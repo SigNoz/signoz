@@ -1,0 +1,45 @@
+kafka:
+    zookeeper:
+        enabled: false
+    externalZookeeper:
+        servers: ["signoz-zookeeper:2181"]
+    zookeeperConnectionTimeoutMs: 6000
+
+druid:
+    configVars:
+        druid_extensions_loadList: '["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-kafka-indexing-service"]'
+        druid_storage_type: local
+        # druid_storage_type: s3
+        # druid_storage_bucket: signoz-druid
+        # druid_storage_baseKey: baseKey
+        # aws_accessKeyId: AKIAI6WYDSRKPE57PYPA
+        # aws_secretKey: 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
+        # druid_s3_accessKey: AKIAI6WYDSRKPE57PYPA
+        # druid_s3_secretKey: 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
+        # AWS_ACCESS_KEY_ID: AKIAI6WYDSRKPE57PYPA
+        # AWS_SECRET_ACCESS_KEY: 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
+        # AWS_REGION: ap-south-1
+
+    historical:
+        persistence:
+            size: "12Gi"
+
+    zkHosts: "signoz-zookeeper:2181"
+
+    zookeeper:
+        enabled: false
+
+flattener-processor:
+    configVars:
+        KAFKA_BROKER: signoz-kafka:9092
+        KAFKA_INPUT_TOPIC: otlp_spans
+        KAFKA_OUTPUT_TOPIC: flattened_spans
+
+query-service:
+    configVars:
+        DruidClientUrl: http://signoz-druid-router:8888
+        DruidDatasource: flattened_spans
+
+frontend:
+    configVars:
+        REACT_APP_QUERY_SERVICE_URL: http://localhost:3000/api/v1/

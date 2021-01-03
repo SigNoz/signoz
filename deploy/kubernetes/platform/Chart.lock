@@ -1,0 +1,21 @@
+dependencies:
+- name: zookeeper
+  repository: https://charts.bitnami.com/bitnami
+  version: 6.0.0
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 12.0.0
+- name: druid
+  repository: https://charts.helm.sh/incubator
+  version: 0.2.18
+- name: flattener-processor
+  repository: file://./signoz-charts/flattener-processor
+  version: 0.1.1
+- name: query-service
+  repository: file://./signoz-charts/query-service
+  version: 0.1.1
+- name: frontend
+  repository: file://./signoz-charts/frontend
+  version: 0.1.4
+digest: sha256:f29f2d0a5e58617075b0e1fd513bf7699138e20dfb94f1cddcfc8ff6a9bcb371
+generated: "2021-01-02T01:14:15.321064+05:30"

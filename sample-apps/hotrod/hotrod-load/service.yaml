@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    role: locust-master
+  name: locust-master
+spec:
+  ports:
+  - port: 5557
+    name: communication
+  - port: 5558
+    name: communication-plus-1
+  - port: 8089
+    targetPort: 8089
+    name: web-ui
+  selector:
+    role: locust-master
