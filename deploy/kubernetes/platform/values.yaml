@@ -12,13 +12,13 @@ druid:
         # druid_storage_type: s3
         # druid_storage_bucket: signoz-druid
         # druid_storage_baseKey: baseKey
-        # aws_accessKeyId: AKIAI6WYDSRKPE57PYPA
-        # aws_secretKey: 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
-        # druid_s3_accessKey: AKIAI6WYDSRKPE57PYPA
-        # druid_s3_secretKey: 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
-        # AWS_ACCESS_KEY_ID: AKIAI6WYDSRKPE57PYPA
-        # AWS_SECRET_ACCESS_KEY: 3YjnS/TXcUkkjHcrzOik7aKdSf6+P4S0FlXmbRHg
-        # AWS_REGION: ap-south-1
+        # aws_accessKeyId: <your secret id>
+        # aws_secretKey: <your secret key>
+        # druid_s3_accessKey: <your secret id>
+        # druid_s3_secretKey: <your secret key>
+        # AWS_ACCESS_KEY_ID: <your secret id>
+        # AWS_SECRET_ACCESS_KEY: <your secret key>
+        # AWS_REGION: <your region>
 
     historical:
         persistence:
