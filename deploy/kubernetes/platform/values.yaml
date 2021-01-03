@@ -12,10 +12,6 @@ druid:
         # druid_storage_type: s3
         # druid_storage_bucket: signoz-druid
         # druid_storage_baseKey: baseKey
-        # aws_accessKeyId: <your secret id>
-        # aws_secretKey: <your secret key>
-        # druid_s3_accessKey: <your secret id>
-        # druid_s3_secretKey: <your secret key>
         # AWS_ACCESS_KEY_ID: <your secret id>
         # AWS_SECRET_ACCESS_KEY: <your secret key>
         # AWS_REGION: <your region>
