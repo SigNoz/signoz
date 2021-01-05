@@ -6,4 +6,4 @@ You can always reach out to ankit@signoz.io to understand more about the repo an
 - If you find any bugs, please create an issue
 - If you find anything missing in documentation, you can create an issue with label **documentation**
 
-#### If you want to build any new feature, please create an issue with tag `enhancement`
+#### If you want to build any new feature, please create an issue with label `enhancement`

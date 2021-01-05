@@ -31,7 +31,7 @@ Deploy in Kubernetes using Helm. Below steps will install the SigNoz in platform
 
 
 ```console
-git clone https://gitlab.com/signoz-oss/signoz.git && cd signoz
+git clone https://github.com/SigNoz/signoz.git && cd signoz
 helm dependency update deploy/kubernetes/platform
 kubectl create ns platform
 helm -n platform install signoz deploy/kubernetes/platform
