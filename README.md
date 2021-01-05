@@ -65,3 +65,5 @@ You can find docs at https://signoz.io/docs. If you need any clarification or fi
 
 # Community
 Join the [slack community](https://app.slack.com/client/T01HWUTP0LT#/) to know more about distributed tracing, observability or SigNoz and to connect with other users and contributors.
+
+If you have any ideas, questions or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
