@@ -5,7 +5,7 @@ metadata:
   annotations:
     "helm.sh/hook": post-install,post-upgrade
 spec:
-  # ttlSecondsAfterFinished: 100
+  ttlSecondsAfterFinished: 100
   template:
     spec:
       containers:

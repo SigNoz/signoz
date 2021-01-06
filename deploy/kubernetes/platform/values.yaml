@@ -18,7 +18,7 @@ druid:
 
     historical:
         persistence:
-            size: "12Gi"
+            size: "4Gi"
 
     zkHosts: "signoz-zookeeper:2181"
 
