@@ -32,4 +32,3 @@ export const reducers = combineReducers<StoreState>({
     filteredTraceMetrics:filteredTraceMetricsReducer,
 });
 
-//input state should ideally be in component state rather than redux application state

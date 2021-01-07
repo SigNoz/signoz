@@ -26,7 +26,6 @@ export interface updateTraceFiltersAction {
 }
 
 export const updateTraceFilters = (traceFilters: TraceFilters) => {
-    console.log('in update trace filters',traceFilters)
     return {
         type: ActionTypes.updateTraceFilters,
         payload: traceFilters,

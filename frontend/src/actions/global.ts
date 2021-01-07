@@ -19,7 +19,6 @@ export const updateTimeInterval = (interval:string, datetimeRange?:[number,numbe
 
     let maxTime: number = 0;
     let minTime: number = 0;
-    console.log('interval', interval, typeof(interval))
     // if interval string is custom, then datetimRange should be present and max & min time should be
     // set directly based on that. Assuming datetimeRange values are in ms, and minTime is 0th element
 
@@ -28,13 +27,11 @@ export const updateTimeInterval = (interval:string, datetimeRange?:[number,numbe
             
             maxTime=Date.now()*1000000; // in nano sec
             minTime=(Date.now()-15*60*1000)*1000000;
-            console.log('max time 15 in case',maxTime)
             break;
                    
         case '30min':
             maxTime=Date.now()*1000000; // in nano sec
             minTime=(Date.now()-30*60*1000)*1000000;
-            console.log('max time in 30 min case',maxTime)
             break; 
 
         case '1hr':

@@ -51,7 +51,6 @@ const _TraceList = (props: TraceListProps)  => {
 
           // new Date() assumes input in milliseconds. Start Time stamp returned by druid api for span list is in ms
 
-          // render: (value: number) => (new Date(Math.round(value/1000))).toLocaleDateString()+' '+(new Date(Math.round(value/1000))).toLocaleTimeString()
         },
         {
           title: 'Duration (in ms)',
@@ -83,9 +82,7 @@ const _TraceList = (props: TraceListProps)  => {
         if (typeof props.traces[0]!== 'undefined' && props.traces[0].events.length > 0) {
                 //PNOTE - Template literal should be wrapped in  curly braces for it to be evaluated
                 
-                // return props.traces.data[0].spans.map((item: spanItem) => <div key={item.spanID}>Span ID is {item.spanID} --- Trace id is <NavLink to={`traces/${item.traceID}`}>{item.traceID}</NavLink></div>)
-                //dataSource.push({spanid:{item.spanID}},traceid:{item.traceID}}
-                //Populating dataSourceArray
+
                 props.traces[0].events.map((item: (number|string|string[]|pushDStree[])[], index ) => { 
                   if (typeof item[0] === 'number' && typeof item[4] === 'string' && typeof item[6] === 'string' && typeof item[1] === 'string' && typeof item[2] === 'string' )
                     dataSource.push({startTime: item[0],  operationName: item[4] , duration:parseInt(item[6]), spanid:item[1], traceid:item[2], key:index.toString()});
@@ -96,13 +93,11 @@ const _TraceList = (props: TraceListProps)  => {
                 return <Table dataSource={dataSource} columns={columns} size="middle"/>;
             } else 
             {
-              //return <Skeleton active />;
               return <div> No spans found for given filter!</div>
             }
       
     };// end of renderTraces
       
-      // console.log(props.traces.data);
       return(
         <div>
           <div>List of traces with spanID</div>
@@ -110,23 +105,11 @@ const _TraceList = (props: TraceListProps)  => {
         </div>
       )
 
-      // PNOTE - code snippet - 
-      // return props.traces.data.map((item) => {
-      //   return (
-      //     <div key={item.traceID}>
-      //       {item.traceID}
-      //     </div>
-      //   );
-      // });
-    
 }
 
 const mapStateToProps = (state: StoreState): { traces: traceResponseNew } => {
-  // console.log(state);
   return {  traces : state.traces };
 };
-// the name mapStateToProps is only a convention
-// take state and map it to props which are accessible inside this component
 
 export const TraceList = connect(mapStateToProps, {
   fetchTraces: fetchTraces,

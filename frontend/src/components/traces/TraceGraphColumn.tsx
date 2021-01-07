@@ -29,7 +29,6 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
           sortDirections: ['descend', 'ascend'],
           render: (value: number) => (new Date(Math.round(value/1000))).toUTCString()
 
-          // render: (value: number) => (new Date(Math.round(value/1000))).toLocaleDateString()+' '+(new Date(Math.round(value/1000))).toLocaleTimeString()
         },
         {
           title: 'Duration (in ms)',
@@ -49,12 +48,6 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
 
       let dataSource :TableDataSourceItem[] = [];
 
-      // PNOTE - Define new array
-      // if (props.traces.data.length > 0)
-      // {
-      // props.traces.data[0].spans.map((item: spanItem, index ) => dataSource.push({startTime: item.startTime,  operationName: item.operationName , duration: item.duration, key:index.toString()}) );
-      // }
-
       if (props.traces[0].events.length > 0) {
    
         props.traces[0].events.map((item: (number|string|string[]|pushDStree[])[], index ) => { 
@@ -66,7 +59,6 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
         return (
 
             <div>
-                {/* <div>Tracing Graph Column Page</div> */}
                 <Table dataSource={dataSource} columns={columns} size="middle"/>;
             </div>
         );
@@ -74,10 +66,8 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
 }
 
 const mapStateToProps = (state: StoreState): { traces: traceResponseNew } => {
-    // console.log(state);
     return {  traces : state.traces };
   };
-  // the name mapStateToProps is only a convention
-  // take state and map it to props which are accessible inside this component
+
   
 export const TraceGraphColumn = connect(mapStateToProps)(_TraceGraphColumn);

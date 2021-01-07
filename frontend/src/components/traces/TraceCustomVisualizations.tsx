@@ -67,7 +67,6 @@ interface TraceCustomVisualizationsProps {
 const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 
     const [selectedEntity, setSelectedEntity] = useState('calls');
-    // const [defaultOption, setDefaultOption]=useState('count');
     const [selectedAggOption, setSelectedAggOption] = useState('count');
     const [selectedStep, setSelectedStep] = useState('60');
     // Step should be multiples of 60, 60 -> 1 min
@@ -98,40 +97,27 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
     const [form] = Form.useForm();
 
     function handleChange(value:string) {
-        console.log(value);
+        // console.log(value);
     }
 
-    // function handleChangeEntity(value:string) {
-    //     // console.log(value);
-    //     // setSelectedEntity(value);
-    //     setDefaultOption(aggregation_options.filter((item) => item.linked_entity === selectedEntity)[0].default_selected)
-    // }
-
     function handleFinish(value:string) {
-        console.log(value);
+        // console.log(value);
     }
 
 
     // PNOTE - Can also use 'coordinate' option in antd Select for implementing this - https://ant.design/components/select/ 
     const handleFormValuesChange = (changedValues:any) => {
         const formFieldName = Object.keys(changedValues)[0];
-        // console.log('Object keys',Object.keys(changedValues) ); 
         if (formFieldName === 'entity') {
            
-            
-            // const a = selectedEntity; // why is selected entity not set instantly??
-
-            // setDefaultOption(aggregation_options.filter((item) => item.linked_entity === selectedEntity)[0].default_selected)
             const temp_entity = aggregation_options.filter((item) => item.linked_entity === changedValues[formFieldName])[0];
 
             form.setFieldsValue( { 
-             //   agg_options : aggregation_options.filter((item) => item.linked_entity === selectedEntity)[0].default_selected,
              agg_options : temp_entity.default_selected.title,
              // PNOTE - TO DO Check if this has the same behaviour as selecting an option?
             })
         
             let temp = form.getFieldsValue(['agg_options','entity']);
-            console.log('custom metric field values',temp,temp.entity,temp.agg_options);
 
             setSelectedEntity(temp.entity);
             setSelectedAggOption(temp.agg_options);
@@ -145,13 +131,6 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
             setSelectedAggOption(changedValues[formFieldName]);
 
             }
-
-          
-          // Make api calls here and display data
-          // PNOTE - TO DO - API CALL location - may be through action creators and set states in redux store?
-
-          // PNOTE - Change this
-          // API call via useEffects after monitoring traces
 
     }
     
@@ -167,12 +146,10 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
                         form={form}
                         onFinish={handleFinish}
                         onValuesChange={handleFormValuesChange}
-                        // initialValues={ agg_options: 'Count'}
                         initialValues={{ agg_options: 'Count', chart_style:'line', interval:'5m', group_by:'none' }}
                     >
                           <Space>
                           <Form.Item  name="entity">
-                          {/* <Select defaultValue={selectedEntity} style={{ width: 120 }} onChange={handleChangeEntity} allowClear> */}
 
                         <Select defaultValue={selectedEntity} style={{ width: 120 }}  allowClear>
                         {entity.map((item) => (
@@ -197,11 +174,7 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
                         }
                         </Select>
                         </Form.Item>
-                        {/* <Select defaultValue="count" style={{ width: 120 }} onChange={handleChange} allowClear>
-                            <Option value="count">Count</Option>
-                            <Option value="sume">Sum</Option>
-                            <Option value="rate">Rate</Option>
-                        </Select> */}
+
                         <Form.Item  name="chart_style">
                         <Select style={{ width: 120 }} onChange={handleChange} allowClear>
                             <Option value="line">Line Chart</Option>
@@ -239,14 +212,10 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 }
 
 const mapStateToProps = (state: StoreState): { filteredTraceMetrics: customMetricsItem[] , globalTime: GlobalTime, traceFilters: TraceFilters} => {
-    // console.log(state);
     return {  filteredTraceMetrics : state.filteredTraceMetrics, globalTime: state.globalTime,traceFilters:state.traceFilters  };
   };
-  // the name mapStateToProps is only a convention
-  // take state and map it to props which are accessible inside this component
+ 
   
   export const TraceCustomVisualizations = connect(mapStateToProps, {
     getFilteredTraceMetrics: getFilteredTraceMetrics,
   })(_TraceCustomVisualizations);
-
-// export default TraceCustomVisualizations;

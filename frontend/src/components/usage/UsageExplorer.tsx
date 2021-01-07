@@ -62,7 +62,6 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
       
         return(
         <React.Fragment>
-            {/* <div>Usage Explorer </div> */}
             {/* PNOTE - TODO - Keep it in reponsive row column tab */}
             <Card style={{ width: "50%" , margin:20 }} bodyStyle={{padding:20 }}>
               <Bar data={data} options={options} />
@@ -73,11 +72,8 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 }
 
 const mapStateToProps = (state: StoreState): { usageData: usageDataItem[], globalTime: GlobalTime } => {
-  // console.log(state);
   return {  usageData : state.usageDate, globalTime: state.globalTime };
 };
-// the name mapStateToProps is only a convention
-// take state and map it to props which are accessible inside this component
 
 export const UsageExplorer = connect(mapStateToProps, {
   getUsageData: getUsageData,

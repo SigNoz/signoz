@@ -14,9 +14,6 @@ const breadcrumbNameMap :any = {  // PNOTE - TO DO - Remove any and do typecheck
     '/traces': 'Traces',
     '/service-map': 'Service Map',
     '/usage-explorer': 'Usage Explorer',
-// only top level things should be  mapped here, rest should be taken dynamically from url
-// Does this work if url has 2 levels of dynamic parameters? - Currently we have only 1 level
-// this structure ignores query params like time -- which is good
 };
 
 
@@ -56,22 +53,5 @@ const ShowBreadcrumbs = withRouter(props => {
 
     );
   });
-
-
-
-
-
-// const ShowBreadcrumbs = () => {
-
-//         return (
-//             <Breadcrumb style={{ margin: '16px 0' , fontSize: 12 }}>
-//               <Breadcrumb.Item>
-//               <Link to="/">Home</Link></Breadcrumb.Item>
-//               <Breadcrumb.Item><Link to="/application">Application</Link></Breadcrumb.Item>
-//             </Breadcrumb>
-//             //programmatically populate it with links
-//         );
-        
-// }
 
 export default ShowBreadcrumbs;

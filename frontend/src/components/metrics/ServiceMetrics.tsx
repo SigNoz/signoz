@@ -1,10 +1,10 @@
 import React,{useEffect} from 'react';
 import { Tabs, Card, Row, Col} from 'antd';
 import { connect } from 'react-redux';
-import { useParams } from "react-router-dom";
+import { useParams, RouteComponentProps } from "react-router-dom";
+import { withRouter } from "react-router";
 
-
-import { getServicesMetrics, metricItem, getTopEndpoints, topEndpointListItem, GlobalTime } from '../../actions';
+import { getServicesMetrics, metricItem, getTopEndpoints, topEndpointListItem, GlobalTime, updateTimeInterval } from '../../actions';
 import { StoreState } from '../../reducers'
 import LatencyLineChart from "./LatencyLineChart"
 import RequestRateChart from './RequestRateChart'
@@ -13,25 +13,30 @@ import TopEndpointsTable from './TopEndpointsTable';
 
 const { TabPane } = Tabs;
 
-interface ServicesMetricsProps {
+interface ServicesMetricsProps extends RouteComponentProps<any>{
   serviceMetrics: metricItem[],
   getServicesMetrics: Function,
   topEndpointsList: topEndpointListItem[],
   getTopEndpoints: Function,
   globalTime: GlobalTime,
+  updateTimeInterval: Function,
 }
 
 
 const _ServiceMetrics = (props: ServicesMetricsProps) => {
 
   const params = useParams<{ servicename?: string; }>();
-  console.log('service name',params.servicename);
 
   useEffect( () => {
     props.getServicesMetrics(params.servicename,props.globalTime);
     props.getTopEndpoints(params.servicename,props.globalTime);
   }, [props.globalTime,params.servicename]);
   
+  const onTracePopupClick = (timestamp:number) => {
+
+    props.updateTimeInterval('custom',[(timestamp/1000000)-5*60*1000,(timestamp/1000000)])// updateTimeInterval takes second range in ms -- give -5 min to selected time, 
+    props.history.push('/traces')
+  }
     return (
       <Tabs defaultActiveKey="1">
         <TabPane tab="Application Metrics" key="1">
@@ -39,7 +44,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
         <Row gutter={32} style={{ margin: 20 }}>
               <Col span={12} >
                   <Card  bodyStyle={{padding:10}}>
-                      <LatencyLineChart data={props.serviceMetrics} />        
+                      <LatencyLineChart data={props.serviceMetrics} popupClickHandler={onTracePopupClick} />        
                   </Card>
               </Col>
 
@@ -88,11 +93,11 @@ const mapStateToProps = (state: StoreState): { serviceMetrics: metricItem[], top
 
   return {  serviceMetrics : state.serviceMetrics, topEndpointsList: state.topEndpointsList, globalTime:state.globalTime};
 };
-// the name mapStateToProps is only a convention
-// take state and map it to props which are accessible inside this component
 
-export const ServiceMetrics  = connect(mapStateToProps, {
+export const ServiceMetrics  = withRouter(connect(mapStateToProps, {
   getServicesMetrics: getServicesMetrics,
   getTopEndpoints: getTopEndpoints,
-})(_ServiceMetrics);
+  updateTimeInterval: updateTimeInterval,
+  
+})(_ServiceMetrics));
 

@@ -15,7 +15,6 @@ interface FilterStateDisplayProps {
 const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 
     function handleCloseTag(value:string) {
-        console.log('on close tag', value)
         if (value==='service')
             props.updateTraceFilters({...props.traceFilters,service:''})
         if (value==='operation')
@@ -28,7 +27,6 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
     }
 
     function handleCloseTagElement(item:TagItem){
-        console.log('tag item closed in handle closeTagElement', item)
         props.updateTraceFilters({...props.traceFilters,tags:props.traceFilters.tags?.filter(elem => elem !== item)})
 
     }
@@ -56,7 +54,6 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
           onClose={e => {handleCloseTag('maxLatency');}}> 
           maxLatency:{(parseInt(props.traceFilters.latency!.max)/1000000).toString()}ms 
           </Tag> }
-          {console.log('tagfilters before showing on card',props.traceFilters.tags)}
           {props.traceFilters.tags === undefined? null: props.traceFilters.tags.map( item => (
                                                     <Tag style={{fontSize:14, padding: 8}} closable
                                                     onClose={e => {handleCloseTagElement(item);}}>

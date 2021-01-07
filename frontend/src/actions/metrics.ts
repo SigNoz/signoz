@@ -62,7 +62,6 @@ export interface getFilteredTraceMetricsAction{
 export const getServicesList = (globalTime: GlobalTime) => {
     return async (dispatch: Dispatch) => {
         let request_string = 'services?start='+globalTime.minTime+'&end='+globalTime.maxTime;
-        console.log(request_string);
         const response = await metricsAPI.get<servicesListItem[]>(request_string);
     
         dispatch<getServicesListAction>({

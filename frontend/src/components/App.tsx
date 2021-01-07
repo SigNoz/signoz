@@ -45,7 +45,6 @@ const App = () =>  {
 
 
   const onCollapse = (): void => {
-    // console.log(collapsed);
     setCollapsed(!collapsed);
   };
 

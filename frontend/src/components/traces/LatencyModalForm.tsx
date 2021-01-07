@@ -2,11 +2,6 @@ import React from 'react';
 import { Modal, Form,  InputNumber, Col, Row} from 'antd';
 import { Store } from 'antd/lib/form/interface';
 
-// interface Values {
-//   title: string;
-//   description: string;
-//   modifier: string;
-// }
 
 interface LatencyModalFormProps {
   visible: boolean;
@@ -32,7 +27,6 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
           .validateFields()
           .then(values => {
             form.resetFields();
-            // onCreate({title:"hello",description:'good',modifier:'public'}); 
             onCreate(values);  // giving error for values
           })
           .catch(info => {
