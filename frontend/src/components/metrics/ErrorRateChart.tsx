@@ -64,8 +64,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps>{
 
    onClickhandler = async(e:any,event:any) => {
       
-      console.log('e graph', e)
-      // console.log('event graph',event)
+
       //PNOTE - e has all key values from mouse event, event has only reference to handler functions
       // PNOTE - https://github.com/emn178/angular2-chartjs/issues/29 - for listening only to element points
       // var firstPoin = this.chart.current.getElementAtEvent(e)
