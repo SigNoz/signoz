@@ -12,15 +12,12 @@ export const spanToTreeUtil  = (spanlist :span[]) :pushDStree => {
     // let spans :spanItem[]= trace.spans;
 
     if(spanlist){
-      //   console.log('spans',spans.length)
-      //  
-      //   console.log(processes)
+
       // Create a dict with spanIDs as keys
       // PNOTE
       // Can we now assign different strings as id - Yes
       // https://stackoverflow.com/questions/15877362/declare-and-initialize-a-dictionary-in-typescript 
     
-      // SPAN TREE processing is
 
     let mapped_array : {[id: string] : span;} = {};
 
@@ -28,7 +25,6 @@ export const spanToTreeUtil  = (spanlist :span[]) :pushDStree => {
         mapped_array[spanlist[i][1]] = spanlist[i];
         mapped_array[spanlist[i][1]][10] = [];
       }
-      // console.log('mapped_array',mapped_array)
 
       for(let id in mapped_array){
         let child_span = mapped_array[id];
@@ -70,8 +66,6 @@ export const spanToTreeUtil  = (spanlist :span[]) :pushDStree => {
         let references :RefItem[] = [];
 
         refArray.forEach(element => {
-          // element = element.replaceAll("=", ":")
-          // let refObj = JSON.parse(element)
           element = element.replaceAll("{", "").replaceAll("}", "").replaceAll(" ", "")
           let arr = element.split(",")
           let refItem = {"traceID": "", "spanID": "", "refType": ""};

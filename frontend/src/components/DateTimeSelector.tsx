@@ -13,12 +13,6 @@ import FormItem from 'antd/lib/form/FormItem';
 import {DateTimeRangeType} from '../actions'
 
 
-import {
-
-    RedoOutlined,
-
-  } from '@ant-design/icons';
-
 
 const { Option } = Select;
 
@@ -30,8 +24,6 @@ interface DateTimeSelectorProps extends RouteComponentProps<any> {
     currentpath?:string;
     updateTimeInterval: Function;
     globalTime: GlobalTime;
-    // urlTime:string;
-
 }
 
 
@@ -43,11 +35,9 @@ const _DateTimeSelector = (props:DateTimeSelectorProps) => {
 
     const [form_dtselector] = Form.useForm();
 
-    console.log('props in DateTimeSelector',props)
 
     const handleOnSelect = (value:string) =>
     {
-        console.log(value);
         if (value === 'custom')
         {
             setCustomDTPickerVisible(true);
@@ -58,8 +48,6 @@ const _DateTimeSelector = (props:DateTimeSelectorProps) => {
                 search: '?time='+value,
               }) //pass time in URL query param for all choices except custom in datetime picker
             props.updateTimeInterval(value);
-            // console.log('in handle on select urlTime',props.urlTime)
-            // console.log('global time', props.globalTime.maxTime,props.globalTime.minTime)
             setTimeInterval(value);
             setRefreshButtonHidden(false); // for normal intervals, show refresh button
         }
@@ -68,14 +56,13 @@ const _DateTimeSelector = (props:DateTimeSelectorProps) => {
     //function called on clicking apply in customDateTimeModal
     const handleOk = (dateTimeRange:DateTimeRangeType) => 
     {
-        console.log('in handleOk of DateTimeSelector',dateTimeRange);
         // pass values in ms [minTime, maxTime]
         if (dateTimeRange!== null && dateTimeRange!== undefined && dateTimeRange[0]!== null && dateTimeRange[1]!== null )
         {
             props.updateTimeInterval('custom',[dateTimeRange[0].valueOf(),dateTimeRange[1].valueOf()])
             //setting globaltime
             setRefreshButtonHidden(true);
-            form_dtselector.setFieldsValue({interval:(dateTimeRange[0].valueOf().toString()+'-'+dateTimeRange[1].valueOf().toString()) ,})
+            form_dtselector.setFieldsValue({interval:(dateTimeRange[0].format("YYYY/MM/DD HH:mm")+'-'+dateTimeRange[1].format("YYYY/MM/DD HH:mm")) ,})
         }
         setCustomDTPickerVisible(false);
     }
@@ -97,7 +84,6 @@ const _DateTimeSelector = (props:DateTimeSelectorProps) => {
 
     const handleRefresh = () => 
     {   
-        console.log('refreshing time interval', timeInterval)
         props.updateTimeInterval(timeInterval);
     }
         if (props.location.pathname.startsWith('/usage-explorer')) {
@@ -110,14 +96,14 @@ const _DateTimeSelector = (props:DateTimeSelectorProps) => {
                 <Space>
                 <Form form={form_dtselector} layout='inline'  initialValues={{ interval:'15min', }} style={{marginTop: 10, marginBottom:10}}>
                 <FormItem name='interval'> 
-                    <Select  style={{ width: 300 }} onSelect={handleOnSelect} >
+                    <Select  onSelect={handleOnSelect} >
                         <Option value="custom">Custom</Option>
-                        <Option value="15min">15 min</Option>
-                        <Option value="30min">30 min</Option>
-                        <Option value="1hr">1 hour</Option>
-                        <Option value="6hr">6 hour</Option>
-                        <Option value="1day">1 day</Option>
-                        <Option value="1week">1 week</Option>
+                        <Option value="15min">Last 15 min</Option>
+                        <Option value="30min">Last 30 min</Option>
+                        <Option value="1hr">Last 1 hour</Option>
+                        <Option value="6hr">Last 6 hour</Option>
+                        <Option value="1day">Last 1 day</Option>
+                        <Option value="1week">Last 1 week</Option>
                     </Select>
                 </FormItem>
                 
@@ -140,14 +126,11 @@ const _DateTimeSelector = (props:DateTimeSelectorProps) => {
         }
     
 }
-//const mapStateToProps = (state: StoreState, ownProps: RouteComponentProps<any> -- ownProps is of type RouteComponentProps<any>
 const mapStateToProps = (state: StoreState ): { globalTime: GlobalTime} => {
     
     return {  globalTime : state.globalTime };
-    // Check if we should pass as urltime or how do we handle this
   };
-  // the name mapStateToProps is only a convention
-  // take state and map it to props which are accessible inside this component
+
   
 export const DateTimeSelector  = connect(mapStateToProps, {
     updateTimeInterval: updateTimeInterval,

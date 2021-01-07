@@ -24,10 +24,6 @@ padding-right:40px;
 .ant-table tfoot>tr>td, .ant-table tfoot>tr>th, .ant-table-tbody>tr>td, .ant-table-thead>tr>th { padding: 10px; };
 `;
 
-//styling antd with styled components - https://codesandbox.io/s/8x1r670rxj
-
-
-
 
 const columns = [
 
@@ -69,7 +65,6 @@ const _ServicesTable = (props: ServicesTableProps) => {
 
     const search = useLocation().search;
     const time_interval = new URLSearchParams(search).get('time');
-    console.log(time_interval)
     
     useEffect( () => {
         props.getServicesList(props.globalTime);
@@ -79,7 +74,6 @@ const _ServicesTable = (props: ServicesTableProps) => {
     return(
         
         <Wrapper>
-            {console.log(props.servicesList)}
             <Table dataSource={props.servicesList} columns={columns} pagination={false} />
         </Wrapper>
 
@@ -88,11 +82,8 @@ const _ServicesTable = (props: ServicesTableProps) => {
 }
 
 const mapStateToProps = (state: StoreState): { servicesList: servicesListItem[], globalTime: GlobalTime } => {
-    // console.log(state);
     return {  servicesList : state.servicesList, globalTime:state.globalTime};
   };
-  // the name mapStateToProps is only a convention
-  // take state and map it to props which are accessible inside this component
   
   export const ServicesTable = connect(mapStateToProps, {
     getServicesList: getServicesList,

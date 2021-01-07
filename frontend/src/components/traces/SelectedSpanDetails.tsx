@@ -17,7 +17,6 @@ interface SelectedSpanDetailsProps {
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 
         const callback = (key:any) => {
-          console.log(key);
         }
 
         return (

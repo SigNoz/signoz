@@ -1,5 +1,5 @@
 import React,{useEffect, useState} from 'react';
-import { Select, Button, Input,  Tag, Card, Form, AutoComplete} from 'antd';
+import { Select, Button, Input,  Form, AutoComplete} from 'antd';
 import { connect } from 'react-redux';
 import { Store } from 'antd/lib/form/interface';
 import styled from 'styled-components';
@@ -43,7 +43,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
     useEffect( () => {
         metricsAPI.get<string[]>('services/list').then(response => {
-            // console.log(response.data);
             setServiceList( response.data );
         });
       }, []);
@@ -57,17 +56,8 @@ const _TraceFilter = (props: TraceFilterProps) => {
             request_string=request_string+'&tags='+encodeURIComponent(JSON.stringify(props.traceFilters.tags));
 
         props.fetchTraces(props.globalTime, request_string)
-        console.log('stringified traceFilters redux state',encodeURIComponent(JSON.stringify(props.traceFilters.tags)));
     }, [props.traceFilters,props.globalTime]);
 
-
-    //   useEffect( () => {
-       
-    //     tagKeyOptions.map(s => options.push({'value':s.tagKeys}));
-    //     console.log('tagoptions USeEffect',options)
-    //   }, [tagKeyOptions]);
-
-    // Use effects run in the order they are specified
 
     useEffect ( () => {
 
@@ -115,17 +105,14 @@ const _TraceFilter = (props: TraceFilterProps) => {
         }
 
         function handleChangeService(value:string) {
-            console.log(value);
             let service_request='/service/'+value+'/operations';
             metricsAPI.get<string[]>(service_request).then(response => {
-                console.log('operations',response.data);
                 // form_basefilter.resetFields(['operation',])
                 setOperationsList( response.data );
             });
 
             let tagkeyoptions_request='tags?service='+value;
             metricsAPI.get<TagKeyOptionItem[]>(tagkeyoptions_request).then(response => {
-                console.log('tag key options',response.data);
                 setTagKeyOptions( response.data );
             });
 
@@ -140,24 +127,14 @@ const _TraceFilter = (props: TraceFilterProps) => {
         
         const onLatencyModalApply = (values: Store) => {
             setModalVisible(false);
-            console.log('Received values of form: ', values);
-            //Latency modal form returns null if the value entered is not a number or string etc or empty
             props.updateTraceFilters({...props.traceFilters,latency:{min:values.min?(parseInt(values.min)*1000000).toString():"", max:values.max?(parseInt(values.max)*1000000).toString():""}})
-            // setLatencyFilterValues()
+
         }
 
         const onTagFormSubmit = (values:any) => {
-            console.log(values);
             
-            // setTagKeyValueApplied(tagKeyValueApplied => [...tagKeyValueApplied, values.tag_key+' '+values.operator+' '+values.tag_value]);
-            // making API calls with only tags data for testing, for last tagform submit
-            // ideally all tags including service, operations, tags, latency selected should be in one state and used
-            // to make API call and update trace list
             let request_tags= 'service=frontend&tags='+encodeURIComponent(JSON.stringify([{"key":values.tag_key,"value":values.tag_value,"operator":values.operator}]))
-            // props.fetchTraces(request_tags)
 
-            // form field names are tag_key & tag_value
-            // data structure has key, value & operator
 
             if (props.traceFilters.tags){ // If there are existing tag filters present
                 props.updateTraceFilters(
@@ -183,9 +160,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
         }
 
         const onTagClose = (value:string) => {
-            console.log(value);
-            // setJoinList(joinList.filter((e)=>(e !== name)))
-            // removing closed tag from the tagKeyValueApplied array
             setTagKeyValueApplied(tagKeyValueApplied.filter( e => (e !== value)));
 
         }
@@ -206,9 +180,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
         // PNOTE - Remove any
         const handleApplyFilterForm = (values:any) => {
-            console.log('values are', values);
-            console.log(typeof(values.service))
-            console.log(typeof(values.operation))
+
             let request_params: string ='';
             if (typeof values.service !== undefined && typeof(values.operation)  !== undefined)
             {
@@ -224,12 +196,8 @@ const _TraceFilter = (props: TraceFilterProps) => {
             }
                 
             request_params=request_params+'&minDuration='+latencyFilterValues.min+'&maxDuration='+latencyFilterValues.max;
-            console.log(request_params);
 
-            // props.fetchTraces(request_params)
 
-            // console.log(props.inputTag)
-            // props.updateTagFilters([{key:props.inputTag, value: props.inputTag }]);
             setTagKeyValueApplied(tagKeyValueApplied => [...tagKeyValueApplied, 'service eq'+values.service, 'operation eq '+values.operation, 'maxduration eq '+ (parseInt(latencyFilterValues.max)/1000000).toString(), 'minduration eq '+(parseInt(latencyFilterValues.min)/1000000).toString()]);
             props.updateTraceFilters({'service':values.service,'operation':values.operation,'latency':latencyFilterValues})
         }
@@ -238,7 +206,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
         return (
             <div>
                 <div>Filter Traces</div>
-                <div>{JSON.stringify(props.traceFilters)}</div>
+                {/* <div>{JSON.stringify(props.traceFilters)}</div> */}
 
                 <Form form={form_basefilter} layout='inline' onFinish={handleApplyFilterForm} initialValues={{ service:'', operation:'',latency:'Latency',}} style={{marginTop: 10, marginBottom:10}}>
                     <FormItem rules={[{ required: true }]} name='service'>  
@@ -250,13 +218,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
                 <FormItem name='operation'>  
                     <Select showSearch style={{ width: 180 }} onChange={handleChangeOperation} placeholder='Select Operation' allowClear>
                         {operationList.map( item => <Option value={item}>{item}</Option>)}
-                        {/* We need to URL encode before making API call on form submission */}
-                        {/* <Option value="HTTP%20GET">HTTP GET</Option>
-                        <Option value="HTTP%20GET%20%2Fdispatch">HTTP GET /dispatch</Option>
-                        <Option value="HTTP%20GET%3A%20%2Froute">HTTP GET: /route</Option>
-                        <Option value="%2Fdriver.DriverService%2FFindNearest">/driver.DriverService/FindNearest</Option>
-                        <Option value="HTTP%20GET%20%2Fcustomer">HTTP GET /customer</Option> */}
-                      
                     </Select>
                 </FormItem>
 
@@ -271,10 +232,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
                 
                 <FilterStateDisplay />
 
-                {/* <Card style={{padding: 6, marginTop: 10, marginBottom: 10}} bodyStyle={{padding: 6}}>
-                    <Tag style={{fontSize:14, padding: 8}} closable> status:200 </Tag><Tag style={{fontSize:14, padding: 8}}  closable> customerid:123 </Tag>
-                    {tagKeyValueApplied.map( item => <Tag key={item} style={{fontSize:14, padding: 8}} onClose={() => onTagClose(item)} closable> {item} </Tag>)}
-                </Card> */}
+
                 {/* // What will be the empty state of card when there is no Tag , it should show something */}
                         
                 <InfoWrapper>Select Service to get Tag suggestions </InfoWrapper>
@@ -282,8 +240,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
                 <Form form={form} layout='inline' onFinish={onTagFormSubmit} initialValues={{operator:'equals'}} style={{marginTop: 10, marginBottom:10}}>
 
                     <FormItem rules={[{ required: true }]} name='tag_key'>
-                        {/* <Input style={{ width: 160, textAlign: 'center' }} placeholder="Tag Key" /> */}
-                        {/* Not using tag count data to show in options */}
+
 
                         <AutoComplete
                         options={tagKeyOptions.map((s) => { return ({'value' : s.tagKeys}) })} 
@@ -296,14 +253,12 @@ const _TraceFilter = (props: TraceFilterProps) => {
                         }
                         placeholder="Tag Key"
                         />
-                        {/* // ! means that we are saying object can't be undefined */}
                     </FormItem>
 
                     <FormItem name='operator'>
                         <Select  style={{ width: 120, textAlign: 'center' }}>
                             <Option value="equals">EQUAL</Option>
                             <Option value="contains">CONTAINS</Option>
-                            {/* <Option value="not-in">NOT IN</Option> */}
                         </Select>
                     </FormItem>
 
@@ -329,7 +284,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 }
 
 const mapStateToProps = (state: StoreState): { traceFilters: TraceFilters, globalTime: GlobalTime } => {
-    // console.log(state);
     return { traceFilters: state.traceFilters, globalTime: state.globalTime };
 };
 

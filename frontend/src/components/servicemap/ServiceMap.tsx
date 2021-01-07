@@ -6,7 +6,6 @@ const ServiceMap = () => {
         return ( 
             
             <div>
-                {/* <div> Service Map </div> */}
                 <ServiceGraph />
             </div>
             

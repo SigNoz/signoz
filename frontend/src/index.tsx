@@ -13,7 +13,7 @@ import { reducers } from './reducers';
 const store = createStore(reducers, applyMiddleware(thunk))
 
 const themes = {
-  dark: `${process.env.PUBLIC_URL}/dark-theme.css`, // How is process.env.PUBLIC_URL defined? - even when we are not using gitlab ci
+  dark: `${process.env.PUBLIC_URL}/dark-theme.css`, 
   light: `${process.env.PUBLIC_URL}/light-theme.css`,
 };
 

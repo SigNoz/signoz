@@ -26,9 +26,7 @@ const TopEndpointsTable = (props: TopEndpointsTableProps) => {
           title: 'Name',
           dataIndex: 'name',
           key: 'name',
-        //   sorter: (a:any, b:any) => a.startTime - b.startTime,
-        //   sortDirections: ['descend', 'ascend'],
-        //PNOTE - TO DO - Change this to API link if available 
+
          render: (text :string) => <NavLink to={'/' + text}>{text}</NavLink>,
 
         },
@@ -61,21 +59,15 @@ const TopEndpointsTable = (props: TopEndpointsTableProps) => {
             dataIndex: 'numCalls',
             key: 'numCalls',
             sorter: (a:any, b:any) => a.numCalls - b.numCalls,
-            // sortDirections: ['descend', 'ascend'],
-            // render: (value: number) => value.toFixed(2),
         },
       ];
-
-
 
     return(
         <Wrapper>
             <h6> Top Endpoints</h6>
             <Table dataSource={props.data} columns={columns} pagination={false} />
         </Wrapper>
-
     )
 }
-
 
 export default TopEndpointsTable;
