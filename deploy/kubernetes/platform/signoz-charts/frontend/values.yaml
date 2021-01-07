@@ -12,8 +12,7 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-configVars:
-  REACT_APP_QUERY_SERVICE_URL: http://localhost:3000/api/v1/
+configVars: {}
 
 config:
   name: signoz-nginx-config
