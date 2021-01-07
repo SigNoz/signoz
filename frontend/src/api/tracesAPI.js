@@ -8,7 +8,7 @@ export default axios.create({
 
   // baseURL: process.env.QUERY_SERVICE_URL,
   // console.log('in traces API', process.env.QUERY_SERVICE_URL)
-  baseURL: 'api/v1/',
+  baseURL: '/api/v1/',
   
 });
 
