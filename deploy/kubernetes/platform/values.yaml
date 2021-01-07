@@ -35,7 +35,3 @@ query-service:
     configVars:
         DruidClientUrl: http://signoz-druid-router:8888
         DruidDatasource: flattened_spans
-
-frontend:
-    configVars:
-        REACT_APP_QUERY_SERVICE_URL: http://localhost:3000/api/v1/

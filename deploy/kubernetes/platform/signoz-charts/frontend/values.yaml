@@ -12,6 +12,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+configVars: {}
+
 config:
   name: signoz-nginx-config
   queryServiceUrl: signoz-query-service:8080
