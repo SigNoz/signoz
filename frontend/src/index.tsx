@@ -4,11 +4,14 @@ import { Provider } from 'react-redux';
 import { createStore, applyMiddleware } from 'redux';
 import { ThemeSwitcherProvider } from "react-css-theme-switcher";
 import thunk  from 'redux-thunk';
+// import { NavLink, BrowserRouter as Router,  Route, Switch  } from 'react-router-dom';
 
 
-import App from './components/App';
+
+import AppWrapper from './components/AppWrapper';
 import './assets/index.css';
 import { reducers } from './reducers';
+// import Signup from './components/Signup';
 
 const store = createStore(reducers, applyMiddleware(thunk))
 
@@ -21,7 +24,14 @@ ReactDOM.render(
   <Provider store={store}>
     <React.StrictMode>
         <ThemeSwitcherProvider themeMap={themes} defaultTheme="dark">
-            <App />
+        {/* <Router basename="/signup">
+        <Switch>
+          <Route path="/signup" component={Signup} />
+          <Route path="/" exact component={App} />
+        </Switch>
+        </Router> */}
+        <AppWrapper />
+        {/* <App /> */}
         </ThemeSwitcherProvider>
     </React.StrictMode>
   </Provider>,

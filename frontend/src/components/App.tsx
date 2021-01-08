@@ -27,6 +27,8 @@ const TraceDetail = React.lazy(() => import('./traces/TraceDetail'));
 const TraceGraph = React.lazy(() => import ('./traces/TraceGraphDef' ));
 const UsageExplorer = React.lazy(() => import ('./usage/UsageExplorerDef' ));
 const ServicesTable = React.lazy(() => import('./metrics/ServicesTableDef'));
+// const Signup = React.lazy(() => import('./Signup'));
+
 
 
 //PNOTE
@@ -54,6 +56,7 @@ const App = () =>  {
   
     return (
     <Router basename="/">
+
       <Layout style={{ minHeight: '100vh' }}>
         <Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={160}>
           <div className="logo">
@@ -98,7 +101,8 @@ const App = () =>  {
                   <Route path="/traces" exact component={TraceDetail}/>
                   <Route path="/traces/:id" component={TraceGraph}/>
                   <Route path="/usage-explorer" component={UsageExplorer}/>
-                  <Route path="/" component={ServicesTable}/>
+                  <Route path="/"  component={ServicesTable}/>
+                  {/* <Route path="/signup" component={Signup} /> */}
 
                 </Switch>
             </Suspense>
