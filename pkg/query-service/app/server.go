@@ -3,8 +3,12 @@ package app
 import (
 	"net"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/posthog/posthog-go"
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
@@ -74,7 +78,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}, nil
 }
 
+var posthogClient posthog.Client
+var distinctId string
+
 func createHTTPServer(druidClientUrl string) *http.Server {
+
+	posthogClient = posthog.New("H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w")
+	distinctId = uuid.New().String()
 
 	client := godruid.Client{
 		Url:   druidClientUrl,
@@ -86,8 +96,11 @@ func createHTTPServer(druidClientUrl string) *http.Server {
 		Debug: true,
 	}
 
-	apiHandler := NewAPIHandler(&client, &sqlClient)
+	apiHandler := NewAPIHandler(&client, &sqlClient, &posthogClient, distinctId)
 	r := NewRouter()
+
+	r.Use(analyticsMiddleware)
+	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r)
 
@@ -105,6 +118,30 @@ func createHTTPServer(druidClientUrl string) *http.Server {
 	return &http.Server{
 		Handler: handler,
 	}
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		startTime := time.Now()
+		next.ServeHTTP(w, r)
+		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+	})
+}
+
+func analyticsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+
+		posthogClient.Enqueue(posthog.Capture{
+			DistinctId: distinctId,
+			Event:      path,
+		})
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // initListener initialises listeners of the server

@@ -92,7 +92,7 @@ func GetServicesList(client *SqlClient) (*[]string, error) {
 		return nil, fmt.Errorf("Something went wrong in druid query")
 	}
 
-	zap.S().Info(string(response))
+	// zap.S().Info(string(response))
 
 	res := new([][]string)
 	err = json.Unmarshal(response, res)

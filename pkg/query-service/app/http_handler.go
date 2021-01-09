@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/posthog/posthog-go"
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
 	"go.uber.org/zap"
@@ -20,17 +21,21 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath  string
-	apiPrefix string
-	client    *godruid.Client
-	sqlClient *druidQuery.SqlClient
+	basePath   string
+	apiPrefix  string
+	client     *godruid.Client
+	sqlClient  *druidQuery.SqlClient
+	pc         *posthog.Client
+	distinctId string
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(client *godruid.Client, sqlClient *druidQuery.SqlClient) *APIHandler {
+func NewAPIHandler(client *godruid.Client, sqlClient *druidQuery.SqlClient, pc *posthog.Client, distinctId string) *APIHandler {
 	aH := &APIHandler{
-		client:    client,
-		sqlClient: sqlClient,
+		client:     client,
+		sqlClient:  sqlClient,
+		pc:         pc,
+		distinctId: distinctId,
 	}
 
 	return aH
@@ -53,6 +58,7 @@ type structuredError struct {
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
+	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
@@ -64,6 +70,31 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/tags", aH.searchTags).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
+	email := r.URL.Query().Get("email")
+
+	var err error
+	if len(email) == 0 {
+		err = fmt.Errorf("Email param is missing")
+	}
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	(*aH.pc).Enqueue(posthog.Identify{
+		DistinctId: aH.distinctId,
+		Properties: posthog.NewProperties().
+			Set("email", email),
+	})
+
+	_, err = http.Get(fmt.Sprintf("https://api.telegram.org/bot1518273960:AAHcgVvym9a0Qkl-PKiCI84X1VZaVbkTud0/sendMessage?chat_id=351813222&text=%s", email))
+
+	if err != nil {
+		zap.S().Debug(err)
+	}
+
 }
 
 func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
@@ -170,6 +201,13 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	result, err := druidQuery.GetServices(aH.sqlClient, query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
+	}
+	if len(*result) != 4 {
+		(*aH.pc).Enqueue(posthog.Capture{
+			DistinctId: distinctId,
+			Event:      "Different Number of Services",
+			Properties: posthog.NewProperties().Set("number", len(*result)),
+		})
 	}
 
 	aH.writeJSON(w, r, result)
