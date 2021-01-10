@@ -22,3 +22,4 @@ frontend/yarn-error.log*
 
 **/.vscode
 *.tgz
+**/build
