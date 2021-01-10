@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 export default axios.create({
-      baseURL: 'https://api.telegram.org/bot1518273960:AAHcgVvym9a0Qkl-PKiCI84X1VZaVbkTud0/',
+      // baseURL: 'https://api.telegram.org/bot1518273960:AAHcgVvym9a0Qkl-PKiCI84X1VZaVbkTud0/',
+      // baseURL: 'http://104.211.113.204:8080/api/v1/',
+      baseURL: '/api/v1/',
     
 }
 );

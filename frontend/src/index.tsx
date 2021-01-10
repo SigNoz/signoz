@@ -24,12 +24,7 @@ ReactDOM.render(
   <Provider store={store}>
     <React.StrictMode>
         <ThemeSwitcherProvider themeMap={themes} defaultTheme="dark">
-        {/* <Router basename="/signup">
-        <Switch>
-          <Route path="/signup" component={Signup} />
-          <Route path="/" exact component={App} />
-        </Switch>
-        </Router> */}
+        
         <AppWrapper />
         {/* <App /> */}
         </ThemeSwitcherProvider>

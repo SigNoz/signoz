@@ -1,10 +1,15 @@
 import React, { useState,useRef, Suspense } from 'react';
 import { Row, Space, Button, Input, Checkbox } from 'antd'
 import submitForm from '../api/submitForm';
-import axios from 'axios';
+import { withRouter } from "react-router";
+import { RouteComponentProps } from 'react-router-dom';
 
 
-const Signup = () => {
+interface SignUpProps extends RouteComponentProps<any> {
+    
+}
+
+const Signup = (props:SignUpProps) => {
 
     const [state, setState] = useState({ submitted: false })
     const [formState, setFormState] = useState({
@@ -76,18 +81,29 @@ const Signup = () => {
     //   console.log(res);
     //   console.log(res.data);
     // })
+    
     let texttolog = JSON.stringify(payload)
     
-    submitForm.get('sendMessage', {
-            params: { 
-              chat_id: 351813222,
-              text:texttolog,
-            }
-            }
+    // submitForm.get('sendMessage', {
+    //         params: { 
+    //           chat_id: 351813222,
+    //           text:texttolog,
+    //         }
+    //         }
+    //   ).then(res => {
+    //     console.log(res);
+    //     console.log(res.data);
+    //   })
+    
+
+    submitForm.post('user?email='+texttolog
       ).then(res => {
         console.log(res);
         console.log(res.data);
       })
+
+      localStorage.setItem('isLoggedIn', 'yes');
+      props.history.push('/application')
     };
 
 
@@ -95,7 +111,7 @@ const Signup = () => {
         <div className="signup-form">
         <Space direction="vertical" className="space-top" style={{ width: '100%', paddingLeft: 32 }}>
             <h1 className="title" style={{ marginBottom: 0, marginTop: 40, display: 'flex', alignItems: 'center' }}>
-                {/* <img src={"signoz.svg"} alt="" style={{ height: 60 }} /> */}
+                {/* <img src={"Signoz-white.svg"} alt="" style={{ height: 60 }} /> */}
                  Create your account
             </h1>
             <div className="page-caption">Monitor your applications. Find what is causing issues.</div>
@@ -123,7 +139,7 @@ const Signup = () => {
                     <div className="input-set">
                         <label htmlFor="signupEmail">Email</label>
                         <Input
-                            placeholder="jane@hogflix.io"
+                            placeholder="mike@netflix.com"
                             type="email"
                             value={formState.email.value}
                             onChange={(e) => updateForm('email', e.target)}
@@ -154,7 +170,7 @@ const Signup = () => {
                     <div className="input-set">
                         <label htmlFor="signupFirstName">First Name</label>
                         <Input
-                            placeholder="Jane"
+                            placeholder="Mike"
                             autoFocus
                             value={formState.firstName.value}
                             onChange={(e) => updateForm('firstName', e.target)}
@@ -167,7 +183,7 @@ const Signup = () => {
                     <div className="input-set">
                         <label htmlFor="signupCompanyName">Company or Project</label>
                         <Input
-                            placeholder="Hogflix Movies"
+                            placeholder="Netflix"
                             value={formState.companyName.value}
                             onChange={(e) => updateForm('companyName', e.target)}
                             // disabled={accountLoading}
@@ -193,11 +209,11 @@ const Signup = () => {
                             disabled={state.submitted && !formState.password}
                             // loading={accountLoading}
                         >
-                            Create my account
+                            Get Started
                         </Button>
                     </div>
 
-                    <div style={{ color: '#666666', marginBottom: 60, textAlign: 'center' }} className="space-top">
+                    {/* <div style={{ color: '#666666', marginBottom: 60, textAlign: 'center' }} className="space-top">
                         By clicking the button above you agree to our{' '}
                         <a href="https://signoz.io" target="_blank">
                             Terms of Service
@@ -207,7 +223,7 @@ const Signup = () => {
                             Privacy Policy
                         </a>
                         .
-                    </div>
+                    </div> */}
                 </form>
             </div>
         </Row>
@@ -216,4 +232,4 @@ const Signup = () => {
     );
 }
 
-export default Signup;
+export default withRouter(Signup);

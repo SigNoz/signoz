@@ -102,6 +102,7 @@ const App = () =>  {
                   <Route path="/traces/:id" component={TraceGraph}/>
                   <Route path="/usage-explorer" component={UsageExplorer}/>
                   <Route path="/"  component={ServicesTable}/>
+                  <Route path="/application" exact component={ServicesTable}/>
                   {/* <Route path="/signup" component={Signup} /> */}
 
                 </Switch>

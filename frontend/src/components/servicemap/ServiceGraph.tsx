@@ -48,7 +48,8 @@ const ServiceGraph = () => {
 
     return ( 
         <React.Fragment>
-        <div> Service Graph Component</div>
+        <div> Updated Service Graph module coming soon..</div>
+
         <Graph
       graph={graph}
       options={options}
@@ -57,6 +58,7 @@ const ServiceGraph = () => {
       //   //  if you want access to vis.js network api you can set the state in a parent component using this property
       // }}
     />
+        
       </React.Fragment>
     );
 
@@ -65,3 +67,5 @@ const ServiceGraph = () => {
 
 
 export default ServiceGraph;
+
+

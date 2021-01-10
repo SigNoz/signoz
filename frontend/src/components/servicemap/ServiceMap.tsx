@@ -5,9 +5,10 @@ const ServiceMap = () => {
 
         return ( 
             
-            <div>
-                <ServiceGraph />
+            <div> Service Map module coming soon...
+                {/* <ServiceGraph /> */}
             </div>
+            
             
         );
     
