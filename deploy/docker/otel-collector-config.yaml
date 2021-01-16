@@ -1,4 +1,8 @@
 receivers:
+  otlp:
+    protocols:
+      # grpc:
+      http:
   jaeger:
     protocols:
       grpc:
@@ -29,6 +33,6 @@ service:
   extensions: [health_check, zpages]
   pipelines:
     traces:
-      receivers: [jaeger]
+      receivers: [jaeger, otlp]
       processors: [memory_limiter, batch, queued_retry]
       exporters: [kafka]

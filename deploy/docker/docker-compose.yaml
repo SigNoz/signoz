@@ -218,6 +218,7 @@ services:
       - "8887:8888"   # Prometheus metrics exposed by the agent
       - "14268:14268"       # Jaeger receiver
       - "55678"       # OpenCensus receiver
+      - "55681:55681"       # OTLP HTTP receiver
       - "55679:55679" # zpages extension
       - "13133"       # health_check
     depends_on: 
