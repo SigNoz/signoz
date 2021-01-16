@@ -1,3 +1,7 @@
+zookeeper:
+    autopurge:
+        purgeInterval: 1
+
 kafka:
     zookeeper:
         enabled: false
