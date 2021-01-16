@@ -1,0 +1,1 @@
+[{"period":"P3D","includeFuture":true,"tieredReplicants":{"_default_tier":1},"type":"loadByPeriod"},{"type":"dropForever"}]
