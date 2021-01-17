@@ -36,7 +36,7 @@ const ThemeSwitcherWrapper = styled.div`
 	display: flex;
 	justify-content: center;
 	margin-top: 20px;
-`
+`;
 const App = () => {
 	// state = { collapsed: false, isDarkMode: true };
 	const { switcher, currentTheme, status, themes } = useThemeSwitcher();
@@ -67,7 +67,7 @@ const App = () => {
 				>
 					<div className="logo">
 						<ThemeSwitcherWrapper>
-						<ToggleButton checked={isDarkMode} onChange={toggleTheme} />
+							<ToggleButton checked={isDarkMode} onChange={toggleTheme} />
 						</ThemeSwitcherWrapper>
 						<NavLink to="/">
 							<img
