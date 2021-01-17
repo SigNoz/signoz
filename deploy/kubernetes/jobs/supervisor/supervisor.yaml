@@ -24,4 +24,4 @@ spec:
             configMap:
               name: supervisor-config
       restartPolicy: Never
-  backoffLimit: 4
+  backoffLimit: 8

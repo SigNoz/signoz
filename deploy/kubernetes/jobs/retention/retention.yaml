@@ -26,4 +26,4 @@ spec:
               name: retention-config
 
       restartPolicy: Never
-  backoffLimit: 4
+  backoffLimit: 8
