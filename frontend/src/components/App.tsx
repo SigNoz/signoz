@@ -17,6 +17,7 @@ import {
 
 import DateTimeSelector from "./DateTimeSelector";
 import ShowBreadcrumbs from "./ShowBreadcrumbs";
+import styled from "styled-components";
 
 const { Content, Footer, Sider } = Layout;
 
@@ -31,6 +32,11 @@ const ServicesTable = React.lazy(() => import("./metrics/ServicesTableDef"));
 //PNOTE
 //React. lazy currently only supports default exports. If the module you want to import uses named exports, you can create an intermediate module that reexports it as the default. This ensures that tree shaking keeps working and that you don't pull in unused components.
 
+const ThemeSwitcherWrapper = styled.div`
+	display: flex;
+	justify-content: center;
+	margin-top: 20px;
+`
 const App = () => {
 	// state = { collapsed: false, isDarkMode: true };
 	const { switcher, currentTheme, status, themes } = useThemeSwitcher();
@@ -60,7 +66,9 @@ const App = () => {
 					width={160}
 				>
 					<div className="logo">
+						<ThemeSwitcherWrapper>
 						<ToggleButton checked={isDarkMode} onChange={toggleTheme} />
+						</ThemeSwitcherWrapper>
 						<NavLink to="/">
 							<img
 								src={"signoz.svg"}
