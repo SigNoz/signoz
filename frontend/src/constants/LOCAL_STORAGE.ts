@@ -1,3 +1,3 @@
-export enum LocalStorage {
+export enum LOCAL_STORAGE {
 	metricsTimeDuration = "metricsTimeDuration",
 }
