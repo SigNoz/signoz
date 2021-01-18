@@ -136,7 +136,6 @@ services:
     env_file:
       - environment
 
-
   flatten-processor:
     image: signoz/flattener-processor:0.1.1
     container_name: flattener-processor
@@ -190,7 +189,9 @@ services:
     - "curl -X POST -H 'Content-Type: application/json' -d @/app/supervisor-spec.json http://router:8888/druid/indexer/v1/supervisor"
 
     depends_on:
-      - router
+    - router
+    restart: on-failure:6
+
     volumes:
       - ./druid-jobs/supervisor-spec.json:/app/supervisor-spec.json
 
@@ -204,7 +205,8 @@ services:
     - "curl -X POST -H 'Content-Type: application/json' -d @/app/retention-spec.json http://router:8888/druid/coordinator/v1/rules/flattened_spans"
     
     depends_on:
-      - router
+    -  router
+    restart: on-failure:6
     volumes:
       - ./druid-jobs/retention-spec.json:/app/retention-spec.json
 
