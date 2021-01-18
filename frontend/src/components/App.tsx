@@ -71,7 +71,7 @@ const App = () => {
 						</ThemeSwitcherWrapper>
 						<NavLink to="/">
 							<img
-								src={"signoz.svg"}
+								src={"/signoz.svg"}
 								alt={"SigNoz"}
 								style={{
 									margin: "5%",
