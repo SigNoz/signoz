@@ -40,7 +40,7 @@ services:
       test: ["CMD", "kafka-topics.sh", "--list", "--zookeeper", "zookeeper:2181"]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
     depends_on:
       - zookeeper
 
