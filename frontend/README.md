@@ -1,3 +1,27 @@
+
+ # Docker
+ **Building image**
+
+```docker-compose up`` 
+/ This will also run
+
+or
+```docker build . -t tagname```
+
+  
+
+**Tag to remote url- Introduce versinoing later on**
+
+```
+docker tag signoz/frontend:latest 7296823551/signoz:latest
+```
+
+  **Running locally**
+
+```
+docker-compose up
+```
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

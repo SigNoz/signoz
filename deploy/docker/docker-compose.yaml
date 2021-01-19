@@ -169,7 +169,7 @@ services:
 
     
   frontend:
-    image: signoz/frontend:0.1.7
+    image: 7296823551/signoz:latest
     container_name: frontend
 
     depends_on:
