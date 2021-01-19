@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import { Table } from "antd";
+import { Spin, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
 
@@ -29,6 +29,16 @@ const Wrapper = styled.div`
 		padding: 10px;
 	}
 `;
+
+const TableLoadingWrapper = styled.div`
+		display: flex;
+		justify-content: center;
+		margin-top: 80px;
+`
+
+const LoadingText = styled.div`
+		margin-left: 16px;
+`
 
 const columns = [
 	{
@@ -72,8 +82,21 @@ const _ServicesTable = (props: ServicesTableProps) => {
 	const time_interval = new URLSearchParams(search).get("time");
 
 	useEffect(() => {
+		/*
+			@Note - Change this from action to thunk
+		 */
 		props.getServicesList(props.globalTime);
 	}, [props.globalTime]);
+
+	const isDataAvailable = props.servicesList.length > 1;
+	if(!isDataAvailable){
+		return (
+				<TableLoadingWrapper>
+					<Spin/>
+					<LoadingText>Fetching data</LoadingText>
+				</TableLoadingWrapper>
+		)
+	}
 
 	return (
 		<Wrapper>
