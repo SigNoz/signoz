@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
-import { createStore, applyMiddleware } from "redux";
+import { createStore, applyMiddleware, compose } from "redux";
 import { ThemeSwitcherProvider } from "react-css-theme-switcher";
 import thunk from "redux-thunk";
 // import { NavLink, BrowserRouter as Router,  Route, Switch  } from 'react-router-dom';
@@ -10,8 +10,9 @@ import AppWrapper from "./components/AppWrapper";
 import "./assets/index.css";
 import { reducers } from "./reducers";
 // import Signup from './components/Signup';
-
-const store = createStore(reducers, applyMiddleware(thunk));
+// @ts-ignore
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const store = createStore(reducers, composeEnhancers(applyMiddleware(thunk)));
 
 const themes = {
 	dark: `${process.env.PUBLIC_URL}/dark-theme.css`,
