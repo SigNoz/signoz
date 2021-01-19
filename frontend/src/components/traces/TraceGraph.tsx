@@ -58,15 +58,18 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.width(640)
 		.cellHeight(18)
 		.transitionDuration(500)
-		.minFrameSize(5)
-		.sort(true)
 		.inverted(true)
-		.tooltip(tip)
+	 .tooltip(tip)
+		 .minFrameSize(10)
 		.elided(false)
-		.onClick(onClick)
-		//   .title("Trace Flame graph")
 		.differential(false)
-		.selfValue(true); //sets span width based on value - which is mapped to duration
+		.sort(true)
+		//Use self value=true when we're using not using aggregated option, Which is not our case.
+		// In that case it's doing step function sort of stuff thru computation.
+		// Source flamegraph.js line 557 and 573.
+		// .selfValue(true)
+		.onClick(onClick)
+	 .title("Trace Flame graph");
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
@@ -81,7 +84,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 						<Button type="primary" onClick={setResetZoom.bind(this, true)}>
 							Reset Zoom
 						</Button>
-						<div id="chart" style={{ fontSize: 12 }}></div>
+						<div id="chart" style={{ fontSize: 12, marginTop: 20}}></div>
 					</Card>
 
 					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />
