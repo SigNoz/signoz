@@ -68,7 +68,7 @@ services:
     command:
       - coordinator
     env_file:
-      - environment_small/coordinator
+      - environment_nano/coordinator
 
   broker:
     image: apache/druid:0.20.0
@@ -84,7 +84,7 @@ services:
     command:
       - broker
     env_file:
-      - environment_small/broker
+      - environment_nano/broker
 
   historical:
     image: apache/druid:0.20.0
@@ -101,7 +101,7 @@ services:
     command:
       - historical
     env_file:
-      - environment_small/historical
+      - environment_nano/historical
 
   middlemanager:
     image: apache/druid:0.20.0
@@ -118,7 +118,7 @@ services:
     command:
       - middleManager
     env_file:
-      - environment_small/middlemanager
+      - environment_nano/middlemanager
 
   router:
     image: apache/druid:0.20.0
@@ -134,7 +134,7 @@ services:
     command:
       - router
     env_file:
-      - environment_small/router
+      - environment_nano/router
 
   flatten-processor:
     image: signoz/flattener-processor:0.1.1
@@ -168,7 +168,7 @@ services:
 
     
   frontend:
-    image: 7296823551/signoz:latest
+    image: signoz/frontend:0.1.7
     container_name: frontend
 
     depends_on:
@@ -236,7 +236,6 @@ services:
     command: ["all"]
     environment:
     - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
-
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"

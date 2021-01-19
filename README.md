@@ -61,7 +61,7 @@ kubectl -n sample-application apply -Rf sample-apps/hotrod/
 
 
 # Documentation
-You can find docs at https://signoz.io/docs/installation. If you need any clarification or find something missing, feel free to raise a github issue with label `documentation` or reach out to us at community slack channel.
+You can find docs at https://signoz.io/docs/deployment/docker. If you need any clarification or find something missing, feel free to raise a github issue with label `documentation` or reach out to us at community slack channel.
 
 # Community
 Join the [slack community](https://app.slack.com/client/T01HWUTP0LT#/) to know more about distributed tracing, observability or SigNoz and to connect with other users and contributors.

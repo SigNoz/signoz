@@ -25,3 +25,5 @@ frontend/yarn-error.log*
 **/.vscode
 *.tgz
 **/build
+**/storage
+**/locust-scripts/__pycache__/
