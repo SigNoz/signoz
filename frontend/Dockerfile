@@ -1,32 +1,15 @@
-# stage1 as builder
-FROM node:14-alpine as builder
-
-# copy the package.json to install dependencies
-COPY package.json ./
-
-# Install the dependencies and make the folder
-RUN npm install && mkdir /react-ui && mv ./node_modules ./react-ui
-
-WORKDIR /react-ui
-
-COPY . .
-
-# Build the project and copy the files
-RUN npm run build
+FROM node:12.20.1-alpine3.9
 
 
-FROM nginx:1.15-alpine
+ADD ./ ./frontend
 
-#!/bin/sh
+WORKDIR /frontend
 
-COPY conf/default.conf /etc/nginx/conf.d/default.conf
+RUN yarn && yarn build
+RUN yarn global add serve
 
-## Remove default nginx index page
-RUN rm -rf /usr/share/nginx/html/*
+ARG PORT=3000
 
-# Copy from the stahg 1
-COPY --from=builder /react-ui/build /usr/share/nginx/html
+EXPOSE $PORT
 
-EXPOSE 3000
-
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s","build"]
