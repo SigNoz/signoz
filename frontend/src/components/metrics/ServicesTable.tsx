@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { Spin, Table } from "antd";
@@ -80,16 +80,19 @@ const columns = [
 const _ServicesTable = (props: ServicesTableProps) => {
 	const search = useLocation().search;
 	const time_interval = new URLSearchParams(search).get("time");
-
+	const [dataFetched, setDataFetched] = useState(false)
 	useEffect(() => {
 		/*
 			@Note - Change this from action to thunk
 		 */
-		props.getServicesList(props.globalTime);
+		props.getServicesList(props.globalTime).then(()=>{
+			setDataFetched(true)
+		}).catch((e:string)=>{
+				alert(e)
+		});
 	}, [props.globalTime]);
 
-	const isDataAvailable = props.servicesList.length > 1;
-	if(!isDataAvailable){
+	if(!dataFetched){
 		return (
 				<TableLoadingWrapper>
 					<Spin/>
