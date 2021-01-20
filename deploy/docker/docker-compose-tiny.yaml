@@ -58,8 +58,8 @@ services:
     image: apache/druid:0.20.0
     container_name: coordinator
     volumes:
-      - ./storage:/opt/druid/data
-      - coordinator_var:/opt/druid/var
+      - ./storage:/opt/druid/deepStorage
+      - coordinator_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -68,13 +68,13 @@ services:
     command:
       - coordinator
     env_file:
-      - environment_nano/coordinator
+      - environment_tiny/coordinator
 
   broker:
     image: apache/druid:0.20.0
     container_name: broker
     volumes:
-      - broker_var:/opt/druid/var
+      - broker_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -84,14 +84,14 @@ services:
     command:
       - broker
     env_file:
-      - environment_nano/broker
+      - environment_tiny/broker
 
   historical:
     image: apache/druid:0.20.0
     container_name: historical
     volumes:
-      - ./storage:/opt/druid/data
-      - historical_var:/opt/druid/var
+      - ./storage:/opt/druid/deepStorage
+      - historical_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -101,14 +101,14 @@ services:
     command:
       - historical
     env_file:
-      - environment_nano/historical
+      - environment_tiny/historical
 
   middlemanager:
     image: apache/druid:0.20.0
     container_name: middlemanager
     volumes:
-      - ./storage:/opt/druid/data
-      - middle_var:/opt/druid/var
+      - ./storage:/opt/druid/deepStorage
+      - middle_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -118,13 +118,13 @@ services:
     command:
       - middleManager
     env_file:
-      - environment_nano/middlemanager
+      - environment_tiny/middlemanager
 
   router:
     image: apache/druid:0.20.0
     container_name: router
     volumes:
-      - router_var:/opt/druid/var
+      - router_var:/opt/druid/data
     depends_on:
       - zookeeper
       - postgres
@@ -134,7 +134,7 @@ services:
     command:
       - router
     env_file:
-      - environment_nano/router
+      - environment_tiny/router
 
   flatten-processor:
     image: signoz/flattener-processor:0.1.1
@@ -236,6 +236,7 @@ services:
     command: ["all"]
     environment:
     - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"

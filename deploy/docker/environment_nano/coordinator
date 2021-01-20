@@ -42,9 +42,9 @@ druid_indexer_runner_javaOptsArray=["-server", "-Xms64m", "-Xmx64m", "-XX:MaxDir
 druid_indexer_fork_property_druid_processing_buffer_sizeBytes=25000000
 
 druid_storage_type=local
-druid_storage_storageDirectory=/opt/data/segments
+druid_storage_storageDirectory=/opt/druid/deepStorage
 druid_indexer_logs_type=file
-druid_indexer_logs_directory=/opt/data/indexing-logs
+druid_indexer_logs_directory=/opt/druid/data/indexing-logs
 
 druid_processing_numThreads=1
 druid_processing_numMergeBuffers=2

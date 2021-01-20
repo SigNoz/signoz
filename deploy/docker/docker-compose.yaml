@@ -58,8 +58,8 @@ services:
     image: apache/druid:0.20.0
     container_name: coordinator
     volumes:
-      - ./storage:/opt/druid/data
-      - coordinator_var:/opt/druid/var
+      - ./storage:/opt/druid/deepStorage
+      - coordinator_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -74,7 +74,7 @@ services:
     image: apache/druid:0.20.0
     container_name: broker
     volumes:
-      - broker_var:/opt/druid/var
+      - broker_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -90,8 +90,8 @@ services:
     image: apache/druid:0.20.0
     container_name: historical
     volumes:
-      - ./storage:/opt/druid/data
-      - historical_var:/opt/druid/var
+      - ./storage:/opt/druid/deepStorage
+      - historical_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -107,8 +107,8 @@ services:
     image: apache/druid:0.20.0
     container_name: middlemanager
     volumes:
-      - ./storage:/opt/druid/data
-      - middle_var:/opt/druid/var
+      - ./storage:/opt/druid/deepStorage
+      - middle_var:/opt/druid/data
     depends_on: 
       - zookeeper
       - postgres
@@ -124,7 +124,7 @@ services:
     image: apache/druid:0.20.0
     container_name: router
     volumes:
-      - router_var:/opt/druid/var
+      - router_var:/opt/druid/data
     depends_on:
       - zookeeper
       - postgres
