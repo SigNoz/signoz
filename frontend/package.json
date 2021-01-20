@@ -1,87 +1,91 @@
 {
-  "name": "client",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@material-ui/core": "^4.0.0",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "@types/chart.js": "^2.9.28",
-    "@types/d3": "^6.2.0",
-    "@types/jest": "^26.0.15",
-    "@types/node": "^14.14.7",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^16.9.9",
-    "@types/react-redux": "^7.1.11",
-    "@types/react-router-dom": "^5.1.6",
-    "@types/redux": "^3.6.0",
-    "@types/styled-components": "^5.1.4",
-    "@types/vis": "^4.21.21",
-    "antd": "^4.8.0",
-    "axios": "^0.21.0",
-    "chart.js": "^2.9.4",
-    "d3": "^6.2.0",
-    "d3-array": "^2.8.0",
-    "d3-ease": "^2.0.0",
-    "d3-flame-graph": "^3.1.1",
-    "d3-tip": "^0.9.1",
-    "material-ui-chip-input": "^2.0.0-beta.2",
-    "prop-types": "^15.6.2",
-    "react": "17.0.0",
-    "react-chartjs-2": "^2.11.1",
-    "react-chips": "^0.8.0",
-    "react-css-theme-switcher": "^0.1.6",
-    "react-dom": "17.0.0",
-    "react-graph-vis": "^1.0.5",
-    "react-redux": "^7.2.2",
-    "react-router-dom": "^5.2.0",
-    "react-scripts": "4.0.0",
-    "react-vis": "^1.11.7",
-    "recharts": "^1.8.5",
-    "redux": "^4.0.5",
-    "redux-thunk": "^2.3.0",
-    "styled-components": "^5.2.1",
-    "typescript": "^4.0.5",
-    "web-vitals": "^0.2.4"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "storybook": "start-storybook -p 6006 -s public --no-dll",
-    "build-storybook": "build-storybook -s public --no-dll"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@babel/core": "^7.12.3",
-    "@babel/preset-typescript": "^7.12.7",
-    "autoprefixer": "^9.0.0",
-    "babel-plugin-styled-components": "^1.12.0",
-    "gulp": "^4.0.2",
-    "gulp-csso": "^4.0.1",
-    "gulp-debug": "^4.0.0",
-    "gulp-less": "^4.0.1",
-    "gulp-postcss": "^9.0.0",
-    "less-plugin-npm-import": "^2.1.0",
-    "react-is": "^17.0.1"
-  }
+	"name": "client",
+	"version": "0.1.0",
+	"private": true,
+	"dependencies": {
+		"@material-ui/core": "^4.0.0",
+		"@testing-library/jest-dom": "^5.11.4",
+		"@testing-library/react": "^11.1.0",
+		"@testing-library/user-event": "^12.1.10",
+		"@types/chart.js": "^2.9.28",
+		"@types/d3": "^6.2.0",
+		"@types/jest": "^26.0.15",
+		"@types/node": "^14.14.7",
+		"@types/react": "^17.0.0",
+		"@types/react-dom": "^16.9.9",
+		"@types/react-redux": "^7.1.11",
+		"@types/react-router-dom": "^5.1.6",
+		"@types/redux": "^3.6.0",
+		"@types/styled-components": "^5.1.4",
+		"@types/vis": "^4.21.21",
+		"antd": "^4.8.0",
+		"axios": "^0.21.0",
+		"chart.js": "^2.9.4",
+		"d3": "^6.2.0",
+		"d3-array": "^2.8.0",
+		"d3-ease": "^2.0.0",
+		"d3-flame-graph": "^3.1.1",
+		"d3-tip": "^0.9.1",
+		"material-ui-chip-input": "^2.0.0-beta.2",
+		"prop-types": "^15.6.2",
+		"react": "17.0.0",
+		"react-chartjs-2": "^2.11.1",
+		"react-chips": "^0.8.0",
+		"react-css-theme-switcher": "^0.1.6",
+		"react-dom": "17.0.0",
+		"react-graph-vis": "^1.0.5",
+		"react-redux": "^7.2.2",
+		"react-router-dom": "^5.2.0",
+		"react-scripts": "4.0.0",
+		"react-vis": "^1.11.7",
+		"recharts": "^1.8.5",
+		"redux": "^4.0.5",
+		"redux-thunk": "^2.3.0",
+		"styled-components": "^5.2.1",
+		"typescript": "^4.0.5",
+		"web-vitals": "^0.2.4"
+	},
+	"scripts": {
+		"start": "react-scripts start",
+		"build": "react-scripts build",
+		"test": "react-scripts test",
+		"eject": "react-scripts eject",
+		"storybook": "start-storybook -p 6006 -s public --no-dll",
+		"build-storybook": "build-storybook -s public --no-dll",
+		"prettify": "prettier --write ."
+	},
+	"eslintConfig": {
+		"extends": [
+			"react-app",
+			"react-app/jest"
+		]
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"devDependencies": {
+		"@babel/core": "^7.12.3",
+		"@babel/preset-typescript": "^7.12.7",
+		"autoprefixer": "^9.0.0",
+		"babel-plugin-styled-components": "^1.12.0",
+		"gulp": "^4.0.2",
+		"gulp-csso": "^4.0.1",
+		"gulp-debug": "^4.0.0",
+		"gulp-less": "^4.0.1",
+		"gulp-postcss": "^9.0.0",
+		"husky": "4.3.8",
+		"less-plugin-npm-import": "^2.1.0",
+		"lint-staged": "10.5.3",
+		"prettier": "2.2.1",
+		"react-is": "^17.0.1"
+	}
 }

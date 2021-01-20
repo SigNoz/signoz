@@ -19,9 +19,13 @@ frontend/.yarnclean
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
+frontend/src/constants/env.ts
+
+.idea
 
 **/.vscode
 *.tgz
 **/build
 **/storage
 **/locust-scripts/__pycache__/
+
