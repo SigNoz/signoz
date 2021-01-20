@@ -58,7 +58,7 @@ services:
     image: apache/druid:0.20.0
     container_name: coordinator
     volumes:
-      - ./storage:/opt/data
+      - ./storage:/opt/druid/data
       - coordinator_var:/opt/druid/var
     depends_on: 
       - zookeeper
@@ -90,7 +90,7 @@ services:
     image: apache/druid:0.20.0
     container_name: historical
     volumes:
-      - ./storage:/opt/data
+      - ./storage:/opt/druid/data
       - historical_var:/opt/druid/var
     depends_on: 
       - zookeeper
@@ -107,7 +107,7 @@ services:
     image: apache/druid:0.20.0
     container_name: middlemanager
     volumes:
-      - ./storage:/opt/data
+      - ./storage:/opt/druid/data
       - middle_var:/opt/druid/var
     depends_on: 
       - zookeeper
