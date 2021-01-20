@@ -17,6 +17,7 @@ import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
 import ErrorRateChart from "./ErrorRateChart";
 import TopEndpointsTable from "./TopEndpointsTable";
+import { METRICS_PAGE_QUERY_PARAM } from "../../constants/query";
 
 const { TabPane } = Tabs;
 
@@ -38,11 +39,16 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 	}, [props.globalTime, params.servicename]);
 
 	const onTracePopupClick = (timestamp: number) => {
+		const tMinus5Min = timestamp / 1000000 - 5 * 60 * 1000;
+		const currentTime = timestamp / 1000000;
+
 		props.updateTimeInterval("custom", [
-			timestamp / 1000000 - 5 * 60 * 1000,
-			timestamp / 1000000,
+			tMinus5Min,
+			currentTime,
 		]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
-		props.history.push("/traces");
+
+
+		props.history.push(`/traces?${METRICS_PAGE_QUERY_PARAM.startTime}=${tMinus5Min}&${METRICS_PAGE_QUERY_PARAM.endTime}=${currentTime}`);
 	};
 	return (
 		<Tabs defaultActiveKey="1">

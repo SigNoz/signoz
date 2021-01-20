@@ -3,7 +3,7 @@ import { ActionTypes, Action, GlobalTime } from "../actions";
 export const updateGlobalTimeReducer = (
 	state: GlobalTime = {
 		maxTime: Date.now() * 1000000,
-		minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
+		minTime: (Date.now() - 15 * 60 * 1000) * 1000000
 	},
 	action: Action,
 ) => {
