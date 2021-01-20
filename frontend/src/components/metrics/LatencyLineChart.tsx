@@ -186,7 +186,9 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 					ycoordinate={this.state.ycoordinate}
 				>
 					<PopUpElements
-						onClick={() => this.props.popupClickHandler(this.state.firstpoint_ts)}
+						onClick={() => {
+							this.props.popupClickHandler(this.state.firstpoint_ts)
+						}}
 					>
 						View Traces
 					</PopUpElements>
