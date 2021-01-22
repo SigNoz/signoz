@@ -1,4 +1,4 @@
-<p align="center"><img src="https://signoz.io/img/SigNozLogo-200x200.svg" alt="SigNoz Logo" width="100"></p>
+<p align="center"><img src="https://signoz.io/img/SigNozLogo-orange.svg" alt="SigNoz Logo" width="100"></p>
 
 # SigNoz
 SigNoz is an opensource observability platform. SigNoz uses distributed tracing to gain visibility into your systems and powers data using [Kafka](https://kafka.apache.org/) (to handle high ingestion rate and backpressure) and [Apache Druid](https://druid.apache.org/) (Apache Druid is a high performance real-time analytics database), both proven in industry to handle scale.
