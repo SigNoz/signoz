@@ -46,7 +46,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.default()
 		.attr("class", "d3-tip")
 		.html(function (d: any) {
-			return d.data.name + "<br>duration: " + d.data.value;
+			return d.data.name + "<br>duration: " + d.data.value/1000000+'ms';
 		});
 
 	const onClick = (z: any) => {
