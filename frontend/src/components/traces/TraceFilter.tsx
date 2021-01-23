@@ -41,7 +41,6 @@ interface TagKeyOptionItem {
 
 const _TraceFilter = (props: TraceFilterProps) => {
 	const [serviceList, setServiceList] = useState<string[]>([]);
-	const [service, setSelectedService] = useState<string|null>(null);
 	const [operationList, setOperationsList] = useState<string[]>([]);
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
 	const location = useLocation()
