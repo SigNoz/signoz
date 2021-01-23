@@ -31,24 +31,29 @@ interface ServicesMetricsProps extends RouteComponentProps<any> {
 }
 
 const _ServiceMetrics = (props: ServicesMetricsProps) => {
-	const params = useParams<{ servicename?: string }>();
-
+	const {servicename} = useParams<{ servicename?: string }>();
 	useEffect(() => {
-		props.getServicesMetrics(params.servicename, props.globalTime);
-		props.getTopEndpoints(params.servicename, props.globalTime);
-	}, [props.globalTime, params.servicename]);
+		props.getServicesMetrics(servicename, props.globalTime);
+		props.getTopEndpoints(servicename, props.globalTime);
+	}, [props.globalTime, servicename]);
 
 	const onTracePopupClick = (timestamp: number) => {
-		const tMinus5Min = timestamp / 1000000 - 5 * 60 * 1000;
+		const tMinus15Min = timestamp / 1000000 - 15 * 60 * 1000;
 		const currentTime = timestamp / 1000000;
 
 		props.updateTimeInterval("custom", [
-			tMinus5Min,
+			tMinus15Min,
 			currentTime,
 		]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
 
+		const urlParams = new URLSearchParams();
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime,tMinus15Min.toString())
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime,currentTime.toString())
+		if(servicename){
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.service,servicename)
+		}
 
-		props.history.push(`/traces?${METRICS_PAGE_QUERY_PARAM.startTime}=${tMinus5Min}&${METRICS_PAGE_QUERY_PARAM.endTime}=${currentTime}`);
+		props.history.push(`/traces?${urlParams.toString()}`);
 	};
 	return (
 		<Tabs defaultActiveKey="1">

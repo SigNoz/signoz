@@ -16,6 +16,8 @@ import { FilterStateDisplay } from "./FilterStateDisplay";
 
 import FormItem from "antd/lib/form/FormItem";
 import metricsAPI from "../../api/metricsAPI";
+import { useLocation } from "react-router-dom";
+import { METRICS_PAGE_QUERY_PARAM } from "../../constants/query";
 
 const { Option } = Select;
 
@@ -39,12 +41,20 @@ interface TagKeyOptionItem {
 
 const _TraceFilter = (props: TraceFilterProps) => {
 	const [serviceList, setServiceList] = useState<string[]>([]);
+	const [service, setSelectedService] = useState<string|null>(null);
 	const [operationList, setOperationsList] = useState<string[]>([]);
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
+	const location = useLocation()
+	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
 	useEffect(() => {
 		metricsAPI.get<string[]>("services/list").then((response) => {
 			setServiceList(response.data);
+		}).then(()=>{
+				const serviceName =urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
+				if(serviceName){
+					handleChangeService(serviceName)
+				}
 		});
 	}, []);
 
