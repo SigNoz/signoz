@@ -3,20 +3,19 @@ import { Modal, Form, InputNumber, Col, Row } from "antd";
 import { Store } from "antd/lib/form/interface";
 
 interface LatencyModalFormProps {
-	visible: boolean;
 	onCreate: (values: Store) => void; //Store is defined in antd forms library
 	onCancel: () => void;
+	latencyFilterValues: {min: string, max: string}
 }
 
 const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
-	visible,
 	onCreate,
-	onCancel,
+	onCancel,latencyFilterValues
 }) => {
 	const [form] = Form.useForm();
 	return (
 		<Modal
-			visible={visible}
+			visible={true}
 			title="Chose min and max values of Latency"
 			okText="Apply"
 			cancelText="Cancel"
@@ -37,7 +36,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 				form={form}
 				layout="horizontal"
 				name="form_in_modal"
-				initialValues={{ min: "100", max: "500" }}
+				initialValues={latencyFilterValues}
 			>
 				<Row>
 					{/* <Input.Group compact> */}

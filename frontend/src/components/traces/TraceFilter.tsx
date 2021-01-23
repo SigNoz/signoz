@@ -120,9 +120,9 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [loading] = useState(false);
 
 	const [tagKeyValueApplied, setTagKeyValueApplied] = useState([""]);
-	const [latencyFilterValues, setLatencyFilterValues] = useState({
-		min: "",
-		max: "",
+	const [latencyFilterValues, setLatencyFilterValues] = useState<{min: string, max: string}>({
+		min: "100",
+		max: "500",
 	});
 
 	const [form] = Form.useForm();
@@ -158,13 +158,16 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	const onLatencyModalApply = (values: Store) => {
 		setModalVisible(false);
+		const { min, max}= values
 		props.updateTraceFilters({
 			...props.traceFilters,
 			latency: {
-				min: values.min ? (parseInt(values.min) * 1000000).toString() : "",
-				max: values.max ? (parseInt(values.max) * 1000000).toString() : "",
+				min: min ? (parseInt(min) * 1000000).toString() : "",
+				max: max ? (parseInt(max) * 1000000).toString() : "",
 			},
 		});
+
+		setLatencyFilterValues({min, max})
 	};
 
 	const onTagFormSubmit = (values: any) => {
@@ -379,13 +382,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				</FormItem>
 			</Form>
 
-			<LatencyModalForm
-				visible={modalVisible}
+			{modalVisible && <LatencyModalForm
 				onCreate={onLatencyModalApply}
+				latencyFilterValues={latencyFilterValues}
 				onCancel={() => {
 					setModalVisible(false);
 				}}
-			/>
+			/>}
 		</div>
 	);
 };
