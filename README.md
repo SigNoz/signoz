@@ -21,7 +21,10 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 ### Motivation:
 - SaaS vendors charge insane amount to provide Application Monitoring. They often surprise you by huge month end bills without any tranparency of data sent to them.
 - Data privacy and compliance demands data to not leave the network boundary
-- No more magic happening in agents installed in your infra. You take control of sampling, uptime, configuration. Also, you can build modules over SigNoz to extend business specific capabilities.
+- Highly scalalable architecture
+- No more magic happening in agents installed in your infra. You take control of sampling, uptime, configuration.
+- Build modules over SigNoz to extend business specific capabilities
+
 
 
 
