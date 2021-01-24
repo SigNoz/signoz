@@ -95,6 +95,7 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 						<Tag
 							style={{ fontSize: 14, padding: 8 }}
 							closable
+							key={`${item.key}-${item.operator}-${item.value}`}
 							onClose={(e) => {
 								handleCloseTagElement(item);
 							}}

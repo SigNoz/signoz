@@ -16,6 +16,8 @@ import { FilterStateDisplay } from "./FilterStateDisplay";
 
 import FormItem from "antd/lib/form/FormItem";
 import metricsAPI from "../../api/metricsAPI";
+import { useLocation } from "react-router-dom";
+import { METRICS_PAGE_QUERY_PARAM } from "../../constants/query";
 
 const { Option } = Select;
 
@@ -41,10 +43,17 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [serviceList, setServiceList] = useState<string[]>([]);
 	const [operationList, setOperationsList] = useState<string[]>([]);
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
+	const location = useLocation()
+	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
 	useEffect(() => {
 		metricsAPI.get<string[]>("services/list").then((response) => {
 			setServiceList(response.data);
+		}).then(()=>{
+				const serviceName =urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
+				if(serviceName){
+					handleChangeService(serviceName)
+				}
 		});
 	}, []);
 
@@ -111,9 +120,9 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [loading] = useState(false);
 
 	const [tagKeyValueApplied, setTagKeyValueApplied] = useState([""]);
-	const [latencyFilterValues, setLatencyFilterValues] = useState({
-		min: "",
-		max: "",
+	const [latencyFilterValues, setLatencyFilterValues] = useState<{min: string, max: string}>({
+		min: "100",
+		max: "500",
 	});
 
 	const [form] = Form.useForm();
@@ -149,13 +158,16 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	const onLatencyModalApply = (values: Store) => {
 		setModalVisible(false);
+		const { min, max}= values
 		props.updateTraceFilters({
 			...props.traceFilters,
 			latency: {
-				min: values.min ? (parseInt(values.min) * 1000000).toString() : "",
-				max: values.max ? (parseInt(values.max) * 1000000).toString() : "",
+				min: min ? (parseInt(min) * 1000000).toString() : "",
+				max: max ? (parseInt(max) * 1000000).toString() : "",
 			},
 		});
+
+		setLatencyFilterValues({min, max})
 	};
 
 	const onTagFormSubmit = (values: any) => {
@@ -370,13 +382,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				</FormItem>
 			</Form>
 
-			<LatencyModalForm
-				visible={modalVisible}
+			{modalVisible && <LatencyModalForm
 				onCreate={onLatencyModalApply}
+				latencyFilterValues={latencyFilterValues}
 				onCancel={() => {
 					setModalVisible(false);
 				}}
-			/>
+			/>}
 		</div>
 	);
 };
