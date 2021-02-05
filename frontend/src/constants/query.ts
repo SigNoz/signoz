@@ -1,6 +1,7 @@
 export enum METRICS_PAGE_QUERY_PARAM {
 	interval = "interval",
 	startTime = "startTime",
-	endTime = "endTime"
+	endTime = "endTime",
+	service = "service"
 }
 
