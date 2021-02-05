@@ -11,8 +11,14 @@ kafka:
 
 druid:
     configVars:
+
+        # To store data on local disks attached
         druid_extensions_loadList: '["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-kafka-indexing-service"]'
         druid_storage_type: local
+
+
+        # # To store data in S3
+        # druid_extensions_loadList: '["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-kafka-indexing-service", "druid-s3-extensions"]'
         # druid_storage_type: s3
         # druid_storage_bucket: signoz-druid
         # druid_storage_baseKey: baseKey
