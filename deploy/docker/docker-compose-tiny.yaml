@@ -211,7 +211,7 @@ services:
       - ./druid-jobs/retention-spec.json:/app/retention-spec.json
 
   otel-collector:
-    image: otel/opentelemetry-collector-dev:latest
+    image: otel/opentelemetry-collector:0.19.0
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
