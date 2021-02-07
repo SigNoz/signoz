@@ -17,6 +17,7 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 - In-built workflows to reduce your efforts in detecting common issues like new deployment failures, 3rd party slow APIs, etc (Coming Soon)
 - Anomaly Detection Framework (Coming Soon)
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Ly34WBQ2640" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Motivation:
 - SaaS vendors charge insane amount to provide Application Monitoring. They often surprise you by huge month end bills without any tranparency of data sent to them.
