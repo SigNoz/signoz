@@ -11,6 +11,14 @@ spec:
     port: 55680
     protocol: TCP
     targetPort: 55680
+  - name: otlp-http-legacy # Default endpoint for OpenTelemetry receiver.
+    port: 55681
+    protocol: TCP
+    targetPort: 55681
+  - name: otlp-http # Default endpoint for OpenTelemetry receiver.
+    port: 4317
+    protocol: TCP
+    targetPort: 4317
   - name: jaeger-grpc # Default endpoing for Jaeger gRPC receiver
     port: 14250
   - name: jaeger-thrift-http # Default endpoint for Jaeger HTTP receiver.

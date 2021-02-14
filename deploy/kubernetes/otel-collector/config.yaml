@@ -12,7 +12,6 @@ data:
         protocols:
           grpc:
           thrift_http:
-      zipkin:
       otlp:
         protocols:
           grpc:
@@ -45,6 +44,6 @@ data:
       extensions: [health_check, zpages]
       pipelines:
         traces:
-          receivers: [jaeger, zipkin, otlp]
+          receivers: [jaeger, otlp]
           processors: [memory_limiter, batch, queued_retry]
           exporters: [kafka]
