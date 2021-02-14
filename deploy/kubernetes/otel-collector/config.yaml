@@ -12,6 +12,11 @@ data:
         protocols:
           grpc:
           thrift_http:
+      zipkin:
+      otlp:
+        protocols:
+          grpc:
+          http:      
     processors:
       batch:
         send_batch_size: 1000
@@ -40,6 +45,6 @@ data:
       extensions: [health_check, zpages]
       pipelines:
         traces:
-          receivers: [jaeger]
+          receivers: [jaeger, zipkin, otlp]
           processors: [memory_limiter, batch, queued_retry]
           exporters: [kafka]
