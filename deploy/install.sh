@@ -410,7 +410,7 @@ else
 
 fi
 
-echo -e "\Thank you!\n"
+echo -e "\nThank you!\n"
 
 
 #####   Changing default memory limit of docker     ############
