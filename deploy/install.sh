@@ -239,6 +239,14 @@ wait_for_containers_start() {
 bye() {  # Prints a friendly good bye message and exits the script.
     if [ "$?" -ne 0 ]; then
         set +o errexit
+
+        echo "The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
+        echo ""
+        echo -e "sudo docker-compose -f docker/docker-compose-tiny.yaml ps -a"
+        # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
+        echo "++++++++++++++++++++++++++++++++++++++++"
+
         echo "Please share your email to receive support with the installation"
         read -rp 'Email: ' email
 
@@ -343,10 +351,10 @@ start_docker
 
 
 echo ""
-echo "Pulling the latest container images for SigNoz"
+echo "Pulling the latest container images for SigNoz. To run as sudo it will ask for system password."
 sudo docker-compose -f ./docker/docker-compose-tiny.yaml pull
 echo ""
-echo "Starting the SigNoz containers"
+echo "Starting the SigNoz containers. It may take a few minutes."
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
 sudo docker-compose -f ./docker/docker-compose-tiny.yaml up --detach --remove-orphans || true
