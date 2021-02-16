@@ -226,6 +226,7 @@ wait_for_containers_start() {
                 sudo docker-compose -f ./docker/docker-compose-tiny.yaml up -d
             fi
 
+
             echo -ne "Waiting for all containers to start. This check will timeout in $timeout seconds...\r\c"
         fi
         ((timeout--))
@@ -238,7 +239,7 @@ wait_for_containers_start() {
 bye() {  # Prints a friendly good bye message and exits the script.
     if [ "$?" -ne 0 ]; then
         set +o errexit
-        echo "Please share your email if you wish to receive support with the installation"
+        echo "Please share your email to receive support with the installation"
         read -rp 'Email: ' email
 
         DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Support", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "email": "'"$email"'" } }'
@@ -357,12 +358,20 @@ if [[ $status_code -ne 200 ]]; then
     echo "+++++++++++ ERROR ++++++++++++++++++++++"
     echo "The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
-    echo -e "cd \"$install_dir\" && sudo docker-compose -f docker/docker-compose-tiny.yaml ps -a"
+    echo -e "sudo docker-compose -f docker/docker-compose-tiny.yaml ps -a"
     echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
     echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
     echo "++++++++++++++++++++++++++++++++++++++++"
 
-    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Error", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "error": "Containers not started" } }'
+    SUPERVISORS="$(curl -so -  http://localhost:8888/druid/indexer/v1/supervisor)"
+    LEN_SUPERVISORS="${#SUPERVISORS}"
+
+    DATASOURCES="$(curl -so -  http://localhost:8888/druid/coordinator/v1/datasources)"
+    LEN_DATASOURCES="${#DATASOURCES}"
+
+
+    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Error - Checks", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "error": "Containers not started", "SUPERVISORS": "'"$SUPERVISORS"'", "DATASOURCES": "'"$DATASOURCES"'" } }'
+
     URL="https://app.posthog.com/capture"
     HEADER="Content-Type: application/json"
 
