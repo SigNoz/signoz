@@ -228,7 +228,7 @@ wait_for_containers_start() {
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/services/list > /dev/null || true)"
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/services/list || true)"
         if [[ status_code -eq 200 ]]; then
             break
         else
@@ -236,7 +236,7 @@ wait_for_containers_start() {
             LEN_SUPERVISORS="${#SUPERVISORS}"
 
             if [[ LEN_SUPERVISORS -ne 19 && $timeout -eq 50 ]];then
-                echo "No Supervisors found... Re-applying docker compose"
+                echo "No Supervisors found... Re-applying docker compose\n"
                 sudo docker-compose -f ./docker/docker-compose-tiny.yaml up -d
             fi
 
