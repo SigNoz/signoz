@@ -79,20 +79,6 @@ check_os() {
 }
 
 
-send_telemetry() {
-    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "install-script:run", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'`get_os_info`'" } }'
-    URL="https://app.posthog.com/capture"
-    HEADER="Content-Type: application/json"
-
-    if [ -z "$WASP_TELEMETRY_DISABLE" ]; then
-        if has_curl; then
-            curl -sfL -d "$DATA" --header "$HEADER" "$URL" > /dev/null 2>&1
-        elif has_wget; then
-            wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
-        fi
-    fi
-}
-
 # This function checks if the relevant ports required by Appsmith are available or not
 # The script should error out in case they aren't available
 check_ports_occupied() {
@@ -291,6 +277,17 @@ SIGNOZ_INSTALLATION_ID=$(curl -s 'https://api64.ipify.org')
 trap bye EXIT
 
 
+DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Started", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'" } }'
+URL="https://app.posthog.com/capture"
+HEADER="Content-Type: application/json"
+
+if has_curl; then
+    curl -sfL -d "$DATA" --header "$HEADER" "$URL" > /dev/null 2>&1
+elif has_wget; then
+    wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
+fi
+
+
 if [[ $desired_os -eq 0 ]];then
     DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Error", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "error": "OS Not Supported" } }'
     URL="https://app.posthog.com/capture"
@@ -304,7 +301,7 @@ if [[ $desired_os -eq 0 ]];then
 
 fi
 
-check_ports_occupied
+# check_ports_occupied
 
 # Check is Docker daemon is installed and available. If not, the install & start Docker for Linux machines. We cannot automatically install Docker Desktop on Mac OS
 if ! is_command_present docker; then
@@ -358,11 +355,62 @@ echo ""
 
 if [[ $status_code -ne 200 ]]; then
     echo "+++++++++++ ERROR ++++++++++++++++++++++"
+    echo "The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
+    echo ""
+    echo -e "cd \"$install_dir\" && sudo docker-compose -f docker/docker-compose-tiny.yaml ps -a"
+    echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
+    echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
+    echo "++++++++++++++++++++++++++++++++++++++++"
+
+    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Error", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "error": "Containers not started" } }'
+    URL="https://app.posthog.com/capture"
+    HEADER="Content-Type: application/json"
+
+    if has_curl; then
+        curl -sfL -d "$DATA" --header "$HEADER" "$URL" > /dev/null 2>&1
+    elif has_wget; then
+        wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
+    fi
+
+    exit 1
+
 else
+    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Success", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'"} }'
+    URL="https://app.posthog.com/capture"
+    HEADER="Content-Type: application/json"
+
+    if has_curl; then
+        curl -sfL -d "$DATA" --header "$HEADER" "$URL" > /dev/null 2>&1
+    elif has_wget; then
+        wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
+    fi
     echo "++++++++++++++++++ SUCCESS ++++++++++++++++++++++"
     echo "Your installation is complete!"
     echo ""
+    echo "Your frontend is running on 'http://localhost:3000'."
+
+    echo ""
+    echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
+    echo ""
+    echo "Need help Getting Started?"
+    echo "Join our Discord server https://discord.com/invite/rBTTVJp"
+    echo ""
+    echo "Please share your email to receive support & updates about appsmith!"
+    read -rp 'Email: ' email
+
+    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Identify Successful Installation", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "email": "'"$email"'" } }'
+    URL="https://app.posthog.com/capture"
+    HEADER="Content-Type: application/json"
+
+    if has_curl; then
+        curl -sfL -d "$DATA" --header "$HEADER" "$URL" > /dev/null 2>&1
+    elif has_wget; then
+        wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
+    fi
+
 fi
+
+echo -e "\Thank you!\n"
 
 
 #####   Changing default memory limit of docker     ############
