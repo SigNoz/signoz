@@ -79,7 +79,7 @@ check_os() {
 }
 
 
-# This function checks if the relevant ports required by Appsmith are available or not
+# This function checks if the relevant ports required by SigNoz are available or not
 # The script should error out in case they aren't available
 check_ports_occupied() {
     local port_check_output
@@ -108,8 +108,8 @@ check_ports_occupied() {
         fi
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
-        echo "Appsmith requires ports 80 & 443 to be open. Please shut down any other service(s) that may be running on these ports."
-        echo "You can run appsmith on another port following this guide https://docs.appsmith.com/v/v1.2.1/troubleshooting-guide/deployment-errors"
+        echo "SigNoz requires ports 80 & 443 to be open. Please shut down any other service(s) that may be running on these ports."
+        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/deployment/docker#troubleshooting"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
         exit 1
@@ -393,9 +393,9 @@ else
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
     echo ""
     echo "Need help Getting Started?"
-    echo "Join our Discord server https://discord.com/invite/rBTTVJp"
+    echo "Join us on Slack https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
     echo ""
-    echo "Please share your email to receive support & updates about appsmith!"
+    echo "Please share your email to receive support & updates about SigNoz!"
     read -rp 'Email: ' email
 
     DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Identify Successful Installation", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "email": "'"$email"'" } }'
