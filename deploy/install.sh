@@ -364,13 +364,10 @@ if [[ $status_code -ne 200 ]]; then
     echo "++++++++++++++++++++++++++++++++++++++++"
 
     SUPERVISORS="$(curl -so -  http://localhost:8888/druid/indexer/v1/supervisor)"
-    LEN_SUPERVISORS="${#SUPERVISORS}"
 
     DATASOURCES="$(curl -so -  http://localhost:8888/druid/coordinator/v1/datasources)"
-    LEN_DATASOURCES="${#DATASOURCES}"
 
-
-    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Error - Checks", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "error": "Containers not started", "SUPERVISORS": "'"$SUPERVISORS"'", "DATASOURCES": "'"$DATASOURCES"'" } }'
+    DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Error - Checks", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "error": "Containers not started", "SUPERVISORS": '"$SUPERVISORS"', "DATASOURCES": '"$DATASOURCES"' } }'
 
     URL="https://app.posthog.com/capture"
     HEADER="Content-Type: application/json"
