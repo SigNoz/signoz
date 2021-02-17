@@ -250,6 +250,11 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo "Please share your email to receive support with the installation"
         read -rp 'Email: ' email
 
+        while [[ $email == "" ]]
+        do
+            read -rp 'Email: ' email
+        done
+
         DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Installation Support", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "email": "'"$email"'" } }'
         URL="https://app.posthog.com/capture"
         HEADER="Content-Type: application/json"
@@ -412,6 +417,11 @@ else
     echo "Please share your email to receive support & updates about SigNoz!"
     read -rp 'Email: ' email
 
+    while [[ $email == "" ]]
+    do
+        read -rp 'Email: ' email
+    done
+    
     DATA='{ "api_key": "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w", "type": "capture", "event": "Identify Successful Installation", "distinct_id": "'"$SIGNOZ_INSTALLATION_ID"'", "properties": { "os": "'"$os"'", "email": "'"$email"'" } }'
     URL="https://app.posthog.com/capture"
     HEADER="Content-Type: application/json"
