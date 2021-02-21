@@ -138,7 +138,7 @@ const App = () => {
 								Settings
 							</NavLink>
 						</Menu.Item>
-						<Menu.Item key="5" icon={<ApiOutlined />}>
+						<Menu.Item key="6" icon={<ApiOutlined />}>
 							<NavLink to="/add-instrumentation" style={{ fontSize: 12, textDecoration: "none" }}>
 								Add instrumentation
 							</NavLink>

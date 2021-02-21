@@ -15,7 +15,7 @@ const AppWrapper = () => {
 				<Route path="/traces/:id" component={App} />
 				<Route path="/usage-explorer" component={App} />
 				<Route path="/settings" component={App} />
-				<Route path="/instumentation" component={App} />
+				<Route path="/add-instrumentation" component={App} />
 				<Route path="/signup" component={Signup} />
 				<Route
 					path="/"

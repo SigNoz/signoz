@@ -12,14 +12,10 @@ import { useAuthenticationData } from "../../hooks/authentication";
 import { TOKEN_DATE } from "../../../../../sass/frontend/src/constants/accessToken";
 import { Alert } from "antd";
 
-interface SettingsPageProps {}
+interface InstrumentationPageProps {}
 
-const layout = {
-	labelCol: { span: 3 },
-	wrapperCol: { span: 6 },
-};
 
-const InstrumentationPage = (props: SettingsPageProps) => {
+const InstrumentationPage = (props: InstrumentationPageProps) => {
 
 
 	return (
