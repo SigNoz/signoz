@@ -14,6 +14,7 @@ const breadcrumbNameMap: any = {
 	"/traces": "Traces",
 	"/service-map": "Service Map",
 	"/usage-explorer": "Usage Explorer",
+	"/settings": "Settings",
 };
 
 const ShowBreadcrumbs = withRouter((props) => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, Card, Row, Col } from "antd";
 import { connect } from "react-redux";
 import { useParams, RouteComponentProps } from "react-router-dom";
@@ -55,6 +55,8 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 
 		props.history.push(`/traces?${urlParams.toString()}`);
 	};
+
+
 	return (
 		<Tabs defaultActiveKey="1">
 			<TabPane tab="Application Metrics" key="1">

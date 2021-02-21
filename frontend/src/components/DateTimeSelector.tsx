@@ -36,6 +36,8 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	const [startTime, setStartTime] = useState<moment.Moment | null>(null);
 	const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState(false);
+	const [refreshText, setRefreshText] = useState("");
+	const [refreshButtonClick, setRefreshButtoClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
 	const location = useLocation();
 	const updateTimeOnQueryParamChange = ()=>{
@@ -143,24 +145,36 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	};
 
 	const timeSinceLastRefresh = () => {
-		let timeDiffSec = Math.round(
-			(Date.now() - Math.round(props.globalTime.maxTime / 1000000)) / 1000,
-		);
+		const currentTime = moment();
+		const lastRefresh = moment(props.globalTime.maxTime / 1000000)
+		const duration = moment.duration(currentTime.diff(lastRefresh));
 
-		//How will Refresh button get updated? Needs to be periodically updated via timer.
-		// For now, not returning any text here
-		// if (timeDiffSec < 60)
-		//     return timeDiffSec.toString()+' s';
-		// else if (timeDiffSec < 3600)
-		//     return Math.round(timeDiffSec/60).toString()+' min';
-		// else
-		//     return Math.round(timeDiffSec/3600).toString()+' hr';
-		return null;
+		const secondsDiff = Math.floor(duration.asSeconds());
+		const minutedDiff = Math.floor(duration.asMinutes());
+		const hoursDiff = Math.floor(duration.asHours())
+
+		if(hoursDiff>0){
+			return `Last refresh - ${hoursDiff} hrs ago`
+		}else if(minutedDiff>0){
+			return `Last refresh - ${minutedDiff} mins ago`
+		}
+			return `Last refresh - ${secondsDiff} sec ago`
 	};
 
 	const handleRefresh = () => {
+		setRefreshButtoClick(refreshButtonClick+1);
 		setMetricsTimeInterval(timeInterval);
 	};
+
+	useEffect(()=>{
+		setRefreshText("")
+		const interval = setInterval(()=>{
+			setRefreshText(timeSinceLastRefresh())
+		}, 2000)
+		return ()=>{
+			clearInterval(interval)
+		}
+	},[props.location,refreshButtonClick])
 
 	const options = [
 		{ value: "custom", label: "Custom" },
@@ -178,27 +192,32 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		const inputLabeLToShow = startTime && endTime? (`${startTime.format("YYYY/MM/DD HH:mm")} - ${endTime.format("YYYY/MM/DD HH:mm")}`):timeInterval
 		return (
 			<DateTimeWrapper>
-				<Space>
-					<Form
-						form={form_dtselector}
-						layout="inline"
-						initialValues={{ interval: "15min" }}
-						style={{ marginTop: 10, marginBottom: 10 }}
-					>
-						<FormItem></FormItem>
-						<Select onSelect={handleOnSelect} value={inputLabeLToShow}>
-							{options.map(({ value, label }) => (
-								<Option value={value}>{label}</Option>
-							))}
-						</Select>
+				<Space style={{float: "right", display:"block"}}>
+						<Space>
+							<Form
+								form={form_dtselector}
+								layout="inline"
+								initialValues={{ interval: "15min" }}
+								style={{ marginTop: 10, marginBottom: 10 }}
+							>
+								<Select onSelect={handleOnSelect} value={inputLabeLToShow}>
+									{options.map(({ value, label }) => (
+										<Option value={value}>{label}</Option>
+									))}
+								</Select>
 
-						<FormItem hidden={refreshButtonHidden} name="refresh_button">
-							<Button type="primary" onClick={handleRefresh}>
-								Refresh {timeSinceLastRefresh()}
-							</Button>
-							{/* if refresh time is more than x min, give a message? */}
-						</FormItem>
-					</Form>
+
+								<FormItem hidden={refreshButtonHidden} name="refresh_button">
+									<Button type="primary" onClick={handleRefresh}>
+										Refresh
+									</Button>
+								</FormItem>
+
+							</Form>
+						</Space>
+						<Space style={{float: "right", display:"block", marginRight: 20, minHeight: 23, width: 200, textAlign: "right"}}>
+							{refreshText}
+						</Space>
 					<CustomDateTimeModal
 						visible={customDTPickerVisible}
 						onCreate={handleCustomDate}

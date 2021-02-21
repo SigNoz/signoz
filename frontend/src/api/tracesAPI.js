@@ -1,5 +1,6 @@
 import axios from "axios";
 import { ENVIRONMENT } from "../constants/env";
+import {Token} from "../utils/token";
 //import { format } from 'path';
 
 export default axios.create({
@@ -7,5 +8,5 @@ export default axios.create({
 	// baseURL: process.env.QUERY_SERVICE_URL,
 	// console.log('in traces API', process.env.QUERY_SERVICE_URL)
 	// baseURL: "/api/v1/",
-	baseURL: `${ENVIRONMENT.baseURL}/api/v1/`,
+	baseURL: `${ENVIRONMENT.baseURL}/api/v1/`
 });

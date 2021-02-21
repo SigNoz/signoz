@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import { Spin, Table } from "antd";
+import { Button, Space, Spin, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
 
 import { getServicesList, GlobalTime, servicesListItem } from "../../actions";
 import { StoreState } from "../../reducers";
+import { CustomModal } from "../common/Modal";
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
@@ -80,24 +81,70 @@ const columns = [
 const _ServicesTable = (props: ServicesTableProps) => {
 	const search = useLocation().search;
 	const time_interval = new URLSearchParams(search).get("time");
-	const [dataFetched, setDataFetched] = useState(false)
-	useEffect(() => {
-		/*
-			@Note - Change this from action to thunk
-		 */
-		props.getServicesList(props.globalTime).then(()=>{
-			setDataFetched(true)
-		}).catch((e:string)=>{
-				alert(e)
-		});
-	}, [props.globalTime]);
+	const [initialDataFetch, setDataFetched] = useState(false)
+	const [errorObject, setErrorObject] = useState({message: "", isError: false});
+	const isEmptyServiceList = !initialDataFetch && props.servicesList.length === 0;
+	const refetchFromBackend = isEmptyServiceList || errorObject.isError;
+ const [skipOnboarding, setSkipOnboarding ] = useState(localStorage.getItem('skip_onboarding') === "true");
 
-	if(!dataFetched){
+	const onContinueClick = ()=>{
+		localStorage.setItem('skip_onboarding', 'true');
+		setSkipOnboarding(true)
+	}
+
+	function getApiServiceData() {
+			props.getServicesList(props.globalTime).then(() => {
+				setDataFetched(true);
+				setErrorObject({ message: "", isError: false });
+			}).catch((e: string) => {
+				setErrorObject({ message: e, isError: true });
+				setDataFetched(true);
+			});
+	}
+
+	useEffect(getApiServiceData, [props.globalTime]);
+	useEffect(()=>{
+		if(props.servicesList.length > 1 ){
+			localStorage.removeItem('skip_onboarding') ;
+		}
+
+		refetchFromBackend &&  setTimeout(getApiServiceData, 50000)
+	}, [props.servicesList,errorObject])
+
+	if(!initialDataFetch){
 		return (
 				<TableLoadingWrapper>
 					<Spin/>
 					<LoadingText>Fetching data</LoadingText>
 				</TableLoadingWrapper>
+		)
+	}
+
+	if(refetchFromBackend && !skipOnboarding){
+		return (
+			<CustomModal title={"Setup instrumentation"}
+																isModalVisible={true}
+																closable={false}
+																setIsModalVisible={()=>{}}
+																footer={[
+																	<Button key="submit" type="primary" onClick={onContinueClick}>
+																		Continue without instrumentation
+																	</Button>,
+																]}
+			>
+				<div>
+					<iframe width="100%" height="265" src="https://www.youtube.com/embed/Ly34WBQ2640" frameBorder="0"
+													allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+													allowFullScreen></iframe>
+					<div style={{margin: "20px 0"}}>
+						<Spin/>
+					</div>
+					<div>
+						No instrumentation data.<br/>
+						Please instrument your application as mentioned <a href={"https://signoz.io/docs/instrumentation/overview"} target={"_blank"}>here</a>
+					</div>
+				</div>
+			</CustomModal>
 		)
 	}
 
@@ -108,6 +155,12 @@ const _ServicesTable = (props: ServicesTableProps) => {
 				columns={columns}
 				pagination={false}
 			/>
+
+			{props.servicesList[0].numCalls === 0 && (
+				<Space style={{width: '100%', margin: "40px 0", justifyContent: "center"}}>
+					No applications present. Please add instrumentation (follow this
+					<a href={"https://signoz.io/docs/instrumentation/overview"} target={"_blank"} style={{marginLeft: 3}}>guide</a>)</Space>
+			)}
 		</Wrapper>
 	);
 };

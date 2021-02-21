@@ -5,28 +5,33 @@ import { createStore, applyMiddleware, compose } from "redux";
 import { ThemeSwitcherProvider } from "react-css-theme-switcher";
 import thunk from "redux-thunk";
 // import { NavLink, BrowserRouter as Router,  Route, Switch  } from 'react-router-dom';
+import { Auth0Provider } from "@auth0/auth0-react";
 
-import AppWrapper from "./components/AppWrapper";
-import "./assets/index.css";
+import AppWrapper from "Src/components/AppWrapper";
+import "Src/assets/index.css";
 import { reducers } from "./reducers";
+import {BrowserRouter as Router} from "react-router-dom";
+import { AUTH0_CLIENT_ID, AUTH0_DOMAIN } from "./constants/env";
 // import Signup from './components/Signup';
 // @ts-ignore
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(reducers, composeEnhancers(applyMiddleware(thunk)));
 
 const themes = {
-	dark: `${process.env.PUBLIC_URL}/dark-theme.css`,
-	light: `${process.env.PUBLIC_URL}/light-theme.css`,
+	dark: `/dark-theme.css`,
+	light: `/light-theme.css`,
 };
 
 ReactDOM.render(
 	<Provider store={store}>
 		<React.StrictMode>
 			<ThemeSwitcherProvider themeMap={themes} defaultTheme="dark">
-				<AppWrapper />
-				{/* <App /> */}
+				<Router basename="/">
+					<AppWrapper />
+				</Router>
 			</ThemeSwitcherProvider>
 		</React.StrictMode>
-	</Provider>,
+	</Provider>
+    ,
 	document.querySelector("#root"),
 );
