@@ -10,7 +10,7 @@ import { getUsageDataAction } from "./usage";
 import { updateTimeIntervalAction } from "./global";
 
 export enum ActionTypes {
-	updateTraceFilters= "UPDATE_TRACES_FILTER",
+	updateTraceFilters = "UPDATE_TRACES_FILTER",
 	updateInput = "UPDATE_INPUT",
 	fetchTraces = "FETCH_TRACES",
 	fetchTraceItem = "FETCH_TRACE_ITEM",

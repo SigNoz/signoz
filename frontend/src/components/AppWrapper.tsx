@@ -1,18 +1,13 @@
 import React, { Suspense, useState } from "react";
 import { Spin } from "antd";
-import {
-	Route,
-	Switch,
-	Redirect
-} from "react-router-dom";
+import { Route, Switch, Redirect } from "react-router-dom";
 import Signup from "./Signup";
 const App = React.lazy(() => import("Src/components/App"));
 
 const AppWrapper = () => {
-
-	console.log("other")
+	console.log("other");
 	return (
-		<Suspense fallback={<Spin size="large"/>}>
+		<Suspense fallback={<Spin size="large" />}>
 			<Switch>
 				<Route path="/application" exact component={App} />
 				<Route path="/application/:servicename" component={App} />

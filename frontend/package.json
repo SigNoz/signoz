@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "NODE_ENV=development webpack serve",
 		"start": "node scripts/start.js",
-		"build": "webpack --config=webpack.config.prod.js"
+		"build": "webpack --config=webpack.config.prod.js",
+		"prettify": "prettier --write ."
 	},
 	"author": "",
 	"license": "ISC",

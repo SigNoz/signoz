@@ -1,14 +1,12 @@
+# Docker
 
- # Docker
- **Building image**
+**Building image**
 
-```docker-compose up`` 
+``docker-compose up`
 / This will also run
 
 or
-```docker build . -t tagname```
-
-  
+`docker build . -t tagname`
 
 **Tag to remote url- Introduce versinoing later on**
 
@@ -16,7 +14,7 @@ or
 docker tag signoz/frontend:latest 7296823551/signoz:latest
 ```
 
-  **Running locally**
+**Running locally**
 
 ```
 docker-compose up

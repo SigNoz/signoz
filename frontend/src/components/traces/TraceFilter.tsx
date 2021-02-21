@@ -43,18 +43,21 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [serviceList, setServiceList] = useState<string[]>([]);
 	const [operationList, setOperationsList] = useState<string[]>([]);
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
-	const location = useLocation()
+	const location = useLocation();
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
 	useEffect(() => {
-		metricsAPI.get<string[]>("services/list").then((response) => {
-			setServiceList(response.data);
-		}).then(()=>{
-				const serviceName =urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
-				if(serviceName){
-					handleChangeService(serviceName)
+		metricsAPI
+			.get<string[]>("services/list")
+			.then((response) => {
+				setServiceList(response.data);
+			})
+			.then(() => {
+				const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
+				if (serviceName) {
+					handleChangeService(serviceName);
 				}
-		});
+			});
 	}, []);
 
 	useEffect(() => {
@@ -120,7 +123,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [loading] = useState(false);
 
 	const [tagKeyValueApplied, setTagKeyValueApplied] = useState([""]);
-	const [latencyFilterValues, setLatencyFilterValues] = useState<{min: string, max: string}>({
+	const [latencyFilterValues, setLatencyFilterValues] = useState<{
+		min: string;
+		max: string;
+	}>({
 		min: "100",
 		max: "500",
 	});
@@ -158,7 +164,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	const onLatencyModalApply = (values: Store) => {
 		setModalVisible(false);
-		const { min, max}= values
+		const { min, max } = values;
 		props.updateTraceFilters({
 			...props.traceFilters,
 			latency: {
@@ -167,7 +173,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			},
 		});
 
-		setLatencyFilterValues({min, max})
+		setLatencyFilterValues({ min, max });
 	};
 
 	const onTagFormSubmit = (values: any) => {
@@ -382,13 +388,15 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				</FormItem>
 			</Form>
 
-			{modalVisible && <LatencyModalForm
-				onCreate={onLatencyModalApply}
-				latencyFilterValues={latencyFilterValues}
-				onCancel={() => {
-					setModalVisible(false);
-				}}
-			/>}
+			{modalVisible && (
+				<LatencyModalForm
+					onCreate={onLatencyModalApply}
+					latencyFilterValues={latencyFilterValues}
+					onCancel={() => {
+						setModalVisible(false);
+					}}
+				/>
+			)}
 		</div>
 	);
 };

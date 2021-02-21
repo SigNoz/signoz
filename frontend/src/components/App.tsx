@@ -14,7 +14,7 @@ import {
 	DeploymentUnitOutlined,
 	AlignLeftOutlined,
 	AppstoreOutlined,
-	SettingOutlined
+	SettingOutlined,
 } from "@ant-design/icons";
 
 import DateTimeSelector from "Src/components/DateTimeSelector";
@@ -23,14 +23,28 @@ import styled from "styled-components";
 
 const { Content, Footer, Sider } = Layout;
 
-const ServiceMetrics = React.lazy(() => import("Src/components/metrics/ServiceMetricsDef"));
-const ServiceMap = React.lazy(() => import("Src/components/servicemap/ServiceMap"));
-const TraceDetail = React.lazy(() => import("Src/components/traces/TraceDetail"));
-const TraceGraph = React.lazy(() => import("Src/components/traces/TraceGraphDef"));
-const UsageExplorer = React.lazy(() => import("Src/components/usage/UsageExplorerDef"));
-const ServicesTable = React.lazy(() => import("Src/components/metrics/ServicesTableDef"));
- const Signup = React.lazy(() => import('Src/components/Signup'));
-const SettingsPage = React.lazy(() => import("Src/components/settings/settingsPage"));
+const ServiceMetrics = React.lazy(
+	() => import("Src/components/metrics/ServiceMetricsDef"),
+);
+const ServiceMap = React.lazy(
+	() => import("Src/components/servicemap/ServiceMap"),
+);
+const TraceDetail = React.lazy(
+	() => import("Src/components/traces/TraceDetail"),
+);
+const TraceGraph = React.lazy(
+	() => import("Src/components/traces/TraceGraphDef"),
+);
+const UsageExplorer = React.lazy(
+	() => import("Src/components/usage/UsageExplorerDef"),
+);
+const ServicesTable = React.lazy(
+	() => import("Src/components/metrics/ServicesTableDef"),
+);
+const Signup = React.lazy(() => import("Src/components/Signup"));
+const SettingsPage = React.lazy(
+	() => import("Src/components/settings/settingsPage"),
+);
 //PNOTE
 //React. lazy currently only supports default exports. If the module you want to import uses named exports, you can create an intermediate module that reexports it as the default. This ensures that tree shaking keeps working and that you don't pull in unused components.
 
@@ -93,7 +107,7 @@ const App = () => {
 								Metrics
 							</NavLink>
 						</Menu.Item>
-						<Menu.Item key="2" icon={<AlignLeftOutlined/>}>
+						<Menu.Item key="2" icon={<AlignLeftOutlined />}>
 							<NavLink to="/traces" style={{ fontSize: 12, textDecoration: "none" }}>
 								Traces
 							</NavLink>
@@ -115,10 +129,7 @@ const App = () => {
 							</NavLink>
 						</Menu.Item>
 						<Menu.Item key="5" icon={<SettingOutlined />}>
-							<NavLink
-								to="/settings"
-								style={{ fontSize: 12, textDecoration: "none" }}
-							>
+							<NavLink to="/settings" style={{ fontSize: 12, textDecoration: "none" }}>
 								Settings
 							</NavLink>
 						</Menu.Item>
@@ -148,7 +159,6 @@ const App = () => {
 								<Route path="/usage-explorer" component={UsageExplorer} />
 								<Route path="/" component={ServicesTable} />
 								<Route path="/application" exact component={ServicesTable} />
-
 							</Switch>
 						</Suspense>
 					</Content>

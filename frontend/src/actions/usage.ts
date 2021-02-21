@@ -14,9 +14,16 @@ export interface getUsageDataAction {
 	payload: usageDataItem[];
 }
 
-export const getUsageData = (minTime: number, maxTime: number, step: number, service: string) => {
+export const getUsageData = (
+	minTime: number,
+	maxTime: number,
+	step: number,
+	service: string,
+) => {
 	return async (dispatch: Dispatch) => {
-		let request_string = `usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(maxTime)}&step=${step}&service=${service ? service : ""}`;
+		let request_string = `usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
+			maxTime,
+		)}&step=${step}&service=${service ? service : ""}`;
 		//Step can only be multiple of 3600
 		const response = await metricsAPI.get<usageDataItem[]>(request_string);
 

@@ -1,6 +1,4 @@
-export const WITHOUT_SESSION_PATH = [
- "/redirect"
-]
+export const WITHOUT_SESSION_PATH = ["/redirect"];
 
 export const AUTH0_REDIRECT_PATH = "/redirect";
 

@@ -32,14 +32,14 @@ const Wrapper = styled.div`
 `;
 
 const TableLoadingWrapper = styled.div`
-		display: flex;
-		justify-content: center;
-		margin-top: 80px;
-`
+	display: flex;
+	justify-content: center;
+	margin-top: 80px;
+`;
 
 const LoadingText = styled.div`
-		margin-left: 16px;
-`
+	margin-left: 16px;
+`;
 
 const columns = [
 	{
@@ -81,71 +81,93 @@ const columns = [
 const _ServicesTable = (props: ServicesTableProps) => {
 	const search = useLocation().search;
 	const time_interval = new URLSearchParams(search).get("time");
-	const [initialDataFetch, setDataFetched] = useState(false)
-	const [errorObject, setErrorObject] = useState({message: "", isError: false});
-	const isEmptyServiceList = !initialDataFetch && props.servicesList.length === 0;
+	const [initialDataFetch, setDataFetched] = useState(false);
+	const [errorObject, setErrorObject] = useState({
+		message: "",
+		isError: false,
+	});
+	const isEmptyServiceList =
+		!initialDataFetch && props.servicesList.length === 0;
 	const refetchFromBackend = isEmptyServiceList || errorObject.isError;
- const [skipOnboarding, setSkipOnboarding ] = useState(localStorage.getItem('skip_onboarding') === "true");
+	const [skipOnboarding, setSkipOnboarding] = useState(
+		localStorage.getItem("skip_onboarding") === "true",
+	);
 
-	const onContinueClick = ()=>{
-		localStorage.setItem('skip_onboarding', 'true');
-		setSkipOnboarding(true)
-	}
+	const onContinueClick = () => {
+		localStorage.setItem("skip_onboarding", "true");
+		setSkipOnboarding(true);
+	};
 
 	function getApiServiceData() {
-			props.getServicesList(props.globalTime).then(() => {
+		props
+			.getServicesList(props.globalTime)
+			.then(() => {
 				setDataFetched(true);
 				setErrorObject({ message: "", isError: false });
-			}).catch((e: string) => {
+			})
+			.catch((e: string) => {
 				setErrorObject({ message: e, isError: true });
 				setDataFetched(true);
 			});
 	}
 
 	useEffect(getApiServiceData, [props.globalTime]);
-	useEffect(()=>{
-		if(props.servicesList.length > 1 ){
-			localStorage.removeItem('skip_onboarding') ;
+	useEffect(() => {
+		if (props.servicesList.length > 1) {
+			localStorage.removeItem("skip_onboarding");
 		}
 
-		refetchFromBackend &&  setTimeout(getApiServiceData, 50000)
-	}, [props.servicesList,errorObject])
+		refetchFromBackend && setTimeout(getApiServiceData, 50000);
+	}, [props.servicesList, errorObject]);
 
-	if(!initialDataFetch){
+	if (!initialDataFetch) {
 		return (
-				<TableLoadingWrapper>
-					<Spin/>
-					<LoadingText>Fetching data</LoadingText>
-				</TableLoadingWrapper>
-		)
+			<TableLoadingWrapper>
+				<Spin />
+				<LoadingText>Fetching data</LoadingText>
+			</TableLoadingWrapper>
+		);
 	}
 
-	if(refetchFromBackend && !skipOnboarding){
+	if (refetchFromBackend && !skipOnboarding) {
 		return (
-			<CustomModal title={"Setup instrumentation"}
-																isModalVisible={true}
-																closable={false}
-																setIsModalVisible={()=>{}}
-																footer={[
-																	<Button key="submit" type="primary" onClick={onContinueClick}>
-																		Continue without instrumentation
-																	</Button>,
-																]}
+			<CustomModal
+				title={"Setup instrumentation"}
+				isModalVisible={true}
+				closable={false}
+				setIsModalVisible={() => {}}
+				footer={[
+					<Button key="submit" type="primary" onClick={onContinueClick}>
+						Continue without instrumentation
+					</Button>,
+				]}
 			>
 				<div>
-					<iframe width="100%" height="265" src="https://www.youtube.com/embed/Ly34WBQ2640" frameBorder="0"
-													allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-													allowFullScreen></iframe>
-					<div style={{margin: "20px 0"}}>
-						<Spin/>
+					<iframe
+						width="100%"
+						height="265"
+						src="https://www.youtube.com/embed/Ly34WBQ2640"
+						frameBorder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+						allowFullScreen
+					></iframe>
+					<div style={{ margin: "20px 0" }}>
+						<Spin />
 					</div>
 					<div>
-						No instrumentation data.<br/>
-						Please instrument your application as mentioned <a href={"https://signoz.io/docs/instrumentation/overview"} target={"_blank"}>here</a>
+						No instrumentation data.
+						<br />
+						Please instrument your application as mentioned{" "}
+						<a
+							href={"https://signoz.io/docs/instrumentation/overview"}
+							target={"_blank"}
+						>
+							here
+						</a>
 					</div>
 				</div>
 			</CustomModal>
-		)
+		);
 	}
 
 	return (
@@ -157,9 +179,19 @@ const _ServicesTable = (props: ServicesTableProps) => {
 			/>
 
 			{props.servicesList[0].numCalls === 0 && (
-				<Space style={{width: '100%', margin: "40px 0", justifyContent: "center"}}>
+				<Space
+					style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
+				>
 					No applications present. Please add instrumentation (follow this
-					<a href={"https://signoz.io/docs/instrumentation/overview"} target={"_blank"} style={{marginLeft: 3}}>guide</a>)</Space>
+					<a
+						href={"https://signoz.io/docs/instrumentation/overview"}
+						target={"_blank"}
+						style={{ marginLeft: 3 }}
+					>
+						guide
+					</a>
+					)
+				</Space>
 			)}
 		</Wrapper>
 	);

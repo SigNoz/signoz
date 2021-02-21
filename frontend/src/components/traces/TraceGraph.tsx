@@ -46,7 +46,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.default()
 		.attr("class", "d3-tip")
 		.html(function (d: any) {
-			return d.data.name + "<br>duration: " + d.data.value/1000000+'ms';
+			return d.data.name + "<br>duration: " + d.data.value / 1000000 + "ms";
 		});
 
 	const onClick = (z: any) => {
@@ -59,8 +59,8 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.cellHeight(18)
 		.transitionDuration(500)
 		.inverted(true)
-	 .tooltip(tip)
-		 .minFrameSize(10)
+		.tooltip(tip)
+		.minFrameSize(10)
 		.elided(false)
 		.differential(false)
 		.sort(true)
@@ -69,7 +69,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
 		.onClick(onClick)
-	 .title("Trace Flame graph");
+		.title("Trace Flame graph");
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
@@ -84,7 +84,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 						<Button type="primary" onClick={setResetZoom.bind(this, true)}>
 							Reset Zoom
 						</Button>
-						<div id="chart" style={{ fontSize: 12, marginTop: 20}}></div>
+						<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 					</Card>
 
 					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />

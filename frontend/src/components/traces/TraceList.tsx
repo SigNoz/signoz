@@ -107,11 +107,22 @@ const _TraceList = (props: TraceListProps) => {
 
 			return <Table dataSource={dataSource} columns={columns} size="middle" />;
 		} else {
-
-			if(isOnboardingSkipped()){
-				return (						<Space style={{width: '100%', margin: "40px 0", justifyContent: "center"}}>
-					No spans found. Please add instrumentation (follow this
-					<a href={"https://signoz.io/docs/instrumentation/overview"} target={"_blank"} style={{marginLeft: 3}}>guide</a>)</Space>)
+			if (isOnboardingSkipped()) {
+				return (
+					<Space
+						style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
+					>
+						No spans found. Please add instrumentation (follow this
+						<a
+							href={"https://signoz.io/docs/instrumentation/overview"}
+							target={"_blank"}
+							style={{ marginLeft: 3 }}
+						>
+							guide
+						</a>
+						)
+					</Space>
+				);
 			}
 			return <div> No spans found for given filter!</div>;
 		}
