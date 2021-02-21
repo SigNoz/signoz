@@ -13,3 +13,10 @@
   .site-layout .site-layout-background {
     background: #fff;
   } */
+.instrument-card{
+	border-radius: 4px;
+	background: #313131;
+	padding: 33px 23px;
+	max-width: 800px;
+	margin-top: 40px;
+}

@@ -5,7 +5,6 @@ import Signup from "./Signup";
 const App = React.lazy(() => import("Src/components/App"));
 
 const AppWrapper = () => {
-	console.log("other");
 	return (
 		<Suspense fallback={<Spin size="large" />}>
 			<Switch>
@@ -16,6 +15,7 @@ const AppWrapper = () => {
 				<Route path="/traces/:id" component={App} />
 				<Route path="/usage-explorer" component={App} />
 				<Route path="/settings" component={App} />
+				<Route path="/instumentation" component={App} />
 				<Route path="/signup" component={Signup} />
 				<Route
 					path="/"

@@ -15,6 +15,7 @@ import {
 	AlignLeftOutlined,
 	AppstoreOutlined,
 	SettingOutlined,
+	ApiOutlined
 } from "@ant-design/icons";
 
 import DateTimeSelector from "Src/components/DateTimeSelector";
@@ -44,6 +45,10 @@ const ServicesTable = React.lazy(
 const Signup = React.lazy(() => import("Src/components/Signup"));
 const SettingsPage = React.lazy(
 	() => import("Src/components/settings/settingsPage"),
+);
+
+const IntstrumentationPage = React.lazy(
+	() => import("Src/components/add-instrumentation/instrumentationPage"),
 );
 //PNOTE
 //React. lazy currently only supports default exports. If the module you want to import uses named exports, you can create an intermediate module that reexports it as the default. This ensures that tree shaking keeps working and that you don't pull in unused components.
@@ -133,6 +138,11 @@ const App = () => {
 								Settings
 							</NavLink>
 						</Menu.Item>
+						<Menu.Item key="5" icon={<ApiOutlined />}>
+							<NavLink to="/add-instrumentation" style={{ fontSize: 12, textDecoration: "none" }}>
+								Add instrumentation
+							</NavLink>
+						</Menu.Item>
 					</Menu>
 				</Sider>
 				<Layout className="site-layout">
@@ -156,6 +166,7 @@ const App = () => {
 								<Route path="/traces" exact component={TraceDetail} />
 								<Route path="/traces/:id" component={TraceGraph} />
 								<Route path="/settings" exact component={SettingsPage} />
+								<Route path="/add-instrumentation" exact component={IntstrumentationPage} />
 								<Route path="/usage-explorer" component={UsageExplorer} />
 								<Route path="/" component={ServicesTable} />
 								<Route path="/application" exact component={ServicesTable} />
