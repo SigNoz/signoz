@@ -73,10 +73,10 @@ const _TraceGraph = (props: TraceGraphProps) => {
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-			<Col md={8} sm={24}>
-				<TraceGraphColumn />
-			</Col>
-			<Col md={16} sm={24}>
+			{/*<Col md={8} sm={24}>*/}
+			{/*	<TraceGraphColumn />*/}
+			{/*</Col>*/}
+			<Col md={24} sm={24}>
 				{/* <Card style={{ width: 640 }}> */}
 				<Space direction="vertical" size="middle">
 					<Card bodyStyle={{ padding: 80 }} style={{ height: 320 }}>

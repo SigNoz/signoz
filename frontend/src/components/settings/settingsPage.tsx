@@ -48,7 +48,7 @@ const SettingsPage = (props: SettingsPageProps) => {
 
 			<Space style={{ marginLeft: 60, marginTop: 48 }}>
 				<Alert
-					message="Mail us at plans@signoz.io to change your plan or retention period"
+					message="Mail us at support@signoz.io to get instructions on how to change your retention period"
 					type="info"
 				/>
 			</Space>
