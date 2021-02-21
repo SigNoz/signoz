@@ -178,7 +178,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 				pagination={false}
 			/>
 
-			{props.servicesList[0].numCalls === 0 && (
+			{props.servicesList[0] !== undefined && props.servicesList[0].numCalls === 0 && (
 				<Space
 					style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
 				>
