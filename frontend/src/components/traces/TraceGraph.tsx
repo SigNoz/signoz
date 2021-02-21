@@ -68,8 +68,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
-		.onClick(onClick)
-		.title("Trace Flame graph");
+		.onClick(onClick);
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>

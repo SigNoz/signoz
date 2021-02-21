@@ -96,7 +96,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 
 		title: {
 			display: true,
-			text: "Application Latency in ms",
+			text: "",
 			fontSize: 20,
 			position: "top",
 			padding: 8,
@@ -237,11 +237,14 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
-				<ChartJSLine
-					ref={this.chartRef}
-					data={data_chartJS}
-					options={this.options_charts}
-				/>
+				<div>
+					<div style={{textAlign: "center"}}>Application latency in ms</div>
+					<ChartJSLine
+						ref={this.chartRef}
+						data={data_chartJS}
+						options={this.options_charts}
+					/>
+				</div>
 			</div>
 		);
 	}

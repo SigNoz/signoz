@@ -284,6 +284,11 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		});
 	};
 
+	useEffect(()=>{
+
+		return handleApplyFilterForm({})
+	},[])
+
 	return (
 		<div>
 			<div>Filter Traces</div>
