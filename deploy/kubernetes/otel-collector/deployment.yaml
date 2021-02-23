@@ -37,8 +37,8 @@ spec:
         ports:
         - containerPort: 55679 # Default endpoint for ZPages.
         - containerPort: 55680 # Default endpoint for OpenTelemetry receiver.
-        - containerPort: 55681 # Default endpoint for OpenTelemetry HTTP receiver.
-        - containerPort: 4317 # Default endpoint for OpenTelemetry HTTP receiver.
+        - containerPort: 55681 # Default endpoint for OpenTelemetry HTTP/1.0 receiver.
+        - containerPort: 4317 # Default endpoint for OpenTelemetry GRPC receiver.
         - containerPort: 14250 # Default endpoint for Jaeger GRPC receiver.
         - containerPort: 14268 # Default endpoint for Jaeger HTTP receiver.
         - containerPort: 9411 # Default endpoint for Zipkin receiver.

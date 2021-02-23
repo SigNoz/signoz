@@ -15,7 +15,7 @@ spec:
     port: 55681
     protocol: TCP
     targetPort: 55681
-  - name: otlp-http # Default endpoint for OpenTelemetry receiver.
+  - name: otlp-grpc # Default endpoint for OpenTelemetry receiver.
     port: 4317
     protocol: TCP
     targetPort: 4317
