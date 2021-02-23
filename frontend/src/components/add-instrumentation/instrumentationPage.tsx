@@ -8,8 +8,7 @@ import {
 	EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import { StoreState } from "../../reducers";
-import { useAuthenticationData } from "../../hooks/authentication";
-import { TOKEN_DATE } from "../../../../../sass/frontend/src/constants/accessToken";
+
 import { Alert } from "antd";
 
 interface InstrumentationPageProps {}
