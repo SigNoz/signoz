@@ -55,7 +55,6 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	};
 
 	const chart = flamegraph()
-		.width(640)
 		.cellHeight(18)
 		.transitionDuration(500)
 		.inverted(true)
@@ -77,13 +76,16 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			{/*</Col>*/}
 			<Col md={24} sm={24}>
 				{/* <Card style={{ width: 640 }}> */}
-				<Space direction="vertical" size="middle">
-					<Card bodyStyle={{ padding: 80 }} style={{ height: 320 }}>
-						<div>Trace Graph component ID is {params.id} </div>
-						<Button type="primary" onClick={setResetZoom.bind(this, true)}>
-							Reset Zoom
-						</Button>
-						<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
+				<Space direction="vertical" size="middle" style={{width: '100%'}}>
+					<Card bodyStyle={{ padding: 80 }} style={{ height: 320,
+						 }}>
+						<div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+							<div style={{textAlign: "center"}}>Trace Graph component ID is {params.id} </div>
+							<Button type="primary" onClick={setResetZoom.bind(this, true)} style={{width: 160}}>
+								Reset Zoom
+							</Button>
+							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
+						</div>
 					</Card>
 
 					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />

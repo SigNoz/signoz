@@ -20,3 +20,10 @@
 	max-width: 800px;
 	margin-top: 40px;
 }
+
+#chart svg{
+	width: 100%;
+}
+#chart{
+	width: 100%;
+}

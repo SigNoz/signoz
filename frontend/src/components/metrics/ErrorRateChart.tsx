@@ -90,7 +90,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 
 		title: {
 			display: true,
-			text: "Error per sec",
+			text: "",
 			fontSize: 20,
 			position: "top",
 			padding: 2,

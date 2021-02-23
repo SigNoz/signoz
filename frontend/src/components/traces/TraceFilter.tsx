@@ -46,6 +46,16 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const location = useLocation();
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
+	useEffect(()=>{
+		console.log("Mera")
+		handleApplyFilterForm({
+			service: "",
+			tags: [],
+			operation: "",
+			latency: { min: "", max: "" },
+		})
+	},[])
+
 	useEffect(() => {
 		metricsAPI
 			.get<string[]>("services/list")
@@ -285,8 +295,14 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	};
 
 	useEffect(()=>{
-
-		return handleApplyFilterForm({})
+		return ()=>{
+			props.updateTraceFilters({
+				service: "",
+				operation: "",
+				tags: [],
+				latency: { min: "", max: "" },
+			});
+		}
 	},[])
 
 	return (

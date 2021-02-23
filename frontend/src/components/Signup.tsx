@@ -133,7 +133,7 @@ const Signup = (props: SignUpProps) => {
 							/>
 						</div>
 
-						<div className="text-center space-top">
+						<div className="text-center space-top" style={{marginTop: 12}}>
 							<Button
 								type="primary"
 								htmlType="submit"

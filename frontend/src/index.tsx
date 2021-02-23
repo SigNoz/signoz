@@ -9,7 +9,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 
 import AppWrapper from "Src/components/AppWrapper";
 import "Src/assets/index.css";
-import { reducers } from "./reducers";
+import { reducers } from "Src/reducers";
 import { BrowserRouter as Router } from "react-router-dom";
 import { AUTH0_CLIENT_ID, AUTH0_DOMAIN } from "./constants/env";
 // import Signup from './components/Signup';
