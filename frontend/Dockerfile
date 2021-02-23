@@ -1,5 +1,5 @@
 # stage1 as builder
-FROM node:14-alpine as builder
+FROM node:12-alpine as builder
 
 WORKDIR /frontend
 
@@ -14,7 +14,7 @@ COPY . .
 # Build the project and copy the files
 RUN yarn build
 
-FROM nginx:1.15-alpine
+FROM nginx:1.12-alpine
 
 #!/bin/sh
 
