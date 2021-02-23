@@ -88,7 +88,7 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 
 		title: {
 			display: true,
-			text: "Request per sec",
+			text: "",
 			fontSize: 20,
 			position: "top",
 			padding: 2,
@@ -207,6 +207,7 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
+				<div style={{textAlign: "center"}}>Request per sec</div>
 				<ChartJSLine
 					ref={this.chartRef}
 					data={data_chartJS}

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { ENVIRONMENT } from "../constants/env";
+import { Token } from "../utils/token";
 //import { format } from 'path';
 
 export default axios.create({

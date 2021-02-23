@@ -22,32 +22,15 @@ const Signup = (props: SignUpProps) => {
 
 	const updateForm = (name: any, target: any, valueAttr = "value") => {
 		/* Validate password (if applicable) */
-		if (name === "password") {
-			let password = target[valueAttr];
-			const valid = password.length >= 8;
-			setFormState({
-				...formState,
-				password: { ...formState.password, valid, value: target[valueAttr] },
-			});
-		} else if (name === "firstName") {
+        if (name === "firstName") {
 			setFormState({
 				...formState,
 				firstName: { ...formState.firstName, value: target[valueAttr] },
-			});
-		} else if (name === "companyName") {
-			setFormState({
-				...formState,
-				companyName: { ...formState.companyName, value: target[valueAttr] },
 			});
 		} else if (name === "email") {
 			setFormState({
 				...formState,
 				email: { ...formState.email, value: target[valueAttr] },
-			});
-		} else if (name === "emailOptIn") {
-			setFormState({
-				...formState,
-				emailOptIn: { ...formState.emailOptIn, value: target[valueAttr] },
 			});
 		}
 	};
@@ -59,41 +42,14 @@ const Signup = (props: SignUpProps) => {
 
 		setState({ ...state, submitted: true });
 
-		/* Password has custom validation */
-		if (!formState.password.valid) {
-			// if (passwordInput.current){
-			//     passwordInput.current.focus()
-			// }
-			// return
-		}
 		const payload = {
 			first_name: formState.firstName,
-			company_name: formState.companyName || undefined,
 			email: formState.email,
-			password: formState.password,
-			email_opt_in: formState.emailOptIn.value,
-			// plan, // Pass it along if on QS, won't have any effect unless on multitenancy
 		};
-		// createAccount(payload)
-
-		// axios.get(`https://jsonplaceholder.typicode.com/users`)
-		// .then(res => {
-		//   console.log(res);
-		//   console.log(res.data);
-		// })
 
 		let texttolog = JSON.stringify(payload);
 
-		// submitForm.get('sendMessage', {
-		//         params: {
-		//           chat_id: 351813222,
-		//           text:texttolog,
-		//         }
-		//         }
-		//   ).then(res => {
-		//     console.log(res);
-		//     console.log(res.data);
-		//   })
+
 
 		submitForm.post("user?email=" + texttolog).then((res) => {
 			console.log(res);
@@ -162,29 +118,7 @@ const Signup = (props: SignUpProps) => {
 							/>
 						</div>
 
-						<div
-							className={`input-set ${
-								state.submitted && !formState.password.valid ? "errored" : ""
-							}`}
-						>
-							<label htmlFor="signupPassword">Password</label>
-							<Input.Password
-								value={formState.password.value}
-								onChange={(e) => updateForm("password", e.target)}
-								required
-								ref={passwordInput}
-								// disabled={accountLoading}
-								id="signupPassword"
-							/>
-							<Suspense fallback={<span />}>
-								{/* <PasswordStrength password={formState.password.value} /> */}
-							</Suspense>
-							{!formState.password && (
-								<span className="caption">
-									Your password must have at least 8 characters.
-								</span>
-							)}
-						</div>
+
 
 						<div className="input-set">
 							<label htmlFor="signupFirstName">First Name</label>
@@ -199,28 +133,7 @@ const Signup = (props: SignUpProps) => {
 							/>
 						</div>
 
-						<div className="input-set">
-							<label htmlFor="signupCompanyName">Company or Project</label>
-							<Input
-								placeholder="Netflix"
-								value={formState.companyName.value}
-								onChange={(e) => updateForm("companyName", e.target)}
-								// disabled={accountLoading}
-								id="signupCompanyName"
-							/>
-						</div>
-
-						<div>
-							<Checkbox
-								checked={formState.emailOptIn.value}
-								onChange={(e) => updateForm("emailOptIn", e.target, "checked")}
-								// disabled={accountLoading}
-							>
-								Send me occasional emails about security and product updates. You may
-								unsubscribe at any time.
-							</Checkbox>
-						</div>
-						<div className="text-center space-top">
+						<div className="text-center space-top" style={{marginTop: 12}}>
 							<Button
 								type="primary"
 								htmlType="submit"

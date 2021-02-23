@@ -2,6 +2,8 @@ import { Dispatch } from "redux";
 import metricsAPI from "../api/metricsAPI";
 import { GlobalTime } from "./global";
 import { ActionTypes } from "./types";
+import { Token } from "../utils/token";
+import { toUTCEpoch } from "../utils/timeUtils";
 
 export interface servicesListItem {
 	serviceName: string;
@@ -61,6 +63,7 @@ export const getServicesList = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch) => {
 		let request_string =
 			"services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
+
 		const response = await metricsAPI.get<servicesListItem[]>(request_string);
 
 		dispatch<getServicesListAction>({
@@ -123,9 +126,9 @@ export const getFilteredTraceMetrics = (
 	return async (dispatch: Dispatch) => {
 		let request_string =
 			"spans/aggregates?start=" +
-			globalTime.minTime +
+			toUTCEpoch(globalTime.minTime) +
 			"&end=" +
-			globalTime.maxTime +
+			toUTCEpoch(globalTime.maxTime) +
 			"&" +
 			filter_params;
 		const response = await metricsAPI.get<customMetricsItem[]>(request_string);

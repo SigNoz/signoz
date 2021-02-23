@@ -36,9 +36,11 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	const [startTime, setStartTime] = useState<moment.Moment | null>(null);
 	const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState(false);
+	const [refreshText, setRefreshText] = useState("");
+	const [refreshButtonClick, setRefreshButtoClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
 	const location = useLocation();
-	const updateTimeOnQueryParamChange = ()=>{
+	const updateTimeOnQueryParamChange = () => {
 		const timeDurationInLocalStorage = localStorage.getItem(
 			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
 		);
@@ -46,13 +48,18 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const intervalInQueryParam = urlParams.get(METRICS_PAGE_QUERY_PARAM.interval);
 		const startTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.startTime);
-		const endTimeString =  urlParams.get(METRICS_PAGE_QUERY_PARAM.endTime);
+		const endTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.endTime);
 
 		// first pref: handle both startTime and endTime
-		if(startTimeString && startTimeString.length>0 && endTimeString && endTimeString.length>0){
+		if (
+			startTimeString &&
+			startTimeString.length > 0 &&
+			endTimeString &&
+			endTimeString.length > 0
+		) {
 			const startTime = moment(Number(startTimeString));
 			const endTime = moment(Number(endTimeString));
-			setCustomTime(startTime,endTime,true)
+			setCustomTime(startTime, endTime, true);
 		}
 		// first pref: handle intervalInQueryParam
 		else if (intervalInQueryParam) {
@@ -64,8 +71,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		} else if (timeDurationInLocalStorage) {
 			setMetricsTimeInterval(timeDurationInLocalStorage);
 		}
-
-	}
+	};
 
 	// On URL Change
 	useEffect(() => {
@@ -77,22 +83,20 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		updateTimeOnQueryParamChange();
 	}, []);
 
-	const setMetricsTimeInterval= (value: string) => {
+	const setMetricsTimeInterval = (value: string) => {
 		props.updateTimeInterval(value);
 		setTimeInterval(value);
 		setEndTime(null);
 		setStartTime(null);
 
-		window.localStorage.setItem(
-			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
-			value,
-		);
+		window.localStorage.setItem(LOCAL_STORAGE.METRICS_TIME_IN_DURATION, value);
 	};
-	const setCustomTime= (startTime: moment.Moment, endTime: moment.Moment, triggeredByURLChange = false) => {
-		props.updateTimeInterval("custom", [
-			startTime.valueOf(),
-			endTime.valueOf(),
-		]);
+	const setCustomTime = (
+		startTime: moment.Moment,
+		endTime: moment.Moment,
+		triggeredByURLChange = false,
+	) => {
+		props.updateTimeInterval("custom", [startTime.valueOf(), endTime.valueOf()]);
 		setEndTime(endTime);
 		setStartTime(startTime);
 	};
@@ -103,10 +107,17 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		}); //pass time in URL query param for all choices except custom in datetime picker
 	};
 
-	const updateUrlForCustomTime= (startTime: moment.Moment, endTime: moment.Moment, triggeredByURLChange = false) => {
-		props.history.push(`?${METRICS_PAGE_QUERY_PARAM.startTime}=${startTime.valueOf()}&${METRICS_PAGE_QUERY_PARAM.endTime}=${endTime.valueOf()}`);
-	}
-
+	const updateUrlForCustomTime = (
+		startTime: moment.Moment,
+		endTime: moment.Moment,
+		triggeredByURLChange = false,
+	) => {
+		props.history.push(
+			`?${METRICS_PAGE_QUERY_PARAM.startTime}=${startTime.valueOf()}&${
+				METRICS_PAGE_QUERY_PARAM.endTime
+			}=${endTime.valueOf()}`,
+		);
+	};
 
 	const handleOnSelect = (value: string) => {
 		if (value === "custom") {
@@ -129,7 +140,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 			const startTime = dateTimeRange[0].valueOf();
 			const endTime = dateTimeRange[1].valueOf();
 
-			updateUrlForCustomTime(moment(startTime),moment(endTime))
+			updateUrlForCustomTime(moment(startTime), moment(endTime));
 			//setting globaltime
 			setRefreshButtonHidden(true);
 			form_dtselector.setFieldsValue({
@@ -143,24 +154,36 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	};
 
 	const timeSinceLastRefresh = () => {
-		let timeDiffSec = Math.round(
-			(Date.now() - Math.round(props.globalTime.maxTime / 1000000)) / 1000,
-		);
+		const currentTime = moment();
+		const lastRefresh = moment(props.globalTime.maxTime / 1000000);
+		const duration = moment.duration(currentTime.diff(lastRefresh));
 
-		//How will Refresh button get updated? Needs to be periodically updated via timer.
-		// For now, not returning any text here
-		// if (timeDiffSec < 60)
-		//     return timeDiffSec.toString()+' s';
-		// else if (timeDiffSec < 3600)
-		//     return Math.round(timeDiffSec/60).toString()+' min';
-		// else
-		//     return Math.round(timeDiffSec/3600).toString()+' hr';
-		return null;
+		const secondsDiff = Math.floor(duration.asSeconds());
+		const minutedDiff = Math.floor(duration.asMinutes());
+		const hoursDiff = Math.floor(duration.asHours());
+
+		if (hoursDiff > 0) {
+			return `Last refresh - ${hoursDiff} hrs ago`;
+		} else if (minutedDiff > 0) {
+			return `Last refresh - ${minutedDiff} mins ago`;
+		}
+		return `Last refresh - ${secondsDiff} sec ago`;
 	};
 
 	const handleRefresh = () => {
+		setRefreshButtoClick(refreshButtonClick + 1);
 		setMetricsTimeInterval(timeInterval);
 	};
+
+	useEffect(() => {
+		setRefreshText("");
+		const interval = setInterval(() => {
+			setRefreshText(timeSinceLastRefresh());
+		}, 2000);
+		return () => {
+			clearInterval(interval);
+		};
+	}, [props.location, refreshButtonClick]);
 
 	const options = [
 		{ value: "custom", label: "Custom" },
@@ -174,31 +197,47 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	if (props.location.pathname.startsWith("/usage-explorer")) {
 		return null;
 	} else {
-
-		const inputLabeLToShow = startTime && endTime? (`${startTime.format("YYYY/MM/DD HH:mm")} - ${endTime.format("YYYY/MM/DD HH:mm")}`):timeInterval
+		const inputLabeLToShow =
+			startTime && endTime
+				? `${startTime.format("YYYY/MM/DD HH:mm")} - ${endTime.format(
+						"YYYY/MM/DD HH:mm",
+				  )}`
+				: timeInterval;
 		return (
 			<DateTimeWrapper>
-				<Space>
-					<Form
-						form={form_dtselector}
-						layout="inline"
-						initialValues={{ interval: "15min" }}
-						style={{ marginTop: 10, marginBottom: 10 }}
-					>
-						<FormItem></FormItem>
-						<Select onSelect={handleOnSelect} value={inputLabeLToShow}>
-							{options.map(({ value, label }) => (
-								<Option value={value}>{label}</Option>
-							))}
-						</Select>
+				<Space style={{ float: "right", display: "block" }}>
+					<Space>
+						<Form
+							form={form_dtselector}
+							layout="inline"
+							initialValues={{ interval: "15min" }}
+							style={{ marginTop: 10, marginBottom: 10 }}
+						>
+							<Select onSelect={handleOnSelect} value={inputLabeLToShow}>
+								{options.map(({ value, label }) => (
+									<Option value={value}>{label}</Option>
+								))}
+							</Select>
 
-						<FormItem hidden={refreshButtonHidden} name="refresh_button">
-							<Button type="primary" onClick={handleRefresh}>
-								Refresh {timeSinceLastRefresh()}
-							</Button>
-							{/* if refresh time is more than x min, give a message? */}
-						</FormItem>
-					</Form>
+							<FormItem hidden={refreshButtonHidden} name="refresh_button">
+								<Button type="primary" onClick={handleRefresh}>
+									Refresh
+								</Button>
+							</FormItem>
+						</Form>
+					</Space>
+					<Space
+						style={{
+							float: "right",
+							display: "block",
+							marginRight: 20,
+							minHeight: 23,
+							width: 200,
+							textAlign: "right",
+						}}
+					>
+						{refreshText}
+					</Space>
 					<CustomDateTimeModal
 						visible={customDTPickerVisible}
 						onCreate={handleCustomDate}
