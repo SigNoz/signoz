@@ -11,8 +11,8 @@ import { StoreState } from "../reducers";
 import FormItem from "antd/lib/form/FormItem";
 
 import { DateTimeRangeType } from "../actions";
-import { METRICS_PAGE_QUERY_PARAM } from "../constants/query";
-import { LOCAL_STORAGE } from "../constants/localStorage";
+import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
+import { LOCAL_STORAGE } from "Src/constants/localStorage";
 import moment from "moment";
 const { Option } = Select;
 

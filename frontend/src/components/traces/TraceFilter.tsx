@@ -17,7 +17,7 @@ import { FilterStateDisplay } from "./FilterStateDisplay";
 import FormItem from "antd/lib/form/FormItem";
 import metricsAPI from "../../api/metricsAPI";
 import { useLocation } from "react-router-dom";
-import { METRICS_PAGE_QUERY_PARAM } from "../../constants/query";
+import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 
 const { Option } = Select;
 
