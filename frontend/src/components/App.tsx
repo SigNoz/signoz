@@ -13,22 +13,43 @@ import {
 	BarChartOutlined,
 	DeploymentUnitOutlined,
 	AlignLeftOutlined,
+	AppstoreOutlined,
+	SettingOutlined,
+	ApiOutlined
 } from "@ant-design/icons";
 
-import DateTimeSelector from "./DateTimeSelector";
-import ShowBreadcrumbs from "./ShowBreadcrumbs";
+import DateTimeSelector from "Src/components/DateTimeSelector";
+import ShowBreadcrumbs from "Src/components/ShowBreadcrumbs";
 import styled from "styled-components";
 
 const { Content, Footer, Sider } = Layout;
 
-const ServiceMetrics = React.lazy(() => import("./metrics/ServiceMetricsDef"));
-const ServiceMap = React.lazy(() => import("./servicemap/ServiceMap"));
-const TraceDetail = React.lazy(() => import("./traces/TraceDetail"));
-const TraceGraph = React.lazy(() => import("./traces/TraceGraphDef"));
-const UsageExplorer = React.lazy(() => import("./usage/UsageExplorerDef"));
-const ServicesTable = React.lazy(() => import("./metrics/ServicesTableDef"));
-// const Signup = React.lazy(() => import('./Signup'));
+const ServiceMetrics = React.lazy(
+	() => import("Src/components/metrics/ServiceMetricsDef"),
+);
+const ServiceMap = React.lazy(
+	() => import("Src/components/servicemap/ServiceMap"),
+);
+const TraceDetail = React.lazy(
+	() => import("Src/components/traces/TraceDetail"),
+);
+const TraceGraph = React.lazy(
+	() => import("Src/components/traces/TraceGraphDef"),
+);
+const UsageExplorer = React.lazy(
+	() => import("Src/components/usage/UsageExplorerDef"),
+);
+const ServicesTable = React.lazy(
+	() => import("Src/components/metrics/ServicesTableDef"),
+);
+const Signup = React.lazy(() => import("Src/components/Signup"));
+const SettingsPage = React.lazy(
+	() => import("Src/components/settings/settingsPage"),
+);
 
+const IntstrumentationPage = React.lazy(
+	() => import("Src/components/add-instrumentation/instrumentationPage"),
+);
 //PNOTE
 //React. lazy currently only supports default exports. If the module you want to import uses named exports, you can create an intermediate module that reexports it as the default. This ensures that tree shaking keeps working and that you don't pull in unused components.
 
@@ -112,16 +133,26 @@ const App = () => {
 								Usage Explorer
 							</NavLink>
 						</Menu.Item>
+						<Menu.Item key="5" icon={<SettingOutlined />}>
+							<NavLink to="/settings" style={{ fontSize: 12, textDecoration: "none" }}>
+								Settings
+							</NavLink>
+						</Menu.Item>
+						<Menu.Item key="6" icon={<ApiOutlined />}>
+							<NavLink to="/add-instrumentation" style={{ fontSize: 12, textDecoration: "none" }}>
+								Add instrumentation
+							</NavLink>
+						</Menu.Item>
 					</Menu>
 				</Sider>
 				<Layout className="site-layout">
 					<Content style={{ margin: "0 16px" }}>
 						<Row>
-							<Col span={20}>
+							<Col span={16}>
 								<ShowBreadcrumbs />
 							</Col>
 
-							<Col span={4}>
+							<Col span={8}>
 								<DateTimeSelector />
 							</Col>
 						</Row>
@@ -134,10 +165,11 @@ const App = () => {
 								<Route path="/service-map" component={ServiceMap} />
 								<Route path="/traces" exact component={TraceDetail} />
 								<Route path="/traces/:id" component={TraceGraph} />
+								<Route path="/settings" exact component={SettingsPage} />
+								<Route path="/add-instrumentation" exact component={IntstrumentationPage} />
 								<Route path="/usage-explorer" component={UsageExplorer} />
 								<Route path="/" component={ServicesTable} />
 								<Route path="/application" exact component={ServicesTable} />
-								{/* <Route path="/signup" component={Signup} /> */}
 							</Switch>
 						</Suspense>
 					</Content>

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, Card, Row, Col } from "antd";
 import { connect } from "react-redux";
 import { useParams, RouteComponentProps } from "react-router-dom";
@@ -31,7 +31,7 @@ interface ServicesMetricsProps extends RouteComponentProps<any> {
 }
 
 const _ServiceMetrics = (props: ServicesMetricsProps) => {
-	const {servicename} = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<{ servicename?: string }>();
 	useEffect(() => {
 		props.getServicesMetrics(servicename, props.globalTime);
 		props.getTopEndpoints(servicename, props.globalTime);
@@ -41,20 +41,18 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 		const tMinus15Min = timestamp / 1000000 - 15 * 60 * 1000;
 		const currentTime = timestamp / 1000000;
 
-		props.updateTimeInterval("custom", [
-			tMinus15Min,
-			currentTime,
-		]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
+		props.updateTimeInterval("custom", [tMinus15Min, currentTime]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
 
 		const urlParams = new URLSearchParams();
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime,tMinus15Min.toString())
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime,currentTime.toString())
-		if(servicename){
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.service,servicename)
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, tMinus15Min.toString());
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, currentTime.toString());
+		if (servicename) {
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
 		props.history.push(`/traces?${urlParams.toString()}`);
 	};
+
 	return (
 		<Tabs defaultActiveKey="1">
 			<TabPane tab="Application Metrics" key="1">

@@ -2,6 +2,7 @@ import { ActionTypes } from "./types";
 import tracesAPI from "../api/tracesAPI";
 import { Dispatch } from "redux";
 import { GlobalTime } from "./global";
+import { toUTCEpoch } from "../utils/timeUtils";
 
 // PNOTE
 // define trace interface - what it should return
@@ -121,9 +122,9 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 		if (globalTime) {
 			let request_string =
 				"spans?limit=100&lookback=2d&start=" +
-				globalTime.minTime +
+				toUTCEpoch(globalTime.minTime) +
 				"&end=" +
-				globalTime.maxTime +
+				toUTCEpoch(globalTime.maxTime) +
 				"&" +
 				filter_params;
 			const response = await tracesAPI.get<traceResponseNew>(request_string);

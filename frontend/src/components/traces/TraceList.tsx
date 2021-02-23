@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { NavLink } from "react-router-dom";
-import { Table } from "antd";
+import { Space, Table } from "antd";
 
 import { traceResponseNew, fetchTraces, pushDStree } from "../../actions";
 import { StoreState } from "../../reducers";
+import { isOnboardingSkipped } from "../../utils/app";
 
 interface TraceListProps {
 	traces: traceResponseNew;
@@ -106,6 +107,23 @@ const _TraceList = (props: TraceListProps) => {
 
 			return <Table dataSource={dataSource} columns={columns} size="middle" />;
 		} else {
+			if (isOnboardingSkipped()) {
+				return (
+					<Space
+						style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
+					>
+						No spans found. Please add instrumentation (follow this
+						<a
+							href={"https://signoz.io/docs/instrumentation/overview"}
+							target={"_blank"}
+							style={{ marginLeft: 3 }}
+						>
+							guide
+						</a>
+						)
+					</Space>
+				);
+			}
 			return <div> No spans found for given filter!</div>;
 		}
 	}; // end of renderTraces

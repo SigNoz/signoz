@@ -5,12 +5,13 @@ import { Store } from "antd/lib/form/interface";
 interface LatencyModalFormProps {
 	onCreate: (values: Store) => void; //Store is defined in antd forms library
 	onCancel: () => void;
-	latencyFilterValues: {min: string, max: string}
+	latencyFilterValues: { min: string; max: string };
 }
 
 const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 	onCreate,
-	onCancel,latencyFilterValues
+	onCancel,
+	latencyFilterValues,
 }) => {
 	const [form] = Form.useForm();
 	return (

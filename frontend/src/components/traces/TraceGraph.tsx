@@ -46,7 +46,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.default()
 		.attr("class", "d3-tip")
 		.html(function (d: any) {
-			return d.data.name + "<br>duration: " + d.data.value/1000000+'ms';
+			return d.data.name + "<br>duration: " + d.data.value / 1000000 + "ms";
 		});
 
 	const onClick = (z: any) => {
@@ -55,12 +55,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	};
 
 	const chart = flamegraph()
-		.width(640)
 		.cellHeight(18)
 		.transitionDuration(500)
 		.inverted(true)
-	 .tooltip(tip)
-		 .minFrameSize(10)
+		.tooltip(tip)
+		.minFrameSize(10)
 		.elided(false)
 		.differential(false)
 		.sort(true)
@@ -68,23 +67,25 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
-		.onClick(onClick)
-	 .title("Trace Flame graph");
+		.onClick(onClick);
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-			<Col md={8} sm={24}>
-				<TraceGraphColumn />
-			</Col>
-			<Col md={16} sm={24}>
+			{/*<Col md={8} sm={24}>*/}
+			{/*	<TraceGraphColumn />*/}
+			{/*</Col>*/}
+			<Col md={24} sm={24}>
 				{/* <Card style={{ width: 640 }}> */}
-				<Space direction="vertical" size="middle">
-					<Card bodyStyle={{ padding: 80 }} style={{ height: 320 }}>
-						<div>Trace Graph component ID is {params.id} </div>
-						<Button type="primary" onClick={setResetZoom.bind(this, true)}>
-							Reset Zoom
-						</Button>
-						<div id="chart" style={{ fontSize: 12, marginTop: 20}}></div>
+				<Space direction="vertical" size="middle" style={{width: '100%'}}>
+					<Card bodyStyle={{ padding: 80 }} style={{ height: 320,
+						 }}>
+						<div style={{display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center'}}>
+							<div style={{textAlign: "center"}}>Trace Graph component ID is {params.id} </div>
+							<Button type="primary" onClick={setResetZoom.bind(this, true)} style={{width: 160}}>
+								Reset Zoom
+							</Button>
+							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
+						</div>
 					</Card>
 
 					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />

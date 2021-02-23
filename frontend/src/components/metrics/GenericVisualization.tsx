@@ -15,7 +15,7 @@ interface GenericVisualizationsProps {
 
 const GenericVisualizations = (props: GenericVisualizationsProps) => {
 	const data = {
-		labels: props.data.map((s) => new Date(s.timestamp / 1000000)),
+		labels: props.data !== undefined && props.data.map((s) => new Date(s.timestamp / 1000000)),
 		datasets: [
 			{
 				data: props.data.map((s) => s.value),
