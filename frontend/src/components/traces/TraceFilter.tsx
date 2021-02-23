@@ -232,10 +232,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		form.resetFields();
 	};
 
-	const onTagClose = (value: string) => {
-		setTagKeyValueApplied(tagKeyValueApplied.filter((e) => e !== value));
-	};
-
 	// For autocomplete
 	//Setting value when autocomplete field is changed
 	const onChangeTagKey = (data: string) => {
@@ -290,7 +286,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		props.updateTraceFilters({
 			service: values.service,
 			operation: values.operation,
-			latency: latencyFilterValues,
+			latency: {
+				max: "",
+				min: ""
+			},
 		});
 	};
 
