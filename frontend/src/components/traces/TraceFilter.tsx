@@ -47,7 +47,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
 	useEffect(()=>{
-		console.log("Mera")
 		handleApplyFilterForm({
 			service: "",
 			tags: [],
