@@ -18,6 +18,7 @@ const { Option } = Select;
 
 const DateTimeWrapper = styled.div`
 	margin-top: 20px;
+	justify-content: flex-end !important;
 `;
 
 interface DateTimeSelectorProps extends RouteComponentProps<any> {
