@@ -31,10 +31,10 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 				<div className={"instrument-card"}>
 					Congrats, you have successfully installed SigNoz!<br/>
 					To start seeing YOUR application data here, follow the instructions in the docs -
-					<a href={"https://signoz.io/docs/instrumentation/overview"}> https://signoz.io/docs/instrumentation/overview</a>
+					<a href={"https://signoz.io/docs/instrumentation/overview"} target="_blank"> https://signoz.io/docs/instrumentation/overview</a>
 					<br/>
-					If you face any issues, join our <a href={"https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"}>
-					slack community</a> to ask any questions or mail us at <a href={"mailto:support@signoz.io"}>
+					If you face any issues, join our <a href={"https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"} target="_blank">
+					slack community</a> to ask any questions or mail us at <a href={"mailto:support@signoz.io"} target="_blank">
 					support@signoz.io
 				</a>
 				</div>
