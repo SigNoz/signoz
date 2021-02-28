@@ -141,8 +141,8 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 
 	}
 
-	newFilter := godruid.FilterSelector("Kind", "2")
-	filter = godruid.FilterAnd(filter, newFilter)
+	// newFilter := godruid.FilterSelector("Kind", "2")
+	// filter = godruid.FilterAnd(filter, newFilter)
 
 	// if filter == nil {
 	// 	return nil, fmt.Errorf("No search criteria for spans was specified")
