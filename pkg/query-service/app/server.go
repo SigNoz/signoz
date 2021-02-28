@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/posthog/posthog-go"
+	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
@@ -104,14 +105,14 @@ func createHTTPServer(druidClientUrl string) *http.Server {
 
 	apiHandler.RegisterRoutes(r)
 
-	// c := cors.New(cors.Options{
-	// 	AllowedOrigins: []string{"http://localhost:3000"},
-	// 	// AllowCredentials: true,
-	// 	// AllowedMethods:   []string{"GET", "DELETE", "POST", "PUT"},
-	// })
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		// AllowCredentials: true,
+		// AllowedMethods:   []string{"GET", "DELETE", "POST", "PUT"},
+	})
 
-	// handler := c.Handler(r)
-	var handler http.Handler = r
+	handler := c.Handler(r)
+	// var handler http.Handler = r
 
 	handler = handlers.CompressHandler(handler)
 
