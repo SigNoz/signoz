@@ -3,7 +3,7 @@
 [![MIT](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
 
 # SigNoz
-SigNoz is an opensource observability platform. SigNoz uses distributed tracing to gain visibility into your systems and powers data using [Kafka](https://kafka.apache.org/) (to handle high ingestion rate and backpressure) and [Apache Druid](https://druid.apache.org/) (Apache Druid is a high performance real-time analytics database), both proven in industry to handle scale.
+SigNoz is an opensource observability platform. SigNoz uses distributed tracing to gain visibility into your systems and powers data using [Kafka](https://kafka.apache.org/) (to handle high ingestion rate and backpressure) and [Apache Druid](https://druid.apache.org/) (Apache Druid is a high performance real-time analytics database), both proven in the industry to handle scale.
 
 
 ![SigNoz Feature](https://signoz.io/img/readme_feature1.jpg)
@@ -11,7 +11,7 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 
 
 ### Features:
-- Application overview metrics like RPS, 50th/90th/99th Percentile latencies and Error Rate
+- Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
 - See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations. 
@@ -22,9 +22,9 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 
 
 ### Motivation:
-- SaaS vendors charge insane amount to provide Application Monitoring. They often surprise you by huge month end bills without any tranparency of data sent to them.
+- SaaS vendors charge an insane amount to provide Application Monitoring. They often surprise you with huge month end bills without any transparency of data sent to them.
 - Data privacy and compliance demands data to not leave the network boundary
-- Highly scalalable architecture
+- Highly scalable architecture
 - No more magic happening in agents installed in your infra. You take control of sampling, uptime, configuration.
 - Build modules over SigNoz to extend business specific capabilities
 
@@ -36,13 +36,13 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 ## Deploy using docker-compose
 
 We have a tiny-cluster setup and a standard setup to deploy using docker-compose.
-Follow steps listed at https://signoz.io/docs/deployment/docker/. 
+Follow the steps listed at https://signoz.io/docs/deployment/docker/. 
 The troubleshooting instructions at https://signoz.io/docs/deployment/docker/#troubleshooting may be helpful
 
 
 ## Deploy in Kubernetes using Helm. 
 
-Below steps will install the SigNoz in platform namespace inside you k8s cluster. 
+Below steps will install the SigNoz in platform namespace inside your k8s cluster. 
 
 ```console
 git clone https://github.com/SigNoz/signoz.git && cd signoz
@@ -75,9 +75,9 @@ kubectl -n sample-application apply -Rf sample-apps/hotrod/
 
 
 # Documentation
-You can find docs at https://signoz.io/docs/deployment/docker. If you need any clarification or find something missing, feel free to raise a github issue with label `documentation` or reach out to us at community slack channel.
+You can find docs at https://signoz.io/docs/deployment/docker. If you need any clarification or find something missing, feel free to raise a GitHub issue with the label `documentation` or reach out to us at the community slack channel.
 
 # Community
-Join the [slack community](https://app.slack.com/client/T01HWUTP0LT#/) to know more about distributed tracing, observability or SigNoz and to connect with other users and contributors.
+Join the [slack community](https://app.slack.com/client/T01HWUTP0LT#/) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
 
-If you have any ideas, questions or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
+If you have any ideas, questions, or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
