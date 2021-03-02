@@ -38,3 +38,7 @@ service:
       receivers: [jaeger, otlp]
       processors: [memory_limiter, batch, queued_retry]
       exporters: [kafka]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [kafka]
