@@ -18,16 +18,15 @@
 #
 
 # Java tuning
-DRUID_XMX=64m
-DRUID_XMS=64m
+DRUID_XMX=512m
+DRUID_XMS=512m
 DRUID_MAXNEWSIZE=256m
 DRUID_NEWSIZE=256m
-DRUID_MAXDIRECTMEMORYSIZE=128m
+DRUID_MAXDIRECTMEMORYSIZE=400m
 
 druid_emitter_logging_logLevel=debug
 
-# druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-kafka-indexing-service"]
-
+druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-kafka-indexing-service"]
 
 druid_zk_service_host=zookeeper
 
@@ -39,9 +38,14 @@ druid_metadata_storage_connector_password=FoolishPassword
 
 druid_coordinator_balancer_strategy=cachingCost
 
-druid_indexer_runner_javaOptsArray=["-server", "-Xms64m", "-Xmx64m", "-XX:MaxDirectMemorySize=128m", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
+druid_indexer_runner_javaOptsArray=["-server", "-Xms512m", "-Xmx512m", "-XX:MaxDirectMemorySize=400m", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
 druid_indexer_fork_property_druid_processing_buffer_sizeBytes=25000000
+druid_processing_buffer_sizeBytes=50MiB
 
+druid_storage_type=local
+druid_storage_storageDirectory=/opt/druid/deepStorage
+druid_indexer_logs_type=file
+druid_indexer_logs_directory=/opt/druid/data/indexing-logs
 
 druid_processing_numThreads=1
 druid_processing_numMergeBuffers=2
