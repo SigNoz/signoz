@@ -147,11 +147,15 @@ install_docker() {
         $zypper_cmd install docker docker-runc containerd
         sudo systemctl enable docker.service
     elif [[ $package_manager == yum && $os == 'amazon linux' ]]; then
-        echo "\n Amazon Linux detected ... \n "
+        echo
+        echo "Amazon Linux detected ... "
+        echo
         sudo yum install docker
         sudo service docker start
     else
-
+        echo 
+        echo "Trying yum package manager"
+        echo 
         yum_cmd="sudo yum --assumeyes --quiet"
         $yum_cmd install yum-utils
         sudo yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
@@ -370,7 +374,8 @@ echo ""
 echo "Pulling the latest container images for SigNoz. To run as sudo it will ask for system password."
 sudo docker-compose -f ./docker/docker-compose-tiny.yaml pull
 echo ""
-echo "Starting the SigNoz containers. It may take a few minutes."
+echo "Starting the SigNoz containers. It may take a few minute ..."
+echo
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
 sudo docker-compose -f ./docker/docker-compose-tiny.yaml up --detach --remove-orphans || true
