@@ -1,5 +1,6 @@
 druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-kafka-indexing-service", "druid-s3-extensions"]
 
+
 druid_storage_type=s3
 druid_storage_bucket=solvzy-test3
 druid_storage_baseKey=druid/segments
@@ -11,3 +12,10 @@ AWS_REGION=us-east-2
 druid_indexer_logs_type=s3
 druid_indexer_logs_s3Bucket=solvzy-test3
 druid_indexer_logs_s3Prefix=druid/indexing-logs
+
+
+# druid_storage_type=local
+# druid_storage_storageDirectory=/opt/druid/deepStorage
+# druid_indexer_logs_type=file
+# druid_indexer_logs_directory=/opt/druid/data/indexing-logs
+
