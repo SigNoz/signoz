@@ -150,12 +150,10 @@ install_docker() {
         echo
         echo "Amazon Linux detected ... "
         echo
-        sudo yum install docker
+        sudo yum --disablerepo=download.docker.com_linux_amazon install docker
         sudo service docker start
     else
-        echo 
-        echo "Trying yum package manager"
-        echo 
+
         yum_cmd="sudo yum --assumeyes --quiet"
         $yum_cmd install yum-utils
         sudo yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
