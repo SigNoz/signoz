@@ -9,7 +9,7 @@
 
 # AWS_ACCESS_KEY_ID=<s3-access-id>
 # AWS_SECRET_ACCESS_KEY=<s3-access-key>
-# AWS_REGION=us-east-2
+# AWS_REGION=<s3-aws-region>
 
 # druid_indexer_logs_type=s3
 # druid_indexer_logs_s3Bucket=signoz
