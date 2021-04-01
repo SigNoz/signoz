@@ -125,8 +125,6 @@ install_docker() {
     echo "++++++++++++++++++++++++"
     echo "Setting up docker repos"
 
-    os="amazon linux"
-    package_manager="yum"
 
     if [[ $package_manager == apt-get ]]; then
         apt_cmd="sudo apt-get --yes --quiet"
@@ -149,6 +147,7 @@ install_docker() {
         $zypper_cmd install docker docker-runc containerd
         sudo systemctl enable docker.service
     elif [[ $package_manager == yum && $os == 'amazon linux' ]]; then
+        echo "\n Amazon Linux detected ... \n "
         sudo yum install docker
         sudo service docker start
     else
