@@ -69,7 +69,6 @@ services:
       - coordinator
     env_file:
       - environment_tiny_s3/coordinator
-      # - environment_tiny_s3/s3_common
 
   broker:
     image: apache/druid:0.20.0
@@ -86,7 +85,6 @@ services:
       - broker
     env_file:
       - environment_tiny_s3/broker
-      # - environment_tiny_s3/s3_common
 
   historical:
     image: apache/druid:0.20.0
@@ -104,7 +102,6 @@ services:
       - historical
     env_file:
       - environment_tiny_s3/historical
-      # - environment_tiny_s3/s3_common
 
   middlemanager:
     image: apache/druid:0.20.0
@@ -122,7 +119,6 @@ services:
       - middleManager
     env_file:
       - environment_tiny_s3/middlemanager
-      # - environment_tiny_s3/s3_common
 
   router:
     image: apache/druid:0.20.0
@@ -139,7 +135,6 @@ services:
       - router
     env_file:
       - environment_tiny_s3/router
-      # - environment_tiny_s3/s3_common
 
   flatten-processor:
     image: signoz/flattener-processor:0.1.1
