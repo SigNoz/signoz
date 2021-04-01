@@ -42,6 +42,11 @@ check_os() {
             os="ubuntu"
             package_manager="apt-get"
             ;;
+        Amazon\ Linux*)
+            desired_os=1
+            os="amazon linux"
+            package_manager="yum"
+            ;;
         Debian*)
             desired_os=1
             os="debian"
@@ -74,7 +79,7 @@ check_os() {
             ;;
         *)
             desired_os=0
-            os="Not Found"
+            os="Not Found: $os_name"
     esac
 }
 
