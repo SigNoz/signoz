@@ -125,6 +125,9 @@ install_docker() {
     echo "++++++++++++++++++++++++"
     echo "Setting up docker repos"
 
+    os="amazon linux"
+    package_manager="yum"
+
     if [[ $package_manager == apt-get ]]; then
         apt_cmd="sudo apt-get --yes --quiet"
         $apt_cmd update
@@ -145,7 +148,11 @@ install_docker() {
         fi
         $zypper_cmd install docker docker-runc containerd
         sudo systemctl enable docker.service
+    elif [[ $package_manager == yum && $os == 'amazon linux' ]]; then
+        sudo yum install docker
+        sudo service docker start
     else
+
         yum_cmd="sudo yum --assumeyes --quiet"
         $yum_cmd install yum-utils
         sudo yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
