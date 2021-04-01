@@ -4,7 +4,7 @@
 
 
 # druid_storage_type=s3
-# druid_storage_bucket=signoz
+# druid_storage_bucket=<s3-bucket-name>
 # druid_storage_baseKey=druid/segments
 
 # AWS_ACCESS_KEY_ID=<s3-access-id>
@@ -12,7 +12,7 @@
 # AWS_REGION=<s3-aws-region>
 
 # druid_indexer_logs_type=s3
-# druid_indexer_logs_s3Bucket=signoz
+# druid_indexer_logs_s3Bucket=<s3-bucket-name>
 # druid_indexer_logs_s3Prefix=druid/indexing-logs
 
 # -----------------------------------------------------------
