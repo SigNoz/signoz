@@ -1,3 +1,4 @@
+deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
 *.pnp.js
