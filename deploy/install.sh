@@ -150,7 +150,7 @@ install_docker() {
         echo
         echo "Amazon Linux detected ... "
         echo
-        sudo yum --disablerepo=download.docker.com_linux_amazon install docker
+        sudo yum install docker
         sudo service docker start
     else
 
