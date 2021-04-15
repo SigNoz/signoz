@@ -27,9 +27,16 @@ extensions:
   health_check: {}
   zpages: {}
 exporters:
-  kafka:
+  kafka/traces:
     brokers:
       - kafka:9092
+    topic: 'otlp_spans'
+    protocol_version: 2.0.0
+
+  kafka/metrics:
+    brokers:
+      - kafka:9092
+    topic: 'otlp_metrics'
     protocol_version: 2.0.0
 service:
   extensions: [health_check, zpages]
@@ -37,8 +44,8 @@ service:
     traces:
       receivers: [jaeger, otlp]
       processors: [memory_limiter, batch, queued_retry]
-      exporters: [kafka]
+      exporters: [kafka/traces]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [kafka]
+      exporters: [kafka/metrics]
