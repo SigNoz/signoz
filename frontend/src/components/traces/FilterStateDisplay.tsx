@@ -1,9 +1,16 @@
 import React from "react";
-import { Card, Tag } from "antd";
+import { Card, Tag as AntTag } from "antd";
 import { connect } from "react-redux";
-
+import styled from "styled-components";
 import { StoreState } from "../../reducers";
 import { TagItem, TraceFilters, updateTraceFilters } from "../../actions";
+
+const Tag = styled(AntTag)`
+	.anticon {
+		position: relative;
+		top: -3px;
+	}
+`;
 
 interface FilterStateDisplayProps {
 	traceFilters: TraceFilters;
