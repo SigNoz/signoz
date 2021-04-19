@@ -19,8 +19,16 @@
               "ServiceName",
               "References",
               "Tags",
-              "TagsKeys",
-              "TagsValues",
+              { 
+                  "type": "string",
+                  "name": "TagsKeys", 
+                  "multiValueHandling": "ARRAY" 
+              },
+              { 
+                  "type": "string",
+                  "name": "TagsValues", 
+                  "multiValueHandling": "ARRAY" 
+              },
               { "name": "DurationNano", "type": "Long" },
               { "name": "Kind", "type": "int" }
             ]
