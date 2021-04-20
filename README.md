@@ -12,7 +12,7 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 
 <!-- ![SigNoz Feature](https://signoz.io/img/readme_feature1.jpg) -->
 
-![SigNoz Feature](https://res.cloudinary.com/dcv3epinx/image/upload/v1618861225/signoz-images/application-github-readme_rkpklh.jpg)
+![SigNoz Feature](https://res.cloudinary.com/dcv3epinx/image/upload/v1618904032/signoz-images/screenzy-1618904013729_clssvy.png)
 
 ### Features:
 
