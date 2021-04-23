@@ -151,7 +151,6 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 		<Card>
 			{/* <Space direction="vertical"> */}
 			<div>Custom Visualizations</div>
-
 			<Form
 				form={form}
 				onFinish={handleFinish}
