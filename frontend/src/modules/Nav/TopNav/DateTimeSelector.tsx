@@ -41,6 +41,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	const [refreshButtonClick, setRefreshButtoClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
 	const location = useLocation();
+
 	const updateTimeOnQueryParamChange = () => {
 		const timeDurationInLocalStorage = localStorage.getItem(
 			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
