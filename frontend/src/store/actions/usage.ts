@@ -1,8 +1,8 @@
 import { Dispatch } from "redux";
-import metricsAPI from "../api/metricsAPI";
+import metricsAPI from "../../api/metricsAPI";
 import { ActionTypes } from "./types";
 import { GlobalTime } from "./global";
-import { toUTCEpoch } from "../utils/timeUtils";
+import { toUTCEpoch } from "../../utils/timeUtils";
 
 export interface usageDataItem {
 	timestamp: number;

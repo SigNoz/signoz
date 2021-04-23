@@ -9,8 +9,8 @@ import {
 	fetchTraces,
 	TraceFilters,
 	GlobalTime,
-} from "../../actions";
-import { StoreState } from "../../reducers";
+} from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 import LatencyModalForm from "./LatencyModalForm";
 import { FilterStateDisplay } from "./FilterStateDisplay";
 

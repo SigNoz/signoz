@@ -1,9 +1,9 @@
 import { Dispatch } from "redux";
-import metricsAPI from "../api/metricsAPI";
+import metricsAPI from "../../api/metricsAPI";
 import { GlobalTime } from "./global";
 import { ActionTypes } from "./types";
-import { Token } from "../utils/token";
-import { toUTCEpoch } from "../utils/timeUtils";
+import { Token } from "../../utils/token";
+import { toUTCEpoch } from "../../utils/timeUtils";
 
 export interface servicesListItem {
 	serviceName: string;

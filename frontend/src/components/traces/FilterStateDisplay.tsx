@@ -2,8 +2,8 @@ import React from "react";
 import { Card, Tag } from "antd";
 import { connect } from "react-redux";
 
-import { StoreState } from "../../reducers";
-import { TagItem, TraceFilters, updateTraceFilters } from "../../actions";
+import { StoreState } from "../../store/reducers";
+import { TagItem, TraceFilters, updateTraceFilters } from "../../store/actions";
 
 interface FilterStateDisplayProps {
 	traceFilters: TraceFilters;

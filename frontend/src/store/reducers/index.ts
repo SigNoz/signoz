@@ -34,7 +34,7 @@ export interface StoreState {
 	filteredTraceMetrics: customMetricsItem[];
 }
 
-export const reducers = combineReducers<StoreState>({
+const reducers = combineReducers<StoreState>({
 	traceFilters: traceFiltersReducer,
 	inputTag: inputsReducer,
 	traces: tracesReducer,
@@ -46,3 +46,5 @@ export const reducers = combineReducers<StoreState>({
 	globalTime: updateGlobalTimeReducer,
 	filteredTraceMetrics: filteredTraceMetricsReducer,
 });
+
+export default reducers;

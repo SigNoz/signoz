@@ -3,13 +3,13 @@ import GenericVisualizations from "../metrics/GenericVisualization";
 import { Select, Card, Space, Form } from "antd";
 import { connect } from "react-redux";
 
-import { StoreState } from "../../reducers";
+import { StoreState } from "../../store/reducers";
 import {
 	customMetricsItem,
 	getFilteredTraceMetrics,
 	GlobalTime,
 	TraceFilters,
-} from "../../actions";
+} from "../../store/actions";
 
 const { Option } = Select;
 

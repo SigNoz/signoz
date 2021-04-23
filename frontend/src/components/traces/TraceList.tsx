@@ -3,8 +3,8 @@ import { connect } from "react-redux";
 import { NavLink } from "react-router-dom";
 import { Space, Table } from "antd";
 
-import { traceResponseNew, fetchTraces, pushDStree } from "../../actions";
-import { StoreState } from "../../reducers";
+import { traceResponseNew, fetchTraces, pushDStree } from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 import { isOnboardingSkipped } from "../../utils/app";
 
 interface TraceListProps {

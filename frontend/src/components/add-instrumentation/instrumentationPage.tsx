@@ -7,7 +7,7 @@ import {
 	EyeTwoTone,
 	EyeInvisibleOutlined,
 } from "@ant-design/icons";
-import { StoreState } from "../../reducers";
+import { StoreState } from "../../store/reducers";
 
 import { Alert } from "antd";
 

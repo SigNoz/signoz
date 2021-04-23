@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Table } from "antd";
 import styled from "styled-components";
-import { topEndpointListItem } from "../../actions/metrics";
+import { topEndpointListItem } from "../../store/actions/metrics";
 
 const Wrapper = styled.div`
 	padding-top: 10px;

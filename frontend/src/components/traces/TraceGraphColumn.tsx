@@ -2,8 +2,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { Table } from "antd";
 
-import { traceResponseNew, pushDStree } from "../../actions";
-import { StoreState } from "../../reducers";
+import { traceResponseNew, pushDStree } from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 
 interface TraceGraphColumnProps {
 	traces: traceResponseNew;

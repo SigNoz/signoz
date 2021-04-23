@@ -5,8 +5,8 @@ import { Button, Space, Spin, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
 
-import { getServicesList, GlobalTime, servicesListItem } from "../../actions";
-import { StoreState } from "../../reducers";
+import { getServicesList, GlobalTime, servicesListItem } from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 import { CustomModal } from "../common/Modal";
 
 interface ServicesTableProps {

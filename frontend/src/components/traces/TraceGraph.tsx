@@ -11,8 +11,8 @@ import * as d3Tip from "d3-tip";
 
 import "./TraceGraph.css";
 import { spanToTreeUtil } from "../../utils/spanToTree";
-import { fetchTraceItem, spansWSameTraceIDResponse } from "../../actions";
-import { StoreState } from "../../reducers";
+import { fetchTraceItem, spansWSameTraceIDResponse } from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 import { TraceGraphColumn } from "./TraceGraphColumn";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 

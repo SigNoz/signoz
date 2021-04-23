@@ -9,8 +9,8 @@ import {
 	GlobalTime,
 	servicesListItem,
 	usageDataItem,
-} from "../../actions";
-import { StoreState } from "../../reducers";
+} from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 import moment from "moment";
 import { isOnboardingSkipped } from "../../utils/app";
 const { Option } = Select;

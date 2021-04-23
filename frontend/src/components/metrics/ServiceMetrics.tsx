@@ -11,8 +11,8 @@ import {
 	topEndpointListItem,
 	GlobalTime,
 	updateTimeInterval,
-} from "../../actions";
-import { StoreState } from "../../reducers";
+} from "../../store/actions";
+import { StoreState } from "../../store/reducers";
 import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
 import ErrorRateChart from "./ErrorRateChart";
