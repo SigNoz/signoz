@@ -1,6 +1,7 @@
-import React, { useState, useRef, Suspense } from "react";
-import { Row, Space, Button, Input, Checkbox } from "antd";
-import submitForm from "../api/submitForm";
+import React, { useState } from "react";
+import { Row, Space, Button, Input } from "antd";
+import api, { apiV1 } from "../api";
+
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 
@@ -15,14 +16,10 @@ const Signup = (props: SignUpProps) => {
 		password: { value: "", valid: true },
 		emailOptIn: { value: true },
 	});
-	const passwordInput = useRef(null);
-	// const { createAccount } = useActions(signupLogic)
-	// const { accountLoading } = useValues(signupLogic)
-	// const { plan } = fromParams()
 
 	const updateForm = (name: any, target: any, valueAttr = "value") => {
 		/* Validate password (if applicable) */
-        if (name === "firstName") {
+		if (name === "firstName") {
 			setFormState({
 				...formState,
 				firstName: { ...formState.firstName, value: target[valueAttr] },
@@ -49,9 +46,7 @@ const Signup = (props: SignUpProps) => {
 
 		let texttolog = JSON.stringify(payload);
 
-
-
-		submitForm.post("user?email=" + texttolog).then((res) => {
+		api.post(apiV1 + "/user?email=" + texttolog).then((res) => {
 			console.log(res);
 			console.log(res.data);
 		});
@@ -118,8 +113,6 @@ const Signup = (props: SignUpProps) => {
 							/>
 						</div>
 
-
-
 						<div className="input-set">
 							<label htmlFor="signupFirstName">First Name</label>
 							<Input
@@ -133,7 +126,7 @@ const Signup = (props: SignUpProps) => {
 							/>
 						</div>
 
-						<div className="text-center space-top" style={{marginTop: 12}}>
+						<div className="text-center space-top" style={{ marginTop: 12 }}>
 							<Button
 								type="primary"
 								htmlType="submit"

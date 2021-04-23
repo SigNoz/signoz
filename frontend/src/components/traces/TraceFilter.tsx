@@ -15,7 +15,7 @@ import LatencyModalForm from "./LatencyModalForm";
 import { FilterStateDisplay } from "./FilterStateDisplay";
 
 import FormItem from "antd/lib/form/FormItem";
-import metricsAPI from "../../api/metricsAPI";
+import api, { apiV1 } from "../../api";
 import { useLocation } from "react-router-dom";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 
@@ -46,18 +46,18 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const location = useLocation();
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
-	useEffect(()=>{
+	useEffect(() => {
 		handleApplyFilterForm({
 			service: "",
 			tags: [],
 			operation: "",
 			latency: { min: "", max: "" },
-		})
-	},[])
+		});
+	}, []);
 
 	useEffect(() => {
-		metricsAPI
-			.get<string[]>("services/list")
+		api
+			.get<string[]>(`${apiV1}/services/list`)
 			.then((response) => {
 				setServiceList(response.data);
 			})
@@ -154,15 +154,17 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	function handleChangeService(value: string) {
 		let service_request = "/service/" + value + "/operations";
-		metricsAPI.get<string[]>(service_request).then((response) => {
+		api.get<string[]>(apiV1 + service_request).then((response) => {
 			// form_basefilter.resetFields(['operation',])
 			setOperationsList(response.data);
 		});
 
-		let tagkeyoptions_request = "tags?service=" + value;
-		metricsAPI.get<TagKeyOptionItem[]>(tagkeyoptions_request).then((response) => {
-			setTagKeyOptions(response.data);
-		});
+		let tagkeyoptions_request = "/tags?service=" + value;
+		api
+			.get<TagKeyOptionItem[]>(apiV1 + tagkeyoptions_request)
+			.then((response) => {
+				setTagKeyOptions(response.data);
+			});
 
 		props.updateTraceFilters({ ...props.traceFilters, service: value });
 	}
@@ -287,21 +289,21 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			operation: values.operation,
 			latency: {
 				max: "",
-				min: ""
+				min: "",
 			},
 		});
 	};
 
-	useEffect(()=>{
-		return ()=>{
+	useEffect(() => {
+		return () => {
 			props.updateTraceFilters({
 				service: "",
 				operation: "",
 				tags: [],
 				latency: { min: "", max: "" },
 			});
-		}
-	},[])
+		};
+	}, []);
 
 	return (
 		<div>

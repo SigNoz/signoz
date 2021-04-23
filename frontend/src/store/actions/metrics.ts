@@ -1,5 +1,6 @@
 import { Dispatch } from "redux";
-import metricsAPI from "../../api/metricsAPI";
+import api, { apiV1 } from "../../api";
+
 import { GlobalTime } from "./global";
 import { ActionTypes } from "./types";
 import { Token } from "../../utils/token";
@@ -62,9 +63,9 @@ export interface getFilteredTraceMetricsAction {
 export const getServicesList = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch) => {
 		let request_string =
-			"services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
+			"/services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
 
-		const response = await metricsAPI.get<servicesListItem[]>(request_string);
+		const response = await api.get<servicesListItem[]>(apiV1 + request_string);
 
 		dispatch<getServicesListAction>({
 			type: ActionTypes.getServicesList,
@@ -80,14 +81,14 @@ export const getServicesMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		let request_string =
-			"service/overview?service=" +
+			"/service/overview?service=" +
 			serviceName +
 			"&start=" +
 			globalTime.minTime +
 			"&end=" +
 			globalTime.maxTime +
 			"&step=60";
-		const response = await metricsAPI.get<metricItem[]>(request_string);
+		const response = await api.get<metricItem[]>(apiV1 + request_string);
 
 		dispatch<getServiceMetricsAction>({
 			type: ActionTypes.getServiceMetrics,
@@ -103,13 +104,13 @@ export const getTopEndpoints = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		let request_string =
-			"service/top_endpoints?service=" +
+			"/service/top_endpoints?service=" +
 			serviceName +
 			"&start=" +
 			globalTime.minTime +
 			"&end=" +
 			globalTime.maxTime;
-		const response = await metricsAPI.get<topEndpointListItem[]>(request_string);
+		const response = await api.get<topEndpointListItem[]>(apiV1 + request_string);
 
 		dispatch<getTopEndpointsAction>({
 			type: ActionTypes.getTopEndpoints,
@@ -125,13 +126,13 @@ export const getFilteredTraceMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		let request_string =
-			"spans/aggregates?start=" +
+			"/spans/aggregates?start=" +
 			toUTCEpoch(globalTime.minTime) +
 			"&end=" +
 			toUTCEpoch(globalTime.maxTime) +
 			"&" +
 			filter_params;
-		const response = await metricsAPI.get<customMetricsItem[]>(request_string);
+		const response = await api.get<customMetricsItem[]>(apiV1 + request_string);
 
 		dispatch<getFilteredTraceMetricsAction>({
 			type: ActionTypes.getFilteredTraceMetrics,

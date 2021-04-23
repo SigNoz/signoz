@@ -1,5 +1,6 @@
 import { Dispatch } from "redux";
-import metricsAPI from "../../api/metricsAPI";
+import api, { apiV1 } from "../../api";
+
 import { ActionTypes } from "./types";
 import { GlobalTime } from "./global";
 import { toUTCEpoch } from "../../utils/timeUtils";
@@ -21,11 +22,11 @@ export const getUsageData = (
 	service: string,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string = `usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
+		let request_string = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
 			maxTime,
 		)}&step=${step}&service=${service ? service : ""}`;
 		//Step can only be multiple of 3600
-		const response = await metricsAPI.get<usageDataItem[]>(request_string);
+		const response = await api.get<usageDataItem[]>(apiV1 + request_string);
 
 		dispatch<getUsageDataAction>({
 			type: ActionTypes.getUsageData,

@@ -1,5 +1,6 @@
 import { ActionTypes } from "./types";
-import tracesAPI from "../../api/tracesAPI";
+import api, { apiV1 } from "../../api";
+
 import { Dispatch } from "redux";
 import { GlobalTime } from "./global";
 import { toUTCEpoch } from "../../utils/timeUtils";
@@ -121,13 +122,13 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 	return async (dispatch: Dispatch) => {
 		if (globalTime) {
 			let request_string =
-				"spans?limit=100&lookback=2d&start=" +
+				"/spans?limit=100&lookback=2d&start=" +
 				toUTCEpoch(globalTime.minTime) +
 				"&end=" +
 				toUTCEpoch(globalTime.maxTime) +
 				"&" +
 				filter_params;
-			const response = await tracesAPI.get<traceResponseNew>(request_string);
+			const response = await api.get<traceResponseNew>(apiV1 + request_string);
 
 			dispatch<FetchTracesAction>({
 				type: ActionTypes.fetchTraces,
@@ -140,9 +141,9 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch) => {
-		let request_string = "traces/" + traceID;
-		const response = await tracesAPI.get<spansWSameTraceIDResponse>(
-			request_string,
+		let request_string = "/traces/" + traceID;
+		const response = await api.get<spansWSameTraceIDResponse>(
+			apiV1 + request_string,
 		);
 
 		dispatch<FetchTraceItemAction>({
