@@ -10,6 +10,8 @@ module.exports = {
 		historyApiFallback: true,
 		publicPath: "/",
 		transportMode: "ws",
+		open: true,
+		openPage: "application",
 		contentBase: [resolve(__dirname, "./public")],
 		hot: true,
 		liveReload: false,
