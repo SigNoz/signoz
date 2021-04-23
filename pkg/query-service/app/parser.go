@@ -35,8 +35,8 @@ func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams,
 	}
 
 	getTopEndpointsParams := model.GetTopEndpointsParams{
-		StartTime:   startTime.Format("2006-01-02 15:04:05"),
-		EndTime:     endTime.Format("2006-01-02 15:04:05"),
+		StartTime:   startTime.Format(time.RFC3339Nano),
+		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 	}
 
@@ -66,8 +66,8 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 	serviceName := r.URL.Query().Get("service")
 
 	getUsageParams := model.GetUsageParams{
-		StartTime:   startTime.Format("2006-01-02 15:04:05"),
-		EndTime:     endTime.Format("2006-01-02 15:04:05"),
+		StartTime:   startTime.Format(time.RFC3339Nano),
+		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 		Period:      fmt.Sprintf("PT%dH", stepInt/3600),
 	}
@@ -101,8 +101,8 @@ func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewP
 	}
 
 	getServiceOverviewParams := model.GetServiceOverviewParams{
-		StartTime:   startTime.Format("2006-01-02 15:04:05"),
-		EndTime:     endTime.Format("2006-01-02 15:04:05"),
+		StartTime:   startTime.Format(time.RFC3339Nano),
+		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 		Period:      fmt.Sprintf("PT%dM", stepInt/60),
 		StepSeconds: stepInt,
@@ -124,8 +124,8 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	}
 
 	getServicesParams := model.GetServicesParams{
-		StartTime: startTime.Format("2006-01-02 15:04:05"),
-		EndTime:   endTime.Format("2006-01-02 15:04:05"),
+		StartTime: startTime.Format(time.RFC3339Nano),
+		EndTime:   endTime.Format(time.RFC3339Nano),
 		Period:    int(endTime.Unix() - startTime.Unix()),
 	}
 	return &getServicesParams, nil

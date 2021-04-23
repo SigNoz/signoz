@@ -53,7 +53,7 @@ type TagItem struct {
 
 func GetOperations(client *SqlClient, serviceName string) (*[]string, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT DISTINCT(Name) FROM %s WHERE ServiceName='%s' AND __time > CURRENT_TIMESTAMP - INTERVAL '2' DAY`, constants.DruidDatasource, serviceName)
+	sqlQuery := fmt.Sprintf(`SELECT DISTINCT(Name) FROM %s WHERE ServiceName='%s' AND __time > CURRENT_TIMESTAMP - INTERVAL '1' DAY`, constants.DruidDatasource, serviceName)
 	// zap.S().Debug(sqlQuery)
 
 	response, err := client.Query(sqlQuery, "array")
@@ -143,7 +143,7 @@ func GetTags(client *SqlClient, serviceName string) (*[]TagItem, error) {
 
 func GetTopEndpoints(client *SqlClient, query *model.GetTopEndpointsParams) (*[]TopEnpointsItem, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.9) as p90, APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT(SpanId) as numCalls, Name  FROM "%s" WHERE  "__time" >= TIMESTAMP '%s' AND "__time" <= TIMESTAMP '%s' AND  "Kind"='2' and "ServiceName"='%s' GROUP BY Name`, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName)
+	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.9) as p90, APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT(SpanId) as numCalls, Name  FROM "%s" WHERE  "__time" >= '%s' AND "__time" <= '%s' AND  "Kind"='2' and "ServiceName"='%s' GROUP BY Name`, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName)
 
 	// zap.S().Debug(sqlQuery)
 
@@ -173,10 +173,10 @@ func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]UsageItem, err
 
 	if len(query.ServiceName) != 0 {
 
-		sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "count" FROM "%s" WHERE "__time" >= TIMESTAMP '%s' and "__time" <= TIMESTAMP '%s'  and "ServiceName"='%s' GROUP BY TIME_FLOOR(__time,  '%s')`, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
+		sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "count" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "ServiceName"='%s' GROUP BY TIME_FLOOR(__time,  '%s')`, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
 
 	} else {
-		sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "count" FROM "%s" WHERE "__time" >= TIMESTAMP '%s' and "__time" <= TIMESTAMP '%s' GROUP BY TIME_FLOOR(__time,  '%s')`, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.Period)
+		sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "count" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s' GROUP BY TIME_FLOOR(__time,  '%s')`, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.Period)
 	}
 
 	// zap.S().Debug(sqlQuery)
@@ -210,7 +210,7 @@ func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]UsageItem, err
 func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceOverviewItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.9) as p90, 
-	APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT("SpanId") as "numCalls" FROM "%s" WHERE "__time" >= TIMESTAMP '%s' and "__time" <= TIMESTAMP '%s'  and "Kind"='2' and "ServiceName"='%s' GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
+	APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT("SpanId") as "numCalls" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "Kind"='2' and "ServiceName"='%s' GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
 
 	// zap.S().Debug(sqlQuery)
 
@@ -245,7 +245,7 @@ func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams
 
 func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceItem, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.99) as "p99", AVG("DurationNano") as "avgDuration", COUNT(SpanId) as numCalls, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= TIMESTAMP '%s' and "__time" <= TIMESTAMP '%s' and "Kind"='2' GROUP BY "ServiceName" ORDER BY "p99" DESC`, constants.DruidDatasource, query.StartTime, query.EndTime)
+	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.99) as "p99", AVG("DurationNano") as "avgDuration", COUNT(SpanId) as numCalls, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' GROUP BY "ServiceName" ORDER BY "p99" DESC`, constants.DruidDatasource, query.StartTime, query.EndTime)
 
 	response, err := client.Query(sqlQuery, "object")
 
