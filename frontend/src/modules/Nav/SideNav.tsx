@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Layout, Menu, Switch as ToggleButton } from "antd";
 import { NavLink } from "react-router-dom";
 import { useThemeSwitcher } from "react-css-theme-switcher";
+import { useHistory } from "react-router-dom";
 
 import {
 	LineChartOutlined,
@@ -17,7 +18,9 @@ const { Sider } = Layout;
 const SideNav = () => {
 	const { switcher, currentTheme, status, themes } = useThemeSwitcher();
 	const [collapsed, setCollapsed] = useState<boolean>(false);
-	if (status === "loading") {
+	const history = useHistory();
+
+	if (status === "loading" || history.location.pathname === "/signup") {
 		return null;
 	}
 	const toggleTheme = (isChecked: boolean) => {
