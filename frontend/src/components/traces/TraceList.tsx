@@ -51,7 +51,7 @@ const _TraceList = (props: TraceListProps) => {
 			key: "startTime",
 			sorter: (a: any, b: any) => a.startTime - b.startTime,
 			sortDirections: ["descend", "ascend"],
-			render: (value: number) => moment(value).format("HH:mm"),
+			render: (value: number) => moment(value).format("YYYY-MM-DD hh:mm:ss"),
 
 			// new Date() assumes input in milliseconds. Start Time stamp returned by druid api for span list is in ms
 		},
