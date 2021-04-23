@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import GenericVisualizations from "../metrics/GenericVisualization";
+import GenericVisualizations from "../Metrics/GenericVisualization";
 import { Select, Card, Space, Form } from "antd";
 import { connect } from "react-redux";
 

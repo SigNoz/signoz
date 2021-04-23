@@ -1,8 +1,8 @@
-import React, { Suspense, useState } from "react";
+import React, { Suspense } from "react";
 import { Spin } from "antd";
 import { Route, Switch, Redirect } from "react-router-dom";
-import Signup from "./Signup";
-const App = React.lazy(() => import("Src/components/App"));
+import Signup from "./Auth/Signup";
+const App = React.lazy(() => import("Src/modules/App"));
 
 const AppWrapper = () => {
 	return (

@@ -6,11 +6,11 @@ import { RouteComponentProps, useLocation } from "react-router-dom";
 import { connect } from "react-redux";
 
 import CustomDateTimeModal from "./CustomDateTimeModal";
-import { GlobalTime, updateTimeInterval } from "../store/actions";
-import { StoreState } from "../store/reducers";
+import { GlobalTime, updateTimeInterval } from "../../../store/actions";
+import { StoreState } from "../../../store/reducers";
 import FormItem from "antd/lib/form/FormItem";
 
-import { DateTimeRangeType } from "../store/actions";
+import { DateTimeRangeType } from "../../../store/actions";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { LOCAL_STORAGE } from "Src/constants/localStorage";
 import moment from "moment";

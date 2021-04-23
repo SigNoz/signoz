@@ -17,7 +17,7 @@ import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
 import ErrorRateChart from "./ErrorRateChart";
 import TopEndpointsTable from "./TopEndpointsTable";
-import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
+import { METRICS_PAGE_QUERY_PARAM } from "../Traces/node_modules/Src/constants/query";
 
 const { TabPane } = Tabs;
 

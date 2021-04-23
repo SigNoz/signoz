@@ -7,7 +7,7 @@ import { connect } from "react-redux";
 
 import { getServicesList, GlobalTime, servicesListItem } from "../../store/actions";
 import { StoreState } from "../../store/reducers";
-import { CustomModal } from "../common/Modal";
+import { CustomModal } from "../../components/Modal";
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
