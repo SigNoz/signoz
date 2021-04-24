@@ -36,7 +36,8 @@ data:
                     "multiValueHandling": "ARRAY" 
                 },
                 { "name": "DurationNano", "type": "Long" },
-                { "name": "Kind", "type": "int" }
+                { "name": "Kind", "type": "int" },
+                { "name": "StatusCode", "type": "int" }
               ]
             }
           }

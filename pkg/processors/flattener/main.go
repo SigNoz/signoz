@@ -50,6 +50,7 @@ type Span struct {
 	StartTimeUnixNano uint64
 	ServiceName       string
 	Kind              int32
+	StatusCode        int64
 	References        []OtelSpanRef
 	Tags              []string
 	TagsKeys          []string
@@ -201,13 +202,25 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 	spanID_bytes := otelSpan.SpanID().Bytes()
 	parentSpanID_bytes := otelSpan.ParentSpanID().Bytes()
 
+	var statusCode int64
+
 	attributes := otelSpan.Attributes()
 
 	var tags []string
 	var tagsKeys []string
 	var tagsValues []string
+	var tag string
+
 	attributes.ForEach(func(k string, v pdata.AttributeValue) {
-		tag := fmt.Sprintf("%s:%s", k, v.StringVal())
+		if v.Type().String() == "INT" {
+			tag = fmt.Sprintf("%s:%d", k, v.IntVal())
+		} else {
+			tag = fmt.Sprintf("%s:%s", k, v.StringVal())
+		}
+		if k == "http.status_code" {
+			statusCode = v.IntVal()
+		}
+
 		tags = append(tags, tag)
 		tagsKeys = append(tagsKeys, k)
 		tagsValues = append(tagsValues, v.StringVal())
@@ -224,6 +237,7 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 		DurationNano:      durationNano,
 		ServiceName:       ServiceName,
 		Kind:              int32(otelSpan.Kind()),
+		StatusCode:        statusCode,
 		References:        references,
 		Tags:              tags,
 		TagsKeys:          tagsKeys,
