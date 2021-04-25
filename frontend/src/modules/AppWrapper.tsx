@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { Layout, Spin } from "antd";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import ROUTES from "Src/constants/routes";
+import { IS_LOGGED_IN } from "Src/constants/auth";
 import {
 	BrowserRouter as Router,
 	Route,
@@ -58,7 +59,7 @@ const App = () => {
 									path="/"
 									exact
 									render={() => {
-										return localStorage.getItem("isLoggedIn") === "yes" ? (
+										return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
 											<Redirect to={ROUTES.APPLICATION} />
 										) : (
 											<Redirect to={ROUTES.SIGN_UP} />

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Row, Space, Button, Input } from "antd";
 import api, { apiV1 } from "../../api";
 import ROUTES from "Src/constants/routes";
+import { IS_LOGGED_IN } from "Src/constants/auth";
 
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
@@ -36,8 +37,6 @@ const Signup = (props: SignUpProps) => {
 	const handleSubmit = (e: any) => {
 		e.preventDefault();
 
-		console.log("in handle submit");
-
 		setState({ ...state, submitted: true });
 
 		const payload = {
@@ -52,7 +51,7 @@ const Signup = (props: SignUpProps) => {
 			console.log(res.data);
 		});
 
-		localStorage.setItem("isLoggedIn", "yes");
+		localStorage.setItem(IS_LOGGED_IN, "yes");
 		props.history.push(ROUTES.APPLICATION);
 	};
 
