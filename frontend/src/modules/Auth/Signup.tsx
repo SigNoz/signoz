@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Row, Space, Button, Input } from "antd";
 import api, { apiV1 } from "../../api";
+import ROUTES from "Src/constants/routes";
 
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
@@ -52,7 +53,7 @@ const Signup = (props: SignUpProps) => {
 		});
 
 		localStorage.setItem("isLoggedIn", "yes");
-		props.history.push("/application");
+		props.history.push(ROUTES.APPLICATION);
 	};
 
 	return (

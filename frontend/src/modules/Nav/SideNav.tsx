@@ -3,6 +3,7 @@ import { Layout, Menu, Switch as ToggleButton } from "antd";
 import { NavLink } from "react-router-dom";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { useHistory } from "react-router-dom";
+import ROUTES from "Src/constants/routes";
 
 import {
 	LineChartOutlined,
@@ -20,7 +21,7 @@ const SideNav = () => {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
 	const history = useHistory();
 
-	if (status === "loading" || history.location.pathname === "/signup") {
+	if (status === "loading" || history.location.pathname === ROUTES.SIGN_UP) {
 		return null;
 	}
 	const toggleTheme = (isChecked: boolean) => {
@@ -55,20 +56,23 @@ const SideNav = () => {
 			<Menu theme="dark" defaultSelectedKeys={["1"]} mode="inline">
 				<Menu.Item key="1" icon={<BarChartOutlined />}>
 					<NavLink
-						to="/application"
+						to={ROUTES.APPLICATION}
 						style={{ fontSize: 12, textDecoration: "none" }}
 					>
 						Metrics
 					</NavLink>
 				</Menu.Item>
 				<Menu.Item key="2" icon={<AlignLeftOutlined />}>
-					<NavLink to="/traces" style={{ fontSize: 12, textDecoration: "none" }}>
+					<NavLink
+						to={ROUTES.TRACES}
+						style={{ fontSize: 12, textDecoration: "none" }}
+					>
 						Traces
 					</NavLink>
 				</Menu.Item>
 				<Menu.Item key="3" icon={<DeploymentUnitOutlined />}>
 					<NavLink
-						to="/service-map"
+						to={ROUTES.SERVICE_MAP}
 						style={{ fontSize: 12, textDecoration: "none" }}
 					>
 						Service Map
@@ -76,22 +80,22 @@ const SideNav = () => {
 				</Menu.Item>
 				<Menu.Item key="4" icon={<LineChartOutlined />}>
 					<NavLink
-						to="/usage-explorer"
+						to={ROUTES.USAGE_EXPLORER}
 						style={{ fontSize: 12, textDecoration: "none" }}
 					>
 						Usage Explorer
 					</NavLink>
 				</Menu.Item>
 				<Menu.Item key="5" icon={<SettingOutlined />}>
-					<NavLink to="/settings" style={{ fontSize: 12, textDecoration: "none" }}>
+					<NavLink
+						to={ROUTES.SETTINGS}
+						style={{ fontSize: 12, textDecoration: "none" }}
+					>
 						Settings
 					</NavLink>
 				</Menu.Item>
 				<Menu.Item key="6" icon={<ApiOutlined />}>
-					<NavLink
-						to="/add-instrumentation"
-						style={{ fontSize: 12, textDecoration: "none" }}
-					>
+					<NavLink to={ROUTES.INSTRUMENTATION} style={{ fontSize: 12, textDecoration: "none" }}>
 						Add instrumentation
 					</NavLink>
 				</Menu.Item>

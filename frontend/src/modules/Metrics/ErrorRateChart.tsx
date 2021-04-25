@@ -4,6 +4,7 @@ import { ChartOptions } from "chart.js";
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 import styled from "styled-components";
+import ROUTES from "Src/constants/routes";
 
 import { metricItem } from "../../store/actions/metrics";
 
@@ -74,11 +75,11 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 	};
 
 	gotoTracesHandler = () => {
-		this.props.history.push("/traces");
+		this.props.history.push(ROUTES.TRACES);
 	};
 
 	gotoAlertsHandler = () => {
-		this.props.history.push("/service-map");
+		this.props.history.push(ROUTES.SERVICE_MAP);
 		// PNOTE - Keeping service map for now, will replace with alerts when alert page is made
 	};
 

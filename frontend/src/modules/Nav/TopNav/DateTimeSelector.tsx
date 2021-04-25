@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { withRouter } from "react-router";
 import { RouteComponentProps, useLocation } from "react-router-dom";
 import { connect } from "react-redux";
+import ROUTES from "Src/constants/routes";
 
 import CustomDateTimeModal from "./CustomDateTimeModal";
 import { GlobalTime, updateTimeInterval } from "../../../store/actions";
@@ -195,7 +196,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		{ value: "1day", label: "Last 1 day" },
 		{ value: "1week", label: "Last 1 week" },
 	];
-	if (props.location.pathname.startsWith("/usage-explorer")) {
+	if (props.location.pathname.startsWith(ROUTES.USAGE_EXPLORER)) {
 		return null;
 	} else {
 		const inputLabeLToShow =
