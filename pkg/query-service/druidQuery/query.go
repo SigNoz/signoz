@@ -254,19 +254,18 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 		return nil, clientErr
 	}
 
-	// fmt.Println("response", client.LastResponse)
+	fmt.Println("response", client.LastResponse)
 
-	reveivedResponse := new([]SpanSearchAggregatesDuratonReceivedItem)
-
-	err = json.Unmarshal([]byte(client.LastResponse), reveivedResponse)
-	if err != nil {
+	receivedResponse := new([]SpanSearchAggregatesDuratonReceivedItem)
+	err = json.Unmarshal([]byte(client.LastResponse), receivedResponse)
+	if err != nil && len(*receivedResponse) == 0 {
 		zap.S().Error(err)
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
 	var response []SpanSearchAggregatesResponseItem
 
-	for _, elem := range *reveivedResponse {
+	for _, elem := range *receivedResponse {
 
 		value := elem.Result.Value
 		timeObj, _ := time.Parse(time.RFC3339Nano, elem.Timestamp)
