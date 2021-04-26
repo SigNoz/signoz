@@ -42,19 +42,26 @@ var (
 )
 
 type Span struct {
-	TraceId           string
-	SpanId            string
-	ParentSpanId      string
-	Name              string
-	DurationNano      uint64
-	StartTimeUnixNano uint64
-	ServiceName       string
-	Kind              int32
-	StatusCode        int64
-	References        []OtelSpanRef
-	Tags              []string
-	TagsKeys          []string
-	TagsValues        []string
+	TraceId            string
+	SpanId             string
+	ParentSpanId       string
+	Name               string
+	DurationNano       uint64
+	StartTimeUnixNano  uint64
+	ServiceName        string
+	Kind               int32
+	References         []OtelSpanRef
+	Tags               []string
+	TagsKeys           []string
+	TagsValues         []string
+	StatusCode         int64
+	ExternalHttpMethod string
+	ExternalHttpUrl    string
+	Component          string
+	DBSystem           string
+	DBName             string
+	DBOperation        string
+	PeerService        string
 }
 
 type OtelSpanRef struct {
@@ -195,14 +202,45 @@ func byteSlice2string(byteSlice []byte) string {
 	return hex.EncodeToString(byteSlice)
 }
 
+func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
+
+	attributes.ForEach(func(k string, v pdata.AttributeValue) {
+		if k == "http.status_code" {
+			span.StatusCode = v.IntVal()
+		}
+		if k == "http.url" {
+			span.ExternalHttpUrl = v.StringVal()
+		}
+		if k == "http.method" {
+			span.ExternalHttpMethod = v.StringVal()
+		}
+		if k == "component" {
+			span.Component = v.StringVal()
+		}
+
+		if k == "db.system" {
+			span.DBSystem = v.StringVal()
+		}
+		if k == "db.name" {
+			span.DBName = v.StringVal()
+		}
+		if k == "db.operation" {
+			span.DBOperation = v.StringVal()
+		}
+		if k == "peer.service" {
+			span.PeerService = v.StringVal()
+		}
+
+	})
+
+}
+
 func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 
 	durationNano := uint64(otelSpan.EndTime() - otelSpan.StartTime())
 	traceID_bytes := otelSpan.TraceID().Bytes()
 	spanID_bytes := otelSpan.SpanID().Bytes()
 	parentSpanID_bytes := otelSpan.ParentSpanID().Bytes()
-
-	var statusCode int64
 
 	attributes := otelSpan.Attributes()
 
@@ -217,9 +255,6 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 		} else {
 			tag = fmt.Sprintf("%s:%s", k, v.StringVal())
 		}
-		if k == "http.status_code" {
-			statusCode = v.IntVal()
-		}
 
 		tags = append(tags, tag)
 		tagsKeys = append(tagsKeys, k)
@@ -228,7 +263,7 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 
 	references, _ := makeJaegerProtoReferences(otelSpan.Links(), otelSpan.ParentSpanID(), otelSpan.TraceID())
 
-	return &Span{
+	var span *Span = &Span{
 		TraceId:           hex.EncodeToString(traceID_bytes[:]),
 		SpanId:            hex.EncodeToString(spanID_bytes[:]),
 		ParentSpanId:      hex.EncodeToString(parentSpanID_bytes[:]),
@@ -237,12 +272,15 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 		DurationNano:      durationNano,
 		ServiceName:       ServiceName,
 		Kind:              int32(otelSpan.Kind()),
-		StatusCode:        statusCode,
 		References:        references,
 		Tags:              tags,
 		TagsKeys:          tagsKeys,
 		TagsValues:        tagsValues,
 	}
+
+	populateOtherDimensions(attributes, span)
+
+	return span
 }
 
 // ServiceNameForResource gets the service name for a specified Resource.
