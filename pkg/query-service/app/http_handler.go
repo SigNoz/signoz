@@ -63,6 +63,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/external", aH.getServiceExternal).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/{service}/operations", aH.getOperations).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/spans", aH.searchSpans).Methods(http.MethodGet)
@@ -167,6 +170,54 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := druidQuery.GetUsage(aH.sqlClient, query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, err := druidQuery.GetServiceExternal(aH.sqlClient, query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) GetServiceExternalAvgDuration(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, err := druidQuery.GetServiceExternalAvgDuration(aH.sqlClient, query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) getServiceExternalErrors(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, err := druidQuery.GetServiceExternalErrors(aH.sqlClient, query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}

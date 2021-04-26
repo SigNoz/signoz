@@ -76,6 +76,42 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 
 }
 
+func parseGetServiceExternalRequest(r *http.Request) (*model.GetServiceOverviewParams, error) {
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTime("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	stepStr := r.URL.Query().Get("step")
+	if len(stepStr) == 0 {
+		return nil, errors.New("step param missing in query")
+	}
+	stepInt, err := strconv.Atoi(stepStr)
+	if err != nil {
+		return nil, errors.New("step param is not in correct format")
+	}
+
+	serviceName := r.URL.Query().Get("service")
+	if len(serviceName) == 0 {
+		return nil, errors.New("serviceName param missing in query")
+	}
+
+	getServiceOverviewParams := model.GetServiceOverviewParams{
+		StartTime:   startTime.Format(time.RFC3339Nano),
+		EndTime:     endTime.Format(time.RFC3339Nano),
+		ServiceName: serviceName,
+		Period:      fmt.Sprintf("PT%dM", stepInt/60),
+		StepSeconds: stepInt,
+	}
+
+	return &getServiceOverviewParams, nil
+
+}
+
 func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewParams, error) {
 	startTime, err := parseTime("start", r)
 	if err != nil {

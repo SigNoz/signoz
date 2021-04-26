@@ -32,6 +32,15 @@ type ServiceOverviewItem struct {
 	ErrorRate    float32 `json:"errorRate"`
 }
 
+type ServiceExternalItem struct {
+	Time            string  `json:"time,omitempty"`
+	Timestamp       int64   `json:"timestamp,omitempty"`
+	ExternalHttpUrl string  `json:"externalHttpUrl,omitempty"`
+	AvgDuration     float32 `json:"avgDuration,omitempty"`
+	NumCalls        int     `json:"numCalls,omitempty"`
+	CallRate        float32 `json:"callRate,omitempty"`
+}
+
 type UsageItem struct {
 	Time      string `json:"time,omitempty"`
 	Timestamp int64  `json:"timestamp"`
@@ -205,6 +214,115 @@ func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]UsageItem, err
 
 	usageResponse := (*res)[1:]
 	return &usageResponse, nil
+}
+
+func GetServiceExternalAvgDuration(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceExternalItem, error) {
+
+	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", AVG(DurationNano) as "avgDuration" FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != '' AND "__time" >= '%s' AND "__time" <= '%s'
+	GROUP BY TIME_FLOOR(__time,  '%s'), ExternalHttpUrl`, query.Period, constants.DruidDatasource, query.ServiceName, query.StartTime, query.EndTime, query.Period)
+
+	// zap.S().Debug(sqlQuery)
+
+	response, err := client.Query(sqlQuery, "object")
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// responseStr := string(response)
+	// zap.S().Info(responseStr)
+
+	res := new([]ServiceExternalItem)
+	err = json.Unmarshal(response, res)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+
+	for i, _ := range *res {
+		timeObj, _ := time.Parse(time.RFC3339Nano, (*res)[i].Time)
+		(*res)[i].Timestamp = int64(timeObj.UnixNano())
+		(*res)[i].Time = ""
+		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.StepSeconds)
+
+	}
+
+	servicesExternalResponse := (*res)[1:]
+	return &servicesExternalResponse, nil
+}
+
+func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceExternalItem, error) {
+
+	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "numCalls", ExternalHttpUrl as externalHttpUrl FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != '' AND StatusCode >= 500 AND "__time" >= '%s' AND "__time" <= '%s'
+	GROUP BY TIME_FLOOR(__time,  '%s'), ExternalHttpUrl`, query.Period, constants.DruidDatasource, query.ServiceName, query.StartTime, query.EndTime, query.Period)
+
+	// zap.S().Debug(sqlQuery)
+
+	response, err := client.Query(sqlQuery, "object")
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// responseStr := string(response)
+	// zap.S().Info(responseStr)
+
+	res := new([]ServiceExternalItem)
+	err = json.Unmarshal(response, res)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+
+	for i, _ := range *res {
+		timeObj, _ := time.Parse(time.RFC3339Nano, (*res)[i].Time)
+		(*res)[i].Timestamp = int64(timeObj.UnixNano())
+		(*res)[i].Time = ""
+		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.StepSeconds)
+
+	}
+
+	servicesExternalResponse := (*res)[1:]
+	return &servicesExternalResponse, nil
+}
+
+func GetServiceExternal(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceExternalItem, error) {
+
+	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", AVG(DurationNano) as "avgDuration", COUNT(SpanId) as "numCalls", ExternalHttpUrl as externalHttpUrl FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != ''
+	AND "__time" >= '%s' AND "__time" <= '%s'
+	GROUP BY TIME_FLOOR(__time,  '%s'), ExternalHttpUrl`, query.Period, constants.DruidDatasource, query.ServiceName, query.StartTime, query.EndTime, query.Period)
+
+	// zap.S().Debug(sqlQuery)
+
+	response, err := client.Query(sqlQuery, "object")
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// responseStr := string(response)
+	// zap.S().Info(responseStr)
+
+	res := new([]ServiceExternalItem)
+	err = json.Unmarshal(response, res)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+
+	for i, _ := range *res {
+		timeObj, _ := time.Parse(time.RFC3339Nano, (*res)[i].Time)
+		(*res)[i].Timestamp = int64(timeObj.UnixNano())
+		(*res)[i].Time = ""
+		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.StepSeconds)
+
+	}
+
+	servicesExternalResponse := (*res)[1:]
+	return &servicesExternalResponse, nil
 }
 
 func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceOverviewItem, error) {
