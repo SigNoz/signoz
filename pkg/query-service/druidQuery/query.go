@@ -254,7 +254,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 		return nil, clientErr
 	}
 
-	fmt.Println("response", client.LastResponse)
+	// fmt.Println("response", client.LastResponse)
 
 	receivedResponse := new([]SpanSearchAggregatesDuratonReceivedItem)
 	err = json.Unmarshal([]byte(client.LastResponse), receivedResponse)
