@@ -6,7 +6,12 @@ import { Space, Table } from "antd";
 import { traceResponseNew, fetchTraces, pushDStree } from "../../actions";
 import { StoreState } from "../../reducers";
 import { isOnboardingSkipped } from "../../utils/app";
+import moment from "moment";
+import styled from "styled-components";
 
+const TraceHeader = styled.div`
+	margin: 16px 0;
+`;
 interface TraceListProps {
 	traces: traceResponseNew;
 	fetchTraces: Function;
@@ -41,12 +46,12 @@ const _TraceList = (props: TraceListProps) => {
 
 	const columns: any = [
 		{
-			title: "Start Time (UTC Time)",
+			title: "Start Time",
 			dataIndex: "startTime",
 			key: "startTime",
 			sorter: (a: any, b: any) => a.startTime - b.startTime,
 			sortDirections: ["descend", "ascend"],
-			render: (value: number) => new Date(Math.round(value)).toUTCString(),
+			render: (value: number) => moment(value).format("YYYY-MM-DD hh:mm:ss"),
 
 			// new Date() assumes input in milliseconds. Start Time stamp returned by druid api for span list is in ms
 		},
@@ -130,7 +135,7 @@ const _TraceList = (props: TraceListProps) => {
 
 	return (
 		<div>
-			<div>List of traces with spanID</div>
+			<TraceHeader>List of traces with spanID</TraceHeader>
 			<div>{renderTraces()}</div>
 		</div>
 	);
