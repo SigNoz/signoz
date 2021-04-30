@@ -46,14 +46,14 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const location = useLocation();
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 
-	useEffect(()=>{
+	useEffect(() => {
 		handleApplyFilterForm({
 			service: "",
 			tags: [],
 			operation: "",
 			latency: { min: "", max: "" },
-		})
-	},[])
+		});
+	}, []);
 
 	useEffect(() => {
 		metricsAPI
@@ -287,21 +287,21 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			operation: values.operation,
 			latency: {
 				max: "",
-				min: ""
+				min: "",
 			},
 		});
 	};
 
-	useEffect(()=>{
-		return ()=>{
+	useEffect(() => {
+		return () => {
 			props.updateTraceFilters({
 				service: "",
 				operation: "",
 				tags: [],
 				latency: { min: "", max: "" },
 			});
-		}
-	},[])
+		};
+	}, []);
 
 	return (
 		<div>
