@@ -1,4 +1,4 @@
-import { pushDStree, span, RefItem } from "../actions";
+import { pushDStree, span, RefItem } from "../store/actions";
 // PNOTE - should the data be taken from redux or only through props? - Directly as arguments
 
 export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
