@@ -267,7 +267,7 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	if err != nil {
 		return nil, err
 	}
-	endTime, err := parseTime("end", r)
+	endTime, err := parseTimeMinusBuffer("end", r)
 	if err != nil {
 		return nil, err
 	}
@@ -402,6 +402,26 @@ func parseTime(param string, r *http.Request) (*time.Time, error) {
 	if err != nil || len(timeStr) == 0 {
 		return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
 	}
+
+	timeFmt := time.Unix(0, timeUnix)
+
+	return &timeFmt, nil
+
+}
+
+func parseTimeMinusBuffer(param string, r *http.Request) (*time.Time, error) {
+
+	timeStr := r.URL.Query().Get(param)
+	if len(timeStr) == 0 {
+		return nil, fmt.Errorf("%s param missing in query", param)
+	}
+
+	timeUnix, err := strconv.ParseInt(timeStr, 10, 64)
+	if err != nil || len(timeStr) == 0 {
+		return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
+	}
+
+	timeUnix = timeUnix - 30000000000
 
 	timeFmt := time.Unix(0, timeUnix)
 
