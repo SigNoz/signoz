@@ -41,12 +41,12 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	const [refreshButtonClick, setRefreshButtoClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
 	const location = useLocation();
+
 	const updateTimeOnQueryParamChange = () => {
 		const timeDurationInLocalStorage = localStorage.getItem(
 			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
 		);
-
-		const urlParams = new URLSearchParams(window.location.search);
+		const urlParams = new URLSearchParams(location.search);
 		const intervalInQueryParam = urlParams.get(METRICS_PAGE_QUERY_PARAM.interval);
 		const startTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.startTime);
 		const endTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.endTime);
