@@ -2,6 +2,7 @@ import React from "react";
 import { Breadcrumb } from "antd";
 import { Link, withRouter } from "react-router-dom";
 import styled from "styled-components";
+import ROUTES from "Src/constants/routes";
 
 const BreadCrumbWrapper = styled.div`
 	padding-top: 20px;
@@ -10,12 +11,12 @@ const BreadCrumbWrapper = styled.div`
 
 const breadcrumbNameMap: any = {
 	// PNOTE - TO DO - Remove any and do typechecking - like https://stackoverflow.com/questions/56568423/typescript-no-index-signature-with-a-parameter-of-type-string-was-found-on-ty
-	"/application": "Application",
-	"/traces": "Traces",
-	"/service-map": "Service Map",
-	"/usage-explorer": "Usage Explorer",
-	"/add-instrumentation": "Add instrumentation",
-	"/settings": "Settings",
+	[ROUTES.APPLICATION]: "Application",
+	[ROUTES.TRACES]: "Traces",
+	[ROUTES.SERVICE_MAP]: "Service Map",
+	[ROUTES.USAGE_EXPLORER]: "Usage Explorer",
+	[ROUTES.INSTRUMENTATION]: "Add instrumentation",
+	[ROUTES.SETTINGS]: "Settings",
 };
 
 const ShowBreadcrumbs = withRouter((props) => {

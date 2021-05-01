@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { NavLink } from "react-router-dom";
 import { Space, Table } from "antd";
+import ROUTES from "Src/constants/routes";
 
 import { traceResponseNew, fetchTraces, pushDStree } from "../../store/actions";
 import { StoreState } from "../../store/reducers";
@@ -73,7 +74,7 @@ const _TraceList = (props: TraceListProps) => {
 			dataIndex: "traceid",
 			key: "traceid",
 			render: (text: string) => (
-				<NavLink to={"/traces/" + text}>{text.slice(-16)}</NavLink>
+				<NavLink to={ROUTES.TRACES + "/" + text}>{text.slice(-16)}</NavLink>
 			),
 			//only last 16 chars have traceID, druid makes it 32 by adding zeros
 		},

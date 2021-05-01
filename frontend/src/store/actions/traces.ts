@@ -4,6 +4,7 @@ import api, { apiV1 } from "../../api";
 import { Dispatch } from "redux";
 import { GlobalTime } from "./global";
 import { toUTCEpoch } from "../../utils/timeUtils";
+import ROUTES from "Src/constants/routes";
 
 // PNOTE
 // define trace interface - what it should return
@@ -141,7 +142,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch) => {
-		let request_string = "/traces/" + traceID;
+		let request_string = ROUTES.TRACES + "/" + traceID;
 		const response = await api.get<spansWSameTraceIDResponse>(
 			apiV1 + request_string,
 		);

@@ -1,11 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { Button, Space, Spin, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
+import { SKIP_ONBOARDING } from "Src/constants/onboarding";
+import ROUTES from "Src/constants/routes";
 
-import { getServicesList, GlobalTime, servicesListItem } from "../../store/actions";
+import {
+	getServicesList,
+	GlobalTime,
+	servicesListItem,
+} from "../../store/actions";
 import { StoreState } from "../../store/reducers";
 import { CustomModal } from "../../components/Modal";
 
@@ -47,7 +53,10 @@ const columns = [
 		dataIndex: "serviceName",
 		key: "serviceName",
 		render: (text: string) => (
-			<NavLink style={{ textTransform: "capitalize" }} to={"/application/" + text}>
+			<NavLink
+				style={{ textTransform: "capitalize" }}
+				to={ROUTES.APPLICATION + "/" + text}
+			>
 				<strong>{text}</strong>
 			</NavLink>
 		),
@@ -90,11 +99,11 @@ const _ServicesTable = (props: ServicesTableProps) => {
 		!initialDataFetch && props.servicesList.length === 0;
 	const refetchFromBackend = isEmptyServiceList || errorObject.isError;
 	const [skipOnboarding, setSkipOnboarding] = useState(
-		localStorage.getItem("skip_onboarding") === "true",
+		localStorage.getItem(SKIP_ONBOARDING) === "true",
 	);
 
 	const onContinueClick = () => {
-		localStorage.setItem("skip_onboarding", "true");
+		localStorage.setItem(SKIP_ONBOARDING, "true");
 		setSkipOnboarding(true);
 	};
 
@@ -114,7 +123,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 	useEffect(getApiServiceData, [props.globalTime]);
 	useEffect(() => {
 		if (props.servicesList.length > 1) {
-			localStorage.removeItem("skip_onboarding");
+			localStorage.removeItem(SKIP_ONBOARDING);
 		}
 
 		refetchFromBackend && setTimeout(getApiServiceData, 50000);
@@ -178,21 +187,22 @@ const _ServicesTable = (props: ServicesTableProps) => {
 				pagination={false}
 			/>
 
-			{props.servicesList[0] !== undefined && props.servicesList[0].numCalls === 0 && (
-				<Space
-					style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
-				>
-					No applications present. Please add instrumentation (follow this
-					<a
-						href={"https://signoz.io/docs/instrumentation/overview"}
-						target={"_blank"}
-						style={{ marginLeft: 3 }}
+			{props.servicesList[0] !== undefined &&
+				props.servicesList[0].numCalls === 0 && (
+					<Space
+						style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
 					>
-						guide
-					</a>
-					)
-				</Space>
-			)}
+						No applications present. Please add instrumentation (follow this
+						<a
+							href={"https://signoz.io/docs/instrumentation/overview"}
+							target={"_blank"}
+							style={{ marginLeft: 3 }}
+						>
+							guide
+						</a>
+						)
+					</Space>
+				)}
 		</Wrapper>
 	);
 };

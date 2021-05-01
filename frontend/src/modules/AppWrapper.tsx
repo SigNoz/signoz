@@ -1,7 +1,8 @@
 import React, { Suspense } from "react";
 import { Layout, Spin } from "antd";
 import { useThemeSwitcher } from "react-css-theme-switcher";
-
+import ROUTES from "Src/constants/routes";
+import { IS_LOGGED_IN } from "Src/constants/auth";
 import {
 	BrowserRouter as Router,
 	Route,
@@ -41,27 +42,27 @@ const App = () => {
 						<TopNav />
 						<Suspense fallback={<Spin size="large" />}>
 							<Switch>
-								<Route path="/signup" component={Signup} />
-								<Route path="/application/:servicename" component={ServiceMetrics} />
-								<Route path="/service-map" component={ServiceMap} />
-								<Route path="/traces" exact component={TraceDetail} />
-								<Route path="/traces/:id" component={TraceGraph} />
-								<Route path="/settings" exact component={SettingsPage} />
+								<Route path={ROUTES.SIGN_UP} component={Signup} />
+								<Route path={ROUTES.SERVICE_METRICS} component={ServiceMetrics} />
+								<Route path={ROUTES.SERVICE_MAP} component={ServiceMap} />
+								<Route path={ROUTES.TRACES} exact component={TraceDetail} />
+								<Route path={ROUTES.TRACE_GRAPH} component={TraceGraph} />
+								<Route path={ROUTES.SETTINGS} exact component={SettingsPage} />
 								<Route
-									path="/add-instrumentation"
+									path={ROUTES.INSTRUMENTATION}
 									exact
 									component={IntstrumentationPage}
 								/>
-								<Route path="/usage-explorer" component={UsageExplorer} />
-								<Route path="/application" exact component={ServicesTable} />
+								<Route path={ROUTES.USAGE_EXPLORER} component={UsageExplorer} />
+								<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
 								<Route
 									path="/"
 									exact
 									render={() => {
-										return localStorage.getItem("isLoggedIn") === "yes" ? (
-											<Redirect to="/application" />
+										return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
+											<Redirect to={ROUTES.APPLICATION} />
 										) : (
-											<Redirect to="/signup" />
+											<Redirect to={ROUTES.SIGN_UP} />
 										);
 									}}
 								/>

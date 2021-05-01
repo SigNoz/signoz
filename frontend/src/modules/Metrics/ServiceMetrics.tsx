@@ -3,6 +3,7 @@ import { Tabs, Card, Row, Col } from "antd";
 import { connect } from "react-redux";
 import { useParams, RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router";
+import ROUTES from "Src/constants/routes";
 
 import {
 	getServicesMetrics,
@@ -50,7 +51,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
-		props.history.push(`/traces?${urlParams.toString()}`);
+		props.history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
 	return (
