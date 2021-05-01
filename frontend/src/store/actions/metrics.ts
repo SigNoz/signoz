@@ -27,6 +27,17 @@ export interface metricItem {
 	errorRate: number;
 }
 
+export interface externalMetricsAvgDurationItem {
+	avgDuration: number;
+	timestamp: number;
+}
+
+export interface externalErrCodeMetricsItem {
+	callRate: number;
+	externalHttpUrl: string;
+	numCalls: number;
+	timestamp: number;
+}
 export interface topEndpointListItem {
 	p50: number;
 	p90: number;
@@ -53,6 +64,14 @@ export interface getServicesListAction {
 	payload: servicesListItem[];
 }
 
+export interface externalErrCodeMetricsActions {
+	type: ActionTypes.getErrCodeMetrics;
+	payload: externalErrCodeMetricsItem[];
+}
+export interface externalMetricsAvgDurationAction {
+	type: ActionTypes.getAvgDurationMetrics;
+	payload: externalMetricsAvgDurationItem[];
+}
 export interface getServiceMetricsAction {
 	type: ActionTypes.getServiceMetrics;
 	payload: metricItem[];
@@ -101,9 +120,55 @@ export const getExternalMetrics = (
 			globalTime.maxTime +
 			"&step=60";
 		const response = await api.get<externalMetricsItem[]>(apiV1 + request_string);
-		console.log("response", response);
 		dispatch<getExternalMetricsAction>({
 			type: ActionTypes.getExternalMetrics,
+			payload: response.data,
+		});
+	};
+};
+
+export const getExternalAvgDurationMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/externalAvgDuration?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+
+		const response = await api.get<externalMetricsAvgDurationItem[]>(
+			apiV1 + request_string,
+		);
+		dispatch<externalMetricsAvgDurationAction>({
+			type: ActionTypes.getAvgDurationMetrics,
+			payload: response.data,
+		});
+	};
+};
+export const getExternalErrCodeMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/externalErrors?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+		const response = await api.get<externalErrCodeMetricsItem[]>(
+			apiV1 + request_string,
+		);
+		console.log("Re", response);
+		dispatch<externalErrCodeMetricsActions>({
+			type: ActionTypes.getErrCodeMetrics,
 			payload: response.data,
 		});
 	};

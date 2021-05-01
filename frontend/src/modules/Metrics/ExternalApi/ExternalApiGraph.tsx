@@ -12,7 +12,8 @@ const theme = "dark";
 
 interface ExternalApiGraphProps extends RouteComponentProps<any> {
 	data: externalMetricsItem[];
-	keyIdentifier: string;
+	keyIdentifier?: string;
+	label?: string;
 	title: string;
 	dataIdentifier: string;
 	fnDataIdentifier?: (s: number | string) => number | string;
@@ -39,12 +40,28 @@ class ExternalApiGraph extends React.Component<ExternalApiGraphProps> {
 	render() {
 		const {
 			title,
+			label,
 			data,
 			dataIdentifier,
 			keyIdentifier,
 			fnDataIdentifier,
 		} = this.props;
 		const getDataSets = () => {
+			if (!keyIdentifier) {
+				return [
+					{
+						label: label || "",
+						data: data.map((s: externalMetricsItem) =>
+							fnDataIdentifier
+								? fnDataIdentifier(s[dataIdentifier])
+								: s[dataIdentifier],
+						),
+						pointRadius: 0.5,
+						borderColor: borderColors[0],
+						borderWidth: 2,
+					},
+				];
+			}
 			const uniq = uniqBy(data, keyIdentifier);
 			return uniq.map((obj: externalMetricsItem, i: number) => {
 				const _data = filter(
@@ -68,9 +85,9 @@ class ExternalApiGraph extends React.Component<ExternalApiGraphProps> {
 			const ctx = canvas.getContext("2d");
 			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
 			gradient.addColorStop(0, "rgba(250,174,50,1)");
-      gradient.addColorStop(1, "rgba(250,174,50,1)");
+			gradient.addColorStop(1, "rgba(250,174,50,1)");
 			const uniqTimestamp = uniqBy(data, "timestamp");
-      
+
 			return {
 				labels: uniqTimestamp.map(
 					(s: externalMetricsItem) => new Date(s.timestamp / 1000000),

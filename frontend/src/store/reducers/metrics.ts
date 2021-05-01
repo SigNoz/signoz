@@ -4,8 +4,10 @@ import {
 	servicesListItem,
 	metricItem,
 	topEndpointListItem,
+	externalErrCodeMetricsItem,
 	customMetricsItem,
 	externalMetricsItem,
+	externalMetricsAvgDurationItem,
 } from "../actions";
 
 export const serviceTableReducer = (
@@ -61,6 +63,42 @@ export const topEndpointsReducer = (
 ) => {
 	switch (action.type) {
 		case ActionTypes.getTopEndpoints:
+			return action.payload;
+		default:
+			return state;
+	}
+};
+
+export const externalAvgDurationMetricsReducer = (
+	state: externalMetricsAvgDurationItem[] = [
+		{
+			avgDuration: 0,
+			timestamp: 0,
+		},
+	],
+	action: Action,
+) => {
+	switch (action.type) {
+		case ActionTypes.getAvgDurationMetrics:
+			return action.payload;
+		default:
+			return state;
+	}
+};
+
+export const externalErrCodeMetricsReducer = (
+	state: externalErrCodeMetricsItem[] = [
+		{
+			callRate: 0,
+			externalHttpUrl: "",
+			numCalls: 0,
+			timestamp: 0,
+		},
+	],
+	action: Action,
+) => {
+	switch (action.type) {
+		case ActionTypes.getErrCodeMetrics:
 			return action.payload;
 		default:
 			return state;
