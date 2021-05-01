@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"gitlab.com/signoz-public/goka"
 	sp "gitlab.com/signoz-public/spanprocessor"
@@ -252,13 +253,15 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 	attributes.ForEach(func(k string, v pdata.AttributeValue) {
 		if v.Type().String() == "INT" {
 			tag = fmt.Sprintf("%s:%d", k, v.IntVal())
+			tagsValues = append(tagsValues, strconv.FormatInt(v.IntVal(), 10))
 		} else {
 			tag = fmt.Sprintf("%s:%s", k, v.StringVal())
+			tagsValues = append(tagsValues, v.StringVal())
 		}
 
 		tags = append(tags, tag)
 		tagsKeys = append(tagsKeys, k)
-		tagsValues = append(tagsValues, v.StringVal())
+
 	})
 
 	references, _ := makeJaegerProtoReferences(otelSpan.Links(), otelSpan.ParentSpanID(), otelSpan.TraceID())
