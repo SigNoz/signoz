@@ -105,8 +105,11 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 			request_string =
 				request_string + "&aggregation_option=" + selectedAggOption.toLowerCase();
 		if (selectedStep) request_string = request_string + "&step=" + selectedStep;
-
-		props.getFilteredTraceMetrics(request_string, props.globalTime);
+		const plusMinus15 = {
+			minTime: props.globalTime.minTime - 15 * 60 * 1000000000,
+			maxTime: props.globalTime.maxTime + 15 * 60 * 1000000000,
+		};
+		props.getFilteredTraceMetrics(request_string, plusMinus15);
 	}, [selectedEntity, selectedAggOption, props.traceFilters, props.globalTime]);
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes
