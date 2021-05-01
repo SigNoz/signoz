@@ -19,6 +19,16 @@ type ServiceItem struct {
 	NumErrors    int     `json:"numErrors"`
 	ErrorRate    float32 `json:"errorRate"`
 }
+type ServiceListErrorItem struct {
+	ServiceName string `json:"serviceName"`
+	NumErrors   int    `json:"numErrors"`
+}
+
+type ServiceErrorItem struct {
+	Time      string `json:"time,omitempty"`
+	Timestamp int64  `json:"timestamp"`
+	NumErrors int    `json:"numErrors"`
+}
 
 type ServiceOverviewItem struct {
 	Time         string  `json:"time,omitempty"`
@@ -348,11 +358,41 @@ func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
+	sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT("SpanId") as "numErrors" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "Kind"='2' and "ServiceName"='%s' and "StatusCode">=500 GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
+
+	// zap.S().Debug(sqlQuery)
+
+	responseError, err := client.Query(sqlQuery, "object")
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// zap.S().Info(string(response))
+
+	resError := new([]ServiceErrorItem)
+	err = json.Unmarshal(responseError, resError)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+
+	m := make(map[int64]int)
+
+	for j, _ := range *resError {
+		timeObj, _ := time.Parse(time.RFC3339Nano, (*resError)[j].Time)
+		m[int64(timeObj.UnixNano())] = (*resError)[j].NumErrors
+	}
+
 	for i, _ := range *res {
 		timeObj, _ := time.Parse(time.RFC3339Nano, (*res)[i].Time)
 		(*res)[i].Timestamp = int64(timeObj.UnixNano())
 		(*res)[i].Time = ""
-		(*res)[i].ErrorRate = float32((*res)[i].NumErrors) / float32(query.StepSeconds)
+		if val, ok := m[(*res)[i].Timestamp]; ok {
+			(*res)[i].NumErrors = val
+		}
+		(*res)[i].ErrorRate = float32((*res)[i].NumErrors) / float32((*res)[i].NumCalls)
 		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.StepSeconds)
 
 	}
@@ -383,9 +423,39 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
+	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as numErrors, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and "StatusCode">=500 GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
+
+	responseError, err := client.Query(sqlQuery, "object")
+
+	// zap.S().Debug(sqlQuery)
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// zap.S().Info(string(response))
+
+	resError := new([]ServiceListErrorItem)
+	err = json.Unmarshal(responseError, resError)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+
+	m := make(map[string]int)
+
+	for j, _ := range *resError {
+		m[(*resError)[j].ServiceName] = (*resError)[j].NumErrors
+	}
+
 	for i, _ := range *res {
 
-		(*res)[i].ErrorRate = float32((*res)[i].NumErrors) / float32(query.Period)
+		if val, ok := m[(*res)[i].ServiceName]; ok {
+			(*res)[i].NumErrors = val
+		}
+
+		(*res)[i].ErrorRate = float32((*res)[i].NumErrors) / float32((*res)[i].NumCalls)
 		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.Period)
 
 	}
