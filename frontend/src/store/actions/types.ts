@@ -3,6 +3,7 @@ import { updateTraceFiltersAction, updateInputTagAction } from "./traceFilters";
 import {
 	getServicesListAction,
 	getServiceMetricsAction,
+	getExternalMetricsAction,
 	getTopEndpointsAction,
 	getFilteredTraceMetricsAction,
 } from "./metrics";
@@ -16,6 +17,7 @@ export enum ActionTypes {
 	fetchTraceItem = "FETCH_TRACE_ITEM",
 	getServicesList = "GET_SERVICE_LIST",
 	getServiceMetrics = "GET_SERVICE_METRICS",
+	getExternalMetrics = "GET_EXTERNAL_METRICS",
 	getTopEndpoints = "GET_TOP_ENDPOINTS",
 	getUsageData = "GET_USAGE_DATE",
 	updateTimeInterval = "UPDATE_TIME_INTERVAL",
@@ -32,4 +34,5 @@ export type Action =
 	| getTopEndpointsAction
 	| getUsageDataAction
 	| updateTimeIntervalAction
-	| getFilteredTraceMetricsAction;
+	| getFilteredTraceMetricsAction
+	| getExternalMetricsAction;

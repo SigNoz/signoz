@@ -5,6 +5,7 @@ import {
 	servicesListItem,
 	metricItem,
 	topEndpointListItem,
+	externalMetricsItem,
 	usageDataItem,
 	GlobalTime,
 	customMetricsItem,
@@ -16,6 +17,7 @@ import {
 	serviceMetricsReducer,
 	serviceTableReducer,
 	topEndpointsReducer,
+	externalMetricsReducer,
 } from "./metrics";
 import { traceFiltersReducer, inputsReducer } from "./traceFilters";
 import { traceItemReducer, tracesReducer } from "./traces";
@@ -29,6 +31,7 @@ export interface StoreState {
 	servicesList: servicesListItem[];
 	serviceMetrics: metricItem[];
 	topEndpointsList: topEndpointListItem[];
+	externalMetrics: externalMetricsItem[];
 	usageDate: usageDataItem[];
 	globalTime: GlobalTime;
 	filteredTraceMetrics: customMetricsItem[];
@@ -42,6 +45,7 @@ const reducers = combineReducers<StoreState>({
 	servicesList: serviceTableReducer,
 	serviceMetrics: serviceMetricsReducer,
 	topEndpointsList: topEndpointsReducer,
+	externalMetrics: externalMetricsReducer,
 	usageDate: usageDataReducer,
 	globalTime: updateGlobalTimeReducer,
 	filteredTraceMetrics: filteredTraceMetricsReducer,

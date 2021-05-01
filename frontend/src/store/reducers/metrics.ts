@@ -5,6 +5,7 @@ import {
 	metricItem,
 	topEndpointListItem,
 	customMetricsItem,
+	externalMetricsItem,
 } from "../actions";
 
 export const serviceTableReducer = (
@@ -60,6 +61,26 @@ export const topEndpointsReducer = (
 ) => {
 	switch (action.type) {
 		case ActionTypes.getTopEndpoints:
+			return action.payload;
+		default:
+			return state;
+	}
+};
+
+export const externalMetricsReducer = (
+	state: externalMetricsItem[] = [
+		{
+			avgDuration: 0,
+			callRate: 0,
+			externalHttpUrl: "",
+			numCalls: 0,
+			timestamp: 0,
+		},
+	],
+	action: Action,
+) => {
+	switch (action.type) {
+		case ActionTypes.getExternalMetrics:
 			return action.payload;
 		default:
 			return state;

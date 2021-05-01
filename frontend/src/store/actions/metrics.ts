@@ -35,6 +35,14 @@ export interface topEndpointListItem {
 	name: string;
 }
 
+export interface externalMetricsItem {
+	avgDuration: number;
+	callRate: number;
+	externalHttpUrl: string;
+	numCalls: number;
+	timestamp: number;
+}
+
 export interface customMetricsItem {
 	timestamp: number;
 	value: number;
@@ -48,6 +56,10 @@ export interface getServicesListAction {
 export interface getServiceMetricsAction {
 	type: ActionTypes.getServiceMetrics;
 	payload: metricItem[];
+}
+export interface getExternalMetricsAction {
+	type: ActionTypes.getExternalMetrics;
+	payload: externalMetricsItem[];
 }
 
 export interface getTopEndpointsAction {
@@ -71,6 +83,28 @@ export const getServicesList = (globalTime: GlobalTime) => {
 			type: ActionTypes.getServicesList,
 			payload: response.data,
 			//PNOTE - response.data in the axios response has the actual API response
+		});
+	};
+};
+
+export const getExternalMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/external?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+		const response = await api.get<externalMetricsItem[]>(apiV1 + request_string);
+		console.log("response", response);
+		dispatch<getExternalMetricsAction>({
+			type: ActionTypes.getExternalMetrics,
+			payload: response.data,
 		});
 	};
 };
