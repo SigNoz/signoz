@@ -108,7 +108,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 					<Col span={12}>
 						<Card bodyStyle={{ padding: 10 }}>
 							<ExternalApiGraph
-								title="External Call RPS(by Address)"
+								title=" External Call Error Rate"
 								keyIdentifier="externalHttpUrl"
 								dataIdentifier="numCalls"
 								data={props.externalErrCodeMetrics}

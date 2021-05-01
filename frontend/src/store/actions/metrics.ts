@@ -166,7 +166,7 @@ export const getExternalErrCodeMetrics = (
 		const response = await api.get<externalErrCodeMetricsItem[]>(
 			apiV1 + request_string,
 		);
-		console.log("Re", response);
+
 		dispatch<externalErrCodeMetricsActions>({
 			type: ActionTypes.getErrCodeMetrics,
 			payload: response.data,
