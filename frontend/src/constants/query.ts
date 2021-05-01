@@ -3,4 +3,5 @@ export enum METRICS_PAGE_QUERY_PARAM {
 	startTime = "startTime",
 	endTime = "endTime",
 	service = "service",
+	operation = "operation",
 }

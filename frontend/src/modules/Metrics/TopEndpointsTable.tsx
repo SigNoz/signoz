@@ -1,8 +1,12 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { Table } from "antd";
+import { Table, Button } from "antd";
+import { connect } from "react-redux";
 import styled from "styled-components";
+import { useHistory, useParams } from "react-router-dom";
 import { topEndpointListItem } from "../../store/actions/metrics";
+import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
+import { GlobalTime } from "Src/store/actions";
+import { StoreState } from "Src/store/reducers";
 
 const Wrapper = styled.div`
 	padding-top: 10px;
@@ -22,16 +26,42 @@ const Wrapper = styled.div`
 
 interface TopEndpointsTableProps {
 	data: topEndpointListItem[];
+	globalTime: GlobalTime;
 }
 
-const TopEndpointsTable = (props: TopEndpointsTableProps) => {
+const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
+	const history = useHistory();
+	const params = useParams<{ servicename: string }>();
+	const handleOnClick = (operation: string) => {
+		const urlParams = new URLSearchParams();
+		const { servicename } = params;
+		const { maxTime, minTime } = props.globalTime;
+		urlParams.set(
+			METRICS_PAGE_QUERY_PARAM.startTime,
+			String(Number(minTime) / 1000000),
+		);
+		urlParams.set(
+			METRICS_PAGE_QUERY_PARAM.endTime,
+			String(Number(maxTime) / 1000000),
+		);
+		if (servicename) {
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
+		}
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.operation, operation);
+		history.push(`/traces?${urlParams.toString()}`);
+	};
+
 	const columns: any = [
 		{
 			title: "Name",
 			dataIndex: "name",
 			key: "name",
 
-			render: (text: string) => <NavLink to={"/" + text}>{text}</NavLink>,
+			render: (text: string) => (
+				<Button type="link" onClick={() => handleOnClick(text)}>
+					{text}
+				</Button>
+			),
 		},
 		{
 			title: "P50  (in ms)",
@@ -72,5 +102,18 @@ const TopEndpointsTable = (props: TopEndpointsTableProps) => {
 		</Wrapper>
 	);
 };
+
+const mapStateToProps = (
+	state: StoreState,
+): {
+	globalTime: GlobalTime;
+} => {
+	return { globalTime: state.globalTime };
+};
+
+export const TopEndpointsTable = connect(
+	mapStateToProps,
+	null,
+)(_TopEndpointsTable);
 
 export default TopEndpointsTable;

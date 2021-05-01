@@ -62,9 +62,22 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				setServiceList(response.data);
 			})
 			.then(() => {
+				const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
 				const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
-				if (serviceName) {
-					handleChangeService(serviceName);
+				if (operationName && serviceName) {
+					props.updateTraceFilters({
+						...props.traceFilters,
+						operation: operationName,
+						service: serviceName,
+					});
+					populateData(serviceName);
+				} else {
+					if (operationName) {
+						handleChangeOperation(operationName);
+					}
+					if (serviceName) {
+						handleChangeService(serviceName);
+					}
 				}
 			});
 	}, []);
@@ -144,15 +157,11 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	const [form_basefilter] = Form.useForm();
 
-	function handleChange(value: string) {
-		console.log(value);
-	}
-
 	function handleChangeOperation(value: string) {
 		props.updateTraceFilters({ ...props.traceFilters, operation: value });
 	}
 
-	function handleChangeService(value: string) {
+	function populateData(value: string) {
 		let service_request = "/service/" + value + "/operations";
 		api.get<string[]>(apiV1 + service_request).then((response) => {
 			// form_basefilter.resetFields(['operation',])
@@ -165,7 +174,9 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			.then((response) => {
 				setTagKeyOptions(response.data);
 			});
-
+	}
+	function handleChangeService(value: string) {
+		populateData(value);
 		props.updateTraceFilters({ ...props.traceFilters, service: value });
 	}
 
