@@ -21,12 +21,22 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		// Can we now assign different strings as id - Yes
 		// https://stackoverflow.com/questions/15877362/declare-and-initialize-a-dictionary-in-typescript
 
-		let mapped_array: { [id: string]: span } = {};
+		//May1
+		//https://stackoverflow.com/questions/13315131/enforcing-the-type-of-the-indexed-members-of-a-typescript-object
+
+		let mapped_array: { [id: string]: span; } = {};
 
 		for (let i = 0; i < spanlist.length; i++) {
 			mapped_array[spanlist[i][1]] = spanlist[i];
-			mapped_array[spanlist[i][1]][10] = [];
+			mapped_array[spanlist[i][1]][10] = []; //initialising the 10th element in the span data structure which is array
+			//  of type pushDStree
+			// console.log('IDs while creating mapped array')
+			// console.log(`SpanID is ${spanlist[i][1]}\n`);
+
 		}
+
+		// console.log(`In SpanTreeUtil: mapped_arrayis ${mapped_array}`);
+
 
 		for (let id in mapped_array) {
 			let child_span = mapped_array[id];
@@ -88,7 +98,16 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 			if (references.length !== 0 && references[0].spanID.length !== 0) {
 				if (references[0].refType === "CHILD_OF") {
 					let parentID = references[0].spanID;
-					mapped_array[parentID][10].push(push_object);
+					// console.log(`In SpanTreeUtil: mapped_array[parentID] is ${mapped_array[parentID]}`);
+
+					if (typeof mapped_array[parentID] !== 'undefined') { //checking for undefined [10] issue
+						mapped_array[parentID][10].push(push_object);
+					} else {
+						console.log(`In SpanTreeUtil: mapped_array[parentID] is undefined, parentID is ${parentID}`);
+						console.log(`In SpanTreeUtil: mapped_array[parentID] is undefined, mapped_array[parentID] is ${mapped_array[parentID]}`);
+
+					}
+
 				}
 			} else {
 				tree = push_object;
