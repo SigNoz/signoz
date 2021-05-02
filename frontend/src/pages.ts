@@ -1,7 +1,7 @@
 import React from "react";
 
 export const ServiceMetrics = React.lazy(
-	() => import("Src/modules/metrics/ServiceMetricsDef"),
+	() => import("Src/modules/Metrics/ServiceMetricsDef"),
 );
 export const ServiceMap = React.lazy(
 	() => import("Src/modules/Servicemap/ServiceMap"),
@@ -16,7 +16,7 @@ export const UsageExplorer = React.lazy(
 	() => import("Src/modules/Usage/UsageExplorerDef"),
 );
 export const ServicesTable = React.lazy(
-	() => import("Src/modules/metrics/ServicesTableDef"),
+	() => import("Src/modules/Metrics/ServicesTableDef"),
 );
 export const Signup = React.lazy(() => import("Src/modules/Auth/Signup"));
 export const SettingsPage = React.lazy(
