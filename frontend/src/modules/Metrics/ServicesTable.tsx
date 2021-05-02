@@ -75,7 +75,7 @@ const columns = [
 		key: "errorRate",
 		sorter: (a: any, b: any) => a.errorRate - b.errorRate,
 		// sortDirections: ['descend', 'ascend'],
-		render: (value: number) => (value * 100).toFixed(2),
+		render: (value: number) => (value).toFixed(2),
 	},
 	{
 		title: "Requests Per Second",
