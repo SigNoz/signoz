@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Layout, Menu, Switch as ToggleButton } from "antd";
 import { NavLink } from "react-router-dom";
 import { useThemeSwitcher } from "react-css-theme-switcher";
-import { useHistory } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import ROUTES from "Src/constants/routes";
 
 import {
@@ -19,11 +19,20 @@ const { Sider } = Layout;
 const SideNav = () => {
 	const { switcher, currentTheme, status, themes } = useThemeSwitcher();
 	const [collapsed, setCollapsed] = useState<boolean>(false);
-	const history = useHistory();
+	const [selectedKeys, setSelectedKeys] = useState<string[]>([
+		ROUTES.APPLICATION,
+	]);
+	const location = useLocation();
 
-	if (status === "loading" || history.location.pathname === ROUTES.SIGN_UP) {
+	useEffect(() => {
+		const newRoute = location.pathname.split("/")[1];
+		setSelectedKeys([`/${newRoute}`]);
+	}, [location.pathname]);
+
+	if (status === "loading" || location.pathname === ROUTES.SIGN_UP) {
 		return null;
 	}
+
 	const toggleTheme = (isChecked: boolean) => {
 		switcher({ theme: isChecked ? themes.dark : themes.light });
 	};
@@ -53,8 +62,13 @@ const SideNav = () => {
 				</NavLink>
 			</div>
 
-			<Menu theme="dark" defaultSelectedKeys={["1"]} mode="inline">
-				<Menu.Item key="1" icon={<BarChartOutlined />}>
+			<Menu
+				theme="dark"
+				defaultSelectedKeys={[ROUTES.APPLICATION]}
+				selectedKeys={selectedKeys}
+				mode="inline"
+			>
+				<Menu.Item key={ROUTES.APPLICATION} icon={<BarChartOutlined />}>
 					<NavLink
 						to={ROUTES.APPLICATION}
 						style={{ fontSize: 12, textDecoration: "none" }}
@@ -62,7 +76,7 @@ const SideNav = () => {
 						Metrics
 					</NavLink>
 				</Menu.Item>
-				<Menu.Item key="2" icon={<AlignLeftOutlined />}>
+				<Menu.Item key={ROUTES.TRACES} icon={<AlignLeftOutlined />}>
 					<NavLink
 						to={ROUTES.TRACES}
 						style={{ fontSize: 12, textDecoration: "none" }}
@@ -70,7 +84,7 @@ const SideNav = () => {
 						Traces
 					</NavLink>
 				</Menu.Item>
-				<Menu.Item key="3" icon={<DeploymentUnitOutlined />}>
+				<Menu.Item key={ROUTES.SERVICE_MAP} icon={<DeploymentUnitOutlined />}>
 					<NavLink
 						to={ROUTES.SERVICE_MAP}
 						style={{ fontSize: 12, textDecoration: "none" }}
@@ -78,7 +92,7 @@ const SideNav = () => {
 						Service Map
 					</NavLink>
 				</Menu.Item>
-				<Menu.Item key="4" icon={<LineChartOutlined />}>
+				<Menu.Item key={ROUTES.USAGE_EXPLORER} icon={<LineChartOutlined />}>
 					<NavLink
 						to={ROUTES.USAGE_EXPLORER}
 						style={{ fontSize: 12, textDecoration: "none" }}
@@ -86,7 +100,7 @@ const SideNav = () => {
 						Usage Explorer
 					</NavLink>
 				</Menu.Item>
-				<Menu.Item key="5" icon={<SettingOutlined />}>
+				<Menu.Item key={ROUTES.SETTINGS} icon={<SettingOutlined />}>
 					<NavLink
 						to={ROUTES.SETTINGS}
 						style={{ fontSize: 12, textDecoration: "none" }}
@@ -94,8 +108,11 @@ const SideNav = () => {
 						Settings
 					</NavLink>
 				</Menu.Item>
-				<Menu.Item key="6" icon={<ApiOutlined />}>
-					<NavLink to={ROUTES.INSTRUMENTATION} style={{ fontSize: 12, textDecoration: "none" }}>
+				<Menu.Item key={ROUTES.INSTRUMENTATION} icon={<ApiOutlined />}>
+					<NavLink
+						to={ROUTES.INSTRUMENTATION}
+						style={{ fontSize: 12, textDecoration: "none" }}
+					>
 						Add instrumentation
 					</NavLink>
 				</Menu.Item>
