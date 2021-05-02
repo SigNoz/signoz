@@ -37,6 +37,7 @@ const theme = "dark";
 
 interface ErrorRateChartProps extends RouteComponentProps<any> {
 	data: metricItem[];
+	onTracePopupClick: Function;
 }
 
 interface ErrorRateChart {
@@ -54,6 +55,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		xcoordinate: 0,
 		ycoordinate: 0,
 		showpopUp: false,
+		firstpoint_ts: 0
 		// graphInfo:{}
 	};
 
@@ -65,17 +67,18 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 
 		if (firstPoint) {
 			// PNOTE - TODO - Is await needed in this expression?
-			await this.setState({
+			this.setState({
 				xcoordinate: e.offsetX + 20,
 				ycoordinate: e.offsetY,
 				showpopUp: true,
+				firstpoint_ts: this.props.data[firstPoint._index].timestamp,
 				// graphInfo:{...event}
 			});
 		}
 	};
 
 	gotoTracesHandler = () => {
-		this.props.history.push(ROUTES.TRACES);
+		this.props.onTracePopupClick(this.state.firstpoint_ts);
 	};
 
 	gotoAlertsHandler = () => {
@@ -216,7 +219,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
-				<div style={{textAlign: "center"}}>Errors per sec</div>
+				<div style={{ textAlign: "center" }}>Errors per sec</div>
 				<ChartJSLine
 					ref={this.chartRef}
 					data={data_chartJS}

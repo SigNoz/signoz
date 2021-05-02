@@ -54,6 +54,23 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 		props.history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
+	const onErrTracePopupClick = (timestamp: number) => {
+		const currentTime = timestamp / 1000000;
+		const tPlusOne = timestamp / 1000000 + 1 * 60 * 1000;
+
+		props.updateTimeInterval("custom", [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
+
+		const urlParams = new URLSearchParams();
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		if (servicename) {
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
+		}
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, "true");
+
+		props.history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+	};
+
 	return (
 		<Tabs defaultActiveKey="1">
 			<TabPane tab="Application Metrics" key="1">
@@ -77,7 +94,10 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 				<Row gutter={32} style={{ margin: 20 }}>
 					<Col span={12}>
 						<Card bodyStyle={{ padding: 10 }}>
-							<ErrorRateChart data={props.serviceMetrics} />
+							<ErrorRateChart
+								onTracePopupClick={onErrTracePopupClick}
+								data={props.serviceMetrics}
+							/>
 						</Card>
 					</Col>
 
