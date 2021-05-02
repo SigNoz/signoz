@@ -81,6 +81,10 @@ export interface getExternalMetricsAction {
 	payload: externalMetricsItem[];
 }
 
+export interface getDbOverViewMetricsAction {
+	type: ActionTypes.getDbOverviewMetrics;
+	payload: externalMetricsItem[];
+}
 export interface getTopEndpointsAction {
 	type: ActionTypes.getTopEndpoints;
 	payload: topEndpointListItem[];
@@ -103,6 +107,28 @@ export const getServicesList = (globalTime: GlobalTime) => {
 			payload: response.data,
 			//PNOTE - response.data in the axios response has the actual API response
 		});
+	};
+};
+
+export const getDbOverViewMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/dbOverview?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+		const response = await api.get<any>(apiV1 + request_string);
+		console.log("response", response);
+		// dispatch<getExternalMetricsAction>({
+		// 	type: ActionTypes.getExternalMetrics,
+		// 	payload: response.data,
+		// });
 	};
 };
 

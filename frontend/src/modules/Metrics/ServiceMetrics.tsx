@@ -8,6 +8,7 @@ import {
 	getServicesMetrics,
 	metricItem,
 	getTopEndpoints,
+	getDbOverViewMetrics,
 	getExternalMetrics,
 	externalMetricsAvgDurationItem,
 	externalErrCodeMetricsItem,
@@ -33,6 +34,7 @@ interface ServicesMetricsProps extends RouteComponentProps<any> {
 	getExternalMetrics: Function;
 	getExternalErrCodeMetrics: Function;
 	getExternalAvgDurationMetrics: Function;
+	getDbOverViewMetrics: Function;
 	externalMetrics: externalMetricsItem[];
 	topEndpointsList: topEndpointListItem[];
 	externalAvgDurationMetrics: externalMetricsAvgDurationItem[];
@@ -50,6 +52,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 		props.getExternalMetrics(servicename, props.globalTime);
 		props.getExternalErrCodeMetrics(servicename, props.globalTime);
 		props.getExternalAvgDurationMetrics(servicename, props.globalTime);
+		props.getDbOverViewMetrics(servicename, props.globalTime);
 	}, [props.globalTime, servicename]);
 
 	const onTracePopupClick = (timestamp: number) => {
@@ -108,7 +111,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 					<Col span={12}>
 						<Card bodyStyle={{ padding: 10 }}>
 							<ExternalApiGraph
-								title=" External Call Error Rate"
+								title="External Call Error Percentage (%)"
 								keyIdentifier="externalHttpUrl"
 								dataIdentifier="numCalls"
 								data={props.externalErrCodeMetrics}
@@ -129,7 +132,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 					</Col>
 				</Row>
 
-				<Row gutter={32} style={{ margin: 20 }}>
+				<Row gutter={32} style={{ margin: 20 }}> 
 					<Col span={12}>
 						<Card bodyStyle={{ padding: 10 }}>
 							<ExternalApiGraph
@@ -149,6 +152,33 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 								dataIdentifier="avgDuration"
 								fnDataIdentifier={(s) => Number(s) / 1000000}
 								data={props.externalMetrics}
+							/>
+						</Card>
+					</Col>
+				</Row>
+			</TabPane>
+
+			<TabPane tab="Database Calls" key="3">
+				<Row gutter={32} style={{ margin: 20 }}>
+					<Col span={12}>
+						<Card bodyStyle={{ padding: 10 }}>
+							<ExternalApiGraph
+								title=" External Call Error Rate"
+								keyIdentifier="externalHttpUrl"
+								dataIdentifier="numCalls"
+								data={props.externalErrCodeMetrics}
+							/>
+						</Card>
+					</Col>
+
+					<Col span={12}>
+						<Card bodyStyle={{ padding: 10 }}>
+							<ExternalApiGraph
+								label="Average Duration"
+								title="External Call duration"
+								dataIdentifier="avgDuration"
+								fnDataIdentifier={(s) => Number(s) / 1000000}
+								data={props.externalAvgDurationMetrics}
 							/>
 						</Card>
 					</Col>
@@ -186,5 +216,6 @@ export const ServiceMetrics = withRouter(
 		getExternalAvgDurationMetrics: getExternalAvgDurationMetrics,
 		getTopEndpoints: getTopEndpoints,
 		updateTimeInterval: updateTimeInterval,
+		getDbOverViewMetrics:getDbOverViewMetrics,
 	})(_ServiceMetrics),
 );

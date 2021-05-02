@@ -125,6 +125,26 @@ export const externalMetricsReducer = (
 	}
 };
 
+export const dbOverviewMetricsReducer = (
+	state: externalMetricsItem[] = [
+		{
+			avgDuration: 0,
+			callRate: 0,
+			externalHttpUrl: "",
+			numCalls: 0,
+			timestamp: 0,
+		},
+	],
+	action: Action,
+) => {
+	switch (action.type) {
+		case ActionTypes.getDbOverviewMetrics:
+			return action.payload;
+		default:
+			return state;
+	}
+};
+
 export const filteredTraceMetricsReducer = (
 	state: customMetricsItem[] = [{ timestamp: 0, value: 0 }],
 	action: Action,
