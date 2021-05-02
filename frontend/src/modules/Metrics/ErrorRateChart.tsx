@@ -206,7 +206,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)), // converting from nano second to mili second
 				datasets: [
 					{
-						label: "",
+						label: "Error Percentage (%)",
 						data: ndata.map((s) => s.errorRate),
 						pointRadius: 0.5,
 						borderColor: "rgba(227, 74, 51,1)", // Can also add transparency in border color
@@ -219,7 +219,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
-				<div style={{ textAlign: "center" }}>Errors per sec</div>
+				<div style={{ textAlign: "center" }}>Error Percentage (%)</div>
 				<ChartJSLine
 					ref={this.chartRef}
 					data={data_chartJS}
