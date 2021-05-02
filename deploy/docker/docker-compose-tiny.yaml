@@ -142,7 +142,7 @@ services:
       - environment_tiny/common
 
   flatten-processor:
-    image: signoz/flattener-processor:0.1.1
+    image: signoz/flattener-processor:0.2.0
     container_name: flattener-processor
 
     depends_on:
@@ -158,7 +158,7 @@ services:
     
 
   query-service:
-    image: signoz.docker.scarf.sh/signoz/query-service:0.1.4
+    image: signoz.docker.scarf.sh/signoz/query-service:0.2.0
     container_name: query-service
 
     depends_on:
@@ -173,7 +173,7 @@ services:
 
     
   frontend:
-    image: signoz/frontend:0.2.0
+    image: signoz/frontend:0.2.1
     container_name: frontend
 
     depends_on:

@@ -10,12 +10,12 @@ dependencies:
   version: 0.2.18
 - name: flattener-processor
   repository: file://./signoz-charts/flattener-processor
-  version: 0.1.1
+  version: 0.2.0
 - name: query-service
   repository: file://./signoz-charts/query-service
-  version: 0.1.1
+  version: 0.2.0
 - name: frontend
   repository: file://./signoz-charts/frontend
-  version: 0.1.8
-digest: sha256:8e85ad25689df85b0176627539f1ba116ed609aa31c55043a4e41417d574f0c1
-generated: "2021-01-20T17:23:19.845512+05:30"
+  version: 0.2.1
+digest: sha256:7ea89a82fabae53ff97cbdaddab0c9edf952a3d212237efc5897b32937d940fd
+generated: "2021-05-02T23:16:58.998702+05:30"

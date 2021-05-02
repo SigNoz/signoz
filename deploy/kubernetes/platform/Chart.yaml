@@ -15,12 +15,12 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.6
+version: 0.2.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
-appVersion: 0.1.1
+appVersion: 0.2.0
 
 dependencies:
   - name: zookeeper
@@ -34,10 +34,10 @@ dependencies:
     version: 0.2.18
   - name: flattener-processor
     repository: "file://./signoz-charts/flattener-processor"
-    version: 0.1.1
+    version: 0.2.0
   - name: query-service
     repository: "file://./signoz-charts/query-service"
-    version: 0.1.1
+    version: 0.2.0
   - name: frontend
     repository: "file://./signoz-charts/frontend"
-    version: 0.1.8
+    version: 0.2.1
