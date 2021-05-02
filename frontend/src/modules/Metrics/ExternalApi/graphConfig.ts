@@ -91,6 +91,7 @@ export const getOptions = (theme: string): ChartOptions => {
 };
 
 export const borderColors = [
+	"#00feff",
 	"rgba(227, 74, 51, 1.0)",
 	"rgba(250,174,50,1)",
 	"#058b00",
@@ -99,7 +100,6 @@ export const borderColors = [
 	"#45a1ff",
 	"#ffe900",
 	"#30e60b",
-	"#00feff",
 	"#8000d7",
 	"#ededf0"
 ];

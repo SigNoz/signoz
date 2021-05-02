@@ -7,6 +7,7 @@ import {
 	externalErrCodeMetricsItem,
 	customMetricsItem,
 	externalMetricsItem,
+	dbOverviewMetricsItem,
 	externalMetricsAvgDurationItem,
 } from "../actions";
 
@@ -126,11 +127,11 @@ export const externalMetricsReducer = (
 };
 
 export const dbOverviewMetricsReducer = (
-	state: externalMetricsItem[] = [
+	state: dbOverviewMetricsItem[] = [
 		{
 			avgDuration: 0,
 			callRate: 0,
-			externalHttpUrl: "",
+			dbSystem: "",
 			numCalls: 0,
 			timestamp: 0,
 		},

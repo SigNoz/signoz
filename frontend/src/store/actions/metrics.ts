@@ -54,6 +54,14 @@ export interface externalMetricsItem {
 	timestamp: number;
 }
 
+export interface dbOverviewMetricsItem {
+	avgDuration: number;
+	callRate: number;
+	dbSystem: string;
+	numCalls: number;
+	timestamp: number;
+}
+
 export interface customMetricsItem {
 	timestamp: number;
 	value: number;
@@ -83,7 +91,7 @@ export interface getExternalMetricsAction {
 
 export interface getDbOverViewMetricsAction {
 	type: ActionTypes.getDbOverviewMetrics;
-	payload: externalMetricsItem[];
+	payload: dbOverviewMetricsItem[];
 }
 export interface getTopEndpointsAction {
 	type: ActionTypes.getTopEndpoints;
@@ -123,12 +131,11 @@ export const getDbOverViewMetrics = (
 			"&end=" +
 			globalTime.maxTime +
 			"&step=60";
-		const response = await api.get<any>(apiV1 + request_string);
-		console.log("response", response);
-		// dispatch<getExternalMetricsAction>({
-		// 	type: ActionTypes.getExternalMetrics,
-		// 	payload: response.data,
-		// });
+		const response = await api.get<dbOverviewMetricsItem[]>(apiV1 + request_string);
+		dispatch<getDbOverViewMetricsAction>({
+			type: ActionTypes.getDbOverviewMetrics,
+			payload: response.data,
+		});
 	};
 };
 
