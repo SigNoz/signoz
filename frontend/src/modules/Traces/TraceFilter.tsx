@@ -62,6 +62,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				setServiceList(response.data);
 			})
 			.then(() => {
+				/*
+				Todo
+				revisit this flow post refactoring store
+				*/
 				const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
 				const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
 				const errorTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.error);
@@ -72,6 +76,18 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						service: serviceName,
 					});
 					populateData(serviceName);
+				} else if (serviceName && errorTag) {
+					props.updateTraceFilters({
+						...props.traceFilters,
+						service: serviceName,
+						tags: [
+							{
+								key: METRICS_PAGE_QUERY_PARAM.error,
+								value: errorTag,
+								operator: "EQUAL",
+							},
+						],
+					});
 				} else {
 					if (operationName) {
 						handleChangeOperation(operationName);
@@ -79,13 +95,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 					if (serviceName) {
 						handleChangeService(serviceName);
 					}
-				}
-				if (errorTag) {
-					onTagFormSubmit({
-						tag_key: METRICS_PAGE_QUERY_PARAM.error,
-						tag_value: errorTag,
-						operator: "EQUAL",
-					});
+					if (errorTag) {
+						onTagFormSubmit({
+							tag_key: METRICS_PAGE_QUERY_PARAM.error,
+							tag_value: errorTag,
+							operator: "EQUAL",
+						});
+					}
 				}
 			});
 	}, []);
