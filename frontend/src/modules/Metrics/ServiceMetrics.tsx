@@ -198,7 +198,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 						<Card bodyStyle={{ padding: 10 }}>
 							<ExternalApiGraph
 								label="Average Duration"
-								title="DataBase Calls Avg Duration"
+								title="Database Calls Avg Duration (in ms)"
 								dataIdentifier="avgDuration"
 								fnDataIdentifier={(s) => Number(s) / 1000000}
 								data={props.dbOverviewMetrics}
