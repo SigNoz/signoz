@@ -421,7 +421,10 @@ func parseTimeMinusBuffer(param string, r *http.Request) (*time.Time, error) {
 		return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
 	}
 
-	timeUnix = timeUnix - 30000000000
+	timeUnixNow := time.Now().UnixNano()
+	if timeUnix > timeUnixNow-30000000000 {
+		timeUnix = timeUnix - 30000000000
+	}
 
 	timeFmt := time.Unix(0, timeUnix)
 
