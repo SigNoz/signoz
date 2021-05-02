@@ -63,8 +63,17 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			})
 			.then(() => {
 				const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
+				const errorTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.error);
+
 				if (serviceName) {
 					handleChangeService(serviceName);
+				}
+				if (errorTag) {
+					onTagFormSubmit({
+						tag_key: METRICS_PAGE_QUERY_PARAM.error,
+						tag_value: errorTag,
+						operator: "EQUAL",
+					});
 				}
 			});
 	}, []);
