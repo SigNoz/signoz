@@ -84,7 +84,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 							{
 								key: METRICS_PAGE_QUERY_PARAM.error,
 								value: errorTag,
-								operator: "EQUAL",
+								operator: "equals",
 							},
 						],
 					});
@@ -99,7 +99,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						onTagFormSubmit({
 							tag_key: METRICS_PAGE_QUERY_PARAM.error,
 							tag_value: errorTag,
-							operator: "EQUAL",
+							operator: "equals",
 						});
 					}
 				}
