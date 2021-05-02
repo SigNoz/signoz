@@ -79,6 +79,13 @@ func buildFilters(queryParams *model.SpanSearchParams) (*godruid.Filter, error) 
 			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
 		}
 
+		if item.Key == "error" && item.Value == "true" {
+			statusCodeFilter := godruid.FilterBound("StatusCode", "500", "600", false, true, "numeric")
+			filterError := godruid.FilterOr(statusCodeFilter, newFilter)
+			filter = godruid.FilterAnd(filter, filterError)
+			continue
+		}
+
 		filter = godruid.FilterAnd(filter, newFilter)
 
 	}
@@ -135,6 +142,13 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 			newFilter = godruid.FilterAnd(valuesFilter, keysFilter)
 		} else {
 			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
+		}
+
+		if item.Key == "error" && item.Value == "true" {
+			statusCodeFilter := godruid.FilterBound("StatusCode", "500", "600", false, true, "numeric")
+			filterError := godruid.FilterOr(statusCodeFilter, newFilter)
+			filter = godruid.FilterAnd(filter, filterError)
+			continue
 		}
 
 		filter = godruid.FilterAnd(filter, newFilter)
