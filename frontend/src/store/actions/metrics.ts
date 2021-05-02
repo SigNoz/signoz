@@ -27,12 +27,31 @@ export interface metricItem {
 	errorRate: number;
 }
 
+export interface externalMetricsAvgDurationItem {
+	avgDuration: number;
+	timestamp: number;
+}
+
+export interface externalErrCodeMetricsItem {
+	callRate: number;
+	externalHttpUrl: string;
+	numCalls: number;
+	timestamp: number;
+}
 export interface topEndpointListItem {
 	p50: number;
 	p90: number;
 	p99: number;
 	numCalls: number;
 	name: string;
+}
+
+export interface externalMetricsItem {
+	avgDuration: number;
+	callRate: number;
+	externalHttpUrl: string;
+	numCalls: number;
+	timestamp: number;
 }
 
 export interface customMetricsItem {
@@ -45,9 +64,21 @@ export interface getServicesListAction {
 	payload: servicesListItem[];
 }
 
+export interface externalErrCodeMetricsActions {
+	type: ActionTypes.getErrCodeMetrics;
+	payload: externalErrCodeMetricsItem[];
+}
+export interface externalMetricsAvgDurationAction {
+	type: ActionTypes.getAvgDurationMetrics;
+	payload: externalMetricsAvgDurationItem[];
+}
 export interface getServiceMetricsAction {
 	type: ActionTypes.getServiceMetrics;
 	payload: metricItem[];
+}
+export interface getExternalMetricsAction {
+	type: ActionTypes.getExternalMetrics;
+	payload: externalMetricsItem[];
 }
 
 export interface getTopEndpointsAction {
@@ -71,6 +102,74 @@ export const getServicesList = (globalTime: GlobalTime) => {
 			type: ActionTypes.getServicesList,
 			payload: response.data,
 			//PNOTE - response.data in the axios response has the actual API response
+		});
+	};
+};
+
+export const getExternalMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/external?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+		const response = await api.get<externalMetricsItem[]>(apiV1 + request_string);
+		dispatch<getExternalMetricsAction>({
+			type: ActionTypes.getExternalMetrics,
+			payload: response.data,
+		});
+	};
+};
+
+export const getExternalAvgDurationMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/externalAvgDuration?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+
+		const response = await api.get<externalMetricsAvgDurationItem[]>(
+			apiV1 + request_string,
+		);
+		dispatch<externalMetricsAvgDurationAction>({
+			type: ActionTypes.getAvgDurationMetrics,
+			payload: response.data,
+		});
+	};
+};
+export const getExternalErrCodeMetrics = (
+	serviceName: string,
+	globalTime: GlobalTime,
+) => {
+	return async (dispatch: Dispatch) => {
+		let request_string =
+			"/service/externalErrors?service=" +
+			serviceName +
+			"&start=" +
+			globalTime.minTime +
+			"&end=" +
+			globalTime.maxTime +
+			"&step=60";
+		const response = await api.get<externalErrCodeMetricsItem[]>(
+			apiV1 + request_string,
+		);
+
+		dispatch<externalErrCodeMetricsActions>({
+			type: ActionTypes.getErrCodeMetrics,
+			payload: response.data,
 		});
 	};
 };
