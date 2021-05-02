@@ -7,6 +7,7 @@ import {
 	externalErrCodeMetricsItem,
 	customMetricsItem,
 	externalMetricsItem,
+	dbOverviewMetricsItem,
 	externalMetricsAvgDurationItem,
 } from "../actions";
 
@@ -119,6 +120,26 @@ export const externalMetricsReducer = (
 ) => {
 	switch (action.type) {
 		case ActionTypes.getExternalMetrics:
+			return action.payload;
+		default:
+			return state;
+	}
+};
+
+export const dbOverviewMetricsReducer = (
+	state: dbOverviewMetricsItem[] = [
+		{
+			avgDuration: 0,
+			callRate: 0,
+			dbSystem: "",
+			numCalls: 0,
+			timestamp: 0,
+		},
+	],
+	action: Action,
+) => {
+	switch (action.type) {
+		case ActionTypes.getDbOverviewMetrics:
 			return action.payload;
 		default:
 			return state;

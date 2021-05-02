@@ -8,6 +8,7 @@ import {
 	getExternalMetricsAction,
 	getTopEndpointsAction,
 	getFilteredTraceMetricsAction,
+	getDbOverViewMetricsAction,
 } from "./metrics";
 import { getUsageDataAction } from "./usage";
 import { updateTimeIntervalAction } from "./global";
@@ -21,6 +22,7 @@ export enum ActionTypes {
 	getServiceMetrics = "GET_SERVICE_METRICS",
 	getAvgDurationMetrics = "GET_AVG_DURATION_METRICS",
 	getErrCodeMetrics = "GET_ERR_CODE_METRICS",
+	getDbOverviewMetrics = "GET_DB_OVERVIEW_METRICS",
 	getExternalMetrics = "GET_EXTERNAL_METRICS",
 	getTopEndpoints = "GET_TOP_ENDPOINTS",
 	getUsageData = "GET_USAGE_DATE",
@@ -41,4 +43,5 @@ export type Action =
 	| getFilteredTraceMetricsAction
 	| getExternalMetricsAction
 	| externalErrCodeMetricsActions
+	| getDbOverViewMetricsAction
 	| externalMetricsAvgDurationAction;

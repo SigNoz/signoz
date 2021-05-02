@@ -20,6 +20,7 @@ import {
 	externalErrCodeMetricsReducer,
 	serviceTableReducer,
 	topEndpointsReducer,
+	dbOverviewMetricsReducer,
 	externalMetricsReducer,
 	externalAvgDurationMetricsReducer,
 } from "./metrics";
@@ -36,6 +37,7 @@ export interface StoreState {
 	serviceMetrics: metricItem[];
 	topEndpointsList: topEndpointListItem[];
 	externalMetrics: externalMetricsItem[];
+	dbOverviewMetrics: externalMetricsItem[];
 	externalAvgDurationMetrics: externalMetricsAvgDurationItem[];
 	externalErrCodeMetrics: externalErrCodeMetricsItem[];
 	usageDate: usageDataItem[];
@@ -50,6 +52,7 @@ const reducers = combineReducers<StoreState>({
 	traceItem: traceItemReducer,
 	servicesList: serviceTableReducer,
 	serviceMetrics: serviceMetricsReducer,
+	dbOverviewMetrics: dbOverviewMetricsReducer,
 	topEndpointsList: topEndpointsReducer,
 	externalAvgDurationMetrics: externalAvgDurationMetricsReducer,
 	externalMetrics: externalMetricsReducer,
