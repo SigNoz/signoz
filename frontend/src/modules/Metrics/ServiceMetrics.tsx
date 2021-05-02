@@ -115,7 +115,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 							<ExternalApiGraph
 								title="External Call Error Percentage (%)"
 								keyIdentifier="externalHttpUrl"
-								dataIdentifier="numCalls"
+								dataIdentifier="errorRate"
 								data={props.externalErrCodeMetrics}
 							/>
 						</Card>

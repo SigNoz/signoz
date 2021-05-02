@@ -33,9 +33,9 @@ export interface externalMetricsAvgDurationItem {
 }
 
 export interface externalErrCodeMetricsItem {
-	callRate: number;
+	errorRate: number;
 	externalHttpUrl: string;
-	numCalls: number;
+	numErrors: number;
 	timestamp: number;
 }
 export interface topEndpointListItem {
@@ -131,7 +131,9 @@ export const getDbOverViewMetrics = (
 			"&end=" +
 			globalTime.maxTime +
 			"&step=60";
-		const response = await api.get<dbOverviewMetricsItem[]>(apiV1 + request_string);
+		const response = await api.get<dbOverviewMetricsItem[]>(
+			apiV1 + request_string,
+		);
 		dispatch<getDbOverViewMetricsAction>({
 			type: ActionTypes.getDbOverviewMetrics,
 			payload: response.data,
