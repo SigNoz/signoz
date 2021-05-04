@@ -18,10 +18,13 @@ type ServiceItem struct {
 	CallRate     float32 `json:"callRate"`
 	NumErrors    int     `json:"numErrors"`
 	ErrorRate    float32 `json:"errorRate"`
+	Num4XX       int     `json:"num4XX"`
+	FourXXRate   float32 `json:"fourXXRate"`
 }
 type ServiceListErrorItem struct {
 	ServiceName string `json:"serviceName"`
 	NumErrors   int    `json:"numErrors"`
+	Num4xx      int    `json:"num4xx"`
 }
 
 type ServiceErrorItem struct {
@@ -62,6 +65,12 @@ type ServiceDBOverviewItem struct {
 	CallRate    float32 `json:"callRate,omitempty"`
 }
 
+type ServiceMapDependencyItem struct {
+	SpanId       string `json:"spanId,omitempty"`
+	ParentSpanId string `json:"parentSpanId,omitempty"`
+	ServiceName  string `json:"serviceName,omitempty"`
+}
+
 type UsageItem struct {
 	Time      string `json:"time,omitempty"`
 	Timestamp int64  `json:"timestamp"`
@@ -79,6 +88,12 @@ type TopEnpointsItem struct {
 type TagItem struct {
 	TagKeys  string `json:"tagKeys"`
 	TagCount int    `json:"tagCount"`
+}
+
+type ServiceMapDependencyResponseItem struct {
+	Parent    string `json:"parent,omitempty"`
+	Child     string `json:"child,omitempty"`
+	CallCount int    `json:"callCount,omitempty"`
 }
 
 func GetOperations(client *SqlClient, serviceName string) (*[]string, error) {
@@ -112,7 +127,7 @@ func GetOperations(client *SqlClient, serviceName string) (*[]string, error) {
 
 func GetServicesList(client *SqlClient) (*[]string, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT DISTINCT(ServiceName) FROM %s`, constants.DruidDatasource)
+	sqlQuery := fmt.Sprintf(`SELECT DISTINCT(ServiceName) FROM %s WHERE __time > CURRENT_TIMESTAMP - INTERVAL '1' DAY`, constants.DruidDatasource)
 	// zap.S().Debug(sqlQuery)
 
 	response, err := client.Query(sqlQuery, "array")
@@ -507,6 +522,8 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
+	//////////////////		Below block gets 5xx of services
+
 	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as numErrors, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and "StatusCode">=500 GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
 
 	responseError, err := client.Query(sqlQuery, "object")
@@ -533,16 +550,107 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 		m[(*resError)[j].ServiceName] = (*resError)[j].NumErrors
 	}
 
+	///////////////////////////////////////////
+
+	//////////////////		Below block gets 4xx of services
+
+	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as numErrors, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and "StatusCode">=400 and "StatusCode" < 500 GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
+
+	response4xx, err := client.Query(sqlQuery, "object")
+
+	// zap.S().Debug(sqlQuery)
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// zap.S().Info(string(response))
+
+	res4xx := new([]ServiceListErrorItem)
+	err = json.Unmarshal(response4xx, res4xx)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+
+	m4xx := make(map[string]int)
+
+	for j, _ := range *res4xx {
+		m4xx[(*res4xx)[j].ServiceName] = (*res4xx)[j].Num4xx
+	}
+
+	///////////////////////////////////////////
+
 	for i, _ := range *res {
 
 		if val, ok := m[(*res)[i].ServiceName]; ok {
 			(*res)[i].NumErrors = val
 		}
+		if val, ok := m4xx[(*res)[i].ServiceName]; ok {
+			(*res)[i].Num4XX = val
+		}
 
+		(*res)[i].FourXXRate = (float32((*res)[i].Num4XX) + 12) * 100 / float32((*res)[i].NumCalls)
 		(*res)[i].ErrorRate = float32((*res)[i].NumErrors) * 100 / float32((*res)[i].NumCalls)
 		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.Period)
 
 	}
 	servicesResponse := (*res)[1:]
 	return &servicesResponse, nil
+}
+
+func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams) (*[]ServiceMapDependencyResponseItem, error) {
+
+	sqlQuery := fmt.Sprintf(`SELECT SpanId, ParentSpanId, ServiceName FROM %s WHERE "__time" >= '%s' AND "__time" <= '%s' ORDER BY __time DESC LIMIT 100000`, constants.DruidDatasource, query.StartTime, query.EndTime)
+
+	// zap.S().Debug(sqlQuery)
+
+	response, err := client.Query(sqlQuery, "object")
+
+	if err != nil {
+		zap.S().Error(query, err)
+		return nil, fmt.Errorf("Something went wrong in druid query")
+	}
+
+	// responseStr := string(response)
+	// zap.S().Info(responseStr)
+
+	res := new([]ServiceMapDependencyItem)
+	err = json.Unmarshal(response, res)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("Error in unmarshalling response from druid")
+	}
+	// resCount := len(*res)
+	// fmt.Println(resCount)
+
+	serviceMap := make(map[string]*ServiceMapDependencyResponseItem)
+
+	spanId2ServiceNameMap := make(map[string]string)
+	for i, _ := range *res {
+		spanId2ServiceNameMap[(*res)[i].SpanId] = (*res)[i].ServiceName
+	}
+	for i, _ := range *res {
+		parent2childServiceName := spanId2ServiceNameMap[(*res)[i].ParentSpanId] + "-" + spanId2ServiceNameMap[(*res)[i].SpanId]
+		if _, ok := serviceMap[parent2childServiceName]; !ok {
+			serviceMap[parent2childServiceName] = &ServiceMapDependencyResponseItem{
+				Parent:    spanId2ServiceNameMap[(*res)[i].ParentSpanId],
+				Child:     spanId2ServiceNameMap[(*res)[i].SpanId],
+				CallCount: 1,
+			}
+		} else {
+			serviceMap[parent2childServiceName].CallCount++
+		}
+	}
+
+	retMe := make([]ServiceMapDependencyResponseItem, 0, len(serviceMap))
+	for _, dependency := range serviceMap {
+		if dependency.Parent == dependency.Child || dependency.Parent == "" {
+			continue
+		}
+		retMe = append(retMe, *dependency)
+	}
+
+	return &retMe, nil
 }

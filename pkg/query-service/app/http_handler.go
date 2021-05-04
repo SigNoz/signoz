@@ -74,6 +74,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/tags", aH.searchTags).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
@@ -280,6 +281,22 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 
 	aH.writeJSON(w, r, result)
 }
+
+func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetServicesRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, err := druidQuery.GetServiceMapDependencies(aH.sqlClient, query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
 func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
