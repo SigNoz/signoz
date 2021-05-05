@@ -3,6 +3,7 @@ package druidQuery
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.signoz.io/query-service/constants"
@@ -334,11 +335,11 @@ func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverview
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
-	m := make(map[int64]int)
+	m := make(map[string]int)
 
 	for j, _ := range *res {
 		timeObj, _ := time.Parse(time.RFC3339Nano, (*res)[j].Time)
-		m[int64(timeObj.UnixNano())] = (*res)[j].NumCalls
+		m[strconv.FormatInt(timeObj.UnixNano(), 10)+"-"+(*res)[j].ExternalHttpUrl] = (*res)[j].NumCalls
 	}
 
 	for i, _ := range *resTotal {
@@ -347,7 +348,7 @@ func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverview
 		(*resTotal)[i].Time = ""
 		(*resTotal)[i].CallRate = float32((*resTotal)[i].NumCalls) / float32(query.StepSeconds)
 
-		if val, ok := m[(*resTotal)[i].Timestamp]; ok {
+		if val, ok := m[strconv.FormatInt((*resTotal)[i].Timestamp, 10)+"-"+(*resTotal)[i].ExternalHttpUrl]; ok {
 			(*resTotal)[i].NumErrors = val
 			(*resTotal)[i].ErrorRate = float32((*resTotal)[i].NumErrors) * 100 / float32((*resTotal)[i].NumCalls)
 		}
