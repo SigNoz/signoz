@@ -50,6 +50,7 @@ type TagQuery struct {
 type SpanSearchAggregatesParams struct {
 	ServiceName       string
 	OperationName     string
+	Kind              string
 	MinDuration       string
 	MaxDuration       string
 	Tags              []TagQuery
@@ -64,6 +65,7 @@ type SpanSearchAggregatesParams struct {
 type SpanSearchParams struct {
 	ServiceName   string
 	OperationName string
+	Kind          string
 	Intervals     string
 	MinDuration   string
 	MaxDuration   string
