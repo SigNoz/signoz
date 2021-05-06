@@ -46,6 +46,12 @@ func buildFilters(queryParams *model.SpanSearchParams) (*godruid.Filter, error) 
 		filter = godruid.FilterAnd(filter, newFilter)
 
 	}
+	if len(queryParams.Kind) != 0 {
+
+		newFilter := godruid.FilterSelector("Kind", queryParams.Kind)
+		filter = godruid.FilterAnd(filter, newFilter)
+
+	}
 
 	// zap.S().Debug("MinDuration: ", queryParams.MinDuration)
 	var lower string
@@ -75,6 +81,8 @@ func buildFilters(queryParams *model.SpanSearchParams) (*godruid.Filter, error) 
 			valuesFilter := godruid.FilterSearch("TagsValues", fmt.Sprintf("%s", item.Value))
 			keysFilter := godruid.FilterSelector("TagsKeys", fmt.Sprintf("%s", item.Key))
 			newFilter = godruid.FilterAnd(valuesFilter, keysFilter)
+		} else if item.Operator == "isnotnull" {
+			newFilter = godruid.FilterSelector("TagsKeys", fmt.Sprintf("%s", item.Key))
 		} else {
 			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
 		}
@@ -111,6 +119,12 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 		filter = godruid.FilterAnd(filter, newFilter)
 
 	}
+	if len(queryParams.Kind) != 0 {
+
+		newFilter := godruid.FilterSelector("Kind", queryParams.Kind)
+		filter = godruid.FilterAnd(filter, newFilter)
+
+	}
 
 	// zap.S().Debug("MinDuration: ", queryParams.MinDuration)
 	var lower string
@@ -140,6 +154,8 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 			valuesFilter := godruid.FilterSearch("TagsValues", fmt.Sprintf("%s", item.Value))
 			keysFilter := godruid.FilterSelector("TagsKeys", fmt.Sprintf("%s", item.Key))
 			newFilter = godruid.FilterAnd(valuesFilter, keysFilter)
+		} else if item.Operator == "isnotnull" {
+			newFilter = godruid.FilterSelector("TagsKeys", fmt.Sprintf("%s", item.Key))
 		} else {
 			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
 		}
