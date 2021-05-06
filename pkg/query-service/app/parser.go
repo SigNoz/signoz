@@ -241,6 +241,12 @@ func parseSearchSpanAggregatesRequest(r *http.Request) (*model.SpanSearchAggrega
 		zap.S().Debug("Operation Name: ", operationName)
 	}
 
+	kind := r.URL.Query().Get("kind")
+	if len(kind) != 0 {
+		params.Kind = kind
+		zap.S().Debug("Kind: ", kind)
+	}
+
 	minDuration, err := parseTimestamp("minDuration", r)
 	if err == nil {
 		params.MinDuration = *minDuration
@@ -290,6 +296,12 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	if len(operationName) != 0 {
 		params.OperationName = operationName
 		zap.S().Debug("Operation Name: ", operationName)
+	}
+
+	kind := r.URL.Query().Get("kind")
+	if len(kind) != 0 {
+		params.Kind = kind
+		zap.S().Debug("Kind: ", kind)
 	}
 
 	minDuration, err := parseTimestamp("minDuration", r)
