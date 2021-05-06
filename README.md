@@ -4,8 +4,11 @@
   <p align="center">Monitor your applications and troubleshoot problems in your deployed applications, an open-source alternative to DataDog, New Relic, etc.</p>
 </p>
 
-[![MIT](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
-![Downloads](https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads)
+<p align="center">
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen"> </a>
+    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads"> </a>
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
+</p>
 
 ##
 
