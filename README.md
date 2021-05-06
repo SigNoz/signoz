@@ -4,17 +4,27 @@
   <p align="center">Monitor your applications and troubleshoot problems in your deployed applications, an open-source alternative to DataDog, New Relic, etc.</p>
 </p>
 
-[![MIT](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
+<p align="center">
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen"> </a>
+    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads"> </a>
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
+    <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
+        <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
+</p>
 
 ##
 
-SigNoz is an opensource observability platform. SigNoz uses distributed tracing to gain visibility into your systems and powers data using [Kafka](https://kafka.apache.org/) (to handle high ingestion rate and backpressure) and [Apache Druid](https://druid.apache.org/) (Apache Druid is a high performance real-time analytics database), both proven in the industry to handle scale.
+SigNoz helps developer monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
+
+👉 You can see metrics like p99 latency, error rates for your services, external API calls and individual end points.
+
+👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
 
 <!-- ![SigNoz Feature](https://signoz.io/img/readme_feature1.jpg) -->
 
 ![SigNoz Feature](https://res.cloudinary.com/dcv3epinx/image/upload/v1618904032/signoz-images/screenzy-1618904013729_clssvy.png)
 
-### Features:
+### 👇 Features:
 
 - Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
@@ -22,16 +32,25 @@ SigNoz is an opensource observability platform. SigNoz uses distributed tracing 
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Aggregate metrics on filtered traces. Eg, you can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
-- In-built workflows to reduce your efforts in detecting common issues like new deployment failures, 3rd party slow APIs, etc (Coming Soon)
-- Anomaly Detection Framework (Coming Soon)
 
-### Motivation:
+### 🤓 Why SigNoz?
 
-- SaaS vendors charge an insane amount to provide Application Monitoring. They often surprise you with huge month end bills without any transparency of data sent to them.
-- Data privacy and compliance demands data to not leave the network boundary
-- Highly scalable architecture
-- No more magic happening in agents installed in your infra. You take control of sampling, uptime, configuration.
-- Build modules over SigNoz to extend business specific capabilities
+Being developers, we found it annoying to rely on closed source SaaS vendors for every small feature we wanted. Closed source vendors often surprise you with huge month end bills without any transparency.
+
+We wanted to make a self-hosted & open source version of tools like DataDog, NewRelic for companies that have privacy and security concerns about having customer data going to third party services.
+
+Being open source also gives you complete control of your configuration, sampling, uptimes. You can also build modules over SigNoz to extend business specific capabilities
+
+### 👊🏻 Languages supported:
+
+We support [OpenTelemetry](https://opentelemetry.io) as the library which you can use to instrument your applications. So any framework and language supported by OpenTelemetry is also supported by SigNoz. Some of the main supported languages are:
+
+- Java
+- Python
+- NodeJS
+- Go
+
+You can find the complete list of languages here - https://opentelemetry.io/docs/
 
 # Getting Started
 
