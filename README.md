@@ -26,8 +26,6 @@ SigNoz helps developer monitor applications and troubleshoot problems in their d
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Aggregate metrics on filtered traces. Eg, you can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
-- In-built workflows to reduce your efforts in detecting common issues like new deployment failures, 3rd party slow APIs, etc (Coming Soon)
-- Anomaly Detection Framework (Coming Soon)
 
 ### 🤓 Why SigNoz?
 
