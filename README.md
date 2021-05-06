@@ -4,8 +4,13 @@
   <p align="center">Monitor your applications and troubleshoot problems in your deployed applications, an open-source alternative to DataDog, New Relic, etc.</p>
 </p>
 
-[![MIT](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
-![Downloads](https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads)
+<p align="center">
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen"> </a>
+    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads"> </a>
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
+    <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
+        <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
+</p>
 
 ##
 
