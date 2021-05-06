@@ -38,7 +38,7 @@ type ServiceOverviewItem struct {
 	Time         string  `json:"time,omitempty"`
 	Timestamp    int64   `json:"timestamp"`
 	Percentile50 float32 `json:"p50"`
-	Percentile90 float32 `json:"p90"`
+	Percentile95 float32 `json:"p95"`
 	Percentile99 float32 `json:"p99"`
 	NumCalls     int     `json:"numCalls"`
 	CallRate     float32 `json:"callRate"`
@@ -437,7 +437,7 @@ func GetServiceDBOverview(client *SqlClient, query *model.GetServiceOverviewPara
 
 func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceOverviewItem, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.9) as p90, 
+	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.95) as p95, 
 	APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT("SpanId") as "numCalls" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "Kind"='2' and "ServiceName"='%s' GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
 
 	// zap.S().Debug(sqlQuery)
