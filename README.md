@@ -35,8 +35,6 @@ Being developers, we found it annoying to rely on closed source SaaS vendors for
 
 We wanted to make a self-hosted & open source version of tools like DataDog, NewRelic for companies that have privacy and security concerns about having customer data going to third party services.
 
-With modern cloud native technologies like Kubernetes, hosting within your cloud is now much easier. And you won't need to send petabytes of your observability data to your SaaS vendors.
-
 Being open source also gives you complete control of your configuration, sampling, uptimes. You can also build modules over SigNoz to extend business specific capabilities
 
 ### 👊🏻 Languages supported:
