@@ -5,6 +5,7 @@
 </p>
 
 [![MIT](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
+![Downloads](https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads)
 
 ##
 
