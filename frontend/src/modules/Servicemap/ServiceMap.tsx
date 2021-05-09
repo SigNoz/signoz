@@ -8,11 +8,28 @@ import {
 	getDetailedServiceMapItems,
 } from "Src/store/actions";
 import { Spin } from "antd";
-
+import styled from "styled-components";
 import { StoreState } from "../../store/reducers";
 import { getGraphData } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
+
+const Container = styled.div`
+	.force-graph-container .graph-tooltip {
+		background: black;
+		padding: 1px;
+		.keyval {
+			display: flex;
+			.key {
+				margin-right: 4px;
+			}
+			.val {
+				margin-left: auto;
+			}
+		}
+	}
+`;
+
 interface ServiceMapProps extends RouteComponentProps<any> {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
@@ -52,13 +69,13 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 480, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, 280, (e) => e.id === value);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
 	const graphData = { nodes, links };
 	return (
-		<div>
+		<Container>
 			<SelectService
 				services={serviceMap.services}
 				zoomToService={zoomToService}
@@ -66,7 +83,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
-				onEngineStop={() => fgRef.current.zoomToFit(100, 200)}
+				onEngineStop={() => fgRef.current.zoomToFit(100, 120)}
 				graphData={graphData}
 				nodeLabel="id"
 				linkAutoColorBy={(d) => d.target}
@@ -75,46 +92,46 @@ const ServiceMap = (props: ServiceMapProps) => {
 				nodeCanvasObject={(node, ctx, globalScale) => {
 					const label = node.id;
 					const fontSize = node.fontSize;
-					ctx.font = `${fontSize}px Sans-Serif`;
-					const textWidth = ctx.measureText(label).width;
-					const width = textWidth > node.width ? textWidth : node.width;
-					const bckgDimensions = [width, node.height].map((n) => n + fontSize); // some padding
+					ctx.font = `${fontSize}px Roboto`;
+					const width = node.width;
+
 					ctx.fillStyle = node.color;
-					ctx.fillRect(
-						node.x - bckgDimensions[0] / 2,
-						node.y - bckgDimensions[1] / 2,
-						...bckgDimensions,
-					);
+					ctx.beginPath();
+					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
+					ctx.fill();
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
-					ctx.fillStyle = "black";
+					ctx.fillStyle = "#333333";
 					ctx.fillText(label, node.x, node.y);
-
-					node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
 				}}
 				onNodeClick={(node) => {
 					const tooltip = document.querySelector(".graph-tooltip");
 					if (tooltip && node) {
-						tooltip.innerHTML = `<div style="padding:12px;background: black;border: 1px solid #BDBDBD;border-radius: 2px;">
-								<div style="color:white; font-weight:bold; margin-bottom:8px;">${node.id}</div>
-								<div style="color:white">P99 latency: ${node.p99 / 1000000}</div>
-								<div style="color:white">Error Rate: ${node.errorRate}%</div>
-								<div style="color:white">Request Per Sec: ${node.callRate}</div>
+						tooltip.innerHTML = `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
+								<div style="font-weight:bold; margin-bottom:16px;">${node.id}</div>
+								<div class="keyval">
+									<div class="key">P99 latency:</div>
+									<div class="val">${node.p99 / 1000000}</div>
+								</div>
+								<div class="keyval">
+									<div class="key">Request:</div>
+									<div class="val">${node.callRate}/sec</div>
+								</div>
+								<div class="keyval">
+									<div class="key">Error Rate:</div>
+									<div class="val">${node.errorRate}%</div>
+								</div>
 							</div>`;
 					}
 				}}
 				nodePointerAreaPaint={(node, color, ctx) => {
 					ctx.fillStyle = color;
-					const bckgDimensions = node.__bckgDimensions;
-					bckgDimensions &&
-						ctx.fillRect(
-							node.x - bckgDimensions[0] / 2,
-							node.y - bckgDimensions[1] / 2,
-							...bckgDimensions,
-						);
+					ctx.beginPath();
+					ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI, false);
+					ctx.fill();
 				}}
 			/>
-		</div>
+		</Container>
 	);
 };
 

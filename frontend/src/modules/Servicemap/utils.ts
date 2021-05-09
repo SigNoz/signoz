@@ -2,20 +2,16 @@ import { uniqBy, uniq, maxBy, cloneDeep, find } from "lodash";
 import { serviceMapStore } from "Src/store/actions";
 import { graphDataType } from "./ServiceMap";
 
-const MIN_WIDTH = 25;
-const MAX_WIDTH = 50;
-const MIN_HEIGHT = 10;
-const MAX_HEIGHT = 15;
-const DEFAULT_FONT_SIZE = 4;
+const MIN_WIDTH = 12;
+const MAX_WIDTH = 20;
+const DEFAULT_FONT_SIZE = 6;
 export const getDimensions = (num, highest) => {
 	const percentage = (num / highest) * 100;
 	const width = (percentage * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
-	const height = (percentage * (MAX_HEIGHT - MIN_HEIGHT)) / 100 + MIN_HEIGHT;
 	const fontSize = DEFAULT_FONT_SIZE;
 	return {
 		fontSize,
 		width,
-		height,
 	};
 };
 
@@ -40,14 +36,13 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
 	const nodes = uniqNodes.map((node, i) => {
 		const service = find(services, (service) => service.serviceName === node);
-		let color = "#84ff00";
+		let color = "#88CEA5";
 		if (!service) {
 			return {
 				id: node,
 				group: i + 1,
 				fontSize: DEFAULT_FONT_SIZE,
 				width: MIN_WIDTH,
-				height: MIN_HEIGHT,
 				color,
 				nodeVal: MIN_WIDTH,
 				callRate: 0,
@@ -56,17 +51,16 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 			};
 		}
 		if (service.errorRate > 0) {
-			color = "#f00a0a";
+			color = "#F98989";
 		} else if (service.fourXXRate > 0) {
-			color = "#ebeb15";
+			color = "#F9DA7B";
 		}
-		const { fontSize, width, height } = getDimensions(service.callRate, highestCallRate);
+		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {
 			id: node,
 			group: i + 1,
 			fontSize,
 			width,
-			height,
 			color,
 			nodeVal: width,
 			callRate: service.callRate,
