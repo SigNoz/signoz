@@ -69,7 +69,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 280, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, 390, (e) => e.id === value);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
