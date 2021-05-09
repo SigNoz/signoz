@@ -64,12 +64,15 @@ const ServiceMap = (props: ServiceMapProps) => {
 		getDetailedServiceMapItems(globalTime);
 	}, []);
 
+	useEffect(() => {
+		fgRef.current && fgRef.current.d3Force("charge").strength(-400);
+	});
 	if (!serviceMap.items.length || !serviceMap.services.length) {
 		return <Spin />;
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 390, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, 399, (e) => e.id === value);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
@@ -83,7 +86,9 @@ const ServiceMap = (props: ServiceMapProps) => {
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
-				onEngineStop={() => fgRef.current.zoomToFit(100, 120)}
+				onEngineStop={() => {
+					fgRef.current.zoomToFit(100, 120);
+				}}
 				graphData={graphData}
 				nodeLabel="id"
 				linkAutoColorBy={(d) => d.target}
@@ -111,7 +116,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 								<div style="font-weight:bold; margin-bottom:16px;">${node.id}</div>
 								<div class="keyval">
 									<div class="key">P99 latency:</div>
-									<div class="val">${node.p99 / 1000000}</div>
+									<div class="val">${node.p99 / 1000000}ms</div>
 								</div>
 								<div class="keyval">
 									<div class="key">Request:</div>

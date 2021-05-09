@@ -63,7 +63,7 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 			width,
 			color,
 			nodeVal: width,
-			callRate: service.callRate,
+			callRate: service.callRate.toFixed(2),
 			errorRate: service.errorRate,
 			p99: service.p99,
 		};
