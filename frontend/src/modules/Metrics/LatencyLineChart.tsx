@@ -193,7 +193,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 					>
 						View Traces
 					</PopUpElements>
-					<PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements>
+					{/* <PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements> */}
 				</ChartPopUpUnique>
 			);
 		} else return null;

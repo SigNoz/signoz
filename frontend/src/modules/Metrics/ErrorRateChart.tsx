@@ -188,7 +188,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 					ycoordinate={this.state.ycoordinate}
 				>
 					<PopUpElements onClick={this.gotoTracesHandler}>View Traces</PopUpElements>
-					<PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements>
+					{/* <PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements> */}
 				</ChartPopUpUnique>
 			);
 		} else return null;
