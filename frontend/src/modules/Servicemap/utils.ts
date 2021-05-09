@@ -2,7 +2,7 @@ import { uniqBy, uniq, maxBy, cloneDeep, find } from "lodash";
 import { serviceMapStore } from "Src/store/actions";
 import { graphDataType } from "./ServiceMap";
 
-const MAX_WIDTH = 8;
+const MAX_WIDTH = 12;
 const MIN_WIDTH = 5;
 const MAX_FONT_SIZE = 8;
 const MIN_FONT_SIZE = 5;

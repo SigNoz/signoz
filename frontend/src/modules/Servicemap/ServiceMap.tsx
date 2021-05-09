@@ -52,7 +52,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 350, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, 360, (e) => e.id === value);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
@@ -65,6 +65,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 			/>
 			<ForceGraph2D
 				ref={fgRef}
+				enableNodeDrag={false}
 				cooldownTicks={100}
 				onEngineStop={() => fgRef.current.zoomToFit(100, 200)}
 				graphData={graphData}
