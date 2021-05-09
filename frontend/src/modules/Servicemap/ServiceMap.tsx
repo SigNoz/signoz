@@ -44,10 +44,11 @@ const ServiceMap = (props: ServiceMapProps) => {
 		getDetailedServiceMapItems(globalTime);
 	}, []);
 
-	if (!serviceMap.items.length) {
+	if (!serviceMap.items.length || !serviceMap.services.length) {
 		return "loading";
 	}
-	const { nodes, links } = getGraphData(serviceMap.items);
+
+	const { nodes, links } = getGraphData(serviceMap);
 	const graphData = { nodes, links };
 	return (
 		<div>
@@ -63,10 +64,11 @@ const ServiceMap = (props: ServiceMapProps) => {
 				linkDirectionalParticleSpeed={(d) => d.value}
 				nodeCanvasObject={(node, ctx, globalScale) => {
 					const label = node.id;
-					const fontSize = 16 / globalScale;
+					const fontSize = node.fontSize;
 					ctx.font = `${fontSize}px Sans-Serif`;
 					const textWidth = ctx.measureText(label).width;
-					const bckgDimensions = [textWidth, fontSize].map((n) => n + fontSize); // some padding
+					const width = textWidth > node.width ? textWidth : node.width;
+					const bckgDimensions = [width, fontSize].map((n) => n + fontSize); // some padding
 					ctx.fillStyle = node.color;
 					ctx.fillRect(
 						node.x - bckgDimensions[0] / 2,
