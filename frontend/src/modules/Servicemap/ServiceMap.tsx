@@ -52,7 +52,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 360, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, 480, (e) => e.id === value);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
@@ -65,7 +65,6 @@ const ServiceMap = (props: ServiceMapProps) => {
 			/>
 			<ForceGraph2D
 				ref={fgRef}
-				enableNodeDrag={false}
 				cooldownTicks={100}
 				onEngineStop={() => fgRef.current.zoomToFit(100, 200)}
 				graphData={graphData}
@@ -79,14 +78,13 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.font = `${fontSize}px Sans-Serif`;
 					const textWidth = ctx.measureText(label).width;
 					const width = textWidth > node.width ? textWidth : node.width;
-					const bckgDimensions = [width, fontSize].map((n) => n + fontSize); // some padding
+					const bckgDimensions = [width, node.height].map((n) => n + fontSize); // some padding
 					ctx.fillStyle = node.color;
 					ctx.fillRect(
 						node.x - bckgDimensions[0] / 2,
 						node.y - bckgDimensions[1] / 2,
 						...bckgDimensions,
 					);
-
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
 					ctx.fillStyle = "black";

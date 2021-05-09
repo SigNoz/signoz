@@ -2,18 +2,20 @@ import { uniqBy, uniq, maxBy, cloneDeep, find } from "lodash";
 import { serviceMapStore } from "Src/store/actions";
 import { graphDataType } from "./ServiceMap";
 
-const MAX_WIDTH = 12;
-const MIN_WIDTH = 5;
-const MAX_FONT_SIZE = 8;
-const MIN_FONT_SIZE = 5;
+const MIN_WIDTH = 25;
+const MAX_WIDTH = 50;
+const MIN_HEIGHT = 10;
+const MAX_HEIGHT = 15;
+const DEFAULT_FONT_SIZE = 4;
 export const getDimensions = (num, highest) => {
 	const percentage = (num / highest) * 100;
 	const width = (percentage * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
-	const fontSize =
-		(percentage * (MAX_FONT_SIZE - MIN_FONT_SIZE)) / 100 + MIN_FONT_SIZE;
+	const height = (percentage * (MAX_HEIGHT - MIN_HEIGHT)) / 100 + MIN_HEIGHT;
+	const fontSize = DEFAULT_FONT_SIZE;
 	return {
 		fontSize,
 		width,
+		height,
 	};
 };
 
@@ -43,8 +45,9 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 			return {
 				id: node,
 				group: i + 1,
-				fontSize: MIN_FONT_SIZE,
+				fontSize: DEFAULT_FONT_SIZE,
 				width: MIN_WIDTH,
+				height: MIN_HEIGHT,
 				color,
 				nodeVal: MIN_WIDTH,
 				callRate: 0,
@@ -57,12 +60,13 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 		} else if (service.fourXXRate > 0) {
 			color = "#ebeb15";
 		}
-		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
+		const { fontSize, width, height } = getDimensions(service.callRate, highestCallRate);
 		return {
 			id: node,
 			group: i + 1,
 			fontSize,
 			width,
+			height,
 			color,
 			nodeVal: width,
 			callRate: service.callRate,
