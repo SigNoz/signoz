@@ -45,7 +45,17 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 			color = "#ebeb15";
 		}
 		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
-		return { id: node, group: i + 1, fontSize, width, color, nodeVal: width };
+		return {
+			id: node,
+			group: i + 1,
+			fontSize,
+			width,
+			color,
+			nodeVal: width,
+			callRate: service.callRate,
+			errorRate: service.errorRate,
+			p99: service.p99,
+		};
 	});
 	return {
 		nodes,

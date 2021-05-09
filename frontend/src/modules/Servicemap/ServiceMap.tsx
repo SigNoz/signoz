@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router-dom";
 import {
@@ -7,10 +7,12 @@ import {
 	getServiceMapItems,
 	getDetailedServiceMapItems,
 } from "Src/store/actions";
+import { Spin } from "antd";
+
 import { StoreState } from "../../store/reducers";
 import { getGraphData } from "./utils";
+import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
-
 interface ServiceMapProps extends RouteComponentProps<any> {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
@@ -39,26 +41,34 @@ const ServiceMap = (props: ServiceMapProps) => {
 		globalTime,
 		serviceMap,
 	} = props;
+
 	useEffect(() => {
 		getServiceMapItems(globalTime);
 		getDetailedServiceMapItems(globalTime);
 	}, []);
 
 	if (!serviceMap.items.length || !serviceMap.services.length) {
-		return "loading";
+		return <Spin />;
 	}
+
+	const zoomToService = (value: string) => {
+		fgRef && fgRef.current.zoomToFit(700, 350, (e) => e.id === value);
+	};
 
 	const { nodes, links } = getGraphData(serviceMap);
 	const graphData = { nodes, links };
 	return (
 		<div>
+			<SelectService
+				services={serviceMap.services}
+				zoomToService={zoomToService}
+			/>
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
-				onEngineStop={() => fgRef.current.zoomToFit(100, 100)}
+				onEngineStop={() => fgRef.current.zoomToFit(100, 200)}
 				graphData={graphData}
 				nodeLabel="id"
-				nodeAutoColorBy={(d) => d.id}
 				linkAutoColorBy={(d) => d.target}
 				linkDirectionalParticles="value"
 				linkDirectionalParticleSpeed={(d) => d.value}
@@ -82,6 +92,17 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.fillText(label, node.x, node.y);
 
 					node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
+				}}
+				onNodeClick={(node) => {
+					const tooltip = document.querySelector(".graph-tooltip");
+					if (tooltip && node) {
+						tooltip.innerHTML = `<div style="padding:12px;background: black;border: 1px solid #BDBDBD;border-radius: 2px;">
+								<div style="color:white; font-weight:bold; margin-bottom:8px;">${node.id}</div>
+								<div style="color:white">P99 latency: ${node.p99 / 1000000}</div>
+								<div style="color:white">Error Rate: ${node.errorRate}%</div>
+								<div style="color:white">Request Per Sec: ${node.callRate}</div>
+							</div>`;
+					}
 				}}
 				nodePointerAreaPaint={(node, color, ctx) => {
 					ctx.fillStyle = color;
