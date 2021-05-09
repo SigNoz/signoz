@@ -19,7 +19,7 @@ export interface servicesListItem {
 export interface metricItem {
 	timestamp: number;
 	p50: number;
-	p90: number;
+	p95: number;
 	p99: number;
 	numCalls: number;
 	callRate: number;
