@@ -193,7 +193,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 					>
 						View Traces
 					</PopUpElements>
-					<PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements>
+					{/* <PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements> */}
 				</ChartPopUpUnique>
 			);
 		} else return null;
@@ -218,8 +218,8 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 						borderWidth: 2,
 					},
 					{
-						label: "p90 Latency",
-						data: ndata.map((s) => s.p90 / 1000000), //converting latency from nano sec to ms
+						label: "p95 Latency",
+						data: ndata.map((s) => s.p95 / 1000000), //converting latency from nano sec to ms
 						pointRadius: 0.5,
 						borderColor: "rgba(227, 74, 51, 1.0)",
 						borderWidth: 2,
