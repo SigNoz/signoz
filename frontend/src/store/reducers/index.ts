@@ -10,6 +10,7 @@ import {
 	usageDataItem,
 	GlobalTime,
 	externalErrCodeMetricsItem,
+	serviceMapStore,
 	customMetricsItem,
 	TraceFilters,
 } from "../actions";
@@ -27,7 +28,7 @@ import {
 import { traceFiltersReducer, inputsReducer } from "./traceFilters";
 import { traceItemReducer, tracesReducer } from "./traces";
 import { usageDataReducer } from "./usage";
-
+import { ServiceMapReducer } from "./serviceMap";
 export interface StoreState {
 	traceFilters: TraceFilters;
 	inputTag: string;
@@ -43,6 +44,7 @@ export interface StoreState {
 	usageDate: usageDataItem[];
 	globalTime: GlobalTime;
 	filteredTraceMetrics: customMetricsItem[];
+	serviceMap: serviceMapStore;
 }
 
 const reducers = combineReducers<StoreState>({
@@ -60,6 +62,7 @@ const reducers = combineReducers<StoreState>({
 	usageDate: usageDataReducer,
 	globalTime: updateGlobalTimeReducer,
 	filteredTraceMetrics: filteredTraceMetricsReducer,
+	serviceMap: ServiceMapReducer,
 });
 
 export default reducers;
