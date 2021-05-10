@@ -2,7 +2,7 @@ import { uniqBy, uniq, maxBy, cloneDeep, find } from "lodash";
 import { serviceMapStore } from "Src/store/actions";
 import { graphDataType } from "./ServiceMap";
 
-const MIN_WIDTH = 12;
+const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;
 const DEFAULT_FONT_SIZE = 6;
 export const getDimensions = (num, highest) => {
@@ -28,7 +28,7 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 		return {
 			source: parent,
 			target: child,
-			value: (100 - callCount / divNum) * 0.01,
+			value: (100 - callCount / divNum) * 0.03,
 		};
 	});
 	const uniqParent = uniqBy(cloneDeep(items), "parent").map((e) => e.parent);
