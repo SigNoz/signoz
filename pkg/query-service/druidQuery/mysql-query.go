@@ -592,7 +592,7 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 			(*res)[i].Num4XX = val
 		}
 
-		(*res)[i].FourXXRate = (float32((*res)[i].Num4XX) + 12) * 100 / float32((*res)[i].NumCalls)
+		(*res)[i].FourXXRate = float32((*res)[i].Num4XX) * 100 / float32((*res)[i].NumCalls)
 		(*res)[i].ErrorRate = float32((*res)[i].NumErrors) * 100 / float32((*res)[i].NumCalls)
 		(*res)[i].CallRate = float32((*res)[i].NumCalls) / float32(query.Period)
 
