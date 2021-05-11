@@ -62,7 +62,7 @@ The troubleshooting instructions at https://signoz.io/docs/deployment/docker/#tr
 
 ## Deploy in Kubernetes using Helm
 
-Below steps will install the SigNoz in platform namespace inside your k8s cluster.
+Below steps will install the SigNoz in `platform` namespace inside your k8s cluster.
 
 ```console
 git clone https://github.com/SigNoz/signoz.git && cd signoz
