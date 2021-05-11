@@ -647,7 +647,7 @@ func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams
 
 	retMe := make([]ServiceMapDependencyResponseItem, 0, len(serviceMap))
 	for _, dependency := range serviceMap {
-		if dependency.Parent == dependency.Child || dependency.Parent == "" {
+		if dependency.Parent == "" {
 			continue
 		}
 		retMe = append(retMe, *dependency)
