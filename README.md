@@ -60,7 +60,7 @@ We have a tiny-cluster setup and a standard setup to deploy using docker-compose
 Follow the steps listed at https://signoz.io/docs/deployment/docker/.
 The troubleshooting instructions at https://signoz.io/docs/deployment/docker/#troubleshooting may be helpful
 
-## Deploy in Kubernetes using Helm.
+## Deploy in Kubernetes using Helm
 
 Below steps will install the SigNoz in platform namespace inside your k8s cluster.
 
