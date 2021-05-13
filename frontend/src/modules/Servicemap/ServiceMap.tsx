@@ -62,7 +62,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	useEffect(() => {
 		getServiceMapItems(globalTime);
 		getDetailedServiceMapItems(globalTime);
-	}, []);
+	}, [globalTime]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force("charge").strength(-400);

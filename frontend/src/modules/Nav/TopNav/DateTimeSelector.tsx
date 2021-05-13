@@ -5,12 +5,12 @@ import { withRouter } from "react-router";
 import { RouteComponentProps, useLocation } from "react-router-dom";
 import { connect } from "react-redux";
 import ROUTES from "Src/constants/routes";
-
+import { findIndex } from "lodash";
 import CustomDateTimeModal from "./CustomDateTimeModal";
 import { GlobalTime, updateTimeInterval } from "../../../store/actions";
 import { StoreState } from "../../../store/reducers";
 import FormItem from "antd/lib/form/FormItem";
-
+import { DefaultOptions, ServiceMapOptions } from "./config";
 import { DateTimeRangeType } from "../../../store/actions";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { LOCAL_STORAGE } from "Src/constants/localStorage";
@@ -32,16 +32,19 @@ interface DateTimeSelectorProps extends RouteComponentProps<any> {
 This components is mounted all the time. Use event listener to track changes.
  */
 const _DateTimeSelector = (props: DateTimeSelectorProps) => {
-	const defaultTime = "30min";
+	const location = useLocation();
+	const options =
+		location.pathname === ROUTES.SERVICE_MAP ? ServiceMapOptions : DefaultOptions;
+	const defaultTime = options[0].value;
+
 	const [customDTPickerVisible, setCustomDTPickerVisible] = useState(false);
 	const [timeInterval, setTimeInterval] = useState(defaultTime);
 	const [startTime, setStartTime] = useState<moment.Moment | null>(null);
 	const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState(false);
 	const [refreshText, setRefreshText] = useState("");
-	const [refreshButtonClick, setRefreshButtoClick] = useState(0);
+	const [refreshButtonClick, setRefreshButtonClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
-	const location = useLocation();
 
 	const updateTimeOnQueryParamChange = () => {
 		const timeDurationInLocalStorage = localStorage.getItem(
@@ -78,12 +81,10 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	// On URL Change
 	useEffect(() => {
 		updateTimeOnQueryParamChange();
+		if (findIndex(options, (option) => option.value === timeInterval) === -1) {
+			setTimeInterval(options[0].value);
+		}
 	}, [location]);
-
-	//On mount
-	useEffect(() => {
-		updateTimeOnQueryParamChange();
-	}, []);
 
 	const setMetricsTimeInterval = (value: string) => {
 		props.updateTimeInterval(value);
@@ -173,7 +174,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	};
 
 	const handleRefresh = () => {
-		setRefreshButtoClick(refreshButtonClick + 1);
+		setRefreshButtonClick(refreshButtonClick + 1);
 		setMetricsTimeInterval(timeInterval);
 	};
 
@@ -187,15 +188,6 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		};
 	}, [props.location, refreshButtonClick]);
 
-	const options = [
-		{ value: "custom", label: "Custom" },
-		{ value: "15min", label: "Last 15 min" },
-		{ value: "30min", label: "Last 30 min" },
-		{ value: "1hr", label: "Last 1 hour" },
-		{ value: "6hr", label: "Last 6 hour" },
-		{ value: "1day", label: "Last 1 day" },
-		{ value: "1week", label: "Last 1 week" },
-	];
 	if (props.location.pathname.startsWith(ROUTES.USAGE_EXPLORER)) {
 		return null;
 	} else {
@@ -205,6 +197,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 						"YYYY/MM/DD HH:mm",
 				  )}`
 				: timeInterval;
+
 		return (
 			<DateTimeWrapper>
 				<Space style={{ float: "right", display: "block" }}>
