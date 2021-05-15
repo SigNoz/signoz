@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Select, Button, Space, Form } from "antd";
+import { Select as DefaultSelect, Button, Space, Form } from "antd";
 import styled from "styled-components";
 import { withRouter } from "react-router";
 import { RouteComponentProps, useLocation } from "react-router-dom";
@@ -15,13 +15,15 @@ import { DateTimeRangeType } from "../../../store/actions";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { LOCAL_STORAGE } from "Src/constants/localStorage";
 import moment from "moment";
-const { Option } = Select;
+const { Option } = DefaultSelect;
 
 const DateTimeWrapper = styled.div`
 	margin-top: 20px;
 	justify-content: flex-end !important;
 `;
-
+const Select = styled(DefaultSelect)`
+	width: 150px;
+`;
 interface DateTimeSelectorProps extends RouteComponentProps<any> {
 	currentpath?: string;
 	updateTimeInterval: Function;
