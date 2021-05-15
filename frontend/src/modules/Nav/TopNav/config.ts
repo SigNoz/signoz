@@ -10,5 +10,5 @@ export const DefaultOptions = [
 
 export const ServiceMapOptions = [
 	{ value: "1min", label: "Last 1 min" },
-	{ value: "1day", label: "Last 1 day" },
+	{ value: "5min", label: "Last 5 min" },
 ];

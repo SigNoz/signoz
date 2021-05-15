@@ -27,6 +27,10 @@ export const updateTimeInterval = (
 			maxTime = Date.now() * 1000000; // in nano sec
 			minTime = (Date.now() - 1 * 60 * 1000) * 1000000;
 			break;
+		case "5min":
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 5 * 60 * 1000) * 1000000;
+			break;
 
 		case "15min":
 			maxTime = Date.now() * 1000000; // in nano sec
