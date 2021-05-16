@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Select, Button, Space, Form } from "antd";
+import { Select as DefaultSelect, Button, Space, Form } from "antd";
 import styled from "styled-components";
 import { withRouter } from "react-router";
 import { RouteComponentProps, useLocation } from "react-router-dom";
@@ -10,18 +10,24 @@ import CustomDateTimeModal from "./CustomDateTimeModal";
 import { GlobalTime, updateTimeInterval } from "../../../store/actions";
 import { StoreState } from "../../../store/reducers";
 import FormItem from "antd/lib/form/FormItem";
-import { DefaultOptions, ServiceMapOptions } from "./config";
+import {
+	Options,
+	ServiceMapOptions,
+	DefaultOptionsBasedOnRoute,
+} from "./config";
 import { DateTimeRangeType } from "../../../store/actions";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { LOCAL_STORAGE } from "Src/constants/localStorage";
 import moment from "moment";
-const { Option } = Select;
+const { Option } = DefaultSelect;
 
 const DateTimeWrapper = styled.div`
 	margin-top: 20px;
 	justify-content: flex-end !important;
 `;
-
+const Select = styled(DefaultSelect)`
+	width: 150px;
+`;
 interface DateTimeSelectorProps extends RouteComponentProps<any> {
 	currentpath?: string;
 	updateTimeInterval: Function;
@@ -34,8 +40,12 @@ This components is mounted all the time. Use event listener to track changes.
 const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	const location = useLocation();
 	const options =
-		location.pathname === ROUTES.SERVICE_MAP ? ServiceMapOptions : DefaultOptions;
-	const defaultTime = options[0].value;
+		location.pathname === ROUTES.SERVICE_MAP ? ServiceMapOptions : Options;
+	const defaultTime =
+		location.pathname === ROUTES.SERVICE_MAP ||
+		location.pathname === ROUTES.APPLICATION
+			? DefaultOptionsBasedOnRoute[location.pathname]
+			: DefaultOptionsBasedOnRoute.default;
 
 	const [customDTPickerVisible, setCustomDTPickerVisible] = useState(false);
 	const [timeInterval, setTimeInterval] = useState(defaultTime);
@@ -82,7 +92,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	useEffect(() => {
 		updateTimeOnQueryParamChange();
 		if (findIndex(options, (option) => option.value === timeInterval) === -1) {
-			setTimeInterval(options[0].value);
+			setTimeInterval(defaultTime);
 		}
 	}, [location]);
 
