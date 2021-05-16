@@ -23,6 +23,15 @@ export const updateTimeInterval = (
 	// set directly based on that. Assuming datetimeRange values are in ms, and minTime is 0th element
 
 	switch (interval) {
+		case "1min":
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 1 * 60 * 1000) * 1000000;
+			break;
+		case "5min":
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 5 * 60 * 1000) * 1000000;
+			break;
+
 		case "15min":
 			maxTime = Date.now() * 1000000; // in nano sec
 			minTime = (Date.now() - 15 * 60 * 1000) * 1000000;
