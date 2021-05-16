@@ -10,7 +10,7 @@ import {
 import { Spin } from "antd";
 import styled from "styled-components";
 import { StoreState } from "../../store/reducers";
-import { getGraphData, getTooltip } from "./utils";
+import { getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
 
@@ -95,7 +95,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 				linkDirectionalParticles="value"
 				linkDirectionalParticleSpeed={(d) => d.value}
 				nodeCanvasObject={(node, ctx, globalScale) => {
-					const label = node.id;
+					const label = transformLabel(node.id);
 					const fontSize = node.fontSize;
 					ctx.font = `${fontSize}px Roboto`;
 					const width = node.width;
