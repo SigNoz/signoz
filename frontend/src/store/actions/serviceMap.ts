@@ -38,6 +38,11 @@ export interface servicesAction {
 
 export const getServiceMapItems = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch) => {
+		dispatch<serviceMapItemAction>({
+			type: ActionTypes.getServiceMapItems,
+			payload: [],
+		});
+
 		let request_string =
 			"/serviceMapDependencies?start=" +
 			globalTime.minTime +
@@ -45,7 +50,7 @@ export const getServiceMapItems = (globalTime: GlobalTime) => {
 			globalTime.maxTime;
 
 		const response = await api.get<servicesMapItem[]>(apiV1 + request_string);
-	
+
 		dispatch<serviceMapItemAction>({
 			type: ActionTypes.getServiceMapItems,
 			payload: response.data,
@@ -55,11 +60,16 @@ export const getServiceMapItems = (globalTime: GlobalTime) => {
 
 export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch) => {
+		dispatch<servicesAction>({
+			type: ActionTypes.getServices,
+			payload: [],
+		});
+
 		let request_string =
 			"/services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
 
 		const response = await api.get<servicesItem[]>(apiV1 + request_string);
-	
+
 		dispatch<servicesAction>({
 			type: ActionTypes.getServices,
 			payload: response.data,
