@@ -73,3 +73,26 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 		links,
 	};
 };
+
+export const getTooltip = (node: {
+	p99: number;
+	errorRate: number;
+	callRate: number;
+	id: string;
+}) => {
+	return `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
+								<div style="font-weight:bold; margin-bottom:16px;">${node.id}</div>
+								<div class="keyval">
+									<div class="key">P99 latency:</div>
+									<div class="val">${node.p99 / 1000000}ms</div>
+								</div>
+								<div class="keyval">
+									<div class="key">Request:</div>
+									<div class="val">${node.callRate}/sec</div>
+								</div>
+								<div class="keyval">
+									<div class="key">Error Rate:</div>
+									<div class="val">${node.errorRate}%</div>
+								</div>
+							</div>`;
+};
