@@ -10,7 +10,8 @@ import {
 import { Spin } from "antd";
 import styled from "styled-components";
 import { StoreState } from "../../store/reducers";
-import { getGraphData } from "./utils";
+import { getZoomPx, getGraphData } from "./utils";
+import { getGraphData, getTooltip } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
 
@@ -72,7 +73,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 380, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, getZoomPx(), (e) => e.id === value);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
@@ -90,7 +91,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 					fgRef.current.zoomToFit(100, 120);
 				}}
 				graphData={graphData}
-				nodeLabel="id"
+				nodeLabel={getTooltip}
 				linkAutoColorBy={(d) => d.target}
 				linkDirectionalParticles="value"
 				linkDirectionalParticleSpeed={(d) => d.value}
@@ -112,21 +113,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 				onNodeClick={(node) => {
 					const tooltip = document.querySelector(".graph-tooltip");
 					if (tooltip && node) {
-						tooltip.innerHTML = `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
-								<div style="font-weight:bold; margin-bottom:16px;">${node.id}</div>
-								<div class="keyval">
-									<div class="key">P99 latency:</div>
-									<div class="val">${node.p99 / 1000000}ms</div>
-								</div>
-								<div class="keyval">
-									<div class="key">Request:</div>
-									<div class="val">${node.callRate}/sec</div>
-								</div>
-								<div class="keyval">
-									<div class="key">Error Rate:</div>
-									<div class="val">${node.errorRate}%</div>
-								</div>
-							</div>`;
+						tooltip.innerHTML = getTooltip(node);
 					}
 				}}
 				nodePointerAreaPaint={(node, color, ctx) => {
