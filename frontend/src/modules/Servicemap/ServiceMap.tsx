@@ -10,8 +10,7 @@ import {
 import { Spin } from "antd";
 import styled from "styled-components";
 import { StoreState } from "../../store/reducers";
-import { getZoomPx, getGraphData } from "./utils";
-import { getGraphData, getTooltip } from "./utils";
+import { getZoomPx, getGraphData, getTooltip } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
 

@@ -83,6 +83,7 @@ export const getZoomPx = (): number => {
 	} else if (width > 2500) {
 		return 360;
 	}
+};
 
 export const getTooltip = (node: {
 	p99: number;
@@ -105,5 +106,4 @@ export const getTooltip = (node: {
 									<div class="val">${node.errorRate}%</div>
 								</div>
 							</div>`;
-
 };

@@ -3,7 +3,6 @@ import ROUTES from "Src/constants/routes";
 export const getLocalStorageRouteKey = (pathName: string) => {
 	let localStorageKey = "";
 	const pathNameSplit = pathName.split("/");
-	console.log("pathName", pathName);
 	if (!pathNameSplit[2]) {
 		localStorageKey = pathName;
 	} else {
