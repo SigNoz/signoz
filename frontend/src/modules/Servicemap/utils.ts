@@ -74,6 +74,17 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 	};
 };
 
+export const getZoomPx = (): number => {
+	const width = window.screen.width;
+	if (width < 1400) {
+		return 190;
+	} else if (width > 1400 && width < 1700) {
+		return 380;
+	} else if (width > 1700) {
+		return 470;
+	}
+};
+
 export const getTooltip = (node: {
 	p99: number;
 	errorRate: number;

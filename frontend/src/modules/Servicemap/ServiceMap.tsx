@@ -10,7 +10,8 @@ import {
 import { Spin } from "antd";
 import styled from "styled-components";
 import { StoreState } from "../../store/reducers";
-import { getGraphData, getTooltip, transformLabel } from "./utils";
+
+import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
 
@@ -72,7 +73,11 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}
 
 	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, 380, (e) => e.id === value);
+		fgRef && fgRef.current.zoomToFit(700, getZoomPx(), (e) => e.id === value);
+	};
+
+	const zoomToDefault = () => {
+		fgRef && fgRef.current.zoomToFit(100, 120);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);
@@ -82,13 +87,11 @@ const ServiceMap = (props: ServiceMapProps) => {
 			<SelectService
 				services={serviceMap.services}
 				zoomToService={zoomToService}
+				zoomToDefault={zoomToDefault}
 			/>
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
-				onEngineStop={() => {
-					fgRef.current.zoomToFit(100, 120);
-				}}
 				graphData={graphData}
 				nodeLabel={getTooltip}
 				linkAutoColorBy={(d) => d.target}
@@ -106,7 +109,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.fill();
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
-					ctx.fillStyle = "#333333";
+					ctx.fillStyle = "#646464";
 					ctx.fillText(label, node.x, node.y);
 				}}
 				onNodeClick={(node) => {

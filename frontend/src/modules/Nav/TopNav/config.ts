@@ -19,5 +19,6 @@ export const ServiceMapOptions = [
 export const DefaultOptionsBasedOnRoute = {
 	[ROUTES.SERVICE_MAP]: ServiceMapOptions[0].value,
 	[ROUTES.APPLICATION]: Options[0].value,
+	[ROUTES.SERVICE_METRICS]: Options[2].value,
 	default: Options[2].value,
 };
