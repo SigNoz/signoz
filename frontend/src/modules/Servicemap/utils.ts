@@ -107,3 +107,12 @@ export const getTooltip = (node: {
 								</div>
 							</div>`;
 };
+
+export const transformLabel = (label: string) => {
+	const MAX_LENGTH = 13;
+	const MAX_SHOW = 10;
+	if (label.length > MAX_LENGTH) {
+		return `${label.slice(0, MAX_SHOW)}...`;
+	}
+	return label;
+};
