@@ -4,6 +4,7 @@ import { InfoCircleOutlined } from "@ant-design/icons";
 import { Select } from "antd";
 import styled from "styled-components";
 const { Option } = Select;
+import { cloneDeep } from "lodash";
 
 const Container = styled.div`
   margin-top: 12px;
@@ -25,14 +26,26 @@ const Container = styled.div`
 interface SelectServiceProps {
 	services: servicesItem[];
 	zoomToService: (arg0: string) => void;
+	zoomToDefault: () => void;
 }
 
+const defaultOption = {
+	serviceName: "Default"
+};
+
 const SelectService = (props: SelectServiceProps) => {
-	const [selectedVal, setSelectedVal] = useState<string>();
-	const { services, zoomToService } = props;
+	const [selectedVal, setSelectedVal] = useState<string>(defaultOption.serviceName);
+	console.log("props",props);
+	const { zoomToService, zoomToDefault } = props;
+	const services = cloneDeep(props.services);
+	services.unshift(defaultOption)
 	const handleSelect = (value: string) => {
+		if(value === defaultOption.serviceName){
+			zoomToDefault()
+		} else {
+			zoomToService(value);
+		}
 		setSelectedVal(value);
-		zoomToService(value);
 	};
 	return (
 		<Container>
