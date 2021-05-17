@@ -35,7 +35,6 @@ const defaultOption = {
 
 const SelectService = (props: SelectServiceProps) => {
 	const [selectedVal, setSelectedVal] = useState<string>(defaultOption.serviceName);
-	console.log("props",props);
 	const { zoomToService, zoomToDefault } = props;
 	const services = cloneDeep(props.services);
 	services.unshift(defaultOption)
