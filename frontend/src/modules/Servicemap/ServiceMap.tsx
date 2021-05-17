@@ -86,9 +86,6 @@ const ServiceMap = (props: ServiceMapProps) => {
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
-				onEngineStop={() => {
-					fgRef.current.zoomToFit(100, 120);
-				}}
 				graphData={graphData}
 				nodeLabel={getTooltip}
 				linkAutoColorBy={(d) => d.target}
@@ -106,7 +103,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.fill();
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
-					ctx.fillStyle = "#333333";
+					ctx.fillStyle = "#646464";
 					ctx.fillText(label, node.x, node.y);
 				}}
 				onNodeClick={(node) => {
