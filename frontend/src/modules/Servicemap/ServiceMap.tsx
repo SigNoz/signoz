@@ -103,7 +103,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.fill();
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
-					ctx.fillStyle = "#333333";
+					ctx.fillStyle = "#646464";
 					ctx.fillText(label, node.x, node.y);
 				}}
 				onNodeClick={(node) => {
