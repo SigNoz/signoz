@@ -57,14 +57,12 @@ func main() {
 	logger := loggerMgr.Sugar()
 	logger.Debug("START!")
 
-	// v := initViper()
-
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
 		// DruidClientUrl: v.GetString(app.DruidClientUrl),
 
-		HTTPHostPort:   constants.HTTPHostPort,
-		DruidClientUrl: constants.DruidClientUrl,
+		HTTPHostPort: constants.HTTPHostPort,
+		// DruidClientUrl: constants.DruidClientUrl,
 	}
 
 	server, err := app.NewServer(serverOptions)
