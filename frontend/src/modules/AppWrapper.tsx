@@ -34,7 +34,13 @@ const App = () => {
 							<Route path={ROUTES.SIGN_UP} exact component={Signup} />
 							<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
 							<Route path={ROUTES.SERVICE_METRICS} exact component={ServiceMetrics} />
-							<Route path={ROUTES.SERVICE_MAP} exact component={ServiceMap} />
+							<Route
+								path={ROUTES.SERVICE_MAP}
+								exact
+								render={(props) => (
+									<ServiceMap {...props} componentPath={ROUTES.SERVICE_MAP} />
+								)}
+							/>
 							<Route path={ROUTES.TRACES} exact component={TraceDetail} />
 							<Route path={ROUTES.TRACE_GRAPH} exact component={TraceGraph} />
 							<Route path={ROUTES.SETTINGS} exact component={SettingsPage} />

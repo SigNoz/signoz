@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router-dom";
+import { RouteComponentProps, useLocation } from "react-router-dom";
 import {
 	GlobalTime,
 	serviceMapStore,
@@ -36,6 +36,7 @@ interface ServiceMapProps extends RouteComponentProps<any> {
 	globalTime: GlobalTime;
 	getServiceMapItems: Function;
 	getDetailedServiceMapItems: Function;
+	componentPath: string;
 }
 interface graphNode {
 	id: string;
@@ -53,16 +54,19 @@ export interface graphDataType {
 
 const ServiceMap = (props: ServiceMapProps) => {
 	const fgRef = useRef();
+	const location = useLocation();
 	const {
 		getDetailedServiceMapItems,
 		getServiceMapItems,
 		globalTime,
 		serviceMap,
+		componentPath,
 	} = props;
-
 	useEffect(() => {
-		getServiceMapItems(globalTime);
-		getDetailedServiceMapItems(globalTime);
+		if (location.pathname === componentPath) {
+			getServiceMapItems(globalTime);
+			getDetailedServiceMapItems(globalTime);
+		}
 	}, [globalTime]);
 
 	useEffect(() => {
