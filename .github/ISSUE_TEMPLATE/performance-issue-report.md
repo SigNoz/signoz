@@ -30,4 +30,4 @@ Please provide details of OS version etc.
 
 
 
-#### *Thank you* for your performance issue report – we want PostHog to go supersonic!
+#### *Thank you* for your performance issue report – we want SigNoz to be blazing fast!
