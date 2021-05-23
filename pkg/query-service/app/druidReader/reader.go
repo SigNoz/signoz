@@ -2,6 +2,7 @@ package druidReader
 
 import (
 	"context"
+	"os"
 
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
@@ -13,9 +14,10 @@ type DruidReader struct {
 	SqlClient *druidQuery.SqlClient
 }
 
-func NewReader(druidClientUrl string) *DruidReader {
+func NewReader() *DruidReader {
 
 	initialize()
+	druidClientUrl := os.Getenv("DruidClientUrl")
 
 	client := godruid.Client{
 		Url:   druidClientUrl,
@@ -32,6 +34,7 @@ func NewReader(druidClientUrl string) *DruidReader {
 	}
 
 }
+
 func initialize() {
 
 }

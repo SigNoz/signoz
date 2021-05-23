@@ -96,8 +96,7 @@ func createHTTPServer() (*http.Server, error) {
 
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
-		druidClientUrl := os.Getenv("DruidClientUrl")
-		reader = druidReader.NewReader(druidClientUrl)
+		reader = druidReader.NewReader()
 	} else if storage == "clickhouse" {
 		// clickHouseClientUrl := os.Getenv("clickHouseClientUrl")
 		// reader = clickHouseReader.NewTraceReader()
