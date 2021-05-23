@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router-dom";
 import {
@@ -14,6 +14,7 @@ import { StoreState } from "../../store/reducers";
 import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
+import { useRoute } from "../RouteProvider";
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {
@@ -53,6 +54,8 @@ export interface graphDataType {
 
 const ServiceMap = (props: ServiceMapProps) => {
 	const fgRef = useRef();
+	const { state } = useRoute();
+
 	const {
 		getDetailedServiceMapItems,
 		getServiceMapItems,
@@ -61,8 +64,14 @@ const ServiceMap = (props: ServiceMapProps) => {
 	} = props;
 
 	useEffect(() => {
-		getServiceMapItems(globalTime);
-		getDetailedServiceMapItems(globalTime);
+		/*
+			Call the apis only when the route is loaded.
+			Check this issue: https://github.com/SigNoz/signoz/issues/110
+		 */
+		if (state.SERVICE_MAP.isLoaded) {
+			getServiceMapItems(globalTime);
+			getDetailedServiceMapItems(globalTime);
+		}
 	}, [globalTime]);
 
 	useEffect(() => {

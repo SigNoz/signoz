@@ -1,8 +1,12 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 
 import { Layout } from "antd";
 import SideNav from "./Nav/SideNav";
 import TopNav from "./Nav/TopNav";
+import { useLocation } from "react-router-dom";
+import ROUTES from "Src/constants/routes";
+import { useRoute } from "./RouteProvider";
+
 const { Content, Footer } = Layout;
 
 interface BaseLayoutProps {
@@ -10,6 +14,13 @@ interface BaseLayoutProps {
 }
 
 const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
+	const location = useLocation();
+	const { dispatch } = useRoute();
+
+	useEffect(() => {
+		dispatch({ type: "UPDATE_IS_LOADED", payload: location.pathname });
+	}, [location]);
+
 	return (
 		<Layout style={{ minHeight: "100vh" }}>
 			<SideNav />

@@ -18,6 +18,7 @@ import FormItem from "antd/lib/form/FormItem";
 import api, { apiV1 } from "../../api";
 import { useLocation } from "react-router-dom";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
+import { useRoute } from "../RouteProvider";
 
 const { Option } = Select;
 
@@ -45,6 +46,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
 	const location = useLocation();
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
+	const { state } = useRoute();
 
 	useEffect(() => {
 		handleApplyFilterForm({
@@ -122,7 +124,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				"&tags=" +
 				encodeURIComponent(JSON.stringify(props.traceFilters.tags));
 
-		props.fetchTraces(props.globalTime, request_string);
+		/*
+			Call the apis only when the route is loaded.
+			Check this issue: https://github.com/SigNoz/signoz/issues/110
+		 */
+		if (state.TRACES.isLoaded) {
+			props.fetchTraces(props.globalTime, request_string);
+		}
 	}, [props.traceFilters, props.globalTime]);
 
 	useEffect(() => {
