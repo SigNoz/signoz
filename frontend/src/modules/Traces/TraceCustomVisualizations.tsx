@@ -10,6 +10,7 @@ import {
 	GlobalTime,
 	TraceFilters,
 } from "../../store/actions";
+import { useRoute } from "../RouteProvider";
 
 const { Option } = Select;
 
@@ -81,6 +82,8 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 	const [selectedEntity, setSelectedEntity] = useState("calls");
 	const [selectedAggOption, setSelectedAggOption] = useState("count");
 	const [selectedStep, setSelectedStep] = useState("60");
+	const { state } = useRoute();
+
 	// Step should be multiples of 60, 60 -> 1 min
 
 	useEffect(() => {
@@ -109,7 +112,10 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 			minTime: props.globalTime.minTime - 15 * 60 * 1000000000,
 			maxTime: props.globalTime.maxTime + 15 * 60 * 1000000000,
 		};
-		props.getFilteredTraceMetrics(request_string, plusMinus15);
+
+		if (state.TRACES.isLoaded) {
+			props.getFilteredTraceMetrics(request_string, plusMinus15);
+		}
 	}, [selectedEntity, selectedAggOption, props.traceFilters, props.globalTime]);
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes

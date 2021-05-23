@@ -13,41 +13,12 @@ interface BaseLayoutProps {
 	children: ReactNode;
 }
 
-interface RouteObj {
-	[key: string]: {
-		route: string;
-		isLoaded: boolean;
-	};
-}
 const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 	const location = useLocation();
 	const { dispatch } = useRoute();
 
-	/*
-	Create a routes obj with values as
-	{
-		SERVICE_MAP: {
-			route: '/service-map',
-			isLoaded: false
-	}
-	 */
-	const routes: RouteObj = {};
-	Object.keys(ROUTES).map((items) => {
-		routes[items] = {
-			route: `${ROUTES[items]}`,
-			isLoaded: false,
-		};
-	});
-
 	useEffect(() => {
-		/*
-		Update the isLoaded property in routes obj
-		if the route matches the current pathname
-		 */
-		Object.keys(ROUTES).map((items) => {
-			routes[items].isLoaded = routes[items].route === location.pathname;
-		});
-		dispatch({ type: "UPDATE", payload: routes });
+		dispatch({ type: "UPDATE_IS_LOADED", payload: location.pathname });
 	}, [location]);
 
 	return (

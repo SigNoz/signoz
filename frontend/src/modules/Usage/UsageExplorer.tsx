@@ -13,6 +13,7 @@ import {
 import { StoreState } from "../../store/reducers";
 import moment from "moment";
 import { isOnboardingSkipped } from "../../utils/app";
+import { useRoute } from "../RouteProvider";
 const { Option } = Select;
 
 interface UsageExplorerProps {
@@ -56,6 +57,8 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>("");
 
+	const { state } = useRoute();
+
 	useEffect(() => {
 		if (selectedTime && selectedInterval) {
 			const maxTime = new Date().getTime() * 1000000;
@@ -71,7 +74,9 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 	}, [selectedTime, selectedInterval, selectedService]);
 
 	useEffect(() => {
-		props.getServicesList(props.globalTime);
+		if (state.USAGE_EXPLORER.isLoaded) {
+			props.getServicesList(props.globalTime);
+		}
 	}, []);
 
 	const data = {
