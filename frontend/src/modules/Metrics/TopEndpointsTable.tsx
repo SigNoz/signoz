@@ -7,6 +7,7 @@ import { topEndpointListItem } from "../../store/actions/metrics";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { GlobalTime } from "Src/store/actions";
 import { StoreState } from "Src/store/reducers";
+import "./TopEndpointsTable.css";
 
 const Wrapper = styled.div`
 	padding-top: 10px;
@@ -58,7 +59,11 @@ const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
 			key: "name",
 
 			render: (text: string) => (
-				<Button type="link" onClick={() => handleOnClick(text)}>
+				<Button
+					className="topEndpointsButton"
+					type="link"
+					onClick={() => handleOnClick(text)}
+				>
 					{text}
 				</Button>
 			),
