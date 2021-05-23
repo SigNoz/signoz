@@ -37,7 +37,6 @@ interface ServiceMapProps extends RouteComponentProps<any> {
 	globalTime: GlobalTime;
 	getServiceMapItems: Function;
 	getDetailedServiceMapItems: Function;
-	componentPath: string;
 }
 interface graphNode {
 	id: string;
