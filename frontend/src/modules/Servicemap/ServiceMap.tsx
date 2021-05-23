@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { connect } from "react-redux";
-import { RouteComponentProps, useLocation } from "react-router-dom";
+import { RouteComponentProps } from "react-router-dom";
 import {
 	GlobalTime,
 	serviceMapStore,
@@ -14,6 +14,7 @@ import { StoreState } from "../../store/reducers";
 import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
+import { useRoute } from "../RouteProvider";
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {
@@ -54,16 +55,17 @@ export interface graphDataType {
 
 const ServiceMap = (props: ServiceMapProps) => {
 	const fgRef = useRef();
-	const location = useLocation();
+	const { state } = useRoute();
+
 	const {
 		getDetailedServiceMapItems,
 		getServiceMapItems,
 		globalTime,
 		serviceMap,
-		componentPath,
 	} = props;
+
 	useEffect(() => {
-		if (location.pathname === componentPath) {
+		if (state.SERVICE_MAP.isLoaded) {
 			getServiceMapItems(globalTime);
 			getDetailedServiceMapItems(globalTime);
 		}
