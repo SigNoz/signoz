@@ -124,6 +124,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				"&tags=" +
 				encodeURIComponent(JSON.stringify(props.traceFilters.tags));
 
+		/*
+			Call the apis only when the route is loaded.
+			Check this issue: https://github.com/SigNoz/signoz/issues/110
+		 */
 		if (state.TRACES.isLoaded) {
 			props.fetchTraces(props.globalTime, request_string);
 		}

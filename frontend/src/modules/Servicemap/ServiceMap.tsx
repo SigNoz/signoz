@@ -64,6 +64,10 @@ const ServiceMap = (props: ServiceMapProps) => {
 	} = props;
 
 	useEffect(() => {
+		/*
+			Call the apis only when the route is loaded.
+			Check this issue: https://github.com/SigNoz/signoz/issues/110
+		 */
 		if (state.SERVICE_MAP.isLoaded) {
 			getServiceMapItems(globalTime);
 			getDetailedServiceMapItems(globalTime);

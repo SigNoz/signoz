@@ -113,6 +113,10 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 			maxTime: props.globalTime.maxTime + 15 * 60 * 1000000000,
 		};
 
+		/*
+			Call the apis only when the route is loaded.
+			Check this issue: https://github.com/SigNoz/signoz/issues/110
+		 */
 		if (state.TRACES.isLoaded) {
 			props.getFilteredTraceMetrics(request_string, plusMinus15);
 		}
