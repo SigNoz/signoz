@@ -3,11 +3,13 @@ module go.signoz.io/query-service
 go 1.14
 
 require (
+	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/gogo/protobuf v1.2.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jaegertracing/jaeger v1.21.0
+	github.com/jmoiron/sqlx v1.3.4
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/ory/viper v1.7.5
 	github.com/posthog/posthog-go v0.0.0-20200525173953-e46dc8e6b89b

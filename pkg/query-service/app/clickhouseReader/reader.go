@@ -2,13 +2,22 @@ package clickhouseReader
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"time"
+
+	_ "github.com/ClickHouse/clickhouse-go"
+	"github.com/jmoiron/sqlx"
+
+	"go.signoz.io/query-service/model"
+	"go.uber.org/zap"
 )
 
 const (
+	primaryNamespace = "clickhouse"
+	archiveNamespace = "clickhouse-archive"
+
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
 	maxProgressiveSteps                   = 4
@@ -21,24 +30,50 @@ var (
 )
 
 // SpanWriter for reading spans from ClickHouse
-type TraceReader struct {
-	db              *sql.DB
+type ClickHouseReader struct {
+	db              *sqlx.DB
 	operationsTable string
 	indexTable      string
 	spansTable      string
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewTraceReader(db *sql.DB, operationsTable, indexTable, spansTable string) *TraceReader {
-	return &TraceReader{
+func NewReader() *ClickHouseReader {
+
+	datasource := os.Getenv("ClickHouseUrl")
+	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
+	db, err := initialize(options)
+
+	if err != nil {
+		zap.S().Error(err)
+	}
+	return &ClickHouseReader{
 		db:              db,
-		operationsTable: operationsTable,
-		indexTable:      indexTable,
-		spansTable:      spansTable,
+		operationsTable: options.primary.OperationsTable,
+		indexTable:      options.primary.IndexTable,
+		spansTable:      options.primary.SpansTable,
 	}
 }
 
-func (r *TraceReader) getStrings(ctx context.Context, sql string, args ...interface{}) ([]string, error) {
+func initialize(options *Options) (*sqlx.DB, error) {
+
+	db, err := connect(options.getPrimary())
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to primary db: %v", err)
+	}
+
+	return db, nil
+}
+
+func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
+	if cfg.Encoding != EncodingJSON && cfg.Encoding != EncodingProto {
+		return nil, fmt.Errorf("unknown encoding %q, supported: %q, %q", cfg.Encoding, EncodingJSON, EncodingProto)
+	}
+
+	return cfg.Connector(cfg)
+}
+
+func (r *ClickHouseReader) getStrings(ctx context.Context, sql string, args ...interface{}) ([]string, error) {
 	rows, err := r.db.QueryContext(ctx, sql, args...)
 	if err != nil {
 		return nil, err
@@ -64,13 +99,22 @@ func (r *TraceReader) getStrings(ctx context.Context, sql string, args ...interf
 }
 
 // GetServices fetches the sorted service list that have not expired
-func (r *TraceReader) GetServices(ctx context.Context) ([]string, error) {
+func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, error) {
 
-	if r.operationsTable == "" {
-		return nil, ErrNoOperationsTable
+	if r.indexTable == "" {
+		return nil, ErrNoIndexTable
 	}
 
-	query := fmt.Sprintf("SELECT service FROM %s GROUP BY service", r.operationsTable)
+	var serviceItems []model.ServiceItem
 
-	return r.getStrings(ctx, query)
+	query := fmt.Sprintf("SELECT service as serviceName, avg(durationNano) as avgDuration FROM %s GROUP BY service", r.indexTable)
+
+	err := r.db.Select(&serviceItems, query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, err
+	}
+
+	return &serviceItems, nil
 }

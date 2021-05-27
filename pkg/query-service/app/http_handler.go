@@ -56,10 +56,10 @@ type structuredError struct {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/dbOverview", aH.getServiceDBOverview).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
@@ -241,21 +241,21 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 // }
 
-func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
+// func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseGetServiceOverviewRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
+// 	query, err := parseGetServiceOverviewRequest(r)
+// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 		return
+// 	}
 
-	result, err := (*aH.reader).GetServiceOverview(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
+// 	result, err := (*aH.reader).GetServiceOverview(context.Background(), query)
+// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 		return
+// 	}
 
-	aH.writeJSON(w, r, result)
+// 	aH.writeJSON(w, r, result)
 
-}
+// }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 
@@ -337,20 +337,20 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 // 	aH.writeJSON(w, r, result)
 // }
 
-func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
+// func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
+// 	// vars := mux.Vars(r)
 
-	query, err := parseApplicationPercentileRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
+// 	query, err := parseApplicationPercentileRequest(r)
+// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 		return
+// 	}
 
-	result, err := (*aH.reader).GetApplicationPercentiles(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-	aH.writeJSON(w, r, result)
-}
+// 	result, err := (*aH.reader).GetApplicationPercentiles(context.Background(), query)
+// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 		return
+// 	}
+// 	aH.writeJSON(w, r, result)
+// }
 
 func (aH *APIHandler) handleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {

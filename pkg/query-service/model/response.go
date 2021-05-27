@@ -1,16 +1,17 @@
 package model
 
 type ServiceItem struct {
-	ServiceName  string  `json:"serviceName"`
-	Percentile99 float32 `json:"p99"`
-	AvgDuration  float32 `json:"avgDuration"`
-	NumCalls     int     `json:"numCalls"`
-	CallRate     float32 `json:"callRate"`
-	NumErrors    int     `json:"numErrors"`
-	ErrorRate    float32 `json:"errorRate"`
-	Num4XX       int     `json:"num4XX"`
-	FourXXRate   float32 `json:"fourXXRate"`
+	ServiceName  string  `json:"serviceName" db:"serviceName"`
+	Percentile99 float32 `json:"p99" db:"p99"`
+	AvgDuration  float32 `json:"avgDuration" db:"avgDuration"`
+	NumCalls     int     `json:"numCalls" db:"numCalls"`
+	CallRate     float32 `json:"callRate" db:"callRate"`
+	NumErrors    int     `json:"numErrors" db:"numErrors"`
+	ErrorRate    float32 `json:"errorRate" db:"errorRate"`
+	Num4XX       int     `json:"num4XX" db:"num4XX"`
+	FourXXRate   float32 `json:"fourXXRate" db:"fourXXRate"`
 }
+
 type ServiceListErrorItem struct {
 	ServiceName string `json:"serviceName"`
 	NumErrors   int    `json:"numErrors"`
