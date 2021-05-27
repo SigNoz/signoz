@@ -13,7 +13,6 @@ import "./TraceGraph.css";
 import { spanToTreeUtil } from "../../utils/spanToTree";
 import { fetchTraceItem, spansWSameTraceIDResponse } from "../../store/actions";
 import { StoreState } from "../../store/reducers";
-import { TraceGraphColumn } from "./TraceGraphColumn";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 
 interface TraceGraphProps {
@@ -71,11 +70,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-			{/*<Col md={8} sm={24}>*/}
-			{/*	<TraceGraphColumn />*/}
-			{/*</Col>*/}
 			<Col md={24} sm={24}>
-				{/* <Card style={{ width: 640 }}> */}
 				<Space direction="vertical" size="middle" style={{ width: "100%" }}>
 					<Card bodyStyle={{ padding: 80 }} style={{ height: 320 }}>
 						<div
