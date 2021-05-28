@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Button } from "antd";
+import { Table, Button, Tooltip } from "antd";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { useHistory, useParams } from "react-router-dom";
@@ -7,12 +7,16 @@ import { topEndpointListItem } from "../../store/actions/metrics";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { GlobalTime } from "Src/store/actions";
 import { StoreState } from "Src/store/reducers";
+import "./TopEndpointsTable.css";
 
 const Wrapper = styled.div`
 	padding-top: 10px;
 	padding-bottom: 10px;
-	padding-left: 20px;
-	padding-right: 20px;
+	padding-left: 8px;
+	padding-right: 8px;
+	@media only screen and (max-width: 767px) {
+		padding: 0;
+	}
 	.ant-table table {
 		font-size: 12px;
 	}
@@ -21,6 +25,9 @@ const Wrapper = styled.div`
 	.ant-table-tbody > tr > td,
 	.ant-table-thead > tr > th {
 		padding: 10px;
+	}
+	.ant-table-column-sorters {
+		padding: 6px;
 	}
 `;
 
@@ -58,9 +65,15 @@ const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
 			key: "name",
 
 			render: (text: string) => (
-				<Button type="link" onClick={() => handleOnClick(text)}>
-					{text}
-				</Button>
+				<Tooltip placement="topLeft" title={text}>
+					<Button
+						className="topEndpointsButton"
+						type="link"
+						onClick={() => handleOnClick(text)}
+					>
+						{text}
+					</Button>
+				</Tooltip>
 			),
 		},
 		{
