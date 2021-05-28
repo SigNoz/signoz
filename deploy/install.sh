@@ -386,7 +386,7 @@ if [[ $status_code -ne 200 ]]; then
     echo "The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
     echo -e "sudo docker-compose -f docker/docker-compose-tiny.yaml ps -a"
-    echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
+    echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
     echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
     echo "++++++++++++++++++++++++++++++++++++++++"
 
