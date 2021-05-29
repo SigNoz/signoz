@@ -418,10 +418,12 @@ else
         wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
     fi
     echo "++++++++++++++++++ SUCCESS ++++++++++++++++++++++"
+    echo ""
     echo "Your installation is complete!"
     echo ""
     echo "Your frontend is running on 'http://localhost:3000'."
-
+    echo ""
+    echo "To bring down SigNoz and clean volumes : sudo docker-compose -f docker/docker-compose-tiny.yaml down -v"
     echo ""
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
     echo ""
