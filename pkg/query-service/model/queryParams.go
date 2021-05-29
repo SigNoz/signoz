@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type GetTopEndpointsParams struct {
 	StartTime   string
@@ -19,11 +22,15 @@ type GetServicesParams struct {
 	StartTime string
 	EndTime   string
 	Period    int
+	Start     *time.Time
+	End       *time.Time
 }
 
 type GetServiceOverviewParams struct {
 	StartTime   string
 	EndTime     string
+	Start       *time.Time
+	End         *time.Time
 	ServiceName string
 	Period      string
 	StepSeconds int
@@ -67,6 +74,8 @@ type SpanSearchParams struct {
 	OperationName string
 	Kind          string
 	Intervals     string
+	Start         *time.Time
+	End           *time.Time
 	MinDuration   string
 	MaxDuration   string
 	Limit         int64

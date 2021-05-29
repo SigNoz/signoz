@@ -101,7 +101,9 @@ func parseGetServiceExternalRequest(r *http.Request) (*model.GetServiceOverviewP
 	}
 
 	getServiceOverviewParams := model.GetServiceOverviewParams{
+		Start:       startTime,
 		StartTime:   startTime.Format(time.RFC3339Nano),
+		End:         endTime,
 		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 		Period:      fmt.Sprintf("PT%dM", stepInt/60),
@@ -137,7 +139,9 @@ func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewP
 	}
 
 	getServiceOverviewParams := model.GetServiceOverviewParams{
+		Start:       startTime,
 		StartTime:   startTime.Format(time.RFC3339Nano),
+		End:         endTime,
 		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 		Period:      fmt.Sprintf("PT%dM", stepInt/60),
@@ -160,7 +164,9 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	}
 
 	getServicesParams := model.GetServicesParams{
+		Start:     startTime,
 		StartTime: startTime.Format(time.RFC3339Nano),
+		End:       endTime,
 		EndTime:   endTime.Format(time.RFC3339Nano),
 		Period:    int(endTime.Unix() - startTime.Unix()),
 	}
@@ -283,6 +289,8 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	// fmt.Println(startTimeStr)
 	params := &model.SpanSearchParams{
 		Intervals: fmt.Sprintf("%s/%s", startTimeStr, endTimeStr),
+		Start:     startTime,
+		End:       endTime,
 		Limit:     100,
 		Order:     "descending",
 	}

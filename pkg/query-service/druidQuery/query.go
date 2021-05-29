@@ -316,7 +316,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 	return nil, nil
 }
 
-func SearchSpans(client *godruid.Client, queryParams *model.SpanSearchParams) ([]godruid.ScanResult, error) {
+func SearchSpans(client *godruid.Client, queryParams *model.SpanSearchParams) (*[]model.SearchSpansResult, error) {
 
 	filter, err := buildFilters(queryParams)
 
@@ -347,7 +347,16 @@ func SearchSpans(client *godruid.Client, queryParams *model.SpanSearchParams) ([
 
 	// fmt.Printf("query.QueryResult:\n%v", query.QueryResult)
 
-	return query.QueryResult, nil
+	var searchSpansResult []model.SearchSpansResult
+	searchSpansResult = make([]model.SearchSpansResult, len(query.QueryResult))
+
+	searchSpansResult[0].Columns = make([]string, len(query.QueryResult[0].Columns))
+	copy(searchSpansResult[0].Columns, query.QueryResult[0].Columns)
+
+	searchSpansResult[0].Events = make([][]interface{}, len(query.QueryResult[0].Events))
+	copy(searchSpansResult[0].Events, query.QueryResult[0].Events)
+
+	return &searchSpansResult, nil
 }
 
 func GetApplicationPercentiles(client *godruid.Client, queryParams *model.ApplicationPercentileParams) ([]godruid.Timeseries, error) {

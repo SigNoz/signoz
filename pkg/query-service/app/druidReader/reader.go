@@ -47,6 +47,6 @@ func (druid *DruidReader) GetServices(ctx context.Context, query *model.GetServi
 	return druidQuery.GetServices(druid.SqlClient, query)
 }
 
-func (druid *DruidReader) GetApplicationPercentiles(ctx context.Context, query *model.ApplicationPercentileParams) ([]godruid.Timeseries, error) {
-	return druidQuery.GetApplicationPercentiles(druid.Client, query)
+func (druid *DruidReader) SearchSpans(ctx context.Context, query *model.SpanSearchParams) (*[]model.SearchSpansResult, error) {
+	return druidQuery.SearchSpans(druid.Client, query)
 }
