@@ -421,7 +421,8 @@ else
     echo "Your installation is complete!"
     echo ""
     echo "Your frontend is running on 'http://localhost:3000'."
-
+    echo ""
+    echo "Stop all docker containers : sudo docker-compose -f docker/docker-compose-tiny.yaml down -v"
     echo ""
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
     echo ""
