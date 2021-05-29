@@ -1,19 +1,17 @@
-import {
-	ActionTypes,
-	TraceFilters,
-	updateInputTagAction,
-	updateTraceFiltersAction,
-} from "../actions";
+import { ActionTypes, TraceFilters } from "../actions";
 
-export const traceFiltersReducer = (
-	state: TraceFilters = {
-		service: "",
-		tags: [],
-		operation: "",
-		latency: { min: "", max: "" },
-	},
-	action: updateTraceFiltersAction,
-) => {
+type ACTION = {
+	type: ActionTypes;
+	payload: TraceFilters;
+};
+const initialState: TraceFilters = {
+	service: "",
+	tags: [],
+	operation: "",
+	latency: { min: "", max: "" },
+};
+
+const TraceFilterReducer = (state = initialState, action: ACTION) => {
 	switch (action.type) {
 		case ActionTypes.updateTraceFilters:
 			return action.payload;
@@ -22,14 +20,4 @@ export const traceFiltersReducer = (
 	}
 };
 
-export const inputsReducer = (
-	state: string = "",
-	action: updateInputTagAction,
-) => {
-	switch (action.type) {
-		case ActionTypes.updateInput:
-			return action.payload;
-		default:
-			return state;
-	}
-};
+export default TraceFilterReducer;

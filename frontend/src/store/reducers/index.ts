@@ -25,13 +25,12 @@ import {
 	externalMetricsReducer,
 	externalAvgDurationMetricsReducer,
 } from "./metrics";
-import { traceFiltersReducer, inputsReducer } from "./traceFilters";
+import TraceFilterReducer from "./traceFilters";
 import { traceItemReducer, tracesReducer } from "./traces";
 import { usageDataReducer } from "./usage";
 import { ServiceMapReducer } from "./serviceMap";
 export interface StoreState {
 	traceFilters: TraceFilters;
-	inputTag: string;
 	traces: traceResponseNew;
 	traceItem: spansWSameTraceIDResponse;
 	servicesList: servicesListItem[];
@@ -48,8 +47,7 @@ export interface StoreState {
 }
 
 const reducers = combineReducers<StoreState>({
-	traceFilters: traceFiltersReducer,
-	inputTag: inputsReducer,
+	traceFilters: TraceFilterReducer,
 	traces: tracesReducer,
 	traceItem: traceItemReducer,
 	servicesList: serviceTableReducer,
