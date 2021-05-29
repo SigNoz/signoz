@@ -418,6 +418,7 @@ else
         wget -q --post-data="$DATA" --header="$HEADER" "$URL" > /dev/null 2>&1
     fi
     echo "++++++++++++++++++ SUCCESS ++++++++++++++++++++++"
+    echo ""
     echo "Your installation is complete!"
     echo ""
     echo "Your frontend is running on 'http://localhost:3000'."
