@@ -60,7 +60,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/service/dbOverview", aH.getServiceDBOverview).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/dbOverview", aH.getServiceDBOverview).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/external", aH.getServiceExternal).Methods(http.MethodGet)
@@ -177,21 +177,22 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 // }
 
-// func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseGetServiceExternalRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetServiceDBOverview(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetServiceDBOverview(context.Background(), query)
 
-// 	aH.writeJSON(w, r, result)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// }
+	aH.writeJSON(w, r, result)
+
+}
 
 // func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request) {
 

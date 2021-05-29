@@ -78,12 +78,12 @@ type ServiceExternalItem struct {
 }
 
 type ServiceDBOverviewItem struct {
-	Time        string  `json:"time,omitempty"`
-	Timestamp   int64   `json:"timestamp,omitempty"`
-	DBSystem    string  `json:"dbSystem,omitempty"`
-	AvgDuration float32 `json:"avgDuration,omitempty"`
-	NumCalls    int     `json:"numCalls,omitempty"`
-	CallRate    float32 `json:"callRate,omitempty"`
+	Time        string  `json:"time,omitempty" db:"time,omitempty"`
+	Timestamp   int64   `json:"timestamp,omitempty" db:"timestamp,omitempty"`
+	DBSystem    string  `json:"dbSystem,omitempty" db:"dbSystem,omitempty"`
+	AvgDuration float32 `json:"avgDuration,omitempty" db:"avgDuration,omitempty"`
+	NumCalls    int     `json:"numCalls,omitempty" db:"numCalls,omitempty"`
+	CallRate    float32 `json:"callRate,omitempty" db:"callRate,omitempty"`
 }
 
 type ServiceMapDependencyItem struct {

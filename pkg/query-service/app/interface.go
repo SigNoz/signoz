@@ -11,4 +11,5 @@ type Reader interface {
 	GetServices(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceItem, error)
 	// GetApplicationPercentiles(ctx context.Context, query *model.ApplicationPercentileParams) ([]godruid.Timeseries, error)
 	SearchSpans(ctx context.Context, query *model.SpanSearchParams) (*[]model.SearchSpansResult, error)
+	GetServiceDBOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error)
 }

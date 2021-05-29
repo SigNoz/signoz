@@ -50,3 +50,7 @@ func (druid *DruidReader) GetServices(ctx context.Context, query *model.GetServi
 func (druid *DruidReader) SearchSpans(ctx context.Context, query *model.SpanSearchParams) (*[]model.SearchSpansResult, error) {
 	return druidQuery.SearchSpans(druid.Client, query)
 }
+
+func (druid *DruidReader) GetServiceDBOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
+	return druidQuery.GetServiceDBOverview(druid.SqlClient, query)
+}
