@@ -1,18 +1,6 @@
-@import "~antd/dist/antd.dark.css";
-@import "~antd/dist/antd.compact.css";
-
 .ant-space-item {
 	margin-right: 0 !important;
 }
-/* #components-layout-demo-side .logo {
-    height: 32px;
-    margin: 16px;
-    background: rgba(255, 255, 255, 0.3);
-  }
-  
-  .site-layout .site-layout-background {
-    background: #fff;
-  } */
 .instrument-card{
 	border-radius: 4px;
 	background: #313131;
