@@ -422,7 +422,7 @@ else
     echo ""
     echo "Your frontend is running on 'http://localhost:3000'."
     echo ""
-    echo "Stop all docker containers : sudo docker-compose -f docker/docker-compose-tiny.yaml down -v"
+    echo "To bring down SigNoz and clean volumes : sudo docker-compose -f docker/docker-compose-tiny.yaml down -v"
     echo ""
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
     echo ""
