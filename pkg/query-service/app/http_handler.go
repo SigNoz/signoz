@@ -61,9 +61,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	// router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/dbOverview", aH.getServiceDBOverview).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/service/external", aH.getServiceExternal).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/external", aH.getServiceExternal).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/{service}/operations", aH.getOperations).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/spans", aH.searchSpans).Methods(http.MethodGet)
@@ -194,53 +194,53 @@ func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Reques
 
 }
 
-// func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseGetServiceExternalRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetServiceExternal(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetServiceExternal(context.Background(), query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
 
-// func (aH *APIHandler) GetServiceExternalAvgDuration(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) GetServiceExternalAvgDuration(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseGetServiceExternalRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetServiceExternalAvgDuration(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetServiceExternalAvgDuration(context.Background(), query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
 
-// func (aH *APIHandler) getServiceExternalErrors(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getServiceExternalErrors(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseGetServiceExternalRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetServiceExternalRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetServiceExternalErrors(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetServiceExternalErrors(context.Background(), query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
 
 func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
 

@@ -67,14 +67,14 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 }
 
 type ServiceExternalItem struct {
-	Time            string  `json:"time,omitempty"`
-	Timestamp       int64   `json:"timestamp,omitempty"`
-	ExternalHttpUrl string  `json:"externalHttpUrl,omitempty"`
-	AvgDuration     float32 `json:"avgDuration,omitempty"`
-	NumCalls        int     `json:"numCalls,omitempty"`
-	CallRate        float32 `json:"callRate,omitempty"`
-	NumErrors       int     `json:"numErrors"`
-	ErrorRate       float32 `json:"errorRate"`
+	Time            string  `json:"time,omitempty" db:"time,omitempty"`
+	Timestamp       int64   `json:"timestamp,omitempty" db:"timestamp,omitempty"`
+	ExternalHttpUrl string  `json:"externalHttpUrl,omitempty" db:"externalHttpUrl,omitempty"`
+	AvgDuration     float32 `json:"avgDuration,omitempty" db:"avgDuration,omitempty"`
+	NumCalls        int     `json:"numCalls,omitempty" db:"numCalls,omitempty"`
+	CallRate        float32 `json:"callRate,omitempty" db:"callRate,omitempty"`
+	NumErrors       int     `json:"numErrors" db:"numErrors"`
+	ErrorRate       float32 `json:"errorRate" db:"errorRate"`
 }
 
 type ServiceDBOverviewItem struct {

@@ -242,11 +242,11 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 
 func (r *ClickHouseReader) GetServiceDBOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
 
-	var serviceDBOverviewItem []model.ServiceDBOverviewItem
+	var serviceDBOverviewItems []model.ServiceDBOverviewItem
 
 	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, dbSystem FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND dbName IS NOT NULL GROUP BY time, dbSystem ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
-	err := r.db.Select(&serviceDBOverviewItem, query)
+	err := r.db.Select(&serviceDBOverviewItems, query)
 
 	zap.S().Info(query)
 
@@ -255,17 +255,104 @@ func (r *ClickHouseReader) GetServiceDBOverview(ctx context.Context, queryParams
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	for i, _ := range serviceDBOverviewItem {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceDBOverviewItem[i].Time)
-		serviceDBOverviewItem[i].Timestamp = int64(timeObj.UnixNano())
-		serviceDBOverviewItem[i].Time = ""
-		serviceDBOverviewItem[i].CallRate = float32(serviceDBOverviewItem[i].NumCalls) / float32(queryParams.StepSeconds)
+	for i, _ := range serviceDBOverviewItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, serviceDBOverviewItems[i].Time)
+		serviceDBOverviewItems[i].Timestamp = int64(timeObj.UnixNano())
+		serviceDBOverviewItems[i].Time = ""
+		serviceDBOverviewItems[i].CallRate = float32(serviceDBOverviewItems[i].NumCalls) / float32(queryParams.StepSeconds)
 	}
 
-	if serviceDBOverviewItem == nil {
-		serviceDBOverviewItem = []model.ServiceDBOverviewItem{}
+	if serviceDBOverviewItems == nil {
+		serviceDBOverviewItems = []model.ServiceDBOverviewItem{}
 	}
 
-	return &serviceDBOverviewItem, nil
+	return &serviceDBOverviewItems, nil
 
+}
+
+func (r *ClickHouseReader) GetServiceExternalAvgDuration(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
+
+	var serviceExternalItems []model.ServiceExternalItem
+
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL GROUP BY time ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+
+	err := r.db.Select(&serviceExternalItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	for i, _ := range serviceExternalItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalItems[i].Time)
+		serviceExternalItems[i].Timestamp = int64(timeObj.UnixNano())
+		serviceExternalItems[i].Time = ""
+		serviceExternalItems[i].CallRate = float32(serviceExternalItems[i].NumCalls) / float32(queryParams.StepSeconds)
+	}
+
+	if serviceExternalItems == nil {
+		serviceExternalItems = []model.ServiceExternalItem{}
+	}
+
+	return &serviceExternalItems, nil
+}
+
+func (r *ClickHouseReader) GetServiceExternalErrors(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
+
+	var serviceExternalItems []model.ServiceExternalItem
+
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL AND StatusCode >= 500 GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+
+	err := r.db.Select(&serviceExternalItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	for i, _ := range serviceExternalItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalItems[i].Time)
+		serviceExternalItems[i].Timestamp = int64(timeObj.UnixNano())
+		serviceExternalItems[i].Time = ""
+		serviceExternalItems[i].CallRate = float32(serviceExternalItems[i].NumCalls) / float32(queryParams.StepSeconds)
+	}
+
+	if serviceExternalItems == nil {
+		serviceExternalItems = []model.ServiceExternalItem{}
+	}
+
+	return &serviceExternalItems, nil
+}
+
+func (r *ClickHouseReader) GetServiceExternal(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
+
+	var serviceExternalItems []model.ServiceExternalItem
+
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+
+	err := r.db.Select(&serviceExternalItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	for i, _ := range serviceExternalItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalItems[i].Time)
+		serviceExternalItems[i].Timestamp = int64(timeObj.UnixNano())
+		serviceExternalItems[i].Time = ""
+		serviceExternalItems[i].CallRate = float32(serviceExternalItems[i].NumCalls) / float32(queryParams.StepSeconds)
+	}
+
+	if serviceExternalItems == nil {
+		serviceExternalItems = []model.ServiceExternalItem{}
+	}
+
+	return &serviceExternalItems, nil
 }

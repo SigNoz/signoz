@@ -54,3 +54,15 @@ func (druid *DruidReader) SearchSpans(ctx context.Context, query *model.SpanSear
 func (druid *DruidReader) GetServiceDBOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
 	return druidQuery.GetServiceDBOverview(druid.SqlClient, query)
 }
+
+func (druid *DruidReader) GetServiceExternalAvgDuration(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
+	return druidQuery.GetServiceExternalAvgDuration(druid.SqlClient, query)
+}
+
+func (druid *DruidReader) GetServiceExternalErrors(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
+	return druidQuery.GetServiceExternalErrors(druid.SqlClient, query)
+}
+
+func (druid *DruidReader) GetServiceExternal(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
+	return druidQuery.GetServiceExternal(druid.SqlClient, query)
+}
