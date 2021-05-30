@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 import { Button, Space, Spin, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
 import { SKIP_ONBOARDING } from "Src/constants/onboarding";
 import ROUTES from "Src/constants/routes";
-
-import {
-	getServicesList,
-	GlobalTime,
-	servicesListItem,
-} from "../../store/actions";
+import { getServicesList, GlobalTime } from "../../store/actions";
+import { servicesListItem } from "../../store/actions/MetricsActions";
 import { StoreState } from "../../store/reducers";
 import { CustomModal } from "../../components/Modal";
 
@@ -75,7 +70,7 @@ const columns = [
 		key: "errorRate",
 		sorter: (a: any, b: any) => a.errorRate - b.errorRate,
 		// sortDirections: ['descend', 'ascend'],
-		render: (value: number) => (value).toFixed(2),
+		render: (value: number) => value.toFixed(2),
 	},
 	{
 		title: "Requests Per Second",
@@ -88,8 +83,6 @@ const columns = [
 ];
 
 const _ServicesTable = (props: ServicesTableProps) => {
-	const search = useLocation().search;
-	const time_interval = new URLSearchParams(search).get("time");
 	const [initialDataFetch, setDataFetched] = useState(false);
 	const [errorObject, setErrorObject] = useState({
 		message: "",
@@ -210,7 +203,10 @@ const _ServicesTable = (props: ServicesTableProps) => {
 const mapStateToProps = (
 	state: StoreState,
 ): { servicesList: servicesListItem[]; globalTime: GlobalTime } => {
-	return { servicesList: state.servicesList, globalTime: state.globalTime };
+	return {
+		servicesList: state.metricsData.serviceList,
+		globalTime: state.globalTime,
+	};
 };
 
 export const ServicesTable = connect(mapStateToProps, {

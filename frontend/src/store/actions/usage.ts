@@ -2,7 +2,6 @@ import { Dispatch } from "redux";
 import api, { apiV1 } from "../../api";
 
 import { ActionTypes } from "./types";
-import { GlobalTime } from "./global";
 import { toUTCEpoch } from "../../utils/timeUtils";
 
 export interface usageDataItem {

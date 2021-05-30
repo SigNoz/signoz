@@ -6,7 +6,7 @@ import { RouteComponentProps } from "react-router-dom";
 import styled from "styled-components";
 import ROUTES from "Src/constants/routes";
 
-import { metricItem } from "../../store/actions/metrics";
+import { metricItem } from "../../store/actions/MetricsActions";
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -55,7 +55,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		xcoordinate: 0,
 		ycoordinate: 0,
 		showpopUp: false,
-		firstpoint_ts: 0
+		firstpoint_ts: 0,
 		// graphInfo:{}
 	};
 

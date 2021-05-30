@@ -4,7 +4,6 @@ import { Layout } from "antd";
 import SideNav from "./Nav/SideNav";
 import TopNav from "./Nav/TopNav";
 import { useLocation } from "react-router-dom";
-import ROUTES from "Src/constants/routes";
 import { useRoute } from "./RouteProvider";
 
 const { Content, Footer } = Layout;
@@ -18,7 +17,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 	const { dispatch } = useRoute();
 
 	useEffect(() => {
-		dispatch({ type: "UPDATE_IS_LOADED", payload: location.pathname });
+		dispatch({ type: "ROUTE_IS_LOADED", payload: location.pathname });
 	}, [location]);
 
 	return (
