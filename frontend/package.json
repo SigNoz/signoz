@@ -147,7 +147,6 @@
 		"prettier": "2.2.1",
 		"react-hot-loader": "^4.13.0",
 		"react-is": "^17.0.1",
-		"webpack-bundle-analyzer": "^4.4.2",
 		"webpack-cli": "^4.5.0"
 	}
 }
