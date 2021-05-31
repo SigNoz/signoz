@@ -2,16 +2,11 @@ import React, { useState, useEffect } from "react";
 import GenericVisualizations from "../Metrics/GenericVisualization";
 import { Select, Card, Space, Form } from "antd";
 import { connect } from "react-redux";
-
 import { StoreState } from "../../store/reducers";
-import {
-	customMetricsItem,
-	getFilteredTraceMetrics,
-	GlobalTime,
-	TraceFilters,
-} from "../../store/actions";
+import { GlobalTime, TraceFilters } from "../../store/actions";
 import { useRoute } from "../RouteProvider";
-
+import { getFilteredTraceMetrics } from "../../store/actions/MetricsActions";
+import { customMetricsItem } from "../../store/actions/MetricsActions";
 const { Option } = Select;
 
 const entity = [
@@ -81,8 +76,9 @@ interface TraceCustomVisualizationsProps {
 const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 	const [selectedEntity, setSelectedEntity] = useState("calls");
 	const [selectedAggOption, setSelectedAggOption] = useState("count");
-	const [selectedStep, setSelectedStep] = useState("60");
 	const { state } = useRoute();
+	const [form] = Form.useForm();
+	const selectedStep = "60";
 
 	// Step should be multiples of 60, 60 -> 1 min
 
@@ -124,16 +120,6 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes
 
-	const [form] = Form.useForm();
-
-	function handleChange(value: string) {
-		// console.log(value);
-	}
-
-	function handleFinish(value: string) {
-		// console.log(value);
-	}
-
 	// PNOTE - Can also use 'coordinate' option in antd Select for implementing this - https://ant.design/components/select/
 	const handleFormValuesChange = (changedValues: any) => {
 		const formFieldName = Object.keys(changedValues)[0];
@@ -162,11 +148,9 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 
 	return (
 		<Card>
-			{/* <Space direction="vertical"> */}
 			<div>Custom Visualizations</div>
 			<Form
 				form={form}
-				onFinish={handleFinish}
 				onValuesChange={handleFormValuesChange}
 				initialValues={{
 					agg_options: "Count",
@@ -199,7 +183,7 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 					</Form.Item>
 
 					<Form.Item name="chart_style">
-						<Select style={{ width: 120 }} onChange={handleChange} allowClear>
+						<Select style={{ width: 120 }} allowClear>
 							<Option value="line">Line Chart</Option>
 							<Option value="bar">Bar Chart</Option>
 							<Option value="area">Area Chart</Option>
@@ -207,7 +191,7 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 					</Form.Item>
 
 					<Form.Item name="interval">
-						<Select style={{ width: 120 }} onChange={handleChange} allowClear>
+						<Select style={{ width: 120 }} allowClear>
 							<Option value="1m">1 min</Option>
 							<Option value="5m">5 min</Option>
 							<Option value="30m">30 min</Option>
@@ -216,7 +200,7 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 
 					{/* Need heading for each option */}
 					<Form.Item name="group_by">
-						<Select style={{ width: 120 }} onChange={handleChange} allowClear>
+						<Select style={{ width: 120 }} allowClear>
 							<Option value="none">Group By</Option>
 							<Option value="status">Status Code</Option>
 							<Option value="protocol">Protocol</Option>
@@ -239,7 +223,7 @@ const mapStateToProps = (
 	traceFilters: TraceFilters;
 } => {
 	return {
-		filteredTraceMetrics: state.filteredTraceMetrics,
+		filteredTraceMetrics: state.metricsData.customMetricsItem,
 		globalTime: state.globalTime,
 		traceFilters: state.traceFilters,
 	};
