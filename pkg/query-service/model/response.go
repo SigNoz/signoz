@@ -15,7 +15,7 @@ type ServiceItem struct {
 	CallRate     float32 `json:"callRate" db:"callRate"`
 	NumErrors    int     `json:"numErrors" db:"numErrors"`
 	ErrorRate    float32 `json:"errorRate" db:"errorRate"`
-	Num4XX       int     `json:"num4XX" db:"num4XX"`
+	Num4XX       int     `json:"num4XX" db:"num4xx"`
 	FourXXRate   float32 `json:"fourXXRate" db:"fourXXRate"`
 }
 
@@ -26,9 +26,9 @@ type ServiceListErrorItem struct {
 }
 
 type ServiceErrorItem struct {
-	Time      string `json:"time,omitempty"`
-	Timestamp int64  `json:"timestamp"`
-	NumErrors int    `json:"numErrors"`
+	Time      string `json:"time,omitempty" db:"time,omitempty"`
+	Timestamp int64  `json:"timestamp" db:"timestamp"`
+	NumErrors int    `json:"numErrors" db:"numErrors"`
 }
 
 type ServiceOverviewItem struct {
