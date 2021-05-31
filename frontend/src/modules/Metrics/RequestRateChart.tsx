@@ -5,7 +5,7 @@ import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 import styled from "styled-components";
 
-import { metricItem } from "../../store/actions/metrics";
+import { metricItem } from "../../store/actions/MetricsActions";
 import ROUTES from "Src/constants/routes";
 
 const ChartPopUpUnique = styled.div<{

@@ -4,23 +4,24 @@ import { connect } from "react-redux";
 import { useParams, RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router";
 import ROUTES from "Src/constants/routes";
-
+import { GlobalTime, updateTimeInterval } from "Src/store/actions";
 import {
-	getServicesMetrics,
 	metricItem,
-	getTopEndpoints,
-	getDbOverViewMetrics,
-	getExternalMetrics,
 	externalMetricsAvgDurationItem,
 	externalErrCodeMetricsItem,
 	externalMetricsItem,
 	dbOverviewMetricsItem,
+	topEndpointListItem,
+} from "../../store/actions/MetricsActions";
+import {
+	getServicesMetrics,
+	getTopEndpoints,
+	getDbOverViewMetrics,
+	getExternalMetrics,
 	getExternalAvgDurationMetrics,
 	getExternalErrCodeMetrics,
-	topEndpointListItem,
-	GlobalTime,
-	updateTimeInterval,
-} from "Src/store/actions";
+} from "../../store/actions/MetricsActions";
+
 import { StoreState } from "../../store/reducers";
 import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
@@ -223,13 +224,13 @@ const mapStateToProps = (
 	globalTime: GlobalTime;
 } => {
 	return {
-		externalErrCodeMetrics: state.externalErrCodeMetrics,
-		serviceMetrics: state.serviceMetrics,
-		topEndpointsList: state.topEndpointsList,
-		externalMetrics: state.externalMetrics,
+		externalErrCodeMetrics: state.metricsData.externalErrCodeMetricsItem,
+		serviceMetrics: state.metricsData.metricItems,
+		topEndpointsList: state.metricsData.topEndpointListItem,
+		externalMetrics: state.metricsData.externalMetricsItem,
 		globalTime: state.globalTime,
-		dbOverviewMetrics: state.dbOverviewMetrics,
-		externalAvgDurationMetrics: state.externalAvgDurationMetrics,
+		dbOverviewMetrics: state.metricsData.dbOverviewMetricsItem,
+		externalAvgDurationMetrics: state.metricsData.externalMetricsAvgDurationItem,
 	};
 };
 

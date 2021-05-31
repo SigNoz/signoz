@@ -32,16 +32,4 @@ export const updateTraceFilters = (traceFilters: TraceFilters) => {
 	};
 };
 
-export interface updateInputTagAction {
-	type: ActionTypes.updateInput;
-	payload: string;
-}
-
-export const updateInputTag = (Input: string) => {
-	return {
-		type: ActionTypes.updateInput,
-		payload: Input,
-	};
-};
-
 //named export when you want to export multiple functions from the same file
