@@ -97,8 +97,10 @@ func createHTTPServer() (*http.Server, error) {
 
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
+		zap.S().Info("Using Apache Druid as datastore ...")
 		reader = druidReader.NewReader()
 	} else if storage == "clickhouse" {
+		zap.S().Info("Using ClickHouse as datastore ...")
 		reader = clickhouseReader.NewReader()
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)

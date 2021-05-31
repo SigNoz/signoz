@@ -38,6 +38,8 @@ func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams,
 		StartTime:   startTime.Format(time.RFC3339Nano),
 		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
+		Start:       startTime,
+		End:         endTime,
 	}
 
 	return &getTopEndpointsParams, nil
@@ -64,12 +66,16 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 	}
 
 	serviceName := r.URL.Query().Get("service")
+	stepHour := stepInt / 3600
 
 	getUsageParams := model.GetUsageParams{
 		StartTime:   startTime.Format(time.RFC3339Nano),
 		EndTime:     endTime.Format(time.RFC3339Nano),
+		Start:       startTime,
+		End:         endTime,
 		ServiceName: serviceName,
-		Period:      fmt.Sprintf("PT%dH", stepInt/3600),
+		Period:      fmt.Sprintf("PT%dH", stepHour),
+		StepHour:    stepHour,
 	}
 
 	return &getUsageParams, nil

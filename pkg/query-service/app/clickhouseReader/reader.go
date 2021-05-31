@@ -178,10 +178,6 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 
 	}
 
-	// // zap.S().Debug("MinDuration: ", queryParams.MinDuration)
-	// var lower string
-	// var upper string
-
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
 		args = append(args, queryParams.MinDuration)
@@ -209,8 +205,9 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 		}
 
 		if item.Key == "error" && item.Value == "true" {
-
+			query = query + " OR statusCode>=500"
 		}
+		query = query + " ORDER BY timestamp LIMIT 100"
 
 	}
 
@@ -301,11 +298,11 @@ func (r *ClickHouseReader) GetServiceExternalAvgDuration(ctx context.Context, qu
 
 func (r *ClickHouseReader) GetServiceExternalErrors(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
 
-	var serviceExternalItems []model.ServiceExternalItem
+	var serviceExternalErrorItems []model.ServiceExternalItem
 
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL AND StatusCode >= 500 GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL AND statusCode >= 500 GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
-	err := r.db.Select(&serviceExternalItems, query)
+	err := r.db.Select(&serviceExternalErrorItems, query)
 
 	zap.S().Info(query)
 
@@ -313,19 +310,44 @@ func (r *ClickHouseReader) GetServiceExternalErrors(ctx context.Context, queryPa
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
+	var serviceExternalTotalItems []model.ServiceExternalItem
 
-	for i, _ := range serviceExternalItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalItems[i].Time)
-		serviceExternalItems[i].Timestamp = int64(timeObj.UnixNano())
-		serviceExternalItems[i].Time = ""
-		serviceExternalItems[i].CallRate = float32(serviceExternalItems[i].NumCalls) / float32(queryParams.StepSeconds)
+	queryTotal := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+
+	errTotal := r.db.Select(&serviceExternalTotalItems, queryTotal)
+
+	if errTotal != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	if serviceExternalItems == nil {
-		serviceExternalItems = []model.ServiceExternalItem{}
+	m := make(map[string]int)
+
+	for j, _ := range serviceExternalErrorItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalErrorItems[j].Time)
+		m[strconv.FormatInt(timeObj.UnixNano(), 10)+"-"+serviceExternalErrorItems[j].ExternalHttpUrl] = serviceExternalErrorItems[j].NumCalls
 	}
 
-	return &serviceExternalItems, nil
+	for i, _ := range serviceExternalTotalItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalTotalItems[i].Time)
+		serviceExternalTotalItems[i].Timestamp = int64(timeObj.UnixNano())
+		serviceExternalTotalItems[i].Time = ""
+		// serviceExternalTotalItems[i].CallRate = float32(serviceExternalTotalItems[i].NumCalls) / float32(queryParams.StepSeconds)
+
+		if val, ok := m[strconv.FormatInt(serviceExternalTotalItems[i].Timestamp, 10)+"-"+serviceExternalTotalItems[i].ExternalHttpUrl]; ok {
+			serviceExternalTotalItems[i].NumErrors = val
+			serviceExternalTotalItems[i].ErrorRate = float32(serviceExternalTotalItems[i].NumErrors) * 100 / float32(serviceExternalTotalItems[i].NumCalls)
+		}
+		serviceExternalTotalItems[i].CallRate = 0
+		serviceExternalTotalItems[i].NumCalls = 0
+
+	}
+
+	if serviceExternalTotalItems == nil {
+		serviceExternalTotalItems = []model.ServiceExternalItem{}
+	}
+
+	return &serviceExternalTotalItems, nil
 }
 
 func (r *ClickHouseReader) GetServiceExternal(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
@@ -355,4 +377,186 @@ func (r *ClickHouseReader) GetServiceExternal(ctx context.Context, queryParams *
 	}
 
 	return &serviceExternalItems, nil
+}
+
+func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, error) {
+
+	var topEndpointsItems []model.TopEndpointsItem
+
+	query := fmt.Sprintf("SELECT quantile(0.5)(durationNano) as p50, quantile(0.95)(durationNano) as p95, quantile(0.99)(durationNano) as p99, COUNT(1) as numCalls, name  FROM %s WHERE  timestamp >= '%s' AND timestamp <= '%s' AND  kind='2' and serviceName='%s' GROUP BY name", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
+
+	err := r.db.Select(&topEndpointsItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	if topEndpointsItems == nil {
+		topEndpointsItems = []model.TopEndpointsItem{}
+	}
+
+	return &topEndpointsItems, nil
+}
+
+func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
+
+	var usageItems []model.UsageItem
+
+	var query string
+	if len(queryParams.ServiceName) != 0 {
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	} else {
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	}
+
+	err := r.db.Select(&usageItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	for i, _ := range usageItems {
+		timeObj, _ := time.Parse(time.RFC3339Nano, usageItems[i].Time)
+		usageItems[i].Timestamp = int64(timeObj.UnixNano())
+		usageItems[i].Time = ""
+	}
+
+	if usageItems == nil {
+		usageItems = []model.UsageItem{}
+	}
+
+	return &usageItems, nil
+}
+
+func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
+
+	services := []string{}
+
+	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable)
+
+	err := r.db.Select(&services, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	return &services, nil
+}
+
+func (r *ClickHouseReader) GetTags(ctx context.Context, serviceName string) (*[]model.TagItem, error) {
+
+	tagItems := []model.TagItem{}
+
+	query := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE serviceName='%s'  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable, serviceName)
+
+	err := r.db.Select(&tagItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	return &tagItems, nil
+}
+
+func (r *ClickHouseReader) GetOperations(ctx context.Context, serviceName string) (*[]string, error) {
+
+	operations := []string{}
+
+	query := fmt.Sprintf(`SELECT DISTINCT(name) FROM %s WHERE serviceName='%s'  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable, serviceName)
+
+	err := r.db.Select(&operations, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+	return &operations, nil
+}
+
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
+
+	var searchScanReponses []model.SearchSpanReponseItem
+
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references FROM %s WHERE traceID='%s'", r.indexTable, traceId)
+
+	err := r.db.Select(&searchScanReponses, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	searchSpansResult := []model.SearchSpansResult{
+		model.SearchSpansResult{
+			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References"},
+			Events:  make([][]interface{}, len(searchScanReponses)),
+		},
+	}
+
+	for i, item := range searchScanReponses {
+		spanEvents := item.GetValues()
+		searchSpansResult[0].Events[i] = spanEvents
+	}
+
+	return &searchSpansResult, nil
+
+}
+func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
+	serviceMapDependencyItems := []model.ServiceMapDependencyItem{}
+
+	query := fmt.Sprintf(`SELECT spanID, parentSpanID, serviceName FROM %s WHERE timestamp>='%s' AND timestamp<='%s'`, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+
+	err := r.db.Select(&serviceMapDependencyItems, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	serviceMap := make(map[string]*model.ServiceMapDependencyResponseItem)
+
+	spanId2ServiceNameMap := make(map[string]string)
+	for i, _ := range serviceMapDependencyItems {
+		spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId] = serviceMapDependencyItems[i].ServiceName
+	}
+	for i, _ := range serviceMapDependencyItems {
+		parent2childServiceName := spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId] + "-" + spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId]
+		if _, ok := serviceMap[parent2childServiceName]; !ok {
+			serviceMap[parent2childServiceName] = &model.ServiceMapDependencyResponseItem{
+				Parent:    spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId],
+				Child:     spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId],
+				CallCount: 1,
+			}
+		} else {
+			serviceMap[parent2childServiceName].CallCount++
+		}
+	}
+
+	retMe := make([]model.ServiceMapDependencyResponseItem, 0, len(serviceMap))
+	for _, dependency := range serviceMap {
+		if dependency.Parent == "" {
+			continue
+		}
+		retMe = append(retMe, *dependency)
+	}
+
+	return &retMe, nil
 }

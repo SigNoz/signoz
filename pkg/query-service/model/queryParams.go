@@ -9,6 +9,8 @@ type GetTopEndpointsParams struct {
 	StartTime   string
 	EndTime     string
 	ServiceName string
+	Start       *time.Time
+	End         *time.Time
 }
 
 type GetUsageParams struct {
@@ -16,6 +18,9 @@ type GetUsageParams struct {
 	EndTime     string
 	ServiceName string
 	Period      string
+	StepHour    int
+	Start       *time.Time
+	End         *time.Time
 }
 
 type GetServicesParams struct {

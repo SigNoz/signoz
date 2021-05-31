@@ -66,3 +66,31 @@ func (druid *DruidReader) GetServiceExternalErrors(ctx context.Context, query *m
 func (druid *DruidReader) GetServiceExternal(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
 	return druidQuery.GetServiceExternal(druid.SqlClient, query)
 }
+
+func (druid *DruidReader) GetTopEndpoints(ctx context.Context, query *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, error) {
+	return druidQuery.GetTopEndpoints(druid.SqlClient, query)
+}
+
+func (druid *DruidReader) GetUsage(ctx context.Context, query *model.GetUsageParams) (*[]model.UsageItem, error) {
+	return druidQuery.GetUsage(druid.SqlClient, query)
+}
+
+func (druid *DruidReader) GetOperations(ctx context.Context, serviceName string) (*[]string, error) {
+	return druidQuery.GetOperations(druid.SqlClient, serviceName)
+}
+
+func (druid *DruidReader) GetTags(ctx context.Context, serviceName string) (*[]model.TagItem, error) {
+	return druidQuery.GetTags(druid.SqlClient, serviceName)
+}
+
+func (druid *DruidReader) GetServicesList(ctx context.Context) (*[]string, error) {
+	return druidQuery.GetServicesList(druid.SqlClient)
+}
+
+func (druid *DruidReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
+	return druidQuery.SearchTraces(druid.Client, traceId)
+}
+
+func (druid *DruidReader) GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
+	return druidQuery.GetServiceMapDependencies(druid.SqlClient, query)
+}

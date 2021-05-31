@@ -181,7 +181,7 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 
 }
 
-func SearchTraces(client *godruid.Client, traceId string) ([]godruid.ScanResult, error) {
+func SearchTraces(client *godruid.Client, traceId string) (*[]model.SearchSpansResult, error) {
 
 	filter := godruid.FilterSelector("TraceId", traceId)
 
@@ -206,7 +206,17 @@ func SearchTraces(client *godruid.Client, traceId string) ([]godruid.ScanResult,
 
 	// fmt.Printf("query.QueryResult:\n%v", query.QueryResult)
 
-	return query.QueryResult, nil
+	var searchSpansResult []model.SearchSpansResult
+	searchSpansResult = make([]model.SearchSpansResult, len(query.QueryResult))
+
+	searchSpansResult[0].Columns = make([]string, len(query.QueryResult[0].Columns))
+	copy(searchSpansResult[0].Columns, query.QueryResult[0].Columns)
+
+	searchSpansResult[0].Events = make([][]interface{}, len(query.QueryResult[0].Events))
+	copy(searchSpansResult[0].Events, query.QueryResult[0].Events)
+
+	return &searchSpansResult, nil
+
 }
 
 func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchAggregatesParams) ([]SpanSearchAggregatesResponseItem, error) {

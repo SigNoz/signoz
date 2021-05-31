@@ -58,20 +58,20 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/dbOverview", aH.getServiceDBOverview).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/external", aH.getServiceExternal).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/service/{service}/operations", aH.getOperations).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/{service}/operations", aH.getOperations).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/spans", aH.searchSpans).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/spans/aggregates", aH.searchSpansAggregates).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/tags", aH.searchTags).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/tags", aH.searchTags).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
@@ -99,83 +99,84 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
 
-// 	vars := mux.Vars(r)
-// 	serviceName := vars["service"]
+	vars := mux.Vars(r)
+	serviceName := vars["service"]
 
-// 	var err error
-// 	if len(serviceName) == 0 {
-// 		err = fmt.Errorf("service param not found")
-// 	}
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	var err error
+	if len(serviceName) == 0 {
+		err = fmt.Errorf("service param not found")
+	}
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetOperations(aH.sqlClient, serviceName)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetOperations(context.Background(), serviceName)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
 
-// func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
-// 	result, err := druidQuery.GetServicesList(aH.sqlClient)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetServicesList(context.Background())
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
 
-// func (aH *APIHandler) searchTags(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) searchTags(w http.ResponseWriter, r *http.Request) {
 
-// 	serviceName := r.URL.Query().Get("service")
+	serviceName := r.URL.Query().Get("service")
 
-// 	result, err := druidQuery.GetTags(aH.sqlClient, serviceName)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetTags(context.Background(), serviceName)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
 
-// func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseGetTopEndpointsRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetTopEndpointsRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetTopEndpoints(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetTopEndpoints(context.Background(), query)
 
-// 	aH.writeJSON(w, r, result)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// }
+	aH.writeJSON(w, r, result)
 
-// func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
+}
 
-// 	query, err := parseGetUsageRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 
-// 	result, err := druidQuery.GetUsage(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetUsageRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	result, err := (*aH.reader).GetUsage(context.Background(), query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// }
+	aH.writeJSON(w, r, result)
+
+}
 
 func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Request) {
 
@@ -280,34 +281,35 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-// func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseGetServicesRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseGetServicesRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.GetServiceMapDependencies(aH.sqlClient, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).GetServiceMapDependencies(context.Background(), query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
-// }
+	aH.writeJSON(w, r, result)
+}
 
-// func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
-// 	vars := mux.Vars(r)
-// 	traceId := vars["traceId"]
+	vars := mux.Vars(r)
+	traceId := vars["traceId"]
 
-// 	result, err := druidQuery.SearchTraces(aH.client, traceId)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).SearchTraces(context.Background(), traceId)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, result)
 
-// }
+}
+
 // func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Request) {
 
 // 	query, err := parseSearchSpanAggregatesRequest(r)
