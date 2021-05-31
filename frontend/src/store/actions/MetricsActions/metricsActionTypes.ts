@@ -11,8 +11,6 @@ import {
 
 export enum MetricsActionTypes {
 	updateInput = "UPDATE_INPUT",
-	fetchTraces = "FETCH_TRACES",
-	fetchTraceItem = "FETCH_TRACE_ITEM",
 	getServicesList = "GET_SERVICE_LIST",
 	getServiceMetrics = "GET_SERVICE_METRICS",
 	getAvgDurationMetrics = "GET_AVG_DURATION_METRICS",
