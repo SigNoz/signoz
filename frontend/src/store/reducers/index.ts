@@ -9,7 +9,7 @@ import {
 } from "../actions";
 import { updateGlobalTimeReducer } from "./global";
 import { MetricsInitialState, metricsReducer } from "./metrics";
-import { traceFiltersReducer, inputsReducer } from "./traceFilters";
+import TraceFilterReducer from "./traceFilters";
 import { traceItemReducer, tracesReducer } from "./traces";
 import { usageDataReducer } from "./usage";
 import { ServiceMapReducer } from "./serviceMap";
@@ -25,8 +25,7 @@ export interface StoreState {
 }
 
 const reducers = combineReducers<StoreState>({
-	traceFilters: traceFiltersReducer,
-	inputTag: inputsReducer,
+	traceFilters: TraceFilterReducer,
 	traces: tracesReducer,
 	traceItem: traceItemReducer,
 	usageDate: usageDataReducer,

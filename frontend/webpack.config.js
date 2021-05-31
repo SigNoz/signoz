@@ -2,7 +2,6 @@
 const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 console.log(resolve(__dirname, "./src/"));
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
 	mode: "development",
@@ -57,7 +56,6 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
-		new BundleAnalyzerPlugin()
 	],
 	performance: {
 		hints: false,
