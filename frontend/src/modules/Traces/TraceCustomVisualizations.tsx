@@ -52,7 +52,7 @@ const aggregation_options = [
 		//   options_available: [ {title:'Avg', dataindex:'avg'}, {title:'Max', dataindex:'max'},{title:'Min', dataindex:'min'}, {title:'p50', dataindex:'p50'},{title:'p90', dataindex:'p90'}, {title:'p95', dataindex:'p95'}]
 		options_available: [
 			{ title: "p50", dataindex: "p50" },
-			{ title: "p90", dataindex: "p90" },
+			{ title: "p95", dataindex: "p95" },
 			{ title: "p99", dataindex: "p99" },
 		],
 	},

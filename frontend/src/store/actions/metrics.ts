@@ -40,7 +40,7 @@ export interface externalErrCodeMetricsItem {
 }
 export interface topEndpointListItem {
 	p50: number;
-	p90: number;
+	p95: number;
 	p99: number;
 	numCalls: number;
 	name: string;

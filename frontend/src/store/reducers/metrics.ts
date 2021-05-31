@@ -38,7 +38,7 @@ export const serviceMetricsReducer = (
 		{
 			timestamp: 0,
 			p50: 0,
-			p90: 0,
+			p95: 0,
 			p99: 0,
 			numCalls: 0,
 			callRate: 0.0,
@@ -58,7 +58,7 @@ export const serviceMetricsReducer = (
 
 export const topEndpointsReducer = (
 	state: topEndpointListItem[] = [
-		{ p50: 0, p90: 0, p99: 0, numCalls: 0, name: "" },
+		{ p50: 0, p95: 0, p99: 0, numCalls: 0, name: "" },
 	],
 	action: Action,
 ) => {
