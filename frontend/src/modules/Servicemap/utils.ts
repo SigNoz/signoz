@@ -79,10 +79,11 @@ export const getZoomPx = (): number => {
 	if (width < 1400) {
 		return 190;
 	} else if (width > 1400 && width < 1700) {
-		return 380;
+		return 400;
 	} else if (width > 1700) {
-		return 470;
+		return 485;
 	}
+	return 190;
 };
 
 export const getTooltip = (node: {
