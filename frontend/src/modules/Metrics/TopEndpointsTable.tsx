@@ -3,7 +3,7 @@ import { Table, Button, Tooltip } from "antd";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { useHistory, useParams } from "react-router-dom";
-import { topEndpointListItem } from "../../store/actions/metrics";
+import { topEndpointListItem } from "../../store/actions/MetricsActions";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { GlobalTime } from "Src/store/actions";
 import { StoreState } from "Src/store/reducers";

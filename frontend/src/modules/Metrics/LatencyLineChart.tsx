@@ -4,9 +4,7 @@ import { ChartOptions } from "chart.js";
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 import styled from "styled-components";
-import ROUTES from "Src/constants/routes";
-
-import { metricItem } from "../../store/actions/metrics";
+import { metricItem } from "../../store/actions/MetricsActions";
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -39,11 +37,8 @@ interface LatencyLineChartProps extends RouteComponentProps<any> {
 	popupClickHandler: Function;
 }
 
-interface LatencyLineChart {
-	chartRef: any;
-}
-
 class LatencyLineChart extends React.Component<LatencyLineChartProps> {
+	private chartRef: React.RefObject<HTMLElement>;
 	constructor(props: LatencyLineChartProps) {
 		super(props);
 		this.chartRef = React.createRef();
@@ -54,7 +49,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		ycoordinate: 0,
 		showpopUp: false,
 		firstpoint_ts: 0,
-		// graphInfo:{}
 	};
 
 	onClickhandler = async (e: any, event: any) => {
@@ -69,7 +63,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 				ycoordinate: e.offsetY,
 				showpopUp: true,
 				firstpoint_ts: this.props.data[firstPoint._index].timestamp,
-				// graphInfo:{...event}
 			});
 		} else {
 			// if clicked outside of the graph line, then firstpoint is undefined -> close popup.
@@ -78,15 +71,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 				showpopUp: false,
 			});
 		}
-	};
-
-	gotoTracesHandler = (xc: any) => {
-		this.props.history.push(ROUTES.TRACES);
-	};
-
-	gotoAlertsHandler = () => {
-		this.props.history.push(ROUTES.SERVICE_MAP);
-		// PNOTE - Keeping service map for now, will replace with alerts when alert page is made
 	};
 
 	options_charts: ChartOptions = {
@@ -161,9 +145,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 			xAxes: [
 				{
 					type: "time",
-					// time: {
-					//     unit: 'second'
-					// },
 					distribution: "linear",
 					//'linear': data are spread according to their time (distances can vary)
 					// From https://www.chartjs.org/docs/latest/axes/cartesian/time.html
@@ -193,7 +174,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 					>
 						View Traces
 					</PopUpElements>
-					{/* <PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements> */}
 				</ChartPopUpUnique>
 			);
 		} else return null;
@@ -239,7 +219,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 			<div>
 				{this.GraphTracePopUp()}
 				<div>
-					<div style={{textAlign: "center"}}>Application latency in ms</div>
+					<div style={{ textAlign: "center" }}>Application latency in ms</div>
 					<ChartJSLine
 						ref={this.chartRef}
 						data={data_chartJS}

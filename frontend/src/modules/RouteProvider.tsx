@@ -9,7 +9,7 @@ type State = {
 };
 
 enum ActionTypes {
-	UPDATE_IS_LOADED = "UPDATE_IS_LOADED",
+	UPDATE_IS_LOADED = "ROUTE_IS_LOADED",
 }
 
 type Action = {

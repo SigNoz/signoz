@@ -1,6 +1,4 @@
 import {
-	ActionTypes,
-	Action,
 	servicesListItem,
 	metricItem,
 	topEndpointListItem,
@@ -9,10 +7,21 @@ import {
 	externalMetricsItem,
 	dbOverviewMetricsItem,
 	externalMetricsAvgDurationItem,
-} from "../actions";
+} from "../actions/MetricsActions";
+import { MetricsActionTypes as ActionTypes } from "../actions/MetricsActions/metricsActionTypes";
 
-export const serviceTableReducer = (
-	state: servicesListItem[] = [
+export type MetricsInitialState = {
+	serviceList?: servicesListItem[];
+	metricItems?: metricItem[];
+	topEndpointListItem?: topEndpointListItem[];
+	externalMetricsAvgDurationItem?: externalMetricsAvgDurationItem[];
+	externalErrCodeMetricsItem?: externalErrCodeMetricsItem[];
+	externalMetricsItem?: externalMetricsItem[];
+	dbOverviewMetricsItem?: dbOverviewMetricsItem[];
+	customMetricsItem?: customMetricsItem[];
+};
+export const metricsInitialState: MetricsInitialState = {
+	serviceList: [
 		{
 			serviceName: "",
 			p99: 0,
@@ -23,22 +32,11 @@ export const serviceTableReducer = (
 			errorRate: 0,
 		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getServicesList:
-			return action.payload;
-		default:
-			return state;
-	}
-};
-
-export const serviceMetricsReducer = (
-	state: metricItem[] = [
+	metricItems: [
 		{
 			timestamp: 0,
 			p50: 0,
-			p90: 0,
+			p95: 0,
 			p99: 0,
 			numCalls: 0,
 			callRate: 0.0,
@@ -46,49 +44,22 @@ export const serviceMetricsReducer = (
 			errorRate: 0,
 		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getServiceMetrics:
-			return action.payload;
-		default:
-			return state;
-	}
-};
-
-export const topEndpointsReducer = (
-	state: topEndpointListItem[] = [
-		{ p50: 0, p90: 0, p99: 0, numCalls: 0, name: "" },
+	topEndpointListItem: [
+		{
+			p50: 0,
+			p90: 0,
+			p99: 0,
+			numCalls: 0,
+			name: "",
+		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getTopEndpoints:
-			return action.payload;
-		default:
-			return state;
-	}
-};
-
-export const externalAvgDurationMetricsReducer = (
-	state: externalMetricsAvgDurationItem[] = [
+	externalMetricsAvgDurationItem: [
 		{
 			avgDuration: 0,
 			timestamp: 0,
 		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getAvgDurationMetrics:
-			return action.payload;
-		default:
-			return state;
-	}
-};
-
-export const externalErrCodeMetricsReducer = (
-	state: externalErrCodeMetricsItem[] = [
+	externalErrCodeMetricsItem: [
 		{
 			callRate: 0,
 			externalHttpUrl: "",
@@ -96,18 +67,7 @@ export const externalErrCodeMetricsReducer = (
 			timestamp: 0,
 		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getErrCodeMetrics:
-			return action.payload;
-		default:
-			return state;
-	}
-};
-
-export const externalMetricsReducer = (
-	state: externalMetricsItem[] = [
+	externalMetricsItem: [
 		{
 			avgDuration: 0,
 			callRate: 0,
@@ -116,18 +76,7 @@ export const externalMetricsReducer = (
 			timestamp: 0,
 		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getExternalMetrics:
-			return action.payload;
-		default:
-			return state;
-	}
-};
-
-export const dbOverviewMetricsReducer = (
-	state: dbOverviewMetricsItem[] = [
+	dbOverviewMetricsItem: [
 		{
 			avgDuration: 0,
 			callRate: 0,
@@ -136,24 +85,68 @@ export const dbOverviewMetricsReducer = (
 			timestamp: 0,
 		},
 	],
-	action: Action,
-) => {
-	switch (action.type) {
-		case ActionTypes.getDbOverviewMetrics:
-			return action.payload;
-		default:
-			return state;
-	}
+	customMetricsItem: [
+		{
+			timestamp: 0,
+			value: 0,
+		},
+	],
 };
 
-export const filteredTraceMetricsReducer = (
-	state: customMetricsItem[] = [{ timestamp: 0, value: 0 }],
-	action: Action,
+type ActionType = {
+	type: string;
+	payload: any;
+};
+
+export const metricsReducer = (
+	state: MetricsInitialState = metricsInitialState,
+	action: ActionType,
 ) => {
 	switch (action.type) {
 		case ActionTypes.getFilteredTraceMetrics:
-			return action.payload;
+			return {
+				...state,
+				customMetricsItem: action.payload,
+			};
+		case ActionTypes.getServiceMetrics:
+			return {
+				...state,
+				metricItems: action.payload,
+			};
+		case ActionTypes.getDbOverviewMetrics:
+			return {
+				...state,
+				dbOverviewMetricsItem: action.payload,
+			};
+		case ActionTypes.getExternalMetrics:
+			return {
+				...state,
+				externalMetricsItem: action.payload,
+			};
+		case ActionTypes.getTopEndpoints:
+			return {
+				...state,
+				topEndpointListItem: action.payload,
+			};
+		case ActionTypes.getErrCodeMetrics:
+			return {
+				...state,
+				externalErrCodeMetricsItem: action.payload,
+			};
+		case ActionTypes.getAvgDurationMetrics:
+			return {
+				...state,
+				externalMetricsAvgDurationItem: action.payload,
+			};
+
+		case ActionTypes.getServicesList:
+			return {
+				...state,
+				serviceList: action.payload,
+			};
 		default:
-			return state;
+			return {
+				...state,
+			};
 	}
 };
