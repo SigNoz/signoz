@@ -47,7 +47,7 @@ export const metricsInitialState: MetricsInitialState = {
 	topEndpointListItem: [
 		{
 			p50: 0,
-			p90: 0,
+			p95: 0,
 			p99: 0,
 			numCalls: 0,
 			name: "",

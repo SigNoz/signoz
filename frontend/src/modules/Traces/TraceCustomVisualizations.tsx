@@ -44,7 +44,7 @@ const aggregation_options = [
 	{
 		linked_entity: "duration",
 		default_selected: { title: "p99", dataindex: "p99" },
-		//   options_available: [ {title:'Avg', dataindex:'avg'}, {title:'Max', dataindex:'max'},{title:'Min', dataindex:'min'}, {title:'p50', dataindex:'p50'},{title:'p90', dataindex:'p90'}, {title:'p95', dataindex:'p95'}]
+		//   options_available: [ {title:'Avg', dataindex:'avg'}, {title:'Max', dataindex:'max'},{title:'Min', dataindex:'min'}, {title:'p50', dataindex:'p50'},{title:'p95', dataindex:'p95'}, {title:'p95', dataindex:'p95'}]
 		options_available: [
 			{ title: "p50", dataindex: "p50" },
 			{ title: "p95", dataindex: "p95" },
