@@ -1,8 +1,10 @@
 package app
 
 import (
+	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,16 +13,16 @@ import (
 	"github.com/posthog/posthog-go"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	"go.signoz.io/query-service/druidQuery"
-	"go.signoz.io/query-service/godruid"
+	"go.signoz.io/query-service/app/clickhouseReader"
+	"go.signoz.io/query-service/app/druidReader"
 	"go.signoz.io/query-service/healthcheck"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
 )
 
 type ServerOptions struct {
-	HTTPHostPort   string
-	DruidClientUrl string
+	HTTPHostPort string
+	// DruidClientUrl string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -28,11 +30,10 @@ type Server struct {
 	// logger       *zap.Logger
 	// querySvc     *querysvc.QueryService
 	// queryOptions *QueryOptions
-	serverOptions *ServerOptions
 
 	// tracer opentracing.Tracer // TODO make part of flags.Service
-
-	conn net.Listener
+	serverOptions *ServerOptions
+	conn          net.Listener
 	// grpcConn           net.Listener
 	httpConn net.Listener
 	// grpcServer         *grpc.Server
@@ -64,6 +65,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
+	httpServer, err := createHTTPServer()
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &Server{
 		// logger: logger,
@@ -72,7 +78,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		// tracer:             tracer,
 		// grpcServer:         grpcServer,
 		serverOptions: serverOptions,
-		httpServer:    createHTTPServer(serverOptions.DruidClientUrl),
+		httpServer:    httpServer,
 		separatePorts: true,
 		// separatePorts:      grpcPort != httpPort,
 		unavailableChannel: make(chan healthcheck.Status),
@@ -82,22 +88,25 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 var posthogClient posthog.Client
 var distinctId string
 
-func createHTTPServer(druidClientUrl string) *http.Server {
+func createHTTPServer() (*http.Server, error) {
 
 	posthogClient = posthog.New("H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w")
 	distinctId = uuid.New().String()
 
-	client := godruid.Client{
-		Url:   druidClientUrl,
-		Debug: true,
+	var reader Reader
+
+	storage := os.Getenv("STORAGE")
+	if storage == "druid" {
+		zap.S().Info("Using Apache Druid as datastore ...")
+		reader = druidReader.NewReader()
+	} else if storage == "clickhouse" {
+		zap.S().Info("Using ClickHouse as datastore ...")
+		reader = clickhouseReader.NewReader()
+	} else {
+		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	sqlClient := druidQuery.SqlClient{
-		Url:   druidClientUrl,
-		Debug: true,
-	}
-
-	apiHandler := NewAPIHandler(&client, &sqlClient, &posthogClient, distinctId)
+	apiHandler := NewAPIHandler(&reader, &posthogClient, distinctId)
 	r := NewRouter()
 
 	r.Use(analyticsMiddleware)
@@ -118,7 +127,7 @@ func createHTTPServer(druidClientUrl string) *http.Server {
 
 	return &http.Server{
 		Handler: handler,
-	}
+	}, nil
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {

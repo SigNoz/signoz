@@ -38,6 +38,8 @@ func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams,
 		StartTime:   startTime.Format(time.RFC3339Nano),
 		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
+		Start:       startTime,
+		End:         endTime,
 	}
 
 	return &getTopEndpointsParams, nil
@@ -64,12 +66,16 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 	}
 
 	serviceName := r.URL.Query().Get("service")
+	stepHour := stepInt / 3600
 
 	getUsageParams := model.GetUsageParams{
 		StartTime:   startTime.Format(time.RFC3339Nano),
 		EndTime:     endTime.Format(time.RFC3339Nano),
+		Start:       startTime,
+		End:         endTime,
 		ServiceName: serviceName,
-		Period:      fmt.Sprintf("PT%dH", stepInt/3600),
+		Period:      fmt.Sprintf("PT%dH", stepHour),
+		StepHour:    stepHour,
 	}
 
 	return &getUsageParams, nil
@@ -101,7 +107,9 @@ func parseGetServiceExternalRequest(r *http.Request) (*model.GetServiceOverviewP
 	}
 
 	getServiceOverviewParams := model.GetServiceOverviewParams{
+		Start:       startTime,
 		StartTime:   startTime.Format(time.RFC3339Nano),
+		End:         endTime,
 		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 		Period:      fmt.Sprintf("PT%dM", stepInt/60),
@@ -137,7 +145,9 @@ func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewP
 	}
 
 	getServiceOverviewParams := model.GetServiceOverviewParams{
+		Start:       startTime,
 		StartTime:   startTime.Format(time.RFC3339Nano),
+		End:         endTime,
 		EndTime:     endTime.Format(time.RFC3339Nano),
 		ServiceName: serviceName,
 		Period:      fmt.Sprintf("PT%dM", stepInt/60),
@@ -160,7 +170,9 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	}
 
 	getServicesParams := model.GetServicesParams{
+		Start:     startTime,
 		StartTime: startTime.Format(time.RFC3339Nano),
+		End:       endTime,
 		EndTime:   endTime.Format(time.RFC3339Nano),
 		Period:    int(endTime.Unix() - startTime.Unix()),
 	}
@@ -283,6 +295,8 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	// fmt.Println(startTimeStr)
 	params := &model.SpanSearchParams{
 		Intervals: fmt.Sprintf("%s/%s", startTimeStr, endTimeStr),
+		Start:     startTime,
+		End:       endTime,
 		Limit:     100,
 		Order:     "descending",
 	}

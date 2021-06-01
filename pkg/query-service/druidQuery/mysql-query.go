@@ -11,92 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type ServiceItem struct {
-	ServiceName  string  `json:"serviceName"`
-	Percentile99 float32 `json:"p99"`
-	AvgDuration  float32 `json:"avgDuration"`
-	NumCalls     int     `json:"numCalls"`
-	CallRate     float32 `json:"callRate"`
-	NumErrors    int     `json:"numErrors"`
-	ErrorRate    float32 `json:"errorRate"`
-	Num4XX       int     `json:"num4XX"`
-	FourXXRate   float32 `json:"fourXXRate"`
-}
-type ServiceListErrorItem struct {
-	ServiceName string `json:"serviceName"`
-	NumErrors   int    `json:"numErrors"`
-	Num4xx      int    `json:"num4xx"`
-}
-
-type ServiceErrorItem struct {
-	Time      string `json:"time,omitempty"`
-	Timestamp int64  `json:"timestamp"`
-	NumErrors int    `json:"numErrors"`
-}
-
-type ServiceOverviewItem struct {
-	Time         string  `json:"time,omitempty"`
-	Timestamp    int64   `json:"timestamp"`
-	Percentile50 float32 `json:"p50"`
-	Percentile95 float32 `json:"p95"`
-	Percentile99 float32 `json:"p99"`
-	NumCalls     int     `json:"numCalls"`
-	CallRate     float32 `json:"callRate"`
-	NumErrors    int     `json:"numErrors"`
-	ErrorRate    float32 `json:"errorRate"`
-}
-
-type ServiceExternalItem struct {
-	Time            string  `json:"time,omitempty"`
-	Timestamp       int64   `json:"timestamp,omitempty"`
-	ExternalHttpUrl string  `json:"externalHttpUrl,omitempty"`
-	AvgDuration     float32 `json:"avgDuration,omitempty"`
-	NumCalls        int     `json:"numCalls,omitempty"`
-	CallRate        float32 `json:"callRate,omitempty"`
-	NumErrors       int     `json:"numErrors"`
-	ErrorRate       float32 `json:"errorRate"`
-}
-
-type ServiceDBOverviewItem struct {
-	Time        string  `json:"time,omitempty"`
-	Timestamp   int64   `json:"timestamp,omitempty"`
-	DBSystem    string  `json:"dbSystem,omitempty"`
-	AvgDuration float32 `json:"avgDuration,omitempty"`
-	NumCalls    int     `json:"numCalls,omitempty"`
-	CallRate    float32 `json:"callRate,omitempty"`
-}
-
-type ServiceMapDependencyItem struct {
-	SpanId       string `json:"spanId,omitempty"`
-	ParentSpanId string `json:"parentSpanId,omitempty"`
-	ServiceName  string `json:"serviceName,omitempty"`
-}
-
-type UsageItem struct {
-	Time      string `json:"time,omitempty"`
-	Timestamp int64  `json:"timestamp"`
-	Count     int64  `json:"count"`
-}
-
-type TopEnpointsItem struct {
-	Percentile50 float32 `json:"p50"`
-	Percentile90 float32 `json:"p90"`
-	Percentile99 float32 `json:"p99"`
-	NumCalls     int     `json:"numCalls"`
-	Name         string  `json:"name"`
-}
-
-type TagItem struct {
-	TagKeys  string `json:"tagKeys"`
-	TagCount int    `json:"tagCount"`
-}
-
-type ServiceMapDependencyResponseItem struct {
-	Parent    string `json:"parent,omitempty"`
-	Child     string `json:"child,omitempty"`
-	CallCount int    `json:"callCount,omitempty"`
-}
-
 func GetOperations(client *SqlClient, serviceName string) (*[]string, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT DISTINCT(Name) FROM %s WHERE ServiceName='%s' AND __time > CURRENT_TIMESTAMP - INTERVAL '1' DAY`, constants.DruidDatasource, serviceName)
@@ -155,7 +69,7 @@ func GetServicesList(client *SqlClient) (*[]string, error) {
 	return &servicesListReponse, nil
 }
 
-func GetTags(client *SqlClient, serviceName string) (*[]TagItem, error) {
+func GetTags(client *SqlClient, serviceName string) (*[]model.TagItem, error) {
 
 	var sqlQuery string
 
@@ -176,7 +90,7 @@ func GetTags(client *SqlClient, serviceName string) (*[]TagItem, error) {
 
 	// zap.S().Info(string(response))
 
-	res := new([]TagItem)
+	res := new([]model.TagItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -187,9 +101,9 @@ func GetTags(client *SqlClient, serviceName string) (*[]TagItem, error) {
 	return &tagResponse, nil
 }
 
-func GetTopEndpoints(client *SqlClient, query *model.GetTopEndpointsParams) (*[]TopEnpointsItem, error) {
+func GetTopEndpoints(client *SqlClient, query *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.9) as p90, APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT(SpanId) as numCalls, Name  FROM "%s" WHERE  "__time" >= '%s' AND "__time" <= '%s' AND  "Kind"='2' and "ServiceName"='%s' GROUP BY Name`, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName)
+	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.95) as p95, APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT(SpanId) as numCalls, Name  FROM "%s" WHERE  "__time" >= '%s' AND "__time" <= '%s' AND  "Kind"='2' and "ServiceName"='%s' GROUP BY Name`, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName)
 
 	// zap.S().Debug(sqlQuery)
 
@@ -202,7 +116,7 @@ func GetTopEndpoints(client *SqlClient, query *model.GetTopEndpointsParams) (*[]
 
 	// zap.S().Info(string(response))
 
-	res := new([]TopEnpointsItem)
+	res := new([]model.TopEndpointsItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -213,7 +127,7 @@ func GetTopEndpoints(client *SqlClient, query *model.GetTopEndpointsParams) (*[]
 	return &topEnpointsResponse, nil
 }
 
-func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]UsageItem, error) {
+func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]model.UsageItem, error) {
 
 	var sqlQuery string
 
@@ -236,7 +150,7 @@ func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]UsageItem, err
 
 	// zap.S().Info(string(response))
 
-	res := new([]UsageItem)
+	res := new([]model.UsageItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -253,7 +167,7 @@ func GetUsage(client *SqlClient, query *model.GetUsageParams) (*[]UsageItem, err
 	return &usageResponse, nil
 }
 
-func GetServiceExternalAvgDuration(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceExternalItem, error) {
+func GetServiceExternalAvgDuration(client *SqlClient, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", AVG(DurationNano) as "avgDuration" FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != '' AND "__time" >= '%s' AND "__time" <= '%s'
 	GROUP BY TIME_FLOOR(__time,  '%s')`, query.Period, constants.DruidDatasource, query.ServiceName, query.StartTime, query.EndTime, query.Period)
@@ -270,7 +184,7 @@ func GetServiceExternalAvgDuration(client *SqlClient, query *model.GetServiceOve
 	// responseStr := string(response)
 	// zap.S().Info(responseStr)
 
-	res := new([]ServiceExternalItem)
+	res := new([]model.ServiceExternalItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -289,7 +203,7 @@ func GetServiceExternalAvgDuration(client *SqlClient, query *model.GetServiceOve
 	return &servicesExternalResponse, nil
 }
 
-func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceExternalItem, error) {
+func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "numCalls", ExternalHttpUrl as externalHttpUrl FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != '' AND StatusCode >= 500 AND "__time" >= '%s' AND "__time" <= '%s'
 	GROUP BY TIME_FLOOR(__time,  '%s'), ExternalHttpUrl`, query.Period, constants.DruidDatasource, query.ServiceName, query.StartTime, query.EndTime, query.Period)
@@ -306,7 +220,7 @@ func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverview
 	// responseStr := string(response)
 	// zap.S().Info(responseStr)
 
-	res := new([]ServiceExternalItem)
+	res := new([]model.ServiceExternalItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -328,7 +242,7 @@ func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverview
 	// responseStr := string(response)
 	// zap.S().Info(responseStr)
 
-	resTotal := new([]ServiceExternalItem)
+	resTotal := new([]model.ServiceExternalItem)
 	err = json.Unmarshal(responseTotal, resTotal)
 	if err != nil {
 		zap.S().Error(err)
@@ -361,7 +275,7 @@ func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverview
 	return &servicesExternalResponse, nil
 }
 
-func GetServiceExternal(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceExternalItem, error) {
+func GetServiceExternal(client *SqlClient, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", AVG(DurationNano) as "avgDuration", COUNT(SpanId) as "numCalls", ExternalHttpUrl as externalHttpUrl FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != ''
 	AND "__time" >= '%s' AND "__time" <= '%s'
@@ -379,7 +293,7 @@ func GetServiceExternal(client *SqlClient, query *model.GetServiceOverviewParams
 	// responseStr := string(response)
 	// zap.S().Info(responseStr)
 
-	res := new([]ServiceExternalItem)
+	res := new([]model.ServiceExternalItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -398,7 +312,7 @@ func GetServiceExternal(client *SqlClient, query *model.GetServiceOverviewParams
 	return &servicesExternalResponse, nil
 }
 
-func GetServiceDBOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceDBOverviewItem, error) {
+func GetServiceDBOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", AVG(DurationNano) as "avgDuration", COUNT(SpanId) as "numCalls", DBSystem as "dbSystem" FROM %s WHERE ServiceName='%s' AND Kind='3' AND DBName IS NOT NULL
 	AND "__time" >= '%s' AND "__time" <= '%s'
@@ -416,7 +330,7 @@ func GetServiceDBOverview(client *SqlClient, query *model.GetServiceOverviewPara
 	// responseStr := string(response)
 	// zap.S().Info(responseStr)
 
-	res := new([]ServiceDBOverviewItem)
+	res := new([]model.ServiceDBOverviewItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -435,7 +349,7 @@ func GetServiceDBOverview(client *SqlClient, query *model.GetServiceOverviewPara
 	return &servicesDBOverviewResponse, nil
 }
 
-func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]ServiceOverviewItem, error) {
+func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", APPROX_QUANTILE_DS("QuantileDuration", 0.5) as p50, APPROX_QUANTILE_DS("QuantileDuration", 0.95) as p95, 
 	APPROX_QUANTILE_DS("QuantileDuration", 0.99) as p99, COUNT("SpanId") as "numCalls" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "Kind"='2' and "ServiceName"='%s' GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
@@ -451,7 +365,7 @@ func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams
 
 	// zap.S().Info(string(response))
 
-	res := new([]ServiceOverviewItem)
+	res := new([]model.ServiceOverviewItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -471,7 +385,7 @@ func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams
 
 	// zap.S().Info(string(response))
 
-	resError := new([]ServiceErrorItem)
+	resError := new([]model.ServiceErrorItem)
 	err = json.Unmarshal(responseError, resError)
 	if err != nil {
 		zap.S().Error(err)
@@ -501,7 +415,7 @@ func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams
 	return &servicesOverviewResponse, nil
 }
 
-func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceItem, error) {
+func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]model.ServiceItem, error) {
 
 	sqlQuery := fmt.Sprintf(`SELECT APPROX_QUANTILE_DS("QuantileDuration", 0.99) as "p99", AVG("DurationNano") as "avgDuration", COUNT(SpanId) as numCalls, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' GROUP BY "ServiceName" ORDER BY "p99" DESC`, constants.DruidDatasource, query.StartTime, query.EndTime)
 
@@ -516,7 +430,7 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 
 	// zap.S().Info(string(response))
 
-	res := new([]ServiceItem)
+	res := new([]model.ServiceItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -538,7 +452,7 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 
 	// zap.S().Info(string(response))
 
-	resError := new([]ServiceListErrorItem)
+	resError := new([]model.ServiceListErrorItem)
 	err = json.Unmarshal(responseError, resError)
 	if err != nil {
 		zap.S().Error(err)
@@ -555,7 +469,7 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 
 	//////////////////		Below block gets 4xx of services
 
-	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as numErrors, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and "StatusCode">=400 and "StatusCode" < 500 GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
+	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as num4xx, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and "StatusCode">=400 and "StatusCode" < 500 GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
 
 	response4xx, err := client.Query(sqlQuery, "object")
 
@@ -568,7 +482,7 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 
 	// zap.S().Info(string(response))
 
-	res4xx := new([]ServiceListErrorItem)
+	res4xx := new([]model.ServiceListErrorItem)
 	err = json.Unmarshal(response4xx, res4xx)
 	if err != nil {
 		zap.S().Error(err)
@@ -601,9 +515,9 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]ServiceI
 	return &servicesResponse, nil
 }
 
-func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams) (*[]ServiceMapDependencyResponseItem, error) {
+func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT SpanId, ParentSpanId, ServiceName FROM %s WHERE "__time" >= '%s' AND "__time" <= '%s' ORDER BY __time DESC LIMIT 100000`, constants.DruidDatasource, query.StartTime, query.EndTime)
+	sqlQuery := fmt.Sprintf(`SELECT SpanId, ParentSpanId, ServiceName FROM %s WHERE "__time" >= '%s' AND "__time" <= '%s' ORDER BY __time DESC`, constants.DruidDatasource, query.StartTime, query.EndTime)
 
 	// zap.S().Debug(sqlQuery)
 
@@ -617,7 +531,7 @@ func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams
 	// responseStr := string(response)
 	// zap.S().Info(responseStr)
 
-	res := new([]ServiceMapDependencyItem)
+	res := new([]model.ServiceMapDependencyItem)
 	err = json.Unmarshal(response, res)
 	if err != nil {
 		zap.S().Error(err)
@@ -626,7 +540,7 @@ func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams
 	// resCount := len(*res)
 	// fmt.Println(resCount)
 
-	serviceMap := make(map[string]*ServiceMapDependencyResponseItem)
+	serviceMap := make(map[string]*model.ServiceMapDependencyResponseItem)
 
 	spanId2ServiceNameMap := make(map[string]string)
 	for i, _ := range *res {
@@ -635,7 +549,7 @@ func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams
 	for i, _ := range *res {
 		parent2childServiceName := spanId2ServiceNameMap[(*res)[i].ParentSpanId] + "-" + spanId2ServiceNameMap[(*res)[i].SpanId]
 		if _, ok := serviceMap[parent2childServiceName]; !ok {
-			serviceMap[parent2childServiceName] = &ServiceMapDependencyResponseItem{
+			serviceMap[parent2childServiceName] = &model.ServiceMapDependencyResponseItem{
 				Parent:    spanId2ServiceNameMap[(*res)[i].ParentSpanId],
 				Child:     spanId2ServiceNameMap[(*res)[i].SpanId],
 				CallCount: 1,
@@ -645,7 +559,7 @@ func GetServiceMapDependencies(client *SqlClient, query *model.GetServicesParams
 		}
 	}
 
-	retMe := make([]ServiceMapDependencyResponseItem, 0, len(serviceMap))
+	retMe := make([]model.ServiceMapDependencyResponseItem, 0, len(serviceMap))
 	for _, dependency := range serviceMap {
 		if dependency.Parent == "" {
 			continue

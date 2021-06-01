@@ -27,11 +27,6 @@ type SpanSearchAggregatesDuratonReceivedItem struct {
 	Result    DurationItem `json:"result"`
 }
 
-type SpanSearchAggregatesResponseItem struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float32 `json:"value"`
-}
-
 func buildFilters(queryParams *model.SpanSearchParams) (*godruid.Filter, error) {
 
 	var filter *godruid.Filter
@@ -181,7 +176,7 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 
 }
 
-func SearchTraces(client *godruid.Client, traceId string) ([]godruid.ScanResult, error) {
+func SearchTraces(client *godruid.Client, traceId string) (*[]model.SearchSpansResult, error) {
 
 	filter := godruid.FilterSelector("TraceId", traceId)
 
@@ -206,10 +201,20 @@ func SearchTraces(client *godruid.Client, traceId string) ([]godruid.ScanResult,
 
 	// fmt.Printf("query.QueryResult:\n%v", query.QueryResult)
 
-	return query.QueryResult, nil
+	var searchSpansResult []model.SearchSpansResult
+	searchSpansResult = make([]model.SearchSpansResult, len(query.QueryResult))
+
+	searchSpansResult[0].Columns = make([]string, len(query.QueryResult[0].Columns))
+	copy(searchSpansResult[0].Columns, query.QueryResult[0].Columns)
+
+	searchSpansResult[0].Events = make([][]interface{}, len(query.QueryResult[0].Events))
+	copy(searchSpansResult[0].Events, query.QueryResult[0].Events)
+
+	return &searchSpansResult, nil
+
 }
 
-func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchAggregatesParams) ([]SpanSearchAggregatesResponseItem, error) {
+func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error) {
 
 	filter, err := buildFiltersForSpansAggregates(queryParams)
 	var needsPostAggregation bool = true
@@ -293,7 +298,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
-	var response []SpanSearchAggregatesResponseItem
+	var response []model.SpanSearchAggregatesResponseItem
 
 	for _, elem := range *receivedResponse {
 
@@ -304,7 +309,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 		if queryParams.AggregationOption == "rate_per_sec" {
 			value = elem.Result.Value * 1.0 / float32(queryParams.StepSeconds)
 		}
-		response = append(response, SpanSearchAggregatesResponseItem{
+		response = append(response, model.SpanSearchAggregatesResponseItem{
 			Timestamp: timestamp,
 			Value:     value,
 		})
@@ -316,7 +321,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 	return nil, nil
 }
 
-func SearchSpans(client *godruid.Client, queryParams *model.SpanSearchParams) ([]godruid.ScanResult, error) {
+func SearchSpans(client *godruid.Client, queryParams *model.SpanSearchParams) (*[]model.SearchSpansResult, error) {
 
 	filter, err := buildFilters(queryParams)
 
@@ -347,7 +352,16 @@ func SearchSpans(client *godruid.Client, queryParams *model.SpanSearchParams) ([
 
 	// fmt.Printf("query.QueryResult:\n%v", query.QueryResult)
 
-	return query.QueryResult, nil
+	var searchSpansResult []model.SearchSpansResult
+	searchSpansResult = make([]model.SearchSpansResult, len(query.QueryResult))
+
+	searchSpansResult[0].Columns = make([]string, len(query.QueryResult[0].Columns))
+	copy(searchSpansResult[0].Columns, query.QueryResult[0].Columns)
+
+	searchSpansResult[0].Events = make([][]interface{}, len(query.QueryResult[0].Events))
+	copy(searchSpansResult[0].Events, query.QueryResult[0].Events)
+
+	return &searchSpansResult, nil
 }
 
 func GetApplicationPercentiles(client *godruid.Client, queryParams *model.ApplicationPercentileParams) ([]godruid.Timeseries, error) {

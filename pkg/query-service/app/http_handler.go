@@ -1,14 +1,13 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/posthog/posthog-go"
-	"go.signoz.io/query-service/druidQuery"
-	"go.signoz.io/query-service/godruid"
 	"go.uber.org/zap"
 )
 
@@ -23,17 +22,15 @@ type APIHandler struct {
 	// queryParser  queryParser
 	basePath   string
 	apiPrefix  string
-	client     *godruid.Client
-	sqlClient  *druidQuery.SqlClient
+	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(client *godruid.Client, sqlClient *druidQuery.SqlClient, pc *posthog.Client, distinctId string) *APIHandler {
+func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
 	aH := &APIHandler{
-		client:     client,
-		sqlClient:  sqlClient,
+		reader:     reader,
 		pc:         pc,
 		distinctId: distinctId,
 	}
@@ -59,7 +56,7 @@ type structuredError struct {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
@@ -115,7 +112,7 @@ func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := druidQuery.GetOperations(aH.sqlClient, serviceName)
+	result, err := (*aH.reader).GetOperations(context.Background(), serviceName)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -126,7 +123,7 @@ func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
-	result, err := druidQuery.GetServicesList(aH.sqlClient)
+	result, err := (*aH.reader).GetServicesList(context.Background())
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -139,7 +136,7 @@ func (aH *APIHandler) searchTags(w http.ResponseWriter, r *http.Request) {
 
 	serviceName := r.URL.Query().Get("service")
 
-	result, err := druidQuery.GetTags(aH.sqlClient, serviceName)
+	result, err := (*aH.reader).GetTags(context.Background(), serviceName)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -155,7 +152,8 @@ func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := druidQuery.GetTopEndpoints(aH.sqlClient, query)
+	result, err := (*aH.reader).GetTopEndpoints(context.Background(), query)
+
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -171,7 +169,7 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := druidQuery.GetUsage(aH.sqlClient, query)
+	result, err := (*aH.reader).GetUsage(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -187,7 +185,8 @@ func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	result, err := druidQuery.GetServiceDBOverview(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServiceDBOverview(context.Background(), query)
+
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -203,7 +202,7 @@ func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := druidQuery.GetServiceExternal(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServiceExternal(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -219,7 +218,7 @@ func (aH *APIHandler) GetServiceExternalAvgDuration(w http.ResponseWriter, r *ht
 		return
 	}
 
-	result, err := druidQuery.GetServiceExternalAvgDuration(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServiceExternalAvgDuration(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -235,7 +234,7 @@ func (aH *APIHandler) getServiceExternalErrors(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	result, err := druidQuery.GetServiceExternalErrors(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServiceExternalErrors(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -251,7 +250,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := druidQuery.GetServiceOverview(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServiceOverview(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -267,7 +266,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := druidQuery.GetServices(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServices(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -289,7 +288,7 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	result, err := druidQuery.GetServiceMapDependencies(aH.sqlClient, query)
+	result, err := (*aH.reader).GetServiceMapDependencies(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -302,7 +301,7 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
 
-	result, err := druidQuery.SearchTraces(aH.client, traceId)
+	result, err := (*aH.reader).SearchTraces(context.Background(), traceId)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -310,6 +309,7 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 
 }
+
 func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseSearchSpanAggregatesRequest(r)
@@ -317,7 +317,7 @@ func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	result, err := druidQuery.SearchSpansAggregate(aH.client, query)
+	result, err := (*aH.reader).SearchSpansAggregate(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -332,7 +332,9 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := druidQuery.SearchSpans(aH.client, query)
+	// result, err := druidQuery.SearchSpans(aH.client, query)
+	result, err := (*aH.reader).SearchSpans(context.Background(), query)
+
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -340,20 +342,20 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
+// func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
+// 	// vars := mux.Vars(r)
 
-	query, err := parseApplicationPercentileRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
+// 	query, err := parseApplicationPercentileRequest(r)
+// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 		return
+// 	}
 
-	result, err := druidQuery.GetApplicationPercentiles(aH.client, query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-	aH.writeJSON(w, r, result)
-}
+// 	result, err := (*aH.reader).GetApplicationPercentiles(context.Background(), query)
+// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 		return
+// 	}
+// 	aH.writeJSON(w, r, result)
+// }
 
 func (aH *APIHandler) handleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {
