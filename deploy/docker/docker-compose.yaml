@@ -153,7 +153,7 @@ services:
     
 
   query-service:
-    image: signoz.docker.scarf.sh/signoz/query-service:0.2.2
+    image: signoz.docker.scarf.sh/signoz/query-service:0.3.0
     container_name: query-service
 
     depends_on:
@@ -164,11 +164,12 @@ services:
     environment:
       - DruidClientUrl=http://router:8888
       - DruidDatasource=flattened_spans
+      - STORAGE=druid
       - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
 
     
   frontend:
-    image: signoz/frontend:0.2.3
+    image: signoz/frontend:0.3.0
     container_name: frontend
 
     depends_on:
