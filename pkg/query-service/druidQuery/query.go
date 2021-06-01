@@ -27,11 +27,6 @@ type SpanSearchAggregatesDuratonReceivedItem struct {
 	Result    DurationItem `json:"result"`
 }
 
-type SpanSearchAggregatesResponseItem struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float32 `json:"value"`
-}
-
 func buildFilters(queryParams *model.SpanSearchParams) (*godruid.Filter, error) {
 
 	var filter *godruid.Filter
@@ -219,7 +214,7 @@ func SearchTraces(client *godruid.Client, traceId string) (*[]model.SearchSpansR
 
 }
 
-func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchAggregatesParams) ([]SpanSearchAggregatesResponseItem, error) {
+func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error) {
 
 	filter, err := buildFiltersForSpansAggregates(queryParams)
 	var needsPostAggregation bool = true
@@ -303,7 +298,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
-	var response []SpanSearchAggregatesResponseItem
+	var response []model.SpanSearchAggregatesResponseItem
 
 	for _, elem := range *receivedResponse {
 
@@ -314,7 +309,7 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 		if queryParams.AggregationOption == "rate_per_sec" {
 			value = elem.Result.Value * 1.0 / float32(queryParams.StepSeconds)
 		}
-		response = append(response, SpanSearchAggregatesResponseItem{
+		response = append(response, model.SpanSearchAggregatesResponseItem{
 			Timestamp: timestamp,
 			Value:     value,
 		})

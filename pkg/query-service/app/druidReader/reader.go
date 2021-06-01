@@ -94,3 +94,6 @@ func (druid *DruidReader) SearchTraces(ctx context.Context, traceId string) (*[]
 func (druid *DruidReader) GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 	return druidQuery.GetServiceMapDependencies(druid.SqlClient, query)
 }
+func (druid *DruidReader) SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error) {
+	return druidQuery.SearchSpansAggregate(druid.Client, queryParams)
+}

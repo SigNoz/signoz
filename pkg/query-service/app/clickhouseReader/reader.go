@@ -609,3 +609,11 @@ func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryP
 
 	return &retMe, nil
 }
+
+func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error) {
+
+	spanSearchAggregatesResponseItems := []model.SpanSearchAggregatesResponseItem{}
+
+	return spanSearchAggregatesResponseItems, nil
+
+}

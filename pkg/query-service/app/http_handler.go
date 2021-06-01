@@ -67,7 +67,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/service/{service}/operations", aH.getOperations).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/spans", aH.searchSpans).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/spans/aggregates", aH.searchSpansAggregates).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/spans/aggregates", aH.searchSpansAggregates).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/tags", aH.searchTags).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
@@ -310,20 +310,20 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Request) {
 
-// 	query, err := parseSearchSpanAggregatesRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	query, err := parseSearchSpanAggregatesRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	result, err := druidQuery.SearchSpansAggregate(aH.client, query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
-// 		return
-// 	}
+	result, err := (*aH.reader).SearchSpansAggregate(context.Background(), query)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
 
-// 	aH.writeJSON(w, r, result)
-// }
+	aH.writeJSON(w, r, result)
+}
 
 func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 

@@ -22,4 +22,5 @@ type Reader interface {
 	GetServicesList(ctx context.Context) (*[]string, error)
 	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 	GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
+	SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error)
 }

@@ -162,3 +162,8 @@ type ServiceMapDependencyResponseItem struct {
 	Child     string `json:"child,omitempty" db:"child,omitempty"`
 	CallCount int    `json:"callCount,omitempty" db:"callCount,omitempty"`
 }
+
+type SpanSearchAggregatesResponseItem struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float32 `json:"value"`
+}
