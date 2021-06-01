@@ -140,6 +140,11 @@ services:
     env_file:
       - environment_tiny/router
       - environment_tiny/common
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://router:8888/druid/coordinator/v1/datasources/flattened_spans"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
   flatten-processor:
     image: signoz/flattener-processor:0.2.0
@@ -171,11 +176,10 @@ services:
       - DruidDatasource=flattened_spans
       - STORAGE=druid
       - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://router:8888/status/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
+      
+    depends_on: 
+      router:
+        condition: service_healthy
     
   frontend:
     image: signoz/frontend:0.3.0
