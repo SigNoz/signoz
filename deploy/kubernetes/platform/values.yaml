@@ -45,3 +45,4 @@ query-service:
     configVars:
         DruidClientUrl: http://signoz-druid-router:8888
         DruidDatasource: flattened_spans
+        STORAGE: druid
