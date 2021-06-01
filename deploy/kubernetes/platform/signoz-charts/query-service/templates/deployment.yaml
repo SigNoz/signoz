@@ -36,7 +36,8 @@ spec:
             value: {{ .Values.configVars.DruidClientUrl }}
           - name: DruidDatasource
             value: {{ .Values.configVars.DruidDatasource }}
-
+          - name: STORAGE
+            value: {{ .Values.configVars.STORAGE }}
             
           # livenessProbe:
           #   httpGet:
