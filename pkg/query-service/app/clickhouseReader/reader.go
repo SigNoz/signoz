@@ -614,6 +614,101 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 
 	spanSearchAggregatesResponseItems := []model.SpanSearchAggregatesResponseItem{}
 
+	aggregation_query := ""
+	if queryParams.Dimension == "duration" {
+		switch queryParams.AggregationOption {
+		case "p50":
+			aggregation_query = " quantile(0.50)(durationNano) as value "
+			break
+
+		case "p95":
+			aggregation_query = " quantile(0.95)(durationNano) as value "
+			break
+
+		case "p99":
+			aggregation_query = " quantile(0.99)(durationNano) as value "
+			break
+		}
+	} else if queryParams.Dimension == "calls" {
+		aggregation_query = " count(*) as value "
+	}
+
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+
+	if len(queryParams.ServiceName) != 0 {
+		query = query + " AND serviceName = ?"
+		args = append(args, queryParams.ServiceName)
+	}
+
+	if len(queryParams.OperationName) != 0 {
+
+		query = query + " AND name = ?"
+		args = append(args, queryParams.OperationName)
+
+	}
+
+	if len(queryParams.Kind) != 0 {
+		query = query + " AND kind = ?"
+		args = append(args, queryParams.Kind)
+
+	}
+
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+
+	for _, item := range queryParams.Tags {
+
+		if item.Key == "error" && item.Value == "true" {
+			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500)"
+			continue
+		}
+
+		if item.Operator == "equals" {
+			query = query + " AND has(tags, ?)"
+			args = append(args, fmt.Sprintf("%s:%s", item.Key, item.Value))
+
+		} else if item.Operator == "contains" {
+			query = query + " AND tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
+			args = append(args, item.Key)
+			args = append(args, fmt.Sprintf("%%%s%%", item.Value))
+		} else if item.Operator == "isnotnull" {
+			query = query + " AND has(tagsKeys, ?)"
+			args = append(args, item.Key)
+		} else {
+			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
+		}
+
+	}
+
+	query = query + " GROUP BY time ORDER BY time"
+
+	err := r.db.Select(&spanSearchAggregatesResponseItems, query, args...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	for i, _ := range spanSearchAggregatesResponseItems {
+
+		timeObj, _ := time.Parse(time.RFC3339Nano, spanSearchAggregatesResponseItems[i].Time)
+		spanSearchAggregatesResponseItems[i].Timestamp = int64(timeObj.UnixNano())
+		spanSearchAggregatesResponseItems[i].Time = ""
+		if queryParams.AggregationOption == "rate_per_sec" {
+			spanSearchAggregatesResponseItems[i].Value = float32(spanSearchAggregatesResponseItems[i].Value) / float32(queryParams.StepSeconds)
+		}
+	}
+
 	return spanSearchAggregatesResponseItems, nil
 
 }
