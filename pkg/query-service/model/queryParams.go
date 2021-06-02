@@ -66,6 +66,8 @@ type SpanSearchAggregatesParams struct {
 	MinDuration       string
 	MaxDuration       string
 	Tags              []TagQuery
+	Start             *time.Time
+	End               *time.Time
 	GranOrigin        string
 	GranPeriod        string
 	Intervals         string

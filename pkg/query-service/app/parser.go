@@ -16,7 +16,7 @@ var allowedDimesions = []string{"calls", "duration"}
 
 var allowedAggregations = map[string][]string{
 	"calls":    []string{"count", "rate_per_sec"},
-	"duration": []string{"avg", "p50", "p90", "p99"},
+	"duration": []string{"avg", "p50", "p95", "p99"},
 }
 
 func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
@@ -234,6 +234,8 @@ func parseSearchSpanAggregatesRequest(r *http.Request) (*model.SpanSearchAggrega
 	}
 
 	params := &model.SpanSearchAggregatesParams{
+		Start:             startTime,
+		End:               endTime,
 		Intervals:         fmt.Sprintf("%s/%s", startTimeStr, endTimeStr),
 		GranOrigin:        startTimeStr,
 		GranPeriod:        granPeriod,

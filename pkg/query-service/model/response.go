@@ -164,6 +164,7 @@ type ServiceMapDependencyResponseItem struct {
 }
 
 type SpanSearchAggregatesResponseItem struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float32 `json:"value"`
+	Timestamp int64   `json:"timestamp,omitempty" db:"timestamp" `
+	Time      string  `json:"time,omitempty" db:"time"`
+	Value     float32 `json:"value,omitempty" db:"value"`
 }
