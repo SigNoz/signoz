@@ -240,10 +240,10 @@ func SearchSpansAggregate(client *godruid.Client, queryParams *model.SpanSearchA
 			postAggregationString := `{"type":"quantilesDoublesSketchToQuantile","name":"value","field":{"type":"fieldAccess","fieldName":"quantile_agg"},"fraction":0.5}`
 			postAggregation = godruid.PostAggRawJson(postAggregationString)
 			break
-		case "p90":
+		case "p95":
 			aggregationString := `{ "type": "quantilesDoublesSketch", "fieldName": "QuantileDuration", "name": "quantile_agg", "k": 128}`
 			aggregation = godruid.AggRawJson(aggregationString)
-			postAggregationString := `{"type":"quantilesDoublesSketchToQuantile","name":"value","field":{"type":"fieldAccess","fieldName":"quantile_agg"},"fraction":0.9}`
+			postAggregationString := `{"type":"quantilesDoublesSketchToQuantile","name":"value","field":{"type":"fieldAccess","fieldName":"quantile_agg"},"fraction":0.95}`
 			postAggregation = godruid.PostAggRawJson(postAggregationString)
 			break
 
