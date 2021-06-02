@@ -367,6 +367,10 @@ fi
 
 start_docker
 
+sudo docker-compose -f ./docker/docker-compose-tiny.yaml
+EXIT 0
+
+
 
 echo ""
 echo "Pulling the latest container images for SigNoz. To run as sudo it will ask for system password."
