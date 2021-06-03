@@ -222,8 +222,7 @@ install_docker_compose() {
 
 start_docker() {
     echo "Starting Docker ..."
-    if [ $os == "Mac" ]
-    then
+    if [ $os = "Mac" ]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else 
         if ! sudo systemctl is-active docker.service > /dev/null; then
@@ -246,7 +245,7 @@ wait_for_containers_start() {
                 LEN_SUPERVISORS="${#SUPERVISORS}"
 
                 if [[ LEN_SUPERVISORS -ne 19 && $timeout -eq 50 ]];then
-                    echo "No Supervisors found... Re-applying docker compose\n"
+                    echo "\n🟠 Supervisors taking time to start ⏳ ... let's wait for some more time ⏱️\n\n"
                     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up -d
                 fi
             fi
