@@ -245,12 +245,12 @@ wait_for_containers_start() {
                 LEN_SUPERVISORS="${#SUPERVISORS}"
 
                 if [[ LEN_SUPERVISORS -ne 19 && $timeout -eq 50 ]];then
-                    echo "\n🟠 Supervisors taking time to start ⏳ ... let's wait for some more time ⏱️\n\n"
+                    echo -e "\n🟠 Supervisors taking time to start ⏳ ... let's wait for some more time ⏱️\n\n"
                     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up -d
                 fi
             fi
 
-            echo -ne "\nWaiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
+            echo -ne "Waiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
         fi
         ((timeout--))
         sleep 1
