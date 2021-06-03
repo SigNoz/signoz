@@ -1,6 +1,6 @@
 # How to Contribute
 
-You can always reach out to ankit@signoz.io to understand more about the repo and product. We are very responsive over email and [slack](https://signoz-community.slack.com/join/shared_invite/zt-kj26gm1u-Xe3CYxCu0bGXCrCqKipjOA#/). 
+You can always reach out to ankit@signoz.io to understand more about the repo and product. We are very responsive over email and [slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA). 
 
 - You can create a PR (Pull Request)
 - If you find any bugs, please create an issue
