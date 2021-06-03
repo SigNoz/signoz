@@ -488,7 +488,7 @@ else
     echo "👉 Need help Getting Started?"
     echo -e "Join us on Slack https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
     echo ""
-    echo "\n📨 Please share your email to receive support & updates about SigNoz!"
+    echo -e "\n📨 Please share your email to receive support & updates about SigNoz!"
     read -rp 'Email: ' email
 
     while [[ $email == "" ]]
