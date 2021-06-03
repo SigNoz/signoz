@@ -192,7 +192,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./nginx-config.conf:/etc/nginx/conf.d/default.conf
+      - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   create-supervisor:
     image: theithollow/hollowapp-blog:curl
@@ -269,5 +269,5 @@ services:
       QUIET_MODE: "${QUIET_MODE:-false}"
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
-      - ./locust-scripts:/locust
+      - ../common/locust-scripts:/locust
 
