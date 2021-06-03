@@ -250,7 +250,7 @@ wait_for_containers_start() {
                 fi
             fi
 
-            echo -ne "Waiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
+            echo -ne "\nWaiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
         fi
         ((timeout--))
         sleep 1
@@ -274,7 +274,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
-        echo "📨 Please share your email to receive support with the installation"
+        echo -e "\n📨 Please share your email to receive support with the installation"
         read -rp 'Email: ' email
 
         while [[ $email == "" ]]
@@ -320,11 +320,11 @@ echo -e "${RED}1) ClickHouse as database (recommended for low memory usage)\n"
 echo -e "${RED}2) Kafka + Druid setup to handle scale (recommended for production use)\n"  
 read -p "⚙️  Enter your preference (1/2):" choice_setup 
 
-while [ $choice_setup != "1" ] && [ $choice_setup != "2" ]
+while [[ $choice_setup == "" || ( $choice_setup != "1" && $choice_setup != "2" ) ]]
 do
     # echo $choice_setup
     echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
-    read -sp "⚙️  Enter your preference (1/2):  " choice_setup 
+    read -rp "⚙️  Enter your preference (1/2):  " choice_setup 
     # echo $choice_setup
 done
 
