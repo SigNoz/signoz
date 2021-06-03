@@ -403,7 +403,7 @@ start_docker
 
 
 echo ""
-echo -e "🟡 \nPulling the latest container images for SigNoz. To run as sudo it may ask for system password\n"
+echo -e "\n🟡 Pulling the latest container images for SigNoz. To run as sudo it may ask for system password\n"
 if [ $setup_type == 'clickhouse' ]; then
     sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
 else
