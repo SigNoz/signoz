@@ -47,7 +47,7 @@ const App = () => {
 								/>
 								<Route
 									path={ROUTES.USAGE_EXPLORER}
-									exactexact
+									exact
 									component={UsageExplorer}
 								/>
 								<Route
