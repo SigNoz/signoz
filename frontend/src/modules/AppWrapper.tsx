@@ -67,6 +67,7 @@ const App = () => {
 										}}
 									/>
 								</Suspense>
+
 							</BaseLayout>
 						</RouteProvider>
 					</Switch>
