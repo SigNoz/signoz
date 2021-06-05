@@ -316,19 +316,19 @@ SIGNOZ_INSTALLATION_ID=$(curl -s 'https://api64.ipify.org')
 echo ""
 
 echo -e "👉 ${RED}Two ways to go forward\n"  
-echo -e "${RED}1) ClickHouse as database (recommended for low memory usage)\n"  
+echo -e "${RED}1) ClickHouse as database (default)\n"  
 echo -e "${RED}2) Kafka + Druid setup to handle scale (recommended for production use)\n"  
 read -p "⚙️  Enter your preference (1/2):" choice_setup 
 
-while [[ $choice_setup == "" || ( $choice_setup != "1" && $choice_setup != "2" ) ]]
+while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
 do
     # echo $choice_setup
     echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
-    read -rp "⚙️  Enter your preference (1/2):  " choice_setup 
+    read -p "⚙️  Enter your preference (1/2):  " choice_setup 
     # echo $choice_setup
 done
 
-if [ $choice_setup == "1" ];then
+if [[ $choice_setup == "1" || $choice_setup == "" ]];then
     setup_type='clickhouse'
 else
     setup_type='druid'
