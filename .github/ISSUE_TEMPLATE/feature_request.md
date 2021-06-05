@@ -20,10 +20,8 @@ assignees: ''
 
 
 ## Additional context
+Add any other context or screenshots about the feature request here.
 
 
 
 #### *Thank you* for your feature request – we love each and every one!
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
