@@ -79,7 +79,7 @@ export const getZoomPx = (): number => {
 	if (width < 1400) {
 		return 190;
 	} else if (width >= 1400 && width < 1700) {
-		return 320;
+		return 352;
 	} else if (width > 1700) {
 		return 485;
 	}
