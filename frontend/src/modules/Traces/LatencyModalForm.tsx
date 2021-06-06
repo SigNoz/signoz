@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Modal, Form, InputNumber, Col, Row } from "antd";
 import { Store } from "antd/lib/form/interface";
 
@@ -14,13 +14,6 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 	latencyFilterValues,
 }) => {
     const [form] = Form.useForm();
-    const [disabled, setDisabled] = useState<boolean>(false)
-    const [min, setMin] = useState<number>(parseInt(latencyFilterValues.min))
-    const [max, setMax] = useState<number>(parseInt(latencyFilterValues.max))
-    
-    useEffect(() => {
-        min! > max! ? setDisabled(true) : setDisabled(false)
-    },[min,max])
       
 	return (
 		<Modal
@@ -28,7 +21,6 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 			title="Chose min and max values of Latency"
 			okText="Apply"
             cancelText="Cancel"
-            okButtonProps={{disabled: disabled}}
 			onCancel={onCancel}
 			onOk={() => {
 				form
@@ -54,21 +46,43 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 						<Form.Item
 							name="min"
                             label="Min (in ms)"
+							rules={[
+								({ getFieldValue }) => ({
+									validator(_, value) {
+									  if (value < getFieldValue('max')) {
+										return Promise.resolve();
+									  }
+									  return Promise.reject(new Error('Min value should be less than Max value'));
+									},
+								  }),
+							]}
                             
 							//   rules={[{ required: true, message: 'Please input the title of collection!' }]}
 						>
-							<InputNumber onChange={() => setMin(parseInt(form.getFieldValue("min")))} />
+							<InputNumber />
 						</Form.Item>
 					</Col>
 					<Col span={12}>
-						<Form.Item name="max" label="Max (in ms)">
-							<InputNumber onChange={() => setMax(parseInt(form.getFieldValue("max")))} />
+						<Form.Item 
+							name="max" 
+							label="Max (in ms)"
+							rules = {[
+								({ getFieldValue }) => ({
+									validator(_, value) {
+									  if (value > getFieldValue('min')) {
+										return Promise.resolve();
+									  }
+									  return Promise.reject(new Error('Max value should be greater than Min value'));
+									},
+								  }),
+							]}
+							>
+							<InputNumber />
 						</Form.Item>
 					</Col>
 				</Row>
 				{/* </Input.Group> */}
 			</Form>
-            {disabled && <span style={{position: 'relative', top: 10, marginLeft: 200}}>max value should be greater then min value</span>}
 		</Modal>
 	);
 };
