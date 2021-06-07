@@ -14,7 +14,7 @@
 
 ##
 
-SigNoz helps developer monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
+SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
 
 👉 You can see metrics like p99 latency, error rates for your services, external API calls and individual end points.
 
