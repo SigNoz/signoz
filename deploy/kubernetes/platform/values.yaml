@@ -11,7 +11,7 @@ kafka:
 
 druid:
     image:
-    tag: 0.21.1-rc2
+        tag: 0.21.1-rc2
 
     configVars:
 

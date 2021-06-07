@@ -37,7 +37,7 @@ dependencies:
     version: 0.2.0
   - name: query-service
     repository: "file://./signoz-charts/query-service"
-    version: 0.3.0
+    version: 0.3.1
   - name: frontend
     repository: "file://./signoz-charts/frontend"
     version: 0.3.0

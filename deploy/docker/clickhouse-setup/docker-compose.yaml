@@ -20,7 +20,7 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:0.3.0
+    image: signoz/query-service:0.3.1
     container_name: query-service
 
     ports:
