@@ -10,6 +10,9 @@ kafka:
     zookeeperConnectionTimeoutMs: 6000
 
 druid:
+    image:
+    tag: 0.21.1-rc2
+
     configVars:
 
         # To store data on local disks attached
