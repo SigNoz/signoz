@@ -40,4 +40,4 @@ dependencies:
     version: 0.3.1
   - name: frontend
     repository: "file://./signoz-charts/frontend"
-    version: 0.3.0
+    version: 0.3.1
