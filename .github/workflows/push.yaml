@@ -4,51 +4,10 @@ on:
     branches:
       - master
       - ^v[0-9]*.[0-9]*.x$
-      - add-gh-workflow
     tags:
       - "*"
 
 jobs:
-  code-quality-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      - name: Code quality check for frontend
-        shell: bash
-        run: |
-          cd frontend
-          @echo "------------------"
-          @echo "--> checking code style [frontend]"
-          @echo "------------------"
-          npm i eslint --no-save && npm run lint
-      - name: Code quality check for query-service
-        shell: bash
-        run: |
-          cd pkg/query-service
-          @echo "------------------"
-          @echo "--> checking code style [query-service]"
-          @echo "------------------"
-          @fmtRes=$$(gofmt -d $$(find . -path ./vendor -prune -o -name '*.go' -print)); \
-          if [ -n "$${fmtRes}" ]; then \
-            echo "gofmt checking failed!" && echo "$${fmtRes}" \
-            && echo "Please ensure you are using $$($(GO) version) for formatting code." \
-            && exit 1;\
-          fi
-      - name: Code quality check for flattener
-        shell: bash
-        run: |
-          cd pkg/processors/flattener
-          @echo "------------------"
-          @echo "--> checking code style [flattener]"
-          @echo "------------------"
-          @fmtRes=$$(gofmt -d $$(find . -path ./vendor -prune -o -name '*.go' -print)); \
-          if [ -n "$${fmtRes}" ]; then \
-            echo "gofmt checking failed!" && echo "$${fmtRes}" \
-            && echo "Please ensure you are using $$($(GO) version) for formatting code." \
-            && exit 1;\
-          fi
-
   get-envs:
     runs-on: ubuntu-latest
     steps:
@@ -82,8 +41,7 @@ jobs:
   build-and-push-frontend:
     runs-on: ubuntu-latest
     needs:
-      - code-quality-checks
-      - get_filters
+      - get-envs
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -111,9 +69,7 @@ jobs:
   build-and-push-query-service:
     runs-on: ubuntu-latest
     needs:
-      - code-quality-checks
-      - get_filters
-    if: ${{ needs.get_filters.outputs.query-service == 'true' }}
+      - get-envs
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -138,12 +94,10 @@ jobs:
             docker push ${{ secrets.REPONAME }}/${QUERY_SERVICE}:${IMG_TAG}
           fi
 
-  build-flattener:
+  build-and-push-flattener:
     runs-on: ubuntu-latest
     needs:
-      - code-quality-checks
-      - get_filters
-    if: ${{ needs.get_filters.outputs.flattener == 'true' }}
+      - get-envs
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
