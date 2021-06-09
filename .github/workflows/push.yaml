@@ -1,12 +1,12 @@
 name: push-pipeline
 on:
-  pull_request:
+  push:
     branches:
       - master
-      - v*
+      - ^v[0-9]*.[0-9]*.x$
       - add-gh-workflow
-  tags:
-    - '*'
+    tags:
+      - "*"
 
 jobs:
   code-quality-checks:
