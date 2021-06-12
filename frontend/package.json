@@ -9,6 +9,9 @@
 		"build": "webpack --config=webpack.config.prod.js",
 		"prettify": "prettier --write ."
 	},
+	"engines": {
+		"node": ">=12.13.0"
+	},
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
