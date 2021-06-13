@@ -124,7 +124,7 @@ const TraceGanttChart = ({ treeData }) => {
 	const handleFocusOnSelectedPath = () => {
 		let rows = document.querySelectorAll(".collapsable table tbody tr");
 		Array.from(rows).map((row) => {
-			let attribKey = parseInt(row.getAttribute("data-row-key"));
+			let attribKey = row.getAttribute("data-row-key");
 			if (!selectedRows.includes(attribKey)) {
 				row.classList.add("hide");
 			}
