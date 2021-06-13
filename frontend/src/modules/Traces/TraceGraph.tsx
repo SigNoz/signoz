@@ -5,15 +5,12 @@ import { connect } from "react-redux";
 import { Card, Button, Row, Col, Space } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
-
-//import * as d3Tip from 'd3-tip';
-// PNOTE - uninstall @types/d3-tip. issues with importing d3-tip https://github.com/Caged/d3-tip/issues/181
-
 import "./TraceGraph.css";
 import { spanToTreeUtil } from "../../utils/spanToTree";
 import { fetchTraceItem, spansWSameTraceIDResponse } from "../../store/actions";
 import { StoreState } from "../../store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
+import TraceGanttChart  from "./TraceGanttChart";
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
@@ -24,6 +21,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const params = useParams<{ id?: string }>();
 	const [clickedSpanTags, setClickedSpanTags] = useState([]);
 	const [resetZoom, setResetZoom] = useState(false);
+	const [treeData, setTreeData] = useState([]);
 
 	useEffect(() => {
 		//sets span width based on value - which is mapped to duration
@@ -33,10 +31,14 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	useEffect(() => {
 		if (props.traceItem || resetZoom) {
 			const tree = spanToTreeUtil(props.traceItem[0].events);
+			console.log("tree", tree)
+
+			setTreeData([tree]);
 			// This is causing element to change ref. Can use both useRef or this approach.
 			d3.select("#chart").datum(tree).call(chart);
 			setResetZoom(false);
 		}
+
 	}, [props.traceItem, resetZoom]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
@@ -54,7 +56,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	};
 
 	const chart = flamegraph()
-		.cellHeight(18)
+		.cellHeight(48)
 		.transitionDuration(500)
 		.inverted(true)
 		.tooltip(tip)
@@ -66,7 +68,12 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
-		.onClick(onClick);
+		.onClick(onClick)
+	// Purple if highlighted, otherwise the original color
+		.setColorMapper(function(node, originalColor) {
+			return node.data.name.includes('frontend') ? "#D291BC" : originalColor;
+	})
+
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
@@ -96,6 +103,9 @@ const _TraceGraph = (props: TraceGraphProps) => {
 					</Card>
 
 					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />
+					<div className={'collapsable'}>
+						<TraceGanttChart treeData = {treeData}/>
+					</div>
 				</Space>
 			</Col>
 		</Row>
