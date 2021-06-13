@@ -1,12 +1,14 @@
 import React, { useRef, useState } from "react";
 import { Table, Progress, Tabs, Button } from "antd";
 import "./Collapse.css";
-import { max, min, flatMapDeep, map } from "lodash";
+import { max, min } from "lodash-es";
 
 const { TabPane } = Tabs;
 
 const TraceGanttChart = ({ treeData }) => {
-	console.log("treeData", treeData);
+	let checkStrictly = false;
+	const [selectedRows, setSelectedRows] = useState([]);
+	const tableRef = useRef("");
 	
 	const { id } = treeData;
 	let maxGlobal = 0;
@@ -14,22 +16,56 @@ const TraceGanttChart = ({ treeData }) => {
 	let medianGlobal = 0;
 	
 	if (id !== "empty") {
-		const minArray = flatMapDeep(treeData, ({ children }) =>
-			map(children, (item) => item.startTime),
-		);
+	
+		let endTimeArray = [];
+		let startTimeArray = [];
 		
-		const maxArray = flatMapDeep(treeData, ({ children }) =>
-			map(children, (item) => item.startTime + item.time),
-		);
+		const getMaxEndTime = (treeData) => {
+			if (treeData.length > 0 ) {
+				if (treeData[0].id !== "empty") {
+					Array.from(treeData).map((item) => {
+						if (item.children.length > 0) {
+							endTimeArray.push(item.time + item.startTime);
+							getMaxEndTime(item.children);
+						} else {
+							endTimeArray.push(item.time + item.startTime);
+						}
+					});
+				}
+			}
+		};
 		
-		maxGlobal = max(maxArray);
-		minGlobal = min(minArray);
+		const getMinStartTime = (treeData) =>{
+			if (treeData.length > 0 ) {
+				if (treeData[0].id !== "empty") {
+					Array.from(treeData).map((item) => {
+						if (item.children.length > 0) {
+							startTimeArray.push(item.startTime);
+							getMinStartTime(item.children);
+						} else {
+							startTimeArray.push(item.startTime);
+						}
+					});
+				}
+			}
+		}
+		
+		getMaxEndTime(treeData);
+		getMinStartTime(treeData);
+		
+		console.log("maxArray", endTimeArray, "minArray", startTimeArray);
+		
+		maxGlobal = max(endTimeArray);
+		minGlobal = min(startTimeArray);
 		medianGlobal = (minGlobal + maxGlobal) / 2;
+		
+		
+		console.log("maxGlobal", maxGlobal, "minGlobal", minGlobal)
 	}
 	
-	const getPaddingLeft = (value, totalWidth) =>{
-		return (value/totalWidth * 100).toFixed(0)
-	}
+	const getPaddingLeft = (value, totalWidth) => {
+		return (value / totalWidth * 100).toFixed(0);
+	};
 	
 	const columns = [
 		{
@@ -42,7 +78,7 @@ const TraceGanttChart = ({ treeData }) => {
 				<Tabs>
 					<TabPane tab={minGlobal + "ms"} key="1" />
 					<TabPane tab={medianGlobal + "ms"} key="2" />
-					<TabPane tab={maxGlobal + "ms"} key="2" />
+					<TabPane tab={maxGlobal + "ms"} key="3" />
 				</Tabs>,
 			dataIndex: "trace",
 			name: "trace",
@@ -50,7 +86,7 @@ const TraceGanttChart = ({ treeData }) => {
 				let tabs = document.querySelectorAll(".collapsable .ant-tabs-tab");
 				let tabsContainerWidth = document.querySelector(".collapsable .ant-tabs-nav-list")?.offsetWidth;
 				let widths = [];
-				let length = 0;
+				let length;
 				
 				if (widths.length < tabs.length) {
 					Array.from(tabs).map((tab) => {
@@ -64,10 +100,15 @@ const TraceGanttChart = ({ treeData }) => {
 				if (startTime < medianGlobal) {
 					paddingLeft = getPaddingLeft(startTime - minGlobal, tabsContainerWidth);
 				} else if (startTime >= medianGlobal && startTime < maxGlobal) {
-					paddingLeft = getPaddingLeft(widths[0]  + (startTime - medianGlobal), tabsContainerWidth);
+					paddingLeft = getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth);
 				}
 				
-				length = ((record.time) / (maxGlobal - minGlobal) * 100).toFixed(2);
+				console.log("maxGlobal - minGlobal", maxGlobal - minGlobal, "record.time", record.time, "(record.time / (maxGlobal - minGlobal))",
+					(record.time / (maxGlobal - minGlobal)),
+					"((record.time / (maxGlobal - minGlobal)) * 100)",
+					((record.time / (maxGlobal - minGlobal)) * 100))
+				
+				length = ((record.time / (maxGlobal - minGlobal)) * 100).toFixed(2);
 				
 				return (
 					<>
@@ -79,9 +120,6 @@ const TraceGanttChart = ({ treeData }) => {
 		},
 	];
 	
-	let checkStrictly = false;
-	const [selectedRows, setSelectedRows] = useState([]);
-	const tableRef = useRef("");
 	
 	const handleFocusOnSelectedPath = () => {
 		let rows = document.querySelectorAll(".collapsable table tbody tr");
@@ -102,15 +140,8 @@ const TraceGanttChart = ({ treeData }) => {
 	};
 	
 	const rowSelection = {
-		onChange: (selectedRowKeys, selectedRows) => {
-			console.log("selectedRowKeys", selectedRowKeys)
+		onChange: (selectedRowKeys) => {
 			setSelectedRows(selectedRowKeys);
-		},
-		onSelect: (record, selected, selectedRows) => {
-			console.log(record, selected, selectedRows);
-		},
-		onSelectAll: (selected, selectedRows, changeRows) => {
-			console.log(selected, selectedRows, changeRows);
 		},
 	};
 	
@@ -119,14 +150,14 @@ const TraceGanttChart = ({ treeData }) => {
 			{id !== "empty" && (
 				<>
 					<Table
-						ref={tableRef}
+						refs={tableRef}
 						checkStrictly={true}
 						hideSelectAll={true}
 						columns={columns}
 						rowSelection={{ ...rowSelection, checkStrictly }}
 						dataSource={treeData}
 						rowKey="id"
-						sticky = {true}
+						sticky={true}
 						pagination={false} />
 					<Button onClick={handleFocusOnSelectedPath}> Focus on selected path </Button>
 					<Button onClick={handleResetFocus}> Reset Focus </Button>

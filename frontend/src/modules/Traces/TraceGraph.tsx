@@ -38,7 +38,6 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			d3.select("#chart").datum(tree).call(chart);
 			setResetZoom(false);
 		}
-
 	}, [props.traceItem, resetZoom]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
@@ -56,7 +55,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	};
 
 	const chart = flamegraph()
-		.cellHeight(48)
+		.cellHeight(18)
 		.transitionDuration(500)
 		.inverted(true)
 		.tooltip(tip)
@@ -68,12 +67,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
-		.onClick(onClick)
-	// Purple if highlighted, otherwise the original color
-		.setColorMapper(function(node, originalColor) {
-			return node.data.name.includes('frontend') ? "#D291BC" : originalColor;
-	})
-
+		.onClick(onClick);
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
