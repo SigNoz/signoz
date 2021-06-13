@@ -25,10 +25,10 @@ const TraceGanttChart = ({ treeData }) => {
 				if (treeData[0].id !== "empty") {
 					Array.from(treeData).map((item) => {
 						if (item.children.length > 0) {
-							endTimeArray.push(item.time + item.startTime);
+							endTimeArray.push((item.time/1000000) + item.startTime);
 							getMaxEndTime(item.children);
 						} else {
-							endTimeArray.push(item.time + item.startTime);
+							endTimeArray.push((item.time/1000000) + item.startTime);
 						}
 					});
 				}
@@ -67,6 +67,10 @@ const TraceGanttChart = ({ treeData }) => {
 		return (value / totalWidth * 100).toFixed(0);
 	};
 	
+	let tabMinVal = minGlobal?.toFixed(0)
+	let tabMedianVal = medianGlobal?.toFixed(0)
+	let tabMaxVal = maxGlobal?.toFixed(0)
+	
 	const columns = [
 		{
 			title: "Name",
@@ -76,9 +80,9 @@ const TraceGanttChart = ({ treeData }) => {
 		{
 			title:
 				<Tabs>
-					<TabPane tab={minGlobal + "ms"} key="1" />
-					<TabPane tab={medianGlobal + "ms"} key="2" />
-					<TabPane tab={maxGlobal + "ms"} key="3" />
+					<TabPane tab={tabMinVal + "ms"} key="1" />
+					<TabPane tab={tabMedianVal + "ms"} key="2" />
+					<TabPane tab={tabMaxVal + "ms"} key="3" />
 				</Tabs>,
 			dataIndex: "trace",
 			name: "trace",
@@ -103,12 +107,12 @@ const TraceGanttChart = ({ treeData }) => {
 					paddingLeft = getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth);
 				}
 				
-				console.log("maxGlobal - minGlobal", maxGlobal - minGlobal, "record.time", record.time, "(record.time / (maxGlobal - minGlobal))",
-					(record.time / (maxGlobal - minGlobal)),
+				console.log("maxGlobal - minGlobal", maxGlobal - minGlobal, "record.time", record.time/1000000, "(record.time / (maxGlobal - minGlobal))",
+					((record.time/1000000) / (maxGlobal - minGlobal)),
 					"((record.time / (maxGlobal - minGlobal)) * 100)",
-					((record.time / (maxGlobal - minGlobal)) * 100))
+					(((record.time/1000000) / (maxGlobal - minGlobal)) * 100))
 				
-				length = ((record.time / (maxGlobal - minGlobal)) * 100).toFixed(2);
+				length = (((record.time/1000000) / (maxGlobal - minGlobal)) * 100).toFixed(2);
 				
 				return (
 					<>
