@@ -16,27 +16,27 @@ const TraceGanttChart = ({ treeData }) => {
 	let medianGlobal = 0;
 	
 	if (id !== "empty") {
-	
+		
 		let endTimeArray = [];
 		let startTimeArray = [];
 		
 		const getMaxEndTime = (treeData) => {
-			if (treeData.length > 0 ) {
+			if (treeData.length > 0) {
 				if (treeData[0].id !== "empty") {
 					Array.from(treeData).map((item) => {
 						if (item.children.length > 0) {
-							endTimeArray.push((item.time/1000000) + item.startTime);
+							endTimeArray.push((item.time / 1000000) + item.startTime);
 							getMaxEndTime(item.children);
 						} else {
-							endTimeArray.push((item.time/1000000) + item.startTime);
+							endTimeArray.push((item.time / 1000000) + item.startTime);
 						}
 					});
 				}
 			}
 		};
 		
-		const getMinStartTime = (treeData) =>{
-			if (treeData.length > 0 ) {
+		const getMinStartTime = (treeData) => {
+			if (treeData.length > 0) {
 				if (treeData[0].id !== "empty") {
 					Array.from(treeData).map((item) => {
 						if (item.children.length > 0) {
@@ -48,28 +48,23 @@ const TraceGanttChart = ({ treeData }) => {
 					});
 				}
 			}
-		}
+		};
 		
 		getMaxEndTime(treeData);
 		getMinStartTime(treeData);
 		
-		console.log("maxArray", endTimeArray, "minArray", startTimeArray);
-		
 		maxGlobal = max(endTimeArray);
 		minGlobal = min(startTimeArray);
 		medianGlobal = (minGlobal + maxGlobal) / 2;
-		
-		
-		console.log("maxGlobal", maxGlobal, "minGlobal", minGlobal)
 	}
 	
-	const getPaddingLeft = (value, totalWidth) => {
-		return (value / totalWidth * 100).toFixed(0);
+	const getPaddingLeft = (value, totalWidth, leftOffset = 0) => {
+		return (value / totalWidth * 100).toFixed(0) + leftOffset;
 	};
 	
-	let tabMinVal = minGlobal?.toFixed(0)
-	let tabMedianVal = medianGlobal?.toFixed(0)
-	let tabMaxVal = maxGlobal?.toFixed(0)
+	let tabMinVal = minGlobal?.toFixed(0);
+	let tabMedianVal = medianGlobal?.toFixed(0);
+	let tabMaxVal = maxGlobal?.toFixed(0);
 	
 	const columns = [
 		{
@@ -104,15 +99,10 @@ const TraceGanttChart = ({ treeData }) => {
 				if (startTime < medianGlobal) {
 					paddingLeft = getPaddingLeft(startTime - minGlobal, tabsContainerWidth);
 				} else if (startTime >= medianGlobal && startTime < maxGlobal) {
-					paddingLeft = getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth);
+					paddingLeft = getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth, widths[1].offsetLeft);
 				}
 				
-				console.log("maxGlobal - minGlobal", maxGlobal - minGlobal, "record.time", record.time/1000000, "(record.time / (maxGlobal - minGlobal))",
-					((record.time/1000000) / (maxGlobal - minGlobal)),
-					"((record.time / (maxGlobal - minGlobal)) * 100)",
-					(((record.time/1000000) / (maxGlobal - minGlobal)) * 100))
-				
-				length = (((record.time/1000000) / (maxGlobal - minGlobal)) * 100).toFixed(2);
+				length = (((record.time / 1000000) / (maxGlobal - minGlobal)) * 100).toFixed(2);
 				
 				return (
 					<>
