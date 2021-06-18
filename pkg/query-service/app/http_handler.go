@@ -55,7 +55,7 @@ type structuredError struct {
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
-	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
@@ -90,12 +90,6 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 		Properties: posthog.NewProperties().
 			Set("email", email),
 	})
-
-	_, err = http.Get(fmt.Sprintf("https://api.telegram.org/bot1518273960:AAHcgVvym9a0Qkl-PKiCI84X1VZaVbkTud0/sendMessage?chat_id=351813222&text=%s", email))
-
-	if err != nil {
-		zap.S().Debug(err)
-	}
 
 }
 
