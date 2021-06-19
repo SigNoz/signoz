@@ -1,13 +1,14 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Table, Progress, Tabs, Button } from "antd";
 import "./Collapse.css";
-import { max, min } from "lodash-es";
+import { max, min, sortBy } from "lodash-es";
 
 const { TabPane } = Tabs;
 
 const TraceGanttChart = ({ treeData }) => {
 	let checkStrictly = false;
 	const [selectedRows, setSelectedRows] = useState([]);
+	const [sortedTreeData, setSortedTreeData] = useState([]);
 	const tableRef = useRef("");
 	
 	const { id } = treeData;
@@ -15,51 +16,74 @@ const TraceGanttChart = ({ treeData }) => {
 	let minGlobal = 0;
 	let medianGlobal = 0;
 	
+	let sortedData = {};
+	let endTimeArray = [];
+	let startTimeArray = [];
+	
+	const getMaxEndTime = (treeData) => {
+		if (treeData.length > 0) {
+			if (treeData[0].id !== "empty") {
+				return Array.from(treeData).map((item, key) => {
+					if (item.children.length > 0) {
+						endTimeArray.push((item.time / 1000000) + item.startTime);
+						getMaxEndTime(item.children);
+					} else {
+						endTimeArray.push((item.time / 1000000) + item.startTime);
+					}
+				});
+			}
+		}
+	};
+	
+	const getSortedData = (treeData) =>{
+		if (treeData.length > 0) {
+			if (treeData[0].id !== "empty") {
+				return Array.from(treeData).map((item, key) => {
+					if (item.children.length > 0) {
+						getSortedData(item.children);
+						sortedData = sortBy(item.children, (i)=> i.startTime)
+						treeData[key].children = sortedData;
+						console.log("treeData", treeData)
+						return treeData
+					}
+				});
+			}
+		}
+	}
+	
+	const getMinStartTime = (treeData) => {
+		if (treeData.length > 0) {
+			if (treeData[0].id !== "empty") {
+				Array.from(treeData).map((item) => {
+					if (item.children.length > 0) {
+						startTimeArray.push(item.startTime);
+						getMinStartTime(item.children);
+					} else {
+						startTimeArray.push(item.startTime);
+					}
+				});
+			}
+		}
+	};
+	
+	useEffect(()=>{
+		if (id !== "empty") {
+			let sortedTreeData = getSortedData(treeData);
+			console.log("sortedTreeData, useEffect", sortedTreeData)
+			setSortedTreeData(sortedTreeData?.[0])
+		 }
+	}, [sortedTreeData, treeData])
+	
 	if (id !== "empty") {
-		
-		let endTimeArray = [];
-		let startTimeArray = [];
-		
-		const getMaxEndTime = (treeData) => {
-			if (treeData.length > 0) {
-				if (treeData[0].id !== "empty") {
-					Array.from(treeData).map((item) => {
-						if (item.children.length > 0) {
-							endTimeArray.push((item.time / 1000000) + item.startTime);
-							getMaxEndTime(item.children);
-						} else {
-							endTimeArray.push((item.time / 1000000) + item.startTime);
-						}
-					});
-				}
-			}
-		};
-		
-		const getMinStartTime = (treeData) => {
-			if (treeData.length > 0) {
-				if (treeData[0].id !== "empty") {
-					Array.from(treeData).map((item) => {
-						if (item.children.length > 0) {
-							startTimeArray.push(item.startTime);
-							getMinStartTime(item.children);
-						} else {
-							startTimeArray.push(item.startTime);
-						}
-					});
-				}
-			}
-		};
-		
 		getMaxEndTime(treeData);
 		getMinStartTime(treeData);
-		
 		maxGlobal = max(endTimeArray);
 		minGlobal = min(startTimeArray);
 		medianGlobal = (minGlobal + maxGlobal) / 2;
 	}
 	
 	const getPaddingLeft = (value, totalWidth, leftOffset = 0) => {
-		return (value / totalWidth * 100).toFixed(0) + leftOffset;
+		return (((value / totalWidth) * 100) + leftOffset).toFixed(0);
 	};
 	
 	let tabMinVal = minGlobal?.toFixed(0);
@@ -99,7 +123,7 @@ const TraceGanttChart = ({ treeData }) => {
 				if (startTime < medianGlobal) {
 					paddingLeft = getPaddingLeft(startTime - minGlobal, tabsContainerWidth);
 				} else if (startTime >= medianGlobal && startTime < maxGlobal) {
-					paddingLeft = getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth, widths[1].offsetLeft);
+					paddingLeft = getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth, tabs[1].offsetLeft);
 				}
 				
 				length = (((record.time / 1000000) / (maxGlobal - minGlobal)) * 100).toFixed(2);
@@ -125,7 +149,6 @@ const TraceGanttChart = ({ treeData }) => {
 		});
 	};
 	
-	
 	const handleResetFocus = () => {
 		let rows = document.querySelectorAll(".collapsable table tbody tr");
 		Array.from(rows).map((row) => {
@@ -135,6 +158,7 @@ const TraceGanttChart = ({ treeData }) => {
 	
 	const rowSelection = {
 		onChange: (selectedRowKeys) => {
+			console.log(selectedRowKeys)
 			setSelectedRows(selectedRowKeys);
 		},
 	};
@@ -149,7 +173,7 @@ const TraceGanttChart = ({ treeData }) => {
 						hideSelectAll={true}
 						columns={columns}
 						rowSelection={{ ...rowSelection, checkStrictly }}
-						dataSource={treeData}
+						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}
 						pagination={false} />
