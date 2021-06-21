@@ -1,30 +1,69 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Table, Progress, Tabs, Button } from "antd";
+import { Table, Progress, Tabs, Button, Row, Col } from "antd";
 import "./Collapse.css";
-import { max, min, sortBy } from "lodash-es";
+import { max, isEmpty, has } from "lodash-es";
+import styled from "styled-components";
 
 const { TabPane } = Tabs;
 
-const TraceGanttChart = ({ treeData }) => {
+const StyledButton = styled(Button)`
+	border: 1px solid #E0E0E0;
+	border-radius: 4px;
+	color: #F2F2F2;
+	font-size: 14px;
+ line-height: 20px;
+`;
+
+const TraceGanttChart = ({ treeData, clickedSpan, selectedSpan = {} }) => {
 	let checkStrictly = false;
 	const [selectedRows, setSelectedRows] = useState([]);
-	const [sortedTreeData, setSortedTreeData] = useState([]);
+	const [defaultExpandedRows, setDefaultExpandedRows] = useState([]);
+	const [sortedTreeData, setSortedTreeData] = useState(treeData);
+	const [rowId, setRowId] = useState(0);
 	const tableRef = useRef("");
 	
-	const { id } = treeData;
+	console.log("clickedSpan", treeData, selectedSpan, !isEmpty(selectedSpan));
+	
+	const { id } = treeData || "id";
 	let maxGlobal = 0;
 	let minGlobal = 0;
 	let medianGlobal = 0;
-	
-	let sortedData = {};
 	let endTimeArray = [];
-	let startTimeArray = [];
+	
+	useEffect(() => {
+		if (id !== "empty") {
+			setSortedTreeData(treeData);
+		}
+		if (clickedSpan) {
+			handleRowOnClick(clickedSpan);
+		}
+		handleScroll(selectedSpan?.id)
+	}, [sortedTreeData, treeData, clickedSpan]);
+	
+	let parentKeys = [];
+	const getParentKeys = (obj) => {
+		if (has(obj, "parent")) {
+			parentKeys.push(obj.parent.id);
+			getParentKeys(obj.parent);
+		}
+	};
+	
+	useEffect(() => {
+		if (!isEmpty(selectedSpan)) {
+			getParentKeys(selectedSpan);
+			let keys = [selectedSpan?.id, ...parentKeys];
+			setDefaultExpandedRows(keys);
+			setSelectedRows([selectedSpan.id]);
+		}
+	}, [selectedSpan]);
+	
 	
 	const getMaxEndTime = (treeData) => {
 		if (treeData.length > 0) {
-			if (treeData[0].id !== "empty") {
-				return Array.from(treeData).map((item, key) => {
-					if (item.children.length > 0) {
+			let data = treeData[0];
+			if (data?.id !== "empty") {
+				return Array.from(data).map((item, key) => {
+					if (!isEmpty(item.children)) {
 						endTimeArray.push((item.time / 1000000) + item.startTime);
 						getMaxEndTime(item.children);
 					} else {
@@ -35,50 +74,10 @@ const TraceGanttChart = ({ treeData }) => {
 		}
 	};
 	
-	const getSortedData = (treeData) =>{
-		if (treeData.length > 0) {
-			if (treeData[0].id !== "empty") {
-				return Array.from(treeData).map((item, key) => {
-					if (item.children.length > 0) {
-						getSortedData(item.children);
-						sortedData = sortBy(item.children, (i)=> i.startTime)
-						treeData[key].children = sortedData;
-						console.log("treeData", treeData)
-						return treeData
-					}
-				});
-			}
-		}
-	}
-	
-	const getMinStartTime = (treeData) => {
-		if (treeData.length > 0) {
-			if (treeData[0].id !== "empty") {
-				Array.from(treeData).map((item) => {
-					if (item.children.length > 0) {
-						startTimeArray.push(item.startTime);
-						getMinStartTime(item.children);
-					} else {
-						startTimeArray.push(item.startTime);
-					}
-				});
-			}
-		}
-	};
-	
-	useEffect(()=>{
-		if (id !== "empty") {
-			let sortedTreeData = getSortedData(treeData);
-			console.log("sortedTreeData, useEffect", sortedTreeData)
-			setSortedTreeData(sortedTreeData?.[0])
-		 }
-	}, [sortedTreeData, treeData])
-	
 	if (id !== "empty") {
 		getMaxEndTime(treeData);
-		getMinStartTime(treeData);
 		maxGlobal = max(endTimeArray);
-		minGlobal = min(startTimeArray);
+		minGlobal = treeData?.[0]?.startTime;
 		medianGlobal = (minGlobal + maxGlobal) / 2;
 	}
 	
@@ -86,13 +85,13 @@ const TraceGanttChart = ({ treeData }) => {
 		return (((value / totalWidth) * 100) + leftOffset).toFixed(0);
 	};
 	
-	let tabMinVal = minGlobal?.toFixed(0);
-	let tabMedianVal = medianGlobal?.toFixed(0);
-	let tabMaxVal = maxGlobal?.toFixed(0);
+	let tabMinVal = 0;
+	let tabMedianVal = (medianGlobal - minGlobal).toFixed(0);
+	let tabMaxVal = (maxGlobal - minGlobal).toFixed(0);
 	
 	const columns = [
 		{
-			title: "Name",
+			title: "",
 			dataIndex: "name",
 			key: "name",
 		},
@@ -106,8 +105,8 @@ const TraceGanttChart = ({ treeData }) => {
 			dataIndex: "trace",
 			name: "trace",
 			render: (_, record) => {
-				let tabs = document.querySelectorAll(".collapsable .ant-tabs-tab");
-				let tabsContainerWidth = document.querySelector(".collapsable .ant-tabs-nav-list")?.offsetWidth;
+				let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
+				let tabsContainerWidth = document.querySelector("#collapsable .ant-tabs-nav-list")?.offsetWidth;
 				let widths = [];
 				let length;
 				
@@ -119,6 +118,7 @@ const TraceGanttChart = ({ treeData }) => {
 				
 				let paddingLeft = 0;
 				let startTime = record.startTime;
+				let duration = (record.time / 1000000).toFixed(2);
 				
 				if (startTime < medianGlobal) {
 					paddingLeft = getPaddingLeft(startTime - minGlobal, tabsContainerWidth);
@@ -130,8 +130,8 @@ const TraceGanttChart = ({ treeData }) => {
 				
 				return (
 					<>
+						<div style={{ paddingLeft: paddingLeft + "px" }}>{duration}ms</div>
 						<Progress percent={length} showInfo={false} style={{ paddingLeft: paddingLeft + "px" }} />
-						<div style={{ paddingLeft: paddingLeft + "px" }}>{startTime}ms</div>
 					</>
 				);
 			},
@@ -140,7 +140,7 @@ const TraceGanttChart = ({ treeData }) => {
 	
 	
 	const handleFocusOnSelectedPath = () => {
-		let rows = document.querySelectorAll(".collapsable table tbody tr");
+		let rows = document.querySelectorAll("#collapsable table tbody tr");
 		Array.from(rows).map((row) => {
 			let attribKey = row.getAttribute("data-row-key");
 			if (!selectedRows.includes(attribKey)) {
@@ -150,23 +150,69 @@ const TraceGanttChart = ({ treeData }) => {
 	};
 	
 	const handleResetFocus = () => {
-		let rows = document.querySelectorAll(".collapsable table tbody tr");
+		let rows = document.querySelectorAll("#collapsable table tbody tr");
 		Array.from(rows).map((row) => {
 			row.classList.remove("hide");
 		});
 	};
 	
+	const handleScroll = (id) =>{
+		let rows = document.querySelectorAll("#collapsable table tbody tr");
+		const table = document.querySelectorAll("#collapsable table")
+		Array.from(rows).map((row) => {
+			let attribKey = row.getAttribute("data-row-key");
+			if (id === attribKey) {
+				console.log("row.offsetTop", row.offsetTop, table[1].offsetHeight)
+				let scrollValue = table[1].offsetTop - row.offsetHeight
+					table[1].scrollTop = scrollValue;
+			}
+		});
+	}
+	
 	const rowSelection = {
-		onChange: (selectedRowKeys) => {
-			console.log(selectedRowKeys)
+		onChange: (selectedRowKeys, selectedRows) => {
+			console.log("selectedRowKeys", selectedRowKeys, selectedRows)
 			setSelectedRows(selectedRowKeys);
 		},
+		selectedRowKeys: selectedRows
 	};
+	
+	const handleRowOnClick = (record) => {
+		setRowId(record.id);
+		
+		const selectedRowKeys = selectedRows;
+		if (selectedRowKeys.indexOf(record.id) >= 0) {
+			selectedRowKeys.splice(selectedRowKeys.indexOf(record.key), 1);
+		} else {
+			selectedRowKeys.push(record.id);
+		}
+		setSelectedRows(selectedRowKeys);
+	};
+	
+	const setRowClassName = (record) => {
+		return record.id === rowId ? "selectedRowStyles" : "";
+	};
+	
+	const handleOnExpandedRowsChange = (item) =>{
+		setDefaultExpandedRows(item);
+	}
+	
 	
 	return (
 		<>
 			{id !== "empty" && (
 				<>
+					<Row justify="end" gutter={32} style={{
+						marginBottom: "24px",
+					}}>
+						<Col>
+							<StyledButton onClick={handleFocusOnSelectedPath}> Focus on selected path </StyledButton>
+						</Col>
+						<Col>
+							<StyledButton onClick={handleResetFocus}> Reset Focus </StyledButton>
+						</Col>
+					</Row>
+					
 					<Table
 						refs={tableRef}
 						checkStrictly={true}
@@ -176,9 +222,16 @@ const TraceGanttChart = ({ treeData }) => {
 						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}
+						onRow={(record, rowIndex) => {
+							return {
+								onClick: () => handleRowOnClick(record, rowIndex), // click row
+							};
+						}}
+						rowClassName={setRowClassName}
+						expandedRowKeys={defaultExpandedRows}
+						onExpandedRowsChange={handleOnExpandedRowsChange}
+						scroll={{ y: 640 }}
 						pagination={false} />
-					<Button onClick={handleFocusOnSelectedPath}> Focus on selected path </Button>
-					<Button onClick={handleResetFocus}> Reset Focus </Button>
 				</>
 			)
 			}

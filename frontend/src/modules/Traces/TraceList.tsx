@@ -13,6 +13,7 @@ import styled from "styled-components";
 const TraceHeader = styled.div`
 	margin: 16px 0;
 `;
+
 interface TraceListProps {
 	traces: traceResponseNew;
 	fetchTraces: Function;
@@ -33,17 +34,6 @@ const _TraceList = (props: TraceListProps) => {
 	useEffect(() => {
 		props.fetchTraces();
 	}, []);
-
-	// PNOTE - code snippet -
-	// renderList(): JSX.Element[] {
-	//   return this.props.todos.map((todo: Todo) => {
-	//     return (
-	//       <div onClick={() => this.onTodoClick(todo.id)} key={todo.id}>
-	//         {todo.title}
-	//       </div>
-	//     );
-	//   });
-	// }
 
 	const columns: any = [
 		{
@@ -73,9 +63,18 @@ const _TraceList = (props: TraceListProps) => {
 			title: "TraceID",
 			dataIndex: "traceid",
 			key: "traceid",
-			render: (text: string) => (
-				<NavLink to={ROUTES.TRACES + "/" + text}>{text.slice(-16)}</NavLink>
-			),
+			render: (_, record) => {
+				console.log("text", record);
+				return (
+					<NavLink to={{
+						pathname: ROUTES.TRACES + "/" + record.traceid,
+						state: {
+							spanId: record.spanid,
+						},
+					}}
+					>{record.traceid.slice(-16)}</NavLink>
+				);
+			},
 			//only last 16 chars have traceID, druid makes it 32 by adding zeros
 		},
 	];
@@ -87,8 +86,6 @@ const _TraceList = (props: TraceListProps) => {
 			typeof props.traces[0] !== "undefined" &&
 			props.traces[0].events.length > 0
 		) {
-			//PNOTE - Template literal should be wrapped in  curly braces for it to be evaluated
-
 			props.traces[0].events.map(
 				(item: (number | string | string[] | pushDStree[])[], index) => {
 					if (
