@@ -72,7 +72,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			setSortedTreeData(sortedData?.[0]);
 			getSpanInfo(sortedData?.[0], spanId);
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select("#chart").datum(tree).call(chart);
+			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
 		}
 	}, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
