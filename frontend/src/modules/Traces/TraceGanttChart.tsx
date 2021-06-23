@@ -157,12 +157,12 @@ const TraceGanttChart = ({
 				}
 
 				let paddingLeft = 0;
-				let startTime = record.startTime;
-				let duration = (record.time / 1000000).toFixed(2);
+				let startTime = parseInt(record.startTime);
+				let duration = parseInt((record.time / 1000000).toFixed(2));
 
 				paddingLeft = getPaddingLeft(startTime - minGlobal, maxGlobal - minGlobal, tabsContainerWidth);
 
-				length = ((record.time / 1000000 / (maxGlobal - minGlobal)) * 100).toFixed(
+				length = ((duration / (maxGlobal - startTime)) * 100).toFixed(
 					2,
 				);
 
