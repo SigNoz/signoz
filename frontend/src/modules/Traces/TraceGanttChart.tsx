@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Table, Progress, Tabs, Button, Row, Col } from "antd";
-import "./Collapse.css";
+import "./TraceGanttChart.css";
 import { max, isEmpty, has } from "lodash-es";
 import styled from "styled-components";
 import getTreeData from "Src/modules/Traces/TraceGantChartHelpers";
@@ -31,7 +31,7 @@ const TraceGanttChart = ({
 	resetZoom,
 	setSpanTagsInfo,
 }: TraceGanttChartProps) => {
-	let checkStrictly = false;
+	let checkStrictly = true;
 	const [selectedRows, setSelectedRows] = useState([]);
 	const [clickedSpanData, setClickedSpanData] = useState(clickedSpan);
 	const [defaultExpandedRows, setDefaultExpandedRows] = useState([]);
@@ -66,6 +66,7 @@ const TraceGanttChart = ({
 			!isEmpty(clickedSpanData) &&
 			clickedSpan &&
 			!selectedRows.includes(clickedSpan.id)
+			&& !isReset
 		) {
 			setSelectedRows([clickedSpan.id]);
 			getParentKeys(clickedSpan);
@@ -215,27 +216,30 @@ const TraceGanttChart = ({
 		resetZoom(true);
 	};
 
-	// const handleScroll = (id) => {
-	// 	let rows = document.querySelectorAll("#collapsable table tbody tr");
-	// 	const table = document.querySelectorAll("#collapsable table");
-	// 	Array.from(rows).map((row) => {
-	// 		let attribKey = row.getAttribute("data-row-key");
-	// 		if (id === attribKey) {
-	// 			let scrollValue = table[1].offsetTop - row.offsetHeight;
-	// 			table[1].scrollTop = scrollValue;
-	// 		}
-	// 	});
-	// };
+	const handleScroll = (id) => {
+		let rows = document.querySelectorAll("#collapsable table tbody tr");
+		const table = document.querySelectorAll("#collapsable table");
+		Array.from(rows).map((row) => {
+			let attribKey = row.getAttribute("data-row-key");
+			if (id === attribKey) {
+				let scrollValue = row.offsetTop;
+				table[1].scrollTop = scrollValue;
+			}
+		});
+	};
 
 	const rowSelection = {
-		onChange: (selectedRowKeys: [], selectedRows: []) => {
+		onChange: (selectedRowKeys: []) => {
+			setSelectedRows(selectedRowKeys);
+			setClickedSpanData({});
 			if (isEmpty(selectedRowKeys)) {
 				setIsReset(true);
-				setClickedSpanData({});
 			} else {
 				setIsReset(false);
 			}
-			setSelectedRows(selectedRowKeys);
+		},
+		onSelect:(record)=>{
+			handleRowOnClick(record)
 		},
 		selectedRowKeys: selectedRows,
 	};
@@ -257,10 +261,6 @@ const TraceGanttChart = ({
 			selectedRowKeys.push(record.id);
 		}
 		setSelectedRows([record.id]);
-	};
-
-	const setRowClassName = (record) => {
-		return record.id === rowId ? "selectedRowStyles" : "";
 	};
 
 	const handleOnExpandedRowsChange = (item) => {
@@ -291,10 +291,9 @@ const TraceGanttChart = ({
 
 					<Table
 						refs={tableRef}
-						checkStrictly={true}
 						hideSelectAll={true}
 						columns={columns}
-						rowSelection={{ ...rowSelection, checkStrictly }}
+						rowSelection={{ ...rowSelection, checkStrictly, type:'radio' }}
 						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}
@@ -306,6 +305,9 @@ const TraceGanttChart = ({
 						expandedRowKeys={defaultExpandedRows}
 						onExpandedRowsChange={handleOnExpandedRowsChange}
 						pagination={false}
+						scroll={{ y: 640}}
+						rowClassName="row-styles"
+						filterMultiple={false}
 					/>
 				</>
 			)}

@@ -1,3 +1,23 @@
-.selectedRowStyles{
-    background-color: 'rgb(39 59 82)'
+.row-styles{
+    cursor: pointer
 }
+.hide{
+    display: none;
+}
+.ant-tabs-nav-list{
+    justify-content: space-between;
+    width: 100%;
+}
+/*.selectedRowStyles{*/
+/*    background-color: rgb(39 59 82) !important;*/
+/*}*/
+/*.ant-table-row-selected{*/
+/*    background-color: rgb(39 59 82) !important;*/
+/*}*/
+/*!*.ant-table .ant-table-tbody> tr:hover:not(.ant-table-expanded-row)> td {*!*/
+/*!*    background-color: rgb(39 59 82) !important;*!*/
+/*!*}*!*/
+
+/*.ant-progress-status-success .ant-progress-bg{*/
+/*    background-color: #219653;*/
+/*}*/
