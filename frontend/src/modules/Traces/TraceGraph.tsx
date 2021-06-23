@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { flamegraph } from "d3-flame-graph";
 import { connect } from "react-redux";
-import { Card, Button, Row, Col, Space } from "antd";
+import { Card, Row, Col, Space } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
@@ -28,7 +28,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	let location = useLocation();
 	const spanId = location?.state?.spanId;
 	const params = useParams<{ id?: string }>();
-	const [clickedSpanTags, setClickedSpanTags] = useState([]);
+	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
 	const [selectedSpan, setSelectedSpan] = useState({});
 	const [clickedSpan, setClickedSpan] = useState(null);
 	const [resetZoom, setResetZoom] = useState(false);
@@ -74,9 +74,9 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
-	useEffect(() => {
-		d3.select("#chart").datum(selectedSpan).call(chart);
-	}, [selectedSpan]);
+	// useEffect(() => {
+	// 	d3.select("#chart").datum(selectedSpan).call(chart);
+	// }, [selectedSpan]);
 
 	useEffect(() => {
 		if (resetZoom) {
@@ -95,10 +95,16 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		});
 
 	const onClick = (z: any) => {
-		setClickedSpanTags(z.data.tags);
-		setSelectedSpan(z.data);
+		setClickedSpanTags(z.data);
+		setClickedSpan(z.data);
+		setSelectedSpan([]);
 		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
 	};
+
+	const setSpanTagsInfo = (z: any) =>{
+		debugger
+		setClickedSpanTags(z.data);
+	}
 
 	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
 		if (resetZoom) {
@@ -123,7 +129,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.transitionDuration(500)
 		.inverted(true)
 		.tooltip(tip)
-		.minFrameSize(10)
+		.minFrameSize(4)
 		.elided(false)
 		.differential(false)
 		.sort(true)
@@ -131,19 +137,19 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
-		.onClick(onClick);
+		.onClick(onClick)
+		.width(800)
 
-	console.log("selectedSpan", selectedSpan);
 
-	const handleResetZoom = () => {
-		setResetZoom(true);
+	const handleResetZoom = (value) => {
+		setResetZoom(value);
 	};
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
 			<Col md={18} sm={18}>
 				<Space direction="vertical" size="middle" style={{ width: "100%" }}>
-					<Card bodyStyle={{ padding: 80 }} style={{ height: 320 }}>
+					<Card bodyStyle={{ padding: 24 }} style={{ height: 320 }}>
 						<div
 							style={{
 								display: "flex",
@@ -155,25 +161,24 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							<div style={{ textAlign: "center" }}>
 								Trace Graph component ID is {params.id}{" "}
 							</div>
-							<Button
-								type="primary"
-								onClick={handleResetZoom}
-								style={{ width: 160 }}
-							>
-								Reset Zoom
-							</Button>
 							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 						</div>
 					</Card>
 					<TraceGanttChartContainer id={"collapsable"}>
-						<TraceGanttChart treeData={sortedTreeData} clickedSpan={clickedSpan} selectedSpan={selectedSpan} />
+						<TraceGanttChart
+							treeData={sortedTreeData}
+							clickedSpan={clickedSpan}
+							selectedSpan={selectedSpan}
+							resetZoom = {handleResetZoom}
+							setSpanTagsInfo = {setSpanTagsInfo}
+						/>
 					</TraceGanttChartContainer>
 
 
 				</Space>
 			</Col>
 			<Col md={6} sm={6}>
-					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />
+					<SelectedSpanDetails data={clickedSpanTags} />
 			</Col>
 		</Row>
 	);
