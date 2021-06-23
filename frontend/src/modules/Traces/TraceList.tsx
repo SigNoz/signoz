@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { NavLink } from "react-router-dom";
+import { useHistory} from "react-router-dom";
 import { Space, Table } from "antd";
 import ROUTES from "Src/constants/routes";
 
@@ -9,6 +9,10 @@ import { StoreState } from "../../store/reducers";
 import { isOnboardingSkipped } from "../../utils/app";
 import moment from "moment";
 import styled from "styled-components";
+
+const StyledTable = styled(Table)`
+	cursor: pointer;
+`
 
 const TraceHeader = styled.div`
 	margin: 16px 0;
@@ -26,10 +30,12 @@ interface TableDataSourceItem {
 	operationName: string;
 	startTime: number;
 	duration: number;
+	service: string;
 }
 
 const _TraceList = (props: TraceListProps) => {
 	// PNOTE (TO DO) - Currently this use of useEffect gives warning. May need to memoise fetchtraces - https://stackoverflow.com/questions/55840294/how-to-fix-missing-dependency-warning-when-using-useeffect-react-hook
+	let history = useHistory();
 
 	useEffect(() => {
 		props.fetchTraces();
@@ -47,12 +53,9 @@ const _TraceList = (props: TraceListProps) => {
 			// new Date() assumes input in milliseconds. Start Time stamp returned by druid api for span list is in ms
 		},
 		{
-			title: "Duration (in ms)",
-			dataIndex: "duration",
-			key: "duration",
-			sorter: (a: any, b: any) => a.duration - b.duration,
-			sortDirections: ["descend", "ascend"],
-			render: (value: number) => (value / 1000000).toFixed(2),
+			title: "Service",
+			dataIndex: "service",
+			key: "service",
 		},
 		{
 			title: "Operation",
@@ -60,22 +63,12 @@ const _TraceList = (props: TraceListProps) => {
 			key: "operationName",
 		},
 		{
-			title: "TraceID",
-			dataIndex: "traceid",
-			key: "traceid",
-			render: (_, record) => {
-				console.log("text", record);
-				return (
-					<NavLink to={{
-						pathname: ROUTES.TRACES + "/" + record.traceid,
-						state: {
-							spanId: record.spanid,
-						},
-					}}
-					>{record.traceid.slice(-16)}</NavLink>
-				);
-			},
-			//only last 16 chars have traceID, druid makes it 32 by adding zeros
+			title: "Duration (in ms)",
+			dataIndex: "duration",
+			key: "duration",
+			sorter: (a: any, b: any) => a.duration - b.duration,
+			sortDirections: ["descend", "ascend"],
+			render: (value: number) => (value / 1000000).toFixed(2),
 		},
 	];
 
@@ -93,7 +86,8 @@ const _TraceList = (props: TraceListProps) => {
 						typeof item[4] === "string" &&
 						typeof item[6] === "string" &&
 						typeof item[1] === "string" &&
-						typeof item[2] === "string"
+						typeof item[2] === "string" &&
+						typeof item[3] === "string"
 					)
 						dataSource.push({
 							startTime: item[0],
@@ -102,13 +96,30 @@ const _TraceList = (props: TraceListProps) => {
 							spanid: item[1],
 							traceid: item[2],
 							key: index.toString(),
+							service: item[3],
 						});
 				},
 			);
 
 			//antd table in typescript - https://codesandbox.io/s/react-typescript-669cv
 
-			return <Table dataSource={dataSource} columns={columns} size="middle" />;
+			return <StyledTable
+				dataSource={dataSource}
+				columns={columns}
+				size="middle"
+				rowClassName=""
+				onRow={(record) => ({
+						onClick: () => {
+							history.push({
+								pathname: ROUTES.TRACES + "/" + record.traceid,
+								state: {
+									spanId: record.spanid,
+								},
+							});
+						}
+				})}
+		/>
+			;
 		} else {
 			if (isOnboardingSkipped()) {
 				return (

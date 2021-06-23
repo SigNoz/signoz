@@ -9,106 +9,121 @@ import { pushDStree } from "../../store/actions";
 const { TabPane } = Tabs;
 
 const StyledButton = styled(Button)`
-	border: 1px solid #E0E0E0;
+	border: 1px solid #e0e0e0;
 	border-radius: 4px;
-	color: #F2F2F2;
+	color: #f2f2f2;
 	font-size: 14px;
- line-height: 20px;
+	line-height: 20px;
 `;
 
 interface TraceGanttChartProps {
-	treeData: pushDStree,
-	clickedSpan: pushDStree,
-	selectedSpan: pushDStree,
-	resetZoom: () =>{},
-	setSpanTagsInfo: () =>{}
+	treeData: pushDStree;
+	clickedSpan: pushDStree;
+	selectedSpan: pushDStree;
+	resetZoom: () => {};
+	setSpanTagsInfo: () => {};
 }
 
-
-const TraceGanttChart = ({ treeData, clickedSpan, selectedSpan, resetZoom , setSpanTagsInfo }: TraceGanttChartProps) => {
+const TraceGanttChart = ({
+	treeData,
+	clickedSpan,
+	selectedSpan,
+	resetZoom,
+	setSpanTagsInfo,
+}: TraceGanttChartProps) => {
 	let checkStrictly = false;
 	const [selectedRows, setSelectedRows] = useState([]);
-	const [selectedRowsData, setSelectedRowsData] = useState([]);
+	const [clickedSpanData, setClickedSpanData] = useState(clickedSpan);
 	const [defaultExpandedRows, setDefaultExpandedRows] = useState([]);
 	const [sortedTreeData, setSortedTreeData] = useState(treeData);
 	const [isReset, setIsReset] = useState(false);
 	const [rowId, setRowId] = useState(0);
 	const tableRef = useRef("");
+	let tabsContainerWidth = document.querySelector(
+		"#collapsable .ant-tabs-nav-list",
+	)?.offsetWidth;
+	let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
+	let secondTabLeftOffset = tabs[1]?.offsetLeft;
 
 	const { id } = treeData || "id";
 	let maxGlobal = 0;
 	let minGlobal = 0;
 	let medianGlobal = 0;
 	let endTimeArray: [] = [];
-	
+
 	useEffect(() => {
 		if (id !== "empty") {
 			setSortedTreeData(treeData);
+			if (clickedSpan) {
+				setClickedSpanData(clickedSpan);
+			}
 		}
-		handleScroll(selectedSpan?.id)
+		// handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
-	
-	useEffect(()=>{
-		if (clickedSpan && !selectedRows.includes(clickedSpan.id) && !isReset) {
+
+	useEffect(() => {
+		if (
+			!isEmpty(clickedSpanData) &&
+			clickedSpan &&
+			!selectedRows.includes(clickedSpan.id)
+		) {
 			setSelectedRows([clickedSpan.id]);
 			getParentKeys(clickedSpan);
 			let keys = [clickedSpan?.id, ...parentKeys];
 			// setDefaultExpandedRows(keys)
-			handleFocusOnSelectedPath('', [clickedSpan.id], clickedSpan);
+			handleFocusOnSelectedPath("", [clickedSpan.id], clickedSpan);
 		}
-	}, [clickedSpan, selectedRows, isReset])
-	
-	let parentKeys: [] = [];
+	}, [clickedSpan, selectedRows, isReset, clickedSpanData]);
+
+	let parentKeys = [];
 	const getParentKeys = (obj) => {
 		if (has(obj, "parent")) {
 			parentKeys.push(obj.parent.id);
 			getParentKeys(obj.parent);
 		}
 	};
-	
+
 	useEffect(() => {
 		if (!isEmpty(selectedSpan) && isEmpty(clickedSpan)) {
 			getParentKeys(selectedSpan);
 			let keys = [selectedSpan?.id, ...parentKeys];
 			setDefaultExpandedRows(keys);
 			setSelectedRows([selectedSpan.id, clickedSpan]);
-		}
-		else{
+		} else {
 			setSelectedRows([]);
 		}
 	}, [selectedSpan]);
-	
-	
+
 	const getMaxEndTime = (treeData) => {
 		if (treeData.length > 0) {
 			if (treeData?.id !== "empty") {
 				return Array.from(treeData).map((item, key) => {
 					if (!isEmpty(item.children)) {
-						endTimeArray.push((item.time / 1000000) + item.startTime);
+						endTimeArray.push(item.time / 1000000 + item.startTime);
 						getMaxEndTime(item.children);
 					} else {
-						endTimeArray.push((item.time / 1000000) + item.startTime);
+						endTimeArray.push(item.time / 1000000 + item.startTime);
 					}
 				});
 			}
 		}
 	};
-	
+
 	if (id !== "empty") {
 		getMaxEndTime(treeData);
 		maxGlobal = max(endTimeArray);
 		minGlobal = treeData?.[0]?.startTime;
 		medianGlobal = (minGlobal + maxGlobal) / 2;
 	}
-	
+
 	const getPaddingLeft = (value, totalWidth, leftOffset = 0) => {
-		return (((value / totalWidth) * 100) + leftOffset).toFixed(0);
+		return ((value / totalWidth) * 100 + leftOffset).toFixed(0);
 	};
-	
+
 	let tabMinVal = 0;
 	let tabMedianVal = (medianGlobal - minGlobal).toFixed(0);
 	let tabMaxVal = (maxGlobal - minGlobal).toFixed(0);
-	
+
 	const columns = [
 		{
 			title: "",
@@ -116,150 +131,159 @@ const TraceGanttChart = ({ treeData, clickedSpan, selectedSpan, resetZoom , setS
 			key: "name",
 		},
 		{
-			title:
+			title: (
 				<Tabs>
 					<TabPane tab={tabMinVal + "ms"} key="1" />
 					<TabPane tab={tabMedianVal + "ms"} key="2" />
 					<TabPane tab={tabMaxVal + "ms"} key="3" />
-				</Tabs>,
+				</Tabs>
+			),
 			dataIndex: "trace",
 			name: "trace",
 			render: (_, record: pushDStree) => {
-				let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
-				let tabsContainerWidth = document.querySelector("#collapsable .ant-tabs-nav-list")?.offsetWidth;
-				let widths: [] = [];
+				let widths = [];
 				let length;
-				
+
 				if (widths.length < tabs.length) {
 					Array.from(tabs).map((tab) => {
 						widths.push(tab.offsetWidth);
 					});
 				}
-				
-				let paddingLeft: number = 0;
+
+				let paddingLeft = 0;
 				let startTime = record.startTime;
 				let duration = (record.time / 1000000).toFixed(2);
-				
+
 				if (startTime < medianGlobal) {
-					paddingLeft = parseInt(getPaddingLeft(startTime - minGlobal, tabsContainerWidth));
+					paddingLeft = getPaddingLeft(startTime - minGlobal, tabsContainerWidth);
 				} else if (startTime >= medianGlobal && startTime < maxGlobal) {
-					paddingLeft = parseInt(getPaddingLeft(widths[0] + (startTime - medianGlobal), tabsContainerWidth, tabs[1].offsetLeft));
+					paddingLeft = getPaddingLeft(
+						widths[0] + (startTime - medianGlobal),
+						tabsContainerWidth,
+						secondTabLeftOffset,
+					);
 				}
-				
-				length = (((record.time / 1000000) / (maxGlobal - minGlobal)) * 100).toFixed(2);
-				
+
+				length = ((record.time / 1000000 / (maxGlobal - minGlobal)) * 100).toFixed(
+					2,
+				);
+
 				return (
 					<>
 						<div style={{ paddingLeft: paddingLeft + "px" }}>{duration}ms</div>
-						<Progress percent={length} showInfo={false} style={{ paddingLeft: paddingLeft + "px" }} />
+						<Progress
+							percent={length}
+							showInfo={false}
+							style={{ paddingLeft: paddingLeft + "px" }}
+						/>
 					</>
 				);
 			},
 		},
 	];
-	
-	let isFound = false;
+
 	const handleFocusOnSelectedPath = (event, selectedRowsList = selectedRows) => {
-		if(!isEmpty(selectedRowsList)) {
+		if (!isEmpty(selectedRowsList)) {
+			let node: pushDStree = getTreeData(
+				treeData,
+				(item: pushDStree) => item.id === selectedRowsList[0],
+				1,
+			);
+			setSpanTagsInfo({ data: node[0] });
+
+			getParentKeys(node[0]);
+			let keys = [node[0]?.id, ...parentKeys];
+			setDefaultExpandedRows(keys);
+
 			let rows = document.querySelectorAll("#collapsable table tbody tr");
 			Array.from(rows).map((row) => {
 				let attribKey = row.getAttribute("data-row-key");
 				if (!selectedRowsList.includes(attribKey)) {
 					row.classList.add("hide");
-					isFound = false
-				}
-				else{
-					isFound = true;
 				}
 			});
-			// if(!isFound){
-			// 	handleResetFocus(true);
-			// 	getParentKeys(selectedRowsData[0]);
-			// 	let keys = [selectedRowsData[0]?.id, ...parentKeys];
-			// 	setDefaultExpandedRows(keys);
-			// 	handleFocusOnSelectedPath(keys);
-			// }
+			setDefaultExpandedRows(keys);
 		}
 	};
-	
-	const handleResetFocus = (implicitReset = false) => {
+
+	const handleResetFocus = () => {
 		let rows = document.querySelectorAll("#collapsable table tbody tr");
 		Array.from(rows).map((row) => {
 			row.classList.remove("hide");
 		});
-		
-		// if(!implicitReset) {
-			resetZoom(true);
-		// }
+
+		resetZoom(true);
 	};
-	
-	const handleScroll = (id) =>{
-		let rows = document.querySelectorAll("#collapsable table tbody tr");
-		const table = document.querySelectorAll("#collapsable table")
-		Array.from(rows).map((row) => {
-			let attribKey = row.getAttribute("data-row-key");
-			if (id === attribKey) {
-				let scrollValue = table[1].offsetTop - row.offsetHeight
-					table[1].scrollTop = scrollValue;
-			}
-		});
-	}
-	
-	
-	console.log("getTreeData", getTreeData())
-	
+
+	// const handleScroll = (id) => {
+	// 	let rows = document.querySelectorAll("#collapsable table tbody tr");
+	// 	const table = document.querySelectorAll("#collapsable table");
+	// 	Array.from(rows).map((row) => {
+	// 		let attribKey = row.getAttribute("data-row-key");
+	// 		if (id === attribKey) {
+	// 			let scrollValue = table[1].offsetTop - row.offsetHeight;
+	// 			table[1].scrollTop = scrollValue;
+	// 		}
+	// 	});
+	// };
+
 	const rowSelection = {
-		onChange: (selectedRowKeys, selectedRows, record) => {
-			if(isEmpty(selectedRowKeys)){
-				setIsReset(true)
-			}
-			else{
-				setIsReset(false)
+		onChange: (selectedRowKeys: [], selectedRows: []) => {
+			if (isEmpty(selectedRowKeys)) {
+				setIsReset(true);
+				setClickedSpanData({});
+			} else {
+				setIsReset(false);
 			}
 			setSelectedRows(selectedRowKeys);
 		},
 		selectedRowKeys: selectedRows,
 	};
-	
-	const handleRowOnClick = (record) => {
-		setRowId(record.id);
-		
-		// const selectedRowKeys = selectedRows;
-		// if (selectedRowKeys.indexOf(record.id) >= 0) {
-		// 	selectedRowKeys.splice(selectedRowKeys.indexOf(record.key), 1);
-		// } else {
-		// 	selectedRowKeys.push(record.id);
-		// }
-		setSelectedRows([record.id]);
-		// console.log("selectedRowKeys", selectedRowKeys)
-		handleFocusOnSelectedPath('', [record.id], record);
-	};
-	
-	
+
+	// const handleRowOnClick = (record) => {
+	// 	setRowId(record.id);
+	//
+	// 	// const selectedRowKeys = selectedRows;
+	// 	// if (selectedRowKeys.indexOf(record.id) >= 0) {
+	// 	// 	selectedRowKeys.splice(selectedRowKeys.indexOf(record.key), 1);
+	// 	// } else {
+	// 	// 	selectedRowKeys.push(record.id);
+	// 	// }
+	// 	setSelectedRows([record.id]);
+	// 	// console.log("selectedRowKeys", selectedRowKeys)
+	// 	handleFocusOnSelectedPath("", [record.id], record);
+	// };
+
 	const setRowClassName = (record) => {
 		return record.id === rowId ? "selectedRowStyles" : "";
 	};
-	
-	const handleOnExpandedRowsChange = (item) =>{
+
+	const handleOnExpandedRowsChange = (item) => {
 		setDefaultExpandedRows(item);
-	}
-	
-	
+	};
+
 	return (
 		<>
 			{id !== "empty" && (
 				<>
-					<Row justify="end" gutter={32} style={{
-						marginBottom: "24px",
-					}}>
+					<Row
+						justify="end"
+						gutter={32}
+						style={{
+							marginBottom: "24px",
+						}}
+					>
 						<Col>
-							<StyledButton onClick={handleFocusOnSelectedPath}> Focus on selected path </StyledButton>
+							<StyledButton onClick={handleFocusOnSelectedPath}>
+								{" "}
+								Focus on selected path{" "}
+							</StyledButton>
 						</Col>
 						<Col>
 							<StyledButton onClick={handleResetFocus}> Reset Focus </StyledButton>
 						</Col>
 					</Row>
-					
+
 					<Table
 						refs={tableRef}
 						checkStrictly={true}
@@ -278,10 +302,10 @@ const TraceGanttChart = ({ treeData, clickedSpan, selectedSpan, resetZoom , setS
 						expandedRowKeys={defaultExpandedRows}
 						onExpandedRowsChange={handleOnExpandedRowsChange}
 						scroll={{ y: 640 }}
-						pagination={false} />
+						pagination={false}
+					/>
 				</>
-			)
-			}
+			)}
 		</>
 	);
 };
