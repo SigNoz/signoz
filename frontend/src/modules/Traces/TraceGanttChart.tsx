@@ -240,19 +240,24 @@ const TraceGanttChart = ({
 		selectedRowKeys: selectedRows,
 	};
 
-	// const handleRowOnClick = (record) => {
-	// 	setRowId(record.id);
-	//
-	// 	// const selectedRowKeys = selectedRows;
-	// 	// if (selectedRowKeys.indexOf(record.id) >= 0) {
-	// 	// 	selectedRowKeys.splice(selectedRowKeys.indexOf(record.key), 1);
-	// 	// } else {
-	// 	// 	selectedRowKeys.push(record.id);
-	// 	// }
-	// 	setSelectedRows([record.id]);
-	// 	// console.log("selectedRowKeys", selectedRowKeys)
-	// 	handleFocusOnSelectedPath("", [record.id], record);
-	// };
+	const handleRowOnClick = (record) => {
+		setRowId(record.id);
+
+		let node: pushDStree = getTreeData(
+			treeData,
+			(item: pushDStree) => item.id === record.id,
+			1,
+		);
+		setSpanTagsInfo({ data: node[0] });
+
+		const selectedRowKeys = selectedRows;
+		if (selectedRowKeys.indexOf(record.id) >= 0) {
+			selectedRowKeys.splice(selectedRowKeys.indexOf(record.key), 1);
+		} else {
+			selectedRowKeys.push(record.id);
+		}
+		setSelectedRows([record.id]);
+	};
 
 	const setRowClassName = (record) => {
 		return record.id === rowId ? "selectedRowStyles" : "";
@@ -293,15 +298,13 @@ const TraceGanttChart = ({
 						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}
-						// onRow={(record, rowIndex) => {
-						// 	return {
-						// 		onClick: () => handleRowOnClick(record, rowIndex), // click row
-						// 	};
-						// }}
-						rowClassName={setRowClassName}
+						onRow={(record, rowIndex) => {
+							return {
+								onClick: () => handleRowOnClick(record, rowIndex), // click row
+							};
+						}}
 						expandedRowKeys={defaultExpandedRows}
 						onExpandedRowsChange={handleOnExpandedRowsChange}
-						scroll={{ y: 640 }}
 						pagination={false}
 					/>
 				</>

@@ -7,7 +7,11 @@ import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
 import { spanToTreeUtil } from "../../utils/spanToTree";
-import { fetchTraceItem, pushDStree, spansWSameTraceIDResponse } from "../../store/actions";
+import {
+	fetchTraceItem,
+	pushDStree,
+	spansWSameTraceIDResponse,
+} from "../../store/actions";
 import { StoreState } from "../../store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
@@ -86,11 +90,10 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		}
 	}, [resetZoom]);
 
-
 	const tip = d3Tip
 		.default()
 		.attr("class", "d3-tip")
-		.html(function(d: any) {
+		.html(function (d: any) {
 			return d.data.name + "<br>duration: " + d.data.value / 1000000 + "ms";
 		});
 
@@ -101,10 +104,9 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
 	};
 
-	const setSpanTagsInfo = (z: any) =>{
-		debugger
+	const setSpanTagsInfo = (z: any) => {
 		setClickedSpanTags(z.data);
-	}
+	};
 
 	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
 		if (resetZoom) {
@@ -132,14 +134,13 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.minFrameSize(4)
 		.elided(false)
 		.differential(false)
-		.sort(true)
+		.sort((item: pushDStree) => item.startTime)
 		//Use self value=true when we're using not using aggregated option, Which is not our case.
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
 		.onClick(onClick)
-		.width(800)
-
+		.width(800);
 
 	const handleResetZoom = (value) => {
 		setResetZoom(value);
@@ -169,16 +170,14 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							treeData={sortedTreeData}
 							clickedSpan={clickedSpan}
 							selectedSpan={selectedSpan}
-							resetZoom = {handleResetZoom}
-							setSpanTagsInfo = {setSpanTagsInfo}
+							resetZoom={handleResetZoom}
+							setSpanTagsInfo={setSpanTagsInfo}
 						/>
 					</TraceGanttChartContainer>
-
-
 				</Space>
 			</Col>
 			<Col md={6} sm={6}>
-					<SelectedSpanDetails data={clickedSpanTags} />
+				<SelectedSpanDetails data={clickedSpanTags} />
 			</Col>
 		</Row>
 	);
