@@ -78,9 +78,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
-	// useEffect(() => {
-	// 	d3.select("#chart").datum(selectedSpan).call(chart);
-	// }, [selectedSpan]);
+	useEffect(() => {
+		if(!isEmpty(sortedTreeData) && sortedTreeData?.id !== "empty" && isEmpty(clickedSpanTags)) {
+			setClickedSpanTags(sortedTreeData?.[0]);
+		}
+	}, [sortedTreeData]);
 
 	useEffect(() => {
 		if (resetZoom) {
@@ -117,7 +119,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			Array.from(data).map((item) => {
 				if (item.id === spanId) {
 					setSelectedSpan(item);
-					setClickedSpanTags(item.tags);
+					setClickedSpanTags(item);
 					return item;
 				} else if (!isEmpty(item.children)) {
 					getSpanInfo(item.children, spanId);

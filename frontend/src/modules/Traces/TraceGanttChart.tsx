@@ -43,7 +43,6 @@ const TraceGanttChart = ({
 		"#collapsable .ant-tabs-nav-list",
 	)?.offsetWidth;
 	let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
-	let secondTabLeftOffset = tabs[1]?.offsetLeft;
 
 	const { id } = treeData || "id";
 	let maxGlobal = 0;
@@ -77,6 +76,7 @@ const TraceGanttChart = ({
 	}, [clickedSpan, selectedRows, isReset, clickedSpanData]);
 
 	let parentKeys = [];
+	let childrenKeys = [];
 	const getParentKeys = (obj) => {
 		if (has(obj, "parent")) {
 			parentKeys.push(obj.parent.id);
@@ -84,16 +84,32 @@ const TraceGanttChart = ({
 		}
 	};
 
+	const getChildrenKeys = (obj) =>{
+		if (has(obj, "children")) {
+			childrenKeys.push(obj.id);
+			if(!isEmpty(obj.children)){
+				obj.children.map((item)=>{
+					getChildrenKeys(item);
+				})
+			}
+
+		}
+	}
+
 	useEffect(() => {
 		if (!isEmpty(selectedSpan) && isEmpty(clickedSpan)) {
 			getParentKeys(selectedSpan);
 			let keys = [selectedSpan?.id, ...parentKeys];
 			setDefaultExpandedRows(keys);
 			setSelectedRows([selectedSpan.id, clickedSpan]);
+			// setSpanTagsInfo({data: selectedSpan})
 		} else {
-			setSelectedRows([]);
+			setSelectedRows([treeData?.[0]?.id]);
+			setDefaultExpandedRows([treeData?.[0]?.id]);
+			// /.setSpanTagsInfo({data: treeData?.[0]})
 		}
-	}, [selectedSpan]);
+
+	}, [selectedSpan, treeData]);
 
 	const getMaxEndTime = (treeData) => {
 		if (treeData.length > 0) {
@@ -190,8 +206,7 @@ const TraceGanttChart = ({
 			setSpanTagsInfo({ data: node[0] });
 
 			getParentKeys(node[0]);
-			let keys = [node[0]?.id, ...parentKeys];
-			setDefaultExpandedRows(keys);
+			getChildrenKeys(node[0]);
 
 			let rows = document.querySelectorAll("#collapsable table tbody tr");
 			Array.from(rows).map((row) => {
@@ -200,7 +215,7 @@ const TraceGanttChart = ({
 					row.classList.add("hide");
 				}
 			});
-			setDefaultExpandedRows(keys);
+			setDefaultExpandedRows([...parentKeys, ...childrenKeys]);
 		}
 	};
 
