@@ -117,8 +117,13 @@ const TraceGanttChart = ({
 		medianGlobal = (minGlobal + maxGlobal) / 2;
 	}
 
-	const getPaddingLeft = (value, totalWidth, leftOffset = 0) => {
-		return ((value / totalWidth) * 100 + leftOffset).toFixed(0);
+	/*
+	timeDiff = maxGlobal - startTime
+	totalTime = maxGlobal - minGlobal
+	totalWidth = width of container
+	 */
+	const getPaddingLeft = (timeDiff, totalTime, totalWidth) => {
+		return ((timeDiff / totalTime) * totalWidth ).toFixed(0);
 	};
 
 	let tabMinVal = 0;
@@ -155,15 +160,7 @@ const TraceGanttChart = ({
 				let startTime = record.startTime;
 				let duration = (record.time / 1000000).toFixed(2);
 
-				if (startTime < medianGlobal) {
-					paddingLeft = getPaddingLeft(startTime - minGlobal, tabsContainerWidth);
-				} else if (startTime >= medianGlobal && startTime < maxGlobal) {
-					paddingLeft = getPaddingLeft(
-						widths[0] + (startTime - medianGlobal),
-						tabsContainerWidth,
-						secondTabLeftOffset,
-					);
-				}
+				paddingLeft = getPaddingLeft(startTime - minGlobal, maxGlobal - minGlobal, tabsContainerWidth);
 
 				length = ((record.time / 1000000 / (maxGlobal - minGlobal)) * 100).toFixed(
 					2,
