@@ -1,29 +1,65 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { flamegraph } from "d3-flame-graph";
 import { connect } from "react-redux";
-import { Card, Button, Row, Col, Space } from "antd";
+import { Card, Row, Col, Space, Affix } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
-
-//import * as d3Tip from 'd3-tip';
-// PNOTE - uninstall @types/d3-tip. issues with importing d3-tip https://github.com/Caged/d3-tip/issues/181
-
 import "./TraceGraph.css";
 import { spanToTreeUtil } from "../../utils/spanToTree";
-import { fetchTraceItem, spansWSameTraceIDResponse } from "../../store/actions";
+import {
+	fetchTraceItem,
+	pushDStree,
+	spansWSameTraceIDResponse,
+} from "../../store/actions";
 import { StoreState } from "../../store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
+import TraceGanttChart from "./TraceGanttChart";
+import styled from "styled-components";
+import { isEmpty, sortBy } from "lodash-es";
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
 }
 
+const TraceGanttChartContainer = styled(Card)`
+	background: #333333;
+	border-radius: 5px;
+`;
+
 const _TraceGraph = (props: TraceGraphProps) => {
+	let location = useLocation();
+	const spanId = location?.state?.spanId;
 	const params = useParams<{ id?: string }>();
-	const [clickedSpanTags, setClickedSpanTags] = useState([]);
+	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
+	const [selectedSpan, setSelectedSpan] = useState({});
+	const [clickedSpan, setClickedSpan] = useState(null);
 	const [resetZoom, setResetZoom] = useState(false);
+	const [sortedTreeData, setSortedTreeData] = useState<pushDStree>([]);
+
+	let sortedData = {};
+
+	const getSortedData = (treeData: [pushDStree], parent = {}) => {
+		if (!isEmpty(treeData)) {
+			if (treeData[0].id !== "empty") {
+				return Array.from(treeData).map((item, key) => {
+					if (!isEmpty(item.children)) {
+						getSortedData(item.children, item);
+						sortedData = sortBy(item.children, (i) => i.startTime);
+						treeData[key].children = sortedData;
+					}
+					if (!isEmpty(parent)) {
+						treeData[key].parent = parent;
+					}
+					return treeData;
+				});
+			}
+			return treeData;
+		}
+	};
+
+	const tree = spanToTreeUtil(props.traceItem[0].events);
 
 	useEffect(() => {
 		//sets span width based on value - which is mapped to duration
@@ -31,15 +67,30 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	}, []);
 
 	useEffect(() => {
-		if (props.traceItem || resetZoom) {
-			const tree = spanToTreeUtil(props.traceItem[0].events);
+		if (props.traceItem) {
+			let sortedData = getSortedData([tree]);
+			setSortedTreeData(sortedData?.[0]);
+			getSpanInfo(sortedData?.[0], spanId);
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select("#chart").datum(tree).call(chart);
-			setResetZoom(false);
+			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
 		}
-	}, [props.traceItem, resetZoom]);
+	}, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
+
+	useEffect(() => {
+		if(!isEmpty(sortedTreeData) && sortedTreeData?.id !== "empty" && isEmpty(clickedSpanTags)) {
+			setClickedSpanTags(sortedTreeData?.[0]);
+		}
+	}, [sortedTreeData]);
+
+	useEffect(() => {
+		if (resetZoom) {
+			// This is causing element to change ref. Can use both useRef or this approach.
+			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
+			setResetZoom(false);
+		}
+	}, [resetZoom]);
 
 	const tip = d3Tip
 		.default()
@@ -49,8 +100,32 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		});
 
 	const onClick = (z: any) => {
-		setClickedSpanTags(z.data.tags);
+		setClickedSpanTags(z.data);
+		setClickedSpan(z.data);
+		setSelectedSpan([]);
 		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
+	};
+
+	const setSpanTagsInfo = (z: any) => {
+		setClickedSpanTags(z.data);
+	};
+
+	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
+		if (resetZoom) {
+			setSelectedSpan({});
+			return;
+		}
+		if (data?.[0]?.id !== "empty") {
+			Array.from(data).map((item) => {
+				if (item.id === spanId) {
+					setSelectedSpan(item);
+					setClickedSpanTags(item);
+					return item;
+				} else if (!isEmpty(item.children)) {
+					getSpanInfo(item.children, spanId);
+				}
+			});
+		}
 	};
 
 	const chart = flamegraph()
@@ -58,21 +133,26 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.transitionDuration(500)
 		.inverted(true)
 		.tooltip(tip)
-		.minFrameSize(10)
+		.minFrameSize(4)
 		.elided(false)
 		.differential(false)
-		.sort(true)
+		.sort((item) => item.startTime)
 		//Use self value=true when we're using not using aggregated option, Which is not our case.
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
 		// .selfValue(true)
-		.onClick(onClick);
+		.onClick(onClick)
+		.width(800);
+
+	const handleResetZoom = (value) => {
+		setResetZoom(value);
+	};
 
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-			<Col md={24} sm={24}>
+			<Col md={18} sm={18}>
 				<Space direction="vertical" size="middle" style={{ width: "100%" }}>
-					<Card bodyStyle={{ padding: 80 }} style={{ height: 320 }}>
+					<Card bodyStyle={{ padding: 24 }} style={{ height: 320 }}>
 						<div
 							style={{
 								display: "flex",
@@ -84,19 +164,26 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							<div style={{ textAlign: "center" }}>
 								Trace Graph component ID is {params.id}{" "}
 							</div>
-							<Button
-								type="primary"
-								onClick={setResetZoom.bind(this, true)}
-								style={{ width: 160 }}
-							>
-								Reset Zoom
-							</Button>
 							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 						</div>
 					</Card>
-
-					<SelectedSpanDetails clickedSpanTags={clickedSpanTags} />
+					<Affix offsetTop={24}>
+						<TraceGanttChartContainer id={"collapsable"}>
+							<TraceGanttChart
+								treeData={sortedTreeData}
+								clickedSpan={clickedSpan}
+								selectedSpan={selectedSpan}
+								resetZoom={handleResetZoom}
+								setSpanTagsInfo={setSpanTagsInfo}
+							/>
+						</TraceGanttChartContainer>
+					</Affix>
 				</Space>
+			</Col>
+			<Col md={6} sm={6}>
+				<Affix offsetTop={24}>
+					<SelectedSpanDetails data={clickedSpanTags} />
+				</Affix>
 			</Col>
 		</Row>
 	);
