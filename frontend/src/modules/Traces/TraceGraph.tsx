@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { flamegraph } from "d3-flame-graph";
 import { connect } from "react-redux";
-import { Card, Row, Col, Space } from "antd";
+import { Card, Row, Col, Space, Affix } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
@@ -136,7 +136,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.minFrameSize(4)
 		.elided(false)
 		.differential(false)
-		.sort((item: pushDStree) => item.startTime)
+		.sort((item) => item.startTime)
 		//Use self value=true when we're using not using aggregated option, Which is not our case.
 		// In that case it's doing step function sort of stuff thru computation.
 		// Source flamegraph.js line 557 and 573.
@@ -167,19 +167,23 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 						</div>
 					</Card>
-					<TraceGanttChartContainer id={"collapsable"}>
-						<TraceGanttChart
-							treeData={sortedTreeData}
-							clickedSpan={clickedSpan}
-							selectedSpan={selectedSpan}
-							resetZoom={handleResetZoom}
-							setSpanTagsInfo={setSpanTagsInfo}
-						/>
-					</TraceGanttChartContainer>
+					<Affix offsetTop={24}>
+						<TraceGanttChartContainer id={"collapsable"}>
+							<TraceGanttChart
+								treeData={sortedTreeData}
+								clickedSpan={clickedSpan}
+								selectedSpan={selectedSpan}
+								resetZoom={handleResetZoom}
+								setSpanTagsInfo={setSpanTagsInfo}
+							/>
+						</TraceGanttChartContainer>
+					</Affix>
 				</Space>
 			</Col>
 			<Col md={6} sm={6}>
-				<SelectedSpanDetails data={clickedSpanTags} />
+				<Affix offsetTop={24}>
+					<SelectedSpanDetails data={clickedSpanTags} />
+				</Affix>
 			</Col>
 		</Row>
 	);
