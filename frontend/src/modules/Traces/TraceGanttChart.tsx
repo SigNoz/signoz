@@ -38,10 +38,12 @@ const TraceGanttChart = ({
 	const [sortedTreeData, setSortedTreeData] = useState(treeData);
 	const [isReset, setIsReset] = useState(false);
 	const [rowId, setRowId] = useState(0);
+	const [tabsContainerWidth, setTabsContainerWidth] = useState(0);
 	const tableRef = useRef("");
-	let tabsContainerWidth = document.querySelector(
+	let tabsContainer = document.querySelector(
 		"#collapsable .ant-tabs-nav-list",
-	)?.offsetWidth;
+	);
+
 	let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
 
 	const { id } = treeData || "id";
@@ -56,6 +58,7 @@ const TraceGanttChart = ({
 			if (clickedSpan) {
 				setClickedSpanData(clickedSpan);
 			}
+			setTabsContainerWidth(tabsContainer?.offsetWidth)
 		}
 		// handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
@@ -175,16 +178,18 @@ const TraceGanttChart = ({
 				let paddingLeft = 0;
 				let startTime = parseInt(record.startTime);
 				let duration = parseInt((record.time / 1000000).toFixed(2));
-
-				paddingLeft = getPaddingLeft(startTime - minGlobal, maxGlobal - minGlobal, tabsContainerWidth);
-
+				paddingLeft = parseInt(getPaddingLeft(startTime - minGlobal, maxGlobal - minGlobal, tabsContainerWidth));
+				let textPadding = paddingLeft;
+				if(paddingLeft === tabsContainerWidth - 20){
+					textPadding = tabsContainerWidth - 40
+				}
 				length = ((duration / (maxGlobal - startTime)) * 100).toFixed(
 					2,
 				);
 
 				return (
 					<>
-						<div style={{ paddingLeft: paddingLeft + "px" }}>{duration}ms</div>
+						<div style={{ paddingLeft: textPadding + "px" }}>{duration}ms</div>
 						<Progress
 							percent={length}
 							showInfo={false}
@@ -317,7 +322,7 @@ const TraceGanttChart = ({
 						expandedRowKeys={defaultExpandedRows}
 						onExpandedRowsChange={handleOnExpandedRowsChange}
 						pagination={false}
-						scroll={{ y: 640}}
+						scroll={{ y: 540}}
 						rowClassName="row-styles"
 						filterMultiple={false}
 					/>
