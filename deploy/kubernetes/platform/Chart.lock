@@ -16,6 +16,6 @@ dependencies:
   version: 0.3.1
 - name: frontend
   repository: file://./signoz-charts/frontend
-  version: 0.3.1
-digest: sha256:ed5735a81c416a15b1e498f86a2ddb550ca0da9f5f445891561be0ef5d01b3b2
-generated: "2021-06-08T22:35:14.109626+05:30"
+  version: 0.3.2
+digest: sha256:4501accff11231878f58b6d3626263455241ecb8a9d3317d36caa1474cfb36e7
+generated: "2021-06-24T23:01:02.327558+05:30"
