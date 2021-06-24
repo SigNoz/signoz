@@ -144,7 +144,7 @@ const _TraceList = (props: TraceListProps) => {
 
 	return (
 		<div>
-			<TraceHeader>List of traces with spanID</TraceHeader>
+			<TraceHeader>List of filtered spans</TraceHeader>
 			<div>{renderTraces()}</div>
 		</div>
 	);
