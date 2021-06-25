@@ -32,12 +32,12 @@ jobs:
           echo export FRONTEND_IMAGE="frontend" >> env-vars
           echo export QUERY_SERVICE="query-service" >> env-vars
           echo export FLATTENER_PROCESSOR="flattener-processor" >> env-vars
-          
+
       - name: Uploading envs
         uses: actions/upload-artifact@v2
         with:
           name: env_artifact
-          path: env-vars
+          path: signoz/env-vars
 
   build-and-push-frontend:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: env_artifact
-          path: env-vars
+          path: signoz
 
       - name: Build frontend docker image
         shell: bash
@@ -88,7 +88,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: env_artifact
-          path: env-vars
+          path: signoz
 
       - name: Build query-service image
         shell: bash
@@ -125,7 +125,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: env_artifact
-          path: env-vars
+          path: signoz
 
       - name: Build flattener docker image
         shell: bash
