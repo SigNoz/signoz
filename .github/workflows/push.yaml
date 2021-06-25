@@ -1,0 +1,128 @@
+name: push-pipeline
+on:
+  push:
+    branches:
+      - main
+      - ^v[0-9]*.[0-9]*.x$
+    tags:
+      - "*"
+
+jobs:
+  get-envs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - shell: bash
+        run: |
+          img_tag=""
+          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
+          if [ ${array[1]} == "tags" ]
+          then
+              echo "tag build"
+              img_tag=${GITHUB_REF#refs/*/}
+          else
+              echo "non tag build"
+              img_tag="latest"
+          fi
+          # This is a condition where image tag looks like "pull/<pullrequest-name>" during pull request build
+          NEW_IMG_TAG=`echo $img_tag | sed "s/\//-/g"`
+          echo $NEW_IMG_TAG
+          echo export IMG_TAG=$NEW_IMG_TAG >> env-vars
+          echo export FRONTEND_IMAGE="frontend" >> env-vars
+          echo export QUERY_SERVICE="query-service" >> env-vars
+          echo export FLATTENER_PROCESSOR="flattener-processor" >> env-vars
+      - name: Uploading envs
+        uses: actions/upload-artifact@v2
+        with:
+          name: env_artifact
+          path: env-vars
+
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    needs:
+      - get-envs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build frontend docker image
+        shell: bash
+        run: |
+          cd frontend
+          docker build . -f Dockerfile
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push frontend docker image
+        shell: bash
+        run: |
+          branch=${GITHUB_REF#refs/*/}
+          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          then
+            source env-vars
+            docker push ${{ secrets.REPONAME }}/${FRONTEND_IMAGE}:${IMG_TAG}
+          fi
+
+  build-and-push-query-service:
+    runs-on: ubuntu-latest
+    needs:
+      - get-envs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build query-service image
+        shell: bash
+        run: |
+          cd pkg/query-service
+          docker build . -f Dockerfile
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push query service docker image
+        shell: bash
+        run: |
+          branch=${GITHUB_REF#refs/*/}
+          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          then
+            source env-vars
+            docker push ${{ secrets.REPONAME }}/${QUERY_SERVICE}:${IMG_TAG}
+          fi
+
+  build-and-push-flattener:
+    runs-on: ubuntu-latest
+    needs:
+      - get-envs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build flattener docker image
+        shell: bash
+        run: |
+          cd pkg/processors/flattener
+          docker build . -f Dockerfile
+      - name: Build flattener processor docker image
+        shell: bash
+        run: |
+          cd pkg/query-service
+          docker build . -f Dockerfile
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push flattener processor docker image
+        shell: bash
+        run: |
+          branch=${GITHUB_REF#refs/*/}
+          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          then
+            source env-vars
+            docker push ${{ secrets.REPONAME }}/${FLATTENER_PROCESSOR}:${IMG_TAG}
+          fi
