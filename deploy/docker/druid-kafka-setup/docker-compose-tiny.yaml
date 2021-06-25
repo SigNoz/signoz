@@ -182,7 +182,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.3.1
+    image: signoz/frontend:0.3.2
     container_name: frontend
 
     depends_on:

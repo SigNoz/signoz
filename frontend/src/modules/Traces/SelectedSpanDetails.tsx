@@ -1,47 +1,94 @@
 import React from "react";
-import { Card, Tabs } from "antd";
+import { Card, Space, Tabs, Typography } from "antd";
+import styled from "styled-components";
+import { pushDStree } from "../../store/actions";
+
 const { TabPane } = Tabs;
 
-interface spanTagItem {
-	key: string;
-	type: string;
-	value: string;
-}
+const { Text } = Typography;
 
 interface SelectedSpanDetailsProps {
-	clickedSpanTags: spanTagItem[];
+	data: pushDStree
 }
 
+const Title = styled(Text)`
+ color: "#2D9CDB", 
+ fontSize: '12px',
+`;
+
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
-	const callback = (key: any) => {};
+
+	let spanTags = props.data.tags;
+	let service = props.data?.name?.split(":")[0];
+	let operation = props.data?.name?.split(":")[1];
 
 	return (
-		<Card style={{ height: 320 }}>
-			<Tabs defaultActiveKey="1" onChange={callback}>
+		<Card style={{ border: "none", background: "transparent", padding: 0 }} bodyStyle={{ padding: 0 }}>
+			<Space direction="vertical">
+
+				<strong> Details for selected Span </strong>
+				<Space direction="vertical" size={2}>
+					<Text style={{ marginTop: "18px" }}>
+						Service
+					</Text>
+					<Title style={{ color: "#2D9CDB", fontSize: "12px" }}>
+						{service}
+					</Title>
+				</Space>
+				<Space direction="vertical" size={2}>
+					<Text>
+						Operation
+					</Text>
+					<Text style={{ color: "#2D9CDB", fontSize: "12px" }}>
+						{operation}
+					</Text>
+				</Space>
+			</Space>
+			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
-					<strong> Details for selected Span </strong>
-					{props.clickedSpanTags.map((tags, index) => (
-						<li
-							key={index}
-							style={{ color: "grey", fontSize: "13px", listStyle: "none" }}
-						>
-							<span className="mr-1">{tags.key}</span>:
-							<span className="ml-1">
-								{tags.key === "error" ? "true" : tags.value}
-							</span>
-						</li>
-					))}{" "}
+					{spanTags && spanTags.map((tags, index) => {
+						return (
+							<>
+								{tags.value && (
+									<>
+										<Text style={{ color: "#BDBDBD", fontSize: "12px", marginBottom: "8px" }}>
+											{tags.key}
+										</Text>
+										<div style={{
+											background: "#4F4F4F",
+											color: "#2D9CDB",
+											fontSize: "12px",
+											padding: "6px 8px",
+											wordBreak: "break-all",
+											marginBottom: "16px",
+										}}>
+											{tags.key === "error" ? "true" : tags.value}
+										</div>
+									</>
+								)}
+							</>
+						);
+					})}
 				</TabPane>
 				<TabPane tab="Errors" key="2">
-					{props.clickedSpanTags
+					{spanTags && spanTags
 						.filter((tags) => tags.key === "error")
 						.map((error) => (
-							<div className="ml-5">
-								<p style={{ color: "grey", fontSize: "10px" }}>
-									<span className="mr-1">{error.key}</span>:
-									<span className="ml-1">true</span>
-								</p>
-							</div>
+							<>
+								<Text style={{ color: "#BDBDBD", fontSize: "12px", marginBottom: "8px" }}>
+									{error.key}
+								</Text>
+								<div style={{
+									background: "#4F4F4F",
+									color: "#2D9CDB",
+									fontSize: "12px",
+									padding: "6px 8px",
+									wordBreak: "break-all",
+									marginBottom: "16px",
+								}}>
+									true
+								</div>
+							</>
 						))}
 				</TabPane>
 			</Tabs>

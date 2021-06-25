@@ -49,7 +49,6 @@ const interval = [
 		label: "Hours",
 		applicableOn: [timeDaysOptions[2], timeDaysOptions[1]],
 	},
-	,
 ];
 
 const _UsageExplorer = (props: UsageExplorerProps) => {
