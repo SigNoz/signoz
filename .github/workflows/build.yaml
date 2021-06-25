@@ -2,7 +2,7 @@ name: build-pipeline
 on:
   pull_request:
     branches:
-      - master
+      - main
       - v*
     paths:
       - 'pkg/**'
