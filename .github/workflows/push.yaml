@@ -32,11 +32,12 @@ jobs:
           echo export FRONTEND_IMAGE="frontend" >> env-vars
           echo export QUERY_SERVICE="query-service" >> env-vars
           echo export FLATTENER_PROCESSOR="flattener-processor" >> env-vars
+
       - name: Uploading envs
         uses: actions/upload-artifact@v2
         with:
           name: env_artifact
-          path: env-vars
+          path: signoz/env-vars
 
   build-and-push-frontend:
     runs-on: ubuntu-latest
@@ -45,16 +46,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+          path: signoz
+
       - name: Build frontend docker image
         shell: bash
         run: |
           cd frontend
           docker build . -f Dockerfile
+
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Push frontend docker image
         shell: bash
         run: |
@@ -73,16 +83,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+          path: signoz
+
       - name: Build query-service image
         shell: bash
         run: |
           cd pkg/query-service
           docker build . -f Dockerfile
+
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Push query service docker image
         shell: bash
         run: |
@@ -101,21 +120,31 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Downloading image artficate
+        uses: actions/download-artifact@v2
+        with:
+          name: env_artifact
+          path: signoz
+
       - name: Build flattener docker image
         shell: bash
         run: |
           cd pkg/processors/flattener
           docker build . -f Dockerfile
+
       - name: Build flattener processor docker image
         shell: bash
         run: |
           cd pkg/query-service
           docker build . -f Dockerfile
+
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Push flattener processor docker image
         shell: bash
         run: |

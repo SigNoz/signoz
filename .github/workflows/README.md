@@ -1,6 +1,6 @@
-To Run github workflow, few environment varibale needs to added in github secrets
+To run GitHub workflow, a few environment variables needs to add in GitHub secrets
 
-####  Tunables
+####  Environment Variables
 
 <table>
   <tr>
