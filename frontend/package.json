@@ -7,7 +7,8 @@
 		"dev": "NODE_ENV=development webpack serve",
 		"start": "node scripts/start.js",
 		"build": "webpack --config=webpack.config.prod.js",
-		"prettify": "prettier --write ."
+		"prettify": "prettier --write .",
+		"lint": "eslint src"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -54,7 +55,7 @@
 		"d3-tip": "^0.9.1",
 		"dotenv": "8.2.0",
 		"dotenv-expand": "5.1.0",
-		"eslint": "^7.11.0",
+		"eslint": "^7.29.0",
 		"eslint-config-react-app": "^6.0.0",
 		"eslint-plugin-flowtype": "^5.2.0",
 		"eslint-plugin-import": "^2.22.1",
@@ -109,12 +110,6 @@
 		"webpack-dev-server": "^3.11.2",
 		"webpack-manifest-plugin": "2.2.0",
 		"workbox-webpack-plugin": "5.1.4"
-	},
-	"eslintConfig": {
-		"extends": [
-			"react-app",
-			"react-app/jest"
-		]
 	},
 	"browserslist": {
 		"production": [
