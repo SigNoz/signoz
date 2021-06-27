@@ -93,7 +93,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 	};
 
 	return (
-		<Tabs defaultActiveKey="1">
+		<Tabs defaultActiveKey="1" tabBarGutter={48}>
 			<TabPane tab="Application Metrics" key="1">
 				<Row gutter={32} style={{ margin: 20 }}>
 					<Col span={12}>
