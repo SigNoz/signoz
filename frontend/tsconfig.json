@@ -16,7 +16,10 @@
 		"moduleResolution": "node",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"noEmit": true
-	},
-	"include": ["src"]
+		"noEmit": true,
+		"baseUrl": ".",
+		"paths": {
+			"Src/*": ["./src/*"]
+		}
+	}
 }
