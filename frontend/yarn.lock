@@ -10099,7 +10099,15 @@ polished@^4.1.2:
   dependencies:
     "@babel/runtime" "^7.13.17"
 
-portfinder@^1.0.26:
+portfinder-sync@^0.0.2:
+  version "0.0.2"
+  resolved "https://unpm.uberinternal.com/portfinder-sync/-/portfinder-sync-0.0.2.tgz#6e3409a73a718436de053ac949385350caabd8a2"
+  integrity sha1-bjQJpzpxhDbeBTrJSThTUMqr2KI=
+  dependencies:
+    minimist "^1.2.0"
+    portfinder "^1.0.10"
+
+portfinder@^1.0.10, portfinder@^1.0.26:
   version "1.0.28"
   resolved "https://registry.yarnpkg.com/portfinder/-/portfinder-1.0.28.tgz#67c4622852bd5374dd1dd900f779f53462fac778"
   integrity sha512-Se+2isanIcEqf2XMHjyUKskczxbPH7dQnlMjXX6+dybayyHvAf/TCgyMRlzf/B6QDhAEFOGes0pzRo3by4AbMA==

@@ -74,6 +74,7 @@
 		"jest-resolve": "26.6.0",
 		"jest-watch-typeahead": "0.6.1",
 		"pnp-webpack-plugin": "1.6.4",
+		"portfinder-sync": "^0.0.2",
 		"postcss-loader": "3.0.0",
 		"postcss-normalize": "8.0.1",
 		"postcss-preset-env": "6.7.0",
