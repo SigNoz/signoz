@@ -4,8 +4,6 @@ on:
     branches:
       - main
       - ^v[0-9]*.[0-9]*.x$
-      # to removed before pr merge
-      - add-multi-arch
     tags:
       - "*"
 
@@ -76,7 +74,7 @@ jobs:
         run: |
           branch=${GITHUB_REF#refs/*/}
           array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "add-multi-arch" ] || [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
           then
             source env-vars
             make build-push-frontend
@@ -117,7 +115,7 @@ jobs:
         run: |
           branch=${GITHUB_REF#refs/*/}
           array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "add-multi-arch" ] || [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
           then
             source env-vars
             make build-push-query-service
@@ -158,7 +156,7 @@ jobs:
         run: |
           branch=${GITHUB_REF#refs/*/}
           array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "add-multi-arch" ] || [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
           then
             source env-vars
             make build-push-flattener
