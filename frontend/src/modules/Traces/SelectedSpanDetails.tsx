@@ -48,7 +48,7 @@ const CustomSubText = styled(Paragraph)`
 `;
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
-	const spanTags = props.data.tags;
+	const spanTags = props.data?.tags;
 	const service = props.data?.name?.split(":")[0];
 	const operation = props.data?.name?.split(":")[1];
 

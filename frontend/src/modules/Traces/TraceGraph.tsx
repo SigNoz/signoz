@@ -6,13 +6,13 @@ import { Card, Row, Col, Space, Affix } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
-import { spanToTreeUtil } from "../../utils/spanToTree";
+import { spanToTreeUtil } from "Src/utils/spanToTree";
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
 } from "../../store/actions";
-import { StoreState } from "../../store/reducers";
+import { StoreState } from "Src/store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
 import styled from "styled-components";
@@ -36,11 +36,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const [selectedSpan, setSelectedSpan] = useState({});
 	const [clickedSpan, setClickedSpan] = useState(null);
 	const [resetZoom, setResetZoom] = useState(false);
-	const [sortedTreeData, setSortedTreeData] = useState<pushDStree>([]);
+	const [sortedTreeData, setSortedTreeData] = useState<pushDStree[]>([]);
 
 	let sortedData = {};
 
-	const getSortedData = (treeData: [pushDStree], parent = {}) => {
+	const getSortedData = (treeData: pushDStree[], parent = {}) => {
 		if (!isEmpty(treeData)) {
 			if (treeData[0].id !== "empty") {
 				return Array.from(treeData).map((item, key) => {
