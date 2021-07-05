@@ -3,8 +3,8 @@ import { Table, Progress, Tabs, Button, Row, Col } from "antd";
 import "./TraceGanttChart.css";
 import { max, isEmpty, has } from "lodash-es";
 import styled from "styled-components";
-import getTreeData from "Src/modules/Traces/TraceGantChartHelpers";
-import { pushDStree } from "../../store/actions";
+import { pushDStree } from "Src/store/actions";
+import traverseTreeData from "Src/modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
 
 const { TabPane } = Tabs;
 
@@ -17,11 +17,11 @@ const StyledButton = styled(Button)`
 `;
 
 interface TraceGanttChartProps {
-	treeData: pushDStree;
+	treeData: pushDStree[];
 	clickedSpan: pushDStree;
 	selectedSpan: pushDStree;
 	resetZoom: () => {};
-	setSpanTagsInfo: () => {};
+	setSpanTagsInfo: (p: { data: any }) => {};
 }
 
 const TraceGanttChart = ({
@@ -37,12 +37,9 @@ const TraceGanttChart = ({
 	const [defaultExpandedRows, setDefaultExpandedRows] = useState([]);
 	const [sortedTreeData, setSortedTreeData] = useState(treeData);
 	const [isReset, setIsReset] = useState(false);
-	const [rowId, setRowId] = useState(0);
 	const [tabsContainerWidth, setTabsContainerWidth] = useState(0);
 	const tableRef = useRef("");
-	let tabsContainer = document.querySelector(
-		"#collapsable .ant-tabs-nav-list",
-	);
+	let tabsContainer = document.querySelector("#collapsable .ant-tabs-nav-list");
 
 	let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
 
@@ -58,7 +55,7 @@ const TraceGanttChart = ({
 			if (clickedSpan) {
 				setClickedSpanData(clickedSpan);
 			}
-			setTabsContainerWidth(tabsContainer?.offsetWidth)
+			setTabsContainerWidth(tabsContainer?.offsetWidth);
 		}
 		// handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
@@ -67,13 +64,11 @@ const TraceGanttChart = ({
 		if (
 			!isEmpty(clickedSpanData) &&
 			clickedSpan &&
-			!selectedRows.includes(clickedSpan.id)
-			&& !isReset
+			!selectedRows.includes(clickedSpan.id) &&
+			!isReset
 		) {
 			setSelectedRows([clickedSpan.id]);
 			getParentKeys(clickedSpan);
-			let keys = [clickedSpan?.id, ...parentKeys];
-			// setDefaultExpandedRows(keys)
 			handleFocusOnSelectedPath("", [clickedSpan.id], clickedSpan);
 		}
 	}, [clickedSpan, selectedRows, isReset, clickedSpanData]);
@@ -87,17 +82,16 @@ const TraceGanttChart = ({
 		}
 	};
 
-	const getChildrenKeys = (obj) =>{
+	const getChildrenKeys = (obj) => {
 		if (has(obj, "children")) {
 			childrenKeys.push(obj.id);
-			if(!isEmpty(obj.children)){
-				obj.children.map((item)=>{
+			if (!isEmpty(obj.children)) {
+				obj.children.map((item) => {
 					getChildrenKeys(item);
-				})
+				});
 			}
-
 		}
-	}
+	};
 
 	useEffect(() => {
 		if (!isEmpty(selectedSpan) && isEmpty(clickedSpan)) {
@@ -111,7 +105,6 @@ const TraceGanttChart = ({
 			setDefaultExpandedRows([treeData?.[0]?.id]);
 			// /.setSpanTagsInfo({data: treeData?.[0]})
 		}
-
 	}, [selectedSpan, treeData]);
 
 	const getMaxEndTime = (treeData) => {
@@ -142,7 +135,7 @@ const TraceGanttChart = ({
 	totalWidth = width of container
 	 */
 	const getPaddingLeft = (timeDiff, totalTime, totalWidth) => {
-		return ((timeDiff / totalTime) * totalWidth ).toFixed(0);
+		return ((timeDiff / totalTime) * totalWidth).toFixed(0);
 	};
 
 	let tabMinVal = 0;
@@ -178,14 +171,18 @@ const TraceGanttChart = ({
 				let paddingLeft = 0;
 				let startTime = parseFloat(record.startTime);
 				let duration = parseFloat((record.time / 1000000).toFixed(2));
-				paddingLeft = parseInt(getPaddingLeft(startTime - minGlobal, maxGlobal - minGlobal, tabsContainerWidth));
-				let textPadding = paddingLeft;
-				if(paddingLeft === tabsContainerWidth - 20){
-					textPadding = tabsContainerWidth - 40
-				}
-				length = ((duration / (maxGlobal - startTime)) * 100).toFixed(
-					2,
+				paddingLeft = parseInt(
+					getPaddingLeft(
+						startTime - minGlobal,
+						maxGlobal - minGlobal,
+						tabsContainerWidth,
+					),
 				);
+				let textPadding = paddingLeft;
+				if (paddingLeft === tabsContainerWidth - 20) {
+					textPadding = tabsContainerWidth - 40;
+				}
+				length = ((duration / (maxGlobal - startTime)) * 100).toFixed(2);
 
 				return (
 					<>
@@ -203,15 +200,22 @@ const TraceGanttChart = ({
 
 	const handleFocusOnSelectedPath = (event, selectedRowsList = selectedRows) => {
 		if (!isEmpty(selectedRowsList)) {
-			let node: pushDStree = getTreeData(
-				treeData,
-				(item: pushDStree) => item.id === selectedRowsList[0],
-				1,
-			);
-			setSpanTagsInfo({ data: node[0] });
+			let node = {};
+			traverseTreeData(treeData, (item: pushDStree) => {
+				if (item.id === selectedRowsList[0]) {
+					node = item;
+				}
+			});
 
-			getParentKeys(node[0]);
-			getChildrenKeys(node[0]);
+			try {
+				setSpanTagsInfo({ data: node });
+			} catch (e) {
+				// TODO: error logging.
+				console.error("Node not found in Tree Data.");
+			}
+
+			getParentKeys(node);
+			getChildrenKeys(node);
 
 			let rows = document.querySelectorAll("#collapsable table tbody tr");
 			Array.from(rows).map((row) => {
@@ -255,21 +259,26 @@ const TraceGanttChart = ({
 				setIsReset(false);
 			}
 		},
-		onSelect:(record)=>{
-			handleRowOnClick(record)
+		onSelect: (record) => {
+			handleRowOnClick(record);
 		},
 		selectedRowKeys: selectedRows,
 	};
 
 	const handleRowOnClick = (record) => {
-		setRowId(record.id);
+		let node = {};
+		traverseTreeData(treeData, (item: pushDStree) => {
+			if (item.id === record.id) {
+				node = item;
+			}
+		});
 
-		let node: pushDStree = getTreeData(
-			treeData,
-			(item: pushDStree) => item.id === record.id,
-			1,
-		);
-		setSpanTagsInfo({ data: node[0] });
+		try {
+			setSpanTagsInfo({ data: node });
+		} catch (e) {
+			// TODO: error logging.
+			console.error("Node not found in TreeData.");
+		}
 
 		const selectedRowKeys = selectedRows;
 		if (selectedRowKeys.indexOf(record.id) >= 0) {
@@ -310,7 +319,7 @@ const TraceGanttChart = ({
 						refs={tableRef}
 						hideSelectAll={true}
 						columns={columns}
-						rowSelection={{ ...rowSelection, checkStrictly, type:'radio' }}
+						rowSelection={{ ...rowSelection, checkStrictly, type: "radio" }}
 						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}
@@ -322,7 +331,7 @@ const TraceGanttChart = ({
 						expandedRowKeys={defaultExpandedRows}
 						onExpandedRowsChange={handleOnExpandedRowsChange}
 						pagination={false}
-						scroll={{ y: 540}}
+						scroll={{ y: 540 }}
 						rowClassName="row-styles"
 						filterMultiple={false}
 					/>
