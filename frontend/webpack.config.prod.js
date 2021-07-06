@@ -62,9 +62,7 @@ module.exports = {
 			process: "process",
 		}),
 		new webpack.DefinePlugin({
-			"process.env.REACT_APP_BASE_URL": JSON.stringify(
-				process.env.REACT_APP_BASE_URL,
-			),
+			"process.env": JSON.stringify(myEnv.parsed),
 		}),
 	],
 	performance: {
