@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash-es";
+import { has, isEmpty } from "lodash-es";
 import { pushDStree } from "Src/store/actions";
 
 interface itemProps {
@@ -6,9 +6,22 @@ interface itemProps {
 	marked: boolean;
 }
 
+export interface extendedPushDSTree extends pushDStree {
+	parent?: pushDStree[];
+}
+
+/**
+ * Function to traverse the tree data
+ * This function takes a callback and the callee can execute any
+ * logic in the callback
+ * Currently its being used to sort, get max, search a node in the tree &
+ * modify the tree to add parents
+ * @param tree { pushDStree[] }
+ * @param callback { Function }
+ */
 // Doing DFS traversal on the tree.
 // Callback to be called for each element in the tree once.
-const traverseTreeData = (
+export const traverseTreeData = (
 	tree: pushDStree[],
 	callback: (item: pushDStree) => void,
 ): void => {
@@ -37,4 +50,69 @@ const traverseTreeData = (
 	}
 };
 
-export default traverseTreeData;
+/**
+ * Function to get the left padding for gantt chart lines
+ * @param timeDiff { number } Diff between global end time & start time of the span
+ * @param totalTime { number } Diff between global start time & global end time
+ * @param totalWidth { number } Total width of the container
+ */
+export const getPaddingLeft = (
+	timeDiff: number,
+	totalTime: number,
+	totalWidth: number,
+): number => {
+	return parseInt(((timeDiff / totalTime) * totalWidth).toFixed(0));
+};
+
+/**
+ *
+ * @param obj
+ * @param arr
+ */
+export const getParentKeys = (
+	obj: extendedPushDSTree = {
+		children: [],
+		id: "",
+		name: "",
+		startTime: 0,
+		tags: [],
+		time: 0,
+		value: 0,
+	},
+	arr: string[],
+): string[] => {
+	if (!isEmpty(obj)) {
+		let node = obj;
+		while (has(node, "parent")) {
+			arr.push(node?.parent?.id);
+			node = node.parent;
+		}
+	}
+	return arr;
+};
+
+export const emptyTree: pushDStree[] = [
+	{
+		id: "empty",
+		name: "default",
+		value: 0,
+		time: 0,
+		startTime: 0,
+		tags: [],
+		children: [],
+	},
+];
+
+export const extendedEmptyObj: extendedPushDSTree = {
+	id: "empty",
+	name: "default",
+	value: 0,
+	time: 0,
+	startTime: 0,
+	tags: [],
+	children: [],
+	parent: [],
+};
+export const extendedEmptyTree: extendedPushDSTree[] = [
+	{ ...extendedEmptyObj },
+];

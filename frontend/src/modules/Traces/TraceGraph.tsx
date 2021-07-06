@@ -17,10 +17,19 @@ import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
 import styled from "styled-components";
 import { isEmpty, sortBy } from "lodash-es";
+import {
+	traverseTreeData,
+	emptyTree,
+} from "Src/modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
+import Location from "history";
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
+}
+
+interface LocationProps extends Location {
+	spanId: string;
 }
 
 const TraceGanttChartContainer = styled(Card)`
@@ -29,37 +38,45 @@ const TraceGanttChartContainer = styled(Card)`
 `;
 
 const _TraceGraph = (props: TraceGraphProps) => {
-	let location = useLocation();
+	let location = useLocation<LocationProps>();
 	const spanId = location?.state?.spanId;
 	const params = useParams<{ id?: string }>();
 	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
 	const [selectedSpan, setSelectedSpan] = useState({});
 	const [clickedSpan, setClickedSpan] = useState(null);
 	const [resetZoom, setResetZoom] = useState(false);
-	const [sortedTreeData, setSortedTreeData] = useState<pushDStree[]>([]);
+	const [sortedTreeData, setSortedTreeData] = useState<pushDStree[]>(emptyTree);
+	const [globalEndTime, setGlobalEndTime] = useState(0);
 
-	let sortedData = {};
+	const getEndTime = (item: pushDStree) => {
+		return item.time / 1000000 + item.startTime;
+	};
 
-	const getSortedData = (treeData: pushDStree[], parent = {}) => {
+	const getSortedData = (
+		treeData: pushDStree[] = emptyTree,
+		parent = {},
+	): pushDStree[] => {
+		let globalEndTime = 0;
 		if (!isEmpty(treeData)) {
 			if (treeData[0].id !== "empty") {
-				return Array.from(treeData).map((item, key) => {
-					if (!isEmpty(item.children)) {
-						getSortedData(item.children, item);
-						sortedData = sortBy(item.children, (i) => i.startTime);
-						treeData[key].children = sortedData;
-					}
-					if (!isEmpty(parent)) {
-						treeData[key].parent = parent;
-					}
-					return treeData;
+				let endTime = 0;
+				traverseTreeData(treeData, (item) => {
+					item.children = sortBy(item.children, (i) => i.startTime);
+					item.children.map((child) => {
+						child.parent = item;
+					});
+					endTime = getEndTime(item);
+					if (globalEndTime < endTime) globalEndTime = endTime;
 				});
+				setGlobalEndTime(globalEndTime);
 			}
-			return treeData;
 		}
+		return treeData;
 	};
 
 	const tree = spanToTreeUtil(props.traceItem[0].events);
+
+	console.log("tree", tree);
 
 	useEffect(() => {
 		//sets span width based on value - which is mapped to duration
@@ -69,17 +86,25 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	useEffect(() => {
 		if (props.traceItem) {
 			let sortedData = getSortedData([tree]);
-			setSortedTreeData(sortedData?.[0]);
-			getSpanInfo(sortedData?.[0], spanId);
+			setSortedTreeData(sortedData);
+			getSpanInfo(sortedData, spanId);
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
+			d3
+				.select("#chart")
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 		}
 	}, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
 	useEffect(() => {
-		if(!isEmpty(sortedTreeData) && sortedTreeData?.id !== "empty" && isEmpty(clickedSpanTags)) {
+		if (
+			!isEmpty(sortedTreeData) &&
+			sortedTreeData[0]?.id !== "empty" &&
+			isEmpty(clickedSpanTags)
+		) {
 			setClickedSpanTags(sortedTreeData?.[0]);
 		}
 	}, [sortedTreeData]);
@@ -87,7 +112,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	useEffect(() => {
 		if (resetZoom) {
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
+			d3
+				.select("#chart")
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 			setResetZoom(false);
 		}
 	}, [resetZoom]);
@@ -103,19 +132,18 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		setClickedSpanTags(z.data);
 		setClickedSpan(z.data);
 		setSelectedSpan([]);
-		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
 	};
 
 	const setSpanTagsInfo = (z: any) => {
 		setClickedSpanTags(z.data);
 	};
 
-	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
+	const getSpanInfo = (data: pushDStree[], spanId: string): void => {
 		if (resetZoom) {
 			setSelectedSpan({});
 			return;
 		}
-		if (data?.[0]?.id !== "empty") {
+		if (!isEmpty(data) && data?.[0]?.id !== "empty") {
 			Array.from(data).map((item) => {
 				if (item.id === spanId) {
 					setSelectedSpan(item);
@@ -144,7 +172,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.onClick(onClick)
 		.width(800);
 
-	const handleResetZoom = (value) => {
+	const handleResetZoom = (value: React.SetStateAction<boolean>): void => {
 		setResetZoom(value);
 	};
 
@@ -175,6 +203,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 								selectedSpan={selectedSpan}
 								resetZoom={handleResetZoom}
 								setSpanTagsInfo={setSpanTagsInfo}
+								globalEndTime={globalEndTime}
 							/>
 						</TraceGanttChartContainer>
 					</Affix>
