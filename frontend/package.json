@@ -54,7 +54,6 @@
 		"d3-flame-graph": "^3.1.1",
 		"d3-tip": "^0.9.1",
 		"dotenv": "8.2.0",
-		"dotenv-expand": "5.1.0",
 		"eslint": "^7.29.0",
 		"eslint-config-react-app": "^6.0.0",
 		"eslint-plugin-flowtype": "^5.2.0",

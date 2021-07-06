@@ -4,11 +4,9 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const CompressionPlugin = require("compression-webpack-plugin");
 const webpack = require("webpack");
-const dotenvExpand = require("dotenv-expand");
 const dotenv = require("dotenv");
 
 const myEnv = dotenv.config();
-dotenvExpand(myEnv);
 
 module.exports = {
 	mode: "production",
@@ -57,9 +55,6 @@ module.exports = {
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
 		new CopyPlugin({
 			patterns: [{ from: resolve(__dirname, "public/"), to: "." }],
-		}),
-		new webpack.ProvidePlugin({
-			process: "process",
 		}),
 		new webpack.DefinePlugin({
 			"process.env": JSON.stringify(myEnv.parsed),
