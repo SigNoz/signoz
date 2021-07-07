@@ -1,7 +1,7 @@
-import React from "react";
-import { Card, Space, Tabs, Typography } from "antd";
-import styled from "styled-components";
-import { pushDStree } from "Src/store/actions";
+import React from 'react';
+import { Card, Space, Tabs, Typography } from 'antd';
+import styled from 'styled-components';
+import { pushDStree } from 'Src/store/actions';
 
 const { TabPane } = Tabs;
 
@@ -49,18 +49,18 @@ const CustomSubText = styled(Paragraph)`
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 	const spanTags = props.data?.tags;
-	const service = props.data?.name?.split(":")[0];
-	const operation = props.data?.name?.split(":")[1];
+	const service = props.data?.name?.split(':')[0];
+	const operation = props.data?.name?.split(':')[1];
 
 	return (
 		<Card
-			style={{ border: "none", background: "transparent", padding: 0 }}
+			style={{ border: 'none', background: 'transparent', padding: 0 }}
 			bodyStyle={{ padding: 0 }}
 		>
 			<Space direction="vertical">
 				<strong> Details for selected Span </strong>
 				<Space direction="vertical" size={2}>
-					<CustomTitle style={{ marginTop: "18px" }}>Service</CustomTitle>
+					<CustomTitle style={{ marginTop: '18px' }}>Service</CustomTitle>
 					<CustomText>{service}</CustomText>
 				</Space>
 				<Space direction="vertical" size={2}>
@@ -78,7 +78,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 										<>
 											<CustomSubTitle>{tags.key}</CustomSubTitle>
 											<CustomSubText>
-												{tags.key === "error" ? "true" : tags.value}
+												{tags.key === 'error' ? 'true' : tags.value}
 											</CustomSubText>
 										</>
 									)}
@@ -89,7 +89,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 				<TabPane tab="Errors" key="2">
 					{spanTags &&
 						spanTags
-							.filter((tags) => tags.key === "error")
+							.filter((tags) => tags.key === 'error')
 							.map((error) => (
 								<>
 									<CustomSubTitle>{error.key}</CustomSubTitle>

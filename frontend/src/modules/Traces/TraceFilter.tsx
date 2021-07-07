@@ -1,24 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { Select, Button, Input, Form, AutoComplete } from "antd";
-import { connect } from "react-redux";
-import { Store } from "antd/lib/form/interface";
-import styled from "styled-components";
+import React, { useEffect, useState } from 'react';
+import { Select, Button, Input, Form, AutoComplete } from 'antd';
+import { connect } from 'react-redux';
+import { Store } from 'antd/lib/form/interface';
+import styled from 'styled-components';
 
 import {
 	updateTraceFilters,
 	fetchTraces,
 	TraceFilters,
 	GlobalTime,
-} from "../../store/actions";
-import { StoreState } from "../../store/reducers";
-import LatencyModalForm from "./LatencyModalForm";
-import { FilterStateDisplay } from "./FilterStateDisplay";
+} from '../../store/actions';
+import { StoreState } from '../../store/reducers';
+import LatencyModalForm from './LatencyModalForm';
+import { FilterStateDisplay } from './FilterStateDisplay';
 
-import FormItem from "antd/lib/form/FormItem";
-import api, { apiV1 } from "../../api";
-import { useLocation } from "react-router-dom";
-import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
-import { useRoute } from "../RouteProvider";
+import FormItem from 'antd/lib/form/FormItem';
+import api, { apiV1 } from '../../api';
+import { useLocation } from 'react-router-dom';
+import { METRICS_PAGE_QUERY_PARAM } from 'Src/constants/query';
+import { useRoute } from '../RouteProvider';
 
 const { Option } = Select;
 
@@ -45,15 +45,15 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [operationList, setOperationsList] = useState<string[]>([]);
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
 	const location = useLocation();
-	const urlParams = new URLSearchParams(location.search.split("?")[1]);
+	const urlParams = new URLSearchParams(location.search.split('?')[1]);
 	const { state } = useRoute();
 
 	useEffect(() => {
 		handleApplyFilterForm({
-			service: "",
+			service: '',
 			tags: [],
-			operation: "",
-			latency: { min: "", max: "" },
+			operation: '',
+			latency: { min: '', max: '' },
 		});
 	}, []);
 
@@ -86,7 +86,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 							{
 								key: METRICS_PAGE_QUERY_PARAM.error,
 								value: errorTag,
-								operator: "equals",
+								operator: 'equals',
 							},
 						],
 					});
@@ -101,7 +101,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						onTagFormSubmit({
 							tag_key: METRICS_PAGE_QUERY_PARAM.error,
 							tag_value: errorTag,
-							operator: "equals",
+							operator: 'equals',
 						});
 					}
 				}
@@ -110,18 +110,18 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	useEffect(() => {
 		let request_string =
-			"service=" +
+			'service=' +
 			props.traceFilters.service +
-			"&operation=" +
+			'&operation=' +
 			props.traceFilters.operation +
-			"&maxDuration=" +
+			'&maxDuration=' +
 			props.traceFilters.latency?.max +
-			"&minDuration=" +
+			'&minDuration=' +
 			props.traceFilters.latency?.min;
 		if (props.traceFilters.tags)
 			request_string =
 				request_string +
-				"&tags=" +
+				'&tags=' +
 				encodeURIComponent(JSON.stringify(props.traceFilters.tags));
 
 		/*
@@ -134,33 +134,33 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	}, [props.traceFilters, props.globalTime]);
 
 	useEffect(() => {
-		let latencyButtonText = "Latency";
+		let latencyButtonText = 'Latency';
 		if (
-			props.traceFilters.latency?.min === "" &&
-			props.traceFilters.latency?.max !== ""
+			props.traceFilters.latency?.min === '' &&
+			props.traceFilters.latency?.max !== ''
 		)
 			latencyButtonText =
-				"Latency<" +
+				'Latency<' +
 				(parseInt(props.traceFilters.latency?.max) / 1000000).toString() +
-				"ms";
+				'ms';
 		else if (
-			props.traceFilters.latency?.min !== "" &&
-			props.traceFilters.latency?.max === ""
+			props.traceFilters.latency?.min !== '' &&
+			props.traceFilters.latency?.max === ''
 		)
 			latencyButtonText =
-				"Latency>" +
+				'Latency>' +
 				(parseInt(props.traceFilters.latency?.min) / 1000000).toString() +
-				"ms";
+				'ms';
 		else if (
 			props.traceFilters.latency !== undefined &&
-			props.traceFilters.latency?.min !== "" &&
-			props.traceFilters.latency?.max !== ""
+			props.traceFilters.latency?.min !== '' &&
+			props.traceFilters.latency?.max !== ''
 		)
 			latencyButtonText =
 				(parseInt(props.traceFilters.latency.min) / 1000000).toString() +
-				"ms <Latency<" +
+				'ms <Latency<' +
 				(parseInt(props.traceFilters.latency.max) / 1000000).toString() +
-				"ms";
+				'ms';
 
 		form_basefilter.setFieldsValue({ latency: latencyButtonText });
 	}, [props.traceFilters.latency]);
@@ -176,13 +176,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [modalVisible, setModalVisible] = useState(false);
 	const [loading] = useState(false);
 
-	const [tagKeyValueApplied, setTagKeyValueApplied] = useState([""]);
+	const [tagKeyValueApplied, setTagKeyValueApplied] = useState(['']);
 	const [latencyFilterValues, setLatencyFilterValues] = useState<{
 		min: string;
 		max: string;
 	}>({
-		min: "100",
-		max: "500",
+		min: '100',
+		max: '500',
 	});
 
 	const [form] = Form.useForm();
@@ -194,13 +194,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	}
 
 	function populateData(value: string) {
-		let service_request = "/service/" + value + "/operations";
+		const service_request = '/service/' + value + '/operations';
 		api.get<string[]>(apiV1 + service_request).then((response) => {
 			// form_basefilter.resetFields(['operation',])
 			setOperationsList(response.data);
 		});
 
-		let tagkeyoptions_request = "/tags?service=" + value;
+		const tagkeyoptions_request = '/tags?service=' + value;
 		api
 			.get<TagKeyOptionItem[]>(apiV1 + tagkeyoptions_request)
 			.then((response) => {
@@ -222,8 +222,8 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		props.updateTraceFilters({
 			...props.traceFilters,
 			latency: {
-				min: min ? (parseInt(min) * 1000000).toString() : "",
-				max: max ? (parseInt(max) * 1000000).toString() : "",
+				min: min ? (parseInt(min) * 1000000).toString() : '',
+				max: max ? (parseInt(max) * 1000000).toString() : '',
 			},
 		});
 
@@ -231,8 +231,8 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	};
 
 	const onTagFormSubmit = (values: any) => {
-		let request_tags =
-			"service=frontend&tags=" +
+		const request_tags =
+			'service=frontend&tags=' +
 			encodeURIComponent(
 				JSON.stringify([
 					{
@@ -282,7 +282,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		form.setFieldsValue({ tag_key: data });
 	};
 
-	const dataSource = ["status:200"];
+	const dataSource = ['status:200'];
 	const children = [];
 	for (let i = 0; i < dataSource.length; i++) {
 		children.push(
@@ -294,45 +294,45 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	// PNOTE - Remove any
 	const handleApplyFilterForm = (values: any) => {
-		let request_params: string = "";
+		let request_params = '';
 		if (
 			typeof values.service !== undefined &&
 			typeof values.operation !== undefined
 		) {
 			request_params =
-				"service=" + values.service + "&operation=" + values.operation;
+				'service=' + values.service + '&operation=' + values.operation;
 		} else if (
 			typeof values.service === undefined &&
 			typeof values.operation !== undefined
 		) {
-			request_params = "operation=" + values.operation;
+			request_params = 'operation=' + values.operation;
 		} else if (
 			typeof values.service !== undefined &&
 			typeof values.operation === undefined
 		) {
-			request_params = "service=" + values.service;
+			request_params = 'service=' + values.service;
 		}
 
 		request_params =
 			request_params +
-			"&minDuration=" +
+			'&minDuration=' +
 			latencyFilterValues.min +
-			"&maxDuration=" +
+			'&maxDuration=' +
 			latencyFilterValues.max;
 
 		setTagKeyValueApplied((tagKeyValueApplied) => [
 			...tagKeyValueApplied,
-			"service eq" + values.service,
-			"operation eq " + values.operation,
-			"maxduration eq " + (parseInt(latencyFilterValues.max) / 1000000).toString(),
-			"minduration eq " + (parseInt(latencyFilterValues.min) / 1000000).toString(),
+			'service eq' + values.service,
+			'operation eq ' + values.operation,
+			'maxduration eq ' + (parseInt(latencyFilterValues.max) / 1000000).toString(),
+			'minduration eq ' + (parseInt(latencyFilterValues.min) / 1000000).toString(),
 		]);
 		props.updateTraceFilters({
 			service: values.service,
 			operation: values.operation,
 			latency: {
-				max: "",
-				min: "",
+				max: '',
+				min: '',
 			},
 		});
 	};
@@ -340,10 +340,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	useEffect(() => {
 		return () => {
 			props.updateTraceFilters({
-				service: "",
-				operation: "",
+				service: '',
+				operation: '',
 				tags: [],
-				latency: { min: "", max: "" },
+				latency: { min: '', max: '' },
 			});
 		};
 	}, []);
@@ -357,7 +357,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				form={form_basefilter}
 				layout="inline"
 				onFinish={handleApplyFilterForm}
-				initialValues={{ service: "", operation: "", latency: "Latency" }}
+				initialValues={{ service: '', operation: '', latency: 'Latency' }}
 				style={{ marginTop: 10, marginBottom: 10 }}
 			>
 				<FormItem rules={[{ required: true }]} name="service">
@@ -411,7 +411,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				form={form}
 				layout="inline"
 				onFinish={onTagFormSubmit}
-				initialValues={{ operator: "equals" }}
+				initialValues={{ operator: 'equals' }}
 				style={{ marginTop: 10, marginBottom: 10 }}
 			>
 				<FormItem rules={[{ required: true }]} name="tag_key">
@@ -419,7 +419,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						options={tagKeyOptions.map((s) => {
 							return { value: s.tagKeys };
 						})}
-						style={{ width: 200, textAlign: "center" }}
+						style={{ width: 200, textAlign: 'center' }}
 						// onSelect={onSelect}
 						// onSearch={onSearch}
 						onChange={onChangeTagKey}
@@ -431,7 +431,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				</FormItem>
 
 				<FormItem name="operator">
-					<Select style={{ width: 120, textAlign: "center" }}>
+					<Select style={{ width: 120, textAlign: 'center' }}>
 						<Option value="equals">EQUAL</Option>
 						<Option value="contains">CONTAINS</Option>
 					</Select>
@@ -439,15 +439,15 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 				<FormItem rules={[{ required: true }]} name="tag_value">
 					<Input
-						style={{ width: 160, textAlign: "center" }}
+						style={{ width: 160, textAlign: 'center' }}
 						placeholder="Tag Value"
 					/>
 				</FormItem>
 
 				<FormItem>
 					<Button type="primary" htmlType="submit">
-						{" "}
-						Apply Tag Filter{" "}
+						{' '}
+						Apply Tag Filter{' '}
 					</Button>
 				</FormItem>
 			</Form>

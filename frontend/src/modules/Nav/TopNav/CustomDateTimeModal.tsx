@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Modal, DatePicker } from "antd";
-import { DateTimeRangeType } from "../../../store/actions";
-import { Moment } from "moment";
-import moment from "moment";
+import React, { useState } from 'react';
+import { Modal, DatePicker } from 'antd';
+import { DateTimeRangeType } from '../../../store/actions';
+import { Moment } from 'moment';
+import moment from 'moment';
 
 const { RangePicker } = DatePicker;
 
@@ -43,7 +43,7 @@ const CustomDateTimeModal: React.FC<CustomDateTimeModalProps> = ({
 			okText="Apply"
 			cancelText="Cancel"
 			onCancel={onCancel}
-			style={{ position: "absolute", top: 60, right: 40 }}
+			style={{ position: 'absolute', top: 60, right: 40 }}
 			onOk={() => onCreate(customDateTimeRange ? customDateTimeRange : null)}
 		>
 			<RangePicker

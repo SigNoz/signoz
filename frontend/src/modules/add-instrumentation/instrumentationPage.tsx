@@ -1,9 +1,9 @@
-import React from "react";
-import { Space } from "antd";
-import { connect } from "react-redux";
-import { StoreState } from "../../store/reducers";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import styled from "styled-components";
+import React from 'react';
+import { Space } from 'antd';
+import { connect } from 'react-redux';
+import { StoreState } from '../../store/reducers';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
+import styled from 'styled-components';
 
 const InstrumentCard = styled.div<{
 	currentThemeStatus: string | undefined;
@@ -31,10 +31,10 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 				<InstrumentCard currentThemeStatus={currentTheme}>
 					Congrats, you have successfully installed SigNoz!<br/>
 					To start seeing YOUR application data here, follow the instructions in the docs -
-					<a href={"https://signoz.io/docs/instrumentation/overview"} target="_blank"> https://signoz.io/docs/instrumentation/overview</a>
+					<a href={'https://signoz.io/docs/instrumentation/overview'} target="_blank" rel="noreferrer"> https://signoz.io/docs/instrumentation/overview</a>
 					<br/>
-					If you face any issues, join our <a href={"https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"} target="_blank">
-					slack community</a> to ask any questions or mail us at <a href={"mailto:support@signoz.io"} target="_blank">
+					If you face any issues, join our <a href={'https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA'} target="_blank" rel="noreferrer">
+					slack community</a> to ask any questions or mail us at <a href={'mailto:support@signoz.io'} target="_blank" rel="noreferrer">
 					support@signoz.io</a>
 				</InstrumentCard>
 			</Space>

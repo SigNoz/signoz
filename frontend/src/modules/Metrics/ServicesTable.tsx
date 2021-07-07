@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
-import { Button, Space, Spin, Table } from "antd";
-import styled from "styled-components";
-import { connect } from "react-redux";
-import { SKIP_ONBOARDING } from "Src/constants/onboarding";
-import ROUTES from "Src/constants/routes";
-import { getServicesList, GlobalTime } from "../../store/actions";
-import { servicesListItem } from "../../store/actions/MetricsActions";
-import { StoreState } from "../../store/reducers";
-import { CustomModal } from "../../components/Modal";
+import React, { useEffect, useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { Button, Space, Spin, Table } from 'antd';
+import styled from 'styled-components';
+import { connect } from 'react-redux';
+import { SKIP_ONBOARDING } from 'Src/constants/onboarding';
+import ROUTES from 'Src/constants/routes';
+import { getServicesList, GlobalTime } from '../../store/actions';
+import { servicesListItem } from '../../store/actions/MetricsActions';
+import { StoreState } from '../../store/reducers';
+import { CustomModal } from '../../components/Modal';
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
@@ -44,38 +44,38 @@ const LoadingText = styled.div`
 
 const columns = [
 	{
-		title: "Application",
-		dataIndex: "serviceName",
-		key: "serviceName",
+		title: 'Application',
+		dataIndex: 'serviceName',
+		key: 'serviceName',
 		render: (text: string) => (
 			<NavLink
-				style={{ textTransform: "capitalize" }}
-				to={ROUTES.APPLICATION + "/" + text}
+				style={{ textTransform: 'capitalize' }}
+				to={ROUTES.APPLICATION + '/' + text}
 			>
 				<strong>{text}</strong>
 			</NavLink>
 		),
 	},
 	{
-		title: "P99 latency (in ms)",
-		dataIndex: "p99",
-		key: "p99",
+		title: 'P99 latency (in ms)',
+		dataIndex: 'p99',
+		key: 'p99',
 		sorter: (a: any, b: any) => a.p99 - b.p99,
 		// sortDirections: ['descend', 'ascend'],
 		render: (value: number) => (value / 1000000).toFixed(2),
 	},
 	{
-		title: "Error Rate (in %)",
-		dataIndex: "errorRate",
-		key: "errorRate",
+		title: 'Error Rate (in %)',
+		dataIndex: 'errorRate',
+		key: 'errorRate',
 		sorter: (a: any, b: any) => a.errorRate - b.errorRate,
 		// sortDirections: ['descend', 'ascend'],
 		render: (value: number) => value.toFixed(2),
 	},
 	{
-		title: "Requests Per Second",
-		dataIndex: "callRate",
-		key: "callRate",
+		title: 'Requests Per Second',
+		dataIndex: 'callRate',
+		key: 'callRate',
 		sorter: (a: any, b: any) => a.callRate - b.callRate,
 		// sortDirections: ['descend', 'ascend'],
 		render: (value: number) => value.toFixed(2),
@@ -85,18 +85,18 @@ const columns = [
 const _ServicesTable = (props: ServicesTableProps) => {
 	const [initialDataFetch, setDataFetched] = useState(false);
 	const [errorObject, setErrorObject] = useState({
-		message: "",
+		message: '',
 		isError: false,
 	});
 	const isEmptyServiceList =
 		!initialDataFetch && props.servicesList.length === 0;
 	const refetchFromBackend = isEmptyServiceList || errorObject.isError;
 	const [skipOnboarding, setSkipOnboarding] = useState(
-		localStorage.getItem(SKIP_ONBOARDING) === "true",
+		localStorage.getItem(SKIP_ONBOARDING) === 'true',
 	);
 
 	const onContinueClick = () => {
-		localStorage.setItem(SKIP_ONBOARDING, "true");
+		localStorage.setItem(SKIP_ONBOARDING, 'true');
 		setSkipOnboarding(true);
 	};
 
@@ -105,7 +105,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 			.getServicesList(props.globalTime)
 			.then(() => {
 				setDataFetched(true);
-				setErrorObject({ message: "", isError: false });
+				setErrorObject({ message: '', isError: false });
 			})
 			.catch((e: string) => {
 				setErrorObject({ message: e, isError: true });
@@ -134,7 +134,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 	if (refetchFromBackend && !skipOnboarding) {
 		return (
 			<CustomModal
-				title={"Setup instrumentation"}
+				title={'Setup instrumentation'}
 				isModalVisible={true}
 				closable={false}
 				setIsModalVisible={() => {}}
@@ -153,16 +153,16 @@ const _ServicesTable = (props: ServicesTableProps) => {
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 						allowFullScreen
 					></iframe>
-					<div style={{ margin: "20px 0" }}>
+					<div style={{ margin: '20px 0' }}>
 						<Spin />
 					</div>
 					<div>
 						No instrumentation data.
 						<br />
-						Please instrument your application as mentioned{" "}
+						Please instrument your application as mentioned{' '}
 						<a
-							href={"https://signoz.io/docs/instrumentation/overview"}
-							target={"_blank"}
+							href={'https://signoz.io/docs/instrumentation/overview'}
+							target={'_blank'} rel="noreferrer"
 						>
 							here
 						</a>
@@ -182,20 +182,20 @@ const _ServicesTable = (props: ServicesTableProps) => {
 
 			{props.servicesList[0] !== undefined &&
 				props.servicesList[0].numCalls === 0 && (
-					<Space
-						style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
-					>
+				<Space
+					style={{ width: '100%', margin: '40px 0', justifyContent: 'center' }}
+				>
 						No applications present. Please add instrumentation (follow this
-						<a
-							href={"https://signoz.io/docs/instrumentation/overview"}
-							target={"_blank"}
-							style={{ marginLeft: 3 }}
-						>
+					<a
+						href={'https://signoz.io/docs/instrumentation/overview'}
+						target={'_blank'}
+						style={{ marginLeft: 3 }} rel="noreferrer"
+					>
 							guide
-						</a>
+					</a>
 						)
-					</Space>
-				)}
+				</Space>
+			)}
 		</Wrapper>
 	);
 };

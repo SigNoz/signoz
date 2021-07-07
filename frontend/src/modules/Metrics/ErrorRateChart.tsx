@@ -1,12 +1,12 @@
-import React from "react";
-import { Line as ChartJSLine } from "react-chartjs-2";
-import { ChartOptions } from "chart.js";
-import { withRouter } from "react-router";
-import { RouteComponentProps } from "react-router-dom";
-import styled from "styled-components";
-import ROUTES from "Src/constants/routes";
+import React from 'react';
+import { Line as ChartJSLine } from 'react-chartjs-2';
+import { ChartOptions } from 'chart.js';
+import { withRouter } from 'react-router';
+import { RouteComponentProps } from 'react-router-dom';
+import styled from 'styled-components';
+import ROUTES from 'Src/constants/routes';
 
-import { metricItem } from "../../store/actions/MetricsActions";
+import { metricItem } from '../../store/actions/MetricsActions';
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -33,7 +33,7 @@ const PopUpElements = styled.p`
 `;
 
 // PNOTE - Check if this should be the case
-const theme = "dark";
+const theme = 'dark';
 
 interface ErrorRateChartProps extends RouteComponentProps<any> {
 	data: metricItem[];
@@ -60,7 +60,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 	};
 
 	onClickhandler = async (e: any, event: any) => {
-		var firstPoint;
+		let firstPoint;
 		if (this.chartRef) {
 			firstPoint = this.chartRef.current.chartInstance.getElementAtEvent(e)[0];
 		}
@@ -94,22 +94,22 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 
 		title: {
 			display: true,
-			text: "",
+			text: '',
 			fontSize: 20,
-			position: "top",
+			position: 'top',
 			padding: 2,
-			fontFamily: "Arial",
-			fontStyle: "regular",
-			fontColor: theme === "dark" ? "rgb(200, 200, 200)" : "rgb(20, 20, 20)",
+			fontFamily: 'Arial',
+			fontStyle: 'regular',
+			fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
 		},
 
 		legend: {
 			display: true,
-			position: "bottom",
-			align: "center",
+			position: 'bottom',
+			align: 'center',
 
 			labels: {
-				fontColor: theme === "dark" ? "rgb(200, 200, 200)" : "rgb(20, 20, 20)",
+				fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
 				fontSize: 10,
 				boxWidth: 10,
 				usePointStyle: true,
@@ -117,20 +117,20 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		},
 
 		tooltips: {
-			mode: "label",
+			mode: 'label',
 			bodyFontSize: 12,
 			titleFontSize: 12,
 
 			callbacks: {
 				label: function (tooltipItem, data) {
-					if (typeof tooltipItem.yLabel === "number") {
+					if (typeof tooltipItem.yLabel === 'number') {
 						return (
 							data.datasets![tooltipItem.datasetIndex!].label +
-							" : " +
+							' : ' +
 							tooltipItem.yLabel.toFixed(2)
 						);
 					} else {
-						return "";
+						return '';
 					}
 				},
 			},
@@ -156,18 +156,18 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 					gridLines: {
 						// You can change the color, the dash effect, the main axe color, etc.
 						borderDash: [1, 4],
-						color: "#D3D3D3",
+						color: '#D3D3D3',
 						lineWidth: 0.25,
 					},
 				},
 			],
 			xAxes: [
 				{
-					type: "time",
+					type: 'time',
 					// time: {
 					//     unit: 'second'
 					// },
-					distribution: "linear",
+					distribution: 'linear',
 					ticks: {
 						beginAtZero: false,
 						fontSize: 10,
@@ -198,18 +198,18 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		const ndata = this.props.data;
 
 		const data_chartJS = (canvas: any) => {
-			const ctx = canvas.getContext("2d");
+			const ctx = canvas.getContext('2d');
 			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			gradient.addColorStop(0, "rgba(250,174,50,1)");
-			gradient.addColorStop(1, "rgba(250,174,50,1)");
+			gradient.addColorStop(0, 'rgba(250,174,50,1)');
+			gradient.addColorStop(1, 'rgba(250,174,50,1)');
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)), // converting from nano second to mili second
 				datasets: [
 					{
-						label: "Error Percentage (%)",
+						label: 'Error Percentage (%)',
 						data: ndata.map((s) => s.errorRate),
 						pointRadius: 0.5,
-						borderColor: "rgba(227, 74, 51,1)", // Can also add transparency in border color
+						borderColor: 'rgba(227, 74, 51,1)', // Can also add transparency in border color
 						borderWidth: 2,
 					},
 				],
@@ -219,7 +219,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
-				<div style={{ textAlign: "center" }}>Error Percentage (%)</div>
+				<div style={{ textAlign: 'center' }}>Error Percentage (%)</div>
 				<ChartJSLine
 					ref={this.chartRef}
 					data={data_chartJS}

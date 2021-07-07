@@ -1,10 +1,10 @@
-import React from "react";
-import { Line as ChartJSLine } from "react-chartjs-2";
-import { ChartOptions } from "chart.js";
-import { withRouter } from "react-router";
-import { RouteComponentProps } from "react-router-dom";
-import styled from "styled-components";
-import { metricItem } from "../../store/actions/MetricsActions";
+import React from 'react';
+import { Line as ChartJSLine } from 'react-chartjs-2';
+import { ChartOptions } from 'chart.js';
+import { withRouter } from 'react-router';
+import { RouteComponentProps } from 'react-router-dom';
+import styled from 'styled-components';
+import { metricItem } from '../../store/actions/MetricsActions';
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -30,7 +30,7 @@ const PopUpElements = styled.p`
 	}
 `;
 
-const theme = "dark";
+const theme = 'dark';
 
 interface LatencyLineChartProps extends RouteComponentProps<any> {
 	data: metricItem[];
@@ -52,7 +52,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 	};
 
 	onClickhandler = async (e: any, event: any) => {
-		var firstPoint;
+		let firstPoint;
 		if (this.chartRef) {
 			firstPoint = this.chartRef.current.chartInstance.getElementAtEvent(e)[0];
 		}
@@ -81,22 +81,22 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 
 		title: {
 			display: true,
-			text: "",
+			text: '',
 			fontSize: 20,
-			position: "top",
+			position: 'top',
 			padding: 8,
-			fontFamily: "Arial",
-			fontStyle: "regular",
-			fontColor: theme === "dark" ? "rgb(200, 200, 200)" : "rgb(20, 20, 20)",
+			fontFamily: 'Arial',
+			fontStyle: 'regular',
+			fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
 		},
 
 		legend: {
 			display: true,
-			position: "bottom",
-			align: "center",
+			position: 'bottom',
+			align: 'center',
 
 			labels: {
-				fontColor: theme === "dark" ? "rgb(200, 200, 200)" : "rgb(20, 20, 20)",
+				fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
 				fontSize: 10,
 				boxWidth: 10,
 				usePointStyle: true,
@@ -104,20 +104,20 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		},
 
 		tooltips: {
-			mode: "label",
+			mode: 'label',
 			bodyFontSize: 12,
 			titleFontSize: 12,
 
 			callbacks: {
 				label: function (tooltipItem, data) {
-					if (typeof tooltipItem.yLabel === "number") {
+					if (typeof tooltipItem.yLabel === 'number') {
 						return (
 							data.datasets![tooltipItem.datasetIndex!].label +
-							" : " +
+							' : ' +
 							tooltipItem.yLabel.toFixed(2)
 						);
 					} else {
-						return "";
+						return '';
 					}
 				},
 			},
@@ -137,15 +137,15 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 					gridLines: {
 						// You can change the color, the dash effect, the main axe color, etc.
 						borderDash: [1, 4],
-						color: "#D3D3D3",
+						color: '#D3D3D3',
 						lineWidth: 0.25,
 					},
 				},
 			],
 			xAxes: [
 				{
-					type: "time",
-					distribution: "linear",
+					type: 'time',
+					distribution: 'linear',
 					//'linear': data are spread according to their time (distances can vary)
 					// From https://www.chartjs.org/docs/latest/axes/cartesian/time.html
 					ticks: {
@@ -183,32 +183,32 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		const ndata = this.props.data;
 
 		const data_chartJS = (canvas: any) => {
-			const ctx = canvas.getContext("2d");
+			const ctx = canvas.getContext('2d');
 			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			gradient.addColorStop(0, "rgba(250,174,50,1)");
-			gradient.addColorStop(1, "rgba(250,174,50,1)");
+			gradient.addColorStop(0, 'rgba(250,174,50,1)');
+			gradient.addColorStop(1, 'rgba(250,174,50,1)');
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)),
 				datasets: [
 					{
-						label: "p99 Latency",
+						label: 'p99 Latency',
 						data: ndata.map((s) => s.p99 / 1000000), //converting latency from nano sec to ms
 						pointRadius: 0.5,
-						borderColor: "rgba(250,174,50,1)", // Can also add transparency in border color
+						borderColor: 'rgba(250,174,50,1)', // Can also add transparency in border color
 						borderWidth: 2,
 					},
 					{
-						label: "p95 Latency",
+						label: 'p95 Latency',
 						data: ndata.map((s) => s.p95 / 1000000), //converting latency from nano sec to ms
 						pointRadius: 0.5,
-						borderColor: "rgba(227, 74, 51, 1.0)",
+						borderColor: 'rgba(227, 74, 51, 1.0)',
 						borderWidth: 2,
 					},
 					{
-						label: "p50 Latency",
+						label: 'p50 Latency',
 						data: ndata.map((s) => s.p50 / 1000000), //converting latency from nano sec to ms
 						pointRadius: 0.5,
-						borderColor: "rgba(57, 255, 20, 1.0)",
+						borderColor: 'rgba(57, 255, 20, 1.0)',
 						borderWidth: 2,
 					},
 				],
@@ -219,7 +219,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 			<div>
 				{this.GraphTracePopUp()}
 				<div>
-					<div style={{ textAlign: "center" }}>Application latency in ms</div>
+					<div style={{ textAlign: 'center' }}>Application latency in ms</div>
 					<ChartJSLine
 						ref={this.chartRef}
 						data={data_chartJS}

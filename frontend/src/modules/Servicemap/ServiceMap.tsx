@@ -1,20 +1,20 @@
-import React, { useEffect, useRef } from "react";
-import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router-dom";
+import React, { useEffect, useRef } from 'react';
+import { connect } from 'react-redux';
+import { RouteComponentProps } from 'react-router-dom';
 import {
 	GlobalTime,
 	serviceMapStore,
 	getServiceMapItems,
 	getDetailedServiceMapItems,
-} from "Src/store/actions";
-import { Spin } from "antd";
-import styled from "styled-components";
-import { StoreState } from "../../store/reducers";
+} from 'Src/store/actions';
+import { Spin } from 'antd';
+import styled from 'styled-components';
+import { StoreState } from '../../store/reducers';
 
-import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
-import SelectService from "./SelectService";
-import { ForceGraph2D } from "react-force-graph";
-import { useRoute } from "../RouteProvider";
+import { getZoomPx, getGraphData, getTooltip, transformLabel } from './utils';
+import SelectService from './SelectService';
+import { ForceGraph2D } from 'react-force-graph';
+import { useRoute } from '../RouteProvider';
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {
@@ -75,7 +75,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}, [globalTime]);
 
 	useEffect(() => {
-		fgRef.current && fgRef.current.d3Force("charge").strength(-400);
+		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
 	});
 	if (!serviceMap.items.length || !serviceMap.services.length) {
 		return <Spin />;
@@ -116,13 +116,13 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.beginPath();
 					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
 					ctx.fill();
-					ctx.textAlign = "center";
-					ctx.textBaseline = "middle";
-					ctx.fillStyle = "#646464";
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					ctx.fillStyle = '#646464';
 					ctx.fillText(label, node.x, node.y);
 				}}
 				onNodeClick={(node) => {
-					const tooltip = document.querySelector(".graph-tooltip");
+					const tooltip = document.querySelector('.graph-tooltip');
 					if (tooltip && node) {
 						tooltip.innerHTML = getTooltip(node);
 					}

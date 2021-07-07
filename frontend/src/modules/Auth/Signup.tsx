@@ -1,32 +1,32 @@
-import React, { useState } from "react";
-import { Row, Space, Button, Input } from "antd";
-import api, { apiV1 } from "../../api";
-import ROUTES from "Src/constants/routes";
-import { IS_LOGGED_IN } from "Src/constants/auth";
+import React, { useState } from 'react';
+import { Row, Space, Button, Input } from 'antd';
+import api, { apiV1 } from '../../api';
+import ROUTES from 'Src/constants/routes';
+import { IS_LOGGED_IN } from 'Src/constants/auth';
 
-import { withRouter } from "react-router";
-import { RouteComponentProps } from "react-router-dom";
+import { withRouter } from 'react-router';
+import { RouteComponentProps } from 'react-router-dom';
 
-interface SignUpProps extends RouteComponentProps<any> {}
+type SignUpProps = RouteComponentProps<any>
 
 const Signup = (props: SignUpProps) => {
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
-		firstName: { value: "" },
-		companyName: { value: "" },
-		email: { value: "" },
-		password: { value: "", valid: true },
+		firstName: { value: '' },
+		companyName: { value: '' },
+		email: { value: '' },
+		password: { value: '', valid: true },
 		emailOptIn: { value: true },
 	});
 
-	const updateForm = (name: any, target: any, valueAttr = "value") => {
+	const updateForm = (name: any, target: any, valueAttr = 'value') => {
 		/* Validate password (if applicable) */
-		if (name === "firstName") {
+		if (name === 'firstName') {
 			setFormState({
 				...formState,
 				firstName: { ...formState.firstName, value: target[valueAttr] },
 			});
-		} else if (name === "email") {
+		} else if (name === 'email') {
 			setFormState({
 				...formState,
 				email: { ...formState.email, value: target[valueAttr] },
@@ -44,14 +44,14 @@ const Signup = (props: SignUpProps) => {
 			email: formState.email,
 		};
 
-		let texttolog = JSON.stringify(payload);
+		const texttolog = JSON.stringify(payload);
 
-		api.post(apiV1 + "/user?email=" + texttolog).then((res) => {
+		api.post(apiV1 + '/user?email=' + texttolog).then((res) => {
 			console.log(res);
 			console.log(res.data);
 		});
 
-		localStorage.setItem(IS_LOGGED_IN, "yes");
+		localStorage.setItem(IS_LOGGED_IN, 'yes');
 		props.history.push(ROUTES.APPLICATION);
 	};
 
@@ -60,15 +60,15 @@ const Signup = (props: SignUpProps) => {
 			<Space
 				direction="vertical"
 				className="space-top"
-				style={{ width: "100%", paddingLeft: 32 }}
+				style={{ width: '100%', paddingLeft: 32 }}
 			>
 				<h1
 					className="title"
 					style={{
 						marginBottom: 0,
 						marginTop: 40,
-						display: "flex",
-						alignItems: "center",
+						display: 'flex',
+						alignItems: 'center',
 					}}
 				>
 					{/* <img src={"Signoz-white.svg"} alt="" style={{ height: 60 }} /> */}
@@ -78,25 +78,25 @@ const Signup = (props: SignUpProps) => {
 					Monitor your applications. Find what is causing issues.
 				</div>
 			</Space>
-			<Row style={{ display: "flex", justifyContent: "center" }}>
+			<Row style={{ display: 'flex', justifyContent: 'center' }}>
 				<div
-					style={{ display: "flex", alignItems: "center", flexDirection: "column" }}
+					style={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}
 				>
 					<img
-						src={"signoz.svg"}
-						style={{ maxHeight: "100%", maxWidth: 300, marginTop: 64 }}
+						src={'signoz.svg'}
+						style={{ maxHeight: '100%', maxWidth: 300, marginTop: 64 }}
 						alt=""
 						className="main-img"
 					/>
 				</div>
 				<div
 					style={{
-						display: "flex",
-						justifyContent: "flex-start",
-						margin: "0 32px",
-						flexDirection: "column",
+						display: 'flex',
+						justifyContent: 'flex-start',
+						margin: '0 32px',
+						flexDirection: 'column',
 						paddingTop: 32,
-						maxWidth: "32rem",
+						maxWidth: '32rem',
 					}}
 				>
 					<form onSubmit={handleSubmit}>
@@ -106,7 +106,7 @@ const Signup = (props: SignUpProps) => {
 								placeholder="mike@netflix.com"
 								type="email"
 								value={formState.email.value}
-								onChange={(e) => updateForm("email", e.target)}
+								onChange={(e) => updateForm('email', e.target)}
 								required
 								// disabled={accountLoading}
 								id="signupEmail"
@@ -119,7 +119,7 @@ const Signup = (props: SignUpProps) => {
 								placeholder="Mike"
 								autoFocus
 								value={formState.firstName.value}
-								onChange={(e) => updateForm("firstName", e.target)}
+								onChange={(e) => updateForm('firstName', e.target)}
 								required
 								// disabled={accountLoading}
 								id="signupFirstName"

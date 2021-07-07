@@ -1,11 +1,11 @@
-import React, { Suspense } from "react";
-import { Spin } from "antd";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import ROUTES from "Src/constants/routes";
-import { IS_LOGGED_IN } from "Src/constants/auth";
-import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
+import React, { Suspense } from 'react';
+import { Spin } from 'antd';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
+import ROUTES from 'Src/constants/routes';
+import { IS_LOGGED_IN } from 'Src/constants/auth';
+import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
 
-import BaseLayout from "./BaseLayout";
+import BaseLayout from './BaseLayout';
 import {
 	ServiceMetrics,
 	ServiceMap,
@@ -16,20 +16,20 @@ import {
 	Signup,
 	SettingsPage,
 	IntstrumentationPage,
-} from "Src/pages";
-import { RouteProvider } from "./RouteProvider";
+} from 'Src/pages';
+import { RouteProvider } from './RouteProvider';
 
 const App = () => {
 	const { status } = useThemeSwitcher();
 
-	if (status === "loading") {
+	if (status === 'loading') {
 		return null;
 	}
 
 	return (
 		<BrowserRouter>
 			<Suspense fallback={<Spin size="large" />}>
-				<Route path={"/"}>
+				<Route path={'/'}>
 					<Switch>
 						<RouteProvider>
 							<BaseLayout>
@@ -59,7 +59,7 @@ const App = () => {
 										path="/"
 										exact
 										render={() => {
-											return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
+											return localStorage.getItem(IS_LOGGED_IN) === 'yes' ? (
 												<Redirect to={ROUTES.APPLICATION} />
 											) : (
 												<Redirect to={ROUTES.SIGN_UP} />

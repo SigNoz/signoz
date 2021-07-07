@@ -6,8 +6,8 @@ module.exports = {
 	extends: [
 		'eslint:recommended',
 		'plugin:react/recommended',
-		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/eslint-recommended",
+		'plugin:@typescript-eslint/recommended',
+		'plugin:@typescript-eslint/eslint-recommended',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -22,14 +22,14 @@ module.exports = {
 		'@typescript-eslint'
 	],
 	rules: {
-		"react/jsx-filename-extension": [
-			"error",
+		'react/jsx-filename-extension': [
+			'error',
 			{
-				extensions: [".tsx"],
+				extensions: ['.tsx', '.js', '.jsx'],
 			},
 		],
-		"react/prop-types": "off",
-		"@typescript-eslint/explicit-function-return-type": "error",
+		'react/prop-types': 'off',
+		'@typescript-eslint/explicit-function-return-type': 'error',
 		'indent': [
 			'error',
 			'tab'

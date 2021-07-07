@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Bar } from "react-chartjs-2";
-import { Card, Select, Space } from "antd";
-import { connect } from "react-redux";
+import React, { useEffect, useState } from 'react';
+import { Bar } from 'react-chartjs-2';
+import { Card, Select, Space } from 'antd';
+import { connect } from 'react-redux';
 
 import {
 	getServicesList,
 	getUsageData,
 	GlobalTime,
 	usageDataItem,
-} from "../../store/actions";
-import { StoreState } from "../../store/reducers";
-import moment from "moment";
-import { isOnboardingSkipped } from "../../utils/app";
-import { useRoute } from "../RouteProvider";
-import { servicesListItem } from "../../store/actions/MetricsActions";
+} from '../../store/actions';
+import { StoreState } from '../../store/reducers';
+import moment from 'moment';
+import { isOnboardingSkipped } from '../../utils/app';
+import { useRoute } from '../RouteProvider';
+import { servicesListItem } from '../../store/actions/MetricsActions';
 const { Option } = Select;
 
 interface UsageExplorerProps {
@@ -25,28 +25,28 @@ interface UsageExplorerProps {
 	totalCount: number;
 }
 const timeDaysOptions = [
-	{ value: 30, label: "Last 30 Days" },
-	{ value: 7, label: "Last week" },
-	{ value: 1, label: "Last day" },
+	{ value: 30, label: 'Last 30 Days' },
+	{ value: 7, label: 'Last week' },
+	{ value: 1, label: 'Last day' },
 ];
 
 const interval = [
 	{
 		value: 604800,
 		chartDivideMultiplier: 1,
-		label: "Weekly",
+		label: 'Weekly',
 		applicableOn: [timeDaysOptions[0]],
 	},
 	{
 		value: 86400,
 		chartDivideMultiplier: 30,
-		label: "Daily",
+		label: 'Daily',
 		applicableOn: [timeDaysOptions[0], timeDaysOptions[1]],
 	},
 	{
 		value: 3600,
 		chartDivideMultiplier: 10,
-		label: "Hours",
+		label: 'Hours',
 		applicableOn: [timeDaysOptions[2], timeDaysOptions[1]],
 	},
 ];
@@ -54,7 +54,7 @@ const interval = [
 const _UsageExplorer = (props: UsageExplorerProps) => {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
-	const [selectedService, setSelectedService] = useState<string>("");
+	const [selectedService, setSelectedService] = useState<string>('');
 
 	const { state } = useRoute();
 
@@ -84,14 +84,14 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 
 	const data = {
 		labels: props.usageData.map((s) =>
-			moment(s.timestamp / 1000000).format("MMM Do h a"),
+			moment(s.timestamp / 1000000).format('MMM Do h a'),
 		),
 		datasets: [
 			{
-				label: "Span Count",
+				label: 'Span Count',
 				data: props.usageData.map((s) => s.count),
-				backgroundColor: "rgba(255, 99, 132, 0.2)",
-				borderColor: "rgba(255, 99, 132, 1)",
+				backgroundColor: 'rgba(255, 99, 132, 0.2)',
+				borderColor: 'rgba(255, 99, 132, 1)',
 				borderWidth: 2,
 			},
 		],
@@ -153,9 +153,9 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 						onSelect={(value) => {
 							setSelectedService(value);
 						}}
-						value={selectedService || "All Services"}
+						value={selectedService || 'All Services'}
 					>
-						<Option value={""}>All Services</Option>
+						<Option value={''}>All Services</Option>
 						{props.servicesList.map((service) => (
 							<Option value={service.serviceName}>{service.serviceName}</Option>
 						))}
@@ -165,30 +165,30 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 				{isOnboardingSkipped() && props.totalCount === 0 ? (
 					<Space
 						style={{
-							width: "100%",
-							margin: "40px 0",
+							width: '100%',
+							margin: '40px 0',
 							marginLeft: 20,
-							justifyContent: "center",
+							justifyContent: 'center',
 						}}
 					>
 						No spans found. Please add instrumentation (follow this
 						<a
-							href={"https://signoz.io/docs/instrumentation/overview"}
-							target={"_blank"}
-							style={{ marginLeft: 3 }}
+							href={'https://signoz.io/docs/instrumentation/overview'}
+							target={'_blank'}
+							style={{ marginLeft: 3 }} rel="noreferrer"
 						>
 							guide
 						</a>
 						)
 					</Space>
 				) : (
-					<Space style={{ display: "block", marginLeft: 20, width: 200 }}>
+					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
 						{`Total count is ${props.totalCount}`}
 					</Space>
 				)}
 			</Space>
 
-			<Card style={{ width: "90%", margin: 20 }} bodyStyle={{ padding: 20 }}>
+			<Card style={{ width: '90%', margin: 20 }} bodyStyle={{ padding: 20 }}>
 				<Bar data={data} options={options} />
 			</Card>
 		</React.Fragment>
@@ -204,7 +204,7 @@ const mapStateToProps = (
 	usageData: usageDataItem[];
 } => {
 	let totalCount = 0;
-	for (let item of state.usageDate) {
+	for (const item of state.usageDate) {
 		totalCount = totalCount + item.count;
 	}
 	return {

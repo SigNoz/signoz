@@ -1,5 +1,5 @@
-import React, { useContext, createContext, ReactNode, Dispatch } from "react";
-import ROUTES from "Src/constants/routes";
+import React, { useContext, createContext, ReactNode, Dispatch } from 'react';
+import ROUTES from 'Src/constants/routes';
 
 type State = {
 	[key: string]: {
@@ -9,7 +9,7 @@ type State = {
 };
 
 enum ActionTypes {
-	UPDATE_IS_LOADED = "ROUTE_IS_LOADED",
+	UPDATE_IS_LOADED = 'ROUTE_IS_LOADED',
 }
 
 type Action = {
@@ -76,7 +76,7 @@ const RouteProvider: React.FC<RouteProviderProps> = ({ children }) => {
 const useRoute = (): ContextType => {
 	const context = useContext(RouteContext);
 	if (context === undefined) {
-		throw new Error("useRoute must be used within a RouteProvider");
+		throw new Error('useRoute must be used within a RouteProvider');
 	}
 	return context as ContextType;
 };
