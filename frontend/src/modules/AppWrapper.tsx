@@ -15,65 +15,55 @@ import {
 	ServicesTable,
 	Signup,
 	SettingsPage,
-	IntstrumentationPage,
+	InstrumentationPage,
 } from "Src/pages";
 import { RouteProvider } from "./RouteProvider";
+import NotFound from "Src/components/NotFound";
 
 const App = () => {
 	const { status } = useThemeSwitcher();
 
 	if (status === "loading") {
-		return null;
+		return <Spin size="large" />;
 	}
 
 	return (
-		<BrowserRouter>
-			<Suspense fallback={<Spin size="large" />}>
-				<Route path={"/"}>
-					<Switch>
-						<RouteProvider>
-							<BaseLayout>
-								<Suspense fallback={<Spin size="large" />}>
-									<Route path={ROUTES.SIGN_UP} exact component={Signup} />
-									<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
-									<Route
-										path={ROUTES.SERVICE_METRICS}
-										exact
-										component={ServiceMetrics}
-									/>
-									<Route path={ROUTES.SERVICE_MAP} exact component={ServiceMap} />
-									<Route path={ROUTES.TRACES} exact component={TraceDetail} />
-									<Route path={ROUTES.TRACE_GRAPH} exact component={TraceGraph} />
-									<Route path={ROUTES.SETTINGS} exact component={SettingsPage} />
-									<Route
-										path={ROUTES.INSTRUMENTATION}
-										exact
-										component={IntstrumentationPage}
-									/>
-									<Route
-										path={ROUTES.USAGE_EXPLORER}
-										exactexact
-										component={UsageExplorer}
-									/>
-									<Route
-										path="/"
-										exact
-										render={() => {
-											return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
-												<Redirect to={ROUTES.APPLICATION} />
-											) : (
-												<Redirect to={ROUTES.SIGN_UP} />
-											);
-										}}
-									/>
-								</Suspense>
+		<Suspense fallback={<Spin size="large" />}>
+			<BrowserRouter>
+				<RouteProvider>
+					<BaseLayout>
+						<Switch>
+							<Route path={ROUTES.SIGN_UP} exact component={Signup} />
+							<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
+							<Route path={ROUTES.SERVICE_METRICS} exact component={ServiceMetrics} />
+							<Route path={ROUTES.SERVICE_MAP} exact component={ServiceMap} />
+							<Route path={ROUTES.TRACES} exact component={TraceDetail} />
+							<Route path={ROUTES.TRACE_GRAPH} exact component={TraceGraph} />
+							<Route path={ROUTES.SETTINGS} exact component={SettingsPage} />
+							<Route
+								path={ROUTES.INSTRUMENTATION}
+								exact
+								component={InstrumentationPage}
+							/>
+							<Route path={ROUTES.USAGE_EXPLORER} exact component={UsageExplorer} />
+							<Route
+								path="/"
+								exact
+								render={() => {
+									return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
+										<Redirect to={ROUTES.APPLICATION} />
+									) : (
+										<Redirect to={ROUTES.SIGN_UP} />
+									);
+								}}
+							/>
 
-							</BaseLayout>
-						</RouteProvider>
-					</Switch>
-				</Route>
-			</Suspense>
-		</BrowserRouter>
+							<Route path="*" exact component={NotFound} />
+						</Switch>
+					</BaseLayout>
+				</RouteProvider>
+			</BrowserRouter>
+		</Suspense>
 	);
 };
 
