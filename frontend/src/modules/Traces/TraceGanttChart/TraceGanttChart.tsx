@@ -57,7 +57,7 @@ const TraceGanttChart = ({
 			}
 			setTabsContainerWidth(tabsContainer?.offsetWidth);
 		}
-		// handleScroll(selectedSpan?.id);
+		handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
 
 	useEffect(() => {
@@ -229,9 +229,9 @@ const TraceGanttChart = ({
 	};
 
 	const handleResetFocus = () => {
-		const rows = document.querySelectorAll('#collapsable table tbody tr');
+		const rows = document.querySelectorAll("#collapsable table tbody tr");
 		Array.from(rows).map((row) => {
-			row.classList.remove('hide');
+			row.classList.remove("hide");
 		});
 
 		resetZoom(true);
@@ -239,15 +239,13 @@ const TraceGanttChart = ({
 
 	const handleScroll = (id: string): void => {
 		if (!isEmpty(id)) {
-			const rows = document.querySelectorAll<HTMLElement>('#collapsable table tbody tr');
-			const table = document.querySelectorAll<HTMLElement>('#collapsable .ant-table-body');
-			Array.from(rows).map((row) => {
-				const attribKey = row.getAttribute('data-row-key');
-				if (id === attribKey) {
-					const scrollValue = row.offsetTop;
-					table[0].scrollTo(0, scrollValue);
-				}
-			});
+			const table = document.querySelectorAll<HTMLElement>(
+				"#collapsable .ant-table-body",
+			);
+			const selectedRow = document.querySelectorAll<HTMLElement>(
+				`[data-row-key='${id}']`,
+			);
+			table[0].scrollTo(0, selectedRow[0]?.offsetTop);
 		}
 	};
 
