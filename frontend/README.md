@@ -23,7 +23,7 @@ docker-compose up
 ```
 
 ## Without Docker
-Follow the steps below 
+Follow the steps below
 
 1. ```git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend```
 1. change baseURL to ```<test environment URL>``` in file ```src/constants/env.ts```
@@ -31,7 +31,20 @@ Follow the steps below
 1. ```yarn install```
 1. ```yarn dev```
 
-```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>``` 
+```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>```
+
+### To Avoid Adding a file to git or ignore changes
+Add the file to skip tree
+command
+```
+git update-index --skip-worktree <file path>
+```
+
+to remove from skiptree
+```
+git update-index --no-skip-worktree <file_name>
+```
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
