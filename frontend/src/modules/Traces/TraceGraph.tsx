@@ -41,9 +41,9 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	let location = useLocation<LocationProps>();
 	const spanId = location?.state?.spanId;
 	const params = useParams<{ id?: string }>();
-	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
-	const [selectedSpan, setSelectedSpan] = useState({});
-	const [clickedSpan, setClickedSpan] = useState(null);
+	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree | {}>({});
+	const [selectedSpan, setSelectedSpan] = useState<pushDStree | {}>({});
+	const [clickedSpan, setClickedSpan] = useState<pushDStree | {}>({});
 	const [resetZoom, setResetZoom] = useState(false);
 	const [sortedTreeData, setSortedTreeData] = useState<pushDStree[]>(emptyTree);
 	const [globalEndTime, setGlobalEndTime] = useState(0);
@@ -75,8 +75,6 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	};
 
 	const tree = spanToTreeUtil(props.traceItem[0].events);
-
-	console.log("tree", tree);
 
 	useEffect(() => {
 		//sets span width based on value - which is mapped to duration
@@ -131,10 +129,10 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const onClick = (z: any) => {
 		setClickedSpanTags(z.data);
 		setClickedSpan(z.data);
-		setSelectedSpan([]);
+		setSelectedSpan({});
 	};
 
-	const setSpanTagsInfo = (z: any) => {
+	const setSpanTagsInfo = (z: any): void => {
 		setClickedSpanTags(z.data);
 	};
 

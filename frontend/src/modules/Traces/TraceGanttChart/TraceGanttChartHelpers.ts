@@ -91,17 +91,17 @@ export const getParentKeys = (
 	return arr;
 };
 
-export const emptyTree: pushDStree[] = [
-	{
-		id: "empty",
-		name: "default",
-		value: 0,
-		time: 0,
-		startTime: 0,
-		tags: [],
-		children: [],
-	},
-];
+export const emptyTreeObj: pushDStree = {
+	id: "empty",
+	name: "default",
+	value: 0,
+	time: 0,
+	startTime: 0,
+	tags: [],
+	children: [],
+};
+
+export const emptyTree: pushDStree[] = [{ ...emptyTreeObj }];
 
 export const extendedEmptyObj: extendedPushDSTree = {
 	id: "empty",
