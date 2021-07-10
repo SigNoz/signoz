@@ -239,13 +239,10 @@ const TraceGanttChart = ({
 
 	const handleScroll = (id: string): void => {
 		if (!isEmpty(id)) {
-			const table = document.querySelectorAll<HTMLElement>(
-				"#collapsable .ant-table-body",
-			);
 			const selectedRow = document.querySelectorAll<HTMLElement>(
 				`[data-row-key='${id}']`,
 			);
-			table[0].scrollTo(0, selectedRow[0]?.offsetTop);
+			selectedRow?.[0]?.scrollIntoView();
 		}
 	};
 
