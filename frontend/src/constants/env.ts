@@ -1,3 +1,3 @@
 export const ENVIRONMENT = {
-	baseURL: process.env.REACT_APP_BASE_URL,
+	baseURL: process.env.FRONTEND_API_ENDPOINT,
 };
