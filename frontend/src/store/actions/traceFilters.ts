@@ -17,6 +17,7 @@ export interface TraceFilters {
 	service?: string;
 	latency?: LatencyValue;
 	operation?: string;
+	kind?: string;
 }
 
 //define interface for action. Action creator always returns object of this type
@@ -26,6 +27,7 @@ export interface updateTraceFiltersAction {
 }
 
 export const updateTraceFilters = (traceFilters: TraceFilters) => {
+	console.log(traceFilters);
 	return {
 		type: ActionTypes.updateTraceFilters,
 		payload: traceFilters,
