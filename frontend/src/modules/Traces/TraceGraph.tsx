@@ -62,7 +62,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 				let endTime = 0;
 				traverseTreeData(treeData, (item) => {
 					item.children = sortBy(item.children, (i) => i.startTime);
-					item.children.map((child) => {
+					item.children.forEach((child) => {
 						child.parent = item;
 					});
 					endTime = getEndTime(item);
@@ -82,17 +82,16 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	}, []);
 
 	useEffect(() => {
-		if (props.traceItem) {
-			let sortedData = getSortedData([tree]);
-			setSortedTreeData(sortedData);
-			getSpanInfo(sortedData, spanId);
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select("#chart")
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
-		}
+		if (!props.traceItem) return;
+		let sortedData = getSortedData([tree]);
+		setSortedTreeData(sortedData);
+		getSpanInfo(sortedData, spanId);
+		// This is causing element to change ref. Can use both useRef or this approach.
+		d3
+			.select("#chart")
+			.datum(tree)
+			.call(chart)
+			.sort((item) => item.startTime);
 	}, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
@@ -108,15 +107,14 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	}, [sortedTreeData]);
 
 	useEffect(() => {
-		if (resetZoom) {
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select("#chart")
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
-			setResetZoom(false);
-		}
+		if (!resetZoom) return;
+		// This is causing element to change ref. Can use both useRef or this approach.
+		d3
+			.select("#chart")
+			.datum(tree)
+			.call(chart)
+			.sort((item) => item.startTime);
+		setResetZoom(false);
 	}, [resetZoom]);
 
 	const tip = d3Tip
@@ -142,7 +140,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			return;
 		}
 		if (!isEmpty(data) && data?.[0]?.id !== "empty") {
-			Array.from(data).map((item) => {
+			data.forEach((item) => {
 				if (item.id === spanId) {
 					setSelectedSpan(item);
 					setClickedSpanTags(item);
