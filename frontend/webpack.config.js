@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const dotenv = require("dotenv");
 const webpack = require("webpack");
 
-const envVars = dotenv.config();
+dotenv.config();
 
 console.log(resolve(__dirname, "./src/"));
 
@@ -62,7 +62,7 @@ module.exports = {
 	plugins: [
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
 		new webpack.DefinePlugin({
-			"process.env": JSON.stringify(envVars.parsed),
+			"process.env": JSON.stringify(process.env),
 		}),
 	],
 	performance: {

@@ -6,7 +6,7 @@ const CompressionPlugin = require("compression-webpack-plugin");
 const webpack = require("webpack");
 const dotenv = require("dotenv");
 
-const envVars = dotenv.config();
+dotenv.config();
 
 module.exports = {
 	mode: "production",
@@ -57,7 +57,7 @@ module.exports = {
 			patterns: [{ from: resolve(__dirname, "public/"), to: "." }],
 		}),
 		new webpack.DefinePlugin({
-			"process.env": JSON.stringify(envVars.parsed),
+			"process.env": JSON.stringify(process.env),
 		}),
 	],
 	performance: {
