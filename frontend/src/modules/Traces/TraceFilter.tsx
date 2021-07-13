@@ -49,10 +49,20 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const [serviceList, setServiceList] = useState<string[]>([]);
 	const [operationList, setOperationsList] = useState<string[]>([]);
 	const [tagKeyOptions, setTagKeyOptions] = useState<TagKeyOptionItem[]>([]);
-	const [spanKinds, setSpanKinds] = useState<ISpanKind[]>([]);
 	const location = useLocation();
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 	const { state } = useRoute();
+
+	const spanKindList: ISpanKind[] = [
+		{
+			label: "SERVER",
+			value: "2"
+		},
+		{
+			label: "CLIENT",
+			value: "3"
+		}
+	]
 
 	useEffect(() => {
 		handleApplyFilterForm({
@@ -62,18 +72,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			latency: { min: "", max: "" },
 			kind: ""
 		});
-
-		const spanKindList: ISpanKind[] = [
-			{
-				label: "SERVER",
-				value: "2"
-			},
-			{
-				label: "CLIENT",
-				value: "3"
-			}
-		]
-		setSpanKinds(spanKindList);
 	}, []);
 
 	useEffect(() => {
@@ -441,7 +439,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						placeholder="Select Span Kind"
 						allowClear
 					>
-						{spanKinds && spanKinds.map(spanKind => (
+						{spanKindList && spanKindList.map(spanKind => (
 							<Option value={spanKind.value} key={spanKind.value}>{spanKind.label}</Option>
 						))}
 					</Select>
