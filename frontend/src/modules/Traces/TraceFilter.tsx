@@ -128,7 +128,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	}, []);
 
 	useEffect(() => {
-		console.log(props.traceFilters)
 		let request_string =
 			"service=" +
 			props.traceFilters.service +
@@ -150,7 +149,6 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		console.log(request_string);
 		if (state.TRACES.isLoaded) {
 			props.fetchTraces(props.globalTime, request_string);
 		}
