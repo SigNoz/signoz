@@ -14,7 +14,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 
 ### Contribute to Frontend with Docker installation of SigNoz
 
-- `git clone [https://github.com/SigNoz/signoz.git](https://github.com/SigNoz/signoz.git) && cd signoz`
+- `git clone https://github.com/SigNoz/signoz.git && cd signoz`
 - comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L38`
 - run `cd deploy && docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d` (this will install signoz locally without the frontend service)
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
