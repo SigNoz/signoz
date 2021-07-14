@@ -66,6 +66,8 @@ You can always reach out to `ankit@signoz.io` to understand more about the repo 
 ### Conventions to follow when submitting commits, PRs
 We try to follow https://www.conventionalcommits.org/en/v1.0.0/
 
-More specifically the commits and PRs should have type specifiers prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea 
+More specifically the commits and PRs should have type specifiers prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea.
+
+e.g. If you are submitting a fix for an issue in frontend - PR name should be prefixed with `fix(FE):` 
 
 Feel free to ping us on #contributing or #contributin-frontend on our slack community if you need any help on this :)
