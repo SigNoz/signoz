@@ -62,3 +62,10 @@ You can always reach out to `ankit@signoz.io` to understand more about the repo 
 - If you find anything missing in documentation, you can create an issue with label **documentation**
 - If you want to build any new feature, please create an issue with label `enhancement`
 - If you want to discuss something about the product, start a new [discussion](https://github.com/SigNoz/signoz/discussions)
+
+### Conventions to follow when submitting commits, PRs
+We try to follow https://www.conventionalcommits.org/en/v1.0.0/
+
+More specifically the commits and PRs should have type specifiers prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea 
+
+Feel free to ping us on #contributing or #contributin-frontend on our slack community if you need any help on this :)
