@@ -46,7 +46,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 **_Query Service should now be available at `http://localhost:8080`_**
 
-> If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to [`http://localhost:8080`](http://ec2-18-191-251-86.us-east-2.compute.amazonaws.com:8080/) in file `src/constants/env.ts` as the query-service is now running at port `8080`
+> If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
 # Contribute to Flattener Processor
 
