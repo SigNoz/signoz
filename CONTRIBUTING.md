@@ -25,7 +25,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 
 If you don't want to install SigNoz backend just for doing frontend development, we can provide you with test environments which you can use as the backend. Please ping us in #contributing channel in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) and we will DM you with `<test environment URL>`
 
-- `git clone [https://github.com/SigNoz/signoz.git](https://github.com/SigNoz/signoz.git) && cd signoz/frontend`
+- `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
 - change baseURL to `<test environment URL>` in file `src/constants/env.ts`
 - `yarn install`
 - `yarn dev`
@@ -38,7 +38,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 ### To run ClickHouse setup (recommended for local development)
 
-- `git clone [https://github.com/SigNoz/signoz.git](https://github.com/SigNoz/signoz.git) && cd signoz/deploy`
+- `git clone https://github.com/SigNoz/signoz.git && cd signoz/deploy`
 - comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 - comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L22`
 - Run `docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d` (this will install signoz locally without the frontend and query-service)
