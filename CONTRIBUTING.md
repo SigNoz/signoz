@@ -70,4 +70,4 @@ More specifically the commits and PRs should have type specifiers prefixed in th
 
 e.g. If you are submitting a fix for an issue in frontend - PR name should be prefixed with `fix(FE):` 
 
-Feel free to ping us on #contributing or #contributin-frontend on our slack community if you need any help on this :)
+Feel free to ping us on #contributing or `#contributing-frontend` on our slack community if you need any help on this :)
