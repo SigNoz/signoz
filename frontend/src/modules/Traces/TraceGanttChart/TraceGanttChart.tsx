@@ -57,7 +57,7 @@ const TraceGanttChart = ({
 			}
 			setTabsContainerWidth(tabsContainer?.offsetWidth);
 		}
-		// handleScroll(selectedSpan?.id);
+		handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
 
 	useEffect(() => {
@@ -237,16 +237,13 @@ const TraceGanttChart = ({
 		resetZoom(true);
 	};
 
-	const handleScroll = (id) => {
-		const rows = document.querySelectorAll('#collapsable table tbody tr');
-		const table = document.querySelectorAll('#collapsable table');
-		Array.from(rows).map((row) => {
-			const attribKey = row.getAttribute('data-row-key');
-			if (id === attribKey) {
-				const scrollValue = row.offsetTop;
-				table[1].scrollTop = scrollValue;
-			}
-		});
+	const handleScroll = (id: string): void => {
+		if (!isEmpty(id)) {
+			const selectedRow = document.querySelectorAll<HTMLElement>(
+				`[data-row-key='${id}']`,
+			);
+			selectedRow?.[0]?.scrollIntoView();
+		}
 	};
 
 	const rowSelection = {
