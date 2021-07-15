@@ -28,10 +28,10 @@ const App = () => {
 	}
 
 	return (
-		<Suspense fallback={<Spin size="large" />}>
-			<BrowserRouter>
-				<RouteProvider>
-					<BaseLayout>
+		<BrowserRouter>
+			<RouteProvider>
+				<BaseLayout>
+					<Suspense fallback={<Spin size="large" />}>
 						<Switch>
 							<Route path={ROUTES.SIGN_UP} exact component={Signup} />
 							<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
@@ -60,10 +60,10 @@ const App = () => {
 
 							<Route path="*" exact component={NotFound} />
 						</Switch>
-					</BaseLayout>
-				</RouteProvider>
-			</BrowserRouter>
-		</Suspense>
+					</Suspense>
+				</BaseLayout>
+			</RouteProvider>
+		</BrowserRouter>
 	);
 };
 
