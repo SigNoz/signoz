@@ -40,8 +40,8 @@ jobs:
       - name: Build frontend docker image
         shell: bash
         run: |
-          cd frontend
-          docker build . -f Dockerfile
+          make build-frontend-amd64
+
   build-query-service:
     runs-on: ubuntu-latest
     needs:
@@ -53,8 +53,8 @@ jobs:
       - name: Build  query-service image
         shell: bash
         run: |
-          cd pkg/query-service
-          docker build . -f Dockerfile
+          make build-flattener-amd64
+
   build-flattener:
     runs-on: ubuntu-latest
     needs:
@@ -66,5 +66,4 @@ jobs:
       - name: Build flattener docker image
         shell: bash
         run: |
-          cd pkg/processors/flattener
-          docker build . -f Dockerfile
+          make build-query-service-amd64

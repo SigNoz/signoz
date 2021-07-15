@@ -1,5 +1,11 @@
 # stage1 as builder
-FROM node:12-alpine as builder
+FROM node:12.18.0 as builder
+
+# Add Maintainer Info
+LABEL maintainer="signoz"
+
+ARG TARGETOS=linux
+ARG TARGETARCH
 
 WORKDIR /frontend
 
@@ -14,7 +20,7 @@ COPY . .
 # Build the project and copy the files
 RUN yarn build
 
-FROM nginx:1.12-alpine
+FROM nginx:1.18-alpine
 
 #!/bin/sh
 
