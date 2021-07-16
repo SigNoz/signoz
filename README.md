@@ -33,7 +33,11 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 - Aggregate metrics on filtered traces. Eg, you can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
 
-## 🤓 Why SigNoz?
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/WhatsCool.svg" width="50px" />
+
+## Why SigNoz?
 
 Being developers, we found it annoying to rely on closed source SaaS vendors for every small feature we wanted. Closed source vendors often surprise you with huge month end bills without any transparency.
 
@@ -41,7 +45,7 @@ We wanted to make a self-hosted & open source version of tools like DataDog, New
 
 Being open source also gives you complete control of your configuration, sampling, uptimes. You can also build modules over SigNoz to extend business specific capabilities
 
-### 👊🏻 Languages supported:
+### Languages supported:
 
 We support [OpenTelemetry](https://opentelemetry.io) as the library which you can use to instrument your applications. So any framework and language supported by OpenTelemetry is also supported by SigNoz. Some of the main supported languages are:
 
@@ -54,7 +58,7 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/QuickStart.svg" width="50px" />
 
 ## Getting Started
 
