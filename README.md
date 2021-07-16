@@ -52,6 +52,10 @@ We support [OpenTelemetry](https://opentelemetry.io) as the library which you ca
 
 You can find the complete list of languages here - https://opentelemetry.io/docs/
 
+<br /><br />
+
+<img align="left" src="https://posthog-public.s3.amazonaws.com/Features.svg" width="50px" />
+
 ## Getting Started
 
 ### Deploy using docker-compose
