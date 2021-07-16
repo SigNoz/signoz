@@ -102,6 +102,10 @@ kubectl -n sample-application apply -Rf sample-apps/hotrod/
 
 `kubectl -n sample-application run strzal --image=djbingham/curl --restart='OnFailure' -i --tty --rm --command -- curl http://locust-master:8089/stop`
 
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/UseSigNoz.svg" width="50px" />
+
 ## Comparisons to Familiar Tools
 
 ### SigNoz and Prometheus
