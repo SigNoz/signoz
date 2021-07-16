@@ -58,7 +58,7 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/QuickStart.svg" width="50px" />
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
 
 ## Getting Started
 
