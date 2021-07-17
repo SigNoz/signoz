@@ -94,6 +94,8 @@ Prometheus is good if you want to do just metrics. But if you want to have a sea
 
 Our goal is to provide an integrated UI between metrics & traces - similar to what SaaS vendors like Datadog provides - and give advanced filtering and aggregation over traces, something which Jaeger currently lack.
 
+<p>&nbsp  </p>
+
 ### SigNoz and Jaeger
 
 Jaeger only does distributed tracing. SigNoz does both metrics and traces, and we also have log management in our roadmap.
