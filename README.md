@@ -94,7 +94,7 @@ Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_cha
 
 ## Comparisons to Familiar Tools
 
-### SigNoz and Prometheus
+### SigNoz vs Prometheus
 
 Prometheus is good if you want to do just metrics. But if you want to have a seamless experience between metrics and traces, then current experience of stitching together Prometheus & Jaeger is not great. 
 
@@ -102,7 +102,7 @@ Our goal is to provide an integrated UI between metrics & traces - similar to wh
 
 <p>&nbsp  </p>
 
-### SigNoz and Jaeger
+### SigNoz vs Jaeger
 
 Jaeger only does distributed tracing. SigNoz does both metrics and traces, and we also have log management in our roadmap.
 
