@@ -66,45 +66,17 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 ## Getting Started
 
+
 ### Deploy using docker-compose
 
-We have a tiny-cluster setup and a standard setup to deploy using docker-compose.
-Follow the steps listed at https://signoz.io/docs/deployment/docker/.
-The troubleshooting instructions at https://signoz.io/docs/deployment/docker/#troubleshooting may be helpful
+Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker-compose
+
+The [troubleshooting instructions](https://signoz.io/docs/deployment/docker/#troubleshooting) may be helpful if you face any issues.
 
 ### Deploy in Kubernetes using Helm
 
-Below steps will install the SigNoz in `platform` namespace inside your k8s cluster.
+Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_chart) to install using helm charts
 
-```console
-git clone https://github.com/SigNoz/signoz.git && cd signoz
-helm dependency update deploy/kubernetes/platform
-kubectl create ns platform
-helm -n platform install signoz deploy/kubernetes/platform
-kubectl -n platform apply -Rf deploy/kubernetes/jobs
-kubectl -n platform apply -f deploy/kubernetes/otel-collector
-```
-
-\*_You can choose a different namespace too. In that case, you need to point your applications to correct address to send traces. In our sample application just change the `JAEGER_ENDPOINT` environment variable in `sample-apps/hotrod/deployment.yaml`_
-
-### Test HotROD application with SigNoz
-
-```console
-kubectl create ns sample-application
-kubectl -n sample-application apply -Rf sample-apps/hotrod/
-```
-
-### How to generate load
-
-`kubectl -n sample-application run strzal --image=djbingham/curl --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F 'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm`
-
-### See UI
-
-`kubectl -n platform port-forward svc/signoz-frontend 3000:3000`
-
-### How to stop load
-
-`kubectl -n sample-application run strzal --image=djbingham/curl --restart='OnFailure' -i --tty --rm --command -- curl http://locust-master:8089/stop`
 
 <br /><br />
 
