@@ -110,7 +110,7 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 ## Documentation
 
-You can find docs at https://signoz.io/docs/deployment/docker. If you need any clarification or find something missing, feel free to raise a GitHub issue with the label `documentation` or reach out to us at the community slack channel.
+You can find docs at https://signoz.io/docs/. If you need any clarification or find something missing, feel free to raise a GitHub issue with the label `documentation` or reach out to us at the community slack channel.
 
 <br /><br />
 
