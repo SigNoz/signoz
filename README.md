@@ -24,7 +24,11 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 ![SigNoz Feature](https://res.cloudinary.com/dcv3epinx/image/upload/v1618904032/signoz-images/screenzy-1618904013729_clssvy.png)
 
-## 👇 Features:
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
+
+## Features:
 
 - Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
@@ -58,7 +62,7 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
 
 ## Getting Started
 
@@ -123,9 +127,17 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 - Jaegar UI doesn’t show any metrics on traces or on filtered traces
 - Jaeger can’t get aggregates on filtered traces. For example, p99 latency of requests which have tag - customer_type='premium'. This can be done easily on SigNoz
 
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/DevelopingLocally.svg" width="50px" />
+
 ## Documentation
 
 You can find docs at https://signoz.io/docs/deployment/docker. If you need any clarification or find something missing, feel free to raise a GitHub issue with the label `documentation` or reach out to us at the community slack channel.
+
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
 
 ## Community
 
