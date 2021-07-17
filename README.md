@@ -106,6 +106,16 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 <br /><br />
 
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributors.svg" width="50px" />
+
+## Contributing
+
+We love contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz. 
+
+Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)
+
+<br /><br />
+
 <img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/DevelopingLocally.svg" width="50px" />
 
 ## Documentation
@@ -118,6 +128,15 @@ You can find docs at https://signoz.io/docs/. If you need any clarification or f
 
 ## Community
 
-Join the [slack community](https://app.slack.com/client/T01HWUTP0LT#/) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
+Join the [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
 
 If you have any ideas, questions, or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
+
+As always, thanks to our amazing contributors!    
+
+<a href="https://github.com/signoz/signoz/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=signoz/signoz" />
+</a>
+
+
+
