@@ -66,12 +66,15 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 ## Getting Started
   
-  
+<p>&nbsp  </p>
+
 ### Deploy using docker-compose
 
 Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker-compose
 
 The [troubleshooting instructions](https://signoz.io/docs/deployment/docker/#troubleshooting) may be helpful if you face any issues.
+
+<p>&nbsp  </p>
   
   
 ### Deploy in Kubernetes using Helm
