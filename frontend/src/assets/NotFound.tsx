@@ -1,6 +1,6 @@
-import React, { FC } from "react";
+import React from "react";
 
-const NotFound: FC = (): JSX.Element => {
+const NotFound = (): JSX.Element => {
 	return (
 		<svg
 			width="360"
