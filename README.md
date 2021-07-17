@@ -20,9 +20,16 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
 
-<!-- ![SigNoz Feature](https://signoz.io/img/readme_feature1.jpg) -->
 
-![SigNoz Feature](https://res.cloudinary.com/dcv3epinx/image/upload/v1618904032/signoz-images/screenzy-1618904013729_clssvy.png)
+![SigNoz Feature](https://signoz-public.s3.us-east-2.amazonaws.com/signoz_hero_github.png)
+
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
+
+## Join our Slack community
+
+Come say Hi to us on [Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 👋
 
 <br /><br />
 
@@ -110,7 +117,8 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 ## Contributing
 
-We love contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz. 
+
+We ❤️  contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz. 
 
 Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)
 
