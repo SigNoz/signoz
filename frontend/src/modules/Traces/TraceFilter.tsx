@@ -41,7 +41,7 @@ interface TagKeyOptionItem {
 }
 
 interface ISpanKind {
-	label: string;
+	label: "SERVER" | "CLIENT";
 	value: string;
 }
 
@@ -437,7 +437,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						placeholder="Select Span Kind"
 						allowClear
 					>
-						{spanKindList && spanKindList.map(spanKind => (
+						{spanKindList.map(spanKind => (
 							<Option value={spanKind.value} key={spanKind.value}>{spanKind.label}</Option>
 						))}
 					</Select>
