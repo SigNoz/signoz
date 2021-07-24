@@ -13,7 +13,43 @@ FRONTEND_DOCKER_IMAGE ?= frontend
 FLATTERNER_DOCKER_IMAGE ?= query-service
 QUERY_SERVICE_DOCKER_IMAGE ?= flattener-processor
 
-all: build-push-frontend build-push-query-service build-push-flattener
+all: frontend-service-checks backend-services-checks build-push-frontend build-push-query-service build-push-flattener
+
+frontend-service-checks:
+	@echo "------------------"
+	@echo "--> Checking unused imports of signoz's  frontend [depcheck]"
+	@echo "------------------"
+	@cd frontend && npm i depcheck --no-save && node_modules/.bin/depcheck --skip-missing . --ignores="webpack-cli,webpack-dev-server,react-hot-loader"
+
+backend-services-checks:
+	@echo "------------------"
+	@echo "--> checking format of query service and flattener service [go fmt]"
+	@echo "------------------"
+	@fmtRes=$$(gofmt -d $$(find . -path ./vendor -prune -o -name '*.go' -print)); \
+	if [ -n "$${fmtRes}" ]; then \
+		echo "gofmt checking failed!" && echo "$${fmtRes}" \
+		&& echo "Please ensure you are using $$($(GO) version) for formatting code." \
+		&& exit 1;\
+	fi
+	@echo "------------------"
+	@echo "--> checking unused packages of query-service [go mod tidy]"
+	@echo "------------------"
+	@tidyRes=$$(cd $(QUERY_SERVICE_DIRECTORY) && go mod tidy); \
+	if [ -n "$${tidyRes}" ]; then \
+		echo "go mod tidy checking failed!" && echo "$${tidyRes}" \
+		&& echo "Please ensure you are using $$($(GO) version) for formatting code." \
+		&& exit 1; \
+	fi
+	@echo "------------------"
+	@echo "--> checking unused packages of flattener [go mod tidy]"
+	@echo "------------------"
+	@tidyRes=$$(cd $(FLATTENER_DIRECTORY) && go mod tidy); \
+	if [ -n "$${tidyRes}" ]; then \
+		echo "go mod tidy checking failed!" && echo "$${tidyRes}" \
+		&& echo "Please ensure you are using $$($(GO) version) for formatting code." \
+		&& exit 1; \
+	fi
+
 # Steps to build and push docker image of frontend
 .PHONY: build-frontend-amd64  build-push-frontend
 # Step to build docker image of frontend in amd64 (used in build pipeline)

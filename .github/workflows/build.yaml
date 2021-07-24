@@ -29,10 +29,43 @@ jobs:
           flattener:
             - 'pkg/processors/flattener/**'
 
+  backend-checks:
+    runs-on: ubuntu-latest
+    needs: get_filters
+    if: needs.get_filters.outputs.graphql-server == 'true'  || needs.get_filters.outputs.authentication == 'true' || needs.get_filters.outputs.event-tracker == 'true' || needs.get_filters.outputs.subscriber == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "1.16" # By default, the go version is v1.15 in runner.
+      - name: Check Golang imports order
+        uses: Jerome1337/goimports-action@v1.0.3
+        with:
+          goimports-path: ./pkg
+      - shell: bash
+        run: |
+          cd pkg
+          make backend-services-checks
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    needs: get_filters
+    if: ${{ needs.get_filters.outputs.frontend == 'true' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Frontend checks
+        shell: bash
+        run: |
+          cd frontend
+          make frontend-services-checks
+
   build-frontend:
     runs-on: ubuntu-latest
     needs:
       - get_filters
+      - frontend-services-checks
     if: ${{ needs.get_filters.outputs.frontend == 'true' }}
     steps:
       - name: Checkout code
@@ -46,6 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - get_filters
+      - backend-checks
     if: ${{ needs.get_filters.outputs.query-service == 'true' }}
     steps:
       - name: Checkout code
@@ -59,6 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - get_filters
+      - backend-checks
     if: ${{ needs.get_filters.outputs.flattener == 'true' }}
     steps:
       - name: Checkout code
