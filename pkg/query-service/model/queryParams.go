@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+type QueryRangeParams struct {
+	Start time.Time
+	End   time.Time
+	Step  time.Duration
+}
+
 type GetTopEndpointsParams struct {
 	StartTime   string
 	EndTime     string

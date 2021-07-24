@@ -74,6 +74,11 @@ func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
 	return cfg.Connector(cfg)
 }
 
+func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*model.QueryData, error) {
+
+	return &model.QueryData{}, nil
+}
+
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, error) {
 
 	if r.indexTable == "" {

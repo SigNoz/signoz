@@ -5,10 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/posthog/posthog-go"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/storage/remote"
 	"go.uber.org/zap"
+)
+
+type status string
+
+const (
+	statusSuccess status = "success"
+	statusError   status = "error"
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -25,6 +40,7 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
+	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
@@ -34,7 +50,7 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHa
 		pc:         pc,
 		distinctId: distinctId,
 	}
-
+	aH.ready = aH.testReady
 	return aH
 }
 
@@ -52,9 +68,121 @@ type structuredError struct {
 	// TraceID ui.TraceID `json:"traceID,omitempty"`
 }
 
+var corsHeaders = map[string]string{
+	"Access-Control-Allow-Headers":  "Accept, Authorization, Content-Type, Origin",
+	"Access-Control-Allow-Methods":  "GET, OPTIONS",
+	"Access-Control-Allow-Origin":   "*",
+	"Access-Control-Expose-Headers": "Date",
+}
+
+// Enables cross-site script calls.
+func setCORS(w http.ResponseWriter) {
+	for h, v := range corsHeaders {
+		w.Header().Set(h, v)
+	}
+}
+
+type apiFunc func(r *http.Request) (interface{}, *apiError, func())
+
+// Checks if server is ready, calls f if it is, returns 503 if it is not.
+func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		f(w, r)
+
+	}
+}
+
+// // Register the API's endpoints in the given router.
+// func (aH *APIHandler) Register(r *route.Router) {
+// 	wrap := func(f apiFunc) http.HandlerFunc {
+// 		hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			setCORS(w)
+// 			data, err, finalizer := f(r)
+// 			if err != nil {
+// 				aH.respondError(w, err, data)
+// 			} else if data != nil {
+// 				aH.respond(w, data)
+// 			} else {
+// 				w.WriteHeader(http.StatusNoContent)
+// 			}
+// 			if finalizer != nil {
+// 				finalizer()
+// 			}
+// 		})
+// 		return aH.ready(httputil.CompressionHandler{
+// 			Handler: hf,
+// 		}.ServeHTTP)
+// 	}
+// 	r.Get("/api/v1/query_range", wrap(aH.queryRange))
+// }
+
+type response struct {
+	Status    status      `json:"status"`
+	Data      interface{} `json:"data,omitempty"`
+	ErrorType errorType   `json:"errorType,omitempty"`
+	Error     string      `json:"error,omitempty"`
+}
+
+func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *apiError, data interface{}) {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	b, err := json.Marshal(&response{
+		Status:    statusError,
+		ErrorType: apiErr.typ,
+		Error:     apiErr.err.Error(),
+		Data:      data,
+	})
+	if err != nil {
+		zap.S().Error("msg", "error marshalling json response", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var code int
+	switch apiErr.typ {
+	case errorBadData:
+		code = http.StatusBadRequest
+	case errorExec:
+		code = 422
+	case errorCanceled, errorTimeout:
+		code = http.StatusServiceUnavailable
+	case errorInternal:
+		code = http.StatusInternalServerError
+	case errorNotFound:
+		code = http.StatusNotFound
+	default:
+		code = http.StatusInternalServerError
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if n, err := w.Write(b); err != nil {
+		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+	}
+}
+
+func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	b, err := json.Marshal(&response{
+		Status: statusSuccess,
+		Data:   data,
+	})
+	if err != nil {
+		zap.S().Error("msg", "error marshalling json response", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if n, err := w.Write(b); err != nil {
+		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+	}
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
-
+	router.HandleFunc("/api/v1/query_range", aH.queryRange).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
@@ -72,6 +200,95 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+}
+
+// func (aH *APIHandler) queryRange(r *http.Request) (interface{}, *apiError, func()) {
+
+func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
+
+	query, apiError := parseQueryRangeRequest(r)
+
+	if aH.handleError(w, apiError.err, http.StatusBadRequest) {
+		return
+	}
+
+	zap.S().Info(query)
+
+	// result, err := (*aH.reader).GetQueryRangeResult(context.Background(), query)
+
+	ctx := r.Context()
+	// if to := r.FormValue("timeout"); to != "" {
+	// 	var cancel context.CancelFunc
+	// 	timeout, err := parseMetricsDuration(to)
+	// 	if aH.handleError(w, err, http.StatusBadRequest) {
+	// 		return
+	// 	}
+
+	// 	ctx, cancel = context.WithTimeout(ctx, timeout)
+	// 	defer cancel()
+	// }
+
+	logLevel := promlog.AllowedLevel{}
+	logLevel.Set("debug")
+
+	logger := promlog.New(logLevel)
+
+	opts := promql.EngineOpts{
+		Logger:        log.With(logger, "component", "query engine"),
+		Reg:           nil,
+		MaxConcurrent: 20,
+		MaxSamples:    50000000,
+		Timeout:       time.Duration(2 * time.Minute),
+	}
+	queryEngine := promql.NewEngine(opts)
+
+	startTime := func() (int64, error) {
+		return int64(model.Latest), nil
+	}
+
+	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
+
+	filename := "prometheus.yml"
+	conf, err := config.LoadFile(filename)
+	if err != nil {
+		zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
+	}
+	remoteStorage.ApplyConfig(conf)
+
+	qry, err := queryEngine.NewRangeQuery(remoteStorage, r.FormValue("query"), query.Start, query.End, query.Step)
+
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	res := qry.Exec(ctx)
+
+	if res.Err != nil {
+		zap.S().Error(res.Err)
+	}
+
+	// if res.Err != nil {
+	// 	switch res.Err.(type) {
+	// 	case promql.ErrQueryCanceled:
+	// 		return nil, &apiError{errorCanceled, res.Err}, qry.Close
+	// 	case promql.ErrQueryTimeout:
+	// 		return nil, &apiError{errorTimeout, res.Err}, qry.Close
+	// 	}
+	// 	return nil, &apiError{errorExec, res.Err}, qry.Close
+	// }
+
+	// return &model.QueryData{
+	// 	ResultType: res.Value.Type(),
+	// 	Result:     res.Value,
+	// 	Stats:      qs,
+	// }, nil, qry.Close
+	// return &model.QueryData{}, nil, nil
+
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, res.Value)
+
 }
 
 func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {

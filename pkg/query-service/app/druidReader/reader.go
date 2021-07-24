@@ -39,6 +39,11 @@ func initialize() {
 
 }
 
+func (druid *DruidReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*model.QueryData, error) {
+
+	return &model.QueryData{}, nil
+}
+
 func (druid *DruidReader) GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error) {
 	return druidQuery.GetServiceOverview(druid.SqlClient, query)
 }

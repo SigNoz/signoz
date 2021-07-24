@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
+
+	promModel "github.com/prometheus/common/model"
 
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
@@ -44,6 +47,89 @@ func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams,
 
 	return &getTopEndpointsParams, nil
 
+}
+
+type apiError struct {
+	typ errorType
+	err error
+}
+type errorType string
+
+const (
+	errorNone        errorType = ""
+	errorTimeout     errorType = "timeout"
+	errorCanceled    errorType = "canceled"
+	errorExec        errorType = "execution"
+	errorBadData     errorType = "bad_data"
+	errorInternal    errorType = "internal"
+	errorUnavailable errorType = "unavailable"
+	errorNotFound    errorType = "not_found"
+)
+
+func parseMetricsTime(s string) (time.Time, error) {
+	if t, err := strconv.ParseFloat(s, 64); err == nil {
+		s, ns := math.Modf(t)
+		return time.Unix(int64(s), int64(ns*float64(time.Second))), nil
+	}
+	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+		return t, nil
+	}
+	return time.Time{}, fmt.Errorf("cannot parse %q to a valid timestamp", s)
+}
+
+func parseMetricsDuration(s string) (time.Duration, error) {
+	if d, err := strconv.ParseFloat(s, 64); err == nil {
+		ts := d * float64(time.Second)
+		if ts > float64(math.MaxInt64) || ts < float64(math.MinInt64) {
+			return 0, fmt.Errorf("cannot parse %q to a valid duration. It overflows int64", s)
+		}
+		return time.Duration(ts), nil
+	}
+	if d, err := promModel.ParseDuration(s); err == nil {
+		return time.Duration(d), nil
+	}
+	return 0, fmt.Errorf("cannot parse %q to a valid duration", s)
+}
+
+func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *apiError) {
+
+	start, err := parseMetricsTime(r.FormValue("start"))
+	if err != nil {
+		return nil, &apiError{errorBadData, err}
+	}
+	end, err := parseMetricsTime(r.FormValue("end"))
+	if err != nil {
+		return nil, &apiError{errorBadData, err}
+	}
+	if end.Before(start) {
+		err := errors.New("end timestamp must not be before start time")
+		return nil, &apiError{errorBadData, err}
+	}
+
+	step, err := parseMetricsDuration(r.FormValue("step"))
+	if err != nil {
+		return nil, &apiError{errorBadData, err}
+	}
+
+	if step <= 0 {
+		err := errors.New("zero or negative query resolution step widths are not accepted. Try a positive integer")
+		return nil, &apiError{errorBadData, err}
+	}
+
+	// For safety, limit the number of returned points per timeseries.
+	// This is sufficient for 60s resolution for a week or 1h resolution for a year.
+	if end.Sub(start)/step > 11000 {
+		err := errors.New("exceeded maximum resolution of 11,000 points per timeseries. Try decreasing the query resolution (?step=XX)")
+		return nil, &apiError{errorBadData, err}
+	}
+
+	queryRangeParams := model.QueryRangeParams{
+		Start: start,
+		End:   end,
+		Step:  step,
+	}
+
+	return &queryRangeParams, nil
 }
 
 func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
