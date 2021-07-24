@@ -17,7 +17,7 @@ all: frontend-service-checks backend-services-checks build-push-frontend build-p
 
 frontend-service-checks:
 	@echo "------------------"
-	@echo "--> Checking unused imports of signoz's  frontend [depcheck]"
+	@echo "--> Checking unused imports of signoz's frontend [depcheck]"
 	@echo "------------------"
 	@cd frontend && npm i depcheck --no-save && node_modules/.bin/depcheck --skip-missing . --ignores="webpack-cli,webpack-dev-server,react-hot-loader"
 

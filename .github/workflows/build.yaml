@@ -32,7 +32,7 @@ jobs:
   backend-checks:
     runs-on: ubuntu-latest
     needs: get_filters
-    if: needs.get_filters.outputs.graphql-server == 'true'  || needs.get_filters.outputs.authentication == 'true' || needs.get_filters.outputs.event-tracker == 'true' || needs.get_filters.outputs.subscriber == 'true'
+    if: needs.get_filters.outputs.query-service == 'true'  || needs.get_filters.outputs.flattener == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -45,7 +45,6 @@ jobs:
           goimports-path: ./pkg
       - shell: bash
         run: |
-          cd pkg
           make backend-services-checks
 
   frontend-checks:
@@ -58,14 +57,12 @@ jobs:
       - name: Frontend checks
         shell: bash
         run: |
-          cd frontend
-          make frontend-services-checks
+          make frontend-service-checks
 
   build-frontend:
     runs-on: ubuntu-latest
     needs:
-      - get_filters
-      - frontend-services-checks
+      - frontend-checks
     if: ${{ needs.get_filters.outputs.frontend == 'true' }}
     steps:
       - name: Checkout code
@@ -78,7 +75,6 @@ jobs:
   build-query-service:
     runs-on: ubuntu-latest
     needs:
-      - get_filters
       - backend-checks
     if: ${{ needs.get_filters.outputs.query-service == 'true' }}
     steps:

@@ -8,7 +8,7 @@
 		"start": "node scripts/start.js",
 		"build": "webpack --config=webpack.config.prod.js",
 		"prettify": "prettier --write .",
-		"lint": "eslint . --ext .js,.tsx,.ts"
+		"lint": "eslint src"
 	},
 	"engines": {
 		"node": ">=12.13.0"

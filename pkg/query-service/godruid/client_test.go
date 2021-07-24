@@ -2,8 +2,9 @@ package godruid
 
 import (
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGroupby(t *testing.T) {
