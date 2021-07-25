@@ -1,8 +1,15 @@
 FROM golang:1.14-buster AS builder
+
+# Add Maintainer Info
+LABEL maintainer="signoz"
+
+ARG TARGETPLATFORM
+
 ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
 ENV GOPATH=/go
+
+RUN export GOOS=$(echo ${TARGETPLATFORM} | cut -d / -f1) && \
+    export GOARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2)
 
 # Prepare and enter src directory
 WORKDIR /go/src/github.com/signoz/signoz/pkg/processors/flattener
