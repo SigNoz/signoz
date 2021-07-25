@@ -12,6 +12,15 @@
         <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
 </p>
 
+-----
+
+<h3 align="center">
+  <a href="https://signoz.io/docs"><b>Documentation</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
+  <a href="https://bit.ly/signoz-slack"><b>Slack Community</b></a> &bull;
+  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
+</h3>
+
 ##
 
 SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
