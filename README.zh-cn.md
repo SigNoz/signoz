@@ -29,7 +29,7 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 
 ## 加入我们的Slack社区
 
-Come say Hi to us on [Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 👋
+来[Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 跟我们打声招呼👋
 
 <br /><br />
 
