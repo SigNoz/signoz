@@ -1,9 +1,6 @@
 import React from "react";
 
-import Button from "./styles/Button";
-import Text from "./styles/Text";
-import Container from "./styles/Container";
-import TextContainer from "./styles/TextContainer";
+import { Button, Text, TextContainer, Container } from "./styles";
 
 import NotFoundImage from "Src/assets/NotFound";
 import ROUTES from "Src/constants/routes";
