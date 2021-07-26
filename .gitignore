@@ -31,3 +31,5 @@ frontend/src/constants/env.ts
 **/locust-scripts/__pycache__/
 
 frontend/*.env
+
+node_modules
