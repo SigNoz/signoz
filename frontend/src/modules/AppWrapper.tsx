@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { Spin, Alert, Row, Col } from "antd";
+import { Spin } from "antd";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import ROUTES from "Src/constants/routes";
 import { IS_LOGGED_IN } from "Src/constants/auth";
@@ -19,21 +19,7 @@ import {
 	IntstrumentationPage,
 } from "Src/pages";
 import { RouteProvider } from "./RouteProvider";
-
-function ErrorFallback({ error }) {
-	return (
-		<Row justify="space-around" align="middle" style={{ margin: 200 }}>
-			<Col span={12}>
-				<Alert
-					message="Error Something Went Wrong!"
-					showIcon
-					description="Hi Sorry Due to Some technical difficulty this error Happened We are Working hard fix this! Please Reload the Page."
-					type="error"
-				/>
-			</Col>
-		</Row>
-	)
-}
+import { ErrorFallback } from "../components/ErrorFallback"
 
 const App = () => {
 	const { status } = useThemeSwitcher();
