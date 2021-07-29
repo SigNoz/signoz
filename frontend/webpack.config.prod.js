@@ -53,6 +53,9 @@ module.exports = {
 		new CopyPlugin({
 			patterns: [{ from: resolve(__dirname, "public/"), to: "." }],
 		}),
+		new webpack.ProvidePlugin({
+			process: "process/browser",
+		}),
 		new webpack.DefinePlugin({
 			"process.env": JSON.stringify(process.env),
 		}),

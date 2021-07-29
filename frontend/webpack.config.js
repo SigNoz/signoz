@@ -61,6 +61,9 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
+		new webpack.ProvidePlugin({
+			process: "process/browser",
+		}),
 		new webpack.DefinePlugin({
 			"process.env": JSON.stringify(process.env),
 		}),
