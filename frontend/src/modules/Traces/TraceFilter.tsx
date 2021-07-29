@@ -377,7 +377,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		};
 	}, []);
 
-	const handleChangeSpanKind = (value:string) => {
+	const handleChangeSpanKind = (value:string = '') => {
 		props.updateTraceFilters({ ...props.traceFilters, kind: value });
 	}
 
