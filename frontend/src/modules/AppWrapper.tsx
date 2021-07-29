@@ -1,11 +1,10 @@
 import React, { Suspense } from "react";
-import { Spin } from "antd";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import ROUTES from "Src/constants/routes";
 import { IS_LOGGED_IN } from "Src/constants/auth";
 import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
 import { ErrorBoundary } from 'react-error-boundary';
-
+import { CustomSpinner } from "./../components/Spiner";
 import BaseLayout from "./BaseLayout";
 import {
 	ServiceMetrics,
@@ -30,12 +29,12 @@ const App = () => {
 	return (
 		<BrowserRouter>
 			<ErrorBoundary FallbackComponent={ErrorFallback}>
-				<Suspense fallback={<Spin size="large" />}>
+				<Suspense fallback={<CustomSpinner size="large" message="Loading..."/>}>
 					<Route path={"/"}>
 						<Switch>
 							<RouteProvider>
 								<BaseLayout>
-									<Suspense fallback={<Spin size="large" />}>
+									<Suspense fallback={<CustomSpinner size="large" message="Loading..."/>}>
 										<Route path={ROUTES.SIGN_UP} exact component={Signup} />
 										<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
 										<Route
