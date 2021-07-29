@@ -46,7 +46,7 @@ module.exports = {
 	},
 	plugins: [
 		new CompressionPlugin({
-			exclude: /.map$/
+			exclude: /.map$/,
 		}),
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
 		new CopyPlugin({
