@@ -1,9 +1,9 @@
 import React, { Suspense } from "react";
-import { Spin } from "antd";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import ROUTES from "Src/constants/routes";
 import { IS_LOGGED_IN } from "Src/constants/auth";
 import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
+import { CustomSpinner } from "./../components/Spiner";
 
 import BaseLayout from "./BaseLayout";
 import {
@@ -24,14 +24,14 @@ const App = () => {
 	const { status } = useThemeSwitcher();
 
 	if (status === "loading") {
-		return <Spin size="large" />;
+		return <CustomSpinner size="large" tip="Loading..." />;
 	}
 
 	return (
 		<BrowserRouter>
 			<RouteProvider>
 				<BaseLayout>
-					<Suspense fallback={<Spin size="large" />}>
+					<Suspense fallback={<CustomSpinner size="large" tip="Loading..." />}>
 						<Switch>
 							<Route path={ROUTES.SIGN_UP} exact component={Signup} />
 							<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
