@@ -30,7 +30,6 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 					{children}
 				</Content>
 				<Footer style={{ textAlign: "center", fontSize: 10 }}>
-					{/* SigNoz Inc. ©2020{" "} */}
 					SigNoz Inc. ©<Moment format='YYYY'></Moment>{" "}
 				</Footer>
 			</Layout>
