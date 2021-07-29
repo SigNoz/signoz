@@ -29,4 +29,4 @@ frontend/src/constants/env.ts
 **/build
 **/storage
 **/locust-scripts/__pycache__/
-
+**/__debug_bin
