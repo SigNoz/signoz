@@ -35,20 +35,52 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath   string
-	apiPrefix  string
-	reader     *Reader
-	pc         *posthog.Client
-	distinctId string
-	ready      func(http.HandlerFunc) http.HandlerFunc
+	basePath      string
+	apiPrefix     string
+	reader        *Reader
+	pc            *posthog.Client
+	distinctId    string
+	ready         func(http.HandlerFunc) http.HandlerFunc
+	queryEngine   *promql.Engine
+	remoteStorage *remote.Storage
 }
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
+	logLevel := promlog.AllowedLevel{}
+	logLevel.Set("debug")
+
+	logger := promlog.New(logLevel)
+
+	opts := promql.EngineOpts{
+		Logger:        log.With(logger, "component", "query engine"),
+		Reg:           nil,
+		MaxConcurrent: 20,
+		MaxSamples:    50000000,
+		Timeout:       time.Duration(2 * time.Minute),
+	}
+
+	queryEngine := promql.NewEngine(opts)
+
+	startTime := func() (int64, error) {
+		return int64(model.Latest), nil
+	}
+
+	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
+
+	filename := "/Users/ankitnayan/Desktop/signoz/pkg/query-service/app/prometheus.yml"
+	conf, err := config.LoadFile(filename)
+	if err != nil {
+		zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
+	}
+	remoteStorage.ApplyConfig(conf)
+
 	aH := &APIHandler{
-		reader:     reader,
-		pc:         pc,
-		distinctId: distinctId,
+		reader:        reader,
+		pc:            pc,
+		distinctId:    distinctId,
+		queryEngine:   queryEngine,
+		remoteStorage: remoteStorage,
 	}
 	aH.ready = aH.testReady
 	return aH
@@ -208,54 +240,27 @@ func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 
 	query, apiError := parseQueryRangeRequest(r)
 
-	if aH.handleError(w, apiError.err, http.StatusBadRequest) {
-		return
-	}
+	// if aH.handleError(w, apiError.err, http.StatusBadRequest) {
+	// 	return
+	// }
 
-	zap.S().Info(query)
+	zap.S().Info(query, apiError)
 
 	// result, err := (*aH.reader).GetQueryRangeResult(context.Background(), query)
 
 	ctx := r.Context()
-	// if to := r.FormValue("timeout"); to != "" {
-	// 	var cancel context.CancelFunc
-	// 	timeout, err := parseMetricsDuration(to)
-	// 	if aH.handleError(w, err, http.StatusBadRequest) {
-	// 		return
-	// 	}
+	if to := r.FormValue("timeout"); to != "" {
+		var cancel context.CancelFunc
+		timeout, err := parseMetricsDuration(to)
+		if aH.handleError(w, err, http.StatusBadRequest) {
+			return
+		}
 
-	// 	ctx, cancel = context.WithTimeout(ctx, timeout)
-	// 	defer cancel()
-	// }
-
-	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
-
-	logger := promlog.New(logLevel)
-
-	opts := promql.EngineOpts{
-		Logger:        log.With(logger, "component", "query engine"),
-		Reg:           nil,
-		MaxConcurrent: 20,
-		MaxSamples:    50000000,
-		Timeout:       time.Duration(2 * time.Minute),
-	}
-	queryEngine := promql.NewEngine(opts)
-
-	startTime := func() (int64, error) {
-		return int64(model.Latest), nil
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
 	}
 
-	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
-
-	filename := "prometheus.yml"
-	conf, err := config.LoadFile(filename)
-	if err != nil {
-		zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
-	}
-	remoteStorage.ApplyConfig(conf)
-
-	qry, err := queryEngine.NewRangeQuery(remoteStorage, r.FormValue("query"), query.Start, query.End, query.Step)
+	qry, err := aH.queryEngine.NewRangeQuery(aH.remoteStorage, r.FormValue("query"), query.Start, query.End, query.Step)
 
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
