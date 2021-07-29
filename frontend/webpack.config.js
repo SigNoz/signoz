@@ -1,6 +1,11 @@
 // shared config (dev and prod)
 const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const dotenv = require("dotenv");
+const webpack = require("webpack");
+
+dotenv.config();
+
 console.log(resolve(__dirname, "./src/"));
 
 module.exports = {
@@ -56,6 +61,9 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
+		new webpack.DefinePlugin({
+			"process.env": JSON.stringify(process.env),
+		}),
 	],
 	performance: {
 		hints: false,

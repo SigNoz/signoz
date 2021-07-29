@@ -5,6 +5,7 @@ import ROUTES from "Src/constants/routes";
 import { IS_LOGGED_IN } from "Src/constants/auth";
 import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
 import { ErrorBoundary } from 'react-error-boundary';
+import { CustomSpinner } from "./../components/Spiner";
 
 import BaseLayout from "./BaseLayout";
 import {
