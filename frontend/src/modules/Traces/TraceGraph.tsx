@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-import { flamegraph } from 'd3-flame-graph';
-import { connect } from 'react-redux';
-import { Card, Row, Col, Space, Affix } from 'antd';
-import * as d3 from 'd3';
-import * as d3Tip from 'd3-tip';
-import './TraceGraph.css';
-import { spanToTreeUtil } from 'Src/utils/spanToTree';
+import React, { useEffect, useState } from "react";
+import { useParams, useLocation } from "react-router-dom";
+import { flamegraph } from "d3-flame-graph";
+import { connect } from "react-redux";
+import { Card, Row, Col, Space, Affix } from "antd";
+import * as d3 from "d3";
+import * as d3Tip from "d3-tip";
+import "./TraceGraph.css";
+import { spanToTreeUtil } from "Src/utils/spanToTree";
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
-} from '../../store/actions';
-import { StoreState } from 'Src/store/reducers';
-import SelectedSpanDetails from './SelectedSpanDetails';
-import TraceGanttChart from './TraceGanttChart';
-import styled from 'styled-components';
-import { isEmpty, sortBy } from 'lodash-es';
+} from "../../store/actions";
+import { StoreState } from "Src/store/reducers";
+import SelectedSpanDetails from "./SelectedSpanDetails";
+import TraceGanttChart from "./TraceGanttChart";
+import styled from "styled-components";
+import { isEmpty, sortBy } from "lodash-es";
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
@@ -42,7 +42,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 
 	const getSortedData = (treeData: pushDStree[], parent = {}) => {
 		if (!isEmpty(treeData)) {
-			if (treeData[0].id !== 'empty') {
+			if (treeData[0].id !== "empty") {
 				return Array.from(treeData).map((item, key) => {
 					if (!isEmpty(item.children)) {
 						getSortedData(item.children, item);
@@ -72,14 +72,22 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			setSortedTreeData(sortedData?.[0]);
 			getSpanInfo(sortedData?.[0], spanId);
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select('#chart').datum(tree).call(chart).sort(item=>item.startTime);
+			d3
+				.select("#chart")
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 		}
 	}, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
 	useEffect(() => {
-		if(!isEmpty(sortedTreeData) && sortedTreeData?.id !== 'empty' && isEmpty(clickedSpanTags)) {
+		if (
+			!isEmpty(sortedTreeData) &&
+			sortedTreeData?.id !== "empty" &&
+			isEmpty(clickedSpanTags)
+		) {
 			setClickedSpanTags(sortedTreeData?.[0]);
 		}
 	}, [sortedTreeData]);
@@ -87,16 +95,20 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	useEffect(() => {
 		if (resetZoom) {
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select('#chart').datum(tree).call(chart).sort(item=>item.startTime);
+			d3
+				.select("#chart")
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 			setResetZoom(false);
 		}
 	}, [resetZoom]);
 
 	const tip = d3Tip
 		.default()
-		.attr('class', 'd3-tip')
+		.attr("class", "d3-tip")
 		.html(function (d: any) {
-			return d.data.name + '<br>duration: ' + d.data.value / 1000000 + 'ms';
+			return d.data.name + "<br>duration: " + d.data.value / 1000000 + "ms";
 		});
 
 	const onClick = (z: any) => {
@@ -115,7 +127,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			setSelectedSpan({});
 			return;
 		}
-		if (data?.[0]?.id !== 'empty') {
+		if (data?.[0]?.id !== "empty") {
 			Array.from(data).map((item) => {
 				if (item.id === spanId) {
 					setSelectedSpan(item);
@@ -151,24 +163,24 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
 			<Col md={18} sm={18}>
-				<Space direction="vertical" size="middle" style={{ width: '100%' }}>
+				<Space direction="vertical" size="middle" style={{ width: "100%" }}>
 					<Card bodyStyle={{ padding: 24 }} style={{ height: 320 }}>
 						<div
 							style={{
-								display: 'flex',
-								justifyContent: 'center',
-								flexDirection: 'column',
-								alignItems: 'center',
+								display: "flex",
+								justifyContent: "center",
+								flexDirection: "column",
+								alignItems: "center",
 							}}
 						>
-							<div style={{ textAlign: 'center' }}>
-								Trace Graph component ID is {params.id}{' '}
+							<div style={{ textAlign: "center" }}>
+								Trace Graph component ID is {params.id}{" "}
 							</div>
 							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 						</div>
 					</Card>
 					<Affix offsetTop={24}>
-						<TraceGanttChartContainer id={'collapsable'}>
+						<TraceGanttChartContainer id={"collapsable"}>
 							<TraceGanttChart
 								treeData={sortedTreeData}
 								clickedSpan={clickedSpan}

@@ -3,7 +3,7 @@
 .ant-space-item {
 	margin-right: 0 !important;
 }
-.instrument-card{
+.instrument-card {
 	border-radius: 4px;
 	background: #313131;
 	padding: 33px 23px;
@@ -11,9 +11,9 @@
 	margin-top: 40px;
 }
 
-#chart svg{
+#chart svg {
 	width: 100%;
 }
-#chart{
+#chart {
 	width: 100%;
 }

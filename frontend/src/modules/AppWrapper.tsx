@@ -1,11 +1,11 @@
-import React, { Suspense } from 'react';
-import { Spin } from 'antd';
-import { useThemeSwitcher } from 'react-css-theme-switcher';
-import ROUTES from 'Src/constants/routes';
-import { IS_LOGGED_IN } from 'Src/constants/auth';
-import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
+import React, { Suspense } from "react";
+import { useThemeSwitcher } from "react-css-theme-switcher";
+import ROUTES from "Src/constants/routes";
+import { IS_LOGGED_IN } from "Src/constants/auth";
+import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
+import { CustomSpinner } from "./../components/Spiner";
 
-import BaseLayout from './BaseLayout';
+import BaseLayout from "./BaseLayout";
 import {
 	ServiceMetrics,
 	ServiceMap,
@@ -16,24 +16,24 @@ import {
 	Signup,
 	SettingsPage,
 	IntstrumentationPage,
-} from 'Src/pages';
-import { RouteProvider } from './RouteProvider';
+} from "Src/pages";
+import { RouteProvider } from "./RouteProvider";
 
 const App = () => {
 	const { status } = useThemeSwitcher();
 
-	if (status === 'loading') {
+	if (status === "loading") {
 		return null;
 	}
 
 	return (
 		<BrowserRouter>
-			<Suspense fallback={<Spin size="large" />}>
-				<Route path={'/'}>
+			<Suspense fallback={<CustomSpinner size="large" tip="Loading..." />}>
+				<Route path={"/"}>
 					<Switch>
 						<RouteProvider>
 							<BaseLayout>
-								<Suspense fallback={<Spin size="large" />}>
+								<Suspense fallback={<CustomSpinner size="large" tip="Loading..." />}>
 									<Route path={ROUTES.SIGN_UP} exact component={Signup} />
 									<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
 									<Route
@@ -59,7 +59,7 @@ const App = () => {
 										path="/"
 										exact
 										render={() => {
-											return localStorage.getItem(IS_LOGGED_IN) === 'yes' ? (
+											return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
 												<Redirect to={ROUTES.APPLICATION} />
 											) : (
 												<Redirect to={ROUTES.SIGN_UP} />
@@ -67,7 +67,6 @@ const App = () => {
 										}}
 									/>
 								</Suspense>
-
 							</BaseLayout>
 						</RouteProvider>
 					</Switch>
