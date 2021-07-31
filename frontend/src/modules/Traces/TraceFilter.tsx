@@ -40,6 +40,11 @@ interface TagKeyOptionItem {
 	tagCount: number;
 }
 
+interface ISpanKind {
+	label: "SERVER" | "CLIENT";
+	value: string;
+}
+
 const _TraceFilter = (props: TraceFilterProps) => {
 	const [serviceList, setServiceList] = useState<string[]>([]);
 	const [operationList, setOperationsList] = useState<string[]>([]);
@@ -48,12 +53,24 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const urlParams = new URLSearchParams(location.search.split("?")[1]);
 	const { state } = useRoute();
 
+	const spanKindList: ISpanKind[] = [
+		{
+			label: "SERVER",
+			value: "2"
+		},
+		{
+			label: "CLIENT",
+			value: "3"
+		}
+	]
+
 	useEffect(() => {
 		handleApplyFilterForm({
 			service: "",
 			tags: [],
 			operation: "",
 			latency: { min: "", max: "" },
+			kind: ""
 		});
 	}, []);
 
@@ -76,6 +93,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						...props.traceFilters,
 						operation: operationName,
 						service: serviceName,
+						kind: ""
 					});
 					populateData(serviceName);
 				} else if (serviceName && errorTag) {
@@ -89,6 +107,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 								operator: "equals",
 							},
 						],
+						kind: ""
 					});
 				} else {
 					if (operationName) {
@@ -117,7 +136,9 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			"&maxDuration=" +
 			props.traceFilters.latency?.max +
 			"&minDuration=" +
-			props.traceFilters.latency?.min;
+			props.traceFilters.latency?.min +
+			"&kind=" +
+			props.traceFilters.kind;
 		if (props.traceFilters.tags)
 			request_string =
 				request_string +
@@ -172,6 +193,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	useEffect(() => {
 		form_basefilter.setFieldsValue({ operation: props.traceFilters.operation });
 	}, [props.traceFilters.operation]);
+
+	useEffect(() => {
+		form_basefilter.setFieldsValue({ kind: props.traceFilters.kind });
+	}, [props.traceFilters.kind]);
 
 	const [modalVisible, setModalVisible] = useState(false);
 	const [loading] = useState(false);
@@ -257,6 +282,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						operator: values.operator,
 					},
 				],
+				kind: props.traceFilters.kind
 			});
 		} else {
 			props.updateTraceFilters({
@@ -270,6 +296,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						operator: values.operator,
 					},
 				],
+				kind: props.traceFilters.kind
 			});
 		}
 
@@ -334,6 +361,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				max: "",
 				min: "",
 			},
+			kind: values.kind
 		});
 	};
 
@@ -344,9 +372,14 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				operation: "",
 				tags: [],
 				latency: { min: "", max: "" },
+				kind: ""
 			});
 		};
 	}, []);
+
+	const handleChangeSpanKind = (value:string = '') => {
+		props.updateTraceFilters({ ...props.traceFilters, kind: value });
+	}
 
 	return (
 		<div>
@@ -394,6 +427,20 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						type="button"
 						onClick={onLatencyButtonClick}
 					/>
+				</FormItem>
+
+				<FormItem name="spanKind">
+					<Select
+						showSearch
+						style={{ width: 180 }}
+						onChange={handleChangeSpanKind}
+						placeholder="Select Span Kind"
+						allowClear
+					>
+						{spanKindList.map(spanKind => (
+							<Option value={spanKind.value} key={spanKind.value}>{spanKind.label}</Option>
+						))}
+					</Select>
 				</FormItem>
 
 				{/* <FormItem>

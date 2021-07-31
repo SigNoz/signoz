@@ -15,15 +15,16 @@ import {
 	ServicesTable,
 	Signup,
 	SettingsPage,
-	IntstrumentationPage,
+	InstrumentationPage,
 } from "Src/pages";
 import { RouteProvider } from "./RouteProvider";
 import { ErrorFallback } from "../components/ErrorFallback"
+import NotFound from "Src/components/NotFound";
 
 const App = () => {
 	const { status } = useThemeSwitcher();
 	if (status === "loading") {
-		return null;
+		return <CustomSpinner size="large" tip="Loading..." />;
 	}
 
 	return (

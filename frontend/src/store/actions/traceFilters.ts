@@ -17,6 +17,7 @@ export interface TraceFilters {
 	service?: string;
 	latency?: LatencyValue;
 	operation?: string;
+	kind?: string;
 }
 
 //define interface for action. Action creator always returns object of this type
