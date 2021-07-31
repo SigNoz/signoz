@@ -5,4 +5,5 @@ export enum METRICS_PAGE_QUERY_PARAM {
 	service = "service",
 	error = "error",
 	operation = "operation",
+	kind = "kind"
 }
