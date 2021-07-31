@@ -8,6 +8,7 @@ const SpinerStyle = styled.div`
 position: fixed;
 z-index: 999;
 height: 4em;
+// width: 4em;
 overflow: visible;
 margin: auto;
 top: 0;
@@ -18,15 +19,15 @@ right: 0;
 
 export const CustomSpinner = ({
     size,
-    message,
+    tip,
 }:{
     size:string,
-    message:string,
+    tip:string,
 })=>{
     return(
         <>
         <SpinerStyle>
-                <Spin size={size} tip={message} indicator={antIcon}/>
+                <Spin size={size} tip={tip} indicator={antIcon}/>
         </SpinerStyle>
         </>
     )

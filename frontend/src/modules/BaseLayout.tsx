@@ -5,7 +5,6 @@ import SideNav from "./Nav/SideNav";
 import TopNav from "./Nav/TopNav";
 import { useLocation } from "react-router-dom";
 import { useRoute } from "./RouteProvider";
-import Moment from 'react-moment';
 
 const { Content, Footer } = Layout;
 
@@ -30,7 +29,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 					{children}
 				</Content>
 				<Footer style={{ textAlign: "center", fontSize: 10 }}>
-					SigNoz Inc. ©<Moment format='YYYY'></Moment>{" "}
+					SigNoz Inc. ©2020{" "}
 				</Footer>
 			</Layout>
 		</Layout>

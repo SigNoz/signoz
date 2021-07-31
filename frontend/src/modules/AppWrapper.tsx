@@ -29,12 +29,12 @@ const App = () => {
 	return (
 		<BrowserRouter>
 			<ErrorBoundary FallbackComponent={ErrorFallback}>
-				<Suspense fallback={<CustomSpinner size="large" message="Loading..."/>}>
+				<Suspense fallback={<CustomSpinner size="large" tip="Loading..."/>}>
 					<Route path={"/"}>
 						<Switch>
 							<RouteProvider>
 								<BaseLayout>
-									<Suspense fallback={<CustomSpinner size="large" message="Loading..."/>}>
+									<Suspense fallback={<CustomSpinner size="large" tip="Loading..."/>}>
 										<Route path={ROUTES.SIGN_UP} exact component={Signup} />
 										<Route path={ROUTES.APPLICATION} exact component={ServicesTable} />
 										<Route

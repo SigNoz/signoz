@@ -78,7 +78,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 		fgRef.current && fgRef.current.d3Force("charge").strength(-400);
 	});
 	if (!serviceMap.items.length || !serviceMap.services.length) {
-		return <CustomSpinner size="large" message="Loading..."/>;
+		return <CustomSpinner size="large" tip="Loading..."/>;
 	}
 
 	const zoomToService = (value: string) => {

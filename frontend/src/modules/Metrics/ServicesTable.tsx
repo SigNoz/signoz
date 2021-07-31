@@ -125,7 +125,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 
 	if (!initialDataFetch) {
 		return (
-			<CustomSpinner size="large" message="Fetching data..."/>
+			<CustomSpinner size="large" tip="Fetching data..."/>
 		);
 	}
 
