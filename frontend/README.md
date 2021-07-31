@@ -33,18 +33,6 @@ Follow the steps below
 
 ```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>```
 
-### To Avoid Adding a file to git or ignore changes
-Add the file to skip tree
-command
-```
-git update-index --skip-worktree <file path>
-```
-
-to remove from skiptree
-```
-git update-index --no-skip-worktree <file_name>
-```
-
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

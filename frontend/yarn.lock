@@ -10101,7 +10101,7 @@ polished@^4.1.2:
 
 portfinder-sync@^0.0.2:
   version "0.0.2"
-  resolved "https://unpm.uberinternal.com/portfinder-sync/-/portfinder-sync-0.0.2.tgz#6e3409a73a718436de053ac949385350caabd8a2"
+  resolved "https://registry.yarnpkg.com/portfinder-sync/-/portfinder-sync-0.0.2.tgz#6e3409a73a718436de053ac949385350caabd8a2"
   integrity sha1-bjQJpzpxhDbeBTrJSThTUMqr2KI=
   dependencies:
     minimist "^1.2.0"
