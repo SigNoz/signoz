@@ -481,6 +481,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 					<Select style={{ width: 120, textAlign: "center" }}>
 						<Option value="equals">EQUAL</Option>
 						<Option value="contains">CONTAINS</Option>
+						<Option value="regex">REGEX</Option>
 					</Select>
 				</FormItem>
 
