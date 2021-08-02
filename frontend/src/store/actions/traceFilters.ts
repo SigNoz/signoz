@@ -4,7 +4,7 @@ import { ActionTypes } from "./types";
 export interface TagItem {
 	key: string;
 	value: string;
-	operator: "equals" | "contains";
+	operator: "equals" | "contains" | "regex";
 }
 
 export interface LatencyValue {
