@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"time"
@@ -68,8 +69,9 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHa
 
 	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
 
-	filename := "/Users/ankitnayan/Desktop/signoz/pkg/query-service/app/prometheus.yml"
-	conf, err := config.LoadFile(filename)
+	filename := flag.String("config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.Parse()
+	conf, err := config.LoadFile(*filename)
 	if err != nil {
 		zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
 	}
