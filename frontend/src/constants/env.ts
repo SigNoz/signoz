@@ -1,3 +1,3 @@
 export const ENVIRONMENT = {
-	baseURL: "",
+	baseURL: process?.env?.FRONTEND_API_ENDPOINT || "",
 };
