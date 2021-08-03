@@ -244,11 +244,14 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 		if item.Operator == "equals" {
 			query = query + " AND has(tags, ?)"
 			args = append(args, fmt.Sprintf("%s:%s", item.Key, item.Value))
-
 		} else if item.Operator == "contains" {
 			query = query + " AND tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
 			args = append(args, item.Key)
 			args = append(args, fmt.Sprintf("%%%s%%", item.Value))
+		} else if item.Operator == "regex" {
+			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
+			args = append(args, item.Key)
+			args = append(args, item.Value)
 		} else if item.Operator == "isnotnull" {
 			query = query + " AND has(tagsKeys, ?)"
 			args = append(args, item.Key)
@@ -674,11 +677,14 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 		if item.Operator == "equals" {
 			query = query + " AND has(tags, ?)"
 			args = append(args, fmt.Sprintf("%s:%s", item.Key, item.Value))
-
 		} else if item.Operator == "contains" {
 			query = query + " AND tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
 			args = append(args, item.Key)
 			args = append(args, fmt.Sprintf("%%%s%%", item.Value))
+		} else if item.Operator == "regex" {
+			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
+			args = append(args, item.Key)
+			args = append(args, item.Value)
 		} else if item.Operator == "isnotnull" {
 			query = query + " AND has(tagsKeys, ?)"
 			args = append(args, item.Key)

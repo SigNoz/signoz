@@ -9,6 +9,7 @@ const initialState: TraceFilters = {
 	tags: [],
 	operation: "",
 	latency: { min: "", max: "" },
+	kind: ""
 };
 
 const TraceFilterReducer = (state = initialState, action: ACTION) => {

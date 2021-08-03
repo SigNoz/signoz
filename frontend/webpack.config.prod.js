@@ -3,6 +3,7 @@ const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const CompressionPlugin = require("compression-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
 	mode: "production",
@@ -46,11 +47,17 @@ module.exports = {
 	},
 	plugins: [
 		new CompressionPlugin({
-			exclude: /.map$/
+			exclude: /.map$/,
 		}),
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
 		new CopyPlugin({
 			patterns: [{ from: resolve(__dirname, "public/"), to: "." }],
+		}),
+		new webpack.ProvidePlugin({
+			process: "process/browser",
+		}),
+		new webpack.DefinePlugin({
+			"process.env": JSON.stringify(process.env),
 		}),
 	],
 	performance: {
