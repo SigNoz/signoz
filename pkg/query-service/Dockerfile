@@ -26,5 +26,5 @@ WORKDIR /root
 # copy the binary from builder
 COPY --from=builder /go/src/github.com/signoz/signoz/pkg/query-service/bin/query-service .
 # run the binary
-CMD ["./query-service"]
+CMD ["./query-service -config /root/config/prometheus.yml"]
 
