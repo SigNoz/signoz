@@ -22,7 +22,7 @@ services:
   query-service:
     image: signoz/query-service:custom-metrics
     container_name: query-service
-
+    command: ["-config=/root/config/prometheus.yml"]
     ports:
       - "8080:8080"
     volumes:
