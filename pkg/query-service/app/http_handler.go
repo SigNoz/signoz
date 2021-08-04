@@ -50,6 +50,13 @@ type APIHandler struct {
 func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
+	// allowedFormat := promlog.AllowedFormat{}
+	// allowedFormat.Set("logfmt")
+
+	// promlogConfig := promlog.Config{
+	// 	Level:  &logLevel,
+	// 	Format: &allowedFormat,
+	// }
 
 	logger := promlog.New(logLevel)
 
@@ -65,6 +72,7 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHa
 
 	startTime := func() (int64, error) {
 		return int64(model.Latest), nil
+
 	}
 
 	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))

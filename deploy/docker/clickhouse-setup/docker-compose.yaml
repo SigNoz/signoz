@@ -20,11 +20,13 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:0.3.1
+    image: signoz/query-service:custom-metrics
     container_name: query-service
 
     ports:
       - "8080:8080"
+    volumes:
+      - ./prometheus.yml:/etc/clickhouse-server/config.xml/go/src/github.com/signoz/signoz/pkg/query-service/config/prometheus.yml
 
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
