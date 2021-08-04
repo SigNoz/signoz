@@ -52,7 +52,7 @@ services:
 
 
   otel-collector:
-    image: signoz/otelcol:latest
+    image: signoz/otelcol:0.4.0
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
