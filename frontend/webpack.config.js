@@ -1,6 +1,12 @@
 // shared config (dev and prod)
 const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const portFinderSync = require('portfinder-sync')
+const dotenv = require("dotenv");
+const webpack = require("webpack");
+
+dotenv.config();
+
 console.log(resolve(__dirname, "./src/"));
 
 module.exports = {
@@ -17,7 +23,9 @@ module.exports = {
 		hot: true,
 		liveReload: false,
 		inline: true,
-		port: 3000,
+		// This is being used because if the port 3000 is being used
+		// then it will try to find another open port availble.
+		port: portFinderSync.getPort(3000),
 	},
 	output: {
 		filename: "js/bundle.[chunkhash].min.js",
@@ -56,6 +64,12 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
+		new webpack.ProvidePlugin({
+			process: "process/browser",
+		}),
+		new webpack.DefinePlugin({
+			"process.env": JSON.stringify(process.env),
+		}),
 	],
 	performance: {
 		hints: false,
