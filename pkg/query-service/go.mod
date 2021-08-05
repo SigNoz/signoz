@@ -57,4 +57,4 @@ require (
 
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.3
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.4
