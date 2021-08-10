@@ -34,10 +34,10 @@ dependencies:
     version: 0.2.18
   - name: flattener-processor
     repository: "file://./signoz-charts/flattener-processor"
-    version: 0.3.3
+    version: 0.3.4
   - name: query-service
     repository: "file://./signoz-charts/query-service"
-    version: 0.3.3
+    version: 0.3.4
   - name: frontend
     repository: "file://./signoz-charts/frontend"
-    version: 0.3.3
+    version: 0.3.4
