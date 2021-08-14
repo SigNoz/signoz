@@ -16,7 +16,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 	const callback = (key: any) => {};
 
 	return (
-		<Card style={{ height: 320 }}>
+		<Card>
 			<Tabs defaultActiveKey="1" onChange={callback}>
 				<TabPane tab="Tags" key="1">
 					<strong> Details for selected Span </strong>
