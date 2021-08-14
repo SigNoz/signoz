@@ -91,7 +91,9 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 			"&maxDuration=" +
 			props.traceFilters.latency?.max +
 			"&minDuration=" +
-			props.traceFilters.latency?.min;
+			props.traceFilters.latency?.min +
+			"&kind=" +
+			props.traceFilters.kind;
 		if (props.traceFilters.tags)
 			request_string =
 				request_string +

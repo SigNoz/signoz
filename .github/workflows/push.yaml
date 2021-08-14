@@ -20,7 +20,7 @@ jobs:
           if [ ${array[1]} == "tags" ]
           then
               echo "tag build"
-              img_tag=${GITHUB_REF#refs/*/}
+              img_tag=${GITHUB_REF#refs/*/v}
           else
               echo "non tag build"
               img_tag="latest"
