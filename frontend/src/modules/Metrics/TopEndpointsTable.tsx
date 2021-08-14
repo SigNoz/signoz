@@ -1,13 +1,13 @@
-import React from "react";
-import { Table, Button, Tooltip } from "antd";
-import { connect } from "react-redux";
-import styled from "styled-components";
-import { useHistory, useParams } from "react-router-dom";
-import { topEndpointListItem } from "../../store/actions/MetricsActions";
-import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
-import { GlobalTime } from "Src/store/actions";
-import { StoreState } from "Src/store/reducers";
-import "./TopEndpointsTable.css";
+import React from 'react';
+import { Table, Button, Tooltip } from 'antd';
+import { connect } from 'react-redux';
+import styled from 'styled-components';
+import { useHistory, useParams } from 'react-router-dom';
+import { topEndpointListItem } from '../../store/actions/MetricsActions';
+import { METRICS_PAGE_QUERY_PARAM } from 'Src/constants/query';
+import { GlobalTime } from 'Src/store/actions';
+import { StoreState } from 'Src/store/reducers';
+import './TopEndpointsTable.css';
 
 const Wrapper = styled.div`
 	padding-top: 10px;
@@ -60,9 +60,9 @@ const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
 
 	const columns: any = [
 		{
-			title: "Name",
-			dataIndex: "name",
-			key: "name",
+			title: 'Name',
+			dataIndex: 'name',
+			key: 'name',
 
 			render: (text: string) => (
 				<Tooltip placement="topLeft" title={text}>
@@ -77,33 +77,33 @@ const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
 			),
 		},
 		{
-			title: "P50  (in ms)",
-			dataIndex: "p50",
-			key: "p50",
+			title: 'P50  (in ms)',
+			dataIndex: 'p50',
+			key: 'p50',
 			sorter: (a: any, b: any) => a.p50 - b.p50,
 			// sortDirections: ['descend', 'ascend'],
 			render: (value: number) => (value / 1000000).toFixed(2),
 		},
 		{
-			title: "P95  (in ms)",
-			dataIndex: "p95",
-			key: "p95",
+			title: 'P95  (in ms)',
+			dataIndex: 'p95',
+			key: 'p95',
 			sorter: (a: any, b: any) => a.p95 - b.p95,
 			// sortDirections: ['descend', 'ascend'],
 			render: (value: number) => (value / 1000000).toFixed(2),
 		},
 		{
-			title: "P99  (in ms)",
-			dataIndex: "p99",
-			key: "p99",
+			title: 'P99  (in ms)',
+			dataIndex: 'p99',
+			key: 'p99',
 			sorter: (a: any, b: any) => a.p99 - b.p99,
 			// sortDirections: ['descend', 'ascend'],
 			render: (value: number) => (value / 1000000).toFixed(2),
 		},
 		{
-			title: "Number of Calls",
-			dataIndex: "numCalls",
-			key: "numCalls",
+			title: 'Number of Calls',
+			dataIndex: 'numCalls',
+			key: 'numCalls',
 			sorter: (a: any, b: any) => a.numCalls - b.numCalls,
 		},
 	];

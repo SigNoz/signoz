@@ -1,6 +1,6 @@
-import React from "react";
-import { Modal, Form, InputNumber, Col, Row } from "antd";
-import { NamePath, Store } from "antd/lib/form/interface";
+import React from 'react';
+import { Modal, Form, InputNumber, Col, Row } from 'antd';
+import { NamePath, Store } from 'antd/lib/form/interface';
 
 interface LatencyModalFormProps {
 	onCreate: (values: Store) => void; //Store is defined in antd forms library
@@ -21,10 +21,10 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 		getFieldValue: (name: NamePath) => any;
 	}) => ({
 		validator(_, value: any) {
-			if (value < getFieldValue("max")) {
+			if (value < getFieldValue('max')) {
 				return Promise.resolve();
 			}
-			return Promise.reject(new Error("Min value should be less than Max value"));
+			return Promise.reject(new Error('Min value should be less than Max value'));
 		},
 	});
 
@@ -34,11 +34,11 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 		getFieldValue: (name: NamePath) => any;
 	}) => ({
 		validator(_, value: any) {
-			if (value > getFieldValue("min")) {
+			if (value > getFieldValue('min')) {
 				return Promise.resolve();
 			}
 			return Promise.reject(
-				new Error("Max value should be greater than Min value"),
+				new Error('Max value should be greater than Min value'),
 			);
 		},
 	});
@@ -58,7 +58,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 						onCreate(values); // giving error for values
 					})
 					.catch((info) => {
-						console.log("Validate Failed:", info);
+						console.log('Validate Failed:', info);
 					});
 			}}
 		>

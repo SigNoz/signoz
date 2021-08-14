@@ -1,6 +1,6 @@
-import { uniqBy, uniq, maxBy, cloneDeep, find } from "lodash";
-import { serviceMapStore } from "Src/store/actions";
-import { graphDataType } from "./ServiceMap";
+import { uniqBy, uniq, maxBy, cloneDeep, find } from 'lodash';
+import { serviceMapStore } from 'Src/store/actions';
+import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;
@@ -20,7 +20,7 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 	const highestCallCount = maxBy(items, (e) => e.callCount).callCount;
 	const highestCallRate = maxBy(services, (e) => e.callRate).callRate;
 	const divNum = Number(
-		String(1).padEnd(highestCallCount.toString().length, "0"),
+		String(1).padEnd(highestCallCount.toString().length, '0'),
 	);
 
 	const links = cloneDeep(items).map((node) => {
@@ -31,12 +31,12 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 			value: (100 - callCount / divNum) * 0.03,
 		};
 	});
-	const uniqParent = uniqBy(cloneDeep(items), "parent").map((e) => e.parent);
-	const uniqChild = uniqBy(cloneDeep(items), "child").map((e) => e.child);
+	const uniqParent = uniqBy(cloneDeep(items), 'parent').map((e) => e.parent);
+	const uniqChild = uniqBy(cloneDeep(items), 'child').map((e) => e.child);
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
 	const nodes = uniqNodes.map((node, i) => {
 		const service = find(services, (service) => service.serviceName === node);
-		let color = "#88CEA5";
+		let color = '#88CEA5';
 		if (!service) {
 			return {
 				id: node,
@@ -51,9 +51,9 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 			};
 		}
 		if (service.errorRate > 0) {
-			color = "#F98989";
+			color = '#F98989';
 		} else if (service.fourXXRate > 0) {
-			color = "#F9DA7B";
+			color = '#F9DA7B';
 		}
 		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {

@@ -1,4 +1,4 @@
-import { combineReducers } from "redux";
+import { combineReducers } from 'redux';
 import {
 	traceResponseNew,
 	spansWSameTraceIDResponse,
@@ -6,13 +6,13 @@ import {
 	GlobalTime,
 	serviceMapStore,
 	TraceFilters,
-} from "../actions";
-import { updateGlobalTimeReducer } from "./global";
-import { MetricsInitialState, metricsReducer } from "./metrics";
-import TraceFilterReducer from "./traceFilters";
-import { traceItemReducer, tracesReducer } from "./traces";
-import { usageDataReducer } from "./usage";
-import { ServiceMapReducer } from "./serviceMap";
+} from '../actions';
+import { updateGlobalTimeReducer } from './global';
+import { MetricsInitialState, metricsReducer } from './metrics';
+import TraceFilterReducer from './traceFilters';
+import { traceItemReducer, tracesReducer } from './traces';
+import { usageDataReducer } from './usage';
+import { ServiceMapReducer } from './serviceMap';
 
 export interface StoreState {
 	metricsData: MetricsInitialState;

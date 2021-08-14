@@ -1,11 +1,11 @@
-import React, { Suspense } from "react";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import ROUTES from "Src/constants/routes";
-import { IS_LOGGED_IN } from "Src/constants/auth";
-import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
-import { CustomSpinner } from "./../components/Spiner";
+import React, { Suspense } from 'react';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
+import ROUTES from 'Src/constants/routes';
+import { IS_LOGGED_IN } from 'Src/constants/auth';
+import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
+import { CustomSpinner } from './../components/Spiner';
 
-import BaseLayout from "./BaseLayout";
+import BaseLayout from './BaseLayout';
 import {
 	ServiceMetrics,
 	ServiceMap,
@@ -16,14 +16,14 @@ import {
 	Signup,
 	SettingsPage,
 	InstrumentationPage,
-} from "Src/pages";
-import { RouteProvider } from "./RouteProvider";
-import NotFound from "Src/components/NotFound";
+} from 'Src/pages';
+import { RouteProvider } from './RouteProvider';
+import NotFound from 'Src/components/NotFound';
 
 const App = () => {
 	const { status } = useThemeSwitcher();
 
-	if (status === "loading") {
+	if (status === 'loading') {
 		return <CustomSpinner size="large" tip="Loading..." />;
 	}
 
@@ -50,7 +50,7 @@ const App = () => {
 								path="/"
 								exact
 								render={() => {
-									return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
+									return localStorage.getItem(IS_LOGGED_IN) === 'yes' ? (
 										<Redirect to={ROUTES.APPLICATION} />
 									) : (
 										<Redirect to={ROUTES.SIGN_UP} />

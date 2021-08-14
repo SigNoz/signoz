@@ -1,15 +1,15 @@
-import { Dispatch } from "redux";
-import api, { apiV1 } from "../../../api";
+import { Dispatch } from 'redux';
+import api, { apiV1 } from '../../../api';
 
-import { GlobalTime } from "../global";
-import { toUTCEpoch } from "../../../utils/timeUtils";
-import { MetricsActionTypes } from "./metricsActionTypes";
-import * as MetricsInterfaces from "./metricsInterfaces";
+import { GlobalTime } from '../global';
+import { toUTCEpoch } from '../../../utils/timeUtils';
+import { MetricsActionTypes } from './metricsActionTypes';
+import * as MetricsInterfaces from './metricsInterfaces';
 
 export const getServicesList = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
+			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
 
 		const response = await api.get<MetricsInterfaces.servicesListItem[]>(
 			apiV1 + request_string,
@@ -29,13 +29,13 @@ export const getDbOverViewMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/service/dbOverview?service=" +
+			'/service/dbOverview?service=' +
 			serviceName +
-			"&start=" +
+			'&start=' +
 			globalTime.minTime +
-			"&end=" +
+			'&end=' +
 			globalTime.maxTime +
-			"&step=60";
+			'&step=60';
 		const response = await api.get<MetricsInterfaces.dbOverviewMetricsItem[]>(
 			apiV1 + request_string,
 		);
@@ -52,13 +52,13 @@ export const getExternalMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/service/external?service=" +
+			'/service/external?service=' +
 			serviceName +
-			"&start=" +
+			'&start=' +
 			globalTime.minTime +
-			"&end=" +
+			'&end=' +
 			globalTime.maxTime +
-			"&step=60";
+			'&step=60';
 		const response = await api.get<MetricsInterfaces.externalMetricsItem[]>(
 			apiV1 + request_string,
 		);
@@ -75,13 +75,13 @@ export const getExternalAvgDurationMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/service/externalAvgDuration?service=" +
+			'/service/externalAvgDuration?service=' +
 			serviceName +
-			"&start=" +
+			'&start=' +
 			globalTime.minTime +
-			"&end=" +
+			'&end=' +
 			globalTime.maxTime +
-			"&step=60";
+			'&step=60';
 
 		const response = await api.get<
 			MetricsInterfaces.externalMetricsAvgDurationItem[]
@@ -98,13 +98,13 @@ export const getExternalErrCodeMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/service/externalErrors?service=" +
+			'/service/externalErrors?service=' +
 			serviceName +
-			"&start=" +
+			'&start=' +
 			globalTime.minTime +
-			"&end=" +
+			'&end=' +
 			globalTime.maxTime +
-			"&step=60";
+			'&step=60';
 		const response = await api.get<
 			MetricsInterfaces.externalErrCodeMetricsItem[]
 		>(apiV1 + request_string);
@@ -122,13 +122,13 @@ export const getServicesMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/service/overview?service=" +
+			'/service/overview?service=' +
 			serviceName +
-			"&start=" +
+			'&start=' +
 			globalTime.minTime +
-			"&end=" +
+			'&end=' +
 			globalTime.maxTime +
-			"&step=60";
+			'&step=60';
 		const response = await api.get<MetricsInterfaces.metricItem[]>(
 			apiV1 + request_string,
 		);
@@ -147,11 +147,11 @@ export const getTopEndpoints = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/service/top_endpoints?service=" +
+			'/service/top_endpoints?service=' +
 			serviceName +
-			"&start=" +
+			'&start=' +
 			globalTime.minTime +
-			"&end=" +
+			'&end=' +
 			globalTime.maxTime;
 		const response = await api.get<MetricsInterfaces.topEndpointListItem[]>(
 			apiV1 + request_string,
@@ -171,11 +171,11 @@ export const getFilteredTraceMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-			"/spans/aggregates?start=" +
+			'/spans/aggregates?start=' +
 			toUTCEpoch(globalTime.minTime) +
-			"&end=" +
+			'&end=' +
 			toUTCEpoch(globalTime.maxTime) +
-			"&" +
+			'&' +
 			filter_params;
 		const response = await api.get<MetricsInterfaces.customMetricsItem[]>(
 			apiV1 + request_string,

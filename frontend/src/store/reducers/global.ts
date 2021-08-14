@@ -1,4 +1,4 @@
-import { ActionTypes, Action, GlobalTime } from "../actions";
+import { ActionTypes, Action, GlobalTime } from '../actions';
 
 export const updateGlobalTimeReducer = (
 	state: GlobalTime = {
@@ -9,9 +9,9 @@ export const updateGlobalTimeReducer = (
 ) => {
 	// Initial global state is time now and 15 minute interval
 	switch (action.type) {
-		case ActionTypes.updateTimeInterval:
-			return action.payload;
-		default:
-			return state;
+	case ActionTypes.updateTimeInterval:
+		return action.payload;
+	default:
+		return state;
 	}
 };
