@@ -14,7 +14,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 
 ### Contribute to Frontend with Docker installation of SigNoz
 
-- `git clone [https://github.com/SigNoz/signoz.git](https://github.com/SigNoz/signoz.git) && cd signoz`
+- `git clone https://github.com/SigNoz/signoz.git && cd signoz`
 - comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L38`
 - run `cd deploy && docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d` (this will install signoz locally without the frontend service)
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
@@ -25,7 +25,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 
 If you don't want to install SigNoz backend just for doing frontend development, we can provide you with test environments which you can use as the backend. Please ping us in #contributing channel in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) and we will DM you with `<test environment URL>`
 
-- `git clone [https://github.com/SigNoz/signoz.git](https://github.com/SigNoz/signoz.git) && cd signoz/frontend`
+- `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
 - change baseURL to `<test environment URL>` in file `src/constants/env.ts`
 - `yarn install`
 - `yarn dev`
@@ -38,7 +38,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 ### To run ClickHouse setup (recommended for local development)
 
-- `git clone [https://github.com/SigNoz/signoz.git](https://github.com/SigNoz/signoz.git) && cd signoz/deploy`
+- `git clone https://github.com/SigNoz/signoz.git && cd signoz/deploy`
 - comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 - comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L22`
 - Run `docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d` (this will install signoz locally without the frontend and query-service)
@@ -46,7 +46,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 **_Query Service should now be available at `http://localhost:8080`_**
 
-> If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to [`http://localhost:8080`](http://ec2-18-191-251-86.us-east-2.compute.amazonaws.com:8080/) in file `src/constants/env.ts` as the query-service is now running at port `8080`
+> If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
 # Contribute to Flattener Processor
 
@@ -62,3 +62,14 @@ You can always reach out to `ankit@signoz.io` to understand more about the repo 
 - If you find anything missing in documentation, you can create an issue with label **documentation**
 - If you want to build any new feature, please create an issue with label `enhancement`
 - If you want to discuss something about the product, start a new [discussion](https://github.com/SigNoz/signoz/discussions)
+
+### Conventions to follow when submitting commits, PRs
+1. We try to follow https://www.conventionalcommits.org/en/v1.0.0/
+
+More specifically the commits and PRs should have type specifiers prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea.
+
+e.g. If you are submitting a fix for an issue in frontend - PR name should be prefixed with `fix(FE):` 
+
+2. Follow [GitHub Flow](https://guides.github.com/introduction/flow/) guidelines for your contribution flows
+
+3. Feel free to ping us on `#contributing` or `#contributing-frontend` on our slack community if you need any help on this :)

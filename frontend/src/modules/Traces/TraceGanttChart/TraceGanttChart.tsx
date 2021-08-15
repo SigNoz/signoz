@@ -78,6 +78,7 @@ const TraceGanttChart = ({
 			}
 			setTabsContainerWidth(tabsContainer?.offsetWidth!);
 		}
+		handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
 
 	useEffect(() => {
@@ -230,6 +231,15 @@ const TraceGanttChart = ({
 		});
 
 		resetZoom(true);
+	};
+
+	const handleScroll = (id: string): void => {
+		if (!isEmpty(id)) {
+			const selectedRow = document.querySelectorAll<HTMLElement>(
+				`[data-row-key='${id}']`,
+			);
+			selectedRow?.[0]?.scrollIntoView();
+		}
 	};
 
 	const rowSelection = {
