@@ -11,20 +11,39 @@
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
         <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
 </p>
+  
+  
+<h3 align="center">
+  <a href="https://signoz.io/docs"><b>Documentation</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
+  <a href="https://bit.ly/signoz-slack"><b>Slack Community</b></a> &bull;
+  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
+</h3>
 
 ##
 
-SigNoz helps developer monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
+SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
 
 👉 You can see metrics like p99 latency, error rates for your services, external API calls and individual end points.
 
 👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
 
-<!-- ![SigNoz Feature](https://signoz.io/img/readme_feature1.jpg) -->
 
-![SigNoz Feature](https://res.cloudinary.com/dcv3epinx/image/upload/v1618904032/signoz-images/screenzy-1618904013729_clssvy.png)
+![SigNoz Feature](https://signoz-public.s3.us-east-2.amazonaws.com/signoz_hero_github.png)
 
-### 👇 Features:
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
+
+## Join our Slack community
+
+Come say Hi to us on [Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 👋
+
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
+
+## Features:
 
 - Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
@@ -33,7 +52,11 @@ SigNoz helps developer monitor applications and troubleshoot problems in their d
 - Aggregate metrics on filtered traces. Eg, you can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
 
-### 🤓 Why SigNoz?
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/WhatsCool.svg" width="50px" />
+
+## Why SigNoz?
 
 Being developers, we found it annoying to rely on closed source SaaS vendors for every small feature we wanted. Closed source vendors often surprise you with huge month end bills without any transparency.
 
@@ -41,7 +64,7 @@ We wanted to make a self-hosted & open source version of tools like DataDog, New
 
 Being open source also gives you complete control of your configuration, sampling, uptimes. You can also build modules over SigNoz to extend business specific capabilities
 
-### 👊🏻 Languages supported:
+### Languages supported:
 
 We support [OpenTelemetry](https://opentelemetry.io) as the library which you can use to instrument your applications. So any framework and language supported by OpenTelemetry is also supported by SigNoz. Some of the main supported languages are:
 
@@ -52,54 +75,84 @@ We support [OpenTelemetry](https://opentelemetry.io) as the library which you ca
 
 You can find the complete list of languages here - https://opentelemetry.io/docs/
 
-# Getting Started
+<br /><br />
 
-## Deploy using docker-compose
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
 
-We have a tiny-cluster setup and a standard setup to deploy using docker-compose.
-Follow the steps listed at https://signoz.io/docs/deployment/docker/.
-The troubleshooting instructions at https://signoz.io/docs/deployment/docker/#troubleshooting may be helpful
+## Getting Started
+  
+  
+### Deploy using Docker
 
-## Deploy in Kubernetes using Helm
+Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker
 
-Below steps will install the SigNoz in `platform` namespace inside your k8s cluster.
+The [troubleshooting instructions](https://signoz.io/docs/deployment/troubleshooting) may be helpful if you face any issues.
 
-```console
-git clone https://github.com/SigNoz/signoz.git && cd signoz
-helm dependency update deploy/kubernetes/platform
-kubectl create ns platform
-helm -n platform install signoz deploy/kubernetes/platform
-kubectl -n platform apply -Rf deploy/kubernetes/jobs
-kubectl -n platform apply -f deploy/kubernetes/otel-collector
-```
+<p>&nbsp  </p>
+  
+  
+### Deploy in Kubernetes using Helm
 
-\*_You can choose a different namespace too. In that case, you need to point your applications to correct address to send traces. In our sample application just change the `JAEGER_ENDPOINT` environment variable in `sample-apps/hotrod/deployment.yaml`_
+Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_chart) to install using helm charts
+  
 
-### Test HotROD application with SigNoz
+<br /><br />
 
-```console
-kubectl create ns sample-application
-kubectl -n sample-application apply -Rf sample-apps/hotrod/
-```
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/UseSigNoz.svg" width="50px" />
 
-### How to generate load
+## Comparisons to Familiar Tools
 
-`kubectl -n sample-application run strzal --image=djbingham/curl --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F 'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm`
+### SigNoz vs Prometheus
 
-### See UI
+Prometheus is good if you want to do just metrics. But if you want to have a seamless experience between metrics and traces, then current experience of stitching together Prometheus & Jaeger is not great. 
 
-`kubectl -n platform port-forward svc/signoz-frontend 3000:3000`
+Our goal is to provide an integrated UI between metrics & traces - similar to what SaaS vendors like Datadog provides - and give advanced filtering and aggregation over traces, something which Jaeger currently lack.
 
-### How to stop load
+<p>&nbsp  </p>
 
-`kubectl -n sample-application run strzal --image=djbingham/curl --restart='OnFailure' -i --tty --rm --command -- curl http://locust-master:8089/stop`
+### SigNoz vs Jaeger
 
-# Documentation
+Jaeger only does distributed tracing. SigNoz does both metrics and traces, and we also have log management in our roadmap.
 
-You can find docs at https://signoz.io/docs/deployment/docker. If you need any clarification or find something missing, feel free to raise a GitHub issue with the label `documentation` or reach out to us at the community slack channel.
+Moreover, SigNoz has few more advanced features wrt Jaeger:
 
-# Community
+- Jaegar UI doesn’t show any metrics on traces or on filtered traces
+- Jaeger can’t get aggregates on filtered traces. For example, p99 latency of requests which have tag - customer_type='premium'. This can be done easily on SigNoz
 
-Join the [slack community](https://app.slack.com/client/T01HWUTP0LT#/) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributors.svg" width="50px" />
+
+## Contributing
+
+
+We ❤️  contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz. 
+
+Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)
+
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/DevelopingLocally.svg" width="50px" />
+
+## Documentation
+
+You can find docs at https://signoz.io/docs/. If you need any clarification or find something missing, feel free to raise a GitHub issue with the label `documentation` or reach out to us at the community slack channel.
+
+<br /><br />
+
+<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
+
+## Community
+
+Join the [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
 
 If you have any ideas, questions, or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
+
+As always, thanks to our amazing contributors!    
+
+<a href="https://github.com/signoz/signoz/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=signoz/signoz" />
+</a>
+
+
+

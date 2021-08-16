@@ -83,6 +83,7 @@ export const getZoomPx = (): number => {
 	} else if (width > 1700) {
 		return 470;
 	}
+	return 190;
 };
 
 export const getTooltip = (node: {

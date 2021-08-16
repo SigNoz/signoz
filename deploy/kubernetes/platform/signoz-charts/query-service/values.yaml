@@ -16,6 +16,7 @@ fullnameOverride: ""
 configVars:
   DruidClientUrl: http://signoz-druid-router:8888
   DruidDatasource: flattened_spans
+  STORAGE: druid
   POSTHOG_API_KEY: "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 
 

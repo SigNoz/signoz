@@ -22,7 +22,10 @@ assignees: ''
 2.
 3.
 
-
+## Version information 
+* **Signoz version**:
+* **Browser version**:
+* **Your OS and version**:
 
 ## Additional context
 

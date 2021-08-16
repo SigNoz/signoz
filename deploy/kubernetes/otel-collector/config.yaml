@@ -8,14 +8,14 @@ metadata:
 data:
   otel-collector-config: |
     receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
       jaeger:
         protocols:
           grpc:
           thrift_http:
-      otlp:
-        protocols:
-          grpc:
-          http:      
     processors:
       batch:
         send_batch_size: 1000
@@ -36,9 +36,16 @@ data:
       health_check: {}
       zpages: {}
     exporters:
-      kafka:
+      kafka/traces:
         brokers:
           - signoz-kafka:9092
+        topic: 'otlp_spans'
+        protocol_version: 2.0.0
+
+      kafka/metrics:
+        brokers:
+          - signoz-kafka:9092
+        topic: 'otlp_metrics'
         protocol_version: 2.0.0
     service:
       extensions: [health_check, zpages]
@@ -46,8 +53,8 @@ data:
         traces:
           receivers: [jaeger, otlp]
           processors: [memory_limiter, batch, queued_retry]
-          exporters: [kafka]
+          exporters: [kafka/traces]
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [kafka]
+          exporters: [kafka/metrics]

@@ -1,0 +1,29 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+template: |
+  # What's Changed
+  $CHANGES
+autolabeler:
+  - label: 'chore'
+    title:
+      - '/chore/i'
+  - label: 'bug'
+    title:
+      - '/fix/i'
+  - label: 'enhancement'
+    title:
+      - '/feat/i'
+
+categories:
+  - title: '🚀 Features'
+    label: 'enhancement'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug'
+  - title: '🧰 Maintenance'
+    label: 'chore'
+  - title: 'Breaking'
+    label: 'breaking'
+
+exclude-labels:
+  - 'skip-changelog'

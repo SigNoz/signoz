@@ -23,6 +23,6 @@ export const SettingsPage = React.lazy(
 	() => import("Src/modules/Settings/settingsPage"),
 );
 
-export const IntstrumentationPage = React.lazy(
+export const InstrumentationPage = React.lazy(
 	() => import("Src/modules/add-instrumentation/instrumentationPage"),
 );

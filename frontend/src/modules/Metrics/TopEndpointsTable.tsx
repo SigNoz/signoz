@@ -3,7 +3,7 @@ import { Table, Button, Tooltip } from "antd";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { useHistory, useParams } from "react-router-dom";
-import { topEndpointListItem } from "../../store/actions/metrics";
+import { topEndpointListItem } from "../../store/actions/MetricsActions";
 import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
 import { GlobalTime } from "Src/store/actions";
 import { StoreState } from "Src/store/reducers";
@@ -85,10 +85,10 @@ const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
 			render: (value: number) => (value / 1000000).toFixed(2),
 		},
 		{
-			title: "P90  (in ms)",
-			dataIndex: "p90",
-			key: "p90",
-			sorter: (a: any, b: any) => a.p90 - b.p90,
+			title: "P95  (in ms)",
+			dataIndex: "p95",
+			key: "p95",
+			sorter: (a: any, b: any) => a.p95 - b.p95,
 			// sortDirections: ['descend', 'ascend'],
 			render: (value: number) => (value / 1000000).toFixed(2),
 		},

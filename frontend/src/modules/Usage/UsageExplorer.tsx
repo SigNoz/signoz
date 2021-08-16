@@ -1,19 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
-import { Card, Form, Select, Space } from "antd";
+import { Card, Select, Space } from "antd";
 import { connect } from "react-redux";
 
 import {
 	getServicesList,
 	getUsageData,
 	GlobalTime,
-	servicesListItem,
 	usageDataItem,
 } from "../../store/actions";
 import { StoreState } from "../../store/reducers";
 import moment from "moment";
 import { isOnboardingSkipped } from "../../utils/app";
 import { useRoute } from "../RouteProvider";
+import { servicesListItem } from "../../store/actions/MetricsActions";
 const { Option } = Select;
 
 interface UsageExplorerProps {
@@ -49,7 +49,6 @@ const interval = [
 		label: "Hours",
 		applicableOn: [timeDaysOptions[2], timeDaysOptions[1]],
 	},
-	,
 ];
 
 const _UsageExplorer = (props: UsageExplorerProps) => {
@@ -212,7 +211,7 @@ const mapStateToProps = (
 		totalCount: totalCount,
 		usageData: state.usageDate,
 		globalTime: state.globalTime,
-		servicesList: state.servicesList,
+		servicesList: state.metricsData.serviceList,
 	};
 };
 

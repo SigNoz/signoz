@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router-dom";
 import {
@@ -7,7 +7,6 @@ import {
 	getServiceMapItems,
 	getDetailedServiceMapItems,
 } from "Src/store/actions";
-import { Spin } from "antd";
 import styled from "styled-components";
 import { StoreState } from "../../store/reducers";
 
@@ -15,6 +14,7 @@ import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
 import { useRoute } from "../RouteProvider";
+import { CustomSpinner } from "../../components/Spiner";
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {
@@ -78,7 +78,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 		fgRef.current && fgRef.current.d3Force("charge").strength(-400);
 	});
 	if (!serviceMap.items.length || !serviceMap.services.length) {
-		return <Spin />;
+		return <CustomSpinner size="large" tip="Loading..."/>;
 	}
 
 	const zoomToService = (value: string) => {

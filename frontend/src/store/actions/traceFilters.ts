@@ -4,7 +4,7 @@ import { ActionTypes } from "./types";
 export interface TagItem {
 	key: string;
 	value: string;
-	operator: "equals" | "contains";
+	operator: "equals" | "contains" | "regex";
 }
 
 export interface LatencyValue {
@@ -17,6 +17,7 @@ export interface TraceFilters {
 	service?: string;
 	latency?: LatencyValue;
 	operation?: string;
+	kind?: string;
 }
 
 //define interface for action. Action creator always returns object of this type
@@ -29,18 +30,6 @@ export const updateTraceFilters = (traceFilters: TraceFilters) => {
 	return {
 		type: ActionTypes.updateTraceFilters,
 		payload: traceFilters,
-	};
-};
-
-export interface updateInputTagAction {
-	type: ActionTypes.updateInput;
-	payload: string;
-}
-
-export const updateInputTag = (Input: string) => {
-	return {
-		type: ActionTypes.updateInput,
-		payload: Input,
 	};
 };
 

@@ -1,12 +1,7 @@
+@import "~antd/dist/antd.dark.css";
+
 .ant-space-item {
 	margin-right: 0 !important;
-}
-.instrument-card{
-	border-radius: 4px;
-	background: #313131;
-	padding: 33px 23px;
-	max-width: 800px;
-	margin-top: 40px;
 }
 
 #chart svg{
