@@ -1,5 +1,5 @@
 import { Dispatch } from "redux";
-import api, { apiV1 } from "../../api";
+import api, { apiV1 } from "api";
 import { GlobalTime } from "./global";
 import { ActionTypes } from "./types";
 
