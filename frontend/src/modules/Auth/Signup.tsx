@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Row, Space, Button, Input } from "antd";
-import api, { apiV1 } from "../../api";
+import api, { apiV1 } from "api";
 import ROUTES from "constants/routes";
 import { IS_LOGGED_IN } from "constants/auth";
 

@@ -4,9 +4,9 @@ import { useHistory } from "react-router-dom";
 import { Space, Table } from "antd";
 import ROUTES from "constants/routes";
 
-import { traceResponseNew, fetchTraces, pushDStree } from "../../store/actions";
-import { StoreState } from "../../store/reducers";
-import { isOnboardingSkipped } from "../../utils/app";
+import { traceResponseNew, fetchTraces, pushDStree } from "store/actions";
+import { StoreState } from "store/reducers";
+import { isOnboardingSkipped } from "utils/app";
 import moment from "moment";
 import styled from "styled-components";
 

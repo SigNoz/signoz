@@ -9,16 +9,16 @@ import {
 	fetchTraces,
 	TraceFilters,
 	GlobalTime,
-} from "../../store/actions";
-import { StoreState } from "../../store/reducers";
+} from "store/actions";
+import { StoreState } from "store/reducers";
 import LatencyModalForm from "./LatencyModalForm";
 import { FilterStateDisplay } from "./FilterStateDisplay";
 
 import FormItem from "antd/lib/form/FormItem";
-import api, { apiV1 } from "../../api";
+import api, { apiV1 } from "api";
 import { useLocation } from "react-router-dom";
 import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
-import { useRoute } from "../RouteProvider";
+import { useRoute } from "modules/RouteProvider";
 
 const { Option } = Select;
 

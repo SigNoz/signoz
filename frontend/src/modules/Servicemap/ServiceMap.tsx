@@ -8,13 +8,13 @@ import {
 	getDetailedServiceMapItems,
 } from "store/actions";
 import styled from "styled-components";
-import { StoreState } from "../../store/reducers";
+import { StoreState } from "store/reducers";
 
 import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
-import { useRoute } from "../RouteProvider";
-import { CustomSpinner } from "../../components/Spiner";
+import { useRoute } from "modules/RouteProvider";
+import { CustomSpinner } from "components/Spiner";
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {

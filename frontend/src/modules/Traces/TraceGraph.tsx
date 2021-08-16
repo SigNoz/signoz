@@ -11,7 +11,7 @@ import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
-} from "../../store/actions";
+} from "store/actions";
 import { StoreState } from "store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
