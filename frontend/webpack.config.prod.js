@@ -58,10 +58,6 @@ module.exports = {
 		new webpack.DefinePlugin({
 			"process.env": JSON.stringify(process.env),
 		}),
-		// new TsconfigPathsPlugin({
-		// 	baseUrl: "./src",
-		// 	silent: false,
-		// }),
 	],
 	performance: {
 		hints: false,
