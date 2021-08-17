@@ -20,7 +20,7 @@ interface TraceGanttChartProps {
 	treeData: pushDStree[];
 	clickedSpan: pushDStree;
 	selectedSpan: pushDStree;
-	resetZoom: () => {};
+	resetZoom: (value: boolean) => {};
 	setSpanTagsInfo: (p: { data: any }) => {};
 }
 
@@ -105,7 +105,7 @@ const TraceGanttChart = ({
 			setDefaultExpandedRows([treeData?.[0]?.id]);
 			// /.setSpanTagsInfo({data: treeData?.[0]})
 		}
-	}, [selectedSpan, treeData]);
+	}, [selectedSpan, treeData, setDefaultExpandedRows]);
 
 	const getMaxEndTime = (treeData) => {
 		if (treeData.length > 0) {
@@ -303,8 +303,7 @@ const TraceGanttChart = ({
 					>
 						<Col>
 							<StyledButton onClick={handleFocusOnSelectedPath}>
-								{" "}
-								Focus on selected path{" "}
+								Focus on selected path
 							</StyledButton>
 						</Col>
 						<Col>
@@ -320,14 +319,16 @@ const TraceGanttChart = ({
 						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}
-						onRow={(record, rowIndex) => {
+						onRow={(record) => {
 							return {
-								onClick: () => handleRowOnClick(record, rowIndex), // click row
+								onClick: () => handleRowOnClick(record), // click row
 							};
 						}}
-						expandedRowKeys={defaultExpandedRows}
 						onExpandedRowsChange={handleOnExpandedRowsChange}
 						pagination={false}
+						expandable={{
+							expandedRowKeys: defaultExpandedRows,
+						}}
 						scroll={{ y: 540 }}
 						rowClassName="row-styles"
 						filterMultiple={false}
