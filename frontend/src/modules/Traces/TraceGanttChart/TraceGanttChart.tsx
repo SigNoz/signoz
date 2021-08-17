@@ -105,7 +105,7 @@ const TraceGanttChart = ({
 			setDefaultExpandedRows([treeData?.[0]?.id]);
 			// /.setSpanTagsInfo({data: treeData?.[0]})
 		}
-	}, [selectedSpan, treeData, setDefaultExpandedRows]);
+	}, [selectedSpan, treeData, setDefaultExpandedRows, setSelectedRows]);
 
 	const getMaxEndTime = (treeData) => {
 		if (treeData.length > 0) {
