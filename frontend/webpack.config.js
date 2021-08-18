@@ -1,7 +1,7 @@
 // shared config (dev and prod)
 const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const portFinderSync = require('portfinder-sync')
+const portFinderSync = require("portfinder-sync");
 const dotenv = require("dotenv");
 const webpack = require("webpack");
 
@@ -28,7 +28,9 @@ module.exports = {
 		port: portFinderSync.getPort(3000),
 	},
 	output: {
-		filename: "js/bundle.[chunkhash].min.js",
+		filename: ({ chunk: { name, hash } }) => {
+			return `js/${name}-${hash}.js`;
+		},
 		path: resolve(__dirname, "./build"),
 		publicPath: "/",
 	},
