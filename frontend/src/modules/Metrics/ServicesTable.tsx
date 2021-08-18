@@ -9,7 +9,7 @@ import { getServicesList, GlobalTime } from "../../store/actions";
 import { servicesListItem } from "../../store/actions/MetricsActions";
 import { StoreState } from "../../store/reducers";
 import { CustomModal } from "../../components/Modal";
-import { CustomSpinner,DefaultSpinner } from "../../components/Spiner";
+import Spinner from "../../components/Spinner";
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
@@ -124,9 +124,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 	}, [props.servicesList, errorObject]);
 
 	if (!initialDataFetch) {
-		return (
-			<CustomSpinner size="large" tip="Fetching data..."/>
-		);
+		return <Spinner height="90vh" size="large" tip="Fetching data..." />;
 	}
 
 	if (refetchFromBackend && !skipOnboarding) {
@@ -152,7 +150,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 						allowFullScreen
 					></iframe>
 					<div style={{ margin: "20px 0" }}>
-						<DefaultSpinner/>
+						<Spinner />
 					</div>
 					<div>
 						No instrumentation data.
