@@ -2,7 +2,7 @@ import React from "react";
 import { Breadcrumb } from "antd";
 import { Link, withRouter } from "react-router-dom";
 import styled from "styled-components";
-import ROUTES from "Src/constants/routes";
+import ROUTES from "constants/routes";
 
 const BreadCrumbWrapper = styled.div`
 	padding-top: 20px;

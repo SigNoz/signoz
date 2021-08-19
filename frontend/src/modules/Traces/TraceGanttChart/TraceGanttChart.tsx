@@ -3,8 +3,8 @@ import { Table, Progress, Tabs, Button, Row, Col } from "antd";
 import "./TraceGanttChart.css";
 import { max, isEmpty, has } from "lodash-es";
 import styled from "styled-components";
-import { pushDStree } from "Src/store/actions";
-import traverseTreeData from "Src/modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
+import { pushDStree } from "store/actions";
+import traverseTreeData from "modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
 
 const { TabPane } = Tabs;
 

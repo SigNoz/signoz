@@ -1,5 +1,5 @@
 import { FetchTracesAction, FetchTraceItemAction } from "./traces";
-import { updateTraceFiltersAction, updateInputTagAction } from "./traceFilters";
+import { updateTraceFiltersAction } from "./traceFilters";
 
 import { serviceMapItemAction, servicesAction } from "./serviceMap";
 import { getUsageDataAction } from "./usage";
@@ -19,7 +19,6 @@ export type Action =
 	| FetchTraceItemAction
 	| FetchTracesAction
 	| updateTraceFiltersAction
-	| updateInputTagAction
 	| getUsageDataAction
 	| updateTimeIntervalAction
 	| servicesAction

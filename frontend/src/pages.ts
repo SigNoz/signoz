@@ -1,28 +1,28 @@
 import React from "react";
 
 export const ServiceMetrics = React.lazy(
-	() => import("Src/modules/Metrics/ServiceMetricsDef"),
+	() => import("modules/Metrics/ServiceMetricsDef"),
 );
 export const ServiceMap = React.lazy(
-	() => import("Src/modules/Servicemap/ServiceMap"),
+	() => import("modules/Servicemap/ServiceMap"),
 );
 export const TraceDetail = React.lazy(
-	() => import("Src/modules/Traces/TraceDetail"),
+	() => import("modules/Traces/TraceDetail"),
 );
 export const TraceGraph = React.lazy(
-	() => import("Src/modules/Traces/TraceGraphDef"),
+	() => import("modules/Traces/TraceGraphDef"),
 );
 export const UsageExplorer = React.lazy(
-	() => import("Src/modules/Usage/UsageExplorerDef"),
+	() => import("modules/Usage/UsageExplorerDef"),
 );
 export const ServicesTable = React.lazy(
-	() => import("Src/modules/Metrics/ServicesTableDef"),
+	() => import("modules/Metrics/ServicesTableDef"),
 );
-export const Signup = React.lazy(() => import("Src/modules/Auth/Signup"));
+export const Signup = React.lazy(() => import("modules/Auth/Signup"));
 export const SettingsPage = React.lazy(
-	() => import("Src/modules/Settings/settingsPage"),
+	() => import("modules/Settings/settingsPage"),
 );
 
 export const InstrumentationPage = React.lazy(
-	() => import("Src/modules/add-instrumentation/instrumentationPage"),
+	() => import("modules/add-instrumentation/instrumentationPage"),
 );
