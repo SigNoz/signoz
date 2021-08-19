@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, Space, Tabs, Typography } from "antd";
 import styled from "styled-components";
-import { pushDStree } from "Src/store/actions";
+import { pushDStree } from "store/actions";
 
 const { TabPane } = Tabs;
 

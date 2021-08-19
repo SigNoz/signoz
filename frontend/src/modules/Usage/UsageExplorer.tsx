@@ -8,12 +8,12 @@ import {
 	getUsageData,
 	GlobalTime,
 	usageDataItem,
-} from "../../store/actions";
-import { StoreState } from "../../store/reducers";
+} from "store/actions";
+import { StoreState } from "store/reducers";
 import moment from "moment";
-import { isOnboardingSkipped } from "../../utils/app";
-import { useRoute } from "../RouteProvider";
-import { servicesListItem } from "../../store/actions/MetricsActions";
+import { isOnboardingSkipped } from "utils/app";
+import { useRoute } from "modules/RouteProvider";
+import { servicesListItem } from "store/actions/MetricsActions";
 const { Option } = Select;
 
 interface UsageExplorerProps {

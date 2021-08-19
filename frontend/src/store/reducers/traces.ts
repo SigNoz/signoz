@@ -4,7 +4,7 @@ import {
 	traceResponseNew,
 	spanList,
 	spansWSameTraceIDResponse,
-} from "../actions";
+} from "store/actions";
 
 // PNOTE - Initializing is a must for state variable otherwise it gives an error in reducer
 var spanlistinstance: spanList = { events: [], segmentID: "", columns: [] };

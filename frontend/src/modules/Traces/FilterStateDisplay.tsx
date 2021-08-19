@@ -3,9 +3,8 @@ import { Card, Tag as AntTag } from "antd";
 import { connect } from "react-redux";
 
 import styled from "styled-components";
-import { StoreState } from "../../store/reducers";
-import { TagItem, TraceFilters, updateTraceFilters } from "../../store/actions";
-
+import { StoreState } from "store/reducers";
+import { TagItem, TraceFilters, updateTraceFilters } from "store/actions";
 
 const Tag = styled(AntTag)`
 	.anticon {
