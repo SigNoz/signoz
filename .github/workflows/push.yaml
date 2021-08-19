@@ -6,7 +6,13 @@ on:
       - ^v[0-9]*.[0-9]*.x$
     tags:
       - "*"
-
+  pull_request:
+    branches:
+      - main
+      - v*
+    paths:
+      - 'pkg/**'
+      - 'frontend/**'
 jobs:
   get-envs:
     runs-on: ubuntu-latest
@@ -21,6 +27,9 @@ jobs:
           then
               echo "tag build"
               img_tag=${GITHUB_REF#refs/*/v}
+          elif [ ${array[1]} == "pull" ]
+          then
+            img_tag="pull-${{ github.event.number }}"
           else
               echo "non tag build"
               img_tag="latest"
@@ -74,7 +83,7 @@ jobs:
         run: |
           branch=${GITHUB_REF#refs/*/}
           array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [ ${array[1]} == "pull" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
           then
             source env-vars
             make build-push-frontend
@@ -115,7 +124,7 @@ jobs:
         run: |
           branch=${GITHUB_REF#refs/*/}
           array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [ ${array[1]} == "pull" ] ||[[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
           then
             source env-vars
             make build-push-query-service
@@ -156,7 +165,7 @@ jobs:
         run: |
           branch=${GITHUB_REF#refs/*/}
           array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
+          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [ ${array[1]} == "pull" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
           then
             source env-vars
             make build-push-flattener

@@ -6,19 +6,19 @@ import { withRouter } from "react-router";
 import { getLocalStorageRouteKey } from "./utils";
 import { RouteComponentProps, useLocation } from "react-router-dom";
 import { connect } from "react-redux";
-import ROUTES from "Src/constants/routes";
+import ROUTES from "constants/routes";
 import CustomDateTimeModal from "./CustomDateTimeModal";
-import { GlobalTime, updateTimeInterval } from "../../../store/actions";
-import { StoreState } from "../../../store/reducers";
+import { GlobalTime, updateTimeInterval } from "store/actions";
+import { StoreState } from "store/reducers";
 import FormItem from "antd/lib/form/FormItem";
 import {
 	Options,
 	ServiceMapOptions,
 	DefaultOptionsBasedOnRoute,
 } from "./config";
-import { DateTimeRangeType } from "../../../store/actions";
-import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
-import { LOCAL_STORAGE } from "Src/constants/localStorage";
+import { DateTimeRangeType } from "store/actions";
+import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
+import { LOCAL_STORAGE } from "constants/localStorage";
 import moment from "moment";
 const { Option } = DefaultSelect;
 

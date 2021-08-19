@@ -2,11 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import { ThemeSwitcherProvider } from "react-css-theme-switcher";
-import store from "Src/store";
-import AppWrapper from "Src/modules/AppWrapper";
-import "Src/assets/index.css";
+import store from "store";
+import AppWrapper from "modules/AppWrapper";
+import "assets/index.css";
 import { BrowserRouter as Router } from "react-router-dom";
-import themes from "Src/themes";
+import themes from "themes";
 
 ReactDOM.render(
 	<Provider store={store}>
