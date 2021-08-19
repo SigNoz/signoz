@@ -11,4 +11,6 @@ jobs:
       - uses: actions/setup-node@v2.1.0
       # or just "yarn" if you depend on "@commitlint/cli" already
       - run: yarn add @commitlint/cli
+      - run: yarn add @commitlint/config-conventional
+      - run: echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
       - run: yarn run commitlint --from HEAD~${{ github.event.pull_request.commits }} --to HEAD
