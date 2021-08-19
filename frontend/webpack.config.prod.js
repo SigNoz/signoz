@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const CompressionPlugin = require("compression-webpack-plugin");
 const webpack = require("webpack");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 module.exports = {
 	mode: "production",
@@ -16,10 +17,8 @@ module.exports = {
 	},
 
 	resolve: {
-		alias: {
-			Src: resolve(__dirname, "./src/"),
-		},
 		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		plugins: [new TsconfigPathsPlugin({})],
 	},
 	module: {
 		rules: [

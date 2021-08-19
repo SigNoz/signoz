@@ -1,4 +1,4 @@
-import { pushDStree, span, RefItem } from "../store/actions";
+import { pushDStree, span, RefItem } from "store/actions";
 // PNOTE - should the data be taken from redux or only through props? - Directly as arguments
 
 export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
@@ -24,7 +24,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		//May1
 		//https://stackoverflow.com/questions/13315131/enforcing-the-type-of-the-indexed-members-of-a-typescript-object
 
-		let mapped_array: { [id: string]: span; } = {};
+		let mapped_array: { [id: string]: span } = {};
 
 		for (let i = 0; i < spanlist.length; i++) {
 			mapped_array[spanlist[i][1]] = spanlist[i];
@@ -32,11 +32,9 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 			//  of type pushDStree
 			// console.log('IDs while creating mapped array')
 			// console.log(`SpanID is ${spanlist[i][1]}\n`);
-
 		}
 
 		// console.log(`In SpanTreeUtil: mapped_arrayis ${mapped_array}`);
-
 
 		for (let id in mapped_array) {
 			let child_span = mapped_array[id];
@@ -100,14 +98,17 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 					let parentID = references[0].spanID;
 					// console.log(`In SpanTreeUtil: mapped_array[parentID] is ${mapped_array[parentID]}`);
 
-					if (typeof mapped_array[parentID] !== 'undefined') { //checking for undefined [10] issue
+					if (typeof mapped_array[parentID] !== "undefined") {
+						//checking for undefined [10] issue
 						mapped_array[parentID][10].push(push_object);
 					} else {
-						console.log(`In SpanTreeUtil: mapped_array[parentID] is undefined, parentID is ${parentID}`);
-						console.log(`In SpanTreeUtil: mapped_array[parentID] is undefined, mapped_array[parentID] is ${mapped_array[parentID]}`);
-
+						console.log(
+							`In SpanTreeUtil: mapped_array[parentID] is undefined, parentID is ${parentID}`,
+						);
+						console.log(
+							`In SpanTreeUtil: mapped_array[parentID] is undefined, mapped_array[parentID] is ${mapped_array[parentID]}`,
+						);
 					}
-
 				}
 			} else {
 				tree = push_object;

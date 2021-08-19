@@ -1,9 +1,9 @@
 import React, { Suspense } from "react";
 import { useThemeSwitcher } from "react-css-theme-switcher";
-import ROUTES from "Src/constants/routes";
-import { IS_LOGGED_IN } from "Src/constants/auth";
+import ROUTES from "constants/routes";
+import { IS_LOGGED_IN } from "constants/auth";
 import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
-import { CustomSpinner } from "./../components/Spiner";
+import { CustomSpinner } from "components/Spiner";
 
 import BaseLayout from "./BaseLayout";
 import {
@@ -16,9 +16,9 @@ import {
 	Signup,
 	SettingsPage,
 	InstrumentationPage,
-} from "Src/pages";
+} from "pages";
 import { RouteProvider } from "./RouteProvider";
-import NotFound from "Src/components/NotFound";
+import NotFound from "components/NotFound";
 
 const App = () => {
 	const { status } = useThemeSwitcher();

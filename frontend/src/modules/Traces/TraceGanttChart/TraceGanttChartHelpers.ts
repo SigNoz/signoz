@@ -1,5 +1,5 @@
 import { isEmpty } from "lodash-es";
-import { pushDStree } from "Src/store/actions";
+import { pushDStree } from "store/actions";
 
 interface itemProps {
 	treeData: pushDStree[];
