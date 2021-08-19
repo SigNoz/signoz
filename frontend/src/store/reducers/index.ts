@@ -6,7 +6,7 @@ import {
 	GlobalTime,
 	serviceMapStore,
 	TraceFilters,
-} from "../actions";
+} from "store/actions";
 import { updateGlobalTimeReducer } from "./global";
 import { MetricsInitialState, metricsReducer } from "./metrics";
 import TraceFilterReducer from "./traceFilters";

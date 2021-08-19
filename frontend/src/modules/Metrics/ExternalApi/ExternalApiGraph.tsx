@@ -3,7 +3,7 @@ import { Line as ChartJSLine } from "react-chartjs-2";
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 import { getOptions, borderColors } from "./graphConfig";
-import { externalMetricsItem } from "../../../store/actions/MetricsActions";
+import { externalMetricsItem } from "store/actions/MetricsActions";
 import { uniqBy, filter } from "lodash";
 
 const theme = "dark";
