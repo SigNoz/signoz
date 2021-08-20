@@ -3,8 +3,8 @@ import { Tabs, Card, Row, Col } from "antd";
 import { connect } from "react-redux";
 import { useParams, RouteComponentProps } from "react-router-dom";
 import { withRouter } from "react-router";
-import ROUTES from "Src/constants/routes";
-import { GlobalTime, updateTimeInterval } from "Src/store/actions";
+import ROUTES from "constants/routes";
+import { GlobalTime, updateTimeInterval } from "store/actions";
 import {
 	metricItem,
 	externalMetricsAvgDurationItem,
@@ -12,7 +12,7 @@ import {
 	externalMetricsItem,
 	dbOverviewMetricsItem,
 	topEndpointListItem,
-} from "../../store/actions/MetricsActions";
+} from "store/actions/MetricsActions";
 import {
 	getServicesMetrics,
 	getTopEndpoints,
@@ -20,14 +20,14 @@ import {
 	getExternalMetrics,
 	getExternalAvgDurationMetrics,
 	getExternalErrCodeMetrics,
-} from "../../store/actions/MetricsActions";
+} from "store/actions/MetricsActions";
 
-import { StoreState } from "../../store/reducers";
+import { StoreState } from "store/reducers";
 import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
 import ErrorRateChart from "./ErrorRateChart";
 import TopEndpointsTable from "./TopEndpointsTable";
-import { METRICS_PAGE_QUERY_PARAM } from "Src/constants/query";
+import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
 import ExternalApiGraph from "./ExternalApi";
 const { TabPane } = Tabs;
 
@@ -93,7 +93,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 	};
 
 	return (
-		<Tabs defaultActiveKey="1" tabBarGutter={48}>
+		<Tabs defaultActiveKey="1">
 			<TabPane tab="Application Metrics" key="1">
 				<Row gutter={32} style={{ margin: 20 }}>
 					<Col span={12}>

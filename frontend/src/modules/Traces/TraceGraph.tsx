@@ -6,13 +6,13 @@ import { Card, Row, Col, Space, Affix } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
-import { spanToTreeUtil } from "Src/utils/spanToTree";
+import { spanToTreeUtil } from "utils/spanToTree";
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
-} from "../../store/actions";
-import { StoreState } from "Src/store/reducers";
+} from "store/actions";
+import { StoreState } from "store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
 import styled from "styled-components";
@@ -72,14 +72,22 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			setSortedTreeData(sortedData?.[0]);
 			getSpanInfo(sortedData?.[0], spanId);
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
+			d3
+				.select("#chart")
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 		}
 	}, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
 	useEffect(() => {
-		if(!isEmpty(sortedTreeData) && sortedTreeData?.id !== "empty" && isEmpty(clickedSpanTags)) {
+		if (
+			!isEmpty(sortedTreeData) &&
+			sortedTreeData?.id !== "empty" &&
+			isEmpty(clickedSpanTags)
+		) {
 			setClickedSpanTags(sortedTreeData?.[0]);
 		}
 	}, [sortedTreeData]);
@@ -87,7 +95,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	useEffect(() => {
 		if (resetZoom) {
 			// This is causing element to change ref. Can use both useRef or this approach.
-			d3.select("#chart").datum(tree).call(chart).sort(item=>item.startTime);
+			d3
+				.select("#chart")
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 			setResetZoom(false);
 		}
 	}, [resetZoom]);

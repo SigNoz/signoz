@@ -1,4 +1,4 @@
-import ROUTES from "Src/constants/routes";
+import ROUTES from "constants/routes";
 
 export const getLocalStorageRouteKey = (pathName: string) => {
 	let localStorageKey = "";

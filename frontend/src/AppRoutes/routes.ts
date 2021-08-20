@@ -8,8 +8,8 @@ import {
 	SignupPage,
 	SettingsPage,
 	InstrumentationPage,
-} from "Src/pages";
-import ROUTES from "Src/constants/routes";
+} from "pages";
+import ROUTES from "constants/routes";
 import { RouteProps } from "react-router-dom";
 
 const routes: AppRoutes[] = [

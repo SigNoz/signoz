@@ -2,16 +2,16 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import { ThemeSwitcherProvider } from "react-css-theme-switcher";
-import store from "Src/store";
-import AppRouter from "Src/AppRoutes";
-import "Src/assets/index.css";
-import themes from "Src/themes";
+import store from "store";
+import AppRoutes from "AppRoutes";
+import "assets/index.css";
+import themes from "themes";
 
 ReactDOM.render(
 	<Provider store={store}>
 		<React.StrictMode>
 			<ThemeSwitcherProvider themeMap={themes} defaultTheme="dark">
-				<AppRouter />
+				<AppRoutes />
 			</ThemeSwitcherProvider>
 		</React.StrictMode>
 	</Provider>,

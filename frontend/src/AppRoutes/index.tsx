@@ -1,20 +1,20 @@
-import React, { Suspense, useEffect } from "react";
-import ROUTES from "Src/constants/routes";
+import React, { Suspense } from "react";
+import ROUTES from "constants/routes";
 import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
-import CustomSpinner from "../components/Spinner";
-import { IS_LOGGED_IN } from "Src/constants/auth";
+import Spinner from "components/Spinner";
+import NotFound from "components/NotFound";
 
-import AppLayout from "../modules/AppLayout";
+import { IS_LOGGED_IN } from "constants/auth";
 
-import NotFound from "Src/components/NotFound";
-import { RouteProvider } from "Src/modules/RouteProvider";
+import AppLayout from "modules/AppLayout";
+import { RouteProvider } from "modules/RouteProvider";
 import routes from "./routes";
 
 const App = () => (
 	<BrowserRouter basename="/">
 		<RouteProvider>
 			<AppLayout>
-				<Suspense fallback={<CustomSpinner size="large" tip="Loading..." />}>
+				<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 					<Switch>
 						{routes.map(({ path, component, exact }) => {
 							return <Route exact={exact} path={path} component={component} />;

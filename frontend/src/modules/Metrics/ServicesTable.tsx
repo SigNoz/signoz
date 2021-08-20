@@ -3,13 +3,13 @@ import { NavLink } from "react-router-dom";
 import { Button, Space, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { SKIP_ONBOARDING } from "Src/constants/onboarding";
-import ROUTES from "Src/constants/routes";
-import { getServicesList, GlobalTime } from "../../store/actions";
-import { servicesListItem } from "../../store/actions/MetricsActions";
-import { StoreState } from "../../store/reducers";
-import { CustomModal } from "../../components/Modal";
-import Spinner from "../../components/Spinner";
+import Spinner from "components/Spinner";
+import { SKIP_ONBOARDING } from "constants/onboarding";
+import ROUTES from "constants/routes";
+import { getServicesList, GlobalTime } from "store/actions";
+import { servicesListItem } from "store/actions/MetricsActions";
+import { StoreState } from "store/reducers";
+import { CustomModal } from "components/Modal";
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];

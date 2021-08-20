@@ -1,4 +1,4 @@
-import { ActionTypes, Action, usageDataItem } from "../actions";
+import { ActionTypes, Action, usageDataItem } from "store/actions";
 
 export const usageDataReducer = (
 	state: usageDataItem[] = [{ timestamp: 0, count: 0 }],

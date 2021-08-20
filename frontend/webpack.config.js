@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const portFinderSync = require("portfinder-sync");
 const dotenv = require("dotenv");
 const webpack = require("webpack");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 dotenv.config();
 
@@ -35,10 +36,8 @@ module.exports = {
 		publicPath: "/",
 	},
 	resolve: {
-		alias: {
-			Src: resolve(__dirname, "./src/"),
-		},
 		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		plugins: [new TsconfigPathsPlugin({})],
 	},
 	module: {
 		rules: [
