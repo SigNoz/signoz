@@ -1,15 +1,17 @@
-import React, { lazy, ComponentType } from "react";
+import { lazy, ComponentType } from "react";
 
-function Loadable<T>(importPath: {
+function Loadable(importPath: {
 	(): LoadableProps;
-}): (props: T) => JSX.Element {
+}): React.LazyExoticComponent<LazyComponent> {
 	const LazyComponent = lazy(() => importPath());
 
-	return () => <LazyComponent />;
+	return LazyComponent;
 }
 
+type LazyComponent = ComponentType<Record<string, unknown>>;
+
 type LoadableProps = Promise<{
-	default: ComponentType<Record<string, unknown>>;
+	default: LazyComponent;
 }>;
 
 export default Loadable;
