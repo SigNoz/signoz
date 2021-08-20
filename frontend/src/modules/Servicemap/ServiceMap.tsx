@@ -13,7 +13,7 @@ import { StoreState } from "store/reducers";
 import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
 import { ForceGraph2D } from "react-force-graph";
-import CustomSpinner from "components/Spinner";
+import Spinner from "components/Spinner";
 import { useRoute } from "modules/RouteProvider";
 
 const Container = styled.div`
@@ -78,7 +78,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 		fgRef.current && fgRef.current.d3Force("charge").strength(-400);
 	});
 	if (!serviceMap.items.length || !serviceMap.services.length) {
-		return <CustomSpinner size="large" tip="Loading..." />;
+		return <Spinner size="large" tip="Loading..." />;
 	}
 
 	const zoomToService = (value: string) => {
