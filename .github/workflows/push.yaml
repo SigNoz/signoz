@@ -6,13 +6,13 @@ on:
       - ^v[0-9]*.[0-9]*.x$
     tags:
       - "*"
-  pull_request:
-    branches:
-      - main
-      - v*
-    paths:
-      - 'pkg/**'
-      - 'frontend/**'
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - v*
+  #   paths:
+  #     - 'pkg/**'
+  #     - 'frontend/**'
 jobs:
   get-envs:
     runs-on: ubuntu-latest
