@@ -2,7 +2,7 @@ import React from "react";
 import { Bar, Line as ChartJSLine } from "react-chartjs-2";
 import styled from "styled-components";
 
-import { customMetricsItem } from "../../store/actions/MetricsActions";
+import { customMetricsItem } from "store/actions/MetricsActions";
 
 const GenVisualizationWrapper = styled.div`
 	height: 160px;
@@ -15,10 +15,16 @@ interface GenericVisualizationsProps {
 
 const GenericVisualizations = (props: GenericVisualizationsProps) => {
 	const data = {
-		labels: (props.data !== undefined && props.data !== null) && props.data.map((s) => new Date(s.timestamp / 1000000)),
+		labels:
+			props.data !== undefined &&
+			props.data !== null &&
+			props.data.map((s) => new Date(s.timestamp / 1000000)),
 		datasets: [
 			{
-				data: (props.data !== undefined && props.data !== null) && props.data.map((s) => s.value),
+				data:
+					props.data !== undefined &&
+					props.data !== null &&
+					props.data.map((s) => s.value),
 				borderColor: "rgba(250,174,50,1)", // for line chart
 				backgroundColor: props.chartType === "bar" ? "rgba(250,174,50,1)" : "", // for bar chart, don't assign backgroundcolor if its not a bar chart, may be relevant for area graph though
 			},

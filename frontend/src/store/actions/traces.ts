@@ -1,10 +1,10 @@
 import { ActionTypes } from "./types";
-import api, { apiV1 } from "../../api";
+import api, { apiV1 } from "api";
 
 import { Dispatch } from "redux";
 import { GlobalTime } from "./global";
-import { toUTCEpoch } from "../../utils/timeUtils";
-import ROUTES from "Src/constants/routes";
+import { toUTCEpoch } from "utils/timeUtils";
+import ROUTES from "constants/routes";
 
 // PNOTE
 // define trace interface - what it should return

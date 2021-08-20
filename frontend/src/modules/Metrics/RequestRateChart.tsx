@@ -5,8 +5,8 @@ import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 import styled from "styled-components";
 
-import { metricItem } from "../../store/actions/MetricsActions";
-import ROUTES from "Src/constants/routes";
+import { metricItem } from "store/actions/MetricsActions";
+import ROUTES from "constants/routes";
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -208,7 +208,7 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
-				<div style={{textAlign: "center"}}>Request per sec</div>
+				<div style={{ textAlign: "center" }}>Request per sec</div>
 				<ChartJSLine
 					ref={this.chartRef}
 					data={data_chartJS}

@@ -4,7 +4,7 @@ import { ChartOptions } from "chart.js";
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 import styled from "styled-components";
-import { metricItem } from "../../store/actions/MetricsActions";
+import { metricItem } from "store/actions/MetricsActions";
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
