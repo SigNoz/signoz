@@ -71,13 +71,12 @@ const TraceGanttChart = ({
 	}
 
 	useEffect(() => {
-		if (id !== "empty") {
+		if( id === 'empty') return
 			setSortedTreeData(treeData);
 			if (clickedSpan) {
 				setClickedSpanData(clickedSpan);
 			}
 			setTabsContainerWidth(tabsContainer?.offsetWidth!);
-		}
 		handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
 
@@ -89,8 +88,6 @@ const TraceGanttChart = ({
 			!isReset
 		) {
 			setSelectedRows([clickedSpan.id]);
-			// getParentKeys(clickedSpan, []);
-
 			focusSelectedPath([clickedSpan.id]);
 		}
 	}, [clickedSpan, selectedRows, isReset, clickedSpanData]);
