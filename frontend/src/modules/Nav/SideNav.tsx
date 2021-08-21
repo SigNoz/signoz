@@ -3,7 +3,7 @@ import { Layout, Menu, Switch as ToggleButton } from "antd";
 import { NavLink } from "react-router-dom";
 import { useThemeSwitcher } from "react-css-theme-switcher";
 import { useLocation } from "react-router-dom";
-import ROUTES from "Src/constants/routes";
+import ROUTES from "constants/routes";
 
 import {
 	LineChartOutlined,

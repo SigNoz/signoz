@@ -1,18 +1,18 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { useHistory} from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { Space, Table } from "antd";
-import ROUTES from "Src/constants/routes";
+import ROUTES from "constants/routes";
 
-import { traceResponseNew, fetchTraces, pushDStree } from "../../store/actions";
-import { StoreState } from "../../store/reducers";
-import { isOnboardingSkipped } from "../../utils/app";
+import { traceResponseNew, fetchTraces, pushDStree } from "store/actions";
+import { StoreState } from "store/reducers";
+import { isOnboardingSkipped } from "utils/app";
 import moment from "moment";
 import styled from "styled-components";
 
 const StyledTable = styled(Table)`
 	cursor: pointer;
-`
+`;
 
 const TraceHeader = styled.div`
 	margin: 16px 0;
@@ -103,12 +103,13 @@ const _TraceList = (props: TraceListProps) => {
 
 			//antd table in typescript - https://codesandbox.io/s/react-typescript-669cv
 
-			return <StyledTable
-				dataSource={dataSource}
-				columns={columns}
-				size="middle"
-				rowClassName=""
-				onRow={(record) => ({
+			return (
+				<StyledTable
+					dataSource={dataSource}
+					columns={columns}
+					size="middle"
+					rowClassName=""
+					onRow={(record) => ({
 						onClick: () => {
 							history.push({
 								pathname: ROUTES.TRACES + "/" + record.traceid,
@@ -116,10 +117,10 @@ const _TraceList = (props: TraceListProps) => {
 									spanId: record.spanid,
 								},
 							});
-						}
-				})}
-		/>
-			;
+						},
+					})}
+				/>
+			);
 		} else {
 			if (isOnboardingSkipped()) {
 				return (

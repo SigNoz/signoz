@@ -3,13 +3,13 @@ import { NavLink } from "react-router-dom";
 import { Button, Space, Table } from "antd";
 import styled from "styled-components";
 import { connect } from "react-redux";
-import { SKIP_ONBOARDING } from "Src/constants/onboarding";
-import ROUTES from "Src/constants/routes";
-import { getServicesList, GlobalTime } from "../../store/actions";
-import { servicesListItem } from "../../store/actions/MetricsActions";
-import { StoreState } from "../../store/reducers";
-import { CustomModal } from "../../components/Modal";
-import { CustomSpinner,DefaultSpinner } from "../../components/Spiner";
+import { SKIP_ONBOARDING } from "constants/onboarding";
+import ROUTES from "constants/routes";
+import { getServicesList, GlobalTime } from "store/actions";
+import { servicesListItem } from "store/actions/MetricsActions";
+import { StoreState } from "store/reducers";
+import { CustomModal } from "components/Modal";
+import { CustomSpinner, DefaultSpinner } from "components/Spiner";
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
@@ -124,9 +124,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 	}, [props.servicesList, errorObject]);
 
 	if (!initialDataFetch) {
-		return (
-			<CustomSpinner size="large" tip="Fetching data..."/>
-		);
+		return <CustomSpinner size="large" tip="Fetching data..." />;
 	}
 
 	if (refetchFromBackend && !skipOnboarding) {
@@ -152,7 +150,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 						allowFullScreen
 					></iframe>
 					<div style={{ margin: "20px 0" }}>
-						<DefaultSpinner/>
+						<DefaultSpinner />
 					</div>
 					<div>
 						No instrumentation data.

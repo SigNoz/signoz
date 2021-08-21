@@ -6,13 +6,13 @@ import { Card, Row, Col, Space, Affix } from "antd";
 import * as d3 from "d3";
 import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
-import { spanToTreeUtil } from "Src/utils/spanToTree";
+import { spanToTreeUtil } from "utils/spanToTree";
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
-} from "../../store/actions";
-import { StoreState } from "Src/store/reducers";
+} from "store/actions";
+import { StoreState } from "store/reducers";
 import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
 import styled from "styled-components";
@@ -20,7 +20,7 @@ import { isEmpty, sortBy } from "lodash-es";
 import {
 	traverseTreeData,
 	emptyTree,
-} from "Src/modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
+} from "modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
 import Location from "history";
 
 interface TraceGraphProps {

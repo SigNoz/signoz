@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, Space, Tabs, Typography } from "antd";
 import styled from "styled-components";
-import { pushDStree } from "Src/store/actions";
+import { pushDStree } from "store/actions";
 
 const { TabPane } = Tabs;
 
@@ -47,16 +47,20 @@ const CustomSubText = styled(Paragraph)`
 	}
 `;
 
+const CardContainer = styled(Card)`
+	.ant-card-body {
+		max-height: 90vh;
+		overflow-y: auto;
+	}
+`;
+
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 	const spanTags = props.data?.tags;
 	const service = props.data?.name?.split(":")[0];
 	const operation = props.data?.name?.split(":")[1];
 
 	return (
-		<Card
-			style={{ border: "none", background: "transparent", padding: 0 }}
-			bodyStyle={{ padding: 0 }}
-		>
+		<CardContainer>
 			<Space direction="vertical">
 				<strong> Details for selected Span </strong>
 				<Space direction="vertical" size={2}>
@@ -98,7 +102,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 							))}
 				</TabPane>
 			</Tabs>
-		</Card>
+		</CardContainer>
 	);
 };
 

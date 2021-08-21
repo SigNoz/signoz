@@ -20,7 +20,7 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:0.3.4
+    image: signoz/query-service:0.3.5
     container_name: query-service
 
     ports:
@@ -36,7 +36,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.3.4
+    image: signoz/frontend:0.3.5
     container_name: frontend
 
     depends_on:

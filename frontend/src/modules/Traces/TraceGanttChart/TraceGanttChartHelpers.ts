@@ -1,5 +1,5 @@
 import { has, isEmpty } from "lodash-es";
-import { pushDStree } from "Src/store/actions";
+import { pushDStree } from "store/actions";
 
 interface itemProps {
 	treeData: pushDStree[];
@@ -65,9 +65,7 @@ export const getPaddingLeft = (
 };
 
 /**
- *
  * @param obj
- * @param arr
  */
 export const getParentKeys = (
 	obj: extendedPushDSTree = {
@@ -79,10 +77,10 @@ export const getParentKeys = (
 		time: 0,
 		value: 0,
 	},
-	arr: string[],
 ): string[] => {
 	if (!isEmpty(obj)) {
 		let node = obj;
+		let arr = [];
 		while (has(node, "parent")) {
 			arr.push(node?.parent?.id);
 			node = node.parent;

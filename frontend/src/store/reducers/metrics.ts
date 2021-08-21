@@ -7,8 +7,8 @@ import {
 	externalMetricsItem,
 	dbOverviewMetricsItem,
 	externalMetricsAvgDurationItem,
-} from "../actions/MetricsActions";
-import { MetricsActionTypes as ActionTypes } from "../actions/MetricsActions/metricsActionTypes";
+} from "store/actions/MetricsActions";
+import { MetricsActionTypes as ActionTypes } from "store/actions/MetricsActions/metricsActionTypes";
 
 export type MetricsInitialState = {
 	serviceList?: servicesListItem[];

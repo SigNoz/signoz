@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Col, Progress, Row, Table, Tabs } from "antd";
+import { Table, Progress, Tabs, Button, Row, Col } from "antd";
 import "./TraceGanttChart.css";
 import { has, isEmpty } from "lodash-es";
 import styled from "styled-components";
-import { pushDStree } from "Src/store/actions";
+import { pushDStree } from "store/actions";
 import {
 	emptyTreeObj,
 	extendedEmptyObj,
 	getPaddingLeft,
 	getParentKeys,
 	traverseTreeData,
-} from "Src/modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
+} from "modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
 import { Key } from "antd/lib/table/interface";
 
 const { TabPane } = Tabs;
@@ -71,12 +71,14 @@ const TraceGanttChart = ({
 	}
 
 	useEffect(() => {
-		if( id === 'empty') return
-			setSortedTreeData(treeData);
-			if (clickedSpan) {
-				setClickedSpanData(clickedSpan);
-			}
-			setTabsContainerWidth(tabsContainer?.offsetWidth!);
+		if (id === "empty") return;
+		setSortedTreeData(treeData);
+		if (clickedSpan) {
+			setClickedSpanData(clickedSpan);
+		}
+		if (tabsContainer) {
+			setTabsContainerWidth(tabsContainer.offsetWidth);
+		}
 		handleScroll(selectedSpan?.id);
 	}, [sortedTreeData, treeData, clickedSpan]);
 
@@ -105,7 +107,7 @@ const TraceGanttChart = ({
 
 	useEffect(() => {
 		if (!isEmpty(selectedSpan) && isEmpty(clickedSpan)) {
-			const parentKeys = getParentKeys(selectedSpan, []);
+			const parentKeys = getParentKeys(selectedSpan);
 			let keys = [selectedSpan?.id, ...parentKeys];
 			setDefaultExpandedRows(keys);
 			setSelectedRows([selectedSpan.id]);
@@ -198,15 +200,19 @@ const TraceGanttChart = ({
 			}
 
 			// get parent keys of the selected node
-			const parentKeys = getParentKeys(node, []);
+			const parentKeys = getParentKeys(node);
 
 			// get children keys of the selected node
 			getChildrenKeys(node);
 
 			let rows = document.querySelectorAll("#collapsable table tbody tr");
-			Array.from(rows).map((row) => {
+			rows.forEach((row) => {
 				let attribKey = row.getAttribute("data-row-key") || "";
-				if (!isEmpty(attribKey) && !selectedRowsList.includes(attribKey)) {
+				if (
+					!isEmpty(attribKey) &&
+					!selectedRowsList.includes(attribKey) &&
+					!childrenKeys.includes(attribKey)
+				) {
 					row.classList.add("hide");
 				}
 			});
@@ -222,8 +228,8 @@ const TraceGanttChart = ({
 	};
 
 	const handleResetFocus = () => {
-		let rows = document.querySelectorAll("#collapsable table tbody tr");
-		Array.from(rows).map((row) => {
+		const rows = document.querySelectorAll("#collapsable table tbody tr");
+		rows.forEach((row) => {
 			row.classList.remove("hide");
 		});
 
@@ -316,9 +322,13 @@ const TraceGanttChart = ({
 								onClick: () => handleRowOnClick(record), // click row
 							};
 						}}
-						expandedRowKeys={defaultExpandedRows}
-						onExpandedRowsChange={handleOnExpandedRowsChange}
+						onExpandedRowsChange={(keys) =>
+							handleOnExpandedRowsChange(keys.map((e) => e.toString()))
+						}
 						pagination={false}
+						expandable={{
+							expandedRowKeys: defaultExpandedRows,
+						}}
 						scroll={{ y: 540 }}
 						rowClassName="row-styles"
 						filterMultiple={false}
