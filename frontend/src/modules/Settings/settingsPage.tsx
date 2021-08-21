@@ -1,14 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Form, Input, Space } from 'antd';
-import { connect } from 'react-redux';
-import { Tooltip } from 'antd';
-import {
-	InfoCircleOutlined,
-	EyeTwoTone,
-	EyeInvisibleOutlined,
-} from '@ant-design/icons';
-import { StoreState } from '../../store/reducers';
-import { Alert } from 'antd';
+import React, { useEffect, useState } from "react";
+import { Form, Input, Space } from "antd";
+import { connect } from "react-redux";
+import { StoreState } from "store/reducers";
+import { Alert } from "antd";
 
 interface SettingsPageProps {}
 
@@ -22,7 +16,7 @@ const SettingsPage = (props: SettingsPageProps) => {
 
 	useEffect(() => {
 		form.setFieldsValue({
-			retention_period: '3 days',
+			retention_period: "3 days",
 		});
 	});
 

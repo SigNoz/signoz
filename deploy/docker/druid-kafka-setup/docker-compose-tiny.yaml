@@ -147,7 +147,7 @@ services:
       retries: 5
 
   flatten-processor:
-    image: signoz/flattener-processor:0.3.4
+    image: signoz/flattener-processor:0.3.5
     container_name: flattener-processor
 
     depends_on:
@@ -163,7 +163,7 @@ services:
     
 
   query-service:
-    image: signoz.docker.scarf.sh/signoz/query-service:0.3.4
+    image: signoz.docker.scarf.sh/signoz/query-service:0.3.5
     container_name: query-service
 
     depends_on:
@@ -182,7 +182,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.3.4
+    image: signoz/frontend:0.3.5
     container_name: frontend
 
     depends_on:
