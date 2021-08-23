@@ -1,8 +1,8 @@
 import { Dispatch } from "redux";
-import api, { apiV1 } from "../../../api";
+import api, { apiV1 } from "api";
 
-import { GlobalTime } from "../global";
-import { toUTCEpoch } from "../../../utils/timeUtils";
+import { GlobalTime } from "store/actions/global";
+import { toUTCEpoch } from "utils/timeUtils";
 import { MetricsActionTypes } from "./metricsActionTypes";
 import * as MetricsInterfaces from "./metricsInterfaces";
 

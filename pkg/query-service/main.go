@@ -5,7 +5,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/viper"
 	"go.signoz.io/query-service/app"
 	"go.signoz.io/query-service/constants"
 
@@ -20,32 +19,6 @@ func initZapLog() *zap.Logger {
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	logger, _ := config.Build()
 	return logger
-}
-
-func initViper() *viper.Viper {
-
-	v := viper.New()
-
-	v.SetConfigName("config") // name of config file (without extension)
-	v.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	// v.AddConfigPath("/etc/appname/")   // path to look for the config file in
-	// v.AddConfigPath("$HOME/.appname")  // call multiple times to add many search paths
-	v.AddConfigPath(".") // optionally look for config in the working directory
-
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found; ignore error if desired
-			zap.S().Warn("Config File not found")
-
-		} else {
-			// Config file was found but another error was produced
-			zap.S().Warn("Config file was found but another error was produced")
-		}
-	}
-
-	// Config file found and successfully parsed
-	return v
-
 }
 
 func main() {

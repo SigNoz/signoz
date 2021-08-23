@@ -1,4 +1,4 @@
-import ROUTES from "Src/constants/routes";
+import ROUTES from "constants/routes";
 
 export const Options = [
 	{ value: "5min", label: "Last 5 min" },
