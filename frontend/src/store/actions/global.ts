@@ -1,5 +1,6 @@
-import { ActionTypes } from './types';
 import { Moment } from 'moment';
+
+import { ActionTypes } from './types';
 
 export type DateTimeRangeType = [Moment | null, Moment | null] | null;
 

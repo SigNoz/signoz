@@ -1,7 +1,8 @@
 module.exports = {
 	env: {
-		'browser': true,
-		'es2021': true
+		browser: true,
+		es2021: true,
+		node: true,
 	},
 	extends: [
 		'eslint:recommended',
@@ -11,16 +12,13 @@ module.exports = {
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
-		'ecmaFeatures': {
-			'jsx': true
+		ecmaFeatures: {
+			jsx: true,
 		},
-		'ecmaVersion': 12,
-		'sourceType': 'module'
+		ecmaVersion: 12,
+		sourceType: 'module',
 	},
-	plugins: [
-		'react',
-		'@typescript-eslint'
-	],
+	plugins: ['react', '@typescript-eslint', 'simple-import-sort'],
 	rules: {
 		'react/jsx-filename-extension': [
 			'error',
@@ -30,21 +28,14 @@ module.exports = {
 		],
 		'react/prop-types': 'off',
 		'@typescript-eslint/explicit-function-return-type': 'error',
-		'indent': [
-			'error',
-			'tab'
-		],
-		'linebreak-style': [
-			'error',
-			'unix'
-		],
-		'quotes': [
-			'error',
-			'single'
-		],
-		'semi': [
-			'error',
-			'always'
-		]
+		'@typescript-eslint/no-var-requires': 0,
+		'linebreak-style': ['error', 'unix'],
+		indent: ['error', 'tab'],
+		quotes: ['error', 'single'],
+		semi: ['error', 'always'],
+
+		// simple sort error
+		'simple-import-sort/imports': 'error',
+		'simple-import-sort/exports': 'error',
 	},
 };

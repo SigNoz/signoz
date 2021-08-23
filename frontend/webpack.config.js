@@ -1,26 +1,26 @@
 // shared config (dev and prod)
-const { resolve } = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const portFinderSync = require("portfinder-sync");
-const dotenv = require("dotenv");
-const webpack = require("webpack");
-const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+const { resolve } = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const portFinderSync = require('portfinder-sync');
+const dotenv = require('dotenv');
+const webpack = require('webpack');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 dotenv.config();
 
-console.log(resolve(__dirname, "./src/"));
+console.log(resolve(__dirname, './src/'));
 
 module.exports = {
-	mode: "development",
-	devtool: "source-map",
-	entry: resolve(__dirname, "./src/index.tsx"),
+	mode: 'development',
+	devtool: 'source-map',
+	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
 		historyApiFallback: true,
-		publicPath: "/",
-		transportMode: "ws",
+		publicPath: '/',
+		transportMode: 'ws',
 		open: true,
-		openPage: "application",
-		contentBase: [resolve(__dirname, "./public")],
+		openPage: 'application',
+		contentBase: [resolve(__dirname, './public')],
 		hot: true,
 		liveReload: false,
 		inline: true,
@@ -32,44 +32,44 @@ module.exports = {
 		filename: ({ chunk: { name, hash } }) => {
 			return `js/${name}-${hash}.js`;
 		},
-		path: resolve(__dirname, "./build"),
-		publicPath: "/",
+		path: resolve(__dirname, './build'),
+		publicPath: '/',
 	},
 	resolve: {
-		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
 	},
 	module: {
 		rules: [
 			{
 				test: [/\.jsx?$/, /\.tsx?$/],
-				use: ["babel-loader"],
+				use: ['babel-loader'],
 				exclude: /node_modules/,
 			},
 			{
 				test: /\.css$/,
-				use: ["style-loader", "css-loader"],
+				use: ['style-loader', 'css-loader'],
 			},
 			{
 				test: /\.(scss|sass)$/,
-				use: ["style-loader", "css-loader", "sass-loader"],
+				use: ['style-loader', 'css-loader', 'sass-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
 				use: [
-					"file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]",
-					"image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false",
+					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
+					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
 				],
 			},
 		],
 	},
 	plugins: [
-		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
+		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
 		new webpack.ProvidePlugin({
-			process: "process/browser",
+			process: 'process/browser',
 		}),
 		new webpack.DefinePlugin({
-			"process.env": JSON.stringify(process.env),
+			'process.env': JSON.stringify(process.env),
 		}),
 	],
 	performance: {

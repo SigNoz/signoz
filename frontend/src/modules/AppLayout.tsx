@@ -1,9 +1,9 @@
-import React, { ReactNode, useEffect } from 'react';
-
 import { Layout } from 'antd';
+import React, { ReactNode, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import SideNav from './Nav/SideNav';
 import TopNav from './Nav/TopNav';
-import { useLocation } from 'react-router-dom';
 import { useRoute } from './RouteProvider';
 
 const { Content, Footer } = Layout;

@@ -1,6 +1,6 @@
-import React from 'react';
-import { Modal, Form, InputNumber, Col, Row } from 'antd';
+import { Col, Form, InputNumber, Modal, Row } from 'antd';
 import { NamePath, Store } from 'antd/lib/form/interface';
+import React from 'react';
 
 interface LatencyModalFormProps {
 	onCreate: (values: Store) => void; //Store is defined in antd forms library

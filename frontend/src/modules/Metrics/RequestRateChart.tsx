@@ -1,12 +1,11 @@
+import { ChartOptions } from 'chart.js';
+import ROUTES from 'constants/routes';
 import React from 'react';
 import { Line as ChartJSLine } from 'react-chartjs-2';
-import { ChartOptions } from 'chart.js';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
+import { metricItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
-
-import { metricItem } from "store/actions/MetricsActions";
-import ROUTES from "constants/routes";
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -208,11 +207,7 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
-<<<<<<< HEAD
 				<div style={{ textAlign: 'center' }}>Request per sec</div>
-=======
-				<div style={{ textAlign: "center" }}>Request per sec</div>
->>>>>>> main
 				<ChartJSLine
 					ref={this.chartRef}
 					data={data_chartJS}
