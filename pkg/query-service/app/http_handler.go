@@ -225,7 +225,8 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRange).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)

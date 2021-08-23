@@ -2,8 +2,8 @@ import React from "react";
 
 import { Button, Text, TextContainer, Container } from "./styles";
 
-import NotFoundImage from "Src/assets/NotFound";
-import ROUTES from "Src/constants/routes";
+import NotFoundImage from "assets/NotFound";
+import ROUTES from "constants/routes";
 
 const NotFound = (): JSX.Element => {
 	return (

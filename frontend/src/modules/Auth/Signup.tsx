@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Row, Space, Button, Input } from "antd";
-import api, { apiV1 } from "../../api";
-import ROUTES from "Src/constants/routes";
-import { IS_LOGGED_IN } from "Src/constants/auth";
+import api, { apiV1 } from "api";
+import ROUTES from "constants/routes";
+import { IS_LOGGED_IN } from "constants/auth";
 
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";

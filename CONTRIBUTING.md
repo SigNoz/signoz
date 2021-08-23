@@ -26,7 +26,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 If you don't want to install SigNoz backend just for doing frontend development, we can provide you with test environments which you can use as the backend. Please ping us in #contributing channel in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) and we will DM you with `<test environment URL>`
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
-- change baseURL to `<test environment URL>` in file `src/constants/env.ts`
+- Create a file `.env` with `FRONTEND_API_ENDPOINT=<test environment URL>`
 - `yarn install`
 - `yarn dev`
 
@@ -64,11 +64,12 @@ You can always reach out to `ankit@signoz.io` to understand more about the repo 
 - If you want to discuss something about the product, start a new [discussion](https://github.com/SigNoz/signoz/discussions)
 
 ### Conventions to follow when submitting commits, PRs
+
 1. We try to follow https://www.conventionalcommits.org/en/v1.0.0/
 
 More specifically the commits and PRs should have type specifiers prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea.
 
-e.g. If you are submitting a fix for an issue in frontend - PR name should be prefixed with `fix(FE):` 
+e.g. If you are submitting a fix for an issue in frontend - PR name should be prefixed with `fix(FE):`
 
 2. Follow [GitHub Flow](https://guides.github.com/introduction/flow/) guidelines for your contribution flows
 
