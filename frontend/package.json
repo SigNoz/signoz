@@ -5,7 +5,6 @@
 	"main": "webpack.config.js",
 	"scripts": {
 		"dev": "NODE_ENV=development webpack serve --progress",
-		"start": "node scripts/start.js",
 		"build": "webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
 		"lint": "eslint src",
