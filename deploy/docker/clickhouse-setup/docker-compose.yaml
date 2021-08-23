@@ -20,7 +20,7 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:0.3.5
+    image: signoz/query-service:0.3.6
     container_name: query-service
 
     ports:
@@ -36,7 +36,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.3.5
+    image: signoz/frontend:0.3.6
     container_name: frontend
 
     depends_on:
@@ -50,7 +50,7 @@ services:
 
 
   otel-collector:
-    image: signoz/otelcol:latest
+    image: signoz/otelcol:0.3.6
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
