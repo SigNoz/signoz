@@ -11,7 +11,9 @@ module.exports = {
 	devtool: "source-map",
 	entry: resolve(__dirname, "./src/index.tsx"),
 	output: {
-		filename: "js/bundle.[chunkhash].min.js",
+		filename: ({ chunk: { name, hash } }) => {
+			return `js/${name}-${hash}.js`;
+		},
 		path: resolve(__dirname, "./build"),
 		publicPath: "/",
 	},
