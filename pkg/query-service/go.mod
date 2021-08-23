@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/ClickHouse/clickhouse-go v1.4.5
+	github.com/go-delve/delve v1.7.1-0.20210804080032-f95340ae1bf9 // indirect
 	github.com/gogo/protobuf v1.2.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.5.1
@@ -18,7 +19,9 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
-	github.com/spf13/viper v1.6.2
+	github.com/spf13/viper v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.uber.org/zap v1.16.0
+	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
+	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 )

@@ -96,7 +96,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	//////////////////		Below block gets 5xx of services
 	serviceErrorItems := []model.ServiceItem{}
 
-	query = fmt.Sprintf("SELECT serviceName, count(*) as numErrors FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND statusCode>=500 GROUP BY serviceName", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	query = fmt.Sprintf("SELECT serviceName, count(*) as numErrors FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND (statusCode>=500 OR statusCode=2) GROUP BY serviceName", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
 	err = r.db.Select(&serviceErrorItems, query)
 
@@ -167,7 +167,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 
 	serviceErrorItems := []model.ServiceErrorItem{}
 
-	query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, count(*) as numErrors FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s' AND statusCode>=500 GROUP BY time ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
+	query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, count(*) as numErrors FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s' AND (statusCode>=500 OR statusCode=2) GROUP BY time ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
 
 	err = r.db.Select(&serviceErrorItems, query)
 
@@ -237,7 +237,7 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 	for _, item := range queryParams.Tags {
 
 		if item.Key == "error" && item.Value == "true" {
-			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500)"
+			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2)"
 			continue
 		}
 
@@ -352,7 +352,7 @@ func (r *ClickHouseReader) GetServiceExternalErrors(ctx context.Context, queryPa
 
 	var serviceExternalErrorItems []model.ServiceExternalItem
 
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL AND statusCode >= 500 GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL AND (statusCode >= 500 OR statusCode=2) GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
 	err := r.db.Select(&serviceExternalErrorItems, query)
 
@@ -670,7 +670,7 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 	for _, item := range queryParams.Tags {
 
 		if item.Key == "error" && item.Value == "true" {
-			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500)"
+			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2)"
 			continue
 		}
 
