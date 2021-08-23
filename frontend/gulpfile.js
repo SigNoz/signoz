@@ -7,7 +7,7 @@ const autteoprefixer = require('autoprefixer');
 const NpmImportPlugin = require('less-plugin-npm-import');
 
 gulp.task('less', function () {
-	const plugins = [autoprefixer()];
+	const plugins = [autteoprefixer()];
 
 	return gulp
 		.src('src/themes/*-theme.less')
