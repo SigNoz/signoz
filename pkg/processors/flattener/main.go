@@ -280,6 +280,7 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 		TagsKeys:          tagsKeys,
 		TagsValues:        tagsValues,
 	}
+	span.StatusCode = int64(otelSpan.Status().Code())
 
 	populateOtherDimensions(attributes, span)
 

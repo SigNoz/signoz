@@ -21,6 +21,7 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/src/constants/env.ts
+frontend/cypress/**/*.mp4
 
 .idea
 
