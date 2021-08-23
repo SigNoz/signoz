@@ -1,10 +1,10 @@
 import {
-	ActionTypes,
 	Action,
-	traceResponseNew,
+	ActionTypes,
 	spanList,
 	spansWSameTraceIDResponse,
-} from '../actions';
+	traceResponseNew,
+} from 'store/actions';
 
 // PNOTE - Initializing is a must for state variable otherwise it gives an error in reducer
 const spanlistinstance: spanList = { events: [], segmentID: '', columns: [] };

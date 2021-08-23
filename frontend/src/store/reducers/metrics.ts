@@ -1,14 +1,14 @@
 import {
-	servicesListItem,
-	metricItem,
-	topEndpointListItem,
-	externalErrCodeMetricsItem,
 	customMetricsItem,
-	externalMetricsItem,
 	dbOverviewMetricsItem,
+	externalErrCodeMetricsItem,
 	externalMetricsAvgDurationItem,
-} from '../actions/MetricsActions';
-import { MetricsActionTypes as ActionTypes } from '../actions/MetricsActions/metricsActionTypes';
+	externalMetricsItem,
+	metricItem,
+	servicesListItem,
+	topEndpointListItem,
+} from 'store/actions/MetricsActions';
+import { MetricsActionTypes as ActionTypes } from 'store/actions/MetricsActions/metricsActionTypes';
 
 export type MetricsInitialState = {
 	serviceList?: servicesListItem[];

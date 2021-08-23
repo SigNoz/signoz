@@ -1,4 +1,4 @@
-import { ActionTypes, Action, GlobalTime } from '../actions';
+import { Action, ActionTypes, GlobalTime } from 'store/actions';
 
 export const updateGlobalTimeReducer = (
 	state: GlobalTime = {

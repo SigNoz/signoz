@@ -1,13 +1,14 @@
-import React from 'react';
-import { Table, Button, Tooltip } from 'antd';
-import { connect } from 'react-redux';
-import styled from 'styled-components';
-import { useHistory, useParams } from 'react-router-dom';
-import { topEndpointListItem } from '../../store/actions/MetricsActions';
-import { METRICS_PAGE_QUERY_PARAM } from 'Src/constants/query';
-import { GlobalTime } from 'Src/store/actions';
-import { StoreState } from 'Src/store/reducers';
 import './TopEndpointsTable.css';
+
+import { Button, Table, Tooltip } from 'antd';
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import React from 'react';
+import { connect } from 'react-redux';
+import { useHistory, useParams } from 'react-router-dom';
+import { GlobalTime } from 'store/actions';
+import { topEndpointListItem } from 'store/actions/MetricsActions';
+import { StoreState } from 'store/reducers';
+import styled from 'styled-components';
 
 const Wrapper = styled.div`
 	padding-top: 10px;

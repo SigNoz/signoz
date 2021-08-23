@@ -5,10 +5,12 @@
 	"main": "webpack.config.js",
 	"scripts": {
 		"dev": "NODE_ENV=development webpack serve --progress",
-		"start": "node scripts/start.js",
 		"build": "webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
-		"lint": "eslint src"
+		"lint": "eslint . --debug",
+		"lint:fix": "eslint . --fix --debug",
+		"cypress:open": "cypress open",
+		"cypress:run": "cypress run"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -98,6 +100,7 @@
 		"styled-components": "^5.2.1",
 		"terser-webpack-plugin": "4.2.3",
 		"ts-pnp": "1.2.0",
+		"tsconfig-paths-webpack-plugin": "^3.5.1",
 		"typescript": "^4.0.5",
 		"url-loader": "4.1.1",
 		"web-vitals": "^0.2.4",
@@ -125,6 +128,7 @@
 		"@babel/preset-env": "^7.12.17",
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.12.17",
+		"@testing-library/cypress": "^8.0.0",
 		"@types/lodash-es": "^4.17.4",
 		"@typescript-eslint/eslint-plugin": "^4.28.2",
 		"@typescript-eslint/parser": "^4.28.2",
@@ -132,12 +136,14 @@
 		"babel-plugin-styled-components": "^1.12.0",
 		"compression-webpack-plugin": "^8.0.0",
 		"copy-webpack-plugin": "^7.0.0",
+		"cypress": "^8.3.0",
 		"eslint": "^7.30.0",
 		"eslint-config-standard": "^16.0.3",
 		"eslint-plugin-import": "^2.23.4",
 		"eslint-plugin-node": "^11.1.0",
 		"eslint-plugin-promise": "^5.1.0",
 		"eslint-plugin-react": "^7.24.0",
+		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"gulp": "^4.0.2",
 		"gulp-csso": "^4.0.1",
 		"gulp-debug": "^4.0.0",

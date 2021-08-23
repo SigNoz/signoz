@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import { Button, Space, Table } from 'antd';
-import styled from 'styled-components';
+import { CustomModal } from 'components/Modal';
+import Spinner from 'components/Spinner';
+import { SKIP_ONBOARDING } from 'constants/onboarding';
+import ROUTES from 'constants/routes';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { SKIP_ONBOARDING } from 'Src/constants/onboarding';
-import ROUTES from 'Src/constants/routes';
-import { getServicesList, GlobalTime } from '../../store/actions';
-import { servicesListItem } from '../../store/actions/MetricsActions';
-import { StoreState } from '../../store/reducers';
-import { CustomModal } from '../../components/Modal';
-import { CustomSpinner, DefaultSpinner } from '../../components/Spiner';
+import { NavLink } from 'react-router-dom';
+import { getServicesList, GlobalTime } from 'store/actions';
+import { servicesListItem } from 'store/actions/MetricsActions';
+import { StoreState } from 'store/reducers';
+import styled from 'styled-components';
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
@@ -124,7 +124,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 	}, [props.servicesList, errorObject]);
 
 	if (!initialDataFetch) {
-		return <CustomSpinner size="large" tip="Fetching data..." />;
+		return <Spinner height="90vh" size="large" tip="Fetching data..." />;
 	}
 
 	if (refetchFromBackend && !skipOnboarding) {
@@ -150,7 +150,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 						allowFullScreen
 					></iframe>
 					<div style={{ margin: '20px 0' }}>
-						<DefaultSpinner />
+						<Spinner />
 					</div>
 					<div>
 						No instrumentation data.

@@ -1,8 +1,8 @@
-import React from 'react';
 import { Space } from 'antd';
-import { connect } from 'react-redux';
-import { StoreState } from '../../store/reducers';
+import React from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
+import { connect } from 'react-redux';
+import { StoreState } from 'store/reducers';
 import styled from 'styled-components';
 
 const InstrumentCard = styled.div<{
@@ -34,8 +34,7 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 					docs -
 					<a
 						href={'https://signoz.io/docs/instrumentation/overview'}
-						target="_blank"
-						rel="noreferrer"
+						target="_blank" rel="noreferrer"
 					>
 						{' '}
 						https://signoz.io/docs/instrumentation/overview
@@ -46,8 +45,7 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 						href={
 							'https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA'
 						}
-						target="_blank"
-						rel="noreferrer"
+						target="_blank" rel="noreferrer"
 					>
 						slack community
 					</a>{' '}

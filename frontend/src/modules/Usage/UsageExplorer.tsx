@@ -1,19 +1,18 @@
+import { Card, Select, Space } from 'antd';
+import { useRoute } from 'modules/RouteProvider';
+import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Card, Select, Space } from 'antd';
 import { connect } from 'react-redux';
-
 import {
 	getServicesList,
 	getUsageData,
 	GlobalTime,
 	usageDataItem,
-} from '../../store/actions';
-import { StoreState } from '../../store/reducers';
-import moment from 'moment';
-import { isOnboardingSkipped } from '../../utils/app';
-import { useRoute } from '../RouteProvider';
-import { servicesListItem } from '../../store/actions/MetricsActions';
+} from 'store/actions';
+import { servicesListItem } from 'store/actions/MetricsActions';
+import { StoreState } from 'store/reducers';
+import { isOnboardingSkipped } from 'utils/app';
 const { Option } = Select;
 
 interface UsageExplorerProps {

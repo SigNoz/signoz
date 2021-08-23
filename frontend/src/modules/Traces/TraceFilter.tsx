@@ -1,24 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { Select, Button, Input, Form, AutoComplete } from 'antd';
-import { connect } from 'react-redux';
+import { AutoComplete,Button, Form, Input, Select } from 'antd';
+import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
+import api, { apiV1 } from 'api';
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { useRoute } from 'modules/RouteProvider';
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import {
+	fetchTraces,
+	GlobalTime,
+	TraceFilters,
+	updateTraceFilters,
+} from 'store/actions';
+import { StoreState } from 'store/reducers';
 import styled from 'styled-components';
 
-import {
-	updateTraceFilters,
-	fetchTraces,
-	TraceFilters,
-	GlobalTime,
-} from '../../store/actions';
-import { StoreState } from '../../store/reducers';
-import LatencyModalForm from './LatencyModalForm';
 import { FilterStateDisplay } from './FilterStateDisplay';
-
-import FormItem from 'antd/lib/form/FormItem';
-import api, { apiV1 } from '../../api';
-import { useLocation } from 'react-router-dom';
-import { METRICS_PAGE_QUERY_PARAM } from 'Src/constants/query';
-import { useRoute } from '../RouteProvider';
+import LatencyModalForm from './LatencyModalForm';
 
 const { Option } = Select;
 
@@ -56,12 +55,12 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	const spanKindList: ISpanKind[] = [
 		{
 			label: 'SERVER',
-			value: '2'
+			value: '2',
 		},
 		{
 			label: 'CLIENT',
-			value: '3'
-		}
+			value: '3',
+		},
 	];
 
 	useEffect(() => {
@@ -70,7 +69,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 			tags: [],
 			operation: '',
 			latency: { min: '', max: '' },
-			kind: ''
+			kind: '',
 		});
 	}, []);
 
@@ -93,7 +92,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						...props.traceFilters,
 						operation: operationName,
 						service: serviceName,
-						kind: ''
+						kind: '',
 					});
 					populateData(serviceName);
 				} else if (serviceName && errorTag) {
@@ -107,7 +106,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 								operator: 'equals',
 							},
 						],
-						kind: ''
+						kind: '',
 					});
 				} else {
 					if (operationName) {
@@ -282,7 +281,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						operator: values.operator,
 					},
 				],
-				kind: props.traceFilters.kind
+				kind: props.traceFilters.kind,
 			});
 		} else {
 			props.updateTraceFilters({
@@ -296,7 +295,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						operator: values.operator,
 					},
 				],
-				kind: props.traceFilters.kind
+				kind: props.traceFilters.kind,
 			});
 		}
 
@@ -361,7 +360,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				max: '',
 				min: '',
 			},
-			kind: values.kind
+			kind: values.kind,
 		});
 	};
 
@@ -372,7 +371,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 				operation: '',
 				tags: [],
 				latency: { min: '', max: '' },
-				kind: ''
+				kind: '',
 			});
 		};
 	}, []);
@@ -437,8 +436,10 @@ const _TraceFilter = (props: TraceFilterProps) => {
 						placeholder="Select Span Kind"
 						allowClear
 					>
-						{spanKindList.map(spanKind => (
-							<Option value={spanKind.value} key={spanKind.value}>{spanKind.label}</Option>
+						{spanKindList.map((spanKind) => (
+							<Option value={spanKind.value} key={spanKind.value}>
+								{spanKind.label}
+							</Option>
 						))}
 					</Select>
 				</FormItem>

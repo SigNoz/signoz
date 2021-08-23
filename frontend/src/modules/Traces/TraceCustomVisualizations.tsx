@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import GenericVisualizations from '../Metrics/GenericVisualization';
-import { Select, Card, Space, Form } from 'antd';
+import { Card, Form,Select, Space } from 'antd';
+import GenericVisualizations from 'modules/Metrics/GenericVisualization';
+import { useRoute } from 'modules/RouteProvider';
+import React, { useEffect,useState } from 'react';
 import { connect } from 'react-redux';
-import { StoreState } from '../../store/reducers';
-import { GlobalTime, TraceFilters } from '../../store/actions';
-import { useRoute } from '../RouteProvider';
-import { getFilteredTraceMetrics } from '../../store/actions/MetricsActions';
-import { customMetricsItem } from '../../store/actions/MetricsActions';
+import { GlobalTime, TraceFilters } from 'store/actions';
+import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';
+import { customMetricsItem } from 'store/actions/MetricsActions';
+import { StoreState } from 'store/reducers';
 const { Option } = Select;
 
 const entity = [

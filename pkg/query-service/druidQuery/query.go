@@ -83,8 +83,9 @@ func buildFilters(queryParams *model.SpanSearchParams) (*godruid.Filter, error) 
 		}
 
 		if item.Key == "error" && item.Value == "true" {
-			statusCodeFilter := godruid.FilterBound("StatusCode", "500", "600", false, true, "numeric")
-			filterError := godruid.FilterOr(statusCodeFilter, newFilter)
+			statusCodeHttpFilter := godruid.FilterBound("StatusCode", "500", "600", false, true, "numeric")
+			statusCodeGrpcFilter := godruid.FilterBound("StatusCode", "2", "2", false, false, "numeric")
+			filterError := godruid.FilterOr(statusCodeHttpFilter, statusCodeGrpcFilter, newFilter)
 			filter = godruid.FilterAnd(filter, filterError)
 			continue
 		}
@@ -156,8 +157,9 @@ func buildFiltersForSpansAggregates(queryParams *model.SpanSearchAggregatesParam
 		}
 
 		if item.Key == "error" && item.Value == "true" {
-			statusCodeFilter := godruid.FilterBound("StatusCode", "500", "600", false, true, "numeric")
-			filterError := godruid.FilterOr(statusCodeFilter, newFilter)
+			statusCodeHttpFilter := godruid.FilterBound("StatusCode", "500", "600", false, true, "numeric")
+			statusCodeGrpcFilter := godruid.FilterBound("StatusCode", "2", "2", false, false, "numeric")
+			filterError := godruid.FilterOr(statusCodeHttpFilter, statusCodeGrpcFilter, newFilter)
 			filter = godruid.FilterAnd(filter, filterError)
 			continue
 		}

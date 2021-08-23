@@ -205,7 +205,7 @@ func GetServiceExternalAvgDuration(client *SqlClient, query *model.GetServiceOve
 
 func GetServiceExternalErrors(client *SqlClient, query *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
 
-	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "numCalls", ExternalHttpUrl as externalHttpUrl FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != '' AND StatusCode >= 500 AND "__time" >= '%s' AND "__time" <= '%s'
+	sqlQuery := fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT(SpanId) as "numCalls", ExternalHttpUrl as externalHttpUrl FROM %s WHERE ServiceName='%s' AND Kind='3' AND ExternalHttpUrl != '' AND (StatusCode >= 500 OR StatusCode=2) AND "__time" >= '%s' AND "__time" <= '%s'
 	GROUP BY TIME_FLOOR(__time,  '%s'), ExternalHttpUrl`, query.Period, constants.DruidDatasource, query.ServiceName, query.StartTime, query.EndTime, query.Period)
 
 	// zap.S().Debug(sqlQuery)
@@ -372,7 +372,7 @@ func GetServiceOverview(client *SqlClient, query *model.GetServiceOverviewParams
 		return nil, fmt.Errorf("Error in unmarshalling response from druid")
 	}
 
-	sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT("SpanId") as "numErrors" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "Kind"='2' and "ServiceName"='%s' and "StatusCode">=500 GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
+	sqlQuery = fmt.Sprintf(`SELECT TIME_FLOOR(__time,  '%s') as "time", COUNT("SpanId") as "numErrors" FROM "%s" WHERE "__time" >= '%s' and "__time" <= '%s'  and "Kind"='2' and "ServiceName"='%s' and ("StatusCode">=500 or "StatusCode"=2) GROUP BY TIME_FLOOR(__time,  '%s') `, query.Period, constants.DruidDatasource, query.StartTime, query.EndTime, query.ServiceName, query.Period)
 
 	// zap.S().Debug(sqlQuery)
 
@@ -439,11 +439,11 @@ func GetServices(client *SqlClient, query *model.GetServicesParams) (*[]model.Se
 
 	//////////////////		Below block gets 5xx of services
 
-	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as numErrors, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and "StatusCode">=500 GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
+	sqlQuery = fmt.Sprintf(`SELECT COUNT(SpanId) as numErrors, "ServiceName" as "serviceName" FROM %s WHERE "__time" >= '%s' and "__time" <= '%s' and "Kind"='2' and ("StatusCode">=500 or "StatusCode"=2) GROUP BY "ServiceName"`, constants.DruidDatasource, query.StartTime, query.EndTime)
 
 	responseError, err := client.Query(sqlQuery, "object")
 
-	// zap.S().Debug(sqlQuery)
+	zap.S().Debug(sqlQuery)
 
 	if err != nil {
 		zap.S().Error(query, err)

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Bar, Line as ChartJSLine } from 'react-chartjs-2';
+import { customMetricsItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
-
-import { customMetricsItem } from '../../store/actions/MetricsActions';
 
 const GenVisualizationWrapper = styled.div`
 	height: 160px;

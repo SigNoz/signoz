@@ -1,14 +1,13 @@
+import { Space, Table } from 'antd';
+import ROUTES from 'constants/routes';
+import moment from 'moment';
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { Space, Table } from 'antd';
-import ROUTES from 'Src/constants/routes';
-
-import { traceResponseNew, fetchTraces, pushDStree } from '../../store/actions';
-import { StoreState } from '../../store/reducers';
-import { isOnboardingSkipped } from '../../utils/app';
-import moment from 'moment';
+import { fetchTraces, pushDStree,traceResponseNew } from 'store/actions';
+import { StoreState } from 'store/reducers';
 import styled from 'styled-components';
+import { isOnboardingSkipped } from 'utils/app';
 
 const StyledTable = styled(Table)`
 	cursor: pointer;

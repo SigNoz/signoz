@@ -1,10 +1,9 @@
-import React from 'react';
 import { Card, Tag as AntTag } from 'antd';
+import React from 'react';
 import { connect } from 'react-redux';
-
+import { TagItem, TraceFilters, updateTraceFilters } from 'store/actions';
+import { StoreState } from 'store/reducers';
 import styled from 'styled-components';
-import { StoreState } from '../../store/reducers';
-import { TagItem, TraceFilters, updateTraceFilters } from '../../store/actions';
 
 const Tag = styled(AntTag)`
 	.anticon {

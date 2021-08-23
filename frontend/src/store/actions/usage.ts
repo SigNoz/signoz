@@ -1,8 +1,8 @@
+import api, { apiV1 } from 'api';
 import { Dispatch } from 'redux';
-import api, { apiV1 } from '../../api';
+import { toUTCEpoch } from 'utils/timeUtils';
 
 import { ActionTypes } from './types';
-import { toUTCEpoch } from '../../utils/timeUtils';
 
 export interface usageDataItem {
 	timestamp: number;

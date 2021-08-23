@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-import { flamegraph } from 'd3-flame-graph';
-import { connect } from 'react-redux';
-import { Card, Row, Col, Space, Affix } from 'antd';
-import * as d3 from 'd3';
-import * as d3Tip from 'd3-tip';
 import './TraceGraph.css';
-import { spanToTreeUtil } from 'Src/utils/spanToTree';
+
+import { Affix,Card, Col, Row, Space } from 'antd';
+import * as d3 from 'd3';
+import { flamegraph } from 'd3-flame-graph';
+import * as d3Tip from 'd3-tip';
+import { isEmpty, sortBy } from 'lodash-es';
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { useLocation,useParams } from 'react-router-dom';
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
-} from '../../store/actions';
-import { StoreState } from 'Src/store/reducers';
+} from 'store/actions';
+import { StoreState } from 'store/reducers';
+import styled from 'styled-components';
+import { spanToTreeUtil } from 'utils/spanToTree';
+
 import SelectedSpanDetails from './SelectedSpanDetails';
 import TraceGanttChart from './TraceGanttChart';
-import styled from 'styled-components';
-import { isEmpty, sortBy } from 'lodash-es';
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;

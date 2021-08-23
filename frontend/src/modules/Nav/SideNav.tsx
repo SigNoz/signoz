@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Switch as ToggleButton } from 'antd';
-import { NavLink } from 'react-router-dom';
-import { useThemeSwitcher } from 'react-css-theme-switcher';
-import { useLocation } from 'react-router-dom';
-import ROUTES from 'Src/constants/routes';
-
 import {
-	LineChartOutlined,
+	AlignLeftOutlined,
+	ApiOutlined,
 	BarChartOutlined,
 	DeploymentUnitOutlined,
-	AlignLeftOutlined,
+	LineChartOutlined,
 	SettingOutlined,
-	ApiOutlined,
 } from '@ant-design/icons';
+import { Layout, Menu, Switch as ToggleButton } from 'antd';
+import ROUTES from 'constants/routes';
+import React, { useEffect,useState } from 'react';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
+import { NavLink } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+
 import { ThemeSwitcherWrapper } from './styles';
 const { Sider } = Layout;
 

@@ -1,10 +1,10 @@
+import { ChartOptions } from 'chart.js';
 import React from 'react';
 import { Line as ChartJSLine } from 'react-chartjs-2';
-import { ChartOptions } from 'chart.js';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
+import { metricItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
-import { metricItem } from '../../store/actions/MetricsActions';
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;

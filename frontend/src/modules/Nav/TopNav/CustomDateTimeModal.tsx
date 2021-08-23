@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Modal, DatePicker } from 'antd';
-import { DateTimeRangeType } from '../../../store/actions';
+import { DatePicker,Modal } from 'antd';
 import { Moment } from 'moment';
 import moment from 'moment';
+import React, { useState } from 'react';
+import { DateTimeRangeType } from 'store/actions';
 
 const { RangePicker } = DatePicker;
 

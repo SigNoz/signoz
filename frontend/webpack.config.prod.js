@@ -4,22 +4,23 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const CompressionPlugin = require("compression-webpack-plugin");
 const webpack = require("webpack");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 module.exports = {
 	mode: "production",
 	devtool: "source-map",
 	entry: resolve(__dirname, "./src/index.tsx"),
 	output: {
-		filename: "js/bundle.[chunkhash].min.js",
+		filename: ({ chunk: { name, hash } }) => {
+			return `js/${name}-${hash}.js`;
+		},
 		path: resolve(__dirname, "./build"),
 		publicPath: "/",
 	},
 
 	resolve: {
-		alias: {
-			Src: resolve(__dirname, "./src/"),
-		},
 		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		plugins: [new TsconfigPathsPlugin({})],
 	},
 	module: {
 		rules: [
