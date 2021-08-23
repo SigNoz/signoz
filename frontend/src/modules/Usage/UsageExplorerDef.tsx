@@ -1,1 +1,1 @@
-export { UsageExplorer as default } from "./UsageExplorer";
+export { UsageExplorer as default } from './UsageExplorer';

@@ -1,3 +1,3 @@
 export enum LOCAL_STORAGE {
-	METRICS_TIME_IN_DURATION = "metricsTimeDurations",
+	METRICS_TIME_IN_DURATION = 'metricsTimeDurations',
 }

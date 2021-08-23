@@ -1,9 +1,9 @@
 //You must first install the vis and react types 'npm install --save-dev @types/vis @types/react'
-declare module "react-graph-vis" {
-	import { Network, NetworkEvents, Options, Node, Edge, DataSet } from "vis";
-	import { Component } from "react";
+declare module 'react-graph-vis' {
+	import { Network, NetworkEvents, Options, Node, Edge, DataSet } from 'vis';
+	import { Component } from 'react';
 
-	export { Network, NetworkEvents, Options, Node, Edge, DataSet } from "vis";
+	export { Network, NetworkEvents, Options, Node, Edge, DataSet } from 'vis';
 
 	export interface graphEvents {
 		[event: NetworkEvents]: (params?: any) => void;

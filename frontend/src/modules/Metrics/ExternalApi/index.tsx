@@ -1,1 +1,1 @@
-export { default } from "./ExternalApiGraph";
+export { default } from './ExternalApiGraph';

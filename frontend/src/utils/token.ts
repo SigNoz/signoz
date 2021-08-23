@@ -1,3 +1,3 @@
 export class Token {
-	static auth0Token = "";
+	static auth0Token = '';
 }

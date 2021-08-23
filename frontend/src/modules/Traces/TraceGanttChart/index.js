@@ -1,1 +1,1 @@
-export { default } from "./TraceGanttChart";
+export { default } from './TraceGanttChart';

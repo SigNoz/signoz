@@ -1,1 +1,1 @@
-export { ServiceMetrics as default } from "./ServiceMetrics";
+export { ServiceMetrics as default } from './ServiceMetrics';

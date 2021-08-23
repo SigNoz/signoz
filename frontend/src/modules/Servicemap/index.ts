@@ -1,1 +1,1 @@
-export { default } from "./ServiceMap";
+export { default } from './ServiceMap';

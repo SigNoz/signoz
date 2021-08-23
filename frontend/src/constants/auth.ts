@@ -1,1 +1,1 @@
-export const IS_LOGGED_IN = "isLoggedIn";
+export const IS_LOGGED_IN = 'isLoggedIn';
