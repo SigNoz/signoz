@@ -28,6 +28,8 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
 
+👉 Run aggregates on trace data to get business relevant metrics
+
 
 ![SigNoz Feature](https://signoz-public.s3.us-east-2.amazonaws.com/signoz_hero_github.png)
 
@@ -49,7 +51,7 @@ Come say Hi to us on [Slack](https://join.slack.com/t/signoz-community/shared_in
 - Slowest endpoints in your application
 - See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations.
-- Aggregate metrics on filtered traces. Eg, you can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
+- Run aggregates on trace data (events/spans) to get business relevant metrics Eg, you can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
 
 <br /><br />
