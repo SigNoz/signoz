@@ -23,6 +23,9 @@ frontend/yarn-error.log*
 frontend/src/constants/env.ts
 frontend/cypress/**/*.mp4
 
+# env file for cypress
+frontend/cypress.env.json
+
 .idea
 
 **/.vscode
