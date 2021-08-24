@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect } from "react";
 
 import { Layout } from "antd";
-import SideNav from "./Nav/SideNav";
+import SideNav from "components/SideNav";
 import TopNav from "./Nav/TopNav";
 import { useLocation } from "react-router-dom";
 import { useRoute } from "./RouteProvider";
