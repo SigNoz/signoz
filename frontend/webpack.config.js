@@ -14,6 +14,7 @@ module.exports = {
 	mode: "development",
 	devtool: "source-map",
 	entry: resolve(__dirname, "./src/index.tsx"),
+	target: "web",
 	devServer: {
 		historyApiFallback: true,
 		publicPath: "/",
