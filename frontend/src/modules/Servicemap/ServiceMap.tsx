@@ -1,20 +1,20 @@
-import React, { useEffect, useRef } from "react";
-import { connect } from "react-redux";
-import { RouteComponentProps, withRouter } from "react-router-dom";
+import Spinner from 'components/Spinner';
+import { useRoute } from 'modules/RouteProvider';
+import React, { useEffect, useRef } from 'react';
+import { ForceGraph2D } from 'react-force-graph';
+import { connect } from 'react-redux';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import {
+	getDetailedServiceMapItems,
+	getServiceMapItems,
 	GlobalTime,
 	serviceMapStore,
-	getServiceMapItems,
-	getDetailedServiceMapItems,
-} from "store/actions";
-import styled from "styled-components";
-import { StoreState } from "store/reducers";
+} from 'store/actions';
+import { StoreState } from 'store/reducers';
+import styled from 'styled-components';
 
-import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
-import SelectService from "./SelectService";
-import { ForceGraph2D } from "react-force-graph";
-import Spinner from "components/Spinner";
-import { useRoute } from "modules/RouteProvider";
+import SelectService from './SelectService';
+import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {
@@ -75,7 +75,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 	}, [globalTime]);
 
 	useEffect(() => {
-		fgRef.current && fgRef.current.d3Force("charge").strength(-400);
+		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
 	});
 	if (!serviceMap.items.length || !serviceMap.services.length) {
 		return <Spinner size="large" tip="Loading..." />;
@@ -116,13 +116,13 @@ const ServiceMap = (props: ServiceMapProps) => {
 					ctx.beginPath();
 					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
 					ctx.fill();
-					ctx.textAlign = "center";
-					ctx.textBaseline = "middle";
-					ctx.fillStyle = "#646464";
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					ctx.fillStyle = '#646464';
 					ctx.fillText(label, node.x, node.y);
 				}}
 				onNodeClick={(node) => {
-					const tooltip = document.querySelector(".graph-tooltip");
+					const tooltip = document.querySelector('.graph-tooltip');
 					if (tooltip && node) {
 						tooltip.innerHTML = getTooltip(node);
 					}

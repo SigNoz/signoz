@@ -1,14 +1,13 @@
-import React, { Suspense } from "react";
-import ROUTES from "constants/routes";
-import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
-import Spinner from "components/Spinner";
-import NotFound from "components/NotFound";
+import NotFound from 'components/NotFound';
+import Spinner from 'components/Spinner';
+import { IS_LOGGED_IN } from 'constants/auth';
+import ROUTES from 'constants/routes';
+import AppLayout from 'modules/AppLayout';
+import { RouteProvider } from 'modules/RouteProvider';
+import React, { Suspense } from 'react';
+import { BrowserRouter, Redirect,Route, Switch } from 'react-router-dom';
 
-import { IS_LOGGED_IN } from "constants/auth";
-
-import AppLayout from "modules/AppLayout";
-import { RouteProvider } from "modules/RouteProvider";
-import routes from "./routes";
+import routes from './routes';
 
 const App = () => (
 	<BrowserRouter basename="/">
@@ -25,7 +24,7 @@ const App = () => (
 							path="/"
 							exact
 							render={() => {
-								return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
+								return localStorage.getItem(IS_LOGGED_IN) === 'yes' ? (
 									<Redirect to={ROUTES.APPLICATION} />
 								) : (
 									<Redirect to={ROUTES.SIGN_UP} />
