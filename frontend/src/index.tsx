@@ -1,11 +1,12 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { Provider } from "react-redux";
-import { ThemeSwitcherProvider } from "react-css-theme-switcher";
-import store from "store";
-import AppRoutes from "AppRoutes";
-import "assets/index.css";
-import themes from "themes";
+import 'assets/index.css';
+
+import AppRoutes from 'AppRoutes';
+import React from 'react';
+import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
+import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import store from 'store';
+import themes from 'themes';
 
 ReactDOM.render(
 	<Provider store={store}>
@@ -15,5 +16,5 @@ ReactDOM.render(
 			</ThemeSwitcherProvider>
 		</React.StrictMode>
 	</Provider>,
-	document.querySelector("#root"),
+	document.querySelector('#root'),
 );
