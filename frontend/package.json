@@ -7,7 +7,7 @@
 		"dev": "NODE_ENV=development webpack serve --progress",
 		"build": "webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
-		"lint": "eslint src",
+		"lint": "eslint .",
 		"cypress:open": "cypress open",
 		"cypress:run": "cypress run"
 	},
@@ -138,6 +138,7 @@
 		"compression-webpack-plugin": "^8.0.0",
 		"copy-webpack-plugin": "^7.0.0",
 		"cypress": "^8.3.0",
+		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"gulp": "^4.0.2",
 		"gulp-csso": "^4.0.1",
 		"gulp-debug": "^4.0.0",
