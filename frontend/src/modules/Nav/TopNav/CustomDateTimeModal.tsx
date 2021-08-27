@@ -1,4 +1,4 @@
-import { DatePicker,Modal } from 'antd';
+import { DatePicker, Modal } from 'antd';
 import { Moment } from 'moment';
 import moment from 'moment';
 import React, { useState } from 'react';

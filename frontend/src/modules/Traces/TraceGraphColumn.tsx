@@ -1,8 +1,8 @@
 import { Table } from 'antd';
 import React from 'react';
 import { connect } from 'react-redux';
-import { pushDStree,traceResponseNew } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { pushDStree, traceResponseNew } from 'store/actions';
+import { AppState } from 'store/reducers';
 
 interface TraceGraphColumnProps {
 	traces: traceResponseNew;
@@ -69,7 +69,7 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
 	);
 };
 
-const mapStateToProps = (state: StoreState): { traces: traceResponseNew } => {
+const mapStateToProps = (state: AppState): { traces: traceResponseNew } => {
 	return { traces: state.traces };
 };
 

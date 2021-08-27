@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
 import { GlobalTime } from 'store/actions';
 import { topEndpointListItem } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
@@ -118,7 +118,7 @@ const _TopEndpointsTable = (props: TopEndpointsTableProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	globalTime: GlobalTime;
 } => {

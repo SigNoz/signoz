@@ -2,14 +2,14 @@ import { Space } from 'antd';
 import React from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 import { connect } from 'react-redux';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 const InstrumentCard = styled.div<{
 	currentThemeStatus: string | undefined;
 }>`
 	border-radius: 4px;
-	background: ${({ currentThemeStatus }) =>
+	background: ${({ currentThemeStatus }): string =>
 		currentThemeStatus === 'dark' ? '#313131' : '#ddd'};
 	padding: 33px 23px;
 	max-width: 800px;
@@ -34,7 +34,8 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 					docs -
 					<a
 						href={'https://signoz.io/docs/instrumentation/overview'}
-						target="_blank" rel="noreferrer"
+						target="_blank"
+						rel="noreferrer"
 					>
 						{' '}
 						https://signoz.io/docs/instrumentation/overview
@@ -45,7 +46,8 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 						href={
 							'https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA'
 						}
-						target="_blank" rel="noreferrer"
+						target="_blank"
+						rel="noreferrer"
 					>
 						slack community
 					</a>{' '}
@@ -59,7 +61,7 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 	);
 };
 
-const mapStateToProps = (state: StoreState): {} => {
+const mapStateToProps = (state: AppState): {} => {
 	return {};
 };
 

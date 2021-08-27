@@ -1,19 +1,19 @@
 import './TraceGraph.css';
 
-import { Affix,Card, Col, Row, Space } from 'antd';
+import { Affix, Card, Col, Row, Space } from 'antd';
 import * as d3 from 'd3';
 import { flamegraph } from 'd3-flame-graph';
 import * as d3Tip from 'd3-tip';
 import { isEmpty, sortBy } from 'lodash-es';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { useLocation,useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
 } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
@@ -204,7 +204,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): { traceItem: spansWSameTraceIDResponse } => {
 	return { traceItem: state.traceItem };
 };

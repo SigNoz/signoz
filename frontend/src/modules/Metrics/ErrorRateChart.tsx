@@ -13,10 +13,10 @@ const ChartPopUpUnique = styled.div<{
 }>`
 	background-color: white;
 	border: 1px solid rgba(219, 112, 147, 0.5);
-	zindex: 10;
+	z-index: 10;
 	position: absolute;
-	top: ${(props) => props.ycoordinate}px;
-	left: ${(props) => props.xcoordinate}px;
+	top: ${(props): number => props.ycoordinate}px;
+	left: ${(props): number => props.xcoordinate}px;
 	font-size: 12px;
 	border-radius: 2px;
 `;

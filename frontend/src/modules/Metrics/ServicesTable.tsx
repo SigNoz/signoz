@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { getServicesList, GlobalTime } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 interface ServicesTableProps {
@@ -199,7 +199,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): { servicesList: servicesListItem[]; globalTime: GlobalTime } => {
 	return {
 		servicesList: state.metricsData.serviceList,

@@ -1,5 +1,5 @@
 import ROUTES from 'constants/routes';
-import React, { createContext, Dispatch,ReactNode, useContext } from 'react';
+import React, { createContext, Dispatch, ReactNode, useContext } from 'react';
 
 type State = {
 	[key: string]: {

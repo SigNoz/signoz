@@ -3,7 +3,7 @@ import ROUTES from 'constants/routes';
 import { Dispatch } from 'redux';
 import { toUTCEpoch } from 'utils/timeUtils';
 
-import { GlobalTime } from './global';
+import { GloxwbalTime } from './global';
 import { ActionTypes } from './types';
 
 // PNOTE

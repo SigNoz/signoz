@@ -1,4 +1,4 @@
-import { AutoComplete,Button, Form, Input, Select } from 'antd';
+import { AutoComplete, Button, Form, Input, Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
 import api, { apiV1 } from 'api';
@@ -13,7 +13,7 @@ import {
 	TraceFilters,
 	updateTraceFilters,
 } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 import { FilterStateDisplay } from './FilterStateDisplay';
@@ -515,7 +515,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): { traceFilters: TraceFilters; globalTime: GlobalTime } => {
 	return { traceFilters: state.traceFilters, globalTime: state.globalTime };
 };

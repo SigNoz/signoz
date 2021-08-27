@@ -1,4 +1,4 @@
-import { Button, Input,Row, Space } from 'antd';
+import { Button, Input, Row, Space } from 'antd';
 import api, { apiV1 } from 'api';
 import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
@@ -8,7 +8,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 type SignUpProps = RouteComponentProps<any>;
 
-const Signup = (props: SignUpProps) => {
+const Signup = (props: SignUpProps): JSX.Element => {
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },

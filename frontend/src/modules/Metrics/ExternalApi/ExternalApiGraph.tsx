@@ -1,11 +1,11 @@
-import { filter,uniqBy } from 'lodash';
+import { filter, uniqBy } from 'lodash';
 import React from 'react';
 import { Line as ChartJSLine } from 'react-chartjs-2';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { externalMetricsItem } from 'store/actions/MetricsActions';
 
-import { borderColors,getOptions } from './graphConfig';
+import { borderColors, getOptions } from './graphConfig';
 
 const theme = 'dark';
 

@@ -2,7 +2,7 @@ import { Card, Tag as AntTag } from 'antd';
 import React from 'react';
 import { connect } from 'react-redux';
 import { TagItem, TraceFilters, updateTraceFilters } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 const Tag = styled(AntTag)`
@@ -114,7 +114,7 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 	);
 };
 
-const mapStateToProps = (state: StoreState): { traceFilters: TraceFilters } => {
+const mapStateToProps = (state: AppState): { traceFilters: TraceFilters } => {
 	return { traceFilters: state.traceFilters };
 };
 

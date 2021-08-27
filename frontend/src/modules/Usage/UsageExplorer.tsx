@@ -11,7 +11,7 @@ import {
 	usageDataItem,
 } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import { isOnboardingSkipped } from 'utils/app';
 const { Option } = Select;
 
@@ -196,7 +196,7 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	totalCount: number;
 	globalTime: GlobalTime;

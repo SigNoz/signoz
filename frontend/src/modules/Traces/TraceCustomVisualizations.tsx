@@ -1,7 +1,7 @@
-import { Card, Form,Select, Space } from 'antd';
+import { Card, Form, Select, Space } from 'antd';
 import GenericVisualizations from 'modules/Metrics/GenericVisualization';
 import { useRoute } from 'modules/RouteProvider';
-import React, { useEffect,useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { GlobalTime, TraceFilters } from 'store/actions';
 import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';

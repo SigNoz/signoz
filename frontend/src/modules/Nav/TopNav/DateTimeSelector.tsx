@@ -1,4 +1,4 @@
-import { Button, Form,Select as DefaultSelect, Space } from 'antd';
+import { Button, Form, Select as DefaultSelect, Space } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import { LOCAL_STORAGE } from 'constants/localStorage';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
@@ -11,7 +11,7 @@ import { withRouter } from 'react-router';
 import { RouteComponentProps, useLocation } from 'react-router-dom';
 import { GlobalTime, updateTimeInterval } from 'store/actions';
 import { DateTimeRangeType } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 import {
@@ -273,7 +273,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		);
 	}
 };
-const mapStateToProps = (state: StoreState): { globalTime: GlobalTime } => {
+const mapStateToProps = (state: AppState): { globalTime: GlobalTime } => {
 	return { globalTime: state.globalTime };
 };
 
