@@ -1,10 +1,10 @@
 // Action creator must have a type and optionally a payload
-import { ActionTypes } from "./types";
+import { ActionTypes } from './types';
 
 export interface TagItem {
 	key: string;
 	value: string;
-	operator: "equals" | "contains" | "regex";
+	operator: 'equals' | 'contains' | 'regex';
 }
 
 export interface LatencyValue {
