@@ -3,13 +3,21 @@ package clickhouseReader
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go"
+	"github.com/go-kit/log"
 	"github.com/jmoiron/sqlx"
+	promModel "github.com/prometheus/common/model"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/storage/remote"
+	"github.com/prometheus/prometheus/util/stats"
 
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
@@ -36,6 +44,8 @@ type ClickHouseReader struct {
 	operationsTable string
 	indexTable      string
 	spansTable      string
+	queryEngine     *promql.Engine
+	remoteStorage   *remote.Storage
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -48,11 +58,55 @@ func NewReader() *ClickHouseReader {
 	if err != nil {
 		zap.S().Error(err)
 	}
+
+	logLevel := promlog.AllowedLevel{}
+	logLevel.Set("debug")
+	// allowedFormat := promlog.AllowedFormat{}
+	// allowedFormat.Set("logfmt")
+
+	// promlogConfig := promlog.Config{
+	// 	Level:  &logLevel,
+	// 	Format: &allowedFormat,
+	// }
+
+	logger := promlog.New(logLevel)
+
+	opts := promql.EngineOpts{
+		Logger:        log.With(logger, "component", "query engine"),
+		Reg:           nil,
+		MaxConcurrent: 20,
+		MaxSamples:    50000000,
+		Timeout:       time.Duration(2 * time.Minute),
+	}
+
+	queryEngine := promql.NewEngine(opts)
+
+	startTime := func() (int64, error) {
+		return int64(promModel.Latest), nil
+
+	}
+
+	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
+
+	filename := flag.String("config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.Parse()
+	conf, err := config.LoadFile(*filename)
+	if err != nil {
+		zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
+	}
+
+	err = remoteStorage.ApplyConfig(conf)
+	if err != nil {
+		zap.S().Error("Error in remoteStorage.ApplyConfig: ", err)
+	}
+
 	return &ClickHouseReader{
 		db:              db,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		spansTable:      options.primary.SpansTable,
+		queryEngine:     queryEngine,
+		remoteStorage:   remoteStorage,
 	}
 }
 
@@ -72,6 +126,45 @@ func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
 	}
 
 	return cfg.Connector(cfg)
+}
+
+func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
+	if err != nil {
+		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+	}
+
+	res := qry.Exec(ctx)
+
+	// Optional stats field in response if parameter "stats" is not empty.
+	var qs *stats.QueryStats
+	if queryParams.Stats != "" {
+		qs = stats.NewQueryStats(qry.Stats())
+	}
+
+	qry.Close()
+	return res, qs, nil
+
+}
+
+func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+
+	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
+
+	if err != nil {
+		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+	}
+
+	res := qry.Exec(ctx)
+
+	// Optional stats field in response if parameter "stats" is not empty.
+	var qs *stats.QueryStats
+	if query.Stats != "" {
+		qs = stats.NewQueryStats(qry.Stats())
+	}
+
+	qry.Close()
+	return res, qs, nil
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, error) {

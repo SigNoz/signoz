@@ -5,7 +5,16 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/util/stats"
 )
+
+type QueryData struct {
+	ResultType promql.ValueType  `json:"resultType"`
+	Result     promql.Value      `json:"result"`
+	Stats      *stats.QueryStats `json:"stats,omitempty"`
+}
 
 type ServiceItem struct {
 	ServiceName  string  `json:"serviceName" db:"serviceName"`

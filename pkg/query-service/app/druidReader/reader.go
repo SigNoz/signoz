@@ -2,8 +2,11 @@ package druidReader
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
 	"go.signoz.io/query-service/model"
@@ -37,6 +40,16 @@ func NewReader() *DruidReader {
 
 func initialize() {
 
+}
+
+func (druid *DruidReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+
+	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
+}
+
+func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+
+	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
 }
 
 func (druid *DruidReader) GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error) {

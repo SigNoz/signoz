@@ -36,5 +36,6 @@ frontend/cypress.env.json
 **/build
 **/storage
 **/locust-scripts/__pycache__/
+**/__debug_bin
 
 frontend/*.env
