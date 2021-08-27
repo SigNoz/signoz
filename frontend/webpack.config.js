@@ -11,9 +11,6 @@ dotenv.config();
 console.log(resolve(__dirname, './src/'));
 
 module.exports = {
-	mode: "development",
-	devtool: "source-map",
-	entry: resolve(__dirname, "./src/index.tsx"),
 	mode: 'development',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
