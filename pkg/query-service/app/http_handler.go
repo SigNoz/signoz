@@ -3,21 +3,13 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/posthog/posthog-go"
-	promModel "github.com/prometheus/common/model"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/storage/remote"
-	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -38,61 +30,21 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath      string
-	apiPrefix     string
-	reader        *Reader
-	pc            *posthog.Client
-	distinctId    string
-	ready         func(http.HandlerFunc) http.HandlerFunc
-	queryEngine   *promql.Engine
-	remoteStorage *remote.Storage
+	basePath   string
+	apiPrefix  string
+	reader     *Reader
+	pc         *posthog.Client
+	distinctId string
+	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
-	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
-	// allowedFormat := promlog.AllowedFormat{}
-	// allowedFormat.Set("logfmt")
-
-	// promlogConfig := promlog.Config{
-	// 	Level:  &logLevel,
-	// 	Format: &allowedFormat,
-	// }
-
-	logger := promlog.New(logLevel)
-
-	opts := promql.EngineOpts{
-		Logger:        log.With(logger, "component", "query engine"),
-		Reg:           nil,
-		MaxConcurrent: 20,
-		MaxSamples:    50000000,
-		Timeout:       time.Duration(2 * time.Minute),
-	}
-
-	queryEngine := promql.NewEngine(opts)
-
-	startTime := func() (int64, error) {
-		return int64(promModel.Latest), nil
-
-	}
-
-	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
-
-	filename := flag.String("config", "./config/prometheus.yml", "(prometheus config to read metrics)")
-	flag.Parse()
-	conf, err := config.LoadFile(*filename)
-	if err != nil {
-		zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
-	}
-	remoteStorage.ApplyConfig(conf)
 
 	aH := &APIHandler{
-		reader:        reader,
-		pc:            pc,
-		distinctId:    distinctId,
-		queryEngine:   queryEngine,
-		remoteStorage: remoteStorage,
+		reader:     reader,
+		pc:         pc,
+		distinctId: distinctId,
 	}
 	aH.ready = aH.testReady
 	return aH
@@ -126,7 +78,7 @@ func setCORS(w http.ResponseWriter) {
 	}
 }
 
-type apiFunc func(r *http.Request) (interface{}, *apiError, func())
+type apiFunc func(r *http.Request) (interface{}, *model.ApiError, func())
 
 // Checks if server is ready, calls f if it is, returns 503 if it is not.
 func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
@@ -137,43 +89,19 @@ func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// // Register the API's endpoints in the given router.
-// func (aH *APIHandler) Register(r *route.Router) {
-// 	wrap := func(f apiFunc) http.HandlerFunc {
-// 		hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			setCORS(w)
-// 			data, err, finalizer := f(r)
-// 			if err != nil {
-// 				aH.respondError(w, err, data)
-// 			} else if data != nil {
-// 				aH.respond(w, data)
-// 			} else {
-// 				w.WriteHeader(http.StatusNoContent)
-// 			}
-// 			if finalizer != nil {
-// 				finalizer()
-// 			}
-// 		})
-// 		return aH.ready(httputil.CompressionHandler{
-// 			Handler: hf,
-// 		}.ServeHTTP)
-// 	}
-// 	r.Get("/api/v1/query_range", wrap(aH.queryRange))
-// }
-
 type response struct {
-	Status    status      `json:"status"`
-	Data      interface{} `json:"data,omitempty"`
-	ErrorType errorType   `json:"errorType,omitempty"`
-	Error     string      `json:"error,omitempty"`
+	Status    status          `json:"status"`
+	Data      interface{}     `json:"data,omitempty"`
+	ErrorType model.ErrorType `json:"errorType,omitempty"`
+	Error     string          `json:"error,omitempty"`
 }
 
-func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *apiError, data interface{}) {
+func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status:    statusError,
-		ErrorType: apiErr.typ,
-		Error:     apiErr.err.Error(),
+		ErrorType: apiErr.Typ,
+		Error:     apiErr.Err.Error(),
 		Data:      data,
 	})
 	if err != nil {
@@ -183,17 +111,19 @@ func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *apiError, data
 	}
 
 	var code int
-	switch apiErr.typ {
-	case errorBadData:
+	switch apiErr.Typ {
+	case model.ErrorBadData:
 		code = http.StatusBadRequest
-	case errorExec:
+	case model.ErrorExec:
 		code = 422
-	case errorCanceled, errorTimeout:
+	case model.ErrorCanceled, model.ErrorTimeout:
 		code = http.StatusServiceUnavailable
-	case errorInternal:
+	case model.ErrorInternal:
 		code = http.StatusInternalServerError
-	case errorNotFound:
+	case model.ErrorNotFound:
 		code = http.StatusNotFound
+	case model.ErrorNotImplemented:
+		code = http.StatusNotImplemented
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -270,12 +200,12 @@ func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 	}
 
-	qry, err := aH.queryEngine.NewRangeQuery(aH.remoteStorage, r.FormValue("query"), query.Start, query.End, query.Step)
+	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
 
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if apiError.Err != nil {
+		aH.respondError(w, apiError, nil)
 		return
 	}
-	res := qry.Exec(ctx)
 
 	if res.Err != nil {
 		zap.S().Error(res.Err)
@@ -284,17 +214,11 @@ func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			aH.respondError(w, &apiError{errorCanceled, res.Err}, nil)
+			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			aH.respondError(w, &apiError{errorTimeout, res.Err}, nil)
+			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		aH.respondError(w, &apiError{errorExec, res.Err}, nil)
-	}
-
-	// Optional stats field in response if parameter "stats" is not empty.
-	var qs *stats.QueryStats
-	if r.FormValue("stats") != "" {
-		qs = stats.NewQueryStats(qry.Stats())
+		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -303,7 +227,6 @@ func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 		Stats:      qs,
 	}
 
-	qry.Close()
 	aH.respond(w, response_data)
 
 }

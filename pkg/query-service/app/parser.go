@@ -49,23 +49,6 @@ func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams,
 
 }
 
-type apiError struct {
-	typ errorType
-	err error
-}
-type errorType string
-
-const (
-	errorNone        errorType = ""
-	errorTimeout     errorType = "timeout"
-	errorCanceled    errorType = "canceled"
-	errorExec        errorType = "execution"
-	errorBadData     errorType = "bad_data"
-	errorInternal    errorType = "internal"
-	errorUnavailable errorType = "unavailable"
-	errorNotFound    errorType = "not_found"
-)
-
 func parseMetricsTime(s string) (time.Time, error) {
 	if t, err := strconv.ParseFloat(s, 64); err == nil {
 		s, ns := math.Modf(t)
@@ -92,42 +75,44 @@ func parseMetricsDuration(s string) (time.Duration, error) {
 	return 0, fmt.Errorf("cannot parse %q to a valid duration", s)
 }
 
-func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *apiError) {
+func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *model.ApiError) {
 
 	start, err := parseMetricsTime(r.FormValue("start"))
 	if err != nil {
-		return nil, &apiError{errorBadData, err}
+		return nil, &model.ApiError{model.ErrorBadData, err}
 	}
 	end, err := parseMetricsTime(r.FormValue("end"))
 	if err != nil {
-		return nil, &apiError{errorBadData, err}
+		return nil, &model.ApiError{model.ErrorBadData, err}
 	}
 	if end.Before(start) {
 		err := errors.New("end timestamp must not be before start time")
-		return nil, &apiError{errorBadData, err}
+		return nil, &model.ApiError{model.ErrorBadData, err}
 	}
 
 	step, err := parseMetricsDuration(r.FormValue("step"))
 	if err != nil {
-		return nil, &apiError{errorBadData, err}
+		return nil, &model.ApiError{model.ErrorBadData, err}
 	}
 
 	if step <= 0 {
 		err := errors.New("zero or negative query resolution step widths are not accepted. Try a positive integer")
-		return nil, &apiError{errorBadData, err}
+		return nil, &model.ApiError{model.ErrorBadData, err}
 	}
 
 	// For safety, limit the number of returned points per timeseries.
 	// This is sufficient for 60s resolution for a week or 1h resolution for a year.
 	if end.Sub(start)/step > 11000 {
 		err := errors.New("exceeded maximum resolution of 11,000 points per timeseries. Try decreasing the query resolution (?step=XX)")
-		return nil, &apiError{errorBadData, err}
+		return nil, &model.ApiError{model.ErrorBadData, err}
 	}
 
 	queryRangeParams := model.QueryRangeParams{
 		Start: start,
 		End:   end,
 		Step:  step,
+		Query: r.FormValue("query"),
+		Stats: r.FormValue("stats"),
 	}
 
 	return &queryRangeParams, nil
