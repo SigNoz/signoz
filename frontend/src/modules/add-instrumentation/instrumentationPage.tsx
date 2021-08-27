@@ -1,8 +1,8 @@
-import React from "react";
 import { Space } from "antd";
+import React from "react";
+import { useThemeSwitcher } from "react-css-theme-switcher";
 import { connect } from "react-redux";
 import { StoreState } from "store/reducers";
-import { useThemeSwitcher } from "react-css-theme-switcher";
 import styled from "styled-components";
 
 const InstrumentCard = styled.div<{

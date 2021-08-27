@@ -1,20 +1,20 @@
+import Spinner from "components/Spinner";
+import { useRoute } from "modules/RouteProvider";
 import React, { useEffect, useRef } from "react";
+import { ForceGraph2D } from "react-force-graph";
 import { connect } from "react-redux";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 import {
+	getDetailedServiceMapItems,
+	getServiceMapItems,
 	GlobalTime,
 	serviceMapStore,
-	getServiceMapItems,
-	getDetailedServiceMapItems,
 } from "store/actions";
-import styled from "styled-components";
 import { AppState } from "store/reducers";
+import styled from "styled-components";
 
-import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
-import { ForceGraph2D } from "react-force-graph";
-import Spinner from "components/Spinner";
-import { useRoute } from "modules/RouteProvider";
+import { getGraphData, getTooltip, getZoomPx, transformLabel } from "./utils";
 
 const Container = styled.div`
 	.force-graph-container .graph-tooltip {

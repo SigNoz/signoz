@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
 import { Form, Input, Space } from "antd";
+import { Alert } from "antd";
+import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { StoreState } from "store/reducers";
-import { Alert } from "antd";
 
 interface SettingsPageProps {}
 

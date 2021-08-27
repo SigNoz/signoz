@@ -1,8 +1,8 @@
-import { Dispatch } from "redux";
 import api, { apiV1 } from "api";
+import { Dispatch } from "redux";
+import { toUTCEpoch } from "utils/timeUtils";
 
 import { ActionTypes } from "./types";
-import { toUTCEpoch } from "utils/timeUtils";
 
 export interface usageDataItem {
 	timestamp: number;
@@ -21,7 +21,7 @@ export const getUsageData = (
 	service: string,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
+		const request_string = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
 			maxTime,
 		)}&step=${step}&service=${service ? service : ""}`;
 		//Step can only be multiple of 3600

@@ -1,14 +1,13 @@
+import { Space, Table } from "antd";
+import ROUTES from "constants/routes";
+import moment from "moment";
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { useHistory } from "react-router-dom";
-import { Space, Table } from "antd";
-import ROUTES from "constants/routes";
-
-import { traceResponseNew, fetchTraces, pushDStree } from "store/actions";
+import { fetchTraces, pushDStree,traceResponseNew } from "store/actions";
 import { StoreState } from "store/reducers";
-import { isOnboardingSkipped } from "utils/app";
-import moment from "moment";
 import styled from "styled-components";
+import { isOnboardingSkipped } from "utils/app";
 
 const StyledTable = styled(Table)`
 	cursor: pointer;
@@ -35,7 +34,7 @@ interface TableDataSourceItem {
 
 const _TraceList = (props: TraceListProps) => {
 	// PNOTE (TO DO) - Currently this use of useEffect gives warning. May need to memoise fetchtraces - https://stackoverflow.com/questions/55840294/how-to-fix-missing-dependency-warning-when-using-useeffect-react-hook
-	let history = useHistory();
+	const history = useHistory();
 
 	useEffect(() => {
 		props.fetchTraces();
@@ -72,7 +71,7 @@ const _TraceList = (props: TraceListProps) => {
 		},
 	];
 
-	let dataSource: TableDataSourceItem[] = [];
+	const dataSource: TableDataSourceItem[] = [];
 
 	const renderTraces = () => {
 		if (

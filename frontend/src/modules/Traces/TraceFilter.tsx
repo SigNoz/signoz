@@ -1,24 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { Select, Button, Input, Form, AutoComplete } from "antd";
-import { connect } from "react-redux";
-import { Store } from "antd/lib/form/interface";
-import styled from "styled-components";
-
-import {
-	updateTraceFilters,
-	fetchTraces,
-	TraceFilters,
-	GlobalTime,
-} from "store/actions";
-import { StoreState } from "store/reducers";
-import LatencyModalForm from "./LatencyModalForm";
-import { FilterStateDisplay } from "./FilterStateDisplay";
-
+import { AutoComplete,Button, Form, Input, Select } from "antd";
 import FormItem from "antd/lib/form/FormItem";
+import { Store } from "antd/lib/form/interface";
 import api, { apiV1 } from "api";
-import { useLocation } from "react-router-dom";
 import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
 import { useRoute } from "modules/RouteProvider";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { useLocation } from "react-router-dom";
+import {
+	fetchTraces,
+	GlobalTime,
+	TraceFilters,
+	updateTraceFilters,
+} from "store/actions";
+import { StoreState } from "store/reducers";
+import styled from "styled-components";
+
+import { FilterStateDisplay } from "./FilterStateDisplay";
+import LatencyModalForm from "./LatencyModalForm";
 
 const { Option } = Select;
 
@@ -219,13 +218,13 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	}
 
 	function populateData(value: string) {
-		let service_request = "/service/" + value + "/operations";
+		const service_request = "/service/" + value + "/operations";
 		api.get<string[]>(apiV1 + service_request).then((response) => {
 			// form_basefilter.resetFields(['operation',])
 			setOperationsList(response.data);
 		});
 
-		let tagkeyoptions_request = "/tags?service=" + value;
+		const tagkeyoptions_request = "/tags?service=" + value;
 		api
 			.get<TagKeyOptionItem[]>(apiV1 + tagkeyoptions_request)
 			.then((response) => {
@@ -256,7 +255,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 	};
 
 	const onTagFormSubmit = (values: any) => {
-		let request_tags =
+		const request_tags =
 			"service=frontend&tags=" +
 			encodeURIComponent(
 				JSON.stringify([
@@ -321,7 +320,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	// PNOTE - Remove any
 	const handleApplyFilterForm = (values: any) => {
-		let request_params: string = "";
+		let request_params = "";
 		if (
 			typeof values.service !== undefined &&
 			typeof values.operation !== undefined
@@ -377,7 +376,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		};
 	}, []);
 
-	const handleChangeSpanKind = (value: string = "") => {
+	const handleChangeSpanKind = (value = "") => {
 		props.updateTraceFilters({ ...props.traceFilters, kind: value });
 	};
 

@@ -1,34 +1,34 @@
-import React, { useEffect, useState } from "react";
-import { Tabs, Card, Row, Col } from "antd";
-import { connect } from "react-redux";
-import { useParams, RouteComponentProps } from "react-router-dom";
-import { withRouter } from "react-router";
+import { Card, Col,Row, Tabs } from "antd";
+import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
 import ROUTES from "constants/routes";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { withRouter } from "react-router";
+import { RouteComponentProps,useParams } from "react-router-dom";
 import { GlobalTime, updateTimeInterval } from "store/actions";
 import {
-	metricItem,
-	externalMetricsAvgDurationItem,
-	externalErrCodeMetricsItem,
-	externalMetricsItem,
 	dbOverviewMetricsItem,
+	externalErrCodeMetricsItem,
+	externalMetricsAvgDurationItem,
+	externalMetricsItem,
+	metricItem,
 	topEndpointListItem,
 } from "store/actions/MetricsActions";
 import {
-	getServicesMetrics,
-	getTopEndpoints,
 	getDbOverViewMetrics,
-	getExternalMetrics,
 	getExternalAvgDurationMetrics,
 	getExternalErrCodeMetrics,
+	getExternalMetrics,
+	getServicesMetrics,
+	getTopEndpoints,
 } from "store/actions/MetricsActions";
-
 import { StoreState } from "store/reducers";
+
+import ErrorRateChart from "./ErrorRateChart";
+import ExternalApiGraph from "./ExternalApi";
 import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
-import ErrorRateChart from "./ErrorRateChart";
 import TopEndpointsTable from "./TopEndpointsTable";
-import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
-import ExternalApiGraph from "./ExternalApi";
 const { TabPane } = Tabs;
 
 interface ServicesMetricsProps extends RouteComponentProps<any> {

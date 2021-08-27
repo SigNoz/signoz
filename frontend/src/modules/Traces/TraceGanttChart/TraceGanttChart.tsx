@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Table, Progress, Tabs, Button, Row, Col } from "antd";
 import "./TraceGanttChart.css";
-import { max, isEmpty, has } from "lodash-es";
-import styled from "styled-components";
-import { pushDStree } from "store/actions";
+
+import { Button, Col,Progress, Row, Table, Tabs } from "antd";
+import { has,isEmpty, max } from "lodash-es";
 import traverseTreeData from "modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
+import React, { useEffect, useRef, useState } from "react";
+import { pushDStree } from "store/actions";
+import styled from "styled-components";
 
 const { TabPane } = Tabs;
 
@@ -31,7 +32,7 @@ const TraceGanttChart = ({
 	resetZoom,
 	setSpanTagsInfo,
 }: TraceGanttChartProps) => {
-	let checkStrictly = true;
+	const checkStrictly = true;
 	const [selectedRows, setSelectedRows] = useState<string[]>([]);
 	const [clickedSpanData, setClickedSpanData] = useState(clickedSpan);
 	const [defaultExpandedRows, setDefaultExpandedRows] = useState<string[]>([]);
@@ -39,17 +40,17 @@ const TraceGanttChart = ({
 	const [isReset, setIsReset] = useState(false);
 	const [tabsContainerWidth, setTabsContainerWidth] = useState(0);
 	const tableRef = useRef("");
-	let tabsContainer = document.querySelector<HTMLElement>(
+	const tabsContainer = document.querySelector<HTMLElement>(
 		"#collapsable .ant-tabs-nav-list",
 	);
 
-	let tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
+	const tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
 
 	const { id } = treeData || "id";
 	let maxGlobal = 0;
 	let minGlobal = 0;
 	let medianGlobal = 0;
-	let endTimeArray: [] = [];
+	const endTimeArray: [] = [];
 
 	useEffect(() => {
 		if (id !== "empty") {
@@ -77,8 +78,8 @@ const TraceGanttChart = ({
 		}
 	}, [clickedSpan, selectedRows, isReset, clickedSpanData]);
 
-	let parentKeys: string[] = [];
-	let childrenKeys: string[] = [];
+	const parentKeys: string[] = [];
+	const childrenKeys: string[] = [];
 
 	const getParentKeys = (obj) => {
 		if (has(obj, "parent")) {
@@ -101,7 +102,7 @@ const TraceGanttChart = ({
 	useEffect(() => {
 		if (!isEmpty(selectedSpan) && isEmpty(clickedSpan)) {
 			getParentKeys(selectedSpan);
-			let keys = [selectedSpan?.id, ...parentKeys];
+			const keys = [selectedSpan?.id, ...parentKeys];
 			setDefaultExpandedRows(keys);
 			setSelectedRows([selectedSpan.id, clickedSpan]);
 			// setSpanTagsInfo({data: selectedSpan})
@@ -143,9 +144,9 @@ const TraceGanttChart = ({
 		return ((timeDiff / totalTime) * totalWidth).toFixed(0);
 	};
 
-	let tabMinVal = 0;
-	let tabMedianVal = (medianGlobal - minGlobal).toFixed(0);
-	let tabMaxVal = (maxGlobal - minGlobal).toFixed(0);
+	const tabMinVal = 0;
+	const tabMedianVal = (medianGlobal - minGlobal).toFixed(0);
+	const tabMaxVal = (maxGlobal - minGlobal).toFixed(0);
 
 	const columns = [
 		{
@@ -164,7 +165,7 @@ const TraceGanttChart = ({
 			dataIndex: "trace",
 			name: "trace",
 			render: (_, record: pushDStree) => {
-				let widths = [];
+				const widths = [];
 				let length;
 
 				if (widths.length < tabs.length) {
@@ -174,8 +175,8 @@ const TraceGanttChart = ({
 				}
 
 				let paddingLeft = 0;
-				let startTime = parseFloat(record.startTime.toString());
-				let duration = parseFloat((record.time / 1000000).toFixed(2));
+				const startTime = parseFloat(record.startTime.toString());
+				const duration = parseFloat((record.time / 1000000).toFixed(2));
 				paddingLeft = parseInt(
 					getPaddingLeft(
 						startTime - minGlobal,
@@ -235,9 +236,9 @@ const TraceGanttChart = ({
 			// get the children of the node
 			getChildrenKeys(node);
 
-			let rows = document.querySelectorAll("#collapsable table tbody tr");
+			const rows = document.querySelectorAll("#collapsable table tbody tr");
 			rows.forEach((row) => {
-				let attribKey = row.getAttribute("data-row-key") || "";
+				const attribKey = row.getAttribute("data-row-key") || "";
 				if (
 					!isEmpty(attribKey) &&
 					!selectedRowsList.includes(attribKey) &&

@@ -1,13 +1,12 @@
-import React, { useState } from "react";
-import { Row, Space, Button, Input } from "antd";
+import { Button, Input,Row, Space } from "antd";
 import api, { apiV1 } from "api";
-import ROUTES from "constants/routes";
 import { IS_LOGGED_IN } from "constants/auth";
-
+import ROUTES from "constants/routes";
+import React, { useState } from "react";
 import { withRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 
-interface SignUpProps extends RouteComponentProps<any> {}
+type SignUpProps = RouteComponentProps<any>
 
 const Signup = (props: SignUpProps) => {
 	const [state, setState] = useState({ submitted: false });
@@ -44,7 +43,7 @@ const Signup = (props: SignUpProps) => {
 			email: formState.email,
 		};
 
-		let texttolog = JSON.stringify(payload);
+		const texttolog = JSON.stringify(payload);
 
 		api.post(apiV1 + "/user?email=" + texttolog).then((res) => {
 			console.log(res);

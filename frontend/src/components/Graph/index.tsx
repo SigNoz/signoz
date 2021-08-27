@@ -1,5 +1,5 @@
-import React, { useRef, useCallback, useEffect } from "react";
 import Chart, { ChartOptions } from "chart.js";
+import React, { useCallback, useEffect,useRef } from "react";
 
 const Graph = ({ data, type, stepX, stepY }: GraphProps) => {
 	const chartRef = useRef<HTMLCanvasElement>(null);

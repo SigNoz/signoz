@@ -1,5 +1,6 @@
-import { uniqBy, uniq, maxBy, cloneDeep, find } from "lodash";
+import { cloneDeep, find,maxBy, uniq, uniqBy } from "lodash";
 import { serviceMapStore } from "Src/store/actions";
+
 import { graphDataType } from "./ServiceMap";
 
 const MIN_WIDTH = 10;

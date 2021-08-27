@@ -1,25 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { cloneDeep } from "lodash";
-import { Select as DefaultSelect, Button, Space, Form } from "antd";
-import styled from "styled-components";
-import { withRouter } from "react-router";
-import { getLocalStorageRouteKey } from "./utils";
-import { RouteComponentProps, useLocation } from "react-router-dom";
-import { connect } from "react-redux";
-import ROUTES from "constants/routes";
-import CustomDateTimeModal from "./CustomDateTimeModal";
-import { GlobalTime, updateTimeInterval } from "store/actions";
-import { StoreState } from "store/reducers";
+import { Button, Form,Select as DefaultSelect, Space } from "antd";
 import FormItem from "antd/lib/form/FormItem";
+import { LOCAL_STORAGE } from "constants/localStorage";
+import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
+import ROUTES from "constants/routes";
+import { cloneDeep } from "lodash";
+import moment from "moment";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { withRouter } from "react-router";
+import { RouteComponentProps, useLocation } from "react-router-dom";
+import { GlobalTime, updateTimeInterval } from "store/actions";
+import { DateTimeRangeType } from "store/actions";
+import { StoreState } from "store/reducers";
+import styled from "styled-components";
+
 import {
+	DefaultOptionsBasedOnRoute,
 	Options,
 	ServiceMapOptions,
-	DefaultOptionsBasedOnRoute,
 } from "./config";
-import { DateTimeRangeType } from "store/actions";
-import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
-import { LOCAL_STORAGE } from "constants/localStorage";
-import moment from "moment";
+import CustomDateTimeModal from "./CustomDateTimeModal";
+import { getLocalStorageRouteKey } from "./utils";
 const { Option } = DefaultSelect;
 
 const DateTimeWrapper = styled.div`
@@ -221,7 +222,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		const inputLabeLToShow =
 			startTime && endTime
 				? `${startTime.format("YYYY/MM/DD HH:mm")} - ${endTime.format(
-						"YYYY/MM/DD HH:mm",
+					"YYYY/MM/DD HH:mm",
 				  )}`
 				: timeInterval;
 

@@ -1,8 +1,7 @@
+import { Table } from "antd";
 import React from "react";
 import { connect } from "react-redux";
-import { Table } from "antd";
-
-import { traceResponseNew, pushDStree } from "store/actions";
+import { pushDStree,traceResponseNew } from "store/actions";
 import { StoreState } from "store/reducers";
 
 interface TraceGraphColumnProps {
@@ -41,7 +40,7 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
 		},
 	];
 
-	let dataSource: TableDataSourceItem[] = [];
+	const dataSource: TableDataSourceItem[] = [];
 
 	if (props.traces[0].events.length > 0) {
 		props.traces[0].events.map(

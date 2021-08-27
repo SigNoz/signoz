@@ -1,10 +1,10 @@
-import { ActionTypes } from "./types";
 import api, { apiV1 } from "api";
-
-import { Dispatch } from "redux";
-import { GlobalTime } from "./global";
-import { toUTCEpoch } from "utils/timeUtils";
 import ROUTES from "constants/routes";
+import { Dispatch } from "redux";
+import { toUTCEpoch } from "utils/timeUtils";
+
+import { GlobalTime } from "./global";
+import { ActionTypes } from "./types";
 
 // PNOTE
 // define trace interface - what it should return
@@ -122,7 +122,7 @@ export interface FetchTraceItemAction {
 export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 	return async (dispatch: Dispatch) => {
 		if (globalTime) {
-			let request_string =
+			const request_string =
 				"/spans?limit=100&lookback=2d&start=" +
 				toUTCEpoch(globalTime.minTime) +
 				"&end=" +
@@ -142,7 +142,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch) => {
-		let request_string = ROUTES.TRACES + "/" + traceID;
+		const request_string = ROUTES.TRACES + "/" + traceID;
 		const response = await api.get<spansWSameTraceIDResponse>(
 			apiV1 + request_string,
 		);

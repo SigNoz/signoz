@@ -1,14 +1,14 @@
-import { Dispatch } from "redux";
 import api, { apiV1 } from "api";
-
+import { Dispatch } from "redux";
 import { GlobalTime } from "store/actions/global";
 import { toUTCEpoch } from "utils/timeUtils";
+
 import { MetricsActionTypes } from "./metricsActionTypes";
 import * as MetricsInterfaces from "./metricsInterfaces";
 
 export const getServicesList = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
 
 		const response = await api.get<MetricsInterfaces.servicesListItem[]>(
@@ -28,7 +28,7 @@ export const getDbOverViewMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/service/dbOverview?service=" +
 			serviceName +
 			"&start=" +
@@ -51,7 +51,7 @@ export const getExternalMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/service/external?service=" +
 			serviceName +
 			"&start=" +
@@ -74,7 +74,7 @@ export const getExternalAvgDurationMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/service/externalAvgDuration?service=" +
 			serviceName +
 			"&start=" +
@@ -97,7 +97,7 @@ export const getExternalErrCodeMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/service/externalErrors?service=" +
 			serviceName +
 			"&start=" +
@@ -121,7 +121,7 @@ export const getServicesMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/service/overview?service=" +
 			serviceName +
 			"&start=" +
@@ -146,7 +146,7 @@ export const getTopEndpoints = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/service/top_endpoints?service=" +
 			serviceName +
 			"&start=" +
@@ -170,7 +170,7 @@ export const getFilteredTraceMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch) => {
-		let request_string =
+		const request_string =
 			"/spans/aggregates?start=" +
 			toUTCEpoch(globalTime.minTime) +
 			"&end=" +

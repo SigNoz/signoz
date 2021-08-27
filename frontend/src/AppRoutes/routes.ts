@@ -1,15 +1,15 @@
+import ROUTES from "constants/routes";
 import {
-	ServiceMetricsPage,
+	InstrumentationPage,
 	ServiceMapPage,
+	ServiceMetricsPage,
+	ServicesTablePage,
+	SettingsPage,
+	SignupPage,
 	TraceDetailPage,
 	TraceGraphPage,
 	UsageExplorerPage,
-	ServicesTablePage,
-	SignupPage,
-	SettingsPage,
-	InstrumentationPage,
 } from "pages";
-import ROUTES from "constants/routes";
 import { RouteProps } from "react-router-dom";
 
 const routes: AppRoutes[] = [

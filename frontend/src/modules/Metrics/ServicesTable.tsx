@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
 import { Button, Space, Table } from "antd";
-import styled from "styled-components";
-import { connect } from "react-redux";
+import { CustomModal } from "components/Modal";
 import Spinner from "components/Spinner";
 import { SKIP_ONBOARDING } from "constants/onboarding";
 import ROUTES from "constants/routes";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { NavLink } from "react-router-dom";
 import { getServicesList, GlobalTime } from "store/actions";
 import { servicesListItem } from "store/actions/MetricsActions";
 import { StoreState } from "store/reducers";
-import { CustomModal } from "components/Modal";
+import styled from "styled-components";
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
@@ -178,20 +178,20 @@ const _ServicesTable = (props: ServicesTableProps) => {
 
 			{props.servicesList[0] !== undefined &&
 				props.servicesList[0].numCalls === 0 && (
-					<Space
-						style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
-					>
+				<Space
+					style={{ width: "100%", margin: "40px 0", justifyContent: "center" }}
+				>
 						No applications present. Please add instrumentation (follow this
-						<a
-							href={"https://signoz.io/docs/instrumentation/overview"}
-							target={"_blank"}
-							style={{ marginLeft: 3 }}
-						>
+					<a
+						href={"https://signoz.io/docs/instrumentation/overview"}
+						target={"_blank"}
+						style={{ marginLeft: 3 }}
+					>
 							guide
-						</a>
+					</a>
 						)
-					</Space>
-				)}
+				</Space>
+			)}
 		</Wrapper>
 	);
 };

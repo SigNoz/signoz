@@ -13,11 +13,11 @@ const traverseTreeData = (
 	callback: (item: pushDStree) => void,
 ): void => {
 	if (isEmpty(tree) || tree[0].id === "empty") return;
-	let node = { treeData: tree, marked: false };
-	let stk: [itemProps] = [node];
+	const node = { treeData: tree, marked: false };
+	const stk: [itemProps] = [node];
 
 	while (!isEmpty(stk)) {
-		let x = stk[stk.length - 1];
+		const x = stk[stk.length - 1];
 
 		// marked means seeing the node for the second time.
 		if (x.marked) {

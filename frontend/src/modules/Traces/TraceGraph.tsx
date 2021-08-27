@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
-import { flamegraph } from "d3-flame-graph";
-import { connect } from "react-redux";
-import { Card, Row, Col, Space, Affix } from "antd";
-import * as d3 from "d3";
-import * as d3Tip from "d3-tip";
 import "./TraceGraph.css";
-import { spanToTreeUtil } from "utils/spanToTree";
+
+import { Affix,Card, Col, Row, Space } from "antd";
+import * as d3 from "d3";
+import { flamegraph } from "d3-flame-graph";
+import * as d3Tip from "d3-tip";
+import { isEmpty, sortBy } from "lodash-es";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { useLocation,useParams } from "react-router-dom";
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
 } from "store/actions";
 import { StoreState } from "store/reducers";
+import styled from "styled-components";
+import { spanToTreeUtil } from "utils/spanToTree";
+
 import SelectedSpanDetails from "./SelectedSpanDetails";
 import TraceGanttChart from "./TraceGanttChart";
-import styled from "styled-components";
-import { isEmpty, sortBy } from "lodash-es";
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
@@ -29,7 +31,7 @@ const TraceGanttChartContainer = styled(Card)`
 `;
 
 const _TraceGraph = (props: TraceGraphProps) => {
-	let location = useLocation();
+	const location = useLocation();
 	const spanId = location?.state?.spanId;
 	const params = useParams<{ id?: string }>();
 	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
@@ -68,7 +70,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 
 	useEffect(() => {
 		if (props.traceItem) {
-			let sortedData = getSortedData([tree]);
+			const sortedData = getSortedData([tree]);
 			setSortedTreeData(sortedData?.[0]);
 			getSpanInfo(sortedData?.[0], spanId);
 			// This is causing element to change ref. Can use both useRef or this approach.

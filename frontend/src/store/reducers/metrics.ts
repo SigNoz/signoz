@@ -1,12 +1,12 @@
 import {
-	servicesListItem,
-	metricItem,
-	topEndpointListItem,
-	externalErrCodeMetricsItem,
 	customMetricsItem,
-	externalMetricsItem,
 	dbOverviewMetricsItem,
+	externalErrCodeMetricsItem,
 	externalMetricsAvgDurationItem,
+	externalMetricsItem,
+	metricItem,
+	servicesListItem,
+	topEndpointListItem,
 } from "store/actions/MetricsActions";
 import { MetricsActionTypes as ActionTypes } from "store/actions/MetricsActions/metricsActionTypes";
 
@@ -103,50 +103,50 @@ export const metricsReducer = (
 	action: ActionType,
 ) => {
 	switch (action.type) {
-		case ActionTypes.getFilteredTraceMetrics:
-			return {
-				...state,
-				customMetricsItem: action.payload,
-			};
-		case ActionTypes.getServiceMetrics:
-			return {
-				...state,
-				metricItems: action.payload,
-			};
-		case ActionTypes.getDbOverviewMetrics:
-			return {
-				...state,
-				dbOverviewMetricsItem: action.payload,
-			};
-		case ActionTypes.getExternalMetrics:
-			return {
-				...state,
-				externalMetricsItem: action.payload,
-			};
-		case ActionTypes.getTopEndpoints:
-			return {
-				...state,
-				topEndpointListItem: action.payload,
-			};
-		case ActionTypes.getErrCodeMetrics:
-			return {
-				...state,
-				externalErrCodeMetricsItem: action.payload,
-			};
-		case ActionTypes.getAvgDurationMetrics:
-			return {
-				...state,
-				externalMetricsAvgDurationItem: action.payload,
-			};
+	case ActionTypes.getFilteredTraceMetrics:
+		return {
+			...state,
+			customMetricsItem: action.payload,
+		};
+	case ActionTypes.getServiceMetrics:
+		return {
+			...state,
+			metricItems: action.payload,
+		};
+	case ActionTypes.getDbOverviewMetrics:
+		return {
+			...state,
+			dbOverviewMetricsItem: action.payload,
+		};
+	case ActionTypes.getExternalMetrics:
+		return {
+			...state,
+			externalMetricsItem: action.payload,
+		};
+	case ActionTypes.getTopEndpoints:
+		return {
+			...state,
+			topEndpointListItem: action.payload,
+		};
+	case ActionTypes.getErrCodeMetrics:
+		return {
+			...state,
+			externalErrCodeMetricsItem: action.payload,
+		};
+	case ActionTypes.getAvgDurationMetrics:
+		return {
+			...state,
+			externalMetricsAvgDurationItem: action.payload,
+		};
 
-		case ActionTypes.getServicesList:
-			return {
-				...state,
-				serviceList: action.payload,
-			};
-		default:
-			return {
-				...state,
-			};
+	case ActionTypes.getServicesList:
+		return {
+			...state,
+			serviceList: action.payload,
+		};
+	default:
+		return {
+			...state,
+		};
 	}
 };
