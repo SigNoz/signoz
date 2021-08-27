@@ -12,11 +12,13 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/posthog/posthog-go"
-	"github.com/prometheus/common/model"
+	promModel "github.com/prometheus/common/model"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage/remote"
+	"github.com/prometheus/prometheus/util/stats"
+	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -71,7 +73,7 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHa
 	queryEngine := promql.NewEngine(opts)
 
 	startTime := func() (int64, error) {
-		return int64(model.Latest), nil
+		return int64(promModel.Latest), nil
 
 	}
 
@@ -245,19 +247,16 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 }
 
-// func (aH *APIHandler) queryRange(r *http.Request) (interface{}, *apiError, func()) {
-
 func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 
-	query, apiError := parseQueryRangeRequest(r)
+	query, apiErrorObj := parseQueryRangeRequest(r)
 
-	// if aH.handleError(w, apiError.err, http.StatusBadRequest) {
-	// 	return
-	// }
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
 
-	zap.S().Info(query, apiError)
-
-	// result, err := (*aH.reader).GetQueryRangeResult(context.Background(), query)
+	// zap.S().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -282,28 +281,30 @@ func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 		zap.S().Error(res.Err)
 	}
 
-	// if res.Err != nil {
-	// 	switch res.Err.(type) {
-	// 	case promql.ErrQueryCanceled:
-	// 		return nil, &apiError{errorCanceled, res.Err}, qry.Close
-	// 	case promql.ErrQueryTimeout:
-	// 		return nil, &apiError{errorTimeout, res.Err}, qry.Close
-	// 	}
-	// 	return nil, &apiError{errorExec, res.Err}, qry.Close
-	// }
-
-	// return &model.QueryData{
-	// 	ResultType: res.Value.Type(),
-	// 	Result:     res.Value,
-	// 	Stats:      qs,
-	// }, nil, qry.Close
-	// return &model.QueryData{}, nil, nil
-
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
+	if res.Err != nil {
+		switch res.Err.(type) {
+		case promql.ErrQueryCanceled:
+			aH.respondError(w, &apiError{errorCanceled, res.Err}, nil)
+		case promql.ErrQueryTimeout:
+			aH.respondError(w, &apiError{errorTimeout, res.Err}, nil)
+		}
+		aH.respondError(w, &apiError{errorExec, res.Err}, nil)
 	}
 
-	aH.writeJSON(w, r, res.Value)
+	// Optional stats field in response if parameter "stats" is not empty.
+	var qs *stats.QueryStats
+	if r.FormValue("stats") != "" {
+		qs = stats.NewQueryStats(qry.Stats())
+	}
+
+	response_data := &model.QueryData{
+		ResultType: res.Value.Type(),
+		Result:     res.Value,
+		Stats:      qs,
+	}
+
+	qry.Close()
+	aH.respond(w, response_data)
 
 }
 
