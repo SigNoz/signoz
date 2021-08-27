@@ -156,7 +156,8 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/query_range", aH.queryRange).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -177,7 +178,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 }
 
-func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
 
@@ -202,7 +203,61 @@ func (aH *APIHandler) queryRange(w http.ResponseWriter, r *http.Request) {
 
 	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
 
-	if apiError.Err != nil {
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	if res.Err != nil {
+		zap.S().Error(res.Err)
+	}
+
+	if res.Err != nil {
+		switch res.Err.(type) {
+		case promql.ErrQueryCanceled:
+			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+		case promql.ErrQueryTimeout:
+			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+		}
+		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+	}
+
+	response_data := &model.QueryData{
+		ResultType: res.Value.Type(),
+		Result:     res.Value,
+		Stats:      qs,
+	}
+
+	aH.respond(w, response_data)
+
+}
+
+func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
+
+	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// zap.S().Info(query, apiError)
+
+	ctx := r.Context()
+	if to := r.FormValue("timeout"); to != "" {
+		var cancel context.CancelFunc
+		timeout, err := parseMetricsDuration(to)
+		if aH.handleError(w, err, http.StatusBadRequest) {
+			return
+		}
+
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
+
+	if apiError != nil {
 		aH.respondError(w, apiError, nil)
 		return
 	}

@@ -128,6 +128,25 @@ func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
 	return cfg.Connector(cfg)
 }
 
+func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
+	if err != nil {
+		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+	}
+
+	res := qry.Exec(ctx)
+
+	// Optional stats field in response if parameter "stats" is not empty.
+	var qs *stats.QueryStats
+	if queryParams.Stats != "" {
+		qs = stats.NewQueryStats(qry.Stats())
+	}
+
+	qry.Close()
+	return res, qs, nil
+
+}
+
 func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
 
 	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)

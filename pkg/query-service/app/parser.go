@@ -75,6 +75,26 @@ func parseMetricsDuration(s string) (time.Duration, error) {
 	return 0, fmt.Errorf("cannot parse %q to a valid duration", s)
 }
 
+func parseInstantQueryMetricsRequest(r *http.Request) (*model.InstantQueryMetricsParams, *model.ApiError) {
+	var ts time.Time
+	if t := r.FormValue("time"); t != "" {
+		var err error
+		ts, err = parseMetricsTime(t)
+		if err != nil {
+			return nil, &model.ApiError{model.ErrorBadData, err}
+		}
+	} else {
+		ts = time.Now()
+	}
+
+	return &model.InstantQueryMetricsParams{
+		Time:  ts,
+		Query: r.FormValue("query"),
+		Stats: r.FormValue("stats"),
+	}, nil
+
+}
+
 func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *model.ApiError) {
 
 	start, err := parseMetricsTime(r.FormValue("start"))
