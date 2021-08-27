@@ -1,7 +1,7 @@
 import Chart, { ChartOptions } from "chart.js";
-import React, { useCallback, useEffect,useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
-const Graph = ({ data, type, stepX, stepY }: GraphProps) => {
+const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 	const lineChartRef = useRef<Chart>();
@@ -12,7 +12,7 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps) => {
 		}
 
 		if (chartRef.current !== null) {
-			const charContext = chartRef.current.getContext("2d");
+			// const charContext = chartRef.current.getContext("2d");
 
 			const toolTipOptions: Chart.ChartTooltipOptions = {
 				enabled: true,
@@ -22,13 +22,13 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps) => {
 				maintainAspectRatio: true,
 				plugins: {},
 				hover: {
-					onHover: () => {
+					onHover: (): void => {
 						console.log("asd");
 					},
 				},
-				onClick: (_, activeElements) => {
-					// console.log(activeElements);
-				},
+				// onClick: (_, activeElements) => {
+				// 	// console.log(activeElements);
+				// },
 
 				scales: {
 					gridLines: {
