@@ -1,5 +1,5 @@
-import { isEmpty } from "lodash-es";
-import { pushDStree } from "store/actions";
+import { isEmpty } from 'lodash-es';
+import { pushDStree } from 'store/actions';
 
 interface itemProps {
 	treeData: pushDStree[];
@@ -12,7 +12,7 @@ const traverseTreeData = (
 	tree: pushDStree[],
 	callback: (item: pushDStree) => void,
 ): void => {
-	if (isEmpty(tree) || tree[0].id === "empty") return;
+	if (isEmpty(tree) || tree[0].id === 'empty') return;
 	const node = { treeData: tree, marked: false };
 	const stk: [itemProps] = [node];
 

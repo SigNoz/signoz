@@ -1,11 +1,11 @@
-import { pushDStree, RefItem,span } from "store/actions";
+import { pushDStree, RefItem, span } from 'store/actions';
 // PNOTE - should the data be taken from redux or only through props? - Directly as arguments
 
 export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 	// Initializing tree. What should be returned is trace is empty? We should have better error handling
 	let tree: pushDStree = {
-		id: "empty",
-		name: "default",
+		id: 'empty',
+		name: 'default',
 		value: 0,
 		time: 0,
 		startTime: 0,
@@ -43,8 +43,8 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 			const tags_temp = [];
 			if (child_span[7] !== null && child_span[8] !== null) {
 				if (
-					typeof child_span[7] === "string" &&
-					typeof child_span[8] === "string"
+					typeof child_span[7] === 'string' &&
+					typeof child_span[8] === 'string'
 				) {
 					tags_temp.push({ key: child_span[7], value: child_span[8] });
 				} else if (child_span[7].length > 0 && child_span[8].length > 0) {
@@ -56,7 +56,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 
 			const push_object: pushDStree = {
 				id: child_span[1],
-				name: child_span[3] + ": " + child_span[4],
+				name: child_span[3] + ': ' + child_span[4],
 				value: parseInt(child_span[6]),
 				time: parseInt(child_span[6]),
 				startTime: child_span[0],
@@ -65,7 +65,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 			};
 			const referencesArr = mapped_array[id][9];
 			let refArray = [];
-			if (typeof referencesArr === "string") {
+			if (typeof referencesArr === 'string') {
 				refArray.push(referencesArr);
 			} else {
 				refArray = referencesArr;
@@ -74,19 +74,19 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 
 			refArray.forEach((element) => {
 				element = element
-					.replaceAll("{", "")
-					.replaceAll("}", "")
-					.replaceAll(" ", "");
-				const arr = element.split(",");
-				const refItem = { traceID: "", spanID: "", refType: "" };
+					.replaceAll('{', '')
+					.replaceAll('}', '')
+					.replaceAll(' ', '');
+				const arr = element.split(',');
+				const refItem = { traceID: '', spanID: '', refType: '' };
 				arr.forEach((obj) => {
-					const arr2 = obj.split("=");
-					if (arr2[0] === "TraceId") {
-						refItem["traceID"] = arr2[1];
-					} else if (arr2[0] === "SpanId") {
-						refItem["spanID"] = arr2[1];
-					} else if (arr2[0] === "RefType") {
-						refItem["refType"] = arr2[1];
+					const arr2 = obj.split('=');
+					if (arr2[0] === 'TraceId') {
+						refItem['traceID'] = arr2[1];
+					} else if (arr2[0] === 'SpanId') {
+						refItem['spanID'] = arr2[1];
+					} else if (arr2[0] === 'RefType') {
+						refItem['refType'] = arr2[1];
 					}
 				});
 
@@ -94,11 +94,11 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 			});
 
 			if (references.length !== 0 && references[0].spanID.length !== 0) {
-				if (references[0].refType === "CHILD_OF") {
+				if (references[0].refType === 'CHILD_OF') {
 					const parentID = references[0].spanID;
 					// console.log(`In SpanTreeUtil: mapped_array[parentID] is ${mapped_array[parentID]}`);
 
-					if (typeof mapped_array[parentID] !== "undefined") {
+					if (typeof mapped_array[parentID] !== 'undefined') {
 						//checking for undefined [10] issue
 						mapped_array[parentID][10].push(push_object);
 					} else {

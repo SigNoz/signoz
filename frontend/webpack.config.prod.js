@@ -1,47 +1,47 @@
 // shared config (dev and prod)
-const { resolve } = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
-const CompressionPlugin = require("compression-webpack-plugin");
-const webpack = require("webpack");
-const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+const { resolve } = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
+const webpack = require('webpack');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = {
-	mode: "production",
-	devtool: "source-map",
-	entry: resolve(__dirname, "./src/index.tsx"),
+	mode: 'production',
+	devtool: 'source-map',
+	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
 		filename: ({ chunk: { name, hash } }) => {
 			return `js/${name}-${hash}.js`;
 		},
-		path: resolve(__dirname, "./build"),
-		publicPath: "/",
+		path: resolve(__dirname, './build'),
+		publicPath: '/',
 	},
 
 	resolve: {
-		extensions: [".ts", ".tsx", ".js", ".jsx"],
+		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
 	},
 	module: {
 		rules: [
 			{
 				test: [/\.jsx?$/, /\.tsx?$/],
-				use: ["babel-loader"],
+				use: ['babel-loader'],
 				exclude: /node_modules/,
 			},
 			{
 				test: /\.css$/,
-				use: ["style-loader", "css-loader"],
+				use: ['style-loader', 'css-loader'],
 			},
 			{
 				test: /\.(scss|sass)$/,
-				use: ["style-loader", "css-loader", "sass-loader"],
+				use: ['style-loader', 'css-loader', 'sass-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
 				use: [
-					"file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]",
-					"image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false",
+					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
+					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
 				],
 			},
 		],
@@ -50,15 +50,15 @@ module.exports = {
 		new CompressionPlugin({
 			exclude: /.map$/,
 		}),
-		new HtmlWebpackPlugin({ template: "src/index.html.ejs" }),
+		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
 		new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, "public/"), to: "." }],
+			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
 		}),
 		new webpack.ProvidePlugin({
-			process: "process/browser",
+			process: 'process/browser',
 		}),
 		new webpack.DefinePlugin({
-			"process.env": JSON.stringify(process.env),
+			'process.env': JSON.stringify(process.env),
 		}),
 	],
 	performance: {

@@ -1,6 +1,6 @@
-import { Col, Form, InputNumber, Modal, Row } from "antd";
-import { NamePath, Store } from "antd/lib/form/interface";
-import React from "react";
+import { Col, Form, InputNumber, Modal, Row } from 'antd';
+import { NamePath, Store } from 'antd/lib/form/interface';
+import React from 'react';
 
 interface LatencyModalFormProps {
 	onCreate: (values: Store) => void; //Store is defined in antd forms library
@@ -14,6 +14,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 	latencyFilterValues,
 }) => {
 	const [form] = Form.useForm();
+<<<<<<< HEAD
     
 	const validateMinValue = ({ getFieldValue }: {getFieldValue: (name: NamePath) => any}) => ({
 		validator(_, value: any) {
@@ -33,12 +34,43 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 		},
 	  });
       
+=======
+
+	const validateMinValue = ({
+		getFieldValue,
+	}: {
+		getFieldValue: (name: NamePath) => any;
+	}) => ({
+		validator(_, value: any) {
+			if (value < getFieldValue('max')) {
+				return Promise.resolve();
+			}
+			return Promise.reject(new Error('Min value should be less than Max value'));
+		},
+	});
+
+	const validateMaxValue = ({
+		getFieldValue,
+	}: {
+		getFieldValue: (name: NamePath) => any;
+	}) => ({
+		validator(_, value: any) {
+			if (value > getFieldValue('min')) {
+				return Promise.resolve();
+			}
+			return Promise.reject(
+				new Error('Max value should be greater than Min value'),
+			);
+		},
+	});
+
+>>>>>>> main
 	return (
 		<Modal
 			visible={true}
 			title="Chose min and max values of Latency"
 			okText="Apply"
-            		cancelText="Cancel"
+			cancelText="Cancel"
 			onCancel={onCancel}
 			onOk={() => {
 				form
@@ -48,7 +80,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 						onCreate(values); // giving error for values
 					})
 					.catch((info) => {
-						console.log("Validate Failed:", info);
+						console.log('Validate Failed:', info);
 					});
 			}}
 		>
@@ -63,7 +95,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 					<Col span={12}>
 						<Form.Item
 							name="min"
-                            				label="Min (in ms)"
+							label="Min (in ms)"
 							rules={[validateMinValue]}
 							//   rules={[{ required: true, message: 'Please input the title of collection!' }]}
 						>
@@ -71,11 +103,15 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 						</Form.Item>
 					</Col>
 					<Col span={12}>
+<<<<<<< HEAD
 						<Form.Item 
 							name="max" 
 							label="Max (in ms)"
 							rules = {[validateMaxValue]}
 						>
+=======
+						<Form.Item name="max" label="Max (in ms)" rules={[validateMaxValue]}>
+>>>>>>> main
 							<InputNumber />
 						</Form.Item>
 					</Col>

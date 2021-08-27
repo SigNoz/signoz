@@ -1,26 +1,26 @@
-import { Button, Form,Select as DefaultSelect, Space } from "antd";
-import FormItem from "antd/lib/form/FormItem";
-import { LOCAL_STORAGE } from "constants/localStorage";
-import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
-import ROUTES from "constants/routes";
-import { cloneDeep } from "lodash";
-import moment from "moment";
-import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import { withRouter } from "react-router";
-import { RouteComponentProps, useLocation } from "react-router-dom";
-import { GlobalTime, updateTimeInterval } from "store/actions";
-import { DateTimeRangeType } from "store/actions";
-import { StoreState } from "store/reducers";
-import styled from "styled-components";
+import { Button, Form, Select as DefaultSelect, Space } from 'antd';
+import FormItem from 'antd/lib/form/FormItem';
+import { LOCAL_STORAGE } from 'constants/localStorage';
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import ROUTES from 'constants/routes';
+import { cloneDeep } from 'lodash';
+import moment from 'moment';
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router';
+import { RouteComponentProps, useLocation } from 'react-router-dom';
+import { GlobalTime, updateTimeInterval } from 'store/actions';
+import { DateTimeRangeType } from 'store/actions';
+import { AppState } from 'store/reducers';
+import styled from 'styled-components';
 
 import {
 	DefaultOptionsBasedOnRoute,
 	Options,
 	ServiceMapOptions,
-} from "./config";
-import CustomDateTimeModal from "./CustomDateTimeModal";
-import { getLocalStorageRouteKey } from "./utils";
+} from './config';
+import CustomDateTimeModal from './CustomDateTimeModal';
+import { getLocalStorageRouteKey } from './utils';
 const { Option } = DefaultSelect;
 
 const DateTimeWrapper = styled.div`
@@ -61,7 +61,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	const [startTime, setStartTime] = useState<moment.Moment | null>(null);
 	const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState(false);
-	const [refreshText, setRefreshText] = useState("");
+	const [refreshText, setRefreshText] = useState('');
 	const [refreshButtonClick, setRefreshButtonClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
 
@@ -127,7 +127,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		endTime: moment.Moment,
 		triggeredByURLChange = false,
 	) => {
-		props.updateTimeInterval("custom", [startTime.valueOf(), endTime.valueOf()]);
+		props.updateTimeInterval('custom', [startTime.valueOf(), endTime.valueOf()]);
 		setEndTime(endTime);
 		setStartTime(startTime);
 	};
@@ -151,7 +151,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	};
 
 	const handleOnSelect = (value: string) => {
-		if (value === "custom") {
+		if (value === 'custom') {
 			setCustomDTPickerVisible(true);
 		} else {
 			updateUrlForTimeInterval(value);
@@ -176,9 +176,9 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 			setRefreshButtonHidden(true);
 			form_dtselector.setFieldsValue({
 				interval:
-					dateTimeRange[0].format("YYYY/MM/DD HH:mm") +
-					"-" +
-					dateTimeRange[1].format("YYYY/MM/DD HH:mm"),
+					dateTimeRange[0].format('YYYY/MM/DD HH:mm') +
+					'-' +
+					dateTimeRange[1].format('YYYY/MM/DD HH:mm'),
 			});
 		}
 		setCustomDTPickerVisible(false);
@@ -207,7 +207,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	};
 
 	useEffect(() => {
-		setRefreshText("");
+		setRefreshText('');
 		const interval = setInterval(() => {
 			setRefreshText(timeSinceLastRefresh());
 		}, 2000);
@@ -221,19 +221,19 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 	} else {
 		const inputLabeLToShow =
 			startTime && endTime
-				? `${startTime.format("YYYY/MM/DD HH:mm")} - ${endTime.format(
-					"YYYY/MM/DD HH:mm",
+				? `${startTime.format('YYYY/MM/DD HH:mm')} - ${endTime.format(
+						'YYYY/MM/DD HH:mm',
 				  )}`
 				: timeInterval;
 
 		return (
 			<DateTimeWrapper>
-				<Space style={{ float: "right", display: "block" }}>
+				<Space style={{ float: 'right', display: 'block' }}>
 					<Space>
 						<Form
 							form={form_dtselector}
 							layout="inline"
-							initialValues={{ interval: "15min" }}
+							initialValues={{ interval: '15min' }}
 							style={{ marginTop: 10, marginBottom: 10 }}
 						>
 							<Select onSelect={handleOnSelect} value={inputLabeLToShow}>
@@ -251,12 +251,12 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 					</Space>
 					<Space
 						style={{
-							float: "right",
-							display: "block",
+							float: 'right',
+							display: 'block',
 							marginRight: 20,
 							minHeight: 23,
 							width: 200,
-							textAlign: "right",
+							textAlign: 'right',
 						}}
 					>
 						{refreshText}
@@ -273,7 +273,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		);
 	}
 };
-const mapStateToProps = (state: StoreState): { globalTime: GlobalTime } => {
+const mapStateToProps = (state: AppState): { globalTime: GlobalTime } => {
 	return { globalTime: state.globalTime };
 };
 

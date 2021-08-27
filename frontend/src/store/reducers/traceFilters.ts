@@ -1,15 +1,15 @@
-import { ActionTypes, TraceFilters } from "store/actions";
+import { ActionTypes, TraceFilters } from 'store/actions';
 
 type ACTION = {
 	type: ActionTypes;
 	payload: TraceFilters;
 };
 const initialState: TraceFilters = {
-	service: "",
+	service: '',
 	tags: [],
-	operation: "",
-	latency: { min: "", max: "" },
-	kind: "",
+	operation: '',
+	latency: { min: '', max: '' },
+	kind: '',
 };
 
 const TraceFilterReducer = (state = initialState, action: ACTION) => {

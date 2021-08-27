@@ -1,11 +1,11 @@
-import { combineReducers } from "redux";
+import { combineReducers } from 'redux';
 
-import { updateGlobalTimeReducer } from "./global";
-import { metricsReducer } from "./metrics";
-import { ServiceMapReducer } from "./serviceMap";
-import TraceFilterReducer from "./traceFilters";
-import { traceItemReducer, tracesReducer } from "./traces";
-import { usageDataReducer } from "./usage";
+import { updateGlobalTimeReducer } from './global';
+import { metricsReducer } from './metrics';
+import { ServiceMapReducer } from './serviceMap';
+import TraceFilterReducer from './traceFilters';
+import { traceItemReducer, tracesReducer } from './traces';
+import { usageDataReducer } from './usage';
 
 const reducers = combineReducers({
 	traceFilters: TraceFilterReducer,

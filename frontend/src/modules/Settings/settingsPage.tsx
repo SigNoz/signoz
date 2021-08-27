@@ -1,8 +1,8 @@
-import { Form, Input, Space } from "antd";
-import { Alert } from "antd";
-import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import { StoreState } from "store/reducers";
+import { Form, Input, Space } from 'antd';
+import { Alert } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { AppState } from 'store/reducers';
 
 interface SettingsPageProps {}
 
@@ -16,7 +16,7 @@ const SettingsPage = (props: SettingsPageProps) => {
 
 	useEffect(() => {
 		form.setFieldsValue({
-			retention_period: "3 days",
+			retention_period: '3 days',
 		});
 	});
 
@@ -48,7 +48,7 @@ const SettingsPage = (props: SettingsPageProps) => {
 	);
 };
 
-const mapStateToProps = (state: StoreState): {} => {
+const mapStateToProps = (state: AppState): {} => {
 	return {};
 };
 

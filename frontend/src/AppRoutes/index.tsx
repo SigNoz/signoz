@@ -24,7 +24,7 @@ const App = () => (
 							path="/"
 							exact
 							render={() => {
-								return localStorage.getItem(IS_LOGGED_IN) === "yes" ? (
+								return localStorage.getItem(IS_LOGGED_IN) === 'yes' ? (
 									<Redirect to={ROUTES.APPLICATION} />
 								) : (
 									<Redirect to={ROUTES.SIGN_UP} />

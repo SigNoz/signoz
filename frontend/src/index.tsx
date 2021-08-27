@@ -16,5 +16,5 @@ ReactDOM.render(
 			</ThemeSwitcherProvider>
 		</React.StrictMode>
 	</Provider>,
-	document.querySelector("#root"),
+	document.querySelector('#root'),
 );

@@ -1,11 +1,11 @@
-import "./TraceGanttChart.css";
+import './TraceGanttChart.css';
 
-import { Button, Col,Progress, Row, Table, Tabs } from "antd";
-import { has,isEmpty, max } from "lodash-es";
-import traverseTreeData from "modules/Traces/TraceGanttChart/TraceGanttChartHelpers";
-import React, { useEffect, useRef, useState } from "react";
-import { pushDStree } from "store/actions";
-import styled from "styled-components";
+import { Button, Col, Progress, Row, Table, Tabs } from 'antd';
+import { has, isEmpty, max } from 'lodash-es';
+import traverseTreeData from 'modules/Traces/TraceGanttChart/TraceGanttChartHelpers';
+import React, { useEffect, useRef, useState } from 'react';
+import { pushDStree } from 'store/actions';
+import styled from 'styled-components';
 
 const { TabPane } = Tabs;
 
@@ -39,21 +39,21 @@ const TraceGanttChart = ({
 	const [sortedTreeData, setSortedTreeData] = useState(treeData);
 	const [isReset, setIsReset] = useState(false);
 	const [tabsContainerWidth, setTabsContainerWidth] = useState(0);
-	const tableRef = useRef("");
+	const tableRef = useRef('');
 	const tabsContainer = document.querySelector<HTMLElement>(
-		"#collapsable .ant-tabs-nav-list",
+		'#collapsable .ant-tabs-nav-list',
 	);
 
-	const tabs = document.querySelectorAll("#collapsable .ant-tabs-tab");
+	const tabs = document.querySelectorAll('#collapsable .ant-tabs-tab');
 
-	const { id } = treeData || "id";
+	const { id } = treeData || 'id';
 	let maxGlobal = 0;
 	let minGlobal = 0;
 	let medianGlobal = 0;
 	const endTimeArray: [] = [];
 
 	useEffect(() => {
-		if (id !== "empty") {
+		if (id !== 'empty') {
 			setSortedTreeData(treeData);
 			if (clickedSpan) {
 				setClickedSpanData(clickedSpan);
@@ -74,7 +74,7 @@ const TraceGanttChart = ({
 		) {
 			setSelectedRows([clickedSpan.id]);
 			getParentKeys(clickedSpan);
-			handleFocusOnSelectedPath("", [clickedSpan.id]);
+			handleFocusOnSelectedPath('', [clickedSpan.id]);
 		}
 	}, [clickedSpan, selectedRows, isReset, clickedSpanData]);
 
@@ -82,14 +82,14 @@ const TraceGanttChart = ({
 	const childrenKeys: string[] = [];
 
 	const getParentKeys = (obj) => {
-		if (has(obj, "parent")) {
+		if (has(obj, 'parent')) {
 			parentKeys.push(obj.parent.id);
 			getParentKeys(obj.parent);
 		}
 	};
 
 	const getChildrenKeys = (obj: pushDStree) => {
-		if (has(obj, "children")) {
+		if (has(obj, 'children')) {
 			childrenKeys.push(obj.id);
 			if (!isEmpty(obj.children)) {
 				obj.children.map((item) => {
@@ -115,7 +115,7 @@ const TraceGanttChart = ({
 
 	const getMaxEndTime = (treeData) => {
 		if (treeData.length > 0) {
-			if (treeData?.id !== "empty") {
+			if (treeData?.id !== 'empty') {
 				return Array.from(treeData).map((item, key) => {
 					if (!isEmpty(item.children)) {
 						endTimeArray.push(item.time / 1000000 + item.startTime);
@@ -128,7 +128,7 @@ const TraceGanttChart = ({
 		}
 	};
 
-	if (id !== "empty") {
+	if (id !== 'empty') {
 		getMaxEndTime(treeData);
 		maxGlobal = max(endTimeArray);
 		minGlobal = treeData?.[0]?.startTime;
@@ -150,20 +150,20 @@ const TraceGanttChart = ({
 
 	const columns = [
 		{
-			title: "",
-			dataIndex: "name",
-			key: "name",
+			title: '',
+			dataIndex: 'name',
+			key: 'name',
 		},
 		{
 			title: (
 				<Tabs>
-					<TabPane tab={tabMinVal + "ms"} key="1" />
-					<TabPane tab={tabMedianVal + "ms"} key="2" />
-					<TabPane tab={tabMaxVal + "ms"} key="3" />
+					<TabPane tab={tabMinVal + 'ms'} key="1" />
+					<TabPane tab={tabMedianVal + 'ms'} key="2" />
+					<TabPane tab={tabMaxVal + 'ms'} key="3" />
 				</Tabs>
 			),
-			dataIndex: "trace",
-			name: "trace",
+			dataIndex: 'trace',
+			name: 'trace',
 			render: (_, record: pushDStree) => {
 				const widths = [];
 				let length;
@@ -192,11 +192,11 @@ const TraceGanttChart = ({
 
 				return (
 					<>
-						<div style={{ paddingLeft: textPadding + "px" }}>{duration}ms</div>
+						<div style={{ paddingLeft: textPadding + 'px' }}>{duration}ms</div>
 						<Progress
 							percent={length}
 							showInfo={false}
-							style={{ paddingLeft: paddingLeft + "px" }}
+							style={{ paddingLeft: paddingLeft + 'px' }}
 						/>
 					</>
 				);
@@ -209,8 +209,8 @@ const TraceGanttChart = ({
 			// initializing the node
 			let node: pushDStree = {
 				children: [],
-				id: "",
-				name: "",
+				id: '',
+				name: '',
 				startTime: 0,
 				tags: [],
 				time: 0,
@@ -227,7 +227,7 @@ const TraceGanttChart = ({
 				setSpanTagsInfo({ data: node });
 			} catch (e) {
 				// TODO: error logging.
-				console.error("Node not found in Tree Data.");
+				console.error('Node not found in Tree Data.');
 			}
 
 			// get the parent of the node
@@ -236,15 +236,15 @@ const TraceGanttChart = ({
 			// get the children of the node
 			getChildrenKeys(node);
 
-			const rows = document.querySelectorAll("#collapsable table tbody tr");
+			const rows = document.querySelectorAll('#collapsable table tbody tr');
 			rows.forEach((row) => {
-				const attribKey = row.getAttribute("data-row-key") || "";
+				const attribKey = row.getAttribute('data-row-key') || '';
 				if (
 					!isEmpty(attribKey) &&
 					!selectedRowsList.includes(attribKey) &&
 					!childrenKeys.includes(attribKey)
 				) {
-					row.classList.add("hide");
+					row.classList.add('hide');
 				}
 			});
 			setDefaultExpandedRows([...parentKeys, ...childrenKeys]);
@@ -252,9 +252,9 @@ const TraceGanttChart = ({
 	};
 
 	const handleResetFocus = () => {
-		const rows = document.querySelectorAll("#collapsable table tbody tr");
+		const rows = document.querySelectorAll('#collapsable table tbody tr');
 		rows.forEach((row) => {
-			row.classList.remove("hide");
+			row.classList.remove('hide');
 		});
 
 		resetZoom(true);
@@ -297,7 +297,7 @@ const TraceGanttChart = ({
 			setSpanTagsInfo({ data: node });
 		} catch (e) {
 			// TODO: error logging.
-			console.error("Node not found in TreeData.");
+			console.error('Node not found in TreeData.');
 		}
 
 		const selectedRowKeys = selectedRows;
@@ -315,13 +315,13 @@ const TraceGanttChart = ({
 
 	return (
 		<>
-			{id !== "empty" && (
+			{id !== 'empty' && (
 				<>
 					<Row
 						justify="end"
 						gutter={32}
 						style={{
-							marginBottom: "24px",
+							marginBottom: '24px',
 						}}
 					>
 						<Col>
@@ -338,7 +338,7 @@ const TraceGanttChart = ({
 						refs={tableRef}
 						hideSelectAll={true}
 						columns={columns}
-						rowSelection={{ ...rowSelection, checkStrictly, type: "radio" }}
+						rowSelection={{ ...rowSelection, checkStrictly, type: 'radio' }}
 						dataSource={sortedTreeData}
 						rowKey="id"
 						sticky={true}

@@ -1,11 +1,11 @@
-import { Card, Col,Row, Tabs } from "antd";
-import { METRICS_PAGE_QUERY_PARAM } from "constants/query";
-import ROUTES from "constants/routes";
-import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import { withRouter } from "react-router";
-import { RouteComponentProps,useParams } from "react-router-dom";
-import { GlobalTime, updateTimeInterval } from "store/actions";
+import { Card, Col,Row, Tabs } from 'antd';
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import ROUTES from 'constants/routes';
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router';
+import { RouteComponentProps,useParams } from 'react-router-dom';
+import { GlobalTime, updateTimeInterval } from 'store/actions';
 import {
 	dbOverviewMetricsItem,
 	externalErrCodeMetricsItem,
@@ -13,7 +13,7 @@ import {
 	externalMetricsItem,
 	metricItem,
 	topEndpointListItem,
-} from "store/actions/MetricsActions";
+} from 'store/actions/MetricsActions';
 import {
 	getDbOverViewMetrics,
 	getExternalAvgDurationMetrics,
@@ -21,6 +21,7 @@ import {
 	getExternalMetrics,
 	getServicesMetrics,
 	getTopEndpoints,
+<<<<<<< HEAD
 } from "store/actions/MetricsActions";
 import { StoreState } from "store/reducers";
 
@@ -29,6 +30,16 @@ import ExternalApiGraph from "./ExternalApi";
 import LatencyLineChart from "./LatencyLineChart";
 import RequestRateChart from "./RequestRateChart";
 import TopEndpointsTable from "./TopEndpointsTable";
+=======
+} from 'store/actions/MetricsActions';
+import { StoreState } from 'store/reducers';
+
+import ErrorRateChart from './ErrorRateChart';
+import ExternalApiGraph from './ExternalApi';
+import LatencyLineChart from './LatencyLineChart';
+import RequestRateChart from './RequestRateChart';
+import TopEndpointsTable from './TopEndpointsTable';
+>>>>>>> main
 const { TabPane } = Tabs;
 
 interface ServicesMetricsProps extends RouteComponentProps<any> {
@@ -63,7 +74,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 		const currentTime = timestamp / 1000000;
 		const tPlusOne = timestamp / 1000000 + 1 * 60 * 1000;
 
-		props.updateTimeInterval("custom", [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
+		props.updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -79,7 +90,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 		const currentTime = timestamp / 1000000;
 		const tPlusOne = timestamp / 1000000 + 1 * 60 * 1000;
 
-		props.updateTimeInterval("custom", [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
+		props.updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -87,7 +98,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 		if (servicename) {
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, "true");
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
 		props.history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};

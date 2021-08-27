@@ -1,10 +1,10 @@
-import api, { apiV1 } from "api";
-import ROUTES from "constants/routes";
-import { Dispatch } from "redux";
-import { toUTCEpoch } from "utils/timeUtils";
+import api, { apiV1 } from 'api';
+import ROUTES from 'constants/routes';
+import { Dispatch } from 'redux';
+import { toUTCEpoch } from 'utils/timeUtils';
 
-import { GlobalTime } from "./global";
-import { ActionTypes } from "./types";
+import { GlobalTime } from './global';
+import { ActionTypes } from './types';
 
 // PNOTE
 // define trace interface - what it should return
@@ -123,11 +123,15 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 	return async (dispatch: Dispatch) => {
 		if (globalTime) {
 			const request_string =
+<<<<<<< HEAD
 				"/spans?limit=100&lookback=2d&start=" +
+=======
+				'/spans?limit=100&lookback=2d&start=' +
+>>>>>>> main
 				toUTCEpoch(globalTime.minTime) +
-				"&end=" +
+				'&end=' +
 				toUTCEpoch(globalTime.maxTime) +
-				"&" +
+				'&' +
 				filter_params;
 			const response = await api.get<traceResponseNew>(apiV1 + request_string);
 
@@ -142,7 +146,11 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch) => {
+<<<<<<< HEAD
 		const request_string = ROUTES.TRACES + "/" + traceID;
+=======
+		const request_string = ROUTES.TRACES + '/' + traceID;
+>>>>>>> main
 		const response = await api.get<spansWSameTraceIDResponse>(
 			apiV1 + request_string,
 		);
