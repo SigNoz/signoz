@@ -1,5 +1,7 @@
 {
 	"extends": "../tsconfig.json",
+	"target": "es5",
+	"lib": ["es5", "dom"],
 	"compilerOptions": {
 		"noEmit": true,
 		// be explicit about types included
