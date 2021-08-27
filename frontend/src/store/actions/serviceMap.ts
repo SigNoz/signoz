@@ -45,11 +45,7 @@ export const getServiceMapItems = (globalTime: GlobalTime) => {
 		});
 
 		const request_string =
-<<<<<<< HEAD
-			"/serviceMapDependencies?start=" +
-=======
 			'/serviceMapDependencies?start=' +
->>>>>>> main
 			globalTime.minTime +
 			'&end=' +
 			globalTime.maxTime;
@@ -71,11 +67,7 @@ export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 		});
 
 		const request_string =
-<<<<<<< HEAD
-			"/services?start=" + globalTime.minTime + "&end=" + globalTime.maxTime;
-=======
 			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
->>>>>>> main
 
 		const response = await api.get<servicesItem[]>(apiV1 + request_string);
 

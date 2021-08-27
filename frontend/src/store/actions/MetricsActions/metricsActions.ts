@@ -52,11 +52,7 @@ export const getExternalMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-<<<<<<< HEAD
-			"/service/external?service=" +
-=======
 			'/service/external?service=' +
->>>>>>> main
 			serviceName +
 			'&start=' +
 			globalTime.minTime +
@@ -79,11 +75,7 @@ export const getExternalAvgDurationMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-<<<<<<< HEAD
-			"/service/externalAvgDuration?service=" +
-=======
 			'/service/externalAvgDuration?service=' +
->>>>>>> main
 			serviceName +
 			'&start=' +
 			globalTime.minTime +
@@ -106,11 +98,7 @@ export const getExternalErrCodeMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-<<<<<<< HEAD
-			"/service/externalErrors?service=" +
-=======
 			'/service/externalErrors?service=' +
->>>>>>> main
 			serviceName +
 			'&start=' +
 			globalTime.minTime +
@@ -134,11 +122,7 @@ export const getServicesMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-<<<<<<< HEAD
-			"/service/overview?service=" +
-=======
 			'/service/overview?service=' +
->>>>>>> main
 			serviceName +
 			'&start=' +
 			globalTime.minTime +
@@ -163,11 +147,7 @@ export const getTopEndpoints = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-<<<<<<< HEAD
-			"/service/top_endpoints?service=" +
-=======
 			'/service/top_endpoints?service=' +
->>>>>>> main
 			serviceName +
 			'&start=' +
 			globalTime.minTime +
@@ -191,11 +171,7 @@ export const getFilteredTraceMetrics = (
 ) => {
 	return async (dispatch: Dispatch) => {
 		const request_string =
-<<<<<<< HEAD
-			"/spans/aggregates?start=" +
-=======
 			'/spans/aggregates?start=' +
->>>>>>> main
 			toUTCEpoch(globalTime.minTime) +
 			'&end=' +
 			toUTCEpoch(globalTime.maxTime) +

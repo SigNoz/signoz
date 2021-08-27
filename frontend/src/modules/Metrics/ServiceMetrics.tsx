@@ -1,10 +1,10 @@
-import { Card, Col,Row, Tabs } from 'antd';
+import { Card, Col, Row, Tabs } from 'antd';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
-import { RouteComponentProps,useParams } from 'react-router-dom';
+import { RouteComponentProps, useParams } from 'react-router-dom';
 import { GlobalTime, updateTimeInterval } from 'store/actions';
 import {
 	dbOverviewMetricsItem,
@@ -21,25 +21,14 @@ import {
 	getExternalMetrics,
 	getServicesMetrics,
 	getTopEndpoints,
-<<<<<<< HEAD
-} from "store/actions/MetricsActions";
-import { StoreState } from "store/reducers";
-
-import ErrorRateChart from "./ErrorRateChart";
-import ExternalApiGraph from "./ExternalApi";
-import LatencyLineChart from "./LatencyLineChart";
-import RequestRateChart from "./RequestRateChart";
-import TopEndpointsTable from "./TopEndpointsTable";
-=======
 } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 
 import ErrorRateChart from './ErrorRateChart';
 import ExternalApiGraph from './ExternalApi';
 import LatencyLineChart from './LatencyLineChart';
 import RequestRateChart from './RequestRateChart';
 import TopEndpointsTable from './TopEndpointsTable';
->>>>>>> main
 const { TabPane } = Tabs;
 
 interface ServicesMetricsProps extends RouteComponentProps<any> {
@@ -224,7 +213,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	serviceMetrics: metricItem[];
 	topEndpointsList: topEndpointListItem[];

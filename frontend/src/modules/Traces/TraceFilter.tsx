@@ -1,4 +1,4 @@
-import { AutoComplete,Button, Form, Input, Select } from 'antd';
+import { AutoComplete, Button, Form, Input, Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
 import api, { apiV1 } from 'api';
@@ -376,11 +376,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 		};
 	}, []);
 
-<<<<<<< HEAD
-	const handleChangeSpanKind = (value = "") => {
-=======
 	const handleChangeSpanKind = (value = '') => {
->>>>>>> main
 		props.updateTraceFilters({ ...props.traceFilters, kind: value });
 	};
 

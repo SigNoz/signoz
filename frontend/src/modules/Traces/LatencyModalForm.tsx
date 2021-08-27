@@ -14,27 +14,6 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 	latencyFilterValues,
 }) => {
 	const [form] = Form.useForm();
-<<<<<<< HEAD
-    
-	const validateMinValue = ({ getFieldValue }: {getFieldValue: (name: NamePath) => any}) => ({
-		validator(_, value: any) {
-		  if (value < getFieldValue('max')) {
-				return Promise.resolve();
-		  }
-		  return Promise.reject(new Error('Min value should be less than Max value'));
-		},
-	  });
-
-	const validateMaxValue = ({ getFieldValue }: {getFieldValue: (name: NamePath) => any}) => ({
-		validator(_, value: any) {
-		  if (value > getFieldValue('min')) {
-				return Promise.resolve();
-		  }
-		  return Promise.reject(new Error('Max value should be greater than Min value'));
-		},
-	  });
-      
-=======
 
 	const validateMinValue = ({
 		getFieldValue,
@@ -64,7 +43,6 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 		},
 	});
 
->>>>>>> main
 	return (
 		<Modal
 			visible={true}
@@ -103,15 +81,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 						</Form.Item>
 					</Col>
 					<Col span={12}>
-<<<<<<< HEAD
-						<Form.Item 
-							name="max" 
-							label="Max (in ms)"
-							rules = {[validateMaxValue]}
-						>
-=======
 						<Form.Item name="max" label="Max (in ms)" rules={[validateMaxValue]}>
->>>>>>> main
 							<InputNumber />
 						</Form.Item>
 					</Col>

@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 
-import { ActionTypes } from "./types";
+import { ActionTypes } from './types';
 
 export type DateTimeRangeType = [Moment | null, Moment | null] | null;
 
@@ -24,94 +24,54 @@ export const updateTimeInterval = (
 	// set directly based on that. Assuming datetimeRange values are in ms, and minTime is 0th element
 
 	switch (interval) {
-<<<<<<< HEAD
-	case "1min":
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 1 * 60 * 1000) * 1000000;
-		break;
-	case "5min":
-=======
-	case '1min':
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 1 * 60 * 1000) * 1000000;
-		break;
-	case '5min':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 5 * 60 * 1000) * 1000000;
-		break;
+		case '1min':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 1 * 60 * 1000) * 1000000;
+			break;
+		case '5min':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 5 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "15min":
-=======
-	case '15min':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 15 * 60 * 1000) * 1000000;
-		break;
+		case '15min':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 15 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "30min":
-=======
-	case '30min':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 30 * 60 * 1000) * 1000000;
-		break;
+		case '30min':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 30 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "1hr":
-=======
-	case '1hr':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 1 * 60 * 60 * 1000) * 1000000;
-		break;
+		case '1hr':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 1 * 60 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "6hr":
-=======
-	case '6hr':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 6 * 60 * 60 * 1000) * 1000000;
-		break;
+		case '6hr':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 6 * 60 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "1day":
-=======
-	case '1day':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 24 * 60 * 60 * 1000) * 1000000;
-		break;
+		case '1day':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 24 * 60 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "1week":
-=======
-	case '1week':
->>>>>>> main
-		maxTime = Date.now() * 1000000; // in nano sec
-		minTime = (Date.now() - 7 * 24 * 60 * 60 * 1000) * 1000000;
-		break;
+		case '1week':
+			maxTime = Date.now() * 1000000; // in nano sec
+			minTime = (Date.now() - 7 * 24 * 60 * 60 * 1000) * 1000000;
+			break;
 
-<<<<<<< HEAD
-	case "custom":
-=======
-	case 'custom':
->>>>>>> main
-		if (datetimeRange !== undefined) {
-			maxTime = datetimeRange[1] * 1000000; // in nano sec
-			minTime = datetimeRange[0] * 1000000; // in nano sec
-		}
-		break;
+		case 'custom':
+			if (datetimeRange !== undefined) {
+				maxTime = datetimeRange[1] * 1000000; // in nano sec
+				minTime = datetimeRange[0] * 1000000; // in nano sec
+			}
+			break;
 
-	default:
-<<<<<<< HEAD
-		console.log("not found matching case");
-=======
-		console.log('not found matching case');
->>>>>>> main
+		default:
+			console.log('not found matching case');
 	}
 
 	return {
