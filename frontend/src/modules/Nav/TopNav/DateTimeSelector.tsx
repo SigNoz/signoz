@@ -222,7 +222,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		const inputLabeLToShow =
 			startTime && endTime
 				? `${startTime.format('YYYY/MM/DD HH:mm')} - ${endTime.format(
-						'YYYY/MM/DD HH:mm',
+					'YYYY/MM/DD HH:mm',
 				  )}`
 				: timeInterval;
 

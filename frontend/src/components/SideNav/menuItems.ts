@@ -1,10 +1,10 @@
 import {
-	BarChartOutlined,
 	AlignLeftOutlined,
+	ApiOutlined,
+	BarChartOutlined,
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	SettingOutlined,
-	ApiOutlined,
 } from "@ant-design/icons";
 import ROUTES from "constants/routes";
 

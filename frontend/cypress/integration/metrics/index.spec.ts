@@ -1,6 +1,7 @@
 /// <reference types="cypress" />
-import defaultApps from "../../fixtures/defaultApp.json";
 import convertToNanoSecondsToSecond from "lib/convertToNanoSecondsToSecond";
+
+import defaultApps from "../../fixtures/defaultApp.json";
 
 describe("Metrics", () => {
 	beforeEach(() => {

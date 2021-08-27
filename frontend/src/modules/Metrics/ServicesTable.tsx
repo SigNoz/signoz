@@ -179,21 +179,21 @@ const _ServicesTable = (props: ServicesTableProps) => {
 
 			{props.servicesList[0] !== undefined &&
 				props.servicesList[0].numCalls === 0 && (
-					<Space
-						style={{ width: '100%', margin: '40px 0', justifyContent: 'center' }}
-					>
+				<Space
+					style={{ width: '100%', margin: '40px 0', justifyContent: 'center' }}
+				>
 						No applications present. Please add instrumentation (follow this
-						<a
-							href={'https://signoz.io/docs/instrumentation/overview'}
-							target={'_blank'}
-							style={{ marginLeft: 3 }}
-							rel="noreferrer"
-						>
+					<a
+						href={'https://signoz.io/docs/instrumentation/overview'}
+						target={'_blank'}
+						style={{ marginLeft: 3 }}
+						rel="noreferrer"
+					>
 							guide
-						</a>
+					</a>
 						)
-					</Space>
-				)}
+				</Space>
+			)}
 		</Wrapper>
 	);
 };
