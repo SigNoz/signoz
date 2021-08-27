@@ -1,8 +1,8 @@
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 
 interface Props {
-	height: React.CSSProperties["height"];
+	height: React.CSSProperties['height'];
 }
 
 export const SpinerStyle = styled.div<Props>`
@@ -12,5 +12,5 @@ export const SpinerStyle = styled.div<Props>`
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	height: ${({ height = "100vh" }) => height};
+	height: ${({ height = '100vh' }) => height};
 `;

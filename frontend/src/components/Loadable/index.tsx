@@ -1,4 +1,4 @@
-import { lazy, ComponentType } from "react";
+import { ComponentType,lazy } from 'react';
 
 function Loadable(importPath: {
 	(): LoadableProps;

@@ -1,8 +1,8 @@
-import React from "react";
-import { Spin, SpinProps } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined } from '@ant-design/icons';
+import { Spin, SpinProps } from 'antd';
+import React from 'react';
 
-import { SpinerStyle } from "./styles";
+import { SpinerStyle } from './styles';
 
 const Spinner = ({ size, tip, height }: SpinnerProps): JSX.Element => (
 	<SpinerStyle height={height}>
@@ -11,9 +11,9 @@ const Spinner = ({ size, tip, height }: SpinnerProps): JSX.Element => (
 );
 
 interface SpinnerProps {
-	size?: SpinProps["size"];
-	tip?: SpinProps["tip"];
-	height?: React.CSSProperties["height"];
+	size?: SpinProps['size'];
+	tip?: SpinProps['tip'];
+	height?: React.CSSProperties['height'];
 }
 
 export default Spinner;

@@ -1,5 +1,5 @@
-import React, { ReactElement } from "react";
-import { Modal } from "antd";
+import { Modal } from 'antd';
+import React, { ReactElement } from 'react';
 
 export const CustomModal = ({
 	title,
