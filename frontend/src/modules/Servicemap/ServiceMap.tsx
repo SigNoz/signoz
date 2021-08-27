@@ -8,7 +8,7 @@ import {
 	getDetailedServiceMapItems,
 } from "store/actions";
 import styled from "styled-components";
-import { StoreState } from "store/reducers";
+import { AppState } from "store/reducers";
 
 import { getZoomPx, getGraphData, getTooltip, transformLabel } from "./utils";
 import SelectService from "./SelectService";
@@ -139,7 +139,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
