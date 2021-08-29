@@ -1,1 +1,1 @@
-declare module "d3-tip";
+declare module 'd3-tip';

@@ -1,4 +1,4 @@
-import { MetricsActionTypes } from "./metricsActionTypes";
+import { MetricsActionTypes } from './metricsActionTypes';
 
 export interface servicesListItem {
 	serviceName: string;

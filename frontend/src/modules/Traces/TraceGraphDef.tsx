@@ -1,4 +1,4 @@
-export { TraceGraph as default } from "./TraceGraph";
+export { TraceGraph as default } from './TraceGraph';
 
 // PNOTE
 // Because react.lazy doesn't work on named components

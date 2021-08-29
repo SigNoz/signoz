@@ -1,3 +1,6 @@
+node_modules
+yarn.lock
+
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
@@ -21,6 +24,10 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/src/constants/env.ts
+frontend/cypress/**/*.mp4
+
+# env file for cypress
+frontend/cypress.env.json
 
 .idea
 
@@ -29,5 +36,6 @@ frontend/src/constants/env.ts
 **/build
 **/storage
 **/locust-scripts/__pycache__/
+**/__debug_bin
 
 frontend/*.env
