@@ -7,8 +7,18 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/posthog/posthog-go"
+	"github.com/prometheus/prometheus/promql"
+	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
+)
+
+type status string
+
+const (
+	statusSuccess status = "success"
+	statusError   status = "error"
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -25,16 +35,18 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
+	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
+
 	aH := &APIHandler{
 		reader:     reader,
 		pc:         pc,
 		distinctId: distinctId,
 	}
-
+	aH.ready = aH.testReady
 	return aH
 }
 
@@ -52,8 +64,100 @@ type structuredError struct {
 	// TraceID ui.TraceID `json:"traceID,omitempty"`
 }
 
+var corsHeaders = map[string]string{
+	"Access-Control-Allow-Headers":  "Accept, Authorization, Content-Type, Origin",
+	"Access-Control-Allow-Methods":  "GET, OPTIONS",
+	"Access-Control-Allow-Origin":   "*",
+	"Access-Control-Expose-Headers": "Date",
+}
+
+// Enables cross-site script calls.
+func setCORS(w http.ResponseWriter) {
+	for h, v := range corsHeaders {
+		w.Header().Set(h, v)
+	}
+}
+
+type apiFunc func(r *http.Request) (interface{}, *model.ApiError, func())
+
+// Checks if server is ready, calls f if it is, returns 503 if it is not.
+func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		f(w, r)
+
+	}
+}
+
+type response struct {
+	Status    status          `json:"status"`
+	Data      interface{}     `json:"data,omitempty"`
+	ErrorType model.ErrorType `json:"errorType,omitempty"`
+	Error     string          `json:"error,omitempty"`
+}
+
+func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	b, err := json.Marshal(&response{
+		Status:    statusError,
+		ErrorType: apiErr.Typ,
+		Error:     apiErr.Err.Error(),
+		Data:      data,
+	})
+	if err != nil {
+		zap.S().Error("msg", "error marshalling json response", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var code int
+	switch apiErr.Typ {
+	case model.ErrorBadData:
+		code = http.StatusBadRequest
+	case model.ErrorExec:
+		code = 422
+	case model.ErrorCanceled, model.ErrorTimeout:
+		code = http.StatusServiceUnavailable
+	case model.ErrorInternal:
+		code = http.StatusInternalServerError
+	case model.ErrorNotFound:
+		code = http.StatusNotFound
+	case model.ErrorNotImplemented:
+		code = http.StatusNotImplemented
+	default:
+		code = http.StatusInternalServerError
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if n, err := w.Write(b); err != nil {
+		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+	}
+}
+
+func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	b, err := json.Marshal(&response{
+		Status: statusSuccess,
+		Data:   data,
+	})
+	if err != nil {
+		zap.S().Error("msg", "error marshalling json response", "err", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if n, err := w.Write(b); err != nil {
+		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+	}
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -72,6 +176,114 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
+
+	query, apiErrorObj := parseQueryRangeRequest(r)
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// zap.S().Info(query, apiError)
+
+	ctx := r.Context()
+	if to := r.FormValue("timeout"); to != "" {
+		var cancel context.CancelFunc
+		timeout, err := parseMetricsDuration(to)
+		if aH.handleError(w, err, http.StatusBadRequest) {
+			return
+		}
+
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
+
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	if res.Err != nil {
+		zap.S().Error(res.Err)
+	}
+
+	if res.Err != nil {
+		switch res.Err.(type) {
+		case promql.ErrQueryCanceled:
+			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+		case promql.ErrQueryTimeout:
+			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+		}
+		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+	}
+
+	response_data := &model.QueryData{
+		ResultType: res.Value.Type(),
+		Result:     res.Value,
+		Stats:      qs,
+	}
+
+	aH.respond(w, response_data)
+
+}
+
+func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
+
+	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// zap.S().Info(query, apiError)
+
+	ctx := r.Context()
+	if to := r.FormValue("timeout"); to != "" {
+		var cancel context.CancelFunc
+		timeout, err := parseMetricsDuration(to)
+		if aH.handleError(w, err, http.StatusBadRequest) {
+			return
+		}
+
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
+
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	if res.Err != nil {
+		zap.S().Error(res.Err)
+	}
+
+	if res.Err != nil {
+		switch res.Err.(type) {
+		case promql.ErrQueryCanceled:
+			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+		case promql.ErrQueryTimeout:
+			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+		}
+		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+	}
+
+	response_data := &model.QueryData{
+		ResultType: res.Value.Type(),
+		Result:     res.Value,
+		Stats:      qs,
+	}
+
+	aH.respond(w, response_data)
+
 }
 
 func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
