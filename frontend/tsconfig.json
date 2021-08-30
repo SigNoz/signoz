@@ -19,5 +19,7 @@
 		"noEmit": true,
 		"baseUrl": "./src",
 		"downlevelIteration": true
-	}
+	},
+	"exclude": ["node_modules"],
+	"include": ["./src", "./cypress"]
 }
