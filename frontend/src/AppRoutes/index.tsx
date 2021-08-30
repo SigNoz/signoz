@@ -15,15 +15,17 @@ const App = (): JSX.Element => (
 			<AppLayout>
 				<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 					<Switch>
-						{routes.map(({ path, component, exact }) => {
-							return <Route exact={exact} path={path} component={component} />;
+						{routes.map(({ path, component, exact }, index) => {
+							return (
+								<Route key={index} exact={exact} path={path} component={component} />
+							);
 						})}
 
 						{/* This logic should be moved to app layout */}
 						<Route
 							path="/"
 							exact
-							render={() => {
+							render={(): JSX.Element => {
 								return localStorage.getItem(IS_LOGGED_IN) === 'yes' ? (
 									<Redirect to={ROUTES.APPLICATION} />
 								) : (
