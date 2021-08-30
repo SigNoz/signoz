@@ -17,6 +17,10 @@ const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
 );
 
+const NewDashboardPage = Loadable(
+	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
+);
+
 const routes: AppRoutes[] = [
 	{
 		component: SignupPage,
@@ -67,6 +71,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.ALL_DASHBOARD,
 		exact: true,
 		component: DashboardPage,
+	},
+	{
+		path: ROUTES.NEW_DASHBOARD,
+		exact: true,
+		component: NewDashboardPage,
 	},
 ];
 
