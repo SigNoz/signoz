@@ -1,4 +1,5 @@
-import ROUTES from "constants/routes";
+import Loadable from 'components/Loadable';
+import ROUTES from 'constants/routes';
 import {
 	InstrumentationPage,
 	ServiceMapPage,
@@ -11,6 +12,10 @@ import {
 	UsageExplorerPage,
 } from 'pages';
 import { RouteProps } from 'react-router-dom';
+
+const DashboardPage = Loadable(
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
+);
 
 const routes: AppRoutes[] = [
 	{
@@ -57,6 +62,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.TRACES,
 		exact: true,
 		component: TraceDetailPage,
+	},
+	{
+		path: ROUTES.ALL_DASHBOARD,
+		exact: true,
+		component: DashboardPage,
 	},
 ];
 
