@@ -7,9 +7,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posthog/posthog-go"
 	"github.com/prometheus/prometheus/promql"
+	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -35,11 +38,12 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
+	db         *sqlx.DB
 	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
+func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:     reader,
@@ -47,7 +51,12 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHa
 		distinctId: distinctId,
 	}
 	aH.ready = aH.testReady
-	return aH
+
+	err := dashboards.InitDB("signoz.db")
+	if err != nil {
+		return nil, err
+	}
+	return aH, nil
 }
 
 type structuredResponse struct {
@@ -159,6 +168,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
@@ -176,6 +188,31 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
+
+	// aH.db.Prepare("select Uuid, Slug, Create, created_time, last_edited_time, ")
+
+	// dashboards = dashboards.getDashboards()
+
+	// if aH.handleError(w, err, http.StatusBadRequest) {
+	// 	return
+	// }
+
+	// aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
+
+	dash, err := dashboards.CreateDashboard("Test Title")
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, dash)
+
 }
 
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
