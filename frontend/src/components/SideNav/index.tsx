@@ -1,13 +1,13 @@
-import { Layout, Menu, Switch as ToggleButton } from "antd";
-import ROUTES from "constants/routes";
-import React, { useCallback,useState } from "react";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import { NavLink } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { Layout, Menu, Switch as ToggleButton } from 'antd';
+import ROUTES from 'constants/routes';
+import React, { useCallback, useState } from 'react';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
+import { NavLink } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-import { Logo,ThemeSwitcherWrapper } from "./styles";
+import { Logo, ThemeSwitcherWrapper } from './styles';
 const { Sider } = Layout;
-import menus from "./menuItems";
+import menus from './menuItems';
 
 const SideNav = (): JSX.Element => {
 	const { switcher, currentTheme, themes } = useThemeSwitcher();
@@ -32,7 +32,7 @@ const SideNav = (): JSX.Element => {
 				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to="/">
-				<Logo src={"/signoz.svg"} alt="SigNoz" collapsed={collapsed} />
+				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -43,7 +43,7 @@ const SideNav = (): JSX.Element => {
 			>
 				{menus.map(({ to, Icon, name }) => (
 					<Menu.Item key={to} icon={<Icon />}>
-						<NavLink to={to} style={{ fontSize: 12, textDecoration: "none" }}>
+						<NavLink to={to} style={{ fontSize: 12, textDecoration: 'none' }}>
 							{name}
 						</NavLink>
 					</Menu.Item>

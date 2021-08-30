@@ -5,39 +5,44 @@ import {
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	SettingOutlined,
-} from "@ant-design/icons";
-import ROUTES from "constants/routes";
+} from '@ant-design/icons';
+import ROUTES from 'constants/routes';
 
 const menus: SidebarMenu[] = [
 	{
 		Icon: BarChartOutlined,
 		to: ROUTES.APPLICATION,
-		name: "Metrics",
+		name: 'Metrics',
 	},
 	{
 		Icon: AlignLeftOutlined,
 		to: ROUTES.TRACES,
-		name: "Traces",
+		name: 'Traces',
 	},
 	{
 		to: ROUTES.SERVICE_MAP,
-		name: "Service Map",
+		name: 'Service Map',
 		Icon: DeploymentUnitOutlined,
 	},
 	{
 		Icon: LineChartOutlined,
 		to: ROUTES.USAGE_EXPLORER,
-		name: "Usage Explorer",
+		name: 'Usage Explorer',
 	},
 	{
 		Icon: SettingOutlined,
 		to: ROUTES.SETTINGS,
-		name: "Settings",
+		name: 'Settings',
 	},
 	{
 		Icon: ApiOutlined,
 		to: ROUTES.INSTRUMENTATION,
-		name: "Add instrumentation",
+		name: 'Add instrumentation',
+	},
+	{
+		Icon: ApiOutlined,
+		to: ROUTES.ALL_DASHBOARD,
+		name: 'Dashboard',
 	},
 ];
 

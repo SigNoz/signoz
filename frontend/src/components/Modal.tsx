@@ -1,5 +1,5 @@
-import { Modal } from "antd";
-import React, { ReactElement } from "react";
+import { Modal } from 'antd';
+import React, { ReactElement } from 'react';
 
 export const CustomModal = ({
 	title,
@@ -8,14 +8,7 @@ export const CustomModal = ({
 	setIsModalVisible,
 	footer,
 	closable = true,
-}: {
-	isModalVisible: boolean;
-	closable?: boolean;
-	setIsModalVisible: Function;
-	footer?: any;
-	title: string;
-	children: ReactElement;
-}) => {
+}: ModalProps): JSX.Element => {
 	return (
 		<>
 			<Modal
@@ -29,3 +22,12 @@ export const CustomModal = ({
 		</>
 	);
 };
+
+interface ModalProps {
+	isModalVisible: boolean;
+	closable?: boolean;
+	setIsModalVisible: Function;
+	footer?: any;
+	title: string;
+	children: ReactElement;
+}
