@@ -1,15 +1,16 @@
-import GridGraphLayout from 'container/GridGraphLayout';
+import { Col } from 'antd';
 import AddTags from 'container/NewDashboard/AddTags';
+import GridGraph from 'container/NewDashboard/GridGraphs';
 import NameOfTheDashboard from 'container/NewDashboard/NameOfTheDashboard';
 import React from 'react';
 
 const NewDashboard = (): JSX.Element => {
 	return (
-		<div>
+		<Col>
 			<NameOfTheDashboard />
 			<AddTags />
-			<GridGraphLayout />
-		</div>
+			<GridGraph />
+		</Col>
 	);
 };
 

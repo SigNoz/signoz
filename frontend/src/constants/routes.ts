@@ -10,7 +10,7 @@ const ROUTES = {
 	APPLICATION: '/application',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
-	NEW_DASHBOARD: '/dashboard/new',
+	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
 };
 
 export default ROUTES;

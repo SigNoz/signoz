@@ -36,16 +36,15 @@ const AddTags = (): JSX.Element => {
 		setTags(newTags);
 	};
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setInputValue(e.target.value);
-	};
-
 	const showInput = (): void => {
 		setInputVisible(true);
 	};
 
-	const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setEditInputValue(e.target.value);
+	const onChangeHandler = (
+		value: string,
+		func: React.Dispatch<React.SetStateAction<string>>,
+	): void => {
+		func(value);
 	};
 
 	return (
@@ -58,7 +57,9 @@ const AddTags = (): JSX.Element => {
 								key={tag}
 								size="small"
 								value={editInputValue}
-								onChangeHandler={handleEditChange}
+								onChangeHandler={(event): void =>
+									onChangeHandler(event.target.value, setEditInputValue)
+								}
 								onBlurHandler={handleEditInputConfirm}
 								onPressEnterHandler={handleEditInputConfirm}
 							/>
@@ -103,7 +104,9 @@ const AddTags = (): JSX.Element => {
 						type="text"
 						size="small"
 						value={inputValue}
-						onChangeHandler={handleInputChange}
+						onChangeHandler={(event): void =>
+							onChangeHandler(event.target.value, setInputValue)
+						}
 						onBlurHandler={handleInputConfirm}
 						onPressEnterHandler={handleInputConfirm}
 					/>

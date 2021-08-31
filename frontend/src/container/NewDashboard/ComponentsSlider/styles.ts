@@ -4,10 +4,6 @@ import styled from 'styled-components';
 export const Container = styled.div`
 	display: flex;
 	gap: 0.6rem;
-
-	> div:first-child {
-		margin-left: 0.5rem;
-	}
 `;
 
 export const Card = styled(CardComponent)`

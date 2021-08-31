@@ -1,8 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
 import ROUTES from 'constants/routes';
+import updateUrl from 'lib/updateUrl';
 import React, { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
+import { v4 } from 'uuid';
 
 import { NewDashboardButton, TableContainer } from './styles';
 import DateComponent from './TableComponents/Date';
@@ -88,7 +90,9 @@ const ListOfAllDashboard = (): JSX.Element => {
 	];
 
 	const onNewDashboardHandler = useCallback(() => {
-		push(ROUTES.NEW_DASHBOARD);
+		// TODO create the dashboard in the dashboard
+		const newDashboardId = v4();
+		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', newDashboardId));
 	}, []);
 
 	return (

@@ -1,4 +1,4 @@
-import { Input, InputProps } from 'antd';
+import { Form, Input, InputProps } from 'antd';
 import React from 'react';
 
 const InputComponent = ({
@@ -10,28 +10,37 @@ const InputComponent = ({
 	size = 'small',
 	onBlurHandler,
 	onPressEnterHandler,
+	label,
+	labelOnTop,
+	addonBefore,
 }: InputComponentProps): JSX.Element => (
-	<Input
-		placeholder={placeholder}
-		type={type}
-		onChange={onChangeHandler}
-		value={value}
-		ref={ref}
-		size={size}
-		onBlur={onBlurHandler}
-		onPressEnter={onPressEnterHandler}
-	/>
+	<Form.Item labelCol={{ span: labelOnTop ? 24 : 4 }} label={label}>
+		<Input
+			placeholder={placeholder}
+			type={type}
+			onChange={onChangeHandler}
+			value={value}
+			ref={ref}
+			size={size}
+			addonBefore={addonBefore}
+			onBlur={onBlurHandler}
+			onPressEnter={onPressEnterHandler}
+		/>
+	</Form.Item>
 );
 
 interface InputComponentProps {
 	value: InputProps['value'];
 	type?: InputProps['type'];
-	onChangeHandler: React.ChangeEventHandler<HTMLInputElement>;
+	onChangeHandler?: React.ChangeEventHandler<HTMLInputElement>;
 	placeholder?: InputProps['placeholder'];
 	ref?: React.LegacyRef<Input>;
 	size?: InputProps['size'];
 	onBlurHandler?: React.FocusEventHandler<HTMLInputElement>;
 	onPressEnterHandler?: React.KeyboardEventHandler<HTMLInputElement>;
+	label?: string;
+	labelOnTop?: boolean;
+	addonBefore?: React.ReactNode;
 }
 
 export default InputComponent;

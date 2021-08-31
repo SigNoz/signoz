@@ -12,8 +12,10 @@ const Items: ItemsProps[] = [
 	},
 ];
 
+export type ITEMS = 'Time Series' | 'Value';
+
 interface ItemsProps {
-	name: string;
+	name: ITEMS;
 	Icon: () => JSX.Element;
 }
 
