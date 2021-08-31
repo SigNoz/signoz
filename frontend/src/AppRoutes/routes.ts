@@ -1,7 +1,11 @@
-import Loadable from 'components/Loadable';
 import ROUTES from 'constants/routes';
+import DashboardWidget from 'pages/DashboardWidget';
+import { RouteProps } from 'react-router-dom';
+
 import {
+	DashboardPage,
 	InstrumentationPage,
+	NewDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -10,16 +14,7 @@ import {
 	TraceDetailPage,
 	TraceGraphPage,
 	UsageExplorerPage,
-} from 'pages';
-import { RouteProps } from 'react-router-dom';
-
-const DashboardPage = Loadable(
-	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
-);
-
-const NewDashboardPage = Loadable(
-	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
-);
+} from './pageComponents';
 
 const routes: AppRoutes[] = [
 	{
@@ -73,9 +68,14 @@ const routes: AppRoutes[] = [
 		component: DashboardPage,
 	},
 	{
-		path: ROUTES.NEW_DASHBOARD,
+		path: ROUTES.DASHBOARD,
 		exact: true,
 		component: NewDashboardPage,
+	},
+	{
+		path: ROUTES.DASHBOARD_WIDGET,
+		exact: true,
+		component: DashboardWidget,
 	},
 ];
 
