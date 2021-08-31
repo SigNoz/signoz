@@ -170,6 +170,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.getDashboard).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.updateDashboard).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.deleteDashboard).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -194,24 +197,116 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	// aH.db.Prepare("select Uuid, Slug, Create, created_time, last_edited_time, ")
 
-	// dashboards = dashboards.getDashboards()
+	dashboards, err := dashboards.GetDashboards()
 
-	// if aH.handleError(w, err, http.StatusBadRequest) {
-	// 	return
-	// }
+	if err != nil {
+		aH.respondError(w, err, nil)
+		return
+	}
 
-	// aH.writeJSON(w, r, result)
+	aH.respond(w, dashboards)
 
+}
+func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
+
+	// aH.db.Prepare("select Uuid, Slug, Create, created_time, last_edited_time, ")
+
+	uuid := mux.Vars(r)["uuid"]
+	err := dashboards.DeleteDashboard(uuid)
+
+	if err != nil {
+		aH.respondError(w, err, nil)
+		return
+	}
+
+	aH.respond(w, nil)
+
+}
+
+func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
+
+	uuid := mux.Vars(r)["uuid"]
+
+	var postData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
+	err = isPostDataSane(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
+
+	if postData["uuid"] != uuid {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
+		return
+	}
+
+	dashboard, apiError := dashboards.UpdateDashboard(&postData)
+
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	aH.respond(w, dashboard)
+
+}
+
+func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
+
+	uuid := mux.Vars(r)["uuid"]
+
+	dashboard, apiError := dashboards.GetDashboard(uuid)
+
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	aH.respond(w, dashboard)
+
+}
+
+func isPostDataSane(data *map[string]interface{}) error {
+
+	val, ok := (*data)["uuid"]
+	if !ok || val == nil {
+		return fmt.Errorf("uuid not found in post data")
+	}
+
+	val, ok = (*data)["title"]
+	if !ok || val == nil {
+		return fmt.Errorf("title not found in post data")
+	}
+
+	return nil
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
-	dash, err := dashboards.CreateDashboard("Test Title")
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	var postData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		return
+	}
+	err = isPostDataSane(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
 
-	aH.writeJSON(w, r, dash)
+	dash, apiErr := dashboards.CreateDashboard(&postData)
+
+	if apiErr != nil {
+		aH.respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.respond(w, dash)
 
 }
 

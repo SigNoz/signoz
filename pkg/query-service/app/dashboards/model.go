@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/query-service/model"
+	"go.uber.org/zap"
 )
 
 // const (
@@ -38,11 +39,9 @@ func InitDB(dataSourceName string) error {
 
 	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		uuid TEXT NOT NULL,
-		slug TEXT NOT NULL,
-		created_at TEXT NOT NULL,
-		updated_at TEXT NOT NULL,
-		title TEXT NOT NULL,
+		uuid TEXT NOT NULL UNIQUE,
+		created_at datetime NOT NULL,
+		updated_at datetime NOT NULL,
 		data TEXT NOT NULL
 	);`
 
@@ -55,41 +54,146 @@ func InitDB(dataSourceName string) error {
 }
 
 type Dashboard struct {
-	Id        int64                  `json:"id", db:"id"`
-	Uuid      string                 `json:"uuid", db:"uuid"`
-	Slug      string                 `json:"slug", db:"slug"`
-	CreatedAt time.Time              `json:"created_at", db:"created_at"`
-	UpdatedAt time.Time              `json:"updated_at", db:"updated_at"`
-	Title     string                 `json:"title", db:"title"`
-	Data      map[string]interface{} `json:"data", db:"data"`
+	Id        int       `json:"id" db:"id"`
+	Uuid      string    `json:"uuid" db:"uuid"`
+	Slug      string    `json:"-" db:"-"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	Title     string    `json:"-" db:"-"`
+	Data      Data      `json:"data" db:"data"`
+}
+
+type Data map[string]interface{}
+
+// func (c *Data) Value() (driver.Value, error) {
+// 	if c != nil {
+// 		b, err := json.Marshal(c)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return string(b), nil
+// 	}
+// 	return nil, nil
+// }
+
+func (c *Data) Scan(src interface{}) error {
+	var data []byte
+	if b, ok := src.([]byte); ok {
+		data = b
+	} else if s, ok := src.(string); ok {
+		data = []byte(s)
+	}
+	return json.Unmarshal(data, c)
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(title string) (*Dashboard, error) {
+func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError) {
 	dash := &Dashboard{
-		Data: make(map[string]interface{}),
+		Data: *data,
 	}
-	dash.Data["title"] = title
-	dash.Title = title
 	dash.CreatedAt = time.Now()
 	dash.UpdatedAt = time.Now()
 	dash.UpdateSlug()
-	dash.Uuid = uuid.New().String()
+	// dash.Uuid = uuid.New().String()
+	dash.Uuid = dash.Data["uuid"].(string)
 
 	map_data, err := json.Marshal(dash.Data)
+	if err != nil {
+		zap.S().Errorf("Error in marshalling data field in dashboard: ", dash, err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
 
 	// db.Prepare("Insert into dashboards where")
-	result, err := db.Exec("INSERT INTO dashboards (uuid, slug, created_at, updated_at, title, data) VALUES ($1, $2, $3, $4, $5, $6)", dash.Uuid, dash.Slug, dash.CreatedAt, dash.UpdatedAt, dash.Title, map_data)
+	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data)
 
 	if err != nil {
-		return nil, err
+		zap.S().Errorf("Error in inserting dashboard data: ", dash, err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
-	dash.Id, err = result.LastInsertId()
+	lastInsertId, err := result.LastInsertId()
+
 	if err != nil {
-		return nil, err
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
+	dash.Id = int(lastInsertId)
 
 	return dash, nil
+}
+
+func GetDashboards() (*[]Dashboard, *model.ApiError) {
+
+	dashboards := []Dashboard{}
+	query := fmt.Sprintf("SELECT * FROM dashboards;")
+
+	err := db.Select(&dashboards, query)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	return &dashboards, nil
+}
+
+func DeleteDashboard(uuid string) *model.ApiError {
+
+	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
+
+	result, err := db.Exec(query)
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+	if affectedRows == 0 {
+		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
+	}
+
+	return nil
+}
+
+func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
+
+	dashboard := Dashboard{}
+	query := fmt.Sprintf("SELECT * FROM dashboards WHERE uuid='%s';", uuid)
+
+	err := db.Get(&dashboard, query)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
+	}
+
+	return &dashboard, nil
+}
+
+func UpdateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError) {
+
+	uuid := (*data)["uuid"].(string)
+
+	map_data, err := json.Marshal(data)
+	if err != nil {
+		zap.S().Errorf("Error in marshalling data field in dashboard: ", data, err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	dashboard, apiErr := GetDashboard(uuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	dashboard.UpdatedAt = time.Now()
+	dashboard.Data = *data
+
+	// db.Prepare("Insert into dashboards where")
+	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, data=$2 WHERE uuid=$3 ", dashboard.UpdatedAt, map_data, dashboard.Uuid)
+
+	if err != nil {
+		zap.S().Errorf("Error in inserting dashboard data: ", data, err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	return dashboard, nil
 }
 
 // UpdateSlug updates the slug
