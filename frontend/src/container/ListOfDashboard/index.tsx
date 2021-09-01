@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import updateUrl from 'lib/updateUrl';
 import React, { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
+import { PayloadProps as APIAllDashboardReponse } from 'types/api/dashboard/getAll';
 import { v4 } from 'uuid';
 
 import { NewDashboardButton, TableContainer } from './styles';
@@ -12,7 +13,9 @@ import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
-const ListOfAllDashboard = (): JSX.Element => {
+const ListOfAllDashboard = ({
+	listOfDashboards,
+}: ListOfAllDashboardProps): JSX.Element => {
 	const { push } = useHistory();
 
 	const columns: TableColumnProps<Data>[] = [
@@ -50,44 +53,15 @@ const ListOfAllDashboard = (): JSX.Element => {
 		},
 	];
 
-	const data: Data[] = [
-		{
-			key: '1',
-			name: 'TradeCode 99',
-			description: 'Vel cras auctor at tortor imperdiet amet id sed rhoncus.',
-			tags: ['cpu', 'node'],
-			createdBy: 'Palash',
-			lastUpdatedTime: new Date().getTime().toString(),
-			id: 1,
-		},
-		{
-			key: '2',
-			name: 'TradeCode 99',
-			description: 'Vel cras auctor at tortor imperdiet amet id sed rhoncus.',
-			tags: ['cpu', 'node'],
-			createdBy: 'Palash',
-			lastUpdatedTime: new Date().getTime().toString(),
-			id: 2,
-		},
-		{
-			key: '3',
-			name: 'TradeCode 99',
-			description: 'Vel cras auctor at tortor imperdiet amet id sed rhoncus.',
-			tags: ['cpu', 'node'],
-			createdBy: 'Palash',
-			lastUpdatedTime: new Date().getTime().toString(),
-			id: 3,
-		},
-		{
-			key: '4',
-			name: 'TradeCode 99',
-			description: 'Vel cras auctor at tortor imperdiet amet id sed rhoncus.',
-			tags: ['cpu', 'node'],
-			createdBy: 'Palash',
-			lastUpdatedTime: new Date().getTime().toString(),
-			id: 4,
-		},
-	];
+	const data: Data[] = listOfDashboards.map((e) => ({
+		createdBy: e.created_at,
+		description: e.data.description,
+		id: e.id,
+		lastUpdatedTime: e.updated_at,
+		name: e.data.name,
+		tags: e.data.tags,
+		key: e.uuid,
+	}));
 
 	const onNewDashboardHandler = useCallback(() => {
 		// TODO create the dashboard in the dashboard
@@ -135,6 +109,10 @@ export interface Data {
 	createdBy: string;
 	lastUpdatedTime: string;
 	id: number;
+}
+
+interface ListOfAllDashboardProps {
+	listOfDashboards: APIAllDashboardReponse;
 }
 
 export default ListOfAllDashboard;
