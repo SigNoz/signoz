@@ -1,6 +1,6 @@
 export type PayloadProps = Dashboard[];
 
-interface Dashboard {
+export interface Dashboard {
 	id: number;
 	uuid: string;
 	created_at: string;
@@ -13,4 +13,5 @@ interface DashboardData {
 	opacity: number;
 	tags: string[];
 	name: string;
+	widgets: [];
 }

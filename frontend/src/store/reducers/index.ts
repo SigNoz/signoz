@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux';
 
+import dashboardReducer from './dashboard';
 import { updateGlobalTimeReducer } from './global';
 import { metricsReducer } from './metrics';
 import { ServiceMapReducer } from './serviceMap';
@@ -15,6 +16,7 @@ const reducers = combineReducers({
 	globalTime: updateGlobalTimeReducer,
 	metricsData: metricsReducer,
 	serviceMap: ServiceMapReducer,
+	dashboards: dashboardReducer,
 });
 
 export type AppState = ReturnType<typeof reducers>;
