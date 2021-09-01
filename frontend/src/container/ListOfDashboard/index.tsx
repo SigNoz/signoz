@@ -3,8 +3,10 @@ import { Row, Table, TableColumnProps, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import updateUrl from 'lib/updateUrl';
 import React, { useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { PayloadProps as APIAllDashboardReponse } from 'types/api/dashboard/getAll';
+import { AppState } from 'store/reducers';
+import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
 import { NewDashboardButton, TableContainer } from './styles';
@@ -13,9 +15,11 @@ import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
-const ListOfAllDashboard = ({
-	listOfDashboards,
-}: ListOfAllDashboardProps): JSX.Element => {
+const ListOfAllDashboard = (): JSX.Element => {
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
 	const { push } = useHistory();
 
 	const columns: TableColumnProps<Data>[] = [
@@ -53,7 +57,7 @@ const ListOfAllDashboard = ({
 		},
 	];
 
-	const data: Data[] = listOfDashboards.map((e) => ({
+	const data: Data[] = dashboards.map((e) => ({
 		createdBy: e.created_at,
 		description: e.data.description,
 		id: e.id,
@@ -109,10 +113,6 @@ export interface Data {
 	createdBy: string;
 	lastUpdatedTime: string;
 	id: number;
-}
-
-interface ListOfAllDashboardProps {
-	listOfDashboards: APIAllDashboardReponse;
 }
 
 export default ListOfAllDashboard;

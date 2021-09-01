@@ -24,7 +24,7 @@ const Dashboard = ({ getAllDashboards }: DashboardProps): JSX.Element => {
 		return <Spinner size="large" tip="Loading.." />;
 	}
 
-	return <ListOfAllDashboard listOfDashboards={dashboards} />;
+	return <ListOfAllDashboard />;
 };
 
 interface DispatchProps {
