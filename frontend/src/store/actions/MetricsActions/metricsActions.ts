@@ -1,4 +1,4 @@
-import api, { apiV1 } from 'api';
+import api from 'api';
 import { Dispatch } from 'redux';
 import { GlobalTime } from 'store/actions/global';
 import { toUTCEpoch } from 'utils/timeUtils';
@@ -12,7 +12,7 @@ export const getServicesList = (globalTime: GlobalTime) => {
 			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
 
 		const response = await api.get<MetricsInterfaces.servicesListItem[]>(
-			apiV1 + request_string,
+			request_string,
 		);
 
 		dispatch<MetricsInterfaces.getServicesListAction>({
@@ -37,7 +37,7 @@ export const getDbOverViewMetrics = (
 			globalTime.maxTime +
 			'&step=60';
 		const response = await api.get<MetricsInterfaces.dbOverviewMetricsItem[]>(
-			apiV1 + request_string,
+			request_string,
 		);
 		dispatch<MetricsInterfaces.getDbOverViewMetricsAction>({
 			type: MetricsActionTypes.getDbOverviewMetrics,
@@ -60,7 +60,7 @@ export const getExternalMetrics = (
 			globalTime.maxTime +
 			'&step=60';
 		const response = await api.get<MetricsInterfaces.externalMetricsItem[]>(
-			apiV1 + request_string,
+			request_string,
 		);
 		dispatch<MetricsInterfaces.getExternalMetricsAction>({
 			type: MetricsActionTypes.getExternalMetrics,
@@ -85,7 +85,7 @@ export const getExternalAvgDurationMetrics = (
 
 		const response = await api.get<
 			MetricsInterfaces.externalMetricsAvgDurationItem[]
-		>(apiV1 + request_string);
+		>(request_string);
 		dispatch<MetricsInterfaces.externalMetricsAvgDurationAction>({
 			type: MetricsActionTypes.getAvgDurationMetrics,
 			payload: response.data,
@@ -107,7 +107,7 @@ export const getExternalErrCodeMetrics = (
 			'&step=60';
 		const response = await api.get<
 			MetricsInterfaces.externalErrCodeMetricsItem[]
-		>(apiV1 + request_string);
+		>(request_string);
 
 		dispatch<MetricsInterfaces.externalErrCodeMetricsActions>({
 			type: MetricsActionTypes.getErrCodeMetrics,
@@ -130,7 +130,7 @@ export const getServicesMetrics = (
 			globalTime.maxTime +
 			'&step=60';
 		const response = await api.get<MetricsInterfaces.metricItem[]>(
-			apiV1 + request_string,
+			request_string,
 		);
 
 		dispatch<MetricsInterfaces.getServiceMetricsAction>({
@@ -154,7 +154,7 @@ export const getTopEndpoints = (
 			'&end=' +
 			globalTime.maxTime;
 		const response = await api.get<MetricsInterfaces.topEndpointListItem[]>(
-			apiV1 + request_string,
+			request_string,
 		);
 
 		dispatch<MetricsInterfaces.getTopEndpointsAction>({
@@ -178,7 +178,7 @@ export const getFilteredTraceMetrics = (
 			'&' +
 			filter_params;
 		const response = await api.get<MetricsInterfaces.customMetricsItem[]>(
-			apiV1 + request_string,
+			request_string,
 		);
 
 		dispatch<MetricsInterfaces.getFilteredTraceMetricsAction>({

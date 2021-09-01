@@ -1,5 +1,5 @@
 import { Button, Input, Row, Space } from 'antd';
-import api, { apiV1 } from 'api';
+import api from 'api';
 import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import React, { useState } from 'react';
@@ -45,7 +45,7 @@ const Signup = (props: SignUpProps): JSX.Element => {
 
 		const texttolog = JSON.stringify(payload);
 
-		api.post(apiV1 + '/user?email=' + texttolog).then((res) => {
+		api.post('/user?email=' + texttolog).then((res) => {
 			console.log(res);
 			console.log(res.data);
 		});

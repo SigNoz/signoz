@@ -1,4 +1,4 @@
-import api, { apiV1 } from 'api';
+import api from 'api';
 import ROUTES from 'constants/routes';
 import { Dispatch } from 'redux';
 import { toUTCEpoch } from 'utils/timeUtils';
@@ -129,7 +129,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 				toUTCEpoch(globalTime.maxTime) +
 				'&' +
 				filter_params;
-			const response = await api.get<traceResponseNew>(apiV1 + request_string);
+			const response = await api.get<traceResponseNew>(request_string);
 
 			dispatch<FetchTracesAction>({
 				type: ActionTypes.fetchTraces,
@@ -143,9 +143,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch) => {
 		const request_string = ROUTES.TRACES + '/' + traceID;
-		const response = await api.get<spansWSameTraceIDResponse>(
-			apiV1 + request_string,
-		);
+		const response = await api.get<spansWSameTraceIDResponse>(request_string);
 
 		dispatch<FetchTraceItemAction>({
 			type: ActionTypes.fetchTraceItem,

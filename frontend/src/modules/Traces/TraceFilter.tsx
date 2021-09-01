@@ -1,7 +1,7 @@
 import { AutoComplete, Button, Form, Input, Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
-import api, { apiV1 } from 'api';
+import api from 'api';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import { useRoute } from 'modules/RouteProvider';
 import React, { useEffect, useState } from 'react';
@@ -75,7 +75,7 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	useEffect(() => {
 		api
-			.get<string[]>(`${apiV1}/services/list`)
+			.get<string[]>(`/services/list`)
 			.then((response) => {
 				setServiceList(response.data);
 			})
@@ -219,17 +219,15 @@ const _TraceFilter = (props: TraceFilterProps) => {
 
 	function populateData(value: string) {
 		const service_request = '/service/' + value + '/operations';
-		api.get<string[]>(apiV1 + service_request).then((response) => {
+		api.get<string[]>(service_request).then((response) => {
 			// form_basefilter.resetFields(['operation',])
 			setOperationsList(response.data);
 		});
 
 		const tagkeyoptions_request = '/tags?service=' + value;
-		api
-			.get<TagKeyOptionItem[]>(apiV1 + tagkeyoptions_request)
-			.then((response) => {
-				setTagKeyOptions(response.data);
-			});
+		api.get<TagKeyOptionItem[]>(tagkeyoptions_request).then((response) => {
+			setTagKeyOptions(response.data);
+		});
 	}
 	function handleChangeService(value: string) {
 		populateData(value);
