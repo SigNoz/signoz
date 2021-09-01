@@ -8,7 +8,7 @@ import { PayloadProps } from 'types/api/dashboard/getAll';
 const Dashboard = (): JSX.Element => {
 	const { payload, loading } = useFetch<PayloadProps, undefined>(getAll);
 
-	if (loading) {
+	if (loading || payload === undefined) {
 		return <Spinner size="large" tip="Loading.." />;
 	}
 
