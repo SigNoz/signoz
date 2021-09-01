@@ -5,41 +5,40 @@ module.exports = {
 		node: true,
 	},
 	extends: [
-		"eslint:recommended",
-		"plugin:react/recommended",
-		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/eslint-recommended",
+		'eslint:recommended',
+		'plugin:react/recommended',
+		'plugin:@typescript-eslint/recommended',
+		'plugin:@typescript-eslint/eslint-recommended',
 	],
-	parser: "@typescript-eslint/parser",
+	parser: '@typescript-eslint/parser',
 	parserOptions: {
 		ecmaFeatures: {
 			jsx: true,
 		},
 		ecmaVersion: 12,
-		sourceType: "module",
+		sourceType: 'module',
 	},
-	plugins: ["react", "@typescript-eslint", "simple-import-sort"],
+	plugins: ['react', '@typescript-eslint', 'simple-import-sort'],
 	settings: {
 		react: {
-			version: "latest",
+			version: 'latest',
 		},
 	},
 	rules: {
-		"react/jsx-filename-extension": [
-			"error",
+		'react/jsx-filename-extension': [
+			'error',
 			{
-				extensions: [".tsx", ".js", ".jsx"],
+				extensions: ['.tsx', '.js', '.jsx'],
 			},
 		],
-		"react/prop-types": "off",
-		"@typescript-eslint/explicit-function-return-type": "error",
-		"@typescript-eslint/no-var-requires": 0,
-		"linebreak-style": ["error", "unix"],
-		indent: ["error", "tab"],
+		'react/prop-types': 'off',
+		'@typescript-eslint/explicit-function-return-type': 'error',
+		'@typescript-eslint/no-var-requires': 0,
+		'linebreak-style': ['error', 'unix'],
 
-		semi: ["error", "always"],
+		semi: ['error', 'always'],
 		// simple sort error
-		"simple-import-sort/imports": "error",
-		"simple-import-sort/exports": "error",
+		'simple-import-sort/imports': 'error',
+		'simple-import-sort/exports': 'error',
 	},
 };

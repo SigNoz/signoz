@@ -1,3 +1,4 @@
+export * from './dashboard';
 export * from './global';
 export * from './MetricsActions';
 export * from './serviceMap';
