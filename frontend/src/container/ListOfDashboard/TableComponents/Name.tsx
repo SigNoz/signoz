@@ -10,7 +10,7 @@ const Name = (name: Data['name'], data: Data): JSX.Element => {
 	const { push } = useHistory();
 
 	const onClickHandler = useCallback(() => {
-		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', data.id.toString()));
+		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', data.id));
 	}, []);
 
 	return (

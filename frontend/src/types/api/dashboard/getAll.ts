@@ -11,7 +11,8 @@ export interface Dashboard {
 interface DashboardData {
 	description: string;
 	opacity: number;
-	tags: string[];
+	tags?: string[];
 	name: string;
 	widgets: [];
+	title: string;
 }

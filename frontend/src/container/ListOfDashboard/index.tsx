@@ -1,8 +1,9 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
+import createDashboard from 'api/dashboard/create';
 import ROUTES from 'constants/routes';
 import updateUrl from 'lib/updateUrl';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -19,6 +20,12 @@ const ListOfAllDashboard = (): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const [newDashboardState, setNewDashboardState] = useState({
+		loading: false,
+		error: false,
+		errorMessage: '',
+	});
 
 	const { push } = useHistory();
 
@@ -60,18 +67,59 @@ const ListOfAllDashboard = (): JSX.Element => {
 	const data: Data[] = dashboards.map((e) => ({
 		createdBy: e.created_at,
 		description: e.data.description,
-		id: e.id,
+		id: e.uuid,
 		lastUpdatedTime: e.updated_at,
-		name: e.data.name,
-		tags: e.data.tags,
+		name: e.data.title,
+		tags: e.data.tags || [],
 		key: e.uuid,
 	}));
 
-	const onNewDashboardHandler = useCallback(() => {
-		// TODO create the dashboard in the dashboard
-		const newDashboardId = v4();
-		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', newDashboardId));
+	const onNewDashboardHandler = useCallback(async () => {
+		try {
+			const newDashboardId = v4();
+			setNewDashboardState({
+				...newDashboardState,
+				loading: true,
+			});
+			const response = await createDashboard({
+				uuid: newDashboardId,
+				title: 'Sampe Title',
+			});
+
+			if (response.statusCode === 200) {
+				setNewDashboardState({
+					...newDashboardState,
+					loading: false,
+				});
+				push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', newDashboardId));
+			} else {
+				setNewDashboardState({
+					...newDashboardState,
+					loading: false,
+					error: true,
+					errorMessage: response.error || 'Something went wrong',
+				});
+			}
+		} catch (error) {
+			setNewDashboardState({
+				...newDashboardState,
+				error: true,
+				errorMessage: error.toString() || 'Something went Wrong',
+			});
+		}
 	}, []);
+
+	const getText = (): string => {
+		if (!newDashboardState.error && !newDashboardState.loading) {
+			return 'New Dashboard';
+		}
+
+		if (newDashboardState.loading) {
+			return 'Loading';
+		}
+
+		return newDashboardState.errorMessage;
+	};
 
 	return (
 		<TableContainer>
@@ -91,8 +139,10 @@ const ListOfAllDashboard = (): JSX.Element => {
 								onClick={onNewDashboardHandler}
 								icon={<PlusOutlined />}
 								type="primary"
+								loading={newDashboardState.loading}
+								danger={newDashboardState.error}
 							>
-								New Dashboard
+								{getText()}
 							</NewDashboardButton>
 						</Row>
 					);
@@ -112,7 +162,7 @@ export interface Data {
 	tags: string[];
 	createdBy: string;
 	lastUpdatedTime: string;
-	id: number;
+	id: string;
 }
 
 export default ListOfAllDashboard;
