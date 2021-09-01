@@ -14,6 +14,7 @@ const DashboardWidget = (): JSX.Element => {
 		const graphType = params.get('graphType') as GRAPH_TYPES | null;
 
 		// if there is no graphType we are pushing to the dashboard route
+		// @TODO need to update this one with useParams
 		if (graphType === null) {
 			const pathNameArray = pathname.split('/');
 			pathNameArray.pop();
