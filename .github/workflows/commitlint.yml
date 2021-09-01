@@ -1,5 +1,8 @@
 name: commitlint
 on: [pull_request]
+defaults:
+  run:
+    working-directory: frontend
 jobs:
   lint-commits:
     runs-on: ubuntu-latest

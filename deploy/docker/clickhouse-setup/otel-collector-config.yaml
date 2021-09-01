@@ -7,6 +7,11 @@ receivers:
     protocols:
       grpc:
       thrift_http:
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      load:
+      memory:
 processors:
   batch:
     send_batch_size: 1000
@@ -29,6 +34,10 @@ extensions:
 exporters:
   clickhouse:
     datasource: tcp://clickhouse:9000
+  clickhousemetricswrite:
+    endpoint: tcp://clickhouse:9000/?database=signoz_metrics
+    resource_to_telemetry_conversion:
+      enabled: true
 
 service:
   extensions: [health_check, zpages]
@@ -37,3 +46,7 @@ service:
       receivers: [jaeger, otlp]
       processors: [batch]
       exporters: [clickhouse]
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [batch]
+      exporters: [clickhousemetricswrite]

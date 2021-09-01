@@ -32,6 +32,12 @@ RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 WORKDIR /root
 # copy the binary from builder
 COPY --from=builder /go/src/github.com/signoz/signoz/pkg/query-service/bin/query-service .
+
+COPY config/prometheus.yml /root/config/prometheus.yml
+
 # run the binary
-CMD ["./query-service"]
+ENTRYPOINT ["./query-service"]
+CMD ["-config", "/root/config/prometheus.yml"]
+# CMD ["./query-service -config /root/config/prometheus.yml"]
+EXPOSE 8080
 
