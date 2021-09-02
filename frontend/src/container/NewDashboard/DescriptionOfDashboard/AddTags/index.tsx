@@ -5,8 +5,7 @@ import React, { useState } from 'react';
 
 import { NewTagContainer, TagsContainer } from './styles';
 
-const AddTags = (): JSX.Element => {
-	const [tags, setTags] = useState<string[]>([]);
+const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [inputVisible, setInputVisible] = useState<boolean>(false);
 	const [editInputIndex, setEditInputIndex] = useState(-1);
@@ -70,11 +69,7 @@ const AddTags = (): JSX.Element => {
 				const isLongTag = tag.length > 20;
 
 				const tagElem = (
-					<NewTagContainer
-						key={tag}
-						closable={index !== 0}
-						onClose={(): void => handleClose(tag)}
-					>
+					<NewTagContainer key={tag} onClose={(): void => handleClose(tag)}>
 						<span
 							onDoubleClick={(e): void => {
 								if (index !== 0) {
@@ -114,13 +109,17 @@ const AddTags = (): JSX.Element => {
 			)}
 
 			{!inputVisible && (
-				<NewTagContainer onClick={showInput}>
-					<PlusOutlined />
+				<NewTagContainer icon={<PlusOutlined />} onClick={showInput}>
 					<Typography>New Tag</Typography>
 				</NewTagContainer>
 			)}
 		</TagsContainer>
 	);
 };
+
+interface AddTagsProps {
+	tags: string[];
+	setTags: React.Dispatch<React.SetStateAction<string[]>>;
+}
 
 export default AddTags;

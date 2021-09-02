@@ -1,19 +1,24 @@
 import { Button } from 'antd';
 import React, { useCallback } from 'react';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+import { bindActionCreators } from 'redux';
+import { Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
+import AppActions from 'types/actions';
 
 import { Data } from '../index';
 
 const DeleteButton = ({
-	name,
-	createdBy,
-	description,
-	key,
-	lastUpdatedTime,
-	tags,
-}: Data): JSX.Element => {
+	deleteDashboard,
+	id,
+}: DeleteButtonProps): JSX.Element => {
 	const onClickHandler = useCallback(() => {
-		console.log({ name, createdBy, description, key, lastUpdatedTime, tags });
-	}, []);
+		deleteDashboard({
+			uuid: id,
+		});
+	}, [id]);
 
 	return (
 		<Button onClick={onClickHandler} type="link">
@@ -22,4 +27,31 @@ const DeleteButton = ({
 	);
 };
 
-export default DeleteButton;
+interface DispatchProps {
+	deleteDashboard: ({
+		uuid,
+	}: DeleteDashboardProps) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	deleteDashboard: bindActionCreators(DeleteDashboard, dispatch),
+});
+
+type DeleteButtonProps = Data & DispatchProps;
+
+const WrapperDeleteButton = connect(null, mapDispatchToProps)(DeleteButton);
+
+// This is to avoid the type collision
+const Wrapper = (props: Data): JSX.Element => {
+	return (
+		<WrapperDeleteButton
+			{...{
+				...props,
+			}}
+		/>
+	);
+};
+
+export default Wrapper;

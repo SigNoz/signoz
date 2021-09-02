@@ -9,7 +9,6 @@ export const CardContainer = styled(Row)`
 
 export const Card = styled(CardComponent)`
 	&&& {
-		min-height: 10vh;
 		cursor: pointer;
 	}
 	.ant-card-body {

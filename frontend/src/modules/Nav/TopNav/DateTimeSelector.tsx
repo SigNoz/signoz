@@ -222,7 +222,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		const inputLabeLToShow =
 			startTime && endTime
 				? `${startTime.format('YYYY/MM/DD HH:mm')} - ${endTime.format(
-					'YYYY/MM/DD HH:mm',
+						'YYYY/MM/DD HH:mm',
 				  )}`
 				: timeInterval;
 
@@ -238,7 +238,9 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 						>
 							<Select onSelect={handleOnSelect} value={inputLabeLToShow}>
 								{options.map(({ value, label }) => (
-									<Option value={value}>{label}</Option>
+									<Option key={value} value={value}>
+										{label}
+									</Option>
 								))}
 							</Select>
 

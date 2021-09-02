@@ -6,13 +6,13 @@ export interface Dashboard {
 	created_at: string;
 	updated_at: string;
 	data: DashboardData;
+	title: string;
 }
 
-interface DashboardData {
+export interface DashboardData {
 	description: string;
 	opacity: number;
 	tags?: string[];
 	name: string;
 	widgets: [];
-	title: string;
 }

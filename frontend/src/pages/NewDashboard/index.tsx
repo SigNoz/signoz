@@ -12,9 +12,10 @@ import { Props } from 'types/api/dashboard/get';
 import DashboardReducer from 'types/reducer/dashboards';
 
 const NewDashboardPage = ({ getDashboard }: NewDashboardProps): JSX.Element => {
-	const { loading, dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { loading, dashboards, error, errorMessage } = useSelector<
+		AppState,
+		DashboardReducer
+	>((state) => state.dashboards);
 
 	const { dashboardId } = useParams<Params>();
 
@@ -24,8 +25,12 @@ const NewDashboardPage = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 		});
 	}, []);
 
+	if (error && !loading && dashboards.length === 0) {
+		return <div>{errorMessage}</div>;
+	}
+
 	if (loading || dashboards.length === 0) {
-		return <Spinner />;
+		return <Spinner tip="Loading.." />;
 	}
 
 	return <NewDashboard />;
