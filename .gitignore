@@ -39,3 +39,4 @@ frontend/cypress.env.json
 **/__debug_bin
 
 frontend/*.env
+pkg/query-service/signoz.db
