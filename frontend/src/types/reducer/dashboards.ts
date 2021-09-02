@@ -5,4 +5,5 @@ export default interface DashboardReducer {
 	loading: boolean;
 	error: boolean;
 	errorMessage: string;
+	isEditMode: boolean;
 }
