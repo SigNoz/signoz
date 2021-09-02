@@ -163,7 +163,7 @@ services:
     
 
   query-service:
-    image: signoz.docker.scarf.sh/signoz/query-service:0.3.6
+    image: signoz.docker.scarf.sh/signoz/query-service:0.4.0
     container_name: query-service
 
     depends_on:

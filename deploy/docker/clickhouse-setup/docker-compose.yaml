@@ -20,7 +20,7 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:0.3.6
+    image: signoz/query-service:0.4.0
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     ports:
@@ -52,7 +52,7 @@ services:
 
 
   otel-collector:
-    image: signoz/otelcol:0.3.6
+    image: signoz/otelcontribcol:0.4.0
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
