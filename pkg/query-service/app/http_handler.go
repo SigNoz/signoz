@@ -56,6 +56,11 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIH
 	if err != nil {
 		return nil, err
 	}
+
+	errReadingDashboards := dashboards.LoadDashboardFiles()
+	if errReadingDashboards != nil {
+		return nil, errReadingDashboards
+	}
 	return aH, nil
 }
 
@@ -193,23 +198,72 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 }
 
+func Intersection(a, b []int) (c []int) {
+	m := make(map[int]bool)
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			c = append(c, item)
+		}
+	}
+	return
+}
+
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
-	// aH.db.Prepare("select Uuid, Slug, Create, created_time, last_edited_time, ")
-
-	dashboards, err := dashboards.GetDashboards()
+	allDashboards, err := dashboards.GetDashboards()
 
 	if err != nil {
 		aH.respondError(w, err, nil)
 		return
 	}
+	tagsFromReq, ok := r.URL.Query()["tags"]
+	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
+		aH.respond(w, &allDashboards)
+		return
+	}
 
-	aH.respond(w, dashboards)
+	tags2Dash := make(map[string][]int)
+	for i := 0; i < len(*allDashboards); i++ {
+		tags, ok := (*allDashboards)[i].Data["tags"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		tagsArray := make([]string, len(tags))
+		for i, v := range tags {
+			tagsArray[i] = v.(string)
+		}
+
+		for _, tag := range tagsArray {
+			tags2Dash[tag] = append(tags2Dash[tag], i)
+		}
+
+	}
+
+	inter := make([]int, len(*allDashboards))
+	for i := range inter {
+		inter[i] = i
+	}
+
+	for _, tag := range tagsFromReq {
+		inter = Intersection(inter, tags2Dash[tag])
+	}
+
+	filteredDashboards := []dashboards.Dashboard{}
+	for _, val := range inter {
+		dash := (*allDashboards)[val]
+		filteredDashboards = append(filteredDashboards, dash)
+	}
+
+	aH.respond(w, &filteredDashboards)
 
 }
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
-
-	// aH.db.Prepare("select Uuid, Slug, Create, created_time, last_edited_time, ")
 
 	uuid := mux.Vars(r)["uuid"]
 	err := dashboards.DeleteDashboard(uuid)
@@ -233,7 +287,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
-	err = isPostDataSane(&postData)
+	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
@@ -270,21 +324,6 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func isPostDataSane(data *map[string]interface{}) error {
-
-	val, ok := (*data)["uuid"]
-	if !ok || val == nil {
-		return fmt.Errorf("uuid not found in post data")
-	}
-
-	val, ok = (*data)["title"]
-	if !ok || val == nil {
-		return fmt.Errorf("title not found in post data")
-	}
-
-	return nil
-}
-
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 	var postData map[string]interface{}
@@ -293,7 +332,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
-	err = isPostDataSane(&postData)
+	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return

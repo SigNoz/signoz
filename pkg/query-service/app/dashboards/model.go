@@ -207,6 +207,21 @@ func (d *Dashboard) UpdateSlug() {
 	d.Slug = SlugifyTitle(title)
 }
 
+func IsPostDataSane(data *map[string]interface{}) error {
+
+	val, ok := (*data)["uuid"]
+	if !ok || val == nil {
+		return fmt.Errorf("uuid not found in post data")
+	}
+
+	val, ok = (*data)["title"]
+	if !ok || val == nil {
+		return fmt.Errorf("title not found in post data")
+	}
+
+	return nil
+}
+
 func SlugifyTitle(title string) string {
 	s := slug.Make(strings.ToLower(title))
 	if s == "" {
