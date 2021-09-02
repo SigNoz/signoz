@@ -28,6 +28,7 @@ module.exports = {
 		// then it will try to find another open port availble.
 		port: portFinderSync.getPort(3000),
 	},
+	target: "web",
 	output: {
 		filename: ({ chunk: { name, hash } }) => {
 			return `js/${name}-${hash}.js`;
