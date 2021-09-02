@@ -6,7 +6,6 @@ export interface Dashboard {
 	created_at: string;
 	updated_at: string;
 	data: DashboardData;
-	title: string;
 }
 
 export interface DashboardData {
@@ -15,4 +14,5 @@ export interface DashboardData {
 	tags?: string[];
 	name: string;
 	widgets: [];
+	title: string;
 }

@@ -28,7 +28,7 @@ const DescriptionOfDashboard = ({
 
 	const [selectedDashboard] = dashboards;
 	const selectedData = selectedDashboard.data;
-	const title = selectedDashboard.title;
+	const title = selectedData.title;
 	const tags = selectedData.tags;
 	const description = selectedData.description;
 
@@ -43,11 +43,11 @@ const DescriptionOfDashboard = ({
 			updateDashboardTitleDescriptionTags({
 				dashboard: {
 					...dashboard,
-					title: updatedTitle,
 					data: {
 						...dashboard.data,
 						description: updatedDescription,
 						tags: updatedTags,
+						title: updatedTitle,
 					},
 				},
 			});

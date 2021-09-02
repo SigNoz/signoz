@@ -11,19 +11,11 @@ export const UpdateDashboardTitleDescriptionTags = ({
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const data = dashboard.data;
-			console.log({
-				...dashboard,
-				title: dashboard.title,
-				data: {
-					...data,
-				},
-			});
+
 			const response = await update({
-				...dashboard,
-				title: dashboard.title,
-				data: {
-					...data,
-				},
+				...dashboard.data,
+				title: dashboard.data.title,
+				uuid: dashboard.uuid,
 			});
 
 			console.log(response);
@@ -33,7 +25,7 @@ export const UpdateDashboardTitleDescriptionTags = ({
 					payload: {
 						description: data.description,
 						tags: data.tags,
-						title: dashboard.title,
+						title: dashboard.data.title,
 					},
 				});
 				dispatch({
