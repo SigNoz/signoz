@@ -121,7 +121,7 @@ func createHTTPServer() (*http.Server, error) {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		// AllowCredentials: true,
-		// AllowedMethods:   []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
 	})
 
 	handler := c.Handler(r)
