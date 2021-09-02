@@ -5,24 +5,6 @@ import (
 	"time"
 )
 
-type ApiError struct {
-	Typ ErrorType
-	Err error
-}
-type ErrorType string
-
-const (
-	ErrorNone           ErrorType = ""
-	ErrorTimeout        ErrorType = "timeout"
-	ErrorCanceled       ErrorType = "canceled"
-	ErrorExec           ErrorType = "execution"
-	ErrorBadData        ErrorType = "bad_data"
-	ErrorInternal       ErrorType = "internal"
-	ErrorUnavailable    ErrorType = "unavailable"
-	ErrorNotFound       ErrorType = "not_found"
-	ErrorNotImplemented ErrorType = "not_implemented"
-)
-
 type InstantQueryMetricsParams struct {
 	Time  time.Time
 	Query string

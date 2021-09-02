@@ -106,7 +106,11 @@ func createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler := NewAPIHandler(&reader, &posthogClient, distinctId)
+	apiHandler, err := NewAPIHandler(&reader, &posthogClient, distinctId)
+	if err != nil {
+		return nil, err
+	}
+
 	r := NewRouter()
 
 	r.Use(analyticsMiddleware)
@@ -117,7 +121,7 @@ func createHTTPServer() (*http.Server, error) {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		// AllowCredentials: true,
-		// AllowedMethods:   []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
 	})
 
 	handler := c.Handler(r)
