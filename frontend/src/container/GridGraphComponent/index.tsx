@@ -8,7 +8,6 @@ const GridGraphComponent = ({
 }: GridGraphComponentProps): JSX.Element | null => {
 	// send the request to get the data from the server
 	if (GRAPH_TYPES === 'Time Series' && data !== undefined) {
-		console.log(data, 'asd');
 		return <Graph type="line" data={data} />;
 	}
 

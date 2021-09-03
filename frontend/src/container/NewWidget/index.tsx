@@ -4,18 +4,22 @@ import React from 'react';
 
 import LeftContainer from './LeftContainer';
 import RightContainer from './RightContainer';
-import { Container } from './styles';
+import {
+	Container,
+	LeftContainerWrapper,
+	RightContainerWrapper,
+} from './styles';
 
 const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 	return (
 		<Container>
-			<Col flex={2.5}>
+			<LeftContainerWrapper flex={2.5}>
 				<LeftContainer selectedGraph={selectedGraph} />
-			</Col>
+			</LeftContainerWrapper>
 
-			<Col flex={1}>
+			<RightContainerWrapper flex={1}>
 				<RightContainer selectedGraph={selectedGraph} />
-			</Col>
+			</RightContainerWrapper>
 		</Container>
 	);
 };
