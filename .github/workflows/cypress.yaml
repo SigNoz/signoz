@@ -2,7 +2,7 @@ name: Cypress e2e tests
 on: [push]
 jobs:
   cypress-run:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       # Install NPM dependencies, cache them correctly
