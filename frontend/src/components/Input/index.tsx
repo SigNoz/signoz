@@ -13,6 +13,7 @@ const InputComponent = ({
 	label,
 	labelOnTop,
 	addonBefore,
+	...props
 }: InputComponentProps): JSX.Element => (
 	<Form.Item labelCol={{ span: labelOnTop ? 24 : 4 }} label={label}>
 		<Input
@@ -25,11 +26,12 @@ const InputComponent = ({
 			addonBefore={addonBefore}
 			onBlur={onBlurHandler}
 			onPressEnter={onPressEnterHandler}
+			{...props}
 		/>
 	</Form.Item>
 );
 
-interface InputComponentProps {
+interface InputComponentProps extends InputProps {
 	value: InputProps['value'];
 	type?: InputProps['type'];
 	onChangeHandler?: React.ChangeEventHandler<HTMLInputElement>;
