@@ -1,0 +1,14 @@
+name: Cypress e2e tests
+on: [push]
+jobs:
+  cypress-run:
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+      # Install NPM dependencies, cache them correctly
+      # and run all Cypress tests
+      - name: run cypress e2e tests
+        uses: cypress-io/github-action@v2.9.7
+        with:
+          start: npm run cypress:run
+          working-directory: frontend
