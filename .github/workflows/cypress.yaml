@@ -12,3 +12,5 @@ jobs:
         with:
           start: npm run cypress:run
           working-directory: frontend
+        env:
+          FRONTEND_API_ENDPOINT: 'http://localhost:8080'
