@@ -1,5 +1,5 @@
 import { Card, Typography } from 'antd';
-import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
+import styled from 'styled-components';
 
 export const Container = styled(Card)`
 	height: 100%;

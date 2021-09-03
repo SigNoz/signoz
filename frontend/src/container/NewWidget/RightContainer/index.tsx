@@ -11,6 +11,8 @@ import InputComponent from 'components/Input';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { useCallback, useState } from 'react';
 
+import timeItems, { timeItem } from './timeItems';
+
 const { TextArea } = Input;
 import { Container, NullButtonContainer, TextContainer, Title } from './styles';
 
@@ -32,6 +34,11 @@ const RightContainer = ({
 		[],
 	);
 
+	const [selectedTime, setSelectedTime] = useState({
+		name: 'Global Time',
+		enum: 'GLOBAL_TIME',
+	});
+
 	const nullValueButtons = [
 		{
 			check: 'zero',
@@ -47,6 +54,16 @@ const RightContainer = ({
 		},
 	];
 
+	const timeMenuItemOnChangeHandler = useCallback(
+		(event: TimeMenuItemOnChangeHandlerEvent) => {
+			const selectedTime = timeItems.find((e) => e.enum === event.key);
+			if (selectedTime !== undefined) {
+				setSelectedTime(selectedTime);
+			}
+		},
+		[],
+	);
+
 	return (
 		<Container>
 			<InputComponent
@@ -54,6 +71,7 @@ const RightContainer = ({
 				label="Panel Type"
 				size="middle"
 				value={selectedGraph}
+				disabled
 			/>
 
 			<Title>Panel Attributes</Title>
@@ -127,13 +145,15 @@ const RightContainer = ({
 				<Dropdown
 					overlay={
 						<Menu>
-							<Menu.Item>
-								<Typography>Global Time</Typography>
-							</Menu.Item>
+							{timeItems.map((item) => (
+								<Menu.Item onClick={timeMenuItemOnChangeHandler} key={item.enum}>
+									<Typography>{item.name}</Typography>
+								</Menu.Item>
+							))}
 						</Menu>
 					}
 				>
-					<Button>asd</Button>
+					<Button>{selectedTime.name}</Button>
 				</Dropdown>
 			</TextContainer>
 		</Container>
@@ -142,6 +162,9 @@ const RightContainer = ({
 
 interface RightContainerProps {
 	selectedGraph: GRAPH_TYPES;
+}
+interface TimeMenuItemOnChangeHandlerEvent {
+	key: timeItem['enum'] | string;
 }
 
 export default RightContainer;
