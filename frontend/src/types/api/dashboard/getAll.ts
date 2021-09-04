@@ -1,3 +1,7 @@
+import { ChartData } from 'chart.js';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+
 export type PayloadProps = Dashboard[];
 
 export interface Dashboard {
@@ -9,10 +13,21 @@ export interface Dashboard {
 }
 
 export interface DashboardData {
-	description: string;
-	opacity: number;
+	description?: string;
 	tags?: string[];
-	name: string;
-	widgets: [];
+	name?: string;
+	widgets?: Widgets[];
 	title: string;
+}
+
+export interface Widgets {
+	isStacked: boolean;
+	id: string;
+	panelTypes: GRAPH_TYPES;
+	title: string;
+	description: string;
+	opacity: string;
+	nullZeroValues: string;
+	timePreferance: timePreferenceType;
+	data?: ChartData;
 }
