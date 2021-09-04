@@ -7,7 +7,6 @@ import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation, useParams } from 'react-router';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import LeftContainer from './LeftContainer';
@@ -40,7 +39,7 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 		return widgets?.find((e) => e.id === widgetId);
 	}, []);
 
-	const selectedWidget = getWidget() as Widgets;
+	const selectedWidget = getWidget();
 
 	const [title, setTitle] = useState<string>(selectedWidget?.title || '');
 	const [description, setDescription] = useState<string>(
