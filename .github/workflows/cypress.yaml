@@ -10,5 +10,9 @@ jobs:
       - name: run cypress e2e tests
         uses: cypress-io/github-action@v2.9.7
         with:
-          start: npm run cypress:run
+          start: yarn dev
+          wait-on: http://localhost:8080/
+          config-file: cypress.json
           working-directory: frontend
+        env:
+          CYPRESS_baseUrl: http://localhost:8080/
