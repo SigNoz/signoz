@@ -14,5 +14,7 @@ jobs:
           wait-on: http://localhost:8080/
           config-file: cypress.json
           working-directory: frontend
+          headless: true
+          browser: chrome
         env:
           CYPRESS_baseUrl: http://localhost:8080/
