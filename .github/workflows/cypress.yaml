@@ -13,4 +13,4 @@ jobs:
           start: npm run cypress:run
           working-directory: frontend
           env: 
-            CYPRESS_baseUrl=http://localhost:8080
+            CYPRESS_baseUrl: http://localhost:8080
