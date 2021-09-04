@@ -28,13 +28,19 @@ export const GetDashboard = ({
 					type: 'CREATE_DEFAULT_WIDGET',
 					payload: {
 						description: '',
-						id: widgetId,
+						id: widgetId || '0',
 						isStacked: false,
 						nullZeroValues: 'zero',
 						opacity: '0',
-						panelTypes: graphType,
+						panelTypes: graphType || 'TIME_SERIES',
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
+						query: [
+							{
+								query: '',
+								legend: '',
+							},
+						],
 					},
 				});
 			} else {
@@ -58,6 +64,6 @@ export const GetDashboard = ({
 
 export interface GetDashboardProps {
 	uuid: Props['uuid'];
-	widgetId: string;
-	graphType: GRAPH_TYPES;
+	widgetId?: string;
+	graphType?: GRAPH_TYPES;
 }

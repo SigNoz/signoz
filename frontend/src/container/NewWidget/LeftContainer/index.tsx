@@ -6,10 +6,14 @@ import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import { NewWidgetProps } from '../index';
+import { timePreferance } from '../RightContainer/timeItems';
 import QuerySection from './QuerySection';
 import { NotFoundContainer, QueryContainer } from './styles';
 
-const LeftContainer = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
+const LeftContainer = ({
+	selectedGraph,
+	selectedTime,
+}: LeftContainerProps): JSX.Element => {
 	const { dashboards, isQueryFired } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -39,10 +43,14 @@ const LeftContainer = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 			</Card>
 
 			<QueryContainer>
-				<QuerySection />
+				<QuerySection selectedTime={selectedTime} />
 			</QueryContainer>
 		</>
 	);
 };
+
+interface LeftContainerProps extends NewWidgetProps {
+	selectedTime: timePreferance;
+}
 
 export default LeftContainer;

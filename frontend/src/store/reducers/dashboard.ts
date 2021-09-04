@@ -1,5 +1,6 @@
 import {
 	CREATE_DEFAULT_WIDGET,
+	CREATE_NEW_QUERY,
 	DashboardActions,
 	DELETE_DASHBOARD_SUCCESS,
 	GET_ALL_DASHBOARD_ERROR,
@@ -131,7 +132,66 @@ const dashboard = (
 						...selectedDashboard,
 						data: {
 							...data,
-							widgets: [...(widgets || []), { ...defaultWidget }],
+							widgets: [
+								...(widgets || []),
+								{
+									...defaultWidget,
+									query: [
+										{
+											query: '',
+											legend: '',
+										},
+									],
+								},
+							],
+						},
+					},
+				],
+			};
+		}
+
+		case CREATE_NEW_QUERY: {
+			const [selectedDashboard] = state.dashboards;
+
+			const data = selectedDashboard.data;
+			const widgets = data.widgets;
+			const selectedWidgetId = action.payload.widgetId;
+			const selectedWidgetIndex = data.widgets?.findIndex(
+				(e) => e.id === selectedWidgetId,
+			);
+
+			const preWidget = data.widgets?.slice(0, selectedWidgetIndex);
+			const afterWidget = data.widgets?.slice(
+				selectedWidgetIndex || 0 + 1, // this is never undefined
+				widgets?.length,
+			);
+
+			const selectedWidget = data.widgets?.find((e) => e.id === selectedWidgetId);
+
+			// this condition will never run as there will a widget with this widgetId
+			if (selectedWidget === undefined) {
+				return {
+					...state,
+				};
+			}
+
+			const newQuery = [...selectedWidget.query, { query: '', legend: '' }];
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...(preWidget || []),
+								{
+									...selectedWidget,
+									query: newQuery,
+								},
+								...(afterWidget || []),
+							],
 						},
 					},
 				],

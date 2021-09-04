@@ -1,10 +1,13 @@
 import { Divider } from 'antd';
+import getQuery from 'api/widgets/getQuery';
 import Input from 'components/Input';
-import React, { useCallback, useState } from 'react';
+import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
+import getStartAndEndTime from 'lib/getStartAndEndTime';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Container, InputContainer } from './styles';
 
-const Query = (): JSX.Element => {
+const Query = ({ selectedTime }: QueryProps): JSX.Element => {
 	const [promqlQuery, setPromqlQuery] = useState('');
 	const [legendFormat, setLegendFormat] = useState('');
 
@@ -16,7 +19,19 @@ const Query = (): JSX.Element => {
 	);
 
 	const onBlurHandler = useCallback(() => {
+		const { end, start } = getStartAndEndTime({
+			type: selectedTime.enum,
+		});
 		// this is the place we need to fire the query
+	}, []);
+
+	const counter = useRef(0);
+
+	useEffect(() => {
+		if (counter.current === 0) {
+			counter.current = 1;
+			onBlurHandler();
+		}
 	}, []);
 
 	return (
@@ -47,5 +62,9 @@ const Query = (): JSX.Element => {
 		</Container>
 	);
 };
+
+interface QueryProps {
+	selectedTime: timePreferance;
+}
 
 export default Query;

@@ -34,6 +34,7 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 	const query = new URLSearchParams(search);
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+
 	const getWidget = useCallback(() => {
 		const widgetId = query.get('widgetId');
 		return widgets?.find((e) => e.id === widgetId);
@@ -51,6 +52,7 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget.nullZeroValues,
 	);
+
 	const getSelectedTime = useCallback(() => {
 		return timeItems.find((e) => e.enum === selectedWidget.timePreferance);
 	}, []);
@@ -82,7 +84,7 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={2.5}>
-					<LeftContainer selectedGraph={selectedGraph} />
+					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} />
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>

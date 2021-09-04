@@ -30,4 +30,10 @@ export interface Widgets {
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
 	data?: ChartData;
+	query: Query[];
+}
+
+interface Query {
+	query: string;
+	legend?: string;
 }

@@ -5,10 +5,9 @@ import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GetDashboard } from 'store/actions/dashboard';
+import { GetDashboard, GetDashboardProps } from 'store/actions/dashboard';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Props } from 'types/api/dashboard/get';
 import DashboardReducer from 'types/reducer/dashboards';
 
 const NewDashboardPage = ({ getDashboard }: NewDashboardProps): JSX.Element => {
@@ -41,7 +40,9 @@ interface Params {
 }
 
 interface DispatchProps {
-	getDashboard: ({ uuid }: Props) => (dispatch: Dispatch<AppActions>) => void;
+	getDashboard: (
+		props: GetDashboardProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

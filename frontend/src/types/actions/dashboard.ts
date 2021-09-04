@@ -22,6 +22,8 @@ export const DELETE_DASHBOARD_ERROR = 'DELETE_DASHBOARD_ERROR';
 
 export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
 
+export const CREATE_NEW_QUERY = 'CREATE_NEW_QUERY';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -59,6 +61,13 @@ interface CreateDefaultWidget {
 	payload: Widgets;
 }
 
+interface CreateNewQuery {
+	type: typeof CREATE_NEW_QUERY;
+	payload: {
+		widgetId: string;
+	};
+}
+
 interface DashboardError {
 	type:
 		| typeof GET_ALL_DASHBOARD_ERROR
@@ -73,7 +82,7 @@ interface DashboardError {
 interface UpdateDashboardTitle {
 	type: typeof UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS;
 	payload: {
-		title: Dashboard['title'];
+		title: Dashboard['data']['title'];
 		description: Dashboard['data']['description'];
 		tags: Dashboard['data']['tags'];
 	};
@@ -93,4 +102,5 @@ export type DashboardActions =
 	| GetDashboardSuccess
 	| UpdateDashboardTitle
 	| ToggleEditMode
-	| CreateDefaultWidget;
+	| CreateDefaultWidget
+	| CreateNewQuery;
