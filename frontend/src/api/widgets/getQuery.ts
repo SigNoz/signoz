@@ -1,5 +1,6 @@
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/widgets/getQuery';
 

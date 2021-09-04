@@ -7,8 +7,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Container, InputContainer } from './styles';
 
-const Query = ({ selectedTime }: QueryProps): JSX.Element => {
-	const [promqlQuery, setPromqlQuery] = useState('');
+const Query = ({ selectedTime, currentIndex }: QueryProps): JSX.Element => {
+	const [promqlQuery, setPromqlQuery] = useState('system_memory_usage_total');
 	const [legendFormat, setLegendFormat] = useState('');
 
 	const onChangeHandler = useCallback(
@@ -18,17 +18,30 @@ const Query = ({ selectedTime }: QueryProps): JSX.Element => {
 		[],
 	);
 
-	const onBlurHandler = useCallback(() => {
-		const { end, start } = getStartAndEndTime({
-			type: selectedTime.enum,
-		});
-		// this is the place we need to fire the query
+	const onBlurHandler = useCallback(async () => {
+		try {
+			const { end, start } = getStartAndEndTime({
+				type: selectedTime.enum,
+			});
+
+			// this is the place we need to fire the query
+			const response = await getQuery({
+				start,
+				end,
+				query: promqlQuery,
+				step: '30',
+			});
+
+			console.log(response.payload?.result);
+		} catch (error) {
+			// set Error
+		}
 	}, []);
 
 	const counter = useRef(0);
 
 	useEffect(() => {
-		if (counter.current === 0) {
+		if (counter.current === 0 && promqlQuery.length !== 0) {
 			counter.current = 1;
 			onBlurHandler();
 		}
@@ -65,6 +78,7 @@ const Query = ({ selectedTime }: QueryProps): JSX.Element => {
 
 interface QueryProps {
 	selectedTime: timePreferance;
+	currentIndex: number;
 }
 
 export default Query;

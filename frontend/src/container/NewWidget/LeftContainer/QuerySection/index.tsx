@@ -24,7 +24,6 @@ const QuerySection = ({
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
 	const widgets = selectedDashboards.data.widgets;
-	console.log({ dashboards });
 
 	const urlQuery = new URLSearchParams(search);
 
@@ -35,7 +34,7 @@ const QuerySection = ({
 
 	const selectedWidget = getWidget() as Widgets;
 
-	const { query } = selectedWidget;
+	const { query = [] } = selectedWidget || {};
 
 	const queryOnClickHandler = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
@@ -48,7 +47,11 @@ const QuerySection = ({
 	return (
 		<div>
 			{query.map((e, index) => (
-				<Query selectedTime={selectedTime} key={e.query + index} />
+				<Query
+					currentIndex={index}
+					selectedTime={selectedTime}
+					key={e.query + index}
+				/>
 			))}
 
 			<QueryButton onClick={queryOnClickHandler} icon={<PlusOutlined />}>

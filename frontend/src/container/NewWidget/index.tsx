@@ -42,24 +42,28 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 
 	const selectedWidget = getWidget() as Widgets;
 
-	const [title, setTitle] = useState<string>(selectedWidget.title);
+	const [title, setTitle] = useState<string>(selectedWidget?.title || '');
 	const [description, setDescription] = useState<string>(
-		selectedWidget.description,
+		selectedWidget?.description || '',
 	);
 
-	const [stacked, setStacked] = useState<boolean>(selectedWidget.isStacked);
-	const [opacity, setOpacity] = useState<string>(selectedWidget.opacity);
+	const [stacked, setStacked] = useState<boolean>(
+		selectedWidget?.isStacked || false,
+	);
+	const [opacity, setOpacity] = useState<string>(selectedWidget?.opacity || '1');
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
-		selectedWidget.nullZeroValues,
+		selectedWidget?.nullZeroValues || 'zero',
 	);
 
 	const getSelectedTime = useCallback(() => {
-		return timeItems.find((e) => e.enum === selectedWidget.timePreferance);
+		return timeItems.find(
+			(e) => e.enum === (selectedWidget?.timePreferance || 'GLOBAL_TIME'),
+		);
 	}, []);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
-		enum: selectedWidget.timePreferance,
+		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
 	const onClickApplyHandler = useCallback(() => {

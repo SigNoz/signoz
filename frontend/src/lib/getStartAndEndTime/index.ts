@@ -20,8 +20,8 @@ const getStartAndEndTime = ({ type }: GetStartAndEndTimeProps): Payload => {
 	}
 
 	return {
-		start: globalTime.minTime.toString(),
-		end: globalTime.maxTime.toString(),
+		start: getMicroSeconds({ time: globalTime.minTime / 10000000 }),
+		end: getMicroSeconds({ time: globalTime.maxTime / 10000000 }),
 	};
 };
 

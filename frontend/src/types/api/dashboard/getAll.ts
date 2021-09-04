@@ -2,6 +2,8 @@ import { ChartData } from 'chart.js';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 
+import { QueryData } from '../widgets/getQuery';
+
 export type PayloadProps = Dashboard[];
 
 export interface Dashboard {
@@ -31,6 +33,7 @@ export interface Widgets {
 	timePreferance: timePreferenceType;
 	data?: ChartData;
 	query: Query[];
+	queryData: QueryData[];
 }
 
 interface Query {
