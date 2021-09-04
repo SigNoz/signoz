@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/widgets/getQuery';
 
-const getQueryData = async (
+const getQuery = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
@@ -22,4 +22,4 @@ const getQueryData = async (
 	}
 };
 
-export default getQueryData;
+export default getQuery;
