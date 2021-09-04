@@ -7,9 +7,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posthog/posthog-go"
 	"github.com/prometheus/prometheus/promql"
+	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -35,11 +38,12 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
+	db         *sqlx.DB
 	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHandler {
+func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:     reader,
@@ -47,7 +51,17 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) *APIHa
 		distinctId: distinctId,
 	}
 	aH.ready = aH.testReady
-	return aH
+
+	err := dashboards.InitDB("signoz.db")
+	if err != nil {
+		return nil, err
+	}
+
+	errReadingDashboards := dashboards.LoadDashboardFiles()
+	if errReadingDashboards != nil {
+		return nil, errReadingDashboards
+	}
+	return aH, nil
 }
 
 type structuredResponse struct {
@@ -159,6 +173,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.getDashboard).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.updateDashboard).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.deleteDashboard).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
@@ -176,6 +196,157 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+}
+
+func Intersection(a, b []int) (c []int) {
+	m := make(map[int]bool)
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; ok {
+			c = append(c, item)
+		}
+	}
+	return
+}
+
+func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
+
+	allDashboards, err := dashboards.GetDashboards()
+
+	if err != nil {
+		aH.respondError(w, err, nil)
+		return
+	}
+	tagsFromReq, ok := r.URL.Query()["tags"]
+	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
+		aH.respond(w, &allDashboards)
+		return
+	}
+
+	tags2Dash := make(map[string][]int)
+	for i := 0; i < len(*allDashboards); i++ {
+		tags, ok := (*allDashboards)[i].Data["tags"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		tagsArray := make([]string, len(tags))
+		for i, v := range tags {
+			tagsArray[i] = v.(string)
+		}
+
+		for _, tag := range tagsArray {
+			tags2Dash[tag] = append(tags2Dash[tag], i)
+		}
+
+	}
+
+	inter := make([]int, len(*allDashboards))
+	for i := range inter {
+		inter[i] = i
+	}
+
+	for _, tag := range tagsFromReq {
+		inter = Intersection(inter, tags2Dash[tag])
+	}
+
+	filteredDashboards := []dashboards.Dashboard{}
+	for _, val := range inter {
+		dash := (*allDashboards)[val]
+		filteredDashboards = append(filteredDashboards, dash)
+	}
+
+	aH.respond(w, &filteredDashboards)
+
+}
+func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
+
+	uuid := mux.Vars(r)["uuid"]
+	err := dashboards.DeleteDashboard(uuid)
+
+	if err != nil {
+		aH.respondError(w, err, nil)
+		return
+	}
+
+	aH.respond(w, nil)
+
+}
+
+func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
+
+	uuid := mux.Vars(r)["uuid"]
+
+	var postData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
+	err = dashboards.IsPostDataSane(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
+
+	if postData["uuid"] != uuid {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
+		return
+	}
+
+	dashboard, apiError := dashboards.UpdateDashboard(&postData)
+
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	aH.respond(w, dashboard)
+
+}
+
+func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
+
+	uuid := mux.Vars(r)["uuid"]
+
+	dashboard, apiError := dashboards.GetDashboard(uuid)
+
+	if apiError != nil {
+		aH.respondError(w, apiError, nil)
+		return
+	}
+
+	aH.respond(w, dashboard)
+
+}
+
+func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
+
+	var postData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		return
+	}
+	err = dashboards.IsPostDataSane(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		return
+	}
+
+	dash, apiErr := dashboards.CreateDashboard(&postData)
+
+	if apiErr != nil {
+		aH.respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.respond(w, dash)
+
 }
 
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
