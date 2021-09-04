@@ -1,5 +1,6 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/dashboard/getAll';
 
@@ -16,7 +17,7 @@ const getAll = async (): Promise<
 			payload: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error);
+		return ErrorResponseHandler(error as AxiosError);
 	}
 };
 

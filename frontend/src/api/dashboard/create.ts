@@ -1,5 +1,6 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/dashboard/create';
 
@@ -18,7 +19,7 @@ const create = async (
 			payload: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error);
+		return ErrorResponseHandler(error as AxiosError);
 	}
 };
 

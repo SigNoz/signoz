@@ -1,5 +1,6 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Props } from 'types/api/dashboard/delete';
 
@@ -16,7 +17,7 @@ const deleteDashboard = async (
 			payload: response.data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error);
+		return ErrorResponseHandler(error as AxiosError);
 	}
 };
 
