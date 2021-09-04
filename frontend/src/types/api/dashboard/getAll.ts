@@ -33,7 +33,12 @@ export interface Widgets {
 	timePreferance: timePreferenceType;
 	data?: ChartData;
 	query: Query[];
-	queryData: QueryData[];
+	queryData: {
+		loading: boolean;
+		error: boolean;
+		errorMessage: string;
+		data: QueryData[];
+	};
 }
 
 interface Query {

@@ -4,12 +4,32 @@ import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { connect } from 'react-redux';
+import { useLocation } from 'react-router';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import {
+	QueryError,
+	QueryErrorProps,
+	QuerySuccess,
+	QuerySuccessProps,
+} from 'store/actions';
+import AppActions from 'types/actions';
 
 import { Container, InputContainer } from './styles';
 
-const Query = ({ selectedTime, currentIndex }: QueryProps): JSX.Element => {
-	const [promqlQuery, setPromqlQuery] = useState('system_memory_usage_total');
+const Query = ({
+	selectedTime,
+	currentIndex,
+	queryError,
+	querySuccess,
+}: QueryProps): JSX.Element => {
+	const [promqlQuery, setPromqlQuery] = useState('');
 	const [legendFormat, setLegendFormat] = useState('');
+	const { search } = useLocation();
+
+	const query = new URLSearchParams(search);
+	const widgetId = query.get('widgetId');
 
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -19,29 +39,40 @@ const Query = ({ selectedTime, currentIndex }: QueryProps): JSX.Element => {
 	);
 
 	const onBlurHandler = useCallback(async () => {
-		try {
-			const { end, start } = getStartAndEndTime({
-				type: selectedTime.enum,
-			});
+		if (promqlQuery.length !== 0) {
+			try {
+				const { end, start } = getStartAndEndTime({
+					type: selectedTime.enum,
+				});
 
-			// this is the place we need to fire the query
-			const response = await getQuery({
-				start,
-				end,
-				query: promqlQuery,
-				step: '30',
-			});
+				// this is the place we need to fire the query
+				const response = await getQuery({
+					start: start.slice(2),
+					end,
+					query: promqlQuery,
+					step: '30',
+				});
 
-			console.log(response.payload?.result);
-		} catch (error) {
-			// set Error
+				if (response.statusCode === 200) {
+					querySuccess({ data: response.payload.result });
+				} else {
+					if (response.error !== null) {
+						queryError({
+							errorMessage: response.error,
+							widgetId: widgetId || '',
+						});
+					}
+				}
+			} catch (error) {
+				// set Error
+			}
 		}
-	}, []);
+	}, [promqlQuery]);
 
 	const counter = useRef(0);
 
 	useEffect(() => {
-		if (counter.current === 0 && promqlQuery.length !== 0) {
+		if (counter.current === 0) {
 			counter.current = 1;
 			onBlurHandler();
 		}
@@ -76,9 +107,25 @@ const Query = ({ selectedTime, currentIndex }: QueryProps): JSX.Element => {
 	);
 };
 
-interface QueryProps {
+interface DispatchProps {
+	querySuccess: ({
+		data,
+	}: QuerySuccessProps) => (dispatch: Dispatch<AppActions>) => void;
+	queryError: ({
+		errorMessage,
+	}: QueryErrorProps) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	querySuccess: bindActionCreators(QuerySuccess, dispatch),
+	queryError: bindActionCreators(QueryError, dispatch),
+});
+
+interface QueryProps extends DispatchProps {
 	selectedTime: timePreferance;
 	currentIndex: number;
 }
 
-export default Query;
+export default connect(null, mapDispatchToProps)(Query);

@@ -8,7 +8,7 @@ export interface QueryData {
 		__name__: string;
 		state: string;
 	};
-	values: [string, string][];
+	values: [number, string][];
 }
 
 export interface Props {

@@ -54,11 +54,13 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 		selectedWidget?.nullZeroValues || 'zero',
 	);
 
-	const getSelectedTime = useCallback(() => {
-		return timeItems.find(
-			(e) => e.enum === (selectedWidget?.timePreferance || 'GLOBAL_TIME'),
-		);
-	}, []);
+	const getSelectedTime = useCallback(
+		() =>
+			timeItems.find(
+				(e) => e.enum === (selectedWidget?.timePreferance || 'GLOBAL_TIME'),
+			),
+		[],
+	);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',

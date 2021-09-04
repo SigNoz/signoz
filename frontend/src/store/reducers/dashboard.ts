@@ -9,6 +9,7 @@ import {
 	GET_DASHBOARD_ERROR,
 	GET_DASHBOARD_LOADING_START,
 	GET_DASHBOARD_SUCCESS,
+	QUERY_ERROR,
 	TOGGLE_EDIT_MODE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
@@ -166,7 +167,7 @@ const dashboard = (
 				widgets?.length,
 			);
 
-			const selectedWidget = data.widgets?.find((e) => e.id === selectedWidgetId);
+			const selectedWidget = (data.widgets || [])[selectedWidgetIndex || 0];
 
 			// this condition will never run as there will a widget with this widgetId
 			if (selectedWidget === undefined) {
@@ -189,6 +190,51 @@ const dashboard = (
 								{
 									...selectedWidget,
 									query: newQuery,
+								},
+								...(afterWidget || []),
+							],
+						},
+					},
+				],
+			};
+		}
+
+		case QUERY_ERROR: {
+			const { widgetId, errorMessage } = action.payload;
+
+			const [selectedDashboard] = state.dashboards;
+			const data = selectedDashboard.data;
+
+			const selectedWidgetIndex = data.widgets?.findIndex(
+				(e) => e.id === widgetId,
+			);
+			const widgets = data.widgets;
+
+			const preWidget = data.widgets?.slice(0, selectedWidgetIndex);
+			const afterWidget = data.widgets?.slice(
+				selectedWidgetIndex || 0 + 1, // this is never undefined
+				widgets?.length,
+			);
+			const selectedWidget = (selectedDashboard.data.widgets || [])[
+				selectedWidgetIndex || 0
+			];
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...(preWidget || []),
+								{
+									...selectedWidget,
+									queryData: {
+										...selectedWidget.queryData,
+										error: true,
+										errorMessage,
+									},
 								},
 								...(afterWidget || []),
 							],

@@ -23,7 +23,7 @@ export const ErrorResponseHandler = (error: AxiosError): ErrorResponse => {
 			return {
 				statusCode,
 				payload: null,
-				error: data.error.message,
+				error: data.error,
 				message: null,
 			};
 		}

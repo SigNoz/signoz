@@ -1,4 +1,5 @@
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
 export const UPDATE_DASHBOARD = 'UPDATE_DASHBOARD';
@@ -23,6 +24,8 @@ export const DELETE_DASHBOARD_ERROR = 'DELETE_DASHBOARD_ERROR';
 export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
 
 export const CREATE_NEW_QUERY = 'CREATE_NEW_QUERY';
+export const QUERY_SUCCESS = 'QUERY_SUCCESS';
+export const QUERY_ERROR = 'QUERY_ERROR';
 
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
@@ -92,6 +95,24 @@ interface ToggleEditMode {
 	type: typeof TOGGLE_EDIT_MODE;
 }
 
+interface QuerySuccess {
+	type: typeof QUERY_SUCCESS;
+	payload: {
+		data: QueryData[];
+		query: string;
+		legend: string;
+		queryIndex: string;
+	};
+}
+
+interface QueryError {
+	type: typeof QUERY_ERROR;
+	payload: {
+		errorMessage: string;
+		widgetId: string;
+	};
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -103,4 +124,6 @@ export type DashboardActions =
 	| UpdateDashboardTitle
 	| ToggleEditMode
 	| CreateDefaultWidget
-	| CreateNewQuery;
+	| CreateNewQuery
+	| QuerySuccess
+	| QueryError;
