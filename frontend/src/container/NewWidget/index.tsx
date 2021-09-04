@@ -4,10 +4,15 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import updateUrl from 'lib/updateUrl';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import React, { useCallback, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import { useSelector } from 'react-redux';
+import { useHistory, useLocation, useParams } from 'react-router';
+import { AppState } from 'store/reducers';
+import { Widgets } from 'types/api/dashboard/getAll';
+import DashboardReducer from 'types/reducer/dashboards';
 
 import LeftContainer from './LeftContainer';
 import RightContainer from './RightContainer';
+import timeItems, { timePreferance } from './RightContainer/timeItems';
 import {
 	ButtonContainer,
 	Container,
@@ -17,23 +22,50 @@ import {
 } from './styles';
 
 const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
-	const { push } = useHistory();
-	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+	const [selectedDashboard] = dashboards;
 
-	const [title, setTitle] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
-	const [stacked, setStacked] = useState<boolean>(false);
-	const [opacity, setOpacity] = useState<string>('');
-	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
-		'zero',
+	const widgets = selectedDashboard.data.widgets;
+
+	const { push } = useHistory();
+	const { search } = useLocation();
+	const query = new URLSearchParams(search);
+
+	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	const getWidget = useCallback(() => {
+		const widgetId = query.get('widgetId');
+		return widgets?.find((e) => e.id === widgetId);
+	}, []);
+
+	const selectedWidget = getWidget() as Widgets;
+
+	const [title, setTitle] = useState<string>(selectedWidget.title);
+	const [description, setDescription] = useState<string>(
+		selectedWidget.description,
 	);
 
+	const [stacked, setStacked] = useState<boolean>(selectedWidget.isStacked);
+	const [opacity, setOpacity] = useState<string>(selectedWidget.opacity);
+	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
+		selectedWidget.nullZeroValues,
+	);
+	const getSelectedTime = useCallback(() => {
+		return timeItems.find((e) => e.enum === selectedWidget.timePreferance);
+	}, []);
+
+	const [selectedTime, setSelectedTime] = useState<timePreferance>({
+		name: getSelectedTime()?.name || '',
+		enum: selectedWidget.timePreferance,
+	});
+
 	const onClickApplyHandler = useCallback(() => {
-		console.log('asd');
+		// update the global state
 	}, []);
 
 	const onClickSaveHandler = useCallback(() => {
-		console.log('asd');
+		// on fire the PUT request which update the dashboard and onClickDiscardHandler
 	}, []);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -67,6 +99,8 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
 							selectedGraph,
+							setSelectedTime,
+							selectedTime,
 						}}
 					/>
 				</RightContainerWrapper>

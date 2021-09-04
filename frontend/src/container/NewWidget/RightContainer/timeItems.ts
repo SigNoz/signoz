@@ -1,4 +1,4 @@
-const timeItems: timeItem[] = [
+export const timeItems: timePreferance[] = [
 	{
 		name: 'Global Time',
 		enum: 'GLOBAL_TIME',
@@ -33,18 +33,20 @@ const timeItems: timeItem[] = [
 	},
 ];
 
-export interface timeItem {
+export interface timePreferance {
 	name: string;
-	enum:
-		| GLOBAL_TIME
-		| LAST_5_MIN
-		| LAST_15_MIN
-		| LAST_30_MIN
-		| LAST_1_HR
-		| LAST_6_HR
-		| LAST_1_DAY
-		| LAST_1_WEEK;
+	enum: timePreferenceType;
 }
+
+export type timePreferenceType =
+	| GLOBAL_TIME
+	| LAST_5_MIN
+	| LAST_15_MIN
+	| LAST_30_MIN
+	| LAST_1_HR
+	| LAST_6_HR
+	| LAST_1_DAY
+	| LAST_1_WEEK;
 
 type GLOBAL_TIME = 'GLOBAL_TIME';
 type LAST_5_MIN = 'LAST_5_MIN';

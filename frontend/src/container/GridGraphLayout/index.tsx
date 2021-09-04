@@ -1,10 +1,11 @@
-import ROUTES from 'constants/routes';
-import GraphComponent from 'container/GridGraphComponent';
+import GraphComponent, {
+	GridGraphComponentProps,
+} from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import updateUrl from 'lib/updateUrl';
 import React, { useCallback, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useHistory, useLocation } from 'react-router-dom';
+import { v4 } from 'uuid';
 
 import { Card, ReactGridLayout } from './styles';
 
@@ -44,7 +45,8 @@ const GridGraph = (): JSX.Element => {
 			event.preventDefault();
 			if (event.dataTransfer) {
 				const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
-				push(`${pathname}/new?graphType=${graphType}`);
+				const generateWidgetId = v4();
+				push(`${pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`);
 			}
 		},
 		[],
@@ -63,11 +65,11 @@ const GridGraph = (): JSX.Element => {
 			isBounded
 			onDrop={onDropHandler}
 		>
-			{layouts.map(({ Component, ...rest }) => {
+			{layouts.map(({ Component, GraphTypes, ...rest }) => {
 				return (
 					<div key={rest.i} data-grid={rest}>
 						<Card>
-							<Component />
+							<Component GRAPH_TYPES={GraphTypes} />
 						</Card>
 					</div>
 				);
@@ -77,7 +79,11 @@ const GridGraph = (): JSX.Element => {
 };
 
 interface LayoutProps extends Layout {
-	Component: () => JSX.Element;
+	Component: ({
+		GRAPH_TYPES,
+		data,
+	}: GridGraphComponentProps) => JSX.Element | null;
+	GraphTypes: GRAPH_TYPES;
 }
 
 export default GridGraph;

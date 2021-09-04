@@ -9,14 +9,14 @@ export const Container = styled(Card)`
 `;
 
 interface TitleProps {
-	textLighter?: boolean;
+	light?: string;
 }
 
 export const Title = styled(Typography)<TitleProps>`
 	&&& {
 		margin-top: 0.5rem;
 		margin-bottom: 1rem;
-		font-weight: ${({ textLighter }): string => (textLighter ? 'none' : 'bold')};
+		font-weight: ${({ light }): string => (light === 'true' ? 'none' : 'bold')};
 	}
 `;
 

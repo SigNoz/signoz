@@ -12,10 +12,10 @@ const DashboardGraphSlider = (): JSX.Element => {
 	);
 	return (
 		<Container>
-			{menuItems.map(({ name, Icon }) => (
+			{menuItems.map(({ name, Icon, display }) => (
 				<Card id={name} onDragStart={onDragStartHandler} key={name} draggable>
 					<Icon />
-					<Text>{name}</Text>
+					<Text>{display}</Text>
 				</Card>
 			))}
 		</Container>

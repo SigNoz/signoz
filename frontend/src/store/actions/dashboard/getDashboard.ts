@@ -1,11 +1,14 @@
 import getDashboard from 'api/dashboard/get';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
 
 export const GetDashboard = ({
 	uuid,
-}: Props): ((dispatch: Dispatch<AppActions>) => void) => {
+	widgetId,
+	graphType,
+}: GetDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			dispatch({
@@ -20,6 +23,19 @@ export const GetDashboard = ({
 				dispatch({
 					payload: response.payload,
 					type: 'GET_DASHBOARD_SUCCESS',
+				});
+				dispatch({
+					type: 'CREATE_DEFAULT_WIDGET',
+					payload: {
+						description: '',
+						id: widgetId,
+						isStacked: false,
+						nullZeroValues: 'zero',
+						opacity: '0',
+						panelTypes: graphType,
+						timePreferance: 'GLOBAL_TIME',
+						title: '',
+					},
 				});
 			} else {
 				dispatch({
@@ -39,3 +55,9 @@ export const GetDashboard = ({
 		}
 	};
 };
+
+export interface GetDashboardProps {
+	uuid: Props['uuid'];
+	widgetId: string;
+	graphType: GRAPH_TYPES;
+}

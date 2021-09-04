@@ -1,4 +1,5 @@
 import {
+	CREATE_DEFAULT_WIDGET,
 	DashboardActions,
 	DELETE_DASHBOARD_SUCCESS,
 	GET_ALL_DASHBOARD_ERROR,
@@ -90,10 +91,10 @@ const dashboard = (
 						id: dashboard.id,
 						updated_at: dashboard.updated_at,
 						uuid: dashboard.uuid,
-						title,
 						data: {
 							...dashboardData,
 							tags,
+							title,
 							description,
 						},
 					},
@@ -114,6 +115,29 @@ const dashboard = (
 				dashboards: state.dashboards.filter((e) => e.uuid !== action.payload.uuid),
 			};
 		}
+
+		// NOTE: this action will will be dispatched in the single dashboard only
+		case CREATE_DEFAULT_WIDGET: {
+			const [selectedDashboard] = state.dashboards;
+
+			const data = selectedDashboard.data;
+			const widgets = data.widgets;
+			const defaultWidget = action.payload;
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [...(widgets || []), { ...defaultWidget }],
+						},
+					},
+				],
+			};
+		}
+
 		default:
 			return state;
 	}

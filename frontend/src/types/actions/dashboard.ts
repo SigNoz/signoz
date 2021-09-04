@@ -1,4 +1,4 @@
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
 export const UPDATE_DASHBOARD = 'UPDATE_DASHBOARD';
@@ -19,6 +19,8 @@ export const TOGGLE_EDIT_MODE = 'TOGGLE_EDIT_MODE';
 
 export const DELETE_DASHBOARD_SUCCESS = 'DELETE_DASHBOARD_SUCCESS';
 export const DELETE_DASHBOARD_ERROR = 'DELETE_DASHBOARD_ERROR';
+
+export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
 
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
@@ -50,6 +52,11 @@ interface GetAllDashboardSuccess {
 interface GetDashboardSuccess {
 	type: typeof GET_DASHBOARD_SUCCESS;
 	payload: Dashboard;
+}
+
+interface CreateDefaultWidget {
+	type: typeof CREATE_DEFAULT_WIDGET;
+	payload: Widgets;
 }
 
 interface DashboardError {
@@ -85,4 +92,5 @@ export type DashboardActions =
 	| DashboardStart
 	| GetDashboardSuccess
 	| UpdateDashboardTitle
-	| ToggleEditMode;
+	| ToggleEditMode
+	| CreateDefaultWidget;

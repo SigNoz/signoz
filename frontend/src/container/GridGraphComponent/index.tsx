@@ -7,18 +7,18 @@ const GridGraphComponent = ({
 	data,
 }: GridGraphComponentProps): JSX.Element | null => {
 	// send the request to get the data from the server
-	if (GRAPH_TYPES === 'Time Series' && data !== undefined) {
+	if (GRAPH_TYPES === 'TIME_SERIES' && data !== undefined) {
 		return <Graph type="line" data={data} />;
 	}
 
-	if (GRAPH_TYPES === 'Value') {
+	if (GRAPH_TYPES === 'VALUE') {
 		return <div>asd</div>;
 	}
 
 	return null;
 };
 
-interface GridGraphComponentProps {
+export interface GridGraphComponentProps {
 	GRAPH_TYPES: GRAPH_TYPES;
 	data?: Chart.ChartData;
 }

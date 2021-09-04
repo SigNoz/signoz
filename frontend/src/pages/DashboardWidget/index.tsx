@@ -4,15 +4,14 @@ import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import NewWidget from 'container/NewWidget';
 import updateUrl from 'lib/updateUrl';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GetDashboard } from 'store/actions';
+import { GetDashboard, GetDashboardProps } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Props as GetDashboardProps } from 'types/api/dashboard/get';
 import DashboardReducer from 'types/reducer/dashboards';
 
 const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
@@ -37,13 +36,28 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 		}
 	}, []);
 
-	useEffect(() => {
-		getDashboard({
-			uuid: dashboardId,
-		});
-	}, []);
+	const counter = useRef(0);
 
-	if (selectedGraph === undefined || loading || dashboards.length === 0) {
+	useEffect(() => {
+		const params = new URLSearchParams(search);
+		const widgetId = params.get('widgetId');
+
+		if (counter.current === 0 && selectedGraph && widgetId !== null) {
+			counter.current = 1;
+			getDashboard({
+				uuid: dashboardId,
+				graphType: selectedGraph,
+				widgetId,
+			});
+		}
+	}, [selectedGraph]);
+
+	if (
+		selectedGraph === undefined ||
+		loading ||
+		dashboards.length === 0 ||
+		dashboards[0].data.widgets === undefined
+	) {
 		return <Spinner tip="Loading.." />;
 	}
 
@@ -60,12 +74,13 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 
 export interface DashboardWidgetPageParams {
 	dashboardId: string;
-	widgetId: string;
 }
 
 interface DispatchProps {
 	getDashboard: ({
 		uuid,
+		widgetId,
+		graphType,
 	}: GetDashboardProps) => (dispatch: Dispatch<AppActions>) => void;
 }
 

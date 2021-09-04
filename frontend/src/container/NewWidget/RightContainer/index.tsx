@@ -9,15 +9,15 @@ import {
 } from 'antd';
 import InputComponent from 'components/Input';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import React, { useCallback, useState } from 'react';
+import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import React, { useCallback } from 'react';
 
-import timeItems, { timeItem } from './timeItems';
+import timeItems, { timePreferance, timePreferenceType } from './timeItems';
 
 const { TextArea } = Input;
 import { Container, NullButtonContainer, TextContainer, Title } from './styles';
 
 const RightContainer = ({
-	selectedGraph,
 	description,
 	opacity,
 	selectedNullZeroValue,
@@ -28,6 +28,9 @@ const RightContainer = ({
 	setTitle,
 	stacked,
 	title,
+	selectedGraph,
+	setSelectedTime,
+	selectedTime,
 }: RightContainerProps): JSX.Element => {
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -35,11 +38,6 @@ const RightContainer = ({
 		},
 		[],
 	);
-
-	const [selectedTime, setSelectedTime] = useState({
-		name: 'Global Time',
-		enum: 'GLOBAL_TIME',
-	});
 
 	const nullValueButtons = [
 		{
@@ -66,13 +64,16 @@ const RightContainer = ({
 		[],
 	);
 
+	const selectedGraphType =
+		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
+
 	return (
 		<Container>
 			<InputComponent
 				labelOnTop
 				label="Panel Type"
 				size="middle"
-				value={selectedGraph}
+				value={selectedGraphType}
 				disabled
 			/>
 
@@ -89,7 +90,7 @@ const RightContainer = ({
 				value={title}
 			/>
 
-			<Title textLighter>Description</Title>
+			<Title light={'true'}>Description</Title>
 
 			<TextArea
 				placeholder="Write something describing the  panel"
@@ -111,7 +112,7 @@ const RightContainer = ({
 				/>
 			</TextContainer>
 
-			<Title textLighter>Fill Opacity: </Title>
+			<Title light={'true'}>Fill Opacity: </Title>
 
 			<Slider
 				value={parseInt(opacity, 10)}
@@ -125,7 +126,7 @@ const RightContainer = ({
 				step={1}
 			/>
 
-			<Title textLighter>Null/Zero values: </Title>
+			<Title light={'true'}>Null/Zero values: </Title>
 
 			<NullButtonContainer>
 				{nullValueButtons.map((button) => (
@@ -141,7 +142,7 @@ const RightContainer = ({
 				))}
 			</NullButtonContainer>
 
-			<Title textLighter>Panel Time Preference</Title>
+			<Title light={'true'}>Panel Time Preference</Title>
 
 			<TextContainer noButtonMargin>
 				<Dropdown
@@ -163,7 +164,6 @@ const RightContainer = ({
 };
 
 interface RightContainerProps {
-	selectedGraph: GRAPH_TYPES;
 	title: string;
 	setTitle: React.Dispatch<React.SetStateAction<string>>;
 	description: string;
@@ -174,9 +174,12 @@ interface RightContainerProps {
 	setOpacity: React.Dispatch<React.SetStateAction<string>>;
 	selectedNullZeroValue: string;
 	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
+	selectedGraph: GRAPH_TYPES;
+	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	selectedTime: timePreferance;
 }
 interface TimeMenuItemOnChangeHandlerEvent {
-	key: timeItem['enum'] | string;
+	key: timePreferenceType | string;
 }
 
 export default RightContainer;
