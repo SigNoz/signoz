@@ -17,7 +17,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 	const { search } = useLocation();
-	const { dashboardId } = useParams<Params>();
+	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
 	const { push } = useHistory();
 	const [selectedGraph, setSelectedGraph] = useState<GRAPH_TYPES>();
@@ -58,7 +58,7 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 	return <NewWidget selectedGraph={selectedGraph} />;
 };
 
-interface Params {
+export interface DashboardWidgetPageParams {
 	dashboardId: string;
 	widgetId: string;
 }

@@ -18,6 +18,7 @@ const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
 	isEditMode: false,
+	isQueryFired: false,
 };
 
 const dashboard = (

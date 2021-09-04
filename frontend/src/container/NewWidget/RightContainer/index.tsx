@@ -18,15 +18,17 @@ import { Container, NullButtonContainer, TextContainer, Title } from './styles';
 
 const RightContainer = ({
 	selectedGraph,
+	description,
+	opacity,
+	selectedNullZeroValue,
+	setDescription,
+	setOpacity,
+	setSelectedNullZeroValue,
+	setStacked,
+	setTitle,
+	stacked,
+	title,
 }: RightContainerProps): JSX.Element => {
-	const [title, setTitle] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
-	const [stacked, setStacked] = useState<boolean>(false);
-	const [opacity, setOpacity] = useState<string>('');
-	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
-		'zero',
-	);
-
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
 			setFunc(value);
@@ -77,7 +79,7 @@ const RightContainer = ({
 			<Title>Panel Attributes</Title>
 
 			<InputComponent
-				label="Panel Type"
+				label="Panel Title"
 				size="middle"
 				placeholder="Title"
 				labelOnTop
@@ -162,6 +164,16 @@ const RightContainer = ({
 
 interface RightContainerProps {
 	selectedGraph: GRAPH_TYPES;
+	title: string;
+	setTitle: React.Dispatch<React.SetStateAction<string>>;
+	description: string;
+	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	stacked: boolean;
+	setStacked: React.Dispatch<React.SetStateAction<boolean>>;
+	opacity: string;
+	setOpacity: React.Dispatch<React.SetStateAction<string>>;
+	selectedNullZeroValue: string;
+	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
 }
 interface TimeMenuItemOnChangeHandlerEvent {
 	key: timeItem['enum'] | string;
