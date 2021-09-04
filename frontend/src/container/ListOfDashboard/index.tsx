@@ -69,7 +69,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 		description: e.data.description,
 		id: e.uuid,
 		lastUpdatedTime: e.updated_at,
-		name: e.title,
+		name: e.data.title,
 		tags: e.data.tags || [],
 		key: e.uuid,
 	}));
