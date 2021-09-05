@@ -10,6 +10,7 @@ import {
 	GET_DASHBOARD_LOADING_START,
 	GET_DASHBOARD_SUCCESS,
 	QUERY_ERROR,
+	QUERY_SUCCESS,
 	TOGGLE_EDIT_MODE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
@@ -125,6 +126,7 @@ const dashboard = (
 			const data = selectedDashboard.data;
 			const widgets = data.widgets;
 			const defaultWidget = action.payload;
+			const query = action.payload.query;
 
 			return {
 				...state,
@@ -137,12 +139,7 @@ const dashboard = (
 								...(widgets || []),
 								{
 									...defaultWidget,
-									query: [
-										{
-											query: '',
-											legend: '',
-										},
-									],
+									query: query,
 								},
 							],
 						},
@@ -241,6 +238,71 @@ const dashboard = (
 						},
 					},
 				],
+				isQueryFired: true,
+			};
+		}
+
+		case QUERY_SUCCESS: {
+			const { queryData, queryIndex, legend, query, widgetId } = action.payload;
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
+			const { widgets } = data;
+
+			const selectedWidgetIndex = data.widgets?.findIndex(
+				(e) => e.id === widgetId,
+			);
+
+			const preWidget = data.widgets?.slice(0, selectedWidgetIndex) || [];
+			const afterWidget =
+				data.widgets?.slice(
+					selectedWidgetIndex || 0 + 1, // this is never undefined
+					widgets?.length,
+				) || [];
+			const selectedWidget = (selectedDashboard.data.widgets || [])[
+				selectedWidgetIndex || 0
+			];
+
+			const selectedWidgetQuery = selectedWidget.query;
+
+			const preQuery = selectedWidgetQuery.slice(0, queryIndex);
+			const afterQuery = selectedWidgetQuery.slice(
+				queryIndex + 1,
+				selectedWidgetQuery.length,
+			);
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...preWidget,
+								{
+									...selectedWidget,
+									query: [
+										...preQuery,
+										{
+											query,
+											legend,
+										},
+										...afterQuery,
+									],
+									queryData: {
+										data: [...queryData],
+										error: false,
+										errorMessage: '',
+										loading: false,
+									},
+								},
+								...afterWidget,
+							],
+						},
+					},
+				],
+				isQueryFired: true,
 			};
 		}
 

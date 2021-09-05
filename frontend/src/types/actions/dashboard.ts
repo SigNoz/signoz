@@ -95,14 +95,16 @@ interface ToggleEditMode {
 	type: typeof TOGGLE_EDIT_MODE;
 }
 
+export interface QuerySuccessPayload {
+	queryData: QueryData[];
+	query: string;
+	legend: string;
+	queryIndex: number;
+	widgetId: string;
+}
 interface QuerySuccess {
 	type: typeof QUERY_SUCCESS;
-	payload: {
-		data: QueryData[];
-		query: string;
-		legend: string;
-		queryIndex: string;
-	};
+	payload: QuerySuccessPayload;
 }
 
 interface QueryError {

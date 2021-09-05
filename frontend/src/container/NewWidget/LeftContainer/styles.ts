@@ -7,10 +7,3 @@ export const QueryContainer = styled(Card)`
 		min-height: 23.5%;
 	}
 `;
-
-export const NotFoundContainer = styled.div`
-	min-height: 55vh;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-`;

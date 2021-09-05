@@ -1,4 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
+import { Card, Typography } from 'antd';
+import Spinner from 'components/Spinner';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -44,6 +46,10 @@ const QuerySection = ({
 		});
 	}, []);
 
+	if (query.length === 0) {
+		return <Spinner size="small" height="30vh" tip="Loading..." />;
+	}
+
 	return (
 		<div>
 			{query.map((e, index) => (
@@ -51,6 +57,8 @@ const QuerySection = ({
 					currentIndex={index}
 					selectedTime={selectedTime}
 					key={e.query + index}
+					preQuery={e.query}
+					preLegend={e.legend || ''}
 				/>
 			))}
 

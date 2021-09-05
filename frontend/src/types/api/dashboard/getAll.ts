@@ -1,4 +1,3 @@
-import { ChartData } from 'chart.js';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 
@@ -31,7 +30,6 @@ export interface Widgets {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	data?: ChartData;
 	query: Query[];
 	queryData: {
 		loading: boolean;
@@ -41,7 +39,7 @@ export interface Widgets {
 	};
 }
 
-interface Query {
+export interface Query {
 	query: string;
 	legend?: string;
 }

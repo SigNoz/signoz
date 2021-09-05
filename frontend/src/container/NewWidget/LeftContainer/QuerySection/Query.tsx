@@ -1,19 +1,17 @@
 import { Divider } from 'antd';
-import getQuery from 'api/widgets/getQuery';
+import { AxiosError } from 'axios';
 import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import getStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { QueryError, QueryErrorProps } from 'store/actions';
 import {
-	QueryError,
-	QueryErrorProps,
-	QuerySuccess,
-	QuerySuccessProps,
-} from 'store/actions';
+	GetQueryResult,
+	GetQueryResultProps,
+} from 'store/actions/dashboard/getQueryResult';
 import AppActions from 'types/actions';
 
 import { Container, InputContainer } from './styles';
@@ -22,14 +20,16 @@ const Query = ({
 	selectedTime,
 	currentIndex,
 	queryError,
-	querySuccess,
+	preLegend,
+	preQuery,
+	getQueryResult,
 }: QueryProps): JSX.Element => {
-	const [promqlQuery, setPromqlQuery] = useState('');
-	const [legendFormat, setLegendFormat] = useState('');
+	const [promqlQuery, setPromqlQuery] = useState(preQuery);
+	const [legendFormat, setLegendFormat] = useState(preLegend);
 	const { search } = useLocation();
 
 	const query = new URLSearchParams(search);
-	const widgetId = query.get('widgetId');
+	const widgetId = query.get('widgetId') || '';
 
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -41,42 +41,44 @@ const Query = ({
 	const onBlurHandler = useCallback(async () => {
 		if (promqlQuery.length !== 0) {
 			try {
-				const { end, start } = getStartAndEndTime({
-					type: selectedTime.enum,
-				});
-
-				// this is the place we need to fire the query
-				const response = await getQuery({
-					start: start.slice(2),
-					end,
+				getQueryResult({
+					currentIndex,
+					legend: legendFormat,
 					query: promqlQuery,
-					step: '30',
+					selectedTime: selectedTime.enum,
+					widgetId,
 				});
-
-				if (response.statusCode === 200) {
-					querySuccess({ data: response.payload.result });
-				} else {
-					if (response.error !== null) {
-						queryError({
-							errorMessage: response.error,
-							widgetId: widgetId || '',
-						});
-					}
-				}
+				// // this is the place we need to fire the query
+				// const response = await getQuery({
+				// 	start,
+				// 	end,
+				// 	query: promqlQuery,
+				// 	step: '30',
+				// });
+				// if (response.statusCode === 200) {
+				// 	querySuccess({
+				// 		queryData: response.payload.result,
+				// 		legend: legendFormat,
+				// 		query: promqlQuery,
+				// 		queryIndex: currentIndex,
+				// 		widgetId: widgetId,
+				// 	});
+				// } else {
+				// 	if (response.error !== null) {
+				// 		queryError({
+				// 			errorMessage: response.error,
+				// 			widgetId: widgetId,
+				// 		});
+				// 	}
+				// }
 			} catch (error) {
-				// set Error
+				queryError({
+					errorMessage: (error as AxiosError).toString(),
+					widgetId: widgetId,
+				});
 			}
 		}
 	}, [promqlQuery]);
-
-	const counter = useRef(0);
-
-	useEffect(() => {
-		if (counter.current === 0) {
-			counter.current = 1;
-			onBlurHandler();
-		}
-	}, []);
 
 	return (
 		<Container>
@@ -108,24 +110,26 @@ const Query = ({
 };
 
 interface DispatchProps {
-	querySuccess: ({
-		data,
-	}: QuerySuccessProps) => (dispatch: Dispatch<AppActions>) => void;
 	queryError: ({
 		errorMessage,
 	}: QueryErrorProps) => (dispatch: Dispatch<AppActions>) => void;
+	getQueryResult: (
+		props: GetQueryResultProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	querySuccess: bindActionCreators(QuerySuccess, dispatch),
 	queryError: bindActionCreators(QueryError, dispatch),
+	getQueryResult: bindActionCreators(GetQueryResult, dispatch),
 });
 
 interface QueryProps extends DispatchProps {
 	selectedTime: timePreferance;
 	currentIndex: number;
+	preQuery: string;
+	preLegend: string;
 }
 
 export default connect(null, mapDispatchToProps)(Query);
