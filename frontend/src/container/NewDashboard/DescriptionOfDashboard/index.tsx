@@ -34,7 +34,9 @@ const DescriptionOfDashboard = ({
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
-	const [updatedDescription, setUpdtatedDescription] = useState(description);
+	const [updatedDescription, setUpdtatedDescription] = useState(
+		description || '',
+	);
 
 	const onClickEditHandler = useCallback(() => {
 		if (isEditMode) {
@@ -54,11 +56,6 @@ const DescriptionOfDashboard = ({
 		} else {
 			toggleEditMode();
 		}
-		console.log(isEditMode);
-		// if (isEditMode) {
-
-		// } else {
-		// }
 	}, [isEditMode, updatedTitle, updatedTags, updatedDescription]);
 
 	return (

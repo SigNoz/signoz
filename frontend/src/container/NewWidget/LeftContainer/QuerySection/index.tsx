@@ -1,5 +1,4 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback } from 'react';

@@ -43,7 +43,7 @@ export const GetDashboard = ({
 						},
 						query: [
 							{
-								query: 'system_memory_usage_total',
+								query: '',
 								legend: '',
 							},
 						],

@@ -3,10 +3,11 @@ import styled from 'styled-components';
 
 export const Container = styled(Card)`
 	min-height: 55vh;
-	display: flex;
-	justify-content: center;
-	align-items: center;
 	position: relative;
+
+	.ant-card-body {
+		padding: 0;
+	}
 `;
 
 export const AlertIconContainer = styled(Tooltip)`

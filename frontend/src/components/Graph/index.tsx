@@ -1,5 +1,5 @@
-import Chart, { ChartOptions } from "chart.js";
-import React, { useCallback, useEffect, useRef } from "react";
+import Chart, { ChartOptions } from 'chart.js';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -20,28 +20,12 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 			const options: ChartOptions = {
 				responsive: true,
 				maintainAspectRatio: true,
-				plugins: {},
-				hover: {
-					onHover: (): void => {
-						console.log("asd");
-					},
-				},
-				// onClick: (_, activeElements) => {
-				// 	// console.log(activeElements);
-				// },
-
 				scales: {
-					gridLines: {
-						drawOnChartArea: true,
-					},
 					xAxes: [
 						{
 							display: true,
 							ticks: {
 								stepSize: stepX,
-							},
-							gridLines: {
-								display: true,
 							},
 						},
 					],
@@ -72,11 +56,11 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 				options,
 			});
 		}
-	}, [chartRef]);
+	}, [chartRef, data.datasets?.length]);
 
 	useEffect(() => {
 		buildChart();
-	}, []);
+	}, [data.datasets?.length]);
 
 	return <canvas ref={chartRef} />;
 };

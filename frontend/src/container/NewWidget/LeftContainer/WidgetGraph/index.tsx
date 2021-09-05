@@ -9,6 +9,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 import { NewWidgetProps } from '../../index';
 import { AlertIconContainer, Container } from './styles';
+import WidgetGraphComponent from './WidgetGraph';
 
 const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 	const { dashboards, isQueryFired } = useSelector<AppState, DashboardReducer>(
@@ -32,8 +33,6 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 
 	const { queryData } = selectedWidget;
 
-	console.log(queryData.data);
-
 	return (
 		<Container>
 			{queryData.error && (
@@ -43,6 +42,10 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 			)}
 
 			{!isQueryFired && <Typography>No Data</Typography>}
+
+			{isQueryFired && !queryData.error && (
+				<WidgetGraphComponent selectedGraph={selectedGraph} />
+			)}
 		</Container>
 	);
 };

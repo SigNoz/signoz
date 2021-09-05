@@ -1,13 +1,15 @@
+import { ChartData } from 'chart.js';
 import Graph from 'components/Graph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import React from 'react';
+import React, { memo } from 'react';
 
 const GridGraphComponent = ({
 	GRAPH_TYPES,
+	data,
 }: GridGraphComponentProps): JSX.Element | null => {
 	// send the request to get the data from the server
 	if (GRAPH_TYPES === 'TIME_SERIES') {
-		// return <Graph type="line" />;
+		return <Graph data={data} type="line" />;
 	}
 
 	if (GRAPH_TYPES === 'VALUE') {
@@ -19,6 +21,7 @@ const GridGraphComponent = ({
 
 export interface GridGraphComponentProps {
 	GRAPH_TYPES: GRAPH_TYPES;
+	data: ChartData;
 }
 
 export default GridGraphComponent;
