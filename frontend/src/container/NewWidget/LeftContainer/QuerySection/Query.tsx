@@ -2,7 +2,7 @@ import { Divider } from 'antd';
 import { AxiosError } from 'axios';
 import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -79,6 +79,16 @@ const Query = ({
 			}
 		}
 	}, [promqlQuery]);
+
+	// @TODO need to shift this logic to the list not to the individual query as this request is checking the query in the currect widget
+	const counter = useRef(0);
+
+	useEffect(() => {
+		if (counter.current == 0 && preQuery.length !== 0) {
+			counter.current = 1;
+			onBlurHandler();
+		}
+	}, []);
 
 	return (
 		<Container>
