@@ -5,7 +5,7 @@ LABEL maintainer="signoz"
 
 ARG TARGETPLATFORM
 
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=1
 ENV GOPATH=/go
 
 RUN export GOOS=$(echo ${TARGETPLATFORM} | cut -d / -f1) && \
@@ -21,7 +21,7 @@ RUN go mod download -x
 
 # Add the sources and proceed with build
 ADD . .
-RUN go build -o ./bin/query-service ./main.go
+RUN go build -a -ldflags "-linkmode external -extldflags '-static' -s -w" -o ./bin/query-service ./main.go
 RUN chmod +x ./bin/query-service
 
 # use a minimal alpine image

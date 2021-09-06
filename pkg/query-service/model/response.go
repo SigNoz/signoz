@@ -10,6 +10,24 @@ import (
 	"github.com/prometheus/prometheus/util/stats"
 )
 
+type ApiError struct {
+	Typ ErrorType
+	Err error
+}
+type ErrorType string
+
+const (
+	ErrorNone           ErrorType = ""
+	ErrorTimeout        ErrorType = "timeout"
+	ErrorCanceled       ErrorType = "canceled"
+	ErrorExec           ErrorType = "execution"
+	ErrorBadData        ErrorType = "bad_data"
+	ErrorInternal       ErrorType = "internal"
+	ErrorUnavailable    ErrorType = "unavailable"
+	ErrorNotFound       ErrorType = "not_found"
+	ErrorNotImplemented ErrorType = "not_implemented"
+)
+
 type QueryData struct {
 	ResultType promql.ValueType  `json:"resultType"`
 	Result     promql.Value      `json:"result"`
