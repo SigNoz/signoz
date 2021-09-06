@@ -15,3 +15,10 @@ export const AlertIconContainer = styled(Tooltip)`
 	top: 10px;
 	left: 10px;
 `;
+
+export const NotFoundContainer = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 55vh;
+`;

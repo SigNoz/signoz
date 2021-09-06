@@ -8,7 +8,7 @@ import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import { NewWidgetProps } from '../../index';
-import { AlertIconContainer, Container } from './styles';
+import { AlertIconContainer, Container, NotFoundContainer } from './styles';
 import WidgetGraphComponent from './WidgetGraph';
 
 const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
@@ -41,11 +41,13 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 				</AlertIconContainer>
 			)}
 
-			{!isQueryFired && <Typography>No Data</Typography>}
-
-			{isQueryFired && !queryData.error && (
-				<WidgetGraphComponent selectedGraph={selectedGraph} />
+			{!isQueryFired && (
+				<NotFoundContainer>
+					<Typography>No Data</Typography>
+				</NotFoundContainer>
 			)}
+
+			{isQueryFired && <WidgetGraphComponent selectedGraph={selectedGraph} />}
 		</Container>
 	);
 };
