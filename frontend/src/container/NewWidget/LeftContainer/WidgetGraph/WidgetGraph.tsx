@@ -53,7 +53,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 
 			return {
 				first: convertDateToAmAndPm(new Date(parseInt(convertIntoEpoc(first), 10))),
-				second: parseInt(second, 10),
+				second: parseFloat(second).toFixed(2),
 			};
 		});
 
