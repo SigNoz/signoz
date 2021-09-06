@@ -1,4 +1,4 @@
-const colors = [
+export const colors = [
 	'#F2994A',
 	'#56CCF2',
 	'#F2C94C',
@@ -9,15 +9,12 @@ const colors = [
 	'#BDBDBD',
 ];
 
-function getRandomArbitrary(min: number, max: number): number {
+export function getRandomNumber(min: number, max: number): number {
 	return Math.random() * (max - min) + min;
 }
 
 const getRandomColor = (): string => {
-	const index = parseInt(
-		getRandomArbitrary(0, colors.length - 1).toString(),
-		10,
-	);
+	const index = parseInt(getRandomNumber(0, colors.length - 1).toString(), 10);
 	return colors[index];
 };
 

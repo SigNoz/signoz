@@ -5,7 +5,7 @@ import { NewWidgetProps } from 'container/NewWidget';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import convertIntoEpoc from 'lib/covertIntoEpoc';
 import getLabelName from 'lib/getLabelName';
-import getRandomColor from 'lib/getRandomColor';
+import getRandomColor, { colors } from 'lib/getRandomColor';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
@@ -53,14 +53,16 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 
 			return {
 				first: convertDateToAmAndPm(new Date(parseInt(convertIntoEpoc(first), 10))),
-				second: parseInt(second),
+				second: parseInt(second, 10),
 			};
 		});
+
+		const color = colors[index] || 'red';
 
 		return {
 			label: labelNames,
 			first: dataValue.map((e) => e.first),
-			borderColor: getRandomColor(),
+			borderColor: color,
 			second: dataValue.map((e) => e.second),
 		};
 	});
