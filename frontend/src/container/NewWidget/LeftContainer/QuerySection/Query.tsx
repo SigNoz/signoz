@@ -38,6 +38,9 @@ const Query = ({
 		[],
 	);
 
+	// @TODO need to shift this logic to the list not to the individual query as this request is checking the query in the currect widget
+	const counter = useRef(0);
+
 	const onBlurHandler = useCallback(async () => {
 		if (promqlQuery.length !== 0) {
 			try {
@@ -48,29 +51,6 @@ const Query = ({
 					selectedTime: selectedTime.enum,
 					widgetId,
 				});
-				// // this is the place we need to fire the query
-				// const response = await getQuery({
-				// 	start,
-				// 	end,
-				// 	query: promqlQuery,
-				// 	step: '30',
-				// });
-				// if (response.statusCode === 200) {
-				// 	querySuccess({
-				// 		queryData: response.payload.result,
-				// 		legend: legendFormat,
-				// 		query: promqlQuery,
-				// 		queryIndex: currentIndex,
-				// 		widgetId: widgetId,
-				// 	});
-				// } else {
-				// 	if (response.error !== null) {
-				// 		queryError({
-				// 			errorMessage: response.error,
-				// 			widgetId: widgetId,
-				// 		});
-				// 	}
-				// }
 			} catch (error) {
 				queryError({
 					errorMessage: (error as AxiosError).toString(),
@@ -79,9 +59,6 @@ const Query = ({
 			}
 		}
 	}, [promqlQuery]);
-
-	// @TODO need to shift this logic to the list not to the individual query as this request is checking the query in the currect widget
-	const counter = useRef(0);
 
 	useEffect(() => {
 		if (counter.current == 0 && preQuery.length !== 0) {

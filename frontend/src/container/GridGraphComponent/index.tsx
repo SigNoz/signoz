@@ -1,7 +1,7 @@
 import { ChartData } from 'chart.js';
 import Graph from 'components/Graph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import React, { memo } from 'react';
+import React from 'react';
 
 const GridGraphComponent = ({
 	GRAPH_TYPES,

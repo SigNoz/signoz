@@ -19,7 +19,13 @@ const getLabelName = (metric: QueryData['metric'], query: string): string => {
 	const post = postArray.map((e) => `${e}="${metric[e]}"`).join(',');
 	const pre = preArray.map((e) => `${e}="${metric[e]}"`).join(',');
 
-	return `${metric[keysArray[index]]}{${pre}${post}}`;
+	const result = `${metric[keysArray[index]]}`;
+
+	if (post.length === 0 && pre.length === 0) {
+		return result;
+	}
+
+	return `${result}{${pre}${post}}`;
 };
 
 export default getLabelName;

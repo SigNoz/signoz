@@ -56,11 +56,11 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 				options,
 			});
 		}
-	}, [chartRef, data.datasets?.length]);
+	}, [chartRef, data.datasets?.length, data.labels]);
 
 	useEffect(() => {
 		buildChart();
-	}, [data.datasets?.length]);
+	}, [data.datasets?.length, data.labels]);
 
 	return <canvas ref={chartRef} />;
 };
