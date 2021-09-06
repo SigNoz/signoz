@@ -1,7 +1,8 @@
-import { Card } from 'antd';
+import { Card, Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { NewWidgetProps } from 'container/NewWidget';
+import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import convertIntoEpoc from 'lib/covertIntoEpoc';
 import getRandomColor from 'lib/getRandomColor';
 import React from 'react';
@@ -9,6 +10,8 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
+
+import { NotFoundContainer } from './styles';
 
 const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
@@ -31,6 +34,14 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 
 	const { queryData } = selectedWidget;
 
+	if (queryData.data.length === 0) {
+		return (
+			<NotFoundContainer>
+				<Typography>No Data</Typography>
+			</NotFoundContainer>
+		);
+	}
+
 	const chartData = queryData.data.map((e) => {
 		const { values, metric } = e;
 
@@ -40,8 +51,8 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 			const [first = 0, second = ''] = e || [];
 
 			return {
-				first: parseInt(convertIntoEpoc(first), 10),
-				second,
+				first: convertDateToAmAndPm(new Date(parseInt(convertIntoEpoc(first), 10))),
+				second: parseInt(second),
 			};
 		});
 
@@ -54,13 +65,10 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 	});
 
 	const chartDataSet: ChartData = {
-		labels: chartData[0].second,
+		labels: chartData[0].first,
 		datasets: chartData.map((e) => ({
 			label: e.label,
-			data: e.first.map((val, index) => ({
-				x: val,
-				y: e['second'][index],
-			})),
+			data: e.second,
 			borderColor: e.borderColor,
 		})),
 	};
