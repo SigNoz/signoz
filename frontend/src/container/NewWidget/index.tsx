@@ -88,7 +88,7 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 			</ButtonContainer>
 
 			<PanelContainer>
-				<LeftContainerWrapper flex={2.5}>
+				<LeftContainerWrapper flex={5}>
 					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} />
 				</LeftContainerWrapper>
 

@@ -10,7 +10,7 @@ export const Container = styled.div`
 
 export const RightContainerWrapper = styled(Col)`
 	&&& {
-		min-width: 280px;
+		min-width: 200px;
 	}
 `;
 
