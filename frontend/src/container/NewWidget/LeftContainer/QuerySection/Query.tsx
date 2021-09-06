@@ -101,7 +101,7 @@ const Query = ({
 					}
 					size="middle"
 					value={legendFormat}
-					addonBefore={'Legent Format'}
+					addonBefore={'Legend Format'}
 				/>
 			</InputContainer>
 			<Divider />
