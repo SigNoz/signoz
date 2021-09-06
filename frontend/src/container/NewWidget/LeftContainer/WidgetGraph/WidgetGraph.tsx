@@ -4,6 +4,7 @@ import GridGraphComponent from 'container/GridGraphComponent';
 import { NewWidgetProps } from 'container/NewWidget';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import convertIntoEpoc from 'lib/covertIntoEpoc';
+import getLabelName from 'lib/getLabelName';
 import getRandomColor from 'lib/getRandomColor';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -32,7 +33,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { queryData } = selectedWidget;
+	const { queryData, query } = selectedWidget;
 
 	if (queryData.data.length === 0) {
 		return (
@@ -42,10 +43,10 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		);
 	}
 
-	const chartData = queryData.data.map((e) => {
+	const chartData = queryData.data.map((e, index) => {
 		const { values, metric } = e;
 
-		const label = `${metric?.state} ${metric?.__name__}`;
+		const labelNames = getLabelName(metric, (query[index] || {}).query);
 
 		const dataValue = values?.map((e) => {
 			const [first = 0, second = ''] = e || [];
@@ -57,7 +58,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		});
 
 		return {
-			label,
+			label: labelNames,
 			first: dataValue.map((e) => e.first),
 			borderColor: getRandomColor(),
 			second: dataValue.map((e) => e.second),

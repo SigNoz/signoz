@@ -6,7 +6,7 @@ export interface PayloadProps {
 export interface QueryData {
 	metric?: {
 		__name__: string;
-		state: string;
+		[key: string]: string;
 	};
 	values: [number, string][];
 }
