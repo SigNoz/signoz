@@ -53,7 +53,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 
 			return {
 				first: convertDateToAmAndPm(new Date(parseInt(convertIntoEpoc(first), 10))),
-				second: parseFloat(second).toFixed(2),
+				second: Number(parseFloat(second).toFixed(2)),
 			};
 		});
 
@@ -73,6 +73,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 			label: e.label,
 			data: e.second,
 			borderColor: e.borderColor,
+			pointRadius: 1,
 		})),
 	};
 
