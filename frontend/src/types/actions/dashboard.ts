@@ -1,3 +1,4 @@
+import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettingsToPanel';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
@@ -27,6 +28,7 @@ export const CREATE_NEW_QUERY = 'CREATE_NEW_QUERY';
 export const QUERY_SUCCESS = 'QUERY_SUCCESS';
 export const QUERY_ERROR = 'QUERY_ERROR';
 
+export const APPLY_SETTINGS_TO_PANEL = 'APPLY_SETTINGS_TO_PANEL';
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -57,6 +59,11 @@ interface GetAllDashboardSuccess {
 interface GetDashboardSuccess {
 	type: typeof GET_DASHBOARD_SUCCESS;
 	payload: Dashboard;
+}
+
+interface ApplySettingsToPanel {
+	type: typeof APPLY_SETTINGS_TO_PANEL;
+	payload: ApplySettingsToPanelProps;
 }
 
 interface CreateDefaultWidget {
@@ -128,4 +135,5 @@ export type DashboardActions =
 	| CreateDefaultWidget
 	| CreateNewQuery
 	| QuerySuccess
-	| QueryError;
+	| QueryError
+	| ApplySettingsToPanel;

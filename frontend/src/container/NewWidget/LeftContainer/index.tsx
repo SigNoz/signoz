@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 import { NewWidgetProps } from '../index';
 import { timePreferance } from '../RightContainer/timeItems';
@@ -25,4 +25,4 @@ interface LeftContainerProps extends NewWidgetProps {
 	selectedTime: timePreferance;
 }
 
-export default LeftContainer;
+export default memo(LeftContainer);

@@ -3,10 +3,14 @@ import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import updateUrl from 'lib/updateUrl';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import React, { useCallback, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useMemo, useState } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { useHistory, useLocation, useParams } from 'react-router';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import LeftContainer from './LeftContainer';
@@ -20,7 +24,10 @@ import {
 	RightContainerWrapper,
 } from './styles';
 
-const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
+const NewWidget = ({
+	selectedGraph,
+	applySettingsToPanel,
+}: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -30,14 +37,17 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 
 	const { push } = useHistory();
 	const { search } = useLocation();
-	const query = new URLSearchParams(search);
+
+	const query = useMemo(() => {
+		return new URLSearchParams(search);
+	}, [search]);
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
 	const getWidget = useCallback(() => {
 		const widgetId = query.get('widgetId');
 		return widgets?.find((e) => e.id === widgetId);
-	}, []);
+	}, [query, widgets]);
 
 	const selectedWidget = getWidget();
 
@@ -59,7 +69,7 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 			timeItems.find(
 				(e) => e.enum === (selectedWidget?.timePreferance || 'GLOBAL_TIME'),
 			),
-		[],
+		[selectedWidget],
 	);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
@@ -69,7 +79,25 @@ const NewWidget = ({ selectedGraph }: NewWidgetProps): JSX.Element => {
 
 	const onClickApplyHandler = useCallback(() => {
 		// update the global state
-	}, []);
+		applySettingsToPanel({
+			description,
+			isStacked: stacked,
+			nullZeroValues: selectedNullZeroValue,
+			opacity,
+			timePreferance: selectedTime.enum,
+			title,
+			widgetId: query.get('widgetId') || '',
+		});
+	}, [
+		applySettingsToPanel,
+		opacity,
+		description,
+		query,
+		selectedTime,
+		stacked,
+		title,
+		selectedNullZeroValue,
+	]);
 
 	const onClickSaveHandler = useCallback(() => {
 		// on fire the PUT request which update the dashboard and onClickDiscardHandler
@@ -120,4 +148,18 @@ export interface NewWidgetProps {
 	selectedGraph: GRAPH_TYPES;
 }
 
-export default NewWidget;
+interface DispatchProps {
+	applySettingsToPanel: (
+		props: ApplySettingsToPanelProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
+});
+
+type Props = DispatchProps & NewWidgetProps;
+
+export default connect(null, mapDispatchToProps)(NewWidget);
