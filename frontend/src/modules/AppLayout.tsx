@@ -15,6 +15,7 @@ interface BaseLayoutProps {
 const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 	const location = useLocation();
 	const { dispatch } = useRoute();
+	const currentYear = new Date().getFullYear();
 
 	useEffect(() => {
 		dispatch({ type: 'ROUTE_IS_LOADED', payload: location.pathname });
@@ -29,7 +30,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 					{children}
 				</Content>
 				<Footer style={{ textAlign: 'center', fontSize: 10 }}>
-					SigNoz Inc. ©2020
+					SigNoz Inc. ©{currentYear}
 				</Footer>
 			</Layout>
 		</Layout>
