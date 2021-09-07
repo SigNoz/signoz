@@ -9,6 +9,7 @@ module.exports = {
 		'plugin:react/recommended',
 		'plugin:@typescript-eslint/recommended',
 		'plugin:@typescript-eslint/eslint-recommended',
+		'plugin:prettier/recommended',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -18,7 +19,13 @@ module.exports = {
 		ecmaVersion: 12,
 		sourceType: 'module',
 	},
-	plugins: ['react', '@typescript-eslint', 'simple-import-sort'],
+	plugins: [
+		'react',
+		'@typescript-eslint',
+		'simple-import-sort',
+		'react-hooks',
+		'prettier',
+	],
 	settings: {
 		react: {
 			version: 'latest',
@@ -36,9 +43,20 @@ module.exports = {
 		'@typescript-eslint/no-var-requires': 0,
 		'linebreak-style': ['error', 'unix'],
 
-		semi: ['error', 'always'],
 		// simple sort error
 		'simple-import-sort/imports': 'error',
 		'simple-import-sort/exports': 'error',
+
+		// hooks
+		'react-hooks/rules-of-hooks': 'error',
+		'react-hooks/exhaustive-deps': 'warn',
+
+		'prettier/prettier': [
+			'error',
+			{},
+			{
+				usePrettierrc: true,
+			},
+		],
 	},
 };
