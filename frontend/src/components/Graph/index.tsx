@@ -40,6 +40,9 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 							},
 						},
 					],
+					gridLines: {
+						display: true,
+					},
 				},
 				tooltips: toolTipOptions,
 				legend: {
