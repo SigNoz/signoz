@@ -88,7 +88,7 @@ const DescriptionOfDashboard = ({
 					)}
 					<Col>
 						<Button
-							icon={isEditMode ? <EditOutlined /> : <SaveOutlined />}
+							icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
 							onClick={onClickEditHandler}
 						>
 							{isEditMode ? 'Save' : 'Edit'}

@@ -69,14 +69,12 @@ const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 				const isLongTag = tag.length > 20;
 
 				const tagElem = (
-					<NewTagContainer key={tag} onClose={(): void => handleClose(tag)}>
+					<NewTagContainer closable key={tag} onClose={(): void => handleClose(tag)}>
 						<span
 							onDoubleClick={(e): void => {
-								if (index !== 0) {
-									setEditInputIndex(index);
-									setEditInputValue(tag);
-									e.preventDefault();
-								}
+								setEditInputIndex(index);
+								setEditInputValue(tag);
+								e.preventDefault();
 							}}
 						>
 							{isLongTag ? `${tag.slice(0, 20)}...` : tag}
