@@ -105,7 +105,7 @@ const NewWidget = ({
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));
-	}, []);
+	}, [dashboardId, push]);
 
 	return (
 		<Container>

@@ -24,31 +24,33 @@ export const GetDashboard = ({
 					payload: response.payload,
 					type: 'GET_DASHBOARD_SUCCESS',
 				});
-				dispatch({
-					type: 'CREATE_DEFAULT_WIDGET',
-					payload: {
-						description: '',
-						id: widgetId || '0',
-						isStacked: false,
-						nullZeroValues: 'zero',
-						opacity: '0',
-						panelTypes: graphType || 'TIME_SERIES',
-						timePreferance: 'GLOBAL_TIME',
-						title: '',
-						queryData: {
-							data: [],
-							error: false,
-							errorMessage: '',
-							loading: false,
-						},
-						query: [
-							{
-								query: 'system_cpu_load_average_1m',
-								legend: '',
+				if (widgetId !== undefined) {
+					dispatch({
+						type: 'CREATE_DEFAULT_WIDGET',
+						payload: {
+							description: '',
+							id: widgetId,
+							isStacked: false,
+							nullZeroValues: 'zero',
+							opacity: '0',
+							panelTypes: graphType || 'TIME_SERIES',
+							timePreferance: 'GLOBAL_TIME',
+							title: '',
+							queryData: {
+								data: [],
+								error: false,
+								errorMessage: '',
+								loading: false,
 							},
-						],
-					},
-				});
+							query: [
+								{
+									query: '',
+									legend: '',
+								},
+							],
+						},
+					});
+				}
 			} else {
 				dispatch({
 					type: 'GET_DASHBOARD_ERROR',

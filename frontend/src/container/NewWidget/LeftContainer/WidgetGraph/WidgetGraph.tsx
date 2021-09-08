@@ -5,7 +5,7 @@ import { NewWidgetProps } from 'container/NewWidget';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import convertIntoEpoc from 'lib/covertIntoEpoc';
 import getLabelName from 'lib/getLabelName';
-import getRandomColor, { colors } from 'lib/getRandomColor';
+import { colors } from 'lib/getRandomColor';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
@@ -33,7 +33,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { queryData, query } = selectedWidget;
+	const { queryData, query, title, opacity, isStacked } = selectedWidget;
 
 	if (queryData.data.length === 0) {
 		return (
@@ -74,10 +74,19 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 			data: e.second,
 			borderColor: e.borderColor,
 			pointRadius: 1,
+			showLine: true,
 		})),
 	};
 
-	return <GridGraphComponent data={chartDataSet} GRAPH_TYPES={selectedGraph} />;
+	return (
+		<GridGraphComponent
+			title={title}
+			isStacked={isStacked}
+			opacity={opacity}
+			data={chartDataSet}
+			GRAPH_TYPES={selectedGraph}
+		/>
+	);
 };
 
 type WidgetGraphProps = NewWidgetProps;

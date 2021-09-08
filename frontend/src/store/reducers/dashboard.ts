@@ -1,4 +1,5 @@
 import {
+	APPLY_SETTINGS_TO_PANEL,
 	CREATE_DEFAULT_WIDGET,
 	CREATE_NEW_QUERY,
 	DashboardActions,
@@ -53,10 +54,19 @@ const dashboard = (
 		}
 
 		case GET_DASHBOARD_SUCCESS: {
+			const dashboard = action.payload;
+			const { data } = dashboard;
 			return {
 				...state,
 				loading: false,
-				dashboards: [{ ...action.payload }],
+				dashboards: [
+					{
+						...dashboard,
+						data: {
+							...data,
+						},
+					},
+				],
 			};
 		}
 
@@ -140,6 +150,7 @@ const dashboard = (
 								{
 									...defaultWidget,
 									query: query,
+									id: action.payload.id,
 								},
 							],
 						},
@@ -303,6 +314,56 @@ const dashboard = (
 					},
 				],
 				isQueryFired: true,
+			};
+		}
+
+		case APPLY_SETTINGS_TO_PANEL: {
+			const { widgetId } = action.payload;
+
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
+			const { widgets } = data;
+
+			const selectedWidgetIndex = data.widgets?.findIndex(
+				(e) => e.id === widgetId,
+			);
+
+			const preWidget = data.widgets?.slice(0, selectedWidgetIndex) || [];
+			const afterWidget =
+				data.widgets?.slice(
+					selectedWidgetIndex || 0 + 1, // this is never undefined
+					widgets?.length,
+				) || [];
+
+			const selectedWidget = (selectedDashboard.data.widgets || [])[
+				selectedWidgetIndex || 0
+			];
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...preWidget,
+								{
+									...selectedWidget,
+									description: action.payload.description,
+									id: action.payload.widgetId,
+									isStacked: action.payload.isStacked,
+									nullZeroValues: action.payload.nullZeroValues,
+									opacity: action.payload.opacity,
+									timePreferance: action.payload.timePreferance,
+									title: action.payload.title,
+								},
+								...afterWidget,
+							],
+						},
+					},
+				],
 			};
 		}
 
