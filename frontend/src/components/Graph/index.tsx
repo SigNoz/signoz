@@ -1,7 +1,24 @@
-import Chart, { ChartOptions } from 'chart.js';
+import {
+	CategoryScale,
+	Chart,
+	ChartOptions,
+	ChartType,
+	Decimation,
+	Filler,
+	Legend,
+	LinearScale,
+	LineController,
+	LineElement,
+	PointElement,
+	SubTitle,
+	TimeScale,
+	TimeSeriesScale,
+	Title,
+	Tooltip,
+} from 'chart.js';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
+const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 	const lineChartRef = useRef<Chart>();
@@ -12,45 +29,54 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 		}
 
 		if (chartRef.current !== null) {
-			// const charContext = chartRef.current.getContext("2d");
+			Chart.register(
+				LineElement,
+				PointElement,
+				LineController,
+				CategoryScale,
+				LinearScale,
+				TimeScale,
+				TimeSeriesScale,
+				Decimation,
+				Filler,
+				Legend,
+				Title,
+				Tooltip,
+				SubTitle,
+			);
 
-			const toolTipOptions: Chart.ChartTooltipOptions = {
-				enabled: true,
-			};
 			const options: ChartOptions = {
 				responsive: true,
 				maintainAspectRatio: true,
-				scales: {
-					xAxes: [
-						{
-							display: true,
-							ticks: {
-								stepSize: stepX,
-							},
-						},
-					],
-					yAxes: [
-						{
-							display: true,
-							ticks: {
-								stepSize: stepY,
-							},
-							gridLines: {
-								display: true,
-							},
-						},
-					],
-					gridLines: {
-						display: true,
+				interaction: {
+					mode: 'index',
+					intersect: false,
+				},
+				plugins: {
+					title: {
+						display: title === undefined ? false : true,
+						text: title,
 					},
 				},
-				tooltips: toolTipOptions,
-				legend: {
-					display: true,
-					fullWidth: true,
+
+				scales: {
+					x: {
+						grid: {
+							display: true,
+							color: 'rgba(231,233,237,0.1)',
+						},
+					},
+					y: {
+						display: true,
+						grid: {
+							display: true,
+							color: 'rgba(231,233,237,0.1)',
+						},
+					},
+					stacked: {
+						display: isStacked === undefined ? false : 'auto',
+					},
 				},
-				showLines: true,
-				spanGaps: true,
 			};
 
 			lineChartRef.current = new Chart(chartRef.current, {
@@ -59,20 +85,20 @@ const Graph = ({ data, type, stepX, stepY }: GraphProps): JSX.Element => {
 				options,
 			});
 		}
-	}, [chartRef, data.datasets?.length, data.labels]);
+	}, [chartRef, data, type, title, isStacked]);
 
 	useEffect(() => {
 		buildChart();
-	}, [data.datasets?.length, data.labels]);
+	}, [data.datasets?.length, data.labels, buildChart]);
 
 	return <canvas ref={chartRef} />;
 };
 
 interface GraphProps {
-	type: Chart.ChartType;
-	data: Chart.ChartData;
-	stepX?: number;
-	stepY?: number;
+	type: ChartType;
+	data: Chart['data'];
+	title?: string;
+	isStacked?: boolean;
 }
 
 export default Graph;
