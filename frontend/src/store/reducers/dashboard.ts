@@ -12,6 +12,7 @@ import {
 	GET_DASHBOARD_SUCCESS,
 	QUERY_ERROR,
 	QUERY_SUCCESS,
+	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
@@ -362,6 +363,18 @@ const dashboard = (
 								...afterWidget,
 							],
 						},
+					},
+				],
+			};
+		}
+
+		case SAVE_SETTING_TO_PANEL_SUCCESS: {
+			const selectedDashboard = action.payload;
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
 					},
 				],
 			};

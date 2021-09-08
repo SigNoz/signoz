@@ -9,6 +9,10 @@ import { useHistory, useLocation, useParams } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
+import {
+	SaveDashboard,
+	SaveDashboardProps,
+} from 'store/actions/dashboard/saveDashboard';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
@@ -27,6 +31,7 @@ import {
 const NewWidget = ({
 	selectedGraph,
 	applySettingsToPanel,
+	saveSettingOfPanel,
 }: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -79,7 +84,8 @@ const NewWidget = ({
 
 	const onClickApplyHandler = useCallback(() => {
 		// update the global state
-		applySettingsToPanel({
+		saveSettingOfPanel({
+			uuid: selectedDashboard.uuid,
 			description,
 			isStacked: stacked,
 			nullZeroValues: selectedNullZeroValue,
@@ -89,7 +95,6 @@ const NewWidget = ({
 			widgetId: query.get('widgetId') || '',
 		});
 	}, [
-		applySettingsToPanel,
 		opacity,
 		description,
 		query,
@@ -97,11 +102,13 @@ const NewWidget = ({
 		stacked,
 		title,
 		selectedNullZeroValue,
+		saveSettingOfPanel,
+		selectedDashboard,
 	]);
 
 	const onClickSaveHandler = useCallback(() => {
-		// on fire the PUT request which update the dashboard and onClickDiscardHandler
-	}, []);
+		onClickApplyHandler();
+	}, [onClickApplyHandler]);
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));
@@ -152,12 +159,16 @@ interface DispatchProps {
 	applySettingsToPanel: (
 		props: ApplySettingsToPanelProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
+	saveSettingOfPanel: (
+		props: SaveDashboardProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
+	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

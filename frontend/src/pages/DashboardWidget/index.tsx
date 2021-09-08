@@ -50,7 +50,7 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 				widgetId,
 			});
 		}
-	}, [selectedGraph]);
+	}, [selectedGraph, dashboardId, getDashboard, search]);
 
 	if (
 		selectedGraph === undefined ||

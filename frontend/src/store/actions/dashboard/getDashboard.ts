@@ -24,7 +24,11 @@ export const GetDashboard = ({
 					payload: response.payload,
 					type: 'GET_DASHBOARD_SUCCESS',
 				});
-				if (widgetId !== undefined) {
+
+				if (
+					widgetId !== undefined &&
+					response.payload.data.widgets?.length === undefined
+				) {
 					dispatch({
 						type: 'CREATE_DEFAULT_WIDGET',
 						payload: {

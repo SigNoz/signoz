@@ -29,6 +29,10 @@ export const QUERY_SUCCESS = 'QUERY_SUCCESS';
 export const QUERY_ERROR = 'QUERY_ERROR';
 
 export const APPLY_SETTINGS_TO_PANEL = 'APPLY_SETTINGS_TO_PANEL';
+
+export const SAVE_SETTING_TO_PANEL_SUCCESS = 'SAVE_SETTING_TO_PANEL_SUCCESS';
+export const SAVE_SETTING_TO_PANEL_ERROR = 'SAVE_SETTING_TO_PANEL_ERROR';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -83,7 +87,8 @@ interface DashboardError {
 		| typeof GET_ALL_DASHBOARD_ERROR
 		| typeof GET_DASHBOARD_ERROR
 		| typeof UPDATE_TITLE_DESCRIPTION_TAGS_ERROR
-		| typeof DELETE_DASHBOARD_ERROR;
+		| typeof DELETE_DASHBOARD_ERROR
+		| typeof SAVE_SETTING_TO_PANEL_ERROR;
 	payload: {
 		errorMessage: string;
 	};
@@ -122,6 +127,11 @@ interface QueryError {
 	};
 }
 
+interface SaveDashboardSuccess {
+	type: typeof SAVE_SETTING_TO_PANEL_SUCCESS;
+	payload: Dashboard;
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -136,4 +146,5 @@ export type DashboardActions =
 	| CreateNewQuery
 	| QuerySuccess
 	| QueryError
-	| ApplySettingsToPanel;
+	| ApplySettingsToPanel
+	| SaveDashboardSuccess;
