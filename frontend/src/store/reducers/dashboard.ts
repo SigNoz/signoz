@@ -139,6 +139,14 @@ const dashboard = (
 			const defaultWidget = action.payload;
 			const query = action.payload.query;
 
+			const isPresent = widgets?.find((e) => e.id === action.payload.id);
+
+			if (isPresent !== undefined) {
+				return {
+					...state,
+				};
+			}
+
 			return {
 				...state,
 				dashboards: [
@@ -172,7 +180,7 @@ const dashboard = (
 
 			const preWidget = data.widgets?.slice(0, selectedWidgetIndex);
 			const afterWidget = data.widgets?.slice(
-				selectedWidgetIndex || 0 + 1, // this is never undefined
+				(selectedWidgetIndex || 0) + 1, // this is never undefined
 				widgets?.length,
 			);
 
@@ -221,7 +229,7 @@ const dashboard = (
 
 			const preWidget = data.widgets?.slice(0, selectedWidgetIndex);
 			const afterWidget = data.widgets?.slice(
-				selectedWidgetIndex || 0 + 1, // this is never undefined
+				(selectedWidgetIndex || 0) + 1, // this is never undefined
 				widgets?.length,
 			);
 			const selectedWidget = (selectedDashboard.data.widgets || [])[
@@ -268,7 +276,7 @@ const dashboard = (
 			const preWidget = data.widgets?.slice(0, selectedWidgetIndex) || [];
 			const afterWidget =
 				data.widgets?.slice(
-					selectedWidgetIndex || 0 + 1, // this is never undefined
+					(selectedWidgetIndex || 0) + 1, // this is never undefined
 					widgets?.length,
 				) || [];
 			const selectedWidget = (selectedDashboard.data.widgets || [])[
@@ -333,7 +341,7 @@ const dashboard = (
 			const preWidget = data.widgets?.slice(0, selectedWidgetIndex) || [];
 			const afterWidget =
 				data.widgets?.slice(
-					selectedWidgetIndex || 0 + 1, // this is never undefined
+					(selectedWidgetIndex || 0) + 1, // this is never undefined
 					widgets?.length,
 				) || [];
 

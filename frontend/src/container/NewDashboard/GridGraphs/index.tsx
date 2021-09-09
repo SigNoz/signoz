@@ -18,7 +18,19 @@ const GridGraphs = (): JSX.Element => {
 
 	const widget = data.widgets;
 
-	const [displaySlider, setDisplaySlider] = useState(widget?.length === 0);
+	const getInitialValue = (): boolean => {
+		if (widget === undefined) {
+			return false;
+		}
+
+		if (widget.length !== 0) {
+			return true;
+		}
+
+		return false;
+	};
+
+	const [displaySlider, setDisplaySlider] = useState(getInitialValue());
 
 	const onToggleHandler = useCallback(() => {
 		setDisplaySlider((value) => !value);

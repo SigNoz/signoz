@@ -43,7 +43,7 @@ export const SaveDashboard = ({
 			const preWidget = data.widgets?.slice(0, selectedWidgetIndex) || [];
 			const afterWidget =
 				data.widgets?.slice(
-					selectedWidgetIndex || 0 + 1, // this is never undefined
+					(selectedWidgetIndex || 0) + 1, // this is never undefined
 					data.widgets?.length,
 				) || [];
 			const selectedWidget = (selectedDashboard.data.widgets || [])[
