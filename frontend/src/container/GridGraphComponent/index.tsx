@@ -10,7 +10,6 @@ const GridGraphComponent = ({
 	opacity,
 	isStacked,
 }: GridGraphComponentProps): JSX.Element | null => {
-	// send the request to get the data from the server
 	if (GRAPH_TYPES === 'TIME_SERIES') {
 		return (
 			<Graph
@@ -26,7 +25,7 @@ const GridGraphComponent = ({
 	}
 
 	if (GRAPH_TYPES === 'VALUE') {
-		return <div>asd</div>;
+		return <div>VALUE</div>;
 	}
 
 	return null;

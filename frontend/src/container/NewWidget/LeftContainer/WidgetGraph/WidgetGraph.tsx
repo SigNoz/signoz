@@ -4,6 +4,7 @@ import GridGraphComponent from 'container/GridGraphComponent';
 import { NewWidgetProps } from 'container/NewWidget';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import convertIntoEpoc from 'lib/covertIntoEpoc';
+import getChartData from 'lib/getChartData';
 import getLabelName from 'lib/getLabelName';
 import { colors } from 'lib/getRandomColor';
 import React from 'react';
@@ -43,40 +44,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		);
 	}
 
-	const chartData = queryData.data.map((e, index) => {
-		const { values, metric } = e;
-
-		const labelNames = getLabelName(metric, (query[index] || {}).query);
-
-		const dataValue = values?.map((e) => {
-			const [first = 0, second = ''] = e || [];
-
-			return {
-				first: convertDateToAmAndPm(new Date(parseInt(convertIntoEpoc(first), 10))),
-				second: Number(parseFloat(second).toFixed(2)),
-			};
-		});
-
-		const color = colors[index] || 'red';
-
-		return {
-			label: labelNames,
-			first: dataValue.map((e) => e.first),
-			borderColor: color,
-			second: dataValue.map((e) => e.second),
-		};
-	});
-
-	const chartDataSet: ChartData = {
-		labels: chartData[0].first,
-		datasets: chartData.map((e) => ({
-			label: e.label,
-			data: e.second,
-			borderColor: e.borderColor,
-			pointRadius: 1,
-			showLine: true,
-		})),
-	};
+	const chartDataSet = getChartData({ query, queryData });
 
 	return (
 		<GridGraphComponent

@@ -1,5 +1,4 @@
 import { Input } from 'antd';
-import { Form } from 'antd';
 import React, { useCallback } from 'react';
 
 import { Container } from './styles';
@@ -13,18 +12,16 @@ const Description = ({
 		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
 			setDescription(e.target.value);
 		},
-		[],
+		[setDescription],
 	);
 
 	return (
 		<Container>
-			<Form.Item labelCol={{ span: 24 }} label="Description">
-				<TextArea
-					placeholder={'Description of the dashboard'}
-					onChange={onChangeHandler}
-					value={description}
-				></TextArea>
-			</Form.Item>
+			<TextArea
+				placeholder={'Description of the dashboard'}
+				onChange={onChangeHandler}
+				value={description}
+			></TextArea>
 		</Container>
 	);
 };

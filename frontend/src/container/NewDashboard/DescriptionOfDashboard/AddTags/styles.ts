@@ -2,7 +2,6 @@ import { Tag } from 'antd';
 import styled from 'styled-components';
 
 export const TagsContainer = styled.div`
-	margin-top: 0.5rem;
 	display: flex;
 `;
 

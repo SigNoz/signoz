@@ -1,23 +1,36 @@
 import GridGraphLayout from 'container/GridGraphLayout';
 import ComponentsSlider from 'container/NewDashboard/ComponentsSlider';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import DashboardReducer from 'types/reducer/dashboards';
 
-import AddWidgets from './AddWidgets';
 import { GridComponentSliderContainer } from './styles';
 
 const GridGraphs = (): JSX.Element => {
-	const [isAddWidgets, setIsAddWidgets] = useState<boolean>(true);
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
+	const [selectedDashboard] = dashboards;
+
+	const data = selectedDashboard.data;
+
+	const widget = data.widgets;
+
+	const [displaySlider, setDisplaySlider] = useState(widget?.length === 0);
+
+	const onToggleHandler = useCallback(() => {
+		setDisplaySlider((value) => !value);
+	}, []);
 
 	return (
 		<>
-			{isAddWidgets ? (
-				<AddWidgets setIsAddWidgets={setIsAddWidgets} />
-			) : (
-				<GridComponentSliderContainer>
-					<ComponentsSlider />
-					<GridGraphLayout />
-				</GridComponentSliderContainer>
-			)}
+			<GridComponentSliderContainer>
+				{displaySlider && <ComponentsSlider />}
+
+				<GridGraphLayout onToggleHandler={onToggleHandler} />
+			</GridComponentSliderContainer>
 		</>
 	);
 };

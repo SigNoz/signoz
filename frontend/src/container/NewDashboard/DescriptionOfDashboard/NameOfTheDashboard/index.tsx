@@ -9,15 +9,13 @@ const NameOfTheDashboard = ({
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			setName(e.target.value);
 		},
-		[],
+		[setName],
 	);
 
 	return (
 		<Input
-			label="Title"
-			labelOnTop
 			size="middle"
-			placeholder="New Dashboard 1"
+			placeholder="Title"
 			value={name}
 			onChangeHandler={onChangeHandler}
 		/>

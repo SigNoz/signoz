@@ -9,6 +9,7 @@ export const Container = styled.div`
 export const Card = styled(CardComponent)`
 	min-height: 10vh;
 	overflow-y: auto;
+	cursor: pointer;
 
 	.ant-card-body {
 		height: 100%;

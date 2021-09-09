@@ -22,7 +22,7 @@ const NewDashboardPage = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 		getDashboard({
 			uuid: dashboardId,
 		});
-	}, []);
+	}, [getDashboard, dashboardId]);
 
 	if (error && !loading && dashboards.length === 0) {
 		return <div>{errorMessage}</div>;
