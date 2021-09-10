@@ -1,13 +1,15 @@
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import store from 'store';
 
 import getMicroSeconds from './getMicroSeconds';
 import getMinAgo from './getMinAgo';
 
-const getStartAndEndTime = ({ type }: GetStartAndEndTimeProps): Payload => {
+const GetStartAndEndTime = ({
+	type,
+	minTime,
+	maxTime,
+}: GetStartAndEndTimeProps): Payload => {
 	const end = new Date().getTime();
 	const endString = getMicroSeconds({ time: end });
-	const { globalTime } = store.getState();
 
 	if (type === 'LAST_15_MIN') {
 		const agodate = getMinAgo({ minutes: 15 }).getTime();
@@ -20,13 +22,15 @@ const getStartAndEndTime = ({ type }: GetStartAndEndTimeProps): Payload => {
 	}
 
 	return {
-		start: getMicroSeconds({ time: globalTime.minTime / 10000000 }),
-		end: getMicroSeconds({ time: globalTime.maxTime / 10000000 }),
+		start: getMicroSeconds({ time: minTime / 10000000 }),
+		end: getMicroSeconds({ time: maxTime / 10000000 }),
 	};
 };
 
 interface GetStartAndEndTimeProps {
 	type: timePreferenceType;
+	minTime: number;
+	maxTime: number;
 }
 
 interface Payload {
@@ -34,4 +38,4 @@ interface Payload {
 	end: string;
 }
 
-export default getStartAndEndTime;
+export default GetStartAndEndTime;

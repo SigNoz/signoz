@@ -4,20 +4,36 @@ import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
-import getStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { useEffect, useRef, useState } from 'react';
+import GetStartAndEndTime from 'lib/getStartAndEndTime';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { GlobalTime } from 'store/actions';
+import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
-const GridCardGraph = ({ widgets }: GridCardGraphProps): JSX.Element => {
+import Bar from './Bar';
+import { Modal } from './styles';
+
+const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: false,
 		errorMessage: '',
 		error: false,
 		payload: undefined,
 	});
+	const [modal, setModal] = useState(false);
+	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
+		(state) => state.globalTime,
+	);
 
 	const counter = useRef(0);
+
+	const { start, end } = GetStartAndEndTime({
+		type: widget.timePreferance,
+		maxTime,
+		minTime,
+	});
 
 	useEffect(() => {
 		(async (): Promise<void> => {
@@ -28,12 +44,9 @@ const GridCardGraph = ({ widgets }: GridCardGraphProps): JSX.Element => {
 						...state,
 						loading: true,
 					});
-					const { start, end } = getStartAndEndTime({
-						type: widgets.timePreferance,
-					});
 
 					const response = await Promise.all(
-						widgets.query.map(async (query) => {
+						widget.query.map(async (query) => {
 							const result = await getQueryResult({
 								end,
 								query: query.query,
@@ -61,7 +74,7 @@ const GridCardGraph = ({ widgets }: GridCardGraphProps): JSX.Element => {
 						}, intialQuery);
 
 						const chartDataSet = getChartData({
-							query: widgets.query,
+							query: widget.query,
 							queryData: {
 								data: finalQueryData,
 								error: false,
@@ -86,7 +99,11 @@ const GridCardGraph = ({ widgets }: GridCardGraphProps): JSX.Element => {
 				});
 			}
 		})();
-	}, [widgets, state]);
+	}, [widget, state, end, start]);
+
+	const onToggleModal = useCallback(() => {
+		setModal((state) => !state);
+	}, []);
 
 	if (state.error) {
 		return <div>{state.errorMessage}</div>;
@@ -97,20 +114,44 @@ const GridCardGraph = ({ widgets }: GridCardGraphProps): JSX.Element => {
 	}
 
 	return (
-		<GridGraphComponent
-			{...{
-				GRAPH_TYPES: widgets.panelTypes,
-				data: state.payload,
-				isStacked: widgets.isStacked,
-				opacity: widgets.opacity,
-				title: widgets.title,
-			}}
-		/>
+		<>
+			<Bar onToggleModal={onToggleModal} widget={widget} />
+
+			<Modal
+				title="View"
+				footer={[]}
+				centered
+				visible={modal}
+				onCancel={onToggleModal}
+				width="60%"
+				destroyOnClose
+			>
+				<GridGraphComponent
+					{...{
+						GRAPH_TYPES: widget.panelTypes,
+						data: state.payload,
+						isStacked: widget.isStacked,
+						opacity: widget.opacity,
+						title: widget.title,
+					}}
+				/>
+			</Modal>
+
+			<GridGraphComponent
+				{...{
+					GRAPH_TYPES: widget.panelTypes,
+					data: state.payload,
+					isStacked: widget.isStacked,
+					opacity: widget.opacity,
+					title: widget.title,
+				}}
+			/>
+		</>
 	);
 };
 
 interface GridCardGraphProps {
-	widgets: Widgets;
+	widget: Widgets;
 }
 
 interface GridCardGraphState {

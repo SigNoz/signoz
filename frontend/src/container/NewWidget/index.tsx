@@ -82,7 +82,7 @@ const NewWidget = ({
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
-	const onClickApplyHandler = useCallback(() => {
+	const onClickSaveHandler = useCallback(() => {
 		// update the global state
 		saveSettingOfPanel({
 			uuid: selectedDashboard.uuid,
@@ -106,9 +106,26 @@ const NewWidget = ({
 		selectedDashboard,
 	]);
 
-	const onClickSaveHandler = useCallback(() => {
-		onClickApplyHandler();
-	}, [onClickApplyHandler]);
+	const onClickApplyHandler = useCallback(() => {
+		applySettingsToPanel({
+			description,
+			isStacked: stacked,
+			nullZeroValues: selectedNullZeroValue,
+			opacity,
+			timePreferance: selectedTime.enum,
+			title,
+			widgetId: selectedWidget?.id || '',
+		});
+	}, [
+		applySettingsToPanel,
+		description,
+		opacity,
+		selectedTime,
+		selectedWidget?.id,
+		selectedNullZeroValue,
+		stacked,
+		title,
+	]);
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));

@@ -34,7 +34,7 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 		} else {
 			setSelectedGraph(graphType);
 		}
-	}, []);
+	}, [dashboardId, push, search]);
 
 	const counter = useRef(0);
 

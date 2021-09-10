@@ -5,10 +5,12 @@ import styled from 'styled-components';
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
 export const Card = styled(CardComponent)`
-	height: 100%;
+	&&& {
+		height: 100%;
+	}
 
 	.ant-card-body {
-		height: 100%;
+		height: 90%;
 		padding: 0;
 	}
 `;

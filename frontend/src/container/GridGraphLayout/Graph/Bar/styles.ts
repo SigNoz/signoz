@@ -1,0 +1,12 @@
+import styled from 'styled-components';
+
+export const Container = styled.div`
+	height: 10%;
+	align-items: center;
+	justify-content: flex-end;
+	display: flex;
+	gap: 1rem;
+	padding-right: 1rem;
+	padding-left: 1rem;
+	padding-top: 0.5rem;
+`;

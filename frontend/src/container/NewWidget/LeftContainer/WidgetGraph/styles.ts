@@ -2,11 +2,14 @@ import { Card, Tooltip } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled(Card)`
-	min-height: 55vh;
-	position: relative;
+	&&& {
+		min-height: 55vh;
+		position: relative;
+	}
 
 	.ant-card-body {
 		padding: 0;
+		min-height: 55vh;
 	}
 `;
 

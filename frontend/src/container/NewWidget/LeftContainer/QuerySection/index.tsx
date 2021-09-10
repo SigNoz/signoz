@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -26,12 +26,14 @@ const QuerySection = ({
 	const { search } = useLocation();
 	const widgets = selectedDashboards.data.widgets;
 
-	const urlQuery = new URLSearchParams(search);
+	const urlQuery = useMemo(() => {
+		return new URLSearchParams(search);
+	}, [search]);
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
 		return widgets?.find((e) => e.id === widgetId);
-	}, [widgets]);
+	}, [widgets, urlQuery]);
 
 	const selectedWidget = getWidget() as Widgets;
 
@@ -43,7 +45,7 @@ const QuerySection = ({
 		createQuery({
 			widgetId: String(widgetId),
 		});
-	}, []);
+	}, [createQuery, urlQuery]);
 
 	if (query.length === 0) {
 		return <Spinner size="small" height="30vh" tip="Loading..." />;

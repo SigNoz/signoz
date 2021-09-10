@@ -55,7 +55,7 @@ const GridGraph = ({ onToggleHandler }: Props): JSX.Element => {
 						y: Infinity,
 						i: (index + 1).toString(),
 						x: (index + 1 * 6) % 12,
-						Component: (): JSX.Element => <Graph widgets={widgets[index]} />,
+						Component: (): JSX.Element => <Graph widget={widgets[index]} />,
 					};
 				});
 			};

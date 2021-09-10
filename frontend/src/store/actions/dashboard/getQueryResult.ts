@@ -1,7 +1,7 @@
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
-import getStartAndEndTime from 'lib/getStartAndEndTime';
+import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -33,9 +33,13 @@ export const GetQueryResult = (
 				},
 				...afterQuery,
 			].map((e) => e.query);
-			const { end, start } = getStartAndEndTime({
+
+			const { end, start } = GetStartAndEndTime({
 				type: props.selectedTime,
+				maxTime: props.maxTime,
+				minTime: props.minTime,
 			});
+
 			const response = await Promise.all(
 				queryArray.map(async (query) => {
 					const result = await getQueryResult({
@@ -93,4 +97,6 @@ export interface GetQueryResultProps {
 	query: string;
 	widgetId: string;
 	selectedTime: timePreferenceType;
+	maxTime: number;
+	minTime: number;
 }

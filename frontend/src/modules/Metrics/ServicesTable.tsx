@@ -1,5 +1,5 @@
 import { Button, Space, Table } from 'antd';
-import { CustomModal } from 'components/Modal';
+import Modal from 'components/Modal';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
@@ -13,7 +13,7 @@ import styled from 'styled-components';
 
 interface ServicesTableProps {
 	servicesList: servicesListItem[];
-	getServicesList: Function;
+	getServicesList: () => void;
 	globalTime: GlobalTime;
 }
 
@@ -129,7 +129,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 
 	if (refetchFromBackend && !skipOnboarding) {
 		return (
-			<CustomModal
+			<Modal
 				title={'Setup instrumentation'}
 				isModalVisible={true}
 				closable={false}
@@ -165,7 +165,7 @@ const _ServicesTable = (props: ServicesTableProps) => {
 						</a>
 					</div>
 				</div>
-			</CustomModal>
+			</Modal>
 		);
 	}
 

@@ -2,16 +2,17 @@ import { Divider } from 'antd';
 import { AxiosError } from 'axios';
 import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { connect } from 'react-redux';
+import React, { useCallback, useEffect, useState } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { QueryError, QueryErrorProps } from 'store/actions';
+import { GlobalTime, QueryError, QueryErrorProps } from 'store/actions';
 import {
 	GetQueryResult,
 	GetQueryResultProps,
 } from 'store/actions/dashboard/getQueryResult';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 
 import { Container, InputContainer } from './styles';
@@ -27,6 +28,11 @@ const Query = ({
 	const [promqlQuery, setPromqlQuery] = useState(preQuery);
 	const [legendFormat, setLegendFormat] = useState(preLegend);
 	const { search } = useLocation();
+	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
+		(state) => state.globalTime,
+	);
+
+	console.log({ minTime, maxTime });
 
 	const query = new URLSearchParams(search);
 	const widgetId = query.get('widgetId') || '';
@@ -38,34 +44,43 @@ const Query = ({
 		[],
 	);
 
-	// @TODO need to shift this logic to the list not to the individual query as this request is checking the query in the currect widget
-	const counter = useRef(0);
-
-	const onBlurHandler = useCallback(async () => {
-		if (promqlQuery.length !== 0) {
-			try {
-				getQueryResult({
-					currentIndex,
-					legend: legendFormat,
-					query: promqlQuery,
-					selectedTime: selectedTime.enum,
-					widgetId,
-				});
-			} catch (error) {
-				queryError({
-					errorMessage: (error as AxiosError).toString(),
-					widgetId: widgetId,
-				});
+	const onBlurHandler = useCallback(
+		async ({ minTime, maxTime }) => {
+			if (promqlQuery.length !== 0) {
+				try {
+					getQueryResult({
+						currentIndex,
+						legend: legendFormat,
+						query: promqlQuery,
+						selectedTime: selectedTime.enum,
+						widgetId,
+						maxTime,
+						minTime,
+					});
+				} catch (error) {
+					queryError({
+						errorMessage: (error as AxiosError).toString(),
+						widgetId: widgetId,
+					});
+				}
 			}
-		}
-	}, [promqlQuery]);
+		},
+		[
+			promqlQuery,
+			currentIndex,
+			getQueryResult,
+			legendFormat,
+			queryError,
+			widgetId,
+			selectedTime,
+		],
+	);
 
 	useEffect(() => {
-		if (counter.current == 0 && preQuery.length !== 0) {
-			counter.current = 1;
-			onBlurHandler();
+		if (preQuery.length !== 0) {
+			onBlurHandler({ minTime, maxTime });
 		}
-	}, []);
+	}, [onBlurHandler, preQuery, minTime, maxTime]);
 
 	return (
 		<Container>
