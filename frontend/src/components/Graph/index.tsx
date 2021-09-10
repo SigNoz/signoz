@@ -1,4 +1,6 @@
 import {
+	BarController,
+	BarElement,
 	CategoryScale,
 	Chart,
 	ChartOptions,
@@ -43,6 +45,8 @@ const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 				Title,
 				Tooltip,
 				SubTitle,
+				BarController,
+				BarElement,
 			);
 
 			const options: ChartOptions = {
