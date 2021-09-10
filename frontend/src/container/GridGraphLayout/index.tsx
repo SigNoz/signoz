@@ -33,7 +33,7 @@ const GridGraph = ({ onToggleHandler }: Props): JSX.Element => {
 			i: '0',
 			x: 0,
 			y: 0,
-			w: 4,
+			w: 6,
 			h: 2,
 			Component: AddWidgetWrapper,
 		},
@@ -51,10 +51,10 @@ const GridGraph = ({ onToggleHandler }: Props): JSX.Element => {
 				return widgets?.map((e, index) => {
 					return {
 						h: 2,
-						w: 4,
+						w: 6,
 						y: Infinity,
-						i: (index + layouts.length).toString(),
-						x: ((index + 1) * 4) % 12,
+						i: (index + 1).toString(),
+						x: (index + 1 * 6) % 12,
 						Component: (): JSX.Element => <Graph widgets={widgets[index]} />,
 					};
 				});

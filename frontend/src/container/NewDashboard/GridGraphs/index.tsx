@@ -33,7 +33,7 @@ const GridGraphs = (): JSX.Element => {
 	const [displaySlider, setDisplaySlider] = useState(getInitialValue());
 
 	const onToggleHandler = useCallback(() => {
-		setDisplaySlider((value) => !value);
+		setDisplaySlider(true);
 	}, []);
 
 	return (

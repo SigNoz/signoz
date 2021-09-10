@@ -1,4 +1,5 @@
 import getAll from 'api/dashboard/getAll';
+import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 
@@ -29,7 +30,7 @@ export const GetAllDashboards = (): ((
 			dispatch({
 				type: 'GET_ALL_DASHBOARD_ERROR',
 				payload: {
-					errorMessage: error.toString() || 'Something went wrong',
+					errorMessage: (error as AxiosError).toString() || 'Something went wrong',
 				},
 			});
 		}
