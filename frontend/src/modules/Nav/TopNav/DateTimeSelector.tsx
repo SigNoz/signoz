@@ -132,9 +132,24 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		setStartTime(startTime);
 	};
 
-	const updateUrlForTimeInterval = (value: string) => {
+	const updateUrlForTimeInterval = (value: string): void => {
+		const preSearch = new URLSearchParams(location.search);
+
+		const widgetId = preSearch.get('widgetId');
+		const graphType = preSearch.get('graphType');
+
+		let result = '';
+
+		if (widgetId !== null) {
+			result = result + `&widgetId=${widgetId}`;
+		}
+
+		if (graphType !== null) {
+			result = result + `&graphType=${graphType}`;
+		}
+
 		props.history.push({
-			search: `?${METRICS_PAGE_QUERY_PARAM.interval}=${value}`,
+			search: `?${METRICS_PAGE_QUERY_PARAM.interval}=${value}${result}`,
 		}); //pass time in URL query param for all choices except custom in datetime picker
 	};
 
