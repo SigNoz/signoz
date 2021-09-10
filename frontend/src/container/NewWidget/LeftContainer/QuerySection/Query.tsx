@@ -45,7 +45,7 @@ const Query = ({
 	);
 
 	const onBlurHandler = useCallback(
-		async ({ minTime, maxTime }) => {
+		async ({ minTime, maxTime }: GlobalTime) => {
 			if (promqlQuery.length !== 0) {
 				try {
 					getQueryResult({
@@ -76,6 +76,7 @@ const Query = ({
 		],
 	);
 
+	// @TODO need to update this approach
 	useEffect(() => {
 		if (preQuery.length !== 0) {
 			onBlurHandler({ minTime, maxTime });
