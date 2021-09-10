@@ -47,7 +47,7 @@ const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 
 			const options: ChartOptions = {
 				responsive: true,
-				maintainAspectRatio: true,
+				maintainAspectRatio: false,
 				interaction: {
 					mode: 'index',
 					intersect: false,
@@ -57,6 +57,9 @@ const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 						display: title === undefined ? false : true,
 						text: title,
 					},
+				},
+				layout: {
+					padding: 0,
 				},
 
 				scales: {
