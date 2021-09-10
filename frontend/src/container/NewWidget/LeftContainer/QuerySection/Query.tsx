@@ -93,7 +93,7 @@ const Query = ({
 					size="middle"
 					value={promqlQuery}
 					addonBefore={'PromQL Query'}
-					onBlur={onBlurHandler}
+					onBlur={(): Promise<void> => onBlurHandler({ maxTime, minTime })}
 				/>
 			</InputContainer>
 
