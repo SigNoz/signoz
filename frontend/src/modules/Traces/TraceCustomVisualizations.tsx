@@ -1,13 +1,14 @@
 import { Card, Form, Select, Space } from 'antd';
-import GenericVisualizations from 'modules/Metrics/GenericVisualization';
+import Graph from 'components/Graph';
 import { useRoute } from 'modules/RouteProvider';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { GlobalTime, TraceFilters } from 'store/actions';
 import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';
 import { customMetricsItem } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 const { Option } = Select;
+import { colors } from 'lib/getRandomColor';
 
 const entity = [
 	{
@@ -211,14 +212,29 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 				</Space>
 			</Form>
 
-			<GenericVisualizations chartType="line" data={props.filteredTraceMetrics} />
-			{/* This component should take bar or line as an input */}
+			<div>
+				<Graph
+					type="line"
+					data={{
+						labels: props.filteredTraceMetrics.map(
+							(s) => new Date(s.timestamp / 1000000),
+						),
+						datasets: [
+							{
+								data: props.filteredTraceMetrics.map((e) => e.value),
+								borderColor: colors[0],
+							},
+						],
+					}}
+					xAxisType="timeseries"
+				/>
+			</div>
 		</Card>
 	);
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	filteredTraceMetrics: customMetricsItem[];
 	globalTime: GlobalTime;

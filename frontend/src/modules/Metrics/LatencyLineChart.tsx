@@ -1,6 +1,5 @@
-import { ChartOptions } from 'chart.js';
+import Graph from 'components/Graph';
 import React from 'react';
-import { Line as ChartJSLine } from 'react-chartjs-2';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
@@ -12,10 +11,10 @@ const ChartPopUpUnique = styled.div<{
 }>`
 	background-color: white;
 	border: 1px solid rgba(219, 112, 147, 0.5);
-	zindex: 10;
+	z-index: 10;
 	position: absolute;
-	top: ${(props) => props.ycoordinate}px;
-	left: ${(props) => props.xcoordinate}px;
+	top: ${(props): number => props.ycoordinate}px;
+	left: ${(props): number => props.xcoordinate}px;
 	font-size: 12px;
 	border-radius: 2px;
 `;
@@ -34,7 +33,7 @@ const theme = 'dark';
 
 interface LatencyLineChartProps extends RouteComponentProps<any> {
 	data: metricItem[];
-	popupClickHandler: Function;
+	popupClickHandler: () => void;
 }
 
 class LatencyLineChart extends React.Component<LatencyLineChartProps> {
@@ -73,93 +72,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		}
 	};
 
-	options_charts: ChartOptions = {
-		onClick: this.onClickhandler,
-
-		maintainAspectRatio: true,
-		responsive: true,
-
-		title: {
-			display: true,
-			text: '',
-			fontSize: 20,
-			position: 'top',
-			padding: 8,
-			fontFamily: 'Arial',
-			fontStyle: 'regular',
-			fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
-		},
-
-		legend: {
-			display: true,
-			position: 'bottom',
-			align: 'center',
-
-			labels: {
-				fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
-				fontSize: 10,
-				boxWidth: 10,
-				usePointStyle: true,
-			},
-		},
-
-		tooltips: {
-			mode: 'label',
-			bodyFontSize: 12,
-			titleFontSize: 12,
-
-			callbacks: {
-				label: function (tooltipItem, data) {
-					if (typeof tooltipItem.yLabel === 'number') {
-						return (
-							data.datasets![tooltipItem.datasetIndex!].label +
-							' : ' +
-							tooltipItem.yLabel.toFixed(2)
-						);
-					} else {
-						return '';
-					}
-				},
-			},
-		},
-
-		scales: {
-			yAxes: [
-				{
-					stacked: false,
-					ticks: {
-						beginAtZero: false,
-						fontSize: 10,
-						autoSkip: true,
-						maxTicksLimit: 6,
-					},
-
-					gridLines: {
-						// You can change the color, the dash effect, the main axe color, etc.
-						borderDash: [1, 4],
-						color: '#D3D3D3',
-						lineWidth: 0.25,
-					},
-				},
-			],
-			xAxes: [
-				{
-					type: 'time',
-					distribution: 'linear',
-					//'linear': data are spread according to their time (distances can vary)
-					// From https://www.chartjs.org/docs/latest/axes/cartesian/time.html
-					ticks: {
-						beginAtZero: false,
-						fontSize: 10,
-						autoSkip: true,
-						maxTicksLimit: 10,
-					},
-					// gridLines: false, --> not a valid option
-				},
-			],
-		},
-	};
-
 	GraphTracePopUp = () => {
 		if (this.state.showpopUp) {
 			return (
@@ -179,14 +91,10 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		} else return null;
 	};
 
-	render() {
+	render(): JSX.Element {
 		const ndata = this.props.data;
 
-		const data_chartJS = (canvas: any) => {
-			const ctx = canvas.getContext('2d');
-			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			gradient.addColorStop(0, 'rgba(250,174,50,1)');
-			gradient.addColorStop(1, 'rgba(250,174,50,1)');
+		const data_chartJS = () => {
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)),
 				datasets: [
@@ -218,13 +126,9 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		return (
 			<div>
 				{this.GraphTracePopUp()}
+				<div style={{ textAlign: 'center' }}>Application latency in ms</div>
 				<div>
-					<div style={{ textAlign: 'center' }}>Application latency in ms</div>
-					<ChartJSLine
-						ref={this.chartRef}
-						data={data_chartJS}
-						options={this.options_charts}
-					/>
+					<Graph xAxisType="timeseries" type="line" data={data_chartJS()} />
 				</div>
 			</div>
 		);

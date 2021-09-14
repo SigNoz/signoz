@@ -1,7 +1,7 @@
 import { Card, Col, Row, Tabs } from 'antd';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { RouteComponentProps, useParams } from 'react-router-dom';
@@ -34,18 +34,18 @@ const { TabPane } = Tabs;
 interface ServicesMetricsProps extends RouteComponentProps<any> {
 	serviceMetrics: metricItem[];
 	dbOverviewMetrics: dbOverviewMetricsItem[];
-	getServicesMetrics: Function;
-	getExternalMetrics: Function;
-	getExternalErrCodeMetrics: Function;
-	getExternalAvgDurationMetrics: Function;
-	getDbOverViewMetrics: Function;
+	getServicesMetrics: () => void;
+	getExternalMetrics: () => void;
+	getExternalErrCodeMetrics: () => void;
+	getExternalAvgDurationMetrics: () => void;
+	getDbOverViewMetrics: () => void;
 	externalMetrics: externalMetricsItem[];
 	topEndpointsList: topEndpointListItem[];
 	externalAvgDurationMetrics: externalMetricsAvgDurationItem[];
 	externalErrCodeMetrics: externalErrCodeMetricsItem[];
-	getTopEndpoints: Function;
+	getTopEndpoints: () => void;
 	globalTime: GlobalTime;
-	updateTimeInterval: Function;
+	updateTimeInterval: () => void;
 }
 
 const _ServiceMetrics = (props: ServicesMetricsProps) => {

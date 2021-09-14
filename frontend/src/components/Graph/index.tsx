@@ -12,15 +12,25 @@ import {
 	LineController,
 	LineElement,
 	PointElement,
+	ScaleOptions,
 	SubTitle,
 	TimeScale,
 	TimeSeriesScale,
 	Title,
 	Tooltip,
 } from 'chart.js';
+import chartjsAdapter from 'chartjs-adapter-date-fns';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
+const Graph = ({
+	data,
+	type,
+	title,
+	isStacked,
+	label,
+	displayLegend = false,
+	xAxisType,
+}: GraphProps): JSX.Element => {
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 	const lineChartRef = useRef<Chart>();
@@ -61,17 +71,25 @@ const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 						display: title === undefined ? false : true,
 						text: title,
 					},
+					legend: {
+						display: displayLegend,
+					},
 				},
 				layout: {
 					padding: 0,
 				},
-
 				scales: {
 					x: {
+						animate: true,
 						grid: {
 							display: true,
 							color: 'rgba(231,233,237,0.1)',
 						},
+						labels: label,
+						adapters: {
+							date: chartjsAdapter,
+						},
+						type: xAxisType,
 					},
 					y: {
 						display: true,
@@ -79,6 +97,7 @@ const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 							display: true,
 							color: 'rgba(231,233,237,0.1)',
 						},
+						type: 'linear',
 					},
 					stacked: {
 						display: isStacked === undefined ? false : 'auto',
@@ -92,7 +111,7 @@ const Graph = ({ data, type, title, isStacked }: GraphProps): JSX.Element => {
 				options,
 			});
 		}
-	}, [chartRef, data, type, title, isStacked]);
+	}, [chartRef, data, type, title, isStacked, label, displayLegend, xAxisType]);
 
 	useEffect(() => {
 		buildChart();
@@ -106,6 +125,9 @@ interface GraphProps {
 	data: Chart['data'];
 	title?: string;
 	isStacked?: boolean;
+	label?: string[];
+	displayLegend?: boolean;
+	xAxisType?: ScaleOptions['type'];
 }
 
 export default Graph;

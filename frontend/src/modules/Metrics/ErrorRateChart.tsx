@@ -1,7 +1,6 @@
-import { ChartOptions } from 'chart.js';
+import Graph from 'components/Graph';
 import ROUTES from 'constants/routes';
 import React from 'react';
-import { Line as ChartJSLine } from 'react-chartjs-2';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
@@ -30,9 +29,6 @@ const PopUpElements = styled.p`
 		cursor: pointer;
 	}
 `;
-
-// PNOTE - Check if this should be the case
-const theme = 'dark';
 
 interface ErrorRateChartProps extends RouteComponentProps<any> {
 	data: metricItem[];
@@ -85,100 +81,6 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		// PNOTE - Keeping service map for now, will replace with alerts when alert page is made
 	};
 
-	options_charts: ChartOptions = {
-		onClick: this.onClickhandler,
-
-		maintainAspectRatio: true,
-		responsive: true,
-
-		title: {
-			display: true,
-			text: '',
-			fontSize: 20,
-			position: 'top',
-			padding: 2,
-			fontFamily: 'Arial',
-			fontStyle: 'regular',
-			fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
-		},
-
-		legend: {
-			display: true,
-			position: 'bottom',
-			align: 'center',
-
-			labels: {
-				fontColor: theme === 'dark' ? 'rgb(200, 200, 200)' : 'rgb(20, 20, 20)',
-				fontSize: 10,
-				boxWidth: 10,
-				usePointStyle: true,
-			},
-		},
-
-		tooltips: {
-			mode: 'label',
-			bodyFontSize: 12,
-			titleFontSize: 12,
-
-			callbacks: {
-				label: function (tooltipItem, data) {
-					if (typeof tooltipItem.yLabel === 'number') {
-						return (
-							data.datasets![tooltipItem.datasetIndex!].label +
-							' : ' +
-							tooltipItem.yLabel.toFixed(2)
-						);
-					} else {
-						return '';
-					}
-				},
-			},
-		},
-
-		scales: {
-			yAxes: [
-				{
-					stacked: false,
-					ticks: {
-						beginAtZero: false,
-						fontSize: 10,
-						autoSkip: true,
-						maxTicksLimit: 6,
-					},
-
-					//   scaleLabel: {
-					//     display: true,
-					//     labelString: 'latency in ms',
-					//     fontSize: 6,
-					//     padding: 4,
-					//   },
-					gridLines: {
-						// You can change the color, the dash effect, the main axe color, etc.
-						borderDash: [1, 4],
-						color: '#D3D3D3',
-						lineWidth: 0.25,
-					},
-				},
-			],
-			xAxes: [
-				{
-					type: 'time',
-					// time: {
-					//     unit: 'second'
-					// },
-					distribution: 'linear',
-					ticks: {
-						beginAtZero: false,
-						fontSize: 10,
-						autoSkip: true,
-						maxTicksLimit: 10,
-					},
-					// gridLines: false, --> not a valid option
-				},
-			],
-		},
-	};
-
 	GraphTracePopUp = () => {
 		if (this.state.showpopUp) {
 			return (
@@ -196,11 +98,11 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 	render() {
 		const ndata = this.props.data;
 
-		const data_chartJS = (canvas: any) => {
-			const ctx = canvas.getContext('2d');
-			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			gradient.addColorStop(0, 'rgba(250,174,50,1)');
-			gradient.addColorStop(1, 'rgba(250,174,50,1)');
+		const data_chartJS = () => {
+			// const ctx = canvas.getContext('2d');
+			// const gradient = ctx.createLinearGradient(0, 0, 0, 100);
+			// gradient.addColorStop(0, 'rgba(250,174,50,1)');
+			// gradient.addColorStop(1, 'rgba(250,174,50,1)');
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)), // converting from nano second to mili second
 				datasets: [
@@ -219,11 +121,9 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 			<div>
 				{this.GraphTracePopUp()}
 				<div style={{ textAlign: 'center' }}>Error Percentage (%)</div>
-				<ChartJSLine
-					ref={this.chartRef}
-					data={data_chartJS}
-					options={this.options_charts}
-				/>
+				<div>
+					<Graph xAxisType="timeseries" type="line" data={data_chartJS()} />
+				</div>
 			</div>
 		);
 	}

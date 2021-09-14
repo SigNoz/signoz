@@ -1,7 +1,7 @@
-import { ChartOptions } from 'chart.js';
+import { Chart, ChartOptions } from 'chart.js';
+import Graph from 'components/Graph';
 import ROUTES from 'constants/routes';
 import React from 'react';
-import { Line as ChartJSLine } from 'react-chartjs-2';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
@@ -182,14 +182,10 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 		} else return null;
 	};
 
-	render() {
+	render(): JSX.Element {
 		const ndata = this.props.data;
 
-		const data_chartJS = (canvas: any) => {
-			const ctx = canvas.getContext('2d');
-			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			gradient.addColorStop(0, 'rgba(250,174,50,1)');
-			gradient.addColorStop(1, 'rgba(250,174,50,1)');
+		const data_chartJS = (): Chart['data'] => {
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)),
 				datasets: [
@@ -208,11 +204,9 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 			<div>
 				{this.GraphTracePopUp()}
 				<div style={{ textAlign: 'center' }}>Request per sec</div>
-				<ChartJSLine
-					ref={this.chartRef}
-					data={data_chartJS}
-					options={this.options_charts}
-				/>
+				<div>
+					<Graph xAxisType="timeseries" type="line" data={data_chartJS()} />
+				</div>
 			</div>
 		);
 	}
