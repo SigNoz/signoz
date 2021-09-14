@@ -4,12 +4,14 @@ import {
 	CREATE_NEW_QUERY,
 	DashboardActions,
 	DELETE_DASHBOARD_SUCCESS,
+	DELETE_WIDGET_SUCCESS,
 	GET_ALL_DASHBOARD_ERROR,
 	GET_ALL_DASHBOARD_LOADING_START,
 	GET_ALL_DASHBOARD_SUCCESS,
 	GET_DASHBOARD_ERROR,
 	GET_DASHBOARD_LOADING_START,
 	GET_DASHBOARD_SUCCESS,
+	IS_ADD_WIDGET,
 	QUERY_ERROR,
 	QUERY_SUCCESS,
 	SAVE_SETTING_TO_PANEL_SUCCESS,
@@ -25,6 +27,7 @@ const InitialValue: InitialValueTypes = {
 	errorMessage: '',
 	isEditMode: false,
 	isQueryFired: false,
+	isAddWidget: false,
 };
 
 const dashboard = (
@@ -385,6 +388,35 @@ const dashboard = (
 						...selectedDashboard,
 					},
 				],
+			};
+		}
+
+		case DELETE_WIDGET_SUCCESS: {
+			const { widgetId } = action.payload;
+
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
+			const { widgets = [] } = data;
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: widgets.filter((e) => e.id !== widgetId),
+						},
+					},
+				],
+			};
+		}
+
+		case IS_ADD_WIDGET: {
+			return {
+				...state,
+				isAddWidget: action.payload.isAddWidget,
 			};
 		}
 

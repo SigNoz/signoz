@@ -3,7 +3,7 @@ import { Col, Tooltip, Typography } from 'antd';
 import Input from 'components/Input';
 import React, { useState } from 'react';
 
-import { NewTagContainer, TagsContainer } from './styles';
+import { InputContainer, NewTagContainer, TagsContainer } from './styles';
 
 const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 	const [inputValue, setInputValue] = useState<string>('');
@@ -12,12 +12,9 @@ const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 	const [editInputValue, setEditInputValue] = useState('');
 
 	const handleInputConfirm = (): void => {
-		let prevTags: string[] = [];
-
 		if (inputValue) {
-			prevTags = [...tags, inputValue];
+			setTags([...tags, inputValue]);
 		}
-		setTags(prevTags);
 		setInputVisible(false);
 		setInputValue('');
 	};
@@ -92,7 +89,7 @@ const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 			})}
 
 			{inputVisible && (
-				<Col lg={4}>
+				<InputContainer lg={4}>
 					<Input
 						type="text"
 						size="small"
@@ -103,7 +100,7 @@ const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 						onBlurHandler={handleInputConfirm}
 						onPressEnterHandler={handleInputConfirm}
 					/>
-				</Col>
+				</InputContainer>
 			)}
 
 			{!inputVisible && (

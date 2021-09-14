@@ -1,11 +1,15 @@
-import { EditFilled, FullscreenOutlined } from '@ant-design/icons';
+import {
+	// DeleteOutlined,
+	EditFilled,
+	FullscreenOutlined,
+} from '@ant-design/icons';
 import React, { useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container } from './styles';
 
-const Bar = ({ widget, onToggleModal }: BarProps): JSX.Element => {
+const Bar = ({ widget, onViewFullScreenHandler }: BarProps): JSX.Element => {
 	const { push } = useHistory();
 	const { pathname } = useLocation();
 
@@ -16,15 +20,17 @@ const Bar = ({ widget, onToggleModal }: BarProps): JSX.Element => {
 
 	return (
 		<Container>
-			<FullscreenOutlined onClick={onToggleModal} />
+			<FullscreenOutlined onClick={onViewFullScreenHandler} />
 			<EditFilled onClick={onEditHandler} />
+			{/* <DeleteOutlined onClick={onDeleteHandler} /> */}
 		</Container>
 	);
 };
 
 interface BarProps {
 	widget: Widgets;
-	onToggleModal: () => void;
+	onViewFullScreenHandler: () => void;
+	onDeleteHandler: () => void;
 }
 
 export default Bar;

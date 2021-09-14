@@ -21,6 +21,7 @@ import {
 } from 'chart.js';
 import chartjsAdapter from 'chartjs-adapter-date-fns';
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
 
 const Graph = ({
 	data,
@@ -32,8 +33,24 @@ const Graph = ({
 	xAxisType,
 }: GraphProps): JSX.Element => {
 	const chartRef = useRef<HTMLCanvasElement>(null);
+	const { currentTheme } = useThemeSwitcher();
+
+	console.log(currentTheme);
+
 	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 	const lineChartRef = useRef<Chart>();
+
+	const getGridColor = useCallback(() => {
+		if (currentTheme === undefined) {
+			return 'rgba(231,233,237,0.1)';
+		}
+
+		if (currentTheme === 'dark') {
+			return 'rgba(231,233,237,0.1)';
+		}
+
+		return 'rgba(231,233,237,0.8)';
+	}, [currentTheme]);
 
 	const buildChart = useCallback(() => {
 		if (lineChartRef.current !== undefined) {
@@ -83,7 +100,7 @@ const Graph = ({
 						animate: true,
 						grid: {
 							display: true,
-							color: 'rgba(231,233,237,0.1)',
+							color: getGridColor(),
 						},
 						labels: label,
 						adapters: {
@@ -95,9 +112,8 @@ const Graph = ({
 						display: true,
 						grid: {
 							display: true,
-							color: 'rgba(231,233,237,0.1)',
+							color: getGridColor(),
 						},
-						type: 'linear',
 					},
 					stacked: {
 						display: isStacked === undefined ? false : 'auto',
@@ -111,7 +127,17 @@ const Graph = ({
 				options,
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, label, displayLegend, xAxisType]);
+	}, [
+		chartRef,
+		data,
+		type,
+		title,
+		isStacked,
+		label,
+		displayLegend,
+		xAxisType,
+		getGridColor,
+	]);
 
 	useEffect(() => {
 		buildChart();

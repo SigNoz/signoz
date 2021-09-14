@@ -93,6 +93,7 @@ const NewWidget = ({
 			timePreferance: selectedTime.enum,
 			title,
 			widgetId: query.get('widgetId') || '',
+			dashboardId: dashboardId,
 		});
 	}, [
 		opacity,
@@ -104,6 +105,7 @@ const NewWidget = ({
 		selectedNullZeroValue,
 		saveSettingOfPanel,
 		selectedDashboard,
+		dashboardId,
 	]);
 
 	const onClickApplyHandler = useCallback(() => {

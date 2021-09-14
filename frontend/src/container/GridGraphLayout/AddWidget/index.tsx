@@ -1,20 +1,55 @@
 import { PlusOutlined } from '@ant-design/icons';
-import React from 'react';
+import { Typography } from 'antd';
+import React, { useCallback } from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import {
+	ToggleAddWidget,
+	ToggleAddWidgetProps,
+} from 'store/actions/dashboard/toggleAddWidget';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import DashboardReducer from 'types/reducer/dashboards';
 
 import { Button, Container } from './styles';
 
-const AddWidget = ({ onToggleHandler }: AddWidgetProps): JSX.Element => {
+const AddWidget = ({ toggleAddWidget }: Props): JSX.Element => {
+	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
+	const onToggleHandler = useCallback(() => {
+		toggleAddWidget(true);
+	}, [toggleAddWidget]);
+
 	return (
 		<Container>
-			<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
-				Add Widgets
-			</Button>
+			{!isAddWidget ? (
+				<>
+					<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
+						Add Widgets
+					</Button>
+				</>
+			) : (
+				<Typography>Click a widget icon to add it here</Typography>
+			)}
 		</Container>
 	);
 };
 
-interface AddWidgetProps {
-	onToggleHandler: () => void;
+interface DispatchProps {
+	toggleAddWidget: (
+		props: ToggleAddWidgetProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
-export default AddWidget;
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	toggleAddWidget: bindActionCreators(ToggleAddWidget, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(AddWidget);

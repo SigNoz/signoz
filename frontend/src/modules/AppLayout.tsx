@@ -19,7 +19,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 
 	useEffect(() => {
 		dispatch({ type: 'ROUTE_IS_LOADED', payload: location.pathname });
-	}, [location]);
+	}, [location, dispatch]);
 
 	return (
 		<Layout style={{ minHeight: '100vh' }}>

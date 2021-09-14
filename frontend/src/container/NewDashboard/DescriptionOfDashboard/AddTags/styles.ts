@@ -1,8 +1,9 @@
-import { Tag } from 'antd';
+import { Col, Tag } from 'antd';
 import styled from 'styled-components';
 
 export const TagsContainer = styled.div`
 	display: flex;
+	align-items: center;
 `;
 
 export const NewTagContainer = styled(Tag)`
@@ -15,5 +16,11 @@ export const NewTagContainer = styled(Tag)`
 		svg {
 			margin-right: 0.2rem;
 		}
+	}
+`;
+
+export const InputContainer = styled(Col)`
+	> div {
+		margin: 0;
 	}
 `;

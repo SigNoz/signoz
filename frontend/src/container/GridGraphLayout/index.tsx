@@ -1,6 +1,6 @@
-/* eslint-disable react/display-name */
+import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -12,13 +12,9 @@ import AddWidget from './AddWidget';
 import Graph from './Graph';
 import { Card, ReactGridLayout } from './styles';
 
-const GridGraph = ({ onToggleHandler }: Props): JSX.Element => {
+const GridGraph = (): JSX.Element => {
 	const { push } = useHistory();
 	const { pathname } = useLocation();
-
-	const AddWidgetWrapper = (): JSX.Element => (
-		<AddWidget onToggleHandler={onToggleHandler} />
-	);
 
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -28,44 +24,43 @@ const GridGraph = ({ onToggleHandler }: Props): JSX.Element => {
 	const { data } = selectedDashboard;
 	const { widgets } = data;
 
-	const [layouts, setLayout] = useState<LayoutProps[]>([
-		{
-			i: '0',
-			x: 0,
-			y: 0,
-			w: 6,
-			h: 2,
-			Component: AddWidgetWrapper,
-		},
-	]);
+	const [layouts, setLayout] = useState<LayoutProps[]>([]);
 
-	const counter = useRef(0);
+	const AddWidgetWrapper = useCallback(() => <AddWidget />, []);
 
 	useEffect(() => {
-		if (counter.current === 0) {
-			const getPreLayouts = (): LayoutProps[] => {
-				if (widgets === undefined) {
-					return [];
-				}
+		const getPreLayouts = (): LayoutProps[] => {
+			if (widgets === undefined) {
+				return [];
+			}
 
-				return widgets?.map((e, index) => {
-					return {
-						h: 2,
-						w: 6,
-						y: Infinity,
-						i: (index + 1).toString(),
-						x: (index + 1 * 6) % 12,
-						Component: (): JSX.Element => <Graph widget={widgets[index]} />,
-					};
-				});
-			};
+			return widgets.map((e, index) => {
+				return {
+					h: 2,
+					w: 6,
+					y: Infinity,
+					i: (index + 1).toString(),
+					x: (index * 6) % 12,
+					// eslint-disable-next-line react/display-name
+					Component: (): JSX.Element => <Graph widget={widgets[index]} />,
+				};
+			});
+		};
 
-			const preLayouts = getPreLayouts();
+		const preLayouts = getPreLayouts();
 
-			counter.current = 1;
-			setLayout((pre) => [...pre, ...preLayouts]);
-		}
-	}, [widgets, layouts.length]);
+		setLayout(() => [
+			...preLayouts,
+			{
+				i: Infinity.toString(),
+				x: ((widgets || []).length * 6) % 12,
+				y: Infinity,
+				w: 6,
+				h: 2,
+				Component: AddWidgetWrapper,
+			},
+		]);
+	}, [widgets, layouts.length, AddWidgetWrapper]);
 
 	const onDropHandler = useCallback(
 		(allLayouts: Layout[], currectLayout: Layout, event: DragEvent) => {
@@ -78,6 +73,10 @@ const GridGraph = ({ onToggleHandler }: Props): JSX.Element => {
 		},
 		[pathname, push],
 	);
+
+	if (layouts.length === 0) {
+		return <Spinner height="40vh" size="large" tip="Loading..." />;
+	}
 
 	return (
 		<ReactGridLayout
@@ -109,8 +108,4 @@ interface LayoutProps extends Layout {
 	Component: () => JSX.Element;
 }
 
-interface Props {
-	onToggleHandler: () => void;
-}
-
-export default GridGraph;
+export default memo(GridGraph);

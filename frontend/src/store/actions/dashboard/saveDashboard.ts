@@ -1,5 +1,8 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
+import updateUrl from 'lib/updateUrl';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -14,6 +17,7 @@ export const SaveDashboard = ({
 	timePreferance,
 	title,
 	widgetId,
+	dashboardId,
 }: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
@@ -79,6 +83,7 @@ export const SaveDashboard = ({
 					type: 'SAVE_SETTING_TO_PANEL_SUCCESS',
 					payload: response.payload,
 				});
+				history.push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));
 			} else {
 				dispatch({
 					type: 'SAVE_SETTING_TO_PANEL_ERROR',
@@ -107,4 +112,5 @@ export interface SaveDashboardProps {
 	timePreferance: Widgets['timePreferance'];
 	nullZeroValues: Widgets['nullZeroValues'];
 	widgetId: Widgets['id'];
+	dashboardId: string;
 }

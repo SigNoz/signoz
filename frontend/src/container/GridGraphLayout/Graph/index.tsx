@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
@@ -7,17 +8,28 @@ import getChartData from 'lib/getChartData';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { connect } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTime } from 'store/actions';
+import {
+	DeleteWidget,
+	DeleteWidgetProps,
+} from 'store/actions/dashboard/deleteWidget';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import Bar from './Bar';
 import { Modal } from './styles';
 
-const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
+const GridCardGraph = ({
+	widget,
+	deleteWidget,
+}: GridCardGraphProps): JSX.Element => {
 	const [state, setState] = useState<GridCardGraphState>({
-		loading: false,
+		loading: true,
 		errorMessage: '',
 		error: false,
 		payload: undefined,
@@ -26,9 +38,10 @@ const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
+	const [deleteModal, setDeletModal] = useState(false);
 
 	const counter = useRef(0);
-
+	const isUnmounted = useRef(false);
 	const { start, end } = GetStartAndEndTime({
 		type: widget.timePreferance,
 		maxTime,
@@ -38,23 +51,20 @@ const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				if (counter.current === 0) {
+				if (counter.current === 0 && isUnmounted.current === false) {
 					counter.current = 1;
-					setState({
-						...state,
-						loading: true,
-					});
-
 					const response = await Promise.all(
-						widget.query.map(async (query) => {
-							const result = await getQueryResult({
-								end,
-								query: query.query,
-								start: start,
-								step: '30',
-							});
-							return result;
-						}),
+						widget.query
+							.filter((e) => e.query.length !== 0)
+							.map(async (query) => {
+								const result = await getQueryResult({
+									end,
+									query: query.query,
+									start: start,
+									step: '30',
+								});
+								return result;
+							}),
 					);
 
 					const isError = response.find((e) => e.statusCode !== 200);
@@ -99,11 +109,23 @@ const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
 				});
 			}
 		})();
+
+		return (): void => {
+			isUnmounted.current = true;
+		};
 	}, [widget, state, end, start]);
 
-	const onToggleModal = useCallback(() => {
-		setModal((state) => !state);
-	}, []);
+	const onToggleModal = useCallback(
+		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
+			func((value) => !value);
+		},
+		[],
+	);
+
+	const onDeleteHandler = useCallback(() => {
+		deleteWidget({ widgetId: widget.id });
+		onToggleModal(setDeletModal);
+	}, [deleteWidget, widget, onToggleModal]);
 
 	if (state.error) {
 		return <div>{state.errorMessage}</div>;
@@ -115,15 +137,31 @@ const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
 
 	return (
 		<>
-			<Bar onToggleModal={onToggleModal} widget={widget} />
+			<Bar
+				onViewFullScreenHandler={(): void => onToggleModal(setModal)}
+				widget={widget}
+				onDeleteHandler={(): void => onToggleModal(setDeletModal)}
+			/>
+
+			<Modal
+				destroyOnClose
+				onCancel={(): void => onToggleModal(setDeletModal)}
+				visible={deleteModal}
+				title="Delete"
+				height="10vh"
+				onOk={onDeleteHandler}
+				centered
+			>
+				<Typography>Are you sure you want to delete this widget</Typography>
+			</Modal>
 
 			<Modal
 				title="View"
 				footer={[]}
 				centered
 				visible={modal}
-				onCancel={onToggleModal}
-				width="60%"
+				onCancel={(): void => onToggleModal(setModal)}
+				width="85%"
 				destroyOnClose
 			>
 				<GridGraphComponent
@@ -150,10 +188,6 @@ const GridCardGraph = ({ widget }: GridCardGraphProps): JSX.Element => {
 	);
 };
 
-interface GridCardGraphProps {
-	widget: Widgets;
-}
-
 interface GridCardGraphState {
 	loading: boolean;
 	error: boolean;
@@ -161,4 +195,20 @@ interface GridCardGraphState {
 	payload: ChartData | undefined;
 }
 
-export default GridCardGraph;
+interface DispatchProps {
+	deleteWidget: ({
+		widgetId,
+	}: DeleteWidgetProps) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+interface GridCardGraphProps extends DispatchProps {
+	widget: Widgets;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	deleteWidget: bindActionCreators(DeleteWidget, dispatch),
+});
+
+export default connect(null, mapDispatchToProps)(GridCardGraph);

@@ -11,6 +11,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
 import { NewDashboardButton, TableContainer } from './styles';
+import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
@@ -47,6 +48,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 		{
 			title: 'Created By',
 			dataIndex: 'createdBy',
+			render: Createdby,
 		},
 		{
 			title: 'Last Updated Time',
@@ -66,7 +68,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 
 	const data: Data[] = dashboards.map((e) => ({
 		createdBy: e.created_at,
-		description: e.data.description,
+		description: e.data.description || '',
 		id: e.uuid,
 		lastUpdatedTime: e.updated_at,
 		name: e.data.title,

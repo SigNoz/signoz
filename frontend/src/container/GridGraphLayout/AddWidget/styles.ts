@@ -6,6 +6,7 @@ export const Button = styled(ButtonComponent)`
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		border: none;
 	}
 `;
 

@@ -6,7 +6,7 @@ import { Data } from '..';
 const DateComponent = (
 	lastUpdatedTime: Data['lastUpdatedTime'],
 ): JSX.Element => {
-	const date = new Date(parseInt(lastUpdatedTime, 10)).toString();
+	const date = new Date(lastUpdatedTime).toDateString();
 
 	return <Typography>{date}</Typography>;
 };

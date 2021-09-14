@@ -33,6 +33,11 @@ export const APPLY_SETTINGS_TO_PANEL = 'APPLY_SETTINGS_TO_PANEL';
 export const SAVE_SETTING_TO_PANEL_SUCCESS = 'SAVE_SETTING_TO_PANEL_SUCCESS';
 export const SAVE_SETTING_TO_PANEL_ERROR = 'SAVE_SETTING_TO_PANEL_ERROR';
 
+export const DELETE_WIDGET_SUCCESS = 'DELETE_WIDGET_SUCCESS';
+export const DELETE_WIDGET_ERROR = 'DELETE_WIDGET_ERROR';
+
+export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -82,13 +87,21 @@ interface CreateNewQuery {
 	};
 }
 
+interface IsAddWidget {
+	type: typeof IS_ADD_WIDGET;
+	payload: {
+		isAddWidget: boolean;
+	};
+}
+
 interface DashboardError {
 	type:
 		| typeof GET_ALL_DASHBOARD_ERROR
 		| typeof GET_DASHBOARD_ERROR
 		| typeof UPDATE_TITLE_DESCRIPTION_TAGS_ERROR
 		| typeof DELETE_DASHBOARD_ERROR
-		| typeof SAVE_SETTING_TO_PANEL_ERROR;
+		| typeof SAVE_SETTING_TO_PANEL_ERROR
+		| typeof DELETE_WIDGET_ERROR;
 	payload: {
 		errorMessage: string;
 	};
@@ -132,6 +145,13 @@ interface SaveDashboardSuccess {
 	payload: Dashboard;
 }
 
+interface WidgetDeleteSuccess {
+	type: typeof DELETE_WIDGET_SUCCESS;
+	payload: {
+		widgetId: Widgets['id'];
+	};
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -147,4 +167,6 @@ export type DashboardActions =
 	| QuerySuccess
 	| QueryError
 	| ApplySettingsToPanel
-	| SaveDashboardSuccess;
+	| SaveDashboardSuccess
+	| WidgetDeleteSuccess
+	| IsAddWidget;

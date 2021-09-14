@@ -1,9 +1,13 @@
 import { Modal as ModalComponent } from 'antd';
 import styled from 'styled-components';
 
-export const Modal = styled(ModalComponent)`
+interface Props {
+	height?: string;
+}
+
+export const Modal = styled(ModalComponent)<Props>`
 	.ant-modal-content,
 	.ant-modal-body {
-		min-height: 60vh;
+		min-height: ${({ height = '80vh' }): string => height};
 	}
 `;
