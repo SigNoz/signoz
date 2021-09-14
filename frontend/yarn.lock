@@ -11916,14 +11916,6 @@ react-autowhatever@^10.1.2:
     react-themeable "^1.1.0"
     section-iterator "^2.0.0"
 
-react-chartjs-2@^2.11.1:
-  version "2.11.2"
-  resolved "https://registry.yarnpkg.com/react-chartjs-2/-/react-chartjs-2-2.11.2.tgz#156c0d2618600561efc23bef278bd48a335cadb6"
-  integrity sha512-hcPS9vmRJeAALPPf0uo02BiD8BDm0HNmneJYTZVR74UKprXOpql+Jy1rVuj93rKw0Jfx77mkcRfXPxTe5K83uw==
-  dependencies:
-    lodash "^4.17.19"
-    prop-types "^15.7.2"
-
 react-chips@^0.8.0:
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/react-chips/-/react-chips-0.8.0.tgz#fc50c9fb469983989b356cf4595b86097ebacc25"
