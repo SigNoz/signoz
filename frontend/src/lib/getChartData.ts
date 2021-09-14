@@ -2,7 +2,6 @@ import { ChartData } from 'chart.js';
 import getLabelName from 'lib/getLabelName';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import convertDateToAmAndPm from './convertDateToAmAndPm';
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
@@ -16,7 +15,7 @@ const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 			const [first = 0, second = ''] = e || [];
 
 			return {
-				first: convertDateToAmAndPm(new Date(parseInt(convertIntoEpoc(first), 10))),
+				first: new Date(parseInt(convertIntoEpoc(first), 10)),
 				second: Number(parseFloat(second).toFixed(2)),
 			};
 		});

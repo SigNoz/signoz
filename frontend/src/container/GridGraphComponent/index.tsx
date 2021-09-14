@@ -19,6 +19,7 @@ const GridGraphComponent = ({
 					type: 'line',
 					isStacked,
 					opacity,
+					xAxisType: 'timeseries',
 				}}
 			/>
 		);
