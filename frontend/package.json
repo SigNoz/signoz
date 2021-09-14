@@ -47,6 +47,7 @@
 		"camelcase": "^6.1.0",
 		"case-sensitive-paths-webpack-plugin": "2.3.0",
 		"chart.js": "^3.4.0",
+		"chartjs-adapter-date-fns": "^2.0.0",
 		"css-loader": "4.3.0",
 		"d3": "^6.2.0",
 		"d3-flame-graph": "^3.1.1",
