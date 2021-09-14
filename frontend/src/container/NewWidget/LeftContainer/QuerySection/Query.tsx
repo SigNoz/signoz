@@ -2,7 +2,7 @@ import { Divider } from 'antd';
 import { AxiosError } from 'axios';
 import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -77,8 +77,10 @@ const Query = ({
 	);
 
 	// @TODO need to update this approach
+	const counter = useRef(0);
 	useEffect(() => {
-		if (preQuery.length !== 0) {
+		if (preQuery.length !== 0 && counter.current === 0) {
+			counter.current = 1;
 			onBlurHandler({ minTime, maxTime });
 		}
 	}, [onBlurHandler, preQuery, minTime, maxTime]);
