@@ -7,7 +7,7 @@ import { colors } from './getRandomColor';
 
 const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 	const chartData = queryData.data.map((e, index) => {
-		const { values, metric } = e;
+		const { values = [], metric } = e || {};
 
 		const labelNames = getLabelName(metric, (query[index] || {}).query);
 
@@ -31,7 +31,7 @@ const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 	});
 
 	const chartDataSet: ChartData = {
-		labels: chartData[0].first,
+		labels: (chartData[0] || {}).first || '',
 		datasets: chartData.map((e) => ({
 			label: e.label,
 			data: e.second,

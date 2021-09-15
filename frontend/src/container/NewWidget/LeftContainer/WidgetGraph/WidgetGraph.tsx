@@ -1,12 +1,7 @@
 import { Card, Typography } from 'antd';
-import { ChartData } from 'chart.js';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { NewWidgetProps } from 'container/NewWidget';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-import convertIntoEpoc from 'lib/covertIntoEpoc';
 import getChartData from 'lib/getChartData';
-import getLabelName from 'lib/getLabelName';
-import { colors } from 'lib/getRandomColor';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router';

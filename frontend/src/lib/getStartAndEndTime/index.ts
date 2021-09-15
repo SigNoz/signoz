@@ -21,6 +21,16 @@ const GetStartAndEndTime = ({
 		};
 	}
 
+	if (type === 'LAST_6_HR') {
+		const agoDate = getMinAgo({ minutes: 6 * 60 }).getTime();
+		const agoString = getMicroSeconds({ time: agoDate });
+
+		return {
+			start: agoString,
+			end: endString,
+		};
+	}
+
 	return {
 		start: getMicroSeconds({ time: minTime / 10000000 }),
 		end: getMicroSeconds({ time: maxTime / 10000000 }),

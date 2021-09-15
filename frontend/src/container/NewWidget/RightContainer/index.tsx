@@ -1,20 +1,14 @@
-import {
-	Button,
-	Dropdown,
-	Input,
-	Menu,
-	Slider,
-	Switch,
-	Typography,
-} from 'antd';
+import { Button, Input, Slider, Switch, Typography } from 'antd';
 import InputComponent from 'components/Input';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import React, { useCallback } from 'react';
 
-import timeItems, { timePreferance, timePreferenceType } from './timeItems';
+import { timePreferance } from './timeItems';
 
 const { TextArea } = Input;
+import TimePreference from 'components/TimePreferenceDropDown';
+
 import { Container, NullButtonContainer, TextContainer, Title } from './styles';
 
 const RightContainer = ({
@@ -53,16 +47,6 @@ const RightContainer = ({
 			name: 'Blank',
 		},
 	];
-
-	const timeMenuItemOnChangeHandler = useCallback(
-		(event: TimeMenuItemOnChangeHandlerEvent) => {
-			const selectedTime = timeItems.find((e) => e.enum === event.key);
-			if (selectedTime !== undefined) {
-				setSelectedTime(selectedTime);
-			}
-		},
-		[],
-	);
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
@@ -144,21 +128,12 @@ const RightContainer = ({
 
 			<Title light={'true'}>Panel Time Preference</Title>
 
-			<TextContainer noButtonMargin>
-				<Dropdown
-					overlay={
-						<Menu>
-							{timeItems.map((item) => (
-								<Menu.Item onClick={timeMenuItemOnChangeHandler} key={item.enum}>
-									<Typography>{item.name}</Typography>
-								</Menu.Item>
-							))}
-						</Menu>
-					}
-				>
-					<Button>{selectedTime.name}</Button>
-				</Dropdown>
-			</TextContainer>
+			<TimePreference
+				{...{
+					selectedTime,
+					setSelectedTime,
+				}}
+			/>
 		</Container>
 	);
 };
@@ -177,9 +152,6 @@ interface RightContainerProps {
 	selectedGraph: GRAPH_TYPES;
 	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
-}
-interface TimeMenuItemOnChangeHandlerEvent {
-	key: timePreferenceType | string;
 }
 
 export default RightContainer;

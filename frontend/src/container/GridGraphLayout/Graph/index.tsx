@@ -22,6 +22,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import Bar from './Bar';
+import FullView from './FullView';
 import { Modal } from './styles';
 
 const GridCardGraph = ({
@@ -164,15 +165,7 @@ const GridCardGraph = ({
 				width="85%"
 				destroyOnClose
 			>
-				<GridGraphComponent
-					{...{
-						GRAPH_TYPES: widget.panelTypes,
-						data: state.payload,
-						isStacked: widget.isStacked,
-						opacity: widget.opacity,
-						title: widget.title,
-					}}
-				/>
+				<FullView widget={widget} />
 			</Modal>
 
 			<GridGraphComponent
