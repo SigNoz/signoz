@@ -2,15 +2,16 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import AppLayout from 'modules/AppLayout';
 import { RouteProvider } from 'modules/RouteProvider';
 import React, { Suspense } from 'react';
-import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 
 import routes from './routes';
 
 const App = (): JSX.Element => (
-	<BrowserRouter basename="/">
+	<Router history={history}>
 		<RouteProvider>
 			<AppLayout>
 				<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
@@ -33,12 +34,12 @@ const App = (): JSX.Element => (
 								);
 							}}
 						/>
-						<Route path="*" component={NotFound} />
+						<Route path="*" exact component={NotFound} />
 					</Switch>
 				</Suspense>
 			</AppLayout>
 		</RouteProvider>
-	</BrowserRouter>
+	</Router>
 );
 
 export default App;
