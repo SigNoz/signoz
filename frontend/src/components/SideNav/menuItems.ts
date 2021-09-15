@@ -2,6 +2,7 @@ import {
 	AlignLeftOutlined,
 	ApiOutlined,
 	BarChartOutlined,
+	DashboardFilled,
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	SettingOutlined,
@@ -40,7 +41,7 @@ const menus: SidebarMenu[] = [
 		name: 'Add instrumentation',
 	},
 	{
-		Icon: ApiOutlined,
+		Icon: DashboardFilled,
 		to: ROUTES.ALL_DASHBOARD,
 		name: 'Dashboard',
 	},
