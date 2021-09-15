@@ -7,8 +7,7 @@ import { cloneDeep } from 'lodash';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router';
-import { RouteComponentProps, useLocation } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 import { GlobalTime, updateTimeInterval } from 'store/actions';
 import { DateTimeRangeType } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -30,15 +29,15 @@ const DateTimeWrapper = styled.div`
 const Select = styled(DefaultSelect)``;
 interface DateTimeSelectorProps extends RouteComponentProps<any> {
 	currentpath?: string;
-	updateTimeInterval: Function;
-	globalTime: GlobalTime;
+	updateTimeInterval?: Function;
+	globalTime?: GlobalTime;
 }
-
+import history from 'lib/history';
 /*
 This components is mounted all the time. Use event listener to track changes.
  */
 const _DateTimeSelector = (props: DateTimeSelectorProps) => {
-	const location = useLocation();
+	const location = history.location;
 	const LocalStorageRouteKey: string = getLocalStorageRouteKey(
 		location.pathname,
 	);
@@ -229,9 +228,9 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		return () => {
 			clearInterval(interval);
 		};
-	}, [props.location, refreshButtonClick]);
+	}, [refreshButtonClick]);
 
-	if (props.location.pathname.startsWith(ROUTES.USAGE_EXPLORER)) {
+	if (location.pathname.startsWith(ROUTES.USAGE_EXPLORER)) {
 		return null;
 	} else {
 		const inputLabeLToShow =
@@ -294,10 +293,8 @@ const mapStateToProps = (state: AppState): { globalTime: GlobalTime } => {
 	return { globalTime: state.globalTime };
 };
 
-export const DateTimeSelector = withRouter(
-	connect(mapStateToProps, {
-		updateTimeInterval: updateTimeInterval,
-	})(_DateTimeSelector),
-);
+export const DateTimeSelector = connect(mapStateToProps, {
+	updateTimeInterval: updateTimeInterval,
+})(_DateTimeSelector);
 
 export default DateTimeSelector;
