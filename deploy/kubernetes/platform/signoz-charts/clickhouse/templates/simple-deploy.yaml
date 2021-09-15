@@ -1,0 +1,37 @@
+apiVersion: "clickhouse.altinity.com/v1"
+kind: "ClickHouseInstallation"
+metadata:
+  name: evolution
+spec:
+  configuration:
+    clusters:
+      - name: cluster
+        # Templates are specified for this cluster explicitly
+        templates:
+          podTemplate: pod-template-with-volume
+        layout:
+          shardsCount: 1
+          replicasCount: 1
+
+  templates:
+    podTemplates:
+      - name: pod-template-with-volume
+        spec:
+          containers:
+            - name: clickhouse
+              image: yandex/clickhouse-server:19.3.7
+              volumeMounts:
+                - name: storage-vc-template
+                  mountPath: /var/lib/clickhouse
+
+    volumeClaimTemplates:
+      - name: storage-vc-template
+        metadata:
+          annotations:
+            volume.beta.kubernetes.io/storage-class: "standard"
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 11Gi
