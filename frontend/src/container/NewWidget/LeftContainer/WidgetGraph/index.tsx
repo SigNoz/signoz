@@ -36,7 +36,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 	return (
 		<Container>
 			{queryData.error && (
-				<AlertIconContainer title={queryData.errorMessage}>
+				<AlertIconContainer color="red" title={queryData.errorMessage}>
 					<InfoCircleOutlined />
 				</AlertIconContainer>
 			)}
