@@ -35,7 +35,7 @@
 		"@types/redux": "^3.6.0",
 		"@types/styled-components": "^5.1.4",
 		"@types/vis": "^4.21.21",
-		"antd": "^4.8.0",
+		"antd": "^4.16.13",
 		"axios": "^0.21.0",
 		"babel-eslint": "^10.1.0",
 		"babel-jest": "^26.6.0",
