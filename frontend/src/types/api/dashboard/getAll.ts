@@ -37,6 +37,7 @@ export interface Widgets {
 		errorMessage: string;
 		data: QueryData[];
 	};
+	stepSize?: number;
 }
 
 export interface Query {
