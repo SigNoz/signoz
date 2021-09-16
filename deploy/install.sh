@@ -317,7 +317,7 @@ echo ""
 
 echo -e "👉 ${RED}Two ways to go forward\n"  
 echo -e "${RED}1) ClickHouse as database (default)\n"  
-echo -e "${RED}2) Kafka + Druid setup to handle scale (recommended for production use)\n"  
+echo -e "${RED}2) Kafka + Druid as datastore \n"  
 read -p "⚙️  Enter your preference (1/2):" choice_setup 
 
 while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
