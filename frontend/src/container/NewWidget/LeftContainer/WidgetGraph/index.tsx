@@ -1,7 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { Card } from 'container/GridGraphLayout/styles';
-import React from 'react';
+import React, { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -54,4 +54,4 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 
 type WidgetGraphProps = NewWidgetProps;
 
-export default WidgetGraph;
+export default memo(WidgetGraph);

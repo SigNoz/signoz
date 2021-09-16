@@ -3,36 +3,16 @@ import { AxiosError } from 'axios';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import { Dispatch } from 'redux';
-import store from 'store';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
-export const GetQueryResult = (
-	props: GetQueryResultProps,
+export const GetQueryResults = (
+	props: GetQueryResultsProps,
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
-			const state = store.getState();
-			const dashboards = state.dashboards.dashboards;
-			const [selectedDashboard] = dashboards;
-			const { data } = selectedDashboard;
-			const { widgets = [] } = data;
-			const selectedWidgetIndex = widgets.findIndex(
-				(e) => e.id === props.widgetId,
-			);
-			const selectedWidget = widgets[selectedWidgetIndex];
-			const { query } = selectedWidget;
-			const preQuery = query.slice(0, props.currentIndex);
-			const afterQuery = query.slice(props.currentIndex + 1, query.length);
-			const queryArray: Query['query'][] = [
-				...preQuery,
-				{
-					query: props.query,
-					legend: props.legend,
-				},
-				...afterQuery,
-			].map((e) => e.query);
+			const queryData = props.query;
 
 			const { end, start } = GetStartAndEndTime({
 				type: props.selectedTime,
@@ -41,10 +21,10 @@ export const GetQueryResult = (
 			});
 
 			const response = await Promise.all(
-				queryArray.map(async (query) => {
+				queryData.map(async (query) => {
 					const result = await getQueryResult({
 						end,
-						query,
+						query: query.query,
 						start: start,
 						step: '30',
 					});
@@ -71,11 +51,8 @@ export const GetQueryResult = (
 				dispatch({
 					type: 'QUERY_SUCCESS',
 					payload: {
-						legend: props.legend,
-						query: props.query,
 						widgetId: props.widgetId,
 						queryData: finalQueryData,
-						queryIndex: props.currentIndex,
 					},
 				});
 			}
@@ -91,12 +68,10 @@ export const GetQueryResult = (
 	};
 };
 
-export interface GetQueryResultProps {
-	currentIndex: number;
-	legend: string;
-	query: string;
+export interface GetQueryResultsProps {
 	widgetId: string;
 	selectedTime: timePreferenceType;
 	maxTime: number;
 	minTime: number;
+	query: Query[];
 }

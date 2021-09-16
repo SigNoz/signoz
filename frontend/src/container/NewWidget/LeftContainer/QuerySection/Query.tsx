@@ -1,38 +1,28 @@
 import { Divider } from 'antd';
-import { AxiosError } from 'axios';
 import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import React, { useCallback, useState } from 'react';
+import { connect } from 'react-redux';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTime, QueryError, QueryErrorProps } from 'store/actions';
 import {
-	GetQueryResult,
-	GetQueryResultProps,
-} from 'store/actions/dashboard/getQueryResult';
-import { AppState } from 'store/reducers';
+	UpdateQuery,
+	UpdateQueryProps,
+} from 'store/actions/dashboard/updateQuery';
 import AppActions from 'types/actions';
 
 import { Container, InputContainer } from './styles';
 
 const Query = ({
-	selectedTime,
 	currentIndex,
-	queryError,
 	preLegend,
 	preQuery,
-	getQueryResult,
+	updateQuery,
 }: QueryProps): JSX.Element => {
 	const [promqlQuery, setPromqlQuery] = useState(preQuery);
 	const [legendFormat, setLegendFormat] = useState(preLegend);
 	const { search } = useLocation();
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
-		(state) => state.globalTime,
-	);
-
-	console.log({ minTime, maxTime });
 
 	const query = new URLSearchParams(search);
 	const widgetId = query.get('widgetId') || '';
@@ -44,46 +34,16 @@ const Query = ({
 		[],
 	);
 
-	const onBlurHandler = useCallback(
-		async ({ minTime, maxTime }: GlobalTime) => {
-			if (promqlQuery.length !== 0) {
-				try {
-					getQueryResult({
-						currentIndex,
-						legend: legendFormat,
-						query: promqlQuery,
-						selectedTime: selectedTime.enum,
-						widgetId,
-						maxTime,
-						minTime,
-					});
-				} catch (error) {
-					queryError({
-						errorMessage: (error as AxiosError).toString(),
-						widgetId: widgetId,
-					});
-				}
-			}
-		},
-		[
-			promqlQuery,
-			currentIndex,
-			getQueryResult,
-			legendFormat,
-			queryError,
-			widgetId,
-			selectedTime,
-		],
-	);
-
-	// @TODO need to update this approach
-	const counter = useRef(0);
-	useEffect(() => {
-		if (preQuery.length !== 0 && counter.current === 0) {
-			counter.current = 1;
-			onBlurHandler({ minTime, maxTime });
+	const onBlurHandler = useCallback(() => {
+		if (promqlQuery.length !== 0) {
+			updateQuery({
+				currentIndex,
+				legend: legendFormat,
+				query: promqlQuery,
+				widgetId,
+			});
 		}
-	}, [onBlurHandler, preQuery, minTime, maxTime]);
+	}, [promqlQuery, currentIndex, legendFormat, widgetId, updateQuery]);
 
 	return (
 		<Container>
@@ -95,7 +55,7 @@ const Query = ({
 					size="middle"
 					value={promqlQuery}
 					addonBefore={'PromQL Query'}
-					onBlur={(): Promise<void> => onBlurHandler({ maxTime, minTime })}
+					onBlur={(): void => onBlurHandler()}
 				/>
 			</InputContainer>
 
@@ -115,19 +75,15 @@ const Query = ({
 };
 
 interface DispatchProps {
-	queryError: ({
-		errorMessage,
-	}: QueryErrorProps) => (dispatch: Dispatch<AppActions>) => void;
-	getQueryResult: (
-		props: GetQueryResultProps,
+	updateQuery: (
+		props: UpdateQueryProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	queryError: bindActionCreators(QueryError, dispatch),
-	getQueryResult: bindActionCreators(GetQueryResult, dispatch),
+	updateQuery: bindActionCreators(UpdateQuery, dispatch),
 });
 
 interface QueryProps extends DispatchProps {

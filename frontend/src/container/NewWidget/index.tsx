@@ -3,12 +3,20 @@ import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import updateUrl from 'lib/updateUrl';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useHistory, useLocation, useParams } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
+import {
+	ApplySettingsToPanel,
+	ApplySettingsToPanelProps,
+	GlobalTime,
+} from 'store/actions';
+import {
+	GetQueryResults,
+	GetQueryResultsProps,
+} from 'store/actions/dashboard/getQueryResults';
 import {
 	SaveDashboard,
 	SaveDashboardProps,
@@ -32,10 +40,15 @@ const NewWidget = ({
 	selectedGraph,
 	applySettingsToPanel,
 	saveSettingOfPanel,
+	getQueryResults,
 }: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const { maxTime, minTime } = useSelector<AppState, GlobalTime>(
+		(state) => state.globalTime,
+	);
+
 	const [selectedDashboard] = dashboards;
 
 	const widgets = selectedDashboard.data.widgets;
@@ -133,6 +146,21 @@ const NewWidget = ({
 		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));
 	}, [dashboardId, push]);
 
+	const getQueryResult = useCallback(() => {
+		getQueryResults({
+			maxTime,
+			minTime,
+			query: selectedWidget?.query || [],
+			selectedTime: selectedTime.enum,
+			widgetId: selectedWidget?.id || '',
+		});
+		// only call this function when the query is changed
+	}, [selectedWidget?.query, selectedTime.enum, maxTime, minTime]);
+
+	useEffect(() => {
+		getQueryResult();
+	}, [getQueryResult]);
+
 	return (
 		<Container>
 			<ButtonContainer>
@@ -181,6 +209,9 @@ interface DispatchProps {
 	saveSettingOfPanel: (
 		props: SaveDashboardProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
+	getQueryResults: (
+		props: GetQueryResultsProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
@@ -188,6 +219,7 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
+	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

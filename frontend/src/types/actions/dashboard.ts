@@ -1,5 +1,5 @@
 import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettingsToPanel';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard, Query, Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
@@ -27,6 +27,8 @@ export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
 export const CREATE_NEW_QUERY = 'CREATE_NEW_QUERY';
 export const QUERY_SUCCESS = 'QUERY_SUCCESS';
 export const QUERY_ERROR = 'QUERY_ERROR';
+
+export const UPDATE_QUERY = 'UPDATE_QUERY';
 
 export const APPLY_SETTINGS_TO_PANEL = 'APPLY_SETTINGS_TO_PANEL';
 
@@ -122,14 +124,19 @@ interface ToggleEditMode {
 
 export interface QuerySuccessPayload {
 	queryData: QueryData[];
-	query: string;
-	legend: string;
-	queryIndex: number;
 	widgetId: string;
 }
 interface QuerySuccess {
 	type: typeof QUERY_SUCCESS;
 	payload: QuerySuccessPayload;
+}
+
+interface UpdateQuery {
+	type: typeof UPDATE_QUERY;
+	payload: {
+		query: Query[];
+		widgetId: string;
+	};
 }
 
 interface QueryError {
@@ -169,4 +176,5 @@ export type DashboardActions =
 	| ApplySettingsToPanel
 	| SaveDashboardSuccess
 	| WidgetDeleteSuccess
-	| IsAddWidget;
+	| IsAddWidget
+	| UpdateQuery;
