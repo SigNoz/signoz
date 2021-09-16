@@ -35,8 +35,6 @@ const Graph = ({
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const { currentTheme } = useThemeSwitcher();
 
-	console.log(currentTheme);
-
 	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 	const lineChartRef = useRef<Chart>();
 

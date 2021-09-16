@@ -9,7 +9,11 @@ const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 	const chartData = queryData.data.map((e, index) => {
 		const { values = [], metric } = e || {};
 
-		const labelNames = getLabelName(metric, (query[index] || {}).query);
+		const labelNames = getLabelName(
+			metric,
+			(query[index] || {}).query, //query
+			(query[index] || {}).legend || '', // legends
+		);
 
 		const dataValue = values?.map((e) => {
 			const [first = 0, second = ''] = e || [];
@@ -39,7 +43,7 @@ const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 			pointRadius: 0,
 			spanGaps: true,
 			animations: false,
-			borderWidth: 1,
+			borderWidth: 1.5,
 		})),
 	};
 

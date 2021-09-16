@@ -65,6 +65,7 @@ const Query = ({
 					size="middle"
 					value={legendFormat}
 					addonBefore={'Legend Format'}
+					onBlur={(): void => onBlurHandler()}
 				/>
 			</InputContainer>
 			<Divider />

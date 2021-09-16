@@ -1,11 +1,32 @@
 import { QueryData } from 'types/api/widgets/getQuery';
 
-const getLabelName = (metric: QueryData['metric'], query: string): string => {
+const getLabelName = (
+	metric: QueryData['metric'],
+	query: string,
+	legends: string,
+): string => {
 	if (metric === undefined) {
 		return '';
 	}
 
 	const keysArray = Object.keys(metric);
+
+	if (legends.length !== 0) {
+		const variables = legends
+			.split('{{')
+			.filter((e) => e)
+			.map((e) => e.split('}}')[0]);
+
+		const results = variables.map((variable) => metric[variable]);
+
+		let endResult = legends;
+
+		variables.forEach((e, index) => {
+			endResult = endResult.replace(`{{${e}}}`, results[index]);
+		});
+
+		return endResult;
+	}
 
 	const index = keysArray.findIndex((e) => e === '__name__');
 
