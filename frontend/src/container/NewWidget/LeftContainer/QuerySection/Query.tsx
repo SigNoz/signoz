@@ -34,16 +34,14 @@ const Query = ({
 		[],
 	);
 
-	const onBlurHandler = useCallback(() => {
-		if (promqlQuery.length !== 0) {
-			updateQuery({
-				currentIndex,
-				legend: legendFormat,
-				query: promqlQuery,
-				widgetId,
-			});
-		}
-	}, [promqlQuery, currentIndex, legendFormat, widgetId, updateQuery]);
+	const onBlurHandler = (): void => {
+		updateQuery({
+			currentIndex,
+			legend: legendFormat,
+			query: promqlQuery,
+			widgetId,
+		});
+	};
 
 	return (
 		<Container>

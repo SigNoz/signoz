@@ -296,8 +296,8 @@ const dashboard = (
 									...selectedWidget,
 									queryData: {
 										data: [...queryData],
-										error: false,
-										errorMessage: '',
+										error: selectedWidget.queryData.error,
+										errorMessage: selectedWidget.queryData.errorMessage,
 										loading: false,
 									},
 								},

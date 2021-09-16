@@ -31,9 +31,15 @@ export const GetQueryResults = (
 					return result;
 				}),
 			);
+
 			const isError = response.find((e) => e.statusCode !== 200);
 
-			if (isError !== undefined) {
+			// want to make sure query is not empty
+			const isEmptyQuery =
+				queryData.map((e) => e.query).filter((e) => e).length ===
+				queryData.map((e) => e.query).length;
+
+			if (isError !== undefined && isEmptyQuery) {
 				dispatch({
 					type: 'QUERY_ERROR',
 					payload: {
@@ -41,21 +47,21 @@ export const GetQueryResults = (
 						widgetId: props.widgetId,
 					},
 				});
-			} else {
-				const intialQuery: QueryData[] = [];
-
-				const finalQueryData: QueryData[] = response.reduce((acc, current) => {
-					return [...acc, ...(current.payload?.result || [])];
-				}, intialQuery);
-
-				dispatch({
-					type: 'QUERY_SUCCESS',
-					payload: {
-						widgetId: props.widgetId,
-						queryData: finalQueryData,
-					},
-				});
 			}
+
+			const intialQuery: QueryData[] = [];
+
+			const finalQueryData: QueryData[] = response.reduce((acc, current) => {
+				return [...acc, ...(current.payload?.result || [])];
+			}, intialQuery);
+
+			dispatch({
+				type: 'QUERY_SUCCESS',
+				payload: {
+					widgetId: props.widgetId,
+					queryData: finalQueryData,
+				},
+			});
 		} catch (error) {
 			dispatch({
 				type: 'QUERY_ERROR',
