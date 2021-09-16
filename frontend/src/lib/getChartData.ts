@@ -39,6 +39,7 @@ const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 			pointRadius: 0,
 			spanGaps: true,
 			animations: false,
+			borderWidth: 1,
 		})),
 	};
 

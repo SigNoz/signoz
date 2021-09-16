@@ -147,7 +147,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 			result = result + `&graphType=${graphType}`;
 		}
 
-		props.history.push({
+		history.push({
 			search: `?${METRICS_PAGE_QUERY_PARAM.interval}=${value}${result}`,
 		}); //pass time in URL query param for all choices except custom in datetime picker
 	};
@@ -157,7 +157,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps) => {
 		endTime: moment.Moment,
 		triggeredByURLChange = false,
 	) => {
-		props.history.push(
+		history.push(
 			`?${METRICS_PAGE_QUERY_PARAM.startTime}=${startTime.valueOf()}&${
 				METRICS_PAGE_QUERY_PARAM.endTime
 			}=${endTime.valueOf()}`,

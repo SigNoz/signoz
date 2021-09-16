@@ -72,7 +72,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_1_WEEK') {
-		const agoDate = getMinAgo({ minutes: 6 * 60 * 7 }).getTime();
+		const agoDate = getMinAgo({ minutes: 24 * 60 * 7 }).getTime();
 		const agoString = getMicroSeconds({ time: agoDate });
 
 		return {
