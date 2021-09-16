@@ -24,6 +24,14 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 		AppState,
 		DashboardReducer
 	>((state) => state.dashboards);
+	const [selectedDashboard] = dashboards;
+	const params = new URLSearchParams(search);
+
+	const widgetId = params.get('widgetId');
+	const { data } = selectedDashboard || {};
+	const { widgets } = data || {};
+
+	const selectedWidget = widgets?.find((e) => e.id === widgetId);
 
 	useEffect(() => {
 		const params = new URLSearchParams(search);
@@ -39,9 +47,6 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 	const counter = useRef(0);
 
 	useEffect(() => {
-		const params = new URLSearchParams(search);
-		const widgetId = params.get('widgetId');
-
 		if (counter.current === 0 && selectedGraph && widgetId !== null) {
 			counter.current = 1;
 			getDashboard({
@@ -50,13 +55,14 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 				widgetId,
 			});
 		}
-	}, [selectedGraph, dashboardId, getDashboard, search]);
+	}, [selectedGraph, dashboardId, getDashboard, search, widgetId]);
 
 	if (
 		selectedGraph === undefined ||
 		loading ||
 		dashboards.length === 0 ||
-		dashboards[0].data.widgets === undefined
+		dashboards[0].data.widgets === undefined ||
+		selectedWidget === undefined
 	) {
 		return <Spinner tip="Loading.." />;
 	}

@@ -39,7 +39,10 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		);
 	}
 
-	const chartDataSet = getChartData({ query, queryData });
+	const chartDataSet = getChartData({
+		query,
+		queryData,
+	});
 
 	return (
 		<GridGraphComponent

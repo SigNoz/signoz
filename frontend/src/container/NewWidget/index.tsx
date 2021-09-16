@@ -147,15 +147,25 @@ const NewWidget = ({
 	}, [dashboardId, push]);
 
 	const getQueryResult = useCallback(() => {
-		getQueryResults({
-			maxTime,
-			minTime,
-			query: selectedWidget?.query || [],
-			selectedTime: selectedTime.enum,
-			widgetId: selectedWidget?.id || '',
-		});
-		// only call this function when the query is changed
-	}, [selectedWidget?.query, selectedTime.enum, maxTime, minTime]);
+		if (selectedWidget?.id.length !== 0) {
+			getQueryResults({
+				maxTime,
+				minTime,
+				query: selectedWidget?.query || [],
+				selectedTime: selectedTime.enum,
+				widgetId: selectedWidget?.id || '',
+				graphType: selectedGraph,
+			});
+		}
+	}, [
+		selectedWidget?.query,
+		selectedTime.enum,
+		maxTime,
+		minTime,
+		selectedWidget?.id,
+		selectedGraph,
+		getQueryResults,
+	]);
 
 	useEffect(() => {
 		getQueryResult();

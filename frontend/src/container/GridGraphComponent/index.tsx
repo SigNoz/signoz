@@ -1,7 +1,11 @@
 import { ChartData } from 'chart.js';
 import Graph from 'components/Graph';
+import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import history from 'lib/history';
 import React from 'react';
+
+import { ValueContainer } from './styles';
 
 const GridGraphComponent = ({
 	GRAPH_TYPES,
@@ -10,6 +14,10 @@ const GridGraphComponent = ({
 	opacity,
 	isStacked,
 }: GridGraphComponentProps): JSX.Element | null => {
+	const location = history.location.pathname;
+
+	const isDashboardPage = location.split('/').length === 3;
+
 	if (GRAPH_TYPES === 'TIME_SERIES') {
 		return (
 			<Graph
@@ -26,7 +34,13 @@ const GridGraphComponent = ({
 	}
 
 	if (GRAPH_TYPES === 'VALUE') {
-		return <div>VALUE</div>;
+		const value = data.datasets[0].data[0] as number;
+
+		return (
+			<ValueContainer isDashboardPage={isDashboardPage}>
+				<ValueGraph value={value.toString()} />
+			</ValueContainer>
+		);
 	}
 
 	return null;

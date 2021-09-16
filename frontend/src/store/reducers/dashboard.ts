@@ -236,9 +236,8 @@ const dashboard = (
 				(selectedWidgetIndex || 0) + 1, // this is never undefined
 				widgets?.length,
 			);
-			const selectedWidget = (selectedDashboard.data.widgets || [])[
-				selectedWidgetIndex || 0
-			];
+			const selectedWidget =
+				(selectedDashboard.data.widgets || [])[selectedWidgetIndex || 0] || {};
 
 			return {
 				...state,
