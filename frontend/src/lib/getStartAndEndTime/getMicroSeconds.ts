@@ -1,5 +1,5 @@
 const getMicroSeconds = ({ time }: getMicroSecondsProps): string => {
-	return (time / 100).toString();
+	return (time / 1000).toString();
 };
 
 interface getMicroSecondsProps {

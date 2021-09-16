@@ -82,8 +82,8 @@ const GetStartAndEndTime = ({
 	}
 
 	return {
-		start: getMicroSeconds({ time: minTime / 10000000 }),
-		end: getMicroSeconds({ time: maxTime / 10000000 }),
+		start: getMicroSeconds({ time: minTime / 1000000 }),
+		end: getMicroSeconds({ time: maxTime / 1000000 }),
 	};
 };
 
