@@ -36,8 +36,9 @@ const getChartData = ({ queryData, query }: GetChartDataProps): ChartData => {
 			label: e.label,
 			data: e.second,
 			borderColor: e.borderColor,
-			pointRadius: 1,
-			showLine: true,
+			pointRadius: 0,
+			spanGaps: true,
+			animations: false,
 		})),
 	};
 

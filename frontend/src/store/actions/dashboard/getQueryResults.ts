@@ -21,15 +21,17 @@ export const GetQueryResults = (
 			});
 
 			const response = await Promise.all(
-				queryData.map(async (query) => {
-					const result = await getQueryResult({
-						end,
-						query: query.query,
-						start: start,
-						step: '30',
-					});
-					return result;
-				}),
+				queryData
+					.filter((e) => e.query)
+					.map(async (query) => {
+						const result = await getQueryResult({
+							end,
+							query: query.query,
+							start: start,
+							step: '30',
+						});
+						return result;
+					}),
 			);
 
 			const isError = response.find((e) => e.statusCode !== 200);
