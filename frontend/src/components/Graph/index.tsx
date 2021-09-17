@@ -29,8 +29,9 @@ const Graph = ({
 	title,
 	isStacked,
 	label,
-	displayLegend = false,
+	displayLegend = true,
 	xAxisType,
+	onClickHandler,
 }: GraphProps): JSX.Element => {
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const { currentTheme } = useThemeSwitcher();
@@ -88,6 +89,11 @@ const Graph = ({
 					},
 					legend: {
 						display: displayLegend,
+						position: 'bottom',
+						align: 'center',
+						labels: {
+							usePointStyle: true,
+						},
 					},
 				},
 				layout: {
@@ -95,7 +101,7 @@ const Graph = ({
 				},
 				scales: {
 					x: {
-						animate: true,
+						animate: false,
 						grid: {
 							display: true,
 							color: getGridColor(),
@@ -117,6 +123,13 @@ const Graph = ({
 						display: isStacked === undefined ? false : 'auto',
 					},
 				},
+				elements: {
+					line: {
+						tension: 0,
+						cubicInterpolationMode: 'monotone',
+					},
+				},
+				onClick: onClickHandler,
 			};
 
 			lineChartRef.current = new Chart(chartRef.current, {
@@ -135,6 +148,7 @@ const Graph = ({
 		displayLegend,
 		xAxisType,
 		getGridColor,
+		onClickHandler,
 	]);
 
 	useEffect(() => {
@@ -152,6 +166,7 @@ interface GraphProps {
 	label?: string[];
 	displayLegend?: boolean;
 	xAxisType?: ScaleOptions['type'];
+	onClickHandler?: ChartOptions['onClick'];
 }
 
 export default Graph;
