@@ -6,8 +6,6 @@ interface TextContainerProps {
 
 export const TextContainer = styled.div<TextContainerProps>`
 	display: flex;
-	margin-top: 1rem;
-	margin-bottom: 1rem;
 
 	> button {
 		margin-left: ${({ noButtonMargin }): string => {
