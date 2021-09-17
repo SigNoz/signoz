@@ -5,8 +5,15 @@ interface Props {
 }
 export const ValueContainer = styled.div<Props>`
 	height: ${({ isDashboardPage }): string =>
-		isDashboardPage ? '24vh' : '55vh'};
+		isDashboardPage ? '20vh' : '55vh'};
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	flex-direction: column;
+`;
+
+export const TitleContainer = styled.div<Props>`
+	text-align: center;
+	padding-top: ${({ isDashboardPage }): string =>
+		!isDashboardPage ? '1rem' : '0rem'};
 `;

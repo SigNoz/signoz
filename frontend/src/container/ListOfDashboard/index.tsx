@@ -1,6 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
+import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
 import updateUrl from 'lib/updateUrl';
 import React, { useCallback, useState } from 'react';
@@ -106,10 +107,10 @@ const ListOfAllDashboard = (): JSX.Element => {
 			setNewDashboardState({
 				...newDashboardState,
 				error: true,
-				errorMessage: error.toString() || 'Something went Wrong',
+				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, []);
+	}, [newDashboardState, push]);
 
 	const getText = (): string => {
 		if (!newDashboardState.error && !newDashboardState.loading) {

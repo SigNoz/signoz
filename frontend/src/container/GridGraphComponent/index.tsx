@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import Graph from 'components/Graph';
 import ValueGraph from 'components/ValueGraph';
@@ -5,7 +6,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
 import React from 'react';
 
-import { ValueContainer } from './styles';
+import { TitleContainer, ValueContainer } from './styles';
 
 const GridGraphComponent = ({
 	GRAPH_TYPES,
@@ -37,9 +38,14 @@ const GridGraphComponent = ({
 		const value = data.datasets[0].data[0] as number;
 
 		return (
-			<ValueContainer isDashboardPage={isDashboardPage}>
-				<ValueGraph value={value.toString()} />
-			</ValueContainer>
+			<>
+				<TitleContainer isDashboardPage={isDashboardPage}>
+					<Typography>{title}</Typography>
+				</TitleContainer>
+				<ValueContainer isDashboardPage={isDashboardPage}>
+					<ValueGraph value={value.toString()} />
+				</ValueContainer>
+			</>
 		);
 	}
 

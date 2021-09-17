@@ -1,4 +1,3 @@
-import getAll from 'api/dashboard/getAll';
 import Spinner from 'components/Spinner';
 import ListOfAllDashboard from 'container/ListOfDashboard';
 import React, { useEffect } from 'react';
@@ -17,7 +16,7 @@ const Dashboard = ({ getAllDashboards }: DashboardProps): JSX.Element => {
 
 	useEffect(() => {
 		getAllDashboards();
-	}, []);
+	}, [getAllDashboards]);
 
 	if (loading) {
 		return <Spinner size="large" tip="Loading.." />;
