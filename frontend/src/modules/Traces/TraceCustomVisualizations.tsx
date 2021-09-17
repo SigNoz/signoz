@@ -227,6 +227,7 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 						],
 					}}
 					xAxisType="timeseries"
+					displayLegend={false}
 				/>
 			</div>
 		</Card>

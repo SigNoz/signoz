@@ -1,9 +1,12 @@
+import { ActiveElement, Chart, ChartEvent, ChartOptions } from 'chart.js';
 import Graph from 'components/Graph';
 import React from 'react';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
+
+import { GraphContainer } from './styles';
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -29,8 +32,6 @@ const PopUpElements = styled.p`
 	}
 `;
 
-const theme = 'dark';
-
 interface LatencyLineChartProps extends RouteComponentProps<any> {
 	data: metricItem[];
 	popupClickHandler: () => void;
@@ -50,29 +51,39 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		firstpoint_ts: 0,
 	};
 
-	onClickhandler = async (e: any, event: any) => {
-		let firstPoint;
-		if (this.chartRef) {
-			firstPoint = this.chartRef.current.chartInstance.getElementAtEvent(e)[0];
-		}
+	onClickhandler: ChartOptions['onClick'] = async (
+		event: ChartEvent,
+		elements: ActiveElement[],
+		chart: Chart,
+	): Promise<void> => {
+		if (event.native) {
+			const points = chart.getElementsAtEventForMode(
+				event.native,
+				'nearest',
+				{ intersect: true },
+				true,
+			);
 
-		if (firstPoint) {
-			this.setState({
-				xcoordinate: e.offsetX + 20,
-				ycoordinate: e.offsetY,
-				showpopUp: true,
-				firstpoint_ts: this.props.data[firstPoint._index].timestamp,
-			});
-		} else {
-			// if clicked outside of the graph line, then firstpoint is undefined -> close popup.
-			// Only works for clicking in the same chart - as click handler only detects clicks in that chart
-			this.setState({
-				showpopUp: false,
-			});
+			if (points.length) {
+				const firstPoint = points[0];
+
+				this.setState({
+					xcoordinate: firstPoint.element.x,
+					ycoordinate: firstPoint.element.y,
+					showpopUp: true,
+					firstpoint_ts: this.props.data[firstPoint.index].timestamp,
+				});
+			} else {
+				if (this.state.showpopUp) {
+					this.setState({
+						showpopUp: false,
+					});
+				}
+			}
 		}
 	};
 
-	GraphTracePopUp = () => {
+	GraphTracePopUp = (): JSX.Element | null => {
 		if (this.state.showpopUp) {
 			return (
 				<ChartPopUpUnique
@@ -94,7 +105,7 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 	render(): JSX.Element {
 		const ndata = this.props.data;
 
-		const data_chartJS = () => {
+		const data_chartJS = (): any => {
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)),
 				datasets: [
@@ -127,9 +138,14 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 			<div>
 				{this.GraphTracePopUp()}
 				<div style={{ textAlign: 'center' }}>Application latency in ms</div>
-				<div>
-					<Graph xAxisType="timeseries" type="line" data={data_chartJS()} />
-				</div>
+				<GraphContainer>
+					<Graph
+						onClickHandler={this.onClickhandler}
+						xAxisType="timeseries"
+						type="line"
+						data={data_chartJS()}
+					/>
+				</GraphContainer>
 			</div>
 		);
 	}

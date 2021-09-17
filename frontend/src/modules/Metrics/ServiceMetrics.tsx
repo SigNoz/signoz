@@ -133,7 +133,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 			<TabPane tab="External Calls" key="2">
 				<Row gutter={32} style={{ margin: 20 }}>
 					<Col span={12}>
-						<Card bodyStyle={{ padding: 10 }}>
+						<Card bodyStyle={{ padding: 10, minHeight: '27vh' }}>
 							<ExternalApiGraph
 								title="External Call Error Percentage (%)"
 								keyIdentifier="externalHttpUrl"
@@ -144,7 +144,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 					</Col>
 
 					<Col span={12}>
-						<Card bodyStyle={{ padding: 10 }}>
+						<Card bodyStyle={{ padding: 10, minHeight: '27vh' }}>
 							<ExternalApiGraph
 								label="Average Duration"
 								title="External Call duration"
@@ -158,7 +158,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 
 				<Row gutter={32} style={{ margin: 20 }}>
 					<Col span={12}>
-						<Card bodyStyle={{ padding: 10 }}>
+						<Card bodyStyle={{ padding: 10, minHeight: '27vh' }}>
 							<ExternalApiGraph
 								title="External Call RPS(by Address)"
 								keyIdentifier="externalHttpUrl"
@@ -169,7 +169,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 					</Col>
 
 					<Col span={12}>
-						<Card bodyStyle={{ padding: 10 }}>
+						<Card bodyStyle={{ padding: 10, minHeight: '27vh' }}>
 							<ExternalApiGraph
 								title="External Call duration(by Address)"
 								keyIdentifier="externalHttpUrl"
@@ -185,7 +185,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 			<TabPane tab="Database Calls" key="3">
 				<Row gutter={32} style={{ margin: 20 }}>
 					<Col span={12}>
-						<Card bodyStyle={{ padding: 10 }}>
+						<Card bodyStyle={{ padding: 10, minHeight: '27vh' }}>
 							<ExternalApiGraph
 								title="Database Calls RPS"
 								keyIdentifier="dbSystem"
@@ -196,7 +196,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps) => {
 					</Col>
 
 					<Col span={12}>
-						<Card bodyStyle={{ padding: 10 }}>
+						<Card bodyStyle={{ padding: 10, minHeight: '27vh' }}>
 							<ExternalApiGraph
 								label="Average Duration"
 								title="Database Calls Avg Duration (in ms)"

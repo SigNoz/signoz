@@ -1,3 +1,4 @@
+import { ActiveElement, Chart, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import ROUTES from 'constants/routes';
 import React from 'react';
@@ -5,6 +6,8 @@ import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
+
+import { GraphContainer } from './styles';
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -54,21 +57,29 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		// graphInfo:{}
 	};
 
-	onClickhandler = async (e: any, event: any) => {
-		let firstPoint;
-		if (this.chartRef) {
-			firstPoint = this.chartRef.current.chartInstance.getElementAtEvent(e)[0];
-		}
+	onClickhandler = (
+		event: ChartEvent,
+		elements: ActiveElement[],
+		chart: Chart,
+	): void => {
+		if (event.native) {
+			const points = chart.getElementsAtEventForMode(
+				event.native,
+				'nearest',
+				{ intersect: true },
+				true,
+			);
 
-		if (firstPoint) {
-			// PNOTE - TODO - Is await needed in this expression?
-			this.setState({
-				xcoordinate: e.offsetX + 20,
-				ycoordinate: e.offsetY,
-				showpopUp: true,
-				firstpoint_ts: this.props.data[firstPoint._index].timestamp,
-				// graphInfo:{...event}
-			});
+			if (points.length) {
+				const firstPoint = points[0];
+
+				this.setState({
+					xcoordinate: firstPoint.element.x,
+					ycoordinate: firstPoint.element.y,
+					showpopUp: true,
+					firstpoint_ts: this.props.data[firstPoint.index].timestamp,
+				});
+			}
 		}
 	};
 
@@ -121,9 +132,15 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 			<div>
 				{this.GraphTracePopUp()}
 				<div style={{ textAlign: 'center' }}>Error Percentage (%)</div>
-				<div>
-					<Graph xAxisType="timeseries" type="line" data={data_chartJS()} />
-				</div>
+
+				<GraphContainer>
+					<Graph
+						onClickHandler={this.onClickhandler}
+						xAxisType="timeseries"
+						type="line"
+						data={data_chartJS()}
+					/>
+				</GraphContainer>
 			</div>
 		);
 	}
