@@ -44,7 +44,7 @@ export const GetQueryResults = (
 					.map(async (query) => {
 						const result = await getQueryResult({
 							end,
-							query: query.query,
+							query: query.query.replace('+', '+%2B+'),
 							start: start,
 							step: '30',
 						});
