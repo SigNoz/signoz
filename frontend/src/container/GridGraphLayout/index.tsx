@@ -58,18 +58,11 @@ const GridGraph = (): JSX.Element => {
 
 			const preLayouts = getPreLayouts();
 
-			const getX = (): number => {
-				if (isDeleted.current === true) {
-					return ((preLayouts.length - 1) % 2) * 6;
-				}
-				return (preLayouts.length % 2) * 6;
-			};
-
 			setLayout(() => [
 				...preLayouts,
 				{
-					i: Infinity.toString(),
-					x: getX(),
+					i: (preLayouts.length + 1).toString(),
+					x: (preLayouts.length % 2) * 6,
 					y: Infinity,
 					w: 6,
 					h: 2,
