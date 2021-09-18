@@ -29,7 +29,6 @@ const Graph = ({
 	title,
 	isStacked,
 	label,
-	displayLegend = true,
 	xAxisType,
 	onClickHandler,
 }: GraphProps): JSX.Element => {
@@ -88,12 +87,7 @@ const Graph = ({
 						text: title,
 					},
 					legend: {
-						display: displayLegend,
-						position: 'bottom',
-						align: 'center',
-						labels: {
-							usePointStyle: true,
-						},
+						display: false,
 					},
 				},
 				layout: {
@@ -145,7 +139,6 @@ const Graph = ({
 		title,
 		isStacked,
 		label,
-		displayLegend,
 		xAxisType,
 		getGridColor,
 		onClickHandler,
@@ -164,7 +157,6 @@ interface GraphProps {
 	title?: string;
 	isStacked?: boolean;
 	label?: string[];
-	displayLegend?: boolean;
 	xAxisType?: ScaleOptions['type'];
 	onClickHandler?: ChartOptions['onClick'];
 }
