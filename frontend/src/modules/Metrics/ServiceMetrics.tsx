@@ -1,7 +1,7 @@
 import { Card, Col, Row, Tabs } from 'antd';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { RouteComponentProps, useParams } from 'react-router-dom';
@@ -50,14 +50,20 @@ interface ServicesMetricsProps extends RouteComponentProps<any> {
 
 const _ServiceMetrics = (props: ServicesMetricsProps) => {
 	const { servicename } = useParams<{ servicename?: string }>();
+	const counter = useRef(0);
+
 	useEffect(() => {
-		props.getServicesMetrics(servicename, props.globalTime);
-		props.getTopEndpoints(servicename, props.globalTime);
-		props.getExternalMetrics(servicename, props.globalTime);
-		props.getExternalErrCodeMetrics(servicename, props.globalTime);
-		props.getExternalAvgDurationMetrics(servicename, props.globalTime);
-		props.getDbOverViewMetrics(servicename, props.globalTime);
-	}, [props.globalTime, servicename]);
+		// need to update this as this keep re-mounting
+		if (counter.current === 0) {
+			counter.current = 1;
+			props.getServicesMetrics(servicename, props.globalTime);
+			props.getTopEndpoints(servicename, props.globalTime);
+			props.getExternalMetrics(servicename, props.globalTime);
+			props.getExternalErrCodeMetrics(servicename, props.globalTime);
+			props.getExternalAvgDurationMetrics(servicename, props.globalTime);
+			props.getDbOverViewMetrics(servicename, props.globalTime);
+		}
+	}, [props.globalTime, servicename, props]);
 
 	const onTracePopupClick = (timestamp: number) => {
 		const currentTime = timestamp / 1000000;

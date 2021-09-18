@@ -102,7 +102,6 @@ const GridGraph = (): JSX.Element => {
 			width={100}
 			isDroppable
 			useCSSTransforms
-			resizeHandles={['s', 'e', 'se']}
 			onDrop={onDropHandler}
 		>
 			{layouts.map(({ Component, ...rest }) => {
