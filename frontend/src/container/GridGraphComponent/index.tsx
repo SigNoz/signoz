@@ -35,7 +35,15 @@ const GridGraphComponent = ({
 	}
 
 	if (GRAPH_TYPES === 'VALUE') {
-		const value = data.datasets[0].data[0] as number;
+		const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
+
+		if (data.datasets.length === 0) {
+			return (
+				<ValueContainer isDashboardPage={isDashboardPage}>
+					<Typography>No Data</Typography>
+				</ValueContainer>
+			);
+		}
 
 		return (
 			<>
