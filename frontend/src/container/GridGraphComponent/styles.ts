@@ -4,8 +4,7 @@ interface Props {
 	isDashboardPage: boolean;
 }
 export const ValueContainer = styled.div<Props>`
-	height: ${({ isDashboardPage }): string =>
-		isDashboardPage ? '20vh' : '55vh'};
+	height: ${({ isDashboardPage }): string => (isDashboardPage ? '75%' : '55vh')};
 	display: flex;
 	justify-content: center;
 	align-items: center;

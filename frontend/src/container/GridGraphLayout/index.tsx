@@ -10,7 +10,7 @@ import { v4 } from 'uuid';
 
 import AddWidget from './AddWidget';
 import Graph from './Graph';
-import { Card, ReactGridLayout } from './styles';
+import { Card, CardContainer, ReactGridLayout } from './styles';
 
 const GridGraph = (): JSX.Element => {
 	const { push } = useHistory();
@@ -96,22 +96,22 @@ const GridGraph = (): JSX.Element => {
 		<ReactGridLayout
 			isResizable
 			isDraggable
+			cols={12}
 			rowHeight={100}
 			autoSize
 			width={100}
 			isDroppable
 			useCSSTransforms
-			resizeHandles={['se']}
-			isBounded
+			resizeHandles={['s', 'e', 'se']}
 			onDrop={onDropHandler}
 		>
 			{layouts.map(({ Component, ...rest }) => {
 				return (
-					<div key={rest.i} data-grid={rest}>
+					<CardContainer key={rest.i} data-grid={rest}>
 						<Card>
 							<Component />
 						</Card>
-					</div>
+					</CardContainer>
 				);
 			})}
 		</ReactGridLayout>

@@ -153,7 +153,7 @@ const Graph = ({
 
 	useEffect(() => {
 		buildChart();
-	}, [data.datasets?.length, data.labels, buildChart]);
+	}, [data.datasets?.length, data.labels, buildChart, data]);
 
 	return <canvas ref={chartRef} />;
 };
