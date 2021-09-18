@@ -28,6 +28,7 @@ import { Modal } from './styles';
 const GridCardGraph = ({
 	widget,
 	deleteWidget,
+	isDeleted,
 }: GridCardGraphProps): JSX.Element => {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -42,7 +43,6 @@ const GridCardGraph = ({
 	const [deleteModal, setDeletModal] = useState(false);
 
 	const counter = useRef(0);
-	const isUnmounted = useRef(false);
 	const { start, end } = GetStartAndEndTime({
 		type: widget.timePreferance,
 		maxTime,
@@ -52,7 +52,7 @@ const GridCardGraph = ({
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				if (counter.current === 0 && isUnmounted.current === false) {
+				if (counter.current === 0) {
 					counter.current = 1;
 					const response = await Promise.all(
 						widget.query
@@ -110,10 +110,6 @@ const GridCardGraph = ({
 				});
 			}
 		})();
-
-		return (): void => {
-			isUnmounted.current = true;
-		};
 	}, [widget, state, end, start]);
 
 	const onToggleModal = useCallback(
@@ -126,7 +122,8 @@ const GridCardGraph = ({
 	const onDeleteHandler = useCallback(() => {
 		deleteWidget({ widgetId: widget.id });
 		onToggleModal(setDeletModal);
-	}, [deleteWidget, widget, onToggleModal]);
+		isDeleted.current = true;
+	}, [deleteWidget, widget, onToggleModal, isDeleted]);
 
 	if (state.error) {
 		return <div>{state.errorMessage}</div>;
@@ -196,6 +193,7 @@ interface DispatchProps {
 
 interface GridCardGraphProps extends DispatchProps {
 	widget: Widgets;
+	isDeleted: React.MutableRefObject<boolean>;
 }
 
 const mapDispatchToProps = (

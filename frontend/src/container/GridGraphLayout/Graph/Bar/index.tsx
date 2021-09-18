@@ -1,5 +1,5 @@
 import {
-	// DeleteOutlined,
+	DeleteOutlined,
 	EditFilled,
 	FullscreenOutlined,
 } from '@ant-design/icons';
@@ -9,7 +9,11 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container } from './styles';
 
-const Bar = ({ widget, onViewFullScreenHandler }: BarProps): JSX.Element => {
+const Bar = ({
+	widget,
+	onViewFullScreenHandler,
+	onDeleteHandler,
+}: BarProps): JSX.Element => {
 	const { push } = useHistory();
 	const { pathname } = useLocation();
 
@@ -22,7 +26,7 @@ const Bar = ({ widget, onViewFullScreenHandler }: BarProps): JSX.Element => {
 		<Container>
 			<FullscreenOutlined onClick={onViewFullScreenHandler} />
 			<EditFilled onClick={onEditHandler} />
-			{/* <DeleteOutlined onClick={onDeleteHandler} /> */}
+			<DeleteOutlined onClick={onDeleteHandler} />
 		</Container>
 	);
 };

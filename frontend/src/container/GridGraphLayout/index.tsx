@@ -1,6 +1,6 @@
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -16,7 +16,7 @@ const GridGraph = (): JSX.Element => {
 	const { push } = useHistory();
 	const { pathname } = useLocation();
 
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
+	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 
@@ -28,39 +28,60 @@ const GridGraph = (): JSX.Element => {
 
 	const AddWidgetWrapper = useCallback(() => <AddWidget />, []);
 
+	const isMounted = useRef(true);
+	const isDeleted = useRef(false);
+
 	useEffect(() => {
-		const getPreLayouts = (): LayoutProps[] => {
-			if (widgets === undefined) {
-				return [];
-			}
+		if (
+			loading === false &&
+			(isMounted.current === true || isDeleted.current === true)
+		) {
+			const getPreLayouts = (): LayoutProps[] => {
+				if (widgets === undefined) {
+					return [];
+				}
 
-			return widgets.map((e, index) => {
-				return {
-					h: 2,
-					w: 6,
+				return widgets.map((e, index) => {
+					return {
+						h: 2,
+						w: 6,
+						y: Infinity,
+						i: (index + 1).toString(),
+						x: (index % 2) * 6,
+						// eslint-disable-next-line react/display-name
+						Component: (): JSX.Element => (
+							<Graph isDeleted={isDeleted} widget={widgets[index]} />
+						),
+					};
+				});
+			};
+
+			const preLayouts = getPreLayouts();
+
+			const getX = (): number => {
+				if (isDeleted.current === true) {
+					return ((preLayouts.length - 1) % 2) * 6;
+				}
+				return (preLayouts.length % 2) * 6;
+			};
+
+			setLayout(() => [
+				...preLayouts,
+				{
+					i: Infinity.toString(),
+					x: getX(),
 					y: Infinity,
-					i: (index + 1).toString(),
-					x: (index * 6) % 12,
-					// eslint-disable-next-line react/display-name
-					Component: (): JSX.Element => <Graph widget={widgets[index]} />,
-				};
-			});
+					w: 6,
+					h: 2,
+					Component: AddWidgetWrapper,
+				},
+			]);
+		}
+
+		return (): void => {
+			isMounted.current = false;
 		};
-
-		const preLayouts = getPreLayouts();
-
-		setLayout(() => [
-			...preLayouts,
-			{
-				i: Infinity.toString(),
-				x: ((widgets || []).length * 6) % 12,
-				y: Infinity,
-				w: 6,
-				h: 2,
-				Component: AddWidgetWrapper,
-			},
-		]);
-	}, [widgets, layouts.length, AddWidgetWrapper]);
+	}, [widgets, layouts.length, AddWidgetWrapper, loading]);
 
 	const onDropHandler = useCallback(
 		(allLayouts: Layout[], currectLayout: Layout, event: DragEvent) => {
@@ -87,7 +108,7 @@ const GridGraph = (): JSX.Element => {
 			width={100}
 			isDroppable
 			useCSSTransforms
-			resizeHandles={['se', 'ne']}
+			resizeHandles={['se']}
 			isBounded
 			onDrop={onDropHandler}
 		>
