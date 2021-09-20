@@ -266,7 +266,7 @@ const dashboard = (
 		}
 
 		case QUERY_SUCCESS: {
-			const { queryData, widgetId } = action.payload;
+			const { widgetId, data: queryDataResponse } = action.payload;
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
 			const { data } = selectedDashboard;
@@ -294,7 +294,7 @@ const dashboard = (
 								{
 									...selectedWidget,
 									queryData: {
-										data: [...queryData],
+										data: [...queryDataResponse],
 										error: selectedWidget.queryData.error,
 										errorMessage: selectedWidget.queryData.errorMessage,
 										loading: false,
