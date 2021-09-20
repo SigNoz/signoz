@@ -29,7 +29,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { queryData, query, title, opacity, isStacked } = selectedWidget;
+	const { queryData, title, opacity, isStacked } = selectedWidget;
 
 	if (queryData.data.length === 0) {
 		return (
@@ -40,7 +40,6 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 	}
 
 	const chartDataSet = getChartData({
-		query,
 		queryData,
 	});
 

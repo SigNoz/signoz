@@ -19,7 +19,6 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { QueryData } from 'types/api/widgets/getQuery';
 
 import Bar from './Bar';
 import FullView from './FullView';
@@ -64,30 +63,32 @@ const GridCardGraph = ({
 									start: start,
 									step: '30',
 								});
-								return result;
+
+								return {
+									query: query.query,
+									queryData: result,
+									legend: query.legend,
+								};
 							}),
 					);
 
-					const isError = response.find((e) => e.statusCode !== 200);
+					const isError = response.find((e) => e.queryData.statusCode !== 200);
 
 					if (isError !== undefined) {
 						setState({
 							...state,
 							error: true,
-							errorMessage: isError.error || 'Something went wrong',
+							errorMessage: isError.queryData.error || 'Something went wrong',
 							loading: false,
 						});
 					} else {
-						const intialQuery: QueryData[] = [];
-
-						const finalQueryData: QueryData[] = response.reduce((acc, current) => {
-							return [...acc, ...(current.payload?.result || [])];
-						}, intialQuery);
-
 						const chartDataSet = getChartData({
-							query: widget.query,
 							queryData: {
-								data: finalQueryData,
+								data: response.map((e) => ({
+									query: e.query,
+									legend: e.legend,
+									queryData: e.queryData.payload?.result || [],
+								})),
 								error: false,
 								errorMessage: '',
 								loading: false,

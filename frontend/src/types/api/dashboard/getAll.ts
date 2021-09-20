@@ -35,7 +35,11 @@ export interface Widgets {
 		loading: boolean;
 		error: boolean;
 		errorMessage: string;
-		data: QueryData[];
+		data: {
+			legend?: string;
+			queryData: QueryData[];
+			query: string;
+		}[];
 	};
 	stepSize?: number;
 }

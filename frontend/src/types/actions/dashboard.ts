@@ -123,8 +123,8 @@ interface ToggleEditMode {
 }
 
 export interface QuerySuccessPayload {
-	queryData: QueryData[];
 	widgetId: string;
+	data: { legend: string; queryData: QueryData[]; query: string }[];
 }
 interface QuerySuccess {
 	type: typeof QUERY_SUCCESS;

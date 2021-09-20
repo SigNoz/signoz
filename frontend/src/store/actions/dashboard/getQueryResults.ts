@@ -44,15 +44,21 @@ export const GetQueryResults = (
 					.map(async (query) => {
 						const result = await getQueryResult({
 							end,
-							query: query.query.replace('+', '+%2B+'),
+							query: encodeURIComponent(query.query),
 							start: start,
 							step: '30',
 						});
-						return result;
+						return {
+							query: query.query,
+							queryData: result,
+							legend: query.legend,
+						};
 					}),
 			);
 
-			const isError = response.find((e) => e.statusCode !== 200);
+			const isError = response.find(
+				({ queryData }) => queryData.statusCode !== 200,
+			);
 
 			// want to make sure query is not empty
 			const isEmptyQuery =
@@ -63,23 +69,23 @@ export const GetQueryResults = (
 				dispatch({
 					type: 'QUERY_ERROR',
 					payload: {
-						errorMessage: isError.error || '',
+						errorMessage: isError.queryData.error || '',
 						widgetId: props.widgetId,
 					},
 				});
 			}
 
-			const intialQuery: QueryData[] = [];
-
-			const finalQueryData: QueryData[] = response.reduce((acc, current) => {
-				return [...acc, ...(current.payload?.result || [])];
-			}, intialQuery);
+			const data = response.map((e) => ({
+				query: e.query,
+				legend: e.legend || '',
+				queryData: e.queryData.payload?.result || [],
+			}));
 
 			dispatch({
 				type: 'QUERY_SUCCESS',
 				payload: {
 					widgetId: props.widgetId,
-					queryData: finalQueryData,
+					data,
 				},
 			});
 		} catch (error) {
