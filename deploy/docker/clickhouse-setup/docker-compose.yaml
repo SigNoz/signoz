@@ -12,6 +12,8 @@ services:
       volumes:
         - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
         - ./docker-entrypoint-initdb.d/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+        - ./data/clickhouse/:/var/lib/clickhouse/
+
       healthcheck:
         # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
         test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
