@@ -44,7 +44,7 @@ const CustomDateTimeModal: React.FC<CustomDateTimeModalProps> = ({
 			cancelText="Cancel"
 			onCancel={onCancel}
 			style={{ position: 'absolute', top: 60, right: 40 }}
-			onOk={() => onCreate(customDateTimeRange ? customDateTimeRange : null)}
+			onOk={(): void => onCreate(customDateTimeRange ? customDateTimeRange : null)}
 		>
 			<RangePicker
 				disabledDate={disabledDate}

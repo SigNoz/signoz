@@ -104,10 +104,16 @@ const GridGraph = (): JSX.Element => {
 			useCSSTransforms
 			onDrop={onDropHandler}
 		>
-			{layouts.map(({ Component, ...rest }) => {
+			{layouts.map(({ Component, ...rest }, index) => {
+				const widget = (widgets || [])[index] || {};
+
+				const type = widget.panelTypes;
+
+				const isQueryType = type === 'VALUE';
+
 				return (
 					<CardContainer key={rest.i} data-grid={rest}>
-						<Card>
+						<Card isQueryType={isQueryType}>
 							<Component />
 						</Card>
 					</CardContainer>

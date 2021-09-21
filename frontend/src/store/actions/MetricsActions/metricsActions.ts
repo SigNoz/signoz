@@ -7,7 +7,7 @@ import { MetricsActionTypes } from './metricsActionTypes';
 import * as MetricsInterfaces from './metricsInterfaces';
 
 export const getServicesList = (globalTime: GlobalTime) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
 
@@ -18,7 +18,6 @@ export const getServicesList = (globalTime: GlobalTime) => {
 		dispatch<MetricsInterfaces.getServicesListAction>({
 			type: MetricsActionTypes.getServicesList,
 			payload: response.data,
-			//PNOTE - response.data in the axios response has the actual API response
 		});
 	};
 };
@@ -27,7 +26,7 @@ export const getDbOverViewMetrics = (
 	serviceName: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/service/dbOverview?service=' +
 			serviceName +
@@ -50,7 +49,7 @@ export const getExternalMetrics = (
 	serviceName: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/service/external?service=' +
 			serviceName +
@@ -73,7 +72,7 @@ export const getExternalAvgDurationMetrics = (
 	serviceName: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/service/externalAvgDuration?service=' +
 			serviceName +
@@ -96,7 +95,7 @@ export const getExternalErrCodeMetrics = (
 	serviceName: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/service/externalErrors?service=' +
 			serviceName +
@@ -120,7 +119,7 @@ export const getServicesMetrics = (
 	serviceName: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/service/overview?service=' +
 			serviceName +
@@ -136,7 +135,6 @@ export const getServicesMetrics = (
 		dispatch<MetricsInterfaces.getServiceMetricsAction>({
 			type: MetricsActionTypes.getServiceMetrics,
 			payload: response.data,
-			//PNOTE - response.data in the axios response has the actual API response
 		});
 	};
 };
@@ -145,7 +143,7 @@ export const getTopEndpoints = (
 	serviceName: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/service/top_endpoints?service=' +
 			serviceName +
@@ -160,7 +158,6 @@ export const getTopEndpoints = (
 		dispatch<MetricsInterfaces.getTopEndpointsAction>({
 			type: MetricsActionTypes.getTopEndpoints,
 			payload: response.data,
-			//PNOTE - response.data in the axios response has the actual API response
 		});
 	};
 };
@@ -169,7 +166,7 @@ export const getFilteredTraceMetrics = (
 	filter_params: string,
 	globalTime: GlobalTime,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string =
 			'/spans/aggregates?start=' +
 			toUTCEpoch(globalTime.minTime) +
@@ -184,7 +181,111 @@ export const getFilteredTraceMetrics = (
 		dispatch<MetricsInterfaces.getFilteredTraceMetricsAction>({
 			type: MetricsActionTypes.getFilteredTraceMetrics,
 			payload: response.data,
-			//PNOTE - response.data in the axios response has the actual API response
 		});
 	};
 };
+
+export const getInitialMerticData = ({
+	serviceName,
+	globalTime,
+}: getInitialMerticDataProps) => {
+	return async (dispatch: Dispatch): Promise<void> => {
+		try {
+			const dbOverviewString =
+				'/service/dbOverview?service=' +
+				serviceName +
+				'&start=' +
+				globalTime.minTime +
+				'&end=' +
+				globalTime.maxTime +
+				'&step=60';
+
+			const externalServicesString =
+				'/service/external?service=' +
+				serviceName +
+				'&start=' +
+				globalTime.minTime +
+				'&end=' +
+				globalTime.maxTime +
+				'&step=60';
+
+			const topEndPointsString =
+				'/service/top_endpoints?service=' +
+				serviceName +
+				'&start=' +
+				globalTime.minTime +
+				'&end=' +
+				globalTime.maxTime;
+
+			const avgExternalDurationString =
+				'/service/externalAvgDuration?service=' +
+				serviceName +
+				'&start=' +
+				globalTime.minTime +
+				'&end=' +
+				globalTime.maxTime +
+				'&step=60';
+
+			const serviceOverviewString =
+				'/service/overview?service=' +
+				serviceName +
+				'&start=' +
+				globalTime.minTime +
+				'&end=' +
+				globalTime.maxTime +
+				'&step=60';
+
+			const externalErrorCodeMetricsString =
+				'/service/externalErrors?service=' +
+				serviceName +
+				'&start=' +
+				globalTime.minTime +
+				'&end=' +
+				globalTime.maxTime +
+				'&step=60';
+
+			dispatch({
+				type: 'UPDATE_INITIAL_VALUE_START',
+			});
+
+			const [
+				dbResponse,
+				externalServiceResponse,
+				topEndPointsResponse,
+				avgExternalDurationResponse,
+				serviceOverViewResponse,
+				externalErrorCodeMetricsResponse,
+			] = await Promise.all([
+				api.get<MetricsInterfaces.dbOverviewMetricsItem[]>(dbOverviewString),
+				api.get<MetricsInterfaces.externalMetricsItem[]>(externalServicesString),
+				api.get<MetricsInterfaces.topEndpointListItem[]>(topEndPointsString),
+				api.get<MetricsInterfaces.externalMetricsAvgDurationItem[]>(
+					avgExternalDurationString,
+				),
+				api.get<MetricsInterfaces.metricItem[]>(serviceOverviewString),
+				api.get<MetricsInterfaces.externalErrCodeMetricsItem[]>(
+					externalErrorCodeMetricsString,
+				),
+			]);
+
+			dispatch({
+				type: 'UPDATE_INITIAL_VALUE',
+				payload: {
+					serviceOverViewResponse: serviceOverViewResponse.data,
+					topEndPointsResponse: topEndPointsResponse.data,
+					dbResponse: dbResponse.data,
+					externalServiceResponse: externalServiceResponse.data,
+					avgExternalDurationResponse: avgExternalDurationResponse.data,
+					externalErrorCodeMetricsResponse: externalErrorCodeMetricsResponse.data,
+				},
+			});
+		} catch (error) {
+			console.error(error);
+		}
+	};
+};
+
+export interface getInitialMerticDataProps {
+	serviceName: string;
+	globalTime: GlobalTime;
+}

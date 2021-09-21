@@ -17,6 +17,7 @@ export const RightContainerWrapper = styled(Col)`
 export const LeftContainerWrapper = styled(Col)`
 	&&& {
 		margin-right: 1rem;
+		max-width: 70%;
 	}
 `;
 

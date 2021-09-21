@@ -1,7 +1,7 @@
-import { ActiveElement, Chart, ChartEvent } from 'chart.js';
+import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import ROUTES from 'constants/routes';
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
@@ -87,33 +87,10 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 		this.props.onTracePopupClick(this.state.firstpoint_ts);
 	};
 
-	gotoAlertsHandler = () => {
-		this.props.history.push(ROUTES.SERVICE_MAP);
-		// PNOTE - Keeping service map for now, will replace with alerts when alert page is made
-	};
-
-	GraphTracePopUp = () => {
-		if (this.state.showpopUp) {
-			return (
-				<ChartPopUpUnique
-					xcoordinate={this.state.xcoordinate}
-					ycoordinate={this.state.ycoordinate}
-				>
-					<PopUpElements onClick={this.gotoTracesHandler}>View Traces</PopUpElements>
-					{/* <PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements> */}
-				</ChartPopUpUnique>
-			);
-		} else return null;
-	};
-
-	render() {
+	render(): JSX.Element {
 		const ndata = this.props.data;
 
-		const data_chartJS = () => {
-			// const ctx = canvas.getContext('2d');
-			// const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			// gradient.addColorStop(0, 'rgba(250,174,50,1)');
-			// gradient.addColorStop(1, 'rgba(250,174,50,1)');
+		const data_chartJS = (): ChartData => {
 			return {
 				labels: ndata.map((s) => new Date(s.timestamp / 1000000)), // converting from nano second to mili second
 				datasets: [
@@ -128,9 +105,20 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 			};
 		};
 
+		const data = data_chartJS();
+
 		return (
 			<div>
-				{this.GraphTracePopUp()}
+				{this.state.showpopUp && (
+					<ChartPopUpUnique
+						xcoordinate={this.state.xcoordinate}
+						ycoordinate={this.state.ycoordinate}
+					>
+						<PopUpElements onClick={this.gotoTracesHandler}>
+							View Traces
+						</PopUpElements>
+					</ChartPopUpUnique>
+				)}
 				<div style={{ textAlign: 'center' }}>Error Percentage (%)</div>
 
 				<GraphContainer>
@@ -138,7 +126,7 @@ class ErrorRateChart extends React.Component<ErrorRateChartProps> {
 						onClickHandler={this.onClickhandler}
 						xAxisType="timeseries"
 						type="line"
-						data={data_chartJS()}
+						data={data}
 					/>
 				</GraphContainer>
 			</div>

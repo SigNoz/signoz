@@ -4,14 +4,19 @@ import styled from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
-export const Card = styled(CardComponent)`
+interface Props {
+	isQueryType: boolean;
+}
+export const Card = styled(CardComponent)<Props>`
 	&&& {
 		height: 100%;
 	}
 
 	.ant-card-body {
-		height: 90%;
+		height: 100%;
 		padding: 0;
+		/* padding-bottom: ${({ isQueryType }): string =>
+			isQueryType ? '0' : '1.5rem'}; */
 	}
 `;
 

@@ -9,4 +9,7 @@ export const Container = styled.div`
 	padding-right: 1rem;
 	padding-left: 1rem;
 	padding-top: 0.5rem;
+	position: absolute;
+	top: 0;
+	right: 0;
 `;

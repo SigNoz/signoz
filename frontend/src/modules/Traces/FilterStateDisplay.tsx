@@ -14,28 +14,34 @@ const Tag = styled(AntTag)`
 
 interface FilterStateDisplayProps {
 	traceFilters: TraceFilters;
-	updateTraceFilters: Function;
+	updateTraceFilters: (props: TraceFilters) => void;
 }
 
-const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
-	function handleCloseTag(value: string) {
-		if (value === 'service')
-			props.updateTraceFilters({ ...props.traceFilters, service: '' });
-		if (value === 'operation')
-			props.updateTraceFilters({ ...props.traceFilters, operation: '' });
-		if (value === 'maxLatency')
-			props.updateTraceFilters({
-				...props.traceFilters,
-				latency: { max: '', min: props.traceFilters.latency?.min },
+const _FilterStateDisplay = (props: FilterStateDisplayProps): JSX.Element => {
+	const { traceFilters, updateTraceFilters } = props;
+
+	function handleCloseTag(value: string): void {
+		if (value === 'service') {
+			updateTraceFilters({ ...traceFilters, service: '' });
+		}
+		if (value === 'operation') {
+			updateTraceFilters({ ...traceFilters, operation: '' });
+		}
+		if (value === 'maxLatency') {
+			updateTraceFilters({
+				...traceFilters,
+				latency: { max: '', min: traceFilters.latency?.min || '' },
 			});
-		if (value === 'minLatency')
-			props.updateTraceFilters({
-				...props.traceFilters,
-				latency: { min: '', max: props.traceFilters.latency?.max },
+		}
+		if (value === 'minLatency') {
+			updateTraceFilters({
+				...traceFilters,
+				latency: { min: '', max: traceFilters.latency?.max || '' },
 			});
+		}
 	}
 
-	function handleCloseTagElement(item: TagItem) {
+	function handleCloseTagElement(item: TagItem): void {
 		props.updateTraceFilters({
 			...props.traceFilters,
 			tags: props.traceFilters.tags?.filter((elem) => elem !== item),
@@ -51,7 +57,7 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 				<Tag
 					style={{ fontSize: 14, padding: 8 }}
 					closable
-					onClose={(e) => {
+					onClose={(): void => {
 						handleCloseTag('service');
 					}}
 				>
@@ -63,7 +69,7 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 				<Tag
 					style={{ fontSize: 14, padding: 8 }}
 					closable
-					onClose={(e) => {
+					onClose={(): void => {
 						handleCloseTag('operation');
 					}}
 				>
@@ -75,12 +81,12 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 				<Tag
 					style={{ fontSize: 14, padding: 8 }}
 					closable
-					onClose={(e) => {
+					onClose={(): void => {
 						handleCloseTag('minLatency');
 					}}
 				>
 					minLatency:
-					{(parseInt(props.traceFilters.latency!.min) / 1000000).toString()}ms
+					{(parseInt(traceFilters?.latency?.min || '0') / 1000000).toString()}ms
 				</Tag>
 			)}
 			{props.traceFilters.latency === undefined ||
@@ -88,12 +94,12 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 				<Tag
 					style={{ fontSize: 14, padding: 8 }}
 					closable
-					onClose={(e) => {
+					onClose={(): void => {
 						handleCloseTag('maxLatency');
 					}}
 				>
 					maxLatency:
-					{(parseInt(props.traceFilters.latency!.max) / 1000000).toString()}ms
+					{(parseInt(traceFilters?.latency?.max || '0') / 1000000).toString()}ms
 				</Tag>
 			)}
 			{props.traceFilters.tags === undefined
@@ -103,7 +109,7 @@ const _FilterStateDisplay = (props: FilterStateDisplayProps) => {
 							style={{ fontSize: 14, padding: 8 }}
 							closable
 							key={`${item.key}-${item.operator}-${item.value}`}
-							onClose={(e) => {
+							onClose={(): void => {
 								handleCloseTagElement(item);
 							}}
 						>

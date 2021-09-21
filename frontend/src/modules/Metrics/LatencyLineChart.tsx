@@ -6,7 +6,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { metricItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
 
-import { GraphContainer } from './styles';
+import { GraphContainer, GraphTitle } from './styles';
 
 const ChartPopUpUnique = styled.div<{
 	ycoordinate: number;
@@ -83,25 +83,6 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 		}
 	};
 
-	GraphTracePopUp = (): JSX.Element | null => {
-		if (this.state.showpopUp) {
-			return (
-				<ChartPopUpUnique
-					xcoordinate={this.state.xcoordinate}
-					ycoordinate={this.state.ycoordinate}
-				>
-					<PopUpElements
-						onClick={() => {
-							this.props.popupClickHandler(this.state.firstpoint_ts);
-						}}
-					>
-						View Traces
-					</PopUpElements>
-				</ChartPopUpUnique>
-			);
-		} else return null;
-	};
-
 	render(): JSX.Element {
 		const ndata = this.props.data;
 
@@ -136,8 +117,23 @@ class LatencyLineChart extends React.Component<LatencyLineChartProps> {
 
 		return (
 			<div>
-				{this.GraphTracePopUp()}
-				<div style={{ textAlign: 'center' }}>Application latency in ms</div>
+				{this.state.showpopUp && (
+					<ChartPopUpUnique
+						xcoordinate={this.state.xcoordinate}
+						ycoordinate={this.state.ycoordinate}
+					>
+						<PopUpElements
+							onClick={() => {
+								this.props.popupClickHandler(this.state.firstpoint_ts);
+							}}
+						>
+							View Traces
+						</PopUpElements>
+					</ChartPopUpUnique>
+				)}
+
+				<GraphTitle>Application latency in ms</GraphTitle>
+
 				<GraphContainer>
 					<Graph
 						onClickHandler={this.onClickhandler}

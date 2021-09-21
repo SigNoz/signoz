@@ -3,7 +3,7 @@ import ROUTES from 'constants/routes';
 import { Dispatch } from 'redux';
 import { toUTCEpoch } from 'utils/timeUtils';
 
-import { GloxwbalTime } from './global';
+import { GlobalTime } from './global';
 import { ActionTypes } from './types';
 
 // PNOTE
@@ -120,7 +120,7 @@ export interface FetchTraceItemAction {
 }
 
 export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): void => {
 		if (globalTime) {
 			const request_string =
 				'/spans?limit=100&lookback=2d&start=' +
@@ -141,7 +141,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 };
 
 export const fetchTraceItem = (traceID: string) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string = ROUTES.TRACES + '/' + traceID;
 		const response = await api.get<spansWSameTraceIDResponse>(request_string);
 
