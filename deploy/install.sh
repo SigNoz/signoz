@@ -266,7 +266,11 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
         echo ""
         if [ $setup_type == 'clickhouse' ]; then
-            echo -e "sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+            if [[ `uname -m` == 'arm64' ]]; then
+                echo -e "sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+            else
+                echo -e "sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+            fi
         else   
             echo -e "sudo docker-compose -f docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
         fi
@@ -404,8 +408,14 @@ start_docker
 
 echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz. To run as sudo it may ask for system password\n"
+
+
 if [ $setup_type == 'clickhouse' ]; then
-    sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
+    if [[ `uname -m` == 'arm64' ]]; then
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f ./docker/clickhouse-setup/docker-compose.yaml pull
+    else
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f ./docker/clickhouse-setup/docker-compose.yaml pull
+    fi
 else
     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
 fi
@@ -417,7 +427,11 @@ echo
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
 if [ $setup_type == 'clickhouse' ]; then
-    sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+    if [[ `uname -m` == 'arm64' ]]; then
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+    else
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+    fi
 else
     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
 fi
