@@ -4,6 +4,11 @@ metadata:
   name: evolution
 spec:
   configuration:
+    zookeeper:
+      nodes:
+        - host: signoz-zookeeper
+          port: 2181
+      session_timeout_ms: 6000
     clusters:
       - name: cluster
         # Templates are specified for this cluster explicitly
@@ -14,24 +19,31 @@ spec:
           replicasCount: 1
 
   templates:
+    hostTemplates:
+      - name: port-distribution
+        portDistribution:
+          - type: ClusterScopeIndex
+        spec:
+          tcpPort: 9000
+          httpPort: 8123
+          interserverHTTPPort: 9009
+
     podTemplates:
       - name: pod-template-with-volume
         spec:
           containers:
             - name: clickhouse
-              image: yandex/clickhouse-server:19.3.7
+              image: yandex/clickhouse-server:21.7
               volumeMounts:
                 - name: storage-vc-template
                   mountPath: /var/lib/clickhouse
 
     volumeClaimTemplates:
       - name: storage-vc-template
-        metadata:
-          annotations:
-            volume.beta.kubernetes.io/storage-class: "standard"
         spec:
+          storageClassName: "standard"
           accessModes:
-            - ReadWriteOnce
+            - ReadWriteMany
           resources:
             requests:
               storage: 11Gi

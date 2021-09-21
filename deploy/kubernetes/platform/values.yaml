@@ -46,6 +46,5 @@ flattener-processor:
 
 query-service:
   configVars:
-    DruidClientUrl: http://signoz-druid-router:8888
-    DruidDatasource: flattened_spans
-    STORAGE: druid
+    ClickHouseUrl: http://clickhouse-evolution:9000
+    STORAGE: clickhouse
