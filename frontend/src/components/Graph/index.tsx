@@ -8,6 +8,7 @@ import {
 	Decimation,
 	Filler,
 	Legend,
+	// LegendItem,
 	LinearScale,
 	LineController,
 	LineElement,
@@ -20,8 +21,13 @@ import {
 	Tooltip,
 } from 'chart.js';
 import chartjsAdapter from 'chartjs-adapter-date-fns';
-import React, { useCallback, useEffect, useRef } from 'react';
+// import { colors } from 'lib/getRandomColor';
+// import stringToHTML from 'lib/stringToHTML';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
+
+// import Legends from './Legend';
+import { LegendsContainer } from './styles';
 
 const Graph = ({
 	data,
@@ -87,7 +93,24 @@ const Graph = ({
 						text: title,
 					},
 					legend: {
-						display: false,
+						display: true,
+						labels: {
+							usePointStyle: true,
+							pointStyle: 'circle',
+						},
+						position: 'bottom',
+						// labels: {
+						// 	generateLabels: (chart: Chart): LegendItem[] => {
+						// 		return (data.datasets || []).map((e, index) => {
+						// 			return {
+						// 				text: e.label || '',
+						// 				datasetIndex: index,
+						// 			};
+						// 		});
+						// 	},
+						// 	pointStyle: 'circle',
+						// 	usePointStyle: true,
+						// },
 					},
 				},
 				layout: {
@@ -130,6 +153,56 @@ const Graph = ({
 				type: type,
 				data: data,
 				options,
+				// plugins: [
+				// 	{
+				// 		id: 'htmlLegendPlugin',
+				// 		afterUpdate: (chart: Chart): void => {
+				// 			if (
+				// 				chart &&
+				// 				chart.options &&
+				// 				chart.options.plugins &&
+				// 				chart.options.plugins.legend &&
+				// 				chart.options.plugins.legend.labels &&
+				// 				chart.options.plugins.legend.labels.generateLabels
+				// 			) {
+				// 				const labels = chart.options.plugins?.legend?.labels?.generateLabels(
+				// 					chart,
+				// 				);
+
+				// 				const id = 'htmlLegend';
+
+				// 				const response = document.getElementById(id);
+
+				// 				if (labels && response && response?.childNodes.length === 0) {
+				// 					const labelComponent = labels.map((e, index) => {
+				// 						return {
+				// 							element: Legends({
+				// 								text: e.text,
+				// 								color: colors[index] || 'white',
+				// 							}),
+				// 							dataIndex: e.datasetIndex,
+				// 						};
+				// 					});
+
+				// 					labelComponent.map((e) => {
+				// 						const el = stringToHTML(e.element);
+
+				// 						if (el) {
+				// 							el.addEventListener('click', () => {
+				// 								chart.setDatasetVisibility(
+				// 									e.dataIndex,
+				// 									!chart.isDatasetVisible(e.dataIndex),
+				// 								);
+				// 								chart.update();
+				// 							});
+				// 							response.append(el);
+				// 						}
+				// 					});
+				// 				}
+				// 			}
+				// 		},
+				// 	},
+				// ],
 			});
 		}
 	}, [
@@ -148,7 +221,12 @@ const Graph = ({
 		buildChart();
 	}, [data, buildChart]);
 
-	return <canvas ref={chartRef} />;
+	return (
+		<>
+			<canvas ref={chartRef} />
+			{/* <LegendsContainer id="htmlLegend" /> */}
+		</>
+	);
 };
 
 interface GraphProps {
