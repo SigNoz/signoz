@@ -70,6 +70,21 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 
 	const [form_basefilter] = Form.useForm();
 
+	const handleChangeOperation = useCallback(
+		(value: string) => {
+			updateTraceFilters({ ...traceFilters, operation: value });
+		},
+		[traceFilters, updateTraceFilters],
+	);
+
+	const handleChangeService = useCallback(
+		(value: string) => {
+			populateData(value);
+			updateTraceFilters({ ...traceFilters, service: value });
+		},
+		[traceFilters, updateTraceFilters],
+	);
+
 	const spanKindList: ISpanKind[] = [
 		{
 			label: 'SERVER',
@@ -279,13 +294,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		form_basefilter.setFieldsValue({ kind: traceFilters.kind });
 	}, [traceFilters.kind, form_basefilter]);
 
-	const handleChangeOperation = useCallback(
-		(value: string) => {
-			updateTraceFilters({ ...traceFilters, operation: value });
-		},
-		[traceFilters, updateTraceFilters],
-	);
-
 	function populateData(value: string): void {
 		const service_request = '/service/' + value + '/operations';
 		api.get<string[]>(service_request).then((response) => {
@@ -298,14 +306,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 			setTagKeyOptions(response.data);
 		});
 	}
-
-	const handleChangeService = useCallback(
-		(value: string) => {
-			populateData(value);
-			updateTraceFilters({ ...traceFilters, service: value });
-		},
-		[traceFilters, updateTraceFilters],
-	);
 
 	const onLatencyButtonClick = (): void => {
 		setModalVisible(true);
