@@ -98,7 +98,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		setClickedSpanTags(z.data);
 		setClickedSpan(z.data);
 		setSelectedSpan([]);
-		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
+		// console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
 	};
 
 	const chart = flamegraph()

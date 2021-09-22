@@ -46,8 +46,8 @@ const Signup = (props: SignUpProps): JSX.Element => {
 		const texttolog = JSON.stringify(payload);
 
 		api.post('/user?email=' + texttolog).then((res) => {
-			console.log(res);
-			console.log(res.data);
+			// console.log(res);
+			// console.log(res.data);
 		});
 
 		localStorage.setItem(IS_LOGGED_IN, 'yes');

@@ -58,7 +58,7 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 						onCreate(values); // giving error for values
 					})
 					.catch((info) => {
-						console.log('Validate Failed:', info);
+						// console.log('Validate Failed:', info);
 					});
 			}}
 		>

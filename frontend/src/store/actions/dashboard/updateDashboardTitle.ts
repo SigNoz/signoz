@@ -18,7 +18,6 @@ export const UpdateDashboardTitleDescriptionTags = ({
 				uuid: dashboard.uuid,
 			});
 
-			console.log(response);
 			if (response.statusCode === 200) {
 				dispatch({
 					type: 'UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS',

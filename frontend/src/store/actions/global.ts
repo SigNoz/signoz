@@ -71,7 +71,7 @@ export const updateTimeInterval = (
 			break;
 
 		default:
-			console.log('not found matching case');
+		// console.log('not found matching case');
 	}
 
 	return {

@@ -230,9 +230,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 					}
 				});
 		}
-		return () => {
-			console.log('asd', 'asdss');
-		};
 	}, [
 		handleChangeOperation,
 		onTagFormSubmit,
