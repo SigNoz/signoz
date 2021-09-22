@@ -41,10 +41,25 @@ const GridCardGraph = ({
 	);
 	const [deleteModal, setDeletModal] = useState(false);
 
+	const getMaxMinTime = (): GlobalTime => {
+		if (widget.panelTypes === 'VALUE') {
+			return {
+				maxTime: maxTime,
+				minTime: maxTime,
+			};
+		}
+		return {
+			maxTime: maxTime,
+			minTime: minTime,
+		};
+	};
+
+	const maxMinTime = getMaxMinTime();
+
 	const { start, end } = GetStartAndEndTime({
 		type: widget.timePreferance,
-		maxTime,
-		minTime,
+		maxTime: maxMinTime.maxTime,
+		minTime: maxMinTime.minTime,
 	});
 
 	useEffect(() => {
