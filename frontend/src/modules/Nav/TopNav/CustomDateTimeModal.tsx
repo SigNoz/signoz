@@ -18,17 +18,15 @@ const CustomDateTimeModal: React.FC<CustomDateTimeModalProps> = ({
 	onCreate,
 	onCancel,
 }) => {
-	// RangeValue<Moment> == [Moment|null,Moment|null]|null
-
 	const [
 		customDateTimeRange,
 		setCustomDateTimeRange,
 	] = useState<DateTimeRangeType>();
 
-	function handleRangePickerOk(date_time: DateTimeRangeType) {
+	function handleRangePickerOk(date_time: DateTimeRangeType): void {
 		setCustomDateTimeRange(date_time);
 	}
-	function disabledDate(current: Moment) {
+	function disabledDate(current: Moment): boolean {
 		if (current > moment()) {
 			return true;
 		} else {

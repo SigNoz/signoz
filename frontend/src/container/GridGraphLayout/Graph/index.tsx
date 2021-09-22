@@ -6,7 +6,7 @@ import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -41,7 +41,6 @@ const GridCardGraph = ({
 	);
 	const [deleteModal, setDeletModal] = useState(false);
 
-	const counter = useRef(0);
 	const { start, end } = GetStartAndEndTime({
 		type: widget.timePreferance,
 		maxTime,
@@ -51,67 +50,64 @@ const GridCardGraph = ({
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				if (counter.current === 0) {
-					counter.current = 1;
-					const response = await Promise.all(
-						widget.query
-							.filter((e) => e.query.length !== 0)
-							.map(async (query) => {
-								const result = await getQueryResult({
-									end,
-									query: query.query,
-									start: start,
-									step: '30',
-								});
+				const response = await Promise.all(
+					widget.query
+						.filter((e) => e.query.length !== 0)
+						.map(async (query) => {
+							const result = await getQueryResult({
+								end,
+								query: query.query,
+								start: start,
+								step: '30',
+							});
 
-								return {
-									query: query.query,
-									queryData: result,
-									legend: query.legend,
-								};
-							}),
-					);
+							return {
+								query: query.query,
+								queryData: result,
+								legend: query.legend,
+							};
+						}),
+				);
 
-					const isError = response.find((e) => e.queryData.statusCode !== 200);
+				const isError = response.find((e) => e.queryData.statusCode !== 200);
 
-					if (isError !== undefined) {
-						setState({
-							...state,
-							error: true,
-							errorMessage: isError.queryData.error || 'Something went wrong',
+				if (isError !== undefined) {
+					setState((state) => ({
+						...state,
+						error: true,
+						errorMessage: isError.queryData.error || 'Something went wrong',
+						loading: false,
+					}));
+				} else {
+					const chartDataSet = getChartData({
+						queryData: {
+							data: response.map((e) => ({
+								query: e.query,
+								legend: e.legend,
+								queryData: e.queryData.payload?.result || [],
+							})),
+							error: false,
+							errorMessage: '',
 							loading: false,
-						});
-					} else {
-						const chartDataSet = getChartData({
-							queryData: {
-								data: response.map((e) => ({
-									query: e.query,
-									legend: e.legend,
-									queryData: e.queryData.payload?.result || [],
-								})),
-								error: false,
-								errorMessage: '',
-								loading: false,
-							},
-						});
+						},
+					});
 
-						setState({
-							...state,
-							loading: false,
-							payload: chartDataSet,
-						});
-					}
+					setState((state) => ({
+						...state,
+						loading: false,
+						payload: chartDataSet,
+					}));
 				}
 			} catch (error) {
-				setState({
+				setState((state) => ({
 					...state,
 					error: true,
 					errorMessage: (error as AxiosError).toString(),
 					loading: false,
-				});
+				}));
 			}
 		})();
-	}, [widget, state, end, start]);
+	}, [widget, end, start]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {

@@ -3,6 +3,7 @@ import FormItem from 'antd/lib/form/FormItem';
 import { LOCAL_STORAGE } from 'constants/localStorage';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import { cloneDeep } from 'lodash';
 import moment from 'moment';
 import React, {
@@ -13,7 +14,7 @@ import React, {
 	useState,
 } from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { GlobalTime, updateTimeInterval } from 'store/actions';
 import { DateTimeRangeType } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -32,21 +33,25 @@ const DateTimeWrapper = styled.div`
 	margin-top: 20px;
 	justify-content: flex-end !important;
 `;
-const Select = styled(DefaultSelect)``;
-interface DateTimeSelectorProps extends RouteComponentProps<any> {
+interface DateTimeSelectorProps {
 	currentpath?: string;
-	updateTimeInterval?: (value: string) => void;
-	globalTime?: GlobalTime;
+	updateTimeInterval: (
+		interval: string,
+		datetimeRange?: [number, number],
+	) => void;
+	globalTime: GlobalTime;
 }
 
-import { SelectValue } from 'antd/lib/select';
-import history from 'lib/history';
-
+/*
+This components is mounted all the time. Use event listener to track changes.
+ */
 const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
-	const location = history.location;
+	const location = useLocation();
 	const LocalStorageRouteKey: string = getLocalStorageRouteKey(
 		location.pathname,
 	);
+	const { globalTime, updateTimeInterval } = props;
+
 	const timeDurationInLocalStorage = useMemo(() => {
 		return (
 			JSON.parse(localStorage.getItem(LOCAL_STORAGE.METRICS_TIME_IN_DURATION)) ||
@@ -73,7 +78,6 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 	const [refreshText, setRefreshText] = useState('');
 	const [refreshButtonClick, setRefreshButtonClick] = useState(0);
 	const [form_dtselector] = Form.useForm();
-	const { globalTime, updateTimeInterval } = props;
 
 	const setToLocalStorage = useCallback(
 		(val: string) => {
@@ -95,9 +99,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 
 	const setMetricsTimeInterval = useCallback(
 		(value: string) => {
-			if (updateTimeInterval) {
-				updateTimeInterval(value);
-			}
+			updateTimeInterval(value);
 			setTimeInterval(value);
 			setEndTime(null);
 			setStartTime(null);
@@ -108,23 +110,54 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 
 	const setCustomTime = useCallback(
 		(startTime: moment.Moment, endTime: moment.Moment) => {
-			if (updateTimeInterval) {
-				updateTimeInterval('custom', [startTime.valueOf(), endTime.valueOf()]);
-			}
+			updateTimeInterval('custom', [startTime.valueOf(), endTime.valueOf()]);
 			setEndTime(endTime);
 			setStartTime(startTime);
 		},
 		[updateTimeInterval],
 	);
 
-	const counter = useRef(0);
+	const updateTimeOnQueryParamChange = useCallback(() => {
+		const urlParams = new URLSearchParams(location.search);
+		const intervalInQueryParam = urlParams.get(METRICS_PAGE_QUERY_PARAM.interval);
+		const startTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.startTime);
+		const endTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.endTime);
+
+		// first pref: handle both startTime and endTime
+		if (
+			startTimeString &&
+			startTimeString.length > 0 &&
+			endTimeString &&
+			endTimeString.length > 0
+		) {
+			const startTime = moment(Number(startTimeString));
+			const endTime = moment(Number(endTimeString));
+			setCustomTime(startTime, endTime);
+		} else if (currentLocalStorageRouteKey !== LocalStorageRouteKey) {
+			setMetricsTimeInterval(defaultTime);
+			setCurrentLocalStorageRouteKey(LocalStorageRouteKey);
+		}
+		// first pref: handle intervalInQueryParam
+		else if (intervalInQueryParam) {
+			setMetricsTimeInterval(intervalInQueryParam);
+		}
+	}, [
+		LocalStorageRouteKey,
+		currentLocalStorageRouteKey,
+		setCustomTime,
+		defaultTime,
+		setMetricsTimeInterval,
+		location,
+	]);
 
 	useEffect(() => {
-		if (counter.current === 0) {
-			counter.current = 1;
-			setMetricsTimeInterval(defaultTime);
-		}
+		setMetricsTimeInterval(defaultTime);
 	}, [defaultTime, setMetricsTimeInterval]);
+
+	// On URL Change
+	useEffect(() => {
+		updateTimeOnQueryParamChange();
+	}, [location, updateTimeOnQueryParamChange]);
 
 	const updateUrlForTimeInterval = (value: string): void => {
 		const preSearch = new URLSearchParams(location.search);
@@ -151,50 +184,39 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 		startTime: moment.Moment,
 		endTime: moment.Moment,
 	): void => {
+		const preSearch = new URLSearchParams(location.search);
+
+		const widgetId = preSearch.get('widgetId');
+		const graphType = preSearch.get('graphType');
+
+		let result = '';
+
+		if (widgetId !== null) {
+			result = result + `&widgetId=${widgetId}`;
+		}
+
+		if (graphType !== null) {
+			result = result + `&graphType=${graphType}`;
+		}
+
 		history.push(
 			`?${METRICS_PAGE_QUERY_PARAM.startTime}=${startTime.valueOf()}&${
 				METRICS_PAGE_QUERY_PARAM.endTime
-			}=${endTime.valueOf()}`,
+			}=${endTime.valueOf()}${result}`,
 		);
 	};
 
-	const handleOnSelect = (value: SelectValue): void => {
+	const handleOnSelect = (value: string): void => {
 		if (value === 'custom') {
 			setCustomDTPickerVisible(true);
 		} else {
-			if (value !== undefined) {
-				updateUrlForTimeInterval(value as string);
-				setRefreshButtonHidden(false); // for normal intervals, show refresh button
-			}
-		}
-
-		const urlParams = new URLSearchParams(location.search);
-		const intervalInQueryParam = value;
-		const startTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.startTime);
-		const endTimeString = urlParams.get(METRICS_PAGE_QUERY_PARAM.endTime);
-
-		// first pref: handle both startTime and endTime
-		if (
-			startTimeString &&
-			startTimeString.length > 0 &&
-			endTimeString &&
-			endTimeString.length > 0
-		) {
-			const startTime = moment(Number(startTimeString));
-			const endTime = moment(Number(endTimeString));
-			setCustomTime(startTime, endTime);
-		} else if (currentLocalStorageRouteKey !== LocalStorageRouteKey) {
-			setMetricsTimeInterval(defaultTime);
-			setCurrentLocalStorageRouteKey(LocalStorageRouteKey);
-		}
-		// first pref: handle intervalInQueryParam
-		else if (intervalInQueryParam) {
-			setMetricsTimeInterval(intervalInQueryParam.toString());
+			updateUrlForTimeInterval(value);
+			setRefreshButtonHidden(false); // for normal intervals, show refresh button
 		}
 	};
 
 	//function called on clicking apply in customDateTimeModal
-	const handleCustomDate = (dateTimeRange: DateTimeRangeType) => {
+	const handleCustomDate = (dateTimeRange: DateTimeRangeType): void => {
 		// pass values in ms [minTime, maxTime]
 		if (
 			dateTimeRange !== null &&
@@ -220,8 +242,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 
 	const timeSinceLastRefresh = useCallback(() => {
 		const currentTime = moment();
-		const lastRefresh = moment(globalTime?.maxTime / 1000000);
-
+		const lastRefresh = moment(globalTime.maxTime / 1000000);
 		const duration = moment.duration(currentTime.diff(lastRefresh));
 
 		const secondsDiff = Math.floor(duration.asSeconds());
@@ -234,7 +255,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 			return `Last refresh - ${minutedDiff} mins ago`;
 		}
 		return `Last refresh - ${secondsDiff} sec ago`;
-	}, [globalTime?.maxTime]);
+	}, [globalTime]);
 
 	const handleRefresh = (): void => {
 		setRefreshButtonClick(refreshButtonClick + 1);
@@ -251,7 +272,7 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 		};
 	}, [refreshButtonClick, timeSinceLastRefresh]);
 
-	if (location.pathname.startsWith(ROUTES.USAGE_EXPLORER)) {
+	if (history.location.pathname.startsWith(ROUTES.USAGE_EXPLORER)) {
 		return <></>;
 	} else {
 		const inputLabeLToShow =
@@ -271,13 +292,13 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 							initialValues={{ interval: '15min' }}
 							style={{ marginTop: 10, marginBottom: 10 }}
 						>
-							<Select onChange={handleOnSelect} value={inputLabeLToShow}>
+							<DefaultSelect onSelect={handleOnSelect} value={inputLabeLToShow}>
 								{options.map(({ value, label }) => (
-									<Option key={value} value={value}>
+									<Option key={value + label} value={value}>
 										{label}
 									</Option>
 								))}
-							</Select>
+							</DefaultSelect>
 
 							<FormItem hidden={refreshButtonHidden} name="refresh_button">
 								<Button type="primary" onClick={handleRefresh}>

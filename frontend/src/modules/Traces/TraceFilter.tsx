@@ -1,10 +1,17 @@
-import { AutoComplete, Button, Form, Input, Select } from 'antd';
+import { AutoComplete, Button, Form, Input, Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
 import api from 'api';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import useMountedState from 'hooks/useMountedState';
 import { useRoute } from 'modules/RouteProvider';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { connect } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
@@ -52,12 +59,14 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 	const urlParams = useMemo(() => {
 		return new URLSearchParams(location.search.split('?')[1]);
 	}, [location.search]);
+	const isMount = useMountedState();
+
+	const isMounted = isMount();
 
 	const { state } = useRoute();
 	const { updateTraceFilters, traceFilters, globalTime, fetchTraces } = props;
 	const [modalVisible, setModalVisible] = useState(false);
 
-	const [tagKeyValueApplied, setTagKeyValueApplied] = useState(['']);
 	const [latencyFilterValues, setLatencyFilterValues] = useState<{
 		min: string;
 		max: string;
@@ -98,15 +107,15 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 
 	const handleApplyFilterForm = useCallback(
 		(values: any): void => {
-			setTagKeyValueApplied((tagKeyValueApplied) => [
-				...tagKeyValueApplied,
-				'service eq' + values.service,
-				'operation eq ' + values.operation,
-				'maxduration eq ' +
-					(parseInt(latencyFilterValues.max) / 1000000).toString(),
-				'minduration eq ' +
-					(parseInt(latencyFilterValues.min) / 1000000).toString(),
-			]);
+			// setTagKeyValueApplied((tagKeyValueApplied) => [
+			// 	...tagKeyValueApplied,
+			// 	'service eq' + values.service,
+			// 	'operation eq ' + values.operation,
+			// 	'maxduration eq ' +
+			// 		(parseInt(latencyFilterValues.max) / 1000000).toString(),
+			// 	'minduration eq ' +
+			// 		(parseInt(latencyFilterValues.min) / 1000000).toString(),
+			// ]);
 			updateTraceFilters({
 				service: values.service,
 				operation: values.operation,
@@ -117,7 +126,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 				kind: values.kind,
 			});
 		},
-		[updateTraceFilters, latencyFilterValues],
+		[updateTraceFilters],
 	);
 
 	useEffect(() => {
@@ -169,57 +178,61 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		[form, traceFilters, updateTraceFilters],
 	);
 
+	const counter = useRef(0);
+
 	useEffect(() => {
-		api
-			.get<string[]>(`/services/list`)
-			.then((response) => {
-				setServiceList(response.data);
-			})
-			.then(() => {
-				/*
-				Todo
-				revisit this flow post refactoring store
-				*/
-				const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
-				const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
-				const errorTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.error);
-				if (operationName && serviceName) {
-					updateTraceFilters({
-						...traceFilters,
-						operation: operationName,
-						service: serviceName,
-						kind: '',
-					});
-					populateData(serviceName);
-				} else if (serviceName && errorTag) {
-					updateTraceFilters({
-						...traceFilters,
-						service: serviceName,
-						tags: [
-							{
-								key: METRICS_PAGE_QUERY_PARAM.error,
-								value: errorTag,
-								operator: 'equals',
-							},
-						],
-						kind: '',
-					});
-				} else {
-					if (operationName) {
-						handleChangeOperation(operationName);
-					}
-					if (serviceName) {
-						handleChangeService(serviceName);
-					}
-					if (errorTag) {
-						onTagFormSubmit({
-							tag_key: METRICS_PAGE_QUERY_PARAM.error,
-							tag_value: errorTag,
-							operator: 'equals',
+		if (isMounted && counter.current === 0) {
+			counter.current = 1;
+			api
+				.get<string[]>(`/services/list`)
+				.then((response) => {
+					setServiceList(response.data);
+				})
+				.then(() => {
+					const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
+					const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
+					const errorTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.error);
+					if (operationName && serviceName) {
+						updateTraceFilters({
+							...traceFilters,
+							operation: operationName,
+							service: serviceName,
+							kind: '',
 						});
+						populateData(serviceName);
+					} else if (serviceName && errorTag) {
+						updateTraceFilters({
+							...traceFilters,
+							service: serviceName,
+							tags: [
+								{
+									key: METRICS_PAGE_QUERY_PARAM.error,
+									value: errorTag,
+									operator: 'equals',
+								},
+							],
+							kind: '',
+						});
+					} else {
+						if (operationName) {
+							handleChangeOperation(operationName);
+						}
+						if (serviceName) {
+							handleChangeService(serviceName);
+						}
+						if (errorTag) {
+							onTagFormSubmit({
+								tag_key: METRICS_PAGE_QUERY_PARAM.error,
+								tag_value: errorTag,
+								operator: 'equals',
+							});
+						}
 					}
-				}
-			});
+				});
+		}
+		return () => {
+			console.log('asd', 'asdss');
+		};
 	}, [
 		handleChangeOperation,
 		onTagFormSubmit,
@@ -227,6 +240,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		traceFilters,
 		urlParams,
 		updateTraceFilters,
+		isMounted,
 	]);
 
 	useEffect(() => {
@@ -351,7 +365,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 				kind: '',
 			});
 		};
-	}, []);
+	}, [updateTraceFilters]);
 
 	const handleChangeSpanKind = (value = ''): void => {
 		updateTraceFilters({ ...traceFilters, kind: value });
@@ -359,9 +373,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 
 	return (
 		<div>
-			<div>Filter Traces</div>
-			{/* <div>{JSON.stringify(traceFilters)}</div> */}
-
+			<Typography>Filter Traces</Typography>
 			<Form
 				form={form_basefilter}
 				layout="inline"
@@ -480,7 +492,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 				<LatencyModalForm
 					onCreate={onLatencyModalApply}
 					latencyFilterValues={latencyFilterValues}
-					onCancel={() => {
+					onCancel={(): void => {
 						setModalVisible(false);
 					}}
 				/>
