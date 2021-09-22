@@ -1,11 +1,11 @@
 import './TraceGraph.css';
 
-import { Affix, Col, Row, Space } from 'antd';
+import { Affix, Card, Col, Row, Space } from 'antd';
 import * as d3 from 'd3';
 import { flamegraph } from 'd3-flame-graph';
 import * as d3Tip from 'd3-tip';
 import { isEmpty, sortBy } from 'lodash-es';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import {
@@ -18,12 +18,11 @@ import styled from 'styled-components';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
 import SelectedSpanDetails from './SelectedSpanDetails';
-import { Card } from './styles';
 import TraceGanttChart from './TraceGanttChart';
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
-	fetchTraceItem: (value: string) => void;
+	fetchTraceItem: Function;
 }
 
 const TraceGanttChartContainer = styled(Card)`
@@ -43,9 +42,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 
 	let sortedData = {};
 
-	const { fetchTraceItem, traceItem } = props;
-
-	const getSortedData = useCallback((treeData: pushDStree[], parent = {}) => {
+	const getSortedData = (treeData: pushDStree[], parent = {}) => {
 		if (!isEmpty(treeData)) {
 			if (treeData[0].id !== 'empty') {
 				return Array.from(treeData).map((item, key) => {
@@ -62,43 +59,87 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			}
 			return treeData;
 		}
-	}, []);
+	};
 
 	const tree = spanToTreeUtil(props.traceItem[0].events);
 
 	useEffect(() => {
 		//sets span width based on value - which is mapped to duration
-		if (params.id) {
-			fetchTraceItem(params.id);
+		props.fetchTraceItem(params.id);
+	}, []);
+
+	useEffect(() => {
+		if (props.traceItem) {
+			const sortedData = getSortedData([tree]);
+			setSortedTreeData(sortedData?.[0]);
+			getSpanInfo(sortedData?.[0], spanId);
+			// This is causing element to change ref. Can use both useRef or this approach.
+			d3
+				.select('#chart')
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
 		}
-	}, [fetchTraceItem, params.id]);
+	}, [props.traceItem]);
+	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
+	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
-	const getSpanInfo = useCallback(
-		(data: [pushDStree], spanId: string) => {
-			if (resetZoom) {
-				setSelectedSpan({});
-				return;
-			}
-			if (data?.[0]?.id !== 'empty') {
-				Array.from(data).map((item) => {
-					if (item.id === spanId) {
-						setSelectedSpan(item);
-						setClickedSpanTags(item);
-						return item;
-					} else if (!isEmpty(item.children)) {
-						getSpanInfo(item.children, spanId);
-					}
-				});
-			}
-		},
-		[resetZoom],
-	);
+	useEffect(() => {
+		if (
+			!isEmpty(sortedTreeData) &&
+			sortedTreeData?.id !== 'empty' &&
+			isEmpty(clickedSpanTags)
+		) {
+			setClickedSpanTags(sortedTreeData?.[0]);
+		}
+	}, [sortedTreeData]);
 
-	const onClick = (z: any): void => {
+	useEffect(() => {
+		if (resetZoom) {
+			// This is causing element to change ref. Can use both useRef or this approach.
+			d3
+				.select('#chart')
+				.datum(tree)
+				.call(chart)
+				.sort((item) => item.startTime);
+			setResetZoom(false);
+		}
+	}, [resetZoom]);
+
+	const tip = d3Tip
+		.default()
+		.attr('class', 'd3-tip')
+		.html(function (d: any) {
+			return d.data.name + '<br>duration: ' + d.data.value / 1000000 + 'ms';
+		});
+
+	const onClick = (z: any) => {
 		setClickedSpanTags(z.data);
 		setClickedSpan(z.data);
 		setSelectedSpan([]);
-		// console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
+		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
+	};
+
+	const setSpanTagsInfo = (z: any) => {
+		setClickedSpanTags(z.data);
+	};
+
+	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
+		if (resetZoom) {
+			setSelectedSpan({});
+			return;
+		}
+		if (data?.[0]?.id !== 'empty') {
+			Array.from(data).map((item) => {
+				if (item.id === spanId) {
+					setSelectedSpan(item);
+					setClickedSpanTags(item);
+					return item;
+				} else if (!isEmpty(item.children)) {
+					getSpanInfo(item.children, spanId);
+				}
+			});
+		}
 	};
 
 	const chart = flamegraph()
@@ -117,56 +158,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		.onClick(onClick)
 		.width(800);
 
-	useEffect(() => {
-		if (traceItem) {
-			const sortedData = getSortedData([tree]);
-			setSortedTreeData(sortedData?.[0]);
-			getSpanInfo(sortedData?.[0], spanId);
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select('#chart')
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
-		}
-	}, [chart, getSortedData, getSpanInfo, traceItem, spanId, tree]);
-	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
-	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
-
-	useEffect(() => {
-		if (
-			!isEmpty(sortedTreeData) &&
-			sortedTreeData?.id !== 'empty' &&
-			isEmpty(clickedSpanTags)
-		) {
-			setClickedSpanTags(sortedTreeData?.[0]);
-		}
-	}, [sortedTreeData, clickedSpanTags]);
-
-	const tip = d3Tip
-		.default()
-		.attr('class', 'd3-tip')
-		.html(function (d: any) {
-			return d.data.name + '<br>duration: ' + d.data.value / 1000000 + 'ms';
-		});
-
-	useEffect(() => {
-		if (resetZoom) {
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select('#chart')
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
-			setResetZoom(false);
-		}
-	}, [resetZoom, clickedSpanTags, tree, chart]);
-
-	const setSpanTagsInfo = (z: any): void => {
-		setClickedSpanTags(z.data);
-	};
-
-	const handleResetZoom = (value): void => {
+	const handleResetZoom = (value) => {
 		setResetZoom(value);
 	};
 
