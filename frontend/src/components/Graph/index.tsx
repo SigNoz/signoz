@@ -23,11 +23,11 @@ import {
 import chartjsAdapter from 'chartjs-adapter-date-fns';
 // import { colors } from 'lib/getRandomColor';
 // import stringToHTML from 'lib/stringToHTML';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useThemeSwitcher } from 'react-css-theme-switcher';
 
 // import Legends from './Legend';
-import { LegendsContainer } from './styles';
+// import { LegendsContainer } from './styles';
 
 const Graph = ({
 	data,
@@ -205,21 +205,11 @@ const Graph = ({
 				// ],
 			});
 		}
-	}, [
-		chartRef,
-		data,
-		type,
-		title,
-		isStacked,
-		label,
-		xAxisType,
-		getGridColor,
-		onClickHandler,
-	]);
+	}, [chartRef, data, type, title, isStacked, label, xAxisType, getGridColor]);
 
 	useEffect(() => {
 		buildChart();
-	}, [data, buildChart]);
+	}, [buildChart]);
 
 	return (
 		<>
