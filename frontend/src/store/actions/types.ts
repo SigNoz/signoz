@@ -1,7 +1,7 @@
 import { updateTimeIntervalAction } from './global';
 import { serviceMapItemAction, servicesAction } from './serviceMap';
 import { updateTraceFiltersAction } from './traceFilters';
-import { FetchTraceItemAction,FetchTracesAction } from './traces';
+import { FetchTraceItemAction, FetchTracesAction } from './traces';
 import { getUsageDataAction } from './usage';
 
 export enum ActionTypes {

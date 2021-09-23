@@ -4,8 +4,8 @@ import moment from 'moment';
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { fetchTraces, pushDStree,traceResponseNew } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { fetchTraces, pushDStree, traceResponseNew } from 'store/actions';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { isOnboardingSkipped } from 'utils/app';
 
@@ -151,7 +151,7 @@ const _TraceList = (props: TraceListProps) => {
 	);
 };
 
-const mapStateToProps = (state: StoreState): { traces: traceResponseNew } => {
+const mapStateToProps = (state: AppState): { traces: traceResponseNew } => {
 	return { traces: state.traces };
 };
 

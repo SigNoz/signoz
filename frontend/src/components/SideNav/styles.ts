@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled from 'styled-components';
 
 export const ThemeSwitcherWrapper = styled.div`
 	display: flex;
@@ -10,7 +10,7 @@ export const ThemeSwitcherWrapper = styled.div`
 export const Logo = styled.img<LogoProps>`
 	width: 100px;
 	margin: 5%;
-	display: ${({ collapsed }) => (!collapsed ? "block" : "none")};
+	display: ${({ collapsed }): string => (!collapsed ? 'block' : 'none')};
 `;
 
 interface LogoProps {

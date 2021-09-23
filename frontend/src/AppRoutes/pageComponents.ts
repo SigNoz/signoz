@@ -1,4 +1,4 @@
-import Loadable from './components/Loadable';
+import Loadable from 'components/Loadable';
 
 export const ServiceMetricsPage = Loadable(
 	() =>
@@ -58,4 +58,17 @@ export const InstrumentationPage = Loadable(
 		import(
 			/* webpackChunkName: "InstrumentationPage" */ 'modules/add-instrumentation/instrumentationPage'
 		),
+);
+
+export const DashboardPage = Loadable(
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
+);
+
+export const NewDashboardPage = Loadable(
+	() => import(/* webpackChunkName: "New DashboardPage" */ 'pages/NewDashboard'),
+);
+
+export const DashboardWidget = Loadable(
+	() =>
+		import(/* webpackChunkName: "New DashboardPage" */ 'pages/DashboardWidget'),
 );

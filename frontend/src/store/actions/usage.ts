@@ -1,4 +1,4 @@
-import api, { apiV1 } from 'api';
+import api from 'api';
 import { Dispatch } from 'redux';
 import { toUTCEpoch } from 'utils/timeUtils';
 
@@ -25,7 +25,7 @@ export const getUsageData = (
 			maxTime,
 		)}&step=${step}&service=${service ? service : ''}`;
 		//Step can only be multiple of 3600
-		const response = await api.get<usageDataItem[]>(apiV1 + request_string);
+		const response = await api.get<usageDataItem[]>(request_string);
 
 		dispatch<getUsageDataAction>({
 			type: ActionTypes.getUsageData,

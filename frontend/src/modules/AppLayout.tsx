@@ -1,8 +1,8 @@
 import { Layout } from 'antd';
+import SideNav from 'components/SideNav';
 import React, { ReactNode, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import SideNav from 'components/SideNav';
 import TopNav from './Nav/TopNav';
 import { useRoute } from './RouteProvider';
 
@@ -19,7 +19,7 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 
 	useEffect(() => {
 		dispatch({ type: 'ROUTE_IS_LOADED', payload: location.pathname });
-	}, [location]);
+	}, [location, dispatch]);
 
 	return (
 		<Layout style={{ minHeight: '100vh' }}>

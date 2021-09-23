@@ -1,4 +1,4 @@
-@import "~antd/dist/antd.dark.css";
+@import '~antd/dist/antd.dark.css';
 
 .ant-space-item {
 	margin-right: 0 !important;
@@ -9,4 +9,12 @@
 }
 #chart {
 	width: 100%;
+}
+
+.ant-tabs-tab {
+	margin: 0 0 0 32px !important;
+}
+
+.ant-tabs-nav-list > .ant-tabs-tab:first-child {
+	margin: 0 !important;
 }

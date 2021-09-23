@@ -1,4 +1,4 @@
-import api, { apiV1 } from 'api';
+import api from 'api';
 import { Dispatch } from 'redux';
 
 import { GlobalTime } from './global';
@@ -50,7 +50,7 @@ export const getServiceMapItems = (globalTime: GlobalTime) => {
 			'&end=' +
 			globalTime.maxTime;
 
-		const response = await api.get<servicesMapItem[]>(apiV1 + request_string);
+		const response = await api.get<servicesMapItem[]>(request_string);
 
 		dispatch<serviceMapItemAction>({
 			type: ActionTypes.getServiceMapItems,
@@ -69,7 +69,7 @@ export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 		const request_string =
 			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
 
-		const response = await api.get<servicesItem[]>(apiV1 + request_string);
+		const response = await api.get<servicesItem[]>(request_string);
 
 		dispatch<servicesAction>({
 			type: ActionTypes.getServices,

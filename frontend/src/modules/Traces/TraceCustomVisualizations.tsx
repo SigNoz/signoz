@@ -1,13 +1,20 @@
-import { Card, Form,Select, Space } from 'antd';
-import GenericVisualizations from 'modules/Metrics/GenericVisualization';
+import { Form, Select, Space } from 'antd';
+import Graph from 'components/Graph';
 import { useRoute } from 'modules/RouteProvider';
-import React, { useEffect,useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { GlobalTime, TraceFilters } from 'store/actions';
 import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';
 import { customMetricsItem } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 const { Option } = Select;
+import { colors } from 'lib/getRandomColor';
+
+import {
+	Card,
+	CustomGraphContainer,
+	CustomVisualizationsTitle,
+} from './styles';
 
 const entity = [
 	{
@@ -69,36 +76,43 @@ const aggregation_options = [
 interface TraceCustomVisualizationsProps {
 	filteredTraceMetrics: customMetricsItem[];
 	globalTime: GlobalTime;
-	getFilteredTraceMetrics: Function;
+	getFilteredTraceMetrics: (value: string, time: GlobalTime) => void;
 	traceFilters: TraceFilters;
 }
 
-const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
+const _TraceCustomVisualizations = (
+	props: TraceCustomVisualizationsProps,
+): JSX.Element => {
 	const [selectedEntity, setSelectedEntity] = useState('calls');
 	const [selectedAggOption, setSelectedAggOption] = useState('count');
 	const { state } = useRoute();
 	const [form] = Form.useForm();
 	const selectedStep = '60';
+	const {
+		filteredTraceMetrics,
+		getFilteredTraceMetrics,
+		globalTime,
+		traceFilters,
+	} = props;
 
 	// Step should be multiples of 60, 60 -> 1 min
-
 	useEffect(() => {
 		let request_string =
 			'service=' +
-			props.traceFilters.service +
+			traceFilters.service +
 			'&operation=' +
-			props.traceFilters.operation +
+			traceFilters.operation +
 			'&maxDuration=' +
-			props.traceFilters.latency?.max +
+			traceFilters.latency?.max +
 			'&minDuration=' +
-			props.traceFilters.latency?.min +
+			traceFilters.latency?.min +
 			'&kind=' +
-			props.traceFilters.kind;
-		if (props.traceFilters.tags)
+			traceFilters.kind;
+		if (traceFilters.tags)
 			request_string =
 				request_string +
 				'&tags=' +
-				encodeURIComponent(JSON.stringify(props.traceFilters.tags));
+				encodeURIComponent(JSON.stringify(traceFilters.tags));
 		if (selectedEntity)
 			request_string =
 				request_string + '&dimension=' + selectedEntity.toLowerCase();
@@ -107,8 +121,8 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 				request_string + '&aggregation_option=' + selectedAggOption.toLowerCase();
 		if (selectedStep) request_string = request_string + '&step=' + selectedStep;
 		const plusMinus15 = {
-			minTime: props.globalTime.minTime - 15 * 60 * 1000000000,
-			maxTime: props.globalTime.maxTime + 15 * 60 * 1000000000,
+			minTime: globalTime.minTime - 15 * 60 * 1000000000,
+			maxTime: globalTime.maxTime + 15 * 60 * 1000000000,
 		};
 
 		/*
@@ -116,14 +130,21 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
 		if (state.TRACES.isLoaded) {
-			props.getFilteredTraceMetrics(request_string, plusMinus15);
+			getFilteredTraceMetrics(request_string, plusMinus15);
 		}
-	}, [selectedEntity, selectedAggOption, props.traceFilters, props.globalTime]);
+	}, [
+		selectedEntity,
+		selectedAggOption,
+		traceFilters,
+		globalTime,
+		getFilteredTraceMetrics,
+		state.TRACES.isLoaded,
+	]);
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes
 
 	// PNOTE - Can also use 'coordinate' option in antd Select for implementing this - https://ant.design/components/select/
-	const handleFormValuesChange = (changedValues: any) => {
+	const handleFormValuesChange = (changedValues: any): void => {
 		const formFieldName = Object.keys(changedValues)[0];
 		if (formFieldName === 'entity') {
 			const temp_entity = aggregation_options.filter(
@@ -150,7 +171,7 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 
 	return (
 		<Card>
-			<div>Custom Visualizations</div>
+			<CustomVisualizationsTitle>Custom Visualizations</CustomVisualizationsTitle>
 			<Form
 				form={form}
 				onValuesChange={handleFormValuesChange}
@@ -211,14 +232,27 @@ const _TraceCustomVisualizations = (props: TraceCustomVisualizationsProps) => {
 				</Space>
 			</Form>
 
-			<GenericVisualizations chartType="line" data={props.filteredTraceMetrics} />
-			{/* This component should take bar or line as an input */}
+			<CustomGraphContainer>
+				<Graph
+					type="line"
+					data={{
+						labels: filteredTraceMetrics.map((s) => new Date(s.timestamp / 1000000)),
+						datasets: [
+							{
+								data: filteredTraceMetrics.map((e) => e.value),
+								borderColor: colors[0],
+							},
+						],
+					}}
+					xAxisType="timeseries"
+				/>
+			</CustomGraphContainer>
 		</Card>
 	);
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	filteredTraceMetrics: customMetricsItem[];
 	globalTime: GlobalTime;

@@ -10,7 +10,7 @@ import {
 	GlobalTime,
 	serviceMapStore,
 } from 'store/actions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 
 import SelectService from './SelectService';
@@ -139,7 +139,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
