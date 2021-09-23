@@ -241,7 +241,6 @@ const _TraceCustomVisualizations = (
 							{
 								data: filteredTraceMetrics.map((e) => e.value),
 								borderColor: colors[0],
-								label: 'Custom Visualization',
 							},
 						],
 					}}

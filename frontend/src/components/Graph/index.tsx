@@ -93,7 +93,10 @@ const Graph = ({
 						text: title,
 					},
 					legend: {
-						display: true,
+						// just making sure that label is present
+						display: !(
+							data.datasets.find((e) => e.label !== undefined) === undefined
+						),
 						labels: {
 							usePointStyle: true,
 							pointStyle: 'circle',
