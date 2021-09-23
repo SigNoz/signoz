@@ -86,7 +86,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 			});
 			const response = await createDashboard({
 				uuid: newDashboardId,
-				title: 'Sampe Title',
+				title: 'Sample Title',
 			});
 
 			if (response.statusCode === 200) {
