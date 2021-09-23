@@ -1,21 +1,13 @@
-import { Modal } from 'antd';
+import { Modal, ModalProps as Props } from 'antd';
 import React, { ReactElement } from 'react';
 
-export const CustomModal = ({
+const CustomModal = ({
 	title,
 	children,
 	isModalVisible,
-	setIsModalVisible,
 	footer,
 	closable = true,
-}: {
-	isModalVisible: boolean;
-	closable?: boolean;
-	setIsModalVisible: Function;
-	footer?: any;
-	title: string;
-	children: ReactElement;
-}) => {
+}: ModalProps): JSX.Element => {
 	return (
 		<>
 			<Modal
@@ -29,3 +21,13 @@ export const CustomModal = ({
 		</>
 	);
 };
+
+interface ModalProps {
+	isModalVisible: boolean;
+	closable?: boolean;
+	footer?: Props['footer'];
+	title: string;
+	children: ReactElement;
+}
+
+export default CustomModal;

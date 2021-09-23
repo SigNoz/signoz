@@ -1,8 +1,9 @@
-import { Card, Select, Space } from 'antd';
+import { Select, Space } from 'antd';
+// import { Bar } from 'react-chartjs-2';
+import Graph from 'components/Graph';
 import { useRoute } from 'modules/RouteProvider';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
-import { Bar } from 'react-chartjs-2';
 import { connect } from 'react-redux';
 import {
 	getServicesList,
@@ -11,9 +12,10 @@ import {
 	usageDataItem,
 } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
-import { StoreState } from 'store/reducers';
+import { AppState } from 'store/reducers';
 import { isOnboardingSkipped } from 'utils/app';
 const { Option } = Select;
+import { Card } from './styles';
 
 interface UsageExplorerProps {
 	usageData: usageDataItem[];
@@ -188,15 +190,15 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 				)}
 			</Space>
 
-			<Card style={{ width: '90%', margin: 20 }} bodyStyle={{ padding: 20 }}>
-				<Bar data={data} options={options} />
+			<Card>
+				<Graph data={data} type="bar" />
 			</Card>
 		</React.Fragment>
 	);
 };
 
 const mapStateToProps = (
-	state: StoreState,
+	state: AppState,
 ): {
 	totalCount: number;
 	globalTime: GlobalTime;

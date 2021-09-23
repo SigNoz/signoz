@@ -1,4 +1,4 @@
-import { pushDStree, RefItem,span } from 'store/actions';
+import { pushDStree, RefItem, span } from 'store/actions';
 // PNOTE - should the data be taken from redux or only through props? - Directly as arguments
 
 export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
@@ -102,12 +102,12 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 						//checking for undefined [10] issue
 						mapped_array[parentID][10].push(push_object);
 					} else {
-						console.log(
-							`In SpanTreeUtil: mapped_array[parentID] is undefined, parentID is ${parentID}`,
-						);
-						console.log(
-							`In SpanTreeUtil: mapped_array[parentID] is undefined, mapped_array[parentID] is ${mapped_array[parentID]}`,
-						);
+						// console.log(
+						// 	`In SpanTreeUtil: mapped_array[parentID] is undefined, parentID is ${parentID}`,
+						// );
+						// console.log(
+						// 	`In SpanTreeUtil: mapped_array[parentID] is undefined, mapped_array[parentID] is ${mapped_array[parentID]}`,
+						// );
 					}
 				}
 			} else {

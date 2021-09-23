@@ -14,10 +14,10 @@ const initialState: TraceFilters = {
 
 const TraceFilterReducer = (state = initialState, action: ACTION) => {
 	switch (action.type) {
-	case ActionTypes.updateTraceFilters:
-		return action.payload;
-	default:
-		return state;
+		case ActionTypes.updateTraceFilters:
+			return action.payload;
+		default:
+			return state;
 	}
 };
 

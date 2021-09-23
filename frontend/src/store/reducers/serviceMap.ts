@@ -7,17 +7,17 @@ const initialState: serviceMapStore = {
 
 export const ServiceMapReducer = (state = initialState, action: Action) => {
 	switch (action.type) {
-	case ActionTypes.getServiceMapItems:
-		return {
-			...state,
-			items: action.payload,
-		};
-	case ActionTypes.getServices:
-		return {
-			...state,
-			services: action.payload,
-		};
-	default:
-		return state;
+		case ActionTypes.getServiceMapItems:
+			return {
+				...state,
+				items: action.payload,
+			};
+		case ActionTypes.getServices:
+			return {
+				...state,
+				services: action.payload,
+			};
+		default:
+			return state;
 	}
 };

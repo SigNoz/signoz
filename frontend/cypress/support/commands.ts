@@ -1,4 +1,5 @@
 import '@testing-library/cypress/add-commands';
+
 import Login, { LoginProps } from '../CustomFunctions/Login';
 
 Cypress.Commands.add('login', Login);

@@ -1,7 +1,7 @@
 import './TraceGanttChart.css';
 
-import { Button, Col,Progress, Row, Table, Tabs } from 'antd';
-import { has,isEmpty, max } from 'lodash-es';
+import { Button, Col, Progress, Row, Table, Tabs } from 'antd';
+import { has, isEmpty, max } from 'lodash-es';
 import traverseTreeData from 'modules/Traces/TraceGanttChart/TraceGanttChartHelpers';
 import React, { useEffect, useRef, useState } from 'react';
 import { pushDStree } from 'store/actions';

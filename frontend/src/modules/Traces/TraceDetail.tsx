@@ -4,13 +4,13 @@ import { TraceCustomVisualizations } from './TraceCustomVisualizations';
 import { TraceFilter } from './TraceFilter';
 import { TraceList } from './TraceList';
 
-const TraceDetail = () => {
+const TraceDetail = (): JSX.Element => {
 	return (
-		<div>
+		<>
 			<TraceFilter />
 			<TraceCustomVisualizations />
 			<TraceList />
-		</div>
+		</>
 	);
 };
 

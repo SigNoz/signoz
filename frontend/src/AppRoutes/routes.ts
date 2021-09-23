@@ -1,6 +1,11 @@
 import ROUTES from 'constants/routes';
+import DashboardWidget from 'pages/DashboardWidget';
+import { RouteProps } from 'react-router-dom';
+
 import {
+	DashboardPage,
 	InstrumentationPage,
+	NewDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -9,8 +14,7 @@ import {
 	TraceDetailPage,
 	TraceGraphPage,
 	UsageExplorerPage,
-} from 'pages';
-import { RouteProps } from 'react-router-dom';
+} from './pageComponents';
 
 const routes: AppRoutes[] = [
 	{
@@ -57,6 +61,21 @@ const routes: AppRoutes[] = [
 		path: ROUTES.TRACES,
 		exact: true,
 		component: TraceDetailPage,
+	},
+	{
+		path: ROUTES.ALL_DASHBOARD,
+		exact: true,
+		component: DashboardPage,
+	},
+	{
+		path: ROUTES.DASHBOARD,
+		exact: true,
+		component: NewDashboardPage,
+	},
+	{
+		path: ROUTES.DASHBOARD_WIDGET,
+		exact: true,
+		component: DashboardWidget,
 	},
 ];
 

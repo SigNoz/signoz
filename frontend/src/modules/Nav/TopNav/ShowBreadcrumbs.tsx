@@ -18,9 +18,11 @@ const breadcrumbNameMap: any = {
 	[ROUTES.INSTRUMENTATION]: 'Add instrumentation',
 	[ROUTES.SETTINGS]: 'Settings',
 };
+import history from 'lib/history';
 
-const ShowBreadcrumbs = withRouter((props) => {
-	const { location } = props;
+const ShowBreadcrumbs = (): JSX.Element => {
+	// const { location } = props;
+	const location = history.location;
 	const pathSnippets = location.pathname.split('/').filter((i) => i);
 	const extraBreadcrumbItems = pathSnippets.map((_, index) => {
 		const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
@@ -48,6 +50,6 @@ const ShowBreadcrumbs = withRouter((props) => {
 			<Breadcrumb>{breadcrumbItems}</Breadcrumb>
 		</BreadCrumbWrapper>
 	);
-});
+};
 
 export default ShowBreadcrumbs;

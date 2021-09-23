@@ -1,13 +1,12 @@
-import { filter,uniqBy } from 'lodash';
+import Graph from 'components/Graph';
+import { filter, uniqBy } from 'lodash';
 import React from 'react';
-import { Line as ChartJSLine } from 'react-chartjs-2';
 import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { externalMetricsItem } from 'store/actions/MetricsActions';
 
-import { borderColors,getOptions } from './graphConfig';
-
-const theme = 'dark';
+import { GraphContainer } from '../styles';
+import { borderColors } from './graphConfig';
 
 interface ExternalApiGraphProps extends RouteComponentProps<any> {
 	data: externalMetricsItem[];
@@ -80,11 +79,8 @@ class ExternalApiGraph extends React.Component<ExternalApiGraphProps> {
 				};
 			});
 		};
-		const data_chartJS = (canvas: any) => {
-			const ctx = canvas.getContext('2d');
-			const gradient = ctx.createLinearGradient(0, 0, 0, 100);
-			gradient.addColorStop(0, 'rgba(250,174,50,1)');
-			gradient.addColorStop(1, 'rgba(250,174,50,1)');
+
+		const data_chartJS = () => {
 			const uniqTimestamp = uniqBy(data, 'timestamp');
 
 			return {
@@ -96,16 +92,12 @@ class ExternalApiGraph extends React.Component<ExternalApiGraphProps> {
 		};
 
 		return (
-			<div>
-				<div>
-					<div style={{ textAlign: 'center' }}>{title}</div>
-					<ChartJSLine
-						ref={this.chartRef}
-						data={data_chartJS}
-						options={getOptions(theme)}
-					/>
-				</div>
-			</div>
+			<>
+				<div style={{ textAlign: 'center' }}>{title}</div>
+				<GraphContainer>
+					<Graph data={data_chartJS()} xAxisType="timeseries" type="line" />
+				</GraphContainer>
+			</>
 		);
 	}
 }

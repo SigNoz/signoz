@@ -1,16 +1,17 @@
 /// <reference types="cypress" />
-import defaultApps from "../../fixtures/defaultApp.json";
-import convertToNanoSecondsToSecond from "lib/convertToNanoSecondsToSecond";
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 
-describe("Metrics", () => {
+import defaultApps from '../../fixtures/defaultApp.json';
+
+describe('Metrics', () => {
 	beforeEach(() => {
-		cy.visit(Cypress.env("baseUrl"));
+		cy.visit(Cypress.env('baseUrl'));
 
-		const testEmail = "test@test.com";
-		const firstName = "Test";
+		const testEmail = 'test@test.com';
+		const firstName = 'Test';
 		cy
-			.intercept("GET", "/api/v1//services?start*", { fixture: "defaultApp.json" })
-			.as("defaultApps");
+			.intercept('GET', '/api/v1//services?start*', { fixture: 'defaultApp.json' })
+			.as('defaultApps');
 
 		cy.login({
 			email: testEmail,
@@ -18,10 +19,10 @@ describe("Metrics", () => {
 		});
 	});
 
-	it("Default Apps", () => {
-		cy.wait("@defaultApps");
+	it('Default Apps', () => {
+		cy.wait('@defaultApps');
 
-		cy.get("tbody").then((elements) => {
+		cy.get('tbody').then((elements) => {
 			const trElements = elements.children();
 			expect(trElements.length).to.be.equal(defaultApps.length);
 

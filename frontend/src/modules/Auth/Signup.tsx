@@ -1,5 +1,5 @@
-import { Button, Input,Row, Space } from 'antd';
-import api, { apiV1 } from 'api';
+import { Button, Input, Row, Space } from 'antd';
+import api from 'api';
 import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import React, { useState } from 'react';
@@ -8,7 +8,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 type SignUpProps = RouteComponentProps<any>;
 
-const Signup = (props: SignUpProps) => {
+const Signup = (props: SignUpProps): JSX.Element => {
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },
@@ -45,9 +45,9 @@ const Signup = (props: SignUpProps) => {
 
 		const texttolog = JSON.stringify(payload);
 
-		api.post(apiV1 + '/user?email=' + texttolog).then((res) => {
-			console.log(res);
-			console.log(res.data);
+		api.post('/user?email=' + texttolog).then((res) => {
+			// console.log(res);
+			// console.log(res.data);
 		});
 
 		localStorage.setItem(IS_LOGGED_IN, 'yes');
