@@ -28,7 +28,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	if (selectedWidget === undefined) {
-		return <Card>Invalid widget</Card>;
+		return <Card isQueryType={false}>Invalid widget</Card>;
 	}
 
 	const { queryData } = selectedWidget;

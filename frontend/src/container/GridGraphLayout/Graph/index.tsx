@@ -48,15 +48,15 @@ const GridCardGraph = ({
 		minTime,
 	});
 
-	const { start, end } = GetStartAndEndTime({
-		type: widget.timePreferance,
-		maxTime: getMaxMinTime.maxTime,
-		minTime: getMaxMinTime.minTime,
-	});
-
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				const { start, end } = GetStartAndEndTime({
+					type: widget.timePreferance,
+					maxTime: getMaxMinTime.maxTime,
+					minTime: getMaxMinTime.minTime,
+				});
+
 				const response = await Promise.all(
 					widget.query
 						.filter((e) => e.query.length !== 0)
@@ -114,7 +114,7 @@ const GridCardGraph = ({
 				}));
 			}
 		})();
-	}, [widget, end, start]);
+	}, [widget]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
