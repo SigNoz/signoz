@@ -2,13 +2,11 @@ import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
-import { QueryData } from 'types/api/widgets/getQuery';
-
-import { GlobalTime } from '..';
 
 export const GetQueryResults = (
 	props: GetQueryResultsProps,
@@ -17,25 +15,16 @@ export const GetQueryResults = (
 		try {
 			const queryData = props.query;
 
-			const getMaxMinTime = (): GlobalTime => {
-				if (props.graphType === 'VALUE') {
-					return {
-						maxTime: props.maxTime,
-						minTime: props.maxTime,
-					};
-				}
-				return {
-					maxTime: props.maxTime,
-					minTime: props.minTime,
-				};
-			};
-
-			const maxMinTime = getMaxMinTime();
+			const getMaxMinTime = GetMaxMinTime({
+				graphType: props.graphType,
+				maxTime: props.maxTime,
+				minTime: props.minTime,
+			});
 
 			const { end, start } = GetStartAndEndTime({
 				type: props.selectedTime,
-				maxTime: maxMinTime.maxTime,
-				minTime: maxMinTime.minTime,
+				maxTime: getMaxMinTime.maxTime,
+				minTime: getMaxMinTime.minTime,
 			});
 
 			const response = await Promise.all(
