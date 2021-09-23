@@ -21,11 +21,11 @@ spec:
     spec:
       containers:
       - command:
-          - "/otelcol"
+          - "/otelcontribcol"
           - "--config=/conf/otel-collector-config.yaml"
 #           Memory Ballast size should be max 1/3 to 1/2 of memory.
           - "--mem-ballast-size-mib=683"
-        image: otel/opentelemetry-collector:0.18.0
+        image: signoz/otelcontribcol:0.4.0
         name: otel-collector
         resources:
           limits:

@@ -28,33 +28,24 @@ data:
         # 25% of limit up to 2G
         spike_limit_mib: 512
         check_interval: 5s
-      queued_retry:
-        num_workers: 4
-        queue_size: 100
-        retry_on_failure: true
     extensions:
       health_check: {}
       zpages: {}
     exporters:
-      kafka/traces:
-        brokers:
-          - signoz-kafka:9092
-        topic: 'otlp_spans'
-        protocol_version: 2.0.0
-
-      kafka/metrics:
-        brokers:
-          - signoz-kafka:9092
-        topic: 'otlp_metrics'
-        protocol_version: 2.0.0
+      clickhouse:
+        datasource: tcp://clickhouse-evolution:9000?username=clickhouse_operator&password=clickhouse_operator_password
+      clickhousemetricswrite:
+        endpoint: tcp://clickhouse-evolution:9000/?database=signoz_metrics&username=clickhouse_operator&password=clickhouse_operator_password
+        resource_to_telemetry_conversion:
+          enabled: true
     service:
       extensions: [health_check, zpages]
       pipelines:
         traces:
           receivers: [jaeger, otlp]
-          processors: [memory_limiter, batch, queued_retry]
-          exporters: [kafka/traces]
+          processors: [batch]
+          exporters: [clickhouse]
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [kafka/metrics]
+          exporters: [clickhousemetricswrite]

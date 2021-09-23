@@ -38,6 +38,8 @@ spec:
             value: {{ .Values.configVars.DruidDatasource }}
           - name: STORAGE
             value: {{ .Values.configVars.STORAGE }}
+          - name: ClickHouseUrl
+            value: {{ .Values.configVars.ClickHouseUrl}}
             
           # livenessProbe:
           #   httpGet:
