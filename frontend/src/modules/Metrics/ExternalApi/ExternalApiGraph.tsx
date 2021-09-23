@@ -5,6 +5,7 @@ import { withRouter } from 'react-router';
 import { RouteComponentProps } from 'react-router-dom';
 import { externalMetricsItem } from 'store/actions/MetricsActions';
 
+import { GraphContainer } from '../styles';
 import { borderColors } from './graphConfig';
 
 interface ExternalApiGraphProps extends RouteComponentProps<any> {
@@ -93,9 +94,9 @@ class ExternalApiGraph extends React.Component<ExternalApiGraphProps> {
 		return (
 			<>
 				<div style={{ textAlign: 'center' }}>{title}</div>
-				<div>
+				<GraphContainer>
 					<Graph data={data_chartJS()} xAxisType="timeseries" type="line" />
-				</div>
+				</GraphContainer>
 			</>
 		);
 	}

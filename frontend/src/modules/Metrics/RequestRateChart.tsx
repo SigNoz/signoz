@@ -1,4 +1,4 @@
-import { ActiveElement, Chart, ChartEvent, ChartOptions } from 'chart.js';
+import { ActiveElement, Chart, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import ROUTES from 'constants/routes';
 import React from 'react';

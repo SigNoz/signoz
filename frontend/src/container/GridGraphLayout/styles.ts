@@ -15,8 +15,6 @@ export const Card = styled(CardComponent)<Props>`
 	.ant-card-body {
 		height: 100%;
 		padding: 0;
-		/* padding-bottom: ${({ isQueryType }): string =>
-			isQueryType ? '0' : '1.5rem'}; */
 	}
 `;
 
