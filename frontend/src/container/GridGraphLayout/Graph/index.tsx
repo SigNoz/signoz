@@ -42,15 +42,15 @@ const GridCardGraph = ({
 	);
 	const [deleteModal, setDeletModal] = useState(false);
 
-	const getMaxMinTime = GetMaxMinTime({
-		graphType: widget.panelTypes,
-		maxTime,
-		minTime,
-	});
-
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				const getMaxMinTime = GetMaxMinTime({
+					graphType: widget.panelTypes,
+					maxTime,
+					minTime,
+				});
+
 				const { start, end } = GetStartAndEndTime({
 					type: widget.timePreferance,
 					maxTime: getMaxMinTime.maxTime,
@@ -114,7 +114,7 @@ const GridCardGraph = ({
 				}));
 			}
 		})();
-	}, [widget]);
+	}, [widget, maxTime, minTime]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
