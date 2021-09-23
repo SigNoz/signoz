@@ -142,7 +142,7 @@ services:
       retries: 5
 
   flatten-processor:
-    image: signoz/flattener-processor:0.3.6
+    image: signoz/flattener-processor:0.4.0
     container_name: flattener-processor
 
     depends_on:
@@ -165,7 +165,9 @@ services:
       - router
     ports:
       - "8080:8080"
-
+      
+    volumes:
+      - ../dashboards:/root/config/dashboards
     environment:
       - DruidClientUrl=http://router:8888
       - DruidDatasource=flattened_spans
@@ -177,7 +179,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.3.6
+    image: signoz/frontend:0.4.0
     container_name: frontend
 
     depends_on:
