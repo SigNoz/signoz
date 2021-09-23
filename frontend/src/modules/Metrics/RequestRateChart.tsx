@@ -1,9 +1,8 @@
 import { ActiveElement, Chart, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import ROUTES from 'constants/routes';
-import React from 'react';
-import { withRouter } from 'react-router';
-import { RouteComponentProps } from 'react-router-dom';
+import history from 'lib/history';
+import React, { useMemo, useState } from 'react';
 import { metricItem } from 'store/actions/MetricsActions';
 import styled from 'styled-components';
 
@@ -33,34 +32,27 @@ const PopUpElements = styled.p`
 	}
 `;
 
-interface RequestRateChartProps extends RouteComponentProps<any> {
+interface RequestRateChartProps {
 	data: metricItem[];
 }
 
-interface RequestRateChart {
-	chartRef: any;
-}
-
-class RequestRateChart extends React.Component<RequestRateChartProps> {
-	constructor(props: RequestRateChartProps) {
-		super(props);
-		this.chartRef = React.createRef();
-	}
-
-	state = {
+const RequestRateChart = ({ data }: RequestRateChartProps): JSX.Element => {
+	const [state, setState] = useState({
 		xcoordinate: 0,
 		ycoordinate: 0,
 		showpopUp: false,
-		// graphInfo:{}
+	});
+	const gotoTracesHandler = (): void => {
+		history.push(ROUTES.TRACES);
 	};
 
-	onClickhandler = async (
+	const onClickHandler = async (
 		event: ChartEvent,
 		elements: ActiveElement[],
-		chart: Chart,
+		charts: Chart,
 	): Promise<void> => {
 		if (event.native) {
-			const points = chart.getElementsAtEventForMode(
+			const points = charts.getElementsAtEventForMode(
 				event.native,
 				'nearest',
 				{ intersect: true },
@@ -70,14 +62,14 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 			if (points.length) {
 				const firstPoint = points[0];
 
-				this.setState({
+				setState({
 					xcoordinate: firstPoint.element.x,
 					ycoordinate: firstPoint.element.y,
 					showpopUp: true,
 				});
 			} else {
-				if (this.state.showpopUp) {
-					this.setState((state) => ({
+				if (state.showpopUp) {
+					setState((state) => ({
 						...state,
 						showpopUp: false,
 					}));
@@ -86,62 +78,50 @@ class RequestRateChart extends React.Component<RequestRateChartProps> {
 		}
 	};
 
-	gotoTracesHandler = () => {
-		this.props.history.push(ROUTES.TRACES);
-	};
-
-	gotoAlertsHandler = () => {
-		this.props.history.push(ROUTES.SERVICE_MAP);
-		// PNOTE - Keeping service map for now, will replace with alerts when alert page is made
-	};
-
-	GraphTracePopUp = (): JSX.Element | null => {
-		if (this.state.showpopUp) {
+	const GraphTracePopUp = (): JSX.Element | null => {
+		if (state.showpopUp) {
 			return (
 				<ChartPopUpUnique
-					xcoordinate={this.state.xcoordinate}
-					ycoordinate={this.state.ycoordinate}
+					xcoordinate={state.xcoordinate}
+					ycoordinate={state.ycoordinate}
 				>
-					<PopUpElements onClick={this.gotoTracesHandler}>View Traces</PopUpElements>
-					{/* <PopUpElements onClick={this.gotoAlertsHandler}>Set Alerts</PopUpElements> */}
+					<PopUpElements onClick={gotoTracesHandler}>View Traces</PopUpElements>
 				</ChartPopUpUnique>
 			);
 		} else return null;
 	};
 
-	render(): JSX.Element {
-		const ndata = this.props.data;
-
-		const data_chartJS = (): Chart['data'] => {
-			return {
-				labels: ndata.map((s) => new Date(s.timestamp / 1000000)),
-				datasets: [
-					{
-						label: 'Request per sec',
-						data: ndata.map((s) => s.callRate),
-						pointRadius: 0.5,
-						borderColor: 'rgba(250,174,50,1)', // Can also add transparency in border color
-						borderWidth: 2,
-					},
-				],
-			};
+	const data_chartJS: Chart['data'] = useMemo(() => {
+		return {
+			labels: data.map((s) => new Date(s.timestamp / 1000000)),
+			datasets: [
+				{
+					label: 'Request per sec',
+					data: data.map((s) => s.callRate),
+					pointRadius: 0.5,
+					borderColor: 'rgba(250,174,50,1)', // Can also add transparency in border color
+					borderWidth: 2,
+				},
+			],
 		};
+	}, [data]);
 
-		return (
+	return (
+		<>
 			<div>
-				{this.GraphTracePopUp()}
+				{GraphTracePopUp()}
 				<div style={{ textAlign: 'center' }}>Request per sec</div>
 				<GraphContainer>
 					<Graph
-						onClickHandler={this.onClickhandler}
+						onClickHandler={onClickHandler}
 						xAxisType="timeseries"
 						type="line"
-						data={data_chartJS()}
+						data={data_chartJS}
 					/>
 				</GraphContainer>
 			</div>
-		);
-	}
-}
+		</>
+	);
+};
 
-export default withRouter(RequestRateChart);
+export default RequestRateChart;
