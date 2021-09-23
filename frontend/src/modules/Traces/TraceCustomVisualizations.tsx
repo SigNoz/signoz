@@ -1,7 +1,7 @@
 import { Form, Select, Space } from 'antd';
 import Graph from 'components/Graph';
 import { useRoute } from 'modules/RouteProvider';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { GlobalTime, TraceFilters } from 'store/actions';
 import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';
@@ -95,7 +95,6 @@ const _TraceCustomVisualizations = (
 		traceFilters,
 	} = props;
 
-	const counter = useRef(0);
 	// Step should be multiples of 60, 60 -> 1 min
 	useEffect(() => {
 		let request_string =
@@ -130,8 +129,7 @@ const _TraceCustomVisualizations = (
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.TRACES.isLoaded && counter.current === 0) {
-			counter.current = 1;
+		if (state.TRACES.isLoaded) {
 			getFilteredTraceMetrics(request_string, plusMinus15);
 		}
 	}, [
