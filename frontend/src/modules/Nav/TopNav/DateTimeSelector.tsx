@@ -6,13 +6,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { cloneDeep } from 'lodash';
 import moment from 'moment';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { GlobalTime, updateTimeInterval } from 'store/actions';
@@ -64,14 +58,27 @@ const _DateTimeSelector = (props: DateTimeSelectorProps): JSX.Element => {
 	let defaultTime = DefaultOptionsBasedOnRoute[LocalStorageRouteKey]
 		? DefaultOptionsBasedOnRoute[LocalStorageRouteKey]
 		: DefaultOptionsBasedOnRoute.default;
+
 	if (timeDurationInLocalStorage[LocalStorageRouteKey]) {
 		defaultTime = timeDurationInLocalStorage[LocalStorageRouteKey];
 	}
+
+	const getDefaultTime = useCallback(() => {
+		if (DefaultOptionsBasedOnRoute[LocalStorageRouteKey]) {
+			return DefaultOptionsBasedOnRoute[LocalStorageRouteKey];
+		}
+		if (timeDurationInLocalStorage[LocalStorageRouteKey]) {
+			return timeDurationInLocalStorage[LocalStorageRouteKey];
+		}
+		return DefaultOptionsBasedOnRoute.default;
+	}, [LocalStorageRouteKey, timeDurationInLocalStorage]);
+
 	const [currentLocalStorageRouteKey, setCurrentLocalStorageRouteKey] = useState(
 		LocalStorageRouteKey,
 	);
+
 	const [customDTPickerVisible, setCustomDTPickerVisible] = useState(false);
-	const [timeInterval, setTimeInterval] = useState(defaultTime);
+	const [timeInterval, setTimeInterval] = useState(getDefaultTime());
 	const [startTime, setStartTime] = useState<moment.Moment | null>(null);
 	const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState(false);
