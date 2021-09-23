@@ -10,6 +10,7 @@ import {
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
 import getChartData from 'lib/getChartData';
+import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -44,10 +45,16 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 
 	const onFetchDataHandler = useCallback(async () => {
 		try {
-			const { end, start } = getStartAndEndTime({
-				type: selectedTime.enum,
+			const maxMinTime = GetMaxMinTime({
+				graphType: widget.panelTypes,
 				maxTime,
 				minTime,
+			});
+
+			const { end, start } = getStartAndEndTime({
+				type: selectedTime.enum,
+				maxTime: maxMinTime.maxTime,
+				minTime: maxMinTime.minTime,
 			});
 
 			const response = await Promise.all(
