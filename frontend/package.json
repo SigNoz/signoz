@@ -79,7 +79,6 @@
 		"react": "17.0.0",
 		"react-app-polyfill": "^2.0.0",
 		"react-chips": "^0.8.0",
-		"react-css-theme-switcher": "^0.1.6",
 		"react-dev-utils": "^11.0.0",
 		"react-dom": "17.0.0",
 		"react-force-graph": "^1.41.0",
