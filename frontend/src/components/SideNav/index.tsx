@@ -1,13 +1,10 @@
-import { Layout, Menu, Switch as ToggleButton, Typography } from 'antd';
+import { Menu, Switch as ToggleButton, Typography } from 'antd';
 import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-
-import { Logo, ThemeSwitcherWrapper } from './styles';
-const { Sider } = Layout;
-import history from 'lib/history';
-import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
@@ -16,6 +13,7 @@ import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 
 import menus from './menuItems';
+import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
 
 const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	const [collapsed, setCollapsed] = useState<boolean>(false);

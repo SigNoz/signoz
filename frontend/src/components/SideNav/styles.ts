@@ -1,4 +1,6 @@
+import { Layout } from 'antd';
 import styled from 'styled-components';
+const { Sider: SiderComponent } = Layout;
 
 export const ThemeSwitcherWrapper = styled.div`
 	display: flex;
@@ -16,3 +18,9 @@ export const Logo = styled.img<LogoProps>`
 interface LogoProps {
 	collapsed: boolean;
 }
+
+export const Sider = styled(SiderComponent)`
+	.ant-typography {
+		color: white;
+	}
+`;
