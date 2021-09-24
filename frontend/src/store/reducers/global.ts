@@ -6,7 +6,7 @@ export const updateGlobalTimeReducer = (
 		minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
 	},
 	action: Action,
-) => {
+): GlobalTime => {
 	// Initial global state is time now and 15 minute interval
 	switch (action.type) {
 		case ActionTypes.updateTimeInterval:
