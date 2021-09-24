@@ -47,7 +47,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 			render: Tags,
 		},
 		{
-			title: 'Created By',
+			title: 'Created At',
 			dataIndex: 'createdBy',
 			render: Createdby,
 		},
