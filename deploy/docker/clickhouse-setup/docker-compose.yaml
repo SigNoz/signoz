@@ -35,6 +35,7 @@ services:
       - ClickHouseUrl=tcp://clickhouse:9000
       - STORAGE=clickhouse
       - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
+      - GODEBUG=netdns=go
 
     depends_on:
       clickhouse:
