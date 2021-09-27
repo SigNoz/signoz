@@ -40,6 +40,8 @@ export const DELETE_WIDGET_ERROR = 'DELETE_WIDGET_ERROR';
 
 export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
+export const DELETE_QUERY = 'DELETE_QUERY';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -159,6 +161,16 @@ interface WidgetDeleteSuccess {
 	};
 }
 
+export interface DeleteQueryProps {
+	widgetId: string;
+	currentIndex: number;
+}
+
+interface DeleteQuery {
+	type: typeof DELETE_QUERY;
+	payload: DeleteQueryProps;
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -177,4 +189,5 @@ export type DashboardActions =
 	| SaveDashboardSuccess
 	| WidgetDeleteSuccess
 	| IsAddWidget
-	| UpdateQuery;
+	| UpdateQuery
+	| DeleteQuery;

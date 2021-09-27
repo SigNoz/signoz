@@ -1,5 +1,4 @@
 import { PlusOutlined } from '@ant-design/icons';
-import Spinner from 'components/Spinner';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -47,12 +46,8 @@ const QuerySection = ({
 		});
 	}, [createQuery, urlQuery]);
 
-	if (query.length === 0) {
-		return <Spinner size="small" height="30vh" tip="Loading..." />;
-	}
-
 	return (
-		<div>
+		<>
 			{query.map((e, index) => (
 				<Query
 					currentIndex={index}
@@ -66,7 +61,7 @@ const QuerySection = ({
 			<QueryButton onClick={queryOnClickHandler} icon={<PlusOutlined />}>
 				Query
 			</QueryButton>
-		</div>
+		</>
 	);
 };
 
