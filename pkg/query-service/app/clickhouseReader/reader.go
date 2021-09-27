@@ -26,6 +26,7 @@ import (
 const (
 	primaryNamespace = "clickhouse"
 	archiveNamespace = "clickhouse-archive"
+	signozDBName     = "signoz_index"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -810,4 +811,23 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 
 	return spanSearchAggregatesResponseItems, nil
 
+}
+
+func (r *ClickHouseReader) SetTTL(ctx context.Context, queryParams *model.SetTTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	interval, err := time.ParseDuration(queryParams.Duration)
+	if err != nil {
+		return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)}
+	}
+
+	// extract the ttl in seconds
+	second := int(interval.Seconds())
+	query := fmt.Sprintf("ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND", signozDBName, second)
+	_, err = r.db.Exec(query)
+
+	if err != nil {
+		zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+	}
+
+	return &model.SetTTLResponseItem{Message: "ttl has been successfully set up"}, nil
 }

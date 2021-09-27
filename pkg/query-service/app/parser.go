@@ -566,3 +566,18 @@ func parseTimestamp(param string, r *http.Request) (*string, error) {
 	return &timeStr, nil
 
 }
+
+func parseDuration(r *http.Request) (*model.SetTTLParams, error) {
+
+	duration := r.URL.Query().Get("duration")
+	if len(duration) == 0 {
+		return nil, fmt.Errorf("duration param is missing from the query")
+	}
+
+	_, err := time.ParseDuration(duration)
+	if err != nil {
+		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
+	}
+
+	return &model.SetTTLParams{duration}, nil
+}

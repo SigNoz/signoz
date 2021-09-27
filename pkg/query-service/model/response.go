@@ -195,3 +195,7 @@ type SpanSearchAggregatesResponseItem struct {
 	Time      string  `json:"time,omitempty" db:"time"`
 	Value     float32 `json:"value,omitempty" db:"value"`
 }
+
+type SetTTLResponseItem struct {
+	Message string `json:"message"`
+}

@@ -196,6 +196,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -717,6 +718,21 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
+	duration, err := parseDuration(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).SetTTL(context.Background(), duration)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

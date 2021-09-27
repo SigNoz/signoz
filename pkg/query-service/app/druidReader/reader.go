@@ -110,3 +110,7 @@ func (druid *DruidReader) GetServiceMapDependencies(ctx context.Context, query *
 func (druid *DruidReader) SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error) {
 	return druidQuery.SearchSpansAggregate(druid.Client, queryParams)
 }
+
+func (druid *DruidReader) SetTTL(ctx context.Context, queryParams *model.SetTTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
+}

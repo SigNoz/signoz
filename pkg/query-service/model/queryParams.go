@@ -105,3 +105,7 @@ type SpanSearchParams struct {
 	BatchSize     int64
 	Tags          []TagQuery
 }
+
+type SetTTLParams struct {
+	Duration string
+}
