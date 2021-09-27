@@ -1,3 +1,6 @@
+/* eslint-disable react/display-name */
+import { SaveFilled } from '@ant-design/icons';
+import updateDashboardApi from 'api/dashboard/update';
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -10,7 +13,13 @@ import { v4 } from 'uuid';
 
 import AddWidget from './AddWidget';
 import Graph from './Graph';
-import { Card, CardContainer, ReactGridLayout } from './styles';
+import {
+	Button,
+	ButtonContainer,
+	Card,
+	CardContainer,
+	ReactGridLayout,
+} from './styles';
 
 const GridGraph = (): JSX.Element => {
 	const { push } = useHistory();
@@ -19,6 +28,12 @@ const GridGraph = (): JSX.Element => {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const [saveLayoutState, setSaveLayoutState] = useState<State>({
+		loading: false,
+		error: false,
+		errorMessage: '',
+		payload: [],
+	});
 
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
@@ -31,33 +46,41 @@ const GridGraph = (): JSX.Element => {
 	const isMounted = useRef(true);
 	const isDeleted = useRef(false);
 
+	const getPreLayouts: () => LayoutProps[] = useCallback(() => {
+		if (widgets === undefined) {
+			return [];
+		}
+
+		if (data.layout === undefined) {
+			return widgets.map((e, index) => {
+				return {
+					h: 2,
+					w: 6,
+					y: Infinity,
+					i: (index + 1).toString(),
+					x: (index % 2) * 6,
+					Component: (): JSX.Element => (
+						<Graph isDeleted={isDeleted} widget={widgets[index]} />
+					),
+				};
+			});
+		} else {
+			return data.layout.map((e, index) => ({
+				...e,
+				y: 0,
+				Component: (): JSX.Element => (
+					<Graph isDeleted={isDeleted} widget={widgets[index]} />
+				),
+			}));
+		}
+	}, [widgets, data.layout]);
+
 	useEffect(() => {
 		if (
 			loading === false &&
 			(isMounted.current === true || isDeleted.current === true)
 		) {
-			const getPreLayouts = (): LayoutProps[] => {
-				if (widgets === undefined) {
-					return [];
-				}
-
-				return widgets.map((e, index) => {
-					return {
-						h: 2,
-						w: 6,
-						y: Infinity,
-						i: (index + 1).toString(),
-						x: (index % 2) * 6,
-						// eslint-disable-next-line react/display-name
-						Component: (): JSX.Element => (
-							<Graph isDeleted={isDeleted} widget={widgets[index]} />
-						),
-					};
-				});
-			};
-
 			const preLayouts = getPreLayouts();
-
 			setLayout(() => [
 				...preLayouts,
 				{
@@ -67,6 +90,10 @@ const GridGraph = (): JSX.Element => {
 					w: 6,
 					h: 2,
 					Component: AddWidgetWrapper,
+					maxW: 6,
+					isDraggable: false,
+					isResizable: false,
+					isBounded: true,
 				},
 			]);
 		}
@@ -74,7 +101,7 @@ const GridGraph = (): JSX.Element => {
 		return (): void => {
 			isMounted.current = false;
 		};
-	}, [widgets, layouts.length, AddWidgetWrapper, loading]);
+	}, [widgets, layouts.length, AddWidgetWrapper, loading, getPreLayouts]);
 
 	const onDropHandler = useCallback(
 		(allLayouts: Layout[], currectLayout: Layout, event: DragEvent) => {
@@ -88,43 +115,107 @@ const GridGraph = (): JSX.Element => {
 		[pathname, push],
 	);
 
+	const onLayoutSaveHanlder = async (): Promise<void> => {
+		setSaveLayoutState((state) => ({
+			...state,
+			error: false,
+			errorMessage: '',
+			loading: true,
+		}));
+
+		const response = await updateDashboardApi({
+			title: data.title,
+			uuid: selectedDashboard.uuid,
+			description: data.description,
+			name: data.name,
+			tags: data.tags,
+			widgets: data.widgets,
+			layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
+		});
+		if (response.statusCode === 200) {
+			setSaveLayoutState((state) => ({
+				...state,
+				error: false,
+				errorMessage: '',
+				loading: false,
+			}));
+		} else {
+			setSaveLayoutState((state) => ({
+				...state,
+				error: true,
+				errorMessage: response.error || 'Something went wrong',
+				loading: false,
+			}));
+		}
+	};
+
+	const onLayoutChangeHandler = (layout: Layout[]): void => {
+		setSaveLayoutState({
+			loading: false,
+			error: false,
+			errorMessage: '',
+			payload: layout,
+		});
+	};
+
 	if (layouts.length === 0) {
 		return <Spinner height="40vh" size="large" tip="Loading..." />;
 	}
 
 	return (
-		<ReactGridLayout
-			isResizable
-			isDraggable
-			cols={12}
-			rowHeight={100}
-			autoSize
-			width={100}
-			isDroppable
-			useCSSTransforms
-			onDrop={onDropHandler}
-		>
-			{layouts.map(({ Component, ...rest }, index) => {
-				const widget = (widgets || [])[index] || {};
+		<>
+			<ButtonContainer>
+				<Button
+					loading={saveLayoutState.loading}
+					onClick={onLayoutSaveHanlder}
+					icon={<SaveFilled />}
+					danger={saveLayoutState.error}
+				>
+					Save Layout
+				</Button>
+			</ButtonContainer>
 
-				const type = widget.panelTypes;
+			<ReactGridLayout
+				isResizable
+				isDraggable
+				cols={12}
+				rowHeight={100}
+				autoSize
+				width={100}
+				isDroppable
+				useCSSTransforms
+				onDrop={onDropHandler}
+				onLayoutChange={onLayoutChangeHandler}
+			>
+				{layouts.map(({ Component, ...rest }, index) => {
+					const widget = (widgets || [])[index] || {};
 
-				const isQueryType = type === 'VALUE';
+					const type = widget.panelTypes;
 
-				return (
-					<CardContainer key={rest.i} data-grid={rest}>
-						<Card isQueryType={isQueryType}>
-							<Component />
-						</Card>
-					</CardContainer>
-				);
-			})}
-		</ReactGridLayout>
+					const isQueryType = type === 'VALUE';
+
+					return (
+						<CardContainer key={rest.i} data-grid={rest}>
+							<Card isQueryType={isQueryType}>
+								<Component />
+							</Card>
+						</CardContainer>
+					);
+				})}
+			</ReactGridLayout>
+		</>
 	);
 };
 
 interface LayoutProps extends Layout {
 	Component: () => JSX.Element;
+}
+
+interface State {
+	loading: boolean;
+	error: boolean;
+	payload: Layout[];
+	errorMessage: string;
 }
 
 export default memo(GridGraph);
