@@ -23,11 +23,9 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 				};
 			});
 
-			const color = colors[index] || 'red';
 			return {
 				label: labelNames,
 				first: dataValue.map((e) => e.first),
-				borderColor: color,
 				second: dataValue.map((e) => e.second),
 			};
 		});
@@ -35,10 +33,6 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 
 	const allLabels = response
 		.map((e) => e.map((e) => e.label))
-		.reduce((a, b) => [...a, ...b], []);
-
-	const allColor = response
-		.map((e) => e.map((e) => e.borderColor))
 		.reduce((a, b) => [...a, ...b], []);
 
 	const alldata = response
@@ -53,7 +47,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 				borderWidth: 1.5,
 				spanGaps: true,
 				animations: false,
-				borderColor: allColor[index],
+				borderColor: colors[index] || 'red',
 				showLine: true,
 				pointRadius: 0,
 			};
