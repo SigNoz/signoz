@@ -10,7 +10,9 @@
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
 		"cypress:open": "cypress open",
-		"cypress:run": "cypress run"
+		"cypress:run": "cypress run",
+		"postinstall": "yarn husky:configure",
+		"husky:configure": "cd .. && husky install frontend/.husky"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -156,7 +158,7 @@
 		"gulp-debug": "^4.0.0",
 		"gulp-less": "^4.0.1",
 		"gulp-postcss": "^9.0.0",
-		"husky": "4.3.8",
+		"husky": "^7.0.2",
 		"less-plugin-npm-import": "^2.1.0",
 		"lint-staged": "10.5.3",
 		"lodash-es": "^4.17.21",
