@@ -22,7 +22,7 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:0.4.0
+    image: signoz/query-service:0.4.1
     container_name: query-service
     restart: always
     command: ["-config=/root/config/prometheus.yml"]
@@ -42,7 +42,7 @@ services:
 
 
   frontend:
-    image: signoz/frontend:0.4.0
+    image: signoz/frontend:0.4.1
     container_name: frontend
 
     depends_on:
