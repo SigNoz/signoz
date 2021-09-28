@@ -1,25 +1,22 @@
 import { Space } from 'antd';
 import React from 'react';
-import { useThemeSwitcher } from 'react-css-theme-switcher';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
+import AppReducer from 'types/reducer/app';
 
 const InstrumentCard = styled.div<{
-	currentThemeStatus: string | undefined;
+	isDarkMode: boolean;
 }>`
 	border-radius: 4px;
-	background: ${({ currentThemeStatus }): string =>
-		currentThemeStatus === 'dark' ? '#313131' : '#ddd'};
+	background: ${({ isDarkMode }): string => (isDarkMode ? '#313131' : '#ddd')};
 	padding: 33px 23px;
 	max-width: 800px;
 	margin-top: 40px;
 `;
 
-interface InstrumentationPageProps {}
-
-const InstrumentationPage = (props: InstrumentationPageProps) => {
-	const { currentTheme } = useThemeSwitcher();
+const InstrumentationPage = (): JSX.Element => {
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	return (
 		<React.Fragment>
@@ -27,7 +24,7 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 				<div>
 					<h2>Instrument your application</h2>
 				</div>
-				<InstrumentCard currentThemeStatus={currentTheme}>
+				<InstrumentCard isDarkMode={isDarkMode}>
 					Congrats, you have successfully installed SigNoz!
 					<br />
 					To start seeing YOUR application data here, follow the instructions in the
@@ -61,8 +58,4 @@ const InstrumentationPage = (props: InstrumentationPageProps) => {
 	);
 };
 
-const mapStateToProps = (state: AppState): {} => {
-	return {};
-};
-
-export default connect(mapStateToProps, {})(InstrumentationPage);
+export default InstrumentationPage;

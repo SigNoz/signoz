@@ -1,28 +1,45 @@
-import { Layout, Menu, Switch as ToggleButton, Typography } from 'antd';
+import { Menu, Switch as ToggleButton, Typography } from 'antd';
 import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
-import { useThemeSwitcher } from 'react-css-theme-switcher';
+import { connect, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-
-import { Logo, ThemeSwitcherWrapper } from './styles';
-const { Sider } = Layout;
-import history from 'lib/history';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { ToggleDarkMode } from 'store/actions';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import AppReducer from 'types/reducer/app';
 
 import menus from './menuItems';
+import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
 
-const SideNav = (): JSX.Element => {
-	const { switcher, currentTheme, themes } = useThemeSwitcher();
-
+const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
 	const { pathname } = useLocation();
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const toggleTheme = useCallback(
-		(isChecked: boolean) => {
-			switcher({ theme: isChecked ? themes.dark : themes.light });
-		},
-		[switcher, themes],
-	);
+	const toggleTheme = useCallback(() => {
+		const preMode: mode = isDarkMode ? 'lightMode' : 'darkMode';
+		const postMode: mode = isDarkMode ? 'darkMode' : 'lightMode';
+
+		const id: mode = preMode;
+		const head = document.head;
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = !isDarkMode ? './css/antd.dark.min.css' : './css/antd.min.css';
+		link.media = 'all';
+		link.id = id;
+		head.appendChild(link);
+
+		link.onload = (): void => {
+			toggleDarkMode();
+			const prevNode = document.getElementById(postMode);
+			prevNode?.remove();
+		};
+	}, [toggleDarkMode, isDarkMode]);
 
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
@@ -33,12 +50,9 @@ const SideNav = (): JSX.Element => {
 	}, []);
 
 	return (
-		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={160}>
+		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<ThemeSwitcherWrapper>
-				<ToggleButton
-					checked={currentTheme === themes.dark}
-					onChange={toggleTheme}
-				/>
+				<ToggleButton checked={isDarkMode} onChange={toggleTheme} />
 			</ThemeSwitcherWrapper>
 			<NavLink to="/">
 				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
@@ -62,4 +76,18 @@ const SideNav = (): JSX.Element => {
 	);
 };
 
-export default SideNav;
+type mode = 'darkMode' | 'lightMode';
+
+interface DispatchProps {
+	toggleDarkMode: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	toggleDarkMode: bindActionCreators(ToggleDarkMode, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(SideNav);

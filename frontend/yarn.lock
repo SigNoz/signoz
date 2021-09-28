@@ -11891,11 +11891,6 @@ react-chips@^0.8.0:
     react-autosuggest "^9.0.1"
     react-themeable "^1.1.0"
 
-react-css-theme-switcher@^0.1.6:
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/react-css-theme-switcher/-/react-css-theme-switcher-0.1.6.tgz#9b765e4ffa7d1ce092ff11c5524b1466990e9eaf"
-  integrity sha512-GG5OqeWTWJFH3Vbd42Tj0QVUwh/uBN/ki7EOTUL99wbzxulX8bof3NOdRHzY6j7746HNZ72s8Ko4TjO3GaWdxA==
-
 react-dev-utils@^11.0.0:
   version "11.0.4"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-11.0.4.tgz#a7ccb60257a1ca2e0efe7a83e38e6700d17aa37a"
