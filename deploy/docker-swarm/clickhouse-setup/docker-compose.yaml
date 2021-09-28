@@ -1,4 +1,4 @@
-version: "2.4"
+version: "3"
 
 services:
   clickhouse:
@@ -24,6 +24,7 @@ services:
   query-service:
     image: signoz/query-service:0.4.0
     container_name: query-service
+    restart: always
     command: ["-config=/root/config/prometheus.yml"]
     ports:
       - "8080:8080"
@@ -31,17 +32,15 @@ services:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
-
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - STORAGE=clickhouse
       - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
       - GODEBUG=netdns=go
-
     depends_on:
-      clickhouse:
-        condition: service_healthy
-    
+    - clickhouse
+
+
   frontend:
     image: signoz/frontend:0.4.0
     container_name: frontend
@@ -58,7 +57,7 @@ services:
 
   otel-collector:
     image: signoz/otelcontribcol:0.4.0
-    command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
+    command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=2000"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
@@ -71,15 +70,25 @@ services:
       - "4317:4317"       # OTLP GRPC receiver
       - "55679:55679" # zpages extension
       - "13133"       # health_check
-
+    deploy:
+      mode: replicated
+      replicas: 3
     depends_on:
-      clickhouse:
-        condition: service_healthy
+    - clickhouse
+
+  otel-collector-hostmetrics:
+    image: signoz/otelcontribcol:0.4.0
+    command: ["--config=/etc/otel-collector-config-hostmetrics.yaml", "--mem-ballast-size-mib=683"]
+    volumes:
+      - ./otel-collector-config-hostmetrics.yaml:/etc/otel-collector-config-hostmetrics.yaml
+    depends_on:
+    - clickhouse
+
 
   hotrod:
     image: jaegertracing/example-hotrod:latest
     container_name: hotrod
-    ports: 
+    ports:
     - "9000:8080"
     command: ["all"]
     environment:

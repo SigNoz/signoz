@@ -30,6 +30,23 @@ import AppReducer from 'types/reducer/app';
 
 // import Legends from './Legend';
 // import { LegendsContainer } from './styles';
+Chart.register(
+	LineElement,
+	PointElement,
+	LineController,
+	CategoryScale,
+	LinearScale,
+	TimeScale,
+	TimeSeriesScale,
+	Decimation,
+	Filler,
+	Legend,
+	Title,
+	Tooltip,
+	SubTitle,
+	BarController,
+	BarElement,
+);
 
 const Graph = ({
 	data,
@@ -65,24 +82,6 @@ const Graph = ({
 		}
 
 		if (chartRef.current !== null) {
-			Chart.register(
-				LineElement,
-				PointElement,
-				LineController,
-				CategoryScale,
-				LinearScale,
-				TimeScale,
-				TimeSeriesScale,
-				Decimation,
-				Filler,
-				Legend,
-				Title,
-				Tooltip,
-				SubTitle,
-				BarController,
-				BarElement,
-			);
-
 			const options: ChartOptions = {
 				responsive: true,
 				maintainAspectRatio: false,

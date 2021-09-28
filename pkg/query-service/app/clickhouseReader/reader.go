@@ -57,6 +57,7 @@ func NewReader() *ClickHouseReader {
 
 	if err != nil {
 		zap.S().Error(err)
+		os.Exit(1)
 	}
 
 	logLevel := promlog.AllowedLevel{}

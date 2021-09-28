@@ -1,4 +1,4 @@
-import { Card as CardComponent } from 'antd';
+import { Button as ButtonComponent, Card as CardComponent } from 'antd';
 import RGL, { WidthProvider } from 'react-grid-layout';
 import styled from 'styled-components';
 
@@ -39,4 +39,18 @@ export const ReactGridLayout = styled(ReactGridLayoutComponent)`
 	border: 1px solid #434343;
 	margin-top: 1rem;
 	position: relative;
+`;
+
+export const ButtonContainer = styled.div`
+	display: flex;
+	justify-content: end;
+	margin-top: 1rem;
+`;
+
+export const Button = styled(ButtonComponent)`
+	&&& {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
 `;
