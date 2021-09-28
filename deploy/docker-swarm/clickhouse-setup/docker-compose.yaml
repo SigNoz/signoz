@@ -1,0 +1,113 @@
+version: "3"
+
+services:
+  clickhouse:
+      image: yandex/clickhouse-server
+      expose:
+        - 8123
+        - 9000
+      ports:
+        - 9001:9000
+        - 8123:8123
+      volumes:
+        - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+        - ./docker-entrypoint-initdb.d/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+        - ./data/clickhouse/:/var/lib/clickhouse/
+
+      healthcheck:
+        # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
+        test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+        interval: 30s
+        timeout: 5s
+        retries: 3
+
+  query-service:
+    image: signoz/query-service:0.4.0
+    container_name: query-service
+    restart: always
+    command: ["-config=/root/config/prometheus.yml"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./prometheus.yml:/root/config/prometheus.yml
+      - ../dashboards:/root/config/dashboards
+
+    environment:
+      - ClickHouseUrl=tcp://clickhouse:9000
+      - STORAGE=clickhouse
+      - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
+      - GODEBUG=netdns=go
+    depends_on:
+    - clickhouse
+
+
+  frontend:
+    image: signoz/frontend:0.4.0
+    container_name: frontend
+
+    depends_on:
+      - query-service
+    links:
+      - "query-service"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
+
+
+  otel-collector:
+    image: signoz/otelcontribcol:0.4.0
+    command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=2000"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1777:1777"   # pprof extension
+      - "8887:8888"   # Prometheus metrics exposed by the agent
+      - "14268:14268"       # Jaeger receiver
+      - "55678"       # OpenCensus receiver
+      - "55680:55680"       # OTLP HTTP/2.0 legacy port
+      - "55681:55681"       # OTLP HTTP/1.0 receiver
+      - "4317:4317"       # OTLP GRPC receiver
+      - "55679:55679" # zpages extension
+      - "13133"       # health_check
+    deploy:
+      mode: replicated
+      replicas: 3
+    depends_on:
+    - clickhouse
+
+  otel-collector-hostmetrics:
+    image: signoz/otelcontribcol:0.4.0
+    command: ["--config=/etc/otel-collector-config-hostmetrics.yaml", "--mem-ballast-size-mib=683"]
+    volumes:
+      - ./otel-collector-config-hostmetrics.yaml:/etc/otel-collector-config-hostmetrics.yaml
+    depends_on:
+    - clickhouse
+
+
+  hotrod:
+    image: jaegertracing/example-hotrod:latest
+    container_name: hotrod
+    ports:
+    - "9000:8080"
+    command: ["all"]
+    environment:
+    - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+
+
+  load-hotrod:
+    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+    container_name: load-hotrod
+    hostname: load-hotrod
+    ports:
+     - "8089:8089"
+    environment:
+      ATTACKED_HOST: http://hotrod:8080
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
+    volumes:
+      - ../common/locust-scripts:/locust
