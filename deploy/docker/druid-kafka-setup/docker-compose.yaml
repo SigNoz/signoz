@@ -168,6 +168,7 @@ services:
       
     volumes:
       - ../dashboards:/root/config/dashboards
+      - ./data/signoz/:/var/lib/signoz/
     environment:
       - DruidClientUrl=http://router:8888
       - DruidDatasource=flattened_spans

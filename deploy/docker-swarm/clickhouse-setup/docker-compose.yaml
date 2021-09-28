@@ -31,7 +31,7 @@ services:
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
-
+      - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - STORAGE=clickhouse
