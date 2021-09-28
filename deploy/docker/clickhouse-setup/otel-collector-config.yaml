@@ -10,8 +10,12 @@ receivers:
   hostmetrics:
     collection_interval: 10s
     scrapers:
+      cpu:
       load:
       memory:
+      disk:
+      filesystem:
+      network:
 processors:
   batch:
     send_batch_size: 1000
