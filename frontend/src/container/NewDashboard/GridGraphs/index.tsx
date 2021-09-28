@@ -1,6 +1,6 @@
 import GridGraphLayout from 'container/GridGraphLayout';
 import ComponentsSlider from 'container/NewDashboard/ComponentsSlider';
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';

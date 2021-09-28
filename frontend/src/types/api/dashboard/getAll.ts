@@ -1,5 +1,6 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { Layout } from 'react-grid-layout';
 
 import { QueryData } from '../widgets/getQuery';
 
@@ -19,6 +20,7 @@ export interface DashboardData {
 	name?: string;
 	widgets?: Widgets[];
 	title: string;
+	layout?: Layout[];
 }
 
 export interface Widgets {

@@ -4,6 +4,7 @@ import {
 	CREATE_NEW_QUERY,
 	DashboardActions,
 	DELETE_DASHBOARD_SUCCESS,
+	DELETE_QUERY,
 	DELETE_WIDGET_SUCCESS,
 	GET_ALL_DASHBOARD_ERROR,
 	GET_ALL_DASHBOARD_LOADING_START,
@@ -430,6 +431,50 @@ const dashboard = (
 								{
 									...selectedWidget,
 									query,
+								},
+								...afterWidget,
+							],
+						},
+					},
+				],
+			};
+		}
+
+		case DELETE_QUERY: {
+			const { currentIndex, widgetId } = action.payload;
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
+			const { widgets = [] } = data;
+
+			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
+
+			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
+			const afterWidget =
+				widgets?.slice(
+					selectedWidgetIndex + 1, // this is never undefined
+					widgets.length,
+				) || [];
+
+			const selectedWidget = widgets[selectedWidgetIndex];
+
+			const query = selectedWidget.query;
+
+			const preQuery = query.slice(0, currentIndex);
+			const postQuery = query.slice(currentIndex + 1, query.length);
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...preWidget,
+								{
+									...selectedWidget,
+									query: [...preQuery, ...postQuery],
 								},
 								...afterWidget,
 							],
