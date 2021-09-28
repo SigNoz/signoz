@@ -1,6 +1,6 @@
 const convertDateToAmAndPm = (date: Date): string => {
 	return date.toLocaleString('en-US', {
-		hour: 'numeric',
+		hour: '2-digit',
 		minute: 'numeric',
 		hour12: true,
 	});

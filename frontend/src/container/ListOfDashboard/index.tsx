@@ -49,13 +49,22 @@ const ListOfAllDashboard = (): JSX.Element => {
 		{
 			title: 'Created At',
 			dataIndex: 'createdBy',
+			sorter: (a: Data, b: Data): number => {
+				const prev = new Date(a.createdBy).getTime();
+				const next = new Date(b.createdBy).getTime();
+
+				return prev - next;
+			},
 			render: Createdby,
 		},
 		{
 			title: 'Last Updated Time',
 			dataIndex: 'lastUpdatedTime',
 			sorter: (a: Data, b: Data): number => {
-				return parseInt(a.lastUpdatedTime, 10) - parseInt(b.lastUpdatedTime, 10);
+				const prev = new Date(a.lastUpdatedTime).getTime();
+				const next = new Date(b.lastUpdatedTime).getTime();
+
+				return prev - next;
 			},
 			render: DateComponent,
 		},
