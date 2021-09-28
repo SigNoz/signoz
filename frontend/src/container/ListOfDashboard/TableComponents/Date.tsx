@@ -1,4 +1,6 @@
 import { Typography } from 'antd';
+import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
+import getFormattedDate from 'lib/getFormatedDate';
 import React from 'react';
 
 import { Data } from '..';
@@ -6,9 +8,13 @@ import { Data } from '..';
 const DateComponent = (
 	lastUpdatedTime: Data['lastUpdatedTime'],
 ): JSX.Element => {
-	const date = new Date(lastUpdatedTime).toDateString();
+	const time = new Date(lastUpdatedTime);
 
-	return <Typography>{date}</Typography>;
+	const date = getFormattedDate(time);
+
+	const timeString = `${date} ${convertDateToAmAndPm(time)}`;
+
+	return <Typography>{timeString}</Typography>;
 };
 
 export default DateComponent;
