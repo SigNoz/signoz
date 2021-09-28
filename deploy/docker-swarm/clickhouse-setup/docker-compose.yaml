@@ -22,7 +22,7 @@ services:
         retries: 3
 
   query-service:
-    image: signoz/query-service:ch-connection-exit
+    image: signoz/query-service:0.4.0
     container_name: query-service
     restart: always
     command: ["-config=/root/config/prometheus.yml"]
