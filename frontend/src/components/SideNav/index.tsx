@@ -29,7 +29,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
-		link.href = !isDarkMode ? './css/antd.dark.min.css' : './css/antd.min.css';
+		link.href = !isDarkMode ? '/css/antd.dark.min.css' : '/css/antd.min.css';
 		link.media = 'all';
 		link.id = id;
 		head.appendChild(link);
