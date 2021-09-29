@@ -47,10 +47,7 @@ export const SignupPage = Loadable(
 );
 
 export const SettingsPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "SettingsPage" */ 'modules/Settings/settingsPage'
-		),
+	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
 export const InstrumentationPage = Loadable(
