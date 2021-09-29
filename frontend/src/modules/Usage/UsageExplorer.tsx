@@ -1,7 +1,6 @@
 import { Select, Space } from 'antd';
 // import { Bar } from 'react-chartjs-2';
 import Graph from 'components/Graph';
-import { useRoute } from 'modules/RouteProvider';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
@@ -57,8 +56,6 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
 
-	const { state } = useRoute();
-
 	useEffect(() => {
 		if (selectedTime && selectedInterval) {
 			const maxTime = new Date().getTime() * 1000000;
@@ -78,9 +75,7 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.USAGE_EXPLORER.isLoaded) {
-			props.getServicesList(props.globalTime);
-		}
+		props.getServicesList(props.globalTime);
 	}, []);
 
 	const data = {

@@ -4,7 +4,6 @@ import { Store } from 'antd/lib/form/interface';
 import api from 'api';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import useMountedState from 'hooks/useMountedState';
-import { useRoute } from 'modules/RouteProvider';
 import React, {
 	useCallback,
 	useEffect,
@@ -63,7 +62,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 
 	const isMounted = isMount();
 
-	const { state } = useRoute();
 	const { updateTraceFilters, traceFilters, globalTime, fetchTraces } = props;
 	const [modalVisible, setModalVisible] = useState(false);
 
@@ -262,10 +260,8 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.TRACES.isLoaded) {
-			fetchTraces(globalTime, request_string);
-		}
-	}, [globalTime, traceFilters, fetchTraces, state]);
+		fetchTraces(globalTime, request_string);
+	}, [globalTime, traceFilters, fetchTraces]);
 
 	useEffect(() => {
 		let latencyButtonText = 'Latency';

@@ -1,6 +1,5 @@
 import { Form, Select, Space } from 'antd';
 import Graph from 'components/Graph';
-import { useRoute } from 'modules/RouteProvider';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { GlobalTime, TraceFilters } from 'store/actions';
@@ -85,7 +84,6 @@ const _TraceCustomVisualizations = (
 ): JSX.Element => {
 	const [selectedEntity, setSelectedEntity] = useState('calls');
 	const [selectedAggOption, setSelectedAggOption] = useState('count');
-	const { state } = useRoute();
 	const [form] = Form.useForm();
 	const selectedStep = '60';
 	const {
@@ -129,16 +127,13 @@ const _TraceCustomVisualizations = (
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.TRACES.isLoaded) {
-			getFilteredTraceMetrics(request_string, plusMinus15);
-		}
+		getFilteredTraceMetrics(request_string, plusMinus15);
 	}, [
 		selectedEntity,
 		selectedAggOption,
 		traceFilters,
 		globalTime,
 		getFilteredTraceMetrics,
-		state.TRACES.isLoaded,
 	]);
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes
