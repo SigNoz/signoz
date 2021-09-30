@@ -21,6 +21,7 @@ import {
 	Tooltip,
 } from 'chart.js';
 import chartjsAdapter from 'chartjs-adapter-date-fns';
+import formatNumber from 'lib/formatNumber';
 // import { colors } from 'lib/getRandomColor';
 // import stringToHTML from 'lib/stringToHTML';
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -139,6 +140,11 @@ const Graph = ({
 						grid: {
 							display: true,
 							color: getGridColor(),
+						},
+						ticks: {
+							callback: function (tickValue: number | string): string {
+								return formatNumber(tickValue);
+							},
 						},
 					},
 					stacked: {
