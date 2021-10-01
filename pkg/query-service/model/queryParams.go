@@ -106,6 +106,10 @@ type SpanSearchParams struct {
 	Tags          []TagQuery
 }
 
-type SetTTLParams struct {
+type SetTTLParamsTraces struct {
+	Duration string
+}
+
+type SetTTLParamsMetrics struct {
 	Duration string
 }

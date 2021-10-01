@@ -18,8 +18,8 @@ import (
 var allowedDimesions = []string{"calls", "duration"}
 
 var allowedAggregations = map[string][]string{
-	"calls":    []string{"count", "rate_per_sec"},
-	"duration": []string{"avg", "p50", "p95", "p99"},
+	"calls":    {"count", "rate_per_sec"},
+	"duration": {"avg", "p50", "p95", "p99"},
 }
 
 func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
@@ -567,17 +567,42 @@ func parseTimestamp(param string, r *http.Request) (*string, error) {
 
 }
 
-func parseDuration(r *http.Request) (*model.SetTTLParams, error) {
+func parseDuration(r *http.Request) (*model.SetTTLParamsMetrics, *model.SetTTLParamsTraces, error) {
 
-	duration := r.URL.Query().Get("duration")
-	if len(duration) == 0 {
-		return nil, fmt.Errorf("duration param is missing from the query")
+	// make sure either of the query params are present
+	metricsDuration := r.URL.Query().Get("metric_duration")
+	tracesDuration := r.URL.Query().Get("trace_duration")
+
+	if len(metricsDuration) == 0 && len(tracesDuration) == 0 {
+		return nil, nil, fmt.Errorf("both trace_duration and metric_duration param cannot be empty from the query")
 	}
 
-	_, err := time.ParseDuration(duration)
-	if err != nil {
-		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
+	// Validate the metrics duration
+	if len(metricsDuration) > 0 {
+		mDuration, err := time.ParseDuration(metricsDuration)
+		if err != nil {
+			return nil, nil, fmt.Errorf("metric_duration parameter is not a valid time.Duration value. Err=%v", err)
+		}
+
+		// make sure the metrics duration is >= 1 Day
+		if mDuration.Seconds() < 3600 {
+			return nil, nil, fmt.Errorf("metric_duration parameter should have duration >= 1 DAY")
+		}
 	}
 
-	return &model.SetTTLParams{duration}, nil
+	// Validate the traces duration
+	if len(tracesDuration) > 0 {
+		_, err := time.ParseDuration(tracesDuration)
+		if err != nil {
+			return nil, nil, fmt.Errorf("trace_duration parameter is not a valid time.Duration value. Err=%v", err)
+		}
+	}
+
+	if len(metricsDuration) > 0 && len(tracesDuration) > 0 {
+		return &model.SetTTLParamsMetrics{metricsDuration}, &model.SetTTLParamsTraces{tracesDuration}, nil
+	} else if len(metricsDuration) > 0 {
+		return &model.SetTTLParamsMetrics{metricsDuration}, nil, nil
+	}
+
+	return nil, &model.SetTTLParamsTraces{tracesDuration}, nil
 }
