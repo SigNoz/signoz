@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS signoz_index (
   dbName Nullable(String) CODEC(ZSTD(1)),
   dbOperation Nullable(String) CODEC(ZSTD(1)),
   peerService Nullable(String) CODEC(ZSTD(1)),
+  INDEX idx_traceID traceID TYPE bloom_filter GRANULARITY 4,
+  INDEX idx_service serviceName TYPE bloom_filter GRANULARITY 4,
+  INDEX idx_name name TYPE bloom_filter GRANULARITY 4,
+  INDEX idx_kind kind TYPE minmax GRANULARITY 4,
   INDEX idx_tagsKeys tagsKeys TYPE bloom_filter(0.01) GRANULARITY 64,
   INDEX idx_tagsValues tagsValues TYPE bloom_filter(0.01) GRANULARITY 64,
   INDEX idx_duration durationNano TYPE minmax GRANULARITY 1
