@@ -1,5 +1,9 @@
 import Loadable from 'components/Loadable';
 
+export const ServicesTablePage = Loadable(
+	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Metrics'),
+);
+
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
@@ -32,13 +36,6 @@ export const UsageExplorerPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage/UsageExplorerDef'
-		),
-);
-
-export const ServicesTablePage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "ServicesTablePage" */ 'modules/Metrics/ServicesTableDef'
 		),
 );
 

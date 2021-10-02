@@ -4,16 +4,13 @@ import Graph from 'components/Graph';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import {
-	getServicesList,
-	getUsageData,
-	GlobalTime,
-	usageDataItem,
-} from 'store/actions';
+import { getServicesList, getUsageData, usageDataItem } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import { isOnboardingSkipped } from 'utils/app';
 const { Option } = Select;
+import { GlobalTime } from 'types/actions/globalTime';
+
 import { Card } from './styles';
 
 interface UsageExplorerProps {

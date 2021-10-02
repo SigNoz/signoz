@@ -1,13 +1,16 @@
 import { Form, Select, Space } from 'antd';
 import Graph from 'components/Graph';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { GlobalTime, TraceFilters } from 'store/actions';
+import { connect, useSelector } from 'react-redux';
+import { TraceFilters } from 'store/actions';
 import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';
 import { customMetricsItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 const { Option } = Select;
+import useSelection from 'antd/lib/table/hooks/useSelection';
 import { colors } from 'lib/getRandomColor';
+import { GlobalTime } from 'types/actions/globalTime';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	Card,
@@ -92,6 +95,9 @@ const _TraceCustomVisualizations = (
 		globalTime,
 		traceFilters,
 	} = props;
+	const { loading } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	// Step should be multiples of 60, 60 -> 1 min
 	useEffect(() => {
@@ -127,14 +133,10 @@ const _TraceCustomVisualizations = (
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		getFilteredTraceMetrics(request_string, plusMinus15);
-	}, [
-		selectedEntity,
-		selectedAggOption,
-		traceFilters,
-		globalTime,
-		getFilteredTraceMetrics,
-	]);
+		if (loading === false) {
+			getFilteredTraceMetrics(request_string, plusMinus15);
+		}
+	}, [selectedEntity, selectedAggOption, traceFilters, getFilteredTraceMetrics]);
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes
 

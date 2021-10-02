@@ -8,11 +8,7 @@ import { connect, useSelector } from 'react-redux';
 import { useHistory, useLocation, useParams } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-	ApplySettingsToPanel,
-	ApplySettingsToPanelProps,
-	GlobalTime,
-} from 'store/actions';
+import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
 import {
 	GetQueryResults,
 	GetQueryResultsProps,
@@ -23,6 +19,7 @@ import {
 } from 'store/actions/dashboard/saveDashboard';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { GlobalTime } from 'types/actions/globalTime';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import LeftContainer from './LeftContainer';

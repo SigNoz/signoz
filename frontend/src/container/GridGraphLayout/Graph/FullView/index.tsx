@@ -14,8 +14,8 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { GlobalTime } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';

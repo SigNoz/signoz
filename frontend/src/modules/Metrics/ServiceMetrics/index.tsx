@@ -3,10 +3,10 @@ import Spinner from 'components/Spinner';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect, useRef } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { GlobalTime, updateTimeInterval } from 'store/actions';
+import { UpdateTimeInterval } from 'store/actions';
 import {
 	dbOverviewMetricsItem,
 	externalErrCodeMetricsItem,
@@ -26,6 +26,8 @@ import {
 	getTopEndpoints,
 } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
+import { GlobalTime } from 'types/actions/globalTime';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ErrorRateChart from '../ErrorRateChart';
 import ExternalApiGraph from '../ExternalApi';
@@ -37,16 +39,26 @@ const { TabPane } = Tabs;
 
 const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const { globalTime, getInitialMerticData } = props;
+	const { globalTime, getInitialMerticData, updateTimeInterval } = props;
+	const { loading } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const counter = useRef(0);
 
 	useEffect(() => {
-		if (servicename !== undefined) {
+		if (servicename !== undefined && counter.current === 0 && loading === false) {
+			counter.current = 1;
 			getInitialMerticData({
 				globalTime: globalTime,
 				serviceName: servicename,
 			});
 		}
-	}, [getInitialMerticData, servicename, globalTime]);
+
+		return (): void => {
+			counter.current = 0;
+		};
+	}, [getInitialMerticData, servicename, globalTime, loading]);
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp / 1000000;
@@ -81,7 +93,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
-	if (props.loading) {
+	if (props.loading && loading === true) {
 		return <Spinner tip="Loading..." height="100vh" size="large" />;
 	}
 
@@ -254,7 +266,7 @@ export const ServiceMetrics = connect(mapStateToProps, {
 	getExternalErrCodeMetrics: getExternalErrCodeMetrics,
 	getExternalAvgDurationMetrics: getExternalAvgDurationMetrics,
 	getTopEndpoints: getTopEndpoints,
-	updateTimeInterval: updateTimeInterval,
+	updateTimeInterval: UpdateTimeInterval,
 	getDbOverViewMetrics: getDbOverViewMetrics,
 	getInitialMerticData: getInitialMerticData,
 })(_ServiceMetrics);

@@ -6,11 +6,11 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import {
 	getDetailedServiceMapItems,
 	getServiceMapItems,
-	GlobalTime,
 	serviceMapStore,
 } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
+import { GlobalTime } from 'types/actions/globalTime';
 
 import SelectService from './SelectService';
 import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';

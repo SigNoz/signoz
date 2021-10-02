@@ -2,8 +2,8 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
+import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
-import AppLayout from 'modules/AppLayout';
 import React, { Suspense } from 'react';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 

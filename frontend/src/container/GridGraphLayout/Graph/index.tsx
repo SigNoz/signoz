@@ -12,13 +12,13 @@ import { useSelector } from 'react-redux';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTime } from 'store/actions';
 import {
 	DeleteWidget,
 	DeleteWidgetProps,
 } from 'store/actions/dashboard/deleteWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';

@@ -3,7 +3,6 @@ import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
 import api from 'api';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
-import useMountedState from 'hooks/useMountedState';
 import React, {
 	useCallback,
 	useEffect,
@@ -11,16 +10,13 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import {
-	fetchTraces,
-	GlobalTime,
-	TraceFilters,
-	updateTraceFilters,
-} from 'store/actions';
+import { fetchTraces, TraceFilters, updateTraceFilters } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
+import { GlobalTime } from 'types/actions/globalTime';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { FilterStateDisplay } from './FilterStateDisplay';
 import LatencyModalForm from './LatencyModalForm';
@@ -58,9 +54,10 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 	const urlParams = useMemo(() => {
 		return new URLSearchParams(location.search.split('?')[1]);
 	}, [location.search]);
-	const isMount = useMountedState();
 
-	const isMounted = isMount();
+	const { loading } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const { updateTraceFilters, traceFilters, globalTime, fetchTraces } = props;
 	const [modalVisible, setModalVisible] = useState(false);
@@ -176,11 +173,8 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		[form, traceFilters, updateTraceFilters],
 	);
 
-	const counter = useRef(0);
-
 	useEffect(() => {
-		if (isMounted && counter.current === 0) {
-			counter.current = 1;
+		if (loading === false) {
 			api
 				.get<string[]>(`/services/list`)
 				.then((response) => {
@@ -235,7 +229,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		traceFilters,
 		urlParams,
 		updateTraceFilters,
-		isMounted,
+		loading,
 	]);
 
 	useEffect(() => {
@@ -260,8 +254,10 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		fetchTraces(globalTime, request_string);
-	}, [globalTime, traceFilters, fetchTraces]);
+		if (loading === false) {
+			fetchTraces(globalTime, request_string);
+		}
+	}, [traceFilters, fetchTraces, loading]);
 
 	useEffect(() => {
 		let latencyButtonText = 'Latency';

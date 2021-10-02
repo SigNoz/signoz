@@ -1,0 +1,96 @@
+import Table, { ColumnsType } from 'antd/lib/table';
+import { SKIP_ONBOARDING } from 'constants/onboarding';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
+import React, { useState } from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { GlobalTimeLoading, servicesListItem } from 'store/actions';
+import { AppState } from 'store/reducers';
+import { MetricsInitialState } from 'store/reducers/metrics';
+import AppActions from 'types/actions';
+
+import SkipBoardModal from './SkipOnBoardModal';
+import { Container, Name } from './styles';
+
+const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
+	const [skipOnboarding, setSkipOnboarding] = useState(
+		localStorage.getItem(SKIP_ONBOARDING) === 'true',
+	);
+
+	const { serviceList } = useSelector<AppState, MetricsInitialState>(
+		(state) => state.metricsData,
+	);
+
+	const onContinueClick = (): void => {
+		localStorage.setItem(SKIP_ONBOARDING, 'true');
+		setSkipOnboarding(true);
+	};
+
+	const onClickHandler = (to: string): void => {
+		history.push(to);
+		globalTimeLoading();
+	};
+
+	if (!skipOnboarding) {
+		return <SkipBoardModal onContinueClick={onContinueClick} />;
+	}
+
+	const columns: ColumnsType<DataProps> = [
+		{
+			title: 'Application',
+			dataIndex: 'serviceName',
+			key: 'serviceName',
+			// eslint-disable-next-line react/display-name
+			render: (text: string): JSX.Element => (
+				<div onClick={(): void => onClickHandler(ROUTES.APPLICATION + '/' + text)}>
+					<Name>{text}</Name>
+				</div>
+			),
+		},
+		{
+			title: 'P99 latency (in ms)',
+			dataIndex: 'p99',
+			key: 'p99',
+			sorter: (a: DataProps, b: DataProps): number => a.p99 - b.p99,
+			render: (value: number): string => (value / 1000000).toFixed(2),
+		},
+		{
+			title: 'Error Rate (in %)',
+			dataIndex: 'errorRate',
+			key: 'errorRate',
+			sorter: (a: DataProps, b: DataProps): number => a.errorRate - b.errorRate,
+			render: (value: number): string => value.toFixed(2),
+		},
+		{
+			title: 'Requests Per Second',
+			dataIndex: 'callRate',
+			key: 'callRate',
+			sorter: (a: DataProps, b: DataProps): number => a.callRate - b.callRate,
+			render: (value: number): string => value.toFixed(2),
+		},
+	];
+
+	return (
+		<Container>
+			<Table dataSource={serviceList} columns={columns} pagination={false} />
+		</Container>
+	);
+};
+
+type DataProps = servicesListItem;
+
+interface DispatchProps {
+	globalTimeLoading: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
+});
+
+type MetricsProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(Metrics);

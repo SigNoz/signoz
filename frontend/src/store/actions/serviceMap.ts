@@ -1,7 +1,7 @@
 import api from 'api';
 import { Dispatch } from 'redux';
+import { GlobalTime } from 'types/actions/globalTime';
 
-import { GlobalTime } from './global';
 import { ActionTypes } from './types';
 
 export interface serviceMapStore {

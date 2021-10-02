@@ -5,10 +5,10 @@ import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import React from 'react';
 import { connect } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
-import { GlobalTime } from 'store/actions';
 import { topEndpointListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
+import { GlobalTime } from 'types/actions/globalTime';
 
 const Wrapper = styled.div`
 	padding-top: 10px;

@@ -2,22 +2,15 @@ import { DatePicker, Modal } from 'antd';
 import { Moment } from 'moment';
 import moment from 'moment';
 import React, { useState } from 'react';
-import { DateTimeRangeType } from 'store/actions';
+export type DateTimeRangeType = [Moment | null, Moment | null] | null;
 
 const { RangePicker } = DatePicker;
 
-interface CustomDateTimeModalProps {
-	visible: boolean;
-	onCreate: (dateTimeRange: DateTimeRangeType) => void; //Store is defined in antd forms library
-	onCancel: () => void;
-}
-
-const CustomDateTimeModal: React.FC<CustomDateTimeModalProps> = ({
-	//destructuring props
+const CustomDateTimeModal = ({
 	visible,
 	onCreate,
 	onCancel,
-}) => {
+}: CustomDateTimeModalProps): JSX.Element => {
 	const [
 		customDateTimeRange,
 		setCustomDateTimeRange,
@@ -26,6 +19,7 @@ const CustomDateTimeModal: React.FC<CustomDateTimeModalProps> = ({
 	function handleRangePickerOk(date_time: DateTimeRangeType): void {
 		setCustomDateTimeRange(date_time);
 	}
+
 	function disabledDate(current: Moment): boolean {
 		if (current > moment()) {
 			return true;
@@ -52,5 +46,11 @@ const CustomDateTimeModal: React.FC<CustomDateTimeModalProps> = ({
 		</Modal>
 	);
 };
+
+interface CustomDateTimeModalProps {
+	visible: boolean;
+	onCreate: (dateTimeRange: DateTimeRangeType) => void;
+	onCancel: () => void;
+}
 
 export default CustomDateTimeModal;
