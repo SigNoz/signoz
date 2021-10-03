@@ -3,7 +3,7 @@ import Spinner from 'components/Spinner';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -29,36 +29,20 @@ import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import ErrorRateChart from '../ErrorRateChart';
-import ExternalApiGraph from '../ExternalApi';
-import LatencyLineChart from '../LatencyLineChart';
-import RequestRateChart from '../RequestRateChart';
-import TopEndpointsTable from '../TopEndpointsTable';
+import ErrorRateChart from './ErrorRateChart';
+import ExternalApiGraph from './ExternalApi';
+import LatencyLineChart from './LatencyLineChart';
+import RequestRateChart from './RequestRateChart';
 import { Card, Row } from './styles';
+import TopEndpointsTable from './TopEndpointsTable';
 const { TabPane } = Tabs;
 
 const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const { globalTime, getInitialMerticData, updateTimeInterval } = props;
+	const { updateTimeInterval } = props;
 	const { loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	const counter = useRef(0);
-
-	useEffect(() => {
-		if (servicename !== undefined && counter.current === 0 && loading === false) {
-			counter.current = 1;
-			getInitialMerticData({
-				globalTime: globalTime,
-				serviceName: servicename,
-			});
-		}
-
-		return (): void => {
-			counter.current = 0;
-		};
-	}, [getInitialMerticData, servicename, globalTime, loading]);
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp / 1000000;
@@ -260,7 +244,7 @@ const mapStateToProps = (
 	};
 };
 
-export const ServiceMetrics = connect(mapStateToProps, {
+export default connect(mapStateToProps, {
 	getServicesMetrics: getServicesMetrics,
 	getExternalMetrics: getExternalMetrics,
 	getExternalErrCodeMetrics: getExternalErrCodeMetrics,

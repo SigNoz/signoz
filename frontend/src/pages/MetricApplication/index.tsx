@@ -1,5 +1,6 @@
 import Spinner from 'components/Spinner';
-import React, { useEffect, useRef } from 'react';
+import MetricsApplicationContainer from 'container/MetricsApplication';
+import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -36,7 +37,7 @@ const MetricsApplication = ({
 		return <Spinner tip="Loading..." />;
 	}
 
-	return <div>asd</div>;
+	return <MetricsApplicationContainer />;
 };
 
 interface DispatchProps {
