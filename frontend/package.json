@@ -10,7 +10,8 @@
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
 		"cypress:open": "cypress open",
-		"cypress:run": "cypress run"
+		"cypress:run": "cypress run",
+		"test": "jest --coverage"
 	},
 	"engines": {
 		"node": ">=12.13.0"
