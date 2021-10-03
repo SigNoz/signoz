@@ -2,7 +2,9 @@ import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
 import React, { ReactNode } from 'react';
 
+import { Main } from './styles';
 import { Content, Footer, Layout } from './styles';
+
 const BaseLayout = ({ children }: BaseLayoutProps): JSX.Element => {
 	const currentYear = new Date().getFullYear();
 
@@ -11,7 +13,7 @@ const BaseLayout = ({ children }: BaseLayoutProps): JSX.Element => {
 			<SideNav />
 			<Content>
 				<TopNav />
-				{children}
+				<Main>{children}</Main>
 				<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
 			</Content>
 		</Layout>
