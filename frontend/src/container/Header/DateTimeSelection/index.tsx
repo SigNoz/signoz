@@ -166,9 +166,11 @@ const DateTimeSelection = ({
 			const searchEndTime = params.get('endTime');
 
 			if (searchEndTime && searchStartTime) {
-				setStartTime(moment(new Date(parseInt(searchStartTime, 10))));
-				setEndTime(moment(new Date(parseInt(searchEndTime, 10))));
-				setSelectedTimeInterval('custom');
+				if (startTime === undefined || endTime === undefined) {
+					setStartTime(moment(new Date(parseInt(searchStartTime, 10))));
+					setEndTime(moment(new Date(parseInt(searchEndTime, 10))));
+					setSelectedTimeInterval('custom');
+				}
 			} else {
 				if (startTime !== undefined || endTime !== undefined) {
 					setStartTime(undefined);
@@ -176,8 +178,6 @@ const DateTimeSelection = ({
 				}
 				setSelectedTimeInterval(time);
 			}
-
-			console.log(currentRoute, time);
 
 			if (loading === true) {
 				updateTimeInterval(time);

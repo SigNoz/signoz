@@ -81,12 +81,30 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		[traceFilters, updateTraceFilters],
 	);
 
+	const populateData = useCallback(
+		(value: string) => {
+			if (loading === false) {
+				const service_request = '/service/' + value + '/operations';
+				api.get<string[]>(service_request).then((response) => {
+					// form_basefilter.resetFields(['operation',])
+					setOperationsList(response.data);
+				});
+
+				const tagkeyoptions_request = '/tags?service=' + value;
+				api.get<TagKeyOptionItem[]>(tagkeyoptions_request).then((response) => {
+					setTagKeyOptions(response.data);
+				});
+			}
+		},
+		[loading],
+	);
+
 	const handleChangeService = useCallback(
 		(value: string) => {
 			populateData(value);
 			updateTraceFilters({ ...traceFilters, service: value });
 		},
-		[traceFilters, updateTraceFilters],
+		[traceFilters, updateTraceFilters, populateData],
 	);
 
 	const spanKindList: ISpanKind[] = [
@@ -173,8 +191,11 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		[form, traceFilters, updateTraceFilters],
 	);
 
+	const counter = useRef(0);
+
 	useEffect(() => {
-		if (loading === false) {
+		if (loading === false && counter.current === 0) {
+			counter.current = 1;
 			api
 				.get<string[]>(`/services/list`)
 				.then((response) => {
@@ -229,6 +250,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		traceFilters,
 		urlParams,
 		updateTraceFilters,
+		populateData,
 		loading,
 	]);
 
@@ -257,7 +279,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		if (loading === false) {
 			fetchTraces(globalTime, request_string);
 		}
-	}, [traceFilters, fetchTraces, loading]);
+	}, [traceFilters, fetchTraces, loading, globalTime]);
 
 	useEffect(() => {
 		let latencyButtonText = 'Latency';
@@ -296,19 +318,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 	useEffect(() => {
 		form_basefilter.setFieldsValue({ kind: traceFilters.kind });
 	}, [traceFilters.kind, form_basefilter]);
-
-	function populateData(value: string): void {
-		const service_request = '/service/' + value + '/operations';
-		api.get<string[]>(service_request).then((response) => {
-			// form_basefilter.resetFields(['operation',])
-			setOperationsList(response.data);
-		});
-
-		const tagkeyoptions_request = '/tags?service=' + value;
-		api.get<TagKeyOptionItem[]>(tagkeyoptions_request).then((response) => {
-			setTagKeyOptions(response.data);
-		});
-	}
 
 	const onLatencyButtonClick = (): void => {
 		setModalVisible(true);

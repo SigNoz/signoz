@@ -7,7 +7,6 @@ import { getFilteredTraceMetrics } from 'store/actions/MetricsActions';
 import { customMetricsItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 const { Option } = Select;
-import useSelection from 'antd/lib/table/hooks/useSelection';
 import { colors } from 'lib/getRandomColor';
 import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -136,7 +135,14 @@ const _TraceCustomVisualizations = (
 		if (loading === false) {
 			getFilteredTraceMetrics(request_string, plusMinus15);
 		}
-	}, [selectedEntity, selectedAggOption, traceFilters, getFilteredTraceMetrics]);
+	}, [
+		selectedEntity,
+		selectedAggOption,
+		traceFilters,
+		getFilteredTraceMetrics,
+		globalTime,
+		loading,
+	]);
 
 	//Custom metrics API called if time, tracefilters, selected entity or agg option changes
 
