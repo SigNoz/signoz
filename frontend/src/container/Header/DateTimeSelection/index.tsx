@@ -166,7 +166,7 @@ const DateTimeSelection = ({
 			const searchEndTime = params.get('endTime');
 
 			if (searchEndTime && searchStartTime) {
-				if (startTime === undefined || endTime === undefined) {
+				if (startTime === undefined && endTime === undefined) {
 					setStartTime(moment(new Date(parseInt(searchStartTime, 10))));
 					setEndTime(moment(new Date(parseInt(searchEndTime, 10))));
 					setSelectedTimeInterval('custom');
