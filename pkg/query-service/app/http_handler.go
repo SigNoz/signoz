@@ -721,12 +721,12 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
-	metricsDuration, tracesDuration, err := parseDuration(r)
+	ttlParams, err := parseDuration(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).SetTTL(context.Background(), metricsDuration, tracesDuration)
+	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

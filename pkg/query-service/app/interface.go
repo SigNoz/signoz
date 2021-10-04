@@ -32,5 +32,5 @@ type Reader interface {
 	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 
 	// Setter Interfaces
-	SetTTL(ctx context.Context, metricsParam *model.SetTTLParamsMetrics, tracesParams *model.SetTTLParamsTraces) (*model.SetTTLResponseItem, *model.ApiError)
+	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/prometheus/prometheus/util/stats"
 
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -816,45 +817,13 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 
 }
 
-func (r *ClickHouseReader) SetTTL(ctx context.Context, metricsParam *model.SetTTLParamsMetrics, tracesParam *model.SetTTLParamsTraces) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 
-	// setup the duration
-	var (
-		metricsDuration time.Duration
-		tracesDuration  time.Duration
-	)
+	switch ttlParams.Type {
 
-	// set the metrics TTL
-	if metricsParam != nil {
+	case constants.TraceTTL:
 		// error is skipped, handled earlier as bad request
-		metricsDuration, _ = time.ParseDuration(metricsParam.Duration)
-
-		// calculate ceil of time in days
-		day := (int(metricsDuration.Seconds()) + 3599) / 3600
-
-		// set the ttl for samples
-		query := fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL toDate(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL %v DAY", signozMetricDBName, signozSampleName, day)
-		_, err := r.db.Exec(query)
-
-		if err != nil {
-			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
-		}
-
-		// set the ttl for time series
-		query = fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL date + INTERVAL %v DAY", signozMetricDBName, signozTSName, day)
-		_, err = r.db.Exec(query)
-
-		if err != nil {
-			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
-		}
-	}
-
-	// set the traces TTL
-	if tracesParam != nil {
-		// error is skipped, handled earlier as bad request
-		tracesDuration, _ = time.ParseDuration(tracesParam.Duration)
+		tracesDuration, _ := time.ParseDuration(ttlParams.Duration)
 		second := int(tracesDuration.Seconds())
 		query := fmt.Sprintf("ALTER TABLE default.%v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND", signozTraceTableName, second)
 		_, err := r.db.Exec(query)
@@ -863,6 +832,21 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, metricsParam *model.SetTT
 			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
 			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
 		}
+
+	case constants.MetricsTTL:
+		// error is skipped, handled earlier as bad request
+		metricsDuration, _ := time.ParseDuration(ttlParams.Duration)
+		second := int(metricsDuration.Seconds())
+		query := fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL %v SECOND", signozMetricDBName, signozSampleName, second)
+		_, err := r.db.Exec(query)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+		}
+
+	default:
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
 	}
 
 	return &model.SetTTLResponseItem{Message: "ttl has been successfully set up"}, nil

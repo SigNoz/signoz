@@ -11,6 +11,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -567,42 +568,26 @@ func parseTimestamp(param string, r *http.Request) (*string, error) {
 
 }
 
-func parseDuration(r *http.Request) (*model.SetTTLParamsMetrics, *model.SetTTLParamsTraces, error) {
+func parseDuration(r *http.Request) (*model.TTLParams, error) {
 
 	// make sure either of the query params are present
-	metricsDuration := r.URL.Query().Get("metric_duration")
-	tracesDuration := r.URL.Query().Get("trace_duration")
+	typeTTL := r.URL.Query().Get("type")
+	duration := r.URL.Query().Get("duration")
 
-	if len(metricsDuration) == 0 && len(tracesDuration) == 0 {
-		return nil, nil, fmt.Errorf("both trace_duration and metric_duration param cannot be empty from the query")
+	if len(typeTTL) == 0 || len(duration) == 0 {
+		return nil, fmt.Errorf("type and duration param cannot be empty from the query")
 	}
 
-	// Validate the metrics duration
-	if len(metricsDuration) > 0 {
-		mDuration, err := time.ParseDuration(metricsDuration)
-		if err != nil {
-			return nil, nil, fmt.Errorf("metric_duration parameter is not a valid time.Duration value. Err=%v", err)
-		}
-
-		// make sure the metrics duration is >= 1 Day
-		if mDuration.Seconds() < 3600 {
-			return nil, nil, fmt.Errorf("metric_duration parameter should have duration >= 1 DAY")
-		}
+	// Validate the duration as a valid time.Duration
+	_, err := time.ParseDuration(duration)
+	if err != nil {
+		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
 	}
 
-	// Validate the traces duration
-	if len(tracesDuration) > 0 {
-		_, err := time.ParseDuration(tracesDuration)
-		if err != nil {
-			return nil, nil, fmt.Errorf("trace_duration parameter is not a valid time.Duration value. Err=%v", err)
-		}
+	// Validate the type parameter
+	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
+		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	if len(metricsDuration) > 0 && len(tracesDuration) > 0 {
-		return &model.SetTTLParamsMetrics{metricsDuration}, &model.SetTTLParamsTraces{tracesDuration}, nil
-	} else if len(metricsDuration) > 0 {
-		return &model.SetTTLParamsMetrics{metricsDuration}, nil, nil
-	}
-
-	return nil, &model.SetTTLParamsTraces{tracesDuration}, nil
+	return &model.TTLParams{Duration: duration, Type: typeTTL}, nil
 }

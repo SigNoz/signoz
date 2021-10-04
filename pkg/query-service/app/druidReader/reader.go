@@ -111,6 +111,6 @@ func (druid *DruidReader) SearchSpansAggregate(ctx context.Context, queryParams 
 	return druidQuery.SearchSpansAggregate(druid.Client, queryParams)
 }
 
-func (druid *DruidReader) SetTTL(ctx context.Context, metricsParam *model.SetTTLParamsMetrics, tracesParams *model.SetTTLParamsTraces) (*model.SetTTLResponseItem, *model.ApiError) {
+func (druid *DruidReader) SetTTL(_ context.Context, _ *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
 }
