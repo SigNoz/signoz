@@ -3,6 +3,7 @@ import { combineReducers } from 'redux';
 import appReducer from './app';
 import dashboardReducer from './dashboard';
 import globalTimeReducer from './global';
+import metricsReducers from './metric';
 import { metricsReducer } from './metrics';
 import { ServiceMapReducer } from './serviceMap';
 import TraceFilterReducer from './traceFilters';
@@ -19,6 +20,7 @@ const reducers = combineReducers({
 	serviceMap: ServiceMapReducer,
 	dashboards: dashboardReducer,
 	app: appReducer,
+	metrics: metricsReducers,
 });
 
 export type AppState = ReturnType<typeof reducers>;
