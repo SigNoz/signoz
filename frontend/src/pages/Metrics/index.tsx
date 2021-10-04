@@ -2,27 +2,26 @@ import Spinner from 'components/Spinner';
 import MetricTable from 'container/MetricsTable';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { getServicesList } from 'store/actions';
+import { GetService, GetServiceProps } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-const Metrics = ({ getServicesList }: MetricsProps): JSX.Element => {
+const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 	const { minTime, maxTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
 	useEffect(() => {
 		if (loading === false) {
-			getServicesList({
-				maxTime,
-				minTime,
+			getService({
+				start: minTime,
+				end: maxTime,
 			});
 		}
-	}, [getServicesList, maxTime, minTime, loading]);
+	}, [getService, maxTime, minTime, loading]);
 
 	if (loading) {
 		return <Spinner tip="Loading..." />;
@@ -32,13 +31,16 @@ const Metrics = ({ getServicesList }: MetricsProps): JSX.Element => {
 };
 
 interface DispatchProps {
-	getServicesList: (globalTime: GlobalTime) => (dispatch: any) => Promise<void>;
+	getService: ({
+		end,
+		start,
+	}: GetServiceProps) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getServicesList: bindActionCreators(getServicesList, dispatch),
+	getService: bindActionCreators(GetService, dispatch),
 });
 
 type MetricsProps = DispatchProps;
