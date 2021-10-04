@@ -8,8 +8,8 @@ import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, servicesListItem } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { MetricsInitialState } from 'store/reducers/metrics';
 import AppActions from 'types/actions';
+import MetricReducer from 'types/reducer/metrics';
 
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
@@ -19,8 +19,8 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 		localStorage.getItem(SKIP_ONBOARDING) === 'true',
 	);
 
-	const { serviceList } = useSelector<AppState, MetricsInitialState>(
-		(state) => state.metricsData,
+	const { services, loading } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
 	);
 
 	const onContinueClick = (): void => {
@@ -74,7 +74,12 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 
 	return (
 		<Container>
-			<Table dataSource={serviceList} columns={columns} pagination={false} />
+			<Table
+				loading={loading}
+				dataSource={services}
+				columns={columns}
+				pagination={false}
+			/>
 		</Container>
 	);
 };
