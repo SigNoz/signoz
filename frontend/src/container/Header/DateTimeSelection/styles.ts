@@ -22,3 +22,7 @@ export const FormItem = styled(Form.Item)`
 		margin: 0;
 	}
 `;
+
+export const RefreshTextContainer = styled.div`
+	min-height: 2rem;
+`;

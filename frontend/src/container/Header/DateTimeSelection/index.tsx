@@ -2,7 +2,13 @@ import { Button, Select as DefaultSelect } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
-import { Container, Form, FormItem, Typography } from './styles';
+import {
+	Container,
+	Form,
+	FormItem,
+	RefreshTextContainer,
+	Typography,
+} from './styles';
 const { Option } = DefaultSelect;
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
@@ -218,7 +224,9 @@ const DateTimeSelection = ({
 				</FormItem>
 			</Form>
 
-			<Typography>{refreshText}</Typography>
+			<RefreshTextContainer>
+				<Typography>{refreshText}</Typography>
+			</RefreshTextContainer>
 
 			<CustomDateTimeModal
 				visible={customDateTimeVisible}
