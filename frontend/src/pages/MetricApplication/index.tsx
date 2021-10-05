@@ -6,34 +6,37 @@ import { useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
-	getInitialMerticData,
-	getInitialMerticDataProps,
-} from 'store/actions/MetricsActions';
+	GetInitialData,
+	GetInitialDataProps,
+} from 'store/actions/metrics/getInitialData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import MetricReducer from 'types/reducer/metrics';
 
-const MetricsApplication = ({
-	getInitialMerticData,
-}: MetricsProps): JSX.Element => {
+const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 	const { loading, maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const { loading: MetricsLoading } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
+	);
+
 	const { servicename } = useParams<ServiceProps>();
 
 	useEffect(() => {
 		if (servicename !== undefined && loading === false) {
-			getInitialMerticData({
-				globalTime: {
-					maxTime,
-					minTime,
-				},
-				serviceName: servicename,
+			getInitialData({
+				end: maxTime,
+				service: servicename,
+				start: minTime,
+				step: 60,
 			});
 		}
-	}, [servicename, getInitialMerticData, maxTime, minTime, loading]);
+	}, [servicename, maxTime, minTime, loading, getInitialData]);
 
-	if (loading) {
+	if (loading || MetricsLoading) {
 		return <Spinner tip="Loading..." />;
 	}
 
@@ -41,9 +44,7 @@ const MetricsApplication = ({
 };
 
 interface DispatchProps {
-	getInitialMerticData: (
-		props: getInitialMerticDataProps,
-	) => (dispatch: Dispatch) => Promise<void>;
+	getInitialData: (props: GetInitialDataProps) => (dispatch: Dispatch) => void;
 }
 
 interface ServiceProps {
@@ -53,7 +54,7 @@ interface ServiceProps {
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getInitialMerticData: bindActionCreators(getInitialMerticData, dispatch),
+	getInitialData: bindActionCreators(GetInitialData, dispatch),
 });
 
 type MetricsProps = DispatchProps;

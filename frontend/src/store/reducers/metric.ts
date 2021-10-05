@@ -1,4 +1,7 @@
 import {
+	GET_INITIAL_APPLICATION_ERROR,
+	GET_INITIAL_APPLICATION_LOADING,
+	GET_INTIAL_APPLICATION_DATA,
 	GET_SERVICE_LIST_ERROR,
 	GET_SERVICE_LIST_LOADING_START,
 	GET_SERVICE_LIST_SUCCESS,
@@ -11,6 +14,12 @@ const InitialValue: InitialValueTypes = {
 	errorMessage: '',
 	loading: false,
 	services: [],
+	dbOverView: [],
+	externalService: [],
+	topEndPoints: [],
+	externalAverageDuration: [],
+	externalError: [],
+	serviceOverview: [],
 };
 
 const metrics = (
@@ -41,6 +50,43 @@ const metrics = (
 				...state,
 				loading: false,
 				services: action.payload,
+			};
+		}
+
+		case GET_INITIAL_APPLICATION_LOADING: {
+			return {
+				...state,
+				loading: true,
+			};
+		}
+		case GET_INITIAL_APPLICATION_ERROR: {
+			return {
+				...state,
+				loading: false,
+				errorMessage: action.payload.errorMessage,
+				error: true,
+			};
+		}
+
+		case GET_INTIAL_APPLICATION_DATA: {
+			const {
+				dbOverView,
+				topEndPoints,
+				serviceOverview,
+				externalService,
+				externalAverageDuration,
+				externalError,
+			} = action.payload;
+
+			return {
+				...state,
+				loading: false,
+				dbOverView,
+				topEndPoints,
+				serviceOverview,
+				externalService,
+				externalAverageDuration,
+				externalError,
 			};
 		}
 		default:
