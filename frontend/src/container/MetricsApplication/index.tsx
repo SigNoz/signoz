@@ -1,33 +1,17 @@
 import { Col, Tabs } from 'antd';
-import Spinner from 'components/Spinner';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { Time } from 'container/Header/DateTimeSelection/config';
 import history from 'lib/history';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTimeInterval } from 'store/actions';
-import {
-	dbOverviewMetricsItem,
-	externalErrCodeMetricsItem,
-	externalMetricsAvgDurationItem,
-	externalMetricsItem,
-	getInitialMerticDataProps,
-	metricItem,
-	topEndpointListItem,
-} from 'store/actions/MetricsActions';
-import {
-	getDbOverViewMetrics,
-	getExternalAvgDurationMetrics,
-	getExternalErrCodeMetrics,
-	getExternalMetrics,
-	getInitialMerticData,
-	getServicesMetrics,
-	getTopEndpoints,
-} from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
-import { GlobalTime } from 'types/actions/globalTime';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import AppActions from 'types/actions';
+import MetricReducer from 'types/reducer/metrics';
 
 import ErrorRateChart from './ErrorRateChart';
 import ExternalApiGraph from './ExternalApi';
@@ -37,12 +21,17 @@ import { Card, Row } from './styles';
 import TopEndpointsTable from './TopEndpointsTable';
 const { TabPane } = Tabs;
 
-const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
+const ServiceMetrics = (props: Props): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const { updateTimeInterval } = props;
-	const { loading } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const {
+		dbOverView,
+		externalService,
+		externalAverageDuration,
+		externalError,
+		topEndPoints,
+		serviceOverview,
+	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp / 1000000;
@@ -77,10 +66,6 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
-	if (props.loading && loading === true) {
-		return <Spinner tip="Loading..." height="100vh" size="large" />;
-	}
-
 	return (
 		<Tabs defaultActiveKey="1">
 			<TabPane tab="Application Metrics" key="1">
@@ -88,7 +73,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 					<Col span={12}>
 						<Card>
 							<LatencyLineChart
-								data={props.serviceMetrics}
+								data={serviceOverview}
 								popupClickHandler={onTracePopupClick}
 							/>
 						</Card>
@@ -96,7 +81,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 
 					<Col span={12}>
 						<Card>
-							<RequestRateChart data={props.serviceMetrics} />
+							<RequestRateChart data={serviceOverview} />
 						</Card>
 					</Col>
 				</Row>
@@ -106,14 +91,14 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 						<Card>
 							<ErrorRateChart
 								onTracePopupClick={onErrTracePopupClick}
-								data={props.serviceMetrics}
+								data={serviceOverview}
 							/>
 						</Card>
 					</Col>
 
 					<Col span={12}>
 						<Card>
-							<TopEndpointsTable data={props.topEndpointsList} />
+							<TopEndpointsTable data={topEndPoints} />
 						</Card>
 					</Col>
 				</Row>
@@ -126,8 +111,14 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 							<ExternalApiGraph
 								title="External Call Error Percentage (%)"
 								keyIdentifier="externalHttpUrl"
-								dataIdentifier="errorRate"
-								data={props.externalErrCodeMetrics}
+								dataIdentifier="callRate"
+								data={externalError.map((e) => ({
+									avgDuration: e.avgDuration,
+									callRate: e.errorRate,
+									externalHttpUrl: e.externalHttpUrl,
+									numCalls: e.numErrors,
+									timestamp: e.timestamp,
+								}))}
 							/>
 						</Card>
 					</Col>
@@ -138,8 +129,14 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 								label="Average Duration"
 								title="External Call duration"
 								dataIdentifier="avgDuration"
-								fnDataIdentifier={(s) => Number(s) / 1000000}
-								data={props.externalAvgDurationMetrics}
+								fnDataIdentifier={(s): number => Number(s) / 1000000}
+								data={externalAverageDuration.map((e) => ({
+									avgDuration: e.avgDuration,
+									callRate: e.errorRate,
+									externalHttpUrl: '',
+									numCalls: e.numErrors,
+									timestamp: e.timestamp,
+								}))}
 							/>
 						</Card>
 					</Col>
@@ -152,7 +149,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 								title="External Call RPS(by Address)"
 								keyIdentifier="externalHttpUrl"
 								dataIdentifier="callRate"
-								data={props.externalMetrics}
+								data={externalService}
 							/>
 						</Card>
 					</Col>
@@ -163,8 +160,8 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 								title="External Call duration(by Address)"
 								keyIdentifier="externalHttpUrl"
 								dataIdentifier="avgDuration"
-								fnDataIdentifier={(s) => Number(s) / 1000000}
-								data={props.externalMetrics}
+								fnDataIdentifier={(s): number => Number(s) / 1000000}
+								data={externalService}
 							/>
 						</Card>
 					</Col>
@@ -179,7 +176,7 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 								title="Database Calls RPS"
 								keyIdentifier="dbSystem"
 								dataIdentifier="callRate"
-								data={props.dbOverviewMetrics}
+								data={dbOverView}
 							/>
 						</Card>
 					</Col>
@@ -190,8 +187,8 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 								label="Average Duration"
 								title="Database Calls Avg Duration (in ms)"
 								dataIdentifier="avgDuration"
-								fnDataIdentifier={(s) => Number(s) / 1000000}
-								data={props.dbOverviewMetrics}
+								fnDataIdentifier={(s): number => Number(s) / 1000000}
+								data={dbOverView}
 							/>
 						</Card>
 					</Col>
@@ -201,56 +198,19 @@ const _ServiceMetrics = (props: ServicesMetricsProps): JSX.Element => {
 	);
 };
 
-interface ServicesMetricsProps {
-	serviceMetrics: metricItem[];
-	dbOverviewMetrics: dbOverviewMetricsItem[];
-	getServicesMetrics: () => void;
-	getExternalMetrics: () => void;
-	getExternalErrCodeMetrics: () => void;
-	getExternalAvgDurationMetrics: () => void;
-	getDbOverViewMetrics: () => void;
-	externalMetrics: externalMetricsItem[];
-	topEndpointsList: topEndpointListItem[];
-	externalAvgDurationMetrics: externalMetricsAvgDurationItem[];
-	externalErrCodeMetrics: externalErrCodeMetricsItem[];
-	getTopEndpoints: () => void;
-	globalTime: GlobalTime;
-	updateTimeInterval: () => void;
-	getInitialMerticData: (props: getInitialMerticDataProps) => void;
-	loading: boolean;
+interface DispatchProps {
+	updateTimeInterval: (
+		interval: Time,
+		dateTimeRange?: [number, number],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
-const mapStateToProps = (
-	state: AppState,
-): {
-	serviceMetrics: metricItem[];
-	topEndpointsList: topEndpointListItem[];
-	externalAvgDurationMetrics: externalMetricsAvgDurationItem[];
-	externalErrCodeMetrics: externalErrCodeMetricsItem[];
-	externalMetrics: externalMetricsItem[];
-	dbOverviewMetrics: dbOverviewMetricsItem[];
-	globalTime: GlobalTime;
-	loading: boolean;
-} => {
-	return {
-		externalErrCodeMetrics: state.metricsData.externalErrCodeMetricsItem,
-		serviceMetrics: state.metricsData.metricItems,
-		topEndpointsList: state.metricsData.topEndpointListItem,
-		externalMetrics: state.metricsData.externalMetricsItem,
-		globalTime: state.globalTime,
-		dbOverviewMetrics: state.metricsData.dbOverviewMetricsItem,
-		externalAvgDurationMetrics: state.metricsData.externalMetricsAvgDurationItem,
-		loading: state.metricsData.loading,
-	};
-};
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
+});
 
-export default connect(mapStateToProps, {
-	getServicesMetrics: getServicesMetrics,
-	getExternalMetrics: getExternalMetrics,
-	getExternalErrCodeMetrics: getExternalErrCodeMetrics,
-	getExternalAvgDurationMetrics: getExternalAvgDurationMetrics,
-	getTopEndpoints: getTopEndpoints,
-	updateTimeInterval: UpdateTimeInterval,
-	getDbOverViewMetrics: getDbOverViewMetrics,
-	getInitialMerticData: getInitialMerticData,
-})(_ServiceMetrics);
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(ServiceMetrics);
