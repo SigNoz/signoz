@@ -1,4 +1,4 @@
-import { Card, Col } from 'antd';
+import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import MetricReducer from 'types/reducer/metrics';
 
-import { Row } from '../styles';
+import { Card, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 
 const Application = (): JSX.Element => {

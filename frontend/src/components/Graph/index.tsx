@@ -97,25 +97,18 @@ const Graph = ({
 					legend: {
 						// just making sure that label is present
 						display: !(
-							data.datasets.find((e) => e.label !== undefined) === undefined
+							data.datasets.find((e) => {
+								if (e.label?.length === 0) {
+									return false;
+								}
+								return e.label !== undefined;
+							}) === undefined
 						),
 						labels: {
 							usePointStyle: true,
 							pointStyle: 'circle',
 						},
 						position: 'bottom',
-						// labels: {
-						// 	generateLabels: (chart: Chart): LegendItem[] => {
-						// 		return (data.datasets || []).map((e, index) => {
-						// 			return {
-						// 				text: e.label || '',
-						// 				datasetIndex: index,
-						// 			};
-						// 		});
-						// 	},
-						// 	pointStyle: 'circle',
-						// 	usePointStyle: true,
-						// },
 					},
 				},
 				layout: {

@@ -8,6 +8,11 @@ export const Card = styled(CardComponent)`
 
 	.ant-card-body {
 		padding: 0;
+		max-height: 40vh;
+
+		> div {
+			min-height: 40vh;
+		}
 	}
 `;
 

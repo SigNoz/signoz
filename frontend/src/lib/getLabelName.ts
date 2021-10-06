@@ -40,7 +40,9 @@ const getLabelName = (
 	const post = postArray.map((e) => `${e}="${metric[e]}"`).join(',');
 	const pre = preArray.map((e) => `${e}="${metric[e]}"`).join(',');
 
-	const result = `${metric[keysArray[index]]}`;
+	const value = metric[keysArray[index]];
+
+	const result = `${value === undefined ? '' : value}`;
 
 	if (post.length === 0 && pre.length === 0) {
 		return result;

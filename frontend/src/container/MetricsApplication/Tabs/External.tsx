@@ -1,9 +1,9 @@
-import { Card, Col } from 'antd';
+import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Row } from '../styles';
+import { Card, Row } from '../styles';
 
 const External = (): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
