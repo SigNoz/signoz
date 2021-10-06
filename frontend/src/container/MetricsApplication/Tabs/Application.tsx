@@ -98,10 +98,36 @@ const Application = (): JSX.Element => {
 			<Row gutter={24}>
 				<Col span={12}>
 					<Card>
-						{/* <ErrorRateChart
-								onTracePopupClick={onErrTracePopupClick}
-								data={serviceOverview}
-							/> */}
+						<Card>
+							<GraphTitle>Request per sec</GraphTitle>
+							<GraphContainer>
+								<FullView
+									fullViewOptions={false}
+									widget={{
+										query: [
+											{
+												query: '',
+											},
+										],
+										description: '',
+										id: '',
+										isStacked: false,
+										nullZeroValues: '',
+										opacity: '0',
+										panelTypes: 'TIME_SERIES',
+										queryData: {
+											data: [],
+											error: false,
+											errorMessage: '',
+											loading: false,
+										},
+										timePreferance: 'GLOBAL_TIME',
+										title: '',
+										stepSize: 30,
+									}}
+								/>
+							</GraphContainer>
+						</Card>
 					</Card>
 				</Col>
 
