@@ -20,7 +20,10 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
 
-const FullView = ({ widget }: FullViewProps): JSX.Element => {
+const FullView = ({
+	widget,
+	fullViewOptions = true,
+}: FullViewProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
@@ -118,6 +121,14 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 		onFetchDataHandler();
 	}, [onFetchDataHandler]);
 
+	if (state.error && !state.loading) {
+		return (
+			<NotFoundContainer>
+				<Typography>{state.errorMessage}</Typography>
+			</NotFoundContainer>
+		);
+	}
+
 	if (state.loading || state.payload === undefined) {
 		return <Spinner height="80vh" size="large" tip="Loading..." />;
 	}
@@ -125,12 +136,19 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 	if (state.loading === false && state.payload.datasets.length === 0) {
 		return (
 			<>
-				<TimePreference
-					{...{
-						selectedTime,
-						setSelectedTime,
-					}}
-				/>
+				{fullViewOptions && (
+					<TimeContainer>
+						<TimePreference
+							{...{
+								selectedTime,
+								setSelectedTime,
+							}}
+						/>
+						<Button onClick={onFetchDataHandler} type="primary">
+							Refresh
+						</Button>
+					</TimeContainer>
+				)}
 				<NotFoundContainer>
 					<Typography>No Data</Typography>
 				</NotFoundContainer>
@@ -140,17 +158,19 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 
 	return (
 		<>
-			<TimeContainer>
-				<TimePreference
-					{...{
-						selectedTime,
-						setSelectedTime,
-					}}
-				/>
-				<Button onClick={onFetchDataHandler} type="primary">
-					Refresh
-				</Button>
-			</TimeContainer>
+			{fullViewOptions && (
+				<TimeContainer>
+					<TimePreference
+						{...{
+							selectedTime,
+							setSelectedTime,
+						}}
+					/>
+					<Button onClick={onFetchDataHandler} type="primary">
+						Refresh
+					</Button>
+				</TimeContainer>
+			)}
 
 			<GraphContainer>
 				<GridGraphComponent
@@ -176,6 +196,7 @@ interface FullViewState {
 
 interface FullViewProps {
 	widget: Widgets;
+	fullViewOptions?: boolean;
 }
 
 export default FullView;
