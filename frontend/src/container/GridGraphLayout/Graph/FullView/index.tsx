@@ -130,7 +130,11 @@ const FullView = ({
 	}
 
 	if (state.loading || state.payload === undefined) {
-		return <Spinner height="80vh" size="large" tip="Loading..." />;
+		return (
+			<div>
+				<Spinner height="80vh" size="large" tip="Loading..." />
+			</div>
+		);
 	}
 
 	if (state.loading === false && state.payload.datasets.length === 0) {

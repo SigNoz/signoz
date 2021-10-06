@@ -6,6 +6,7 @@ export const GraphContainer = styled.div`
 	justify-content: center;
 	display: flex;
 	flex-direction: column;
+	width: 100%;
 `;
 
 export const NotFoundContainer = styled.div`

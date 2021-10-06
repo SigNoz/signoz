@@ -8,11 +8,7 @@ export const Card = styled(CardComponent)`
 
 	.ant-card-body {
 		padding: 0;
-		max-height: 40vh;
-
-		> div {
-			min-height: 40vh;
-		}
+		min-height: 40vh;
 	}
 `;
 
@@ -23,7 +19,10 @@ export const Row = styled(RowComponent)`
 `;
 
 export const GraphContainer = styled.div`
-	min-height: 27vh;
+	div {
+		min-height: 40vh;
+		max-height: 40vh;
+	}
 `;
 
 export const GraphTitle = styled(Typography)`
