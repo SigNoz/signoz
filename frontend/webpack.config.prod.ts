@@ -1,41 +1,27 @@
 // shared config (dev and prod)
-const { resolve } = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const portFinderSync = require('portfinder-sync');
-const dotenv = require('dotenv');
-const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+import CompressionPlugin from 'compression-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { resolve } from 'path';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import webpack from 'webpack';
 
-dotenv.config();
+const __dirname = resolve();
 
-console.log(resolve(__dirname, './src/'));
-
-module.exports = {
-	mode: 'development',
+const config = {
+	mode: 'production',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
-	devServer: {
-		historyApiFallback: true,
-		publicPath: '/',
-		transportMode: 'ws',
-		open: true,
-		openPage: 'application',
-		contentBase: [resolve(__dirname, './public')],
-		hot: true,
-		liveReload: false,
-		inline: true,
-		// This is being used because if the port 3000 is being used
-		// then it will try to find another open port availble.
-		port: portFinderSync.getPort(3000),
-	},
-	target: 'web',
 	output: {
-		filename: ({ chunk: { name, hash } }) => {
+		filename: ({ chunk }: any): string => {
+			const hash = chunk?.hash;
+			const name = chunk?.name;
 			return `js/${name}-${hash}.js`;
 		},
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
+
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
@@ -66,6 +52,12 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+		new CompressionPlugin({
+			exclude: /.map$/,
+		}),
+		new CopyPlugin({
+			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
@@ -77,3 +69,5 @@ module.exports = {
 		hints: false,
 	},
 };
+
+export default config;

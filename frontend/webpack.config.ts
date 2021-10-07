@@ -1,23 +1,41 @@
 // shared config (dev and prod)
-const { resolve } = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
-const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+import dotenv from 'dotenv';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { resolve } from 'path';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import webpack from 'webpack';
+import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 
-module.exports = {
-	mode: 'production',
+dotenv.config();
+
+const __dirname = resolve();
+console.log(resolve(__dirname, './src/'));
+
+interface Configuration extends webpack.Configuration {
+	devServer?: WebpackDevServerConfiguration;
+}
+
+const config: Configuration = {
+	mode: 'development',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
+	devServer: {
+		historyApiFallback: true,
+		open: true,
+		hot: true,
+		liveReload: true,
+		port: 'auto',
+	},
+	target: 'web',
 	output: {
-		filename: ({ chunk: { name, hash } }) => {
+		filename: ({ chunk }) => {
+			const hash = chunk?.hash;
+			const name = chunk?.name;
 			return `js/${name}-${hash}.js`;
 		},
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
-
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
@@ -47,13 +65,7 @@ module.exports = {
 		],
 	},
 	plugins: [
-		new CompressionPlugin({
-			exclude: /.map$/,
-		}),
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
@@ -65,3 +77,5 @@ module.exports = {
 		hints: false,
 	},
 };
+
+export default config;
