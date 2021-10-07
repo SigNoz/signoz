@@ -7,7 +7,7 @@ const config: Config.InitialOptions = {
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
-		'\\.(css|less)$': '<rootDir>cssMock.ts',
+		'\\.(css|less)$': '<rootDir>/__mocks__/cssMock.ts',
 	},
 	notify: true,
 	notifyMode: 'always',
