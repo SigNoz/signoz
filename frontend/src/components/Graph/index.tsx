@@ -1,8 +1,11 @@
 import {
+	ActiveElement,
 	BarController,
 	BarElement,
 	CategoryScale,
 	Chart,
+	ChartData,
+	ChartEvent,
 	ChartOptions,
 	ChartType,
 	Decimation,
@@ -13,7 +16,6 @@ import {
 	LineController,
 	LineElement,
 	PointElement,
-	ScaleOptions,
 	SubTitle,
 	TimeScale,
 	TimeSeriesScale,
@@ -54,7 +56,6 @@ const Graph = ({
 	title,
 	isStacked,
 	label,
-	xAxisType,
 	onClickHandler,
 }: GraphProps): JSX.Element => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -116,16 +117,17 @@ const Graph = ({
 				},
 				scales: {
 					x: {
-						animate: false,
 						grid: {
 							display: true,
 							color: getGridColor(),
 						},
-						labels: label,
 						adapters: {
 							date: chartjsAdapter,
 						},
-						type: xAxisType,
+						time: {
+							unit: 'minute',
+						},
+						type: 'timeseries',
 					},
 					y: {
 						display: true,
@@ -144,7 +146,11 @@ const Graph = ({
 						cubicInterpolationMode: 'monotone',
 					},
 				},
-				onClick: onClickHandler,
+				onClick: (event, element, chart) => {
+					if (onClickHandler) {
+						onClickHandler(event, element, chart, data);
+					}
+				},
 			};
 
 			lineChartRef.current = new Chart(chartRef.current, {
@@ -203,7 +209,7 @@ const Graph = ({
 				// ],
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, label, xAxisType, getGridColor]);
+	}, [chartRef, data, type, title, isStacked, label, getGridColor]);
 
 	useEffect(() => {
 		buildChart();
@@ -223,8 +229,14 @@ interface GraphProps {
 	title?: string;
 	isStacked?: boolean;
 	label?: string[];
-	xAxisType?: ScaleOptions['type'];
-	onClickHandler?: ChartOptions['onClick'];
+	onClickHandler?: graphOnClickHandler;
 }
+
+export type graphOnClickHandler = (
+	event: ChartEvent,
+	elements: ActiveElement[],
+	chart: Chart,
+	data: ChartData,
+) => void;
 
 export default Graph;
