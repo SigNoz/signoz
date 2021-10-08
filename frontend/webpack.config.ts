@@ -25,6 +25,11 @@ const config: Configuration = {
 		hot: true,
 		liveReload: true,
 		port: process.env.PORT,
+		static: {
+			directory: resolve(__dirname, "public"),
+			publicPath: "/",
+			watch: true,
+		}
 	},
 	target: 'web',
 	output: {
