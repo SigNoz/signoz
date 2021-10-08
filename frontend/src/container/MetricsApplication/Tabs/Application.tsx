@@ -98,7 +98,7 @@ const Application = ({
 				<Button
 					type="primary"
 					{...{
-						show: buttonState.show,
+						showbutton: buttonState.show,
 						x: buttonState.xCoordinate,
 						y: buttonState.yCoordinate,
 					}}
