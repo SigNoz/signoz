@@ -14,6 +14,7 @@ export const Card = styled(CardComponent)`
 
 export const Row = styled(RowComponent)`
 	&&& {
+		position: relative;
 		padding: 1rem;
 	}
 `;

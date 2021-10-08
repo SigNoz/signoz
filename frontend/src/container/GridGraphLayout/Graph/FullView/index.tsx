@@ -2,6 +2,7 @@ import { Button, Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
+import { graphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
@@ -12,7 +13,7 @@ import {
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -23,6 +24,7 @@ import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
 const FullView = ({
 	widget,
 	fullViewOptions = true,
+	onClickHandler,
 }: FullViewProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
@@ -184,6 +186,7 @@ const FullView = ({
 						isStacked: widget.isStacked,
 						opacity: widget.opacity,
 						title: widget.title,
+						onClickHandler: onClickHandler,
 					}}
 				/>
 			</GraphContainer>
@@ -201,6 +204,7 @@ interface FullViewState {
 interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
+	onClickHandler?: graphOnClickHandler;
 }
 
-export default FullView;
+export default memo(FullView);
