@@ -24,7 +24,7 @@ const config: Configuration = {
 		open: true,
 		hot: true,
 		liveReload: true,
-		port: 'auto',
+		port: process.env.PORT,
 	},
 	target: 'web',
 	output: {
