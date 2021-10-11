@@ -1,8 +1,10 @@
+import { IS_LOGGED_IN } from 'constants/auth';
 import { AppAction, SWITCH_DARK_MODE } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
 	isDarkMode: true,
+	isLoggedIn: localStorage.getItem(IS_LOGGED_IN) === 'yes',
 };
 
 const appReducer = (
