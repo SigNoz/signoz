@@ -8,9 +8,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 const intitalState: GlobalReducer = {
 	maxTime: Date.now() * 1000000,
 	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
-	// maxTime: 0,
-	// minTime: 0,
-	loading: false,
+	loading: true,
 };
 
 const globalTimeReducer = (
