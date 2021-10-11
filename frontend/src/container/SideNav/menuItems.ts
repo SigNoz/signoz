@@ -21,6 +21,11 @@ const menus: SidebarMenu[] = [
 		name: 'Traces',
 	},
 	{
+		Icon: DashboardFilled,
+		to: ROUTES.ALL_DASHBOARD,
+		name: 'Dashboard',
+	},
+	{
 		to: ROUTES.SERVICE_MAP,
 		name: 'Service Map',
 		Icon: DeploymentUnitOutlined,
@@ -39,11 +44,6 @@ const menus: SidebarMenu[] = [
 		Icon: ApiOutlined,
 		to: ROUTES.INSTRUMENTATION,
 		name: 'Add instrumentation',
-	},
-	{
-		Icon: DashboardFilled,
-		to: ROUTES.ALL_DASHBOARD,
-		name: 'Dashboard',
 	},
 ];
 
