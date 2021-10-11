@@ -25,6 +25,7 @@ type Reader interface {
 	GetTags(ctx context.Context, serviceName string) (*[]model.TagItem, error)
 	GetServicesList(ctx context.Context) (*[]string, error)
 	GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
+	GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
 
 	// Search Interfaces
 	SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error)

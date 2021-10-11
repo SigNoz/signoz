@@ -199,3 +199,12 @@ type SpanSearchAggregatesResponseItem struct {
 type SetTTLResponseItem struct {
 	Message string `json:"message"`
 }
+
+type DBResponseTTL struct {
+	EngineFull string `db:"engine_full"`
+}
+
+type GetTTLResponseItem struct {
+	Type string `json:"type"`
+	Time string `json:"ttl_duration"`
+}

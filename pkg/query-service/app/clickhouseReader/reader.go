@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go"
@@ -850,4 +851,57 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParam
 	}
 
 	return &model.SetTTLResponseItem{Message: "ttl has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
+
+	parseTTL := func(queryResp string) string {
+		values := strings.Split(queryResp, " ")
+		N := len(values)
+		ttlIdx := -1
+
+		for i := 0; i < N; i++ {
+			if strings.Contains(values[i], "toIntervalSecond") {
+				ttlIdx = i
+				break
+			}
+		}
+		if ttlIdx == -1 {
+			return ""
+		}
+
+		output := strings.SplitN(values[ttlIdx], "(", 2)
+		timePart := strings.Trim(output[1], ")")
+		return timePart
+	}
+
+	var dbResp model.DBResponseTTL
+
+	switch ttlParams.Type {
+	case constants.TraceTTL:
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozTraceTableName)
+
+		err := r.db.QueryRowx(query).StructScan(&dbResp)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+		}
+
+	case constants.MetricsTTL:
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
+
+		err := r.db.QueryRowx(query).StructScan(&dbResp)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+		}
+
+	default:
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
+
+	}
+	return &model.GetTTLResponseItem{Type: ttlParams.Type, Time: parseTTL(dbResp.EngineFull)}, nil
+
 }

@@ -110,3 +110,7 @@ type TTLParams struct {
 	Type     string
 	Duration string
 }
+
+type GetTTLParams struct {
+	Type string
+}
