@@ -118,15 +118,15 @@ const Application = ({
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `histogram_quantile(0.5, sum(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}) by (le))`,
+										query: `histogram_quantile(0.5, sum(rate(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m])) by (le))`,
 										legend: 'p50 latency',
 									},
 									{
-										query: `histogram_quantile(0.9, sum(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}) by (le))`,
+										query: `histogram_quantile(0.9, sum(rate(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m])) by (le))`,
 										legend: 'p90 latency',
 									},
 									{
-										query: `histogram_quantile(0.99, sum(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}) by (le))`,
+										query: `histogram_quantile(0.99, sum(rate(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m])) by (le))`,
 										legend: 'p99 latency',
 									},
 								])}
@@ -143,7 +143,7 @@ const Application = ({
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[5m]))`,
+										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[2m]))`,
 										legend: 'Request per second',
 									},
 								])}
@@ -162,8 +162,8 @@ const Application = ({
 									fullViewOptions={false}
 									widget={getWidget([
 										{
-											query: '',
-											legend: '',
+											query: `sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]) OR vector(0))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))`,
+											legend: 'Error Percentage (%)',
 										},
 									])}
 								/>

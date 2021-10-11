@@ -20,8 +20,8 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"}[5m]))`,
-										legend: '',
+										query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"}[1m])) by (db_system)`,
+										legend: '{{db_system}}',
 									},
 								])}
 							/>

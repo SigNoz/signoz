@@ -20,8 +20,8 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: '',
-										legend: '',
+										query: `(sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."}[1m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[1m])) by (http_url)`,
+										legend: '{{http_url}}',
 									},
 								])}
 							/>
@@ -57,7 +57,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								widget={getWidget([
 									{
 										query: `sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
-										legend: '0.0.0.0:8081',
+										legend: '{{http_url}}',
 									},
 								])}
 							/>
@@ -74,7 +74,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								widget={getWidget([
 									{
 										query: `sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m])/rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
-										legend: '0.0.0.0:8083',
+										legend: '{{http_url}}',
 									},
 								])}
 							/>

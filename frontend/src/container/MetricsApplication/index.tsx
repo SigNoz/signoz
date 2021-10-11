@@ -26,7 +26,7 @@ const ServiceMetrics = (): JSX.Element => {
 			},
 			timePreferance: 'GLOBAL_TIME',
 			title: '',
-			stepSize: 30,
+			stepSize: 60,
 		};
 	};
 
