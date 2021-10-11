@@ -96,7 +96,8 @@ const Application = ({
 		<>
 			<Row gutter={24}>
 				<Button
-					type="primary"
+					type="default"
+					size="small"
 					{...{
 						showbutton: buttonState.show,
 						x: buttonState.xCoordinate,
