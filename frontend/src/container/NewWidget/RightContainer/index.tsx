@@ -43,20 +43,20 @@ const RightContainer = ({
 		[],
 	);
 
-	const nullValueButtons = [
-		{
-			check: 'zero',
-			name: 'Zero',
-		},
-		{
-			check: 'interpolate',
-			name: 'Interpolate',
-		},
-		{
-			check: 'blank',
-			name: 'Blank',
-		},
-	];
+	// const nullValueButtons = [
+	// 	{
+	// 		check: 'zero',
+	// 		name: 'Zero',
+	// 	},
+	// 	{
+	// 		check: 'interpolate',
+	// 		name: 'Interpolate',
+	// 	},
+	// 	{
+	// 		check: 'blank',
+	// 		name: 'Blank',
+	// 	},
+	// ];
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
