@@ -10,7 +10,6 @@ import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
-import useMountedState from 'hooks/useMountedState';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
@@ -30,9 +29,6 @@ const FullView = ({
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
-	const mounted = useMountedState();
-
-	const isNotMounted = mounted();
 
 	const [state, setState] = useState<FullViewState>({
 		error: false,
@@ -124,10 +120,8 @@ const FullView = ({
 	}, [widget, maxTime, minTime, selectedTime.enum]);
 
 	useEffect(() => {
-		if (!isNotMounted) {
-			onFetchDataHandler();
-		}
-	}, [onFetchDataHandler, isNotMounted]);
+		onFetchDataHandler();
+	}, [onFetchDataHandler]);
 
 	if (state.error && !state.loading) {
 		return (
@@ -213,4 +207,15 @@ interface FullViewProps {
 	onClickHandler?: graphOnClickHandler;
 }
 
-export default memo(FullView);
+export default memo(FullView, (prev, next) => {
+	if (
+		next.widget.query.length !== prev.widget.query.length &&
+		next.widget.query.every((value, index) => {
+			return value === prev.widget.query[index];
+		})
+	) {
+		return false;
+	}
+
+	return true;
+});

@@ -1,5 +1,5 @@
 import { Tabs } from 'antd';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import Application from './Tabs/Application';
@@ -29,6 +29,7 @@ const ServiceMetrics = (): JSX.Element => {
 			stepSize: 30,
 		};
 	};
+
 	return (
 		<Tabs defaultActiveKey="1">
 			<TabPane animated destroyInactiveTabPane tab="Application Metrics" key="1">
