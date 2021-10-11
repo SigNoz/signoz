@@ -1,4 +1,5 @@
 import { Layout } from 'antd';
+import get from 'api/browser/localstorage/get';
 import ROUTES from 'constants/routes';
 import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
@@ -15,16 +16,20 @@ interface BaseLayoutProps {
 }
 
 const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
-	const currentYear = new Date().getFullYear();
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isLoggedInLocalStorage = get('isLoggedIn');
 
 	useEffect(() => {
-		if (isLoggedIn) {
-			history.push(ROUTES.APPLICATION);
-		} else {
-			history.push(ROUTES.SIGN_UP);
+		if (isLoggedInLocalStorage === null) {
+			if (isLoggedIn) {
+				history.push(ROUTES.APPLICATION);
+			} else {
+				history.push(ROUTES.SIGN_UP);
+			}
 		}
-	}, [isLoggedIn]);
+	}, [isLoggedIn, isLoggedInLocalStorage]);
+
+	const currentYear = new Date().getFullYear();
 
 	return (
 		<Layout style={{ minHeight: '100vh' }}>
