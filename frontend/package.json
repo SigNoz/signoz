@@ -10,7 +10,10 @@
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
 		"cypress:open": "cypress open",
-		"cypress:run": "cypress run"
+		"cypress:run": "cypress run",
+		"jest": "jest",
+		"jest:coverage": "jest --coverage",
+		"jest:watch": "jest --watch"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -164,6 +167,7 @@
 		"prettier": "2.2.1",
 		"react-hot-loader": "^4.13.0",
 		"react-is": "^17.0.1",
+		"ts-node": "^10.2.1",
 		"webpack-cli": "^4.5.0"
 	}
 }
