@@ -8,9 +8,7 @@ const signup = async (
 	props: Props,
 ): Promise<SuccessResponse<undefined> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/user?email=', {
-			...props,
-		});
+		const response = await axios.post(`/user?email=${props.email}`);
 
 		return {
 			statusCode: 200,
