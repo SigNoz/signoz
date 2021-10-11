@@ -9,18 +9,22 @@ import { timePreferance } from './timeItems';
 const { TextArea } = Input;
 import TimePreference from 'components/TimePreferenceDropDown';
 
-import { Container, NullButtonContainer, TextContainer, Title } from './styles';
+import {
+	Container,
+	// NullButtonContainer, TextContainer,
+	Title,
+} from './styles';
 
 const RightContainer = ({
 	description,
-	opacity,
-	selectedNullZeroValue,
+	// opacity,
+	// selectedNullZeroValue,
 	setDescription,
-	setOpacity,
-	setSelectedNullZeroValue,
-	setStacked,
+	// setOpacity,
+	// setSelectedNullZeroValue,
+	// setStacked,
 	setTitle,
-	stacked,
+	// stacked,
 	title,
 	selectedGraph,
 	setSelectedTime,
@@ -86,7 +90,7 @@ const RightContainer = ({
 				}
 			/>
 
-			<TextContainer>
+			{/* <TextContainer>
 				<Typography>Stacked Graphs :</Typography>
 				<Switch
 					checked={stacked}
@@ -94,11 +98,11 @@ const RightContainer = ({
 						setStacked((value) => !value);
 					}}
 				/>
-			</TextContainer>
+			</TextContainer> */}
 
-			<Title light={'true'}>Fill Opacity: </Title>
+			{/* <Title light={'true'}>Fill Opacity: </Title> */}
 
-			<Slider
+			{/* <Slider
 				value={parseInt(opacity, 10)}
 				marks={{
 					0: '0',
@@ -108,9 +112,9 @@ const RightContainer = ({
 				}}
 				onChange={(number): void => onChangeHandler(setOpacity, number.toString())}
 				step={1}
-			/>
+			/> */}
 
-			<Title light={'true'}>Null/Zero values: </Title>
+			{/* <Title light={'true'}>Null/Zero values: </Title>
 
 			<NullButtonContainer>
 				{nullValueButtons.map((button) => (
@@ -124,7 +128,7 @@ const RightContainer = ({
 						{button.name}
 					</Button>
 				))}
-			</NullButtonContainer>
+			</NullButtonContainer> */}
 
 			<Title light={'true'}>Panel Time Preference</Title>
 
