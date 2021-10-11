@@ -73,6 +73,15 @@ export const SaveDashboard = ({
 						opacity: updatedopacity,
 						title: updatedTitle,
 						timePreferance: updatedtimePreferance,
+						queryData: {
+							...selectedWidget.queryData,
+							data: [
+								...selectedWidget.queryData.data.map((e) => ({
+									...e,
+									queryData: [],
+								})),
+							],
+						},
 					},
 					...afterWidget,
 				],
