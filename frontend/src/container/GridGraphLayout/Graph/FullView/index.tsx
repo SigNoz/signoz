@@ -10,6 +10,7 @@ import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
+import useMountedState from 'hooks/useMountedState';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
@@ -29,6 +30,9 @@ const FullView = ({
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
+	const mounted = useMountedState();
+
+	const isNotMounted = mounted();
 
 	const [state, setState] = useState<FullViewState>({
 		error: false,
@@ -120,8 +124,10 @@ const FullView = ({
 	}, [widget, maxTime, minTime, selectedTime.enum]);
 
 	useEffect(() => {
-		onFetchDataHandler();
-	}, [onFetchDataHandler]);
+		if (!isNotMounted) {
+			onFetchDataHandler();
+		}
+	}, [onFetchDataHandler, isNotMounted]);
 
 	if (state.error && !state.loading) {
 		return (

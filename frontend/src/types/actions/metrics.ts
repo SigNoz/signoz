@@ -1,9 +1,9 @@
-import { DbOverView } from 'types/api/metrics/getDBOverview';
-import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
-import { ExternalError } from 'types/api/metrics/getExternalError';
-import { ExternalService } from 'types/api/metrics/getExternalService';
+// import { DBOverView } from 'types/api/metrics/getDBOverview';
+// import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
+// import { ExternalError } from 'types/api/metrics/getExternalError';
+// import { ExternalService } from 'types/api/metrics/getExternalService';
 import { ServicesList } from 'types/api/metrics/getService';
-import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
+// import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
 
 export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
@@ -35,12 +35,12 @@ export interface GetServiceListError {
 export interface GetInitialApplicationData {
 	type: typeof GET_INTIAL_APPLICATION_DATA;
 	payload: {
-		dbOverView: DbOverView[];
-		externalService: ExternalService[];
 		topEndPoints: TopEndPoints[];
-		externalAverageDuration: ExternalAverageDuration[];
-		externalError: ExternalError[];
-		serviceOverview: ServiceOverview[];
+		// dbOverView: DBOverView[];
+		// externalService: ExternalService[];
+		// externalAverageDuration: ExternalAverageDuration[];
+		// externalError: ExternalError[];
+		// serviceOverview: ServiceOverview[];
 	};
 }
 

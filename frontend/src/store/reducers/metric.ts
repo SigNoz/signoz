@@ -70,23 +70,23 @@ const metrics = (
 
 		case GET_INTIAL_APPLICATION_DATA: {
 			const {
-				dbOverView,
+				// dbOverView,
 				topEndPoints,
-				serviceOverview,
-				externalService,
-				externalAverageDuration,
-				externalError,
+				// serviceOverview,
+				// externalService,
+				// externalAverageDuration,
+				// externalError,
 			} = action.payload;
 
 			return {
 				...state,
 				loading: false,
-				dbOverView,
+				// dbOverView,
 				topEndPoints,
-				serviceOverview,
-				externalService,
-				externalAverageDuration,
-				externalError,
+				// serviceOverview,
+				// externalService,
+				// externalAverageDuration,
+				// externalError,
 			};
 		}
 		default:
