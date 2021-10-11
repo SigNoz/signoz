@@ -4,10 +4,15 @@ import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { GlobalTimeLoading } from 'store/actions';
+import AppActions from 'types/actions';
 
 import { ButtonContainer, Container, FormWrapper, Title } from './styles';
 
-const Signup = (): JSX.Element => {
+const Signup = ({ globalLoading }: SignupProps): JSX.Element => {
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },
@@ -50,6 +55,7 @@ const Signup = (): JSX.Element => {
 				if (response.statusCode === 200) {
 					localStorage.setItem(IS_LOGGED_IN, 'yes');
 					history.push(ROUTES.APPLICATION);
+					globalLoading();
 				} else {
 					// @TODO throw a error notification here
 				}
@@ -113,4 +119,16 @@ const Signup = (): JSX.Element => {
 	);
 };
 
-export default Signup;
+interface DispatchProps {
+	globalLoading: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
+});
+
+type SignupProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(Signup);

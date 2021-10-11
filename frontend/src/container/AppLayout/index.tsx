@@ -10,7 +10,6 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 const { Content, Footer } = Layout;
-
 interface BaseLayoutProps {
 	children: ReactNode;
 }
@@ -20,10 +19,10 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 	const isLoggedInLocalStorage = get('isLoggedIn');
 
 	useEffect(() => {
-		if (isLoggedInLocalStorage === null) {
-			if (isLoggedIn) {
-				history.push(ROUTES.APPLICATION);
-			} else {
+		if (!isLoggedIn && isLoggedInLocalStorage !== null) {
+			history.push(ROUTES.APPLICATION);
+		} else {
+			if (isLoggedInLocalStorage === null) {
 				history.push(ROUTES.SIGN_UP);
 			}
 		}
