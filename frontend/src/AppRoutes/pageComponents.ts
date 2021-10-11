@@ -43,20 +43,17 @@ export const ServicesTablePage = Loadable(
 );
 
 export const SignupPage = Loadable(
-	() => import(/* webpackChunkName: "SignupPage" */ 'modules/Auth/Signup'),
+	() => import(/* webpackChunkName: "SignupPage" */ 'pages/SignUp'),
 );
 
 export const SettingsPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "SettingsPage" */ 'modules/Settings/settingsPage'
-		),
+	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
 export const InstrumentationPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "InstrumentationPage" */ 'modules/add-instrumentation/instrumentationPage'
+			/* webpackChunkName: "InstrumentationPage" */ 'pages/AddInstrumentation'
 		),
 );
 
