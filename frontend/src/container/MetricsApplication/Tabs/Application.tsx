@@ -104,7 +104,7 @@ const Application = ({
 					}}
 					onClick={(): void => onTracePopupClick(buttonState.selectedTimeStamp)}
 				>
-					View
+					View Traces
 				</Button>
 
 				<Col span={12}>
