@@ -1,29 +1,23 @@
 import { Form, Input, Space } from 'antd';
 import { Alert } from 'antd';
-import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { AppState } from 'store/reducers';
+import React, { useEffect } from 'react';
 
-interface SettingsPageProps {}
-
-const layout = {
-	labelCol: { span: 3 },
-	wrapperCol: { span: 6 },
-};
-
-const SettingsPage = (props: SettingsPageProps) => {
+const SettingsPage = (): JSX.Element => {
 	const [form] = Form.useForm();
 
 	useEffect(() => {
 		form.setFieldsValue({
 			retention_period: '3 days',
 		});
-	});
+	}, [form]);
 
 	return (
-		<React.Fragment>
+		<>
 			<Form
-				{...layout}
+				labelCol={{
+					span: 3,
+				}}
+				wrapperCol={{ span: 6 }}
 				name="basic"
 				initialValues={{ remember: true }}
 				style={{ marginLeft: 20 }}
@@ -44,12 +38,8 @@ const SettingsPage = (props: SettingsPageProps) => {
 					type="info"
 				/>
 			</Space>
-		</React.Fragment>
+		</>
 	);
 };
 
-const mapStateToProps = (state: AppState): {} => {
-	return {};
-};
-
-export default connect(mapStateToProps, {})(SettingsPage);
+export default SettingsPage;
