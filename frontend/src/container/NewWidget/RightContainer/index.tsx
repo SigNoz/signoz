@@ -1,4 +1,10 @@
-import { Button, Input, Slider, Switch, Typography } from 'antd';
+import {
+	// Button,
+	Input,
+	// Slider,
+	// Switch,
+	// Typography,
+} from 'antd';
 import InputComponent from 'components/Input';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
