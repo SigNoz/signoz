@@ -205,6 +205,6 @@ type DBResponseTTL struct {
 }
 
 type GetTTLResponseItem struct {
-	Type string `json:"type"`
-	Time string `json:"ttl_duration"`
+	MetricsTime string `json:"metrics_ttl_duration"`
+	TracesTime  string `json:"traces_ttl_duration"`
 }

@@ -875,10 +875,23 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		return timePart
 	}
 
-	var dbResp model.DBResponseTTL
+	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
+		var dbResp model.DBResponseTTL
 
-	switch ttlParams.Type {
-	case constants.TraceTTL:
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
+
+		err := r.db.QueryRowx(query).StructScan(&dbResp)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+		}
+		return &dbResp, nil
+	}
+
+	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
+		var dbResp model.DBResponseTTL
+
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozTraceTableName)
 
 		err := r.db.QueryRowx(query).StructScan(&dbResp)
@@ -888,20 +901,36 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 
-	case constants.MetricsTTL:
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
+		return &dbResp, nil
+	}
 
-		err := r.db.QueryRowx(query).StructScan(&dbResp)
-
+	switch ttlParams.Type {
+	case constants.TraceTTL:
+		dbResp, err := getTracesTTL()
 		if err != nil {
-			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+			return nil, err
 		}
 
-	default:
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
+		return &model.GetTTLResponseItem{TracesTime: parseTTL(dbResp.EngineFull)}, nil
 
+	case constants.MetricsTTL:
+		dbResp, err := getMetricsTTL()
+		if err != nil {
+			return nil, err
+		}
+
+		return &model.GetTTLResponseItem{MetricsTime: parseTTL(dbResp.EngineFull)}, nil
 	}
-	return &model.GetTTLResponseItem{Type: ttlParams.Type, Time: parseTTL(dbResp.EngineFull)}, nil
+	db1, err := getTracesTTL()
+	if err != nil {
+		return nil, err
+	}
+
+	db2, err := getMetricsTTL()
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.GetTTLResponseItem{TracesTime: parseTTL(db1.EngineFull), MetricsTime: parseTTL(db2.EngineFull)}, nil
 
 }

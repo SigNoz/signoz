@@ -112,5 +112,6 @@ type TTLParams struct {
 }
 
 type GetTTLParams struct {
-	Type string
+	Type      string
+	GetAllTTL bool
 }
