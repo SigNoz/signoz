@@ -1,4 +1,9 @@
-import { Card as CardComponent, Row as RowComponent, Typography } from 'antd';
+import {
+	Card as CardComponent,
+	Col as ColComponent,
+	Row as RowComponent,
+	Typography,
+} from 'antd';
 import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`
@@ -14,8 +19,13 @@ export const Card = styled(CardComponent)`
 
 export const Row = styled(RowComponent)`
 	&&& {
-		position: relative;
 		padding: 1rem;
+	}
+`;
+
+export const Col = styled(ColComponent)`
+	display &&& {
+		position: relative;
 	}
 `;
 

@@ -1,4 +1,3 @@
-import { Col } from 'antd';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -16,7 +15,7 @@ import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
+import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
@@ -31,6 +30,7 @@ const Application = ({
 		yCoordinate: 0,
 		show: false,
 		selectedTimeStamp: 0,
+		from: '',
 	});
 
 	const { topEndPoints } = useSelector<AppState, MetricReducer>(
@@ -59,6 +59,7 @@ const Application = ({
 		elements: ActiveElement[],
 		chart: Chart,
 		data: ChartData,
+		from: string,
 	): Promise<void> => {
 		if (event.native) {
 			const points = chart.getElementsAtEventForMode(
@@ -79,6 +80,7 @@ const Application = ({
 						xCoordinate: firstPoint.element.x,
 						show: true,
 						yCoordinate: firstPoint.element.y,
+						from,
 					});
 				}
 			} else {
@@ -95,26 +97,27 @@ const Application = ({
 	return (
 		<>
 			<Row gutter={24}>
-				<Button
-					type="default"
-					size="small"
-					{...{
-						showbutton: buttonState.show,
-						x: buttonState.xCoordinate,
-						y: buttonState.yCoordinate,
-					}}
-					onClick={(): void => onTracePopupClick(buttonState.selectedTimeStamp)}
-				>
-					View Traces
-				</Button>
-
 				<Col span={12}>
+					{buttonState.from === 'Application' && (
+						<Button
+							type="default"
+							size="small"
+							{...{
+								showbutton: buttonState.show,
+								x: buttonState.xCoordinate,
+								y: buttonState.yCoordinate,
+							}}
+							onClick={(): void => onTracePopupClick(buttonState.selectedTimeStamp)}
+						>
+							View Traces
+						</Button>
+					)}
 					<Card>
 						<GraphTitle>Application latency in ms</GraphTitle>
 						<GraphContainer>
 							<FullView
 								onClickHandler={(event, element, chart, data): void => {
-									onClickhandler(event, element, chart, data);
+									onClickhandler(event, element, chart, data, 'Application');
 								}}
 								fullViewOptions={false}
 								widget={getWidget([
@@ -137,11 +140,28 @@ const Application = ({
 				</Col>
 
 				<Col span={12}>
+					{buttonState.from === 'Request' && (
+						<Button
+							type="default"
+							size="small"
+							{...{
+								showbutton: buttonState.show,
+								x: buttonState.xCoordinate,
+								y: buttonState.yCoordinate,
+							}}
+							onClick={(): void => onTracePopupClick(buttonState.selectedTimeStamp)}
+						>
+							View Traces
+						</Button>
+					)}
 					<Card>
 						<GraphTitle>Request per sec</GraphTitle>
 						<GraphContainer>
 							<FullView
 								fullViewOptions={false}
+								onClickHandler={(event, element, chart, data): void => {
+									onClickhandler(event, element, chart, data, 'Request');
+								}}
 								widget={getWidget([
 									{
 										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[2m]))`,
