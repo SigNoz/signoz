@@ -60,7 +60,7 @@ const SideNav = ({ toggleDarkMode, globalTimeLoading }: Props): JSX.Element => {
 			<ThemeSwitcherWrapper>
 				<ToggleButton checked={isDarkMode} onChange={toggleTheme} />
 			</ThemeSwitcherWrapper>
-			<NavLink to="/">
+			<NavLink to={ROUTES.APPLICATION}>
 				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
