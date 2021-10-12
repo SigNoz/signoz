@@ -6,6 +6,9 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import webpack from 'webpack';
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 
+// @ts-ignore
+import portFinderSync from 'portfinder-sync';
+
 dotenv.config();
 
 const __dirname = resolve();
@@ -24,7 +27,7 @@ const config: Configuration = {
 		open: true,
 		hot: true,
 		liveReload: true,
-		port: process.env.PORT,
+		port: portFinderSync.getPort(3000),
 		static: {
 			directory: resolve(__dirname, "public"),
 			publicPath: "/",
