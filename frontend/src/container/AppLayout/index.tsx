@@ -19,6 +19,10 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 	const isLoggedInLocalStorage = get('isLoggedIn');
 
 	useEffect(() => {
+		if (isLoggedIn && history.location.pathname === '/') {
+			history.push(ROUTES.APPLICATION);
+		}
+
 		if (!isLoggedIn && isLoggedInLocalStorage !== null) {
 			history.push(ROUTES.APPLICATION);
 		} else {
