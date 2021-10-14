@@ -38,8 +38,8 @@ const Application = ({
 	);
 
 	const onTracePopupClick = (timestamp: number): void => {
-		const currentTime = timestamp / 1000000;
-		const tPlusOne = timestamp / 1000000 + 1 * 60 * 1000;
+		const currentTime = timestamp;
+		const tPlusOne = timestamp + 1 * 60 * 1000;
 
 		updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
 
