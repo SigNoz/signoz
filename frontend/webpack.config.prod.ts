@@ -5,10 +5,11 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { resolve } from 'path';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import webpack from 'webpack';
+import { WebpackPluginInstance } from 'webpack-dev-middleware/node_modules/webpack';
 
 const __dirname = resolve();
 
-const config = {
+const config: webpack.Configuration = {
 	mode: 'production',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
@@ -54,10 +55,10 @@ const config = {
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
 		new CompressionPlugin({
 			exclude: /.map$/,
-		}),
+		}) as any,
 		new CopyPlugin({
 			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
+		}) as any,
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
