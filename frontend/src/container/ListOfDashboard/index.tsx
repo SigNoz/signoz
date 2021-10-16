@@ -3,10 +3,9 @@ import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
-import updateUrl from 'lib/updateUrl';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { generatePath, useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
@@ -103,7 +102,11 @@ const ListOfAllDashboard = (): JSX.Element => {
 					...newDashboardState,
 					loading: false,
 				});
-				push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', newDashboardId));
+				push(
+					generatePath(ROUTES.DASHBOARD, {
+						dashboardId: newDashboardId,
+					}),
+				);
 			} else {
 				setNewDashboardState({
 					...newDashboardState,
