@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -27,9 +27,10 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const { servicename } = useParams<ServiceProps>();
+	const isMouted = useRef(true);
 
 	useEffect(() => {
-		if (servicename !== undefined && loading == false) {
+		if (servicename !== undefined && loading == false && isMouted.current) {
 			getInitialData({
 				end: maxTime,
 				service: servicename,
@@ -37,6 +38,10 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 				step: 60,
 			});
 		}
+
+		return (): void => {
+			isMouted.current = false;
+		};
 	}, [servicename, maxTime, minTime, getInitialData, loading]);
 
 	if (error) {
