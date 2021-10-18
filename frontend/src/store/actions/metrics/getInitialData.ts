@@ -2,7 +2,7 @@
 // import getExternalAverageDuration from 'api/metrics/getExternalAverageDuration';
 // import getExternalError from 'api/metrics/getExternalError';
 // import getExternalService from 'api/metrics/getExternalService';
-// import getServiceOverview from 'api/metrics/getServiceOverview';
+import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
@@ -23,7 +23,7 @@ export const GetInitialData = (
 				// getExternalAverageDurationResponse,
 				// getExternalErrorResponse,
 				// getExternalServiceResponse,
-				// getServiceOverviewResponse,
+				getServiceOverviewResponse,
 				getTopEndPointsResponse,
 			] = await Promise.all([
 				// getDBOverView({
@@ -38,9 +38,9 @@ export const GetInitialData = (
 				// getExternalService({
 				// 	...props,
 				// }),
-				// getServiceOverview({
-				// 	...props,
-				// }),
+				getServiceOverview({
+					...props,
+				}),
 				getTopEndPoints({
 					...props,
 				}),
@@ -51,7 +51,7 @@ export const GetInitialData = (
 				// getExternalAverageDurationResponse.statusCode === 200 &&
 				// getExternalErrorResponse.statusCode === 200 &&
 				// getExternalServiceResponse.statusCode === 200 &&
-				// getServiceOverviewResponse.statusCode === 200 &&
+				getServiceOverviewResponse.statusCode === 200 &&
 				getTopEndPointsResponse.statusCode === 200
 			) {
 				dispatch({
@@ -61,7 +61,7 @@ export const GetInitialData = (
 						// externalAverageDuration: getExternalAverageDurationResponse.payload,
 						// externalError: getExternalErrorResponse.payload,
 						// externalService: getExternalServiceResponse.payload,
-						// serviceOverview: getServiceOverviewResponse.payload,
+						serviceOverview: getServiceOverviewResponse.payload,
 						topEndPoints: getTopEndPointsResponse.payload,
 					},
 				});
@@ -71,7 +71,7 @@ export const GetInitialData = (
 					payload: {
 						errorMessage:
 							getTopEndPointsResponse.error ||
-							// getServiceOverviewResponse.error ||
+							getServiceOverviewResponse.error ||
 							// getExternalServiceResponse.error ||
 							// getExternalErrorResponse.error ||
 							// getExternalAverageDurationResponse.error ||

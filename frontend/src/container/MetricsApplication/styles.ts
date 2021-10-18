@@ -30,6 +30,9 @@ export const Col = styled(ColComponent)`
 `;
 
 export const GraphContainer = styled.div`
+	min-height: 40vh;
+	max-height: 40vh;
+
 	div {
 		min-height: 40vh;
 		max-height: 40vh;

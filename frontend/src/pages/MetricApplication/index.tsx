@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
 import React, { useEffect, useRef } from 'react';
@@ -18,10 +19,12 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 	const { loading, maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { loading: metricsLoading, topEndPoints } = useSelector<
-		AppState,
-		MetricReducer
-	>((state) => state.metrics);
+	const {
+		loading: metricsLoading,
+		topEndPoints,
+		error,
+		errorMessage,
+	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const { servicename } = useParams<ServiceProps>();
 
@@ -34,10 +37,14 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 				end: maxTime,
 				service: servicename,
 				start: minTime,
-				step: 30,
+				step: 60,
 			});
 		}
 	}, [servicename, maxTime, minTime, getInitialData]);
+
+	if (error) {
+		return <Typography>{errorMessage}</Typography>;
+	}
 
 	if (
 		metricsLoading ||

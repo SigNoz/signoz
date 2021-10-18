@@ -3,7 +3,7 @@
 // import { ExternalError } from 'types/api/metrics/getExternalError';
 // import { ExternalService } from 'types/api/metrics/getExternalService';
 import { ServicesList } from 'types/api/metrics/getService';
-// import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
+import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
 
 export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
@@ -40,7 +40,7 @@ export interface GetInitialApplicationData {
 		// externalService: ExternalService[];
 		// externalAverageDuration: ExternalAverageDuration[];
 		// externalError: ExternalError[];
-		// serviceOverview: ServiceOverview[];
+		serviceOverview: ServiceOverview[];
 	};
 }
 

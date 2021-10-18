@@ -72,7 +72,7 @@ const metrics = (
 			const {
 				// dbOverView,
 				topEndPoints,
-				// serviceOverview,
+				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
@@ -83,7 +83,7 @@ const metrics = (
 				loading: false,
 				// dbOverView,
 				topEndPoints,
-				// serviceOverview,
+				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,

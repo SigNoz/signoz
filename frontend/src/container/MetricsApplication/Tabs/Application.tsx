@@ -1,8 +1,10 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
 import { Time } from 'container/Header/DateTimeSelection/config';
+import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -33,7 +35,7 @@ const Application = ({
 		from: '',
 	});
 
-	const { topEndPoints } = useSelector<AppState, MetricReducer>(
+	const { topEndPoints, serviceOverview } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
 
@@ -115,25 +117,47 @@ const Application = ({
 					<Card>
 						<GraphTitle>Application latency in ms</GraphTitle>
 						<GraphContainer>
-							<FullView
-								onClickHandler={(event, element, chart, data): void => {
-									onClickhandler(event, element, chart, data, 'Application');
+							<Graph
+								onClickHandler={(Chart, activeElements): void => {
+									onTracePopupClick(
+										serviceOverview[activeElements[0].datasetIndex].timestamp,
+									);
 								}}
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `histogram_quantile(0.5, sum(rate(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m])) by (le))`,
-										legend: 'p50 latency',
-									},
-									{
-										query: `histogram_quantile(0.9, sum(rate(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m])) by (le))`,
-										legend: 'p90 latency',
-									},
-									{
-										query: `histogram_quantile(0.99, sum(rate(signoz_latency_bucket{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m])) by (le))`,
-										legend: 'p99 latency',
-									},
-								])}
+								type="line"
+								data={{
+									datasets: [
+										{
+											data: serviceOverview.map((e) => e.p99),
+											borderColor: colors[0],
+											label: 'p99 Latency',
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 1.5,
+										},
+										{
+											data: serviceOverview.map((e) => e.p95),
+											borderColor: colors[1],
+											label: 'p95 Latency',
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 1.5,
+										},
+										{
+											data: serviceOverview.map((e) => e.p50),
+											borderColor: colors[2],
+											label: 'p50 Latency',
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 1.5,
+										},
+									],
+									labels: serviceOverview.map((e) => {
+										return new Date(e.timestamp / 100000);
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
