@@ -1,17 +1,16 @@
 import Graph from 'components/Graph';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import getDateArrayFromStartAndEnd from 'lib/getDateArrayFromStartAndEnd';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import { colors } from 'lib/getRandomColor';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 const EmptyGraph = ({ selectedTime, widget }: EmptyGraphProps): JSX.Element => {
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
+	const { minTime, maxTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
@@ -27,10 +26,29 @@ const EmptyGraph = ({ selectedTime, widget }: EmptyGraphProps): JSX.Element => {
 		minTime: maxMinTime.minTime,
 	});
 
-	const dates = getDateArrayFromStartAndEnd({
-		start: start,
-		end: end,
-	});
+	const dateFunction = useCallback(() => {
+		if (!loading) {
+			const dates: Date[] = [];
+
+			const parsedStart = parseInt(start.split('.').join('').slice(0, 13), 10);
+			const parsedEnd = parseInt(end.split('.').join('').slice(0, 13), 10);
+
+			let startDate = parsedStart;
+			const endDate = parsedEnd;
+
+			while (endDate >= startDate) {
+				const newDate = new Date(startDate);
+
+				startDate = startDate + 200000;
+
+				dates.push(newDate);
+			}
+			return dates;
+		}
+		return [];
+	}, [start, end, loading]);
+
+	const date = dateFunction();
 
 	return (
 		<Graph
@@ -39,7 +57,7 @@ const EmptyGraph = ({ selectedTime, widget }: EmptyGraphProps): JSX.Element => {
 				data: {
 					datasets: [
 						{
-							data: new Array(dates?.length).fill(0),
+							data: new Array(date?.length).fill(0),
 							borderColor: colors[0],
 							showLine: true,
 							borderWidth: 1.5,
@@ -47,7 +65,7 @@ const EmptyGraph = ({ selectedTime, widget }: EmptyGraphProps): JSX.Element => {
 							pointRadius: 0,
 						},
 					],
-					labels: dates,
+					labels: date,
 				},
 			}}
 		/>
