@@ -19,12 +19,14 @@ import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import EmptyGraph from '../EmptyGraph';
 import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
 
 const FullView = ({
 	widget,
 	fullViewOptions = true,
 	onClickHandler,
+	noDataGraph = false,
 }: FullViewProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
@@ -70,7 +72,7 @@ const FullView = ({
 							end,
 							query: query.query,
 							start: start,
-							step: '30',
+							step: '60',
 						});
 						return {
 							query: query.query,
@@ -155,9 +157,14 @@ const FullView = ({
 						</Button>
 					</TimeContainer>
 				)}
-				<NotFoundContainer>
-					<Typography>No Data</Typography>
-				</NotFoundContainer>
+
+				{noDataGraph ? (
+					<EmptyGraph widget={widget} selectedTime={selectedTime} />
+				) : (
+					<NotFoundContainer>
+						<Typography>No Data</Typography>
+					</NotFoundContainer>
+				)}
 			</>
 		);
 	}
@@ -205,6 +212,7 @@ interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: graphOnClickHandler;
+	noDataGraph?: boolean;
 }
 
 export default memo(FullView, (prev, next) => {
