@@ -15,7 +15,7 @@ const getDateArrayFromStartAndEnd = ({
 	while (endDate >= startDate) {
 		const newDate = new Date(startDate);
 
-		startDate = startDate + 20000;
+		startDate = startDate + 200000;
 
 		dates.push(newDate);
 	}

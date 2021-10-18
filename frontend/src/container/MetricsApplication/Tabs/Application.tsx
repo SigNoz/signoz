@@ -142,7 +142,7 @@ const Application = ({
 										},
 									],
 									labels: serviceOverview.map((e) => {
-										return new Date(e.timestamp / 100000);
+										return new Date(e.timestamp / 1000000);
 									}),
 								}}
 							/>
@@ -165,6 +165,7 @@ const Application = ({
 						<GraphTitle>Request per sec</GraphTitle>
 						<GraphContainer>
 							<FullView
+								noDataGraph
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
 									onClickhandler(event, element, chart, data, 'Request');
@@ -187,6 +188,7 @@ const Application = ({
 							<GraphTitle>Error Percentage (%)</GraphTitle>
 							<GraphContainer>
 								<FullView
+									noDataGraph
 									fullViewOptions={false}
 									widget={getWidget([
 										{
@@ -227,14 +229,6 @@ const mapDispatchToProps = (
 
 interface DashboardProps extends DispatchProps {
 	getWidget: (query: Widgets['query']) => Widgets;
-}
-
-interface ButtonState {
-	xCoordinate: number;
-	yCoordinate: number;
-	show: boolean;
-	selectedTimeStamp: number;
-	from: string;
 }
 
 export default connect(null, mapDispatchToProps)(Application);
