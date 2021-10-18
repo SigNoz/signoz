@@ -33,7 +33,7 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 		globalTimeLoading();
 	};
 
-	if (!skipOnboarding) {
+	if (!skipOnboarding && services.length === 0 && loading === false) {
 		return <SkipBoardModal onContinueClick={onContinueClick} />;
 	}
 
