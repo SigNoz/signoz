@@ -65,7 +65,7 @@ const GridCardGraph = ({
 								end,
 								query: query.query,
 								start: start,
-								step: '30',
+								step: '60',
 							});
 
 							return {
