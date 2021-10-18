@@ -19,7 +19,7 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 		localStorage.getItem(SKIP_ONBOARDING) === 'true',
 	);
 
-	const { services, loading } = useSelector<AppState, MetricReducer>(
+	const { services, loading, error } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
 
@@ -33,7 +33,11 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 		globalTimeLoading();
 	};
 
-	if (!skipOnboarding && services.length === 0 && loading === false) {
+	if (
+		!skipOnboarding ||
+		(services.length === 0 && loading === false) ||
+		(loading == false && error === true)
+	) {
 		return <SkipBoardModal onContinueClick={onContinueClick} />;
 	}
 
