@@ -76,6 +76,14 @@ services:
       clickhouse:
         condition: service_healthy
 
+  otel-collector-metrics:
+    image: signoz/otelcontribcol:0.4.2
+    command: ["--config=/etc/otel-collector-metrics-config.yaml", "--mem-ballast-size-mib=683"]
+    volumes:
+      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
+    depends_on:
+      clickhouse:
+        condition: service_healthy
   hotrod:
     image: jaegertracing/example-hotrod:latest
     container_name: hotrod
