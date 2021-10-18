@@ -6,7 +6,7 @@ import FullView from 'container/GridGraphLayout/Graph/FullView';
 import { Time } from 'container/Header/DateTimeSelection/config';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -27,13 +27,7 @@ const Application = ({
 	getWidget,
 }: DashboardProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const [buttonState, setButtonState] = useState({
-		xCoordinate: 0,
-		yCoordinate: 0,
-		show: false,
-		selectedTimeStamp: 0,
-		from: '',
-	});
+	const selectedTimeStamp = useRef(0);
 
 	const { topEndPoints, serviceOverview } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
@@ -71,26 +65,25 @@ const Application = ({
 				true,
 			);
 
-			if (points.length) {
+			const id = `${from}_button`;
+			const buttonElement = document.getElementById(id);
+
+			if (points.length !== 0) {
 				const firstPoint = points[0];
 
 				if (data.labels) {
 					const time = data?.labels[firstPoint.index] as Date;
 
-					setButtonState({
-						selectedTimeStamp: new Date(time).getTime(),
-						xCoordinate: firstPoint.element.x,
-						show: true,
-						yCoordinate: firstPoint.element.y,
-						from,
-					});
+					if (buttonElement) {
+						buttonElement.style.display = 'block';
+						buttonElement.style.left = `${firstPoint.element.x}px`;
+						buttonElement.style.top = `${firstPoint.element.y}px`;
+						selectedTimeStamp.current = new Date(time).getTime();
+					}
 				}
 			} else {
-				if (buttonState.show) {
-					setButtonState((state) => ({
-						...state,
-						show: false,
-					}));
+				if (buttonElement && buttonElement.style.display === 'block') {
+					buttonElement.style.display = 'none';
 				}
 			}
 		}
@@ -100,28 +93,22 @@ const Application = ({
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
-					{buttonState.from === 'Application' && (
-						<Button
-							type="default"
-							size="small"
-							{...{
-								showbutton: buttonState.show,
-								x: buttonState.xCoordinate,
-								y: buttonState.yCoordinate,
-							}}
-							onClick={(): void => onTracePopupClick(buttonState.selectedTimeStamp)}
-						>
-							View Traces
-						</Button>
-					)}
+					<Button
+						type="default"
+						size="small"
+						id="Application_button"
+						onClick={(): void => {
+							onTracePopupClick(selectedTimeStamp.current);
+						}}
+					>
+						View Traces
+					</Button>
 					<Card>
 						<GraphTitle>Application latency in ms</GraphTitle>
 						<GraphContainer>
 							<Graph
-								onClickHandler={(Chart, activeElements): void => {
-									onTracePopupClick(
-										serviceOverview[activeElements[0].datasetIndex].timestamp,
-									);
+								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+									onClickhandler(ChartEvent, activeElements, chart, data, 'Application');
 								}}
 								type="line"
 								data={{
@@ -164,20 +151,16 @@ const Application = ({
 				</Col>
 
 				<Col span={12}>
-					{buttonState.from === 'Request' && (
-						<Button
-							type="default"
-							size="small"
-							{...{
-								showbutton: buttonState.show,
-								x: buttonState.xCoordinate,
-								y: buttonState.yCoordinate,
-							}}
-							onClick={(): void => onTracePopupClick(buttonState.selectedTimeStamp)}
-						>
-							View Traces
-						</Button>
-					)}
+					<Button
+						type="default"
+						size="small"
+						id="Request_button"
+						onClick={(): void => {
+							onTracePopupClick(selectedTimeStamp.current);
+						}}
+					>
+						View Traces
+					</Button>
 					<Card>
 						<GraphTitle>Request per sec</GraphTitle>
 						<GraphContainer>
@@ -244,6 +227,14 @@ const mapDispatchToProps = (
 
 interface DashboardProps extends DispatchProps {
 	getWidget: (query: Widgets['query']) => Widgets;
+}
+
+interface ButtonState {
+	xCoordinate: number;
+	yCoordinate: number;
+	show: boolean;
+	selectedTimeStamp: number;
+	from: string;
 }
 
 export default connect(null, mapDispatchToProps)(Application);

@@ -55,7 +55,6 @@ const Graph = ({
 	type,
 	title,
 	isStacked,
-	label,
 	onClickHandler,
 }: GraphProps): JSX.Element => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -157,59 +156,9 @@ const Graph = ({
 				type: type,
 				data: data,
 				options,
-				// plugins: [
-				// 	{
-				// 		id: 'htmlLegendPlugin',
-				// 		afterUpdate: (chart: Chart): void => {
-				// 			if (
-				// 				chart &&
-				// 				chart.options &&
-				// 				chart.options.plugins &&
-				// 				chart.options.plugins.legend &&
-				// 				chart.options.plugins.legend.labels &&
-				// 				chart.options.plugins.legend.labels.generateLabels
-				// 			) {
-				// 				const labels = chart.options.plugins?.legend?.labels?.generateLabels(
-				// 					chart,
-				// 				);
-
-				// 				const id = 'htmlLegend';
-
-				// 				const response = document.getElementById(id);
-
-				// 				if (labels && response && response?.childNodes.length === 0) {
-				// 					const labelComponent = labels.map((e, index) => {
-				// 						return {
-				// 							element: Legends({
-				// 								text: e.text,
-				// 								color: colors[index] || 'white',
-				// 							}),
-				// 							dataIndex: e.datasetIndex,
-				// 						};
-				// 					});
-
-				// 					labelComponent.map((e) => {
-				// 						const el = stringToHTML(e.element);
-
-				// 						if (el) {
-				// 							el.addEventListener('click', () => {
-				// 								chart.setDatasetVisibility(
-				// 									e.dataIndex,
-				// 									!chart.isDatasetVisible(e.dataIndex),
-				// 								);
-				// 								chart.update();
-				// 							});
-				// 							response.append(el);
-				// 						}
-				// 					});
-				// 				}
-				// 			}
-				// 		},
-				// 	},
-				// ],
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, label, getGridColor]);
+	}, [chartRef, data, type, title, isStacked, getGridColor, onClickHandler]);
 
 	useEffect(() => {
 		buildChart();
@@ -218,7 +167,6 @@ const Graph = ({
 	return (
 		<>
 			<canvas ref={chartRef} />
-			{/* <LegendsContainer id="htmlLegend" /> */}
 		</>
 	);
 };
