@@ -218,49 +218,35 @@ const DateTimeSelection = ({
 
 			const updatedTime = getUpdatedTime(time);
 
-			if (
-				localstorageStartTime !== null &&
-				localstorageEndTime !== null &&
-				updatedTime === 'custom' &&
-				startTime === undefined &&
-				endTime === undefined &&
-				searchStartTime === undefined &&
-				searchEndTime === undefined
-			) {
-				setStartTime(moment(localstorageStartTime));
-				setEndTime(moment(localstorageEndTime));
-			}
-
-			if (
-				updatedTime === 'custom' &&
-				searchStartTime &&
-				searchEndTime &&
-				startTime === undefined &&
-				endTime === undefined
-			) {
-				setStartTime(
-					moment(new Date(parseInt(getTimeString(searchStartTime), 10))),
-				);
-				setEndTime(moment(new Date(parseInt(getTimeString(searchEndTime), 10))));
-			}
-
 			setSelectedTimeInterval(updatedTime);
 
 			const getTime = (): [number, number] | undefined => {
 				if (searchEndTime && searchStartTime) {
+					const startMoment = moment(
+						new Date(parseInt(getTimeString(searchStartTime), 10)),
+					);
+					const endMoment = moment(
+						new Date(parseInt(getTimeString(searchEndTime), 10)),
+					);
+
+					setStartTime(startMoment);
+					setEndTime(endMoment);
+
 					return [
-						moment(new Date(parseInt(getTimeString(searchStartTime), 10)))
-							.toDate()
-							.getTime() || 0,
-						moment(new Date(parseInt(getTimeString(searchEndTime), 10)))
-							.toDate()
-							.getTime() || 0,
+						startMoment.toDate().getTime() || 0,
+						endMoment.toDate().getTime() || 0,
 					];
 				}
 				if (localstorageStartTime && localstorageEndTime) {
+					const startMoment = moment(localstorageStartTime);
+					const endMoment = moment(localstorageEndTime);
+
+					setStartTime(startMoment);
+					setEndTime(endMoment);
+
 					return [
-						moment(localstorageStartTime).toDate().getTime() || 0,
-						moment(localstorageEndTime).toDate().getTime() || 0,
+						startMoment.toDate().getTime() || 0,
+						endMoment.toDate().getTime() || 0,
 					];
 				}
 				return undefined;

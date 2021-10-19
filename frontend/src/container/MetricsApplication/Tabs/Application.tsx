@@ -3,15 +3,14 @@ import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
-import { Time } from 'container/Header/DateTimeSelection/config';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useRef } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
+import { GlobalTimeLoading } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -22,7 +21,6 @@ import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
 const Application = ({
-	updateTimeInterval,
 	globalLoading,
 	getWidget,
 }: DashboardProps): JSX.Element => {
@@ -37,8 +35,6 @@ const Application = ({
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 1 * 60 * 1000;
 
-		updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
-
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
@@ -46,8 +42,8 @@ const Application = ({
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 		globalLoading();
+		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
 	const onClickhandler = async (
@@ -90,10 +86,8 @@ const Application = ({
 	};
 
 	const onErrorTrackHandler = (timestamp: number): void => {
-		const currentTime = timestamp / 1000000;
-		const tPlusOne = timestamp / 1000000 + 1 * 60 * 1000;
-
-		updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
+		const currentTime = timestamp;
+		const tPlusOne = timestamp + 1 * 60 * 1000;
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -103,6 +97,7 @@ const Application = ({
 		}
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
+		globalLoading();
 		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
@@ -244,17 +239,12 @@ const Application = ({
 };
 
 interface DispatchProps {
-	updateTimeInterval: (
-		interval: Time,
-		dateTimeRange?: [number, number],
-	) => (dispatch: Dispatch<AppActions>) => void;
 	globalLoading: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
 	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
