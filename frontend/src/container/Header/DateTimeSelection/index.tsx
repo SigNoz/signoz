@@ -13,6 +13,7 @@ const { Option } = DefaultSelect;
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { LOCAL_STORAGE } from 'constants/localStorage';
+import getTimeString from 'lib/getTimeString';
 import moment from 'moment';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
@@ -40,7 +41,7 @@ const DateTimeSelection = ({
 	);
 	const isOnSelectHandler = useRef<boolean>(false);
 
-	const { maxTime, loading } = useSelector<AppState, GlobalReducer>(
+	const { maxTime, loading, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
@@ -86,7 +87,6 @@ const DateTimeSelection = ({
 			updateTimeInterval(value);
 			const selectedLabel = getInputLabel(undefined, undefined, value);
 			setSelectedTimeInterval(selectedLabel as Time);
-
 			updateLocalStorageForRoutes(value);
 		} else {
 			setRefreshButtonHidden(true);
@@ -118,7 +118,10 @@ const DateTimeSelection = ({
 
 	const onLastRefreshHandler = useCallback(() => {
 		const currentTime = moment();
-		const lastRefresh = moment(maxTime / 1000000);
+
+		const lastRefresh = moment(
+			selectedTimeInterval === 'custom' ? minTime / 1000000 : maxTime / 1000000,
+		);
 		const duration = moment.duration(currentTime.diff(lastRefresh));
 
 		const secondsDiff = Math.floor(duration.asSeconds());
@@ -144,7 +147,7 @@ const DateTimeSelection = ({
 		}
 
 		return `Last refresh - ${secondsDiff} sec ago`;
-	}, [maxTime]);
+	}, [maxTime, minTime, selectedTimeInterval]);
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
@@ -198,46 +201,73 @@ const DateTimeSelection = ({
 			const localstorageStartTime = get('startTime');
 			const localstorageEndTime = get('endTime');
 
-			if (
-				searchEndTime &&
-				searchStartTime &&
-				startTime === undefined &&
-				endTime === undefined
-			) {
-				setStartTime(moment(new Date(parseInt(searchStartTime, 10))));
-				setEndTime(moment(new Date(parseInt(searchEndTime, 10))));
-				setSelectedTimeInterval('custom');
-			} else {
-				if (
-					localstorageStartTime !== null &&
-					localstorageEndTime !== null &&
-					time === 'custom' &&
-					startTime === undefined &&
-					endTime === undefined
-				) {
-					setStartTime(moment(localstorageStartTime));
-					setEndTime(moment(localstorageEndTime));
-				}
-			}
-
 			const getUpdatedTime = (time: Time): Time => {
+				if (searchEndTime !== null && searchStartTime !== null) {
+					return 'custom';
+				}
+
 				if (
 					(localstorageEndTime === null || localstorageStartTime === null) &&
 					time === 'custom'
 				) {
 					return getDefaultOption(location.pathname);
 				}
+
 				return time;
 			};
 
 			const updatedTime = getUpdatedTime(time);
+
+			if (
+				localstorageStartTime !== null &&
+				localstorageEndTime !== null &&
+				updatedTime === 'custom' &&
+				startTime === undefined &&
+				endTime === undefined &&
+				searchStartTime === undefined &&
+				searchEndTime === undefined
+			) {
+				setStartTime(moment(localstorageStartTime));
+				setEndTime(moment(localstorageEndTime));
+			}
+
+			if (
+				updatedTime === 'custom' &&
+				searchStartTime &&
+				searchEndTime &&
+				startTime === undefined &&
+				endTime === undefined
+			) {
+				setStartTime(
+					moment(new Date(parseInt(getTimeString(searchStartTime), 10))),
+				);
+				setEndTime(moment(new Date(parseInt(getTimeString(searchEndTime), 10))));
+			}
+
 			setSelectedTimeInterval(updatedTime);
 
+			const getTime = (): [number, number] | undefined => {
+				if (searchEndTime && searchStartTime) {
+					return [
+						moment(new Date(parseInt(getTimeString(searchStartTime), 10)))
+							.toDate()
+							.getTime() || 0,
+						moment(new Date(parseInt(getTimeString(searchEndTime), 10)))
+							.toDate()
+							.getTime() || 0,
+					];
+				}
+				if (localstorageStartTime && localstorageEndTime) {
+					return [
+						moment(localstorageStartTime).toDate().getTime() || 0,
+						moment(localstorageEndTime).toDate().getTime() || 0,
+					];
+				}
+				return undefined;
+			};
+
 			if (loading === true) {
-				updateTimeInterval(updatedTime, [
-					moment(localstorageStartTime)?.toDate().getTime() || 0,
-					moment(localstorageEndTime)?.toDate().getTime() || 0,
-				]);
+				updateTimeInterval(updatedTime, getTime());
 			}
 		} else {
 			isOnSelectHandler.current = false;

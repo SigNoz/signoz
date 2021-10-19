@@ -89,6 +89,23 @@ const Application = ({
 		}
 	};
 
+	const onErrorTrackHandler = (timestamp: number): void => {
+		const currentTime = timestamp / 1000000;
+		const tPlusOne = timestamp / 1000000 + 1 * 60 * 1000;
+
+		updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
+
+		const urlParams = new URLSearchParams();
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		if (servicename) {
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
+		}
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
+
+		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+	};
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -183,6 +200,17 @@ const Application = ({
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
+					<Button
+						type="default"
+						size="small"
+						id="Error_button"
+						onClick={(): void => {
+							onErrorTrackHandler(selectedTimeStamp.current);
+						}}
+					>
+						View Traces
+					</Button>
+
 					<Card>
 						<Card>
 							<GraphTitle>Error Percentage (%)</GraphTitle>
@@ -190,6 +218,9 @@ const Application = ({
 								<FullView
 									noDataGraph
 									fullViewOptions={false}
+									onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+										onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
+									}}
 									widget={getWidget([
 										{
 											query: `sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]) OR vector(0))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))`,
