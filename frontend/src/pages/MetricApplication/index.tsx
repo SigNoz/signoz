@@ -1,10 +1,10 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
-import React, { useEffect, useRef } from 'react';
-import { connect, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
 	GetInitialData,
@@ -19,18 +19,16 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 	const { loading, maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const {
-		loading: metricsLoading,
-		topEndPoints,
-		error,
-		errorMessage,
-	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const { error, errorMessage } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
+	);
 
 	const { servicename } = useParams<ServiceProps>();
-	const isMouted = useRef(true);
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	useEffect(() => {
-		if (servicename !== undefined && loading == false && isMouted.current) {
+		if (servicename !== undefined && loading == false) {
 			getInitialData({
 				end: maxTime,
 				service: servicename,
@@ -40,20 +38,22 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 		}
 
 		return (): void => {
-			isMouted.current = false;
+			// setting the data to it's initial this will avoid the re-rendering the graph
+			dispatch({
+				type: 'GET_INTIAL_APPLICATION_DATA',
+				payload: {
+					serviceOverview: [],
+					topEndPoints: [],
+				},
+			});
 		};
-	}, [servicename, maxTime, minTime, getInitialData, loading]);
+	}, [servicename, maxTime, minTime, getInitialData, loading, dispatch]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
 	}
 
-	if (
-		metricsLoading ||
-		topEndPoints.length === 0 ||
-		loading ||
-		servicename == undefined
-	) {
+	if (loading) {
 		return <Spinner tip="Loading..." />;
 	}
 

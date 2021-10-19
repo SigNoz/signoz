@@ -82,6 +82,7 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 				dataSource={services}
 				columns={columns}
 				pagination={false}
+				rowKey="serviceName"
 			/>
 		</Container>
 	);

@@ -164,11 +164,7 @@ const Graph = ({
 		buildChart();
 	}, [buildChart]);
 
-	return (
-		<>
-			<canvas ref={chartRef} />
-		</>
-	);
+	return <canvas ref={chartRef} />;
 };
 
 interface GraphProps {

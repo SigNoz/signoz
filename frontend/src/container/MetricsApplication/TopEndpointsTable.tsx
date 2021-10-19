@@ -92,6 +92,7 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 			dataSource={props.data}
 			columns={columns}
 			pagination={false}
+			rowKey="name"
 		/>
 	);
 };

@@ -1,5 +1,5 @@
 import { Tabs } from 'antd';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import Application from './Tabs/Application';

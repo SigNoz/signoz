@@ -19,7 +19,7 @@ import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import EmptyGraph from '../EmptyGraph';
+import EmptyGraph from './EmptyGraph';
 import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
 
 const FullView = ({

@@ -30,8 +30,25 @@ const EmptyGraph = ({ selectedTime, widget }: EmptyGraphProps): JSX.Element => {
 		if (!loading) {
 			const dates: Date[] = [];
 
-			const parsedStart = parseInt(start.split('.').join('').slice(0, 13), 10);
-			const parsedEnd = parseInt(end.split('.').join('').slice(0, 13), 10);
+			const getTimeString = (time: string): string => {
+				const timeString = time.split('.').join('').slice(0, 13);
+
+				if (timeString.length < 13) {
+					const lengthMissing = timeString.length - 13;
+
+					const numberZero = new Array(Math.abs(lengthMissing)).fill(0).join('');
+
+					return timeString + numberZero;
+				}
+
+				return timeString;
+			};
+
+			const startString = getTimeString(start);
+			const endString = getTimeString(end);
+
+			const parsedStart = parseInt(startString, 10);
+			const parsedEnd = parseInt(endString, 10);
 
 			let startDate = parsedStart;
 			const endDate = parsedEnd;
@@ -39,7 +56,7 @@ const EmptyGraph = ({ selectedTime, widget }: EmptyGraphProps): JSX.Element => {
 			while (endDate >= startDate) {
 				const newDate = new Date(startDate);
 
-				startDate = startDate + 200000;
+				startDate = startDate + 20000;
 
 				dates.push(newDate);
 			}
