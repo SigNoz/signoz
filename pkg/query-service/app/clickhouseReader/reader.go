@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go"
@@ -19,13 +20,18 @@ import (
 	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/prometheus/prometheus/util/stats"
 
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
 const (
-	primaryNamespace = "clickhouse"
-	archiveNamespace = "clickhouse-archive"
+	primaryNamespace     = "clickhouse"
+	archiveNamespace     = "clickhouse-archive"
+	signozTraceTableName = "signoz_index"
+	signozMetricDBName   = "signoz_metrics"
+	signozSampleName     = "samples"
+	signozTSName         = "time_series"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -810,5 +816,122 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 	}
 
 	return spanSearchAggregatesResponseItems, nil
+
+}
+
+func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+
+	switch ttlParams.Type {
+
+	case constants.TraceTTL:
+		// error is skipped, handled earlier as bad request
+		tracesDuration, _ := time.ParseDuration(ttlParams.Duration)
+		second := int(tracesDuration.Seconds())
+		query := fmt.Sprintf("ALTER TABLE default.%v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND", signozTraceTableName, second)
+		_, err := r.db.Exec(query)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+		}
+
+	case constants.MetricsTTL:
+		// error is skipped, handled earlier as bad request
+		metricsDuration, _ := time.ParseDuration(ttlParams.Duration)
+		second := int(metricsDuration.Seconds())
+		query := fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL %v SECOND", signozMetricDBName, signozSampleName, second)
+		_, err := r.db.Exec(query)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+		}
+
+	default:
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
+	}
+
+	return &model.SetTTLResponseItem{Message: "ttl has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
+
+	parseTTL := func(queryResp string) string {
+		values := strings.Split(queryResp, " ")
+		N := len(values)
+		ttlIdx := -1
+
+		for i := 0; i < N; i++ {
+			if strings.Contains(values[i], "toIntervalSecond") {
+				ttlIdx = i
+				break
+			}
+		}
+		if ttlIdx == -1 {
+			return ""
+		}
+
+		output := strings.SplitN(values[ttlIdx], "(", 2)
+		timePart := strings.Trim(output[1], ")")
+		return timePart
+	}
+
+	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
+		var dbResp model.DBResponseTTL
+
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
+
+		err := r.db.QueryRowx(query).StructScan(&dbResp)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+		}
+		return &dbResp, nil
+	}
+
+	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
+		var dbResp model.DBResponseTTL
+
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozTraceTableName)
+
+		err := r.db.QueryRowx(query).StructScan(&dbResp)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+		}
+
+		return &dbResp, nil
+	}
+
+	switch ttlParams.Type {
+	case constants.TraceTTL:
+		dbResp, err := getTracesTTL()
+		if err != nil {
+			return nil, err
+		}
+
+		return &model.GetTTLResponseItem{TracesTime: parseTTL(dbResp.EngineFull)}, nil
+
+	case constants.MetricsTTL:
+		dbResp, err := getMetricsTTL()
+		if err != nil {
+			return nil, err
+		}
+
+		return &model.GetTTLResponseItem{MetricsTime: parseTTL(dbResp.EngineFull)}, nil
+	}
+	db1, err := getTracesTTL()
+	if err != nil {
+		return nil, err
+	}
+
+	db2, err := getMetricsTTL()
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.GetTTLResponseItem{TracesTime: parseTTL(db1.EngineFull), MetricsTime: parseTTL(db2.EngineFull)}, nil
 
 }

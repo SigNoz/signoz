@@ -11,6 +11,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -18,8 +19,8 @@ import (
 var allowedDimesions = []string{"calls", "duration"}
 
 var allowedAggregations = map[string][]string{
-	"calls":    []string{"count", "rate_per_sec"},
-	"duration": []string{"avg", "p50", "p95", "p99"},
+	"calls":    {"count", "rate_per_sec"},
+	"duration": {"avg", "p50", "p95", "p99"},
 }
 
 func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
@@ -565,4 +566,45 @@ func parseTimestamp(param string, r *http.Request) (*string, error) {
 
 	return &timeStr, nil
 
+}
+
+func parseDuration(r *http.Request) (*model.TTLParams, error) {
+
+	// make sure either of the query params are present
+	typeTTL := r.URL.Query().Get("type")
+	duration := r.URL.Query().Get("duration")
+
+	if len(typeTTL) == 0 || len(duration) == 0 {
+		return nil, fmt.Errorf("type and duration param cannot be empty from the query")
+	}
+
+	// Validate the duration as a valid time.Duration
+	_, err := time.ParseDuration(duration)
+	if err != nil {
+		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
+	}
+
+	// Validate the type parameter
+	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
+		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
+	}
+
+	return &model.TTLParams{Duration: duration, Type: typeTTL}, nil
+}
+
+func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
+
+	typeTTL := r.URL.Query().Get("type")
+	getAllTTL := false
+
+	if len(typeTTL) == 0 {
+		getAllTTL = true
+	} else {
+		// Validate the type parameter
+		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
+			return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
+		}
+	}
+
+	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
 }
