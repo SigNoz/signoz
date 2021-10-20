@@ -1,20 +1,15 @@
 import { Select, Space } from 'antd';
-// import { Bar } from 'react-chartjs-2';
 import Graph from 'components/Graph';
-import { useRoute } from 'modules/RouteProvider';
-import moment from 'moment';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import {
-	getServicesList,
-	getUsageData,
-	GlobalTime,
-	usageDataItem,
-} from 'store/actions';
+import { connect, useSelector } from 'react-redux';
+import { getServicesList, getUsageData, usageDataItem } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import { isOnboardingSkipped } from 'utils/app';
 const { Option } = Select;
+import { GlobalTime } from 'types/actions/globalTime';
+import { GlobalReducer } from 'types/reducer/globalTime';
+
 import { Card } from './styles';
 
 interface UsageExplorerProps {
@@ -56,8 +51,9 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
-
-	const { state } = useRoute();
+	const { loading } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	useEffect(() => {
 		if (selectedTime && selectedInterval) {
@@ -78,15 +74,13 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.USAGE_EXPLORER.isLoaded) {
+		if (loading) {
 			props.getServicesList(props.globalTime);
 		}
-	}, []);
+	}, [loading, props]);
 
 	const data = {
-		labels: props.usageData.map((s) =>
-			moment(s.timestamp / 1000000).format('MMM Do h a'),
-		),
+		labels: props.usageData.map((s) => new Date(s.timestamp / 1000000)),
 		datasets: [
 			{
 				label: 'Span Count',
@@ -96,22 +90,6 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 				borderWidth: 2,
 			},
 		],
-	};
-
-	const options = {
-		scales: {
-			yAxes: [
-				{
-					ticks: {
-						beginAtZero: true,
-						fontSize: 10,
-					},
-				},
-			],
-		},
-		legend: {
-			display: false,
-		},
 	};
 
 	return (

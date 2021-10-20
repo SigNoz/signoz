@@ -3,8 +3,6 @@ import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
 import api from 'api';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
-import useMountedState from 'hooks/useMountedState';
-import { useRoute } from 'modules/RouteProvider';
 import React, {
 	useCallback,
 	useEffect,
@@ -12,16 +10,13 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import {
-	fetchTraces,
-	GlobalTime,
-	TraceFilters,
-	updateTraceFilters,
-} from 'store/actions';
+import { fetchTraces, TraceFilters, updateTraceFilters } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
+import { GlobalTime } from 'types/actions/globalTime';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { FilterStateDisplay } from './FilterStateDisplay';
 import LatencyModalForm from './LatencyModalForm';
@@ -59,11 +54,11 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 	const urlParams = useMemo(() => {
 		return new URLSearchParams(location.search.split('?')[1]);
 	}, [location.search]);
-	const isMount = useMountedState();
 
-	const isMounted = isMount();
+	const { loading } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
-	const { state } = useRoute();
 	const { updateTraceFilters, traceFilters, globalTime, fetchTraces } = props;
 	const [modalVisible, setModalVisible] = useState(false);
 
@@ -86,12 +81,30 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		[traceFilters, updateTraceFilters],
 	);
 
+	const populateData = useCallback(
+		(value: string) => {
+			if (loading === false) {
+				const service_request = '/service/' + value + '/operations';
+				api.get<string[]>(service_request).then((response) => {
+					// form_basefilter.resetFields(['operation',])
+					setOperationsList(response.data);
+				});
+
+				const tagkeyoptions_request = '/tags?service=' + value;
+				api.get<TagKeyOptionItem[]>(tagkeyoptions_request).then((response) => {
+					setTagKeyOptions(response.data);
+				});
+			}
+		},
+		[loading],
+	);
+
 	const handleChangeService = useCallback(
 		(value: string) => {
 			populateData(value);
 			updateTraceFilters({ ...traceFilters, service: value });
 		},
-		[traceFilters, updateTraceFilters],
+		[traceFilters, updateTraceFilters, populateData],
 	);
 
 	const spanKindList: ISpanKind[] = [
@@ -181,7 +194,7 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 	const counter = useRef(0);
 
 	useEffect(() => {
-		if (isMounted && counter.current === 0) {
+		if (loading === false && counter.current === 0) {
 			counter.current = 1;
 			api
 				.get<string[]>(`/services/list`)
@@ -237,7 +250,8 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 		traceFilters,
 		urlParams,
 		updateTraceFilters,
-		isMounted,
+		populateData,
+		loading,
 	]);
 
 	useEffect(() => {
@@ -262,10 +276,10 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.TRACES.isLoaded) {
+		if (loading === false) {
 			fetchTraces(globalTime, request_string);
 		}
-	}, [globalTime, traceFilters, fetchTraces, state]);
+	}, [traceFilters, fetchTraces, loading, globalTime]);
 
 	useEffect(() => {
 		let latencyButtonText = 'Latency';
@@ -304,19 +318,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 	useEffect(() => {
 		form_basefilter.setFieldsValue({ kind: traceFilters.kind });
 	}, [traceFilters.kind, form_basefilter]);
-
-	function populateData(value: string): void {
-		const service_request = '/service/' + value + '/operations';
-		api.get<string[]>(service_request).then((response) => {
-			// form_basefilter.resetFields(['operation',])
-			setOperationsList(response.data);
-		});
-
-		const tagkeyoptions_request = '/tags?service=' + value;
-		api.get<TagKeyOptionItem[]>(tagkeyoptions_request).then((response) => {
-			setTagKeyOptions(response.data);
-		});
-	}
 
 	const onLatencyButtonClick = (): void => {
 		setModalVisible(true);

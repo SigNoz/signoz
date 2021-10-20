@@ -1,8 +1,11 @@
 import {
+	ActiveElement,
 	BarController,
 	BarElement,
 	CategoryScale,
 	Chart,
+	ChartData,
+	ChartEvent,
 	ChartOptions,
 	ChartType,
 	Decimation,
@@ -13,7 +16,6 @@ import {
 	LineController,
 	LineElement,
 	PointElement,
-	ScaleOptions,
 	SubTitle,
 	TimeScale,
 	TimeSeriesScale,
@@ -53,8 +55,6 @@ const Graph = ({
 	type,
 	title,
 	isStacked,
-	label,
-	xAxisType,
 	onClickHandler,
 }: GraphProps): JSX.Element => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -97,25 +97,18 @@ const Graph = ({
 					legend: {
 						// just making sure that label is present
 						display: !(
-							data.datasets.find((e) => e.label !== undefined) === undefined
+							data.datasets.find((e) => {
+								if (e.label?.length === 0) {
+									return false;
+								}
+								return e.label !== undefined;
+							}) === undefined
 						),
 						labels: {
 							usePointStyle: true,
 							pointStyle: 'circle',
 						},
 						position: 'bottom',
-						// labels: {
-						// 	generateLabels: (chart: Chart): LegendItem[] => {
-						// 		return (data.datasets || []).map((e, index) => {
-						// 			return {
-						// 				text: e.label || '',
-						// 				datasetIndex: index,
-						// 			};
-						// 		});
-						// 	},
-						// 	pointStyle: 'circle',
-						// 	usePointStyle: true,
-						// },
 					},
 				},
 				layout: {
@@ -123,16 +116,17 @@ const Graph = ({
 				},
 				scales: {
 					x: {
-						animate: false,
 						grid: {
 							display: true,
 							color: getGridColor(),
 						},
-						labels: label,
 						adapters: {
 							date: chartjsAdapter,
 						},
-						type: xAxisType,
+						time: {
+							unit: 'minute',
+						},
+						type: 'timeseries',
 					},
 					y: {
 						display: true,
@@ -151,77 +145,26 @@ const Graph = ({
 						cubicInterpolationMode: 'monotone',
 					},
 				},
-				onClick: onClickHandler,
+				onClick: (event, element, chart) => {
+					if (onClickHandler) {
+						onClickHandler(event, element, chart, data);
+					}
+				},
 			};
 
 			lineChartRef.current = new Chart(chartRef.current, {
 				type: type,
 				data: data,
 				options,
-				// plugins: [
-				// 	{
-				// 		id: 'htmlLegendPlugin',
-				// 		afterUpdate: (chart: Chart): void => {
-				// 			if (
-				// 				chart &&
-				// 				chart.options &&
-				// 				chart.options.plugins &&
-				// 				chart.options.plugins.legend &&
-				// 				chart.options.plugins.legend.labels &&
-				// 				chart.options.plugins.legend.labels.generateLabels
-				// 			) {
-				// 				const labels = chart.options.plugins?.legend?.labels?.generateLabels(
-				// 					chart,
-				// 				);
-
-				// 				const id = 'htmlLegend';
-
-				// 				const response = document.getElementById(id);
-
-				// 				if (labels && response && response?.childNodes.length === 0) {
-				// 					const labelComponent = labels.map((e, index) => {
-				// 						return {
-				// 							element: Legends({
-				// 								text: e.text,
-				// 								color: colors[index] || 'white',
-				// 							}),
-				// 							dataIndex: e.datasetIndex,
-				// 						};
-				// 					});
-
-				// 					labelComponent.map((e) => {
-				// 						const el = stringToHTML(e.element);
-
-				// 						if (el) {
-				// 							el.addEventListener('click', () => {
-				// 								chart.setDatasetVisibility(
-				// 									e.dataIndex,
-				// 									!chart.isDatasetVisible(e.dataIndex),
-				// 								);
-				// 								chart.update();
-				// 							});
-				// 							response.append(el);
-				// 						}
-				// 					});
-				// 				}
-				// 			}
-				// 		},
-				// 	},
-				// ],
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, label, xAxisType, getGridColor]);
+	}, [chartRef, data, type, title, isStacked, getGridColor, onClickHandler]);
 
 	useEffect(() => {
 		buildChart();
 	}, [buildChart]);
 
-	return (
-		<>
-			<canvas ref={chartRef} />
-			{/* <LegendsContainer id="htmlLegend" /> */}
-		</>
-	);
+	return <canvas ref={chartRef} />;
 };
 
 interface GraphProps {
@@ -230,8 +173,14 @@ interface GraphProps {
 	title?: string;
 	isStacked?: boolean;
 	label?: string[];
-	xAxisType?: ScaleOptions['type'];
-	onClickHandler?: ChartOptions['onClick'];
+	onClickHandler?: graphOnClickHandler;
 }
+
+export type graphOnClickHandler = (
+	event: ChartEvent,
+	elements: ActiveElement[],
+	chart: Chart,
+	data: ChartData,
+) => void;
 
 export default Graph;

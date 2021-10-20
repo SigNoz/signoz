@@ -1,17 +1,39 @@
-import { Action, ActionTypes, GlobalTime } from 'store/actions';
+import {
+	GLOBAL_TIME_LOADING_START,
+	GlobalTimeAction,
+	UPDATE_TIME_INTERVAL,
+} from 'types/actions/globalTime';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
-export const updateGlobalTimeReducer = (
-	state: GlobalTime = {
-		maxTime: Date.now() * 1000000,
-		minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
-	},
-	action: Action,
-): GlobalTime => {
-	// Initial global state is time now and 15 minute interval
+const intitalState: GlobalReducer = {
+	maxTime: Date.now() * 1000000,
+	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
+	loading: true,
+};
+
+const globalTimeReducer = (
+	state = intitalState,
+	action: GlobalTimeAction,
+): GlobalReducer => {
 	switch (action.type) {
-		case ActionTypes.updateTimeInterval:
-			return action.payload;
+		case UPDATE_TIME_INTERVAL: {
+			return {
+				...state,
+				...action.payload,
+				loading: false,
+			};
+		}
+
+		case GLOBAL_TIME_LOADING_START: {
+			return {
+				...state,
+				loading: true,
+			};
+		}
+
 		default:
 			return state;
 	}
 };
+
+export default globalTimeReducer;
