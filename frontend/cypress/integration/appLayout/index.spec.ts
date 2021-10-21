@@ -22,5 +22,3 @@ describe('App Layout', () => {
 		});
 	});
 });
-
-export {};
