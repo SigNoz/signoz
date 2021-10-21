@@ -2,7 +2,7 @@ import {
 	getDefaultOption,
 	getOptions,
 } from 'container/Header/DateTimeSelection/config';
-import { AppState } from 'store/reducers';
+// import { AppState } from 'store/reducers';
 
 const CheckRouteDefaultGlobalTimeOptions = ({
 	route,
@@ -31,15 +31,15 @@ const CheckRouteDefaultGlobalTimeOptions = ({
 			);
 		});
 
-	cy
-		.window()
-		.its('store')
-		.invoke('getState')
-		.then((e: AppState) => {
-			const { globalTime } = e;
-			const { maxTime, minTime } = globalTime;
-			// @TODO match the global min time and max time according to the selected option
-		});
+	// cy
+	// 	.window()
+	// 	.its('store')
+	// 	.invoke('getState')
+	// 	.then((e: AppState) => {
+	// 		const { globalTime } = e;
+	// 		const { maxTime, minTime } = globalTime;
+	// 		// @TODO match the global min time and max time according to the selected option
+	// 	});
 };
 
 export interface CheckRouteDefaultGlobalTimeOptionsProps {

@@ -24,12 +24,6 @@ describe('default time', () => {
 		});
 	});
 
-	it('Trace Page default time', () => {
-		cy.checkDefaultGlobalOption({
-			route: ROUTES.TRACES,
-		});
-	});
-
 	it('Instrumentation Page default time', () => {
 		cy.checkDefaultGlobalOption({
 			route: ROUTES.INSTRUMENTATION,
