@@ -2,10 +2,14 @@ import { Button, Table, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { GlobalTimeLoading } from 'store/actions';
 import { topEndpointListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
@@ -31,6 +35,8 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.operation, operation);
+
+		props.globalTimeLoading();
 		history.push(`/traces?${urlParams.toString()}`);
 	};
 
@@ -99,8 +105,18 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 
 type DataProps = topEndpointListItem;
 
-interface TopEndpointsTableProps {
+interface DispatchProps {
+	globalTimeLoading: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
+});
+
+interface TopEndpointsTableProps extends DispatchProps {
 	data: topEndpointListItem[];
 }
 
-export default TopEndpointsTable;
+export default connect(null, mapDispatchToProps)(TopEndpointsTable);

@@ -159,7 +159,11 @@ const FullView = ({
 				)}
 
 				{noDataGraph ? (
-					<EmptyGraph widget={widget} selectedTime={selectedTime} />
+					<EmptyGraph
+						onClickHandler={onClickHandler}
+						widget={widget}
+						selectedTime={selectedTime}
+					/>
 				) : (
 					<NotFoundContainer>
 						<Typography>No Data</Typography>

@@ -3,15 +3,14 @@ import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
-import { Time } from 'container/Header/DateTimeSelection/config';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useRef } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
+import { GlobalTimeLoading } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -22,7 +21,6 @@ import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
 const Application = ({
-	updateTimeInterval,
 	globalLoading,
 	getWidget,
 }: DashboardProps): JSX.Element => {
@@ -37,8 +35,6 @@ const Application = ({
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 1 * 60 * 1000;
 
-		updateTimeInterval('custom', [currentTime, tPlusOne]); // updateTimeInterval takes second range in ms -- give -5 min to selected time,
-
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
@@ -46,8 +42,8 @@ const Application = ({
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 		globalLoading();
+		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
 	const onClickhandler = async (
@@ -87,6 +83,22 @@ const Application = ({
 				}
 			}
 		}
+	};
+
+	const onErrorTrackHandler = (timestamp: number): void => {
+		const currentTime = timestamp;
+		const tPlusOne = timestamp + 1 * 60 * 1000;
+
+		const urlParams = new URLSearchParams();
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		if (servicename) {
+			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
+		}
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
+
+		globalLoading();
+		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
 	};
 
 	return (
@@ -183,6 +195,17 @@ const Application = ({
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
+					<Button
+						type="default"
+						size="small"
+						id="Error_button"
+						onClick={(): void => {
+							onErrorTrackHandler(selectedTimeStamp.current);
+						}}
+					>
+						View Traces
+					</Button>
+
 					<Card>
 						<Card>
 							<GraphTitle>Error Percentage (%)</GraphTitle>
@@ -190,6 +213,9 @@ const Application = ({
 								<FullView
 									noDataGraph
 									fullViewOptions={false}
+									onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+										onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
+									}}
 									widget={getWidget([
 										{
 											query: `sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]) OR vector(0))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))`,
@@ -213,17 +239,12 @@ const Application = ({
 };
 
 interface DispatchProps {
-	updateTimeInterval: (
-		interval: Time,
-		dateTimeRange?: [number, number],
-	) => (dispatch: Dispatch<AppActions>) => void;
 	globalLoading: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
 	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
