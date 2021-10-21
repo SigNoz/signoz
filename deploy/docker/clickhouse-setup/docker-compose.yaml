@@ -21,6 +21,17 @@ services:
         timeout: 5s
         retries: 3
 
+  alertmanager:
+    image: prom/alertmanager
+    volumes:
+      - ./alertmanager.yml:/prometheus/alertmanager.yml
+      - ./data/alertmanager:/data
+    command:
+      - '--config.file=/prometheus/alertmanager.yml'
+      - '--storage.path=/data'
+    ports:
+      - 9093:9093
+
   query-service:
     image: signoz/query-service:0.4.2
     container_name: query-service
