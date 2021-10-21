@@ -5,9 +5,9 @@ export const usageDataReducer = (
 	action: Action,
 ) => {
 	switch (action.type) {
-	case ActionTypes.getUsageData:
-		return action.payload;
-	default:
-		return state;
+		case ActionTypes.getUsageData:
+			return action.payload;
+		default:
+			return state;
 	}
 };

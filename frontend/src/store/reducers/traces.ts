@@ -13,10 +13,10 @@ export const tracesReducer = (
 	action: Action,
 ) => {
 	switch (action.type) {
-	case ActionTypes.fetchTraces:
-		return action.payload;
-	default:
-		return state;
+		case ActionTypes.fetchTraces:
+			return action.payload;
+		default:
+			return state;
 	}
 };
 
@@ -25,9 +25,9 @@ export const traceItemReducer = (
 	action: Action,
 ) => {
 	switch (action.type) {
-	case ActionTypes.fetchTraceItem:
-		return action.payload;
-	default:
-		return state;
+		case ActionTypes.fetchTraceItem:
+			return action.payload;
+		default:
+			return state;
 	}
 };

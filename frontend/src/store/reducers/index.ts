@@ -1,38 +1,28 @@
 import { combineReducers } from 'redux';
-import {
-	GlobalTime,
-	serviceMapStore,
-	spansWSameTraceIDResponse,
-	TraceFilters,
-	traceResponseNew,
-	usageDataItem,
-} from 'store/actions';
 
-import { updateGlobalTimeReducer } from './global';
-import { MetricsInitialState, metricsReducer } from './metrics';
+import appReducer from './app';
+import dashboardReducer from './dashboard';
+import globalTimeReducer from './global';
+import metricsReducers from './metric';
+import { metricsReducer } from './metrics';
 import { ServiceMapReducer } from './serviceMap';
 import TraceFilterReducer from './traceFilters';
 import { traceItemReducer, tracesReducer } from './traces';
 import { usageDataReducer } from './usage';
 
-export interface StoreState {
-	metricsData: MetricsInitialState;
-	traceFilters: TraceFilters;
-	traces: traceResponseNew;
-	traceItem: spansWSameTraceIDResponse;
-	usageDate: usageDataItem[];
-	globalTime: GlobalTime;
-	serviceMap: serviceMapStore;
-}
-
-const reducers = combineReducers<StoreState>({
+const reducers = combineReducers({
 	traceFilters: TraceFilterReducer,
 	traces: tracesReducer,
 	traceItem: traceItemReducer,
 	usageDate: usageDataReducer,
-	globalTime: updateGlobalTimeReducer,
+	globalTime: globalTimeReducer,
 	metricsData: metricsReducer,
 	serviceMap: ServiceMapReducer,
+	dashboards: dashboardReducer,
+	app: appReducer,
+	metrics: metricsReducers,
 });
+
+export type AppState = ReturnType<typeof reducers>;
 
 export default reducers;
