@@ -1,5 +1,3 @@
-import ROUTES from 'constants/routes';
-
 const Login = ({ email, name }: LoginProps): void => {
 	const emailInput = cy.findByPlaceholderText('mike@netflix.com');
 
@@ -29,12 +27,16 @@ const Login = ({ email, name }: LoginProps): void => {
 		expect(inputValue).to.be.equals(name);
 	});
 
-	const gettingStartedButton = cy.get('button');
+	const gettingStartedButton = cy.findByText('Get Started');
 	gettingStartedButton.click();
 
-	cy.location('pathname').then((e) => {
-		expect(e).to.be.equal(ROUTES.APPLICATION);
-	});
+	cy
+		.intercept('POST', '/api/v1/user?email*', {
+			statusCode: 200,
+		})
+		.as('defaultUser');
+
+	cy.wait('@defaultUser');
 };
 
 export interface LoginProps {
