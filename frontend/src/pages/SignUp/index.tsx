@@ -1,18 +1,17 @@
 import { Button, Input, Typography } from 'antd';
 import signup from 'api/user/signup';
-import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading } from 'store/actions';
+import { GlobalTimeLoading, UserLoggedIn } from 'store/actions';
 import AppActions from 'types/actions';
 
 import { ButtonContainer, Container, FormWrapper, Title } from './styles';
 
-const Signup = ({ globalLoading }: SignupProps): JSX.Element => {
+const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },
@@ -53,9 +52,9 @@ const Signup = ({ globalLoading }: SignupProps): JSX.Element => {
 				});
 
 				if (response.statusCode === 200) {
-					localStorage.setItem(IS_LOGGED_IN, 'yes');
-					history.push(ROUTES.APPLICATION);
+					loggedIn();
 					globalLoading();
+					history.push(ROUTES.APPLICATION);
 				} else {
 					// @TODO throw a error notification here
 				}
@@ -121,12 +120,14 @@ const Signup = ({ globalLoading }: SignupProps): JSX.Element => {
 
 interface DispatchProps {
 	globalLoading: () => void;
+	loggedIn: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
+	loggedIn: bindActionCreators(UserLoggedIn, dispatch),
 });
 
 type SignupProps = DispatchProps;
