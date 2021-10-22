@@ -83,6 +83,7 @@ const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 						<Input
 							placeholder="mike@netflix.com"
 							type="email"
+							autoFocus
 							value={formState.email.value}
 							onChange={(e): void => updateForm('email', e.target)}
 							required
@@ -94,7 +95,6 @@ const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 						<label htmlFor="signupFirstName">First Name</label>
 						<Input
 							placeholder="Mike"
-							autoFocus
 							value={formState.firstName.value}
 							onChange={(e): void => updateForm('firstName', e.target)}
 							required
