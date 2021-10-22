@@ -856,7 +856,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParam
 
 func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 
-	parseTTL := func(queryResp string) string {
+	parseTTL := func(queryResp string) int {
 		values := strings.Split(queryResp, " ")
 		N := len(values)
 		ttlIdx := -1
@@ -868,12 +868,17 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			}
 		}
 		if ttlIdx == -1 {
-			return ""
+			return ttlIdx
 		}
 
 		output := strings.SplitN(values[ttlIdx], "(", 2)
 		timePart := strings.Trim(output[1], ")")
-		return timePart
+		seconds_int, err := strconv.Atoi(timePart)
+		if err != nil {
+			return -1
+		}
+		ttl_hrs := seconds_int / 3600
+		return ttl_hrs
 	}
 
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
