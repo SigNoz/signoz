@@ -64,5 +64,5 @@ export const NewDashboardPage = Loadable(
 
 export const DashboardWidget = Loadable(
 	() =>
-		import(/* webpackChunkName: "New DashboardPage" */ 'pages/DashboardWidget'),
+		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
 );
