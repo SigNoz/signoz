@@ -9,7 +9,13 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UserLoggedIn } from 'store/actions';
 import AppActions from 'types/actions';
 
-import { ButtonContainer, Container, FormWrapper, Title } from './styles';
+import {
+	ButtonContainer,
+	Container,
+	FormWrapper,
+	LogoImageContainer,
+	Title,
+} from './styles';
 
 const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 	const [state, setState] = useState({ submitted: false });
@@ -75,7 +81,7 @@ const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 			</Container>
 
 			<FormWrapper>
-				<img src={'signoz.svg'} alt="logo" />
+				<LogoImageContainer src={'signoz.svg'} alt="logo" />
 
 				<form onSubmit={handleSubmit}>
 					<div>
