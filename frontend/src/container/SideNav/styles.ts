@@ -11,7 +11,7 @@ export const ThemeSwitcherWrapper = styled.div`
 
 export const Logo = styled.img<LogoProps>`
 	width: 100px;
-	margin: 5%;
+	margin: 9% 5% 5% 10%;
 	display: ${({ collapsed }): string => (!collapsed ? 'block' : 'none')};
 `;
 
