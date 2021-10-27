@@ -1,4 +1,3 @@
-import { updateTimeIntervalAction } from './global';
 import { serviceMapItemAction, servicesAction } from './serviceMap';
 import { updateTraceFiltersAction } from './traceFilters';
 import { FetchTraceItemAction, FetchTracesAction } from './traces';
@@ -19,6 +18,5 @@ export type Action =
 	| FetchTracesAction
 	| updateTraceFiltersAction
 	| getUsageDataAction
-	| updateTimeIntervalAction
 	| servicesAction
 	| serviceMapItemAction;

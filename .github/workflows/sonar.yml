@@ -1,0 +1,27 @@
+name: sonar
+on:
+  pull_request:
+    branches:
+      - main
+      - v*
+    paths:
+      - 'frontend/**'
+defaults:
+  run:
+    working-directory: frontend
+jobs:
+  sonar-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
+      - name: Sonar analysis
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      

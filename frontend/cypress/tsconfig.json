@@ -6,7 +6,8 @@
 		"noEmit": true,
 		// be explicit about types included
 		// to avoid clashing with Jest types
-		"types": ["cypress", "@testing-library/cypress"]
+		"types": ["cypress", "@testing-library/cypress"],
+		"isolatedModules": false
 	},
 	"include": ["../node_modules/cypress", "./**/*.ts"]
 }

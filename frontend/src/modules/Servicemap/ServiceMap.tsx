@@ -1,5 +1,4 @@
 import Spinner from 'components/Spinner';
-import { useRoute } from 'modules/RouteProvider';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 import { connect } from 'react-redux';
@@ -7,11 +6,11 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import {
 	getDetailedServiceMapItems,
 	getServiceMapItems,
-	GlobalTime,
 	serviceMapStore,
 } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
+import { GlobalTime } from 'types/actions/globalTime';
 
 import SelectService from './SelectService';
 import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
@@ -54,7 +53,6 @@ export interface graphDataType {
 
 const ServiceMap = (props: ServiceMapProps) => {
 	const fgRef = useRef();
-	const { state } = useRoute();
 
 	const {
 		getDetailedServiceMapItems,
@@ -68,10 +66,8 @@ const ServiceMap = (props: ServiceMapProps) => {
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		if (state.SERVICE_MAP.isLoaded) {
-			getServiceMapItems(globalTime);
-			getDetailedServiceMapItems(globalTime);
-		}
+		getServiceMapItems(globalTime);
+		getDetailedServiceMapItems(globalTime);
 	}, [globalTime]);
 
 	useEffect(() => {

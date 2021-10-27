@@ -35,7 +35,7 @@ export const GetQueryResults = (
 							end,
 							query: encodeURIComponent(query.query),
 							start: start,
-							step: '30',
+							step: '60',
 						});
 						return {
 							query: query.query,

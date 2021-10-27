@@ -23,3 +23,8 @@ To run GitHub workflow, a few environment variables needs to add in GitHub secre
     <td> Docker hub password/token with push permission </td>
     <td> **** </td>
   </tr>
+  <tr>
+    <td> SONAR_TOKEN </td>
+    <td> <a href="https://sonarcloud.io">SonarCloud</a> token </td>
+    <td> **** </td>
+  </tr>

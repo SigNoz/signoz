@@ -1,9 +1,9 @@
 import api from 'api';
 import ROUTES from 'constants/routes';
 import { Dispatch } from 'redux';
+import { GlobalTime } from 'types/actions/globalTime';
 import { toUTCEpoch } from 'utils/timeUtils';
 
-import { GlobalTime } from './global';
 import { ActionTypes } from './types';
 
 // PNOTE

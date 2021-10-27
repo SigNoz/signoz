@@ -1,9 +1,13 @@
 import Loadable from 'components/Loadable';
 
+export const ServicesTablePage = Loadable(
+	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Metrics'),
+);
+
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ServiceMetricsPage" */ 'modules/Metrics/ServiceMetricsDef'
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricApplication'
 		),
 );
 
@@ -35,28 +39,18 @@ export const UsageExplorerPage = Loadable(
 		),
 );
 
-export const ServicesTablePage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "ServicesTablePage" */ 'modules/Metrics/ServicesTableDef'
-		),
-);
-
 export const SignupPage = Loadable(
-	() => import(/* webpackChunkName: "SignupPage" */ 'modules/Auth/Signup'),
+	() => import(/* webpackChunkName: "SignupPage" */ 'pages/SignUp'),
 );
 
 export const SettingsPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "SettingsPage" */ 'modules/Settings/settingsPage'
-		),
+	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
 export const InstrumentationPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "InstrumentationPage" */ 'modules/add-instrumentation/instrumentationPage'
+			/* webpackChunkName: "InstrumentationPage" */ 'pages/AddInstrumentation'
 		),
 );
 
@@ -70,5 +64,5 @@ export const NewDashboardPage = Loadable(
 
 export const DashboardWidget = Loadable(
 	() =>
-		import(/* webpackChunkName: "New DashboardPage" */ 'pages/DashboardWidget'),
+		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
 );

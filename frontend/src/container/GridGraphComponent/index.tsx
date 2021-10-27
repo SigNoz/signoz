@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
-import { ChartData } from 'chart.js';
-import Graph from 'components/Graph';
+import { ChartData, ChartOptions } from 'chart.js';
+import Graph, { graphOnClickHandler } from 'components/Graph';
 import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
@@ -14,6 +14,7 @@ const GridGraphComponent = ({
 	title,
 	opacity,
 	isStacked,
+	onClickHandler,
 }: GridGraphComponentProps): JSX.Element | null => {
 	const location = history.location.pathname;
 
@@ -29,6 +30,7 @@ const GridGraphComponent = ({
 					isStacked,
 					opacity,
 					xAxisType: 'time',
+					onClickHandler: onClickHandler,
 				}}
 			/>
 		);
@@ -66,6 +68,7 @@ export interface GridGraphComponentProps {
 	title?: string;
 	opacity?: string;
 	isStacked?: boolean;
+	onClickHandler?: graphOnClickHandler;
 }
 
 export default GridGraphComponent;
