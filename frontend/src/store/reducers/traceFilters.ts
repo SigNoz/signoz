@@ -4,6 +4,7 @@ type ACTION = {
 	type: ActionTypes;
 	payload: TraceFilters;
 };
+
 const initialState: TraceFilters = {
 	service: '',
 	tags: [],

@@ -69,7 +69,6 @@ const LatencyModalForm: React.FC<LatencyModalFormProps> = ({
 				initialValues={latencyFilterValues}
 			>
 				<Row>
-					{/* <Input.Group compact> */}
 					<Col span={12}>
 						<Form.Item
 							name="min"
