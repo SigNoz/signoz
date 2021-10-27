@@ -135,6 +135,10 @@ const TraceList = ({
 					latency: latencyFilterValues,
 					operation: selectedOperation,
 					service: selectedService,
+					setSelectedTags: setSelectedTags,
+					setSelectedOperation,
+					setSelectedService,
+					setLatencyFilterValues,
 				}}
 			/>
 

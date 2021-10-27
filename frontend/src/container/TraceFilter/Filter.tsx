@@ -4,34 +4,40 @@ import React from 'react';
 import { TagItem } from 'store/actions';
 
 const Filter = (props: FilterStateDisplayProps): JSX.Element => {
-	const { latency, service, tags, operation } = props;
+	const {
+		latency,
+		service,
+		tags,
+		operation,
+		setSelectedTags,
+		setSelectedOperation,
+		setSelectedService,
+		setLatencyFilterValues,
+	} = props;
 
 	function handleCloseTag(value: string): void {
 		if (value === 'service') {
-			updateTraceFilters({ ...traceFilters, service: '' });
+			setSelectedService('');
 		}
 		if (value === 'operation') {
-			updateTraceFilters({ ...traceFilters, operation: '' });
+			setSelectedOperation('');
 		}
 		if (value === 'maxLatency') {
-			updateTraceFilters({
-				...traceFilters,
-				latency: { max: '', min: traceFilters.latency?.min || '' },
-			});
+			setLatencyFilterValues((value) => ({
+				max: value.max,
+				min: '',
+			}));
 		}
 		if (value === 'minLatency') {
-			updateTraceFilters({
-				...traceFilters,
-				latency: { min: '', max: traceFilters.latency?.max || '' },
-			});
+			setLatencyFilterValues((value) => ({
+				min: value.min,
+				max: '',
+			}));
 		}
 	}
 
-	function handleCloseTagElement(item): void {
-		props.updateTraceFilters({
-			...props.traceFilters,
-			tags: tags?.filter((elem) => elem !== item),
-		});
+	function handleCloseTagElement(item: TagItem): void {
+		setSelectedTags((tags) => tags.filter((e) => e.key !== item.key));
 	}
 
 	return (
@@ -102,4 +108,8 @@ interface FilterStateDisplayProps {
 	operation: string;
 	latency: LatencyValue;
 	tags: TagItem[];
+	setSelectedTags: React.Dispatch<React.SetStateAction<TagItem[]>>;
+	setSelectedOperation: React.Dispatch<React.SetStateAction<string>>;
+	setSelectedService: React.Dispatch<React.SetStateAction<string>>;
+	setLatencyFilterValues: React.Dispatch<React.SetStateAction<LatencyValue>>;
 }
