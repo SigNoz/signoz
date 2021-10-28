@@ -7,7 +7,11 @@ import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GetInitialTraceData } from 'store/actions/trace/getInitialData';
+import {
+	GetInitialTraceData,
+	GetSelectedDataProps,
+	GetSelectedTraceData,
+} from 'store/actions/trace';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -15,21 +19,54 @@ import { TraceReducer } from 'types/reducer/trace';
 
 const TraceDetail = ({
 	getInitialTraceData,
+	getSelectedTraceData,
 }: TraceDetailProps): JSX.Element => {
 	const { loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const { loading: TraceLoading, error, errorMessage } = useSelector<
-		AppState,
-		TraceReducer
-	>((state) => state.trace);
+	const {
+		loading: TraceLoading,
+		error,
+		errorMessage,
+		selectedKind,
+		selectedService,
+		selectedOperation,
+		selectedTags,
+		selectedLatency,
+	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
 	useEffect(() => {
 		if (!loading) {
 			getInitialTraceData();
 		}
 	}, [getInitialTraceData, loading]);
+
+	useEffect(() => {
+		if (
+			selectedKind.length !== 0 ||
+			selectedService.length !== 0 ||
+			selectedOperation.length !== 0 ||
+			selectedTags.length !== 0 ||
+			selectedLatency.max.length !== 0 ||
+			selectedLatency.min.length !== 0
+		) {
+			getSelectedTraceData({
+				selectedKind,
+				selectedService,
+				selectedOperation,
+				selectedTags,
+				selectedLatency,
+			});
+		}
+	}, [
+		selectedKind,
+		selectedService,
+		selectedOperation,
+		selectedTags,
+		selectedLatency,
+		getSelectedTraceData,
+	]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
@@ -52,12 +89,14 @@ const TraceDetail = ({
 
 interface DispatchProps {
 	getInitialTraceData: () => void;
+	getSelectedTraceData: (props: GetSelectedDataProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getInitialTraceData: bindActionCreators(GetInitialTraceData, dispatch),
+	getSelectedTraceData: bindActionCreators(GetSelectedTraceData, dispatch),
 });
 
 type TraceDetailProps = DispatchProps;

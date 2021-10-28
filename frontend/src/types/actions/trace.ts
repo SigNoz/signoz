@@ -9,6 +9,7 @@ export const UPDATE_TRACE_SELECTED_LATENCY_VALUE =
 	'UPDATE_TRACE_SELECTED_LATENCY_VALUE';
 export const UPDATE_TRACE_SELECTED_KIND = 'UPDATE_TRACE_SELECTED_KIND';
 export const UPDATE_TRACE_SELECTED_TAGS = 'UPDATE_TRACE_SELECTED_TAGS';
+export const GET_TRACE_SELECTED_DATA = 'GET_TRACE_SELECTED_DATA';
 
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -26,6 +27,15 @@ interface GetTraceInitialData {
 		spansList: TraceReducer['spanList'];
 		selectedService: TraceReducer['selectedService'];
 		selectedOperation: TraceReducer['selectedOperation'];
+	};
+}
+
+interface GetSelectedTraceData {
+	type: typeof GET_TRACE_SELECTED_DATA;
+	payload: {
+		operationList: TraceReducer['operationsList'];
+		tagsSuggestions: TraceReducer['tagsSuggestions'];
+		spansList: TraceReducer['spanList'];
 	};
 }
 
@@ -79,4 +89,5 @@ export type TraceActions =
 	| UpdateTraceSelectedLatencyValue
 	| UpdateTraceSelectedKind
 	| UpdateTraceSelectedOperation
-	| UpdateTraceSelectedTags;
+	| UpdateTraceSelectedTags
+	| GetSelectedTraceData;

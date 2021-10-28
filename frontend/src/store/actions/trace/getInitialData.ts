@@ -11,7 +11,6 @@ import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps as GetServicePayloadProps } from 'types/api/trace/getServiceOperation';
 import { PayloadProps as GetTagsPayloadProps } from 'types/api/trace/getTags';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
 export const GetInitialTraceData = (): ((
@@ -30,11 +29,11 @@ export const GetInitialTraceData = (): ((
 			const { minTime, maxTime } = globalTime;
 
 			const {
-				selectedTags,
-				selectedService,
 				selectedKind,
 				selectedLatency,
+				selectedTags,
 				selectedOperation,
+				selectedService,
 			} = trace;
 
 			const [serviceListResponse, spanResponse] = await Promise.all([
@@ -136,13 +135,3 @@ export const GetInitialTraceData = (): ((
 		}
 	};
 };
-
-export interface GetInitialTraceDataProps {
-	maxTime: GlobalReducer['maxTime'];
-	minTime: GlobalReducer['minTime'];
-	selectedKind: TraceReducer['selectedKind'];
-	selectedLatency: TraceReducer['selectedLatency'];
-	selectedService: TraceReducer['selectedService'];
-	selectedOperation: TraceReducer['selectedOperation'];
-	selectedTags: TraceReducer['selectedTags'];
-}

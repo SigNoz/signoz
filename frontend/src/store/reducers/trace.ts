@@ -2,6 +2,7 @@ import {
 	GET_TRACE_INITIAL_DATA_ERROR,
 	GET_TRACE_INITIAL_DATA_SUCCESS,
 	GET_TRACE_LOADING_START,
+	GET_TRACE_SELECTED_DATA,
 	TraceActions,
 	UPDATE_TRACE_SELECTED_KIND,
 	UPDATE_TRACE_SELECTED_LATENCY_VALUE,
@@ -107,6 +108,17 @@ export const traceReducer = (
 			return {
 				...state,
 				selectedTags: action.payload.selectedTags,
+			};
+		}
+
+		case GET_TRACE_SELECTED_DATA: {
+			const { tagsSuggestions, operationList, spansList } = action.payload;
+
+			return {
+				...state,
+				tagsSuggestions,
+				operationsList: operationList,
+				spanList: spansList,
 			};
 		}
 
