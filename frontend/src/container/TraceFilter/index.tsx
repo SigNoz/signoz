@@ -1,7 +1,6 @@
-import { Button, Form, Input, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
-const FormItem = Form.Item;
+import { Button, Input, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
+import React, { useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TagItem, TraceReducer } from 'types/reducer/trace';
@@ -9,7 +8,7 @@ import { TagItem, TraceReducer } from 'types/reducer/trace';
 import { spanKindList } from './config';
 import Filter from './Filter';
 import LatencyForm from './LatencyForm';
-import { AutoComplete, InfoWrapper, Select } from './styles';
+import { AutoComplete, Form, InfoWrapper, Select } from './styles';
 const { Option } = Select;
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -21,6 +20,7 @@ import {
 } from 'store/actions/trace';
 import AppActions from 'types/actions';
 
+const FormItem = Form.Item;
 const TraceList = ({
 	updateSelectedKind,
 	updateSelectedOperation,
@@ -40,11 +40,10 @@ const TraceList = ({
 		serviceList,
 		tagsSuggestions,
 		selectedTags,
+		selectedService,
+		selectedOperation,
+		selectedLatency,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
-
-	const onApplyFilterFormHandler = (): void => {
-		// fetchData();
-	};
 
 	const onTagSubmitTagHandler = (values: Item): void => {
 		updateSelectedTags([
@@ -64,11 +63,9 @@ const TraceList = ({
 	return (
 		<>
 			<Typography>Filter Traces</Typography>
-
 			<Form
 				form={form_basefilter}
 				layout="inline"
-				onFinish={onApplyFilterFormHandler}
 				initialValues={{ service: '', operation: '', latency: 'Latency' }}
 			>
 				<FormItem rules={[{ required: true }]} name="service">
@@ -129,10 +126,13 @@ const TraceList = ({
 				</FormItem>
 			</Form>
 
-			<Filter />
+			{(selectedTags.length !== 0 ||
+				selectedService.length !== 0 ||
+				selectedOperation.length !== 0 ||
+				selectedLatency.max.length !== 0 ||
+				selectedLatency.min.length !== 0) && <Filter />}
 
 			<InfoWrapper>Select Service to get Tag suggestions</InfoWrapper>
-
 			<Form
 				form={form}
 				layout="inline"
@@ -170,7 +170,6 @@ const TraceList = ({
 					</Button>
 				</FormItem>
 			</Form>
-
 			<LatencyForm
 				onCancel={(): void => {
 					setVisible(false);

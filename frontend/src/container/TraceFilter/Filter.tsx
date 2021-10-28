@@ -1,4 +1,4 @@
-import { Card, Tag } from 'antd';
+import { Tag } from 'antd';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -13,6 +13,8 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
+
+import { Card } from './styles';
 
 const Filter = ({
 	updateSelectedOperation,

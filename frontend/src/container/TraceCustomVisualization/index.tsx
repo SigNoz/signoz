@@ -1,25 +1,18 @@
 import { Form, Select } from 'antd';
 import getSpansAggregate from 'api/trace/getSpanAggregate';
-import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/trace/getSpanAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 const { Option } = Select;
 import { AxiosError } from 'axios';
-import { colors } from 'lib/getRandomColor';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { aggregation_options, entity } from './config';
-import {
-	Card,
-	CustomGraphContainer,
-	CustomVisualizationsTitle,
-	FormItem,
-	Space,
-} from './styles';
+import { Card, CustomVisualizationsTitle, FormItem, Space } from './styles';
+import TraceCustomGraph from './TraceCustomGraph';
 
 const TraceCustomVisualisation = (): JSX.Element => {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -194,20 +187,7 @@ const TraceCustomVisualisation = (): JSX.Element => {
 				</Space>
 			</Form>
 
-			<CustomGraphContainer>
-				<Graph
-					type="line"
-					data={{
-						labels: state.payload.map((s) => new Date(s.timestamp / 1000000)),
-						datasets: [
-							{
-								data: state.payload.map((e) => e.value),
-								borderColor: colors[0],
-							},
-						],
-					}}
-				/>
-			</CustomGraphContainer>
+			<TraceCustomGraph payload={state.payload} />
 		</Card>
 	);
 };
@@ -219,4 +199,4 @@ interface SetState<T> {
 	payload: T;
 }
 
-export default memo(TraceCustomVisualisation);
+export default TraceCustomVisualisation;

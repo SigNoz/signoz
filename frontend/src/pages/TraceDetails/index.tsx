@@ -79,9 +79,7 @@ const TraceDetail = ({
 	return (
 		<>
 			<TraceFilter />
-
 			<TraceCustomVisualisation />
-
 			<TraceList />
 		</>
 	);

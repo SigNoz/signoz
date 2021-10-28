@@ -5,6 +5,9 @@ import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { PayloadProps as ServiceOperationPayloadProps } from 'types/api/trace/getServiceOperation';
+import { PayloadProps as TagPayloadProps } from 'types/api/trace/getTags';
 import { TraceReducer } from 'types/reducer/trace';
 
 export const GetSelectedTraceData = ({
@@ -19,11 +22,17 @@ export const GetSelectedTraceData = ({
 			const { globalTime } = store.getState();
 			const { minTime, maxTime } = globalTime;
 
-			const [
-				spanResponse,
-				tagResponse,
-				serviceOperationResponse,
-			] = await Promise.all([
+			let tagResponse:
+				| SuccessResponse<TagPayloadProps>
+				| ErrorResponse
+				| undefined;
+
+			let serviceOperationResponse:
+				| SuccessResponse<ServiceOperationPayloadProps>
+				| ErrorResponse
+				| undefined;
+
+			const [spanResponse] = await Promise.all([
 				getSpan({
 					start: minTime,
 					end: maxTime,
@@ -36,19 +45,35 @@ export const GetSelectedTraceData = ({
 					service: selectedService,
 					tags: JSON.stringify(selectedTags),
 				}),
-				getTags({
-					service: selectedService,
-				}),
-				getServiceOperation({
-					service: selectedService,
-				}),
 			]);
 
-			if (
-				spanResponse.statusCode === 200 &&
-				tagResponse.statusCode === 200 &&
-				serviceOperationResponse.statusCode === 200
-			) {
+			if (selectedService.length !== 0) {
+				[tagResponse, serviceOperationResponse] = await Promise.all([
+					getTags({
+						service: selectedService,
+					}),
+					getServiceOperation({
+						service: selectedService,
+					}),
+				]);
+			}
+
+			const getCondition = (): boolean => {
+				const basicCondition = spanResponse.statusCode === 200;
+				if (selectedService.length === 0) {
+					return basicCondition;
+				}
+
+				return (
+					basicCondition &&
+					serviceOperationResponse?.statusCode === 200 &&
+					tagResponse?.statusCode === 200
+				);
+			};
+
+			const condition = getCondition();
+
+			if (condition) {
 				dispatch({
 					type: 'GET_TRACE_SELECTED_DATA',
 					payload: {
