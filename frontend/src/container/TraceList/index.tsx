@@ -5,11 +5,51 @@ import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import history from 'lib/history';
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { pushDStree } from 'types/api/trace/getSpans';
+import { TraceReducer } from 'types/reducer/trace';
 import { isOnboardingSkipped } from 'utils/app';
 
 import { TitleContainer } from './styles';
 
-const TraceDetails = ({ spans }: TraceDetailsProps): JSX.Element => {
+const TraceDetails = (): JSX.Element => {
+	const { spanList } = useSelector<AppState, TraceReducer>(
+		(state) => state.trace,
+	);
+
+	const spans: TableDataSourceItem[] = spanList[0].events.map(
+		(item: (number | string | string[] | pushDStree[])[], index) => {
+			if (
+				typeof item[0] === 'number' &&
+				typeof item[4] === 'string' &&
+				typeof item[6] === 'string' &&
+				typeof item[1] === 'string' &&
+				typeof item[2] === 'string' &&
+				typeof item[3] === 'string'
+			) {
+				return {
+					startTime: item[0],
+					operationName: item[4],
+					duration: parseInt(item[6]),
+					spanid: item[1],
+					traceid: item[2],
+					key: index.toString(),
+					service: item[3],
+				};
+			}
+			return {
+				duration: 0,
+				key: '',
+				operationName: '',
+				service: '',
+				spanid: '',
+				startTime: 0,
+				traceid: '',
+			};
+		},
+	);
+
 	const columns: ColumnsType<TableDataSourceItem> = [
 		{
 			title: 'Start Time',
@@ -97,10 +137,6 @@ export interface TableDataSourceItem {
 	startTime: number;
 	duration: number;
 	service: string;
-}
-
-interface TraceDetailsProps {
-	spans: TableDataSourceItem[];
 }
 
 export default TraceDetails;

@@ -35,9 +35,7 @@ export interface SpanList {
 	columns: string[];
 }
 
-export interface PayloadProps {
-	[id: string]: SpanList;
-}
+export type PayloadProps = SpanList[];
 
 export interface Props {
 	start: GlobalTime['minTime'];

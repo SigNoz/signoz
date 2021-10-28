@@ -1,68 +1,82 @@
 import { Card, Tag } from 'antd';
-import { InitialRequestPayload, LatencyValue } from 'pages/TraceDetails';
 import React from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { TagItem } from 'store/actions';
+import {
+	UpdateSelectedLatency,
+	UpdateSelectedOperation,
+	UpdateSelectedService,
+	UpdateSelectedTags,
+} from 'store/actions/trace';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { TraceReducer } from 'types/reducer/trace';
 
-const Filter = (props: FilterStateDisplayProps): JSX.Element => {
+const Filter = ({
+	updateSelectedOperation,
+	updateSelectedService,
+	updateSelectedTags,
+	updateSelectedLatency,
+}: FilterProps): JSX.Element => {
 	const {
-		latency,
-		service,
-		tags,
-		operation,
-		setSelectedTags,
-		setSelectedOperation,
-		setSelectedService,
-		setLatencyFilterValues,
-	} = props;
+		selectedService,
+		selectedOperation,
+		selectedLatency,
+		selectedTags,
+	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
-	function handleCloseTag(value: string): void {
+	function handleCloseTag(value: any): void {
 		if (value === 'service') {
-			setSelectedService('');
+			updateSelectedService('');
 		}
 		if (value === 'operation') {
-			setSelectedOperation('');
+			updateSelectedOperation('');
 		}
 		if (value === 'maxLatency') {
-			setLatencyFilterValues((value) => ({
+			updateSelectedLatency({
 				max: value.max,
 				min: '',
-			}));
+			});
 		}
 		if (value === 'minLatency') {
-			setLatencyFilterValues((value) => ({
-				min: value.min,
+			updateSelectedLatency({
 				max: '',
-			}));
+				min: value.min,
+			});
 		}
 	}
 
 	function handleCloseTagElement(item: TagItem): void {
-		setSelectedTags((tags) => tags.filter((e) => e.key !== item.key));
+		updateSelectedTags(selectedTags.filter((e) => e.key !== item.key));
 	}
 
 	return (
 		<Card>
-			{service === '' || operation === undefined ? null : (
+			{selectedService.length !== 0 && (
 				<Tag
 					closable
 					onClose={(): void => {
 						handleCloseTag('service');
 					}}
 				>
-					service:{service}
+					service:{selectedService}
 				</Tag>
 			)}
-			{operation === '' || operation === undefined ? null : (
+
+			{selectedOperation.length !== 0 && (
 				<Tag
 					closable
 					onClose={(): void => {
 						handleCloseTag('operation');
 					}}
 				>
-					operation:{operation}
+					operation:{selectedOperation}
 				</Tag>
 			)}
-			{latency === undefined || latency?.min === '' ? null : (
+
+			{selectedLatency?.min.length !== 0 && (
 				<Tag
 					closable
 					onClose={(): void => {
@@ -70,10 +84,10 @@ const Filter = (props: FilterStateDisplayProps): JSX.Element => {
 					}}
 				>
 					minLatency:
-					{(parseInt(latency?.min || '0') / 1000000).toString()}ms
+					{(parseInt(selectedLatency?.min || '0') / 1000000).toString()}ms
 				</Tag>
 			)}
-			{latency === undefined || latency?.max === '' ? null : (
+			{selectedLatency?.max.length !== 0 && (
 				<Tag
 					closable
 					onClose={(): void => {
@@ -81,35 +95,49 @@ const Filter = (props: FilterStateDisplayProps): JSX.Element => {
 					}}
 				>
 					maxLatency:
-					{(parseInt(latency?.max || '0') / 1000000).toString()}ms
+					{(parseInt(selectedLatency?.max || '0') / 1000000).toString()}ms
 				</Tag>
 			)}
-			{tags === undefined
-				? null
-				: tags.map((item) => (
-						<Tag
-							closable
-							key={`${item.key}-${item.operator}-${item.value}`}
-							onClose={(): void => {
-								handleCloseTagElement(item);
-							}}
-						>
-							{item.key} {item.operator} {item.value}
-						</Tag>
-				  ))}
+
+			{selectedTags.map((item) => (
+				<Tag
+					closable
+					key={`${item.key}-${item.operator}-${item.value}`}
+					onClose={(): void => {
+						handleCloseTagElement(item);
+					}}
+				>
+					{item.key} {item.operator} {item.value}
+				</Tag>
+			))}
 		</Card>
 	);
 };
 
-export default Filter;
-
-interface FilterStateDisplayProps {
-	service: string;
-	operation: string;
-	latency: LatencyValue;
-	tags: TagItem[];
-	setSelectedTags: React.Dispatch<React.SetStateAction<TagItem[]>>;
-	setSelectedOperation: React.Dispatch<React.SetStateAction<string>>;
-	setSelectedService: React.Dispatch<React.SetStateAction<string>>;
-	setLatencyFilterValues: React.Dispatch<React.SetStateAction<LatencyValue>>;
+interface DispatchProps {
+	updateSelectedLatency: (
+		selectedLatency: TraceReducer['selectedLatency'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedOperation: (
+		selectedOperation: TraceReducer['selectedOperation'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedService: (
+		selectedService: TraceReducer['selectedService'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedTags: (
+		selectedTags: TraceReducer['selectedTags'],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateSelectedLatency: bindActionCreators(UpdateSelectedLatency, dispatch),
+	updateSelectedOperation: bindActionCreators(UpdateSelectedOperation, dispatch),
+	updateSelectedService: bindActionCreators(UpdateSelectedService, dispatch),
+	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+});
+
+type FilterProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(Filter);

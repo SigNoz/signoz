@@ -2,7 +2,7 @@ import { Form, Select } from 'antd';
 import getSpansAggregate from 'api/trace/getSpanAggregate';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/trace/getSpanAggregate';
@@ -10,7 +10,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 const { Option } = Select;
 import { AxiosError } from 'axios';
 import { colors } from 'lib/getRandomColor';
-import { TagItem } from 'pages/TraceDetails';
+import { TraceReducer } from 'types/reducer/trace';
 
 import { aggregation_options, entity } from './config';
 import {
@@ -21,15 +21,18 @@ import {
 	Space,
 } from './styles';
 
-const TraceCustomVisualisation = ({
-	selectedKind,
-	selectedOperation,
-	selectedService,
-	selectedTags,
-}: TraceCustomVisualisationProps): JSX.Element => {
+const TraceCustomVisualisation = (): JSX.Element => {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const {
+		selectedKind,
+		selectedOperation,
+		selectedService,
+		selectedTags,
+		selectedLatency,
+	} = useSelector<AppState, TraceReducer>((state) => state.trace);
+
 	const [selectedEntity, setSelectedEntity] = useState('calls');
 	const [selectedAggOption, setSelectedAggOption] = useState('count');
 	const [form] = Form.useForm();
@@ -51,8 +54,8 @@ const TraceCustomVisualisation = ({
 				dimension: selectedEntity,
 				end: maxTime,
 				kind: selectedKind,
-				maxDuration: '',
-				minDuration: '',
+				maxDuration: selectedLatency.max,
+				minDuration: selectedLatency.min,
 				operation: selectedOperation,
 				service: selectedService,
 				start: minTime,
@@ -96,6 +99,7 @@ const TraceCustomVisualisation = ({
 		selectedOperation,
 		selectedService,
 		selectedTags,
+		selectedLatency,
 	]);
 
 	useEffect(() => {
@@ -214,11 +218,5 @@ interface SetState<T> {
 	errorMessage: string;
 	payload: T;
 }
-interface TraceCustomVisualisationProps {
-	selectedKind: string;
-	selectedOperation: string;
-	selectedService: string;
-	selectedTags: TagItem[];
-}
 
-export default TraceCustomVisualisation;
+export default memo(TraceCustomVisualisation);

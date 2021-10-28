@@ -2,32 +2,30 @@ import { Button, Form, Input, Typography } from 'antd';
 import React, { useCallback, useState } from 'react';
 const FormItem = Form.Item;
 import { SelectValue } from 'antd/lib/select';
-import {
-	InitialRequestPayload,
-	LatencyValue,
-	TagItem,
-} from 'pages/TraceDetails';
+import { connect, useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { TagItem, TraceReducer } from 'types/reducer/trace';
 
 import { spanKindList } from './config';
 import Filter from './Filter';
 import LatencyForm from './LatencyForm';
 import { AutoComplete, InfoWrapper, Select } from './styles';
 const { Option } = Select;
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import {
+	UpdateSelectedKind,
+	UpdateSelectedOperation,
+	UpdateSelectedService,
+	UpdateSelectedTags,
+} from 'store/actions/trace';
+import AppActions from 'types/actions';
 
 const TraceList = ({
-	setSelectedKind,
-	setSelectedOperation,
-	setSelectedService,
-	serviceList,
-	tags = [],
-	serviceOperation = [],
-	fetchData,
-	latencyFilterValues,
-	setLatencyFilterValues,
-	selectedOperation,
-	selectedService,
-	selectedTags,
-	setSelectedTags,
+	updateSelectedKind,
+	updateSelectedOperation,
+	updateSelectedService,
+	updateSelectedTags,
 }: TraceListProps): JSX.Element => {
 	const [visible, setVisible] = useState<boolean>(false);
 	const [form] = Form.useForm();
@@ -37,20 +35,20 @@ const TraceList = ({
 		setVisible((visible) => !visible);
 	}, []);
 
-	const onChangeHandler = useCallback(
-		(value: string, setFunc: React.Dispatch<React.SetStateAction<string>>) => {
-			setFunc(value);
-		},
-		[],
-	);
+	const {
+		operationsList,
+		serviceList,
+		tagsSuggestions,
+		selectedTags,
+	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
 	const onApplyFilterFormHandler = (): void => {
-		fetchData();
+		// fetchData();
 	};
 
 	const onTagSubmitTagHandler = (values: Item): void => {
-		setSelectedTags((value) => [
-			...value,
+		updateSelectedTags([
+			...selectedTags,
 			{
 				operator: values.operator,
 				key: values.tag_key,
@@ -76,9 +74,9 @@ const TraceList = ({
 				<FormItem rules={[{ required: true }]} name="service">
 					<Select
 						showSearch
-						onChange={(value: SelectValue): void =>
-							onChangeHandler(value?.toString() || '', setSelectedService)
-						}
+						onChange={(value: SelectValue): void => {
+							updateSelectedService(value?.toString() || '');
+						}}
 						placeholder="Select Service"
 						allowClear
 					>
@@ -93,13 +91,13 @@ const TraceList = ({
 				<FormItem name="operation">
 					<Select
 						showSearch
-						onChange={(value: SelectValue): void =>
-							onChangeHandler(value?.toString() || '', setSelectedOperation)
-						}
+						onChange={(value: SelectValue): void => {
+							updateSelectedOperation(value?.toString() || '');
+						}}
 						placeholder="Select Operation"
 						allowClear
 					>
-						{serviceOperation.map((item) => (
+						{operationsList.map((item) => (
 							<Option key={item} value={item}>
 								{item}
 							</Option>
@@ -115,7 +113,9 @@ const TraceList = ({
 					<Select
 						showSearch
 						onChange={(value: SelectValue): void => {
-							onChangeHandler(value?.toString() || '', setSelectedKind);
+							if (value) {
+								updateSelectedKind(value.toString());
+							}
 						}}
 						placeholder="Select Span Kind"
 						allowClear
@@ -129,18 +129,7 @@ const TraceList = ({
 				</FormItem>
 			</Form>
 
-			<Filter
-				{...{
-					tags: selectedTags,
-					latency: latencyFilterValues,
-					operation: selectedOperation,
-					service: selectedService,
-					setSelectedTags: setSelectedTags,
-					setSelectedOperation,
-					setSelectedService,
-					setLatencyFilterValues,
-				}}
-			/>
+			<Filter />
 
 			<InfoWrapper>Select Service to get Tag suggestions</InfoWrapper>
 
@@ -152,7 +141,7 @@ const TraceList = ({
 			>
 				<FormItem rules={[{ required: true }]} name="tag_key">
 					<AutoComplete
-						options={tags.map((s) => {
+						options={tagsSuggestions.map((s) => {
 							return { value: s.tagKeys };
 						})}
 						onChange={onChangeTagKey}
@@ -183,33 +172,15 @@ const TraceList = ({
 			</Form>
 
 			<LatencyForm
-				latencyFilterValues={latencyFilterValues}
 				onCancel={(): void => {
 					setVisible(false);
 				}}
 				visible={visible}
-				setLatencyFilterValues={setLatencyFilterValues}
+				onLatencyButtonClick={onLatencyButtonClick}
 			/>
 		</>
 	);
 };
-
-interface TraceListProps {
-	setSelectedKind: React.Dispatch<React.SetStateAction<string>>;
-	setSelectedOperation: React.Dispatch<React.SetStateAction<string>>;
-	setSelectedService: React.Dispatch<React.SetStateAction<string>>;
-	serviceList: InitialRequestPayload['serviceList'];
-	tags: InitialRequestPayload['tags'];
-	serviceOperation: InitialRequestPayload['operations'];
-	fetchData: () => Promise<void>;
-	latencyFilterValues: LatencyValue;
-	setLatencyFilterValues: React.Dispatch<React.SetStateAction<LatencyValue>>;
-
-	selectedOperation: string;
-	selectedService: string;
-	selectedTags: TagItem[];
-	setSelectedTags: React.Dispatch<React.SetStateAction<TagItem[]>>;
-}
 
 interface Item {
 	tag_key: string;
@@ -217,4 +188,30 @@ interface Item {
 	operator: TagItem['operator'];
 }
 
-export default TraceList;
+interface DispatchProps {
+	updateSelectedKind: (
+		selectedKind: TraceReducer['selectedKind'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedOperation: (
+		selectedOperation: TraceReducer['selectedOperation'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedService: (
+		selectedService: TraceReducer['selectedService'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedTags: (
+		selectedTags: TraceReducer['selectedTags'],
+	) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateSelectedKind: bindActionCreators(UpdateSelectedKind, dispatch),
+	updateSelectedOperation: bindActionCreators(UpdateSelectedOperation, dispatch),
+	updateSelectedService: bindActionCreators(UpdateSelectedService, dispatch),
+	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+});
+
+type TraceListProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(TraceList);

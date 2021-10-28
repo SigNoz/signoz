@@ -1,24 +1,31 @@
 import { Col, Form, InputNumber, Modal, notification, Row } from 'antd';
-import { LatencyValue } from 'pages/TraceDetails';
 import { FormInstance, RuleObject } from 'rc-field-form/lib/interface';
 import React from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { UpdateSelectedLatency } from 'store/actions/trace';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { TraceReducer } from 'types/reducer/trace';
 
 const LatencyForm = ({
 	onCancel,
 	visible,
-	latencyFilterValues,
-	setLatencyFilterValues,
+	updateSelectedLatency,
+	onLatencyButtonClick,
 }: LatencyModalFormProps): JSX.Element => {
 	const [form] = Form.useForm();
 	const [notifications, Element] = notification.useNotification();
+	const { selectedLatency } = useSelector<AppState, TraceReducer>(
+		(state) => state.trace,
+	);
 
 	const validateMinValue = (form: FormInstance): RuleObject => ({
 		validator(_: RuleObject, value): Promise<void> {
 			const { getFieldValue } = form;
 			const minValue = getFieldValue('min');
 			const maxValue = getFieldValue('max');
-
-			console.log({ minValue, maxValue, asd: 'minValue' });
 
 			if (value <= maxValue && value >= minValue) {
 				return Promise.resolve();
@@ -33,8 +40,6 @@ const LatencyForm = ({
 
 			const minValue = getFieldValue('min');
 			const maxValue = getFieldValue('max');
-
-			console.log({ minValue, maxValue, asd: 'maxValue' });
 
 			if (value >= minValue && value <= maxValue) {
 				return Promise.resolve();
@@ -59,11 +64,11 @@ const LatencyForm = ({
 					form
 						.validateFields()
 						.then((values) => {
-							form.resetFields();
-							// setLatencyFilterValues({
-							// 	max:values
-							// })
-							console.log(values);
+							onLatencyButtonClick();
+							updateSelectedLatency({
+								max: (values.max * 1000000).toString(),
+								min: (values.min * 1000000).toString(),
+							});
 						})
 						.catch((info) => {
 							notifications.error({
@@ -76,7 +81,7 @@ const LatencyForm = ({
 					form={form}
 					layout="horizontal"
 					name="form_in_modal"
-					initialValues={latencyFilterValues}
+					initialValues={selectedLatency}
 				>
 					<Row>
 						<Col span={12}>
@@ -96,11 +101,22 @@ const LatencyForm = ({
 	);
 };
 
-interface LatencyModalFormProps {
-	onCancel: () => void;
-	latencyFilterValues: LatencyValue;
-	visible: boolean;
-	setLatencyFilterValues: React.Dispatch<React.SetStateAction<LatencyValue>>;
+interface DispatchProps {
+	updateSelectedLatency: (
+		selectedLatency: TraceReducer['selectedLatency'],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
-export default LatencyForm;
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateSelectedLatency: bindActionCreators(UpdateSelectedLatency, dispatch),
+});
+
+interface LatencyModalFormProps extends DispatchProps {
+	onCancel: () => void;
+	visible: boolean;
+	onLatencyButtonClick: () => void;
+}
+
+export default connect(null, mapDispatchToProps)(LatencyForm);

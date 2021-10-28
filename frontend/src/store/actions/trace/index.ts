@@ -1,2 +1,6 @@
 export * from './getInitialData';
-export * from './updateTraceFilter';
+export * from './updateSelectedKind';
+export * from './updateSelectedLatency';
+export * from './updateSelectedOperation';
+export * from './updateSelectedService';
+export * from './updateSelectedTags';
