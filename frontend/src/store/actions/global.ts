@@ -47,6 +47,7 @@ export const UpdateTimeInterval = (
 			payload: {
 				maxTime: maxTime * 1000000, // in nano sec,
 				minTime: minTime * 1000000,
+				selectedTime: interval,
 			},
 		});
 	};

@@ -35,7 +35,7 @@ const TraceDetail = ({
 		return <Typography>{errorMessage}</Typography>;
 	}
 
-	if (TraceLoading || loading) {
+	if (TraceLoading) {
 		return <Spinner tip="Loading..." />;
 	}
 

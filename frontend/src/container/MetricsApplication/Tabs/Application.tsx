@@ -43,7 +43,7 @@ const Application = ({
 		}
 
 		globalLoading();
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	const onClickhandler = async (
@@ -98,7 +98,7 @@ const Application = ({
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
 		globalLoading();
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	return (

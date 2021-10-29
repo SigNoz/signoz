@@ -19,7 +19,7 @@ import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { UpdateTimeInterval } from 'store/actions';
+import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -29,6 +29,7 @@ import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 const DateTimeSelection = ({
 	location,
 	updateTimeInterval,
+	globalTimeLoading,
 }: Props): JSX.Element => {
 	const [form_dtselector] = Form.useForm();
 	const [startTime, setStartTime] = useState<moment.Moment>();
@@ -313,14 +314,14 @@ interface DispatchProps {
 		interval: Time,
 		dateTimeRange?: [number, number],
 	) => (dispatch: Dispatch<AppActions>) => void;
-	// globalTimeLoading: () => void;
+	globalTimeLoading: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
-	// globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
+	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
 type Props = DispatchProps & RouteComponentProps;

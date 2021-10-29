@@ -2,9 +2,9 @@ import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
 import React, { useEffect } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
 	GetInitialData,
@@ -25,8 +25,6 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 
 	const { servicename } = useParams<ServiceProps>();
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
-
 	useEffect(() => {
 		if (servicename !== undefined && loading == false) {
 			getInitialData({
@@ -36,18 +34,7 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 				step: 60,
 			});
 		}
-
-		return (): void => {
-			// setting the data to it's initial this will avoid the re-rendering the graph
-			dispatch({
-				type: 'GET_INTIAL_APPLICATION_DATA',
-				payload: {
-					serviceOverview: [],
-					topEndPoints: [],
-				},
-			});
-		};
-	}, [servicename, maxTime, minTime, getInitialData, loading, dispatch]);
+	}, [servicename, maxTime, minTime, getInitialData, loading]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;

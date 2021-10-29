@@ -15,7 +15,7 @@ import { Card, CustomVisualizationsTitle, FormItem, Space } from './styles';
 import TraceCustomGraph from './TraceCustomGraph';
 
 const TraceCustomVisualisation = (): JSX.Element => {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const {
@@ -96,8 +96,10 @@ const TraceCustomVisualisation = (): JSX.Element => {
 	]);
 
 	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
+		if (!loading) {
+			fetchData();
+		}
+	}, [fetchData, loading]);
 
 	if (state.loading || state.payload === undefined) {
 		return <Spinner tip="Loading..." size="large" height="40vh" />;
@@ -140,7 +142,7 @@ const TraceCustomVisualisation = (): JSX.Element => {
 			>
 				<Space>
 					<FormItem name="entity">
-						<Select defaultValue={selectedEntity} style={{ width: 120 }} allowClear>
+						<Select style={{ width: 120 }} allowClear>
 							{entity.map((item) => (
 								<Option key={item.key} value={item.dataindex}>
 									{item.title}
