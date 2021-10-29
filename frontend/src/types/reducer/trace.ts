@@ -16,16 +16,16 @@ export interface LatencyValue {
 }
 
 export interface TraceReducer {
-	tagsSuggestions: TagsPayload;
 	selectedService: string;
 	selectedLatency: LatencyValue;
 	selectedOperation: string;
 	selectedKind: '' | '2' | '3' | string;
+	selectedTags: TagItem[];
+	tagsSuggestions: TagsPayload;
 	errorMessage: string;
 	serviceList: ServicePayload;
 	spanList: GetSpansPayloadProps;
 	operationsList: OperationsPayload;
 	error: boolean;
 	loading: boolean;
-	selectedTags: TagItem[];
 }

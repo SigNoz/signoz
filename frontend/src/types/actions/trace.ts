@@ -1,6 +1,7 @@
 export const GET_TRACE_INITIAL_DATA_SUCCESS = 'GET_TRACE_INITIAL_DATA_SUCCESS';
 export const GET_TRACE_INITIAL_DATA_ERROR = 'GET_TRACE_INITIAL_DATA_ERROR';
 export const GET_TRACE_LOADING_START = 'GET_TRACE_LOADING_START';
+export const GET_TRACE_LOADING_END = 'GET_TRACE_LOADING_END';
 
 export const UPDATE_TRACE_SELECTED_SERVICE = 'UPDATE_TRACE_SELECTED_SERVICE';
 export const UPDATE_TRACE_SELECTED_OPERATION =
@@ -9,12 +10,12 @@ export const UPDATE_TRACE_SELECTED_LATENCY_VALUE =
 	'UPDATE_TRACE_SELECTED_LATENCY_VALUE';
 export const UPDATE_TRACE_SELECTED_KIND = 'UPDATE_TRACE_SELECTED_KIND';
 export const UPDATE_TRACE_SELECTED_TAGS = 'UPDATE_TRACE_SELECTED_TAGS';
-export const GET_TRACE_SELECTED_DATA = 'GET_TRACE_SELECTED_DATA';
+export const UPDATE_SELECTED_TRACE_DATA = 'UPDATE_SELECTED_TRACE_DATA';
 
 import { TraceReducer } from 'types/reducer/trace';
 
 interface GetTraceLoading {
-	type: typeof GET_TRACE_LOADING_START;
+	type: typeof GET_TRACE_LOADING_START | typeof GET_TRACE_LOADING_END;
 }
 
 interface GetTraceInitialData {
@@ -27,15 +28,21 @@ interface GetTraceInitialData {
 		spansList: TraceReducer['spanList'];
 		selectedService: TraceReducer['selectedService'];
 		selectedOperation: TraceReducer['selectedOperation'];
+		selectedLatency: TraceReducer['selectedLatency'];
+		selectedKind: TraceReducer['selectedKind'];
 	};
 }
 
-interface GetSelectedTraceData {
-	type: typeof GET_TRACE_SELECTED_DATA;
+interface UpdateSelectedDate {
+	type: typeof UPDATE_SELECTED_TRACE_DATA;
 	payload: {
 		operationList: TraceReducer['operationsList'];
 		tagsSuggestions: TraceReducer['tagsSuggestions'];
 		spansList: TraceReducer['spanList'];
+		selectedKind: TraceReducer['selectedKind'];
+		selectedService: TraceReducer['selectedService'];
+		selectedLatency: TraceReducer['selectedLatency'];
+		selectedOperation: TraceReducer['selectedOperation'];
 	};
 }
 
@@ -90,4 +97,4 @@ export type TraceActions =
 	| UpdateTraceSelectedKind
 	| UpdateTraceSelectedOperation
 	| UpdateTraceSelectedTags
-	| GetSelectedTraceData;
+	| UpdateSelectedDate;

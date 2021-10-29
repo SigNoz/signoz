@@ -1,7 +1,7 @@
 import { Form, Select } from 'antd';
 import getSpansAggregate from 'api/trace/getSpanAggregate';
 import Spinner from 'components/Spinner';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/trace/getSpanAggregate';
@@ -199,4 +199,4 @@ interface SetState<T> {
 	payload: T;
 }
 
-export default TraceCustomVisualisation;
+export default memo(TraceCustomVisualisation);

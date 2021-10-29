@@ -1,9 +1,10 @@
 import {
 	GET_TRACE_INITIAL_DATA_ERROR,
 	GET_TRACE_INITIAL_DATA_SUCCESS,
+	GET_TRACE_LOADING_END,
 	GET_TRACE_LOADING_START,
-	GET_TRACE_SELECTED_DATA,
 	TraceActions,
+	UPDATE_SELECTED_TRACE_DATA,
 	UPDATE_TRACE_SELECTED_KIND,
 	UPDATE_TRACE_SELECTED_LATENCY_VALUE,
 	UPDATE_TRACE_SELECTED_OPERATION,
@@ -60,6 +61,8 @@ export const traceReducer = (
 				selectedService,
 				selectedTags,
 				spansList,
+				selectedKind,
+				selectedLatency,
 			} = action.payload;
 
 			return {
@@ -71,8 +74,9 @@ export const traceReducer = (
 				selectedTags,
 				spanList: spansList,
 				operationsList: operationList,
-				loading: false,
 				error: false,
+				selectedKind,
+				selectedLatency,
 			};
 		}
 
@@ -111,14 +115,33 @@ export const traceReducer = (
 			};
 		}
 
-		case GET_TRACE_SELECTED_DATA: {
-			const { tagsSuggestions, operationList, spansList } = action.payload;
+		case UPDATE_SELECTED_TRACE_DATA: {
+			const {
+				spansList,
+				tagsSuggestions,
+				operationList,
+				selectedOperation,
+				selectedLatency,
+				selectedService,
+				selectedKind,
+			} = action.payload;
 
 			return {
 				...state,
+				spanList: spansList,
 				tagsSuggestions,
 				operationsList: operationList,
-				spanList: spansList,
+				selectedOperation,
+				selectedLatency,
+				selectedService,
+				selectedKind,
+			};
+		}
+
+		case GET_TRACE_LOADING_END: {
+			return {
+				...state,
+				loading: false,
 			};
 		}
 

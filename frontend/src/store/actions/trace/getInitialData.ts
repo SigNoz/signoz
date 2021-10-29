@@ -9,8 +9,8 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps as GetServicePayloadProps } from 'types/api/trace/getServiceOperation';
-import { PayloadProps as GetTagsPayloadProps } from 'types/api/trace/getTags';
+import { PayloadProps as ServiceOperationPayloadProps } from 'types/api/trace/getServiceOperation';
+import { PayloadProps as TagPayloadProps } from 'types/api/trace/getTags';
 import { TraceReducer } from 'types/reducer/trace';
 
 export const GetInitialTraceData = (): ((
@@ -23,46 +23,41 @@ export const GetInitialTraceData = (): ((
 			const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
 			const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
 			const errorTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.error);
+			const kindTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.kind);
+			const latencyMin = urlParams.get(METRICS_PAGE_QUERY_PARAM.latencyMin);
+			const latencyMax = urlParams.get(METRICS_PAGE_QUERY_PARAM.latencyMax);
+			const selectedTags = urlParams.get(METRICS_PAGE_QUERY_PARAM.selectedTags);
 
-			const { globalTime, trace } = store.getState();
-
+			const { globalTime } = store.getState();
 			const { minTime, maxTime } = globalTime;
-
-			const {
-				selectedKind,
-				selectedLatency,
-				selectedTags,
-				selectedOperation,
-				selectedService,
-			} = trace;
 
 			const [serviceListResponse, spanResponse] = await Promise.all([
 				getServiceList(),
 				getSpan({
 					start: minTime,
 					end: maxTime,
-					kind: selectedKind,
+					kind: kindTag || '',
 					limit: '100',
 					lookback: '2d',
-					maxDuration: selectedLatency.max,
-					minDuration: selectedLatency.min,
-					operation: selectedOperation,
-					service: selectedService,
-					tags: JSON.stringify(selectedTags),
+					maxDuration: latencyMax || '',
+					minDuration: latencyMin || '',
+					operation: operationName || '',
+					service: serviceName || '',
+					tags: selectedTags || '[]',
 				}),
 			]);
 
-			let serviceOperationResponse:
-				| SuccessResponse<GetServicePayloadProps>
-				| ErrorResponse
-				| undefined;
-
 			let tagResponse:
-				| SuccessResponse<GetTagsPayloadProps>
+				| SuccessResponse<TagPayloadProps>
 				| ErrorResponse
 				| undefined;
 
-			if (serviceName) {
+			let serviceOperationResponse:
+				| SuccessResponse<ServiceOperationPayloadProps>
+				| ErrorResponse
+				| undefined;
+
+			if (serviceName !== null && serviceName.length !== 0) {
 				[tagResponse, serviceOperationResponse] = await Promise.all([
 					getTags({
 						service: serviceName,
@@ -74,9 +69,15 @@ export const GetInitialTraceData = (): ((
 			}
 
 			const getSelectedTags = (): TraceReducer['selectedTags'] => {
+				const selectedTag = JSON.parse(selectedTags || '[]');
+
+				if (typeof selectedTag !== 'object' && Array.isArray(selectedTag)) {
+					return [];
+				}
+
 				if (errorTag) {
 					return [
-						...selectedTags,
+						...selectedTag,
 						{
 							key: METRICS_PAGE_QUERY_PARAM.error,
 							operator: 'equals',
@@ -84,22 +85,23 @@ export const GetInitialTraceData = (): ((
 						},
 					];
 				}
-				return [...selectedTags];
+
+				return [...selectedTag];
 			};
 
 			const getCondition = (): boolean => {
 				const basicCondition =
 					serviceListResponse.statusCode === 200 && spanResponse.statusCode === 200;
 
-				if (serviceName) {
-					return (
-						tagResponse?.statusCode === 200 &&
-						serviceOperationResponse?.statusCode === 200 &&
-						basicCondition
-					);
+				if (serviceName === null || serviceName.length === 0) {
+					return basicCondition;
 				}
 
-				return basicCondition;
+				return (
+					basicCondition &&
+					tagResponse?.statusCode === 200 &&
+					serviceOperationResponse?.statusCode === 200
+				);
 			};
 
 			const condition = getCondition();
@@ -111,11 +113,20 @@ export const GetInitialTraceData = (): ((
 						serviceList: serviceListResponse.payload || [],
 						operationList: serviceOperationResponse?.payload || [],
 						tagsSuggestions: tagResponse?.payload || [],
-						spansList: spanResponse.payload || [],
+						spansList: spanResponse?.payload || [],
 						selectedService: serviceName || '',
 						selectedOperation: operationName || '',
 						selectedTags: getSelectedTags(),
+						selectedKind: kindTag || '',
+						selectedLatency: {
+							max: latencyMax || '',
+							min: latencyMin || '',
+						},
 					},
+				});
+
+				dispatch({
+					type: 'GET_TRACE_LOADING_END',
 				});
 			} else {
 				dispatch({
@@ -126,6 +137,7 @@ export const GetInitialTraceData = (): ((
 				});
 			}
 		} catch (error) {
+			console.log(error, 'asd');
 			dispatch({
 				type: 'GET_TRACE_INITIAL_DATA_ERROR',
 				payload: {

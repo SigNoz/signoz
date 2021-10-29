@@ -1,6 +1,7 @@
 import { Button, Table, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import ROUTES from 'constants/routes';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router-dom';
@@ -37,7 +38,7 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.operation, operation);
 
 		props.globalTimeLoading();
-		history.push(`/traces?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	const columns: ColumnsType<DataProps> = [

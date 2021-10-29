@@ -1,10 +1,15 @@
 import { Col, Form, InputNumber, Modal, notification, Row } from 'antd';
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import { FormInstance, RuleObject } from 'rc-field-form/lib/interface';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateSelectedLatency } from 'store/actions/trace';
+import {
+	UpdateSelectedData,
+	UpdateSelectedDataProps,
+} from 'store/actions/trace/updateSelectedData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
@@ -14,12 +19,17 @@ const LatencyForm = ({
 	visible,
 	updateSelectedLatency,
 	onLatencyButtonClick,
+	updatedQueryParams,
+	updateSelectedData,
 }: LatencyModalFormProps): JSX.Element => {
 	const [form] = Form.useForm();
 	const [notifications, Element] = notification.useNotification();
-	const { selectedLatency } = useSelector<AppState, TraceReducer>(
-		(state) => state.trace,
-	);
+	const {
+		selectedLatency,
+		selectedKind,
+		selectedOperation,
+		selectedService,
+	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
 	const validateMinValue = (form: FormInstance): RuleObject => ({
 		validator(_: RuleObject, value): Promise<void> {
@@ -50,6 +60,39 @@ const LatencyForm = ({
 		},
 	});
 
+	const onOkHandler = (): void => {
+		form
+			.validateFields()
+			.then((values) => {
+				const maxValue = (values.max * 1000000).toString();
+				const minValue = (values.min * 1000000).toString();
+
+				onLatencyButtonClick();
+				updatedQueryParams(
+					[maxValue, minValue],
+					[METRICS_PAGE_QUERY_PARAM.latencyMax, METRICS_PAGE_QUERY_PARAM.latencyMin],
+				);
+				updateSelectedLatency({
+					max: maxValue,
+					min: minValue,
+				});
+				updateSelectedData({
+					selectedKind,
+					selectedLatency: {
+						max: maxValue,
+						min: minValue,
+					},
+					selectedOperation,
+					selectedService,
+				});
+			})
+			.catch((info) => {
+				notifications.error({
+					message: info.toString(),
+				});
+			});
+	};
+
 	return (
 		<>
 			{Element}
@@ -60,28 +103,16 @@ const LatencyForm = ({
 				cancelText="Cancel"
 				visible={visible}
 				onCancel={onCancel}
-				onOk={(): void => {
-					form
-						.validateFields()
-						.then((values) => {
-							onLatencyButtonClick();
-							updateSelectedLatency({
-								max: (values.max * 1000000).toString(),
-								min: (values.min * 1000000).toString(),
-							});
-						})
-						.catch((info) => {
-							notifications.error({
-								message: info.toString(),
-							});
-						});
-				}}
+				onOk={onOkHandler}
 			>
 				<Form
 					form={form}
 					layout="horizontal"
 					name="form_in_modal"
-					initialValues={selectedLatency}
+					initialValues={{
+						min: parseInt(selectedLatency.min, 10) / 1000000,
+						max: parseInt(selectedLatency.max, 10) / 1000000,
+					}}
 				>
 					<Row>
 						<Col span={12}>
@@ -105,18 +136,22 @@ interface DispatchProps {
 	updateSelectedLatency: (
 		selectedLatency: TraceReducer['selectedLatency'],
 	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedData: (props: UpdateSelectedDataProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateSelectedLatency: bindActionCreators(UpdateSelectedLatency, dispatch),
+
+	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
 });
 
 interface LatencyModalFormProps extends DispatchProps {
 	onCancel: () => void;
 	visible: boolean;
 	onLatencyButtonClick: () => void;
+	updatedQueryParams: (updatedValue: string[], value: string[]) => void;
 }
 
 export default connect(null, mapDispatchToProps)(LatencyForm);

@@ -1,4 +1,5 @@
 import { Tag } from 'antd';
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -21,6 +22,7 @@ const Filter = ({
 	updateSelectedService,
 	updateSelectedTags,
 	updateSelectedLatency,
+	updatedQueryParams,
 }: FilterProps): JSX.Element => {
 	const {
 		selectedService,
@@ -51,7 +53,13 @@ const Filter = ({
 	}
 
 	function handleCloseTagElement(item: TagItem): void {
-		updateSelectedTags(selectedTags.filter((e) => e.key !== item.key));
+		const updatedSelectedtags = selectedTags.filter((e) => e.key !== item.key);
+
+		updatedQueryParams(
+			[updatedSelectedtags],
+			[METRICS_PAGE_QUERY_PARAM.selectedTags],
+		);
+		updateSelectedTags(updatedSelectedtags);
 	}
 
 	return (
@@ -140,6 +148,8 @@ const mapDispatchToProps = (
 	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
 });
 
-type FilterProps = DispatchProps;
+interface FilterProps extends DispatchProps {
+	updatedQueryParams: (updatedValue: string[], key: string[]) => void;
+}
 
 export default connect(null, mapDispatchToProps)(Filter);

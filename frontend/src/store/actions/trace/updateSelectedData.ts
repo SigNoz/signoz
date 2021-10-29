@@ -10,17 +10,33 @@ import { PayloadProps as ServiceOperationPayloadProps } from 'types/api/trace/ge
 import { PayloadProps as TagPayloadProps } from 'types/api/trace/getTags';
 import { TraceReducer } from 'types/reducer/trace';
 
-export const GetSelectedTraceData = ({
-	selectedTags,
-	selectedOperation,
-	selectedLatency,
+export const UpdateSelectedData = ({
 	selectedKind,
 	selectedService,
-}: GetSelectedDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
+	selectedLatency,
+	selectedOperation,
+}: UpdateSelectedDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
-			const { globalTime } = store.getState();
+			const { trace, globalTime } = store.getState();
 			const { minTime, maxTime } = globalTime;
+
+			const { selectedTags } = trace;
+
+			const [spanResponse] = await Promise.all([
+				getSpan({
+					start: minTime,
+					end: maxTime,
+					kind: selectedKind || '',
+					limit: '100',
+					lookback: '2d',
+					maxDuration: selectedLatency.max || '',
+					minDuration: selectedLatency.min || '',
+					operation: selectedOperation || '',
+					service: selectedService || '',
+					tags: JSON.stringify(selectedTags),
+				}),
+			]);
 
 			let tagResponse:
 				| SuccessResponse<TagPayloadProps>
@@ -32,22 +48,7 @@ export const GetSelectedTraceData = ({
 				| ErrorResponse
 				| undefined;
 
-			const [spanResponse] = await Promise.all([
-				getSpan({
-					start: minTime,
-					end: maxTime,
-					kind: selectedKind,
-					limit: '100',
-					lookback: '2d',
-					maxDuration: selectedLatency.max,
-					minDuration: selectedLatency.min,
-					operation: selectedOperation,
-					service: selectedService,
-					tags: JSON.stringify(selectedTags),
-				}),
-			]);
-
-			if (selectedService.length !== 0) {
+			if (selectedService !== null && selectedService.length !== 0) {
 				[tagResponse, serviceOperationResponse] = await Promise.all([
 					getTags({
 						service: selectedService,
@@ -60,14 +61,15 @@ export const GetSelectedTraceData = ({
 
 			const getCondition = (): boolean => {
 				const basicCondition = spanResponse.statusCode === 200;
-				if (selectedService.length === 0) {
+
+				if (selectedService === null || selectedService.length === 0) {
 					return basicCondition;
 				}
 
 				return (
 					basicCondition &&
-					serviceOperationResponse?.statusCode === 200 &&
-					tagResponse?.statusCode === 200
+					tagResponse?.statusCode === 200 &&
+					serviceOperationResponse?.statusCode === 200
 				);
 			};
 
@@ -75,22 +77,22 @@ export const GetSelectedTraceData = ({
 
 			if (condition) {
 				dispatch({
-					type: 'GET_TRACE_SELECTED_DATA',
+					type: 'UPDATE_SELECTED_TRACE_DATA',
 					payload: {
 						operationList: serviceOperationResponse?.payload || [],
-						tagsSuggestions: tagResponse?.payload || [],
 						spansList: spanResponse.payload || [],
+						tagsSuggestions: tagResponse?.payload || [],
+						selectedKind,
+						selectedService,
+						selectedLatency,
+						selectedOperation,
 					},
 				});
 			} else {
 				dispatch({
 					type: 'GET_TRACE_INITIAL_DATA_ERROR',
 					payload: {
-						errorMessage:
-							spanResponse?.error ||
-							tagResponse?.error ||
-							serviceOperationResponse?.error ||
-							'Something went wrong',
+						errorMessage: 'Something went wrong',
 					},
 				});
 			}
@@ -105,10 +107,9 @@ export const GetSelectedTraceData = ({
 	};
 };
 
-export interface GetSelectedDataProps {
+export interface UpdateSelectedDataProps {
 	selectedKind: TraceReducer['selectedKind'];
-	selectedLatency: TraceReducer['selectedLatency'];
 	selectedService: TraceReducer['selectedService'];
+	selectedLatency: TraceReducer['selectedLatency'];
 	selectedOperation: TraceReducer['selectedOperation'];
-	selectedTags: TraceReducer['selectedTags'];
 }

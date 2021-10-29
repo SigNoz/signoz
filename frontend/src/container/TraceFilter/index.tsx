@@ -10,26 +10,33 @@ import Filter from './Filter';
 import LatencyForm from './LatencyForm';
 import { AutoComplete, Form, InfoWrapper, Select } from './styles';
 const { Option } = Select;
+import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import ROUTES from 'constants/routes';
+import createQueryParams from 'lib/createQueryParams';
+import history from 'lib/history';
+import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { UpdateSelectedTags } from 'store/actions/trace';
 import {
-	UpdateSelectedKind,
-	UpdateSelectedOperation,
-	UpdateSelectedService,
-	UpdateSelectedTags,
-} from 'store/actions/trace';
+	UpdateSelectedData,
+	UpdateSelectedDataProps,
+} from 'store/actions/trace/updateSelectedData';
 import AppActions from 'types/actions';
 
 const FormItem = Form.Item;
+
 const TraceList = ({
-	updateSelectedKind,
-	updateSelectedOperation,
-	updateSelectedService,
 	updateSelectedTags,
+	updateSelectedData,
 }: TraceListProps): JSX.Element => {
 	const [visible, setVisible] = useState<boolean>(false);
 	const [form] = Form.useForm();
 	const [form_basefilter] = Form.useForm();
+
+	const { search } = useLocation();
+
+	const params = new URLSearchParams(search);
 
 	const onLatencyButtonClick = useCallback(() => {
 		setVisible((visible) => !visible);
@@ -43,21 +50,94 @@ const TraceList = ({
 		selectedService,
 		selectedOperation,
 		selectedLatency,
+		selectedKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
+	const paramsInObject = (params: URLSearchParams): { [x: string]: string } => {
+		const updatedParamas: { [x: string]: string } = {};
+		params.forEach((value, key) => {
+			updatedParamas[key] = value;
+		});
+		return updatedParamas;
+	};
+
+	const updatedQueryParams = (updatedValue: string[], key: string[]): void => {
+		const updatedParams = paramsInObject(params);
+
+		updatedValue.forEach((_, index) => {
+			updatedParams[key[index]] = updatedValue[index];
+		});
+
+		const queryParams = createQueryParams(updatedParams);
+		history.push(ROUTES.TRACE + `?${queryParams}`);
+	};
+
 	const onTagSubmitTagHandler = (values: Item): void => {
-		updateSelectedTags([
+		const preSelectedTags = [
 			...selectedTags,
 			{
 				operator: values.operator,
 				key: values.tag_key,
 				value: values.tag_value,
 			},
-		]);
+		];
+
+		updatedQueryParams(
+			[JSON.stringify(preSelectedTags)],
+			[METRICS_PAGE_QUERY_PARAM.selectedTags],
+		);
+
+		updateSelectedTags(preSelectedTags);
 	};
 
 	const onChangeTagKey = (data: string): void => {
 		form.setFieldsValue({ tag_key: data });
+	};
+
+	const updateSelectedServiceHandler = (value: string): void => {
+		updatedQueryParams([value], [METRICS_PAGE_QUERY_PARAM.service]);
+		getUpdatedSelectedData({
+			selectedKind,
+			selectedLatency,
+			selectedOperation,
+			selectedService: value,
+		});
+	};
+
+	const updateSelectedOperationHandler = (value: string): void => {
+		updatedQueryParams([value], [METRICS_PAGE_QUERY_PARAM.operation]);
+		getUpdatedSelectedData({
+			selectedKind,
+			selectedLatency,
+			selectedOperation: value,
+			selectedService,
+		});
+	};
+
+	const updateSelectedKindHandler = (value: string): void => {
+		updatedQueryParams([value], [METRICS_PAGE_QUERY_PARAM.kind]);
+		getUpdatedSelectedData({
+			selectedKind: value,
+			selectedLatency,
+			selectedOperation,
+			selectedService,
+		});
+	};
+
+	const getUpdatedSelectedData = (props: UpdateSelectedDataProps): void => {
+		const {
+			selectedKind,
+			selectedLatency,
+			selectedOperation,
+			selectedService,
+		} = props;
+
+		updateSelectedData({
+			selectedKind,
+			selectedLatency,
+			selectedOperation,
+			selectedService,
+		});
 	};
 
 	return (
@@ -66,13 +146,18 @@ const TraceList = ({
 			<Form
 				form={form_basefilter}
 				layout="inline"
-				initialValues={{ service: '', operation: '', latency: 'Latency' }}
+				initialValues={{
+					service: selectedService,
+					operation: selectedOperation,
+					latency: 'Latency',
+					spanKind: selectedKind,
+				}}
 			>
-				<FormItem rules={[{ required: true }]} name="service">
+				<FormItem name="service">
 					<Select
 						showSearch
 						onChange={(value: SelectValue): void => {
-							updateSelectedService(value?.toString() || '');
+							updateSelectedServiceHandler(value?.toString() || '');
 						}}
 						placeholder="Select Service"
 						allowClear
@@ -89,7 +174,7 @@ const TraceList = ({
 					<Select
 						showSearch
 						onChange={(value: SelectValue): void => {
-							updateSelectedOperation(value?.toString() || '');
+							updateSelectedOperationHandler(value?.toString() || '');
 						}}
 						placeholder="Select Operation"
 						allowClear
@@ -111,7 +196,7 @@ const TraceList = ({
 						showSearch
 						onChange={(value: SelectValue): void => {
 							if (value) {
-								updateSelectedKind(value.toString());
+								updateSelectedKindHandler(value.toString());
 							}
 						}}
 						placeholder="Select Span Kind"
@@ -130,7 +215,9 @@ const TraceList = ({
 				selectedService.length !== 0 ||
 				selectedOperation.length !== 0 ||
 				selectedLatency.max.length !== 0 ||
-				selectedLatency.min.length !== 0) && <Filter />}
+				selectedLatency.min.length !== 0) && (
+				<Filter updatedQueryParams={updatedQueryParams} />
+			)}
 
 			<InfoWrapper>Select Service to get Tag suggestions</InfoWrapper>
 			<Form
@@ -139,7 +226,7 @@ const TraceList = ({
 				onFinish={onTagSubmitTagHandler}
 				initialValues={{ operator: 'equals' }}
 			>
-				<FormItem rules={[{ required: true }]} name="tag_key">
+				<FormItem name="tag_key">
 					<AutoComplete
 						options={tagsSuggestions.map((s) => {
 							return { value: s.tagKeys };
@@ -160,7 +247,7 @@ const TraceList = ({
 					</Select>
 				</FormItem>
 
-				<FormItem rules={[{ required: true }]} name="tag_value">
+				<FormItem name="tag_value">
 					<Input placeholder="Tag Value" />
 				</FormItem>
 
@@ -174,6 +261,7 @@ const TraceList = ({
 				onCancel={(): void => {
 					setVisible(false);
 				}}
+				updatedQueryParams={updatedQueryParams}
 				visible={visible}
 				onLatencyButtonClick={onLatencyButtonClick}
 			/>
@@ -188,27 +276,17 @@ interface Item {
 }
 
 interface DispatchProps {
-	updateSelectedKind: (
-		selectedKind: TraceReducer['selectedKind'],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	updateSelectedOperation: (
-		selectedOperation: TraceReducer['selectedOperation'],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	updateSelectedService: (
-		selectedService: TraceReducer['selectedService'],
-	) => (dispatch: Dispatch<AppActions>) => void;
 	updateSelectedTags: (
 		selectedTags: TraceReducer['selectedTags'],
 	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedData: (props: UpdateSelectedDataProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateSelectedKind: bindActionCreators(UpdateSelectedKind, dispatch),
-	updateSelectedOperation: bindActionCreators(UpdateSelectedOperation, dispatch),
-	updateSelectedService: bindActionCreators(UpdateSelectedService, dispatch),
 	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
 });
 
 type TraceListProps = DispatchProps;
