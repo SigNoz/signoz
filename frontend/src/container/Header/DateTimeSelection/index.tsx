@@ -1,14 +1,8 @@
 import { Button, Select as DefaultSelect } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
-import {
-	Container,
-	Form,
-	FormItem,
-	RefreshTextContainer,
-	Typography,
-} from './styles';
+import { Container, Form, FormItem } from './styles';
 const { Option } = DefaultSelect;
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
@@ -25,6 +19,7 @@ import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
+import RefreshText from './Refresh';
 
 const DateTimeSelection = ({
 	location,
@@ -32,19 +27,62 @@ const DateTimeSelection = ({
 	globalTimeLoading,
 }: Props): JSX.Element => {
 	const [form_dtselector] = Form.useForm();
-	const [startTime, setStartTime] = useState<moment.Moment>();
-	const [endTime, setEndTime] = useState<moment.Moment>();
+
+	const params = new URLSearchParams(location.search);
+	const searchStartTime = params.get('startTime');
+	const searchEndTime = params.get('endTime');
+
+	const localstorageStartTime = get('startTime');
+	const localstorageEndTime = get('endTime');
+
+	const getTime = useCallback((): [number, number] | undefined => {
+		if (searchEndTime && searchStartTime) {
+			const startMoment = moment(
+				new Date(parseInt(getTimeString(searchStartTime), 10)),
+			);
+			const endMoment = moment(
+				new Date(parseInt(getTimeString(searchEndTime), 10)),
+			);
+
+			return [
+				startMoment.toDate().getTime() || 0,
+				endMoment.toDate().getTime() || 0,
+			];
+		}
+		if (localstorageStartTime && localstorageEndTime) {
+			const startMoment = moment(localstorageStartTime);
+			const endMoment = moment(localstorageEndTime);
+
+			return [
+				startMoment.toDate().getTime() || 0,
+				endMoment.toDate().getTime() || 0,
+			];
+		}
+		return undefined;
+	}, [
+		localstorageEndTime,
+		localstorageStartTime,
+		searchEndTime,
+		searchStartTime,
+	]);
+
+	const [preStartTime, preEndTime] = getTime() || [];
+
+	const [startTime, setStartTime] = useState<moment.Moment>(
+		moment(preStartTime),
+	);
+	const [endTime, setEndTime] = useState<moment.Moment>(moment(preEndTime));
+
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
-	const [refreshText, setRefreshText] = useState<string>('');
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
-	const isOnSelectHandler = useRef<boolean>(false);
 
-	const { maxTime, loading, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { maxTime, loading, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
@@ -82,8 +120,6 @@ const DateTimeSelection = ({
 	};
 
 	const onSelectHandler = (value: Time): void => {
-		isOnSelectHandler.current = true;
-
 		if (value !== 'custom') {
 			updateTimeInterval(value);
 			const selectedLabel = getInputLabel(undefined, undefined, value);
@@ -169,17 +205,6 @@ const DateTimeSelection = ({
 		}
 	};
 
-	// this is to update the refresh text
-	useEffect(() => {
-		const interval = setInterval(() => {
-			const text = onLastRefreshHandler();
-			setRefreshText(text);
-		}, 2000);
-		return (): void => {
-			clearInterval(interval);
-		};
-	}, [onLastRefreshHandler]);
-
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
 		const metricsTimeDuration = get(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
@@ -188,76 +213,31 @@ const DateTimeSelection = ({
 			set(LOCAL_STORAGE.METRICS_TIME_IN_DURATION, JSON.stringify({}));
 		}
 
-		if (isOnSelectHandler.current === false) {
-			const currentRoute = location.pathname;
-			const params = new URLSearchParams(location.search);
-			const time = getDefaultTime(currentRoute);
+		const currentRoute = location.pathname;
+		const time = getDefaultTime(currentRoute);
 
-			const currentOptions = getOptions(currentRoute);
-			setOptions(currentOptions);
+		const currentOptions = getOptions(currentRoute);
+		setOptions(currentOptions);
 
-			const searchStartTime = params.get('startTime');
-			const searchEndTime = params.get('endTime');
-
-			const localstorageStartTime = get('startTime');
-			const localstorageEndTime = get('endTime');
-
-			const getUpdatedTime = (time: Time): Time => {
-				if (searchEndTime !== null && searchStartTime !== null) {
-					return 'custom';
-				}
-
-				if (
-					(localstorageEndTime === null || localstorageStartTime === null) &&
-					time === 'custom'
-				) {
-					return getDefaultOption(location.pathname);
-				}
-
-				return time;
-			};
-
-			const updatedTime = getUpdatedTime(time);
-
-			setSelectedTimeInterval(updatedTime);
-
-			const getTime = (): [number, number] | undefined => {
-				if (searchEndTime && searchStartTime) {
-					const startMoment = moment(
-						new Date(parseInt(getTimeString(searchStartTime), 10)),
-					);
-					const endMoment = moment(
-						new Date(parseInt(getTimeString(searchEndTime), 10)),
-					);
-
-					setStartTime(startMoment);
-					setEndTime(endMoment);
-
-					return [
-						startMoment.toDate().getTime() || 0,
-						endMoment.toDate().getTime() || 0,
-					];
-				}
-				if (localstorageStartTime && localstorageEndTime) {
-					const startMoment = moment(localstorageStartTime);
-					const endMoment = moment(localstorageEndTime);
-
-					setStartTime(startMoment);
-					setEndTime(endMoment);
-
-					return [
-						startMoment.toDate().getTime() || 0,
-						endMoment.toDate().getTime() || 0,
-					];
-				}
-				return undefined;
-			};
-
-			if (loading === true) {
-				updateTimeInterval(updatedTime, getTime());
+		const getCustomOrIntervalTime = (time: Time): Time => {
+			if (searchEndTime !== null && searchStartTime !== null) {
+				return 'custom';
 			}
-		} else {
-			isOnSelectHandler.current = false;
+
+			if (
+				(localstorageEndTime === null || localstorageStartTime === null) &&
+				time === 'custom'
+			) {
+				return getDefaultOption(currentRoute);
+			}
+
+			return time;
+		};
+
+		const updatedTime = getCustomOrIntervalTime(time);
+
+		if (loading === true) {
+			updateTimeInterval(updatedTime, getTime());
 		}
 	}, [
 		location.pathname,
@@ -267,6 +247,11 @@ const DateTimeSelection = ({
 		updateTimeInterval,
 		selectedTimeInterval,
 		loading,
+		getTime,
+		localstorageEndTime,
+		localstorageStartTime,
+		searchEndTime,
+		searchStartTime,
 	]);
 
 	return (
@@ -274,11 +259,11 @@ const DateTimeSelection = ({
 			<Form
 				form={form_dtselector}
 				layout="inline"
-				initialValues={{ interval: selectedTimeInterval }}
+				initialValues={{ interval: selectedTime }}
 			>
 				<DefaultSelect
 					onSelect={(value): void => onSelectHandler(value as Time)}
-					value={getInputLabel(startTime, endTime, selectedTimeInterval)}
+					value={getInputLabel(startTime, endTime, selectedTime)}
 				>
 					{options.map(({ value, label }) => (
 						<Option key={value + label} value={value}>
@@ -294,9 +279,11 @@ const DateTimeSelection = ({
 				</FormItem>
 			</Form>
 
-			<RefreshTextContainer>
-				<Typography>{refreshText}</Typography>
-			</RefreshTextContainer>
+			<RefreshText
+				{...{
+					onLastRefreshHandler,
+				}}
+			/>
 
 			<CustomDateTimeModal
 				visible={customDateTimeVisible}
