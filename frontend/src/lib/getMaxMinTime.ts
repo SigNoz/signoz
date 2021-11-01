@@ -1,4 +1,4 @@
-import { GlobalTime } from 'store/actions';
+import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 const GetMaxMinTime = ({

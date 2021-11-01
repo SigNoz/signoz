@@ -1,5 +1,5 @@
 import { IS_LOGGED_IN } from 'constants/auth';
-import { AppAction, SWITCH_DARK_MODE } from 'types/actions/app';
+import { AppAction, LOGGED_IN, SWITCH_DARK_MODE } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
@@ -16,6 +16,13 @@ const appReducer = (
 			return {
 				...state,
 				isDarkMode: !state.isDarkMode,
+			};
+		}
+
+		case LOGGED_IN: {
+			return {
+				...state,
+				isLoggedIn: true,
 			};
 		}
 

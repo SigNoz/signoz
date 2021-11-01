@@ -13,26 +13,18 @@ const SettingsPage = (): JSX.Element => {
 
 	return (
 		<>
-			<Form
-				labelCol={{
-					span: 3,
-				}}
-				wrapperCol={{ span: 6 }}
-				name="basic"
-				initialValues={{ remember: true }}
-				style={{ marginLeft: 20 }}
-				form={form}
-			>
+			<Form name="basic" initialValues={{ remember: true }} form={form}>
 				<Form.Item
 					label="Retention Period"
 					name="retention_period"
 					rules={[{ required: false }]}
+					style={{ maxWidth: '40%' }}
 				>
-					<Input style={{ marginLeft: 60 }} disabled={true} />
+					<Input disabled={true} />
 				</Form.Item>
 			</Form>
 
-			<Space style={{ marginLeft: 60, marginTop: 48 }}>
+			<Space>
 				<Alert
 					message="Mail us at support@signoz.io to get instructions on how to change your retention period"
 					type="info"

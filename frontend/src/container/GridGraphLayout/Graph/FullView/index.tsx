@@ -2,6 +2,7 @@ import { Button, Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
+import { graphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
@@ -12,15 +13,21 @@ import {
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { GlobalTime } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import EmptyGraph from './EmptyGraph';
 import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
 
-const FullView = ({ widget }: FullViewProps): JSX.Element => {
+const FullView = ({
+	widget,
+	fullViewOptions = true,
+	onClickHandler,
+	noDataGraph = false,
+}: FullViewProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
@@ -65,7 +72,7 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 							end,
 							query: query.query,
 							start: start,
-							step: '30',
+							step: '60',
 						});
 						return {
 							query: query.query,
@@ -118,39 +125,69 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 		onFetchDataHandler();
 	}, [onFetchDataHandler]);
 
+	if (state.error && !state.loading) {
+		return (
+			<NotFoundContainer>
+				<Typography>{state.errorMessage}</Typography>
+			</NotFoundContainer>
+		);
+	}
+
 	if (state.loading || state.payload === undefined) {
-		return <Spinner height="80vh" size="large" tip="Loading..." />;
+		return (
+			<div>
+				<Spinner height="80vh" size="large" tip="Loading..." />
+			</div>
+		);
 	}
 
 	if (state.loading === false && state.payload.datasets.length === 0) {
 		return (
 			<>
-				<TimePreference
-					{...{
-						selectedTime,
-						setSelectedTime,
-					}}
-				/>
-				<NotFoundContainer>
-					<Typography>No Data</Typography>
-				</NotFoundContainer>
+				{fullViewOptions && (
+					<TimeContainer>
+						<TimePreference
+							{...{
+								selectedTime,
+								setSelectedTime,
+							}}
+						/>
+						<Button onClick={onFetchDataHandler} type="primary">
+							Refresh
+						</Button>
+					</TimeContainer>
+				)}
+
+				{noDataGraph ? (
+					<EmptyGraph
+						onClickHandler={onClickHandler}
+						widget={widget}
+						selectedTime={selectedTime}
+					/>
+				) : (
+					<NotFoundContainer>
+						<Typography>No Data</Typography>
+					</NotFoundContainer>
+				)}
 			</>
 		);
 	}
 
 	return (
 		<>
-			<TimeContainer>
-				<TimePreference
-					{...{
-						selectedTime,
-						setSelectedTime,
-					}}
-				/>
-				<Button onClick={onFetchDataHandler} type="primary">
-					Refresh
-				</Button>
-			</TimeContainer>
+			{fullViewOptions && (
+				<TimeContainer>
+					<TimePreference
+						{...{
+							selectedTime,
+							setSelectedTime,
+						}}
+					/>
+					<Button onClick={onFetchDataHandler} type="primary">
+						Refresh
+					</Button>
+				</TimeContainer>
+			)}
 
 			<GraphContainer>
 				<GridGraphComponent
@@ -160,6 +197,7 @@ const FullView = ({ widget }: FullViewProps): JSX.Element => {
 						isStacked: widget.isStacked,
 						opacity: widget.opacity,
 						title: widget.title,
+						onClickHandler: onClickHandler,
 					}}
 				/>
 			</GraphContainer>
@@ -176,6 +214,20 @@ interface FullViewState {
 
 interface FullViewProps {
 	widget: Widgets;
+	fullViewOptions?: boolean;
+	onClickHandler?: graphOnClickHandler;
+	noDataGraph?: boolean;
 }
 
-export default FullView;
+export default memo(FullView, (prev, next) => {
+	if (
+		next.widget.query.length !== prev.widget.query.length &&
+		next.widget.query.every((value, index) => {
+			return value === prev.widget.query[index];
+		})
+	) {
+		return false;
+	}
+
+	return true;
+});
