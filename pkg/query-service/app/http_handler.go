@@ -38,7 +38,7 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
-	db         *sqlx.DB
+	localDB    *sqlx.DB
 	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
@@ -52,10 +52,11 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIH
 	}
 	aH.ready = aH.testReady
 
-	err := dashboards.InitDB("/var/lib/signoz/signoz.db")
+	localDB, err := dashboards.InitDB("./signoz.db")
 	if err != nil {
 		return nil, err
 	}
+	aH.localDB = localDB
 
 	errReadingDashboards := dashboards.LoadDashboardFiles()
 	if errReadingDashboards != nil {
@@ -172,7 +173,8 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
-
+	router.HandleFunc("/api/v1/rules", aH.setRules).Methods(http.MethodPost, http.MethodPut)
+	router.HandleFunc("/api/v1/rules", aH.getRules).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.getDashboard).Methods(http.MethodGet)
@@ -348,6 +350,44 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.respond(w, dash)
+
+}
+
+func (aH *APIHandler) getRules(w http.ResponseWriter, r *http.Request) {
+
+	rules, err := (*aH.reader).GetRules(aH.localDB)
+	if err != nil {
+		aH.respondError(w, err, nil)
+		return
+	}
+
+	aH.respond(w, rules.Data)
+
+}
+
+func (aH *APIHandler) setRules(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+
+	type rulesRequest struct {
+		data string
+	}
+	var rules *rulesRequest
+	err := decoder.Decode(rules)
+
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	apiErrorObj := (*aH.reader).SetRules(aH.localDB, rules.data)
+
+	if apiErrorObj.Err != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.respond(w, "rules successfully set")
 
 }
 

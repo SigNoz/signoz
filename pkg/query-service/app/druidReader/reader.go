@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/druidQuery"
@@ -51,7 +52,14 @@ func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, quer
 
 	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
 }
+func (druid *DruidReader) GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError) {
 
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
+}
+func (druid *DruidReader) SetRules(localDB *sqlx.DB, alert string) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
+}
 func (druid *DruidReader) GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error) {
 	return druidQuery.GetServiceOverview(druid.SqlClient, query)
 }

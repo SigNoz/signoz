@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/model"
@@ -10,6 +11,8 @@ import (
 
 type Reader interface {
 	// Getter Interfaces
+	GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError)
+	SetRules(localDB *sqlx.DB, alert string) *model.ApiError
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error)

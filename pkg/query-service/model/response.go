@@ -34,6 +34,12 @@ type QueryData struct {
 	Stats      *stats.QueryStats `json:"stats,omitempty"`
 }
 
+type RuleGroups struct {
+	Id        int       `json:"id" db:"id"`
+	UpdatedAt time.Time `json:"created_at" db:"created_at"`
+	Data      string    `json:"data" db:"data"`
+}
+
 type ServiceItem struct {
 	ServiceName  string  `json:"serviceName" db:"serviceName"`
 	Percentile99 float32 `json:"p99" db:"p99"`
