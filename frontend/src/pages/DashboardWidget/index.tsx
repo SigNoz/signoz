@@ -3,10 +3,14 @@ import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import NewWidget from 'container/NewWidget';
-import updateUrl from 'lib/updateUrl';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import {
+	generatePath,
+	useHistory,
+	useLocation,
+	useParams,
+} from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetDashboard, GetDashboardProps } from 'store/actions';
@@ -38,7 +42,7 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 		const graphType = params.get('graphType') as GRAPH_TYPES | null;
 
 		if (graphType === null) {
-			push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));
+			push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 		} else {
 			setSelectedGraph(graphType);
 		}

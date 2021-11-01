@@ -25,3 +25,7 @@ export const FormWrapper = styled.div`
 export const ButtonContainer = styled.div`
 	margin-top: 0.5rem;
 `;
+
+export const LogoImageContainer = styled.img`
+	width: 320px;
+`;

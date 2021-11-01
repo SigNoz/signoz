@@ -1,8 +1,7 @@
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
-import updateUrl from 'lib/updateUrl';
 import React, { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
+import { generatePath, useHistory } from 'react-router-dom';
 
 import { Data } from '..';
 
@@ -10,8 +9,12 @@ const Name = (name: Data['name'], data: Data): JSX.Element => {
 	const { push } = useHistory();
 
 	const onClickHandler = useCallback(() => {
-		push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', data.id));
-	}, []);
+		push(
+			generatePath(ROUTES.DASHBOARD, {
+				dashboardId: data.id,
+			}),
+		);
+	}, [data.id, push]);
 
 	return (
 		<Button onClick={onClickHandler} type="link">

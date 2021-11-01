@@ -1,36 +1,44 @@
 // shared config (dev and prod)
-const { resolve } = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const portFinderSync = require('portfinder-sync');
-const dotenv = require('dotenv');
-const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+import dotenv from 'dotenv';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { resolve } from 'path';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import webpack from 'webpack';
+import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
+
+// @ts-ignore
+import portFinderSync from 'portfinder-sync';
 
 dotenv.config();
 
+const __dirname = resolve();
 console.log(resolve(__dirname, './src/'));
 
-module.exports = {
+interface Configuration extends webpack.Configuration {
+	devServer?: WebpackDevServerConfiguration;
+}
+
+const config: Configuration = {
 	mode: 'development',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
 		historyApiFallback: true,
-		publicPath: '/',
-		transportMode: 'ws',
 		open: true,
-		openPage: 'application',
-		contentBase: [resolve(__dirname, './public')],
 		hot: true,
-		liveReload: false,
-		inline: true,
-		// This is being used because if the port 3000 is being used
-		// then it will try to find another open port availble.
+		liveReload: true,
 		port: portFinderSync.getPort(3000),
+		static: {
+			directory: resolve(__dirname, "public"),
+			publicPath: "/",
+			watch: true,
+		}
 	},
 	target: 'web',
 	output: {
-		filename: ({ chunk: { name, hash } }) => {
+		filename: ({ chunk }) => {
+			const hash = chunk?.hash;
+			const name = chunk?.name;
 			return `js/${name}-${hash}.js`;
 		},
 		path: resolve(__dirname, './build'),
@@ -77,3 +85,5 @@ module.exports = {
 		hints: false,
 	},
 };
+
+export default config;

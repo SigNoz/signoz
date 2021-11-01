@@ -2,7 +2,7 @@ import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import updateUrl from 'lib/updateUrl';
+import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -92,7 +92,7 @@ export const SaveDashboard = ({
 					type: 'SAVE_SETTING_TO_PANEL_SUCCESS',
 					payload: response.payload,
 				});
-				history.push(updateUrl(ROUTES.DASHBOARD, ':dashboardId', dashboardId));
+				history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 			} else {
 				dispatch({
 					type: 'SAVE_SETTING_TO_PANEL_ERROR',

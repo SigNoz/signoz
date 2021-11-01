@@ -1,45 +1,41 @@
 import { Layout } from 'antd';
-import get from 'api/browser/localstorage/get';
 import ROUTES from 'constants/routes';
 import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
 import history from 'lib/history';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 const { Content, Footer } = Layout;
-interface BaseLayoutProps {
-	children: ReactNode;
-}
 
-const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isLoggedInLocalStorage = get('isLoggedIn');
+
+	const [isSignUpPage, setIsSignUpPage] = useState(
+		ROUTES.SIGN_UP === location.pathname,
+	);
 
 	useEffect(() => {
-		if (isLoggedIn && history.location.pathname === '/') {
-			history.push(ROUTES.APPLICATION);
-		}
-
-		if (!isLoggedIn && isLoggedInLocalStorage !== null) {
-			history.push(ROUTES.APPLICATION);
+		if (!isLoggedIn) {
+			setIsSignUpPage(true);
+			history.push(ROUTES.SIGN_UP);
 		} else {
-			if (isLoggedInLocalStorage === null) {
-				history.push(ROUTES.SIGN_UP);
+			if (isSignUpPage) {
+				setIsSignUpPage(false);
 			}
 		}
-	}, [isLoggedIn, isLoggedInLocalStorage]);
+	}, [isLoggedIn, isSignUpPage]);
 
 	const currentYear = new Date().getFullYear();
 
 	return (
 		<Layout style={{ minHeight: '100vh' }}>
-			<SideNav />
+			{!isSignUpPage && <SideNav />}
 			<Layout className="site-layout">
 				<Content style={{ margin: '0 16px' }}>
-					<TopNav />
+					{!isSignUpPage && <TopNav />}
 					{children}
 				</Content>
 				<Footer style={{ textAlign: 'center', fontSize: 10 }}>
@@ -50,4 +46,8 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({ children }) => {
 	);
 };
 
-export default BaseLayout;
+interface AppLayoutProps {
+	children: ReactNode;
+}
+
+export default AppLayout;
