@@ -361,7 +361,12 @@ func (aH *APIHandler) getRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.respond(w, rules.Data)
+	if rules != nil {
+		aH.respond(w, rules.Data)
+		return
+	}
+
+	aH.respond(w, "")
 
 }
 
@@ -369,20 +374,17 @@ func (aH *APIHandler) setRules(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	type rulesRequest struct {
-		data string
-	}
-	var rules *rulesRequest
-	err := decoder.Decode(rules)
+	var postData map[string]string
+	err := decoder.Decode(&postData)
 
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	apiErrorObj := (*aH.reader).SetRules(aH.localDB, rules.data)
+	apiErrorObj := (*aH.reader).SetRules(aH.localDB, postData["data"])
 
-	if apiErrorObj.Err != nil {
+	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
 		return
 	}
