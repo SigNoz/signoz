@@ -1,5 +1,5 @@
 import { Button, Select as DefaultSelect } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
 import { Container, Form, FormItem } from './styles';
@@ -236,22 +236,15 @@ const DateTimeSelection = ({
 
 		const updatedTime = getCustomOrIntervalTime(time);
 
-		if (loading === true) {
-			updateTimeInterval(updatedTime, getTime());
-		}
+		updateTimeInterval(updatedTime, getTime());
 	}, [
 		location.pathname,
-		location.search,
-		startTime,
-		endTime,
-		updateTimeInterval,
-		selectedTimeInterval,
-		loading,
 		getTime,
 		localstorageEndTime,
 		localstorageStartTime,
 		searchEndTime,
 		searchStartTime,
+		updateTimeInterval,
 	]);
 
 	return (

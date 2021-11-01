@@ -48,8 +48,8 @@ const SideNav = ({ toggleDarkMode, globalTimeLoading }: Props): JSX.Element => {
 	const onClickHandler = useCallback(
 		(to: string) => {
 			if (pathname !== to) {
-				history.push(to);
 				globalTimeLoading();
+				history.push(to);
 			}
 		},
 		[pathname, globalTimeLoading],
