@@ -112,6 +112,7 @@ export const traceReducer = (
 			return {
 				...state,
 				selectedTags: action.payload.selectedTags,
+				spanList: action.payload.spansList,
 			};
 		}
 

@@ -85,6 +85,7 @@ interface UpdateTraceSelectedTags {
 	type: typeof UPDATE_TRACE_SELECTED_TAGS;
 	payload: {
 		selectedTags: TraceReducer['selectedTags'];
+		spansList: TraceReducer['spanList'];
 	};
 }
 

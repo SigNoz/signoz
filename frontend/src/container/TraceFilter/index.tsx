@@ -73,6 +73,10 @@ const TraceList = ({
 	};
 
 	const onTagSubmitTagHandler = (values: Item): void => {
+		if (values.tag_key.length === 0 || values.tag_value.length === 0) {
+			return;
+		}
+
 		const preSelectedTags = [
 			...selectedTags,
 			{
