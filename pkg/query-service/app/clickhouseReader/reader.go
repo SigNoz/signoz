@@ -70,6 +70,8 @@ type ClickHouseReader struct {
 	spansTable      string
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
+	ruleManager     *rules.Manager
+	promConfig      *config.Config
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -187,6 +189,8 @@ func NewReader() *ClickHouseReader {
 	ctxNotify, cancelNotify := context.WithCancel(context.Background())
 	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
 
+	var promConfig *config.Config
+
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
 		// The Scrape and notifier managers need to reload before the Discovery manager as
@@ -272,7 +276,8 @@ func NewReader() *ClickHouseReader {
 				// 	return nil
 				// }
 
-				if err := reloadConfig(cfg.configFile, logger, reloaders...); err != nil {
+				promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
+				if err != nil {
 					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
 				}
 
@@ -340,15 +345,17 @@ func NewReader() *ClickHouseReader {
 		spansTable:      options.primary.SpansTable,
 		queryEngine:     queryEngine,
 		remoteStorage:   remoteStorage,
+		ruleManager:     ruleManager,
+		promConfig:      promConfig,
 	}
 }
 
-func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (err error) {
+func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
 	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
 
 	conf, err := config.LoadFile(filename)
 	if err != nil {
-		return fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
+		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
 	}
 
 	failed := false
@@ -359,10 +366,10 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 		}
 	}
 	if failed {
-		return fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
+		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
 	}
 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
-	return nil
+	return conf, nil
 }
 
 func startsOrEndsWithQuote(s string) bool {
@@ -486,7 +493,8 @@ func (r *ClickHouseReader) SetRules(localDB *sqlx.DB, rule string) *model.ApiErr
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	return nil
+	err = r.ruleManager.UpdateFromByteArray(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), []byte(rule))
+	return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
