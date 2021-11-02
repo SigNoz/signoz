@@ -159,7 +159,7 @@ func (r *ClickHouseReader) Start() {
 		},
 	}
 
-	cfg.configFile = *flag.String("config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.Parse()
 
 	// fanoutStorage := remoteStorage
