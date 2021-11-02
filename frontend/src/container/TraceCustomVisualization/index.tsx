@@ -90,7 +90,21 @@ const TraceCustomVisualisation = ({
 			>
 				<Space>
 					<FormItem name="entity">
-						<Select style={{ width: 120 }} allowClear>
+						<Select
+							onClear={(): void => {
+								getSpanAggregate({
+									selectedAggOption,
+									selectedEntity: '',
+									selectedKind,
+									selectedLatency,
+									selectedOperation,
+									selectedService,
+									selectedTags,
+								});
+							}}
+							style={{ width: 120 }}
+							allowClear
+						>
 							{entity.map((item) => (
 								<Option key={item.key} value={item.dataindex}>
 									{item.title}
@@ -100,7 +114,21 @@ const TraceCustomVisualisation = ({
 					</FormItem>
 
 					<FormItem name="agg_options">
-						<Select style={{ width: 120 }} allowClear>
+						<Select
+							onClear={(): void => {
+								getSpanAggregate({
+									selectedAggOption: '',
+									selectedEntity,
+									selectedKind,
+									selectedLatency,
+									selectedOperation,
+									selectedService,
+									selectedTags,
+								});
+							}}
+							style={{ width: 120 }}
+							allowClear
+						>
 							{aggregation_options
 								.filter((item) => item.linked_entity === selectedEntity)[0]
 								.options_available.map((item) => (
@@ -111,7 +139,7 @@ const TraceCustomVisualisation = ({
 						</Select>
 					</FormItem>
 
-					<FormItem name="chart_style">
+					{/* <FormItem name="chart_style">
 						<Select style={{ width: 120 }} allowClear>
 							<Option value="line">Line Chart</Option>
 							<Option value="bar">Bar Chart</Option>
@@ -133,7 +161,7 @@ const TraceCustomVisualisation = ({
 							<Option value="status">Status Code</Option>
 							<Option value="protocol">Protocol</Option>
 						</Select>
-					</FormItem>
+					</FormItem> */}
 				</Space>
 			</Form>
 
