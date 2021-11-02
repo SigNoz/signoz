@@ -86,6 +86,15 @@ func NewReader() *ClickHouseReader {
 		os.Exit(1)
 	}
 
+	return &ClickHouseReader{
+		db:              db,
+		operationsTable: options.primary.OperationsTable,
+		indexTable:      options.primary.IndexTable,
+		spansTable:      options.primary.SpansTable,
+	}
+}
+
+func (r *ClickHouseReader) Start() {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
 	// allowedFormat := promlog.AllowedFormat{}
@@ -223,14 +232,6 @@ func NewReader() *ClickHouseReader {
 		},
 	}
 
-	// ruleManager.Run()
-	// defer ruleManager.Stop()
-
-	// err = discoveryManagerNotify.Run()
-	// if err != nil {
-	// 	zap.S().Error("Error in discoveryManagerNotify.Run()")
-	// }
-
 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
 	type closeOnce struct {
 		C     chan struct{}
@@ -330,24 +331,16 @@ func NewReader() *ClickHouseReader {
 			},
 		)
 	}
+	r.queryEngine = queryEngine
+	r.remoteStorage = remoteStorage
+	r.ruleManager = ruleManager
+	r.promConfig = promConfig
+
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
 
-	// notifier.Run(discoveryManagerNotify.SyncCh())
-	// defer notifier.Stop()
-
-	return &ClickHouseReader{
-		db:              db,
-		operationsTable: options.primary.OperationsTable,
-		indexTable:      options.primary.IndexTable,
-		spansTable:      options.primary.SpansTable,
-		queryEngine:     queryEngine,
-		remoteStorage:   remoteStorage,
-		ruleManager:     ruleManager,
-		promConfig:      promConfig,
-	}
 }
 
 func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
