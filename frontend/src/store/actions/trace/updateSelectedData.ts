@@ -1,5 +1,6 @@
 import getServiceOperation from 'api/trace/getServiceOperation';
 import getSpan from 'api/trace/getSpan';
+import getSpansAggregate from 'api/trace/getSpanAggregate';
 import getTags from 'api/trace/getTags';
 import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
@@ -15,15 +16,17 @@ export const UpdateSelectedData = ({
 	selectedService,
 	selectedLatency,
 	selectedOperation,
+	selectedAggOption,
+	selectedEntity,
 }: UpdateSelectedDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const { trace, globalTime } = store.getState();
 			const { minTime, maxTime } = globalTime;
 
-			const { selectedTags } = trace;
+			const { selectedTags, selectedService: globalSelectedService } = trace;
 
-			const [spanResponse] = await Promise.all([
+			const [spanResponse, getSpanAggregateResponse] = await Promise.all([
 				getSpan({
 					start: minTime,
 					end: maxTime,
@@ -34,6 +37,19 @@ export const UpdateSelectedData = ({
 					minDuration: selectedLatency.min || '',
 					operation: selectedOperation || '',
 					service: selectedService || '',
+					tags: JSON.stringify(selectedTags),
+				}),
+				getSpansAggregate({
+					aggregation_option: selectedAggOption,
+					dimension: selectedEntity,
+					end: maxTime,
+					kind: selectedKind || '2',
+					maxDuration: selectedLatency.max || '',
+					minDuration: selectedLatency.min || '',
+					operation: selectedOperation || '',
+					service: selectedService || '',
+					start: minTime,
+					step: '60',
 					tags: JSON.stringify(selectedTags),
 				}),
 			]);
@@ -48,7 +64,11 @@ export const UpdateSelectedData = ({
 				| ErrorResponse
 				| undefined;
 
-			if (selectedService !== null && selectedService.length !== 0) {
+			if (
+				selectedService !== null &&
+				selectedService.length !== 0 &&
+				globalSelectedService !== selectedService
+			) {
 				[tagResponse, serviceOperationResponse] = await Promise.all([
 					getTags({
 						service: selectedService,
@@ -59,9 +79,13 @@ export const UpdateSelectedData = ({
 				]);
 			}
 
-			const getCondition = (): boolean => {
-				const basicCondition = spanResponse.statusCode === 200;
+			const spanAggregateCondition =
+				getSpanAggregateResponse.statusCode === 200 ||
+				getSpanAggregateResponse.statusCode === 400;
 
+			const getCondition = (): boolean => {
+				const basicCondition =
+					spanResponse.statusCode === 200 && spanAggregateCondition;
 				if (selectedService === null || selectedService.length === 0) {
 					return basicCondition;
 				}
@@ -86,6 +110,9 @@ export const UpdateSelectedData = ({
 						selectedService,
 						selectedLatency,
 						selectedOperation,
+						spansAggregate: spanAggregateCondition
+							? getSpanAggregateResponse.payload || []
+							: [],
 					},
 				});
 			} else {
@@ -112,4 +139,6 @@ export interface UpdateSelectedDataProps {
 	selectedService: TraceReducer['selectedService'];
 	selectedLatency: TraceReducer['selectedLatency'];
 	selectedOperation: TraceReducer['selectedOperation'];
+	selectedEntity: TraceReducer['selectedEntity'];
+	selectedAggOption: TraceReducer['selectedAggOption'];
 }

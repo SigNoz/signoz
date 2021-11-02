@@ -7,9 +7,9 @@ const { Option } = Select;
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
-	GetSpanAggregate,
-	SpanAggregateProps,
-} from 'store/actions/trace/getSpanAggregate';
+	UpdateSelectedData,
+	UpdateSelectedDataProps,
+} from 'store/actions/trace/updateSelectedData';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -18,7 +18,7 @@ import { Card, CustomVisualizationsTitle, FormItem, Space } from './styles';
 import TraceCustomGraph from './TraceCustomGraph';
 
 const TraceCustomVisualisation = ({
-	getSpanAggregate,
+	updateSelectedData,
 }: TraceCustomVisualisationProps): JSX.Element => {
 	const {
 		selectedEntity,
@@ -29,6 +29,7 @@ const TraceCustomVisualisation = ({
 		selectedService,
 		selectedTags,
 		selectedAggOption,
+		spansAggregate,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
 	const [form] = Form.useForm();
@@ -50,27 +51,21 @@ const TraceCustomVisualisation = ({
 
 			const values = form.getFieldsValue(['agg_options', 'entity']);
 
-			getSpanAggregate({
-				selectedAggOption: values.agg_options,
-				selectedEntity: values.entity,
-				selectedKind,
-				selectedLatency,
-				selectedOperation,
-				selectedService,
-				selectedTags,
-			});
+			// updateSelectedData({
+
+			// })
 		}
 
 		if (formFieldName === 'agg_options') {
-			getSpanAggregate({
-				selectedAggOption: changedValues[formFieldName],
-				selectedEntity: selectedEntity,
-				selectedKind,
-				selectedLatency,
-				selectedOperation,
-				selectedService,
-				selectedTags,
-			});
+			// getSpanAggregate({
+			// 	selectedAggOption: changedValues[formFieldName],
+			// 	selectedEntity: selectedEntity,
+			// 	selectedKind,
+			// 	selectedLatency,
+			// 	selectedOperation,
+			// 	selectedService,
+			// 	selectedTags,
+			// });
 		}
 	};
 
@@ -165,19 +160,23 @@ const TraceCustomVisualisation = ({
 				</Space>
 			</Form>
 
-			<TraceCustomGraph />
+			<TraceCustomGraph
+				{...{
+					spansAggregate,
+				}}
+			/>
 		</Card>
 	);
 };
 
 interface DispatchProps {
-	getSpanAggregate: (props: SpanAggregateProps) => void;
+	updateSelectedData: (props: UpdateSelectedDataProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getSpanAggregate: bindActionCreators(GetSpanAggregate, dispatch),
+	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
 });
 
 type TraceCustomVisualisationProps = DispatchProps;

@@ -1,4 +1,5 @@
 import getSpan from 'api/trace/getSpan';
+import getSpansAggregate from 'api/trace/getSpanAggregate';
 import { AxiosError } from 'axios';
 import { Dispatch } from 'redux';
 import store from 'store';
@@ -16,11 +17,14 @@ export const UpdateSelectedTags = (
 				selectedLatency,
 				selectedOperation,
 				selectedService,
+				selectedAggOption,
+				selectedEntity,
+				spansAggregate,
 			} = trace;
 
 			const { maxTime, minTime } = globalTime;
 
-			const [spanResponse] = await Promise.all([
+			const [spanResponse, spansAggregateResponse] = await Promise.all([
 				getSpan({
 					start: minTime,
 					end: maxTime,
@@ -33,14 +37,35 @@ export const UpdateSelectedTags = (
 					service: selectedService || '',
 					tags: JSON.stringify(selectedTags),
 				}),
+				getSpansAggregate({
+					aggregation_option: selectedAggOption,
+					dimension: selectedEntity,
+					end: maxTime,
+					kind: selectedKind || '2',
+					maxDuration: selectedLatency.max || '',
+					minDuration: selectedLatency.min || '',
+					operation: selectedOperation || '',
+					service: selectedService || '',
+					start: minTime,
+					step: '60',
+					tags: JSON.stringify(selectedTags),
+				}),
 			]);
 
-			if (spanResponse.statusCode === 200) {
+			const condition =
+				spansAggregateResponse.statusCode === 200 ||
+				spansAggregateResponse.statusCode === 400;
+
+			if (spanResponse.statusCode === 200 && condition) {
 				dispatch({
 					type: 'UPDATE_TRACE_SELECTED_TAGS',
 					payload: {
 						selectedTags,
 						spansList: spanResponse.payload,
+						spansAggregate:
+							spansAggregateResponse.statusCode === 400
+								? spansAggregate
+								: spansAggregateResponse.payload || [],
 					},
 				});
 			}

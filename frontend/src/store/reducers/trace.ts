@@ -7,7 +7,6 @@ import {
 	UPDATE_SELECTED_AGG_OPTION,
 	UPDATE_SELECTED_ENTITY,
 	UPDATE_SELECTED_TRACE_DATA,
-	UPDATE_SPAN_AGGREDATE_SUCCESS,
 	UPDATE_SPANS_LOADING,
 	UPDATE_TRACE_SELECTED_KIND,
 	UPDATE_TRACE_SELECTED_LATENCY_VALUE,
@@ -137,6 +136,7 @@ export const traceReducer = (
 				selectedLatency,
 				selectedService,
 				selectedKind,
+				spansAggregate,
 			} = action.payload;
 
 			return {
@@ -148,6 +148,7 @@ export const traceReducer = (
 				selectedLatency,
 				selectedService,
 				selectedKind,
+				spansAggregate,
 			};
 		}
 
@@ -176,13 +177,6 @@ export const traceReducer = (
 			return {
 				...state,
 				spansLoading: action.payload.loading,
-			};
-		}
-
-		case UPDATE_SPAN_AGGREDATE_SUCCESS: {
-			return {
-				...state,
-				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 

@@ -1,17 +1,13 @@
 import Graph from 'components/Graph';
 import { colors } from 'lib/getRandomColor';
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import React, { memo } from 'react';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { CustomGraphContainer } from './styles';
 
-const TraceCustomGraph = (): JSX.Element => {
-	const { spansAggregate } = useSelector<AppState, TraceReducer>(
-		(state) => state.trace,
-	);
-
+const TraceCustomGraph = ({
+	spansAggregate,
+}: TraceCustomGraphProps): JSX.Element => {
 	return (
 		<CustomGraphContainer>
 			<Graph
@@ -30,4 +26,8 @@ const TraceCustomGraph = (): JSX.Element => {
 	);
 };
 
-export default TraceCustomGraph;
+interface TraceCustomGraphProps {
+	spansAggregate: TraceReducer['spansAggregate'];
+}
+
+export default memo(TraceCustomGraph);

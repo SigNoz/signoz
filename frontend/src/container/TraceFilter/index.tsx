@@ -19,10 +19,6 @@ import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateSelectedTags } from 'store/actions/trace';
 import {
-	GetSpanAggregate,
-	SpanAggregateProps,
-} from 'store/actions/trace/getSpanAggregate';
-import {
 	UpdateSelectedData,
 	UpdateSelectedDataProps,
 } from 'store/actions/trace/updateSelectedData';
@@ -33,7 +29,6 @@ const FormItem = Form.Item;
 const TraceList = ({
 	updateSelectedTags,
 	updateSelectedData,
-	getSpanAggregate,
 }: TraceListProps): JSX.Element => {
 	const [visible, setVisible] = useState<boolean>(false);
 	const [form] = Form.useForm();
@@ -56,8 +51,8 @@ const TraceList = ({
 		selectedOperation,
 		selectedLatency,
 		selectedKind,
-		selectedEntity,
 		selectedAggOption,
+		selectedEntity,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
 	const paramsInObject = (params: URLSearchParams): { [x: string]: string } => {
@@ -92,6 +87,8 @@ const TraceList = ({
 			selectedLatency,
 			selectedOperation,
 			selectedService,
+			selectedAggOption,
+			selectedEntity,
 		});
 	};
 
@@ -115,15 +112,6 @@ const TraceList = ({
 		);
 
 		updateSelectedTags(preSelectedTags);
-		getSpanAggregate({
-			selectedAggOption,
-			selectedEntity,
-			selectedKind,
-			selectedLatency,
-			selectedOperation,
-			selectedService,
-			selectedTags: preSelectedTags,
-		});
 	};
 
 	const onChangeTagKey = (data: string): void => {
@@ -137,15 +125,8 @@ const TraceList = ({
 			selectedLatency,
 			selectedOperation,
 			selectedService: value,
-		});
-		getSpanAggregate({
 			selectedAggOption,
 			selectedEntity,
-			selectedKind,
-			selectedLatency,
-			selectedOperation,
-			selectedService: value,
-			selectedTags,
 		});
 	};
 
@@ -156,15 +137,8 @@ const TraceList = ({
 			selectedLatency,
 			selectedOperation: value,
 			selectedService,
-		});
-		getSpanAggregate({
 			selectedAggOption,
 			selectedEntity,
-			selectedKind,
-			selectedLatency,
-			selectedOperation: value,
-			selectedService,
-			selectedTags,
 		});
 	};
 
@@ -175,15 +149,8 @@ const TraceList = ({
 			selectedLatency,
 			selectedOperation,
 			selectedService,
-		});
-		getSpanAggregate({
 			selectedAggOption,
 			selectedEntity,
-			selectedKind: value,
-			selectedLatency,
-			selectedOperation,
-			selectedService,
-			selectedTags,
 		});
 	};
 
@@ -333,7 +300,6 @@ interface DispatchProps {
 		selectedTags: TraceReducer['selectedTags'],
 	) => (dispatch: Dispatch<AppActions>) => void;
 	updateSelectedData: (props: UpdateSelectedDataProps) => void;
-	getSpanAggregate: (props: SpanAggregateProps) => void;
 }
 
 const mapDispatchToProps = (
@@ -341,7 +307,6 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
 	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
-	getSpanAggregate: bindActionCreators(GetSpanAggregate, dispatch),
 });
 
 type TraceListProps = DispatchProps;

@@ -11,6 +11,10 @@ import {
 	UpdateSelectedService,
 	UpdateSelectedTags,
 } from 'store/actions/trace';
+import {
+	UpdateSelectedData,
+	UpdateSelectedDataProps,
+} from 'store/actions/trace/updateSelectedData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
@@ -18,36 +22,69 @@ import { TraceReducer } from 'types/reducer/trace';
 import { Card } from './styles';
 
 const Filter = ({
-	updateSelectedOperation,
-	updateSelectedService,
-	updateSelectedTags,
-	updateSelectedLatency,
 	updatedQueryParams,
+	updateSelectedData,
+	updateSelectedTags,
 }: FilterProps): JSX.Element => {
 	const {
 		selectedService,
 		selectedOperation,
 		selectedLatency,
 		selectedTags,
+		selectedKind,
+		selectedEntity,
+		selectedAggOption,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
-	function handleCloseTag(value: any): void {
+	function handleCloseTag(value: string): void {
 		if (value === 'service') {
-			updateSelectedService('');
+			updatedQueryParams([''], [METRICS_PAGE_QUERY_PARAM.service]);
+			updateSelectedData({
+				selectedAggOption,
+				selectedEntity,
+				selectedKind,
+				selectedLatency,
+				selectedOperation,
+				selectedService: '',
+			});
 		}
 		if (value === 'operation') {
-			updateSelectedOperation('');
+			updatedQueryParams([''], [METRICS_PAGE_QUERY_PARAM.operation]);
+			updateSelectedData({
+				selectedAggOption,
+				selectedEntity,
+				selectedKind,
+				selectedLatency,
+				selectedOperation: '',
+				selectedService,
+			});
 		}
 		if (value === 'maxLatency') {
-			updateSelectedLatency({
-				max: value.max,
-				min: '',
+			updatedQueryParams([''], [METRICS_PAGE_QUERY_PARAM.latencyMax]);
+			updateSelectedData({
+				selectedAggOption,
+				selectedEntity,
+				selectedKind,
+				selectedLatency: {
+					min: selectedLatency.min,
+					max: '',
+				},
+				selectedOperation,
+				selectedService,
 			});
 		}
 		if (value === 'minLatency') {
-			updateSelectedLatency({
-				max: '',
-				min: value.min,
+			updatedQueryParams([''], [METRICS_PAGE_QUERY_PARAM.latencyMin]);
+			updateSelectedData({
+				selectedAggOption,
+				selectedEntity,
+				selectedKind,
+				selectedLatency: {
+					min: '',
+					max: selectedLatency.max,
+				},
+				selectedOperation,
+				selectedService,
 			});
 		}
 	}
@@ -67,7 +104,8 @@ const Filter = ({
 			{selectedService.length !== 0 && (
 				<Tag
 					closable
-					onClose={(): void => {
+					onClose={(e): void => {
+						e.preventDefault();
 						handleCloseTag('service');
 					}}
 				>
@@ -78,7 +116,8 @@ const Filter = ({
 			{selectedOperation.length !== 0 && (
 				<Tag
 					closable
-					onClose={(): void => {
+					onClose={(e): void => {
+						e.preventDefault();
 						handleCloseTag('operation');
 					}}
 				>
@@ -89,7 +128,8 @@ const Filter = ({
 			{selectedLatency?.min.length !== 0 && (
 				<Tag
 					closable
-					onClose={(): void => {
+					onClose={(e): void => {
+						e.preventDefault();
 						handleCloseTag('minLatency');
 					}}
 				>
@@ -100,7 +140,8 @@ const Filter = ({
 			{selectedLatency?.max.length !== 0 && (
 				<Tag
 					closable
-					onClose={(): void => {
+					onClose={(e): void => {
+						e.preventDefault();
 						handleCloseTag('maxLatency');
 					}}
 				>
@@ -113,7 +154,8 @@ const Filter = ({
 				<Tag
 					closable
 					key={`${item.key}-${item.operator}-${item.value}`}
-					onClose={(): void => {
+					onClose={(e): void => {
+						e.preventDefault();
 						handleCloseTagElement(item);
 					}}
 				>
@@ -125,27 +167,17 @@ const Filter = ({
 };
 
 interface DispatchProps {
-	updateSelectedLatency: (
-		selectedLatency: TraceReducer['selectedLatency'],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	updateSelectedOperation: (
-		selectedOperation: TraceReducer['selectedOperation'],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	updateSelectedService: (
-		selectedService: TraceReducer['selectedService'],
-	) => (dispatch: Dispatch<AppActions>) => void;
 	updateSelectedTags: (
 		selectedTags: TraceReducer['selectedTags'],
 	) => (dispatch: Dispatch<AppActions>) => void;
+	updateSelectedData: (props: UpdateSelectedDataProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateSelectedLatency: bindActionCreators(UpdateSelectedLatency, dispatch),
-	updateSelectedOperation: bindActionCreators(UpdateSelectedOperation, dispatch),
-	updateSelectedService: bindActionCreators(UpdateSelectedService, dispatch),
 	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
 });
 
 interface FilterProps extends DispatchProps {

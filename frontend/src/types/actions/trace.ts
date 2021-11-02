@@ -14,7 +14,6 @@ export const UPDATE_TRACE_SELECTED_TAGS = 'UPDATE_TRACE_SELECTED_TAGS';
 export const UPDATE_SELECTED_AGG_OPTION = 'UPDATE_SELECTED_AGG_OPTION';
 export const UPDATE_SELECTED_ENTITY = 'UPDATE_SELECTED_ENTITY';
 export const UPDATE_SPANS_LOADING = 'UPDATE_SPANS_LOADING';
-export const UPDATE_SPAN_AGGREDATE_SUCCESS = 'UPDATE_SPAN_AGGREDATE_SUCCESS';
 
 export const UPDATE_SELECTED_TRACE_DATA = 'UPDATE_SELECTED_TRACE_DATA';
 
@@ -47,13 +46,6 @@ interface GetTraceInitialData {
 	};
 }
 
-interface UpdateSpansAggregate {
-	type: typeof UPDATE_SPAN_AGGREDATE_SUCCESS;
-	payload: {
-		spansAggregate: TraceReducer['spansAggregate'];
-	};
-}
-
 interface UpdateSelectedDate {
 	type: typeof UPDATE_SELECTED_TRACE_DATA;
 	payload: {
@@ -64,6 +56,7 @@ interface UpdateSelectedDate {
 		selectedService: TraceReducer['selectedService'];
 		selectedLatency: TraceReducer['selectedLatency'];
 		selectedOperation: TraceReducer['selectedOperation'];
+		spansAggregate: TraceReducer['spansAggregate'];
 	};
 }
 
@@ -107,6 +100,7 @@ interface UpdateTraceSelectedTags {
 	payload: {
 		selectedTags: TraceReducer['selectedTags'];
 		spansList: TraceReducer['spanList'];
+		spansAggregate: TraceReducer['spansAggregate'];
 	};
 }
 
@@ -136,5 +130,4 @@ export type TraceActions =
 	| UpdateSelectedDate
 	| UpdateSelectedAggOption
 	| UpdateSelectedEntity
-	| UpdateSpansLoading
-	| UpdateSpansAggregate;
+	| UpdateSpansLoading;
