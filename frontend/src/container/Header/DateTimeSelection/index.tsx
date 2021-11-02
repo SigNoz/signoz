@@ -79,7 +79,7 @@ const DateTimeSelection = ({
 		false,
 	);
 
-	const { maxTime, loading, minTime, selectedTime } = useSelector<
+	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -258,7 +258,7 @@ const DateTimeSelection = ({
 			>
 				<DefaultSelect
 					onSelect={(value): void => onSelectHandler(value as Time)}
-					value={getInputLabel(startTime, endTime, selectedTimeInterval)}
+					value={getInputLabel(startTime, endTime, selectedTime)}
 					data-testid="dropDown"
 				>
 					{options.map(({ value, label }) => (
