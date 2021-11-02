@@ -476,13 +476,12 @@ func (r *ClickHouseReader) SetRules(localDB *sqlx.DB, rule string) *model.ApiErr
 		dbQuery = fmt.Sprintf("INSERT into rules (updated_at, data) VALUES ('%s', '%s')", time.Now(), rule)
 	}
 
-	_, err := localDB.Exec(dbQuery)
+	err := r.ruleManager.UpdateFromByteArray(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), []byte(rule))
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-
-	err = r.ruleManager.UpdateFromByteArray(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), []byte(rule))
+	_, err = localDB.Exec(dbQuery)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
