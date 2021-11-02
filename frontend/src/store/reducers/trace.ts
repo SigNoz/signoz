@@ -4,7 +4,11 @@ import {
 	GET_TRACE_LOADING_END,
 	GET_TRACE_LOADING_START,
 	TraceActions,
+	UPDATE_SELECTED_AGG_OPTION,
+	UPDATE_SELECTED_ENTITY,
 	UPDATE_SELECTED_TRACE_DATA,
+	UPDATE_SPAN_AGGREDATE_SUCCESS,
+	UPDATE_SPANS_LOADING,
 	UPDATE_TRACE_SELECTED_KIND,
 	UPDATE_TRACE_SELECTED_LATENCY_VALUE,
 	UPDATE_TRACE_SELECTED_OPERATION,
@@ -29,6 +33,10 @@ const intitalState: TraceReducer = {
 	serviceList: [],
 	spanList: [],
 	tagsSuggestions: [],
+	selectedAggOption: 'count',
+	selectedEntity: 'calls',
+	spansAggregate: [],
+	spansLoading: false,
 };
 
 export const traceReducer = (
@@ -49,6 +57,7 @@ export const traceReducer = (
 			return {
 				...state,
 				loading: true,
+				spansLoading: true,
 			};
 		}
 
@@ -63,6 +72,7 @@ export const traceReducer = (
 				spansList,
 				selectedKind,
 				selectedLatency,
+				spansAggregate,
 			} = action.payload;
 
 			return {
@@ -77,6 +87,8 @@ export const traceReducer = (
 				error: false,
 				selectedKind,
 				selectedLatency,
+				spansAggregate,
+				spansLoading: false,
 			};
 		}
 
@@ -143,6 +155,34 @@ export const traceReducer = (
 			return {
 				...state,
 				loading: false,
+			};
+		}
+
+		case UPDATE_SELECTED_AGG_OPTION: {
+			return {
+				...state,
+				selectedAggOption: action.payload.selectedAggOption,
+			};
+		}
+
+		case UPDATE_SELECTED_ENTITY: {
+			return {
+				...state,
+				selectedEntity: action.payload.selectedEntity,
+			};
+		}
+
+		case UPDATE_SPANS_LOADING: {
+			return {
+				...state,
+				spansLoading: action.payload.loading,
+			};
+		}
+
+		case UPDATE_SPAN_AGGREDATE_SUCCESS: {
+			return {
+				...state,
+				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 

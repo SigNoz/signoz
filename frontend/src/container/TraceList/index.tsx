@@ -18,7 +18,7 @@ const TraceDetails = (): JSX.Element => {
 		(state) => state.trace,
 	);
 
-	const spans: TableDataSourceItem[] = spanList[0].events.map(
+	const spans: TableDataSourceItem[] = spanList[0]?.events?.map(
 		(item: (number | string | string[] | pushDStree[])[], index) => {
 			if (
 				typeof item[0] === 'number' &&
@@ -83,7 +83,7 @@ const TraceDetails = (): JSX.Element => {
 		},
 	];
 
-	if (spans.length === 0) {
+	if (spans?.length === 0) {
 		return <Typography> No spans found for given filter!</Typography>;
 	}
 

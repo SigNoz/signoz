@@ -9,4 +9,6 @@ export enum METRICS_PAGE_QUERY_PARAM {
 	latencyMax = 'latencyMax',
 	latencyMin = 'latencyMin',
 	selectedTags = 'selectedTags',
+	aggregationOption = 'aggregationOption',
+	entity = 'entity',
 }

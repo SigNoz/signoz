@@ -1,6 +1,7 @@
 import getServiceList from 'api/trace/getServiceList';
 import getServiceOperation from 'api/trace/getServiceOperation';
 import getSpan from 'api/trace/getSpan';
+import getSpansAggregate from 'api/trace/getSpanAggregate';
 import getTags from 'api/trace/getTags';
 import { AxiosError } from 'axios';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
@@ -27,11 +28,20 @@ export const GetInitialTraceData = (): ((
 			const latencyMin = urlParams.get(METRICS_PAGE_QUERY_PARAM.latencyMin);
 			const latencyMax = urlParams.get(METRICS_PAGE_QUERY_PARAM.latencyMax);
 			const selectedTags = urlParams.get(METRICS_PAGE_QUERY_PARAM.selectedTags);
+			const aggregationOption = urlParams.get(
+				METRICS_PAGE_QUERY_PARAM.aggregationOption,
+			);
+			const selectedEntityOption = urlParams.get(METRICS_PAGE_QUERY_PARAM.entity);
 
-			const { globalTime } = store.getState();
+			const { globalTime, trace } = store.getState();
 			const { minTime, maxTime } = globalTime;
+			const { selectedAggOption, selectedEntity } = trace;
 
-			const [serviceListResponse, spanResponse] = await Promise.all([
+			const [
+				serviceListResponse,
+				spanResponse,
+				spanAggregateResponse,
+			] = await Promise.all([
 				getServiceList(),
 				getSpan({
 					start: minTime,
@@ -43,6 +53,19 @@ export const GetInitialTraceData = (): ((
 					minDuration: latencyMin || '',
 					operation: operationName || '',
 					service: serviceName || '',
+					tags: selectedTags || '[]',
+				}),
+				getSpansAggregate({
+					aggregation_option: aggregationOption || selectedAggOption,
+					dimension: selectedEntityOption || selectedEntity,
+					end: maxTime,
+					kind: kindTag || '',
+					maxDuration: latencyMax || '',
+					minDuration: latencyMin || '',
+					operation: operationName || '',
+					service: serviceName || '',
+					start: minTime,
+					step: '60',
 					tags: selectedTags || '[]',
 				}),
 			]);
@@ -91,7 +114,10 @@ export const GetInitialTraceData = (): ((
 
 			const getCondition = (): boolean => {
 				const basicCondition =
-					serviceListResponse.statusCode === 200 && spanResponse.statusCode === 200;
+					serviceListResponse.statusCode === 200 &&
+					spanResponse.statusCode === 200 &&
+					(spanAggregateResponse.statusCode === 200 ||
+						spanAggregateResponse.statusCode === 400);
 
 				if (serviceName === null || serviceName.length === 0) {
 					return basicCondition;
@@ -122,6 +148,7 @@ export const GetInitialTraceData = (): ((
 							max: latencyMax || '',
 							min: latencyMin || '',
 						},
+						spansAggregate: spanAggregateResponse.payload || [],
 					},
 				});
 
@@ -137,7 +164,6 @@ export const GetInitialTraceData = (): ((
 				});
 			}
 		} catch (error) {
-			console.log(error, 'asd');
 			dispatch({
 				type: 'GET_TRACE_INITIAL_DATA_ERROR',
 				payload: {

@@ -207,6 +207,7 @@ const DateTimeSelection = ({
 
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
+		globalTimeLoading();
 		const metricsTimeDuration = get(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
 
 		if (metricsTimeDuration === null) {
@@ -245,6 +246,7 @@ const DateTimeSelection = ({
 		searchEndTime,
 		searchStartTime,
 		updateTimeInterval,
+		globalTimeLoading,
 	]);
 
 	return (

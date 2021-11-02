@@ -10,12 +10,25 @@ export const UPDATE_TRACE_SELECTED_LATENCY_VALUE =
 	'UPDATE_TRACE_SELECTED_LATENCY_VALUE';
 export const UPDATE_TRACE_SELECTED_KIND = 'UPDATE_TRACE_SELECTED_KIND';
 export const UPDATE_TRACE_SELECTED_TAGS = 'UPDATE_TRACE_SELECTED_TAGS';
+
+export const UPDATE_SELECTED_AGG_OPTION = 'UPDATE_SELECTED_AGG_OPTION';
+export const UPDATE_SELECTED_ENTITY = 'UPDATE_SELECTED_ENTITY';
+export const UPDATE_SPANS_LOADING = 'UPDATE_SPANS_LOADING';
+export const UPDATE_SPAN_AGGREDATE_SUCCESS = 'UPDATE_SPAN_AGGREDATE_SUCCESS';
+
 export const UPDATE_SELECTED_TRACE_DATA = 'UPDATE_SELECTED_TRACE_DATA';
 
 import { TraceReducer } from 'types/reducer/trace';
 
 interface GetTraceLoading {
 	type: typeof GET_TRACE_LOADING_START | typeof GET_TRACE_LOADING_END;
+}
+
+interface UpdateSpansLoading {
+	type: typeof UPDATE_SPANS_LOADING;
+	payload: {
+		loading: boolean;
+	};
 }
 
 interface GetTraceInitialData {
@@ -30,6 +43,14 @@ interface GetTraceInitialData {
 		selectedOperation: TraceReducer['selectedOperation'];
 		selectedLatency: TraceReducer['selectedLatency'];
 		selectedKind: TraceReducer['selectedKind'];
+		spansAggregate: TraceReducer['spansAggregate'];
+	};
+}
+
+interface UpdateSpansAggregate {
+	type: typeof UPDATE_SPAN_AGGREDATE_SUCCESS;
+	payload: {
+		spansAggregate: TraceReducer['spansAggregate'];
 	};
 }
 
@@ -89,6 +110,20 @@ interface UpdateTraceSelectedTags {
 	};
 }
 
+interface UpdateSelectedAggOption {
+	type: typeof UPDATE_SELECTED_AGG_OPTION;
+	payload: {
+		selectedAggOption: TraceReducer['selectedAggOption'];
+	};
+}
+
+interface UpdateSelectedEntity {
+	type: typeof UPDATE_SELECTED_ENTITY;
+	payload: {
+		selectedEntity: TraceReducer['selectedEntity'];
+	};
+}
+
 export type TraceActions =
 	| GetTraceLoading
 	| GetTraceInitialData
@@ -98,4 +133,8 @@ export type TraceActions =
 	| UpdateTraceSelectedKind
 	| UpdateTraceSelectedOperation
 	| UpdateTraceSelectedTags
-	| UpdateSelectedDate;
+	| UpdateSelectedDate
+	| UpdateSelectedAggOption
+	| UpdateSelectedEntity
+	| UpdateSpansLoading
+	| UpdateSpansAggregate;

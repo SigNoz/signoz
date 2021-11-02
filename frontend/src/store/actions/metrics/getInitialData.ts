@@ -5,18 +5,30 @@
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
+import GetMinMax from 'lib/getMinMax';
 import { Dispatch } from 'redux';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/metrics/getDBOverview';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 export const GetInitialData = (
 	props: GetInitialDataProps,
-): ((dispatch: Dispatch<AppActions>) => void) => {
-	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
+): ((dispatch: Dispatch<AppActions>, getState: () => AppState) => void) => {
+	return async (dispatch, getState): Promise<void> => {
 		try {
 			dispatch({
 				type: 'GET_INITIAL_APPLICATION_LOADING',
 			});
+
+			const { globalTime } = getState();
+
+			const { maxTime, minTime } = GetMinMax(props.selectedTimeInterval, [
+				globalTime.minTime / 1000000,
+				globalTime.maxTime / 1000000,
+			]);
+
+			const step = 60;
 
 			const [
 				// getDBOverViewResponse,
@@ -39,10 +51,15 @@ export const GetInitialData = (
 				// 	...props,
 				// }),
 				getServiceOverview({
-					...props,
+					end: maxTime,
+					service: props.serviceName,
+					start: minTime,
+					step,
 				}),
 				getTopEndPoints({
-					...props,
+					end: maxTime,
+					service: props.serviceName,
+					start: minTime,
 				}),
 			]);
 
@@ -91,4 +108,7 @@ export const GetInitialData = (
 	};
 };
 
-export type GetInitialDataProps = Props;
+export interface GetInitialDataProps {
+	serviceName: Props['service'];
+	selectedTimeInterval: GlobalReducer['selectedTime'];
+}

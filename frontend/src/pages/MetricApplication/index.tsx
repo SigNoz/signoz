@@ -16,7 +16,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
 const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
-	const { loading, maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+	const { loading, selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const { error, errorMessage } = useSelector<AppState, MetricReducer>(
@@ -28,13 +28,11 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 	useEffect(() => {
 		if (servicename !== undefined && loading == false) {
 			getInitialData({
-				end: maxTime,
-				service: servicename,
-				start: minTime,
-				step: 60,
+				selectedTimeInterval: selectedTime,
+				serviceName: servicename,
 			});
 		}
-	}, [servicename, maxTime, minTime, getInitialData, loading]);
+	}, [servicename, getInitialData, loading, selectedTime]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
