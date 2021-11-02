@@ -198,8 +198,6 @@ func (r *ClickHouseReader) Start() {
 	ctxNotify, cancelNotify := context.WithCancel(context.Background())
 	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
 
-	var promConfig *config.Config
-
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
 		// The Scrape and notifier managers need to reload before the Discovery manager as
@@ -276,8 +274,7 @@ func (r *ClickHouseReader) Start() {
 				// 	reloadReady.Close()
 				// 	return nil
 				// }
-
-				promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
+				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
 				if err != nil {
 					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
 				}
@@ -334,7 +331,6 @@ func (r *ClickHouseReader) Start() {
 	r.queryEngine = queryEngine
 	r.remoteStorage = remoteStorage
 	r.ruleManager = ruleManager
-	r.promConfig = promConfig
 
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
@@ -487,7 +483,12 @@ func (r *ClickHouseReader) SetRules(localDB *sqlx.DB, rule string) *model.ApiErr
 	}
 
 	err = r.ruleManager.UpdateFromByteArray(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), []byte(rule))
-	return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
