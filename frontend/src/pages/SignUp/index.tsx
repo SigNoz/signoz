@@ -1,13 +1,23 @@
 import { Button, Input, Typography } from 'antd';
 import signup from 'api/user/signup';
-import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { UserLoggedIn } from 'store/actions';
+import AppActions from 'types/actions';
 
-import { ButtonContainer, Container, FormWrapper, Title } from './styles';
+import {
+	ButtonContainer,
+	Container,
+	FormWrapper,
+	LogoImageContainer,
+	Title,
+} from './styles';
 
-const Signup = (): JSX.Element => {
+const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },
@@ -48,9 +58,8 @@ const Signup = (): JSX.Element => {
 				});
 
 				if (response.statusCode === 200) {
-					localStorage.setItem(IS_LOGGED_IN, 'yes');
+					loggedIn();
 					history.push(ROUTES.APPLICATION);
-					globalLoading();
 				} else {
 					// @TODO throw a error notification here
 				}
@@ -71,7 +80,7 @@ const Signup = (): JSX.Element => {
 			</Container>
 
 			<FormWrapper>
-				<img src={'signoz.svg'} alt="logo" />
+				<LogoImageContainer src={'signoz.svg'} alt="logo" />
 
 				<form onSubmit={handleSubmit}>
 					<div>
@@ -79,6 +88,7 @@ const Signup = (): JSX.Element => {
 						<Input
 							placeholder="mike@netflix.com"
 							type="email"
+							autoFocus
 							value={formState.email.value}
 							onChange={(e): void => updateForm('email', e.target)}
 							required
@@ -90,7 +100,6 @@ const Signup = (): JSX.Element => {
 						<label htmlFor="signupFirstName">First Name</label>
 						<Input
 							placeholder="Mike"
-							autoFocus
 							value={formState.firstName.value}
 							onChange={(e): void => updateForm('firstName', e.target)}
 							required
@@ -114,4 +123,16 @@ const Signup = (): JSX.Element => {
 	);
 };
 
-export default Signup;
+interface DispatchProps {
+	loggedIn: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	loggedIn: bindActionCreators(UserLoggedIn, dispatch),
+});
+
+type SignupProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(Signup);

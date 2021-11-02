@@ -258,7 +258,8 @@ const DateTimeSelection = ({
 			>
 				<DefaultSelect
 					onSelect={(value): void => onSelectHandler(value as Time)}
-					value={getInputLabel(startTime, endTime, selectedTime)}
+					value={getInputLabel(startTime, endTime, selectedTimeInterval)}
+					data-testid="dropDown"
 				>
 					{options.map(({ value, label }) => (
 						<Option key={value + label} value={value}>

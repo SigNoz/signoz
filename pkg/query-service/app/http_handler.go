@@ -196,6 +196,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -713,6 +715,35 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 	result, err := (*aH.reader).SearchSpans(context.Background(), query)
 
 	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
+	ttlParams, err := parseDuration(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
+	ttlParams, err := parseGetTTL(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).GetTTL(context.Background(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
