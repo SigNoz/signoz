@@ -22,25 +22,37 @@ export const GetSpanAggregate = ({
 				},
 			});
 			const { globalTime } = store.getState();
-			const { minTime, maxTime } = globalTime;
+			const { minTime, maxTime, selectedTime } = globalTime;
+
+			const isCustomSelected = selectedTime === 'custom';
 
 			const [spanAggregateResponse] = await Promise.all([
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
-					end: maxTime,
+					end: isCustomSelected
+						? globalTime.minTime + 15 * 60 * 1000000000
+						: maxTime,
+					start: isCustomSelected
+						? globalTime.minTime - 15 * 60 * 1000000000
+						: minTime,
 					kind: selectedKind,
 					maxDuration: selectedLatency.max,
 					minDuration: selectedLatency.min,
 					operation: selectedOperation,
 					service: selectedService,
-					start: minTime,
 					step: '60',
 					tags: JSON.stringify(selectedTags),
 				}),
 			]);
 
 			if (spanAggregateResponse.statusCode === 400) {
+				dispatch({
+					type: 'UPDATE_SPANS_LOADING',
+					payload: {
+						loading: false,
+					},
+				});
 				return;
 			}
 

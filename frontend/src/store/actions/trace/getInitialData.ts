@@ -34,8 +34,10 @@ export const GetInitialTraceData = (): ((
 			const selectedEntityOption = urlParams.get(METRICS_PAGE_QUERY_PARAM.entity);
 
 			const { globalTime, trace } = store.getState();
-			const { minTime, maxTime } = globalTime;
+			const { minTime, maxTime, selectedTime } = globalTime;
 			const { selectedAggOption, selectedEntity } = trace;
+
+			const isCustomSelected = selectedTime === 'custom';
 
 			const [
 				serviceListResponse,
@@ -58,13 +60,18 @@ export const GetInitialTraceData = (): ((
 				getSpansAggregate({
 					aggregation_option: aggregationOption || selectedAggOption,
 					dimension: selectedEntityOption || selectedEntity,
-					end: maxTime,
+					end: isCustomSelected
+						? globalTime.minTime + 15 * 60 * 1000000000
+						: maxTime,
+					start: isCustomSelected
+						? globalTime.minTime - 15 * 60 * 1000000000
+						: minTime,
+
 					kind: kindTag || '',
 					maxDuration: latencyMax || '',
 					minDuration: latencyMin || '',
 					operation: operationName || '',
 					service: serviceName || '',
-					start: minTime,
 					step: '60',
 					tags: selectedTags || '[]',
 				}),

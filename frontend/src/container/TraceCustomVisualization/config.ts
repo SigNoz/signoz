@@ -26,7 +26,7 @@ export const aggregation_options = [
 		linked_entity: 'calls',
 		default_selected: { title: 'count', dataindex: 'count' },
 		options_available: [
-			{ title: 'count', dataindex: 'count' },
+			{ title: 'Count', dataindex: 'count' },
 			{ title: 'Rate (per sec)', dataindex: 'rate_per_sec' },
 		],
 	},

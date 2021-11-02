@@ -81,6 +81,7 @@ const TraceCustomVisualisation = ({
 				form={form}
 				onValuesChange={handleFormValuesChange}
 				initialValues={{
+					entity: selectedEntity,
 					agg_options: selectedAggOption,
 					chart_style: 'line',
 					interval: '5m',
