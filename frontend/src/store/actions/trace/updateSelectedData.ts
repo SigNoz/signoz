@@ -28,14 +28,24 @@ export const UpdateSelectedData = ({
 				},
 			});
 			const { trace, globalTime } = store.getState();
-			const { minTime, maxTime } = globalTime;
+			const { minTime, maxTime, selectedTime } = globalTime;
 
 			const { selectedTags } = trace;
 
+			const isCustomSelected = selectedTime === 'custom';
+
+			const end = isCustomSelected
+				? globalTime.minTime + 15 * 60 * 1000000000
+				: maxTime;
+
+			const start = isCustomSelected
+				? globalTime.minTime - 15 * 60 * 1000000000
+				: minTime;
+
 			const [spanResponse, getSpanAggregateResponse] = await Promise.all([
 				getSpan({
-					start: minTime,
-					end: maxTime,
+					start,
+					end,
 					kind: selectedKind || '',
 					limit: '100',
 					lookback: '2d',
@@ -48,13 +58,13 @@ export const UpdateSelectedData = ({
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
-					end: maxTime,
+					end,
 					kind: selectedKind || '2',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',
 					operation: selectedOperation || '',
 					service: selectedService || '',
-					start: minTime,
+					start,
 					step: '60',
 					tags: JSON.stringify(selectedTags),
 				}),

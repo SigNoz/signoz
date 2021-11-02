@@ -45,6 +45,14 @@ export const GetInitialTraceData = (): ((
 
 			const isCustomSelected = selectedTime === 'custom';
 
+			const end = isCustomSelected
+				? globalTime.minTime + 15 * 60 * 1000000000
+				: maxTime;
+
+			const start = isCustomSelected
+				? globalTime.minTime - 15 * 60 * 1000000000
+				: minTime;
+
 			const [
 				serviceListResponse,
 				spanResponse,
@@ -52,8 +60,8 @@ export const GetInitialTraceData = (): ((
 			] = await Promise.all([
 				getServiceList(),
 				getSpan({
-					start: minTime,
-					end: maxTime,
+					start,
+					end,
 					kind: kindTag || '',
 					limit: '100',
 					lookback: '2d',
@@ -66,13 +74,8 @@ export const GetInitialTraceData = (): ((
 				getSpansAggregate({
 					aggregation_option: aggregationOption || selectedAggOption,
 					dimension: selectedEntityOption || selectedEntity,
-					end: isCustomSelected
-						? globalTime.minTime + 15 * 60 * 1000000000
-						: maxTime,
-					start: isCustomSelected
-						? globalTime.minTime - 15 * 60 * 1000000000
-						: minTime,
-
+					end,
+					start,
 					kind: kindTag || '',
 					maxDuration: latencyMax || '',
 					minDuration: latencyMin || '',
