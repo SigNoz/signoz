@@ -21,10 +21,16 @@ export const UpdateSelectedData = ({
 }: UpdateSelectedDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
+			dispatch({
+				type: 'UPDATE_SPANS_LOADING',
+				payload: {
+					loading: true,
+				},
+			});
 			const { trace, globalTime } = store.getState();
 			const { minTime, maxTime } = globalTime;
 
-			const { selectedTags, selectedService: globalSelectedService } = trace;
+			const { selectedTags } = trace;
 
 			const [spanResponse, getSpanAggregateResponse] = await Promise.all([
 				getSpan({
@@ -64,11 +70,7 @@ export const UpdateSelectedData = ({
 				| ErrorResponse
 				| undefined;
 
-			if (
-				selectedService !== null &&
-				selectedService.length !== 0 &&
-				globalSelectedService !== selectedService
-			) {
+			if (selectedService !== null && selectedService.length !== 0) {
 				[tagResponse, serviceOperationResponse] = await Promise.all([
 					getTags({
 						service: selectedService,
@@ -86,6 +88,7 @@ export const UpdateSelectedData = ({
 			const getCondition = (): boolean => {
 				const basicCondition =
 					spanResponse.statusCode === 200 && spanAggregateCondition;
+
 				if (selectedService === null || selectedService.length === 0) {
 					return basicCondition;
 				}
@@ -123,6 +126,13 @@ export const UpdateSelectedData = ({
 					},
 				});
 			}
+
+			dispatch({
+				type: 'UPDATE_SPANS_LOADING',
+				payload: {
+					loading: false,
+				},
+			});
 		} catch (error) {
 			dispatch({
 				type: 'GET_TRACE_INITIAL_DATA_ERROR',

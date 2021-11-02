@@ -192,9 +192,6 @@ const TraceList = ({
 						}}
 						placeholder="Select Operation"
 						allowClear
-						onClear={(): void => {
-							updateSelectedOperationHandler('');
-						}}
 					>
 						{operationsList.map((item) => (
 							<Option key={item} value={item}>
@@ -211,9 +208,6 @@ const TraceList = ({
 				<FormItem name="spanKind">
 					<Select
 						showSearch
-						onClear={(): void => {
-							updateSelectedKindHandler('');
-						}}
 						onChange={(value: SelectValue): void => {
 							if (value) {
 								updateSelectedKindHandler(value.toString());
