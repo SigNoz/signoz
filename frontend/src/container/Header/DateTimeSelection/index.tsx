@@ -207,10 +207,6 @@ const DateTimeSelection = ({
 
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
-		globalTimeLoading();
-	}, [globalTimeLoading]);
-
-	useEffect(() => {
 		const metricsTimeDuration = get(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
 
 		if (metricsTimeDuration === null) {
@@ -313,3 +309,8 @@ const mapDispatchToProps = (
 type Props = DispatchProps & RouteComponentProps;
 
 export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
+
+// DateTimeSelection.whyDidYouRender = {
+// 	logOnDifferentValues: true,
+// 	customName: 'DateTimeSelection',
+// };

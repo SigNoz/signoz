@@ -209,9 +209,7 @@ const TraceList = ({
 					<Select
 						showSearch
 						onChange={(value: SelectValue): void => {
-							if (value) {
-								updateSelectedKindHandler(value.toString());
-							}
+							updateSelectedKindHandler(value?.toString() || '');
 						}}
 						placeholder="Select Span Kind"
 						allowClear

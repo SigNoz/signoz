@@ -19,6 +19,12 @@ export const GetInitialTraceData = (): ((
 ) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
+			dispatch({
+				type: 'UPDATE_SPANS_LOADING',
+				payload: {
+					loading: true,
+				},
+			});
 			const urlParams = new URLSearchParams(history.location.search.split('?')[1]);
 
 			const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
