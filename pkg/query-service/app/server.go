@@ -102,7 +102,7 @@ func createHTTPServer() (*http.Server, error) {
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader()
-		clickhouseReader.Start()
+		go clickhouseReader.Start()
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
