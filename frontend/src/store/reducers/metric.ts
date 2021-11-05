@@ -5,6 +5,7 @@ import {
 	GET_SERVICE_LIST_ERROR,
 	GET_SERVICE_LIST_LOADING_START,
 	GET_SERVICE_LIST_SUCCESS,
+	RESET_INITIAL_APPLICATION_DATA,
 	MetricsActions,
 } from 'types/actions/metrics';
 import InitialValueTypes from 'types/reducer/metrics';
@@ -65,6 +66,12 @@ const metrics = (
 				loading: false,
 				errorMessage: action.payload.errorMessage,
 				error: true,
+			};
+		}
+
+		case RESET_INITIAL_APPLICATION_DATA: {
+			return {
+				...InitialValue,
 			};
 		}
 

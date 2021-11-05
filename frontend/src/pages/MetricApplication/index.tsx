@@ -10,18 +10,23 @@ import {
 	GetInitialData,
 	GetInitialDataProps,
 } from 'store/actions/metrics/getInitialData';
+import { ResetInitialData } from 'store/actions/metrics/ResetInitialData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
+const MetricsApplication = ({
+	getInitialData,
+	resetInitialData,
+}: MetricsProps): JSX.Element => {
 	const { loading, selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { error, errorMessage } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { error, errorMessage, loading: metricsLoading } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
 
 	const { servicename } = useParams<ServiceProps>();
 
@@ -32,13 +37,17 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 				serviceName: servicename,
 			});
 		}
+
+		return () => {
+			resetInitialData();
+		};
 	}, [servicename, getInitialData, loading, selectedTime]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
 	}
 
-	if (loading) {
+	if (loading || metricsLoading) {
 		return <Spinner tip="Loading..." />;
 	}
 
@@ -47,6 +56,7 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 
 interface DispatchProps {
 	getInitialData: (props: GetInitialDataProps) => void;
+	resetInitialData: () => void;
 }
 
 interface ServiceProps {
@@ -57,6 +67,7 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getInitialData: bindActionCreators(GetInitialData, dispatch),
+	resetInitialData: bindActionCreators(ResetInitialData, dispatch),
 });
 
 type MetricsProps = DispatchProps;
