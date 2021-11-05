@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GetInitialTraceData } from 'store/actions/trace';
+import { GetInitialTraceData, ResetRaceData } from 'store/actions/trace';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -15,6 +15,7 @@ import { TraceReducer } from 'types/reducer/trace';
 
 const TraceDetail = ({
 	getInitialTraceData,
+	resetTraceData,
 }: TraceDetailProps): JSX.Element => {
 	const { loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -29,6 +30,10 @@ const TraceDetail = ({
 		if (!loading) {
 			getInitialTraceData();
 		}
+
+		return (): void => {
+			resetTraceData();
+		};
 	}, [getInitialTraceData, loading]);
 
 	if (error) {
@@ -50,12 +55,14 @@ const TraceDetail = ({
 
 interface DispatchProps {
 	getInitialTraceData: () => void;
+	resetTraceData: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getInitialTraceData: bindActionCreators(GetInitialTraceData, dispatch),
+	resetTraceData: bindActionCreators(ResetRaceData, dispatch),
 });
 
 type TraceDetailProps = DispatchProps;

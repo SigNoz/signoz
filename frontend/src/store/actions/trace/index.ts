@@ -6,3 +6,4 @@ export * from './updateSelectedLatency';
 export * from './updateSelectedOperation';
 export * from './updateSelectedService';
 export * from './updateSelectedTags';
+export * from './resetTraceDetails';
