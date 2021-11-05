@@ -16,6 +16,8 @@ export const UPDATE_SELECTED_ENTITY = 'UPDATE_SELECTED_ENTITY';
 export const UPDATE_SPANS_LOADING = 'UPDATE_SPANS_LOADING';
 
 export const UPDATE_SELECTED_TRACE_DATA = 'UPDATE_SELECTED_TRACE_DATA';
+export const UPDATE_AGGREGATES = 'UPDATE_AGGREGATES';
+
 export const RESET_TRACE_DATA = 'RESET_TRACE_DATA';
 
 import { TraceReducer } from 'types/reducer/trace';
@@ -119,6 +121,13 @@ interface UpdateSelectedEntity {
 	};
 }
 
+interface UpdateAggregates {
+	type: typeof UPDATE_AGGREGATES;
+	payload: {
+		spansAggregate: TraceReducer['spansAggregate'];
+	};
+}
+
 interface ResetTraceData {
 	type: typeof RESET_TRACE_DATA;
 }
@@ -136,4 +145,5 @@ export type TraceActions =
 	| UpdateSelectedAggOption
 	| UpdateSelectedEntity
 	| UpdateSpansLoading
-	| ResetTraceData;
+	| ResetTraceData
+	| UpdateAggregates;

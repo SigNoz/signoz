@@ -13,6 +13,8 @@ import {
 	UPDATE_TRACE_SELECTED_OPERATION,
 	UPDATE_TRACE_SELECTED_SERVICE,
 	UPDATE_TRACE_SELECTED_TAGS,
+	RESET_TRACE_DATA,
+	UPDATE_AGGREGATES,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -177,6 +179,19 @@ export const traceReducer = (
 			return {
 				...state,
 				spansLoading: action.payload.loading,
+			};
+		}
+
+		case RESET_TRACE_DATA: {
+			return {
+				...intitalState,
+			};
+		}
+
+		case UPDATE_AGGREGATES: {
+			return {
+				...state,
+				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 

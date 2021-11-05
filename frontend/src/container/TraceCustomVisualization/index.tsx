@@ -6,19 +6,20 @@ import { AppState } from 'store/reducers';
 const { Option } = Select;
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-	UpdateSelectedData,
-	UpdateSelectedDataProps,
-} from 'store/actions/trace/updateSelectedData';
+
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { aggregation_options, entity } from './config';
 import { Card, CustomVisualizationsTitle, FormItem, Space } from './styles';
 import TraceCustomGraph from './TraceCustomGraph';
+import {
+	GetTraceVisualAggregates,
+	GetTraceVisualAggregatesProps,
+} from 'store/actions/trace/getTraceVisualAgrregates';
 
 const TraceCustomVisualisation = ({
-	updateSelectedData,
+	getTraceVisualAggregates,
 }: TraceCustomVisualisationProps): JSX.Element => {
 	const {
 		selectedEntity,
@@ -51,21 +52,17 @@ const TraceCustomVisualisation = ({
 
 			const values = form.getFieldsValue(['agg_options', 'entity']);
 
-			// updateSelectedData({
-
-			// })
+			getTraceVisualAggregates({
+				selectedAggOption: values.agg_options,
+				selectedEntity: values.entity,
+			});
 		}
 
 		if (formFieldName === 'agg_options') {
-			// getSpanAggregate({
-			// 	selectedAggOption: changedValues[formFieldName],
-			// 	selectedEntity: selectedEntity,
-			// 	selectedKind,
-			// 	selectedLatency,
-			// 	selectedOperation,
-			// 	selectedService,
-			// 	selectedTags,
-			// });
+			getTraceVisualAggregates({
+				selectedAggOption: changedValues[formFieldName],
+				selectedEntity,
+			});
 		}
 	};
 
@@ -85,21 +82,7 @@ const TraceCustomVisualisation = ({
 			>
 				<Space>
 					<FormItem name="entity">
-						<Select
-							onClear={(): void => {
-								getSpanAggregate({
-									selectedAggOption,
-									selectedEntity: '',
-									selectedKind,
-									selectedLatency,
-									selectedOperation,
-									selectedService,
-									selectedTags,
-								});
-							}}
-							style={{ width: 120 }}
-							allowClear
-						>
+						<Select style={{ width: 120 }} allowClear>
 							{entity.map((item) => (
 								<Option key={item.key} value={item.dataindex}>
 									{item.title}
@@ -109,21 +92,7 @@ const TraceCustomVisualisation = ({
 					</FormItem>
 
 					<FormItem name="agg_options">
-						<Select
-							onClear={(): void => {
-								getSpanAggregate({
-									selectedAggOption: '',
-									selectedEntity,
-									selectedKind,
-									selectedLatency,
-									selectedOperation,
-									selectedService,
-									selectedTags,
-								});
-							}}
-							style={{ width: 120 }}
-							allowClear
-						>
+						<Select style={{ width: 120 }} allowClear>
 							{aggregation_options
 								.filter((item) => item.linked_entity === selectedEntity)[0]
 								.options_available.map((item) => (
@@ -170,13 +139,16 @@ const TraceCustomVisualisation = ({
 };
 
 interface DispatchProps {
-	updateSelectedData: (props: UpdateSelectedDataProps) => void;
+	getTraceVisualAggregates: (props: GetTraceVisualAggregatesProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
+	getTraceVisualAggregates: bindActionCreators(
+		GetTraceVisualAggregates,
+		dispatch,
+	),
 });
 
 type TraceCustomVisualisationProps = DispatchProps;
