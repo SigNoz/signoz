@@ -17,11 +17,18 @@ export const GetInitialData = (
 ): ((dispatch: Dispatch<AppActions>, getState: () => AppState) => void) => {
 	return async (dispatch, getState): Promise<void> => {
 		try {
+			const { globalTime } = getState();
+
+			/**
+			 * @description This is because we keeping the store as source of truth
+			 */
+			if (props.selectedTimeInterval !== globalTime.selectedTime) {
+				return;
+			}
+
 			dispatch({
 				type: 'GET_INITIAL_APPLICATION_LOADING',
 			});
-
-			const { globalTime } = getState();
 
 			const { maxTime, minTime } = GetMinMax(props.selectedTimeInterval, [
 				globalTime.minTime / 1000000,
