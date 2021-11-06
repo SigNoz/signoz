@@ -10,7 +10,7 @@ import (
 )
 
 type Reader interface {
-	// Getter Interfaces
+	ListAlertsFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError)
 	GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError)
 	SetRules(localDB *sqlx.DB, alert string) *model.ApiError
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)

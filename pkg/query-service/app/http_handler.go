@@ -52,7 +52,7 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIH
 	}
 	aH.ready = aH.testReady
 
-	localDB, err := dashboards.InitDB("./signoz.db")
+	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
 	if err != nil {
 		return nil, err
 	}

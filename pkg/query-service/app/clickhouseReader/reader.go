@@ -443,6 +443,38 @@ func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
 	return cfg.Connector(cfg)
 }
 
+func rulesAlertsToAPIAlerts(rulesAlerts []*rules.Alert) []*model.Alert {
+	apiAlerts := make([]*model.Alert, len(rulesAlerts))
+	for i, ruleAlert := range rulesAlerts {
+		apiAlerts[i] = &model.Alert{
+			Labels:      ruleAlert.Labels,
+			Annotations: ruleAlert.Annotations,
+			State:       ruleAlert.State.String(),
+			ActiveAt:    &ruleAlert.ActiveAt,
+			Value:       ruleAlert.Value,
+		}
+	}
+
+	return apiAlerts
+}
+
+func (r *ClickHouseReader) ListAlertsFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
+
+	alertingRules := r.ruleManager.AlertingRules()
+	alerts := []*model.Alert{}
+
+	for _, alertingRule := range alertingRules {
+		alerts = append(
+			alerts,
+			rulesAlertsToAPIAlerts(alertingRule.ActiveAlerts())...,
+		)
+	}
+
+	res := &model.AlertDiscovery{Alerts: alerts}
+
+	return res, nil
+}
+
 func (r *ClickHouseReader) GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError) {
 
 	rules := []*model.RuleGroups{}
