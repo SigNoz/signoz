@@ -94,7 +94,6 @@ const TraceDetails = (): JSX.Element => {
 				<a
 					href={'https://signoz.io/docs/instrumentation/overview'}
 					target={'_blank'}
-					style={{ marginLeft: 3 }}
 					rel="noreferrer"
 				>
 					guide

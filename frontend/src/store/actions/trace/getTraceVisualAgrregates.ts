@@ -63,6 +63,8 @@ export const GetTraceVisualAggregates = ({
 					type: 'UPDATE_AGGREGATES',
 					payload: {
 						spansAggregate: spanAggregateResponse.payload,
+						selectedAggOption,
+						selectedEntity,
 					},
 				});
 			}

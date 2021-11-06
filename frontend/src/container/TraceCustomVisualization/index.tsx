@@ -24,11 +24,6 @@ const TraceCustomVisualisation = ({
 	const {
 		selectedEntity,
 		spansLoading,
-		selectedKind,
-		selectedLatency,
-		selectedOperation,
-		selectedService,
-		selectedTags,
 		selectedAggOption,
 		spansAggregate,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
@@ -102,30 +97,6 @@ const TraceCustomVisualisation = ({
 								))}
 						</Select>
 					</FormItem>
-
-					{/* <FormItem name="chart_style">
-						<Select style={{ width: 120 }} allowClear>
-							<Option value="line">Line Chart</Option>
-							<Option value="bar">Bar Chart</Option>
-							<Option value="area">Area Chart</Option>
-						</Select>
-					</FormItem>
-
-					<FormItem name="interval">
-						<Select style={{ width: 120 }} allowClear>
-							<Option value="1m">1 min</Option>
-							<Option value="5m">5 min</Option>
-							<Option value="30m">30 min</Option>
-						</Select>
-					</FormItem>
-
-					<FormItem name="group_by">
-						<Select style={{ width: 120 }} allowClear>
-							<Option value="none">Group By</Option>
-							<Option value="status">Status Code</Option>
-							<Option value="protocol">Protocol</Option>
-						</Select>
-					</FormItem> */}
 				</Space>
 			</Form>
 

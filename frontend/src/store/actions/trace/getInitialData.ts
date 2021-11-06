@@ -12,13 +12,23 @@ import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps as ServiceOperationPayloadProps } from 'types/api/trace/getServiceOperation';
 import { PayloadProps as TagPayloadProps } from 'types/api/trace/getTags';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-export const GetInitialTraceData = (): ((
-	dispatch: Dispatch<AppActions>,
-) => void) => {
+export const GetInitialTraceData = ({
+	selectedTime,
+}: GetInitialTraceDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
+			const { globalTime, trace } = store.getState();
+			const { minTime, maxTime, selectedTime: globalSelectedTime } = globalTime;
+			const { selectedAggOption, selectedEntity } = trace;
+
+			// keeping the redux as source of truth
+			if (selectedTime !== globalSelectedTime) {
+				return;
+			}
+
 			dispatch({
 				type: 'UPDATE_SPANS_LOADING',
 				payload: {
@@ -38,10 +48,6 @@ export const GetInitialTraceData = (): ((
 				METRICS_PAGE_QUERY_PARAM.aggregationOption,
 			);
 			const selectedEntityOption = urlParams.get(METRICS_PAGE_QUERY_PARAM.entity);
-
-			const { globalTime, trace } = store.getState();
-			const { minTime, maxTime, selectedTime } = globalTime;
-			const { selectedAggOption, selectedEntity } = trace;
 
 			const isCustomSelected = selectedTime === 'custom';
 
@@ -189,3 +195,7 @@ export const GetInitialTraceData = (): ((
 		}
 	};
 };
+
+export interface GetInitialTraceDataProps {
+	selectedTime: GlobalReducer['selectedTime'];
+}

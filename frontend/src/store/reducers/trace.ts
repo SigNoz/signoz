@@ -126,6 +126,7 @@ export const traceReducer = (
 				...state,
 				selectedTags: action.payload.selectedTags,
 				spanList: action.payload.spansList,
+				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 
@@ -192,6 +193,8 @@ export const traceReducer = (
 			return {
 				...state,
 				spansAggregate: action.payload.spansAggregate,
+				selectedAggOption: action.payload.selectedAggOption,
+				selectedEntity: action.payload.selectedEntity,
 			};
 		}
 

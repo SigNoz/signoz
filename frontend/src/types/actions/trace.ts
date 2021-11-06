@@ -125,6 +125,8 @@ interface UpdateAggregates {
 	type: typeof UPDATE_AGGREGATES;
 	payload: {
 		spansAggregate: TraceReducer['spansAggregate'];
+		selectedEntity: TraceReducer['selectedEntity'];
+		selectedAggOption: TraceReducer['selectedAggOption'];
 	};
 }
 

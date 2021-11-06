@@ -1,6 +1,6 @@
-import { Button, Input, Typography } from 'antd';
+import { Button, Input, Typography, notification } from 'antd';
 import { SelectValue } from 'antd/lib/select';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TagItem, TraceReducer } from 'types/reducer/trace';
@@ -30,6 +30,11 @@ const TraceList = ({
 	updateSelectedTags,
 	updateSelectedData,
 }: TraceListProps): JSX.Element => {
+	const [
+		notificationInstance,
+		NotificationElement,
+	] = notification.useNotification();
+
 	const [visible, setVisible] = useState<boolean>(false);
 	const [form] = Form.useForm();
 	const [form_basefilter] = Form.useForm();
@@ -97,21 +102,37 @@ const TraceList = ({
 			return;
 		}
 
-		const preSelectedTags = [
-			...selectedTags,
-			{
-				operator: values.operator,
-				key: values.tag_key,
-				value: values.tag_value,
-			},
-		];
+		// check whether it is pre-existing in the array or not
 
-		updatedQueryParams(
-			[JSON.stringify(preSelectedTags)],
-			[METRICS_PAGE_QUERY_PARAM.selectedTags],
-		);
+		const isFound = selectedTags.find((tags) => {
+			return (
+				tags.key === values.tag_key &&
+				tags.value === values.tag_value &&
+				tags.operator === values.operator
+			);
+		});
 
-		updateSelectedTags(preSelectedTags);
+		if (!isFound) {
+			const preSelectedTags = [
+				...selectedTags,
+				{
+					operator: values.operator,
+					key: values.tag_key,
+					value: values.tag_value,
+				},
+			];
+
+			updatedQueryParams(
+				[JSON.stringify(preSelectedTags)],
+				[METRICS_PAGE_QUERY_PARAM.selectedTags],
+			);
+
+			updateSelectedTags(preSelectedTags);
+		} else {
+			notificationInstance.error({
+				message: 'Tag Already Present',
+			});
+		}
 	};
 
 	const onChangeTagKey = (data: string): void => {
@@ -154,19 +175,21 @@ const TraceList = ({
 		});
 	};
 
+	useEffect(() => {
+		form_basefilter.setFieldsValue({
+			service: selectedService,
+			operation: selectedOperation,
+			spanKind: selectedKind,
+			latency: 'Latency',
+		});
+	}, [selectedService, selectedOperation, selectedKind]);
+
 	return (
 		<>
+			{NotificationElement}
+
 			<Typography>Filter Traces</Typography>
-			<Form
-				form={form_basefilter}
-				layout="inline"
-				initialValues={{
-					service: selectedService,
-					operation: selectedOperation,
-					latency: 'Latency',
-					spanKind: selectedKind,
-				}}
-			>
+			<Form form={form_basefilter} layout="inline">
 				<FormItem name="service">
 					<Select
 						showSearch
