@@ -4,12 +4,7 @@ import thunk, { ThunkMiddleware } from 'redux-thunk';
 import reducers, { AppState } from './reducers';
 
 const composeEnhancers =
-	(window &&
-		(window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
-			trace: true,
-			traceLimit: 25,
-		})) ||
-	compose;
+	(window && (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) || compose;
 
 const store = createStore(
 	reducers,
