@@ -13,7 +13,8 @@ import InitialValueTypes from 'types/reducer/metrics';
 const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
-	loading: false,
+	loading: true,
+	metricsApplicationLoading: true,
 	services: [],
 	dbOverView: [],
 	externalService: [],
@@ -57,13 +58,13 @@ const metrics = (
 		case GET_INITIAL_APPLICATION_LOADING: {
 			return {
 				...state,
-				loading: true,
+				metricsApplicationLoading: true,
 			};
 		}
 		case GET_INITIAL_APPLICATION_ERROR: {
 			return {
 				...state,
-				loading: false,
+				metricsApplicationLoading: false,
 				errorMessage: action.payload.errorMessage,
 				error: true,
 			};
@@ -87,13 +88,13 @@ const metrics = (
 
 			return {
 				...state,
-				loading: false,
 				// dbOverView,
 				topEndPoints,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
+				metricsApplicationLoading: false,
 			};
 		}
 		default:
