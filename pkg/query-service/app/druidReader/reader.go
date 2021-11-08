@@ -56,11 +56,11 @@ func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, quer
 func (druid *DruidReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
 
 	res := model.AlertDiscovery{}
-	return &res, nil
+	return &res, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support getting rules for alerting")}
 }
-func (druid *DruidReader) GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError) {
+func (druid *DruidReader) GetRule(localDB *sqlx.DB, id string) (*model.RuleResponseItem, *model.ApiError) {
 
-	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support getting rules for alerting")}
 }
 func (druid *DruidReader) CreateRule(localDB *sqlx.DB, alert string) *model.ApiError {
 

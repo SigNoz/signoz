@@ -466,6 +466,26 @@ type AlertingRuleWithGroup struct {
 	Id int
 }
 
+func (r *ClickHouseReader) GetRule(localDB *sqlx.DB, id string) (*model.RuleResponseItem, *model.ApiError) {
+
+	idInt, _ := strconv.Atoi(id)
+
+	rule := &model.RuleResponseItem{}
+
+	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
+
+	err := localDB.Get(rule, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return rule, nil
+}
+
 func (r *ClickHouseReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
 
 	groups := r.ruleManager.RuleGroups()
@@ -520,24 +540,6 @@ func (r *ClickHouseReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDisc
 	return res, nil
 }
 
-func (r *ClickHouseReader) GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError) {
-
-	rules := []*model.RuleGroups{}
-	err := localDB.Select(&rules, "SELECT id, updated_at, data FROM rules")
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-
-	}
-	if len(rules) > 1 {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("multiple rule entry detected from db")}
-	}
-	if len(rules) == 0 {
-		return nil, nil
-	}
-
-	return rules[0], nil
-}
-
 func (r *ClickHouseReader) CreateRule(localDB *sqlx.DB, rule string) *model.ApiError {
 
 	dbQuery := fmt.Sprintf("INSERT into rules (updated_at, data) VALUES ('%s', '%s')", time.Now(), rule)
@@ -551,7 +553,9 @@ func (r *ClickHouseReader) CreateRule(localDB *sqlx.DB, rule string) *model.ApiE
 	id, _ := res.LastInsertId()
 	groupName := fmt.Sprintf("%d-groupname", id)
 
-	err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "add")
+	// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "add")
+
+	err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -563,7 +567,7 @@ func (r *ClickHouseReader) CreateRule(localDB *sqlx.DB, rule string) *model.ApiE
 func (r *ClickHouseReader) EditRule(localDB *sqlx.DB, rule string, id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
-	dbQuery := fmt.Sprintf("Update into rules updated_at='%s', data='%s' WHERE id=%d;", time.Now(), rule, idInt)
+	dbQuery := fmt.Sprintf("Update rules SET updated_at='%s', data='%s' WHERE id=%d;", time.Now(), rule, idInt)
 
 	_, err := localDB.Exec(dbQuery)
 
@@ -573,7 +577,7 @@ func (r *ClickHouseReader) EditRule(localDB *sqlx.DB, rule string, id string) *m
 
 	groupName := fmt.Sprintf("%d-groupname", idInt)
 
-	err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "add")
+	err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -585,7 +589,7 @@ func (r *ClickHouseReader) EditRule(localDB *sqlx.DB, rule string, id string) *m
 func (r *ClickHouseReader) DeleteRule(localDB *sqlx.DB, id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
-	dbQuery := fmt.Sprintf("UPDATE INTO rules updated_at='%s', deleted=%d WHERE id=%d;", time.Now(), 1, idInt)
+	dbQuery := fmt.Sprintf("DELETE FROM rules WHERE id=%d;", idInt)
 
 	_, err := localDB.Exec(dbQuery)
 
@@ -596,7 +600,8 @@ func (r *ClickHouseReader) DeleteRule(localDB *sqlx.DB, id string) *model.ApiErr
 	groupName := fmt.Sprintf("%d-groupname", idInt)
 
 	rule := "" // dummy rule to pass to function
-	err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
+	// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
+	err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}

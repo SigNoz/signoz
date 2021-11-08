@@ -35,7 +35,7 @@ type QueryData struct {
 	Stats      *stats.QueryStats `json:"stats,omitempty"`
 }
 
-type RuleGroups struct {
+type RuleResponseItem struct {
 	Id        int       `json:"id" db:"id"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	Data      string    `json:"data" db:"data"`

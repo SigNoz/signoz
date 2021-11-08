@@ -10,8 +10,8 @@ import (
 )
 
 type Reader interface {
+	GetRule(localDB *sqlx.DB, id string) (*model.RuleResponseItem, *model.ApiError)
 	ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError)
-	GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError)
 	CreateRule(localDB *sqlx.DB, alert string) *model.ApiError
 	EditRule(localDB *sqlx.DB, alert string, id string) *model.ApiError
 	DeleteRule(localDB *sqlx.DB, id string) *model.ApiError

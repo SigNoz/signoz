@@ -173,11 +173,11 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", aH.ListRulesFromProm).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/rules", aH.getRules).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/{id}", aH.getRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules", aH.editRule).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules", aH.deleteRule).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rules/{id}", aH.editRule).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rules/{id}", aH.deleteRule).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
@@ -221,7 +221,17 @@ func Intersection(a, b []int) (c []int) {
 	return
 }
 
-func (aH *APIHandler) ListRulesFromProm(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	alertList, apiErrorObj := (*aH.reader).GetRule(aH.localDB, id)
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, alertList)
+}
+
+func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
 	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm(aH.localDB)
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
@@ -366,23 +376,6 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getRules(w http.ResponseWriter, r *http.Request) {
-
-	rules, err := (*aH.reader).GetRules(aH.localDB)
-	if err != nil {
-		aH.respondError(w, err, nil)
-		return
-	}
-
-	if rules != nil {
-		aH.respond(w, rules.Data)
-		return
-	}
-
-	aH.respond(w, "")
-
-}
-
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
@@ -413,7 +406,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.respond(w, "rule successfully set")
+	aH.respond(w, "rule successfully edited")
 
 }
 
@@ -436,7 +429,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.respond(w, "rule successfully edited")
+	aH.respond(w, "rule successfully added")
 
 }
 
