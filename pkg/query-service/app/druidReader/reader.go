@@ -16,9 +16,10 @@ import (
 type DruidReader struct {
 	Client    *godruid.Client
 	SqlClient *druidQuery.SqlClient
+	LocalDB   *sqlx.DB
 }
 
-func NewReader() *DruidReader {
+func NewReader(localDB *sqlx.DB) *DruidReader {
 
 	initialize()
 	druidClientUrl := os.Getenv("DruidClientUrl")
@@ -35,6 +36,7 @@ func NewReader() *DruidReader {
 	return &DruidReader{
 		Client:    &client,
 		SqlClient: &sqlClient,
+		LocalDB:   localDB,
 	}
 
 }
@@ -53,24 +55,24 @@ func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, quer
 	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
 }
 
-func (druid *DruidReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
+func (druid *DruidReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
 
 	res := model.AlertDiscovery{}
 	return &res, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support getting rules for alerting")}
 }
-func (druid *DruidReader) GetRule(localDB *sqlx.DB, id string) (*model.RuleResponseItem, *model.ApiError) {
+func (druid *DruidReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
 
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support getting rules for alerting")}
 }
-func (druid *DruidReader) CreateRule(localDB *sqlx.DB, alert string) *model.ApiError {
+func (druid *DruidReader) CreateRule(alert string) *model.ApiError {
 
 	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
 }
-func (druid *DruidReader) EditRule(localDB *sqlx.DB, alert string, id string) *model.ApiError {
+func (druid *DruidReader) EditRule(alert string, id string) *model.ApiError {
 
 	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support editing rules for alerting")}
 }
-func (druid *DruidReader) DeleteRule(localDB *sqlx.DB, id string) *model.ApiError {
+func (druid *DruidReader) DeleteRule(id string) *model.ApiError {
 
 	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support deleting rules for alerting")}
 }

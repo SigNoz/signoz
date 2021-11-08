@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posthog/posthog-go"
@@ -38,7 +37,6 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *posthog.Client
 	distinctId string
-	localDB    *sqlx.DB
 	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
@@ -51,12 +49,6 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIH
 		distinctId: distinctId,
 	}
 	aH.ready = aH.testReady
-
-	localDB, err := dashboards.InitDB("./signoz.db")
-	if err != nil {
-		return nil, err
-	}
-	aH.localDB = localDB
 
 	errReadingDashboards := dashboards.LoadDashboardFiles()
 	if errReadingDashboards != nil {
@@ -223,7 +215,7 @@ func Intersection(a, b []int) (c []int) {
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	alertList, apiErrorObj := (*aH.reader).GetRule(aH.localDB, id)
+	alertList, apiErrorObj := (*aH.reader).GetRule(id)
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
 		return
@@ -232,7 +224,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
-	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm(aH.localDB)
+	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
 		return
@@ -379,7 +371,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	apiErrorObj := (*aH.reader).DeleteRule(aH.localDB, id)
+	apiErrorObj := (*aH.reader).DeleteRule(id)
 
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
@@ -399,7 +391,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).EditRule(aH.localDB, postData["data"], id)
+	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
 
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
@@ -422,7 +414,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).CreateRule(aH.localDB, postData["data"])
+	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
 
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)

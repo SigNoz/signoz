@@ -65,6 +65,7 @@ var (
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
 	db              *sqlx.DB
+	localDB         *sqlx.DB
 	operationsTable string
 	indexTable      string
 	spansTable      string
@@ -75,7 +76,7 @@ type ClickHouseReader struct {
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader() *ClickHouseReader {
+func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
@@ -88,6 +89,7 @@ func NewReader() *ClickHouseReader {
 
 	return &ClickHouseReader{
 		db:              db,
+		localDB:         localDB,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		spansTable:      options.primary.SpansTable,
@@ -228,6 +230,7 @@ func (r *ClickHouseReader) Start() {
 		// 	}
 		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
 		// },
+
 	}
 
 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
@@ -281,7 +284,20 @@ func (r *ClickHouseReader) Start() {
 
 				reloadReady.Close()
 
+				rules, apiErrorObj := r.GetRulesFromDB()
+
+				if apiErrorObj != nil {
+					zap.S().Errorf("Not able to read rules from DB")
+				}
+				for _, rule := range *rules {
+					apiErrorObj = r.LoadRule(rule)
+					if apiErrorObj != nil {
+						zap.S().Errorf("Not able to create rule with id=%d loaded from DB", rule.Id, rule.Data)
+					}
+				}
+
 				<-cancel
+
 				return nil
 			},
 			func(err error) {
@@ -466,7 +482,25 @@ type AlertingRuleWithGroup struct {
 	Id int
 }
 
-func (r *ClickHouseReader) GetRule(localDB *sqlx.DB, id string) (*model.RuleResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.ApiError) {
+
+	rules := []model.RuleResponseItem{}
+
+	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules")
+
+	err := r.localDB.Select(&rules, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &rules, nil
+}
+
+func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
 
 	idInt, _ := strconv.Atoi(id)
 
@@ -474,7 +508,7 @@ func (r *ClickHouseReader) GetRule(localDB *sqlx.DB, id string) (*model.RuleResp
 
 	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
 
-	err := localDB.Get(rule, query)
+	err := r.localDB.Get(rule, query)
 
 	zap.S().Info(query)
 
@@ -486,7 +520,7 @@ func (r *ClickHouseReader) GetRule(localDB *sqlx.DB, id string) (*model.RuleResp
 	return rule, nil
 }
 
-func (r *ClickHouseReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
+func (r *ClickHouseReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
 
 	groups := r.ruleManager.RuleGroups()
 
@@ -540,11 +574,24 @@ func (r *ClickHouseReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDisc
 	return res, nil
 }
 
-func (r *ClickHouseReader) CreateRule(localDB *sqlx.DB, rule string) *model.ApiError {
+func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError {
+
+	groupName := fmt.Sprintf("%d-groupname", rule.Id)
+
+	err := r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule.Data, groupName)
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
+func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 
 	dbQuery := fmt.Sprintf("INSERT into rules (updated_at, data) VALUES ('%s', '%s')", time.Now(), rule)
 
-	res, err := localDB.Exec(dbQuery)
+	res, err := r.localDB.Exec(dbQuery)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -564,12 +611,12 @@ func (r *ClickHouseReader) CreateRule(localDB *sqlx.DB, rule string) *model.ApiE
 	return nil
 }
 
-func (r *ClickHouseReader) EditRule(localDB *sqlx.DB, rule string, id string) *model.ApiError {
+func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
 	dbQuery := fmt.Sprintf("Update rules SET updated_at='%s', data='%s' WHERE id=%d;", time.Now(), rule, idInt)
 
-	_, err := localDB.Exec(dbQuery)
+	_, err := r.localDB.Exec(dbQuery)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -586,12 +633,12 @@ func (r *ClickHouseReader) EditRule(localDB *sqlx.DB, rule string, id string) *m
 	return nil
 }
 
-func (r *ClickHouseReader) DeleteRule(localDB *sqlx.DB, id string) *model.ApiError {
+func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
 	dbQuery := fmt.Sprintf("DELETE FROM rules WHERE id=%d;", idInt)
 
-	_, err := localDB.Exec(dbQuery)
+	_, err := r.localDB.Exec(dbQuery)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
