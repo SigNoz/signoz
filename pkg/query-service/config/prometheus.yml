@@ -9,7 +9,7 @@ alerting:
   alertmanagers:
   - static_configs:
     - targets:
-      - 18.191.251.86:9093
+      - 3.135.248.251:9093
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
@@ -23,4 +23,4 @@ scrape_configs:
   
 
 remote_read:
-  - url: tcp://18.191.251.86:9001/?database=signoz_metrics
+  - url: tcp://3.135.248.251:9001/?database=signoz_metrics

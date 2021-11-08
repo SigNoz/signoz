@@ -9,7 +9,7 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -215,19 +215,19 @@ func (r *ClickHouseReader) Start() {
 			}
 			return discoveryManagerNotify.ApplyConfig(c)
 		},
-		func(cfg *config.Config) error {
-			// Get all rule files matching the configuration oaths.
-			var files []string
-			for _, pat := range cfg.RuleFiles {
-				fs, err := filepath.Glob(pat)
-				if err != nil {
-					// The only error can be a bad pattern.
-					return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
-				}
-				files = append(files, fs...)
-			}
-			return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
-		},
+		// func(cfg *config.Config) error {
+		// 	// Get all rule files matching the configuration oaths.
+		// 	var files []string
+		// 	for _, pat := range cfg.RuleFiles {
+		// 		fs, err := filepath.Glob(pat)
+		// 		if err != nil {
+		// 			// The only error can be a bad pattern.
+		// 			return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
+		// 		}
+		// 		files = append(files, fs...)
+		// 	}
+		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
+		// },
 	}
 
 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
@@ -443,30 +443,75 @@ func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
 	return cfg.Connector(cfg)
 }
 
-func rulesAlertsToAPIAlerts(rulesAlerts []*rules.Alert) []*model.Alert {
-	apiAlerts := make([]*model.Alert, len(rulesAlerts))
-	for i, ruleAlert := range rulesAlerts {
-		apiAlerts[i] = &model.Alert{
-			Labels:      ruleAlert.Labels,
-			Annotations: ruleAlert.Annotations,
-			State:       ruleAlert.State.String(),
-			ActiveAt:    &ruleAlert.ActiveAt,
-			Value:       ruleAlert.Value,
+type byAlertStateAndNameSorter struct {
+	alerts []*AlertingRuleWithGroup
+}
+
+func (s byAlertStateAndNameSorter) Len() int {
+	return len(s.alerts)
+}
+
+func (s byAlertStateAndNameSorter) Less(i, j int) bool {
+	return s.alerts[i].State() > s.alerts[j].State() ||
+		(s.alerts[i].State() == s.alerts[j].State() &&
+			s.alerts[i].Name() < s.alerts[j].Name())
+}
+
+func (s byAlertStateAndNameSorter) Swap(i, j int) {
+	s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i]
+}
+
+type AlertingRuleWithGroup struct {
+	rules.AlertingRule
+	Id int
+}
+
+func (r *ClickHouseReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
+
+	groups := r.ruleManager.RuleGroups()
+
+	alertingRulesWithGroupObjects := []*AlertingRuleWithGroup{}
+
+	for _, group := range groups {
+		groupNameParts := strings.Split(group.Name(), "-groupname")
+		if len(groupNameParts) < 2 {
+			continue
+		}
+		id, _ := strconv.Atoi(groupNameParts[0])
+		for _, rule := range group.Rules() {
+			if alertingRule, ok := rule.(*rules.AlertingRule); ok {
+				alertingRulesWithGroupObject := AlertingRuleWithGroup{
+					*alertingRule,
+					id,
+				}
+				alertingRulesWithGroupObjects = append(alertingRulesWithGroupObjects, &alertingRulesWithGroupObject)
+			}
 		}
 	}
 
-	return apiAlerts
-}
+	// alertingRules := r.ruleManager.AlertingRules()
 
-func (r *ClickHouseReader) ListAlertsFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
+	alertsSorter := byAlertStateAndNameSorter{alerts: alertingRulesWithGroupObjects}
+	sort.Sort(alertsSorter)
+	alerts := []*model.AlertingRuleResponse{}
 
-	alertingRules := r.ruleManager.AlertingRules()
-	alerts := []*model.Alert{}
+	for _, alertingRule := range alertsSorter.alerts {
 
-	for _, alertingRule := range alertingRules {
+		alertingRuleResponseObject := &model.AlertingRuleResponse{
+			Labels: alertingRule.Labels(),
+			// Annotations: alertingRule.Annotations(),
+			Name: alertingRule.Name(),
+			Id:   alertingRule.Id,
+		}
+		if len(alertingRule.ActiveAlerts()) == 0 {
+			alertingRuleResponseObject.State = rules.StateInactive.String()
+		} else {
+			alertingRuleResponseObject.State = (*(alertingRule.ActiveAlerts()[0])).State.String()
+		}
+
 		alerts = append(
 			alerts,
-			rulesAlertsToAPIAlerts(alertingRule.ActiveAlerts())...,
+			alertingRuleResponseObject,
 		)
 	}
 
@@ -493,27 +538,65 @@ func (r *ClickHouseReader) GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model
 	return rules[0], nil
 }
 
-func (r *ClickHouseReader) SetRules(localDB *sqlx.DB, rule string) *model.ApiError {
+func (r *ClickHouseReader) CreateRule(localDB *sqlx.DB, rule string) *model.ApiError {
 
-	rules, apiErrorObj := r.GetRules(localDB)
+	dbQuery := fmt.Sprintf("INSERT into rules (updated_at, data) VALUES ('%s', '%s')", time.Now(), rule)
 
-	if apiErrorObj != nil {
-		return apiErrorObj
-	}
-
-	var dbQuery string
-	if rules != nil {
-		dbQuery = fmt.Sprintf("UPDATE rules SET updated_at='%s', data='%s' WHERE id='%d'", time.Now(), rule, rules.Id)
-	} else {
-		dbQuery = fmt.Sprintf("INSERT into rules (updated_at, data) VALUES ('%s', '%s')", time.Now(), rule)
-	}
-
-	err := r.ruleManager.UpdateFromByteArray(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), []byte(rule))
+	res, err := localDB.Exec(dbQuery)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	_, err = localDB.Exec(dbQuery)
+
+	id, _ := res.LastInsertId()
+	groupName := fmt.Sprintf("%d-groupname", id)
+
+	err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "add")
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
+func (r *ClickHouseReader) EditRule(localDB *sqlx.DB, rule string, id string) *model.ApiError {
+
+	idInt, _ := strconv.Atoi(id)
+	dbQuery := fmt.Sprintf("Update into rules updated_at='%s', data='%s' WHERE id=%d;", time.Now(), rule, idInt)
+
+	_, err := localDB.Exec(dbQuery)
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	groupName := fmt.Sprintf("%d-groupname", idInt)
+
+	err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "add")
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
+func (r *ClickHouseReader) DeleteRule(localDB *sqlx.DB, id string) *model.ApiError {
+
+	idInt, _ := strconv.Atoi(id)
+	dbQuery := fmt.Sprintf("UPDATE INTO rules updated_at='%s', deleted=%d WHERE id=%d;", time.Now(), 1, idInt)
+
+	_, err := localDB.Exec(dbQuery)
+
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	groupName := fmt.Sprintf("%d-groupname", idInt)
+
+	rule := "" // dummy rule to pass to function
+	err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}

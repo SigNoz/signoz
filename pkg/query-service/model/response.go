@@ -43,16 +43,18 @@ type RuleGroups struct {
 
 // AlertDiscovery has info for all active alerts.
 type AlertDiscovery struct {
-	Alerts []*Alert `json:"alerts"`
+	Alerts []*AlertingRuleResponse `json:"rules"`
 }
 
 // Alert has info for an alert.
-type Alert struct {
+type AlertingRuleResponse struct {
 	Labels      labels.Labels `json:"labels"`
 	Annotations labels.Labels `json:"annotations"`
 	State       string        `json:"state"`
-	ActiveAt    *time.Time    `json:"activeAt,omitempty"`
-	Value       float64       `json:"value"`
+	Name        string        `json:"name"`
+	Id          int           `json:id""`
+	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
+	// Value       float64       `json:"value"`
 }
 
 type ServiceItem struct {

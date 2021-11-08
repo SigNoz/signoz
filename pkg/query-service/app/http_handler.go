@@ -52,7 +52,7 @@ func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIH
 	}
 	aH.ready = aH.testReady
 
-	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
+	localDB, err := dashboards.InitDB("./signoz.db")
 	if err != nil {
 		return nil, err
 	}
@@ -173,8 +173,12 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", aH.setRules).Methods(http.MethodPost, http.MethodPut)
-	router.HandleFunc("/api/v1/rules", aH.getRules).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", aH.ListRulesFromProm).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rules", aH.getRules).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules", aH.editRule).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rules", aH.deleteRule).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.getDashboard).Methods(http.MethodGet)
@@ -215,6 +219,15 @@ func Intersection(a, b []int) (c []int) {
 		}
 	}
 	return
+}
+
+func (aH *APIHandler) ListRulesFromProm(w http.ResponseWriter, r *http.Request) {
+	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm(aH.localDB)
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, alertList)
 }
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
@@ -370,7 +383,41 @@ func (aH *APIHandler) getRules(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) setRules(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	apiErrorObj := (*aH.reader).DeleteRule(aH.localDB, id)
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.respond(w, "rule successfully deleted")
+
+}
+func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	var postData map[string]string
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
+
+	apiErrorObj := (*aH.reader).EditRule(aH.localDB, postData["data"], id)
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.respond(w, "rule successfully set")
+
+}
+
+func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
@@ -382,14 +429,14 @@ func (aH *APIHandler) setRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).SetRules(aH.localDB, postData["data"])
+	apiErrorObj := (*aH.reader).CreateRule(aH.localDB, postData["data"])
 
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)
 		return
 	}
 
-	aH.respond(w, "rules successfully set")
+	aH.respond(w, "rule successfully edited")
 
 }
 

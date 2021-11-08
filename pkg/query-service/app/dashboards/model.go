@@ -41,6 +41,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		updated_at datetime NOT NULL,
+		deleted INTEGER DEFAULT 0,
 		data TEXT NOT NULL
 	);`
 

@@ -57,6 +57,16 @@ github.com/SigNoz/prometheus v1.9.5 h1:ITuK/71BFY3Hxv50/Upsvo6KJUdOxT7o6lCXmVxyL
 github.com/SigNoz/prometheus v1.9.5/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
 github.com/SigNoz/prometheus v1.9.6 h1:G1QYQkwCzTZG961a16r2z/GPK4Esx6PMHa1GF4sVeuo=
 github.com/SigNoz/prometheus v1.9.6/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
+github.com/SigNoz/prometheus v1.9.62 h1:YaemiWBVbaALzgjDHz4qtd6RlJuP2TabLdJZOORWJ/U=
+github.com/SigNoz/prometheus v1.9.62/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
+github.com/SigNoz/prometheus v1.9.63 h1:K/uQMltbLYZEgUGSYxVMK3HEUzPe3VmT2oH91Omnkmo=
+github.com/SigNoz/prometheus v1.9.63/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
+github.com/SigNoz/prometheus v1.9.64 h1:oPB53pbWncTUOAbQxQDq/f8Zz6Ffe6iZSicbsjXKxPQ=
+github.com/SigNoz/prometheus v1.9.64/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
+github.com/SigNoz/prometheus v1.9.65 h1:mbbFs055F3bapnvbreyMLtvMeNRWGH0zTzgBlGVhYJw=
+github.com/SigNoz/prometheus v1.9.65/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
+github.com/SigNoz/prometheus v1.9.66 h1:gmS/wdj+sRQa+PJCRzZQROUqbgC6GWtelSwWJ/iMZhA=
+github.com/SigNoz/prometheus v1.9.66/go.mod h1:BHEawFYBYkVr9BjPXsz9Ye6QVVQ+2a99m6r/S8hO/lA=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=

@@ -10,9 +10,11 @@ import (
 )
 
 type Reader interface {
-	ListAlertsFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError)
+	ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError)
 	GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError)
-	SetRules(localDB *sqlx.DB, alert string) *model.ApiError
+	CreateRule(localDB *sqlx.DB, alert string) *model.ApiError
+	EditRule(localDB *sqlx.DB, alert string, id string) *model.ApiError
+	DeleteRule(localDB *sqlx.DB, id string) *model.ApiError
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error)

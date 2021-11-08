@@ -53,19 +53,28 @@ func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, quer
 	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
 }
 
-func (druid *DruidReader) ListAlertsFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
+func (druid *DruidReader) ListRulesFromProm(localDB *sqlx.DB) (*model.AlertDiscovery, *model.ApiError) {
 
-	res := &model.AlertDiscovery{}
-	return res, nil
+	res := model.AlertDiscovery{}
+	return &res, nil
 }
 func (druid *DruidReader) GetRules(localDB *sqlx.DB) (*model.RuleGroups, *model.ApiError) {
 
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
 }
-func (druid *DruidReader) SetRules(localDB *sqlx.DB, alert string) *model.ApiError {
+func (druid *DruidReader) CreateRule(localDB *sqlx.DB, alert string) *model.ApiError {
 
 	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
 }
+func (druid *DruidReader) EditRule(localDB *sqlx.DB, alert string, id string) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support editing rules for alerting")}
+}
+func (druid *DruidReader) DeleteRule(localDB *sqlx.DB, id string) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support deleting rules for alerting")}
+}
+
 func (druid *DruidReader) GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error) {
 	return druidQuery.GetServiceOverview(druid.SqlClient, query)
 }
