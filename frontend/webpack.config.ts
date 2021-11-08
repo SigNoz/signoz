@@ -29,10 +29,10 @@ const config: Configuration = {
 		liveReload: true,
 		port: portFinderSync.getPort(3000),
 		static: {
-			directory: resolve(__dirname, "public"),
-			publicPath: "/",
+			directory: resolve(__dirname, 'public'),
+			publicPath: '/',
 			watch: true,
-		}
+		},
 	},
 	target: 'web',
 	output: {
@@ -69,6 +69,10 @@ const config: Configuration = {
 					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
 					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
 				],
+			},
+			{
+				test: /\.(ttf|eot|woff|woff2)$/,
+				use: ['file-loader'],
 			},
 		],
 	},
