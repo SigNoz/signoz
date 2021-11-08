@@ -6,6 +6,7 @@ import {
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	SettingOutlined,
+	AlertOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 
@@ -24,6 +25,11 @@ const menus: SidebarMenu[] = [
 		Icon: DashboardFilled,
 		to: ROUTES.ALL_DASHBOARD,
 		name: 'Dashboard',
+	},
+	{
+		Icon: AlertOutlined,
+		to: ROUTES.LIST_ALL_LISTS,
+		name: 'Alerts',
 	},
 	{
 		to: ROUTES.SERVICE_MAP,

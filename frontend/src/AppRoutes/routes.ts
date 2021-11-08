@@ -14,6 +14,9 @@ import {
 	TraceDetailPage,
 	TraceGraphPage,
 	UsageExplorerPage,
+	EditRulesPage,
+	ListAllALertsPage,
+	CreateNewAlerts,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [
@@ -76,6 +79,21 @@ const routes: AppRoutes[] = [
 		path: ROUTES.DASHBOARD_WIDGET,
 		exact: true,
 		component: DashboardWidget,
+	},
+	{
+		path: ROUTES.EDIT_ALERTS,
+		exact: true,
+		component: EditRulesPage,
+	},
+	{
+		path: ROUTES.LIST_ALL_LISTS,
+		exact: true,
+		component: ListAllALertsPage,
+	},
+	{
+		path: ROUTES.ALERTS_NEW,
+		exact: true,
+		component: CreateNewAlerts,
 	},
 ];
 

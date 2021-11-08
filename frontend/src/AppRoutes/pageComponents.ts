@@ -66,3 +66,15 @@ export const DashboardWidget = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
 );
+
+export const EditRulesPage = Loadable(
+	() => import(/* webpackChunkName: "Alerts Edit Page" */ 'pages/EditRules'),
+);
+
+export const ListAllALertsPage = Loadable(
+	() => import(/* webpackChunkName: "All Alerts Page" */ 'pages/AllAlertList'),
+);
+
+export const CreateNewAlerts = Loadable(
+	() => import(/* webpackChunkName: "Create Alerts" */ 'pages/CreateAlert'),
+);

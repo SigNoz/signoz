@@ -78,7 +78,7 @@ export interface State<T> {
 	loading: boolean | null;
 	error: boolean | null;
 	success: boolean | null;
-	payload: T;
+	payload?: T;
 	errorMessage: string;
 }
 

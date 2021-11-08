@@ -11,6 +11,9 @@ const ROUTES = {
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
+	EDIT_ALERTS: '/alerts/edit',
+	LIST_ALL_LISTS: '/alerts',
+	ALERTS_NEW: '/alerts/new',
 };
 
 export default ROUTES;
