@@ -52,7 +52,7 @@ type AlertingRuleResponse struct {
 	Annotations labels.Labels `json:"annotations"`
 	State       string        `json:"state"`
 	Name        string        `json:"name"`
-	Id          int           `json:id""`
+	Id          int           `json:"id"`
 	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
 	// Value       float64       `json:"value"`
 }
