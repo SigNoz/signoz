@@ -1,17 +1,22 @@
 // shared config (dev and prod)
-const { resolve } = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
-const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+import CompressionPlugin from 'compression-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { resolve } from 'path';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import webpack from 'webpack';
+import { WebpackPluginInstance } from 'webpack-dev-middleware/node_modules/webpack';
 
-module.exports = {
+const __dirname = resolve();
+
+const config: webpack.Configuration = {
 	mode: 'production',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
-		filename: ({ chunk: { name, hash } }) => {
+		filename: ({ chunk }: any): string => {
+			const hash = chunk?.hash;
+			const name = chunk?.name;
 			return `js/${name}-${hash}.js`;
 		},
 		path: resolve(__dirname, './build'),
@@ -47,13 +52,13 @@ module.exports = {
 		],
 	},
 	plugins: [
+		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
 		new CompressionPlugin({
 			exclude: /.map$/,
-		}),
-		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+		}) as any,
 		new CopyPlugin({
 			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
+		}) as any,
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
@@ -65,3 +70,5 @@ module.exports = {
 		hints: false,
 	},
 };
+
+export default config;

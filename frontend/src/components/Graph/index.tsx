@@ -22,7 +22,7 @@ import {
 	Title,
 	Tooltip,
 } from 'chart.js';
-import chartjsAdapter from 'chartjs-adapter-date-fns';
+import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 // import { colors } from 'lib/getRandomColor';
 // import stringToHTML from 'lib/stringToHTML';
 import React, { useCallback, useEffect, useRef } from 'react';
