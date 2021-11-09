@@ -66,7 +66,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						buttonElement.style.display = 'block';
 						buttonElement.style.left = `${firstPoint.element.x}px`;
 						buttonElement.style.top = `${firstPoint.element.y}px`;
-						selectedTimeStamp.current = new Date(time).getTime();
+						selectedTimeStamp.current = time.getTime();
 					}
 				}
 			} else {

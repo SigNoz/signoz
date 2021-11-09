@@ -11,6 +11,13 @@ export const UpdateSelectedTags = (
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
+			dispatch({
+				type: 'UPDATE_SPANS_LOADING',
+				payload: {
+					loading: true,
+				},
+			});
+
 			const { trace, globalTime } = store.getState();
 			const {
 				selectedKind,
@@ -41,7 +48,7 @@ export const UpdateSelectedTags = (
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
 					end: maxTime,
-					kind: selectedKind || '2',
+					kind: selectedKind || '',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',
 					operation: selectedOperation || '',
@@ -69,6 +76,12 @@ export const UpdateSelectedTags = (
 					},
 				});
 			}
+			dispatch({
+				type: 'UPDATE_SPANS_LOADING',
+				payload: {
+					loading: false,
+				},
+			});
 		} catch (error) {
 			dispatch({
 				type: 'GET_TRACE_INITIAL_DATA_ERROR',

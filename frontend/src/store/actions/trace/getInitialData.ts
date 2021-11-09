@@ -35,8 +35,8 @@ export const GetInitialTraceData = ({
 					loading: true,
 				},
 			});
-			const urlParams = new URLSearchParams(history.location.search.split('?')[1]);
 
+			const urlParams = new URLSearchParams(history.location.search.split('?')[1]);
 			const operationName = urlParams.get(METRICS_PAGE_QUERY_PARAM.operation);
 			const serviceName = urlParams.get(METRICS_PAGE_QUERY_PARAM.service);
 			const errorTag = urlParams.get(METRICS_PAGE_QUERY_PARAM.error);
@@ -52,7 +52,7 @@ export const GetInitialTraceData = ({
 			const isCustomSelected = selectedTime === 'custom';
 
 			const end = isCustomSelected
-				? globalTime.minTime + 15 * 60 * 1000000000
+				? globalTime.maxTime + 15 * 60 * 1000000000
 				: maxTime;
 
 			const start = isCustomSelected

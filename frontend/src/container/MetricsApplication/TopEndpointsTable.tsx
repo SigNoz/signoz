@@ -22,11 +22,11 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 		const { servicename } = params;
 		urlParams.set(
 			METRICS_PAGE_QUERY_PARAM.startTime,
-			String(Number(minTime) / 1000000),
+			(minTime / 1000000).toString(),
 		);
 		urlParams.set(
 			METRICS_PAGE_QUERY_PARAM.endTime,
-			String(Number(maxTime) / 1000000),
+			(maxTime / 1000000).toString(),
 		);
 		if (servicename) {
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);

@@ -176,13 +176,56 @@ const TraceList = ({
 	};
 
 	useEffect(() => {
-		form_basefilter.setFieldsValue({
-			service: selectedService,
-			operation: selectedOperation,
-			spanKind: selectedKind,
-			latency: 'Latency',
-		});
-	}, [selectedService, selectedOperation, selectedKind]);
+		if (selectedService.length !== 0) {
+			form_basefilter.setFieldsValue({
+				service: selectedService,
+			});
+		}
+
+		if (selectedOperation.length !== 0) {
+			form_basefilter.setFieldsValue({
+				operation: selectedOperation,
+			});
+		}
+
+		if (selectedKind.length !== 0) {
+			form_basefilter.setFieldsValue({
+				spanKind: selectedKind,
+			});
+		}
+
+		if (selectedLatency.max.length === 0 && selectedLatency.min.length === 0) {
+			form_basefilter.setFieldsValue({
+				latency: 'Latency',
+			});
+		}
+
+		if (selectedLatency.max.length !== 0 && selectedLatency.min.length === 0) {
+			form_basefilter.setFieldsValue({
+				latency: `Latency < Max Latency: ${
+					parseInt(selectedLatency.max, 10) / 1000000
+				} ms`,
+			});
+		}
+
+		if (selectedLatency.max.length === 0 && selectedLatency.min.length !== 0) {
+			form_basefilter.setFieldsValue({
+				latency: `Min Latency: ${
+					parseInt(selectedLatency.min, 10) / 1000000
+				} ms < Latency`,
+			});
+		}
+
+		if (selectedLatency.max.length !== 0 && selectedLatency.min.length !== 0) {
+			form_basefilter.setFieldsValue({
+				latency: `Min Latency: ${
+					parseInt(selectedLatency.min, 10) / 1000000
+				} ms < Latency < Max Latency: ${
+					parseInt(selectedLatency.min, 10) / 1000000
+				} ms`,
+			});
+		}
+	}, [selectedService, selectedOperation, selectedKind, selectedLatency]);
 
 	return (
 		<>

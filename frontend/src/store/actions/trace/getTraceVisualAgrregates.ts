@@ -35,7 +35,7 @@ export const GetTraceVisualAggregates = ({
 			const isCustomSelected = selectedTime === 'custom';
 
 			const end = isCustomSelected
-				? globalTime.minTime + 15 * 60 * 1000000000
+				? globalTime.maxTime + 15 * 60 * 1000000000
 				: maxTime;
 
 			const start = isCustomSelected

@@ -29,6 +29,8 @@ const LatencyForm = ({
 		selectedKind,
 		selectedOperation,
 		selectedService,
+		selectedAggOption,
+		selectedEntity,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
 	const validateMinValue = (form: FormInstance): RuleObject => ({
@@ -84,6 +86,8 @@ const LatencyForm = ({
 					},
 					selectedOperation,
 					selectedService,
+					selectedAggOption,
+					selectedEntity,
 				});
 			})
 			.catch((info) => {
@@ -143,7 +147,6 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateSelectedLatency: bindActionCreators(UpdateSelectedLatency, dispatch),
-
 	updateSelectedData: bindActionCreators(UpdateSelectedData, dispatch),
 });
 

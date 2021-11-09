@@ -66,12 +66,8 @@ const DateTimeSelection = ({
 		searchStartTime,
 	]);
 
-	const [preStartTime, preEndTime] = getTime() || [];
-
-	const [startTime, setStartTime] = useState<moment.Moment>(
-		moment(preStartTime),
-	);
-	const [endTime, setEndTime] = useState<moment.Moment>(moment(preEndTime));
+	const [startTime, setStartTime] = useState<moment.Moment>();
+	const [endTime, setEndTime] = useState<moment.Moment>();
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
@@ -236,7 +232,12 @@ const DateTimeSelection = ({
 
 		const updatedTime = getCustomOrIntervalTime(time);
 
-		updateTimeInterval(updatedTime, getTime());
+		const [preStartTime = 0, preEndTime = 0] = getTime() || [];
+
+		setStartTime(moment(preStartTime));
+		setEndTime(moment(preEndTime));
+
+		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 	}, [
 		location.pathname,
 		getTime,
