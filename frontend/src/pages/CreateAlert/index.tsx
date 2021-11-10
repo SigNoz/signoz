@@ -10,13 +10,17 @@ import history from 'lib/history';
 import ROUTES from 'constants/routes';
 
 const CreateAlert = () => {
-	const value = useRef<string>(`name: HighRequestLatency
-expr: job_instance_mode:node_cpu_seconds:avg_rate5m{instance="localhost:8080",job="node",mode="idle"} > 0.5
-for: 1m
-labels:
-severity: page
-annotations:
-summary: High request latency`);
+	const value = useRef<string>(`groups:
+- name: ExampleCPULoadGroup
+  rules:
+  - alert: Example Alert
+    expr: system_cpu_load_average_1m > 0.1
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Sample Summary
+      description: Sample Description`);
 
 	const [newAlertState, setNewAlertState] = useState<
 		State<CreateAlertPayloadProps>

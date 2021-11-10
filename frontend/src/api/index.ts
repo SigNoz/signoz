@@ -7,4 +7,8 @@ export default axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 });
 
+export const AxiosAlertManagerInstance = axios.create({
+	baseURL: `${ENVIRONMENT.alertManagerBaseUrl}${apiV1}`,
+});
+
 export { apiV1 };

@@ -9,35 +9,30 @@ import ROUTES from 'constants/routes';
 import { Alerts } from 'types/api/alerts/getAllList';
 
 import Status from './TableComponents/Status';
+import useFetch from 'hooks/useFetch';
+import getAll from 'api/alerts/getAll';
+import { PayloadProps } from 'types/api/alerts/getAllList';
+import Spinner from 'components/Spinner';
 
-const ListAlerts = () => {
+const ListAlertRules = () => {
 	const onClickNewAlertHandler = useCallback(() => {
 		history.push(ROUTES.ALERTS_NEW);
 	}, []);
 
-	const data: Alerts[] = [
-		{
-			labels: {
-				severity: 'warning',
-				asd: 'asd',
-			},
-			annotations: {},
-			state: 'inactive',
-			name: 'HighCpuLoad4',
-			id: 34,
-		},
-		{
-			labels: {
-				severity: 'ok',
-				asdasd1: 'asd222',
-				asdasd: 'asd222',
-			},
-			annotations: {},
-			state: 'active',
-			name: 'High Network Load',
-			id: 35,
-		},
-	];
+	const { loading, payload, error, errorMessage } = useFetch<
+		PayloadProps,
+		undefined
+	>(getAll);
+
+	if (loading || payload === undefined) {
+		return <Spinner height="75vh" tip="Loading Rules..." />;
+	}
+
+	if (error) {
+		return <div>{errorMessage}</div>;
+	}
+
+	const data: Alerts[] = payload;
 
 	const columns: ColumnsType<Alerts> = [
 		{
@@ -80,9 +75,14 @@ const ListAlerts = () => {
 			title: 'Tags',
 			dataIndex: 'labels',
 			key: 'tags',
+			align: 'center',
 			render: (value) => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
+
+				if (withOutSeverityKeys.length === 0) {
+					return '-';
+				}
 
 				return (
 					<>
@@ -122,4 +122,4 @@ const ListAlerts = () => {
 	);
 };
 
-export default ListAlerts;
+export default ListAlertRules;

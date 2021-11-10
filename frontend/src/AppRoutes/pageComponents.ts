@@ -72,7 +72,7 @@ export const EditRulesPage = Loadable(
 );
 
 export const ListAllALertsPage = Loadable(
-	() => import(/* webpackChunkName: "All Alerts Page" */ 'pages/AllAlertList'),
+	() => import(/* webpackChunkName: "All Alerts Page" */ 'pages/AlertList'),
 );
 
 export const CreateNewAlerts = Loadable(
