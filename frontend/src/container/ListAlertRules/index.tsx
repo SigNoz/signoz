@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Button, Tag, Typography } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Button, Tag, Typography, notification } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import Table, { ColumnsType } from 'antd/lib/table';
 
@@ -13,16 +13,32 @@ import useFetch from 'hooks/useFetch';
 import getAll from 'api/alerts/getAll';
 import { PayloadProps } from 'types/api/alerts/getAllList';
 import Spinner from 'components/Spinner';
+import { generatePath } from 'react-router';
+import DeleteAlert from './DeleteAlert';
 
 const ListAlertRules = () => {
 	const onClickNewAlertHandler = useCallback(() => {
 		history.push(ROUTES.ALERTS_NEW);
 	}, []);
 
+	const [notifications, Element] = notification.useNotification();
+
 	const { loading, payload, error, errorMessage } = useFetch<
 		PayloadProps,
 		undefined
 	>(getAll);
+
+	const [data, setData] = useState<Alerts[]>(payload || []);
+
+	useEffect(() => {
+		if (
+			loading === false &&
+			payload !== undefined &&
+			data.length !== payload.length
+		) {
+			setData(payload);
+		}
+	}, [loading]);
 
 	if (loading || payload === undefined) {
 		return <Spinner height="75vh" tip="Loading Rules..." />;
@@ -32,7 +48,13 @@ const ListAlertRules = () => {
 		return <div>{errorMessage}</div>;
 	}
 
-	const data: Alerts[] = payload;
+	const onEditHandler = (id: string) => {
+		history.push(
+			generatePath(ROUTES.EDIT_ALERTS, {
+				ruleId: id,
+			}),
+		);
+	};
 
 	const columns: ColumnsType<Alerts> = [
 		{
@@ -100,8 +122,11 @@ const ListAlertRules = () => {
 			render: (id: Alerts['id']) => {
 				return (
 					<>
-						<Button type="link">Delete</Button>
-						<Button type="link">Edit</Button>
+						<DeleteAlert notifications={notifications} setData={setData} id={id} />
+
+						<Button onClick={() => onEditHandler(id.toString())} type="link">
+							Edit
+						</Button>
 						<Button type="link">Pause</Button>
 					</>
 				);
@@ -111,6 +136,8 @@ const ListAlertRules = () => {
 
 	return (
 		<>
+			{Element}
+
 			<ButtonContainer>
 				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
 					New Alert
