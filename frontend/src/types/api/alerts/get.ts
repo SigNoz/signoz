@@ -4,7 +4,6 @@ export interface Props {
 	id: Alerts['id'];
 }
 
-export interface PayloadProps {
-	status: string;
+export type PayloadProps = {
 	data: string;
-}
+};

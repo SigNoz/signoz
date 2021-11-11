@@ -6,12 +6,12 @@ import Table, { ColumnsType } from 'antd/lib/table';
 import { ButtonContainer } from './styles';
 import history from 'lib/history';
 import ROUTES from 'constants/routes';
-import { Alerts } from 'types/api/alerts/getAllList';
+import { Alerts } from 'types/api/alerts/getAll';
 
 import Status from './TableComponents/Status';
 import useFetch from 'hooks/useFetch';
 import getAll from 'api/alerts/getAll';
-import { PayloadProps } from 'types/api/alerts/getAllList';
+import { PayloadProps } from 'types/api/alerts/getAll';
 import Spinner from 'components/Spinner';
 import { generatePath } from 'react-router';
 import DeleteAlert from './DeleteAlert';

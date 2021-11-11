@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from 'antd';
-import { Alerts } from 'types/api/alerts/getAllList';
+import { Alerts } from 'types/api/alerts/getAll';
 import { NotificationInstance } from 'antd/lib/notification/index';
 
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';

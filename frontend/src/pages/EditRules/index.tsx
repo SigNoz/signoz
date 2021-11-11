@@ -1,27 +1,35 @@
-import Editor from 'components/Editor';
 import React, { useCallback, useRef } from 'react';
-import { Button } from 'antd';
-import { EditFilled } from '@ant-design/icons';
-import { ButtonContainer } from './styles';
+
+import { useParams } from 'react-router';
+import useFetch from 'hooks/useFetch';
+import get from 'api/alerts/get';
+import { PayloadProps, Props } from 'types/api/alerts/get';
+import Spinner from 'components/Spinner';
+import EditRulesContainer from 'container/EditRules';
 
 const EditRules = () => {
-	const value = useRef<string>('');
+	const { ruleId } = useParams<EditRulesParam>();
 
-	const onClickHandler = useCallback(() => {
-		console.log(value.current);
-	}, []);
+	const { loading, error, payload, errorMessage } = useFetch<
+		PayloadProps,
+		Props
+	>(get, {
+		id: parseInt(ruleId),
+	});
 
-	return (
-		<>
-			<Editor value={value} />
+	if (loading || payload === undefined) {
+		return <Spinner tip="Loading Rules..." />;
+	}
 
-			<ButtonContainer>
-				<Button icon={<EditFilled />} onClick={onClickHandler}>
-					Edit
-				</Button>
-			</ButtonContainer>
-		</>
-	);
+	if (error) {
+		return <div>{errorMessage}</div>;
+	}
+
+	return <EditRulesContainer ruleId={ruleId} initialData={payload.data} />;
 };
+
+interface EditRulesParam {
+	ruleId: string;
+}
 
 export default EditRules;

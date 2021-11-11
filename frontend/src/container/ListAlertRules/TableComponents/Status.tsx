@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alerts } from 'types/api/alerts/getAllList';
+import { Alerts } from 'types/api/alerts/getAll';
 import { Tag } from 'antd';
 
 const Status = ({ status }: StatusProps): JSX.Element => {
