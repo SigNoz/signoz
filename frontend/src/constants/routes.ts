@@ -11,7 +11,7 @@ const ROUTES = {
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
-	EDIT_ALERTS: '/alerts/edit',
+	EDIT_ALERTS: '/alerts/edit/:ruleId',
 	LIST_ALL_LISTS: '/alerts',
 	ALERTS_NEW: '/alerts/new',
 };
