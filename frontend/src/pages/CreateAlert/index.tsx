@@ -10,17 +10,9 @@ import history from 'lib/history';
 import ROUTES from 'constants/routes';
 
 const CreateAlert = () => {
-	const value = useRef<string>(`groups:
-- name: ExampleCPULoadGroup
-  rules:
-  - alert: Example Alert
-    expr: system_cpu_load_average_1m > 0.1
-    for: 0m
-    labels:
-      severity: warning
-    annotations:
-      summary: Sample Summary
-      description: Sample Description`);
+	const value = useRef<string>(
+		`\n        alert: Second Rule\n        expr: system_cpu_load_average_1m > 0.01\n        for: 0m\n        labels:\n            severity: warning\n        annotations:\n            summary: High CPU load\n            description: \"CPU load is > 0.01\n  VALUE = {{ $value }}\n LABELS = {{ $labels }}\"\n    `,
+	);
 
 	const [newAlertState, setNewAlertState] = useState<
 		State<CreateAlertPayloadProps>
@@ -64,23 +56,32 @@ const CreateAlert = () => {
 				}));
 				notifications.success({
 					message: 'Success',
+					description: 'Congrats. The alert was saved correctly.',
 				});
-				history.push(ROUTES.LIST_ALL_LISTS);
+
+				setTimeout(() => {
+					history.push(ROUTES.LIST_ALL_LISTS);
+				}, 3000);
 			} else {
 				notifications.error({
-					description: response.error || 'Something went wrong',
+					description:
+						response.error ||
+						'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
 					message: 'Error',
 				});
 				setNewAlertState((state) => ({
 					...state,
 					loading: false,
 					error: true,
-					errorMessage: response.error || 'Something went wrong',
+					errorMessage:
+						response.error ||
+						'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
 				}));
 			}
 		} catch (error) {
 			notifications.error({
-				message: 'Something went wrong',
+				message:
+					'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
 			});
 		}
 	}, []);
