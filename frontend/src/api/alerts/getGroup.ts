@@ -2,13 +2,13 @@ import { apiV1, AxiosAlertManagerInstance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/alerts/delete';
+import { PayloadProps, Props } from 'types/api/alerts/getGroups';
 
-const deleteAlerts = async (
+const getGroups = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await AxiosAlertManagerInstance.delete(
+		const response = await AxiosAlertManagerInstance.get(
 			`${apiV1}/rules/${props.id}`,
 		);
 
@@ -16,11 +16,11 @@ const deleteAlerts = async (
 			statusCode: 200,
 			error: null,
 			message: response.data.status,
-			payload: response.data.data.rules,
+			payload: response.data.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);
 	}
 };
 
-export default deleteAlerts;
+export default getGroups;

@@ -1,4 +1,4 @@
-import { AxiosAlertManagerInstance } from 'api';
+import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -8,7 +8,7 @@ const getAll = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const response = await AxiosAlertManagerInstance.get('/rules');
+		const response = await axios.get('/rules');
 
 		return {
 			statusCode: 200,
