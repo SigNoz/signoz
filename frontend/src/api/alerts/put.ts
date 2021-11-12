@@ -1,4 +1,4 @@
-import { AxiosAlertManagerInstance } from 'api';
+import axios, { AxiosAlertManagerInstance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -8,7 +8,7 @@ const put = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await AxiosAlertManagerInstance.put(`/rules/${props.id}`, {
+		const response = await axios.put(`/rules/${props.id}`, {
 			data: props.data,
 		});
 

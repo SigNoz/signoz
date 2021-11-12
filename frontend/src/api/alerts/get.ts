@@ -1,4 +1,4 @@
-import { apiV1, AxiosAlertManagerInstance } from 'api';
+import axios, { apiV1, AxiosAlertManagerInstance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -8,9 +8,7 @@ const get = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await AxiosAlertManagerInstance.get(
-			`${apiV1}/rules/${props.id}`,
-		);
+		const response = await axios.get(`/rules/${props.id}`);
 
 		return {
 			statusCode: 200,

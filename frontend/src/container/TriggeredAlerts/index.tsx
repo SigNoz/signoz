@@ -1,46 +1,69 @@
-import React, { useCallback, useState } from 'react';
-import { Select, Tag } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SelectValue } from 'antd/lib/select';
 import getGroupApi from 'api/alerts/getGroup';
 import { PayloadProps, Props } from 'types/api/alerts/getGroups';
 import { State } from 'hooks/useFetch';
+import Spinner from 'components/Spinner';
 
 const TriggeredAlerts = () => {
-	const [groupState, setGroupState] = useState<State<PayloadProps>>();
+	const [groupState, setGroupState] = useState<State<PayloadProps>>({
+		error: false,
+		errorMessage: '',
+		loading: true,
+		success: false,
+		payload: [],
+	});
 
-	const options = [
-		{ value: 'gold', asd: 'asd' },
-		{ value: 'lime' },
-		{ value: 'green' },
-		{ value: 'cyan' },
-	];
+	const fetchData = useCallback(async () => {
+		try {
+			setGroupState((state) => ({
+				...state,
+				loading: true,
+			}));
 
-	const onChangeSelectHandler = useCallback((value: SelectValue, option) => {
-		console.log('asd', value, option);
+			const response = await getGroupApi({
+				active: true,
+				inhibited: true,
+				silenced: false,
+			});
+
+			if (response.statusCode === 200) {
+				setGroupState((state) => ({
+					...state,
+					loading: false,
+					payload: response.payload || [],
+				}));
+			} else {
+				setGroupState((state) => ({
+					...state,
+					loading: false,
+					error: true,
+					errorMessage: response.error || 'Something went wrong',
+				}));
+			}
+		} catch (error) {
+			setGroupState((state) => ({
+				...state,
+				error: true,
+				loading: false,
+				errorMessage: 'Something went wrong',
+			}));
+		}
 	}, []);
 
-	return (
-		<Select
-			allowClear
-			onChange={onChangeSelectHandler}
-			mode="tags"
-			showArrow
-			tagRender={(props) => {
-				const { label, closable, onClose } = props;
-				return (
-					<Tag
-						color={'magenta'}
-						closable={closable}
-						onClose={onClose}
-						style={{ marginRight: 3 }}
-					>
-						{label}
-					</Tag>
-				);
-			}}
-			options={options}
-		/>
-	);
+	useEffect(() => {
+		fetchData();
+	}, [fetchData]);
+
+	if (groupState.error) {
+		return <div>{groupState.errorMessage}</div>;
+	}
+
+	if (groupState.loading || groupState.payload === undefined) {
+		return <Spinner height="75vh" tip="Loading Alerts..." />;
+	}
+
+	return <div>asd</div>;
 };
 
 export default TriggeredAlerts;
