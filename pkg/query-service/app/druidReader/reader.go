@@ -55,6 +55,27 @@ func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, quer
 	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
 }
 
+func (druid *DruidReader) DeleteChannel(id string) *model.ApiError {
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+}
+
+func (druid *DruidReader) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+}
+func (druid *DruidReader) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+}
+func (druid *DruidReader) CreateChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+
+}
+func (druid *DruidReader) EditChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+
+}
+
 func (druid *DruidReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
 
 	res := model.AlertDiscovery{}

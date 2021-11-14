@@ -165,6 +165,11 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", aH.getChannel).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", aH.editChannel).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/channels/{id}", aH.deleteChannel).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/channels", aH.createChannel).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", aH.getRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
@@ -399,6 +404,81 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.respond(w, "rule successfully edited")
+
+}
+
+func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	channel, apiErrorObj := (*aH.reader).GetChannel(id)
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, channel)
+}
+
+func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	apiErrorObj := (*aH.reader).DeleteChannel(id)
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, "notification channel successfully deleted")
+}
+
+func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
+	channels, apiErrorObj := (*aH.reader).GetChannels()
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, channels)
+}
+
+func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+
+	var postData map[string]string
+	err := decoder.Decode(&postData)
+
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	_, apiErrorObj := (*aH.reader).EditChannel(postData["data"])
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.respond(w, nil)
+
+}
+
+func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
+
+	decoder := json.NewDecoder(r.Body)
+
+	var postData map[string]string
+	err := decoder.Decode(&postData)
+
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	_, apiErrorObj := (*aH.reader).CreateChannel(postData["data"])
+
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.respond(w, nil)
 
 }
 

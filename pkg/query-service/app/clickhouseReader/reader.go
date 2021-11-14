@@ -1,12 +1,15 @@
 package clickhouseReader
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"sort"
@@ -292,7 +295,19 @@ func (r *ClickHouseReader) Start() {
 				for _, rule := range *rules {
 					apiErrorObj = r.LoadRule(rule)
 					if apiErrorObj != nil {
-						zap.S().Errorf("Not able to create rule with id=%d loaded from DB", rule.Id, rule.Data)
+						zap.S().Errorf("Not able to load rule with id=%d loaded from DB", rule.Id, rule.Data)
+					}
+				}
+
+				channels, apiErrorObj := r.GetChannels()
+
+				if apiErrorObj != nil {
+					zap.S().Errorf("Not able to read channels from DB")
+				}
+				for _, channel := range *channels {
+					apiErrorObj = r.LoadChannel(&channel)
+					if apiErrorObj != nil {
+						zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
 					}
 				}
 
@@ -585,6 +600,300 @@ func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError
 	}
 
 	return nil
+}
+
+func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
+
+	values := map[string]string{"data": channel.Data}
+	jsonValue, _ := json.Marshal(values)
+
+	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if response.StatusCode > 299 {
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
+		zap.S().Error(err)
+
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
+func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
+
+	idInt, _ := strconv.Atoi(id)
+	channel := model.ChannelItem{}
+
+	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=%d", idInt)
+
+	err := r.localDB.Get(&channel, query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &channel, nil
+
+}
+
+func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
+
+	idInt, _ := strconv.Atoi(id)
+
+	channelToDelete, apiErrorObj := r.GetChannel(id)
+
+	if apiErrorObj != nil {
+		return apiErrorObj
+	}
+
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	{
+		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1;`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(idInt); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	values := map[string]string{"name": channelToDelete.Name}
+	jsonValue, _ := json.Marshal(values)
+
+	req, err := http.NewRequest(http.MethodDelete, constants.ALERTMANAGER_API_PREFIX+"v1/receivers", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		zap.S().Errorf("Error in creating new delete request to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(req)
+
+	if err != nil {
+		zap.S().Errorf("Error in delete API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if response.StatusCode > 299 {
+		err := fmt.Errorf("Error in getting 2xx response in API call to delete alertmanager/v1/receivers\n", response.Status)
+		zap.S().Error(err)
+		tx.Rollback()
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for DELETE command to notification_channels\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+
+}
+
+func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
+
+	channels := []model.ChannelItem{}
+
+	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data data FROM notification_channels")
+
+	err := r.localDB.Select(&channels, query)
+
+	// zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &channels, nil
+
+}
+
+func getChannelType(receiver *model.Receiver) string {
+
+	if receiver.EmailConfigs != nil {
+		return "email"
+	}
+	if receiver.OpsGenieConfigs != nil {
+		return "opsgenie"
+	}
+	if receiver.PagerdutyConfigs != nil {
+		return "pagerduty"
+	}
+	if receiver.PushoverConfigs != nil {
+		return "pushover"
+	}
+	if receiver.SNSConfigs != nil {
+		return "sns"
+	}
+	if receiver.SlackConfigs != nil {
+		return "slack"
+	}
+	if receiver.VictorOpsConfigs != nil {
+		return "victorops"
+	}
+	if receiver.WebhookConfigs != nil {
+		return "webhook"
+	}
+	if receiver.WechatConfigs != nil {
+		return "wechat"
+	}
+
+	return ""
+}
+
+func (r *ClickHouseReader) EditChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	values := map[string]string{"data": channel_settings}
+	jsonValue, _ := json.Marshal(values)
+
+	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if response.StatusCode > 299 {
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
+		zap.S().Error(err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting response body of API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	receiverResponse := &model.ReceiverResponse{}
+	if err := json.Unmarshal(body, receiverResponse); err != nil { // Parse []byte to go struct pointer
+		zap.S().Errorf("Error in parsing response of API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	channel_type := getChannelType(&receiverResponse.Data)
+
+	{
+		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			tx.Rollback()
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(time.Now(), time.Now(), receiverResponse.Data.Name, channel_type, channel_settings); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &receiverResponse.Data, nil
+
+}
+
+func (r *ClickHouseReader) CreateChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	values := map[string]string{"data": channel_settings}
+	jsonValue, _ := json.Marshal(values)
+
+	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if response.StatusCode > 299 {
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
+		zap.S().Error(err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting response body of API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	receiverResponse := &model.ReceiverResponse{}
+	if err := json.Unmarshal(body, receiverResponse); err != nil { // Parse []byte to go struct pointer
+		zap.S().Errorf("Error in parsing response of API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	channel_type := getChannelType(&receiverResponse.Data)
+
+	{
+		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			tx.Rollback()
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(time.Now(), time.Now(), receiverResponse.Data.Name, channel_type, channel_settings); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return &receiverResponse.Data, nil
+
 }
 
 func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
