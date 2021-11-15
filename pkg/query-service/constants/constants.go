@@ -12,4 +12,4 @@ var DruidDatasource = os.Getenv("DruidDatasource")
 const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 
-const ALERTMANAGER_API_PREFIX = "http://localhost:9093/api/"
+const ALERTMANAGER_API_PREFIX = "http://alertmanager:9093/api/"
