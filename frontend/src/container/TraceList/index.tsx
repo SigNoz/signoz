@@ -83,11 +83,7 @@ const TraceDetails = (): JSX.Element => {
 		},
 	];
 
-	if (spans?.length === 0) {
-		return <Typography> No spans found for given filter!</Typography>;
-	}
-
-	if (isOnboardingSkipped()) {
+	if (isOnboardingSkipped() && spans?.length === 0) {
 		return (
 			<Space style={{ width: '100%', margin: '40px 0', justifyContent: 'center' }}>
 				No spans found. Please add instrumentation (follow this
@@ -101,6 +97,10 @@ const TraceDetails = (): JSX.Element => {
 				)
 			</Space>
 		);
+	}
+
+	if (spans?.length === 0) {
+		return <Typography> No spans found for given filter!</Typography>;
 	}
 
 	return (
