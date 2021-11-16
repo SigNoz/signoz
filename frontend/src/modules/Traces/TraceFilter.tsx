@@ -120,15 +120,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 
 	const handleApplyFilterForm = useCallback(
 		(values: any): void => {
-			// setTagKeyValueApplied((tagKeyValueApplied) => [
-			// 	...tagKeyValueApplied,
-			// 	'service eq' + values.service,
-			// 	'operation eq ' + values.operation,
-			// 	'maxduration eq ' +
-			// 		(parseInt(latencyFilterValues.max) / 1000000).toString(),
-			// 	'minduration eq ' +
-			// 		(parseInt(latencyFilterValues.min) / 1000000).toString(),
-			// ]);
 			updateTraceFilters({
 				service: values.service,
 				operation: values.operation,
@@ -272,10 +263,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 				'&tags=' +
 				encodeURIComponent(JSON.stringify(traceFilters.tags));
 
-		/*
-			Call the apis only when the route is loaded.
-			Check this issue: https://github.com/SigNoz/signoz/issues/110
-		 */
 		if (loading === false) {
 			fetchTraces(globalTime, request_string);
 		}
@@ -305,19 +292,10 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 				'ms';
 
 		form_basefilter.setFieldsValue({ latency: latencyButtonText });
-	}, [traceFilters.latency, form_basefilter]);
-
-	useEffect(() => {
 		form_basefilter.setFieldsValue({ service: traceFilters.service });
-	}, [traceFilters.service, form_basefilter]);
-
-	useEffect(() => {
 		form_basefilter.setFieldsValue({ operation: traceFilters.operation });
-	}, [traceFilters.operation, form_basefilter]);
-
-	useEffect(() => {
 		form_basefilter.setFieldsValue({ kind: traceFilters.kind });
-	}, [traceFilters.kind, form_basefilter]);
+	}, [traceFilters, form_basefilter]);
 
 	const onLatencyButtonClick = (): void => {
 		setModalVisible(true);
@@ -437,8 +415,6 @@ const _TraceFilter = (props: TraceFilterProps): JSX.Element => {
 			</Form>
 
 			<FilterStateDisplay />
-
-			{/* // What will be the empty state of card when there is no Tag , it should show something */}
 
 			<InfoWrapper>Select Service to get Tag suggestions </InfoWrapper>
 

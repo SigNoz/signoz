@@ -13,7 +13,7 @@ import {
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -219,15 +219,4 @@ interface FullViewProps {
 	noDataGraph?: boolean;
 }
 
-export default memo(FullView, (prev, next) => {
-	if (
-		next.widget.query.length !== prev.widget.query.length &&
-		next.widget.query.every((value, index) => {
-			return value === prev.widget.query[index];
-		})
-	) {
-		return false;
-	}
-
-	return true;
-});
+export default FullView;

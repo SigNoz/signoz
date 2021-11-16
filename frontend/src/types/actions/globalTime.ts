@@ -1,3 +1,5 @@
+import { Time } from 'container/Header/DateTimeSelection/config';
+
 export const UPDATE_TIME_INTERVAL = 'UPDATE_TIME_INTERVAL';
 export const GLOBAL_TIME_LOADING_START = 'GLOBAL_TIME_LOADING_START';
 
@@ -6,9 +8,13 @@ export type GlobalTime = {
 	minTime: number;
 };
 
+interface UpdateTime extends GlobalTime {
+	selectedTime: Time;
+}
+
 interface UpdateTimeInterval {
 	type: typeof UPDATE_TIME_INTERVAL;
-	payload: GlobalTime;
+	payload: UpdateTime;
 }
 
 interface GlobalTimeLoading {

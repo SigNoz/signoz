@@ -1,20 +1,35 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
+import GetMinMax from 'lib/getMinMax';
 import { Dispatch } from 'redux';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Props } from 'types/api/metrics/getService';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
-export const GetService = ({
-	end,
-	start,
-}: GetServiceProps): ((dispatch: Dispatch<AppActions>) => void) => {
-	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
+export const GetService = (
+	props: GetServiceProps,
+): ((dispatch: Dispatch<AppActions>, getState: () => AppState) => void) => {
+	return async (dispatch, getState): Promise<void> => {
 		try {
+			const { globalTime } = getState();
+
+			if (props.selectedTimeInterval !== globalTime.selectedTime) {
+				return;
+			}
+
+			const { maxTime, minTime } = GetMinMax(props.selectedTimeInterval, [
+				globalTime.minTime / 1000000,
+				globalTime.maxTime / 1000000,
+			]);
+
 			dispatch({
 				type: 'GET_SERVICE_LIST_LOADING_START',
 			});
 
-			const response = await getService({ end, start });
+			const response = await getService({
+				end: maxTime,
+				start: minTime,
+			});
 
 			if (response.statusCode === 200) {
 				dispatch({
@@ -40,4 +55,6 @@ export const GetService = ({
 	};
 };
 
-export type GetServiceProps = Props;
+export type GetServiceProps = {
+	selectedTimeInterval: GlobalReducer['selectedTime'];
+};

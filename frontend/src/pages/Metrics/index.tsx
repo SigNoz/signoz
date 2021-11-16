@@ -5,16 +5,17 @@ import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GetService, GetServiceProps } from 'store/actions';
+import { GetService, GetServiceProps } from 'store/actions/metrics';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
 const Metrics = ({ getService }: MetricsProps): JSX.Element => {
-	const { minTime, maxTime, loading } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, loading, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 	const { services } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
@@ -24,11 +25,10 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 	useEffect(() => {
 		if (loading === false) {
 			getService({
-				start: minTime,
-				end: maxTime,
+				selectedTimeInterval: selectedTime,
 			});
 		}
-	}, [getService, maxTime, minTime, loading]);
+	}, [getService, loading, selectedTime]);
 
 	useEffect(() => {
 		let timeInterval: NodeJS.Timeout;
@@ -36,8 +36,7 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 		if (loading === false && !isSkipped && services.length === 0) {
 			timeInterval = setInterval(() => {
 				getService({
-					start: minTime,
-					end: maxTime,
+					selectedTimeInterval: selectedTime,
 				});
 			}, 50000);
 		}
@@ -45,7 +44,7 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 		return (): void => {
 			clearInterval(timeInterval);
 		};
-	}, [getService, isSkipped, loading, maxTime, minTime, services]);
+	}, [getService, isSkipped, loading, maxTime, minTime, services, selectedTime]);
 
 	if (loading) {
 		return <Spinner tip="Loading..." />;
@@ -55,10 +54,9 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 };
 
 interface DispatchProps {
-	getService: ({
-		end,
-		start,
-	}: GetServiceProps) => (dispatch: Dispatch<AppActions>) => void;
+	getService: (
+		props: GetServiceProps,
+	) => (dispatch: Dispatch<AppActions>, getState: () => AppState) => void;
 }
 
 const mapDispatchToProps = (

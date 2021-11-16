@@ -12,6 +12,7 @@ import {
 	SettingsPage,
 	SignupPage,
 	TraceDetailPage,
+	TraceDetailPages,
 	TraceGraphPage,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -76,6 +77,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.DASHBOARD_WIDGET,
 		exact: true,
 		component: DashboardWidget,
+	},
+	{
+		path: ROUTES.TRACE,
+		exact: true,
+		component: TraceDetailPages,
 	},
 ];
 

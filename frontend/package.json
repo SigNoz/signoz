@@ -145,6 +145,7 @@
 		"@types/webpack-dev-server": "^4.3.0",
 		"@typescript-eslint/eslint-plugin": "^4.28.2",
 		"@typescript-eslint/parser": "^4.28.2",
+		"@welldone-software/why-did-you-render": "^6.2.1",
 		"autoprefixer": "^9.0.0",
 		"babel-plugin-styled-components": "^1.12.0",
 		"compression-webpack-plugin": "^9.0.0",

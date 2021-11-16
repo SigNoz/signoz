@@ -247,7 +247,6 @@ const _TraceCustomVisualizations = (
 							},
 						],
 					}}
-					xAxisType="timeseries"
 				/>
 			</CustomGraphContainer>
 		</Card>
