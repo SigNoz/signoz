@@ -2,12 +2,11 @@
 import dotenv from 'dotenv';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { resolve } from 'path';
+//@ts-ignore
+import portFinderSync from 'portfinder-sync';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import webpack from 'webpack';
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
-
-// @ts-ignore
-import portFinderSync from 'portfinder-sync';
 
 dotenv.config();
 
@@ -29,10 +28,10 @@ const config: Configuration = {
 		liveReload: true,
 		port: portFinderSync.getPort(3000),
 		static: {
-			directory: resolve(__dirname, "public"),
-			publicPath: "/",
+			directory: resolve(__dirname, 'public'),
+			publicPath: '/',
 			watch: true,
-		}
+		},
 	},
 	target: 'web',
 	output: {

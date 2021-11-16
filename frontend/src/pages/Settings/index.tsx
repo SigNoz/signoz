@@ -1,36 +1,22 @@
-import { Form, Input, Space } from 'antd';
-import { Alert } from 'antd';
-import React, { useEffect } from 'react';
+import { Tabs } from 'antd';
+import React from 'react';
+
+const { TabPane } = Tabs;
+import GeneralSettings from 'container/GeneralSettings';
 
 const SettingsPage = (): JSX.Element => {
-	const [form] = Form.useForm();
-
-	useEffect(() => {
-		form.setFieldsValue({
-			retention_period: '3 days',
-		});
-	}, [form]);
-
 	return (
-		<>
-			<Form name="basic" initialValues={{ remember: true }} form={form}>
-				<Form.Item
-					label="Retention Period"
-					name="retention_period"
-					rules={[{ required: false }]}
-					style={{ maxWidth: '40%' }}
-				>
-					<Input disabled={true} />
-				</Form.Item>
-			</Form>
-
-			<Space>
-				<Alert
-					message="Mail us at support@signoz.io to get instructions on how to change your retention period"
-					type="info"
-				/>
-			</Space>
-		</>
+		<Tabs defaultActiveKey="1">
+			<TabPane tab="General" key="1">
+				<GeneralSettings />
+			</TabPane>
+			{/* <TabPane tab="Alert Channels" key="2">
+				Alerts
+			</TabPane>
+			<TabPane tab="Users" key="3">
+				Users
+			</TabPane> */}
+		</Tabs>
 	);
 };
 

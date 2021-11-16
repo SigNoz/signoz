@@ -1,3 +1,4 @@
+import './wdyr';
 import 'assets/index.css';
 
 import AppRoutes from 'AppRoutes';

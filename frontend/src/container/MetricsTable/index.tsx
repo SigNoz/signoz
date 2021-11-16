@@ -3,18 +3,15 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading, servicesListItem } from 'store/actions';
+import { useSelector } from 'react-redux';
+import { servicesListItem } from 'store/actions/MetricsActions/metricsInterfaces';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import MetricReducer from 'types/reducer/metrics';
 
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
 
-const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
+const Metrics = (): JSX.Element => {
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorage.getItem(SKIP_ONBOARDING) === 'true',
 	);
@@ -30,7 +27,6 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 
 	const onClickHandler = (to: string): void => {
 		history.push(to);
-		globalTimeLoading();
 	};
 
 	if (
@@ -90,16 +86,4 @@ const Metrics = ({ globalTimeLoading }: MetricsProps): JSX.Element => {
 
 type DataProps = servicesListItem;
 
-interface DispatchProps {
-	globalTimeLoading: () => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
-});
-
-type MetricsProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(Metrics);
+export default Metrics;
