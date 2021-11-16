@@ -180,17 +180,29 @@ const TraceList = ({
 			form_basefilter.setFieldsValue({
 				service: selectedService,
 			});
+		} else {
+			form_basefilter.setFieldsValue({
+				service: '',
+			});
 		}
 
 		if (selectedOperation.length !== 0) {
 			form_basefilter.setFieldsValue({
 				operation: selectedOperation,
 			});
+		} else {
+			form_basefilter.setFieldsValue({
+				operation: '',
+			});
 		}
 
 		if (selectedKind.length !== 0) {
 			form_basefilter.setFieldsValue({
 				spanKind: selectedKind,
+			});
+		} else {
+			form_basefilter.setFieldsValue({
+				spanKind: '',
 			});
 		}
 
