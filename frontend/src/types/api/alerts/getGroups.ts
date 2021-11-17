@@ -6,7 +6,7 @@ export interface Props {
 	active: boolean;
 	[key: string]: string | boolean;
 }
-interface Group {
+export interface Group {
 	alerts: Alerts[];
 	label: Alerts['labels'];
 	receiver: {
