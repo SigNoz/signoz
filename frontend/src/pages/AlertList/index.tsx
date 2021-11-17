@@ -8,7 +8,7 @@ const { TabPane } = Tabs;
 
 const AllAlertList = () => {
 	return (
-		<Tabs defaultActiveKey="Triggered Alerts">
+		<Tabs defaultActiveKey="Alert Rules">
 			<TabPane tabKey="Alert Rules" tab="Alert Rules" key="Alert Rules">
 				<ListAlertRules />
 			</TabPane>
