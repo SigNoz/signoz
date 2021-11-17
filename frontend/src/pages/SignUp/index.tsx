@@ -1,4 +1,4 @@
-import { Button, Input, Typography } from 'antd';
+import { Button, Input, notification, Typography } from 'antd';
 import signup from 'api/user/signup';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -18,6 +18,8 @@ import {
 } from './styles';
 
 const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
+	const [notificationsInstance, Element] = notification.useNotification();
+
 	const [state, setState] = useState({ submitted: false });
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },
@@ -61,17 +63,22 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 					loggedIn();
 					history.push(ROUTES.APPLICATION);
 				} else {
-					// @TODO throw a error notification here
+					notificationsInstance.error({
+						message: 'Something went wrong',
+					});
 				}
 			} catch (error) {
-				console.error(error);
-				// @TODO throw a error notification here
+				notificationsInstance.error({
+					message: 'Something went wrong',
+				});
 			}
 		})();
 	};
 
 	return (
 		<div>
+			{Element}
+
 			<Container direction="vertical">
 				<Title>Create your account</Title>
 				<Typography>
