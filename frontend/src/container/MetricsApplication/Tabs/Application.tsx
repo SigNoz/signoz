@@ -3,16 +3,13 @@ import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useRef } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading } from 'store/actions';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
@@ -20,10 +17,7 @@ import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
-const Application = ({
-	globalLoading,
-	getWidget,
-}: DashboardProps): JSX.Element => {
+const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
@@ -42,8 +36,7 @@ const Application = ({
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
-		globalLoading();
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	const onClickhandler = async (
@@ -74,7 +67,7 @@ const Application = ({
 						buttonElement.style.display = 'block';
 						buttonElement.style.left = `${firstPoint.element.x}px`;
 						buttonElement.style.top = `${firstPoint.element.y}px`;
-						selectedTimeStamp.current = new Date(time).getTime();
+						selectedTimeStamp.current = time.getTime();
 					}
 				}
 			} else {
@@ -97,8 +90,7 @@ const Application = ({
 		}
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
-		globalLoading();
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	return (
@@ -126,7 +118,9 @@ const Application = ({
 								data={{
 									datasets: [
 										{
-											data: serviceOverview.map((e) => e.p99),
+											data: serviceOverview.map((e) =>
+												parseFloat(convertToNanoSecondsToSecond(e.p99)),
+											),
 											borderColor: colors[0],
 											label: 'p99 Latency',
 											showLine: true,
@@ -135,7 +129,9 @@ const Application = ({
 											pointRadius: 1.5,
 										},
 										{
-											data: serviceOverview.map((e) => e.p95),
+											data: serviceOverview.map((e) =>
+												parseFloat(convertToNanoSecondsToSecond(e.p95)),
+											),
 											borderColor: colors[1],
 											label: 'p95 Latency',
 											showLine: true,
@@ -144,7 +140,9 @@ const Application = ({
 											pointRadius: 1.5,
 										},
 										{
-											data: serviceOverview.map((e) => e.p50),
+											data: serviceOverview.map((e) =>
+												parseFloat(convertToNanoSecondsToSecond(e.p50)),
+											),
 											borderColor: colors[2],
 											label: 'p50 Latency',
 											showLine: true,
@@ -154,7 +152,9 @@ const Application = ({
 										},
 									],
 									labels: serviceOverview.map((e) => {
-										return new Date(e.timestamp / 1000000);
+										return new Date(
+											parseFloat(convertToNanoSecondsToSecond(e.timestamp)),
+										);
 									}),
 								}}
 							/>
@@ -238,18 +238,8 @@ const Application = ({
 	);
 };
 
-interface DispatchProps {
-	globalLoading: () => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
-});
-
-interface DashboardProps extends DispatchProps {
+interface DashboardProps {
 	getWidget: (query: Widgets['query']) => Widgets;
 }
 
-export default connect(null, mapDispatchToProps)(Application);
+export default Application;

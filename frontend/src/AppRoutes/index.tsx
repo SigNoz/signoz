@@ -1,9 +1,10 @@
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
 import React, { Suspense } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
+import { Redirect, Route, Router, Switch, } from 'react-router-dom';
 
 import routes from './routes';
 
@@ -12,12 +13,13 @@ const App = (): JSX.Element => (
 		<AppLayout>
 			<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 				<Switch>
-					{routes.map(({ path, component, exact }, index) => {
+					{routes.map(({ path, component, exact }) => {
 						return (
-							<Route key={index} exact={exact} path={path} component={component} />
+							<Route key={path} exact={exact} path={path} component={component} />
 						);
 					})}
-					<Route path="*" exact component={NotFound} />
+					<Redirect from="/" to={ROUTES.APPLICATION} />
+					<Route component={NotFound} />
 				</Switch>
 			</Suspense>
 		</AppLayout>

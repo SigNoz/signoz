@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { servicesItem } from "Src/store/actions";
+import { servicesItem } from "store/actions";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Select } from "antd";
 import styled from "styled-components";
 const { Option } = Select;
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 const Container = styled.div`
   margin-top: 12px;

@@ -1,4 +1,4 @@
-import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash';
+import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash-es';
 import { serviceMapStore } from 'store/actions';
 
 import { graphDataType } from './ServiceMap';

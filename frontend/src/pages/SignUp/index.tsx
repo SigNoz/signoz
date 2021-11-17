@@ -1,4 +1,4 @@
-import { Button, Input, Typography, notification } from 'antd';
+import { Button, Input, notification, Typography } from 'antd';
 import signup from 'api/user/signup';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading, UserLoggedIn } from 'store/actions';
+import { UserLoggedIn } from 'store/actions';
 import AppActions from 'types/actions';
 
 import {
@@ -17,7 +17,7 @@ import {
 	Title,
 } from './styles';
 
-const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
+const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 	const [notificationsInstance, Element] = notification.useNotification();
 
 	const [state, setState] = useState({ submitted: false });
@@ -61,7 +61,6 @@ const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 
 				if (response.statusCode === 200) {
 					loggedIn();
-					globalLoading();
 					history.push(ROUTES.APPLICATION);
 				} else {
 					notificationsInstance.error({
@@ -132,14 +131,12 @@ const Signup = ({ globalLoading, loggedIn }: SignupProps): JSX.Element => {
 };
 
 interface DispatchProps {
-	globalLoading: () => void;
 	loggedIn: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 	loggedIn: bindActionCreators(UserLoggedIn, dispatch),
 });
 

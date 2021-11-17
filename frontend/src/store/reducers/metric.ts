@@ -5,6 +5,7 @@ import {
 	GET_SERVICE_LIST_ERROR,
 	GET_SERVICE_LIST_LOADING_START,
 	GET_SERVICE_LIST_SUCCESS,
+	RESET_INITIAL_APPLICATION_DATA,
 	MetricsActions,
 } from 'types/actions/metrics';
 import InitialValueTypes from 'types/reducer/metrics';
@@ -12,7 +13,8 @@ import InitialValueTypes from 'types/reducer/metrics';
 const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
-	loading: false,
+	loading: true,
+	metricsApplicationLoading: true,
 	services: [],
 	dbOverView: [],
 	externalService: [],
@@ -56,15 +58,21 @@ const metrics = (
 		case GET_INITIAL_APPLICATION_LOADING: {
 			return {
 				...state,
-				loading: true,
+				metricsApplicationLoading: true,
 			};
 		}
 		case GET_INITIAL_APPLICATION_ERROR: {
 			return {
 				...state,
-				loading: false,
+				metricsApplicationLoading: false,
 				errorMessage: action.payload.errorMessage,
 				error: true,
+			};
+		}
+
+		case RESET_INITIAL_APPLICATION_DATA: {
+			return {
+				...InitialValue,
 			};
 		}
 
@@ -80,13 +88,13 @@ const metrics = (
 
 			return {
 				...state,
-				loading: false,
 				// dbOverView,
 				topEndPoints,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
+				metricsApplicationLoading: false,
 			};
 		}
 		default:

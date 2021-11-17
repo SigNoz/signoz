@@ -9,6 +9,7 @@ import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
 interface MetricReducer {
 	services: ServicesList[];
 	loading: boolean;
+	metricsApplicationLoading: boolean;
 	error: boolean;
 	errorMessage: string;
 	dbOverView: DBOverView[];

@@ -1,60 +1,54 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
-import React, { useEffect } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useRef } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
 	GetInitialData,
 	GetInitialDataProps,
 } from 'store/actions/metrics/getInitialData';
+import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
-	const { loading, maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+const MetricsApplication = ({
+	getInitialData,
+	resetInitialData,
+}: MetricsProps): JSX.Element => {
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { error, errorMessage } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { error, errorMessage, metricsApplicationLoading } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
 
 	const { servicename } = useParams<ServiceProps>();
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
-
 	useEffect(() => {
-		if (servicename !== undefined && loading == false) {
+		if (servicename !== undefined) {
 			getInitialData({
-				end: maxTime,
-				service: servicename,
-				start: minTime,
-				step: 60,
+				selectedTimeInterval: selectedTime,
+				serviceName: servicename,
 			});
 		}
 
-		return (): void => {
-			// setting the data to it's initial this will avoid the re-rendering the graph
-			dispatch({
-				type: 'GET_INTIAL_APPLICATION_DATA',
-				payload: {
-					serviceOverview: [],
-					topEndPoints: [],
-				},
-			});
+		return () => {
+			resetInitialData();
 		};
-	}, [servicename, maxTime, minTime, getInitialData, loading, dispatch]);
+	}, [servicename, getInitialData, selectedTime]);
+
+	if (metricsApplicationLoading) {
+		return <Spinner tip="Loading..." />;
+	}
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
-	}
-
-	if (loading) {
-		return <Spinner tip="Loading..." />;
 	}
 
 	return <MetricsApplicationContainer />;
@@ -62,6 +56,7 @@ const MetricsApplication = ({ getInitialData }: MetricsProps): JSX.Element => {
 
 interface DispatchProps {
 	getInitialData: (props: GetInitialDataProps) => void;
+	resetInitialData: () => void;
 }
 
 interface ServiceProps {
@@ -72,6 +67,7 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getInitialData: bindActionCreators(GetInitialData, dispatch),
+	resetInitialData: bindActionCreators(ResetInitialData, dispatch),
 });
 
 type MetricsProps = DispatchProps;

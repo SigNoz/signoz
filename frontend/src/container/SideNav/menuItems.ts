@@ -17,7 +17,7 @@ const menus: SidebarMenu[] = [
 	},
 	{
 		Icon: AlignLeftOutlined,
-		to: ROUTES.TRACES,
+		to: ROUTES.TRACE,
 		name: 'Traces',
 	},
 	{

@@ -13,7 +13,7 @@ export const GET_INITIAL_APPLICATION_LOADING =
 	'GET_INITIAL_APPLICATION_LOADING';
 export const GET_INITIAL_APPLICATION_ERROR = 'GET_INITIAL_APPLICATION_ERROR';
 export const GET_INTIAL_APPLICATION_DATA = 'GET_INTIAL_APPLICATION_DATA';
-
+export const RESET_INITIAL_APPLICATION_DATA = 'RESET_INITIAL_APPLICATION_DATA';
 export interface GetServiceList {
 	type: typeof GET_SERVICE_LIST_SUCCESS;
 	payload: ServicesList[];
@@ -44,8 +44,13 @@ export interface GetInitialApplicationData {
 	};
 }
 
+export interface ResetInitialApplicationData {
+	type: typeof RESET_INITIAL_APPLICATION_DATA;
+}
+
 export type MetricsActions =
 	| GetServiceListError
 	| GetServiceListLoading
 	| GetServiceList
-	| GetInitialApplicationData;
+	| GetInitialApplicationData
+	| ResetInitialApplicationData;

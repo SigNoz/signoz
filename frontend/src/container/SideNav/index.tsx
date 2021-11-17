@@ -7,7 +7,7 @@ import { NavLink } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading, ToggleDarkMode } from 'store/actions';
+import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
@@ -15,7 +15,7 @@ import AppReducer from 'types/reducer/app';
 import menus from './menuItems';
 import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
 
-const SideNav = ({ toggleDarkMode, globalTimeLoading }: Props): JSX.Element => {
+const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
 	const { pathname } = useLocation();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -49,10 +49,9 @@ const SideNav = ({ toggleDarkMode, globalTimeLoading }: Props): JSX.Element => {
 		(to: string) => {
 			if (pathname !== to) {
 				history.push(to);
-				globalTimeLoading();
 			}
 		},
-		[pathname, globalTimeLoading],
+		[pathname],
 	);
 
 	return (
@@ -86,14 +85,12 @@ type mode = 'darkMode' | 'lightMode';
 
 interface DispatchProps {
 	toggleDarkMode: () => void;
-	globalTimeLoading: () => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	toggleDarkMode: bindActionCreators(ToggleDarkMode, dispatch),
-	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
 type Props = DispatchProps;

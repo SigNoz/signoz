@@ -1,3 +1,4 @@
+import { getDefaultOption } from 'container/Header/DateTimeSelection/config';
 import {
 	GLOBAL_TIME_LOADING_START,
 	GlobalTimeAction,
@@ -9,6 +10,7 @@ const intitalState: GlobalReducer = {
 	maxTime: Date.now() * 1000000,
 	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
 	loading: true,
+	selectedTime: getDefaultOption(location.pathname),
 };
 
 const globalTimeReducer = (

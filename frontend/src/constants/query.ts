@@ -6,4 +6,9 @@ export enum METRICS_PAGE_QUERY_PARAM {
 	error = 'error',
 	operation = 'operation',
 	kind = 'kind',
+	latencyMax = 'latencyMax',
+	latencyMin = 'latencyMin',
+	selectedTags = 'selectedTags',
+	aggregationOption = 'aggregationOption',
+	entity = 'entity',
 }

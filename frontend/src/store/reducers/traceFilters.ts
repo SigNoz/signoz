@@ -1,9 +1,11 @@
-import { ActionTypes, TraceFilters } from 'store/actions';
+import { TraceFilters } from 'store/actions/traceFilters';
+import { ActionTypes } from 'store/actions/types';
 
 type ACTION = {
 	type: ActionTypes;
 	payload: TraceFilters;
 };
+
 const initialState: TraceFilters = {
 	service: '',
 	tags: [],
