@@ -1,6 +1,9 @@
 import Graph from 'components/Graph';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import React, { memo } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { CustomGraphContainer } from './styles';
@@ -8,6 +11,10 @@ import { CustomGraphContainer } from './styles';
 const TraceCustomGraph = ({
 	spansAggregate,
 }: TraceCustomGraphProps): JSX.Element => {
+	const { selectedEntity } = useSelector<AppState, TraceReducer>(
+		(state) => state.trace,
+	);
+
 	return (
 		<CustomGraphContainer>
 			<Graph
@@ -16,7 +23,11 @@ const TraceCustomGraph = ({
 					labels: spansAggregate.map((s) => new Date(s.timestamp / 1000000)),
 					datasets: [
 						{
-							data: spansAggregate.map((e) => e.value),
+							data: spansAggregate.map((e) =>
+								selectedEntity === 'duration'
+									? parseFloat(convertToNanoSecondsToSecond(e.value))
+									: e.value,
+							),
 							borderColor: colors[0],
 						},
 					],
