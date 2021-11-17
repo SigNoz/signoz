@@ -4,8 +4,7 @@ import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { resolve } from 'path';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-import webpack from 'webpack';
-import { WebpackPluginInstance } from 'webpack-dev-middleware/node_modules/webpack';
+import webpack, { WebpackPluginInstance } from 'webpack';
 
 const __dirname = resolve();
 
@@ -14,7 +13,7 @@ const config: webpack.Configuration = {
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
-		filename: ({ chunk }: any): string => {
+		filename: ({ chunk }): string => {
 			const hash = chunk?.hash;
 			const name = chunk?.name;
 			return `js/${name}-${hash}.js`;
@@ -53,12 +52,12 @@ const config: webpack.Configuration = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new CompressionPlugin({
+		(new CompressionPlugin({
 			exclude: /.map$/,
-		}) as any,
-		new CopyPlugin({
+		}) as unknown) as WebpackPluginInstance,
+		(new CopyPlugin({
 			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}) as any,
+		}) as unknown) as WebpackPluginInstance,
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),

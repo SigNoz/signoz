@@ -12,6 +12,7 @@ import {
 	SettingsPage,
 	SignupPage,
 	TraceDetailPage,
+	TraceDetailPages,
 	TraceGraphPage,
 	UsageExplorerPage,
 	EditRulesPage,
@@ -94,6 +95,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.ALERTS_NEW,
 		exact: true,
 		component: CreateNewAlerts,
+	},
+	{
+		path: ROUTES.TRACE,
+		exact: true,
+		component: TraceDetailPages,
 	},
 ];
 

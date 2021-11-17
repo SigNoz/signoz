@@ -6,13 +6,9 @@ import FullView from 'container/GridGraphLayout/Graph/FullView';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useRef } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GlobalTimeLoading } from 'store/actions';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
@@ -20,10 +16,7 @@ import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
-const Application = ({
-	globalLoading,
-	getWidget,
-}: DashboardProps): JSX.Element => {
+const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
@@ -42,8 +35,7 @@ const Application = ({
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
-		globalLoading();
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	const onClickhandler = async (
@@ -74,7 +66,7 @@ const Application = ({
 						buttonElement.style.display = 'block';
 						buttonElement.style.left = `${firstPoint.element.x}px`;
 						buttonElement.style.top = `${firstPoint.element.y}px`;
-						selectedTimeStamp.current = new Date(time).getTime();
+						selectedTimeStamp.current = time.getTime();
 					}
 				}
 			} else {
@@ -97,8 +89,7 @@ const Application = ({
 		}
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
-		globalLoading();
-		history.push(`${ROUTES.TRACES}?${urlParams.toString()}`);
+		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	return (
@@ -238,18 +229,8 @@ const Application = ({
 	);
 };
 
-interface DispatchProps {
-	globalLoading: () => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	globalLoading: bindActionCreators(GlobalTimeLoading, dispatch),
-});
-
-interface DashboardProps extends DispatchProps {
+interface DashboardProps {
 	getWidget: (query: Widgets['query']) => Widgets;
 }
 
-export default connect(null, mapDispatchToProps)(Application);
+export default Application;

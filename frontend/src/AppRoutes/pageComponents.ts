@@ -25,6 +25,10 @@ export const TraceDetailPage = Loadable(
 		),
 );
 
+export const TraceDetailPages = Loadable(
+	() => import(/* webpackChunkName: "TraceDetailPage" */ 'pages/TraceDetails'),
+);
+
 export const TraceGraphPage = Loadable(
 	() =>
 		import(
