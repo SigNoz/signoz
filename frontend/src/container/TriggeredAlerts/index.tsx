@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { SelectValue } from 'antd/lib/select';
 import getGroupApi from 'api/alerts/getGroup';
-import { PayloadProps, Props } from 'types/api/alerts/getGroups';
+import { PayloadProps } from 'types/api/alerts/getGroups';
 import { State } from 'hooks/useFetch';
 import Spinner from 'components/Spinner';
+import TriggerComponent from './TriggeredAlert';
 
 const TriggeredAlerts = () => {
 	const [groupState, setGroupState] = useState<State<PayloadProps>>({
@@ -63,7 +63,7 @@ const TriggeredAlerts = () => {
 		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
 
-	return <div>asd</div>;
+	return <TriggerComponent allAlerts={groupState.payload[0]} />;
 };
 
 export default TriggeredAlerts;
