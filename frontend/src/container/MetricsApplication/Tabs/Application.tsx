@@ -3,6 +3,7 @@ import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useRef } from 'react';
@@ -117,7 +118,9 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								data={{
 									datasets: [
 										{
-											data: serviceOverview.map((e) => e.p99),
+											data: serviceOverview.map((e) =>
+												parseFloat(convertToNanoSecondsToSecond(e.p99)),
+											),
 											borderColor: colors[0],
 											label: 'p99 Latency',
 											showLine: true,
@@ -126,7 +129,9 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 											pointRadius: 1.5,
 										},
 										{
-											data: serviceOverview.map((e) => e.p95),
+											data: serviceOverview.map((e) =>
+												parseFloat(convertToNanoSecondsToSecond(e.p95)),
+											),
 											borderColor: colors[1],
 											label: 'p95 Latency',
 											showLine: true,
@@ -135,7 +140,9 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 											pointRadius: 1.5,
 										},
 										{
-											data: serviceOverview.map((e) => e.p50),
+											data: serviceOverview.map((e) =>
+												parseFloat(convertToNanoSecondsToSecond(e.p50)),
+											),
 											borderColor: colors[2],
 											label: 'p50 Latency',
 											showLine: true,
@@ -145,7 +152,9 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										},
 									],
 									labels: serviceOverview.map((e) => {
-										return new Date(e.timestamp / 1000000);
+										return new Date(
+											parseFloat(convertToNanoSecondsToSecond(e.timestamp)),
+										);
 									}),
 								}}
 							/>
