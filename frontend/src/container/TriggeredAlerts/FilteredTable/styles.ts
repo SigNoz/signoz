@@ -4,6 +4,7 @@ import { Card } from 'antd';
 export const TableHeader = styled(Card)`
 	&&& {
 		flex: 1;
+		text-align: center;
 		.ant-card-body {
 			padding: 1rem;
 		}
@@ -29,13 +30,35 @@ export const TableRow = styled(Card)`
 			padding: 0rem;
 			display: flex;
 
-			min-height: 5rem;
+			min-height: 3rem;
 		}
 	}
 `;
 
-export const TableCell = styled.div`
+interface Props {
+	minWidth?: string;
+}
+export const TableCell = styled.div<Props>`
 	&&& {
 		flex: 1;
+		min-width: ${(props) => props.minWidth};
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+`;
+
+export const StatusContainer = styled.div`
+	&&& {
+		display: flex;
+		align-items: center;
+		height: 100%;
+	}
+`;
+
+export const IconContainer = styled.div`
+	&&& {
+		margin-left: 1rem;
+		margin-right: 1rem;
 	}
 `;

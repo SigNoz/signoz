@@ -3,15 +3,9 @@ import { Alerts } from 'types/api/alerts/getAll';
 import { Value } from '../Filter';
 import groupBy from 'lodash/groupBy';
 import { Dictionary } from 'lodash';
-import { Card, Row } from 'antd';
+import TableRowComponent from './TableRow';
 
-import {
-	Container,
-	TableHeader,
-	TableHeaderContainer,
-	TableRow,
-	TableCell,
-} from './styles';
+import { Container, TableHeader, TableHeaderContainer } from './styles';
 
 const FilteredTable = ({
 	selectedGroup,
@@ -47,7 +41,7 @@ const FilteredTable = ({
 
 			{tags.map((e, index) => {
 				const tagsValue = e.split('+').filter((e) => e);
-				const tagsAlert = tagsAlerts[index];
+				const tagsAlert: Alerts[] = tagsAlerts[index];
 
 				if (tagsAlert.length === 0) {
 					return null;
@@ -61,20 +55,11 @@ const FilteredTable = ({
 					valueArray.push(objects[e]);
 				});
 
-				console.log(keysArray, valueArray);
+				const tags = tagsValue
+					.map((e) => keysArray[valueArray.findIndex((value) => value === e) || 0])
+					.map((e, index) => `${e}:${tagsValue[index]}`);
 
-				return (
-					<Row>
-						<TableRow>
-							<TableCell>asd</TableCell>
-							<TableCell>asd</TableCell>
-							<TableCell>asd</TableCell>
-							<TableCell>asd</TableCell>
-							<TableCell>asd</TableCell>
-							<TableCell>asd</TableCell>
-						</TableRow>
-					</Row>
-				);
+				return <TableRowComponent tagsAlert={tagsAlert} tags={tags} />;
 			})}
 		</Container>
 	);

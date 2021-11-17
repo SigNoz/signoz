@@ -13,14 +13,7 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 		allInitialAlerts,
 	);
 
-	const [selectedGroup, setSelectedGroup] = useState<Value[]>([
-		{
-			value: 'service_name',
-		},
-		{
-			value: 'alertname',
-		},
-	]);
+	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
 	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
 
 	return (
