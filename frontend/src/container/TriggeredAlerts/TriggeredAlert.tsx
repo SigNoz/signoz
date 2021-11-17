@@ -13,12 +13,15 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 		allInitialAlerts,
 	);
 
-	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
-	const [selectedFilter, setSelectedFilter] = useState<Value[]>([
+	const [selectedGroup, setSelectedGroup] = useState<Value[]>([
 		{
-			value: 'alertname : HighCpuLoad_1m',
+			value: 'service_name',
+		},
+		{
+			value: 'alertname',
 		},
 	]);
+	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
 
 	return (
 		<div>
