@@ -438,6 +438,7 @@ func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 
+	id := mux.Vars(r)["id"]
 	decoder := json.NewDecoder(r.Body)
 
 	var postData map[string]string
@@ -448,7 +449,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := (*aH.reader).EditChannel(postData["data"])
+	_, apiErrorObj := (*aH.reader).EditChannel(postData["data"], id)
 
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)

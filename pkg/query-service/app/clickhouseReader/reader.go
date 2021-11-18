@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,6 +18,7 @@ import (
 	"time"
 
 	sd_config "github.com/prometheus/prometheus/discovery/config"
+	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
 
@@ -762,61 +762,77 @@ func getChannelType(receiver *model.Receiver) string {
 	return ""
 }
 
-func (r *ClickHouseReader) EditChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+func (r *ClickHouseReader) EditChannel(channel_settings string, id string) (*model.Receiver, *model.ApiError) {
+
+	idInt, _ := strconv.Atoi(id)
+
+	receiver := &model.Receiver{}
+
+	err := yaml.Unmarshal([]byte(channel_settings), receiver)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse request body into Receiver type")}
+	}
+
+	channel, apiErrObj := r.GetChannel(id)
+
+	if apiErrObj != nil {
+		return nil, apiErrObj
+	}
+	if channel.Name != receiver.Name {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("channel name cannot be changed")}
+	}
 
 	tx, err := r.localDB.Begin()
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	values := map[string]string{"data": channel_settings}
-	jsonValue, _ := json.Marshal(values)
-
-	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(jsonValue))
-
-	if err != nil {
-		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
-		zap.S().Error(err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		zap.S().Errorf("Error in getting response body of API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	receiverResponse := &model.ReceiverResponse{}
-	if err := json.Unmarshal(body, receiverResponse); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing response of API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	channel_type := getChannelType(&receiverResponse.Data)
+	channel_type := getChannelType(receiver)
 
 	{
-		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
+		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4;`)
+
 		if err != nil {
-			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			zap.S().Errorf("Error in preparing statement for UPDATE to notification_channels\n", err)
 			tx.Rollback()
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 		defer stmt.Close()
 
-		if _, err := stmt.Exec(time.Now(), time.Now(), receiverResponse.Data.Name, channel_type, channel_settings); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+		if _, err := stmt.Exec(time.Now(), channel_type, channel_settings, idInt); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for UPDATE to notification_channels\n", err)
 			tx.Rollback() // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
+	}
+
+	values := map[string]string{"data": channel_settings}
+	jsonValue, _ := json.Marshal(values)
+
+	req, err := http.NewRequest(http.MethodPut, constants.ALERTMANAGER_API_PREFIX+"v1/receivers", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		zap.S().Errorf("Error in creating new update request to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(req)
+
+	if err != nil {
+		zap.S().Errorf("Error in update API call to alertmanager/v1/receivers\n", err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if response.StatusCode > 299 {
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
+		zap.S().Error(err)
+		tx.Rollback()
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	err = tx.Commit()
@@ -825,7 +841,7 @@ func (r *ClickHouseReader) EditChannel(channel_settings string) (*model.Receiver
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	return &receiverResponse.Data, nil
+	return receiver, nil
 
 }
 
@@ -835,6 +851,30 @@ func (r *ClickHouseReader) CreateChannel(channel_settings string) (*model.Receiv
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+	receiver := &model.Receiver{}
+
+	err = yaml.Unmarshal([]byte(channel_settings), receiver)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse request body into Receiver type")}
+	}
+
+	channel_type := getChannelType(receiver)
+
+	{
+		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			tx.Rollback()
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, channel_settings); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
 
 	values := map[string]string{"data": channel_settings}
 	jsonValue, _ := json.Marshal(values)
@@ -853,46 +893,13 @@ func (r *ClickHouseReader) CreateChannel(channel_settings string) (*model.Receiv
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	defer response.Body.Close()
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		zap.S().Errorf("Error in getting response body of API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	receiverResponse := &model.ReceiverResponse{}
-	if err := json.Unmarshal(body, receiverResponse); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing response of API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	channel_type := getChannelType(&receiverResponse.Data)
-
-	{
-		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
-		if err != nil {
-			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
-			tx.Rollback()
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		if _, err := stmt.Exec(time.Now(), time.Now(), receiverResponse.Data.Name, channel_type, channel_settings); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-
 	err = tx.Commit()
 	if err != nil {
 		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	return &receiverResponse.Data, nil
+	return receiver, nil
 
 }
 
@@ -979,16 +986,6 @@ func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	return nil
-}
-func (r *ClickHouseReader) deleteRuleFromDB(id int) error {
-	dbQuery := fmt.Sprintf("DELETE FROM rules WHERE id=%d;", id)
-
-	_, err := r.localDB.Exec(dbQuery)
-
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

@@ -58,6 +58,7 @@ require (
 	google.golang.org/api v0.51.0 // indirect
 	google.golang.org/grpc/examples v0.0.0-20210803221256-6ba56c814be7 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 
 )
 

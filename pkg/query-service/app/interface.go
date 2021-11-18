@@ -13,7 +13,7 @@ type Reader interface {
 	GetChannels() (*[]model.ChannelItem, *model.ApiError)
 	DeleteChannel(id string) *model.ApiError
 	CreateChannel(channel_settings string) (*model.Receiver, *model.ApiError)
-	EditChannel(channel_settings string) (*model.Receiver, *model.ApiError)
+	EditChannel(channel_settings string, id string) (*model.Receiver, *model.ApiError)
 
 	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
 	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
