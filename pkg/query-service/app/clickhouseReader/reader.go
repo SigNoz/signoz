@@ -18,7 +18,11 @@ import (
 	"time"
 
 	sd_config "github.com/prometheus/prometheus/discovery/config"
+<<<<<<< HEAD
 	"gopkg.in/yaml.v2"
+=======
+	"github.com/prometheus/prometheus/scrape"
+>>>>>>> alertmanager-discovery
 
 	"github.com/pkg/errors"
 
@@ -112,16 +116,6 @@ func (r *ClickHouseReader) Start() {
 
 	logger := promlog.New(logLevel)
 
-	opts := promql.EngineOpts{
-		Logger:        log.With(logger, "component", "query engine"),
-		Reg:           nil,
-		MaxConcurrent: 20,
-		MaxSamples:    50000000,
-		Timeout:       time.Duration(2 * time.Minute),
-	}
-
-	queryEngine := promql.NewEngine(opts)
-
 	startTime := func() (int64, error) {
 		return int64(promModel.Latest), nil
 
@@ -176,7 +170,7 @@ func (r *ClickHouseReader) Start() {
 	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
 	// notifier.ApplyConfig(conf)
 
-	ExternalURL, err := computeExternalURL("", "0.0.0.0:9090")
+	ExternalURL, err := computeExternalURL("", "0.0.0.0:3000")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
 		os.Exit(2)
@@ -185,6 +179,24 @@ func (r *ClickHouseReader) Start() {
 	cfg.outageTolerance = promModel.Duration(time.Duration.Hours(1))
 	cfg.forGracePeriod = promModel.Duration(time.Duration.Minutes(10))
 	cfg.resendDelay = promModel.Duration(time.Duration.Minutes(1))
+
+	ctxScrape, cancelScrape := context.WithCancel(context.Background())
+	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
+
+	ctxNotify, cancelNotify := context.WithCancel(context.Background())
+	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
+
+	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
+
+	opts := promql.EngineOpts{
+		Logger:        log.With(logger, "component", "query engine"),
+		Reg:           nil,
+		MaxConcurrent: 20,
+		MaxSamples:    50000000,
+		Timeout:       time.Duration(2 * time.Minute),
+	}
+
+	queryEngine := promql.NewEngine(opts)
 
 	ruleManager := rules.NewManager(&rules.ManagerOptions{
 		Appendable:      fanoutStorage,
@@ -200,14 +212,19 @@ func (r *ClickHouseReader) Start() {
 		ResendDelay:     time.Duration(cfg.resendDelay),
 	})
 
-	ctxNotify, cancelNotify := context.WithCancel(context.Background())
-	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
-
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
 		// The Scrape and notifier managers need to reload before the Discovery manager as
 		// they need to read the most updated config when receiving the new targets list.
 		notifier.ApplyConfig,
+		scrapeManager.ApplyConfig,
+		func(cfg *config.Config) error {
+			c := make(map[string]sd_config.ServiceDiscoveryConfig)
+			for _, v := range cfg.ScrapeConfigs {
+				c[v.JobName] = v.ServiceDiscoveryConfig
+			}
+			return discoveryManagerScrape.ApplyConfig(c)
+		},
 		func(cfg *config.Config) error {
 			c := make(map[string]sd_config.ServiceDiscoveryConfig)
 			for _, v := range cfg.AlertingConfig.AlertmanagerConfigs {
@@ -254,6 +271,20 @@ func (r *ClickHouseReader) Start() {
 
 	var g group.Group
 	{
+		// Scrape discovery manager.
+		g.Add(
+			func() error {
+				err := discoveryManagerScrape.Run()
+				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
+				return err
+			},
+			func(err error) {
+				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
+				cancelScrape()
+			},
+		)
+	}
+	{
 		// Notify discovery manager.
 		g.Add(
 			func() error {
@@ -264,6 +295,28 @@ func (r *ClickHouseReader) Start() {
 			func(err error) {
 				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
 				cancelNotify()
+			},
+		)
+	}
+	{
+		// Scrape manager.
+		g.Add(
+			func() error {
+				// When the scrape manager receives a new targets list
+				// it needs to read a valid config for each job.
+				// It depends on the config being in sync with the discovery manager so
+				// we wait until the config is fully loaded.
+				<-reloadReady.C
+
+				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
+				level.Info(logger).Log("msg", "Scrape manager stopped")
+				return err
+			},
+			func(err error) {
+				// Scrape manager needs to be stopped before closing the local TSDB
+				// so that it doesn't try to write samples to a closed storage.
+				level.Info(logger).Log("msg", "Stopping scrape manager...")
+				scrapeManager.Stop()
 			},
 		)
 	}
