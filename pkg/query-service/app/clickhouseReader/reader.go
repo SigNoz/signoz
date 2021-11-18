@@ -898,68 +898,140 @@ func (r *ClickHouseReader) CreateChannel(channel_settings string) (*model.Receiv
 
 func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 
-	dbQuery := fmt.Sprintf("INSERT into rules (updated_at, data) VALUES ('%s', '%s')", time.Now(), rule)
-
-	res, err := r.localDB.Exec(dbQuery)
-
+	tx, err := r.localDB.Begin()
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	id, _ := res.LastInsertId()
-	groupName := fmt.Sprintf("%d-groupname", id)
+	var lastInsertId int64
 
-	// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "add")
+	{
+		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
 
-	err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+		result, err := stmt.Exec(time.Now(), rule)
+		if err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		lastInsertId, _ = result.LastInsertId()
 
+		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
+
+		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+
+		if err != nil {
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+	err = tx.Commit()
 	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for INSERT to rules\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-
 	return nil
 }
 
 func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
-	dbQuery := fmt.Sprintf("Update rules SET updated_at='%s', data='%s' WHERE id=%d;", time.Now(), rule, idInt)
+
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	{
+		stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
+
+		if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+
+		groupName := fmt.Sprintf("%d-groupname", idInt)
+
+		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+
+		if err != nil {
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for UPDATE to rules\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+func (r *ClickHouseReader) deleteRuleFromDB(id int) error {
+	dbQuery := fmt.Sprintf("DELETE FROM rules WHERE id=%d;", id)
 
 	_, err := r.localDB.Exec(dbQuery)
 
 	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return err
 	}
-
-	groupName := fmt.Sprintf("%d-groupname", idInt)
-
-	err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
-
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
 	return nil
 }
 
 func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
 
 	idInt, _ := strconv.Atoi(id)
-	dbQuery := fmt.Sprintf("DELETE FROM rules WHERE id=%d;", idInt)
 
-	_, err := r.localDB.Exec(dbQuery)
-
+	tx, err := r.localDB.Begin()
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	groupName := fmt.Sprintf("%d-groupname", idInt)
+	{
+		stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
 
-	rule := "" // dummy rule to pass to function
-	// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
-	err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
 
+		if _, err := stmt.Exec(idInt); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+
+		groupName := fmt.Sprintf("%d-groupname", idInt)
+
+		rule := "" // dummy rule to pass to function
+		// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
+		err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+
+		if err != nil {
+			tx.Rollback()
+			zap.S().Errorf("Error in deleting rule from rulemanager...\n", err)
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+
+	}
+
+	err = tx.Commit()
 	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for deleting rules\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
