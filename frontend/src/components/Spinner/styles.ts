@@ -12,5 +12,5 @@ export const SpinerStyle = styled.div<Props>`
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	height: ${({ height = '100vh' }) => height};
+	height: ${({ height = '100vh' }): number | string => height};
 `;

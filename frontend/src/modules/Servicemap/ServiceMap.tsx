@@ -34,8 +34,8 @@ const Container = styled.div`
 interface ServiceMapProps extends RouteComponentProps<any> {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
-	getServiceMapItems: Function;
-	getDetailedServiceMapItems: Function;
+	getServiceMapItems: (time: GlobalTime) => void;
+	getDetailedServiceMapItems: (time: GlobalTime) => void;
 }
 interface graphNode {
 	id: string;
@@ -51,7 +51,7 @@ export interface graphDataType {
 	links: graphLink[];
 }
 
-const ServiceMap = (props: ServiceMapProps) => {
+const ServiceMap = (props: ServiceMapProps): JSX.Element => {
 	const fgRef = useRef();
 
 	const {
@@ -68,7 +68,7 @@ const ServiceMap = (props: ServiceMapProps) => {
 		 */
 		getServiceMapItems(globalTime);
 		getDetailedServiceMapItems(globalTime);
-	}, [globalTime]);
+	}, [globalTime, getServiceMapItems, getDetailedServiceMapItems]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
@@ -77,12 +77,14 @@ const ServiceMap = (props: ServiceMapProps) => {
 		return <Spinner size="large" tip="Loading..." />;
 	}
 
-	const zoomToService = (value: string) => {
-		fgRef && fgRef.current.zoomToFit(700, getZoomPx(), (e) => e.id === value);
+	const zoomToService = (value: string): void => {
+		fgRef &&
+			fgRef.current &&
+			fgRef.current.zoomToFit(700, getZoomPx(), (e) => e.id === value);
 	};
 
 	const zoomToDefault = () => {
-		fgRef && fgRef.current.zoomToFit(100, 120);
+		fgRef && fgRef.current && fgRef.current.zoomToFit(100, 120);
 	};
 
 	const { nodes, links } = getGraphData(serviceMap);

@@ -6,17 +6,16 @@ import { AppState } from 'store/reducers';
 const { Option } = Select;
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-
+import {
+	GetTraceVisualAggregates,
+	GetTraceVisualAggregatesProps,
+} from 'store/actions/trace/getTraceVisualAgrregates';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { aggregation_options, entity } from './config';
 import { Card, CustomVisualizationsTitle, FormItem, Space } from './styles';
 import TraceCustomGraph from './TraceCustomGraph';
-import {
-	GetTraceVisualAggregates,
-	GetTraceVisualAggregatesProps,
-} from 'store/actions/trace/getTraceVisualAgrregates';
 
 const TraceCustomVisualisation = ({
 	getTraceVisualAggregates,

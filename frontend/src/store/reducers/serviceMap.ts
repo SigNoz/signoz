@@ -5,7 +5,10 @@ const initialState: serviceMapStore = {
 	services: [],
 };
 
-export const ServiceMapReducer = (state = initialState, action: Action) => {
+export const ServiceMapReducer = (
+	state = initialState,
+	action: Action,
+): serviceMapStore => {
 	switch (action.type) {
 		case ActionTypes.getServiceMapItems:
 			return {

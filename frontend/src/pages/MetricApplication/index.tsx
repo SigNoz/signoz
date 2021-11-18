@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -38,10 +38,10 @@ const MetricsApplication = ({
 			});
 		}
 
-		return () => {
+		return (): void => {
 			resetInitialData();
 		};
-	}, [servicename, getInitialData, selectedTime]);
+	}, [servicename, getInitialData, selectedTime, resetInitialData]);
 
 	if (metricsApplicationLoading) {
 		return <Spinner tip="Loading..." />;

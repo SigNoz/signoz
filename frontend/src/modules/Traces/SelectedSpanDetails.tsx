@@ -54,7 +54,7 @@ const CardContainer = styled(Card)`
 	}
 `;
 
-const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
+const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 	const spanTags = props.data?.tags;
 	const service = props.data?.name?.split(':')[0];
 	const operation = props.data?.name?.split(':')[1];

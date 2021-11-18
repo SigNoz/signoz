@@ -9,8 +9,8 @@ import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
 	GetInitialTraceData,
-	ResetRaceData,
 	GetInitialTraceDataProps,
+	ResetRaceData,
 } from 'store/actions/trace';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -40,7 +40,7 @@ const TraceDetail = ({
 		return (): void => {
 			resetTraceData();
 		};
-	}, [getInitialTraceData, loading, selectedTime]);
+	}, [getInitialTraceData, loading, selectedTime, resetTraceData]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;

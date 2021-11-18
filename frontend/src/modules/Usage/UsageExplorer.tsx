@@ -14,8 +14,13 @@ import { Card } from './styles';
 
 interface UsageExplorerProps {
 	usageData: usageDataItem[];
-	getUsageData: Function;
-	getServicesList: Function;
+	getUsageData: (
+		minTime: number,
+		maxTime: number,
+		selectedInterval: any,
+		selectedService: string,
+	) => void;
+	getServicesList: (time: GlobalTime) => void;
 	globalTime: GlobalTime;
 	servicesList: servicesListItem[];
 	totalCount: number;
@@ -47,27 +52,30 @@ const interval = [
 	},
 ];
 
-const _UsageExplorer = (props: UsageExplorerProps) => {
+const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
 	const { loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const {
+		getServicesList,
+		getUsageData,
+		globalTime,
+		servicesList,
+		totalCount,
+		usageData,
+	} = props;
 
 	useEffect(() => {
 		if (selectedTime && selectedInterval) {
 			const maxTime = new Date().getTime() * 1000000;
 			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
 
-			props.getUsageData(
-				minTime,
-				maxTime,
-				selectedInterval!.value,
-				selectedService,
-			);
+			getUsageData(minTime, maxTime, selectedInterval.value, selectedService);
 		}
-	}, [selectedTime, selectedInterval, selectedService]);
+	}, [selectedTime, selectedInterval, selectedService, getUsageData]);
 
 	useEffect(() => {
 		/*
@@ -75,16 +83,16 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
 		if (loading) {
-			props.getServicesList(props.globalTime);
+			getServicesList(globalTime);
 		}
-	}, [loading, props]);
+	}, [loading, globalTime, getServicesList]);
 
 	const data = {
-		labels: props.usageData.map((s) => new Date(s.timestamp / 1000000)),
+		labels: usageData.map((s) => new Date(s.timestamp / 1000000)),
 		datasets: [
 			{
 				label: 'Span Count',
-				data: props.usageData.map((s) => s.count),
+				data: usageData.map((s) => s.count),
 				backgroundColor: 'rgba(255, 99, 132, 0.2)',
 				borderColor: 'rgba(255, 99, 132, 1)',
 				borderWidth: 2,
@@ -94,11 +102,10 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 
 	return (
 		<React.Fragment>
-			{/* PNOTE - TODO - Keep it in reponsive row column tab */}
 			<Space style={{ marginTop: 40, marginLeft: 20 }}>
 				<Space>
 					<Select
-						onSelect={(value, option) => {
+						onSelect={(value): void => {
 							setSelectedTime(
 								timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
 							);
@@ -106,42 +113,48 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 						value={selectedTime.label}
 					>
 						{timeDaysOptions.map(({ value, label }) => (
-							<Option value={value}>{label}</Option>
+							<Option key={value} value={value}>
+								{label}
+							</Option>
 						))}
 					</Select>
 				</Space>
 				<Space>
 					<Select
-						onSelect={(value) => {
+						onSelect={(value): void => {
 							setSelectedInterval(
-								interval.filter((item) => item!.value === parseInt(value))[0],
+								interval.filter((item) => item.value === parseInt(value))[0],
 							);
 						}}
-						value={selectedInterval!.label}
+						value={selectedInterval.label}
 					>
 						{interval
-							.filter((interval) => interval!.applicableOn.includes(selectedTime))
+							.filter((interval) => interval.applicableOn.includes(selectedTime))
 							.map((item) => (
-								<Option value={item!.value}>{item!.label}</Option>
+								<Option key={item.label} value={item.value}>
+									{item.label}
+								</Option>
 							))}
 					</Select>
 				</Space>
 
 				<Space>
 					<Select
-						onSelect={(value) => {
+						onSelect={(value): void => {
 							setSelectedService(value);
 						}}
 						value={selectedService || 'All Services'}
 					>
 						<Option value={''}>All Services</Option>
-						{props.servicesList.map((service) => (
-							<Option value={service.serviceName}>{service.serviceName}</Option>
+						{servicesList.map((service) => (
+							<Option key={service.serviceName} value={service.serviceName}>
+								{service.serviceName}
+							</Option>
 						))}
 					</Select>
 				</Space>
 
-				{isOnboardingSkipped() && props.totalCount === 0 ? (
+				{isOnboardingSkipped() && totalCount === 0 ? (
 					<Space
 						style={{
 							width: '100%',
@@ -163,7 +176,7 @@ const _UsageExplorer = (props: UsageExplorerProps) => {
 					</Space>
 				) : (
 					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
-						{`Total count is ${props.totalCount}`}
+						{`Total count is ${totalCount}`}
 					</Space>
 				)}
 			</Space>
@@ -191,7 +204,7 @@ const mapStateToProps = (
 		totalCount: totalCount,
 		usageData: state.usageDate,
 		globalTime: state.globalTime,
-		servicesList: state.metricsData.serviceList,
+		servicesList: state.metricsData.serviceList || [],
 	};
 };
 

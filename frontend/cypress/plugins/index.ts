@@ -19,6 +19,8 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-module.exports = (on, config: Cypress.ConfigOptions): void => {};
+module.exports = (): void => {
+	return undefined;
+};
 
 export {};

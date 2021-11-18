@@ -20,7 +20,7 @@ export const getUsageData = (
 	step: number,
 	service: string,
 ) => {
-	return async (dispatch: Dispatch) => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
 			maxTime,
 		)}&step=${step}&service=${service ? service : ''}`;

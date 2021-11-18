@@ -11,7 +11,7 @@ const spanlistinstance: spanList = { events: [], segmentID: '', columns: [] };
 export const tracesReducer = (
 	state: traceResponseNew = { '0': spanlistinstance },
 	action: Action,
-) => {
+): traceResponseNew => {
 	switch (action.type) {
 		case ActionTypes.fetchTraces:
 			return action.payload;
@@ -23,7 +23,7 @@ export const tracesReducer = (
 export const traceItemReducer = (
 	state: spansWSameTraceIDResponse = { '0': spanlistinstance },
 	action: Action,
-) => {
+): spansWSameTraceIDResponse => {
 	switch (action.type) {
 		case ActionTypes.fetchTraceItem:
 			return action.payload;
