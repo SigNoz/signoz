@@ -18,11 +18,8 @@ import (
 	"time"
 
 	sd_config "github.com/prometheus/prometheus/discovery/config"
-<<<<<<< HEAD
-	"gopkg.in/yaml.v2"
-=======
 	"github.com/prometheus/prometheus/scrape"
->>>>>>> alertmanager-discovery
+	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
 
