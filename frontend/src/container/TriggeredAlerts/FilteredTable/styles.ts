@@ -1,5 +1,5 @@
-import styled from 'styled-components';
 import { Card } from 'antd';
+import styled from 'styled-components';
 
 export const TableHeader = styled(Card)`
 	&&& {
@@ -41,9 +41,9 @@ interface Props {
 export const TableCell = styled.div<Props>`
 	&&& {
 		flex: 1;
-		min-width: ${(props) => props.minWidth};
+		min-width: ${(props): string => props.minWidth || ''};
 		display: flex;
-		justify-content: center;
+		justify-content: flex-start;
 		align-items: center;
 	}
 `;

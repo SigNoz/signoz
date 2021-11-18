@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from 'react';
-import { TableCell, TableRow, StatusContainer, IconContainer } from './styles';
-import ExapandableRow from './ExapandableRow';
-import { PlusSquareOutlined, MinusSquareOutlined } from '@ant-design/icons';
-import { Button, Tag } from 'antd';
+import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import { Tag } from 'antd';
+import React, { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
+
+import ExapandableRow from './ExapandableRow';
+import { IconContainer, StatusContainer, TableCell, TableRow } from './styles';
 
 const TableRowComponent = ({
 	tags,
@@ -11,7 +12,7 @@ const TableRowComponent = ({
 }: TableRowComponentProps): JSX.Element => {
 	const [isClicked, setIsClicked] = useState<boolean>(false);
 
-	const onClickHandler = () => {
+	const onClickHandler = (): void => {
 		setIsClicked((state) => !state);
 	};
 
@@ -36,9 +37,9 @@ const TableRowComponent = ({
 				<TableCell></TableCell>
 				<TableCell></TableCell>
 				<TableCell></TableCell>
-				<TableCell minWidth="200px">
+				{/* <TableCell minWidth="200px">
 					<Button type="primary">Resume Group</Button>
-				</TableCell>
+				</TableCell> */}
 			</TableRow>
 			{isClicked && <ExapandableRow allAlerts={tagsAlert} />}
 		</div>

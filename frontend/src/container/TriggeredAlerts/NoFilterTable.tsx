@@ -1,21 +1,21 @@
-import React from 'react';
-
-import { Alerts } from 'types/api/alerts/getAll';
-import { ColumnsType } from 'antd/lib/table';
+/* eslint-disable react/display-name */
 import { Button, Table, Tag, Typography } from 'antd';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-
+import { ColumnsType } from 'antd/lib/table';
 import Status from 'container/ListAlertRules/TableComponents/Status';
+import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
+import React from 'react';
+import { Alerts } from 'types/api/alerts/getAll';
 
-const NoFilterTable = ({ allAlerts }: NoFilterTableProps) => {
+const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 	const columns: ColumnsType<Alerts> = [
 		{
 			title: 'Status',
 			dataIndex: 'labels',
 			key: 'status',
-			sorter: (a, b) => b.labels.severity.length - a.labels.severity.length,
-			render: (value: Alerts['labels']) => {
+			sorter: (a, b): number =>
+				b.labels.severity.length - a.labels.severity.length,
+			render: (value: Alerts['labels']): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				// const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
@@ -33,7 +33,7 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps) => {
 			title: 'Alert Name',
 			dataIndex: 'labels',
 			key: 'alertName',
-			render: (data) => {
+			render: (data): JSX.Element => {
 				const name = data?.alertname || '';
 				return <Typography>{name}</Typography>;
 			},
@@ -42,18 +42,18 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps) => {
 			title: 'Tags',
 			dataIndex: 'labels',
 			key: 'tags',
-			render: (labels) => {
+			render: (labels): JSX.Element => {
 				const objectKeys = Object.keys(labels);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
 				if (withOutSeverityKeys.length === 0) {
-					return '-';
+					return <Typography>-</Typography>;
 				}
 
 				return (
 					<>
 						{withOutSeverityKeys.map((e) => {
-							return <Tag color="magenta">{`${e} : ${labels[e]}`}</Tag>;
+							return <Tag key={e} color="magenta">{`${e} : ${labels[e]}`}</Tag>;
 						})}
 					</>
 				);
@@ -63,7 +63,7 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps) => {
 			title: 'Severity',
 			dataIndex: 'labels',
 			key: 'severity',
-			render: (value) => {
+			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
 				const severityValue = value[withSeverityKey];
@@ -74,7 +74,7 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps) => {
 		{
 			title: 'Firing Since',
 			dataIndex: 'startsAt',
-			render: (date) => {
+			render: (date): JSX.Element => {
 				const formatedDate = new Date(date);
 
 				return (
@@ -84,20 +84,20 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps) => {
 				);
 			},
 		},
-		{
-			title: 'Actions',
-			dataIndex: 'fingerprint',
-			key: 'actions',
-			render: () => {
-				return (
-					<div>
-						<Button type="link">Edit</Button>
-						<Button type="link">Delete</Button>
-						<Button type="link">Pause</Button>
-					</div>
-				);
-			},
-		},
+		// {
+		// 	title: 'Actions',
+		// 	dataIndex: 'fingerprint',
+		// 	key: 'actions',
+		// 	render: (): JSX.Element => {
+		// 		return (
+		// 			<div>
+		// 				<Button type="link">Edit</Button>
+		// 				<Button type="link">Delete</Button>
+		// 				<Button type="link">Pause</Button>
+		// 			</div>
+		// 		);
+		// 	},
+		// },
 	];
 
 	return <Table dataSource={allAlerts} columns={columns} />;

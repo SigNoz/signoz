@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { Alerts } from 'types/api/alerts/getAll';
 import { Group } from 'types/api/alerts/getGroups';
+
 import { Value } from './Filter';
-import NoFilterTable from './NoFilterTable';
 import Filter from './Filter';
 import FilteredTable from './FilteredTable';
+import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';
-import { Alerts } from 'types/api/alerts/getAll';
 
 const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 	const allInitialAlerts = allAlerts?.alerts || [];
@@ -28,6 +29,7 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 					setSelectedAllAlerts,
 				}}
 			/>
+
 			{selectedFilter.length === 0 && selectedGroup.length === 0 ? (
 				<NoTableContainer>
 					<NoFilterTable allAlerts={allInitialAlerts} />

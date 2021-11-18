@@ -1,11 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import getGroupApi from 'api/alerts/getGroup';
-import { PayloadProps } from 'types/api/alerts/getGroups';
-import { State } from 'hooks/useFetch';
 import Spinner from 'components/Spinner';
+import { State } from 'hooks/useFetch';
+import React, { useCallback, useEffect, useState } from 'react';
+import { PayloadProps } from 'types/api/alerts/getGroups';
+
 import TriggerComponent from './TriggeredAlert';
 
-const TriggeredAlerts = () => {
+const TriggeredAlerts = (): JSX.Element => {
 	const [groupState, setGroupState] = useState<State<PayloadProps>>({
 		error: false,
 		errorMessage: '',

@@ -1,12 +1,13 @@
-import React from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
-import { TableRow, TableCell, TableHeaderContainer } from './styles';
+import { Tag, Typography } from 'antd';
 import Status from 'container/ListAlertRules/TableComponents/Status';
-import { Tag, Button, Typography } from 'antd';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
+import React from 'react';
+import { Alerts } from 'types/api/alerts/getAll';
 
-const ExapandableRow = ({ allAlerts }: ExapandableRowProps) => (
+import { TableCell, TableRow } from './styles';
+
+const ExapandableRow = ({ allAlerts }: ExapandableRowProps): JSX.Element => (
 	<>
 		{allAlerts.map((alert) => {
 			const labels = alert.labels;
@@ -51,13 +52,13 @@ const ExapandableRow = ({ allAlerts }: ExapandableRowProps) => (
 						</div>
 					</TableCell>
 
-					<TableCell>
+					{/* <TableCell>
 						<TableHeaderContainer>
 							<Button type="link">Edit</Button>
 							<Button type="link">Delete</Button>
 							<Button type="link">Pause</Button>
 						</TableHeaderContainer>
-					</TableCell>
+					</TableCell> */}
 				</TableRow>
 			);
 		})}

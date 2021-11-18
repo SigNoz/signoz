@@ -1,11 +1,11 @@
+import { Dictionary } from 'lodash';
+import groupBy from 'lodash/groupBy';
 import React, { useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
-import { Value } from '../Filter';
-import groupBy from 'lodash/groupBy';
-import { Dictionary } from 'lodash';
-import TableRowComponent from './TableRow';
 
+import { Value } from '../Filter';
 import { Container, TableHeader, TableHeaderContainer } from './styles';
+import TableRowComponent from './TableRow';
 
 const FilteredTable = ({
 	selectedGroup,
@@ -16,7 +16,7 @@ const FilteredTable = ({
 			groupBy(allAlerts, (obj) =>
 				selectedGroup.map((e) => obj.labels[`${e.value}`]).join('+'),
 			),
-		[selectedGroup],
+		[selectedGroup, allAlerts],
 	);
 
 	const tags = Object.keys(allGroupsAlerts);
@@ -28,15 +28,15 @@ const FilteredTable = ({
 		'Severity',
 		'Firing Since',
 		'Tags',
-		'Actions',
+		// 'Actions',
 	];
 
 	return (
 		<Container>
 			<TableHeaderContainer>
-				{headers.map((header) => {
-					return <TableHeader>{header}</TableHeader>;
-				})}
+				{headers.map((header) => (
+					<TableHeader key={header}>{header}</TableHeader>
+				))}
 			</TableHeaderContainer>
 
 			{tags.map((e, index) => {
@@ -59,7 +59,7 @@ const FilteredTable = ({
 					.map((e) => keysArray[valueArray.findIndex((value) => value === e) || 0])
 					.map((e, index) => `${e}:${tagsValue[index]}`);
 
-				return <TableRowComponent tagsAlert={tagsAlert} tags={tags} />;
+				return <TableRowComponent key={e} tagsAlert={tagsAlert} tags={tags} />;
 			})}
 		</Container>
 	);
