@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
 import { Button } from 'antd';
-import { Alerts } from 'types/api/alerts/getAll';
 import { NotificationInstance } from 'antd/lib/notification/index';
-
-import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
+import React, { useState } from 'react';
+import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
+import { Alerts } from 'types/api/alerts/getAll';
 
-const DeleteAlert = ({ id, setData, notifications }: DeleteAlertProps) => {
+const DeleteAlert = ({
+	id,
+	setData,
+	notifications,
+}: DeleteAlertProps): JSX.Element => {
 	const [deleteAlertState, setDeleteAlertState] = useState<
 		State<DeleteAlertPayloadProps>
 	>({
@@ -18,7 +21,7 @@ const DeleteAlert = ({ id, setData, notifications }: DeleteAlertProps) => {
 		payload: undefined,
 	});
 
-	const onDeleteHandler = async (id: number) => {
+	const onDeleteHandler = async (id: number): Promise<void> => {
 		try {
 			setDeleteAlertState((state) => ({
 				...state,
@@ -71,7 +74,7 @@ const DeleteAlert = ({ id, setData, notifications }: DeleteAlertProps) => {
 			<Button
 				disabled={deleteAlertState.loading || false}
 				loading={deleteAlertState.loading || false}
-				onClick={() => onDeleteHandler(id)}
+				onClick={(): Promise<void> => onDeleteHandler(id)}
 				type="link"
 			>
 				Delete

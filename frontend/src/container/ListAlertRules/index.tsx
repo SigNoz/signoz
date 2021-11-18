@@ -1,22 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Tag, Typography, notification } from 'antd';
+/* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
+import { Button, notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
-
-import { ButtonContainer } from './styles';
-import history from 'lib/history';
-import ROUTES from 'constants/routes';
-import { Alerts } from 'types/api/alerts/getAll';
-
-import Status from './TableComponents/Status';
-import useFetch from 'hooks/useFetch';
 import getAll from 'api/alerts/getAll';
-import { PayloadProps } from 'types/api/alerts/getAll';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
+import useFetch from 'hooks/useFetch';
+import history from 'lib/history';
+import React, { useCallback, useEffect, useState } from 'react';
 import { generatePath } from 'react-router';
-import DeleteAlert from './DeleteAlert';
+import { Alerts } from 'types/api/alerts/getAll';
+import { PayloadProps } from 'types/api/alerts/getAll';
 
-const ListAlertRules = () => {
+import DeleteAlert from './DeleteAlert';
+import { ButtonContainer } from './styles';
+import Status from './TableComponents/Status';
+
+const ListAlertRules = (): JSX.Element => {
 	const onClickNewAlertHandler = useCallback(() => {
 		history.push(ROUTES.ALERTS_NEW);
 	}, []);
@@ -38,17 +38,17 @@ const ListAlertRules = () => {
 		) {
 			setData(payload);
 		}
-	}, [loading]);
-
-	if (loading || payload === undefined) {
-		return <Spinner height="75vh" tip="Loading Rules..." />;
-	}
+	}, [loading, data, payload]);
 
 	if (error) {
 		return <div>{errorMessage}</div>;
 	}
 
-	const onEditHandler = (id: string) => {
+	if (loading || payload === undefined) {
+		return <Spinner height="75vh" tip="Loading Rules..." />;
+	}
+
+	const onEditHandler = (id: string): void => {
 		history.push(
 			generatePath(ROUTES.EDIT_ALERTS, {
 				ruleId: id,
@@ -61,8 +61,9 @@ const ListAlertRules = () => {
 			title: 'Status',
 			dataIndex: 'labels',
 			key: 'labels',
-			sorter: (a, b) => b.labels.severity.length - a.labels.severity.length,
-			render: (value: Alerts['labels']) => {
+			sorter: (a, b): number =>
+				b.labels.severity.length - a.labels.severity.length,
+			render: (value: Alerts['labels']): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				// const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
@@ -80,12 +81,15 @@ const ListAlertRules = () => {
 			title: 'Alert Name',
 			dataIndex: 'name',
 			key: 'name',
+			sorter: (a, b): number => a.name.length - b.name.length,
 		},
 		{
 			title: 'Severity',
 			dataIndex: 'labels',
 			key: 'severity',
-			render: (value) => {
+			sorter: (a, b): number =>
+				a.labels['severity'].length - b.labels['severity'].length,
+			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
 				const severityValue = value[withSeverityKey];
@@ -98,18 +102,30 @@ const ListAlertRules = () => {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			render: (value) => {
+			sorter: (a, b): number => {
+				const alength = Object.keys(a.labels).filter((e) => e !== 'severity')
+					.length;
+				const blength = Object.keys(b.labels).filter((e) => e !== 'severity')
+					.length;
+
+				return blength - alength;
+			},
+			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
 
 				if (withOutSeverityKeys.length === 0) {
-					return '-';
+					return <Typography>-</Typography>;
 				}
 
 				return (
 					<>
 						{withOutSeverityKeys.map((e) => {
-							return <Tag color="magenta">{e}</Tag>;
+							return (
+								<Tag key={e} color="magenta">
+									{e}
+								</Tag>
+							);
 						})}
 					</>
 				);
@@ -119,15 +135,15 @@ const ListAlertRules = () => {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			render: (id: Alerts['id']) => {
+			render: (id: Alerts['id']): JSX.Element => {
 				return (
 					<>
 						<DeleteAlert notifications={notifications} setData={setData} id={id} />
 
-						<Button onClick={() => onEditHandler(id.toString())} type="link">
+						<Button onClick={(): void => onEditHandler(id.toString())} type="link">
 							Edit
 						</Button>
-						<Button type="link">Pause</Button>
+						{/* <Button type="link">Pause</Button> */}
 					</>
 				);
 			},

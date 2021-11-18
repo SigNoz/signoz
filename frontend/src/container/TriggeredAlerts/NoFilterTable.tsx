@@ -33,6 +33,7 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 			title: 'Alert Name',
 			dataIndex: 'labels',
 			key: 'alertName',
+			sorter: (a, b): number => a.name.length - b.name.length,
 			render: (data): JSX.Element => {
 				const name = data?.alertname || '';
 				return <Typography>{name}</Typography>;
@@ -63,6 +64,11 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 			title: 'Severity',
 			dataIndex: 'labels',
 			key: 'severity',
+			sorter: (a, b): number => {
+				const severityValueA = a.labels['severity'];
+				const severityValueB = b.labels['severity'];
+				return severityValueA.length - severityValueB.length;
+			},
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';

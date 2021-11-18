@@ -35,13 +35,21 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 					<NoFilterTable allAlerts={allInitialAlerts} />
 				</NoTableContainer>
 			) : (
-				<FilteredTable
-					{...{
-						allAlerts: selectedAllAlerts,
-						selectedFilter,
-						selectedGroup,
-					}}
-				/>
+				<>
+					{selectedFilter.length !== 0 && selectedGroup.length === 0 ? (
+						<NoTableContainer>
+							<NoFilterTable allAlerts={selectedAllAlerts} />
+						</NoTableContainer>
+					) : (
+						<FilteredTable
+							{...{
+								allAlerts: selectedAllAlerts,
+								selectedFilter,
+								selectedGroup,
+							}}
+						/>
+					)}
+				</>
 			)}
 		</div>
 	);

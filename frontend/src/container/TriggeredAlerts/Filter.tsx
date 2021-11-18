@@ -71,7 +71,7 @@ const Filter = ({
 				allAlerts.filter((e) => filteredAlerts.has(e.fingerprint)),
 			);
 		},
-		[],
+		[allAlerts, setSelectedAllAlerts, setSelectedFilter],
 	);
 
 	const uniqueLabels: Array<string> = useMemo(() => {
