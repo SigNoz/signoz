@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo } from 'react';
 import { Tag } from 'antd';
-import { Select, Container } from './styles';
+import React, { useCallback, useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
+
+import { Container, Select } from './styles';
 
 const Filter = ({
 	setSelectedFilter,
@@ -11,13 +12,16 @@ const Filter = ({
 	selectedFilter,
 	setSelectedAllAlerts,
 }: FilterProps): JSX.Element => {
-	const onChangeSelectGroupHandler = useCallback((value: string[], option) => {
-		setSelectedGroup(
-			value.map((e) => ({
-				value: e,
-			})),
-		);
-	}, []);
+	const onChangeSelectGroupHandler = useCallback(
+		(value: string[], option) => {
+			setSelectedGroup(
+				value.map((e) => ({
+					value: e,
+				})),
+			);
+		},
+		[setSelectedGroup],
+	);
 
 	const onChangeSelectedFilterHandler = useCallback(
 		(value: string[], option) => {
@@ -45,7 +49,7 @@ const Filter = ({
 			const filteredKey = tags.reduce((acc, curr) => [...acc, curr[0]], []);
 			const filteredValue = tags.reduce((acc, curr) => [...acc, curr[1]], []);
 
-			filteredKey.map((key, index) =>
+			filteredKey.forEach((key, index) =>
 				objectMap.set(key.trim(), filteredValue[index].trim()),
 			);
 
