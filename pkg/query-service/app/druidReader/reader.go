@@ -65,7 +65,7 @@ func (druid *DruidReader) GetChannel(id string) (*model.ChannelItem, *model.ApiE
 func (druid *DruidReader) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 }
-func (druid *DruidReader) CreateChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+func (druid *DruidReader) CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError) {
 
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 

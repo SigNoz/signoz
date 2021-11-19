@@ -895,20 +895,15 @@ func (r *ClickHouseReader) EditChannel(channel_settings string, id string) (*mod
 
 }
 
-func (r *ClickHouseReader) CreateChannel(channel_settings string) (*model.Receiver, *model.ApiError) {
+func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError) {
 
 	tx, err := r.localDB.Begin()
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	receiver := &model.Receiver{}
-
-	err = yaml.Unmarshal([]byte(channel_settings), receiver)
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse request body into Receiver type")}
-	}
 
 	channel_type := getChannelType(receiver)
+	receiverString, _ := json.Marshal(receiver)
 
 	{
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
@@ -919,17 +914,14 @@ func (r *ClickHouseReader) CreateChannel(channel_settings string) (*model.Receiv
 		}
 		defer stmt.Close()
 
-		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, channel_settings); err != nil {
+		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString)); err != nil {
 			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
 			tx.Rollback() // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 	}
 
-	values := map[string]string{"data": channel_settings}
-	jsonValue, _ := json.Marshal(values)
-
-	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(jsonValue))
+	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(receiverString))
 
 	if err != nil {
 		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
