@@ -41,3 +41,6 @@ frontend/cypress.env.json
 
 frontend/*.env
 pkg/query-service/signoz.db
+
+# ignore database files after commenting frontend section
+deploy/docker/clickhouse-setup/**

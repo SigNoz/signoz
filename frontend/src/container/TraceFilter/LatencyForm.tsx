@@ -38,7 +38,6 @@ const LatencyForm = ({
 			const { getFieldValue } = form;
 			const minValue = getFieldValue('min');
 			const maxValue = getFieldValue('max');
-
 			if (value <= maxValue && value >= minValue) {
 				return Promise.resolve();
 			}
@@ -120,12 +119,22 @@ const LatencyForm = ({
 				>
 					<Row>
 						<Col span={12}>
-							<Form.Item name="min" label="Min (in ms)" rules={[validateMinValue]}>
+							<Form.Item
+								name="min"
+								label="Min (in ms)"
+								rules={[validateMinValue]}
+								dependencies={['max']}
+							>
 								<InputNumber />
 							</Form.Item>
 						</Col>
 						<Col span={12}>
-							<Form.Item name="max" label="Max (in ms)" rules={[validateMaxValue]}>
+							<Form.Item
+								name="max"
+								label="Max (in ms)"
+								rules={[validateMaxValue]}
+								dependencies={['min']}
+							>
 								<InputNumber />
 							</Form.Item>
 						</Col>

@@ -1,4 +1,4 @@
-import { Button, Input, Typography, notification } from 'antd';
+import { Button, Input, notification, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -182,7 +182,7 @@ const TraceList = ({
 			});
 		} else {
 			form_basefilter.setFieldsValue({
-				service: '',
+				service: undefined,
 			});
 		}
 
@@ -192,7 +192,7 @@ const TraceList = ({
 			});
 		} else {
 			form_basefilter.setFieldsValue({
-				operation: '',
+				operation: undefined,
 			});
 		}
 
@@ -202,7 +202,7 @@ const TraceList = ({
 			});
 		} else {
 			form_basefilter.setFieldsValue({
-				spanKind: '',
+				spanKind: undefined,
 			});
 		}
 
