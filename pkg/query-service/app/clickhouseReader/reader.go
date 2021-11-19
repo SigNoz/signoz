@@ -19,7 +19,6 @@ import (
 
 	sd_config "github.com/prometheus/prometheus/discovery/config"
 	"github.com/prometheus/prometheus/scrape"
-	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
 
@@ -812,16 +811,9 @@ func getChannelType(receiver *model.Receiver) string {
 	return ""
 }
 
-func (r *ClickHouseReader) EditChannel(channel_settings string, id string) (*model.Receiver, *model.ApiError) {
+func (r *ClickHouseReader) EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError) {
 
 	idInt, _ := strconv.Atoi(id)
-
-	receiver := &model.Receiver{}
-
-	err := yaml.Unmarshal([]byte(channel_settings), receiver)
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse request body into Receiver type")}
-	}
 
 	channel, apiErrObj := r.GetChannel(id)
 
@@ -838,6 +830,7 @@ func (r *ClickHouseReader) EditChannel(channel_settings string, id string) (*mod
 	}
 
 	channel_type := getChannelType(receiver)
+	receiverString, _ := json.Marshal(receiver)
 
 	{
 		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4;`)
@@ -849,17 +842,14 @@ func (r *ClickHouseReader) EditChannel(channel_settings string, id string) (*mod
 		}
 		defer stmt.Close()
 
-		if _, err := stmt.Exec(time.Now(), channel_type, channel_settings, idInt); err != nil {
+		if _, err := stmt.Exec(time.Now(), channel_type, string(receiverString), idInt); err != nil {
 			zap.S().Errorf("Error in Executing prepared statement for UPDATE to notification_channels\n", err)
 			tx.Rollback() // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 	}
 
-	values := map[string]string{"data": channel_settings}
-	jsonValue, _ := json.Marshal(values)
-
-	req, err := http.NewRequest(http.MethodPut, constants.ALERTMANAGER_API_PREFIX+"v1/receivers", bytes.NewBuffer(jsonValue))
+	req, err := http.NewRequest(http.MethodPut, constants.ALERTMANAGER_API_PREFIX+"v1/receivers", bytes.NewBuffer(receiverString))
 
 	if err != nil {
 		zap.S().Errorf("Error in creating new update request to alertmanager/v1/receivers\n", err)

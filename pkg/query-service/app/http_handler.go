@@ -440,17 +440,23 @@ func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
-	decoder := json.NewDecoder(r.Body)
 
-	var postData map[string]string
-	err := decoder.Decode(&postData)
-
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	_, apiErrorObj := (*aH.reader).EditChannel(postData["data"], id)
+	receiver := &model.Receiver{}
+	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
+		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	_, apiErrorObj := (*aH.reader).EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
 		aH.respondError(w, apiErrorObj, nil)

@@ -70,7 +70,7 @@ func (druid *DruidReader) CreateChannel(receiver *model.Receiver) (*model.Receiv
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 
 }
-func (druid *DruidReader) EditChannel(channel_settings string, id string) (*model.Receiver, *model.ApiError) {
+func (druid *DruidReader) EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError) {
 
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 
