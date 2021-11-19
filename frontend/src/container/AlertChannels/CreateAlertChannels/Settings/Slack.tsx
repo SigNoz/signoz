@@ -1,6 +1,6 @@
-import React from 'react';
 import { Form, Input } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
+import React from 'react';
 
 const Slack = () => {
 	const [form] = Form.useForm();

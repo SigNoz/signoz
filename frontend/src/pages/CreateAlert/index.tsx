@@ -1,13 +1,14 @@
-import React, { useCallback, useRef, useState } from 'react';
-import Editor from 'components/Editor';
-import { Title, ButtonContainer } from './styles';
-import { Button, notification } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
-import { State } from 'hooks/useFetch';
+import { Button, notification } from 'antd';
 import createAlertsApi from 'api/alerts/create';
-import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create';
-import history from 'lib/history';
+import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
+import { State } from 'hooks/useFetch';
+import history from 'lib/history';
+import React, { useCallback, useRef, useState } from 'react';
+import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create';
+
+import { ButtonContainer, Title } from './styles';
 
 const CreateAlert = () => {
 	const value = useRef<string>(

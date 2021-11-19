@@ -2,16 +2,23 @@ import { Tabs } from 'antd';
 import React, { useState } from 'react';
 
 const { TabPane } = Tabs;
-import GeneralSettings from 'container/GeneralSettings';
 import AlertChannels from 'container/AlertChannels';
+import GeneralSettings from 'container/GeneralSettings';
 
 const SettingsPage = (): JSX.Element => {
+	const [selectedTab, setSelectedTab] = useState<SettingTab>('Alert Channels');
+
 	return (
-		<Tabs defaultActiveKey="2">
-			<TabPane tab="General" key="1">
+		<Tabs
+			onChange={(value): void => {
+				setSelectedTab(value as SettingTab);
+			}}
+			activeKey={selectedTab}
+		>
+			<TabPane tab="General" key="General">
 				<GeneralSettings />
 			</TabPane>
-			<TabPane tab="Alert Channels" key="2">
+			<TabPane tab="Alert Channels" key="Alert Channels">
 				<AlertChannels />
 			</TabPane>
 			{/* <TabPane tab="Users" key="3">
@@ -20,5 +27,7 @@ const SettingsPage = (): JSX.Element => {
 		</Tabs>
 	);
 };
+
+type SettingTab = 'General' | 'Alert Channels';
 
 export default SettingsPage;

@@ -1,8 +1,9 @@
-import React from 'react';
+/* eslint-disable react/display-name */
+import { Button, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import { Table, Button } from 'antd';
+import React from 'react';
 
-const AlertChannels = () => {
+const AlertChannels = (): JSX.Element => {
 	const channels: Channels[] = [
 		{
 			name: 'Slack Alert Devops Channel',
@@ -32,7 +33,7 @@ const AlertChannels = () => {
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
-			render: () => {
+			render: (): JSX.Element => {
 				return (
 					<>
 						<Button type="link">Edit</Button>

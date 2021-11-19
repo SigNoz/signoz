@@ -1,5 +1,5 @@
-import styled from 'styled-components';
 import { Select as SelectComponent } from 'antd';
+import styled from 'styled-components';
 
 export const Select = styled(SelectComponent)`
 	&&& {

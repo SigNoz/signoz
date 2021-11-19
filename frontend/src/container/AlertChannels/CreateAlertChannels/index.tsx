@@ -1,9 +1,9 @@
-import { Typography, Form, Input, Select } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Form, Input, Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
-import { Button } from './styles';
+import React, { useCallback, useState } from 'react';
 
 import SlackSettings from './Settings/Slack';
+import { Button } from './styles';
 
 const CreateAlertChannels = ({
 	onToggleHandler,

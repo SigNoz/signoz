@@ -1,12 +1,13 @@
-import React, { useCallback, useState } from 'react';
-import { ButtonContainer } from './styles';
-import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import React, { useCallback, useState } from 'react';
+
 import AlertChannlesComponent from './AlertChannels';
 import CreateAlertChannels from './CreateAlertChannels';
+import { ButtonContainer } from './styles';
 
-const AlertChannels = () => {
-	const [isNewAlert, setIsNewAlert] = useState<boolean>(true);
+const AlertChannels = (): JSX.Element => {
+	const [isNewAlert, setIsNewAlert] = useState<boolean>(false);
 
 	const onToggleHandler = useCallback(() => {
 		setIsNewAlert((state) => !state);

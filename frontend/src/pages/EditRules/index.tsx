@@ -1,11 +1,10 @@
-import React, { useCallback, useRef } from 'react';
-
-import { useParams } from 'react-router';
-import useFetch from 'hooks/useFetch';
 import get from 'api/alerts/get';
-import { PayloadProps, Props } from 'types/api/alerts/get';
 import Spinner from 'components/Spinner';
 import EditRulesContainer from 'container/EditRules';
+import useFetch from 'hooks/useFetch';
+import React, { useCallback, useRef } from 'react';
+import { useParams } from 'react-router';
+import { PayloadProps, Props } from 'types/api/alerts/get';
 
 const EditRules = () => {
 	const { ruleId } = useParams<EditRulesParam>();

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
 import * as monaco from 'monaco-editor';
+import React, { useEffect, useRef } from 'react';
+
 import { Container } from './styles';
 
 const Editor = ({ value }: EditorProps) => {

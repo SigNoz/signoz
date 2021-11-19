@@ -3,8 +3,11 @@ import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
+	CreateNewAlerts,
 	DashboardPage,
+	EditRulesPage,
 	InstrumentationPage,
+	ListAllALertsPage,
 	NewDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
@@ -15,9 +18,6 @@ import {
 	TraceDetailPages,
 	TraceGraphPage,
 	UsageExplorerPage,
-	EditRulesPage,
-	ListAllALertsPage,
-	CreateNewAlerts,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [

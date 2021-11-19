@@ -1,12 +1,11 @@
-import React from 'react';
-import ListAlertRules from 'container/ListAlertRules';
-import TriggeredAlerts from 'container/TriggeredAlerts';
-import MapAlertChannels from 'container/MapAlertChannels';
-
 import { Tabs } from 'antd';
+import ListAlertRules from 'container/ListAlertRules';
+// import MapAlertChannels from 'container/MapAlertChannels';
+import TriggeredAlerts from 'container/TriggeredAlerts';
+import React from 'react';
 const { TabPane } = Tabs;
 
-const AllAlertList = () => {
+const AllAlertList = (): JSX.Element => {
 	return (
 		<Tabs defaultActiveKey="Alert Rules">
 			<TabPane tabKey="Alert Rules" tab="Alert Rules" key="Alert Rules">
@@ -21,13 +20,13 @@ const AllAlertList = () => {
 				<TriggeredAlerts />
 			</TabPane>
 
-			<TabPane
+			{/* <TabPane
 				tabKey="Map Alert Channels"
 				key="Map Alert Channels"
 				tab="Map Alert Channels"
 			>
 				<MapAlertChannels />
-			</TabPane>
+			</TabPane> */}
 		</Tabs>
 	);
 };
