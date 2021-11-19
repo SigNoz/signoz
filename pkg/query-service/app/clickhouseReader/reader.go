@@ -653,10 +653,12 @@ func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError
 
 func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
 
-	values := map[string]string{"data": channel.Data}
-	jsonValue, _ := json.Marshal(values)
+	receiver := &model.Receiver{}
+	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
+		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
 
-	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(jsonValue))
+	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
 
 	if err != nil {
 		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
