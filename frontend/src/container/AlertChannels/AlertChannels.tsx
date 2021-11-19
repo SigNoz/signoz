@@ -1,25 +1,18 @@
 /* eslint-disable react/display-name */
-import { Button, Table } from 'antd';
+import { Button, notification, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import React from 'react';
+import React, { useState } from 'react';
+import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
-const AlertChannels = (): JSX.Element => {
-	const channels: Channels[] = [
-		{
-			name: 'Slack Alert Devops Channel',
-			type: 'Slack',
-			id: 1,
-		},
-		{
-			name: 'Email Alert Oncall Channel',
-			type: 'Email',
-			id: 2,
-		},
-	];
+import Delete from './Delete';
+
+const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
+	const [notifications, Element] = notification.useNotification();
+	const [channels, setChannels] = useState<Channels[]>(allChannels);
 
 	const columns: ColumnsType<Channels> = [
 		{
-			title: 'Status',
+			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
 		},
@@ -33,24 +26,26 @@ const AlertChannels = (): JSX.Element => {
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
-			render: (): JSX.Element => {
-				return (
-					<>
-						<Button type="link">Edit</Button>
-						<Button type="link">Delete</Button>
-					</>
-				);
-			},
+			render: (id): JSX.Element => (
+				<>
+					<Button type="link">Edit</Button>
+					<Delete id={id} setChannels={setChannels} notifications={notifications} />
+				</>
+			),
 		},
 	];
 
-	return <Table dataSource={channels} columns={columns} />;
+	return (
+		<>
+			{Element}
+
+			<Table rowKey="id" dataSource={channels} columns={columns} />
+		</>
+	);
 };
 
-interface Channels {
-	name: string;
-	type: string;
-	id: number;
+interface AlertChannelsProps {
+	allChannels: PayloadProps;
 }
 
 export default AlertChannels;

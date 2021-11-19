@@ -21,9 +21,6 @@ const SettingsPage = (): JSX.Element => {
 			<TabPane tab="Alert Channels" key="Alert Channels">
 				<AlertChannels />
 			</TabPane>
-			{/* <TabPane tab="Users" key="3">
-				Users
-			</TabPane> */}
 		</Tabs>
 	);
 };

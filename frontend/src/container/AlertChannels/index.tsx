@@ -1,5 +1,8 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Typography } from 'antd';
+import getAll from 'api/channels/getAll';
+import Spinner from 'components/Spinner';
+import useFetch from 'hooks/useFetch';
 import React, { useCallback, useState } from 'react';
 
 import AlertChannlesComponent from './AlertChannels';
@@ -12,6 +15,16 @@ const AlertChannels = (): JSX.Element => {
 	const onToggleHandler = useCallback(() => {
 		setIsNewAlert((state) => !state);
 	}, []);
+
+	const { loading, payload, error, errorMessage } = useFetch(getAll);
+
+	if (error) {
+		return <Typography>{errorMessage}</Typography>;
+	}
+
+	if (loading || payload === undefined) {
+		return <Spinner tip="Loading Channels.." height={'90vh'} />;
+	}
 
 	return (
 		<>
@@ -26,7 +39,7 @@ const AlertChannels = (): JSX.Element => {
 			{isNewAlert ? (
 				<CreateAlertChannels onToggleHandler={onToggleHandler} />
 			) : (
-				<AlertChannlesComponent />
+				<AlertChannlesComponent allChannels={payload} />
 			)}
 		</>
 	);
