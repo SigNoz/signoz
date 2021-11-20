@@ -1,7 +1,10 @@
 /* eslint-disable react/display-name */
 import { Button, notification, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useState } from 'react';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
+import React, { useCallback, useState } from 'react';
+import { generatePath } from 'react-router';
 import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
 import Delete from './Delete';
@@ -9,6 +12,14 @@ import Delete from './Delete';
 const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
 	const [notifications, Element] = notification.useNotification();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
+
+	const onClickEditHandler = useCallback((id: string) => {
+		history.replace(
+			generatePath(ROUTES.CHANNELS_EDIT, {
+				id,
+			}),
+		);
+	}, []);
 
 	const columns: ColumnsType<Channels> = [
 		{
@@ -26,9 +37,11 @@ const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
-			render: (id): JSX.Element => (
+			render: (id: string): JSX.Element => (
 				<>
-					<Button type="link">Edit</Button>
+					<Button onClick={(): void => onClickEditHandler(id)} type="link">
+						Edit
+					</Button>
 					<Delete id={id} setChannels={setChannels} notifications={notifications} />
 				</>
 			),

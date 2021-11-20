@@ -15,6 +15,8 @@ const ROUTES = {
 	EDIT_ALERTS: '/alerts/edit/:ruleId',
 	LIST_ALL_LISTS: '/alerts',
 	ALERTS_NEW: '/alerts/new',
+	CHANNELS_NEW: '/setting/channels/new',
+	CHANNELS_EDIT: '/setting/channels/edit/:id',
 };
 
 export default ROUTES;

@@ -2,18 +2,17 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
 import useFetch from 'hooks/useFetch';
-import React, { useCallback, useState } from 'react';
+import history from 'lib/history';
+import React, { useCallback } from 'react';
 
 import AlertChannlesComponent from './AlertChannels';
-import CreateAlertChannels from './CreateAlertChannels';
 import { ButtonContainer } from './styles';
 
 const AlertChannels = (): JSX.Element => {
-	const [isNewAlert, setIsNewAlert] = useState<boolean>(false);
-
 	const onToggleHandler = useCallback(() => {
-		setIsNewAlert((state) => !state);
+		history.push(ROUTES.CHANNELS_NEW);
 	}, []);
 
 	const { loading, payload, error, errorMessage } = useFetch(getAll);
@@ -28,19 +27,13 @@ const AlertChannels = (): JSX.Element => {
 
 	return (
 		<>
-			{!isNewAlert && (
-				<ButtonContainer>
-					<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
-						New Alert Channel
-					</Button>
-				</ButtonContainer>
-			)}
+			<ButtonContainer>
+				<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
+					New Alert Channel
+				</Button>
+			</ButtonContainer>
 
-			{isNewAlert ? (
-				<CreateAlertChannels onToggleHandler={onToggleHandler} />
-			) : (
-				<AlertChannlesComponent allChannels={payload} />
-			)}
+			<AlertChannlesComponent allChannels={payload} />
 		</>
 	);
 };

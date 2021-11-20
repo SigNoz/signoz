@@ -2,7 +2,7 @@ import { Input } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
 
-import { SlackChannel } from '../config';
+import { SlackChannel } from '../../CreateAlertChannels/config';
 
 const { TextArea } = Input;
 

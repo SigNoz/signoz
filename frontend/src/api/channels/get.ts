@@ -2,24 +2,13 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/channels/createSlack';
+import { PayloadProps, Props } from 'types/api/channels/get';
 
-const create = async (
+const get = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/channels', {
-			name: props.title,
-			slack_configs: [
-				{
-					send_resolved: true,
-					api_url: props.api_url,
-					channel: props.channel,
-					title: props.title,
-					text: props.text,
-				},
-			],
-		});
+		const response = await axios.get(`/channels/${props.id}`);
 
 		return {
 			statusCode: 200,
@@ -32,4 +21,4 @@ const create = async (
 	}
 };
 
-export default create;
+export default get;

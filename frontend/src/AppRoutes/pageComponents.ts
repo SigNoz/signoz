@@ -82,3 +82,12 @@ export const ListAllALertsPage = Loadable(
 export const CreateNewAlerts = Loadable(
 	() => import(/* webpackChunkName: "Create Alerts" */ 'pages/CreateAlert'),
 );
+
+export const CreateAlertChannelAlerts = Loadable(
+	() =>
+		import(/* webpackChunkName: "Create Channels" */ 'pages/AlertChannelCreate'),
+);
+
+export const EditAlertChannelsAlerts = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/ChannelsEdit'),
+);

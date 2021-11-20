@@ -2,14 +2,14 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/channels/createSlack';
+import { PayloadProps, Props } from 'types/api/channels/editSlack';
 
-const create = async (
+const editSlack = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/channels', {
-			name: props.title,
+		const response = await axios.put('/channels', {
+			name: props.name,
 			slack_configs: [
 				{
 					send_resolved: true,
@@ -32,4 +32,4 @@ const create = async (
 	}
 };
 
-export default create;
+export default editSlack;
