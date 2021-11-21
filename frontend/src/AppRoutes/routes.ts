@@ -3,6 +3,7 @@ import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
+	AllAlertChannels,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
@@ -112,6 +113,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.CHANNELS_EDIT,
 		exact: true,
 		component: EditAlertChannelsAlerts,
+	},
+	{
+		path: ROUTES.ALL_CHANNELS,
+		exact: true,
+		component: AllAlertChannels,
 	},
 ];
 

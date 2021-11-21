@@ -26,6 +26,10 @@ const SettingsWrapper = ({
 			if (value === 'General') {
 				history.push(ROUTES.SETTINGS);
 			}
+
+			if (value === 'Alert Channels') {
+				history.push(ROUTES.ALL_CHANNELS);
+			}
 		},
 		[toggleSettingsTab],
 	);

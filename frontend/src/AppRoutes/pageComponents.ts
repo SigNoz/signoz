@@ -91,3 +91,7 @@ export const CreateAlertChannelAlerts = Loadable(
 export const EditAlertChannelsAlerts = Loadable(
 	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/ChannelsEdit'),
 );
+
+export const AllAlertChannels = Loadable(
+	() => import(/* webpackChunkName: "All Channels" */ 'pages/AllAlertChannels'),
+);
