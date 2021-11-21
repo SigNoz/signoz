@@ -33,6 +33,8 @@ const DeleteAlert = ({
 			});
 
 			if (response.statusCode === 200) {
+				setData((state) => state.filter((alert) => alert.id !== id));
+
 				setDeleteAlertState((state) => ({
 					...state,
 					loading: false,
@@ -41,8 +43,6 @@ const DeleteAlert = ({
 				notifications.success({
 					message: 'Success',
 				});
-
-				setData((state) => state.filter((alert) => alert.id !== id));
 			} else {
 				setDeleteAlertState((state) => ({
 					...state,
