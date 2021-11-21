@@ -47,7 +47,7 @@ const CreateAlertChannels = ({
 			} else {
 				notifications.error({
 					message: 'Error',
-					description: 'Error while creating the channel',
+					description: response.error || 'Error while creating the channel',
 				});
 			}
 			setSavingState(false);
