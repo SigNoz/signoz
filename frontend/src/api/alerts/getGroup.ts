@@ -14,7 +14,7 @@ const getGroups = async (
 			.join('&');
 
 		const response = await AxiosAlertManagerInstance.get(
-			`${apiV2}/alerts/groups?${queryParams}`,
+			`/alerts/groups?${queryParams}`,
 		);
 
 		return {

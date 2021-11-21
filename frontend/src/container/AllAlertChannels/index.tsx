@@ -30,8 +30,7 @@ const AlertChannels = (): JSX.Element => {
 		<>
 			<ButtonContainer>
 				<Paragraph ellipsis type="secondary">
-					The latest added channel is used as the default channel take for sending
-					alerts
+					The latest added channel is used as the default channel for sending alerts
 				</Paragraph>
 
 				<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
