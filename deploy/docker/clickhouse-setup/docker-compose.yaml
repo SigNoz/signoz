@@ -22,7 +22,7 @@ services:
         retries: 3
 
   alertmanager:
-    image: prom/alertmanager
+    image: signoz/alertmanager:ubuntu
     volumes:
       - ./alertmanager.yml:/prometheus/alertmanager.yml
       - ./data/alertmanager:/data
@@ -33,7 +33,7 @@ services:
       - 9093:9093
 
   query-service:
-    image: signoz/query-service:0.4.5
+    image: signoz/query-service:enable-alerts
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     ports:
@@ -54,7 +54,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.4.5
+    image: signoz/frontend:enable-alerts
     container_name: frontend
 
     depends_on:
