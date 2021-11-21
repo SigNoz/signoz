@@ -160,8 +160,9 @@ install_docker() {
         echo
         echo "Amazon Linux detected ... "
         echo
-        sudo yum install docker
-        sudo service docker start
+        # sudo yum install docker
+        # sudo service docker start
+        sudo amazon-linux-extras install docker
     else
 
         yum_cmd="sudo yum --assumeyes --quiet"
