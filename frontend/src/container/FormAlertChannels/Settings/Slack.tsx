@@ -64,9 +64,7 @@ const Slack = ({ setSelectedConfig }: SlackProps): JSX.Element => (
 );
 
 interface SlackProps {
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<SlackChannel> | undefined>
-	>;
+	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
 }
 
 export default Slack;

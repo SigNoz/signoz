@@ -12,8 +12,26 @@ const CreateAlertChannels = ({
 }: CreateAlertChannelsProps): JSX.Element => {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
-		text: `"{{ range .Alerts -}} *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\n*Description:* {{ .Annotations.description }}\n*Details:* {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }} {{ end }} {{ end }}"`,
-		title: `"[{{ .Status | toUpper }}{{ if eq .Status \\"firing\\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\\" \\"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\\"{{ $label.Value -}}\\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}"`,
+		text: ` {{ range .Alerts -}}
+     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
+
+     *Description:* {{ .Annotations.description }}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
+       {{ end }}
+     {{ end }}`,
+		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+       {{" "}}(
+       {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- range $index, $label := .SortedPairs -}}
+           {{ if $index }}, {{ end }}
+           {{- $label.Name }}="{{ $label.Value -}}"
+         {{- end }}
+       {{- end -}}
+       )
+     {{- end }}`,
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [notifications, NotificationElement] = notification.useNotification();

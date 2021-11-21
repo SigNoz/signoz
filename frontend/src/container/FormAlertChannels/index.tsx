@@ -69,7 +69,7 @@ const FormAlertChannels = ({
 					>
 						Save
 					</Button>
-					<Button onClick={onTestHandler}>Test</Button>
+					{/* <Button onClick={onTestHandler}>Test</Button> */}
 					<Button
 						onClick={(): void => {
 							history.replace(ROUTES.SETTINGS);

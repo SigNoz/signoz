@@ -7,7 +7,7 @@ const { TabPane } = Tabs;
 
 const AllAlertList = (): JSX.Element => {
 	return (
-		<Tabs defaultActiveKey="Triggered Alerts">
+		<Tabs defaultActiveKey="Alert Rules">
 			<TabPane tabKey="Alert Rules" tab="Alert Rules" key="Alert Rules">
 				<AllAlertRules />
 			</TabPane>
