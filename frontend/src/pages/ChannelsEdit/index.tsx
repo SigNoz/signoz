@@ -38,6 +38,7 @@ const ChannelsEdit = (): JSX.Element => {
 				initialValue: {
 					...channel,
 					type: 'slack',
+					name: value.name,
 				},
 			}}
 		/>

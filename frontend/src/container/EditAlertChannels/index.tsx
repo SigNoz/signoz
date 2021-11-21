@@ -10,6 +10,7 @@ import history from 'lib/history';
 import { Store } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
+import { useParams } from 'react-router';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleSettingsTab } from 'store/actions';
@@ -28,6 +29,7 @@ const EditAlertChannels = ({
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [notifications, NotificationElement] = notification.useNotification();
+	const { id } = useParams<{ id: string }>();
 
 	const [type, setType] = useState<ChannelType>('slack');
 
@@ -44,6 +46,7 @@ const EditAlertChannels = ({
 			send_resolved: true,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
+			id,
 		});
 
 		if (response.statusCode === 200) {
@@ -59,11 +62,11 @@ const EditAlertChannels = ({
 		} else {
 			notifications.error({
 				message: 'Error',
-				description: 'error while updating the Channels',
+				description: response.error || 'error while updating the Channels',
 			});
 		}
 		setSavingState(false);
-	}, [selectedConfig, notifications, toggleSettingsTab]);
+	}, [selectedConfig, notifications, toggleSettingsTab, id]);
 
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {
