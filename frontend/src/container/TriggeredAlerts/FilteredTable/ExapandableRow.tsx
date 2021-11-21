@@ -1,10 +1,10 @@
 import { Tag, Typography } from 'antd';
-import Status from 'container/ListAlertRules/TableComponents/Status';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import React from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
+import Status from '../TableComponents/AlertStatus';
 import { TableCell, TableRow } from './styles';
 
 const ExapandableRow = ({ allAlerts }: ExapandableRowProps): JSX.Element => (
@@ -21,13 +21,14 @@ const ExapandableRow = ({ allAlerts }: ExapandableRowProps): JSX.Element => (
 				<TableRow
 					bodyStyle={{
 						minHeight: '5rem',
+						marginLeft: '2rem',
 					}}
 					translate="yes"
 					hoverable
 					key={alert.fingerprint}
 				>
 					<TableCell>
-						<Status status={labels['severity']} />
+						<Status severity={alert.status.state} />
 					</TableCell>
 
 					<TableCell>
