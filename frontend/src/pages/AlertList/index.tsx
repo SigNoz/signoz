@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
-import AllAlertRules from 'container/AllAlertRules';
+import AllAlertRules from 'container/ListAlertRules';
 // import MapAlertChannels from 'container/MapAlertChannels';
-import TriggeredAlerts from 'container/AllAlerts';
+import TriggeredAlerts from 'container/TriggeredAlerts';
 import React from 'react';
 const { TabPane } = Tabs;
 

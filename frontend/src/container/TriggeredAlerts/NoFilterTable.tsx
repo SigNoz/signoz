@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import AlertStatus from 'container/AllAlerts/TableComponents/AlertStatus';
+import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import React from 'react';
