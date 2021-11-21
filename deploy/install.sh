@@ -160,8 +160,9 @@ install_docker() {
         echo
         echo "Amazon Linux detected ... "
         echo
-        sudo yum install docker
-        sudo service docker start
+        # sudo yum install docker
+        # sudo service docker start
+        sudo amazon-linux-extras install docker
     else
 
         yum_cmd="sudo yum --assumeyes --quiet"
@@ -313,28 +314,30 @@ check_os
 
 SIGNOZ_INSTALLATION_ID=$(curl -s 'https://api64.ipify.org')
 
-echo ""
+# echo ""
 
-echo -e "👉 ${RED}Two ways to go forward\n"  
-echo -e "${RED}1) ClickHouse as database (default)\n"  
-echo -e "${RED}2) Kafka + Druid as datastore \n"  
-read -p "⚙️  Enter your preference (1/2):" choice_setup 
+# echo -e "👉 ${RED}Two ways to go forward\n"  
+# echo -e "${RED}1) ClickHouse as database (default)\n"  
+# echo -e "${RED}2) Kafka + Druid as datastore \n"  
+# read -p "⚙️  Enter your preference (1/2):" choice_setup 
 
-while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
-do
-    # echo $choice_setup
-    echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
-    read -p "⚙️  Enter your preference (1/2):  " choice_setup 
-    # echo $choice_setup
-done
+# while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
+# do
+#     # echo $choice_setup
+#     echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
+#     read -p "⚙️  Enter your preference (1/2):  " choice_setup 
+#     # echo $choice_setup
+# done
 
-if [[ $choice_setup == "1" || $choice_setup == "" ]];then
-    setup_type='clickhouse'
-else
-    setup_type='druid'
-fi
+# if [[ $choice_setup == "1" || $choice_setup == "" ]];then
+#     setup_type='clickhouse'
+# else
+#     setup_type='druid'
+# fi
 
-echo -e "\n✅ ${CYAN}You have chosen: ${setup_type} setup\n"
+setup_type='clickhouse'
+
+# echo -e "\n✅ ${CYAN}You have chosen: ${setup_type} setup\n"
 
 # Run bye if failure happens
 trap bye EXIT
