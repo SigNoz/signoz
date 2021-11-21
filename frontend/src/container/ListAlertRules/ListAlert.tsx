@@ -32,23 +32,11 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 	const columns: ColumnsType<Alerts> = [
 		{
 			title: 'Status',
-			dataIndex: 'labels',
-			key: 'labels',
+			dataIndex: 'state',
+			key: 'state',
 			sorter: (a, b): number =>
 				b.labels.severity.length - a.labels.severity.length,
-			render: (value: Alerts['labels']): JSX.Element => {
-				const objectKeys = Object.keys(value);
-				// const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
-				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = value[withSeverityKey];
-				return (
-					<Status
-						{...{
-							status: severityValue,
-						}}
-					/>
-				);
-			},
+			render: (value): JSX.Element => <Status status={value} />,
 		},
 		{
 			title: 'Alert Name',

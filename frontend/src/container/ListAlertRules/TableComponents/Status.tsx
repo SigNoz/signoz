@@ -4,12 +4,12 @@ import { Alerts } from 'types/api/alerts/getAll';
 
 const Status = ({ status }: StatusProps): JSX.Element => {
 	switch (status) {
-		case 'warning': {
-			return <Tag color="warning">Warning</Tag>;
+		case 'inactive': {
+			return <Tag color="green">OK</Tag>;
 		}
 
-		case 'ok': {
-			return <Tag color="green">Ok</Tag>;
+		case 'pending': {
+			return <Tag color="orange">Pending</Tag>;
 		}
 
 		case 'firing': {
@@ -23,7 +23,7 @@ const Status = ({ status }: StatusProps): JSX.Element => {
 };
 
 interface StatusProps {
-	status: Alerts['labels']['severity'];
+	status: Alerts['state'];
 }
 
 export default Status;

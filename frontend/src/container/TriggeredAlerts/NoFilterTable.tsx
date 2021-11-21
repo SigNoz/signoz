@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
-import { Button, Table, Tag, Typography } from 'antd';
+import { Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import Status from 'container/ListAlertRules/TableComponents/Status';
+import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import React from 'react';
@@ -11,22 +11,13 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 	const columns: ColumnsType<Alerts> = [
 		{
 			title: 'Status',
-			dataIndex: 'labels',
+			dataIndex: 'status',
 			key: 'status',
 			sorter: (a, b): number =>
 				b.labels.severity.length - a.labels.severity.length,
-			render: (value: Alerts['labels']): JSX.Element => {
-				const objectKeys = Object.keys(value);
-				// const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
-				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = value[withSeverityKey];
-				return (
-					<Status
-						{...{
-							status: severityValue,
-						}}
-					/>
-				);
+			render: (value): JSX.Element => {
+				console.log(value);
+				return <AlertStatus severity={value.state} />;
 			},
 		},
 		{
@@ -106,7 +97,7 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 		// },
 	];
 
-	return <Table dataSource={allAlerts} columns={columns} />;
+	return <Table rowKey="alertName" dataSource={allAlerts} columns={columns} />;
 };
 
 interface NoFilterTableProps {

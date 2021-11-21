@@ -25,6 +25,7 @@ const FormAlertChannels = ({
 	NotificationElement,
 	title,
 	initialValue,
+	nameDisable = false,
 }: FormAlertChannelsProps): JSX.Element => {
 	return (
 		<>
@@ -35,6 +36,7 @@ const FormAlertChannels = ({
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<FormItem label="Name" labelAlign="left" name="name">
 					<Input
+						disabled={nameDisable}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -84,9 +86,7 @@ const FormAlertChannels = ({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<SlackChannel | undefined>>
-	>;
+	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onTestHandler: () => void;
 	onSaveHandler: (props: ChannelType) => void;
@@ -97,6 +97,7 @@ interface FormAlertChannelsProps {
 	>;
 	title: string;
 	initialValue: Store;
+	nameDisable?: boolean;
 }
 
 export default FormAlertChannels;

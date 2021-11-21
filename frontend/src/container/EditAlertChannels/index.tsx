@@ -22,9 +22,7 @@ const EditAlertChannels = ({
 	toggleSettingsTab,
 }: EditAlertChannelsProps): JSX.Element => {
 	const [formInstance] = Form.useForm();
-	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel | undefined>
-	>({
+	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
 		...initialValue,
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
@@ -95,6 +93,7 @@ const EditAlertChannels = ({
 					NotificationElement,
 					title: 'Edit Notification Channels',
 					initialValue,
+					nameDisable: true,
 				}}
 			/>
 		</>

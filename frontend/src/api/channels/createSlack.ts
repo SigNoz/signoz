@@ -9,7 +9,7 @@ const create = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/channels', {
-			name: props.title,
+			name: props.name,
 			slack_configs: [
 				{
 					send_resolved: true,

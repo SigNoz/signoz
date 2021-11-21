@@ -11,7 +11,10 @@ const CreateAlertChannels = ({
 	preType = 'slack',
 }: CreateAlertChannelsProps): JSX.Element => {
 	const [formInstance] = Form.useForm();
-	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>();
+	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
+		text: `"{{ range .Alerts -}} *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\n*Description:* {{ .Annotations.description }}\n*Details:* {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }} {{ end }} {{ end }}"`,
+		title: `"[{{ .Status | toUpper }}{{ if eq .Status \\"firing\\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\\" \\"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\\"{{ $label.Value -}}\\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}"`,
+	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [notifications, NotificationElement] = notification.useNotification();
 
@@ -80,8 +83,7 @@ const CreateAlertChannels = ({
 					title: 'New Notification Channels',
 					initialValue: {
 						type: type,
-						text: `"{{ range .Alerts -}} *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\n*Description:* {{ .Annotations.description }}\n*Details:* {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }} {{ end }} {{ end }}"`,
-						title: `"[{{ .Status | toUpper }}{{ if eq .Status \\"firing\\" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n{{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n{{\\" \\"}}(\n{{- with .CommonLabels.Remove .GroupLabels.Names }}\n    {{- range $index, $label := .SortedPairs -}}\n    {{ if $index }}, {{ end }}\n    {{- $label.Name }}=\\"{{ $label.Value -}}\\"\n    {{- end }}\n{{- end -}}\n)\n{{- end }}"`,
+						...selectedConfig,
 					},
 				}}
 			/>
