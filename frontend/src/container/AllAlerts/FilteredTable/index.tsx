@@ -4,19 +4,21 @@ import React, { useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import { Value } from '../Filter';
+import { FilterAlerts } from '../utils';
 import { Container, TableHeader, TableHeaderContainer } from './styles';
 import TableRowComponent from './TableRow';
 
 const FilteredTable = ({
 	selectedGroup,
 	allAlerts,
+	selectedFilter,
 }: FilteredTableProps): JSX.Element => {
 	const allGroupsAlerts: Dictionary<Alerts[]> = useMemo(
 		() =>
-			groupBy(allAlerts, (obj) =>
+			groupBy(FilterAlerts(allAlerts, selectedFilter), (obj) =>
 				selectedGroup.map((e) => obj.labels[`${e.value}`]).join('+'),
 			),
-		[selectedGroup, allAlerts],
+		[selectedGroup, allAlerts, selectedFilter],
 	);
 
 	const tags = Object.keys(allGroupsAlerts);
@@ -68,6 +70,7 @@ const FilteredTable = ({
 interface FilteredTableProps {
 	selectedGroup: Value[];
 	allAlerts: Alerts[];
+	selectedFilter: Value[];
 }
 
 export default FilteredTable;

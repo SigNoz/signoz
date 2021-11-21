@@ -8,7 +8,7 @@ const Severity = ({ severity }: SeverityProps): JSX.Element => {
 		}
 
 		case 'active': {
-			return <Tag color="green">Active</Tag>;
+			return <Tag color="red">Firing</Tag>;
 		}
 
 		case 'suppressed': {

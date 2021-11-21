@@ -10,10 +10,9 @@ const Filter = ({
 	allAlerts,
 	selectedGroup,
 	selectedFilter,
-	setSelectedAllAlerts,
 }: FilterProps): JSX.Element => {
 	const onChangeSelectGroupHandler = useCallback(
-		(value: string[], option) => {
+		(value: string[]) => {
 			setSelectedGroup(
 				value.map((e) => ({
 					value: e,
@@ -24,54 +23,14 @@ const Filter = ({
 	);
 
 	const onChangeSelectedFilterHandler = useCallback(
-		(value: string[], option) => {
+		(value: string[]) => {
 			setSelectedFilter(
 				value.map((e) => ({
 					value: e,
 				})),
 			);
-
-			const selectedFilter: string[] = [];
-
-			// filtering the value
-			value.forEach((e) => {
-				const valueKey = e.split(':');
-				if (valueKey.length === 2) {
-					selectedFilter.push(e);
-				}
-			});
-
-			// also we need to update the alerts
-			// [[key,value]]
-			const tags = selectedFilter.map((e) => e.split(':'));
-			const objectMap = new Map();
-
-			const filteredKey = tags.reduce((acc, curr) => [...acc, curr[0]], []);
-			const filteredValue = tags.reduce((acc, curr) => [...acc, curr[1]], []);
-
-			filteredKey.forEach((key, index) =>
-				objectMap.set(key.trim(), filteredValue[index].trim()),
-			);
-
-			const filteredAlerts: Set<string> = new Set();
-
-			allAlerts.forEach((alert) => {
-				const { labels } = alert;
-				Object.keys(labels).forEach((e) => {
-					const selectedKey = objectMap.get(e);
-
-					// alerts which does not have the key with value
-					if (selectedKey && labels[e] === selectedKey) {
-						filteredAlerts.add(alert.fingerprint);
-					}
-				});
-			});
-
-			setSelectedAllAlerts(
-				allAlerts.filter((e) => filteredAlerts.has(e.fingerprint)),
-			);
 		},
-		[allAlerts, setSelectedAllAlerts, setSelectedFilter],
+		[setSelectedFilter],
 	);
 
 	const uniqueLabels: Array<string> = useMemo(() => {
@@ -82,7 +41,7 @@ const Filter = ({
 			}),
 		);
 		return [...allLabelsSet];
-	}, []);
+	}, [allAlerts]);
 
 	const options = uniqueLabels.map((e) => ({
 		value: e,
@@ -96,7 +55,7 @@ const Filter = ({
 				mode="tags"
 				value={selectedFilter.map((e) => e.value)}
 				placeholder="Filter by tags status or severity or any other tag"
-				tagRender={(props) => {
+				tagRender={(props): JSX.Element => {
 					const { label, closable, onClose } = props;
 					return (
 						<Tag
@@ -118,7 +77,7 @@ const Filter = ({
 				defaultValue={selectedGroup.map((e) => e.value)}
 				showArrow
 				placeholder="Group by any tag"
-				tagRender={(props) => {
+				tagRender={(props): JSX.Element => {
 					const { label, closable, onClose } = props;
 					return (
 						<Tag
@@ -143,7 +102,6 @@ interface FilterProps {
 	allAlerts: Alerts[];
 	selectedGroup: Array<Value>;
 	selectedFilter: Array<Value>;
-	setSelectedAllAlerts: React.Dispatch<React.SetStateAction<Array<Alerts>>>;
 }
 
 export interface Value {

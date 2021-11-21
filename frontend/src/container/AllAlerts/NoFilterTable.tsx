@@ -1,13 +1,22 @@
 /* eslint-disable react/display-name */
 import { Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
+import AlertStatus from 'container/AllAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import React from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
-const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
+import { Value } from './Filter';
+import { FilterAlerts } from './utils';
+
+const NoFilterTable = ({
+	allAlerts,
+	selectedFilter,
+}: NoFilterTableProps): JSX.Element => {
+	const filteredAlerts = FilterAlerts(allAlerts, selectedFilter);
+
+	// need to add the filter
 	const columns: ColumnsType<Alerts> = [
 		{
 			title: 'Status',
@@ -15,10 +24,7 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 			key: 'status',
 			sorter: (a, b): number =>
 				b.labels.severity.length - a.labels.severity.length,
-			render: (value): JSX.Element => {
-				console.log(value);
-				return <AlertStatus severity={value.state} />;
-			},
+			render: (value): JSX.Element => <AlertStatus severity={value.state} />,
 		},
 		{
 			title: 'Alert Name',
@@ -71,6 +77,8 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 		{
 			title: 'Firing Since',
 			dataIndex: 'startsAt',
+			sorter: (a, b): number =>
+				new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
 			render: (date): JSX.Element => {
 				const formatedDate = new Date(date);
 
@@ -81,27 +89,16 @@ const NoFilterTable = ({ allAlerts }: NoFilterTableProps): JSX.Element => {
 				);
 			},
 		},
-		// {
-		// 	title: 'Actions',
-		// 	dataIndex: 'fingerprint',
-		// 	key: 'actions',
-		// 	render: (): JSX.Element => {
-		// 		return (
-		// 			<div>
-		// 				<Button type="link">Edit</Button>
-		// 				<Button type="link">Delete</Button>
-		// 				<Button type="link">Pause</Button>
-		// 			</div>
-		// 		);
-		// 	},
-		// },
 	];
 
-	return <Table rowKey="alertName" dataSource={allAlerts} columns={columns} />;
+	return (
+		<Table rowKey="startsAt" dataSource={filteredAlerts} columns={columns} />
+	);
 };
 
 interface NoFilterTableProps {
 	allAlerts: Alerts[];
+	selectedFilter: Value[];
 }
 
 export default NoFilterTable;

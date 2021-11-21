@@ -6,6 +6,7 @@ import ROUTES from 'constants/routes';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
+const { Paragraph } = Typography;
 
 import AlertChannlesComponent from './AlertChannels';
 import { ButtonContainer } from './styles';
@@ -28,6 +29,11 @@ const AlertChannels = (): JSX.Element => {
 	return (
 		<>
 			<ButtonContainer>
+				<Paragraph ellipsis type="secondary">
+					The latest added channel is used as the default channel take for sending
+					alerts
+				</Paragraph>
+
 				<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
 					New Alert Channel
 				</Button>
