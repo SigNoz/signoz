@@ -61,7 +61,7 @@ const CreateAlert = () => {
 				});
 
 				setTimeout(() => {
-					history.push(ROUTES.LIST_ALL_LISTS);
+					history.push(ROUTES.LIST_ALL_ALERT);
 				}, 3000);
 			} else {
 				notifications.error({

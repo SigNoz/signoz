@@ -90,7 +90,7 @@ const routes: AppRoutes[] = [
 		component: EditRulesPage,
 	},
 	{
-		path: ROUTES.LIST_ALL_LISTS,
+		path: ROUTES.LIST_ALL_ALERT,
 		exact: true,
 		component: ListAllALertsPage,
 	},

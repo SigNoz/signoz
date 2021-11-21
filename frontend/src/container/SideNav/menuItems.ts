@@ -1,4 +1,5 @@
 import {
+	AlertOutlined,
 	AlignLeftOutlined,
 	ApiOutlined,
 	BarChartOutlined,
@@ -6,7 +7,6 @@ import {
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	SettingOutlined,
-	AlertOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 
@@ -28,7 +28,7 @@ const menus: SidebarMenu[] = [
 	},
 	{
 		Icon: AlertOutlined,
-		to: ROUTES.LIST_ALL_LISTS,
+		to: ROUTES.LIST_ALL_ALERT,
 		name: 'Alerts',
 	},
 	{

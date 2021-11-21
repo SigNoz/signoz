@@ -3,7 +3,9 @@ import { Button } from 'antd';
 import { notification } from 'antd';
 import put from 'api/alerts/put';
 import Editor from 'components/Editor';
+import ROUTES from 'constants/routes';
 import { State } from 'hooks/useFetch';
+import history from 'lib/history';
 import React, { useCallback, useRef, useState } from 'react';
 import { PayloadProps } from 'types/api/alerts/get';
 import { PayloadProps as PutPayloadProps } from 'types/api/alerts/put';
@@ -45,6 +47,10 @@ const EditRules = ({ initialData, ruleId }: EditRulesProps): JSX.Element => {
 					message: 'Success',
 					description: 'Congrats. The alert was Edited correctly.',
 				});
+
+				setTimeout(() => {
+					history.push(ROUTES.LIST_ALL_ALERT);
+				}, 2000);
 			} else {
 				setEditButtonState((state) => ({
 					...state,
