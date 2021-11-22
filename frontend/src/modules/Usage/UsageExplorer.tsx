@@ -2,13 +2,14 @@ import { Select, Space } from 'antd';
 import Graph from 'components/Graph';
 import React, { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { getServicesList, getUsageData, usageDataItem } from 'store/actions';
+import { GetService, getUsageData, usageDataItem } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import { isOnboardingSkipped } from 'utils/app';
 const { Option } = Select;
 import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import MetricReducer from 'types/reducer/metrics';
 
 import { Card } from './styles';
 
@@ -20,7 +21,11 @@ interface UsageExplorerProps {
 		selectedInterval: any,
 		selectedService: string,
 	) => void;
-	getServicesList: (time: GlobalTime) => void;
+	getServicesList: ({
+		selectedTimeInterval,
+	}: {
+		selectedTimeInterval: GlobalReducer['selectedTime'];
+	}) => void;
 	globalTime: GlobalTime;
 	servicesList: servicesListItem[];
 	totalCount: number;
@@ -56,17 +61,20 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
-	const { loading } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { selectedTime: globalSelectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 	const {
 		getServicesList,
 		getUsageData,
 		globalTime,
-		servicesList,
 		totalCount,
 		usageData,
 	} = props;
+	const { services } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
+	);
 
 	useEffect(() => {
 		if (selectedTime && selectedInterval) {
@@ -78,14 +86,10 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 	}, [selectedTime, selectedInterval, selectedService, getUsageData]);
 
 	useEffect(() => {
-		/*
-			Call the apis only when the route is loaded.
-			Check this issue: https://github.com/SigNoz/signoz/issues/110
-		 */
-		if (loading) {
-			getServicesList(globalTime);
-		}
-	}, [loading, globalTime, getServicesList]);
+		getServicesList({
+			selectedTimeInterval: globalSelectedTime,
+		});
+	}, [globalTime, getServicesList, globalSelectedTime]);
 
 	const data = {
 		labels: usageData.map((s) => new Date(s.timestamp / 1000000)),
@@ -146,7 +150,7 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 						value={selectedService || 'All Services'}
 					>
 						<Option value={''}>All Services</Option>
-						{servicesList.map((service) => (
+						{services?.map((service) => (
 							<Option key={service.serviceName} value={service.serviceName}>
 								{service.serviceName}
 							</Option>
@@ -193,7 +197,6 @@ const mapStateToProps = (
 ): {
 	totalCount: number;
 	globalTime: GlobalTime;
-	servicesList: servicesListItem[];
 	usageData: usageDataItem[];
 } => {
 	let totalCount = 0;
@@ -204,11 +207,10 @@ const mapStateToProps = (
 		totalCount: totalCount,
 		usageData: state.usageDate,
 		globalTime: state.globalTime,
-		servicesList: state.metricsData.serviceList || [],
 	};
 };
 
 export const UsageExplorer = connect(mapStateToProps, {
 	getUsageData: getUsageData,
-	getServicesList: getServicesList,
+	getServicesList: GetService,
 })(_UsageExplorer);
