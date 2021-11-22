@@ -29,7 +29,7 @@ const config: webpack.Configuration = {
 	module: {
 		rules: [
 			{
-				test: [/\.jsx?$/, /\.tsx?$/],
+				test: [/\.tsx?$/],
 				use: ['babel-loader'],
 				exclude: /node_modules/,
 			},
@@ -38,15 +38,15 @@ const config: webpack.Configuration = {
 				use: ['style-loader', 'css-loader'],
 			},
 			{
-				test: /\.(scss|sass)$/,
-				use: ['style-loader', 'css-loader', 'sass-loader'],
-			},
-			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
 				use: [
 					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
 					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
 				],
+			},
+			{
+				test: /\.(ttf|eot|woff|woff2)$/,
+				use: ['file-loader'],
 			},
 		],
 	},
