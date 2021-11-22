@@ -61,6 +61,10 @@ const config: Configuration = {
 				test: /\.(jpe?g|png|gif|svg)$/i,
 				use: ['file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]'],
 			},
+			{
+				test: /\.(ttf|eot|woff|woff2)$/,
+				use: ['file-loader'],
+			},
 		],
 	},
 	plugins: [

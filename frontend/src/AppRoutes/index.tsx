@@ -4,7 +4,7 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
 import React, { Suspense } from 'react';
-import { Redirect, Route, Router, Switch, } from 'react-router-dom';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 
 import routes from './routes';
 
