@@ -56,7 +56,15 @@ const DescriptionOfDashboard = ({
 		} else {
 			toggleEditMode();
 		}
-	}, [isEditMode, updatedTitle, updatedTags, updatedDescription]);
+	}, [
+		isEditMode,
+		updatedTitle,
+		updatedTags,
+		updatedDescription,
+		selectedDashboard,
+		toggleEditMode,
+		updateDashboardTitleDescriptionTags,
+	]);
 
 	return (
 		<>

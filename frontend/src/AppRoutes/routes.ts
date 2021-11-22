@@ -17,7 +17,6 @@ import {
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
-	TraceDetailPage,
 	TraceDetailPages,
 	TraceGraphPage,
 	UsageExplorerPage,
@@ -63,11 +62,6 @@ const routes: AppRoutes[] = [
 		path: ROUTES.INSTRUMENTATION,
 		exact: true,
 		component: InstrumentationPage,
-	},
-	{
-		path: ROUTES.TRACES,
-		exact: true,
-		component: TraceDetailPage,
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,

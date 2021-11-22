@@ -1,4 +1,4 @@
-import { Button, Input, Typography, notification } from 'antd';
+import { Button, Input, notification, Typography } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -237,7 +237,13 @@ const TraceList = ({
 				} ms`,
 			});
 		}
-	}, [selectedService, selectedOperation, selectedKind, selectedLatency]);
+	}, [
+		selectedService,
+		selectedOperation,
+		selectedKind,
+		selectedLatency,
+		form_basefilter,
+	]);
 
 	return (
 		<>

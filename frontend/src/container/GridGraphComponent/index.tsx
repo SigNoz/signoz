@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import { ChartData, ChartOptions } from 'chart.js';
+import { ChartData } from 'chart.js';
 import Graph, { graphOnClickHandler } from 'components/Graph';
 import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';

@@ -4,7 +4,6 @@ import appReducer from './app';
 import dashboardReducer from './dashboard';
 import globalTimeReducer from './global';
 import metricsReducers from './metric';
-import { metricsReducer } from './metrics';
 import { ServiceMapReducer } from './serviceMap';
 import { traceReducer } from './trace';
 import TraceFilterReducer from './traceFilters';
@@ -18,7 +17,6 @@ const reducers = combineReducers({
 	trace: traceReducer,
 	usageDate: usageDataReducer,
 	globalTime: globalTimeReducer,
-	metricsData: metricsReducer,
 	serviceMap: ServiceMapReducer,
 	dashboards: dashboardReducer,
 	app: appReducer,
