@@ -8,6 +8,8 @@ import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { Container } from './styles';
 
+const routesToSkip = [ROUTES.SETTINGS];
+
 const TopNav = (): JSX.Element | null => {
 	const { pathname } = useLocation();
 
@@ -21,7 +23,7 @@ const TopNav = (): JSX.Element | null => {
 				<ShowBreadcrumbs />
 			</Col>
 
-			{ROUTES.SETTINGS !== pathname && (
+			{!routesToSkip.includes(pathname) && (
 				<Col span={8}>
 					<DateTimeSelector />
 				</Col>
