@@ -13,28 +13,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// const (
-// 	ErrorNone           ErrorType = ""
-// 	ErrorTimeout        ErrorType = "timeout"
-// 	ErrorCanceled       ErrorType = "canceled"
-// 	ErrorExec           ErrorType = "execution"
-// 	ErrorBadData        ErrorType = "bad_data"
-// 	ErrorInternal       ErrorType = "internal"
-// 	ErrorUnavailable    ErrorType = "unavailable"
-// 	ErrorNotFound       ErrorType = "not_found"
-// 	ErrorNotImplemented ErrorType = "not_implemented"
-// )
-
 // This time the global variable is unexported.
 var db *sqlx.DB
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(dataSourceName string) error {
+func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	var err error
 
 	db, err = sqlx.Open("sqlite3", dataSourceName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
@@ -47,10 +35,37 @@ func InitDB(dataSourceName string) error {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return fmt.Errorf("Error in creating dashboard table: ", err.Error())
+		return nil, fmt.Errorf("Error in creating dashboard table: ", err.Error())
 	}
 
-	return nil
+	table_schema = `CREATE TABLE IF NOT EXISTS rules (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		updated_at datetime NOT NULL,
+		deleted INTEGER DEFAULT 0,
+		data TEXT NOT NULL
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating rules table: ", err.Error())
+	}
+
+	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		created_at datetime NOT NULL,
+		updated_at datetime NOT NULL,
+		name TEXT NOT NULL UNIQUE,
+		type TEXT NOT NULL,
+		deleted INTEGER DEFAULT 0,
+		data TEXT NOT NULL
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating notification_channles table: ", err.Error())
+	}
+
+	return db, nil
 }
 
 type Dashboard struct {

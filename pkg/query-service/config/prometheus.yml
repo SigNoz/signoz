@@ -9,12 +9,13 @@ alerting:
   alertmanagers:
   - static_configs:
     - targets:
-      # - alertmanager:9093
+      - 127.0.0.1:9093
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
   # - "first_rules.yml"
   # - "second_rules.yml"
+  - 'alerts.yml'
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
@@ -22,4 +23,4 @@ scrape_configs:
   
 
 remote_read:
-  - url: tcp://localhost:9000/?database=signoz_metrics
+  - url: tcp://3.135.248.251:9001/?database=signoz_metrics
