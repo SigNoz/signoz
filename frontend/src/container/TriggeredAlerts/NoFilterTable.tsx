@@ -31,7 +31,7 @@ const NoFilterTable = ({
 			dataIndex: 'labels',
 			key: 'alertName',
 			sorter: (a, b): number =>
-				a.labels.alertname.length - b.labels.alertname.length,
+				a.labels?.alertname?.length - b.labels?.alertname?.length,
 			render: (data): JSX.Element => {
 				const name = data?.alertname || '';
 				return <Typography>{name}</Typography>;
