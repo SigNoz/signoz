@@ -70,3 +70,28 @@ export const DashboardWidget = Loadable(
 	() =>
 		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
 );
+
+export const EditRulesPage = Loadable(
+	() => import(/* webpackChunkName: "Alerts Edit Page" */ 'pages/EditRules'),
+);
+
+export const ListAllALertsPage = Loadable(
+	() => import(/* webpackChunkName: "All Alerts Page" */ 'pages/AlertList'),
+);
+
+export const CreateNewAlerts = Loadable(
+	() => import(/* webpackChunkName: "Create Alerts" */ 'pages/CreateAlert'),
+);
+
+export const CreateAlertChannelAlerts = Loadable(
+	() =>
+		import(/* webpackChunkName: "Create Channels" */ 'pages/AlertChannelCreate'),
+);
+
+export const EditAlertChannelsAlerts = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/ChannelsEdit'),
+);
+
+export const AllAlertChannels = Loadable(
+	() => import(/* webpackChunkName: "All Channels" */ 'pages/AllAlertChannels'),
+);

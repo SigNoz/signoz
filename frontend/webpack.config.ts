@@ -69,6 +69,10 @@ const config: Configuration = {
 					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
 				],
 			},
+			{
+				test: /\.(ttf|eot|woff|woff2)$/,
+				use: ['file-loader'],
+			},
 		],
 	},
 	plugins: [
