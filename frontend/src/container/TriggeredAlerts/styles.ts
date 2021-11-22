@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 export const Select = styled(SelectComponent)`
 	&&& {
-		min-width: 300px;
+		min-width: 350px;
 	}
 `;
 

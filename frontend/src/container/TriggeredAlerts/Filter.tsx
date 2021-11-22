@@ -54,7 +54,7 @@ const Filter = ({
 				onChange={onChangeSelectedFilterHandler}
 				mode="tags"
 				value={selectedFilter.map((e) => e.value)}
-				placeholder="Filter by tags status or severity or any other tag"
+				placeholder="severity:warning, alertname:Sample Alert"
 				tagRender={(props): JSX.Element => {
 					const { label, closable, onClose } = props;
 					return (
