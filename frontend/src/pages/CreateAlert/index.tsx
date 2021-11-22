@@ -10,9 +10,9 @@ import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create
 
 import { ButtonContainer, Title } from './styles';
 
-const CreateAlert = () => {
+const CreateAlert = (): JSX.Element => {
 	const value = useRef<string>(
-		`\n        alert: Second Rule\n        expr: system_cpu_load_average_1m > 0.01\n        for: 0m\n        labels:\n            severity: warning\n        annotations:\n            summary: High CPU load\n            description: \"CPU load is > 0.01\n  VALUE = {{ $value }}\n LABELS = {{ $labels }}\"\n    `,
+		`\n        alert: <alert name>\n        expr: system_cpu_load_average_1m > 0.01\n        for: 0m\n        labels:\n            severity: warning\n        annotations:\n            summary: High CPU load\n            description: \"CPU load is > 0.01\n  VALUE = {{ $value }}\n LABELS = {{ $labels }}\"\n    `,
 	);
 
 	const [newAlertState, setNewAlertState] = useState<
