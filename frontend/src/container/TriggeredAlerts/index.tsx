@@ -2,6 +2,7 @@ import getGroupApi from 'api/alerts/getGroup';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
 import React, { useCallback, useEffect, useState } from 'react';
+import { Alerts } from 'types/api/alerts/getAll';
 import { PayloadProps } from 'types/api/alerts/getGroups';
 
 import TriggerComponent from './TriggeredAlert';
@@ -64,7 +65,13 @@ const TriggeredAlerts = (): JSX.Element => {
 		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
 
-	return <TriggerComponent allAlerts={groupState.payload[0]} />;
+	const initialAlerts: Alerts[] = [];
+
+	const allAlerts: Alerts[] = groupState.payload.reduce((acc, curr) => {
+		return [...acc, ...curr.alerts];
+	}, initialAlerts);
+
+	return <TriggerComponent allAlerts={allAlerts} />;
 };
 
 export default TriggeredAlerts;
