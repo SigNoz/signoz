@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Group } from 'types/api/alerts/getGroups';
+import { Alerts } from 'types/api/alerts/getAll';
 
 import { Value } from './Filter';
 import Filter from './Filter';
@@ -8,7 +8,7 @@ import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';
 
 const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
-	const allInitialAlerts = allAlerts?.alerts || [];
+	const allInitialAlerts = allAlerts || [];
 
 	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
 	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
@@ -57,7 +57,7 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 };
 
 interface TriggeredAlertsProps {
-	allAlerts: Group;
+	allAlerts: Alerts[];
 }
 
 export default TriggeredAlerts;
