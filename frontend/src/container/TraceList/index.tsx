@@ -116,7 +116,7 @@ const TraceDetails = (): JSX.Element => {
 				): React.HTMLAttributes<HTMLElement> => ({
 					onClick: (): void => {
 						history.push({
-							pathname: ROUTES.TRACES + '/' + record.traceid,
+							pathname: ROUTES.TRACE + '/' + record.traceid,
 							state: {
 								spanId: record.spanid,
 							},
