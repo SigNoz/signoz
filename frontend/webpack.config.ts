@@ -2,6 +2,8 @@
 import dotenv from 'dotenv';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { resolve } from 'path';
+//@ts-ignore
+import portFinderSync from 'portfinder-sync';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import webpack from 'webpack';
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
@@ -22,10 +24,9 @@ const config: Configuration = {
 	devServer: {
 		historyApiFallback: true,
 		open: true,
-		compress: true,
 		hot: true,
 		liveReload: true,
-		port: 3000,
+		port: portFinderSync.getPort(3000),
 		static: {
 			directory: resolve(__dirname, 'public'),
 			publicPath: '/',
@@ -49,7 +50,7 @@ const config: Configuration = {
 	module: {
 		rules: [
 			{
-				test: [/\.tsx?$/],
+				test: [/\.jsx?$/, /\.tsx?$/],
 				use: ['babel-loader'],
 				exclude: /node_modules/,
 			},
@@ -58,8 +59,15 @@ const config: Configuration = {
 				use: ['style-loader', 'css-loader'],
 			},
 			{
+				test: /\.(scss|sass)$/,
+				use: ['style-loader', 'css-loader', 'sass-loader'],
+			},
+			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
-				use: ['file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]'],
+				use: [
+					'file-loader?hash=sha512&digest=hex&name=img/[chunkhash].[ext]',
+					'image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false',
+				],
 			},
 			{
 				test: /\.(ttf|eot|woff|woff2)$/,
