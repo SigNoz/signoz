@@ -36,6 +36,7 @@ const SettingsWrapper = ({
 
 	return (
 		<Tabs
+			destroyInactiveTabPane
 			onChange={(value): void => onChangeHandler(value as SettingTab)}
 			activeKey={settingsActiveTab}
 		>
