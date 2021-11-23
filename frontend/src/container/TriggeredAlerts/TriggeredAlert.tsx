@@ -1,3 +1,5 @@
+import getGroupApi from 'api/alerts/getGroup';
+import useInterval from 'hooks/useInterval';
 import React, { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
@@ -8,7 +10,27 @@ import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';
 
 const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
-	const allInitialAlerts = allAlerts || [];
+	const [allInitialAlerts, setInitialAlerts] = useState(allAlerts || []);
+
+	useInterval(() => {
+		(async (): Promise<void> => {
+			const response = await getGroupApi({
+				active: true,
+				inhibited: true,
+				silenced: false,
+			});
+
+			if (response.statusCode === 200 && response.payload !== null) {
+				const initialAlerts: Alerts[] = [];
+
+				const allAlerts: Alerts[] = response.payload.reduce((acc, cur) => {
+					return [...acc, ...cur.alerts];
+				}, initialAlerts);
+
+				setInitialAlerts(allAlerts);
+			}
+		})();
+	}, 30000);
 
 	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
 	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
