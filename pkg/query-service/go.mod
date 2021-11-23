@@ -32,16 +32,20 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/oklog/oklog v0.3.2
+	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pascaldekloe/goe v0.1.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20200525173953-e46dc8e6b89b
+	github.com/prometheus/client_golang v0.9.0-pre1.0.20181001174001-0a8115f42e03
 	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1
 	github.com/prometheus/procfs v0.0.8 // indirect
 	github.com/prometheus/prometheus v2.5.0+incompatible
+	github.com/prometheus/tsdb v0.0.0-20181003080831-0ce41118ed20
 	github.com/rs/cors v1.7.0
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
@@ -54,7 +58,8 @@ require (
 	google.golang.org/api v0.51.0 // indirect
 	google.golang.org/grpc/examples v0.0.0-20210803221256-6ba56c814be7 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.5
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.68

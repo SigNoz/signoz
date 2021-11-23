@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/druidQuery"
@@ -15,9 +16,10 @@ import (
 type DruidReader struct {
 	Client    *godruid.Client
 	SqlClient *druidQuery.SqlClient
+	LocalDB   *sqlx.DB
 }
 
-func NewReader() *DruidReader {
+func NewReader(localDB *sqlx.DB) *DruidReader {
 
 	initialize()
 	druidClientUrl := os.Getenv("DruidClientUrl")
@@ -34,6 +36,7 @@ func NewReader() *DruidReader {
 	return &DruidReader{
 		Client:    &client,
 		SqlClient: &sqlClient,
+		LocalDB:   localDB,
 	}
 
 }
@@ -50,6 +53,49 @@ func (druid *DruidReader) GetQueryRangeResult(ctx context.Context, query *model.
 func (druid *DruidReader) GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
 
 	return nil, nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support metrics")}
+}
+
+func (druid *DruidReader) DeleteChannel(id string) *model.ApiError {
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+}
+
+func (druid *DruidReader) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+}
+func (druid *DruidReader) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+}
+func (druid *DruidReader) CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError) {
+
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+
+}
+func (druid *DruidReader) EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError) {
+
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
+
+}
+
+func (druid *DruidReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
+
+	res := model.AlertDiscovery{}
+	return &res, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support getting rules for alerting")}
+}
+func (druid *DruidReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
+
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support getting rules for alerting")}
+}
+func (druid *DruidReader) CreateRule(alert string) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support setting rules for alerting")}
+}
+func (druid *DruidReader) EditRule(alert string, id string) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support editing rules for alerting")}
+}
+func (druid *DruidReader) DeleteRule(id string) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support deleting rules for alerting")}
 }
 
 func (druid *DruidReader) GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error) {

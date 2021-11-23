@@ -22,15 +22,12 @@ function useFetch<PayloadProps, FunctionParams>(
 	const loadingRef = useRef(0);
 
 	useEffect(() => {
-		let abortController = new window.AbortController();
-		const { signal } = abortController;
-
 		try {
 			(async (): Promise<void> => {
 				if (state.loading) {
 					const response = await functions(param);
 
-					if (!signal.aborted && loadingRef.current === 0) {
+					if (loadingRef.current === 0) {
 						loadingRef.current = 1;
 
 						if (response.statusCode === 200) {
@@ -54,21 +51,19 @@ function useFetch<PayloadProps, FunctionParams>(
 				}
 			})();
 		} catch (error) {
-			if (!signal.aborted) {
-				setStates({
-					payload: undefined,
-					loading: false,
-					success: false,
-					error: true,
-					errorMessage: error,
-				});
-			}
+			setStates({
+				payload: undefined,
+				loading: false,
+				success: false,
+				error: true,
+				errorMessage: error,
+			});
 		}
 		return (): void => {
-			abortController.abort();
-			abortController = new window.AbortController();
+			loadingRef.current = 1;
 		};
 	}, [functions, param, state.loading]);
+
 	return {
 		...state,
 	};
@@ -78,7 +73,7 @@ export interface State<T> {
 	loading: boolean | null;
 	error: boolean | null;
 	success: boolean | null;
-	payload: T;
+	payload?: T;
 	errorMessage: string;
 }
 

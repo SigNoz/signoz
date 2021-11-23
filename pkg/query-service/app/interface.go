@@ -9,7 +9,18 @@ import (
 )
 
 type Reader interface {
-	// Getter Interfaces
+	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
+	GetChannels() (*[]model.ChannelItem, *model.ApiError)
+	DeleteChannel(id string) *model.ApiError
+	CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError)
+	EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError)
+
+	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
+	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
+	CreateRule(alert string) *model.ApiError
+	EditRule(alert string, id string) *model.ApiError
+	DeleteRule(id string) *model.ApiError
+
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error)

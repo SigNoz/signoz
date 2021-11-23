@@ -6,7 +6,7 @@ import { flamegraph } from 'd3-flame-graph';
 import * as d3Tip from 'd3-tip';
 import { isEmpty, sortBy } from 'lodash-es';
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import {
 	fetchTraceItem,
@@ -33,7 +33,8 @@ const TraceGanttChartContainer = styled(Card)`
 const _TraceGraph = (props: TraceGraphProps) => {
 	const location = useLocation();
 	const spanId = location?.state?.spanId;
-	const params = useParams<{ id?: string }>();
+	const { id } = useParams<{ id?: string }>();
+
 	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
 	const [selectedSpan, setSelectedSpan] = useState({});
 	const [clickedSpan, setClickedSpan] = useState(null);
@@ -62,11 +63,12 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	};
 
 	const tree = spanToTreeUtil(props.traceItem[0].events);
+	const dispatch = useDispatch();
 
 	useEffect(() => {
 		//sets span width based on value - which is mapped to duration
-		props.fetchTraceItem(params.id);
-	}, []);
+		fetchTraceItem(id || '')(dispatch);
+	}, [dispatch, id]);
 
 	useEffect(() => {
 		if (props.traceItem) {
@@ -176,7 +178,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							}}
 						>
 							<div style={{ textAlign: 'center' }}>
-								Trace Graph component ID is {params.id}{' '}
+								Trace Graph component ID is {id}{' '}
 							</div>
 							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 						</div>

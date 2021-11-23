@@ -1,4 +1,5 @@
 import {
+	AlertOutlined,
 	AlignLeftOutlined,
 	ApiOutlined,
 	BarChartOutlined,
@@ -24,6 +25,11 @@ const menus: SidebarMenu[] = [
 		Icon: DashboardFilled,
 		to: ROUTES.ALL_DASHBOARD,
 		name: 'Dashboard',
+	},
+	{
+		Icon: AlertOutlined,
+		to: ROUTES.LIST_ALL_ALERT,
+		name: 'Alerts',
 	},
 	{
 		to: ROUTES.SERVICE_MAP,

@@ -142,7 +142,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string = ROUTES.TRACES + '/' + traceID;
+		const request_string = '/traces' + '/' + traceID;
 		const response = await api.get<spansWSameTraceIDResponse>(request_string);
 
 		dispatch<FetchTraceItemAction>({

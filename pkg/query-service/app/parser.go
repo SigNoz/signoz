@@ -567,6 +567,10 @@ func parseTimestamp(param string, r *http.Request) (*string, error) {
 	return &timeStr, nil
 
 }
+func parseSetRulesRequest(r *http.Request) (string, *model.ApiError) {
+
+	return "", nil
+}
 
 func parseDuration(r *http.Request) (*model.TTLParams, error) {
 

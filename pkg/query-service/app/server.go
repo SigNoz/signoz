@@ -14,6 +14,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/app/clickhouseReader"
+	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/druidReader"
 	"go.signoz.io/query-service/healthcheck"
 	"go.signoz.io/query-service/utils"
@@ -93,15 +94,22 @@ func createHTTPServer() (*http.Server, error) {
 	posthogClient = posthog.New("H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w")
 	distinctId = uuid.New().String()
 
+	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
+	if err != nil {
+		return nil, err
+	}
+
 	var reader Reader
 
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
-		reader = druidReader.NewReader()
+		reader = druidReader.NewReader(localDB)
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		reader = clickhouseReader.NewReader()
+		clickhouseReader := clickhouseReader.NewReader(localDB)
+		go clickhouseReader.Start()
+		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}

@@ -1,5 +1,5 @@
 import { Button, Select as DefaultSelect } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
 import { Container, Form, FormItem } from './styles';
@@ -75,7 +75,7 @@ const DateTimeSelection = ({
 		false,
 	);
 
-	const { maxTime, minTime, selectedTime, loading } = useSelector<
+	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
