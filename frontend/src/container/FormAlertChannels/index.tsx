@@ -19,7 +19,7 @@ const FormAlertChannels = ({
 	type,
 	setSelectedConfig,
 	onTypeChangeHandler,
-	onTestHandler,
+	// onTestHandler,
 	onSaveHandler,
 	savingState,
 	NotificationElement,
@@ -92,8 +92,8 @@ interface FormAlertChannelsProps {
 	onSaveHandler: (props: ChannelType) => void;
 	savingState: boolean;
 	NotificationElement: React.ReactElement<
-		any,
-		string | React.JSXElementConstructor<any>
+		unknown,
+		string | React.JSXElementConstructor<unknown>
 	>;
 	title: string;
 	initialValue: Store;

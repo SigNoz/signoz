@@ -4,6 +4,7 @@ import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 const { Option } = Select;
+import { Store } from 'rc-field-form/lib/interface';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -33,7 +34,7 @@ const TraceCustomVisualisation = ({
 		return <Spinner tip="Loading..." height="40vh" />;
 	}
 
-	const handleFormValuesChange = (changedValues: any): void => {
+	const handleFormValuesChange = (changedValues: Store): void => {
 		const formFieldName = Object.keys(changedValues)[0];
 		if (formFieldName === 'entity') {
 			const temp_entity = aggregation_options.filter(
