@@ -1,15 +1,32 @@
 // shared config (dev and prod)
-const CompressionPlugin = require('compression-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { resolve } = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const portFinderSync = require('portfinder-sync');
+const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
+dotenv.config();
+
+console.log(resolve(__dirname, './src/'));
+
 const config = {
-	mode: 'production',
-	devtool: 'source-map',
+	mode: 'development',
+	devtool: false,
 	entry: resolve(__dirname, './src/index.tsx'),
+	devServer: {
+		historyApiFallback: true,
+		open: true,
+		hot: true,
+		liveReload: true,
+		port: portFinderSync.getPort(3000),
+		static: {
+			directory: resolve(__dirname, 'public'),
+			publicPath: '/',
+			watch: true,
+		},
+	},
+	target: 'web',
 	output: {
 		filename: ({ chunk }) => {
 			const hash = chunk?.hash;
@@ -19,7 +36,6 @@ const config = {
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
-
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
@@ -54,12 +70,6 @@ const config = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new CompressionPlugin({
-			exclude: /.map$/,
-		}),
-		new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),

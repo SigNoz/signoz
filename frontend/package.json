@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {
-		"dev": "NODE_ENV=development webpack serve --config=webpack.config.cjs --progress",
-		"build": "webpack --config=webpack.config.prod.cjs --progress",
+		"dev": "NODE_ENV=development webpack serve --progress",
+		"build": "webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
@@ -18,7 +18,6 @@
 	"engines": {
 		"node": ">=12.13.0"
 	},
-	"type": "module",
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
