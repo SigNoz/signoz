@@ -11,11 +11,11 @@ const config = {
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
-		filename: ({ chunk }) => {
-			const hash = chunk?.hash;
-			const name = chunk?.name;
-			return `js/${name}-${hash}.js`;
-		},
+		// filename: ({ chunk }) => {
+		// 	const hash = chunk?.hash;
+		// 	const name = chunk?.name;
+		// 	return `js/${name}-${hash}.js`;
+		// },
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
