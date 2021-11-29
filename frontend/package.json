@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {
-		"dev": "NODE_ENV=development webpack serve --config=webpack.config.js --progress",
-		"build": "webpack --config=webpack.config.prod.js --progress",
+		"dev": "NODE_ENV=development webpack serve --config=webpack.config.cjs --progress",
+		"build": "webpack --config=webpack.config.prod.cjs --progress",
 		"prettify": "prettier --write .",
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",

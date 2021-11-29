@@ -1,12 +1,10 @@
 // shared config (dev and prod)
-import CompressionPlugin from 'compression-webpack-plugin';
-import CopyPlugin from 'copy-webpack-plugin';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import { resolve } from 'path';
-import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-import webpack from 'webpack';
-
-const __dirname = resolve();
+const CompressionPlugin = require('compression-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { resolve } = require('path');
+const webpack = require('webpack');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const config = {
 	mode: 'production',
@@ -74,4 +72,4 @@ const config = {
 	},
 };
 
-export default config;
+module.exports = config;
