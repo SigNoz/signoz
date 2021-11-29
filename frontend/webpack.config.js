@@ -28,11 +28,12 @@ const config = {
 	},
 	target: 'web',
 	output: {
-		filename: ({ chunk }) => {
-			const hash = chunk?.hash;
-			const name = chunk?.name;
-			return `js/${name}-${hash}.js`;
-		},
+		// filename: ({ chunk }) => {
+		// 	// console.log({ chunk });
+		// 	// const hash = chunk?.hash;
+		// 	// const name = chunk?.name;
+		// 	// return `js/${name}-${hash}.js`;
+		// },
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
