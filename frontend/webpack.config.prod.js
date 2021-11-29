@@ -17,6 +17,17 @@ const config = {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
 	},
+	cache: {
+		type: 'filesystem',
+		allowCollectingMemory: true,
+		cacheDirectory: resolve(__dirname, '.temp_cache'),
+		buildDependencies: {
+			// This makes all dependencies of this file - build dependencies
+			config: [__filename],
+			// By default webpack and loaders are build dependencies
+		},
+	},
+
 	module: {
 		rules: [
 			{
@@ -60,8 +71,13 @@ const config = {
 			'process.env': JSON.stringify(process.env),
 		}),
 	],
+	optimization: {
+		chunkIds: 'named',
+		concatenateModules: true,
+		emitOnErrors: true,
+	},
 	performance: {
-		hints: false,
+		hints: 'warning',
 	},
 };
 
