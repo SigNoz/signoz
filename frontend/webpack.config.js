@@ -28,12 +28,6 @@ const config = {
 	},
 	target: 'web',
 	output: {
-		// filename: ({ chunk }) => {
-		// 	// console.log({ chunk });
-		// 	// const hash = chunk?.hash;
-		// 	// const name = chunk?.name;
-		// 	// return `js/${name}-${hash}.js`;
-		// },
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
@@ -50,11 +44,7 @@ const config = {
 			},
 			{
 				test: /\.css$/,
-				use: ['style-loader', 'css-loader'],
-			},
-			{
-				test: /\.(scss|sass)$/,
-				use: ['style-loader', 'css-loader', 'sass-loader'],
+				use: ['css-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,

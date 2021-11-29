@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 // shared config (dev and prod)
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -5,6 +6,9 @@ const CopyPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const config = {
 	mode: 'production',
@@ -37,11 +41,7 @@ const config = {
 			},
 			{
 				test: /\.css$/,
-				use: ['style-loader', 'css-loader'],
-			},
-			{
-				test: /\.(scss|sass)$/,
-				use: ['style-loader', 'css-loader', 'sass-loader'],
+				use: [MiniCssExtractPlugin.loader, 'css-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
@@ -70,11 +70,38 @@ const config = {
 		new webpack.DefinePlugin({
 			'process.env': JSON.stringify(process.env),
 		}),
+		new MiniCssExtractPlugin(),
 	],
 	optimization: {
 		chunkIds: 'named',
 		concatenateModules: true,
 		emitOnErrors: true,
+		flagIncludedChunks: true,
+		innerGraph: true, //tells webpack whether to conduct inner graph analysis for unused exports.
+		mangleWasmImports: true,
+		mergeDuplicateChunks: true,
+		minimize: true,
+		nodeEnv: 'production',
+		runtimeChunk: {
+			name: (entrypoint) => `runtime~${entrypoint.name}`,
+		},
+		minimizer: [
+			new TerserPlugin({
+				parallel: true,
+				terserOptions: {
+					compress: true,
+					
+					keep_classnames: true,
+					keep_fnames: false,
+					sourceMap: false,
+					safari10: true,
+					parse: {
+						html5_comments: false,
+					},
+				},
+			}),
+			new CssMinimizerPlugin(),
+		],
 	},
 	performance: {
 		hints: 'warning',
