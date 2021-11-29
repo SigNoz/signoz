@@ -18,6 +18,8 @@
 	"engines": {
 		"node": ">=12.13.0"
 	},
+	"homepage": "/",
+	"type": "module",
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
