@@ -90,7 +90,6 @@ const config = {
 				parallel: true,
 				terserOptions: {
 					compress: true,
-					
 					keep_classnames: true,
 					keep_fnames: false,
 					sourceMap: false,
