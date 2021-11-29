@@ -25,7 +25,7 @@
 		"@ant-design/icons": "^4.6.2",
 		"@auth0/auth0-react": "^1.2.0",
 		"@pmmmwh/react-refresh-webpack-plugin": "0.4.2",
-		"@svgr/webpack": "5.4.0",
+		"@svgr/webpack": "6.0.0",
 		"@testing-library/jest-dom": "^5.11.4",
 		"@testing-library/react": "^11.1.0",
 		"@testing-library/user-event": "^12.1.10",
