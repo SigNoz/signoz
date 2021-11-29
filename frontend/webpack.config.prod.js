@@ -8,18 +8,11 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const config = {
 	mode: 'production',
-	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
-		// filename: ({ chunk }) => {
-		// 	const hash = chunk?.hash;
-		// 	const name = chunk?.name;
-		// 	return `js/${name}-${hash}.js`;
-		// },
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
-
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],

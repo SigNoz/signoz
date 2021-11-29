@@ -12,7 +12,7 @@ console.log(resolve(__dirname, './src/'));
 
 const config = {
 	mode: 'development',
-	devtool: false,
+	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
 		historyApiFallback: true,
