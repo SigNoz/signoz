@@ -1,39 +1,17 @@
 // shared config (dev and prod)
-import dotenv from 'dotenv';
+import CompressionPlugin from 'compression-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { resolve } from 'path';
-//@ts-ignore
-import portFinderSync from 'portfinder-sync';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 import webpack from 'webpack';
-import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
-
-dotenv.config();
 
 const __dirname = resolve();
-console.log(resolve(__dirname, './src/'));
 
-interface Configuration extends webpack.Configuration {
-	devServer?: WebpackDevServerConfiguration;
-}
-
-const config: Configuration = {
-	mode: 'development',
+const config = {
+	mode: 'production',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
-	devServer: {
-		historyApiFallback: true,
-		open: true,
-		hot: true,
-		liveReload: true,
-		port: portFinderSync.getPort(3000),
-		static: {
-			directory: resolve(__dirname, 'public'),
-			publicPath: '/',
-			watch: true,
-		},
-	},
-	target: 'web',
 	output: {
 		filename: ({ chunk }) => {
 			const hash = chunk?.hash;
@@ -43,6 +21,7 @@ const config: Configuration = {
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
+
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
@@ -77,6 +56,12 @@ const config: Configuration = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+		new CompressionPlugin({
+			exclude: /.map$/,
+		}),
+		new CopyPlugin({
+			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),

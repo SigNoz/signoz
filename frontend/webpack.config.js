@@ -1,19 +1,36 @@
 // shared config (dev and prod)
-import CompressionPlugin from 'compression-webpack-plugin';
-import CopyPlugin from 'copy-webpack-plugin';
+import dotenv from 'dotenv';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { resolve } from 'path';
+//@ts-ignore
+import portFinderSync from 'portfinder-sync';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-import webpack, { WebpackPluginInstance } from 'webpack';
+import webpack from 'webpack';
+
+dotenv.config();
 
 const __dirname = resolve();
+console.log(resolve(__dirname, './src/'));
 
-const config: webpack.Configuration = {
-	mode: 'production',
-	devtool: 'source-map',
+const config = {
+	mode: 'development',
+	devtool: false,
 	entry: resolve(__dirname, './src/index.tsx'),
+	devServer: {
+		historyApiFallback: true,
+		open: true,
+		hot: true,
+		liveReload: true,
+		port: portFinderSync.getPort(3000),
+		static: {
+			directory: resolve(__dirname, 'public'),
+			publicPath: '/',
+			watch: true,
+		},
+	},
+	target: 'web',
 	output: {
-		filename: ({ chunk }): string => {
+		filename: ({ chunk }) => {
 			const hash = chunk?.hash;
 			const name = chunk?.name;
 			return `js/${name}-${hash}.js`;
@@ -21,7 +38,6 @@ const config: webpack.Configuration = {
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
-
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
@@ -56,12 +72,6 @@ const config: webpack.Configuration = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		(new CompressionPlugin({
-			exclude: /.map$/,
-		}) as unknown) as WebpackPluginInstance,
-		(new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}) as unknown) as WebpackPluginInstance,
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),

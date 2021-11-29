@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {
-		"dev": "NODE_OPTIONS=\"--loader ts-node/esm\" NODE_ENV=development webpack serve --config=webpack.config.ts --progress",
-		"build": "NODE_OPTIONS=\"--loader ts-node/esm\" webpack --config=webpack.config.prod.ts --progress",
+		"dev": "NODE_ENV=development webpack serve --config=webpack.config.js --progress",
+		"build": "webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
