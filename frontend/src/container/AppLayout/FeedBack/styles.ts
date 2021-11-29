@@ -1,4 +1,8 @@
-import { Card as CardComponent, Typography } from 'antd';
+import {
+	Button as ButtonComponent,
+	Card as CardComponent,
+	Typography,
+} from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -31,4 +35,14 @@ export const ButtonContainer = styled.div`
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
+`;
+
+export const Button = styled(ButtonComponent)`
+	height: 4.5rem;
+	width: 4.5rem;
+
+	svg {
+		width: 2rem;
+		height: 2rem;
+	}
 `;

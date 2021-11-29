@@ -4,6 +4,7 @@ import { Callbacks } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
 
 import {
+	Button as IconButton,
 	ButtonContainer,
 	Card,
 	CenterText,
@@ -61,14 +62,14 @@ const Feedback = (): JSX.Element => {
 	return (
 		<Container>
 			{!isOpen && (
-				<Button
+				<IconButton
 					onClick={isToggleHandler}
 					type="primary"
 					size="large"
 					shape="circle"
 				>
 					<CommentOutlined />
-				</Button>
+				</IconButton>
 			)}
 
 			{Element}
