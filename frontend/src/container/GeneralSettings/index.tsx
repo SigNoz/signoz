@@ -9,7 +9,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { PayloadProps } from 'types/api/settings/getRetention';
 
 import Retention from './Retention';
-import { ButtonContainer, Container } from './styles';
+import {
+	ButtonContainer,
+	Container,
+	ErrorText,
+	ErrorTextContainer,
+} from './styles';
 
 const GeneralSettings = (): JSX.Element => {
 	const [
@@ -29,6 +34,8 @@ const GeneralSettings = (): JSX.Element => {
 	);
 
 	const [retentionPeroidTrace, setRetentionPeroidTrace] = useState<number>(0);
+	const [isDefaultMetrics, setIsDefaultMetrics] = useState<boolean>(false);
+	const [isDefaultTrace, setIsDefaultTrace] = useState<boolean>(false);
 
 	const onClickSaveHandler = useCallback(() => {
 		onModalToggleHandler();
@@ -46,6 +53,18 @@ const GeneralSettings = (): JSX.Element => {
 	useEffect(() => {
 		if (!loading && payload !== undefined) {
 			const { metrics_ttl_duration_hrs, traces_ttl_duration_hrs } = payload;
+
+			if (metrics_ttl_duration_hrs === -1) {
+				setIsDefaultMetrics(true);
+			} else {
+				setIsDefaultMetrics(false);
+			}
+
+			if (traces_ttl_duration_hrs === -1) {
+				setIsDefaultTrace(true);
+			} else {
+				setIsDefaultTrace(false);
+			}
 
 			const traceValue = getSettingsPeroid(traces_ttl_duration_hrs);
 			const metricsValue = getSettingsPeroid(metrics_ttl_duration_hrs);
@@ -112,9 +131,36 @@ const GeneralSettings = (): JSX.Element => {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
 
+	const getErrorText = (): string => {
+		const getValue = (value: string): string =>
+			`Retention Peroid for ${value} is not set yet. Please set by choosing below`;
+
+		if (!isDefaultMetrics && !isDefaultTrace) {
+			return '';
+		}
+
+		if (isDefaultMetrics && !isDefaultTrace) {
+			return `${getValue('Metrics')}`;
+		}
+
+		if (!isDefaultMetrics && isDefaultTrace) {
+			return `${getValue('Trace')}`;
+		}
+
+		return `${getValue('Trace , Metrics')}`;
+	};
+
+	const errorText = getErrorText();
+
 	return (
 		<Container>
 			{Element}
+
+			{errorText && (
+				<ErrorTextContainer>
+					<ErrorText>{errorText}</ErrorText>
+				</ErrorTextContainer>
+			)}
 
 			<Retention
 				text={'Retention Period for Metrics'}
