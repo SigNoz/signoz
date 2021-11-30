@@ -14,7 +14,12 @@ const App = (): JSX.Element => (
 			<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 				<Switch>
 					{routes.map(({ path, component, exact }, index) => (
-						<Route key={index} exact={exact} path={path} component={component} />
+						<Route
+							key={index.toString() + path + path?.length}
+							exact={exact}
+							path={path}
+							component={component}
+						/>
 					))}
 					<Redirect from="/" to={ROUTES.APPLICATION} />
 					<Route component={NotFound} />
