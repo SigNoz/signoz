@@ -31,9 +31,7 @@ export const TraceGraphPage = Loadable(
 
 export const UsageExplorerPage = Loadable(
 	() =>
-		import(
-			/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage/UsageExplorerDef'
-		),
+		import(/* webpackChunkName: "UsageExplorerPage" */ 'pages/UsageExplorer'),
 );
 
 export const SignupPage = Loadable(

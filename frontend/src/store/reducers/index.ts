@@ -8,14 +8,14 @@ import { ServiceMapReducer } from './serviceMap';
 import { traceReducer } from './trace';
 import TraceFilterReducer from './traceFilters';
 import { traceItemReducer, tracesReducer } from './traces';
-import { usageDataReducer } from './usage';
+import UsageReducer from './usage';
 
 const reducers = combineReducers({
 	traceFilters: TraceFilterReducer,
 	traces: tracesReducer,
 	traceItem: traceItemReducer,
 	trace: traceReducer,
-	usageDate: usageDataReducer,
+	usage: UsageReducer,
 	globalTime: globalTimeReducer,
 	serviceMap: ServiceMapReducer,
 	dashboards: dashboardReducer,
