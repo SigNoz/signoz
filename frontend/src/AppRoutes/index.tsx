@@ -15,7 +15,7 @@ const App = (): JSX.Element => (
 				<Switch>
 					{routes.map(({ path, component, exact }, index) => (
 						<Route
-							key={index.toString() + path + path?.length}
+							key={`${index.toString()} ${path} ${path?.length}`}
 							exact={exact}
 							path={path}
 							component={component}

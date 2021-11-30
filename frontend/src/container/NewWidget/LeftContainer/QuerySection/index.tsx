@@ -52,7 +52,7 @@ const QuerySection = ({
 				<Query
 					currentIndex={index}
 					selectedTime={selectedTime}
-					key={e.query + e.query.length}
+					key={`${e.query} ${e.query.length}`}
 					preQuery={e.query}
 					preLegend={e.legend || ''}
 				/>
