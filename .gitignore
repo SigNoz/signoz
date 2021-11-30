@@ -42,3 +42,6 @@ frontend/cypress.env.json
 
 frontend/*.env
 pkg/query-service/signoz.db
+
+# Local Netlify folder
+.netlify
