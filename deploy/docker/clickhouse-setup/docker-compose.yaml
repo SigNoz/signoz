@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   clickhouse:
-      image: yandex/clickhouse-server
+      image: ${clickhouse_image}
       expose:
         - 8123
         - 9000
