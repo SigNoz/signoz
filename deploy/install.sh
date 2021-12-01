@@ -496,7 +496,7 @@ else
     echo ""
 
     if [ $setup_type == 'clickhouse' ]; then
-        echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml down -v"
+        echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml down -v"
     else
         echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
     fi
