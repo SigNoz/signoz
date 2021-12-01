@@ -1,5 +1,5 @@
 import Spinner from 'components/Spinner';
-import MetricTable from 'container/MetricsTable';
+import UsageExplorerContainer from 'container/UsageExplorer';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -16,28 +16,38 @@ import { UsageReducer } from 'types/reducer/usage';
 const UsageExplorer = ({
 	getInitialUsageData,
 }: UsageExplorerProps): JSX.Element => {
-	const { selectedService, step } = useSelector<AppState, UsageReducer>(
-		(state) => state.usage,
-	);
-	const { selectedTime, loading } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { selectedService, selectedInterval, selectedTime } = useSelector<
+		AppState,
+		UsageReducer
+	>((state) => state.usage);
+	const { loading, selectedTime: globalSelectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	useEffect(() => {
 		if (loading === false) {
 			getInitialUsageData({
 				selectedService,
-				selectedTime,
-				step,
+				selectedTime: selectedTime,
+				step: selectedInterval.value,
+				globalSelectedTime,
 			});
 		}
-	}, [getInitialUsageData, selectedService, selectedTime, step, loading]);
+	}, [
+		getInitialUsageData,
+		selectedService,
+		selectedTime,
+		loading,
+		globalSelectedTime,
+		selectedInterval,
+	]);
 
 	if (loading) {
-		return <Spinner tip="Loading..." />;
+		return <Spinner height="80vh" tip="Loading..." />;
 	}
 
-	return <div>asd</div>;
+	return <UsageExplorerContainer />;
 };
 
 interface DispatchProps {

@@ -9,28 +9,39 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { UsageReducer } from 'types/reducer/usage';
 
 export const GetInitialUsageData = ({
-	selectedTime,
 	selectedService,
 	step,
+	globalSelectedTime,
+	selectedTime,
 }: GetInitialUsageDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const { globalTime } = store.getState();
 
 			//taking redux as source of truth
-			if (globalTime.selectedTime !== selectedTime) {
+			if (globalTime.selectedTime !== globalSelectedTime) {
 				return;
 			}
 
-			const { maxTime, minTime } = GetMinMax(selectedTime, [
+			const maxTime = new Date().getTime() * 1000000;
+			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
+
+			const globalMinMax = GetMinMax(globalSelectedTime, [
 				globalTime.minTime / 1000000,
 				globalTime.maxTime / 1000000,
 			]);
 
+			dispatch({
+				type: 'GET_INITIAL_USAGE_DATA_LOADING_START',
+				payload: {
+					loading: true,
+				},
+			});
+
 			const [getServiceResponse, getUsageResponse] = await Promise.all([
 				getService({
-					end: maxTime,
-					start: minTime,
+					end: globalMinMax.maxTime,
+					start: globalMinMax.minTime,
 				}),
 				getUsage({
 					maxTime,
@@ -62,6 +73,12 @@ export const GetInitialUsageData = ({
 					},
 				});
 			}
+			dispatch({
+				type: 'GET_INITIAL_USAGE_DATA_LOADING_START',
+				payload: {
+					loading: false,
+				},
+			});
 		} catch (error) {
 			dispatch({
 				type: 'GET_INITIAL_USAGE_DATA_ERROR',
@@ -69,12 +86,19 @@ export const GetInitialUsageData = ({
 					errorMessage: (error as AxiosError).toString() || 'Something went wrong',
 				},
 			});
+			dispatch({
+				type: 'GET_INITIAL_USAGE_DATA_LOADING_START',
+				payload: {
+					loading: false,
+				},
+			});
 		}
 	};
 };
 
 export interface GetInitialUsageDataProps {
-	selectedTime: GlobalReducer['selectedTime'];
+	globalSelectedTime: GlobalReducer['selectedTime'];
 	selectedService: UsageReducer['selectedService'];
-	step: UsageReducer['step'];
+	step: number;
+	selectedTime: UsageReducer['selectedTime'];
 }

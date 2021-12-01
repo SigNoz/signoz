@@ -1,17 +1,20 @@
 import { PayloadProps as ServicePayload } from 'types/api/metrics/getService';
 import { PayloadProps } from 'types/api/usage/getUsage';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { UsageReducer } from 'types/reducer/usage';
 
-export const GET_INITIAL_USAGE_DATA = 'GET_INITIAL_USAGE_DATA';
+export const GET_INITIAL_USAGE_DATA_LOADING_START =
+	'GET_INITIAL_USAGE_DATA_LOADING_START';
+
 export const GET_INITIAL_USAGE_DATA_SUCCESS = 'GET_INITIAL_USAGE_DATA_SUCCESS';
 export const GET_INITIAL_USAGE_DATA_ERROR = 'GET_INITIAL_USAGE_DATA_ERROR';
 export const UPDATE_SELECTED_SERVICE = 'UPDATE_SELECTED_SERVICE';
+export const UPDATE_SELECTED_INTERVAL = 'UPDATE_SELECTED_INTERVAL';
+export const UPDATE_SELECTED_TIME = 'UPDATE_SELECTED_TIME';
 
-interface GetInitialUsageData {
-	type: typeof GET_INITIAL_USAGE_DATA;
+interface GetInitialUsageDataLoading {
+	type: typeof GET_INITIAL_USAGE_DATA_LOADING_START;
 	payload: {
-		selectedTime: GlobalReducer['selectedTime'];
+		loading: boolean;
 	};
 }
 
@@ -37,8 +40,24 @@ interface UpdateSelectedSelectedService {
 	};
 }
 
+interface UpdateSelectedInterval {
+	type: typeof UPDATE_SELECTED_INTERVAL;
+	payload: {
+		selectedInterval: UsageReducer['selectedInterval'];
+	};
+}
+
+interface UpdateSelectedTime {
+	type: typeof UPDATE_SELECTED_TIME;
+	payload: {
+		selectedTime: UsageReducer['selectedTime'];
+	};
+}
+
 export type UsageActions =
-	| GetInitialUsageData
+	| GetInitialUsageDataLoading
 	| GetInitialUsageDataSuccess
 	| GetInitialUsageDataError
-	| UpdateSelectedSelectedService;
+	| UpdateSelectedSelectedService
+	| UpdateSelectedInterval
+	| UpdateSelectedTime;
