@@ -1,4 +1,3 @@
-import { Layout } from 'antd';
 import ROUTES from 'constants/routes';
 import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
@@ -8,7 +7,8 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-const { Content, Footer } = Layout;
+import Feedback from './FeedBack';
+import { Content, Footer, Layout } from './styles';
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -31,17 +31,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 	const currentYear = new Date().getFullYear();
 
 	return (
-		<Layout style={{ minHeight: '100vh' }}>
+		<Layout>
 			{!isSignUpPage && <SideNav />}
-			<Layout className="site-layout">
-				<Content style={{ margin: '0 16px' }}>
+			<Layout>
+				<Content>
 					{!isSignUpPage && <TopNav />}
 					{children}
 				</Content>
-				<Footer style={{ textAlign: 'center', fontSize: 10 }}>
-					SigNoz Inc. ©{currentYear}
-				</Footer>
+				<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
 			</Layout>
+
+			<Feedback />
 		</Layout>
 	);
 };

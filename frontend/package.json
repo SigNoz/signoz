@@ -4,8 +4,8 @@
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {
-		"dev": "NODE_OPTIONS=\"--loader ts-node/esm\" NODE_ENV=development webpack serve --config=webpack.config.ts --progress",
-		"build": "NODE_OPTIONS=\"--loader ts-node/esm\" webpack --config=webpack.config.prod.ts --progress",
+		"dev": "NODE_ENV=development webpack serve --progress",
+		"build": "webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
@@ -13,12 +13,12 @@
 		"cypress:run": "cypress run",
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
-		"jest:watch": "jest --watch"
+		"jest:watch": "jest --watch",
+		"bundle:size": "bundlesize"
 	},
 	"engines": {
 		"node": ">=12.13.0"
 	},
-	"type": "module",
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
@@ -37,6 +37,7 @@
 		"chart.js": "^3.4.0",
 		"chartjs-adapter-date-fns": "^2.0.0",
 		"css-loader": "4.3.0",
+		"css-minimizer-webpack-plugin": "^3.2.0",
 		"d3": "^6.2.0",
 		"d3-flame-graph": "^3.1.1",
 		"d3-tip": "^0.9.1",
@@ -45,7 +46,7 @@
 		"history": "4.10.1",
 		"html-webpack-plugin": "5.1.0",
 		"jest": "26.6.0",
-		"jest-circus": "26.6.0",
+		"mini-css-extract-plugin": "^2.4.5",
 		"monaco-editor": "^0.30.0",
 		"react": "17.0.0",
 		"react-dom": "17.0.0",
@@ -59,6 +60,8 @@
 		"redux-thunk": "^2.3.0",
 		"style-loader": "1.3.0",
 		"styled-components": "^5.2.1",
+		"terser-webpack-plugin": "^5.2.5",
+		"ts-node": "^10.2.1",
 		"tsconfig-paths-webpack-plugin": "^3.5.1",
 		"typescript": "^4.0.5",
 		"uuid": "^8.3.2",
@@ -109,6 +112,7 @@
 		"@welldone-software/why-did-you-render": "^6.2.1",
 		"autoprefixer": "^9.0.0",
 		"babel-plugin-styled-components": "^1.12.0",
+		"bundlesize": "^0.18.1",
 		"compression-webpack-plugin": "^9.0.0",
 		"copy-webpack-plugin": "^8.1.0",
 		"cypress": "^8.3.0",

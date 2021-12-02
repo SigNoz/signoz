@@ -41,6 +41,7 @@ module.exports = {
 		'react/prop-types': 'off',
 		'@typescript-eslint/explicit-function-return-type': 'error',
 		'@typescript-eslint/no-var-requires': 0,
+		'react/no-array-index-key': 2,
 		'linebreak-style': ['error', 'unix'],
 
 		// simple sort error
