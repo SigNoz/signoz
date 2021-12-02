@@ -59,3 +59,17 @@ export const TextContainer = styled.div`
 		min-width: 100px;
 	}
 `;
+
+export const ErrorTextContainer = styled.div`
+	&&& {
+		margin-top: 2rem;
+		margin-bottom: 2rem;
+	}
+`;
+
+export const ErrorText = styled(TypographyComponent)`
+	&&& {
+		color: #e89a3c;
+		font-style: italic;
+	}
+`;

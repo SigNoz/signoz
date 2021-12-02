@@ -1,21 +1,16 @@
 // shared config (dev and prod)
-import dotenv from 'dotenv';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import { resolve } from 'path';
-import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-import webpack from 'webpack';
-import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
+const { resolve } = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const portFinderSync = require('portfinder-sync');
+const dotenv = require('dotenv');
+const webpack = require('webpack');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 dotenv.config();
 
-const __dirname = resolve();
 console.log(resolve(__dirname, './src/'));
 
-interface Configuration extends webpack.Configuration {
-	devServer?: WebpackDevServerConfiguration;
-}
-
-const config: Configuration = {
+const config = {
 	mode: 'development',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
@@ -33,11 +28,6 @@ const config: Configuration = {
 	},
 	target: 'web',
 	output: {
-		filename: ({ chunk }) => {
-			const hash = chunk?.hash;
-			const name = chunk?.name;
-			return `js/${name}-${hash}.js`;
-		},
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
@@ -54,11 +44,7 @@ const config: Configuration = {
 			},
 			{
 				test: /\.css$/,
-				use: ['style-loader', 'css-loader'],
-			},
-			{
-				test: /\.(scss|sass)$/,
-				use: ['style-loader', 'css-loader', 'sass-loader'],
+				use: ['css-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
@@ -87,4 +73,4 @@ const config: Configuration = {
 	},
 };
 
-export default config;
+module.exports = config;

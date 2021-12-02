@@ -16,12 +16,12 @@ const EditRules = (): JSX.Element => {
 		id: parseInt(ruleId),
 	});
 
-	if (loading || payload === undefined) {
-		return <Spinner tip="Loading Rules..." />;
-	}
-
 	if (error) {
 		return <div>{errorMessage}</div>;
+	}
+
+	if (loading || payload === undefined) {
+		return <Spinner tip="Loading Rules..." />;
 	}
 
 	return <EditRulesContainer ruleId={ruleId} initialData={payload.data} />;
