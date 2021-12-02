@@ -1,0 +1,21 @@
+{
+	"data": [
+		{
+			"created_at": 1638083159246,
+			"data": "{}",
+			"id": 1,
+			"name": "First Channels",
+			"type": "slack",
+			"updated_at": 1638083159246
+		},
+		{
+			"created_at": 1638083159246,
+			"data": "{}",
+			"id": 2,
+			"name": "Second Channels",
+			"type": "Slack",
+			"updated_at": 1638083159246
+		}
+	],
+	"message": "Success"
+}

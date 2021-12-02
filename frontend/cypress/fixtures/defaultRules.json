@@ -1,0 +1,28 @@
+{
+	"status": "success",
+	"data": {
+		"rules": [
+			{
+				"labels": { "severity": "warning" },
+				"annotations": {},
+				"state": "firing",
+				"name": "First Rule",
+				"id": 1
+			},
+			{
+				"labels": { "severity": "warning" },
+				"annotations": {},
+				"state": "firing",
+				"name": "Second Rule",
+				"id": 2
+			},
+			{
+				"labels": { "severity": "P0" },
+				"annotations": {},
+				"state": "firing",
+				"name": "Third Rule",
+				"id": 3
+			}
+		]
+	}
+}
