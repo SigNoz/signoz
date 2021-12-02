@@ -13,8 +13,8 @@ const App = (): JSX.Element => (
 		<AppLayout>
 			<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 				<Switch>
-					{routes.map(({ path, component, exact }, index) => (
-						<Route key={index} exact={exact} path={path} component={component} />
+					{routes.map(({ path, component, exact }) => (
+						<Route key={`${path}`} exact={exact} path={path} component={component} />
 					))}
 					<Redirect from="/" to={ROUTES.APPLICATION} />
 					<Route component={NotFound} />
