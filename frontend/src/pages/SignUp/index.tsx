@@ -55,8 +55,10 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 					first_name: formState.firstName,
 					email: formState.email,
 				};
+
 				const response = await signup({
-					email: JSON.stringify(payload),
+					email: payload.email.value,
+					name: payload.first_name.value,
 				});
 
 				if (response.statusCode === 200) {

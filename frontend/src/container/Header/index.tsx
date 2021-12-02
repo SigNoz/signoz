@@ -10,6 +10,7 @@ import { Container } from './styles';
 
 const routesToSkip = [ROUTES.SETTINGS, ROUTES.LIST_ALL_ALERT];
 
+
 const TopNav = (): JSX.Element | null => {
 	const { pathname } = useLocation();
 
