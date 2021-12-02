@@ -2,11 +2,11 @@ import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
 import EditRulesContainer from 'container/EditRules';
 import useFetch from 'hooks/useFetch';
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import { useParams } from 'react-router';
 import { PayloadProps, Props } from 'types/api/alerts/get';
 
-const EditRules = () => {
+const EditRules = (): JSX.Element => {
 	const { ruleId } = useParams<EditRulesParam>();
 
 	const { loading, error, payload, errorMessage } = useFetch<
@@ -16,12 +16,12 @@ const EditRules = () => {
 		id: parseInt(ruleId),
 	});
 
-	if (loading || payload === undefined) {
-		return <Spinner tip="Loading Rules..." />;
-	}
-
 	if (error) {
 		return <div>{errorMessage}</div>;
+	}
+
+	if (loading || payload === undefined) {
+		return <Spinner tip="Loading Rules..." />;
 	}
 
 	return <EditRulesContainer ruleId={ruleId} initialData={payload.data} />;
