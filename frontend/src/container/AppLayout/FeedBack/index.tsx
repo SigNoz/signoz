@@ -64,12 +64,7 @@ const Feedback = (): JSX.Element => {
 	return (
 		<Container>
 			{!isOpen && (
-				<IconButton
-					onClick={isToggleHandler}
-					type="primary"
-					size="large"
-					shape="circle"
-				>
+				<IconButton onClick={isToggleHandler} type="primary" size="large">
 					<CommentOutlined />
 				</IconButton>
 			)}

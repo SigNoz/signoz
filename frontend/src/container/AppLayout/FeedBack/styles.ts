@@ -41,6 +41,8 @@ export const ButtonContainer = styled.div`
 export const Button = styled(ButtonComponent)`
 	height: 4.5rem;
 	width: 4.5rem;
+	border-radius: 30px;
+	background-color: #65b7f3;
 
 	svg {
 		width: 2rem;
