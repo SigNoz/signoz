@@ -1,27 +1,36 @@
 // shared config (dev and prod)
-import CompressionPlugin from 'compression-webpack-plugin';
-import CopyPlugin from 'copy-webpack-plugin';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import { resolve } from 'path';
-import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-import webpack, { WebpackPluginInstance } from 'webpack';
+const { resolve } = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const portFinderSync = require('portfinder-sync');
+const dotenv = require('dotenv');
+const webpack = require('webpack');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-const __dirname = resolve();
+dotenv.config();
 
-const config: webpack.Configuration = {
-	mode: 'production',
+console.log(resolve(__dirname, './src/'));
+
+const config = {
+	mode: 'development',
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
-	output: {
-		filename: ({ chunk }): string => {
-			const hash = chunk?.hash;
-			const name = chunk?.name;
-			return `js/${name}-${hash}.js`;
+	devServer: {
+		historyApiFallback: true,
+		open: true,
+		hot: true,
+		liveReload: true,
+		port: portFinderSync.getPort(3000),
+		static: {
+			directory: resolve(__dirname, 'public'),
+			publicPath: '/',
+			watch: true,
 		},
+	},
+	target: 'web',
+	output: {
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
 	},
-
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
@@ -35,11 +44,7 @@ const config: webpack.Configuration = {
 			},
 			{
 				test: /\.css$/,
-				use: ['style-loader', 'css-loader'],
-			},
-			{
-				test: /\.(scss|sass)$/,
-				use: ['style-loader', 'css-loader', 'sass-loader'],
+				use: ['css-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
@@ -56,12 +61,6 @@ const config: webpack.Configuration = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		(new CompressionPlugin({
-			exclude: /.map$/,
-		}) as unknown) as WebpackPluginInstance,
-		(new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}) as unknown) as WebpackPluginInstance,
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
@@ -74,4 +73,4 @@ const config: webpack.Configuration = {
 	},
 };
 
-export default config;
+module.exports = config;
