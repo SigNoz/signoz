@@ -2,7 +2,9 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
+import getAll from 'api/alerts/getAll';
 import ROUTES from 'constants/routes';
+import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { generatePath } from 'react-router';
@@ -14,6 +16,16 @@ import Status from './TableComponents/Status';
 
 const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
+
+	useInterval(() => {
+		(async (): Promise<void> => {
+			const { payload, statusCode } = await getAll();
+
+			if (statusCode === 200 && payload !== null) {
+				setData(payload);
+			}
+		})();
+	}, 30000);
 
 	const onClickNewAlertHandler = useCallback(() => {
 		history.push(ROUTES.ALERTS_NEW);

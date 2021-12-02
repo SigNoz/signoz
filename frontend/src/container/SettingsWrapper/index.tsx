@@ -15,6 +15,7 @@ const SettingsWrapper = ({
 	AlertChannels,
 	General,
 	toggleSettingsTab,
+	defaultRoute,
 }: SettingsWrapperProps): JSX.Element => {
 	const { settingsActiveTab } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -38,7 +39,7 @@ const SettingsWrapper = ({
 		<Tabs
 			destroyInactiveTabPane
 			onChange={(value): void => onChangeHandler(value as SettingTab)}
-			activeKey={settingsActiveTab}
+			activeKey={defaultRoute || settingsActiveTab}
 		>
 			<TabPane tab="General" key="General">
 				<General />
@@ -63,6 +64,7 @@ const mapDispatchToProps = (
 interface SettingsWrapperProps extends DispatchProps {
 	General: () => JSX.Element;
 	AlertChannels: () => JSX.Element;
+	defaultRoute?: SettingTab;
 }
 
 export default connect(null, mapDispatchToProps)(SettingsWrapper);
