@@ -10,6 +10,7 @@ import {
 	CenterText,
 	Container,
 	TitleContainer,
+	FormItem,
 } from './styles';
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -87,20 +88,19 @@ const Feedback = (): JSX.Element => {
 
 						<Divider />
 
-						<Form.Item name="feedback" required>
+						<FormItem name="feedback" required>
 							<TextArea
 								required
+								rows={3}
 								placeholder="Share what can we improve ( e.g. Not able to  find  how to see metrics... )"
 							/>
-						</Form.Item>
+						</FormItem>
 
-						<Form.Item name="email">
+						<FormItem name="email">
 							<Input type="email" placeholder="Email (optional)" />
-						</Form.Item>
+						</FormItem>
 
-						<Form.Item>
-							<CenterText>This will just be visible to our maintainers</CenterText>
-						</Form.Item>
+						<CenterText>This will just be visible to our maintainers</CenterText>
 
 						<ButtonContainer>
 							<Button
