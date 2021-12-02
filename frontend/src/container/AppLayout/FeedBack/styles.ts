@@ -44,6 +44,9 @@ export const ButtonContainer = styled.div`
 export const Button = styled(ButtonComponent)`
 	height: 4rem;
 	width: 4rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 
 	border-radius: 25px;
 
