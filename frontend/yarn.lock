@@ -1614,6 +1614,11 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
+"@snyk/protect@^1.782.0":
+  version "1.782.0"
+  resolved "https://registry.yarnpkg.com/@snyk/protect/-/protect-1.782.0.tgz#673686f139d8cecc87fcf888db6df27ae664d5de"
+  integrity sha512-QFeaMYllnHk5Y3fqdJnjhQTP+33EpTCe9geqL/YWQh4vgA1HuWveloFL6439u4t4EJUUtCXK9z9oTXDm5Ls1iQ==
+
 "@testing-library/cypress@^8.0.0":
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@testing-library/cypress/-/cypress-8.0.2.tgz#b13f0ff2424dec4368b6670dfbfb7e43af8eefc9"
