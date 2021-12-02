@@ -50,21 +50,25 @@ const GeneralSettings = (): JSX.Element => {
 		setModal((modal) => !modal);
 	};
 
+	const checkMetricTraceDefault = (trace: number, metric: number): void => {
+		if (metric === -1) {
+			setIsDefaultMetrics(true);
+		} else {
+			setIsDefaultMetrics(false);
+		}
+
+		if (trace === -1) {
+			setIsDefaultTrace(true);
+		} else {
+			setIsDefaultTrace(false);
+		}
+	};
+
 	useEffect(() => {
 		if (!loading && payload !== undefined) {
 			const { metrics_ttl_duration_hrs, traces_ttl_duration_hrs } = payload;
 
-			if (metrics_ttl_duration_hrs === -1) {
-				setIsDefaultMetrics(true);
-			} else {
-				setIsDefaultMetrics(false);
-			}
-
-			if (traces_ttl_duration_hrs === -1) {
-				setIsDefaultTrace(true);
-			} else {
-				setIsDefaultTrace(false);
-			}
+			checkMetricTraceDefault(traces_ttl_duration_hrs, metrics_ttl_duration_hrs);
 
 			const traceValue = getSettingsPeroid(traces_ttl_duration_hrs);
 			const metricsValue = getSettingsPeroid(metrics_ttl_duration_hrs);
@@ -80,14 +84,24 @@ const GeneralSettings = (): JSX.Element => {
 	const onOkHandler = async (): Promise<void> => {
 		try {
 			setPostApiLoading(true);
+			const retentionTraceValue =
+				retentionPeroidTrace === 0 && (payload?.traces_ttl_duration_hrs || 0) < 0
+					? payload?.traces_ttl_duration_hrs || 0
+					: retentionPeroidTrace;
+
+			const retentionMetricsValue =
+				retentionPeroidMetrics === 0 && (payload?.metrics_ttl_duration_hrs || 0) < 0
+					? payload?.metrics_ttl_duration_hrs || 0
+					: retentionPeroidMetrics;
+
 			const [tracesResponse, metricsResponse] = await Promise.all([
 				setRetentionApi({
-					duration: `${convertIntoHr(retentionPeroidTrace, selectedTracePeroid)}h`,
+					duration: `${convertIntoHr(retentionTraceValue, selectedTracePeroid)}h`,
 					type: 'traces',
 				}),
 				setRetentionApi({
 					duration: `${convertIntoHr(
-						retentionPeroidMetrics,
+						retentionMetricsValue,
 						selectedMetricsPeroid,
 					)}h`,
 					type: 'metrics',
@@ -103,6 +117,9 @@ const GeneralSettings = (): JSX.Element => {
 					placement: 'topRight',
 					description: 'Congrats. The retention periods were updated correctly.',
 				});
+
+				checkMetricTraceDefault(retentionTraceValue, retentionMetricsValue);
+
 				onModalToggleHandler();
 			} else {
 				notifications.error({
