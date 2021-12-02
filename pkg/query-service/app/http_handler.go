@@ -641,13 +641,18 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
 		return
 	}
+	messageStr := fmt.Sprintf("%s", message)
+	if len(messageStr) == 0 {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
+		return
+	}
 
 	email := postData["email"]
 
-	(*aH.pc).Enqueue(posthog.Identify{
-		DistinctId: aH.distinctId,
-		Properties: posthog.NewProperties().
-			Set("email", email).Set("message", message),
+	(*aH.pc).Enqueue(posthog.Capture{
+		DistinctId: distinctId,
+		Event:      "InProduct Feeback Submitted",
+		Properties: posthog.NewProperties().Set("email", email).Set("message", message),
 	})
 
 }
