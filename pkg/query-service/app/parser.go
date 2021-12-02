@@ -23,6 +23,20 @@ var allowedAggregations = map[string][]string{
 	"duration": {"avg", "p50", "p95", "p99"},
 }
 
+func parseUser(r *http.Request) (*model.User, error) {
+
+	var user model.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+	if len(user.Email) == 0 {
+		return nil, fmt.Errorf("email field not found")
+	}
+
+	return &user, nil
+}
+
 func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
 	startTime, err := parseTime("start", r)
 	if err != nil {
