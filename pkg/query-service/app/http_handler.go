@@ -627,20 +627,18 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
-	email := r.URL.Query().Get("email")
 
-	var err error
-	if len(email) == 0 {
-		err = fmt.Errorf("Email param is missing")
-	}
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
+	user, err := parseUser(r)
+	if err != nil {
+		if aH.handleError(w, err, http.StatusBadRequest) {
+			return
+		}
 	}
 
 	(*aH.pc).Enqueue(posthog.Identify{
 		DistinctId: aH.distinctId,
 		Properties: posthog.NewProperties().
-			Set("email", email),
+			Set("email", user.Email).Set("name", user.Name),
 	})
 
 }
