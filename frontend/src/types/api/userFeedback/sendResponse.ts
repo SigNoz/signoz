@@ -1,5 +1,4 @@
 export interface Props {
-	text: string;
+	email: string;
+	message: string;
 }
-
-export type Payload = string;

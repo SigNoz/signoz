@@ -31,17 +31,14 @@ const Feedback = (): JSX.Element => {
 	): Promise<void> => {
 		try {
 			setIsLoading(true);
-			const { feedback, email } = value;
-
-			const formedText = `message - ${feedback} ${
-				email ? `, email - ${email}` : ''
-			}`;
+			const { feedback, email = '' } = value;
 
 			const response = await sendFeedbackApi({
-				text: formedText,
+				email,
+				message: feedback,
 			});
 
-			if (response) {
+			if (response === 200) {
 				notifications.success({
 					message: 'Thanks for your feedback!',
 					description:
@@ -49,6 +46,11 @@ const Feedback = (): JSX.Element => {
 				});
 
 				isToggleHandler();
+			} else {
+				notifications.error({
+					message: 'Error!',
+					description: 'Something went wrong',
+				});
 			}
 			setIsLoading(false);
 		} catch (error) {

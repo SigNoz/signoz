@@ -1,14 +1,12 @@
-import axios from 'axios';
-import { Payload, Props } from 'types/api/userFeedback/sendResponse';
+import axios from 'api';
+import { Props } from 'types/api/userFeedback/sendResponse';
 
-const slackUrl =
-	'https://hooks.slack.com/services/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';
-
-const sendFeedback = async (props: Props): Promise<Payload> => {
+const sendFeedback = async (props: Props): Promise<number> => {
 	const response = await axios.post(
-		slackUrl,
+		'/feedback',
 		{
-			text: props.text,
+			email: props.email,
+			message: props.message,
 		},
 		{
 			headers: {
@@ -17,7 +15,7 @@ const sendFeedback = async (props: Props): Promise<Payload> => {
 		},
 	);
 
-	return response.data;
+	return response.status;
 };
 
 export default sendFeedback;
