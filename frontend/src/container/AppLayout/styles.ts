@@ -1,10 +1,11 @@
 import { Layout as LayoutComponent } from 'antd';
 import styled from 'styled-components';
 
-export const Layout = styled.div`
+export const Layout = styled(LayoutComponent)`
 	&&& {
 		min-height: 100vh;
 		display: flex;
+		position: relative;
 	}
 `;
 
@@ -19,8 +20,4 @@ export const Footer = styled(LayoutComponent.Footer)`
 		text-align: center;
 		font-size: 0.7rem;
 	}
-`;
-
-export const Main = styled.main`
-	min-height: 80vh;
 `;
