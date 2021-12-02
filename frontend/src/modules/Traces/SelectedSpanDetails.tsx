@@ -75,7 +75,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
 					{spanTags &&
-						spanTags.map((tags, index) => {
+						spanTags.map((tags) => {
 							return (
 								<>
 									{tags.value && (

@@ -1,5 +1,4 @@
-import { apiV1, AxiosAlertManagerInstance } from 'api';
-import { apiV2 } from 'api/apiV1';
+import { AxiosAlertManagerInstance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';

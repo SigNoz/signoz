@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 
 import { Container } from './styles';
 
-const Editor = ({ value }: EditorProps) => {
+const Editor = ({ value }: EditorProps): JSX.Element => {
 	const divEl = useRef<HTMLDivElement>(null);
 	const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
 
@@ -28,7 +28,7 @@ const Editor = ({ value }: EditorProps) => {
 			value.current = editor?.getValue() || '';
 		});
 
-		return () => {
+		return (): void => {
 			if (editor) {
 				editor.dispose();
 			}
