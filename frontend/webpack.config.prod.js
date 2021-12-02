@@ -1,32 +1,18 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 // shared config (dev and prod)
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const portFinderSync = require('portfinder-sync');
-const dotenv = require('dotenv');
+const CopyPlugin = require('copy-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-
-dotenv.config();
-
-console.log(resolve(__dirname, './src/'));
+const TerserPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const config = {
-	mode: 'development',
-	devtool: 'source-map',
+	mode: 'production',
 	entry: resolve(__dirname, './src/index.tsx'),
-	devServer: {
-		historyApiFallback: true,
-		open: true,
-		hot: true,
-		liveReload: true,
-		port: portFinderSync.getPort(3000),
-		static: {
-			directory: resolve(__dirname, 'public'),
-			publicPath: '/',
-			watch: true,
-		},
-	},
-	target: 'web',
 	output: {
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
@@ -35,6 +21,17 @@ const config = {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
 	},
+	cache: {
+		type: 'filesystem',
+		allowCollectingMemory: true,
+		cacheDirectory: resolve(__dirname, '.temp_cache'),
+		buildDependencies: {
+			// This makes all dependencies of this file - build dependencies
+			config: [__filename],
+			// By default webpack and loaders are build dependencies
+		},
+	},
+
 	module: {
 		rules: [
 			{
@@ -44,7 +41,7 @@ const config = {
 			},
 			{
 				test: /\.css$/,
-				use: ['css-loader'],
+				use: [MiniCssExtractPlugin.loader, 'css-loader'],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
@@ -61,15 +58,52 @@ const config = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+		new CompressionPlugin({
+			exclude: /.map$/,
+		}),
+		new CopyPlugin({
+			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+		}),
 		new webpack.ProvidePlugin({
 			process: 'process/browser',
 		}),
 		new webpack.DefinePlugin({
 			'process.env': JSON.stringify(process.env),
 		}),
+		new MiniCssExtractPlugin(),
 	],
+	optimization: {
+		chunkIds: 'named',
+		concatenateModules: true,
+		emitOnErrors: true,
+		flagIncludedChunks: true,
+		innerGraph: true, //tells webpack whether to conduct inner graph analysis for unused exports.
+		mangleWasmImports: true,
+		mergeDuplicateChunks: true,
+		minimize: true,
+		nodeEnv: 'production',
+		runtimeChunk: {
+			name: (entrypoint) => `runtime~${entrypoint.name}`,
+		},
+		minimizer: [
+			new TerserPlugin({
+				parallel: true,
+				terserOptions: {
+					compress: true,
+					keep_classnames: true,
+					keep_fnames: false,
+					sourceMap: false,
+					safari10: true,
+					parse: {
+						html5_comments: false,
+					},
+				},
+			}),
+			new CssMinimizerPlugin(),
+		],
+	},
 	performance: {
-		hints: false,
+		hints: 'warning',
 	},
 };
 
