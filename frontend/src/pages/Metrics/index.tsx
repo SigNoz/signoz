@@ -25,10 +25,11 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 	useEffect(() => {
 		if (loading === false) {
 			getService({
-				selectedTimeInterval: selectedTime,
+				maxTime,
+				minTime,
 			});
 		}
-	}, [getService, loading, selectedTime]);
+	}, [getService, loading, maxTime, minTime]);
 
 	useEffect(() => {
 		let timeInterval: NodeJS.Timeout;
@@ -36,7 +37,8 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 		if (loading === false && !isSkipped && services.length === 0) {
 			timeInterval = setInterval(() => {
 				getService({
-					selectedTimeInterval: selectedTime,
+					maxTime,
+					minTime,
 				});
 			}, 50000);
 		}
