@@ -13,11 +13,14 @@ export const GetService = (
 		try {
 			const { globalTime } = getState();
 
-			if (props.selectedTimeInterval !== globalTime.selectedTime) {
+			if (
+				props.maxTime !== globalTime.maxTime &&
+				props.minTime !== globalTime.minTime
+			) {
 				return;
 			}
 
-			const { maxTime, minTime } = GetMinMax(props.selectedTimeInterval, [
+			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
 				globalTime.minTime / 1000000,
 				globalTime.maxTime / 1000000,
 			]);
@@ -56,5 +59,6 @@ export const GetService = (
 };
 
 export type GetServiceProps = {
-	selectedTimeInterval: GlobalReducer['selectedTime'];
+	minTime: GlobalReducer['minTime'];
+	maxTime: GlobalReducer['maxTime'];
 };

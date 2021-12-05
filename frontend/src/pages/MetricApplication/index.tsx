@@ -20,7 +20,7 @@ const MetricsApplication = ({
 	getInitialData,
 	resetInitialData,
 }: MetricsProps): JSX.Element => {
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const { error, errorMessage, metricsApplicationLoading } = useSelector<
@@ -33,15 +33,16 @@ const MetricsApplication = ({
 	useEffect(() => {
 		if (servicename !== undefined) {
 			getInitialData({
-				selectedTimeInterval: selectedTime,
 				serviceName: servicename,
+				maxTime,
+				minTime,
 			});
 		}
 
 		return (): void => {
 			resetInitialData();
 		};
-	}, [servicename, getInitialData, selectedTime, resetInitialData]);
+	}, [servicename, getInitialData, resetInitialData, maxTime, minTime]);
 
 	if (metricsApplicationLoading) {
 		return <Spinner tip="Loading..." />;
