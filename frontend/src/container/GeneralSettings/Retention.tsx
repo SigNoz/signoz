@@ -56,17 +56,18 @@ const Retention = ({
 
 	const onChangeHandler = (
 		e: React.ChangeEvent<HTMLInputElement>,
-		func: React.Dispatch<React.SetStateAction<number>>,
+		func: React.Dispatch<React.SetStateAction<string>>,
 	): void => {
 		const value = e.target.value;
+		const integerValue = parseInt(value, 10);
 
-		if (value.length > 0) {
-			const parsedValue = Math.abs(parseInt(value, 10));
+		if (value.length > 0 && integerValue.toString() === value) {
+			const parsedValue = Math.abs(integerValue).toString();
 			func(parsedValue);
 		}
 
 		if (value.length === 0) {
-			func(0);
+			func('');
 		}
 	};
 
@@ -96,9 +97,9 @@ interface Option {
 }
 
 interface RetentionProps {
-	retentionValue: number;
+	retentionValue: string;
 	text: string;
-	setRentionValue: React.Dispatch<React.SetStateAction<number>>;
+	setRentionValue: React.Dispatch<React.SetStateAction<string>>;
 	selectedRetentionPeroid: SettingPeroid;
 	setSelectedRetentionPeroid: React.Dispatch<
 		React.SetStateAction<SettingPeroid>
