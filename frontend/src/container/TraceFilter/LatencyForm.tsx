@@ -1,7 +1,7 @@
 import { Col, Form, InputNumber, Modal, notification, Row } from 'antd';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import { FormInstance, RuleObject } from 'rc-field-form/lib/interface';
-import React from 'react';
+import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -33,14 +33,18 @@ const LatencyForm = ({
 		selectedEntity,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
+	const [isApplyDisabled, setApplyDisabled] = useState(true);
+
 	const validateMinValue = (form: FormInstance): RuleObject => ({
 		validator(_: RuleObject, value): Promise<void> {
 			const { getFieldValue } = form;
 			const minValue = getFieldValue('min');
 			const maxValue = getFieldValue('max');
 			if (value <= maxValue && value >= minValue) {
+				setApplyDisabled(false);
 				return Promise.resolve();
 			}
+			setApplyDisabled(true);
 			return Promise.reject(new Error('Min value should be less than Max value'));
 		},
 	});
@@ -53,8 +57,10 @@ const LatencyForm = ({
 			const maxValue = getFieldValue('max');
 
 			if (value >= minValue && value <= maxValue) {
+				setApplyDisabled(false);
 				return Promise.resolve();
 			}
+			setApplyDisabled(true);
 			return Promise.reject(
 				new Error('Max value should be greater than Min value'),
 			);
@@ -107,6 +113,9 @@ const LatencyForm = ({
 				visible={visible}
 				onCancel={onCancel}
 				onOk={onOkHandler}
+				okButtonProps={{
+					disabled: isApplyDisabled
+				}}
 			>
 				<Form
 					form={form}
