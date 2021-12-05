@@ -1,5 +1,4 @@
 import api from 'api';
-import ROUTES from 'constants/routes';
 import { Dispatch } from 'redux';
 import { GlobalTime } from 'types/actions/globalTime';
 import { toUTCEpoch } from 'utils/timeUtils';
@@ -120,7 +119,7 @@ export interface FetchTraceItemAction {
 }
 
 export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
-	return async (dispatch: Dispatch): void => {
+	return async (dispatch: Dispatch): Promise<void> => {
 		if (globalTime) {
 			const request_string =
 				'/spans?limit=100&lookback=2d&start=' +
@@ -142,7 +141,7 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string = ROUTES.TRACES + '/' + traceID;
+		const request_string = '/traces' + '/' + traceID;
 		const response = await api.get<spansWSameTraceIDResponse>(request_string);
 
 		dispatch<FetchTraceItemAction>({

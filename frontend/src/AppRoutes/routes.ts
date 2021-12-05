@@ -3,15 +3,20 @@ import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
+	AllAlertChannels,
+	CreateAlertChannelAlerts,
+	CreateNewAlerts,
 	DashboardPage,
+	EditAlertChannelsAlerts,
+	EditRulesPage,
 	InstrumentationPage,
+	ListAllALertsPage,
 	NewDashboardPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
-	TraceDetailPage,
 	TraceDetailPages,
 	TraceGraphPage,
 	UsageExplorerPage,
@@ -59,11 +64,6 @@ const routes: AppRoutes[] = [
 		component: InstrumentationPage,
 	},
 	{
-		path: ROUTES.TRACES,
-		exact: true,
-		component: TraceDetailPage,
-	},
-	{
 		path: ROUTES.ALL_DASHBOARD,
 		exact: true,
 		component: DashboardPage,
@@ -79,9 +79,39 @@ const routes: AppRoutes[] = [
 		component: DashboardWidget,
 	},
 	{
+		path: ROUTES.EDIT_ALERTS,
+		exact: true,
+		component: EditRulesPage,
+	},
+	{
+		path: ROUTES.LIST_ALL_ALERT,
+		exact: true,
+		component: ListAllALertsPage,
+	},
+	{
+		path: ROUTES.ALERTS_NEW,
+		exact: true,
+		component: CreateNewAlerts,
+	},
+	{
 		path: ROUTES.TRACE,
 		exact: true,
 		component: TraceDetailPages,
+	},
+	{
+		path: ROUTES.CHANNELS_NEW,
+		exact: true,
+		component: CreateAlertChannelAlerts,
+	},
+	{
+		path: ROUTES.CHANNELS_EDIT,
+		exact: true,
+		component: EditAlertChannelsAlerts,
+	},
+	{
+		path: ROUTES.ALL_CHANNELS,
+		exact: true,
+		component: AllAlertChannels,
 	},
 ];
 

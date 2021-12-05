@@ -40,7 +40,7 @@ const TraceDetail = ({
 		return (): void => {
 			resetTraceData();
 		};
-	}, [getInitialTraceData, loading, selectedTime]);
+	}, [getInitialTraceData, loading, selectedTime, resetTraceData]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;

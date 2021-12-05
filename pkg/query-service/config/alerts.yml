@@ -1,0 +1,11 @@
+groups:
+- name: ExampleCPULoadGroup
+  rules:
+  - alert: HighCpuLoad-dev
+    expr: system_cpu_load_average_1m > 0.01
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: High CPU load
+      description: "CPU load is > 0.01\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

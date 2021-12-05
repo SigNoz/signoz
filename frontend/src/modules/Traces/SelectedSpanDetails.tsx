@@ -54,7 +54,7 @@ const CardContainer = styled(Card)`
 	}
 `;
 
-const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
+const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 	const spanTags = props.data?.tags;
 	const service = props.data?.name?.split(':')[0];
 	const operation = props.data?.name?.split(':')[1];
@@ -75,7 +75,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps) => {
 			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
 					{spanTags &&
-						spanTags.map((tags, index) => {
+						spanTags.map((tags) => {
 							return (
 								<>
 									{tags.value && (

@@ -237,7 +237,13 @@ const TraceList = ({
 				} ms`,
 			});
 		}
-	}, [selectedService, selectedOperation, selectedKind, selectedLatency]);
+	}, [
+		selectedService,
+		selectedOperation,
+		selectedKind,
+		selectedLatency,
+		form_basefilter,
+	]);
 
 	return (
 		<>

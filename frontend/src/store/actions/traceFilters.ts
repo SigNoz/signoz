@@ -26,7 +26,9 @@ export interface updateTraceFiltersAction {
 	payload: TraceFilters;
 }
 
-export const updateTraceFilters = (traceFilters: TraceFilters) => {
+export const updateTraceFilters = (
+	traceFilters: TraceFilters,
+): updateTraceFiltersAction => {
 	return {
 		type: ActionTypes.updateTraceFilters,
 		payload: traceFilters,

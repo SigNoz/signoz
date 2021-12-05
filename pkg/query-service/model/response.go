@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 )
@@ -32,6 +33,58 @@ type QueryData struct {
 	ResultType promql.ValueType  `json:"resultType"`
 	Result     promql.Value      `json:"result"`
 	Stats      *stats.QueryStats `json:"stats,omitempty"`
+}
+
+type RuleResponseItem struct {
+	Id        int       `json:"id" db:"id"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	Data      string    `json:"data" db:"data"`
+}
+
+type ChannelItem struct {
+	Id        int       `json:"id" db:"id"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	Name      string    `json:"name" db:"name"`
+	Type      string    `json:"type" db:"type"`
+	Data      string    `json:"data" db:"data"`
+}
+
+// Receiver configuration provides configuration on how to contact a receiver.
+type Receiver struct {
+	// A unique identifier for this receiver.
+	Name string `yaml:"name" json:"name"`
+
+	EmailConfigs     interface{} `yaml:"email_configs,omitempty" json:"email_configs,omitempty"`
+	PagerdutyConfigs interface{} `yaml:"pagerduty_configs,omitempty" json:"pagerduty_configs,omitempty"`
+	SlackConfigs     interface{} `yaml:"slack_configs,omitempty" json:"slack_configs,omitempty"`
+	WebhookConfigs   interface{} `yaml:"webhook_configs,omitempty" json:"webhook_configs,omitempty"`
+	OpsGenieConfigs  interface{} `yaml:"opsgenie_configs,omitempty" json:"opsgenie_configs,omitempty"`
+	WechatConfigs    interface{} `yaml:"wechat_configs,omitempty" json:"wechat_configs,omitempty"`
+	PushoverConfigs  interface{} `yaml:"pushover_configs,omitempty" json:"pushover_configs,omitempty"`
+	VictorOpsConfigs interface{} `yaml:"victorops_configs,omitempty" json:"victorops_configs,omitempty"`
+	SNSConfigs       interface{} `yaml:"sns_configs,omitempty" json:"sns_configs,omitempty"`
+}
+
+type ReceiverResponse struct {
+	Status string   `json:"status"`
+	Data   Receiver `json:"data"`
+}
+
+// AlertDiscovery has info for all active alerts.
+type AlertDiscovery struct {
+	Alerts []*AlertingRuleResponse `json:"rules"`
+}
+
+// Alert has info for an alert.
+type AlertingRuleResponse struct {
+	Labels      labels.Labels `json:"labels"`
+	Annotations labels.Labels `json:"annotations"`
+	State       string        `json:"state"`
+	Name        string        `json:"name"`
+	Id          int           `json:"id"`
+	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
+	// Value       float64       `json:"value"`
 }
 
 type ServiceItem struct {

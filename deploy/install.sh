@@ -36,6 +36,10 @@ is_mac() {
     [[ $OSTYPE == darwin* ]]
 }
 
+is_arm64(){
+    [[ `uname -m` == 'arm64' ]]
+}
+
 check_os() {
     if is_mac; then
         package_manager="brew"
@@ -160,8 +164,9 @@ install_docker() {
         echo
         echo "Amazon Linux detected ... "
         echo
-        sudo yum install docker
-        sudo service docker start
+        # sudo yum install docker
+        # sudo service docker start
+        sudo amazon-linux-extras install docker
     else
 
         yum_cmd="sudo yum --assumeyes --quiet"
@@ -266,7 +271,11 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
         echo ""
         if [ $setup_type == 'clickhouse' ]; then
-            echo -e "sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+            if is_arm64; then
+                echo -e "sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+            else
+                echo -e "sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+            fi
         else   
             echo -e "sudo docker-compose -f docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
         fi
@@ -313,28 +322,30 @@ check_os
 
 SIGNOZ_INSTALLATION_ID=$(curl -s 'https://api64.ipify.org')
 
-echo ""
+# echo ""
 
-echo -e "👉 ${RED}Two ways to go forward\n"  
-echo -e "${RED}1) ClickHouse as database (default)\n"  
-echo -e "${RED}2) Kafka + Druid as datastore \n"  
-read -p "⚙️  Enter your preference (1/2):" choice_setup 
+# echo -e "👉 ${RED}Two ways to go forward\n"  
+# echo -e "${RED}1) ClickHouse as database (default)\n"  
+# echo -e "${RED}2) Kafka + Druid as datastore \n"  
+# read -p "⚙️  Enter your preference (1/2):" choice_setup 
 
-while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
-do
-    # echo $choice_setup
-    echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
-    read -p "⚙️  Enter your preference (1/2):  " choice_setup 
-    # echo $choice_setup
-done
+# while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
+# do
+#     # echo $choice_setup
+#     echo -e "\n❌ ${CYAN}Please enter either 1 or 2"
+#     read -p "⚙️  Enter your preference (1/2):  " choice_setup 
+#     # echo $choice_setup
+# done
 
-if [[ $choice_setup == "1" || $choice_setup == "" ]];then
-    setup_type='clickhouse'
-else
-    setup_type='druid'
-fi
+# if [[ $choice_setup == "1" || $choice_setup == "" ]];then
+#     setup_type='clickhouse'
+# else
+#     setup_type='druid'
+# fi
 
-echo -e "\n✅ ${CYAN}You have chosen: ${setup_type} setup\n"
+setup_type='clickhouse'
+
+# echo -e "\n✅ ${CYAN}You have chosen: ${setup_type} setup\n"
 
 # Run bye if failure happens
 trap bye EXIT
@@ -405,7 +416,11 @@ start_docker
 echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz. To run as sudo it may ask for system password\n"
 if [ $setup_type == 'clickhouse' ]; then
-    sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
+    if is_arm64; then
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f ./docker/clickhouse-setup/docker-compose.yaml pull
+    else
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f ./docker/clickhouse-setup/docker-compose.yaml pull
+    fi
 else
     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
 fi
@@ -417,7 +432,11 @@ echo
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
 if [ $setup_type == 'clickhouse' ]; then
-    sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+    if is_arm64; then
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+    else
+        sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+    fi
 else
     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
 fi
@@ -477,7 +496,7 @@ else
     echo ""
 
     if [ $setup_type == 'clickhouse' ]; then
-        echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml down -v"
+        echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml down -v"
     else
         echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
     fi
