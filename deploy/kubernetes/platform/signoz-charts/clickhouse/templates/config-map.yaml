@@ -2,10 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: initdb-config
-  namespace: kube-system
   annotations:
     meta.helm.sh/release-name: chi
-    meta.helm.sh/release-namespace: kube-system
   labels:
     app.kubernetes.io/managed-by: Helm
     app: clickhouse-operator

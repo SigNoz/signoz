@@ -1,3 +1,14 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp2-resizable
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+reclaimPolicy: Retain
+#volumeBindingMode: Immediate
+allowVolumeExpansion: true
+---
 apiVersion: "clickhouse.altinity.com/v1"
 kind: "ClickHouseInstallation"
 metadata:
@@ -76,9 +87,9 @@ spec:
     volumeClaimTemplates:
       - name: storage-vc-template
         spec:
-          storageClassName: "standard"
+          storageClassName: gp2-resizable
           accessModes:
-            - ReadWriteMany
+            - ReadWriteOnce
           resources:
             requests:
               storage: 11Gi
