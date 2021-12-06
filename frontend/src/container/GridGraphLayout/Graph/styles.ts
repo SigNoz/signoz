@@ -11,3 +11,7 @@ export const Modal = styled(ModalComponent)<Props>`
 		min-height: ${({ height = '80vh' }): string => height};
 	}
 `;
+
+export const FullViewContainer = styled.div`
+	height: 70vh;
+`;

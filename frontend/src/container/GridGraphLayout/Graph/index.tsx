@@ -23,7 +23,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal } from './styles';
+import { Modal, FullViewContainer } from './styles';
 
 const GridCardGraph = ({
 	widget,
@@ -167,7 +167,9 @@ const GridCardGraph = ({
 				width="85%"
 				destroyOnClose
 			>
-				<FullView name={name} widget={widget} />
+				<FullViewContainer>
+					<FullView name={name} widget={widget} />
+				</FullViewContainer>
 			</Modal>
 
 			<GridGraphComponent
