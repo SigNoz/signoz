@@ -8,7 +8,7 @@ const getOrCreateLegendList = (chart: Chart, id: string, isLonger: boolean) => {
 	if (!listContainer) {
 		listContainer = document.createElement('ul');
 		listContainer.style.display = 'flex';
-		listContainer.style.flexDirection = isLonger ? 'column' : 'row';
+		// listContainer.style.flexDirection = isLonger ? 'column' : 'row';
 		listContainer.style.margin = '0';
 		listContainer.style.padding = '0';
 		listContainer.style.overflowY = 'scroll';
@@ -16,6 +16,7 @@ const getOrCreateLegendList = (chart: Chart, id: string, isLonger: boolean) => {
 		listContainer.style.alignItems = isLonger ? 'start' : 'center';
 		listContainer.style.height = '100%';
 		listContainer.style.flexWrap = 'wrap';
+		listContainer.style.justifyContent = 'center';
 
 		legendContainer?.appendChild(listContainer);
 	}
@@ -63,7 +64,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 
 				// Color box
 				const boxSpan = document.createElement('span');
-				boxSpan.style.background = colors[index] || colors[0];
+				boxSpan.style.background = item.strokeStyle || colors[0];
 				boxSpan.style.borderColor = item?.strokeStyle;
 				boxSpan.style.borderWidth = item.lineWidth + 'px';
 				boxSpan.style.display = 'inline-block';

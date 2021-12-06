@@ -152,7 +152,7 @@ const Graph = ({
 	return (
 		<div style={{ height: '85%' }}>
 			<canvas ref={chartRef} />
-			<div style={{ height: '15%' }} id={name} />
+			<div style={{ height: '15%', overflowY: 'scroll' }} id={name} />
 		</div>
 	);
 };
