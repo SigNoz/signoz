@@ -29,6 +29,7 @@ const GridCardGraph = ({
 	widget,
 	deleteWidget,
 	isDeleted,
+	name,
 }: GridCardGraphProps): JSX.Element => {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -166,7 +167,7 @@ const GridCardGraph = ({
 				width="85%"
 				destroyOnClose
 			>
-				<FullView widget={widget} />
+				<FullView name={name} widget={widget} />
 			</Modal>
 
 			<GridGraphComponent
@@ -176,6 +177,7 @@ const GridCardGraph = ({
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,
 					title: widget.title,
+					name,
 				}}
 			/>
 		</>
@@ -198,6 +200,7 @@ interface DispatchProps {
 interface GridCardGraphProps extends DispatchProps {
 	widget: Widgets;
 	isDeleted: React.MutableRefObject<boolean>;
+	name: string;
 }
 
 const mapDispatchToProps = (

@@ -60,7 +60,11 @@ const GridGraph = (): JSX.Element => {
 					i: (index + 1).toString(),
 					x: (index % 2) * 6,
 					Component: (): JSX.Element => (
-						<Graph isDeleted={isDeleted} widget={widgets[index]} />
+						<Graph
+							name={e.id + index}
+							isDeleted={isDeleted}
+							widget={widgets[index]}
+						/>
 					),
 				};
 			});
@@ -69,7 +73,7 @@ const GridGraph = (): JSX.Element => {
 				...e,
 				y: 0,
 				Component: (): JSX.Element => (
-					<Graph isDeleted={isDeleted} widget={widgets[index]} />
+					<Graph name={e.i + index} isDeleted={isDeleted} widget={widgets[index]} />
 				),
 			}));
 		}

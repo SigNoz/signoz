@@ -27,6 +27,7 @@ const FullView = ({
 	fullViewOptions = true,
 	onClickHandler,
 	noDataGraph = false,
+	name,
 }: FullViewProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
@@ -189,18 +190,19 @@ const FullView = ({
 				</TimeContainer>
 			)}
 
-			<GraphContainer>
-				<GridGraphComponent
-					{...{
-						GRAPH_TYPES: widget.panelTypes,
-						data: state.payload,
-						isStacked: widget.isStacked,
-						opacity: widget.opacity,
-						title: widget.title,
-						onClickHandler: onClickHandler,
-					}}
-				/>
-			</GraphContainer>
+			{/* <GraphContainer> */}
+			<GridGraphComponent
+				{...{
+					GRAPH_TYPES: widget.panelTypes,
+					data: state.payload,
+					isStacked: widget.isStacked,
+					opacity: widget.opacity,
+					title: widget.title,
+					onClickHandler: onClickHandler,
+					name,
+				}}
+			/>
+			{/* </GraphContainer> */}
 		</>
 	);
 };
@@ -217,6 +219,7 @@ interface FullViewProps {
 	fullViewOptions?: boolean;
 	onClickHandler?: graphOnClickHandler;
 	noDataGraph?: boolean;
+	name: string;
 }
 
 export default FullView;

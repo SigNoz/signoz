@@ -7,7 +7,7 @@ import {
 import styled from 'styled-components';
 
 export const CustomGraphContainer = styled.div`
-	min-height: 30vh;
+	height: 30vh;
 `;
 
 export const Card = styled(CardComponent)`

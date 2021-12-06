@@ -17,6 +17,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 						<GraphTitle>External Call Error Percentage (%)</GraphTitle>
 						<GraphContainer>
 							<FullView
+								name="external_call_error_percentage"
 								fullViewOptions={false}
 								noDataGraph
 								widget={getWidget([
@@ -35,6 +36,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
 							<FullView
+								name="external_call_duration"
 								noDataGraph
 								fullViewOptions={false}
 								widget={getWidget([
@@ -55,6 +57,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 						<GraphTitle>External Call RPS(by Address)</GraphTitle>
 						<GraphContainer>
 							<FullView
+								name="external_call_rps_by_address"
 								noDataGraph
 								fullViewOptions={false}
 								widget={getWidget([
@@ -74,6 +77,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 						<GraphContainer>
 							<FullView
 								noDataGraph
+								name="external_call_duration_by_address"
 								fullViewOptions={false}
 								widget={getWidget([
 									{
