@@ -45,7 +45,7 @@ export const GetDashboard = ({
 							},
 							query: [
 								{
-									query: 'system_cpu_time_total',
+									query: '',
 									legend: '',
 								},
 							],
