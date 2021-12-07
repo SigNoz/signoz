@@ -41,14 +41,11 @@ spec:
         - host: signoz-zookeeper
           port: 2181
       session_timeout_ms: 6000
-    users:
-      admin/networks/ip: "0.0.0.0/0"
-    profiles:
-      default/allow_experimental_window_functions: "1"
     clusters:
       - name: cluster
+        # Templates are specified for this cluster explicitly
         templates:
-          podTemplate: pod-template-with-volumes
+          podTemplate: pod-template-with-volume
         layout:
           shardsCount: 1
           replicasCount: 1
@@ -83,6 +80,15 @@ spec:
         ORDER BY (serviceName, -toUnixTimestamp(timestamp))
 
   templates:
+    hostTemplates:
+      - name: port-distribution
+        portDistribution:
+          - type: ClusterScopeIndex
+        spec:
+          tcpPort: 9000
+          httpPort: 8123
+          interserverHTTPPort: 9009
+
     podTemplates:
       - name: pod-template-with-volume
         spec:
@@ -92,11 +98,10 @@ spec:
               volumeMounts:
                 - name: storage-vc-template
                   mountPath: /var/lib/clickhouse
-                - name: initdb-config
+                - name: initdb
                   mountPath: /docker-entrypoint-initdb.d
-                  readOnly: true
           volumes:
-            - name: initdb-config
+            - name: initdb
               configMap:
                 name: initdb-config
     serviceTemplates:
@@ -122,4 +127,3 @@ spec:
           resources:
             requests:
               storage: {{ .Values.clickhouseOperator.storage | quote }}
-
