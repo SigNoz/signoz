@@ -33,9 +33,9 @@ data:
       zpages: {}
     exporters:
       clickhouse:
-        datasource: tcp://clickhouse-evolution:9000?username=clickhouse_operator&password=clickhouse_operator_password
+        datasource: tcp://clickhouse-signoz:9000?username=clickhouse_operator&password=clickhouse_operator_password
       clickhousemetricswrite:
-        endpoint: tcp://clickhouse-evolution:9000/?database=signoz_metrics&username=clickhouse_operator&password=clickhouse_operator_password
+        endpoint: tcp://clickhouse-signoz:9000/?database=signoz_metrics&username=clickhouse_operator&password=clickhouse_operator_password
         resource_to_telemetry_conversion:
           enabled: true
     service:

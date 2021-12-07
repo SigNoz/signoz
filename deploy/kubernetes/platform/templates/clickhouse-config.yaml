@@ -2,13 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: initdb-config
-  annotations:
-    meta.helm.sh/release-name: chi
-  labels:
-    app.kubernetes.io/managed-by: Helm
-    app: clickhouse-operator
 data:
-  init-db.sql: |
+  init-db.sql: |-
     CREATE TABLE IF NOT EXISTS signoz_index (
     timestamp DateTime64(9) CODEC(Delta, ZSTD(1)),
     traceID String CODEC(ZSTD(1)),

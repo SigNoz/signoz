@@ -1,3 +1,20 @@
+{{ if (eq (.Values.cloud | toString) "gcp" )}}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gce-resizable
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard
+  fstype: ext4
+  replication-type: none
+reclaimPolicy: Retain
+#volumeBindingMode: Immediate
+allowVolumeExpansion: true
+{{- else if (eq (.Values.cloud | toString) "aws") }}
+#
+# AWS resizable disk example
+#
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -8,23 +25,30 @@ parameters:
 reclaimPolicy: Retain
 #volumeBindingMode: Immediate
 allowVolumeExpansion: true
+{{- end }}
 ---
 apiVersion: "clickhouse.altinity.com/v1"
 kind: "ClickHouseInstallation"
 metadata:
-  name: evolution
+  name: signoz
 spec:
+  defaults:
+    templates:
+      serviceTemplate: chi-service-template
   configuration:
     zookeeper:
       nodes:
         - host: signoz-zookeeper
           port: 2181
       session_timeout_ms: 6000
+    users:
+      admin/networks/ip: "0.0.0.0/0"
+    profiles:
+      default/allow_experimental_window_functions: "1"
     clusters:
       - name: cluster
-        # Templates are specified for this cluster explicitly
         templates:
-          podTemplate: pod-template-with-volume
+          podTemplate: pod-template-with-volumes
         layout:
           shardsCount: 1
           replicasCount: 1
@@ -59,15 +83,6 @@ spec:
         ORDER BY (serviceName, -toUnixTimestamp(timestamp))
 
   templates:
-    hostTemplates:
-      - name: port-distribution
-        portDistribution:
-          - type: ClusterScopeIndex
-        spec:
-          tcpPort: 9000
-          httpPort: 8123
-          interserverHTTPPort: 9009
-
     podTemplates:
       - name: pod-template-with-volume
         spec:
@@ -77,19 +92,34 @@ spec:
               volumeMounts:
                 - name: storage-vc-template
                   mountPath: /var/lib/clickhouse
-                - name: initdb
+                - name: initdb-config
                   mountPath: /docker-entrypoint-initdb.d
+                  readOnly: true
           volumes:
-            - name: initdb
+            - name: initdb-config
               configMap:
                 name: initdb-config
-
+    serviceTemplates:
+      - name: chi-service-template
+        generateName: clickhouse-signoz
+        spec:
+          ports:
+            - name: http
+              port: 8123
+            - name: tcp
+              port: 9000
+          type: {{ .Values.clickhouseOperator.serviceType }}
     volumeClaimTemplates:
       - name: storage-vc-template
         spec:
+          {{- if (eq (.Values.cloud | toString) "gcp" )}}
+          storageClassName: gce-resizable
+          {{- else if (eq (.Values.cloud | toString) "aws") }}
           storageClassName: gp2-resizable
+          {{- end }}
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: 11Gi
+              storage: {{ .Values.clickhouseOperator.storage | quote }}
+
