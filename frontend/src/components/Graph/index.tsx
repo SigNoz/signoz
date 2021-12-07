@@ -90,6 +90,9 @@ const Graph = ({
 					intersect: false,
 				},
 				plugins: {
+					decimation: {
+						algorithm: 'min-max',
+					},
 					title: {
 						display: title === undefined ? false : true,
 						text: title,
@@ -126,7 +129,7 @@ const Graph = ({
 						time: {
 							unit: 'minute',
 						},
-						type: 'timeseries',
+						type: 'time',
 					},
 					y: {
 						display: true,
