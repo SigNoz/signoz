@@ -90,9 +90,6 @@ const Graph = ({
 					intersect: false,
 				},
 				plugins: {
-					decimation: {
-						algorithm: 'min-max',
-					},
 					title: {
 						display: title === undefined ? false : true,
 						text: title,
