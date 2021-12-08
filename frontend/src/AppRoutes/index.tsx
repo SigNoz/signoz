@@ -3,7 +3,7 @@ import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -13,7 +13,27 @@ import routes from './routes';
 
 
 const App = (): JSX.Element => {
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn, isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	useEffect(() => {
+		const preMode: mode = isDarkMode ? 'darkMode' : 'lightMode';
+		const postMode: mode = isDarkMode ? 'lightMode' : 'darkMode';
+
+		const id: mode = preMode;
+		const head = document.head;
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = isDarkMode ? '/css/antd.dark.min.css' : '/css/antd.min.css';
+		link.media = 'all';
+		link.id = id;
+		head.appendChild(link);
+
+		link.onload = (): void => {
+			const prevNode = document.getElementById(postMode);
+			prevNode?.remove();
+		};
+	}, []);
 
 	return (
 		<Router history={history}>
@@ -42,5 +62,7 @@ const App = (): JSX.Element => {
 	);
 };
 
+
+type mode = 'darkMode' | 'lightMode';
 
 export default App;

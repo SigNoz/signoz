@@ -1,5 +1,6 @@
 import { Menu, Switch as ToggleButton, Typography } from 'antd';
 import ROUTES from 'constants/routes';
+import { IS_DARKMODE } from 'constants/localStorage';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -39,6 +40,8 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 			const prevNode = document.getElementById(postMode);
 			prevNode?.remove();
 		};
+		localStorage.setItem(IS_DARKMODE,!isDarkMode?'true':'false');
+
 	}, [toggleDarkMode, isDarkMode]);
 
 	const onCollapse = useCallback(() => {
