@@ -1,5 +1,5 @@
 import { IS_LOGGED_IN } from 'constants/auth';
-import { IS_DARKMODE } from 'constants/localStorage'
+import { IS_DARKMODE } from 'constants/app'
 import {
 	AppAction,
 	LOGGED_IN,

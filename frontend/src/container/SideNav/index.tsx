@@ -1,6 +1,6 @@
 import { Menu, Switch as ToggleButton, Typography } from 'antd';
 import ROUTES from 'constants/routes';
-import { IS_DARKMODE } from 'constants/localStorage';
+import { IS_DARKMODE } from 'constants/app';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
