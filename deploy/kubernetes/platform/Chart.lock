@@ -4,9 +4,9 @@ dependencies:
   version: 6.0.0
 - name: query-service
   repository: file://./signoz-charts/query-service
-  version: 0.3.6
+  version: 0.5.1
 - name: frontend
   repository: file://./signoz-charts/frontend
-  version: 0.3.6
-digest: sha256:077949cb4576b8d434624608e92243acf4ff4eaec071687f3532d56ab8fbeab8
-generated: "2021-12-05T12:47:21.129872+05:30"
+  version: 0.5.2
+digest: sha256:086b8348875c7054598a9cd96e1f4907171110eb758c7a8819bbe5a02657ca0c
+generated: "2021-12-09T01:29:31.324354+05:30"

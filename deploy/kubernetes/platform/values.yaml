@@ -46,7 +46,7 @@ zookeeper:
 
 query-service:
   configVars:
-    ClickHouseUrl: http://clickhouse-signoz:9000?username=clickhouse_operator&password=clickhouse_operator_password
+    ClickHouseUrl: http://signoz-clickhouse:9000?username=clickhouse_operator&password=clickhouse_operator_password
     STORAGE: clickhouse
 
 cloud: aws

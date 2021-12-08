@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: otel-collector
+  name: otel-collector-metrics
   labels:
     app: opentelemetry
-    component: otel-collector
+    component: otel-collector-metrics
 spec:
   selector:
     matchLabels:
       app: opentelemetry
-      component: otel-collector
+      component: otel-collector-metrics
   minReadySeconds: 5
   progressDeadlineSeconds: 120
   replicas: 1 #TODO - adjust this to your own requirements
@@ -17,12 +17,12 @@ spec:
     metadata:
       labels:
         app: opentelemetry
-        component: otel-collector
+        component: otel-collector-metrics
     spec:
       containers:
       - command:
           - "/otelcontribcol"
-          - "--config=/conf/otel-collector-config.yaml"
+          - "--config=/conf/otel-collector-metrics-config.yaml"
 #           Memory Ballast size should be max 1/3 to 1/2 of memory.
           - "--mem-ballast-size-mib=683"
         image: signoz/otelcontribcol:0.4.2
@@ -43,9 +43,8 @@ spec:
         - containerPort: 14268 # Default endpoint for Jaeger HTTP receiver.
         - containerPort: 9411 # Default endpoint for Zipkin receiver.
         - containerPort: 8888  # Default endpoint for querying metrics.
-        - containerPort: 8889  # Default endpoint for prometheus exported metrics.
         volumeMounts:
-        - name: otel-collector-config-vol
+        - name: otel-collector-metrics-config-vol
           mountPath: /conf
 #        - name: otel-collector-secrets
 #          mountPath: /secrets
@@ -59,11 +58,11 @@ spec:
             port: 13133 # Health Check extension default port.
       volumes:
         - configMap:
-            name: otel-collector-conf
+            name: otel-collector-metrics-conf
             items:
-              - key: otel-collector-config
-                path: otel-collector-config.yaml
-          name: otel-collector-config-vol
+              - key: otel-collector-metrics-config
+                path: otel-collector-metrics-config.yaml
+          name: otel-collector-metrics-config-vol
 #        - secret:
 #            name: otel-collector-secrets
 #            items:

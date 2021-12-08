@@ -27,6 +27,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["-config=/root/config/prometheus.yml"]
           ports:
             - name: http
               containerPort: 8080
@@ -40,7 +41,8 @@ spec:
             value: {{ .Values.configVars.STORAGE }}
           - name: ClickHouseUrl
             value: {{ .Values.configVars.ClickHouseUrl}}
-            
+          - name: GODEBUG
+            value: netdns=go
           # livenessProbe:
           #   httpGet:
           #     path: /
@@ -49,6 +51,13 @@ spec:
           #   httpGet:
           #     path: /
           #     port: http
+          volumeMounts:
+          - name: prometheus
+            mountPath: /root/config
+          - name: signoz-db
+            mountPath: /var/lib/signoz/
+          - name: dashboards
+            mountPath: /root/config/dashboards
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
@@ -63,3 +72,12 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      volumes:
+      - name: prometheus
+        configMap:
+          name: prometheus-config
+      - name: signoz-db
+        persistentVolumeClaim:
+          claimName: signoz-db-claim
+      - name: dashboards
+        emptyDir: {}
