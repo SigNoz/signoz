@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: retention-config
-data:
-  retention-spec.json: |
-    [{"period":"P3D","includeFuture":true,"tieredReplicants":{"_default_tier":1},"type":"loadByPeriod"},{"type":"dropForever"}]
