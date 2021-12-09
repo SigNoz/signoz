@@ -1,5 +1,6 @@
 import { SKIP_ONBOARDING } from 'constants/onboarding';
+import getLocalStorage from 'api/browser/localstorage/get';
 
 export const isOnboardingSkipped = (): boolean => {
-	return localStorage.getItem(SKIP_ONBOARDING) === 'true';
+	return getLocalStorage(SKIP_ONBOARDING) === 'true';
 };
