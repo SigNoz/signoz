@@ -35,7 +35,7 @@ spec:
   defaults:
     templates:
       dataVolumeClaimTemplate: default-volume-claim
-      logVolumeClaimTemplate: default-volume-claim
+      # logVolumeClaimTemplate: default-volume-claim
       serviceTemplate: chi-service-template
   configuration:
     zookeeper:
@@ -48,7 +48,7 @@ spec:
         # Templates are specified for this cluster explicitly
         templates:
           dataVolumeClaimTemplate: default-volume-claim
-          logVolumeClaimTemplate: default-volume-claim
+          # logVolumeClaimTemplate: default-volume-claim
           podTemplate: pod-template-with-volume
         layout:
           shardsCount: 1
