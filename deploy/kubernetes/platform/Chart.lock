@@ -8,5 +8,8 @@ dependencies:
 - name: frontend
   repository: file://./signoz-charts/frontend
   version: 0.5.2
-digest: sha256:086b8348875c7054598a9cd96e1f4907171110eb758c7a8819bbe5a02657ca0c
-generated: "2021-12-09T01:29:31.324354+05:30"
+- name: alertmanager
+  repository: file://./signoz-charts/alertmanager
+  version: 0.5.0
+digest: sha256:f1fac36fa869480261d1bf091b95e18147654e52b891ed743d7e3d985fa6ed18
+generated: "2021-12-09T17:07:48.919918+05:30"

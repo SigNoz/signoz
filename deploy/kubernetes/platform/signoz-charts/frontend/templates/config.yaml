@@ -24,6 +24,9 @@ data:
         index  index.html index.htm;
         try_files $uri $uri/ /index.html;
       }
+      location /api/alertmanager{
+        proxy_pass http://{{ .Values.config.alertmanagerUrl }}/api/v2;
+      }
       location /api {
         proxy_pass http://{{ .Values.config.queryServiceUrl }}/api;
       }

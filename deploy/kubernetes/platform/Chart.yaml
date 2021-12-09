@@ -32,3 +32,6 @@ dependencies:
   - name: frontend
     repository: "file://./signoz-charts/frontend"
     version: 0.5.2
+  - name: alertmanager
+    repository: "file://./signoz-charts/alertmanager"
+    version: 0.5.0

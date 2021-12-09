@@ -1,0 +1,48 @@
+should match snapshot of default values:
+  1: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: alertmanager
+        app.kubernetes.io/version: 1.0.0
+        helm.sh/chart: alertmanager-1.0.0
+      name: RELEASE-NAME-alertmanager
+    spec:
+      ingressClassName: nginx-test
+      rules:
+      - host: alertmanager.domain.com
+        http:
+          paths:
+          - backend:
+              service:
+                name: RELEASE-NAME-alertmanager
+                port:
+                  number: 9093
+            path: /
+            pathType: ImplementationSpecific
+should match snapshot of default values with old kubernetes ingress:
+  1: |
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: nginx-test
+      labels:
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: alertmanager
+        app.kubernetes.io/version: 1.0.0
+        helm.sh/chart: alertmanager-1.0.0
+      name: RELEASE-NAME-alertmanager
+    spec:
+      rules:
+      - host: alertmanager.domain.com
+        http:
+          paths:
+          - backend:
+              serviceName: RELEASE-NAME-alertmanager
+              servicePort: 9093
+            path: /
