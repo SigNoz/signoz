@@ -34,6 +34,8 @@ metadata:
 spec:
   defaults:
     templates:
+      dataVolumeClaimTemplate: default-volume-claim
+      logVolumeClaimTemplate: default-volume-claim
       serviceTemplate: chi-service-template
   configuration:
     zookeeper:
@@ -45,6 +47,8 @@ spec:
       - name: cluster
         # Templates are specified for this cluster explicitly
         templates:
+          dataVolumeClaimTemplate: default-volume-claim
+          logVolumeClaimTemplate: default-volume-claim
           podTemplate: pod-template-with-volume
         layout:
           shardsCount: 1
@@ -66,7 +70,7 @@ spec:
             - name: clickhouse
               image: yandex/clickhouse-server:21.7
               volumeMounts:
-                - name: storage-vc-template
+                - name: default-volume-claim
                   mountPath: /var/lib/clickhouse
                 - name: initdb
                   mountPath: /docker-entrypoint-initdb.d
@@ -85,7 +89,8 @@ spec:
               port: 9000
           type: {{ .Values.clickhouseOperator.serviceType }}
     volumeClaimTemplates:
-      - name: storage-vc-template
+      - name: default-volume-claim
+        reclaimPolicy: Retain
         spec:
           {{- if (eq (.Values.cloud | toString) "gcp" )}}
           storageClassName: gce-resizable

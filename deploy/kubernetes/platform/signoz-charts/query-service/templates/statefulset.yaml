@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "query-service.fullname" . }}
   labels:
     {{- include "query-service.labels" . | nindent 4 }}
 spec:
+  serviceName: query-service
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
@@ -14,15 +15,12 @@ spec:
       labels:
         {{- include "query-service.selectorLabels" . | nindent 8 }}
     spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-      serviceAccountName: {{ include "query-service.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
+        {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 8 }}
+        {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
@@ -76,8 +74,14 @@ spec:
       - name: prometheus
         configMap:
           name: prometheus-config
-      - name: signoz-db
-        persistentVolumeClaim:
-          claimName: signoz-db-claim
       - name: dashboards
         emptyDir: {}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: signoz-db
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
