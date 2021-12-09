@@ -45,6 +45,7 @@ Chart.register(
 	BarElement,
 );
 import { legend } from './Plugin';
+import { LegendsContainer } from './styles';
 
 const Graph = ({
 	data,
@@ -152,7 +153,7 @@ const Graph = ({
 	return (
 		<div style={{ height: '85%' }}>
 			<canvas ref={chartRef} />
-			<div style={{ height: '15%', overflowY: 'scroll' }} id={name} />
+			<LegendsContainer id={name} />
 		</div>
 	);
 };

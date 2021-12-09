@@ -60,8 +60,6 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 					chart.update();
 				};
 
-				console.log(item);
-
 				// Color box
 				const boxSpan = document.createElement('span');
 				boxSpan.style.background = item.strokeStyle || colors[0];
