@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 export const CardContainer = styled(Card)`
 	.ant-card-body {
-		min-height: 60vh;
+		height: 60vh;
 	}
 `;
 

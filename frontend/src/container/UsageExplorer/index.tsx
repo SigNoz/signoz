@@ -154,7 +154,7 @@ const UsageExplorer = ({
 					<Spinner tip="Loading Data..." height="80vh" />
 				) : (
 					<CardContainer>
-						<Graph data={graphData} type="bar" />
+						<Graph name="usage_explorer" data={graphData} type="bar" />
 					</CardContainer>
 				)}
 			</CardWrapper>
