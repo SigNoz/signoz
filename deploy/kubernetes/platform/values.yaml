@@ -10,5 +10,6 @@ query-service:
 cloud: aws
 
 clickhouseOperator:
+  enabled: true
   storage: 20Gi
   serviceType: ClusterIP
