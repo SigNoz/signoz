@@ -42,7 +42,7 @@ module.exports = {
 		'@typescript-eslint/explicit-function-return-type': 'error',
 		'@typescript-eslint/no-var-requires': 0,
 		'react/no-array-index-key': 2,
-		'linebreak-style': ['error', 'unix'],
+		'linebreak-style': ['error', process.platform === 'win32' ? 'windows' : 'unix'],
 
 		// simple sort error
 		'simple-import-sort/imports': 'error',
