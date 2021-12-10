@@ -42,13 +42,13 @@ export const ButtonContainer = styled.div`
 `;
 
 export const Button = styled(ButtonComponent)`
-	height: 4rem;
-	width: 4rem;
+	height: 4rem !important;
+	width: 4rem !important;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 
-	border-radius: 25px;
+	border-radius: 25px !important;
 
 	background-color: #65b7f3;
 
