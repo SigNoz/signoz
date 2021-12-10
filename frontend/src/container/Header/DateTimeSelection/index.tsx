@@ -4,8 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getDefaultOption, getOptions, Time } from './config';
 import { Container, Form, FormItem } from './styles';
 const { Option } = DefaultSelect;
-import get from 'api/browser/localstorage/get';
-import set from 'api/browser/localstorage/set';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCAL_STORAGE } from 'constants/localStorage';
 import getTimeString from 'lib/getTimeString';
 import moment from 'moment';
@@ -32,8 +32,8 @@ const DateTimeSelection = ({
 	const searchStartTime = params.get('startTime');
 	const searchEndTime = params.get('endTime');
 
-	const localstorageStartTime = get('startTime');
-	const localstorageEndTime = get('endTime');
+	const localstorageStartTime = getLocalStorageKey('startTime');
+	const localstorageEndTime = getLocalStorageKey('endTime');
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
@@ -83,10 +83,10 @@ const DateTimeSelection = ({
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
 
-		const routes = get(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const routes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
 
 		if (routes !== null) {
-			const routesObject = JSON.parse(routes);
+			const routesObject = JSON.parse(routes || '{}');
 			const selectedTime = routesObject[pathName];
 
 			if (selectedTime) {
@@ -102,7 +102,7 @@ const DateTimeSelection = ({
 	);
 
 	const updateLocalStorageForRoutes = (value: Time): void => {
-		const preRoutes = get(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const preRoutes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
 			const preRoutesObject = JSON.parse(preRoutes);
 
@@ -111,7 +111,10 @@ const DateTimeSelection = ({
 			};
 			preRoute[location.pathname] = value;
 
-			set(LOCAL_STORAGE.METRICS_TIME_IN_DURATION, JSON.stringify(preRoute));
+			setLocalStorageKey(
+				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+				JSON.stringify(preRoute),
+			);
 		}
 	};
 
@@ -194,8 +197,8 @@ const DateTimeSelection = ({
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
 				]);
-				set('startTime', startTimeMoment.toString());
-				set('endTime', endTimeMoment.toString());
+				setLocalStorageKey('startTime', startTimeMoment.toString());
+				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
 			}
 		}
@@ -203,10 +206,15 @@ const DateTimeSelection = ({
 
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
-		const metricsTimeDuration = get(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const metricsTimeDuration = getLocalStorageKey(
+			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+		);
 
 		if (metricsTimeDuration === null) {
-			set(LOCAL_STORAGE.METRICS_TIME_IN_DURATION, JSON.stringify({}));
+			setLocalStorageKey(
+				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+				JSON.stringify({}),
+			);
 		}
 
 		const currentRoute = location.pathname;

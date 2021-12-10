@@ -184,6 +184,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.deleteDashboard).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/feedback", aH.submitFeedback).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
@@ -626,21 +627,49 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
-	email := r.URL.Query().Get("email")
+func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
-	var err error
-	if len(email) == 0 {
-		err = fmt.Errorf("Email param is missing")
-	}
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	var postData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
+	}
+
+	message, ok := postData["message"]
+	if !ok {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
+		return
+	}
+	messageStr := fmt.Sprintf("%s", message)
+	if len(messageStr) == 0 {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
+		return
+	}
+
+	email := postData["email"]
+
+	(*aH.pc).Enqueue(posthog.Capture{
+		DistinctId: distinctId,
+		Event:      "InProduct Feeback Submitted",
+		Properties: posthog.NewProperties().Set("email", email).Set("message", message),
+	})
+
+}
+
+func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
+
+	user, err := parseUser(r)
+	if err != nil {
+		if aH.handleError(w, err, http.StatusBadRequest) {
+			return
+		}
 	}
 
 	(*aH.pc).Enqueue(posthog.Identify{
 		DistinctId: aH.distinctId,
 		Properties: posthog.NewProperties().
-			Set("email", email),
+			Set("email", user.Email).Set("name", user.Name),
 	})
 
 }

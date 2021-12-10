@@ -20,7 +20,7 @@ describe('default time', () => {
 
 	it('Trace Page default time', () => {
 		cy.checkDefaultGlobalOption({
-			route: ROUTES.TRACES,
+			route: ROUTES.TRACE,
 		});
 	});
 

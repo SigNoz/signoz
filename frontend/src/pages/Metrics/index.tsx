@@ -10,6 +10,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 
 const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 	const { minTime, maxTime, loading, selectedTime } = useSelector<
@@ -20,15 +21,16 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 		(state) => state.metrics,
 	);
 
-	const isSkipped = localStorage.getItem(SKIP_ONBOARDING) === 'true';
+	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';
 
 	useEffect(() => {
 		if (loading === false) {
 			getService({
-				selectedTimeInterval: selectedTime,
+				maxTime,
+				minTime,
 			});
 		}
-	}, [getService, loading, selectedTime]);
+	}, [getService, loading, maxTime, minTime]);
 
 	useEffect(() => {
 		let timeInterval: NodeJS.Timeout;
@@ -36,7 +38,8 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 		if (loading === false && !isSkipped && services.length === 0) {
 			timeInterval = setInterval(() => {
 				getService({
-					selectedTimeInterval: selectedTime,
+					maxTime,
+					minTime,
 				});
 			}, 50000);
 		}

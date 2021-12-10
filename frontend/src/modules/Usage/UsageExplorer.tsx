@@ -18,7 +18,7 @@ interface UsageExplorerProps {
 	getUsageData: (
 		minTime: number,
 		maxTime: number,
-		selectedInterval: any,
+		selectedInterval: number,
 		selectedService: string,
 	) => void;
 	getServicesList: ({

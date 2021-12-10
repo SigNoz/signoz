@@ -22,7 +22,10 @@ export const GetInitialData = (
 			/**
 			 * @description This is because we keeping the store as source of truth
 			 */
-			if (props.selectedTimeInterval !== globalTime.selectedTime) {
+			if (
+				props.maxTime !== globalTime.maxTime &&
+				props.minTime !== globalTime.minTime
+			) {
 				return;
 			}
 
@@ -30,7 +33,7 @@ export const GetInitialData = (
 				type: 'GET_INITIAL_APPLICATION_LOADING',
 			});
 
-			const { maxTime, minTime } = GetMinMax(props.selectedTimeInterval, [
+			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
 				globalTime.minTime / 1000000,
 				globalTime.maxTime / 1000000,
 			]);
@@ -117,5 +120,6 @@ export const GetInitialData = (
 
 export interface GetInitialDataProps {
 	serviceName: Props['service'];
-	selectedTimeInterval: GlobalReducer['selectedTime'];
+	maxTime: GlobalReducer['maxTime'];
+	minTime: GlobalReducer['minTime'];
 }

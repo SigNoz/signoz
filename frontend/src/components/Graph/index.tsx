@@ -126,7 +126,7 @@ const Graph = ({
 						time: {
 							unit: 'minute',
 						},
-						type: 'timeseries',
+						type: 'time',
 					},
 					y: {
 						display: true,
