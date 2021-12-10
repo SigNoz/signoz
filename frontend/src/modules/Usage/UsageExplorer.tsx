@@ -186,7 +186,7 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 			</Space>
 
 			<Card>
-				<Graph data={data} type="bar" />
+				<Graph name="usage" data={data} type="bar" />
 			</Card>
 		</React.Fragment>
 	);

@@ -11,7 +11,6 @@ import {
 	Decimation,
 	Filler,
 	Legend,
-	// LegendItem,
 	LinearScale,
 	LineController,
 	LineElement,
@@ -23,15 +22,11 @@ import {
 	Tooltip,
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
-// import { colors } from 'lib/getRandomColor';
-// import stringToHTML from 'lib/stringToHTML';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-// import Legends from './Legend';
-// import { LegendsContainer } from './styles';
 Chart.register(
 	LineElement,
 	PointElement,
@@ -49,6 +44,8 @@ Chart.register(
 	BarController,
 	BarElement,
 );
+import { legend } from './Plugin';
+import { LegendsContainer } from './styles';
 
 const Graph = ({
 	data,
@@ -56,6 +53,7 @@ const Graph = ({
 	title,
 	isStacked,
 	onClickHandler,
+	name,
 }: GraphProps): JSX.Element => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -95,20 +93,7 @@ const Graph = ({
 						text: title,
 					},
 					legend: {
-						// just making sure that label is present
-						display: !(
-							data.datasets.find((e) => {
-								if (e.label?.length === 0) {
-									return false;
-								}
-								return e.label !== undefined;
-							}) === undefined
-						),
-						labels: {
-							usePointStyle: true,
-							pointStyle: 'circle',
-						},
-						position: 'bottom',
+						display: false,
 					},
 				},
 				layout: {
@@ -156,6 +141,7 @@ const Graph = ({
 				type: type,
 				data: data,
 				options,
+				plugins: [legend(name, data.datasets.length > 3)],
 			});
 		}
 	}, [chartRef, data, type, title, isStacked, getGridColor, onClickHandler]);
@@ -164,7 +150,12 @@ const Graph = ({
 		buildChart();
 	}, [buildChart]);
 
-	return <canvas ref={chartRef} />;
+	return (
+		<div style={{ height: '85%' }}>
+			<canvas ref={chartRef} />
+			<LegendsContainer id={name} />
+		</div>
+	);
 };
 
 interface GraphProps {
@@ -174,6 +165,7 @@ interface GraphProps {
 	isStacked?: boolean;
 	label?: string[];
 	onClickHandler?: graphOnClickHandler;
+	name: string;
 }
 
 export type graphOnClickHandler = (

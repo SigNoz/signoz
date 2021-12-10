@@ -8,7 +8,6 @@ export const Card = styled(CardComponent)`
 	}
 
 	.ant-card-body {
-		height: 100%;
-		min-height: 70vh;
+		height: 70vh;
 	}
 `;
