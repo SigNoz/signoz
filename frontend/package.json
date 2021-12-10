@@ -14,7 +14,9 @@
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
-		"bundle:size": "bundlesize"
+		"bundle:size": "bundlesize",
+		"storybook": "start-storybook -p 6006",
+		"build-storybook": "build-storybook"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -88,6 +90,11 @@
 		"@babel/preset-env": "^7.12.17",
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.12.17",
+		"@storybook/addon-actions": "^6.4.7",
+		"@storybook/addon-essentials": "^6.4.7",
+		"@storybook/addon-links": "^6.4.7",
+		"@storybook/cli": "^6.4.7",
+		"@storybook/react": "^6.4.7",
 		"@testing-library/cypress": "^8.0.0",
 		"@types/compression-webpack-plugin": "^9.0.0",
 		"@types/copy-webpack-plugin": "^8.0.1",
