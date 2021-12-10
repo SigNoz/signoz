@@ -50,6 +50,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 			opacity={opacity}
 			data={chartDataSet}
 			GRAPH_TYPES={selectedGraph}
+			name={widgetId || 'legend_widget'}
 		/>
 	);
 };

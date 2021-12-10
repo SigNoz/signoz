@@ -1,8 +1,14 @@
 import styled from 'styled-components';
 
 export const LegendsContainer = styled.div`
-	display: flex;
-	overflow-y: scroll;
-	margin-right: 1rem;
-	margin-bottom: 1rem;
+	height: 15%;
+
+	* {
+		::-webkit-scrollbar {
+			display: none !important;
+		}
+
+		-ms-overflow-style: none !important; /* IE and Edge */
+		scrollbar-width: none !important; /* Firefox */
+	}
 `;

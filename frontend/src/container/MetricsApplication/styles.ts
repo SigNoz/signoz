@@ -30,13 +30,7 @@ export const Col = styled(ColComponent)`
 `;
 
 export const GraphContainer = styled.div`
-	min-height: 40vh;
-	max-height: 40vh;
-
-	div {
-		min-height: 40vh;
-		max-height: 40vh;
-	}
+	height: 40vh;
 `;
 
 export const GraphTitle = styled(Typography)`

@@ -114,6 +114,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onClickhandler(ChartEvent, activeElements, chart, data, 'Application');
 								}}
+								name="application_latency"
 								type="line"
 								data={{
 									datasets: [
@@ -177,6 +178,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						<GraphTitle>Request per sec</GraphTitle>
 						<GraphContainer>
 							<FullView
+								name="request_per_sec"
 								noDataGraph
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
@@ -207,24 +209,23 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					</Button>
 
 					<Card>
-						<Card>
-							<GraphTitle>Error Percentage (%)</GraphTitle>
-							<GraphContainer>
-								<FullView
-									noDataGraph
-									fullViewOptions={false}
-									onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-										onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
-									}}
-									widget={getWidget([
-										{
-											query: `sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]) OR vector(0))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))`,
-											legend: 'Error Percentage (%)',
-										},
-									])}
-								/>
-							</GraphContainer>
-						</Card>
+						<GraphTitle>Error Percentage (%)</GraphTitle>
+						<GraphContainer>
+							<FullView
+								name="error_percentage_%"
+								noDataGraph
+								fullViewOptions={false}
+								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
+								}}
+								widget={getWidget([
+									{
+										query: `sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]) OR vector(0))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))`,
+										legend: 'Error Percentage (%)',
+									},
+								])}
+							/>
+						</GraphContainer>
 					</Card>
 				</Col>
 

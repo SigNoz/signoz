@@ -17,6 +17,7 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 						<GraphTitle>Database Calls RPS</GraphTitle>
 						<GraphContainer>
 							<FullView
+								name="database_call_rps"
 								noDataGraph
 								fullViewOptions={false}
 								widget={getWidget([
@@ -35,6 +36,7 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 						<GraphTitle>Database Calls Avg Duration (in ms)</GraphTitle>
 						<GraphContainer>
 							<FullView
+								name="database_call_avg_duration"
 								noDataGraph
 								fullViewOptions={false}
 								widget={getWidget([

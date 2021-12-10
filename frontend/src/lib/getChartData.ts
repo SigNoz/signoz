@@ -47,7 +47,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 				borderWidth: 1.5,
 				spanGaps: true,
 				animations: false,
-				borderColor: colors[index] || 'red',
+				borderColor: colors[index % colors.length] || 'red',
 				showLine: true,
 				pointRadius: 0,
 			};

@@ -23,8 +23,8 @@ const GeneralSettings = (): JSX.Element => {
 	] = useState<SettingPeroid>('month');
 	const [notifications, Element] = notification.useNotification();
 
-	const [retentionPeroidMetrics, setRetentionPeroidMetrics] = useState<number>(
-		0,
+	const [retentionPeroidMetrics, setRetentionPeroidMetrics] = useState<string>(
+		'',
 	);
 	const [modal, setModal] = useState<boolean>(false);
 	const [postApiLoading, setPostApiLoading] = useState<boolean>(false);
@@ -33,7 +33,7 @@ const GeneralSettings = (): JSX.Element => {
 		'hr',
 	);
 
-	const [retentionPeroidTrace, setRetentionPeroidTrace] = useState<number>(0);
+	const [retentionPeroidTrace, setRetentionPeroidTrace] = useState<string>('');
 	const [isDefaultMetrics, setIsDefaultMetrics] = useState<boolean>(false);
 	const [isDefaultTrace, setIsDefaultTrace] = useState<boolean>(false);
 
@@ -73,10 +73,10 @@ const GeneralSettings = (): JSX.Element => {
 			const traceValue = getSettingsPeroid(traces_ttl_duration_hrs);
 			const metricsValue = getSettingsPeroid(metrics_ttl_duration_hrs);
 
-			setRetentionPeroidTrace(traceValue.value);
+			setRetentionPeroidTrace(traceValue.value.toString());
 			setSelectedTracePeroid(traceValue.peroid);
 
-			setRetentionPeroidMetrics(metricsValue.value);
+			setRetentionPeroidMetrics(metricsValue.value.toString());
 			setSelectedMetricsPeroid(metricsValue.peroid);
 		}
 	}, [setSelectedMetricsPeroid, loading, payload]);
@@ -85,14 +85,15 @@ const GeneralSettings = (): JSX.Element => {
 		try {
 			setPostApiLoading(true);
 			const retentionTraceValue =
-				retentionPeroidTrace === 0 && (payload?.traces_ttl_duration_hrs || 0) < 0
+				retentionPeroidTrace === '0' && (payload?.traces_ttl_duration_hrs || 0) < 0
 					? payload?.traces_ttl_duration_hrs || 0
-					: retentionPeroidTrace;
+					: parseInt(retentionPeroidTrace, 10);
 
 			const retentionMetricsValue =
-				retentionPeroidMetrics === 0 && (payload?.metrics_ttl_duration_hrs || 0) < 0
+				retentionPeroidMetrics === '0' &&
+				(payload?.metrics_ttl_duration_hrs || 0) < 0
 					? payload?.metrics_ttl_duration_hrs || 0
-					: retentionPeroidMetrics;
+					: parseInt(retentionPeroidMetrics, 10);
 
 			const [tracesResponse, metricsResponse] = await Promise.all([
 				setRetentionApi({
@@ -167,6 +168,14 @@ const GeneralSettings = (): JSX.Element => {
 		return `${getValue('Trace , Metrics')}`;
 	};
 
+	const isDisabledHandler = (): boolean => {
+		if (retentionPeroidTrace === '' || retentionPeroidMetrics === '') {
+			return true;
+		}
+
+		return false;
+	};
+
 	const errorText = getErrorText();
 
 	return (
@@ -213,7 +222,11 @@ const GeneralSettings = (): JSX.Element => {
 			</Modal>
 
 			<ButtonContainer>
-				<Button onClick={onClickSaveHandler} type="primary">
+				<Button
+					onClick={onClickSaveHandler}
+					disabled={isDisabledHandler()}
+					type="primary"
+				>
 					Save
 				</Button>
 			</ButtonContainer>
