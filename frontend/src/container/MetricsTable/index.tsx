@@ -10,10 +10,12 @@ import MetricReducer from 'types/reducer/metrics';
 
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
+import localStorageGet from 'api/browser/localstorage/get';
+import localStorageSet from 'api/browser/localstorage/set';
 
 const Metrics = (): JSX.Element => {
 	const [skipOnboarding, setSkipOnboarding] = useState(
-		localStorage.getItem(SKIP_ONBOARDING) === 'true',
+		localStorageGet(SKIP_ONBOARDING) === 'true',
 	);
 
 	const { services, loading, error } = useSelector<AppState, MetricReducer>(
@@ -21,7 +23,7 @@ const Metrics = (): JSX.Element => {
 	);
 
 	const onContinueClick = (): void => {
-		localStorage.setItem(SKIP_ONBOARDING, 'true');
+		localStorageSet(SKIP_ONBOARDING, 'true');
 		setSkipOnboarding(true);
 	};
 

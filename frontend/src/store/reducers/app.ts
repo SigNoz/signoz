@@ -6,10 +6,11 @@ import {
 	TOGGLE_SETTINGS_TABS,
 } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 
 const InitialValue: InitialValueTypes = {
 	isDarkMode: true,
-	isLoggedIn: localStorage.getItem(IS_LOGGED_IN) === 'yes',
+	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
 	settingsActiveTab: 'General',
 };
 
