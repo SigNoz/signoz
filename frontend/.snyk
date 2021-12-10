@@ -1,0 +1,8 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.22.1
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:debug:20170905':
+    - react-force-graph > 3d-force-graph-vr > aframe > debug:
+        patched: '2021-12-10T07:58:21.494Z'
