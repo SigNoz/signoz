@@ -10,7 +10,8 @@
 	],
 	"env": {
 		"production": {
-			"presets": ["minify"]
+			"presets": ["minify"],
+			"plugins": [["transform-remove-console", { "exclude": ["error", "warn"] }]]
 		}
 	}
 }
