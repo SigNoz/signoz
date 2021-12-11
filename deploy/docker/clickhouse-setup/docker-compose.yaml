@@ -33,7 +33,7 @@ services:
       - 9093:9093
 
   query-service:
-    image: signoz/query-service:0.5.1
+    image: signoz/query-service:0.5.3
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     ports:
@@ -54,7 +54,7 @@ services:
         condition: service_healthy
     
   frontend:
-    image: signoz/frontend:0.5.2
+    image: signoz/frontend:0.5.3
     container_name: frontend
 
     depends_on:
