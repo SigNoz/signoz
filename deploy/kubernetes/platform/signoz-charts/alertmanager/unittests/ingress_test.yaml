@@ -1,0 +1,81 @@
+suite: test ingress
+templates:
+  - ingress.yaml
+tests:
+  - it: should be empty if ingress is not enabled
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: should have apiVersion extensions/v1beta1 for k8s < 1.14
+    set:
+      ingress.enabled: true
+    capabilities:
+      majorVersion: 1
+      minorVersion: 13
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - isAPIVersion:
+          of: extensions/v1beta1
+  - it: should have apiVersion networking.k8s.io/v1beta1 for k8s < 1.19
+    set:
+      ingress.enabled: true
+    capabilities:
+      majorVersion: 1
+      minorVersion: 18
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - isAPIVersion:
+          of: networking.k8s.io/v1beta1
+  - it: should have apiVersion networking.k8s.io/v1 for k8s >= 1.19
+    set:
+      ingress.enabled: true
+    capabilities:
+      majorVersion: 1
+      minorVersion: 19
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - isAPIVersion:
+          of: networking.k8s.io/v1
+  - it: should have an ingressClassName for k8s >= 1.19
+    set:
+      ingress.enabled: true
+      ingress.className: nginx-test
+    capabilities:
+      majorVersion: 1
+      minorVersion: 19
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.ingressClassName
+          value: nginx-test
+  - it: should match snapshot of default values
+    set:
+      ingress.enabled: true
+      ingress.className: nginx-test
+    chart:
+      version: 1.0.0
+      appVersion: 1.0.0
+    asserts:
+      - matchSnapshot: { }
+  - it: should match snapshot of default values with old kubernetes ingress
+    set:
+      ingress.enabled: true
+      ingress.className: nginx-test
+    capabilities:
+      majorVersion: 1
+      minorVersion: 17
+    chart:
+      version: 1.0.0
+      appVersion: 1.0.0
+    asserts:
+      - matchSnapshot: { }

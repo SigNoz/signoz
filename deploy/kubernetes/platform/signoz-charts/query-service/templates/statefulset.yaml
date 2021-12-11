@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "query-service.fullname" . }}
+  labels:
+    {{- include "query-service.labels" . | nindent 4 }}
+spec:
+  serviceName: query-service
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "query-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "query-service.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+        {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 8 }}
+        {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["-config=/root/config/prometheus.yml"]
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+          - name: DruidClientUrl
+            value: {{ .Values.configVars.DruidClientUrl }}
+          - name: DruidDatasource
+            value: {{ .Values.configVars.DruidDatasource }}
+          - name: STORAGE
+            value: {{ .Values.configVars.STORAGE }}
+          - name: ClickHouseUrl
+            value: {{ .Values.configVars.ClickHouseUrl}}
+          - name: GODEBUG
+            value: netdns=go
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          volumeMounts:
+          - name: prometheus
+            mountPath: /root/config
+          - name: signoz-db
+            mountPath: /var/lib/signoz/
+          - name: dashboards
+            mountPath: /root/config/dashboards
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      - name: prometheus
+        configMap:
+          name: prometheus-config
+      - name: dashboards
+        emptyDir: {}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: signoz-db
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
