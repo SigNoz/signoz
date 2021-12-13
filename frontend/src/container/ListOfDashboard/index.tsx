@@ -1,5 +1,5 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Row, Table, TableColumnProps, Typography } from 'antd';
+import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Row, Table, TableColumnProps, Tooltip, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
@@ -10,7 +10,7 @@ import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
-import { NewDashboardButton, TableContainer } from './styles';
+import { NewDashboardButton, TableContainer, ButtonContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
 import DeleteButton from './TableComponents/DeleteButton';
@@ -150,15 +150,35 @@ const ListOfAllDashboard = (): JSX.Element => {
 					return (
 						<Row justify="space-between">
 							<Typography>Dashboard List</Typography>
-							<NewDashboardButton
-								onClick={onNewDashboardHandler}
-								icon={<PlusOutlined />}
-								type="primary"
-								loading={newDashboardState.loading}
-								danger={newDashboardState.error}
-							>
-								{getText()}
-							</NewDashboardButton>
+
+							<ButtonContainer>
+								<Tooltip
+									overlay={() => (
+										<div>
+											More details on how to create dashboards{' '}
+											<a
+												href="https://signoz.io/docs/userguide/metrics-dashboard"
+												target={'_blank'}
+											>
+												here
+											</a>
+										</div>
+									)}
+									
+								>
+									<QuestionCircleOutlined />
+								</Tooltip>
+
+								<NewDashboardButton
+									onClick={onNewDashboardHandler}
+									icon={<PlusOutlined />}
+									type="primary"
+									loading={newDashboardState.loading}
+									danger={newDashboardState.error}
+								>
+									{getText()}
+								</NewDashboardButton>
+							</ButtonContainer>
 						</Row>
 					);
 				}}

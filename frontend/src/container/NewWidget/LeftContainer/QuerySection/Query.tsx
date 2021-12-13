@@ -1,4 +1,5 @@
-import { Button, Divider } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Button, Divider, Tooltip } from 'antd';
 import Input from 'components/Input';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback, useState } from 'react';
@@ -14,7 +15,12 @@ import {
 import AppActions from 'types/actions';
 import { DeleteQueryProps } from 'types/actions/dashboard';
 
-import { Container, InputContainer, QueryWrapper } from './styles';
+import {
+	Container,
+	InputContainer,
+	QueryWrapper,
+	ButtonContainer,
+} from './styles';
 
 const Query = ({
 	currentIndex,
@@ -82,7 +88,27 @@ const Query = ({
 					</InputContainer>
 				</QueryWrapper>
 
-				<Button onClick={onDeleteQueryHandler}>Delete</Button>
+				<ButtonContainer>
+					<Button onClick={onDeleteQueryHandler}>Delete</Button>
+
+					<Tooltip
+						overlay={() => {
+							return (
+								<div>
+									More details on how to plot metrics graphs{' '}
+									<a
+										href="https://signoz.io/docs/userguide/prometheus-metrics/"
+										target={'_blank'}
+									>
+										here
+									</a>
+								</div>
+							);
+						}}
+					>
+						<QuestionCircleOutlined />
+					</Tooltip>
+				</ButtonContainer>
 			</Container>
 
 			<Divider />

@@ -1,5 +1,5 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Tooltip, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -9,7 +9,7 @@ import React, { useCallback } from 'react';
 const { Paragraph } = Typography;
 
 import AlertChannlesComponent from './AlertChannels';
-import { ButtonContainer } from './styles';
+import { ButtonContainer, Button } from './styles';
 
 const AlertChannels = (): JSX.Element => {
 	const onToggleHandler = useCallback(() => {
@@ -33,9 +33,29 @@ const AlertChannels = (): JSX.Element => {
 					The latest added channel is used as the default channel for sending alerts
 				</Paragraph>
 
-				<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
-					New Alert Channel
-				</Button>
+				<div>
+					<Tooltip
+						overlay={() => {
+							return (
+								<div>
+									More details on how to setting notification channels{' '}
+									<a
+										href="https://signoz.io/docs/userguide/alerts-management/#setting-notification-channel"
+										target={'_blank'}
+									>
+										here
+									</a>
+								</div>
+							);
+						}}
+					>
+						<QuestionCircleOutlined />
+					</Tooltip>
+
+					<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
+						New Alert Channel
+					</Button>
+				</div>
 			</ButtonContainer>
 
 			<AlertChannlesComponent allChannels={payload} />

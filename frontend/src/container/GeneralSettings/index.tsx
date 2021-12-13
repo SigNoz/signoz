@@ -1,4 +1,5 @@
-import { Button, Modal, notification, Typography } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Button, Modal, notification, Tooltip, Typography } from 'antd';
 import getRetentionperoidApi from 'api/settings/getRetention';
 import setRetentionApi from 'api/settings/setRetention';
 import Spinner from 'components/Spinner';
@@ -185,6 +186,23 @@ const GeneralSettings = (): JSX.Element => {
 			{errorText && (
 				<ErrorTextContainer>
 					<ErrorText>{errorText}</ErrorText>
+					<Tooltip
+						overlay={() => {
+							return (
+								<div>
+									More details on how to set retention period{' '}
+									<a
+										target={'_blank'}
+										href="https://signoz.io/docs/userguide/retention-period/"
+									>
+										here
+									</a>
+								</div>
+							);
+						}}
+					>
+						<QuestionCircleOutlined />
+					</Tooltip>
 				</ErrorTextContainer>
 			)}
 

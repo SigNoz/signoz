@@ -64,6 +64,12 @@ export const ErrorTextContainer = styled.div`
 	&&& {
 		margin-top: 2rem;
 		margin-bottom: 2rem;
+		display: flex;
+		align-items: center;
+
+		> article {
+			margin-right: 1rem;
+		}
 	}
 `;
 

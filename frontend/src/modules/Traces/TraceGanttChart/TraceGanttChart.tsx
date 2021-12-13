@@ -1,11 +1,12 @@
 import './TraceGanttChart.css';
 
-import { Button, Col, Progress, Row, Table, Tabs } from 'antd';
+import { Button, Col, Progress, Row, Table, Tabs, Tooltip } from 'antd';
 import { has, isEmpty, max } from 'lodash-es';
 import traverseTreeData from 'modules/Traces/TraceGanttChart/TraceGanttChartHelpers';
 import React, { useEffect, useRef, useState } from 'react';
 import { pushDStree } from 'store/actions';
 import styled from 'styled-components';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 const { TabPane } = Tabs;
 
@@ -15,6 +16,8 @@ const StyledButton = styled(Button)`
 	color: #f2f2f2;
 	font-size: 14px;
 	line-height: 20px;
+	margin-right: 0.5rem;
+	margin-left: 0.5rem;
 `;
 
 interface TraceGanttChartProps {
@@ -318,18 +321,36 @@ const TraceGanttChart = ({
 			{id !== 'empty' && (
 				<>
 					<Row
-						justify="end"
+						justify="space-between"
+						align="middle"
 						gutter={32}
 						style={{
 							marginBottom: '24px',
 						}}
 					>
 						<Col>
+							<Tooltip
+								overlay={() => {
+									return (
+										<div>
+											More details on how to understand trace details{' '}
+											<a
+												href="https://signoz.io/docs/userguide/trace-details/"
+												target={'_blank'}
+											>
+												here
+											</a>
+										</div>
+									);
+								}}
+							>
+								<QuestionCircleOutlined />
+							</Tooltip>
+						</Col>
+						<Col>
 							<StyledButton onClick={handleFocusOnSelectedPath}>
 								Focus on selected path
 							</StyledButton>
-						</Col>
-						<Col>
 							<StyledButton onClick={handleResetFocus}> Reset Focus </StyledButton>
 						</Col>
 					</Row>

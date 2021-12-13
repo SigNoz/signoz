@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, notification, Tag, Typography } from 'antd';
+import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { notification, Tag, Tooltip, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/alerts/getAll';
 import ROUTES from 'constants/routes';
@@ -11,7 +11,7 @@ import { generatePath } from 'react-router';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import DeleteAlert from './DeleteAlert';
-import { ButtonContainer } from './styles';
+import { ButtonContainer, Button } from './styles';
 import Status from './TableComponents/Status';
 
 const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
@@ -128,6 +128,24 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			{Element}
 
 			<ButtonContainer>
+				<Tooltip
+					overlay={() => {
+						return (
+							<div>
+								More details on how to create alerts{' '}
+								<a
+									href="https://signoz.io/docs/userguide/alerts-management/"
+									target={'_blank'}
+								>
+									here
+								</a>
+							</div>
+						);
+					}}
+				>
+					<QuestionCircleOutlined />
+				</Tooltip>
+
 				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
 					New Alert
 				</Button>
