@@ -9,6 +9,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HtmlCriticalWebpackPlugin = require('html-critical-webpack-plugin');
 
 const config = {
 	mode: 'production',
@@ -71,6 +72,19 @@ const config = {
 			'process.env': JSON.stringify(process.env),
 		}),
 		new MiniCssExtractPlugin(),
+		new HtmlCriticalWebpackPlugin({
+			base: resolve(__dirname, './build'),
+			src: 'index.html',
+			dest: 'index.html',
+			inline: true,
+			minify: true,
+			extract: true,
+			width: 375,
+			height: 565,
+			penthouse: {
+				blockJSRequests: false,
+			},
+		}),
 	],
 	optimization: {
 		chunkIds: 'named',
