@@ -18,7 +18,7 @@ export type ITEMS = 'TIME_SERIES' | 'VALUE';
 
 interface ItemsProps {
 	name: ITEMS;
-	Icon: () => JSX.Element;
+	Icon: (props: any) => JSX.Element;
 	display: string;
 }
 
