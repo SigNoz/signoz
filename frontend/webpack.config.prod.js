@@ -9,6 +9,8 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+	.BundleAnalyzerPlugin;
 
 const config = {
 	mode: 'production',
@@ -106,5 +108,9 @@ const config = {
 		hints: 'warning',
 	},
 };
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 module.exports = config;

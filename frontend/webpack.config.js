@@ -5,6 +5,8 @@ const portFinderSync = require('portfinder-sync');
 const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+	.BundleAnalyzerPlugin;
 
 dotenv.config();
 
@@ -72,5 +74,9 @@ const config = {
 		hints: false,
 	},
 };
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 module.exports = config;
