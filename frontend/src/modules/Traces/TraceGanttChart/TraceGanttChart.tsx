@@ -1,6 +1,13 @@
 import './TraceGanttChart.css';
 
-import { Button, Col, Progress, Row, Table, Tabs } from 'antd';
+import {
+	Button,
+	Col,
+	Progress,
+	Row,
+	Table as TableComponent,
+	Tabs,
+} from 'antd';
 import { has, isEmpty, max } from 'lodash-es';
 import traverseTreeData from 'modules/Traces/TraceGanttChart/TraceGanttChartHelpers';
 import React, { useEffect, useRef, useState } from 'react';
@@ -15,6 +22,13 @@ const StyledButton = styled(Button)`
 	color: #f2f2f2;
 	font-size: 14px;
 	line-height: 20px;
+`;
+
+const Table = styled(TableComponent)`
+	.ant-tabs-nav-list {
+		width: 100%;
+		justify-content: space-between;
+	}
 `;
 
 interface TraceGanttChartProps {
