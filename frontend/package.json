@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "NODE_ENV=development webpack serve --progress",
 		"build": "webpack --config=webpack.config.prod.js --progress",
-		"prod": "yarn build && npx serve ./build",
+		"prod": "yarn build && serve ./build",
 		"prettify": "prettier --write .",
 		"lint": "eslint . --debug",
 		"lint:fix": "eslint . --fix --debug",
