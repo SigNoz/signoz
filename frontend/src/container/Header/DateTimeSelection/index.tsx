@@ -206,20 +206,29 @@ const DateTimeSelection = ({
 
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
-		const metricsTimeDuration = getLocalStorageKey(
-			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
-		);
+				
+		const currentStorage = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
 
-		if (metricsTimeDuration === null) {
+		if(currentStorage === null){
 			setLocalStorageKey(
 				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
-				JSON.stringify({}),
-			);
+				JSON.stringify({
+					'/' : '5min',
+					'/application':'5min',
+					'/application/customer':'30min',
+					'/application/route':'30min',
+					'/application/driver':'30min',
+					'/service-map': '5min'
+				}),
+			);			
 		}
-
+		const currentmetricsTimeDuration = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);		
+		const metricsTimeDuration = JSON.parse(currentmetricsTimeDuration || '{}');
+		
 		const currentRoute = location.pathname;
-		const time = getDefaultTime(currentRoute);
-
+		const time = getDefaultTime(currentRoute);		
+		setSelectedTimeInterval(metricsTimeDuration[currentRoute]); 
+		
 		const currentOptions = getOptions(currentRoute);
 		setOptions(currentOptions);
 
