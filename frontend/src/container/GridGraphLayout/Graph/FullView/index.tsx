@@ -1,4 +1,4 @@
-import { Button, Typography } from 'antd';
+import { Button, Typography, notification } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
@@ -52,6 +52,7 @@ const FullView = ({
 	});
 
 	const onFetchDataHandler = useCallback(async () => {
+		setState((state) => ({ ...state, loading: true }));
 		try {
 			const maxMinTime = GetMaxMinTime({
 				graphType: widget.panelTypes,
@@ -110,6 +111,8 @@ const FullView = ({
 					...state,
 					loading: false,
 					payload: chartDataSet,
+					error: false,
+					errorMessage: '',
 				}));
 			}
 		} catch (error) {
@@ -126,13 +129,11 @@ const FullView = ({
 		onFetchDataHandler();
 	}, [onFetchDataHandler]);
 
-	if (state.error && !state.loading) {
-		return (
-			<NotFoundContainer>
-				<Typography>{state.errorMessage}</Typography>
-			</NotFoundContainer>
-		);
-	}
+	//antd notification config
+	notification.config({
+		placement: 'topRight',
+		maxCount: 1,
+	});
 
 	if (state.loading || state.payload === undefined) {
 		return (
@@ -202,6 +203,12 @@ const FullView = ({
 					name,
 				}}
 			/>
+
+			{state.error &&
+				notification.error({
+					message: state.errorMessage,
+				})}
+
 			{/* </GraphContainer> */}
 		</>
 	);
