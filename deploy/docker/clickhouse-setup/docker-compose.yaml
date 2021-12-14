@@ -83,6 +83,9 @@ services:
       - "55679:55679" # zpages extension
       - "13133"       # health_check
       - "8889:8889"   # prometheus exporter
+    
+    mem_limit: 2000m
+    restart: always
     depends_on:
       clickhouse:
         condition: service_healthy
