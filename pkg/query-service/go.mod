@@ -7,6 +7,7 @@ require (
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/aws/aws-sdk-go v1.27.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/frankban/quicktest v1.13.0 // indirect
@@ -40,7 +41,6 @@ require (
 	github.com/pascaldekloe/goe v0.1.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/posthog/posthog-go v0.0.0-20200525173953-e46dc8e6b89b
 	github.com/prometheus/client_golang v0.9.0-pre1.0.20181001174001-0a8115f42e03
 	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1
 	github.com/prometheus/procfs v0.0.8 // indirect
@@ -49,6 +49,7 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
+	github.com/segmentio/backo-go v1.0.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
@@ -58,7 +59,7 @@ require (
 	google.golang.org/api v0.51.0 // indirect
 	google.golang.org/grpc/examples v0.0.0-20210803221256-6ba56c814be7 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 
 )
 

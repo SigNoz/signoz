@@ -10,11 +10,11 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/posthog/posthog-go"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type status string
@@ -36,13 +36,13 @@ type APIHandler struct {
 	basePath   string
 	apiPrefix  string
 	reader     *Reader
-	pc         *posthog.Client
+	pc         *analytics.Client
 	distinctId string
 	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, pc *posthog.Client, distinctId string) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, pc *analytics.Client, distinctId string) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:     reader,
@@ -649,10 +649,10 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
 	email := postData["email"]
 
-	(*aH.pc).Enqueue(posthog.Capture{
-		DistinctId: distinctId,
+	(*aH.pc).Enqueue(analytics.Track{
+		UserId:     distinctId,
 		Event:      "InProduct Feeback Submitted",
-		Properties: posthog.NewProperties().Set("email", email).Set("message", message),
+		Properties: analytics.NewProperties().Set("email", email).Set("message", message),
 	})
 
 }
@@ -666,10 +666,9 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	(*aH.pc).Enqueue(posthog.Identify{
-		DistinctId: aH.distinctId,
-		Properties: posthog.NewProperties().
-			Set("email", user.Email).Set("name", user.Name),
+	(*aH.pc).Enqueue(analytics.Identify{
+		UserId: aH.distinctId,
+		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
 	})
 
 }
@@ -845,13 +844,12 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	if len(*result) != 4 {
-		(*aH.pc).Enqueue(posthog.Capture{
-			DistinctId: distinctId,
-			Event:      "Different Number of Services",
-			Properties: posthog.NewProperties().Set("number", len(*result)),
-		})
-	}
+
+	(*aH.pc).Enqueue(analytics.Track{
+		UserId:     distinctId,
+		Event:      "Different Number of Services",
+		Properties: analytics.NewProperties().Set("number", len(*result)),
+	})
 
 	aH.writeJSON(w, r, result)
 }

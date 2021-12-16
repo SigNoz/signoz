@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/posthog/posthog-go"
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/app/clickhouseReader"
@@ -19,6 +18,7 @@ import (
 	"go.signoz.io/query-service/healthcheck"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
+	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type ServerOptions struct {
@@ -86,12 +86,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}, nil
 }
 
-var posthogClient posthog.Client
+var analyticsClient analytics.Client
 var distinctId string
 
 func createHTTPServer() (*http.Server, error) {
 
-	posthogClient = posthog.New("H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w")
+	client := analytics.New("4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz")
+	defer client.Close()
 	distinctId = uuid.New().String()
 
 	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
@@ -114,7 +115,7 @@ func createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader, &posthogClient, distinctId)
+	apiHandler, err := NewAPIHandler(&reader, &analyticsClient, distinctId)
 	if err != nil {
 		return nil, err
 	}
@@ -157,9 +158,9 @@ func analyticsMiddleware(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		posthogClient.Enqueue(posthog.Capture{
-			DistinctId: distinctId,
-			Event:      path,
+		analyticsClient.Enqueue(analytics.Track{
+			Event:  path,
+			UserId: distinctId,
 		})
 
 		next.ServeHTTP(w, r)
