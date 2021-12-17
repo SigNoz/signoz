@@ -43,11 +43,23 @@ type Server struct {
 	unavailableChannel chan healthcheck.Status
 	analyticsClient    *analytics.Client
 	distinctId         string
+	ipAddress          string
 }
 
 // HealthCheckStatus returns health check status channel a client can subscribe to
 func (s Server) HealthCheckStatus() chan healthcheck.Status {
 	return s.unavailableChannel
+}
+
+// Get preferred outbound ip of this machine
+func getOutboundIP() string {
+	conn, _ := net.Dial("udp", "8.8.8.8:80")
+
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP.String()
 }
 
 // NewServer creates and initializes Server
@@ -84,6 +96,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s.analyticsClient = &analyticsClient
 
 	s.distinctId = uuid.New().String()
+	s.ipAddress = getOutboundIP()
 
 	httpServer, err := s.createHTTPServer()
 
@@ -117,7 +130,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader, s.analyticsClient, s.distinctId)
+	apiHandler, err := NewAPIHandler(&reader, s.analyticsClient, s.distinctId, s.ipAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +176,8 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		(*s.analyticsClient).Enqueue(analytics.Track{
 			Event:  path,
 			UserId: s.distinctId,
+			Properties: analytics.NewProperties().
+				Set("ip", s.ipAddress),
 		})
 
 		next.ServeHTTP(w, r)

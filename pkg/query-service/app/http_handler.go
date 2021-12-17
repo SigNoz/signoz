@@ -38,16 +38,18 @@ type APIHandler struct {
 	reader     *Reader
 	pc         *analytics.Client
 	distinctId string
+	ipAddress  string
 	ready      func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, pc *analytics.Client, distinctId string) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, pc *analytics.Client, distinctId string, ipAddress string) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:     reader,
 		pc:         pc,
 		distinctId: distinctId,
+		ipAddress:  ipAddress,
 	}
 	aH.ready = aH.testReady
 
@@ -652,7 +654,7 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	(*aH.pc).Enqueue(analytics.Track{
 		UserId:     aH.distinctId,
 		Event:      "InProduct Feeback Submitted",
-		Properties: analytics.NewProperties().Set("email", email).Set("message", message),
+		Properties: analytics.NewProperties().Set("email", email).Set("message", message).Set("ip", aH.ipAddress),
 	})
 
 }
@@ -668,7 +670,7 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 	(*aH.pc).Enqueue(analytics.Identify{
 		UserId: aH.distinctId,
-		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
+		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", aH.ipAddress),
 	})
 
 }
@@ -847,8 +849,8 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 
 	(*aH.pc).Enqueue(analytics.Track{
 		UserId:     aH.distinctId,
-		Event:      "Different Number of Services",
-		Properties: analytics.NewProperties().Set("number", len(*result)),
+		Event:      "Number of Services",
+		Properties: analytics.NewProperties().Set("number", len(*result)).Set("ip", aH.ipAddress),
 	})
 
 	aH.writeJSON(w, r, result)
