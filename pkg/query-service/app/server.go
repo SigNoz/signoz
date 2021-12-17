@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -53,13 +54,13 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // Get preferred outbound ip of this machine
 func getOutboundIP() string {
-	conn, _ := net.Dial("udp", "8.8.8.8:80")
 
-	defer conn.Close()
+	resp, _ := http.Get("https://api.ipify.org?format=text")
 
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	defer resp.Body.Close()
+	ip, _ := ioutil.ReadAll(resp.Body)
 
-	return localAddr.IP.String()
+	return string(ip)
 }
 
 // NewServer creates and initializes Server
