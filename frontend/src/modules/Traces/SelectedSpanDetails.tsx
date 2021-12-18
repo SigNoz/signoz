@@ -52,6 +52,16 @@ const CardContainer = styled(Card)`
 		max-height: 90vh;
 		overflow-y: auto;
 	}
+
+	.ant-tabs-nav-more {
+		display: none;
+	}
+
+	@media only screen and (max-width: 992px) {
+		.ant-tabs-nav-more {
+			display: block;
+		}
+	}
 `;
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
