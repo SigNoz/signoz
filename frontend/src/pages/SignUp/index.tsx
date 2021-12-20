@@ -67,10 +67,12 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 						message: 'Something went wrong',
 					});
 				}
+				setLoading(false);
 			} catch (error) {
 				notificationsInstance.error({
 					message: 'Something went wrong',
 				});
+				setLoading(false);
 			}
 		})();
 	};
