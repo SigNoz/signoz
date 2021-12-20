@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Card, Typography, Divider, Button, Row } from 'antd';
 import * as monaco from 'monaco-editor';
-import { ErrorContainer } from './styles';
+import { ErrorContainer } from '../AppLayout/styles';
 const { Paragraph } = Typography;
 
 const Error = ({ error, errorInfo }: ErrorProps) => {

@@ -21,6 +21,8 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 		(state) => state.metrics,
 	);
 
+	throw new Error('this is new error from render');
+
 	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';
 
 	useEffect(() => {
