@@ -6,7 +6,7 @@ import traverseTreeData from 'modules/Traces/TraceGanttChart/TraceGanttChartHelp
 import React, { useEffect, useRef, useState } from 'react';
 import { pushDStree } from 'store/actions';
 import styled from 'styled-components';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import TextToolTip from 'components/TextToolTip';
 
 const { TabPane } = Tabs;
 
@@ -329,23 +329,10 @@ const TraceGanttChart = ({
 						}}
 					>
 						<Col>
-							<Tooltip
-								overlay={() => {
-									return (
-										<div>
-											More details on how to understand trace details{' '}
-											<a
-												href="https://signoz.io/docs/userguide/trace-details/"
-												target={'_blank'}
-											>
-												here
-											</a>
-										</div>
-									);
-								}}
-							>
-								<QuestionCircleOutlined />
-							</Tooltip>
+							<TextToolTip
+								text={`More details on how to understand trace details`}
+								url="https://signoz.io/docs/userguide/trace-details/"
+							/>
 						</Col>
 						<Col>
 							<StyledButton onClick={handleFocusOnSelectedPath}>

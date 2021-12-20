@@ -1,7 +1,8 @@
-import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
 import getAll from 'api/channels/getAll';
 import Spinner from 'components/Spinner';
+import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
@@ -34,23 +35,10 @@ const AlertChannels = (): JSX.Element => {
 				</Paragraph>
 
 				<div>
-					<Tooltip
-						overlay={() => {
-							return (
-								<div>
-									More details on how to setting notification channels{' '}
-									<a
-										href="https://signoz.io/docs/userguide/alerts-management/#setting-notification-channel"
-										target={'_blank'}
-									>
-										here
-									</a>
-								</div>
-							);
-						}}
-					>
-						<QuestionCircleOutlined />
-					</Tooltip>
+					<TextToolTip
+						text={`More details on how to setting notification channels`}
+						url="https://signoz.io/docs/userguide/alerts-management/#setting-notification-channel"
+					/>
 
 					<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
 						New Alert Channel

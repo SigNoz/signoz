@@ -1,7 +1,8 @@
-import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Row, Table, TableColumnProps, Tooltip, Typography } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -152,22 +153,12 @@ const ListOfAllDashboard = (): JSX.Element => {
 							<Typography>Dashboard List</Typography>
 
 							<ButtonContainer>
-								<Tooltip
-									overlay={() => (
-										<div>
-											More details on how to create dashboards{' '}
-											<a
-												href="https://signoz.io/docs/userguide/metrics-dashboard"
-												target={'_blank'}
-											>
-												here
-											</a>
-										</div>
-									)}
-									
-								>
-									<QuestionCircleOutlined />
-								</Tooltip>
+								<TextToolTip
+									{...{
+										text: `More details on how to create dashboards`,
+										url: 'https://signoz.io/docs/userguide/metrics-dashboard',
+									}}
+								/>
 
 								<NewDashboardButton
 									onClick={onNewDashboardHandler}

@@ -1,8 +1,9 @@
 /* eslint-disable react/display-name */
-import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { notification, Tag, Tooltip, Typography } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/alerts/getAll';
+import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
@@ -128,23 +129,12 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			{Element}
 
 			<ButtonContainer>
-				<Tooltip
-					overlay={() => {
-						return (
-							<div>
-								More details on how to create alerts{' '}
-								<a
-									href="https://signoz.io/docs/userguide/alerts-management/"
-									target={'_blank'}
-								>
-									here
-								</a>
-							</div>
-						);
+				<TextToolTip
+					{...{
+						text: `More details on how to create alerts`,
+						url: 'https://signoz.io/docs/userguide/alerts-management/',
 					}}
-				>
-					<QuestionCircleOutlined />
-				</Tooltip>
+				/>
 
 				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
 					New Alert

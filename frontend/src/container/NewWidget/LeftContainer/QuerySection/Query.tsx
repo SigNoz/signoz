@@ -1,6 +1,6 @@
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import { Button, Divider, Tooltip } from 'antd';
+import { Button, Divider } from 'antd';
 import Input from 'components/Input';
+import TextToolTip from 'components/TextToolTip';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
@@ -90,24 +90,12 @@ const Query = ({
 
 				<ButtonContainer>
 					<Button onClick={onDeleteQueryHandler}>Delete</Button>
-
-					<Tooltip
-						overlay={() => {
-							return (
-								<div>
-									More details on how to plot metrics graphs{' '}
-									<a
-										href="https://signoz.io/docs/userguide/prometheus-metrics/"
-										target={'_blank'}
-									>
-										here
-									</a>
-								</div>
-							);
+					<TextToolTip
+						{...{
+							text: `More details on how to plot metrics graphs`,
+							url: 'https://signoz.io/docs/userguide/prometheus-metrics/',
 						}}
-					>
-						<QuestionCircleOutlined />
-					</Tooltip>
+					/>
 				</ButtonContainer>
 			</Container>
 
