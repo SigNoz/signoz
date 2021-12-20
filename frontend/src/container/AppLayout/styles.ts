@@ -21,3 +21,10 @@ export const Footer = styled(LayoutComponent.Footer)`
 		font-size: 0.7rem;
 	}
 `;
+
+export const ErrorContainer = styled.div`
+	&&& {
+		margin-top: 1rem;
+		min-height: 60vh;
+	}
+`;

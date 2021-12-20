@@ -2,52 +2,103 @@ import ROUTES from 'constants/routes';
 import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
 import history from 'lib/history';
-import React, { ReactNode, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { ReactNode, Component } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 import Feedback from './FeedBack';
 import { Content, Footer, Layout } from './styles';
+import Error from './Error';
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+class AppLayout extends React.Component<Props, State> {
+	state: State = {
+		isSignUpPage: ROUTES.SIGN_UP === location.pathname,
+		isError: false,
+		error: undefined,
+		errorInfo: undefined,
+	};
 
-	const [isSignUpPage, setIsSignUpPage] = useState(
-		ROUTES.SIGN_UP === location.pathname,
-	);
-
-	useEffect(() => {
-		if (!isLoggedIn) {
-			setIsSignUpPage(true);
+	componentDidMount() {
+		if (!this.props.isLoggedIn) {
+			this.setState((state) => ({
+				...state,
+				isSignUpPage: true,
+			}));
 			history.push(ROUTES.SIGN_UP);
 		} else {
-			if (isSignUpPage) {
-				setIsSignUpPage(false);
+			if (this.state.isSignUpPage) {
+				this.setState((state) => ({
+					...state,
+					isSignUpPage: false,
+				}));
 			}
 		}
-	}, [isLoggedIn, isSignUpPage]);
+	}
 
-	const currentYear = new Date().getFullYear();
+	getLayout(children: React.ReactNode) {
+		const currentYear = new Date().getFullYear();
+		const { isSignUpPage } = this.state;
 
-	return (
-		<Layout>
-			{!isSignUpPage && <SideNav />}
+		return (
 			<Layout>
-				<Content>
-					{!isSignUpPage && <TopNav />}
-					{children}
-				</Content>
-				<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
+				{!isSignUpPage && <SideNav />}
+				<Layout>
+					<Content>
+						{!isSignUpPage && <TopNav />}
+						{children}
+					</Content>
+					<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
+				</Layout>
+
+				<Feedback />
 			</Layout>
+		);
+	}
 
-			<Feedback />
-		</Layout>
-	);
-};
+	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+		this.setState((state) => ({
+			...state,
+			isError: true,
+			error,
+			errorInfo,
+		}));
+	}
 
-interface AppLayoutProps {
-	children: ReactNode;
+	render(): React.ReactNode {
+		const { isError, error, errorInfo } = this.state;
+
+		if (isError && error && errorInfo) {
+			return (
+				<>
+					{this.getLayout(
+						<Error
+							{...{
+								error,
+								errorInfo,
+							}}
+						/>,
+					)}
+				</>
+			);
+		}
+
+		return <>{this.getLayout(this.props.children)}</>;
+	}
 }
 
-export default AppLayout;
+interface State {
+	isSignUpPage: boolean;
+	isError: boolean;
+	error?: Error;
+	errorInfo?: React.ErrorInfo;
+}
+
+interface Props {
+	children: React.ReactNode;
+	isLoggedIn: AppReducer['isLoggedIn'];
+}
+
+export default connect((state: AppState) => ({
+	isLoggedIn: state.app.isLoggedIn,
+}))(AppLayout);
