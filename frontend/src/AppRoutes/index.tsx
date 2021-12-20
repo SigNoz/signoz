@@ -11,7 +11,6 @@ import AppReducer from 'types/reducer/app';
 
 import routes from './routes';
 
-
 const App = (): JSX.Element => {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -41,6 +40,5 @@ const App = (): JSX.Element => {
 		</Router>
 	);
 };
-
 
 export default App;

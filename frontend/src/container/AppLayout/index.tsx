@@ -70,16 +70,12 @@ class AppLayout extends React.Component<Props, State> {
 
 		if (isError && error && errorInfo) {
 			return (
-				<>
-					{this.getLayout(
-						<Error
-							{...{
-								error,
-								errorInfo,
-							}}
-						/>,
-					)}
-				</>
+				<Error
+					{...{
+						error,
+						errorInfo,
+					}}
+				/>
 			);
 		}
 

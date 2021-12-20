@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Card, Typography, Divider } from 'antd';
+import { Card, Typography, Divider, Button, Row } from 'antd';
 import * as monaco from 'monaco-editor';
 import { ErrorContainer } from './styles';
+const { Paragraph } = Typography;
 
 const Error = ({ error, errorInfo }: ErrorProps) => {
 	const divEl = useRef<HTMLDivElement>(null);
@@ -28,7 +29,19 @@ const Error = ({ error, errorInfo }: ErrorProps) => {
 
 	return (
 		<Card>
-			<Typography>Something got messed up due to: {error.message}</Typography>
+			<Row align="middle" justify="space-between">
+				<Paragraph ellipsis>
+					Something got messed up due to: {error.message}
+				</Paragraph>
+
+				<Button
+					onClick={() => {
+						window.location.reload();
+					}}
+				>
+					Reload
+				</Button>
+			</Row>
 
 			<Divider />
 
