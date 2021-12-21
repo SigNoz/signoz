@@ -26,9 +26,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 		[push, pathname],
 	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const fillColor = { // make sure all required component's inputs/Props keys&types match
-		fillColor: isDarkMode?"white" : "black",
-	  }
+	const fillColor:React.CSSProperties['color'] =  isDarkMode?"white" : "black";
 	return (
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
@@ -39,7 +37,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 					key={name}
 					draggable
 				>
-					<Icon {...fillColor}/>
+					<Icon fillColor={fillColor}/>
 					<Text>{display}</Text>
 				</Card>
 			))}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Value = (props: colorProps): JSX.Element => {
+const Value = (props: ValueProps): JSX.Element => {
 	return(
 	<React.Fragment>
 		<svg
@@ -18,8 +18,8 @@ const Value = (props: colorProps): JSX.Element => {
 	</React.Fragment>
 )};
 
-interface colorProps{
-	fillColor: string;
+interface ValueProps{
+	fillColor: React.CSSProperties['color'];
 }
 
 export default Value;
