@@ -17,9 +17,13 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import history from 'lib/history';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import RefreshText from './Refresh';
+import getParamsInObject from 'lib/queryUtil/getParamsInObject';
+import createQueryParams from 'lib/queryUtil/createQueryParams';
+import GetMinMax from 'lib/getMinMax';
 
 const DateTimeSelection = ({
 	location,
@@ -29,20 +33,18 @@ const DateTimeSelection = ({
 	const [form_dtselector] = Form.useForm();
 
 	const params = new URLSearchParams(location.search);
-	const searchStartTime = params.get('startTime');
-	const searchEndTime = params.get('endTime');
+	const paramsInObject = getParamsInObject(params);
+	const searchStartTime = paramsInObject['startTime'] || '';
+	const searchEndTime = paramsInObject['endTime'] || '';
+	const searchSelectedTime = paramsInObject['selectedTime'] || '';
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
-			const startMoment = moment(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
-			);
-			const endMoment = moment(
-				new Date(parseInt(getTimeString(searchEndTime), 10)),
-			);
+			const startMoment = moment(parseInt(getTimeString(searchStartTime), 10));
+			const endMoment = moment(parseInt(getTimeString(searchEndTime), 10));
 
 			return [
 				startMoment.toDate().getTime() || 0,
@@ -120,10 +122,20 @@ const DateTimeSelection = ({
 
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
-			updateTimeInterval(value);
+			updateTimeInterval(value, !toIsCalulated);
 			const selectedLabel = getInputLabel(undefined, undefined, value);
 			setSelectedTimeInterval(selectedLabel as Time);
 			updateLocalStorageForRoutes(value);
+
+			const { maxTime, minTime } = GetMinMax(value);
+
+			paramsInObject['startTime'] = minTime.toString();
+			paramsInObject['endTime'] = maxTime.toString();
+			paramsInObject['selectedTime'] = value;
+
+			history.push(
+				history.location.pathname + `?${createQueryParams(paramsInObject)}`,
+			);
 		} else {
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
@@ -134,6 +146,17 @@ const DateTimeSelection = ({
 		onSelectHandler(selectedTimeInterval);
 		onLastRefreshHandler();
 	};
+
+	// this is true when all the value from the search url is present
+	const toIsCalulated =
+		//searchEndTime present
+		searchEndTime.length !== 0 &&
+		//searchStartTime present
+		searchStartTime.length !== 0 &&
+		// valid option
+		getOptions(location.pathname)
+			.map((e) => e.value)
+			.includes(searchSelectedTime as Time);
 
 	const getInputLabel = (
 		startTime?: moment.Moment,
@@ -193,13 +216,26 @@ const DateTimeSelection = ({
 				setStartTime(startTimeMoment);
 				setEndTime(endTimeMoment);
 				setCustomDTPickerVisible(false);
-				updateTimeInterval('custom', [
+				updateTimeInterval('custom', !toIsCalulated, [
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
 				]);
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
+
+				const { maxTime, minTime } = GetMinMax('custom', [
+					startTimeMoment.toDate().getTime(),
+					endTimeMoment.toDate().getTime(),
+				]);
+
+				paramsInObject['startTime'] = minTime.toString();
+				paramsInObject['endTime'] = maxTime.toString();
+				paramsInObject['selectedTime'] = 'custom';
+
+				history.push(
+					history.location.pathname + `?${createQueryParams(paramsInObject)}`,
+				);
 			}
 		}
 	};
@@ -224,10 +260,21 @@ const DateTimeSelection = ({
 		setOptions(currentOptions);
 
 		const getCustomOrIntervalTime = (time: Time): Time => {
-			if (searchEndTime !== null && searchStartTime !== null) {
+			// getting the custom selected time type from the URL
+			if (
+				searchEndTime !== null &&
+				searchStartTime !== null &&
+				searchSelectedTime === 'custom'
+			) {
 				return 'custom';
 			}
 
+			// search selected time
+			if (toIsCalulated) {
+				return searchSelectedTime as Time;
+			}
+
+			//handling if localstorageEndTime and localstorageStartTime is null as there is no entry in the localstorage
 			if (
 				(localstorageEndTime === null || localstorageStartTime === null) &&
 				time === 'custom'
@@ -235,6 +282,7 @@ const DateTimeSelection = ({
 				return getDefaultOption(currentRoute);
 			}
 
+			//returing the default options
 			return time;
 		};
 
@@ -245,7 +293,7 @@ const DateTimeSelection = ({
 		setStartTime(moment(preStartTime));
 		setEndTime(moment(preEndTime));
 
-		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		updateTimeInterval(updatedTime, !toIsCalulated, [preStartTime, preEndTime]);
 	}, [
 		location.pathname,
 		getTime,
@@ -303,6 +351,7 @@ const DateTimeSelection = ({
 interface DispatchProps {
 	updateTimeInterval: (
 		interval: Time,
+		isCalulated: boolean,
 		dateTimeRange?: [number, number],
 	) => (dispatch: Dispatch<AppActions>) => void;
 	globalTimeLoading: () => void;

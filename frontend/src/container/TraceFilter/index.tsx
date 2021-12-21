@@ -12,7 +12,7 @@ import { AutoComplete, Form, InfoWrapper, Select } from './styles';
 const { Option } = Select;
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-import createQueryParams from 'lib/createQueryParams';
+import createQueryParams from 'lib/queryUtil/createQueryParams';
 import history from 'lib/history';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -23,6 +23,7 @@ import {
 	UpdateSelectedDataProps,
 } from 'store/actions/trace/updateSelectedData';
 import AppActions from 'types/actions';
+import getParamsInObject from 'lib/queryUtil/getParamsInObject';
 
 const FormItem = Form.Item;
 
@@ -60,16 +61,8 @@ const TraceList = ({
 		selectedEntity,
 	} = useSelector<AppState, TraceReducer>((state) => state.trace);
 
-	const paramsInObject = (params: URLSearchParams): { [x: string]: string } => {
-		const updatedParamas: { [x: string]: string } = {};
-		params.forEach((value, key) => {
-			updatedParamas[key] = value;
-		});
-		return updatedParamas;
-	};
-
 	const updatedQueryParams = (updatedValue: string[], key: string[]): void => {
-		const updatedParams = paramsInObject(params);
+		const updatedParams = getParamsInObject(params);
 
 		updatedValue.forEach((_, index) => {
 			updatedParams[key[index]] = updatedValue[index];
