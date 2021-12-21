@@ -200,6 +200,7 @@ const TraceList = ({
 			form_basefilter.setFieldsValue({
 				spanKind: selectedKind,
 			});
+			updateSelectedKindHandler(selectedKind);
 		} else {
 			form_basefilter.setFieldsValue({
 				spanKind: '',

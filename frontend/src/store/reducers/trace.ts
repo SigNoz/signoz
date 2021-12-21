@@ -17,13 +17,15 @@ import {
 	UPDATE_TRACE_SELECTED_TAGS,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+import { spanKindList } from '../../container/TraceFilter/config';
 
 const intitalState: TraceReducer = {
 	error: false,
 	errorMessage: '',
 	loading: true,
 	operationsList: [],
-	selectedKind: '',
+	selectedKind:
+		spanKindList.find((spanKind) => spanKind.label === 'SERVER')?.value || '',
 	selectedLatency: {
 		max: '',
 		min: '',
@@ -71,7 +73,6 @@ export const traceReducer = (
 				selectedService,
 				selectedTags,
 				spansList,
-				selectedKind,
 				selectedLatency,
 				spansAggregate,
 			} = action.payload;
@@ -86,7 +87,6 @@ export const traceReducer = (
 				spanList: spansList,
 				operationsList: operationList,
 				error: false,
-				selectedKind,
 				selectedLatency,
 				spansAggregate,
 				spansLoading: false,
