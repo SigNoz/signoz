@@ -46,7 +46,7 @@ export const getDefaultOption = (route: string): Time => {
 	if (route === ROUTES.SERVICE_MAP) {
 		return ServiceMapOptions[0].value;
 	}
-	if (route === ROUTES.APPLICATION || '/') {
+	if (route === ROUTES.APPLICATION) {
 		return Options[0].value;
 	}
 	return Options[2].value;
