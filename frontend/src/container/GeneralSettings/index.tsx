@@ -15,6 +15,7 @@ import {
 	Container,
 	ErrorText,
 	ErrorTextContainer,
+	ToolTipContainer,
 } from './styles';
 
 const GeneralSettings = (): JSX.Element => {
@@ -183,7 +184,7 @@ const GeneralSettings = (): JSX.Element => {
 		<Container>
 			{Element}
 
-			{errorText && (
+			{errorText ? (
 				<ErrorTextContainer>
 					<ErrorText>{errorText}</ErrorText>
 
@@ -194,6 +195,15 @@ const GeneralSettings = (): JSX.Element => {
 						}}
 					/>
 				</ErrorTextContainer>
+			) : (
+				<ToolTipContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to set retention period`,
+							url: 'https://signoz.io/docs/userguide/retention-period/',
+						}}
+					/>
+				</ToolTipContainer>
 			)}
 
 			<Retention

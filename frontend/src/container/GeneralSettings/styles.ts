@@ -73,6 +73,17 @@ export const ErrorTextContainer = styled.div`
 	}
 `;
 
+export const ToolTipContainer = styled.div`
+	&&& {
+		margin-top: 2rem;
+		margin-bottom: 2rem;
+		display: flex;
+		align-items: center;
+		width: 50%;
+		justify-content: flex-end;
+	}
+`;
+
 export const ErrorText = styled(TypographyComponent)`
 	&&& {
 		color: #e89a3c;
