@@ -15,7 +15,7 @@ const TextToolTip = ({ text, url }: TextToolTipProps) => (
 			);
 		}}
 	>
-		<QuestionCircleFilled />
+		<QuestionCircleFilled style={{ fontSize: '1rem' }} />
 	</Tooltip>
 );
 
