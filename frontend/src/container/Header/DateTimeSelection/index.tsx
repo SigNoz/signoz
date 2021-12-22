@@ -17,9 +17,13 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import getParamsInObject from 'lib/query/getParamsInObject';
+import history from 'lib/history';
+import GetMinMax from 'lib/getGlobalMinMax';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import RefreshText from './Refresh';
+import createQueryParams from 'lib/query/createQueryParamsInObject';
 
 const DateTimeSelection = ({
 	location,
@@ -29,8 +33,10 @@ const DateTimeSelection = ({
 	const [form_dtselector] = Form.useForm();
 
 	const params = new URLSearchParams(location.search);
-	const searchStartTime = params.get('startTime');
-	const searchEndTime = params.get('endTime');
+	const paramsInObject = getParamsInObject(params);
+	const searchStartTime = paramsInObject['startTime'] || '';
+	const searchEndTime = paramsInObject['endTime'] || '';
+	const searchSelectedTime = paramsInObject['selectedTime'] || '';
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
@@ -93,6 +99,17 @@ const DateTimeSelection = ({
 		getDefaultTime(location.pathname),
 	);
 
+	// this is true when all the value from the search url is present
+	const toIsCalulated =
+		//searchEndTime present
+		searchEndTime.length !== 0 &&
+		//searchStartTime present
+		searchStartTime.length !== 0 &&
+		// valid option
+		getOptions(location.pathname)
+			.map((e) => e.value)
+			.includes(searchSelectedTime as Time);
+
 	const updateLocalStorageForRoutes = (value: Time): void => {
 		const preRoutes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
@@ -112,10 +129,19 @@ const DateTimeSelection = ({
 
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
-			updateTimeInterval(value);
 			const selectedLabel = getInputLabel(undefined, undefined, value);
 			setSelectedTimeInterval(selectedLabel as Time);
 			updateLocalStorageForRoutes(value);
+
+			const minMax = GetMinMax(value);
+
+			paramsInObject['startTime'] = minMax.maxTime.toString();
+			paramsInObject['endTime'] = minMax.minTime.toString();
+			paramsInObject['selectedTime'] = value;
+
+			history.push(
+				history.location.pathname + `?${createQueryParams(paramsInObject)}`,
+			);
 		} else {
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
@@ -185,7 +211,7 @@ const DateTimeSelection = ({
 				setStartTime(startTimeMoment);
 				setEndTime(endTimeMoment);
 				setCustomDTPickerVisible(false);
-				updateTimeInterval('custom', [
+				updateTimeInterval('custom', toIsCalulated, [
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
 				]);
@@ -216,10 +242,21 @@ const DateTimeSelection = ({
 		setOptions(currentOptions);
 
 		const getCustomOrIntervalTime = (time: Time): Time => {
-			if (searchEndTime !== null && searchStartTime !== null) {
+			// getting the custom selected time type from the URL
+			if (
+				searchEndTime !== null &&
+				searchStartTime !== null &&
+				searchSelectedTime === 'custom'
+			) {
 				return 'custom';
 			}
 
+			// search selected time
+			if (toIsCalulated) {
+				return searchSelectedTime as Time;
+			}
+
+			//handling if localstorageEndTime and localstorageStartTime is null as there is no entry in the localstorage
 			if (
 				(localstorageEndTime === null || localstorageStartTime === null) &&
 				time === 'custom'
@@ -227,6 +264,7 @@ const DateTimeSelection = ({
 				return getDefaultOption(currentRoute);
 			}
 
+			//returing the default options
 			return time;
 		};
 
@@ -237,7 +275,7 @@ const DateTimeSelection = ({
 		setStartTime(dayjs(preStartTime));
 		setEndTime(dayjs(preEndTime));
 
-		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+		updateTimeInterval(updatedTime, !toIsCalulated, [preStartTime, preEndTime]);
 	}, [
 		location.pathname,
 		getTime,
@@ -295,6 +333,7 @@ const DateTimeSelection = ({
 interface DispatchProps {
 	updateTimeInterval: (
 		interval: Time,
+		isCalulated: boolean,
 		dateTimeRange?: [number, number],
 	) => (dispatch: Dispatch<AppActions>) => void;
 	globalTimeLoading: () => void;

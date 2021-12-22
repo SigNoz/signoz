@@ -21,18 +21,13 @@ export const GetService = (
 				return;
 			}
 
-			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
-				globalTime.minTime,
-				globalTime.maxTime,
-			]);
-
 			dispatch({
 				type: 'GET_SERVICE_LIST_LOADING_START',
 			});
 
 			const response = await getService({
-				end: convertSecToNanoSeconds(maxTime),
-				start: convertSecToNanoSeconds(minTime),
+				end: convertSecToNanoSeconds(globalTime.maxTime),
+				start: convertSecToNanoSeconds(globalTime.minTime),
 			});
 
 			if (response.statusCode === 200) {
