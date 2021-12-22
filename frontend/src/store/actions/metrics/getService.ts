@@ -1,10 +1,11 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax from 'lib/getGlobalMinMax';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 
 export const GetService = (
 	props: GetServiceProps,
@@ -21,8 +22,8 @@ export const GetService = (
 			}
 
 			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
-				globalTime.minTime / 1000000,
-				globalTime.maxTime / 1000000,
+				globalTime.minTime,
+				globalTime.maxTime,
 			]);
 
 			dispatch({
@@ -30,8 +31,8 @@ export const GetService = (
 			});
 
 			const response = await getService({
-				end: maxTime,
-				start: minTime,
+				end: convertSecToNanoSeconds(maxTime),
+				start: convertSecToNanoSeconds(minTime),
 			});
 
 			if (response.statusCode === 200) {

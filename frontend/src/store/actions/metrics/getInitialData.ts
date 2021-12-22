@@ -5,7 +5,7 @@
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax from 'lib/getGlobalMinMax';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

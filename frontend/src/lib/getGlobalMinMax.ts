@@ -1,7 +1,7 @@
 import { Time } from 'container/Header/DateTimeSelection/config';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import getMinAgo from './getStartAndEndTime/getMinAgo';
+import dayjs from 'dayjs';
 
 const GetMinMax = (
 	interval: Time,
@@ -11,31 +11,22 @@ const GetMinMax = (
 	let minTime = 0;
 
 	if (interval === '1min') {
-		const minTimeAgo = getMinAgo({ minutes: 1 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(1, 'minute').toDate().getTime();
 	} else if (interval === '15min') {
-		const minTimeAgo = getMinAgo({ minutes: 15 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(15, 'minute').toDate().getTime();
 	} else if (interval === '1hr') {
-		const minTimeAgo = getMinAgo({ minutes: 60 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(1, 'hour').toDate().getTime();
 	} else if (interval === '30min') {
-		const minTimeAgo = getMinAgo({ minutes: 30 }).getTime();
+		const minTimeAgo = dayjs().subtract(30, 'minute').toDate().getTime();
 		minTime = minTimeAgo;
 	} else if (interval === '5min') {
-		const minTimeAgo = getMinAgo({ minutes: 5 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(5, 'minute').toDate().getTime();
 	} else if (interval === '1day') {
-		// one day = 24*60(min)
-		const minTimeAgo = getMinAgo({ minutes: 26 * 60 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(1, 'day').toDate().getTime();
 	} else if (interval === '1week') {
-		// one week = one day * 7
-		const minTimeAgo = getMinAgo({ minutes: 26 * 60 * 7 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(1, 'week').toDate().getTime();
 	} else if (interval === '6hr') {
-		const minTimeAgo = getMinAgo({ minutes: 6 * 60 }).getTime();
-		minTime = minTimeAgo;
+		minTime = dayjs().subtract(6, 'hour').toDate().getTime();
 	} else if (interval === 'custom') {
 		maxTime = (dateTimeRange || [])[1] || 0;
 		minTime = (dateTimeRange || [])[0] || 0;
@@ -44,8 +35,8 @@ const GetMinMax = (
 	}
 
 	return {
-		minTime: minTime * 1000000,
-		maxTime: maxTime * 1000000,
+		minTime: minTime,
+		maxTime: maxTime,
 	};
 };
 

@@ -5,10 +5,11 @@ import {
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import daysjs from 'dayjs';
 
 const intitalState: GlobalReducer = {
-	maxTime: Date.now() * 1000000,
-	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
+	maxTime: daysjs().toDate().getTime(),
+	minTime: daysjs().add(15, 'minutes').toDate().getTime(),
 	loading: true,
 	selectedTime: getDefaultOption(location.pathname),
 };

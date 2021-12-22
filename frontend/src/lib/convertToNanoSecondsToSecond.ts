@@ -1,5 +1,5 @@
-const convertToNanoSecondsToSecond = (number: number): string => {
-	return parseFloat((number / 1000000).toString()).toFixed(2);
+const convertToNanoSecondsToSecond = (number: number): number => {
+	return parseFloat((number / 1000000).toString());
 };
 
 export default convertToNanoSecondsToSecond;

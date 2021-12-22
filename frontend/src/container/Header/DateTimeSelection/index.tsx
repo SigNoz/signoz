@@ -148,7 +148,7 @@ const DateTimeSelection = ({
 		const currentTime = dayjs();
 
 		const lastRefresh = dayjs(
-			selectedTimeInterval === 'custom' ? minTime / 1000000 : maxTime / 1000000,
+			selectedTimeInterval === 'custom' ? minTime : maxTime,
 		);
 
 		const secondsDiff = currentTime.diff(lastRefresh, 'seconds');

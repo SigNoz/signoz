@@ -1,5 +1,5 @@
 import { Time } from 'container/Header/DateTimeSelection/config';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax from 'lib/getGlobalMinMax';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 

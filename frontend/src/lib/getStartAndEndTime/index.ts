@@ -1,7 +1,7 @@
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 
 import getMicroSeconds from './getMicroSeconds';
-import getMinAgo from './getMinAgo';
+import dayjs from 'dayjs';
 
 const GetStartAndEndTime = ({
 	type,
@@ -12,7 +12,7 @@ const GetStartAndEndTime = ({
 	const endString = getMicroSeconds({ time: end });
 
 	if (type === 'LAST_5_MIN') {
-		const agodate = getMinAgo({ minutes: 5 }).getTime();
+		const agodate = dayjs().subtract(5, 'minute').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agodate });
 
 		return {
@@ -22,7 +22,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_30_MIN') {
-		const agodate = getMinAgo({ minutes: 30 }).getTime();
+		const agodate = dayjs().subtract(30, 'minute').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agodate });
 
 		return {
@@ -32,7 +32,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_1_HR') {
-		const agodate = getMinAgo({ minutes: 60 }).getTime();
+		const agodate = dayjs().subtract(60, 'minute').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agodate });
 
 		return {
@@ -42,7 +42,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_15_MIN') {
-		const agodate = getMinAgo({ minutes: 15 }).getTime();
+		const agodate = dayjs().subtract(15, 'minute').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agodate });
 
 		return {
@@ -52,7 +52,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_6_HR') {
-		const agoDate = getMinAgo({ minutes: 6 * 60 }).getTime();
+		const agoDate = dayjs().subtract(6, 'hour').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agoDate });
 
 		return {
@@ -62,7 +62,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_1_DAY') {
-		const agoDate = getMinAgo({ minutes: 24 * 60 }).getTime();
+		const agoDate = dayjs().subtract(1, 'day').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agoDate });
 
 		return {
@@ -72,7 +72,7 @@ const GetStartAndEndTime = ({
 	}
 
 	if (type === 'LAST_1_WEEK') {
-		const agoDate = getMinAgo({ minutes: 24 * 60 * 7 }).getTime();
+		const agoDate = dayjs().subtract(1, 'week').toDate().getTime();
 		const agoString = getMicroSeconds({ time: agoDate });
 
 		return {
@@ -82,8 +82,8 @@ const GetStartAndEndTime = ({
 	}
 
 	return {
-		start: getMicroSeconds({ time: minTime / 1000000 }),
-		end: getMicroSeconds({ time: maxTime / 1000000 }),
+		start: String(minTime),
+		end: String(maxTime),
 	};
 };
 
