@@ -12,6 +12,27 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
 	.BundleAnalyzerPlugin;
 
+const plugins = [
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new CompressionPlugin({
+		exclude: /.map$/,
+	}),
+	new CopyPlugin({
+		patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+	}),
+	new webpack.ProvidePlugin({
+		process: 'process/browser',
+	}),
+	new webpack.DefinePlugin({
+		'process.env': JSON.stringify(process.env),
+	}),
+	new MiniCssExtractPlugin(),
+];
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
+
 const config = {
 	mode: 'production',
 	entry: resolve(__dirname, './src/index.tsx'),
@@ -58,22 +79,7 @@ const config = {
 			},
 		],
 	},
-	plugins: [
-		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new CompressionPlugin({
-			exclude: /.map$/,
-		}),
-		new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
-		new webpack.ProvidePlugin({
-			process: 'process/browser',
-		}),
-		new webpack.DefinePlugin({
-			'process.env': JSON.stringify(process.env),
-		}),
-		new MiniCssExtractPlugin(),
-	],
+	plugins: plugins,
 	optimization: {
 		chunkIds: 'named',
 		concatenateModules: true,

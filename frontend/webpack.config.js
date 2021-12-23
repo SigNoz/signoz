@@ -12,6 +12,20 @@ dotenv.config();
 
 console.log(resolve(__dirname, './src/'));
 
+const plugins = [
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new webpack.ProvidePlugin({
+		process: 'process/browser',
+	}),
+	new webpack.DefinePlugin({
+		'process.env': JSON.stringify(process.env),
+	}),
+];
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
+
 const config = {
 	mode: 'development',
 	devtool: 'source-map',
@@ -61,22 +75,10 @@ const config = {
 			},
 		],
 	},
-	plugins: [
-		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new webpack.ProvidePlugin({
-			process: 'process/browser',
-		}),
-		new webpack.DefinePlugin({
-			'process.env': JSON.stringify(process.env),
-		}),
-	],
+	plugins: plugins,
 	performance: {
 		hints: false,
 	},
 };
-
-if (process.env.BUNDLE_ANALYSER === 'true') {
-	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
-}
 
 module.exports = config;
