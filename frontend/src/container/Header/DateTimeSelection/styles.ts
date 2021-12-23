@@ -1,10 +1,6 @@
 import { Form as FormComponent, Typography as TypographyComponent } from 'antd';
 import styled from 'styled-components';
 
-export const Container = styled.div`
-	justify-content: flex-end;
-`;
-
 export const Form = styled(FormComponent)`
 	&&& {
 		justify-content: flex-end;

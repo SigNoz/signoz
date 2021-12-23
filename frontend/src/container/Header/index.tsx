@@ -10,7 +10,6 @@ import { Container } from './styles';
 
 const routesToSkip = [ROUTES.SETTINGS, ROUTES.LIST_ALL_ALERT];
 
-
 const TopNav = (): JSX.Element | null => {
 	const { pathname } = useLocation();
 
@@ -20,12 +19,12 @@ const TopNav = (): JSX.Element | null => {
 
 	return (
 		<Container>
-			<Col span={16}>
+			<Col span={14}>
 				<ShowBreadcrumbs />
 			</Col>
 
 			{!routesToSkip.includes(pathname) && (
-				<Col span={8}>
+				<Col span={10}>
 					<DateTimeSelector />
 				</Col>
 			)}

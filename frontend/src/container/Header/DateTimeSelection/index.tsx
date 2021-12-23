@@ -2,7 +2,7 @@ import { Button, Select as DefaultSelect } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
-import { Container, Form, FormItem } from './styles';
+import { Form, FormItem } from './styles';
 const { Option } = DefaultSelect;
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -24,6 +24,8 @@ import GetMinMax from 'lib/getGlobalMinMax';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import RefreshText from './Refresh';
 import createQueryParams from 'lib/query/createQueryParamsInObject';
+import { PlayCircleFilled } from '@ant-design/icons';
+import Paused from './Paused';
 
 const DateTimeSelection = ({
 	location,
@@ -38,8 +40,8 @@ const DateTimeSelection = ({
 	const searchEndTime = paramsInObject['endTime'] || '';
 	const searchSelectedTime = paramsInObject['selectedTime'] || '';
 
-	const localstorageStartTime = getLocalStorageKey('startTime');
-	const localstorageEndTime = getLocalStorageKey('endTime');
+	// const localstorageStartTime = getLocalStorageKey('startTime');
+	// const localstorageEndTime = getLocalStorageKey('endTime');
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
@@ -50,16 +52,16 @@ const DateTimeSelection = ({
 
 			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
-		if (localstorageStartTime && localstorageEndTime) {
-			const startDate = dayjs(localstorageStartTime);
-			const endDate = dayjs(localstorageEndTime);
+		// if (localstorageStartTime && localstorageEndTime) {
+		// 	const startDate = dayjs(localstorageStartTime);
+		// 	const endDate = dayjs(localstorageEndTime);
 
-			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
-		}
+		// 	return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
+		// }
 		return undefined;
 	}, [
-		localstorageEndTime,
-		localstorageStartTime,
+		// localstorageEndTime,
+		// localstorageStartTime,
 		searchEndTime,
 		searchStartTime,
 	]);
@@ -68,7 +70,6 @@ const DateTimeSelection = ({
 	const [endTime, setEndTime] = useState<Dayjs>();
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
-	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
@@ -110,28 +111,28 @@ const DateTimeSelection = ({
 			.map((e) => e.value)
 			.includes(searchSelectedTime as Time);
 
-	const updateLocalStorageForRoutes = (value: Time): void => {
-		const preRoutes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
-		if (preRoutes !== null) {
-			const preRoutesObject = JSON.parse(preRoutes);
+	// const updateLocalStorageForRoutes = (value: Time): void => {
+	// 	const preRoutes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+	// 	if (preRoutes !== null) {
+	// 		const preRoutesObject = JSON.parse(preRoutes);
 
-			const preRoute = {
-				...preRoutesObject,
-			};
-			preRoute[location.pathname] = value;
+	// 		const preRoute = {
+	// 			...preRoutesObject,
+	// 		};
+	// 		preRoute[location.pathname] = value;
 
-			setLocalStorageKey(
-				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
-				JSON.stringify(preRoute),
-			);
-		}
-	};
+	// 		setLocalStorageKey(
+	// 			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+	// 			JSON.stringify(preRoute),
+	// 		);
+	// 	}
+	// };
 
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
 			const selectedLabel = getInputLabel(undefined, undefined, value);
 			setSelectedTimeInterval(selectedLabel as Time);
-			updateLocalStorageForRoutes(value);
+			// updateLocalStorageForRoutes(value);
 
 			const minMax = GetMinMax(value);
 
@@ -143,7 +144,6 @@ const DateTimeSelection = ({
 				history.location.pathname + `?${createQueryParams(paramsInObject)}`,
 			);
 		} else {
-			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
 		}
 	};
@@ -217,7 +217,7 @@ const DateTimeSelection = ({
 				]);
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
-				updateLocalStorageForRoutes('custom');
+				// updateLocalStorageForRoutes('custom');
 			}
 		}
 	};
@@ -257,12 +257,12 @@ const DateTimeSelection = ({
 			}
 
 			//handling if localstorageEndTime and localstorageStartTime is null as there is no entry in the localstorage
-			if (
-				(localstorageEndTime === null || localstorageStartTime === null) &&
-				time === 'custom'
-			) {
-				return getDefaultOption(currentRoute);
-			}
+			// if (
+			// 	(localstorageEndTime === null || localstorageStartTime === null) &&
+			// 	time === 'custom'
+			// ) {
+			// 	return getDefaultOption(currentRoute);
+			// }
 
 			//returing the default options
 			return time;
@@ -279,8 +279,8 @@ const DateTimeSelection = ({
 	}, [
 		location.pathname,
 		getTime,
-		localstorageEndTime,
-		localstorageStartTime,
+		// localstorageEndTime,
+		// localstorageStartTime,
 		searchEndTime,
 		searchStartTime,
 		updateTimeInterval,
@@ -288,12 +288,16 @@ const DateTimeSelection = ({
 	]);
 
 	return (
-		<Container>
-			<Form
-				form={form_dtselector}
-				layout="inline"
-				initialValues={{ interval: selectedTime }}
-			>
+		<Form
+			form={form_dtselector}
+			layout="inline"
+			initialValues={{ interval: selectedTime }}
+		>
+			<FormItem>
+				<Paused />
+			</FormItem>
+
+			<FormItem>
 				<DefaultSelect
 					onSelect={(value): void => onSelectHandler(value as Time)}
 					value={getInputLabel(startTime, endTime, selectedTime)}
@@ -305,13 +309,13 @@ const DateTimeSelection = ({
 						</Option>
 					))}
 				</DefaultSelect>
+			</FormItem>
 
-				<FormItem hidden={refreshButtonHidden}>
-					<Button type="primary" onClick={onRefreshHandler}>
-						Refresh
-					</Button>
-				</FormItem>
-			</Form>
+			<FormItem>
+				<Button type="primary" onClick={onRefreshHandler}>
+					Refresh
+				</Button>
+			</FormItem>
 
 			<RefreshText
 				{...{
@@ -326,7 +330,7 @@ const DateTimeSelection = ({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</Container>
+		</Form>
 	);
 };
 
