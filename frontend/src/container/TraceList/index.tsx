@@ -110,6 +110,7 @@ const TraceDetails = (): JSX.Element => {
 			<Table
 				dataSource={spans}
 				columns={columns}
+				pagination={{ position: ['bottomCenter'] }}
 				size="middle"
 				onRow={(
 					record: TableDataSourceItem,

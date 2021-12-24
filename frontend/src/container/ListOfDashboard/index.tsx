@@ -142,6 +142,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 				pagination={{
 					pageSize: 9,
 					defaultPageSize: 9,
+					position: ['bottomCenter'],
 				}}
 				showHeader
 				bordered

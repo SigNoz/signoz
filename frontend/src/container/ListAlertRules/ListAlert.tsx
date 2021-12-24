@@ -133,7 +133,12 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 				</Button>
 			</ButtonContainer>
 
-			<Table rowKey="id" columns={columns} dataSource={data} />
+			<Table
+				rowKey="id"
+				columns={columns}
+				dataSource={data}
+				pagination={{ position: ['bottomCenter'] }}
+			/>
 		</>
 	);
 };

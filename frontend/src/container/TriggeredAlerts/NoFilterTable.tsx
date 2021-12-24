@@ -93,7 +93,12 @@ const NoFilterTable = ({
 	];
 
 	return (
-		<Table rowKey="startsAt" dataSource={filteredAlerts} columns={columns} />
+		<Table
+			rowKey="startsAt"
+			dataSource={filteredAlerts}
+			columns={columns}
+			pagination={{ position: ['bottomCenter'] }}
+		/>
 	);
 };
 

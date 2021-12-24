@@ -52,7 +52,12 @@ const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
 		<>
 			{Element}
 
-			<Table rowKey="id" dataSource={channels} columns={columns} />
+			<Table
+				rowKey="id"
+				dataSource={channels}
+				columns={columns}
+				pagination={{ position: ['bottomCenter'] }}
+			/>
 		</>
 	);
 };

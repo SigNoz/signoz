@@ -64,7 +64,13 @@ const _TraceGraphColumn = (props: TraceGraphColumnProps) => {
 
 	return (
 		<div>
-			<Table dataSource={dataSource} columns={columns} size="middle" />;
+			<Table
+				dataSource={dataSource}
+				columns={columns}
+				pagination={{ position: ['bottomCenter'] }}
+				size="middle"
+			/>
+			;
 		</div>
 	);
 };
