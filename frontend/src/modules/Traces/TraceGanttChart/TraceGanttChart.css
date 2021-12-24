@@ -4,10 +4,12 @@
 .hide {
 	display: none;
 }
-.ant-tabs-nav-list {
+
+/* .ant-tabs-nav-list {
 	justify-content: space-between;
 	width: 100%;
-}
+} */
+
 .ant-table-body table {
 	margin-bottom: 64px;
 }
