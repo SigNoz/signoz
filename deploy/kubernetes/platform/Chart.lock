@@ -4,12 +4,12 @@ dependencies:
   version: 6.0.0
 - name: query-service
   repository: file://./signoz-charts/query-service
-  version: 0.5.3
+  version: 0.5.4
 - name: frontend
   repository: file://./signoz-charts/frontend
-  version: 0.5.3
+  version: 0.5.4
 - name: alertmanager
   repository: file://./signoz-charts/alertmanager
   version: 0.5.0
-digest: sha256:891df4e1a3d9fc7bf2b4b67beb4e505f1ec4da20952c2e294ad8b16fcc4eccb7
-generated: "2021-12-11T11:40:26.756851+05:30"
+digest: sha256:b75aaa30cee8c67d7194fec3543e02389d4df0806982cce55d848b564ae9aad7
+generated: "2021-12-24T13:23:16.211336+05:30"
