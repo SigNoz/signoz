@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-metrics-conf
+  labels:
+    app: opentelemetry
+    component: otel-collector-metrics-conf
+data:
+  otel-collector-metrics-config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+
+      # Data sources: metrics
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: "otel-collector"
+              scrape_interval: 30s
+              static_configs:
+                - targets: ["otel-collector:8889"]
+    processors:
+      batch:
+        send_batch_size: 1000
+        timeout: 10s
+      memory_limiter:
+        # Same as --mem-ballast-size-mib CLI argument
+        ballast_size_mib: 683
+        # 80% of maximum memory up to 2G
+        limit_mib: 1500
+        # 25% of limit up to 2G
+        spike_limit_mib: 512
+        check_interval: 5s
+      # queued_retry:
+      #   num_workers: 4
+      #   queue_size: 100
+      #   retry_on_failure: true
+    extensions:
+      health_check: {}
+      zpages: {}
+    exporters:
+      clickhousemetricswrite:
+        endpoint: tcp://signoz-clickhouse:9000/?database=signoz_metrics&username=clickhouse_operator&password=clickhouse_operator_password
+
+    service:
+      extensions: [health_check, zpages]
+      pipelines:
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [batch]
+          exporters: [clickhousemetricswrite]
