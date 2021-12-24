@@ -1,0 +1,18 @@
+{{- if .Values.clickhouseOperator.enabled }}
+# Setup ClusterRoleBinding between ClusterRole and ServiceAccount.
+# ClusterRoleBinding is namespace-less and must have unique name
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clickhouse-operator-posthog
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clickhouse-operator-posthog
+subjects:
+- kind: ServiceAccount
+  name: clickhouse-operator
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+
+{{- end }}

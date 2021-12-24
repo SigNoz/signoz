@@ -1,0 +1,418 @@
+{{- if .Values.clickhouseOperator.enabled }}
+# Template Parameters:
+#
+# NAME=etc-clickhouse-operator-files
+# NAMESPACE=posthog
+# COMMENT=
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-clickhouse-operator-files
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+  labels:
+    app: clickhouse-operator
+data:
+  config.yaml: |
+    ################################################
+    ##
+    ## Watch Namespaces Section
+    ##
+    ################################################
+    
+    # List of namespaces where clickhouse-operator watches for events.
+    # Concurrently running operators should watch on different namespaces
+    #watchNamespaces: ["dev", "test"]
+    watchNamespaces: []
+    
+    ################################################
+    ##
+    ## Additional Configuration Files Section
+    ##
+    ################################################
+    
+    # Path to folder where ClickHouse configuration files common for all instances within CHI are located.
+    chCommonConfigsPath: config.d
+    
+    # Path to folder where ClickHouse configuration files unique for each instance (host) within CHI are located.
+    chHostConfigsPath: conf.d
+    
+    # Path to folder where ClickHouse configuration files with users settings are located.
+    # Files are common for all instances within CHI
+    chUsersConfigsPath: users.d
+    
+    # Path to folder where ClickHouseInstallation .yaml manifests are located.
+    # Manifests are applied in sorted alpha-numeric order
+    chiTemplatesPath: templates.d
+    
+    ################################################
+    ##
+    ## Cluster Create/Update/Delete Objects Section
+    ##
+    ################################################
+    
+    # How many seconds to wait for created/updated StatefulSet to be Ready
+    statefulSetUpdateTimeout: 300
+    
+    # How many seconds to wait between checks for created/updated StatefulSet status
+    statefulSetUpdatePollPeriod: 5
+    
+    # What to do in case created StatefulSet is not in Ready after `statefulSetUpdateTimeout` seconds
+    # Possible options:
+    # 1. abort - do nothing, just break the process and wait for admin
+    # 2. delete - delete newly created problematic StatefulSet
+    # 3. ignore - ignore error, pretend nothing happened and move on to the next StatefulSet
+    onStatefulSetCreateFailureAction: ignore
+    
+    # What to do in case updated StatefulSet is not in Ready after `statefulSetUpdateTimeout` seconds
+    # Possible options:
+    # 1. abort - do nothing, just break the process and wait for admin
+    # 2. rollback - delete Pod and rollback StatefulSet to previous Generation.
+    # Pod would be recreated by StatefulSet based on rollback-ed configuration
+    # 3. ignore - ignore error, pretend nothing happened and move on to the next StatefulSet
+    onStatefulSetUpdateFailureAction: rollback
+    
+    ################################################
+    ##
+    ## ClickHouse Settings Section
+    ##
+    ################################################
+    
+    # Default values for ClickHouse user configuration
+    # 1. user/profile - string
+    # 2. user/quota - string
+    # 3. user/networks/ip - multiple strings
+    # 4. user/password - string
+    chConfigUserDefaultProfile: default
+    chConfigUserDefaultQuota: default
+    chConfigUserDefaultNetworksIP:
+      - "::1"
+      - "127.0.0.1"
+    chConfigUserDefaultPassword: "default"
+    
+    # Default host_regexp to limit network connectivity from outside
+    chConfigNetworksHostRegexpTemplate: "(chi-{chi}-[^.]+\\d+-\\d+|clickhouse\\-{chi})\\.{namespace}\\.svc\\.cluster\\.local$"
+    
+    ################################################
+    ##
+    ## Access to ClickHouse instances
+    ##
+    ################################################
+    
+    # ClickHouse credentials (username, password and port) to be used by operator to connect to ClickHouse instances
+    # for:
+    # 1. Metrics requests
+    # 2. Schema maintenance
+    # 3. DROP DNS CACHE
+    # User with such credentials can be specified in additional ClickHouse .xml config files,
+    # located in `chUsersConfigsPath` folder
+    chUsername: "clickhouse_operator"
+    chPassword: "clickhouse_operator_password"
+    
+    # Location of k8s Secret with username and password to be used by operator to connect to ClickHouse instances
+    # Can be used instead of explicitly specified username and password
+    chCredentialsSecretNamespace: ""
+    chCredentialsSecretName: ""
+    
+    # Port where to connect to ClickHouse instances to
+    chPort: 8123
+    
+    ################################################
+    ##
+    ## Log parameters
+    ##
+    ################################################
+    
+    logtostderr: "true"
+    alsologtostderr: "false"
+    v: "1"
+    stderrthreshold: ""
+    vmodule: ""
+    log_backtrace_at: ""
+    
+    ################################################
+    ##
+    ## Runtime parameters
+    ##
+    ################################################
+    
+    # Max number of concurrent reconciles in progress
+    reconcileThreadsNumber: 10
+    reconcileWaitExclude: true
+    reconcileWaitInclude: false
+    
+    ################################################
+    ##
+    ## Labels management parameters
+    ##
+    ################################################
+    
+    # When propagating labels from the chi's `metadata.labels` section to child objects' `metadata.labels`,
+    # exclude labels from the following list:
+    #excludeFromPropagationLabels:
+    #  - "labelA"
+    #  - "labelB"
+    
+    # Whether to append *Scope* labels to StatefulSet and Pod.
+    # Full list of available *scope* labels check in labeler.go
+    #  LabelShardScopeIndex
+    #  LabelReplicaScopeIndex
+    #  LabelCHIScopeIndex
+    #  LabelCHIScopeCycleSize
+    #  LabelCHIScopeCycleIndex
+    #  LabelCHIScopeCycleOffset
+    #  LabelClusterScopeIndex
+    #  LabelClusterScopeCycleSize
+    #  LabelClusterScopeCycleIndex
+    #  LabelClusterScopeCycleOffset
+    appendScopeLabels: "no"
+    
+    ################################################
+    ##
+    ## Pod management parameters
+    ##
+    ################################################
+    # Grace period for Pod termination.
+    # How many seconds to wait between sending
+    # SIGTERM and SIGKILL during Pod termination process.
+    # Increase this number is case of slow shutdown.
+    terminationGracePeriod: 30
+
+---
+
+# Template Parameters:
+#
+# NAME=etc-clickhouse-operator-confd-files
+# NAMESPACE=posthog
+# COMMENT=
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-clickhouse-operator-confd-files
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+  labels:
+    app: clickhouse-operator
+data:
+
+---
+
+# Template Parameters:
+#
+# NAME=etc-clickhouse-operator-configd-files
+# NAMESPACE=posthog
+# COMMENT=
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-clickhouse-operator-configd-files
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+  labels:
+    app: clickhouse-operator
+data:
+  01-clickhouse-01-listen.xml: |
+    <yandex>
+        <!-- Listen wildcard address to allow accepting connections from other containers and host network. -->
+        <listen_host>::</listen_host>
+        <listen_host>0.0.0.0</listen_host>
+        <listen_try>1</listen_try>
+    </yandex>
+
+  01-clickhouse-02-logger.xml: |
+    <yandex>
+        <logger>
+            <!-- Possible levels: https://github.com/pocoproject/poco/blob/develop/Foundation/include/Poco/Logger.h#L105 -->
+            <level>debug</level>
+            <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+            <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+            <size>1000M</size>
+            <count>10</count>
+            <!-- Default behavior is autodetection (log to console if not daemon mode and is tty) -->
+            <console>1</console>
+        </logger>
+    </yandex>
+
+  01-clickhouse-03-query_log.xml: |
+    <yandex>
+        <query_log replace="1">
+            <database>system</database>
+            <table>query_log</table>
+            <engine>Engine = MergeTree PARTITION BY event_date ORDER BY event_time TTL event_date + interval 30 day</engine>
+            <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+        </query_log>
+        <query_thread_log remove="1"/>
+    </yandex>
+
+  01-clickhouse-04-part_log.xml: |
+    <yandex>
+        <part_log replace="1">
+            <database>system</database>
+            <table>part_log</table>
+            <engine>Engine = MergeTree PARTITION BY event_date ORDER BY event_time TTL event_date + interval 30 day</engine>
+            <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+        </part_log>
+    </yandex>
+
+---
+
+# Template Parameters:
+#
+# NAME=etc-clickhouse-operator-templatesd-files
+# NAMESPACE=posthog
+# COMMENT=
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-clickhouse-operator-templatesd-files
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+  labels:
+    app: clickhouse-operator
+data:
+  001-templates.json.example: |
+    {
+      "apiVersion": "clickhouse.altinity.com/v1",
+      "kind": "ClickHouseInstallationTemplate",
+      "metadata": {
+        "name": "01-default-volumeclaimtemplate"
+      },
+      "spec": {
+        "templates": {
+          "volumeClaimTemplates": [
+            {
+              "name": "chi-default-volume-claim-template",
+              "spec": {
+                "accessModes": [
+                  "ReadWriteOnce"
+                ],
+                "resources": {
+                  "requests": {
+                    "storage": "2Gi"
+                  }
+                }
+              }
+            }
+          ],
+          "podTemplates": [
+            {
+              "name": "chi-default-oneperhost-pod-template",
+              "distribution": "OnePerHost",
+              "spec": {
+                "containers" : [
+                  {
+                    "name": "clickhouse",
+                    "image": "yandex/clickhouse-server:19.3.7",
+                    "ports": [
+                      {
+                        "name": "http",
+                        "containerPort": 8123
+                      },
+                      {
+                        "name": "client",
+                        "containerPort": 9000
+                      },
+                      {
+                        "name": "interserver",
+                        "containerPort": 9009
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+
+  default-pod-template.yaml.example: |
+    apiVersion: "clickhouse.altinity.com/v1"
+    kind: "ClickHouseInstallationTemplate"
+    metadata:
+      name: "default-oneperhost-pod-template"
+    spec:
+      templates:
+        podTemplates:
+          - name: default-oneperhost-pod-template
+            distribution: "OnePerHost"
+  default-storage-template.yaml.example: |
+    apiVersion: "clickhouse.altinity.com/v1"
+    kind: "ClickHouseInstallationTemplate"
+    metadata:
+      name: "default-storage-template-2Gi"
+    spec:
+      templates:
+        volumeClaimTemplates:
+          - name: default-storage-template-2Gi
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 2Gi
+
+  readme: |
+    Templates in this folder are packaged with an operator and available via 'useTemplate'
+
+---
+
+# Template Parameters:
+#
+# NAME=etc-clickhouse-operator-usersd-files
+# NAMESPACE=posthog
+# COMMENT=
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etc-clickhouse-operator-usersd-files
+  namespace: {{ .Values.clickhouseOperator.namespace | default .Release.Namespace }}
+  labels:
+    app: clickhouse-operator
+data:
+  01-clickhouse-user.xml: |
+    <yandex>
+        <users>
+            <clickhouse_operator>
+                <networks>
+                    <ip>127.0.0.1</ip>
+                    <ip>0.0.0.0/0</ip>
+                    <ip>::/0</ip>
+                </networks>
+                <password_sha256_hex>716b36073a90c6fe1d445ac1af85f4777c5b7a155cea359961826a030513e448</password_sha256_hex>
+                <profile>clickhouse_operator</profile>
+                <quota>default</quota>
+            </clickhouse_operator>
+        </users>
+        <profiles>
+            <clickhouse_operator>
+                <log_queries>0</log_queries>
+                <skip_unavailable_shards>1</skip_unavailable_shards>
+                <http_connection_timeout>10</http_connection_timeout>
+            </clickhouse_operator>
+        </profiles>
+    </yandex>
+
+  02-clickhouse-default-profile.xml: |
+    <yandex>
+      <profiles>
+        <default>
+          <log_queries>1</log_queries>
+          <connect_timeout_with_failover_ms>1000</connect_timeout_with_failover_ms>
+          <distributed_aggregation_memory_efficient>1</distributed_aggregation_memory_efficient>
+          <parallel_view_processing>1</parallel_view_processing>
+        </default>
+      </profiles>
+    </yandex>
+  03-database-ordinary.xml: |
+    <!--  Remove it for ClickHouse versions before 20.4 -->
+    <yandex>
+        <profiles>
+            <default>
+                <default_database_engine>Ordinary</default_database_engine>
+            </default>
+        </profiles>
+    </yandex>
+
+{{- end }}
