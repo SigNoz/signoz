@@ -1,7 +1,6 @@
 import { Time } from 'container/Header/DateTimeSelection/config';
-import { GlobalReducer } from 'types/reducer/globalTime';
-
 import dayjs from 'dayjs';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 const GetMinMax = (
 	interval: Time,
@@ -28,8 +27,8 @@ const GetMinMax = (
 	} else if (interval === '6hr') {
 		minTime = dayjs().subtract(6, 'hour').toDate().getTime();
 	} else if (interval === 'custom') {
-		maxTime = (dateTimeRange || [])[1] || 0;
 		minTime = (dateTimeRange || [])[0] || 0;
+		maxTime = (dateTimeRange || [])[1] || 0;
 	} else {
 		throw new Error('invalid time type');
 	}

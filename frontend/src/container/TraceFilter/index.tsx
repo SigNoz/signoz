@@ -12,8 +12,9 @@ import { AutoComplete, Form, InfoWrapper, Select } from './styles';
 const { Option } = Select;
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-import createQueryParams from 'lib/query/createQueryParamsInObject';
 import history from 'lib/history';
+import createQueryParams from 'lib/query/createQueryParamsInObject';
+import getParamsInObject from 'lib/query/getParamsInObject';
 import { useLocation } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -23,7 +24,6 @@ import {
 	UpdateSelectedDataProps,
 } from 'store/actions/trace/updateSelectedData';
 import AppActions from 'types/actions';
-import getParamsInObject from 'lib/query/getParamsInObject';
 
 const FormItem = Form.Item;
 

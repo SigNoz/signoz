@@ -19,12 +19,12 @@ const TopNav = (): JSX.Element | null => {
 
 	return (
 		<Container>
-			<Col span={14}>
+			<Col span={8}>
 				<ShowBreadcrumbs />
 			</Col>
 
 			{!routesToSkip.includes(pathname) && (
-				<Col span={10}>
+				<Col span={16}>
 					<DateTimeSelector />
 				</Col>
 			)}

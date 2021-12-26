@@ -1,7 +1,7 @@
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import dayjs from 'dayjs';
 
 import getMicroSeconds from './getMicroSeconds';
-import dayjs from 'dayjs';
 
 const GetStartAndEndTime = ({
 	type,

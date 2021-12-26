@@ -5,6 +5,8 @@ import getSpansAggregate from 'api/trace/getSpanAggregate';
 import getTags from 'api/trace/getTags';
 import { AxiosError } from 'axios';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import dayjs from 'dayjs';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 import history from 'lib/history';
 import { Dispatch } from 'redux';
 import store from 'store';
@@ -52,11 +54,11 @@ export const GetInitialTraceData = ({
 			const isCustomSelected = selectedTime === 'custom';
 
 			const end = isCustomSelected
-				? globalTime.maxTime + 15 * 60 * 1000000000
+				? dayjs(maxTime).add(15, 'minutes').toDate().getTime()
 				: maxTime;
 
 			const start = isCustomSelected
-				? globalTime.minTime - 15 * 60 * 1000000000
+				? dayjs(minTime).subtract(15, 'minutes').toDate().getTime()
 				: minTime;
 
 			const [
@@ -66,8 +68,8 @@ export const GetInitialTraceData = ({
 			] = await Promise.all([
 				getServiceList(),
 				getSpan({
-					start,
-					end,
+					start: convertSecToNanoSeconds(start),
+					end: convertSecToNanoSeconds(end),
 					kind: kindTag || '',
 					limit: '100',
 					lookback: '2d',
@@ -80,8 +82,8 @@ export const GetInitialTraceData = ({
 				getSpansAggregate({
 					aggregation_option: aggregationOption || selectedAggOption,
 					dimension: selectedEntityOption || selectedEntity,
-					end,
-					start,
+					end: convertSecToNanoSeconds(end),
+					start: convertSecToNanoSeconds(start),
 					kind: kindTag || '',
 					maxDuration: latencyMax || '',
 					minDuration: latencyMin || '',

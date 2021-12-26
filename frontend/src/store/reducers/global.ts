@@ -1,11 +1,11 @@
 import { getDefaultOption } from 'container/Header/DateTimeSelection/config';
+import daysjs from 'dayjs';
 import {
 	GLOBAL_TIME_LOADING_START,
 	GlobalTimeAction,
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import daysjs from 'dayjs';
 
 const intitalState: GlobalReducer = {
 	maxTime: daysjs().toDate().getTime(),

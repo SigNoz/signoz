@@ -1,3 +1,4 @@
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_LOGGED_IN } from 'constants/auth';
 import {
 	AppAction,
@@ -6,7 +7,6 @@ import {
 	TOGGLE_SETTINGS_TABS,
 } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 
 const InitialValue: InitialValueTypes = {
 	isDarkMode: true,

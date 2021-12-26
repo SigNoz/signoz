@@ -1,11 +1,10 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
-import GetMinMax from 'lib/getGlobalMinMax';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 
 export const GetService = (
 	props: GetServiceProps,

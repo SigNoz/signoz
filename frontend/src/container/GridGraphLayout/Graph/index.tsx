@@ -18,12 +18,12 @@ import {
 } from 'store/actions/dashboard/deleteWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal, FullViewContainer } from './styles';
+import { FullViewContainer, Modal } from './styles';
 
 const GridCardGraph = ({
 	widget,
@@ -38,7 +38,7 @@ const GridCardGraph = ({
 		payload: undefined,
 	});
 	const [modal, setModal] = useState(false);
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const [deleteModal, setDeletModal] = useState(false);

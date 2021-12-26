@@ -16,11 +16,11 @@ import getStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import EmptyGraph from './EmptyGraph';
-import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
+import { NotFoundContainer, TimeContainer } from './styles';
 
 const FullView = ({
 	widget,
@@ -29,7 +29,7 @@ const FullView = ({
 	noDataGraph = false,
 	name,
 }: FullViewProps): JSX.Element => {
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 

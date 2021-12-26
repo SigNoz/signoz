@@ -144,7 +144,16 @@ const Graph = ({
 				plugins: [legend(name, data.datasets.length > 3)],
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, getGridColor, onClickHandler]);
+	}, [
+		chartRef,
+		data,
+		type,
+		title,
+		isStacked,
+		getGridColor,
+		onClickHandler,
+		name,
+	]);
 
 	useEffect(() => {
 		buildChart();
