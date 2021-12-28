@@ -1,8 +1,8 @@
 import React from 'react';
-import {} from 'antd';
+import Search from 'container/Search';
 
 const Trace = (): JSX.Element => {
-	return <div>asd</div>;
+	return <Search />;
 };
 
 export default Trace;

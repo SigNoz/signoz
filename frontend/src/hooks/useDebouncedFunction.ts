@@ -24,11 +24,11 @@ const useDebouncedFn = <T extends (...args: any) => any>(
 	fn: T,
 	wait: number = 100,
 	options: DebounceOptions = defaultOptions,
-	dependencies: ReadonlyArray<any>,
+	dependencies?: ReadonlyArray<any>,
 ): DebouncedFunc<T> => {
 	const debounced = debounce(fn, wait, options);
 
-	return useCallback(debounced, dependencies);
+	return useCallback(debounced, dependencies || []);
 };
 
 export default useDebouncedFn;
