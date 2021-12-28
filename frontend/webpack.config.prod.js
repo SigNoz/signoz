@@ -34,7 +34,6 @@ const plugins = [
 		path: resolve(__dirname, './build/css'),
 		// Public path of the CSS resources. This prefix is removed from the href
 		publicPath: resolve(__dirname, './public/css'),
-		preload: 'swap',
 		fonts: true
 	  })
 ];
