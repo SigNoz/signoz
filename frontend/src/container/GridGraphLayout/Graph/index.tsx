@@ -63,9 +63,9 @@ const GridCardGraph = ({
 						.filter((e) => e.query.length !== 0)
 						.map(async (query) => {
 							const result = await getQueryResult({
-								end,
+								end: (parseInt(end, 10) / 1000).toString(),
 								query: query.query,
-								start: start,
+								start: (parseInt(start, 10) / 1000).toString(),
 								step: '60',
 							});
 
