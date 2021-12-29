@@ -27,14 +27,17 @@ export const GetQueryResults = (
 				minTime: getMaxMinTime.minTime,
 			});
 
+			const updatedStart = start.slice(0, 10);
+			const updatedEnd = end.slice(0, 10);
+
 			const response = await Promise.all(
 				queryData
 					.filter((e) => e.query)
 					.map(async (query) => {
 						const result = await getQueryResult({
-							end,
+							end: updatedEnd,
 							query: encodeURIComponent(query.query),
-							start: start,
+							start: updatedStart,
 							step: '60',
 						});
 						return {
