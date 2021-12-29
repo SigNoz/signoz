@@ -5,6 +5,7 @@
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 import GetMinMax from 'lib/getGlobalMinMax';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -34,8 +35,8 @@ export const GetInitialData = (
 			});
 
 			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
-				globalTime.minTime / 1000000,
-				globalTime.maxTime / 1000000,
+				globalTime.minTime,
+				globalTime.maxTime,
 			]);
 
 			const step = 60;
@@ -61,15 +62,15 @@ export const GetInitialData = (
 				// 	...props,
 				// }),
 				getServiceOverview({
-					end: maxTime,
+					end: convertSecToNanoSeconds(maxTime),
 					service: props.serviceName,
-					start: minTime,
+					start: convertSecToNanoSeconds(minTime),
 					step,
 				}),
 				getTopEndPoints({
-					end: maxTime,
+					end: convertSecToNanoSeconds(maxTime),
 					service: props.serviceName,
-					start: minTime,
+					start: convertSecToNanoSeconds(minTime),
 				}),
 			]);
 

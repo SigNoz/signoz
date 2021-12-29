@@ -12,6 +12,7 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
+import dayjs from 'dayjs';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
@@ -120,7 +121,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 									datasets: [
 										{
 											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p99)),
+												convertToNanoSecondsToSecond(e.p99),
 											),
 											borderColor: colors[0],
 											label: 'p99 Latency',
@@ -131,7 +132,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										},
 										{
 											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p95)),
+												convertToNanoSecondsToSecond(e.p95),
 											),
 											borderColor: colors[1],
 											label: 'p95 Latency',
@@ -142,7 +143,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										},
 										{
 											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p50)),
+												convertToNanoSecondsToSecond(e.p50),
 											),
 											borderColor: colors[2],
 											label: 'p50 Latency',
@@ -153,9 +154,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										},
 									],
 									labels: serviceOverview.map((e) => {
-										return new Date(
-											parseFloat(convertToNanoSecondsToSecond(e.timestamp)),
-										);
+										return dayjs(convertToNanoSecondsToSecond(e.timestamp)).toDate();
 									}),
 								}}
 							/>

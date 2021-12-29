@@ -10,6 +10,7 @@ import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
@@ -65,14 +66,28 @@ const FullView = ({
 				minTime: maxMinTime.minTime,
 			});
 
+			const updatedEnd = convertSecToNanoSeconds(
+				parseInt(end, 10) / 10,
+			).toString();
+
+			const updatedStart = convertSecToNanoSeconds(
+				parseInt(start, 10) / 10,
+			).toString();
+
 			const response = await Promise.all(
 				widget.query
 					.filter((e) => e.query.length !== 0)
 					.map(async (query) => {
 						const result = await getQueryResult({
-							end,
+							end: `${updatedEnd.slice(0, 10)}.${updatedEnd.slice(
+								10,
+								updatedEnd.length,
+							)}`,
 							query: query.query,
-							start: start,
+							start: `${updatedStart.slice(0, 10)}.${updatedStart.slice(
+								10,
+								updatedStart.length,
+							)}`,
 							step: '60',
 						});
 						return {
