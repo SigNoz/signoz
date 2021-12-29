@@ -14,11 +14,27 @@
     <meta data-react-helmet="true" name="docusaurus_tag" content="default">
     <link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico">
 
-    <link id='darkMode' rel='stylesheet' type='text/css' href='/css/antd.dark.min.css' />
+    <link id='appMode' rel='stylesheet' type='text/css' href='/css/antd.dark.min.css' />
 </head>
 <body>
 <noscript>You need to enable JavaScript to run this app.</noscript>
 <div id="root"></div>
 
+<script>
+    const themeNode = document.getElementById('appMode');
+    let userTheme;
+
+    try {
+		userTheme = localStorage.getItem('theme');
+	} catch (e) {
+		userTheme = '';
+	}
+
+    if(userTheme === 'lightMode'){
+        themeNode.setAttribute('href','/css/antd.min.css');
+    } else {
+        themeNode.setAttribute('href', '/css/antd.dark.min.css');
+    }
+</script>
 </body>
 </html>

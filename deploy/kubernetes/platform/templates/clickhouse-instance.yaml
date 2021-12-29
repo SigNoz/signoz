@@ -11,6 +11,7 @@ parameters:
 reclaimPolicy: Retain
 #volumeBindingMode: Immediate
 allowVolumeExpansion: true
+---
 {{- else if (eq (.Values.cloud | toString) "aws") }}
 #
 # AWS resizable disk example
@@ -25,8 +26,8 @@ parameters:
 reclaimPolicy: Retain
 #volumeBindingMode: Immediate
 allowVolumeExpansion: true
-{{- end }}
 ---
+{{- end }}
 apiVersion: "clickhouse.altinity.com/v1"
 kind: "ClickHouseInstallation"
 metadata:
@@ -96,6 +97,8 @@ spec:
           storageClassName: gce-resizable
           {{- else if (eq (.Values.cloud | toString) "aws") }}
           storageClassName: gp2-resizable
+          {{- else if (eq (.Values.cloud | toString) "hcloud") }}
+          storageClassName: hcloud-volumes
           {{- end }}
           accessModes:
             - ReadWriteOnce

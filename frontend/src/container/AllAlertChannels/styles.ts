@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Button as ButtonComponent } from 'antd';
 
 export const ButtonContainer = styled.div`
 	&&& {
@@ -7,5 +8,11 @@ export const ButtonContainer = styled.div`
 		align-items: center;
 		margin-top: 1rem;
 		margin-bottom: 1rem;
+	}
+`;
+
+export const Button = styled(ButtonComponent)`
+	&&& {
+		margin-left: 1rem;
 	}
 `;
