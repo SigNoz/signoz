@@ -1,6 +1,7 @@
 import getSpan from 'api/trace/getSpan';
 import getSpansAggregate from 'api/trace/getSpanAggregate';
 import { AxiosError } from 'axios';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -33,8 +34,8 @@ export const UpdateSelectedTags = (
 
 			const [spanResponse, spansAggregateResponse] = await Promise.all([
 				getSpan({
-					start: minTime,
-					end: maxTime,
+					start: convertSecToNanoSeconds(minTime),
+					end: convertSecToNanoSeconds(maxTime),
 					kind: selectedKind || '',
 					limit: '100',
 					lookback: '2d',
@@ -47,13 +48,13 @@ export const UpdateSelectedTags = (
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
-					end: maxTime,
+					end: convertSecToNanoSeconds(maxTime),
 					kind: selectedKind || '',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',
 					operation: selectedOperation || '',
 					service: selectedService || '',
-					start: minTime,
+					start: convertSecToNanoSeconds(minTime),
 					step: '60',
 					tags: JSON.stringify(selectedTags),
 				}),

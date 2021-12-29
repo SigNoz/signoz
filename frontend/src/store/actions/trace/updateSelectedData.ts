@@ -10,6 +10,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps as ServiceOperationPayloadProps } from 'types/api/trace/getServiceOperation';
 import { PayloadProps as TagPayloadProps } from 'types/api/trace/getTags';
 import { TraceReducer } from 'types/reducer/trace';
+import dayjs from 'dayjs';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 
 export const UpdateSelectedData = ({
 	selectedKind,
@@ -35,17 +37,17 @@ export const UpdateSelectedData = ({
 			const isCustomSelected = selectedTime === 'custom';
 
 			const end = isCustomSelected
-				? globalTime.maxTime + 15 * 60 * 1000000000
+				? dayjs(maxTime).add(15, 'minutes').toDate().getTime()
 				: maxTime;
 
 			const start = isCustomSelected
-				? globalTime.minTime - 15 * 60 * 1000000000
+				? dayjs(minTime).subtract(15, 'minutes').toDate().getTime()
 				: minTime;
 
 			const [spanResponse, getSpanAggregateResponse] = await Promise.all([
 				getSpan({
-					start,
-					end,
+					start: convertSecToNanoSeconds(start),
+					end: convertSecToNanoSeconds(end),
 					kind: selectedKind || '',
 					limit: '100',
 					lookback: '2d',
@@ -58,13 +60,13 @@ export const UpdateSelectedData = ({
 				getSpansAggregate({
 					aggregation_option: selectedAggOption || '',
 					dimension: selectedEntity || '',
-					end,
+					end: convertSecToNanoSeconds(end),
 					kind: selectedKind || '',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',
 					operation: selectedOperation || '',
 					service: selectedService || '',
-					start,
+					start: convertSecToNanoSeconds(start),
 					step: '60',
 					tags: JSON.stringify(selectedTags),
 				}),

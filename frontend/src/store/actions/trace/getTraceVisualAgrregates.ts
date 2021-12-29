@@ -4,6 +4,8 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
+import dayjs from 'dayjs';
+import convertSecToNanoSeconds from 'lib/convertSecToNanoSeconds';
 
 export const GetTraceVisualAggregates = ({
 	selectedEntity,
@@ -35,19 +37,19 @@ export const GetTraceVisualAggregates = ({
 			const isCustomSelected = selectedTime === 'custom';
 
 			const end = isCustomSelected
-				? globalTime.maxTime + 15 * 60 * 1000000000
+				? dayjs(maxTime).add(15, 'minutes').toDate().getTime()
 				: maxTime;
 
 			const start = isCustomSelected
-				? globalTime.minTime - 15 * 60 * 1000000000
+				? dayjs(minTime).subtract(15, 'minutes').toDate().getTime()
 				: minTime;
 
 			const [spanAggregateResponse] = await Promise.all([
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
-					end,
-					start,
+					end: convertSecToNanoSeconds(end),
+					start: convertSecToNanoSeconds(start),
 					kind: selectedKind || '',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',
