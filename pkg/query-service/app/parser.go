@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	promModel "github.com/prometheus/common/model"
@@ -359,12 +360,18 @@ func parseSearchSpanAggregatesRequest(r *http.Request) (*model.SpanSearchAggrega
 	operationName := r.URL.Query().Get("operation")
 	if len(operationName) != 0 {
 		params.OperationName = operationName
+		// Escaping new line chars to avoid CWE-117
+		operationName = strings.Replace(operationName, "\n", "", -1)
+		operationName = strings.Replace(operationName, "\r", "", -1)
 		zap.S().Debug("Operation Name: ", operationName)
 	}
 
 	kind := r.URL.Query().Get("kind")
 	if len(kind) != 0 {
 		params.Kind = kind
+		// Escaping new line chars to avoid CWE-117
+		kind = strings.Replace(kind, "\n", "", -1)
+		kind = strings.Replace(kind, "\r", "", -1)
 		zap.S().Debug("Kind: ", kind)
 	}
 
@@ -418,12 +425,18 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	operationName := r.URL.Query().Get("operation")
 	if len(operationName) != 0 {
 		params.OperationName = operationName
+		// Escaping new line chars to avoid CWE-117
+		operationName = strings.Replace(operationName, "\n", "", -1)
+		operationName = strings.Replace(operationName, "\r", "", -1)
 		zap.S().Debug("Operation Name: ", operationName)
 	}
 
 	kind := r.URL.Query().Get("kind")
 	if len(kind) != 0 {
 		params.Kind = kind
+		// Escaping new line chars to avoid CWE-117
+		kind = strings.Replace(kind, "\n", "", -1)
+		kind = strings.Replace(kind, "\r", "", -1)
 		zap.S().Debug("Kind: ", kind)
 	}
 

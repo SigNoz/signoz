@@ -20,13 +20,11 @@ import {
 const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 	const [notificationsInstance, Element] = notification.useNotification();
 
-	const [state, setState] = useState({ submitted: false });
+	const [loading, setLoading] = useState(false);
+
 	const [formState, setFormState] = useState({
 		firstName: { value: '' },
-		companyName: { value: '' },
 		email: { value: '' },
-		password: { value: '', valid: true },
-		emailOptIn: { value: true },
 	});
 
 	const updateForm = (
@@ -50,7 +48,7 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 		(async (): Promise<void> => {
 			try {
 				e.preventDefault();
-				setState((state) => ({ ...state, submitted: true }));
+				setLoading(true);
 				const payload = {
 					first_name: formState.firstName,
 					email: formState.email,
@@ -69,10 +67,12 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 						message: 'Something went wrong',
 					});
 				}
+				setLoading(false);
 			} catch (error) {
 				notificationsInstance.error({
 					message: 'Something went wrong',
 				});
+				setLoading(false);
 			}
 		})();
 	};
@@ -121,7 +121,8 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 							type="primary"
 							htmlType="submit"
 							data-attr="signup"
-							disabled={state.submitted && !formState.password}
+							loading={loading}
+							disabled={loading || !formState.email.value}
 						>
 							Get Started
 						</Button>

@@ -5,11 +5,12 @@ import {
 	SWITCH_DARK_MODE,
 	TOGGLE_SETTINGS_TABS,
 } from 'types/actions/app';
+import getTheme from 'lib/theme/getTheme';
 import InitialValueTypes from 'types/reducer/app';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 
 const InitialValue: InitialValueTypes = {
-	isDarkMode: true,
+	isDarkMode: getTheme() === 'darkMode' ? true : false,
 	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
 	settingsActiveTab: 'General',
 };
