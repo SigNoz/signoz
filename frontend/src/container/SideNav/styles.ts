@@ -32,7 +32,7 @@ interface DarkModeProps {
 
 export const ToggleButton = styled(Switch)<DarkModeProps>`
 	&&& {
-		background: ${({checked})=> (checked === false ? 'grey': ' ')};
+		background: ${({ checked }) => checked === false && 'grey'};
 	}
 `;
 
