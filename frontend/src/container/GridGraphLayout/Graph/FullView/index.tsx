@@ -52,7 +52,13 @@ const FullView = ({
 	});
 
 	const onFetchDataHandler = useCallback(async () => {
-		setState((state) => ({ ...state, loading: true }));
+		setState((state) => ({
+			...state,
+			loading: true,
+			error: false,
+			errorMessage: '',
+		}));
+
 		try {
 			const maxMinTime = GetMaxMinTime({
 				graphType: widget.panelTypes,
@@ -129,11 +135,12 @@ const FullView = ({
 		onFetchDataHandler();
 	}, [onFetchDataHandler]);
 
-	//antd notification config
-	notification.config({
-		placement: 'topRight',
-		maxCount: 1,
-	});
+	useEffect(() => {
+		state.error &&
+			notification.error({
+				message: state.errorMessage,
+			});
+	}, [state]);
 
 	if (state.loading || state.payload === undefined) {
 		return (
@@ -203,11 +210,6 @@ const FullView = ({
 					name,
 				}}
 			/>
-
-			{state.error &&
-				notification.error({
-					message: state.errorMessage,
-				})}
 
 			{/* </GraphContainer> */}
 		</>
