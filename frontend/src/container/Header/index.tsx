@@ -3,13 +3,11 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { Container } from './styles';
 
-const routesToSkip = [ROUTES.SETTINGS, ROUTES.LIST_ALL_ALERT];
-
+const routesToSkip = [ROUTES.SETTINGS, ROUTES.LIST_ALL_ALERT, ROUTES.TRACE_GRAPH];
 
 const TopNav = (): JSX.Element | null => {
 	const { pathname } = useLocation();
@@ -18,13 +16,20 @@ const TopNav = (): JSX.Element | null => {
 		return null;
 	}
 
+	const checkTraceGraph = (path: string) => {
+		const pathArray = path.split('/');
+		if(pathArray[1]=='trace' && pathArray[2].length>=1){
+			return true;
+		}
+	}
+
 	return (
 		<Container>
 			<Col span={16}>
 				<ShowBreadcrumbs />
 			</Col>
 
-			{!routesToSkip.includes(pathname) && (
+			{!routesToSkip.includes(pathname) && !checkTraceGraph(pathname) && (	
 				<Col span={8}>
 					<DateTimeSelector />
 				</Col>
