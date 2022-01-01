@@ -176,7 +176,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		(*s.analyticsClient).Enqueue(analytics.Track{
 			Event:  path,
-			UserId: s.distinctId,
+			UserId: s.ipAddress,
 			Properties: analytics.NewProperties().
 				Set("ip", s.ipAddress),
 		})

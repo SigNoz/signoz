@@ -652,7 +652,7 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	email := postData["email"]
 
 	(*aH.pc).Enqueue(analytics.Track{
-		UserId:     aH.distinctId,
+		UserId:     aH.ipAddress,
 		Event:      "InProduct Feeback Submitted",
 		Properties: analytics.NewProperties().Set("email", email).Set("message", message).Set("ip", aH.ipAddress),
 	})
@@ -669,7 +669,7 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 	}
 
 	(*aH.pc).Enqueue(analytics.Identify{
-		UserId: aH.distinctId,
+		UserId: aH.ipAddress,
 		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", aH.ipAddress),
 	})
 
@@ -848,7 +848,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	(*aH.pc).Enqueue(analytics.Track{
-		UserId:     aH.distinctId,
+		UserId:     aH.ipAddress,
 		Event:      "Number of Services",
 		Properties: analytics.NewProperties().Set("number", len(*result)).Set("ip", aH.ipAddress),
 	})
