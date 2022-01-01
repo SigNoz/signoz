@@ -672,6 +672,11 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 		UserId: aH.ipAddress,
 		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", aH.ipAddress),
 	})
+	(*aH.pc).Enqueue(analytics.Track{
+		UserId:     aH.ipAddress,
+		Event:      "User",
+		Properties: analytics.NewProperties().Set("name", user.Name).Set("email", user.Email).Set("ip", aH.ipAddress),
+	})
 
 }
 
