@@ -1,0 +1,112 @@
+name: e2e-k8s
+
+on:
+  pull_request:
+    paths:
+      - 'pkg/query-service/**'
+      - 'frontend/**'
+
+jobs:
+
+  image-build-and-push-query-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push docker image
+        env:
+          DOCKER_TAG: pull-${{ github.event.number }}
+        run: make build-push-query-service
+
+  image-build-and-push-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install
+      - name: Run Prettier
+        working-directory: frontend
+        run: npm run prettify
+        continue-on-error: true
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+        continue-on-error: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push docker image
+        env:
+          DOCKER_TAG: pull-${{ github.event.number }}
+        run: make build-push-frontend
+
+  deploy-on-k3s-cluster:
+    runs-on: ubuntu-latest
+    needs:
+      - image-build-and-push-query-service
+      - image-build-and-push-frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create a k3s cluster
+        uses: AbsaOSS/k3d-action@v2
+        with:
+          cluster-name: "test-cluster"
+      - name: Deploy the app
+        env:
+          TAG: pull-${{ github.event.number }}
+        run: |
+          helm dependency update deploy/kubernetes/platform
+          helm install signoz deploy/kubernetes/platform/ -n platform --create-namespace \
+            --set cloud=null \
+            --set frontend.service.type=LoadBalancer \
+            --set frontend.image.tag=$TAG \
+            --set query-service.image.tag=$TAG
+          kubectl describe deploy/signoz-frontend -n platform | grep Image
+          kubectl describe statefulset/signoz-query-service -n platform | grep Image
+          # comment the next 3 lines if you open an SSH connection for debugging
+          kubectl -n platform get deploy --output name | xargs -r -n1 -t kubectl -n platform rollout status --timeout=300s
+          kubectl -n platform get statefulset --output name | xargs -r -n1 -t kubectl -n platform rollout status --timeout=300s
+          kubectl -n platform get daemonset --output name | xargs -r -n1 -t kubectl -n platform rollout status --timeout=300s
+          kubectl get pods -n platform
+          kubectl get svc -n platform
+        # Uncomment for debugging using SSH
+      #- name: Setup upterm session
+      #  uses: lhotari/action-upterm@v1
+      - name: Kick off a sample-app workload
+        run: |
+          kubectl create ns sample-application
+          kubectl -n sample-application apply -Rf sample-apps/hotrod/
+          kubectl -n sample-application run strzal --image=djbingham/curl \
+            --restart='OnFailure' -i --rm --command -- curl -X POST -F \
+            'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
+          kubectl -n sample-application get statefulset --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
+          kubectl -n sample-application get daemonset --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
+      - name: Start tunnel
+        env:
+          SUBDOMAIN: pull-${{ github.event.number }}-signoz
+        run: |
+          npm install -g localtunnel
+          host=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f4)
+          port=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
+          lt -p $port -l $host -s $SUBDOMAIN

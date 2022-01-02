@@ -6,6 +6,7 @@ replicaCount: 1
 
 image:
   repository: signoz/query-service
+  tag: 0.5.4
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
