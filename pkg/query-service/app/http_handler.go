@@ -203,6 +203,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/getTraceFilters", aH.getTraceFilters).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -911,6 +912,23 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 	result, err := (*aH.reader).SearchSpans(context.Background(), query)
 
 	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getTraceFilters(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseTraceFilterRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	// result, err := druidQuery.SearchSpans(aH.client, query)
+	result, apiErr := (*aH.reader).GetTraceFilters(context.Background(), query)
+
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 

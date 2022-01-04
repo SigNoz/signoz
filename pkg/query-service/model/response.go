@@ -261,3 +261,23 @@ type GetTTLResponseItem struct {
 	MetricsTime int `json:"metrics_ttl_duration_hrs"`
 	TracesTime  int `json:"traces_ttl_duration_hrs"`
 }
+
+type DBResponseMinMaxDuration struct {
+	MinDuration int `db:"min(durationNano)"`
+	MaxDuration int `db:"max(durationNano)"`
+}
+
+type DBResponseServiceName struct {
+	ServiceName string `db:"serviceName"`
+}
+
+type DBResponseErrors struct {
+	NumErrors int `db:"numErrors"`
+}
+type TraceFiltersResponse struct {
+	Service   map[string]int `json:"service"`
+	Status    map[string]int `json:"status"`
+	Duration  map[string]int `json:"duration"`
+	Operation map[string]int `json:"operation"`
+	HttpCode  map[string]int `json:"httpCode"`
+}

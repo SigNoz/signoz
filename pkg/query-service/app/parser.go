@@ -480,6 +480,54 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	return params, nil
 }
 
+func parseTraceFilterRequest(r *http.Request) (*model.TraceFilterParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.TraceFilterParams{
+		Start:     startTime,
+		End:       endTime,
+		Service:   false,
+		Duration:  false,
+		HttpCode:  false,
+		Status:    false,
+		Operation: false,
+	}
+
+	service := r.URL.Query().Get("service")
+	if len(service) != 0 {
+		params.Service, _ = strconv.ParseBool(service)
+	}
+	operation := r.URL.Query().Get("operation")
+	if len(operation) != 0 {
+		params.Operation, _ = strconv.ParseBool(operation)
+	}
+
+	duration := r.URL.Query().Get("duration")
+	if len(duration) != 0 {
+		params.Duration, _ = strconv.ParseBool(duration)
+	}
+
+	status := r.URL.Query().Get("status")
+	if len(status) != 0 {
+		params.Status, _ = strconv.ParseBool(status)
+	}
+
+	httpCode := r.URL.Query().Get("httpCode")
+	if len(httpCode) != 0 {
+		params.HttpCode, _ = strconv.ParseBool(httpCode)
+	}
+
+	return params, nil
+}
+
 func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
 
 	tags := new([]model.TagQuery)

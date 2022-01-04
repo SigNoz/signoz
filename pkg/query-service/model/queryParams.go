@@ -111,6 +111,15 @@ type SpanSearchParams struct {
 	Tags          []TagQuery
 }
 
+type TraceFilterParams struct {
+	Status    bool
+	Service   bool
+	Duration  bool
+	HttpCode  bool
+	Operation bool
+	Start     *time.Time
+	End       *time.Time
+}
 type TTLParams struct {
 	Type     string
 	Duration string

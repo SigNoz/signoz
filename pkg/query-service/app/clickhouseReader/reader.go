@@ -1326,6 +1326,61 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 	return &searchSpansResult, nil
 }
 
+func (r *ClickHouseReader) GetTraceFilters(ctx context.Context, queryParams *model.TraceFilterParams) (*model.TraceFiltersResponse, *model.ApiError) {
+
+	query := fmt.Sprintf("SELECT DISTINCT ? FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+
+	var dBResponseMinMaxDuration []model.DBResponseMinMaxDuration
+	var dBResponseServiceName []model.DBResponseServiceName
+	var dBResponseErrors []model.DBResponseErrors
+
+	if queryParams.Service == true {
+		query = fmt.Sprintf("SELECT DISTINCT serviceName FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		err := r.db.Select(&dBResponseServiceName, query, args...)
+		if err != nil {
+			zap.S().Debug("Error in processing sql query: ", err)
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+		}
+	}
+
+	if queryParams.Status == true {
+		query = fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND NOT ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2)", r.indexTable)
+		err := r.db.Select(&dBResponseErrors, query, args...)
+		fmt.Println(dBResponseErrors)
+		if err != nil {
+			zap.S().Debug("Error in processing sql query: ", err)
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+		}
+	}
+
+	if queryParams.Duration == true {
+		query = fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		err := r.db.Select(&dBResponseMinMaxDuration, query, args...)
+		if err != nil {
+			zap.S().Debug("Error in processing sql query: ", err)
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+		}
+	}
+
+	traceFilterReponse := model.TraceFiltersResponse{
+		Status:   map[string]int{},
+		Duration: map[string]int{"minDuration": dBResponseMinMaxDuration[0].MinDuration, "maxDuration": dBResponseMinMaxDuration[0].MaxDuration},
+		Service:  map[string]int{},
+	}
+
+	if dBResponseErrors[0].NumErrors == 0 {
+		traceFilterReponse.Status = map[string]int{"ok": -1}
+	} else {
+		traceFilterReponse.Status = map[string]int{"ok": -1, "error": -1}
+	}
+	for _, service := range dBResponseServiceName {
+		traceFilterReponse.Service[service.ServiceName] = -1
+	}
+	return &traceFilterReponse, nil
+}
+
 func (r *ClickHouseReader) GetServiceDBOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
 
 	var serviceDBOverviewItems []model.ServiceDBOverviewItem
