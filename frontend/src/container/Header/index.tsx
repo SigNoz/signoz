@@ -2,14 +2,17 @@ import { Col } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, matchPath } from 'react-router-dom';
 
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { Container } from './styles';
 
-const routesToSkip = [ROUTES.SETTINGS, ROUTES.LIST_ALL_ALERT];
-
+const routesToSkip = [
+	ROUTES.SETTINGS,
+	ROUTES.LIST_ALL_ALERT,
+	ROUTES.TRACE_GRAPH,
+];
 
 const TopNav = (): JSX.Element | null => {
 	const { pathname } = useLocation();
@@ -18,13 +21,24 @@ const TopNav = (): JSX.Element | null => {
 		return null;
 	}
 
+	const checkRouteExists = (currentPath: string) => {
+		for (let i = 0; i < routesToSkip.length; ++i) {
+			if (
+				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
+			) {
+				return true;
+			}
+		}
+		return false;
+	};
+
 	return (
 		<Container>
 			<Col span={16}>
 				<ShowBreadcrumbs />
 			</Col>
 
-			{!routesToSkip.includes(pathname) && (
+			{!checkRouteExists(pathname) && (
 				<Col span={8}>
 					<DateTimeSelector />
 				</Col>
