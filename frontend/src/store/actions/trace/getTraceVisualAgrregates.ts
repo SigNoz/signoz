@@ -4,6 +4,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
+import { getStartTime } from './config';
 
 export const GetTraceVisualAggregates = ({
 	selectedEntity,
@@ -30,12 +31,17 @@ export const GetTraceVisualAggregates = ({
 				selectedTags,
 			} = trace;
 
+			const updatedStartEndTime = getStartTime(
+				globalTime.selectedTime,
+				globalTime,
+			);
+
 			const [spanAggregateResponse] = await Promise.all([
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
-					end: globalTime.maxTime,
-					start: globalTime.minTime,
+					start: updatedStartEndTime.min,
+					end: updatedStartEndTime.max,
 					kind: selectedKind || '',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',

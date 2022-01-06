@@ -14,6 +14,7 @@ import { PayloadProps as ServiceOperationPayloadProps } from 'types/api/trace/ge
 import { PayloadProps as TagPayloadProps } from 'types/api/trace/getTags';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+import { getStartTime } from './config';
 
 export const GetInitialTraceData = ({
 	selectedTime,
@@ -47,6 +48,9 @@ export const GetInitialTraceData = ({
 			const aggregationOption = urlParams.get(
 				METRICS_PAGE_QUERY_PARAM.aggregationOption,
 			);
+
+			const updatedStartEndTime = getStartTime(globalSelectedTime, globalTime);
+
 			const selectedEntityOption = urlParams.get(METRICS_PAGE_QUERY_PARAM.entity);
 
 			const [
@@ -56,8 +60,8 @@ export const GetInitialTraceData = ({
 			] = await Promise.all([
 				getServiceList(),
 				getSpan({
-					start: globalTime.minTime,
-					end: globalTime.maxTime,
+					start: updatedStartEndTime.min,
+					end: updatedStartEndTime.max,
 					kind: kindTag || '',
 					limit: '100',
 					lookback: '2d',
@@ -70,8 +74,8 @@ export const GetInitialTraceData = ({
 				getSpansAggregate({
 					aggregation_option: aggregationOption || selectedAggOption,
 					dimension: selectedEntityOption || selectedEntity,
-					start: globalTime.minTime,
-					end: globalTime.maxTime,
+					start: updatedStartEndTime.min,
+					end: updatedStartEndTime.max,
 					kind: kindTag || '',
 					maxDuration: latencyMax || '',
 					minDuration: latencyMin || '',
