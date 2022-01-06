@@ -15,7 +15,6 @@ import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
-import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
