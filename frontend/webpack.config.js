@@ -73,6 +73,25 @@ const config = {
 				test: /\.(ttf|eot|woff|woff2)$/,
 				use: ['file-loader'],
 			},
+			{
+				test: /\.less$/i,
+				use: [
+					{
+						loader: 'style-loader',
+					},
+					{
+						loader: 'css-loader',
+					},
+					{
+						loader: 'less-loader',
+						options: {
+							lessOptions: {
+								javascriptEnabled: true,
+							},
+						},
+					},
+				],
+			},
 		],
 	},
 	plugins: plugins,
