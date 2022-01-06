@@ -30,8 +30,6 @@ export const GetTraceVisualAggregates = ({
 				selectedTags,
 			} = trace;
 
-			const { selectedTime, maxTime, minTime } = globalTime;
-
 			const [spanAggregateResponse] = await Promise.all([
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
