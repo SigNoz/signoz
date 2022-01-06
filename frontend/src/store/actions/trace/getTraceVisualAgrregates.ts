@@ -32,22 +32,12 @@ export const GetTraceVisualAggregates = ({
 
 			const { selectedTime, maxTime, minTime } = globalTime;
 
-			const isCustomSelected = selectedTime === 'custom';
-
-			const end = isCustomSelected
-				? globalTime.maxTime + 15 * 60 * 1000000000
-				: maxTime;
-
-			const start = isCustomSelected
-				? globalTime.minTime - 15 * 60 * 1000000000
-				: minTime;
-
 			const [spanAggregateResponse] = await Promise.all([
 				getSpansAggregate({
 					aggregation_option: selectedAggOption,
 					dimension: selectedEntity,
-					end,
-					start,
+					end: globalTime.maxTime,
+					start: globalTime.minTime,
 					kind: selectedKind || '',
 					maxDuration: selectedLatency.max || '',
 					minDuration: selectedLatency.min || '',

@@ -21,7 +21,7 @@ export const GetInitialTraceData = ({
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const { globalTime, trace } = store.getState();
-			const { minTime, maxTime, selectedTime: globalSelectedTime } = globalTime;
+			const { selectedTime: globalSelectedTime } = globalTime;
 			const { selectedAggOption, selectedEntity } = trace;
 
 			// keeping the redux as source of truth
@@ -49,16 +49,6 @@ export const GetInitialTraceData = ({
 			);
 			const selectedEntityOption = urlParams.get(METRICS_PAGE_QUERY_PARAM.entity);
 
-			const isCustomSelected = selectedTime === 'custom';
-
-			const end = isCustomSelected
-				? globalTime.maxTime + 15 * 60 * 1000000000
-				: maxTime;
-
-			const start = isCustomSelected
-				? globalTime.minTime - 15 * 60 * 1000000000
-				: minTime;
-
 			const [
 				serviceListResponse,
 				spanResponse,
@@ -66,8 +56,8 @@ export const GetInitialTraceData = ({
 			] = await Promise.all([
 				getServiceList(),
 				getSpan({
-					start,
-					end,
+					start: globalTime.minTime,
+					end: globalTime.maxTime,
 					kind: kindTag || '',
 					limit: '100',
 					lookback: '2d',
@@ -80,8 +70,8 @@ export const GetInitialTraceData = ({
 				getSpansAggregate({
 					aggregation_option: aggregationOption || selectedAggOption,
 					dimension: selectedEntityOption || selectedEntity,
-					end,
-					start,
+					start: globalTime.minTime,
+					end: globalTime.maxTime,
 					kind: kindTag || '',
 					maxDuration: latencyMax || '',
 					minDuration: latencyMin || '',
