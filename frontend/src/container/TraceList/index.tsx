@@ -1,8 +1,6 @@
 import { Space, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table/Table';
 import ROUTES from 'constants/routes';
-import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
-import getFormattedDate from 'lib/getFormatedDate';
 import history from 'lib/history';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -10,6 +8,7 @@ import { AppState } from 'store/reducers';
 import { pushDStree } from 'types/api/trace/getSpans';
 import { TraceReducer } from 'types/reducer/trace';
 import { isOnboardingSkipped } from 'utils/app';
+import dayjs from 'dayjs';
 
 import { TitleContainer } from './styles';
 
@@ -58,9 +57,8 @@ const TraceDetails = (): JSX.Element => {
 			sorter: (a, b): number => a.startTime - b.startTime,
 			sortDirections: ['descend', 'ascend'],
 			render: (value: number): string => {
-				const date = new Date(value);
-				const result = `${getFormattedDate(date)} ${convertDateToAmAndPm(date)}`;
-				return result;
+				const date = dayjs(value);
+				return date.format('DD/MM/YYYY hh:mm:ss A');
 			},
 		},
 		{
