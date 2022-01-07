@@ -1,0 +1,18 @@
+name: remove-label
+
+on:
+  pull_request:
+    types: [synchronize]
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name != 'openshift-psap/special-resource-operator'
+    steps:
+      - name: Remove label
+        uses: buildsville/add-remove-label@v1
+        with:
+          label: ok-to-test
+          type: remove
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+
