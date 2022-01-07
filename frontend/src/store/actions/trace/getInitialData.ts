@@ -17,7 +17,8 @@ import { TraceReducer } from 'types/reducer/trace';
 import { getStartTime } from './config';
 
 export const GetInitialTraceData = ({
-	selectedTime,
+	maxTime,
+	minTime,
 }: GetInitialTraceDataProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
@@ -26,7 +27,7 @@ export const GetInitialTraceData = ({
 			const { selectedAggOption, selectedEntity } = trace;
 
 			// keeping the redux as source of truth
-			if (selectedTime !== globalSelectedTime) {
+			if (maxTime !== globalTime.maxTime && minTime !== globalTime.minTime) {
 				return;
 			}
 
@@ -191,5 +192,6 @@ export const GetInitialTraceData = ({
 };
 
 export interface GetInitialTraceDataProps {
-	selectedTime: GlobalReducer['selectedTime'];
+	maxTime: GlobalReducer['maxTime'];
+	minTime: GlobalReducer['minTime'];
 }

@@ -21,9 +21,10 @@ const TraceDetail = ({
 	getInitialTraceData,
 	resetTraceData,
 }: TraceDetailProps): JSX.Element => {
-	const { loading, selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { loading, selectedTime, maxTime, minTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const { loading: TraceLoading, error, errorMessage } = useSelector<
 		AppState,
@@ -33,14 +34,15 @@ const TraceDetail = ({
 	useEffect(() => {
 		if (!loading) {
 			getInitialTraceData({
-				selectedTime,
+				maxTime,
+				minTime,
 			});
 		}
 
 		return (): void => {
 			resetTraceData();
 		};
-	}, [getInitialTraceData, loading, selectedTime, resetTraceData]);
+	}, [getInitialTraceData, loading, resetTraceData, maxTime, minTime]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
