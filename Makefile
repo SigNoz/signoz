@@ -10,8 +10,8 @@ REPONAME ?= signoz
 DOCKER_TAG ?= latest
 
 FRONTEND_DOCKER_IMAGE ?= frontend
-FLATTERNER_DOCKER_IMAGE ?= query-service
-QUERY_SERVICE_DOCKER_IMAGE ?= flattener-processor
+QUERY_SERVICE_DOCKER_IMAGE ?= query-service
+FLATTERNER_DOCKER_IMAGE ?= flattener-processor
 
 all: build-push-frontend build-push-query-service build-push-flattener
 # Steps to build and push docker image of frontend

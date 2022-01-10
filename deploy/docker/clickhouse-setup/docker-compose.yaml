@@ -19,16 +19,6 @@ services:
         interval: 30s
         timeout: 5s
         retries: 3
-  migrate:
-    image: migrate/migrate
-    volumes:
-      - ./migrations:/migrations
-    command: ["-path", "/migrations", "-database",  "clickhouse://clickhouse:9000?username=default&database=default&x-multi-statement=true", "up"]
-    links: 
-      - clickhouse
-    depends_on:
-      clickhouse:
-        condition: service_healthy
 
   alertmanager:
     image: signoz/alertmanager:0.5.0
