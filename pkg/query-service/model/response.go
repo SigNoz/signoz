@@ -161,6 +161,7 @@ type SearchSpanReponseItem struct {
 	DurationNano int64    `db:"durationNano"`
 	TagsKeys     []string `db:"tagsKeys"`
 	TagsValues   []string `db:"tagsValues"`
+	Events       []string `db:"events"`
 }
 
 type OtelSpanRef struct {
@@ -186,8 +187,17 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
+	var errorEvent map[string]interface{}
+	for _, e := range item.Events {
+		json.Unmarshal([]byte(e), &errorEvent)
+		if errorEvent["name"] == "exception" {
+			break
+		} else {
+			errorEvent = nil
+		}
+	}
 
-	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray}
+	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, errorEvent}
 
 	return returnArray
 }
