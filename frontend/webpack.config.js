@@ -5,10 +5,26 @@ const portFinderSync = require('portfinder-sync');
 const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+	.BundleAnalyzerPlugin;
 
 dotenv.config();
 
 console.log(resolve(__dirname, './src/'));
+
+const plugins = [
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new webpack.ProvidePlugin({
+		process: 'process/browser',
+	}),
+	new webpack.DefinePlugin({
+		'process.env': JSON.stringify(process.env),
+	}),
+];
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 const config = {
 	mode: 'development',
@@ -59,15 +75,7 @@ const config = {
 			},
 		],
 	},
-	plugins: [
-		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new webpack.ProvidePlugin({
-			process: 'process/browser',
-		}),
-		new webpack.DefinePlugin({
-			'process.env': JSON.stringify(process.env),
-		}),
-	],
+	plugins: plugins,
 	performance: {
 		hints: false,
 	},

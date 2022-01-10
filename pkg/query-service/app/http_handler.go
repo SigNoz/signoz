@@ -845,13 +845,13 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	if len(*result) != 4 {
-		(*aH.pc).Enqueue(posthog.Capture{
-			DistinctId: distinctId,
-			Event:      "Different Number of Services",
-			Properties: posthog.NewProperties().Set("number", len(*result)),
-		})
-	}
+	// if len(*result) != 4 {
+	(*aH.pc).Enqueue(posthog.Capture{
+		DistinctId: distinctId,
+		Event:      "Different Number of Services",
+		Properties: posthog.NewProperties().Set("number", len(*result)),
+	})
+	// }
 
 	aH.writeJSON(w, r, result)
 }

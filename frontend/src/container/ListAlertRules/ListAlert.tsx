@@ -1,8 +1,9 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, notification, Tag, Typography } from 'antd';
+import { notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/alerts/getAll';
+import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
@@ -11,7 +12,7 @@ import { generatePath } from 'react-router';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import DeleteAlert from './DeleteAlert';
-import { ButtonContainer } from './styles';
+import { ButtonContainer, Button } from './styles';
 import Status from './TableComponents/Status';
 
 const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
@@ -128,6 +129,13 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			{Element}
 
 			<ButtonContainer>
+				<TextToolTip
+					{...{
+						text: `More details on how to create alerts`,
+						url: 'https://signoz.io/docs/userguide/alerts-management/',
+					}}
+				/>
+
 				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
 					New Alert
 				</Button>

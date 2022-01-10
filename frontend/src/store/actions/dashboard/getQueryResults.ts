@@ -3,10 +3,13 @@ import { AxiosError } from 'axios';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import GetMaxMinTime from 'lib/getMaxMinTime';
+import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import store from 'store';
 
 export const GetQueryResults = (
 	props: GetQueryResultsProps,
@@ -15,10 +18,17 @@ export const GetQueryResults = (
 		try {
 			const queryData = props.query;
 
+			const { globalTime } = store.getState();
+
+			const minMax = GetMinMax(props.globalSelectedInterval, [
+				globalTime.minTime / 1000000,
+				globalTime.maxTime / 1000000,
+			]);
+
 			const getMaxMinTime = GetMaxMinTime({
 				graphType: props.graphType,
-				maxTime: props.maxTime,
-				minTime: props.minTime,
+				maxTime: minMax.maxTime,
+				minTime: minMax.minTime,
 			});
 
 			const { end, start } = GetStartAndEndTime({
@@ -92,8 +102,7 @@ export const GetQueryResults = (
 export interface GetQueryResultsProps {
 	widgetId: string;
 	selectedTime: timePreferenceType;
-	maxTime: number;
-	minTime: number;
 	query: Query[];
 	graphType: ITEMS;
+	globalSelectedInterval: GlobalReducer['selectedTime'];
 }
