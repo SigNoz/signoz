@@ -23,6 +23,7 @@ func initZapLog() *zap.Logger {
 
 func main() {
 
+	// comment
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
