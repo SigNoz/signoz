@@ -127,6 +127,22 @@ type SpanFilterParams struct {
 	Start       *time.Time
 	End         *time.Time
 }
+
+type TagFilterParams struct {
+	Status      []string
+	ServiceName []string
+	HttpRoute   []string
+	HttpCode    []string
+	HttpUrl     []string
+	HttpHost    []string
+	HttpMethod  []string
+	Component   []string
+	Operation   []string
+	MinDuration string
+	MaxDuration string
+	Start       *time.Time
+	End         *time.Time
+}
 type TTLParams struct {
 	Type     string
 	Duration string

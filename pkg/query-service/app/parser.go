@@ -540,6 +540,63 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 	return params, nil
 }
 
+func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	r.ParseForm()
+
+	params := &model.TagFilterParams{
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: []string{},
+		HttpRoute:   []string{},
+		HttpCode:    []string{},
+		HttpUrl:     []string{},
+		HttpHost:    []string{},
+		HttpMethod:  []string{},
+		Component:   []string{},
+		Status:      []string{},
+		Operation:   []string{},
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	return params, nil
+}
+
 func fetchArrayValues(param string, r *http.Request) []string {
 	valueStr := r.URL.Query().Get(param)
 	var values []string
