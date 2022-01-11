@@ -508,25 +508,25 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 		GetFilters:  []string{},
 	}
 
-	params.ServiceName = r.Form["serviceName"]
+	params.ServiceName = fetchArrayValues("serviceName", r)
 
-	params.Status = r.Form["status"]
+	params.Status = fetchArrayValues("status", r)
 
-	params.Operation = r.Form["operation"]
+	params.Operation = fetchArrayValues("operation", r)
 
-	params.HttpCode = r.Form["httpCode"]
+	params.HttpCode = fetchArrayValues("httpCode", r)
 
-	params.HttpUrl = r.Form["httpUrl"]
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
 
-	params.HttpHost = r.Form["httpHost"]
+	params.HttpHost = fetchArrayValues("httpHost", r)
 
-	params.HttpRoute = r.Form["httpRoute"]
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
 
-	params.HttpMethod = r.Form["httpMethod"]
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
 
-	params.Component = r.Form["component"]
+	params.Component = fetchArrayValues("component", r)
 
-	params.GetFilters = r.Form["getFilters"]
+	params.GetFilters = fetchArrayValues("getFilters", r)
 
 	minDuration, err := parseTimestamp("minDuration", r)
 	if err == nil {
@@ -538,6 +538,19 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 	}
 
 	return params, nil
+}
+
+func fetchArrayValues(param string, r *http.Request) []string {
+	valueStr := r.URL.Query().Get(param)
+	var values []string
+	if len(valueStr) == 0 {
+		return values
+	}
+	err := json.Unmarshal([]byte(valueStr), &values)
+	if err != nil {
+		zap.S().Error("Error in parsing service params", zap.Error(err))
+	}
+	return values
 }
 
 func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
