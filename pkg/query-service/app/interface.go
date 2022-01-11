@@ -37,7 +37,7 @@ type Reader interface {
 	GetServicesList(ctx context.Context) (*[]string, error)
 	GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
 	GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
-	GetTraceFilters(ctx context.Context, query *model.TraceFilterParams) (*model.TraceFiltersResponse, *model.ApiError)
+	GetSpanFilters(ctx context.Context, query *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError)
 
 	// Search Interfaces
 	SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error)

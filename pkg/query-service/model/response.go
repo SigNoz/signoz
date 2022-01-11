@@ -279,15 +279,61 @@ type DBResponseMinMaxDuration struct {
 
 type DBResponseServiceName struct {
 	ServiceName string `db:"serviceName"`
+	Count       int    `db:"count"`
+}
+
+type DBResponseHttpCode struct {
+	HttpCode string `db:"httpCode"`
+	Count    int    `db:"count"`
+}
+
+type DBResponseHttpRoute struct {
+	HttpRoute string `db:"httpRoute"`
+	Count     int    `db:"count"`
+}
+
+type DBResponseHttpUrl struct {
+	HttpUrl string `db:"httpUrl"`
+	Count   int    `db:"count"`
+}
+
+type DBResponseHttpMethod struct {
+	HttpMethod string `db:"httpMethod"`
+	Count      int    `db:"count"`
+}
+
+type DBResponseHttpHost struct {
+	HttpHost string `db:"httpHost"`
+	Count    int    `db:"count"`
+}
+
+type DBResponseOperation struct {
+	Operation string `db:"name"`
+	Count     int    `db:"count"`
+}
+
+type DBResponseComponent struct {
+	Component string `db:"component"`
+	Count     int    `db:"count"`
 }
 
 type DBResponseErrors struct {
 	NumErrors int `db:"numErrors"`
 }
-type TraceFiltersResponse struct {
-	Service   map[string]int `json:"service"`
-	Status    map[string]int `json:"status"`
-	Duration  map[string]int `json:"duration"`
-	Operation map[string]int `json:"operation"`
-	HttpCode  map[string]int `json:"httpCode"`
+
+type DBResponseTotal struct {
+	NumTotal int `db:"numTotal"`
+}
+
+type SpanFiltersResponse struct {
+	ServiceName map[string]int `json:"serviceName"`
+	Status      map[string]int `json:"status"`
+	Duration    map[string]int `json:"duration"`
+	Operation   map[string]int `json:"operation"`
+	HttpCode    map[string]int `json:"httpCode"`
+	HttpUrl     map[string]int `json:"httpUrl"`
+	HttpMethod  map[string]int `json:"httpMethod"`
+	HttpRoute   map[string]int `json:"httpRoute"`
+	HttpHost    map[string]int `json:"httpHost"`
+	Component   map[string]int `json:"component"`
 }

@@ -165,6 +165,6 @@ func (druid *DruidReader) GetTTL(_ context.Context, _ *model.GetTTLParams) (*mod
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
 }
 
-func (druid *DruidReader) GetTraceFilters(_ context.Context, _ *model.TraceFilterParams) (*model.TraceFiltersResponse, *model.ApiError) {
+func (druid *DruidReader) GetSpanFilters(_ context.Context, _ *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting tracefilters")}
 }

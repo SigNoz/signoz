@@ -1326,58 +1326,294 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 	return &searchSpansResult, nil
 }
 
-func (r *ClickHouseReader) GetTraceFilters(ctx context.Context, queryParams *model.TraceFilterParams) (*model.TraceFiltersResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
 
-	query := fmt.Sprintf("SELECT DISTINCT ? FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
-
+	var query string
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
-
-	var dBResponseMinMaxDuration []model.DBResponseMinMaxDuration
-	var dBResponseServiceName []model.DBResponseServiceName
-	var dBResponseErrors []model.DBResponseErrors
-
-	if queryParams.Service == true {
-		query = fmt.Sprintf("SELECT DISTINCT serviceName FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
-		err := r.db.Select(&dBResponseServiceName, query, args...)
-		if err != nil {
-			zap.S().Debug("Error in processing sql query: ", err)
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+	if len(queryParams.ServiceName) > 0 {
+		for i, e := range queryParams.ServiceName {
+			if i == 0 && i == len(queryParams.ServiceName)-1 {
+				query += " AND (serviceName=?)"
+			} else if i == 0 && i != len(queryParams.ServiceName)-1 {
+				query += " AND (serviceName=?"
+			} else if i != 0 && i == len(queryParams.ServiceName)-1 {
+				query += " OR serviceName=?)"
+			} else {
+				query += " OR serviceName=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		for i, e := range queryParams.HttpRoute {
+			if i == 0 && i == len(queryParams.HttpRoute)-1 {
+				query += " AND (httpRoute=?)"
+			} else if i == 0 && i != len(queryParams.HttpRoute)-1 {
+				query += " AND (httpRoute=?"
+			} else if i != 0 && i == len(queryParams.HttpRoute)-1 {
+				query += " OR httpRoute=?)"
+			} else {
+				query += " OR httpRoute=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpCode) > 0 {
+		for i, e := range queryParams.HttpCode {
+			if i == 0 && i == len(queryParams.HttpCode)-1 {
+				query += " AND (httpCode=?)"
+			} else if i == 0 && i != len(queryParams.HttpCode)-1 {
+				query += " AND (httpCode=?"
+			} else if i != 0 && i == len(queryParams.HttpCode)-1 {
+				query += " OR httpCode=?)"
+			} else {
+				query += " OR httpCode=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpHost) > 0 {
+		for i, e := range queryParams.HttpHost {
+			if i == 0 && i == len(queryParams.HttpHost)-1 {
+				query += " AND (httpHost=?)"
+			} else if i == 0 && i != len(queryParams.HttpHost)-1 {
+				query += " AND (httpHost=?"
+			} else if i != 0 && i == len(queryParams.HttpHost)-1 {
+				query += " OR httpHost=?)"
+			} else {
+				query += " OR httpHost=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		for i, e := range queryParams.HttpMethod {
+			if i == 0 && i == len(queryParams.HttpMethod)-1 {
+				query += " AND (httpMethod=?)"
+			} else if i == 0 && i != len(queryParams.HttpMethod)-1 {
+				query += " AND (httpMethod=?"
+			} else if i != 0 && i == len(queryParams.HttpMethod)-1 {
+				query += " OR httpMethod=?)"
+			} else {
+				query += " OR httpMethod=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		for i, e := range queryParams.HttpUrl {
+			if i == 0 && i == len(queryParams.HttpUrl)-1 {
+				query += " AND (httpUrl=?)"
+			} else if i == 0 && i != len(queryParams.HttpUrl)-1 {
+				query += " AND (httpUrl=?"
+			} else if i != 0 && i == len(queryParams.HttpUrl)-1 {
+				query += " OR httpUrl=?)"
+			} else {
+				query += " OR httpUrl=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.Component) > 0 {
+		for i, e := range queryParams.Component {
+			if i == 0 && i == len(queryParams.Component)-1 {
+				query += " AND (component=?)"
+			} else if i == 0 && i != len(queryParams.Component)-1 {
+				query += " AND (component=?"
+			} else if i != 0 && i == len(queryParams.Component)-1 {
+				query += " OR component=?)"
+			} else {
+				query += " OR component=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.Operation) > 0 {
+		for i, e := range queryParams.Operation {
+			if i == 0 && i == len(queryParams.Operation)-1 {
+				query += " AND (name=?)"
+			} else if i == 0 && i != len(queryParams.Operation)-1 {
+				query += " AND (name=?"
+			} else if i != 0 && i == len(queryParams.Operation)-1 {
+				query += " OR name=?)"
+			} else {
+				query += " OR name=?"
+			}
+			args = append(args, e)
 		}
 	}
 
-	if queryParams.Status == true {
-		query = fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND NOT ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2)", r.indexTable)
-		err := r.db.Select(&dBResponseErrors, query, args...)
-		fmt.Println(dBResponseErrors)
-		if err != nil {
-			zap.S().Debug("Error in processing sql query: ", err)
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+	if len(queryParams.Status) != 0 {
+		for _, e := range queryParams.Status {
+			if e == "error" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			} else if e == "ok" {
+				query += " AND (NOT ( has(tags, 'error:true') AND statusCode<500 AND statusCode!=2))"
+			}
+		}
+	}
+	traceFilterReponse := model.SpanFiltersResponse{
+		Status:      map[string]int{},
+		Duration:    map[string]int{},
+		ServiceName: map[string]int{},
+		Operation:   map[string]int{},
+		HttpCode:    map[string]int{},
+		HttpMethod:  map[string]int{},
+		HttpUrl:     map[string]int{},
+		HttpRoute:   map[string]int{},
+		HttpHost:    map[string]int{},
+		Component:   map[string]int{},
+	}
+
+	for _, e := range queryParams.GetFilters {
+		switch e {
+		case "serviceName":
+			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY serviceName"
+			var dBResponse []model.DBResponseServiceName
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.ServiceName[service.ServiceName] = service.Count
+			}
+		case "httpCode":
+			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpCode"
+			var dBResponse []model.DBResponseHttpCode
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.HttpCode[service.HttpCode] = service.Count
+			}
+		case "httpRoute":
+			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpRoute"
+			var dBResponse []model.DBResponseHttpRoute
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.HttpRoute[service.HttpRoute] = service.Count
+			}
+		case "httpUrl":
+			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpUrl"
+			var dBResponse []model.DBResponseHttpUrl
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.HttpUrl[service.HttpUrl] = service.Count
+			}
+		case "httpMethod":
+			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpMethod"
+			var dBResponse []model.DBResponseHttpMethod
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.HttpMethod[service.HttpMethod] = service.Count
+			}
+		case "httpHost":
+			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpHost"
+			var dBResponse []model.DBResponseHttpHost
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.HttpHost[service.HttpHost] = service.Count
+			}
+		case "operation":
+			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY name"
+			var dBResponse []model.DBResponseOperation
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.Operation[service.Operation] = service.Count
+			}
+		case "component":
+			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY component"
+			var dBResponse []model.DBResponseComponent
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.Component[service.Component] = service.Count
+			}
+		case "status":
+			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))", r.indexTable)
+			finalQuery += query
+			var dBResponse []model.DBResponseErrors
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+
+			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery2 += query
+			var dBResponse2 []model.DBResponseTotal
+			err = r.db.Select(&dBResponse2, finalQuery2, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			traceFilterReponse.Status = map[string]int{"ok": dBResponse2[0].NumTotal - dBResponse[0].NumErrors, "error": dBResponse[0].NumErrors}
+		case "duration":
+			finalQuery := fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			var dBResponse []model.DBResponseMinMaxDuration
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.Duration["minDuration"] = service.MinDuration
+				traceFilterReponse.Duration["maxDuration"] = service.MaxDuration
+			}
 		}
 	}
 
-	if queryParams.Duration == true {
-		query = fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
-		err := r.db.Select(&dBResponseMinMaxDuration, query, args...)
-		if err != nil {
-			zap.S().Debug("Error in processing sql query: ", err)
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
-		}
-	}
-
-	traceFilterReponse := model.TraceFiltersResponse{
-		Status:   map[string]int{},
-		Duration: map[string]int{"minDuration": dBResponseMinMaxDuration[0].MinDuration, "maxDuration": dBResponseMinMaxDuration[0].MaxDuration},
-		Service:  map[string]int{},
-	}
-
-	if dBResponseErrors[0].NumErrors == 0 {
-		traceFilterReponse.Status = map[string]int{"ok": -1}
-	} else {
-		traceFilterReponse.Status = map[string]int{"ok": -1, "error": -1}
-	}
-	for _, service := range dBResponseServiceName {
-		traceFilterReponse.Service[service.ServiceName] = -1
-	}
 	return &traceFilterReponse, nil
 }
 

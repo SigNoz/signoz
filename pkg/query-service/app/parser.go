@@ -480,7 +480,7 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	return params, nil
 }
 
-func parseTraceFilterRequest(r *http.Request) (*model.TraceFilterParams, error) {
+func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 
 	startTime, err := parseTime("start", r)
 	if err != nil {
@@ -491,38 +491,50 @@ func parseTraceFilterRequest(r *http.Request) (*model.TraceFilterParams, error) 
 		return nil, err
 	}
 
-	params := &model.TraceFilterParams{
-		Start:     startTime,
-		End:       endTime,
-		Service:   false,
-		Duration:  false,
-		HttpCode:  false,
-		Status:    false,
-		Operation: false,
+	r.ParseForm()
+
+	params := &model.SpanFilterParams{
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: []string{},
+		HttpRoute:   []string{},
+		HttpCode:    []string{},
+		HttpUrl:     []string{},
+		HttpHost:    []string{},
+		HttpMethod:  []string{},
+		Component:   []string{},
+		Status:      []string{},
+		Operation:   []string{},
+		GetFilters:  []string{},
 	}
 
-	service := r.URL.Query().Get("service")
-	if len(service) != 0 {
-		params.Service, _ = strconv.ParseBool(service)
-	}
-	operation := r.URL.Query().Get("operation")
-	if len(operation) != 0 {
-		params.Operation, _ = strconv.ParseBool(operation)
-	}
+	params.ServiceName = r.Form["serviceName"]
 
-	duration := r.URL.Query().Get("duration")
-	if len(duration) != 0 {
-		params.Duration, _ = strconv.ParseBool(duration)
-	}
+	params.Status = r.Form["status"]
 
-	status := r.URL.Query().Get("status")
-	if len(status) != 0 {
-		params.Status, _ = strconv.ParseBool(status)
-	}
+	params.Operation = r.Form["operation"]
 
-	httpCode := r.URL.Query().Get("httpCode")
-	if len(httpCode) != 0 {
-		params.HttpCode, _ = strconv.ParseBool(httpCode)
+	params.HttpCode = r.Form["httpCode"]
+
+	params.HttpUrl = r.Form["httpUrl"]
+
+	params.HttpHost = r.Form["httpHost"]
+
+	params.HttpRoute = r.Form["httpRoute"]
+
+	params.HttpMethod = r.Form["httpMethod"]
+
+	params.Component = r.Form["component"]
+
+	params.GetFilters = r.Form["getFilters"]
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
 	}
 
 	return params, nil
