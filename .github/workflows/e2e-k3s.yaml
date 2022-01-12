@@ -12,22 +12,28 @@ jobs:
   e2e-k3s:
     runs-on: ubuntu-latest
     if: ${{ github.event.label.name == 'ok-to-test' }}
-    env:
-      DOCKER_TAG: pull-${{ github.event.number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build query-service image
+        env:
+          DOCKER_TAG: pull-${{ github.event.number }}
         run: make build-query-service-amd64
       - name: Build frontend image
+        env:
+          DOCKER_TAG: pull-${{ github.event.number }}
         run: make build-frontend-amd64
       - name: Create a k3s cluster
         uses: AbsaOSS/k3d-action@v2
         with:
           cluster-name: "signoz-cluster"
       - name: Inject the images to the cluster
+        env:
+          DOCKER_TAG: pull-${{ github.event.number }}
         run: k3d image import signoz/query-service:$DOCKER_TAG signoz/frontend:$DOCKER_TAG -c signoz-cluster
       - name: Deploy the app
+        env:
+          DOCKER_TAG: pull-${{ github.event.number }}
         run: |
           helm dependency update deploy/kubernetes/platform
           helm install signoz deploy/kubernetes/platform/ -n platform --create-namespace \
@@ -44,17 +50,15 @@ jobs:
         run: |
           kubectl create ns sample-application
           kubectl -n sample-application apply -Rf sample-apps/hotrod/
+          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
           kubectl -n sample-application run strzal --image=djbingham/curl \
             --restart='OnFailure' -i --rm --command -- curl -X POST -F \
             'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
-          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
-          kubectl -n sample-application get statefulset --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
-          kubectl -n sample-application get daemonset --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
       - name: Start tunnel
         env:
-          SUBDOMAIN: pull-${{ github.event.number }}-signoz
+          DOCKER_TAG: pull-${{ github.event.number }}
         run: |
           npm install -g localtunnel
           host=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f4)
           port=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
-          lt -p $port -l $host -s $SUBDOMAIN
+          lt -p $port -l $host -s "$DOCKER_TAG"
