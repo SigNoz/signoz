@@ -50,7 +50,7 @@ jobs:
         run: |
           kubectl create ns sample-application
           kubectl -n sample-application apply -Rf sample-apps/hotrod/
-          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
+          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status
           kubectl -n sample-application run strzal --image=djbingham/curl \
             --restart='OnFailure' -i --rm --command -- curl -X POST -F \
             'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
