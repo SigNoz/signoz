@@ -1617,6 +1617,224 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	return &traceFilterReponse, nil
 }
 
+func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*[]model.GetFilterSpansResponse, *model.ApiError) {
+
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	if len(queryParams.ServiceName) > 0 {
+		for i, e := range queryParams.ServiceName {
+			if i == 0 && i == len(queryParams.ServiceName)-1 {
+				query += " AND (serviceName=?)"
+			} else if i == 0 && i != len(queryParams.ServiceName)-1 {
+				query += " AND (serviceName=?"
+			} else if i != 0 && i == len(queryParams.ServiceName)-1 {
+				query += " OR serviceName=?)"
+			} else {
+				query += " OR serviceName=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		for i, e := range queryParams.HttpRoute {
+			if i == 0 && i == len(queryParams.HttpRoute)-1 {
+				query += " AND (httpRoute=?)"
+			} else if i == 0 && i != len(queryParams.HttpRoute)-1 {
+				query += " AND (httpRoute=?"
+			} else if i != 0 && i == len(queryParams.HttpRoute)-1 {
+				query += " OR httpRoute=?)"
+			} else {
+				query += " OR httpRoute=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpCode) > 0 {
+		for i, e := range queryParams.HttpCode {
+			if i == 0 && i == len(queryParams.HttpCode)-1 {
+				query += " AND (httpCode=?)"
+			} else if i == 0 && i != len(queryParams.HttpCode)-1 {
+				query += " AND (httpCode=?"
+			} else if i != 0 && i == len(queryParams.HttpCode)-1 {
+				query += " OR httpCode=?)"
+			} else {
+				query += " OR httpCode=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpHost) > 0 {
+		for i, e := range queryParams.HttpHost {
+			if i == 0 && i == len(queryParams.HttpHost)-1 {
+				query += " AND (httpHost=?)"
+			} else if i == 0 && i != len(queryParams.HttpHost)-1 {
+				query += " AND (httpHost=?"
+			} else if i != 0 && i == len(queryParams.HttpHost)-1 {
+				query += " OR httpHost=?)"
+			} else {
+				query += " OR httpHost=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		for i, e := range queryParams.HttpMethod {
+			if i == 0 && i == len(queryParams.HttpMethod)-1 {
+				query += " AND (httpMethod=?)"
+			} else if i == 0 && i != len(queryParams.HttpMethod)-1 {
+				query += " AND (httpMethod=?"
+			} else if i != 0 && i == len(queryParams.HttpMethod)-1 {
+				query += " OR httpMethod=?)"
+			} else {
+				query += " OR httpMethod=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		for i, e := range queryParams.HttpUrl {
+			if i == 0 && i == len(queryParams.HttpUrl)-1 {
+				query += " AND (httpUrl=?)"
+			} else if i == 0 && i != len(queryParams.HttpUrl)-1 {
+				query += " AND (httpUrl=?"
+			} else if i != 0 && i == len(queryParams.HttpUrl)-1 {
+				query += " OR httpUrl=?)"
+			} else {
+				query += " OR httpUrl=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.Component) > 0 {
+		for i, e := range queryParams.Component {
+			if i == 0 && i == len(queryParams.Component)-1 {
+				query += " AND (component=?)"
+			} else if i == 0 && i != len(queryParams.Component)-1 {
+				query += " AND (component=?"
+			} else if i != 0 && i == len(queryParams.Component)-1 {
+				query += " OR component=?)"
+			} else {
+				query += " OR component=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.Operation) > 0 {
+		for i, e := range queryParams.Operation {
+			if i == 0 && i == len(queryParams.Operation)-1 {
+				query += " AND (name=?)"
+			} else if i == 0 && i != len(queryParams.Operation)-1 {
+				query += " AND (name=?"
+			} else if i != 0 && i == len(queryParams.Operation)-1 {
+				query += " OR name=?)"
+			} else {
+				query += " OR name=?"
+			}
+			args = append(args, e)
+		}
+	}
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+	if len(queryParams.Status) != 0 {
+		for _, e := range queryParams.Status {
+			if e == "error" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			} else if e == "ok" {
+				query += " AND (NOT ( has(tags, 'error:true') AND statusCode<500 AND statusCode!=2))"
+			}
+		}
+	}
+	if len(queryParams.Kind) != 0 {
+		query = query + " AND kind = ?"
+		args = append(args, queryParams.Kind)
+	}
+
+	for _, item := range queryParams.Tags {
+
+		if item.Operator == "equals" {
+			for i, value := range item.Values {
+				if i == 0 && i == len(item.Values)-1 {
+					query += " AND has(tags, ?)"
+				} else if i == 0 && i != len(item.Values)-1 {
+					query += " AND (has(tags, ?)"
+				} else if i != 0 && i == len(item.Values)-1 {
+					query += " OR has(tags, ?))"
+				} else {
+					query += " OR has(tags, ?)"
+				}
+				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
+			}
+		} else if item.Operator == "contains" {
+			for i, value := range item.Values {
+				if i == 0 && i == len(item.Values)-1 {
+					query += " AND tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
+				} else if i == 0 && i != len(item.Values)-1 {
+					query += " AND (tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
+				} else if i != 0 && i == len(item.Values)-1 {
+					query += " OR tagsValues[indexOf(tagsKeys, ?)] ILIKE ?)"
+				} else {
+					query += " OR tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
+				}
+				args = append(args, item.Key)
+				args = append(args, fmt.Sprintf("%%%s%%", value))
+			}
+		} else if item.Operator == "regex" {
+			if len(item.Values) != 1 {
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Regex tag operator should only have one value")}
+			}
+			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
+			args = append(args, item.Key)
+			args = append(args, item.Values[0])
+		} else if item.Operator == "isnotnull" {
+			for range item.Values {
+				query = query + " AND has(tagsKeys, ?)"
+				args = append(args, item.Key)
+			}
+		} else {
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+		}
+
+	}
+
+	if len(queryParams.Order) != 0 {
+		if queryParams.Order == "descending" {
+			query = query + "  ORDER BY timestamp DESC"
+		}
+		if queryParams.Order == "ascending" {
+			query = query + "  ORDER BY timestamp ASC"
+		}
+	}
+	if queryParams.Limit > 0 {
+		query = query + " LIMIT ?"
+		args = append(args, queryParams.Limit)
+	}
+
+	if queryParams.Offset > 0 {
+		query += " OFFSET ?"
+		args = append(args, queryParams.Offset)
+	}
+
+	var getFilterSpansResponses []model.GetFilterSpansResponse
+
+	err := r.db.Select(&getFilterSpansResponses, query, args...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	return &getFilterSpansResponses, nil
+}
+
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
 
 	var query string
@@ -1780,6 +1998,7 @@ func excludeTags(ctx context.Context, tags []model.TagFilters) []model.TagFilter
 		"messaging.system":    true,
 		"messaging.operation": true,
 		"component":           true,
+		"error":               true,
 	}
 	var newTags []model.TagFilters
 	for _, tag := range tags {

@@ -166,9 +166,13 @@ func (druid *DruidReader) GetTTL(_ context.Context, _ *model.GetTTLParams) (*mod
 }
 
 func (druid *DruidReader) GetSpanFilters(_ context.Context, _ *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
-	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting tracefilters")}
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting spanfilters")}
 }
 
 func (druid *DruidReader) GetTagFilters(_ context.Context, _ *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
-	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting tracefilters")}
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting tagFilters")}
+}
+
+func (druid *DruidReader) GetFilteredSpans(_ context.Context, _ *model.GetFilteredSpansParams) (*[]model.GetFilterSpansResponse, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting FilteredSpans")}
 }

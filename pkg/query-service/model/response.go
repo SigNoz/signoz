@@ -128,6 +128,17 @@ type SearchSpansResult struct {
 	Events  [][]interface{} `json:"events"`
 }
 
+type GetFilterSpansResponse struct {
+	Timestamp    string `db:"timestamp" json:"timestamp"`
+	SpanID       string `db:"spanID" json:"spanID"`
+	TraceID      string `db:"traceID" json:"traceID"`
+	ServiceName  string `db:"serviceName" json:"serviceName"`
+	Operation    string `db:"name" json:"operation"`
+	DurationNano int64  `db:"durationNano" json:"durationNano"`
+	HttpCode     string `db:"httpCode" json:"httpCode"`
+	HttpMethod   string `db:"httpMethod" json:"httpMethod"`
+}
+
 type TraceResult struct {
 	Data   []interface{} `json:"data" db:"data"`
 	Total  int           `json:"total" db:"total"`

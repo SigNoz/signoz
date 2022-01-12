@@ -491,8 +491,6 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 		return nil, err
 	}
 
-	r.ParseForm()
-
 	params := &model.SpanFilterParams{
 		Start:       startTime,
 		End:         endTime,
@@ -540,7 +538,7 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 	return params, nil
 }
 
-func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
+func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, error) {
 
 	startTime, err := parseTime("start", r)
 	if err != nil {
@@ -551,7 +549,95 @@ func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 		return nil, err
 	}
 
-	r.ParseForm()
+	params := &model.GetFilteredSpansParams{
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: []string{},
+		HttpRoute:   []string{},
+		HttpCode:    []string{},
+		HttpUrl:     []string{},
+		HttpHost:    []string{},
+		HttpMethod:  []string{},
+		Component:   []string{},
+		Status:      []string{},
+		Operation:   []string{},
+		Limit:       100,
+		Order:       "descending",
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	limitStr := r.URL.Query().Get("limit")
+	if len(limitStr) != 0 {
+		limit, err := strconv.ParseInt(limitStr, 10, 64)
+		if err != nil {
+			return nil, errors.New("Limit param is not in correct format")
+		}
+		params.Limit = limit
+	} else {
+		params.Limit = 100
+	}
+
+	offsetStr := r.URL.Query().Get("offset")
+	if len(offsetStr) != 0 {
+		offset, err := strconv.ParseInt(offsetStr, 10, 64)
+		if err != nil {
+			return nil, errors.New("Offset param is not in correct format")
+		}
+		params.Offset = offset
+	}
+
+	tags, err := parseTagsV2("tags", r)
+	if err != nil {
+		return nil, err
+	}
+	if len(*tags) != 0 {
+		params.Tags = *tags
+	}
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	kind := r.URL.Query().Get("kind")
+	if len(kind) != 0 {
+		params.Kind = kind
+	}
+
+	return params, nil
+}
+
+func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
 
 	params := &model.TagFilterParams{
 		Start:       startTime,
@@ -613,6 +699,24 @@ func fetchArrayValues(param string, r *http.Request) []string {
 func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
 
 	tags := new([]model.TagQuery)
+	tagsStr := r.URL.Query().Get(param)
+
+	if len(tagsStr) == 0 {
+		return tags, nil
+	}
+	err := json.Unmarshal([]byte(tagsStr), tags)
+	if err != nil {
+		zap.S().Error("Error in parsig tags", zap.Error(err))
+		return nil, fmt.Errorf("error in parsing %s ", param)
+	}
+	// zap.S().Info("Tags: ", *tags)
+
+	return tags, nil
+}
+
+func parseTagsV2(param string, r *http.Request) (*[]model.TagQueryV2, error) {
+
+	tags := new([]model.TagQueryV2)
 	tagsStr := r.URL.Query().Get(param)
 
 	if len(tagsStr) == 0 {
