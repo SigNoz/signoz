@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Search from 'container/Trace/Search';
 
 import { Container, LeftContainer, RightContainer } from './styles';
 
-import TraceGraph from 'container/Trace/Graph';
-import TraceTable from 'container/Trace/TraceTable';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import Filters from 'container/Trace/Filters';
+import { useLocation } from 'react-router-dom';
+import { connect, useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { TraceReducer } from 'types/reducer/trace';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { ThunkDispatch } from 'redux-thunk';
+import AppActions from 'types/actions';
+import { GetFilter } from 'store/actions/trace/getFilters';
+import { bindActionCreators } from 'redux';
 
-const Trace = (): JSX.Element => {
+const Trace = ({ getFilters }: Props): JSX.Element => {
+	const { search } = useLocation();
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const { filter } = useSelector<AppState, TraceReducer>(
+		(state) => state.traces,
+	);
+
+	useEffect(() => {
+		getFilters(search, minTime, maxTime);
+	}, [search, minTime, maxTime]);
+
 	return (
 		<>
 			<Search />
@@ -19,12 +39,28 @@ const Trace = (): JSX.Element => {
 
 				<RightContainer>
 					<TraceGraphFilter />
-					<TraceGraph />
-					<TraceTable />
+					{/* <TraceGraph />
+					<TraceTable /> */}
 				</RightContainer>
 			</Container>
 		</>
 	);
 };
 
-export default Trace;
+interface DispatchProps {
+	getFilters: (
+		query: string,
+		minTime: GlobalReducer['minTime'],
+		maxTime: GlobalReducer['maxTime'],
+	) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	getFilters: bindActionCreators(GetFilter, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(Trace);

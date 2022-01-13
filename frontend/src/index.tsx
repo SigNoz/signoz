@@ -7,9 +7,9 @@ import { Provider } from 'react-redux';
 import reportWebVitals from 'reportWebVitals';
 import store from 'store';
 
-if (process.env.NODE_ENV === 'development') {
-	reportWebVitals(console.log);
-}
+// if (process.env.NODE_ENV === 'development') {
+// 	reportWebVitals(console.log);
+// }
 
 ReactDOM.render(
 	<Provider store={store}>

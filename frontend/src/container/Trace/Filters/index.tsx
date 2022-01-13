@@ -1,58 +1,43 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 
-import { Collapse, Slider, Typography, Checkbox, Space } from 'antd';
-const { Panel } = Collapse;
-import { DurationContainer, InputComponent } from './styles';
-import PanelOptions from './Panel';
+import AppActions from 'types/actions';
+import { ThunkDispatch } from 'redux-thunk';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import { GetInitialFilter } from 'store/actions/trace/getInitialFilters';
+import Panel from './Panel';
 
-const Filters = (): JSX.Element => {
-	function callback(key: string | string[]) {
-		if (key) {
-			// fetch the filters and updated the redux selectedFilters
-			console.log(key);
-		} else {
-			console.log('clossed');
-		}
-	}
+const Filters = ({ getInitialFilter }: Props): JSX.Element => {
+	useEffect(() => {
+		getInitialFilter();
+	}, [getInitialFilter]);
 
 	return (
-		<Collapse
-			destroyInactivePanel
-			expandIconPosition="right"
-			accordion
-			onChange={callback}
-		>
-			<Panel header="Duration" showArrow key="duration">
-				<DurationContainer>
-					<Typography>Min</Typography>
-					<InputComponent />
-
-					<Typography>Min</Typography>
-					<InputComponent />
-				</DurationContainer>
-				<Slider range defaultValue={[0, 100]} />
-			</Panel>
-
-			<Panel header="Status" key="status">
-				<Space direction="vertical" align="center">
-					<Checkbox>asd</Checkbox>
-					<Checkbox>asd</Checkbox>
-				</Space>
-			</Panel>
-
-			<Panel header="Service" key="service">
-				<Space direction="vertical" align="center"></Space>
-			</Panel>
-
-			<Panel header="HTTP CODE" key="http_code">
-				<Space direction="vertical" align="center">
-					<PanelOptions text="asd" />
-					<PanelOptions text="asd" />
-					<PanelOptions text="asd" />
-				</Space>
-			</Panel>
-		</Collapse>
+		<>
+			<Panel name="duration" />
+			<Panel name="status" />
+			<Panel name="serviceName" />
+			<Panel name="component" />
+			<Panel name="httpCode" />
+			<Panel name="httpHost" />
+			<Panel name="httpMethod" />
+			<Panel name="httpRoute" />
+			<Panel name="httpUrl" />
+			<Panel name="operation" />
+		</>
 	);
 };
 
-export default Filters;
+interface DispatchProps {
+	getInitialFilter: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+) => ({
+	getInitialFilter: bindActionCreators(GetInitialFilter, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(Filters);
