@@ -5,7 +5,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getFilters';
 import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 
-const getRetention = async (
+const getFilters = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
@@ -31,4 +31,4 @@ const getRetention = async (
 	}
 };
 
-export default getRetention;
+export default getFilters;
