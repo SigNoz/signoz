@@ -6,11 +6,14 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { GetInitialFilter } from 'store/actions/trace/getInitialFilters';
 import Panel from './Panel';
+import { useLocation } from 'react-router-dom';
 
 const Filters = ({ getInitialFilter }: Props): JSX.Element => {
+	const { search } = useLocation();
+
 	useEffect(() => {
-		getInitialFilter();
-	}, [getInitialFilter]);
+		getInitialFilter(search);
+	}, [getInitialFilter, search]);
 
 	return (
 		<>
@@ -29,7 +32,7 @@ const Filters = ({ getInitialFilter }: Props): JSX.Element => {
 };
 
 interface DispatchProps {
-	getInitialFilter: () => void;
+	getInitialFilter: (query: string) => void;
 }
 
 const mapDispatchToProps = (

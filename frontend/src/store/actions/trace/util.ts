@@ -1,3 +1,5 @@
+import { TraceFilterEnum } from 'types/reducer/trace';
+
 export const parseQuery = (query: string): Map<string, string> => {
 	const url = new URLSearchParams(query);
 
@@ -45,4 +47,14 @@ export const parseQuery = (query: string): Map<string, string> => {
 	});
 
 	return filters;
+};
+
+export const convertMapIntoStringifyString = (
+	map: Map<TraceFilterEnum, Record<string, string>>,
+) => {
+	const parsedFilter = Object.fromEntries(map);
+
+	return Object.keys(parsedFilter)
+		.map((e) => `${e}=${JSON.stringify(parsedFilter[e])}`)
+		.join('&');
 };

@@ -3,7 +3,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import getFiltersApi from 'api/trace/getFilters';
-import { parseQuery } from './util';
+import { convertMapIntoStringifyString, parseQuery } from './util';
 import {
 	UPDATE_TRACE_FILTER,
 	UPDATE_TRACE_FILTER_LOADING,
@@ -31,10 +31,12 @@ export const GetFilter = (
 		const parsedQueryFilter = parseQuery(query);
 
 		const parsedFilter = Object.fromEntries(parsedQueryFilter);
+
 		const parsedFilterInState = Object.fromEntries(filter);
 
 		// if filter in state and in query are same no need to fetch the filters
 		if (isEqual(parsedFilter, parsedFilterInState)) {
+			console.log('filters are equal');
 			return;
 		}
 
@@ -64,13 +66,9 @@ export const GetFilter = (
 				},
 			});
 
-			const parsedUpdatedFilter = Object.fromEntries(traces.filter);
+			const key = convertMapIntoStringifyString(traces.filter);
 
-			const updatedKey = Object.keys(parsedUpdatedFilter)
-				.map((e) => `${e}=${JSON.stringify(parsedUpdatedFilter[e])}`)
-				.join('&');
-
-			history.replace(`${history.location.pathname}?${updatedKey}`);
+			history.replace(`${history.location.pathname}?${key}`);
 		}
 
 		dispatch({

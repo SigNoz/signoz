@@ -17,10 +17,10 @@ const Panel = (props: PanelProps) => {
 	const [isOpen, setIsOpen] = useState<boolean>(isDefaultOpen !== undefined);
 
 	useEffect(() => {
-		if (filter.get(props.name)) {
+		if (isDefaultOpen) {
 			setIsOpen(true);
 		}
-	}, [filter]);
+	}, [isDefaultOpen]);
 
 	const onClearHandler = (clearItem: TraceFilterEnum) => {
 		console.log(clearItem);
