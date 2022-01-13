@@ -1,4 +1,5 @@
-import { TraceFilterEnum } from 'types/reducer/trace';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+import history from 'lib/history';
 
 export const parseQuery = (query: string): Map<string, string> => {
 	const url = new URLSearchParams(query);
@@ -55,7 +56,18 @@ export const parseSelectedFilter = (query: string): Map<string, string[]> => {
 	const filters = new Map<string, string[]>();
 
 	url.forEach((value, key) => {
-		console.log(value, key);
+		if (key === 'selected') {
+			try {
+				const parsedValue = JSON.parse(value);
+				if (typeof parsedValue === 'object') {
+					Object.keys(parsedValue).forEach((e) => {
+						filters.set(e, parsedValue[e]);
+					});
+				}
+			} catch (error) {
+				// if the parsing error happens
+			}
+		}
 	});
 
 	return filters;
@@ -69,4 +81,17 @@ export const convertMapIntoStringifyString = (
 	return Object.keys(parsedFilter)
 		.map((e) => `${e}=${JSON.stringify(parsedFilter[e])}`)
 		.join('&');
+};
+
+export const updateURL = (
+	filter: TraceReducer['filter'],
+	selectedFilter: TraceReducer['selectedFilter'],
+) => {
+	const key = convertMapIntoStringifyString(filter);
+
+	history.replace(
+		`${history.location.pathname}?${key}&selected=${JSON.stringify(
+			Object.fromEntries(selectedFilter),
+		)}`,
+	);
 };

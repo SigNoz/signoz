@@ -9,11 +9,12 @@ const getRetention = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const params = convertObjectIntoParams(props);
-
 		const updatedQueryParams = `start=${props.start}&end=${
 			props.end
-		}&getFilters=${JSON.stringify(props.getFilters)}`;
+		}&getFilters=${JSON.stringify(props.getFilters)}&${convertObjectIntoParams(
+			props.other,
+			true,
+		)}`;
 
 		const response = await axios.get<PayloadProps>(
 			`/getSpanFilters?${updatedQueryParams}`,

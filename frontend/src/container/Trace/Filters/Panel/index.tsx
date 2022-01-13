@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 
 import PanelHeading from './PanelHeading';
 import PanelBody from './PanelBody';
+import { ThunkDispatch } from 'redux-thunk';
+import AppActions from 'types/actions';
+import { bindActionCreators } from 'redux';
+import { ExpandPanel } from 'store/actions/trace/expandPanel';
 
 const Panel = (props: PanelProps) => {
 	const { filter } = useSelector<AppState, TraceReducer>(
@@ -28,7 +32,6 @@ const Panel = (props: PanelProps) => {
 
 	const onExpandHandler = (props: TraceFilterEnum) => {
 		setIsOpen((state) => !state);
-		console.log(props);
 	};
 
 	return (
@@ -49,4 +52,14 @@ interface PanelProps {
 	name: TraceFilterEnum;
 }
 
-export default Panel;
+interface DispatchProps {
+	expandPanel: (props: TraceFilterEnum) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	expandPanel: bindActionCreators(ExpandPanel, dispatch),
+});
+
+export default connect(null, mapDispatchToProps)(Panel);

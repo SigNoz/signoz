@@ -3,6 +3,7 @@ import {
 	TraceActions,
 	UPDATE_TRACE_FILTER,
 	UPDATE_TRACE_FILTER_LOADING,
+	UPDATE_ALL_FILTERS,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -22,6 +23,18 @@ const traceReducer = (
 			return {
 				...state,
 				filter: action.payload.filter,
+			};
+		}
+
+		case UPDATE_ALL_FILTERS: {
+			const { payload } = action;
+			const { filter, filterToFetchData, selectedFilter } = payload;
+
+			return {
+				...state,
+				filter,
+				filterToFetchData,
+				selectedFilter,
 			};
 		}
 

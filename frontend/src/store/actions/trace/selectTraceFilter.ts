@@ -2,8 +2,7 @@ import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceFilterEnum } from 'types/reducer/trace';
-import { convertMapIntoStringifyString } from './util';
-import history from 'lib/history';
+import { updateURL } from './util';
 import { SELECT_TRACE_FILTER } from 'types/actions/trace';
 
 export const SelectedTraceFilter = (props: {
@@ -40,14 +39,7 @@ export const SelectedTraceFilter = (props: {
 			}
 		}
 
-		const key = convertMapIntoStringifyString(traces.filter);
-
-		// updated the selected route
-		history.replace(
-			`${history.location.pathname}?${key}&selected=${JSON.stringify(
-				Object.fromEntries(filter),
-			)}`,
-		);
+		updateURL(traces.filter, filter);
 
 		dispatch({
 			type: SELECT_TRACE_FILTER,

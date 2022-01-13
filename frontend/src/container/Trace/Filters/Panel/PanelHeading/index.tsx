@@ -9,12 +9,13 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
-	const { filterLoading } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
-	);
+	const { filterLoading, filterToFetchData } = useSelector<
+		AppState,
+		TraceReducer
+	>((state) => state.traces);
 
 	const onExpandHandler = () => {
-		props.onExpandHandler && props.onExpandHandler(props.name);
+		props.onExpandHandler(props.name);
 	};
 
 	return (

@@ -8,8 +8,7 @@ import {
 import getFiltersApi from 'api/trace/getFilters';
 import { TraceFilterEnum } from 'types/reducer/trace';
 import isEmpty from 'lodash-es/isEmpty';
-import { convertMapIntoStringifyString, parseQuery } from './util';
-import history from 'lib/history';
+import { parseQuery, updateURL } from './util';
 
 export const GetInitialFilter = (
 	query: string,
@@ -38,6 +37,7 @@ export const GetInitialFilter = (
 				end: String(globalTime.maxTime),
 				getFilters: traces.filterToFetchData,
 				start: String(globalTime.minTime),
+				other: {},
 			});
 
 			if (response.statusCode === 200) {
@@ -55,9 +55,7 @@ export const GetInitialFilter = (
 					},
 				});
 
-				const key = convertMapIntoStringifyString(initialFilters);
-
-				history.replace(`${history.location.pathname}?${key}`);
+				updateURL(initialFilters, traces.selectedFilter);
 			}
 
 			dispatch({

@@ -8,7 +8,6 @@ import Filters from 'container/Trace/Filters';
 import { useLocation } from 'react-router-dom';
 import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ThunkDispatch } from 'redux-thunk';
 import AppActions from 'types/actions';
@@ -20,9 +19,6 @@ const Trace = ({ getFilters }: Props): JSX.Element => {
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
-	);
-	const { filter } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
 	);
 
 	useEffect(() => {

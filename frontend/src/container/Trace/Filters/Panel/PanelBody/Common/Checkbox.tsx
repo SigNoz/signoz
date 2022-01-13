@@ -9,6 +9,7 @@ import { SelectedTraceFilter } from 'store/actions/trace/selectTraceFilter';
 import AppActions from 'types/actions';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
+import { updateURL } from 'store/actions/trace/util';
 
 const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	const { selectedFilter, filter } = useSelector<AppState, TraceReducer>(
@@ -20,11 +21,31 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	const isSelected = isPresent.find((e) => e === props.keyValue) !== undefined;
 
 	const onCheckHandler = () => {
-		// updated the filter to fetch the data
-		props.selectedTraceFilter({
-			topic: props.name,
-			value: props.keyValue,
-		});
+		const newSelectedMap = new Map(selectedFilter);
+
+		const isTopicPresent = newSelectedMap.get(props.name);
+
+		// append the value
+		if (!isTopicPresent) {
+			newSelectedMap.set(props.name, [props.keyValue]);
+		} else {
+			const isValuePresent =
+				isTopicPresent.find((e) => e === props.keyValue) !== undefined;
+
+			// check the value if present then remove the value
+			if (isValuePresent) {
+				newSelectedMap.set(
+					props.name,
+					isTopicPresent.filter((e) => e !== props.keyValue),
+				);
+			} else {
+				// if not present add into the array of string
+				newSelectedMap.set(props.name, [...isTopicPresent, props.keyValue]);
+			}
+		}
+
+		const mergedMaps = new Map([...selectedFilter, ...newSelectedMap]);
+		updateURL(filter, mergedMaps);
 	};
 
 	return (

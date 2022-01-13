@@ -4,7 +4,9 @@ export interface Props {
 	start: string;
 	end: string;
 	getFilters: string[];
-	[key: string]: string[] | string;
+	other: {
+		[k: string]: string[];
+	};
 }
 
 export interface PayloadProps {
