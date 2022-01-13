@@ -1,4 +1,5 @@
 import {
+	SELECT_TRACE_FILTER,
 	TraceActions,
 	UPDATE_TRACE_FILTER,
 	UPDATE_TRACE_FILTER_LOADING,
@@ -31,6 +32,12 @@ const traceReducer = (
 			};
 		}
 
+		case SELECT_TRACE_FILTER: {
+			return {
+				...state,
+				selectedFilter: action.payload.selectedFilter,
+			};
+		}
 		default:
 			return state;
 	}

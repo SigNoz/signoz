@@ -49,6 +49,18 @@ export const parseQuery = (query: string): Map<string, string> => {
 	return filters;
 };
 
+export const parseSelectedFilter = (query: string): Map<string, string[]> => {
+	const url = new URLSearchParams(query);
+
+	const filters = new Map<string, string[]>();
+
+	url.forEach((value, key) => {
+		console.log(value, key);
+	});
+
+	return filters;
+};
+
 export const convertMapIntoStringifyString = (
 	map: Map<TraceFilterEnum, Record<string, string>>,
 ) => {
