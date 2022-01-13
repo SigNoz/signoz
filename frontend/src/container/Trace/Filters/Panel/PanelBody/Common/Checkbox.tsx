@@ -12,9 +12,10 @@ import { bindActionCreators } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 
 const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
-	const { selectedFilter, filter } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
-	);
+	const { selectedFilter, filter, filterLoading } = useSelector<
+		AppState,
+		TraceReducer
+	>((state) => state.traces);
 
 	const isPresent = selectedFilter.get(props.name) || [];
 
@@ -50,7 +51,12 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 	return (
 		<CheckBoxContainer>
-			<Checkbox onClick={onCheckHandler} checked={isSelected} key={props.keyValue}>
+			<Checkbox
+				disabled={filterLoading}
+				onClick={onCheckHandler}
+				checked={isSelected}
+				key={props.keyValue}
+			>
 				{props.keyValue}
 			</Checkbox>
 			{props.value !== '-1' && <Typography>{props.value}</Typography>}
