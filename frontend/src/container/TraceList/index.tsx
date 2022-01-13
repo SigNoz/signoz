@@ -59,8 +59,7 @@ const TraceDetails = (): JSX.Element => {
 			sortDirections: ['descend', 'ascend'],
 			render: (value: number): string => {
 				const date = new Date(value);
-				const result = `${getFormattedDate(date)} ${convertDateToAmAndPm(date)}`;
-				return result;
+				return `${getFormattedDate(date)} ${convertDateToAmAndPm(date)}`;
 			},
 		},
 		{

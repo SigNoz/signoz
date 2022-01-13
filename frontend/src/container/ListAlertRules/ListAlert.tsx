@@ -12,7 +12,7 @@ import { generatePath } from 'react-router';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import DeleteAlert from './DeleteAlert';
-import { ButtonContainer, Button } from './styles';
+import { Button, ButtonContainer } from './styles';
 import Status from './TableComponents/Status';
 
 const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {

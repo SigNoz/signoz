@@ -6,10 +6,10 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import { Dispatch } from 'redux';
+import store from 'store';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import store from 'store';
 
 export const GetQueryResults = (
 	props: GetQueryResultsProps,

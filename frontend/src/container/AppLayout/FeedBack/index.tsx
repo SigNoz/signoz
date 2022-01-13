@@ -9,8 +9,8 @@ import {
 	Card,
 	CenterText,
 	Container,
-	TitleContainer,
 	FormItem,
+	TitleContainer,
 } from './styles';
 const { Title } = Typography;
 const { TextArea } = Input;

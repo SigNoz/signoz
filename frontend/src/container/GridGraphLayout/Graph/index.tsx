@@ -23,7 +23,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal, FullViewContainer } from './styles';
+import { FullViewContainer, Modal } from './styles';
 
 const GridCardGraph = ({
 	widget,

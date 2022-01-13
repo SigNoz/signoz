@@ -1,8 +1,8 @@
 import {
 	Button as ButtonComponent,
 	Card as CardComponent,
-	Typography,
 	Form,
+	Typography,
 } from 'antd';
 import styled from 'styled-components';
 

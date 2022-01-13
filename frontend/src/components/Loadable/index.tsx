@@ -3,9 +3,7 @@ import { ComponentType, lazy } from 'react';
 function Loadable(importPath: {
 	(): LoadableProps;
 }): React.LazyExoticComponent<LazyComponent> {
-	const LazyComponent = lazy(() => importPath());
-
-	return LazyComponent;
+	return lazy(() => importPath());
 }
 
 type LazyComponent = ComponentType<Record<string, unknown>>;
