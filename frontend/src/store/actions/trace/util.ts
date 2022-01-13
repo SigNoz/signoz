@@ -86,12 +86,13 @@ export const convertMapIntoStringifyString = (
 export const updateURL = (
 	filter: TraceReducer['filter'],
 	selectedFilter: TraceReducer['selectedFilter'],
+	filterToFetchData:TraceReducer['filterToFetchData']
 ) => {
 	const key = convertMapIntoStringifyString(filter);
 
 	history.replace(
 		`${history.location.pathname}?${key}&selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
-		)}`,
+		)}&filterToFetchData=${JSON.stringify(filterToFetchData)}`,
 	);
 };

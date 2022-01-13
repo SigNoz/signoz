@@ -39,7 +39,7 @@ export const SelectedTraceFilter = (props: {
 			}
 		}
 
-		updateURL(traces.filter, filter);
+		updateURL(traces.filter, filter,traces.filterToFetchData);
 
 		dispatch({
 			type: SELECT_TRACE_FILTER,

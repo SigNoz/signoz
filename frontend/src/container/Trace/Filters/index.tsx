@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-
-import AppActions from 'types/actions';
-import { ThunkDispatch } from 'redux-thunk';
-import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { GetInitialFilter } from 'store/actions/trace/getInitialFilters';
-import Panel from './Panel';
 import { useLocation } from 'react-router-dom';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { GetInitialFilter } from 'store/actions/trace/getInitialFilters';
+import AppActions from 'types/actions';
+
+import Panel from './Panel';
 
 const Filters = ({ getInitialFilter }: Props): JSX.Element => {
 	const { search } = useLocation();
@@ -37,7 +37,7 @@ interface DispatchProps {
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-) => ({
+): DispatchProps => ({
 	getInitialFilter: bindActionCreators(GetInitialFilter, dispatch),
 });
 

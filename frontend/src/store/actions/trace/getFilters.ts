@@ -3,7 +3,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import getFiltersApi from 'api/trace/getFilters';
-import { parseQuery, updateURL, parseSelectedFilter } from './util';
+import { parseQuery, parseSelectedFilter } from './util';
 import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_TRACE_FILTER_LOADING,
@@ -79,8 +79,6 @@ export const GetFilter = (
 					filterToFetchData: traces.filterToFetchData,
 				},
 			});
-
-			// updateURL(traces.filter, traces.selectedFilter);
 		}
 
 		dispatch({

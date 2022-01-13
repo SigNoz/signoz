@@ -5,7 +5,7 @@ import { TraceFilterEnum } from 'types/reducer/trace';
 import { UPDATE_FILTER_TO_FETCH_DATA } from 'types/actions/trace';
 import { updateURL } from './util';
 
-export const ExpandPanel = (
+export const ClearAllFilter = (
 	props: TraceFilterEnum,
 ): ((
 	dispatch: Dispatch<AppActions>,
@@ -16,12 +16,13 @@ export const ExpandPanel = (
 
 		const { filterToFetchData } = traces;
 
-		const updatedFilterToFetchTheData = [...new Set([...filterToFetchData, props])]
+		const updatedFilterToFetchTheData = [...filterToFetchData.filter(e=>e==props)];
+
 
 		dispatch({
 			type: UPDATE_FILTER_TO_FETCH_DATA,
 			payload: {
-				filterToFetchData:updatedFilterToFetchTheData ,
+				filterToFetchData: updatedFilterToFetchTheData,
 			},
 		});
 

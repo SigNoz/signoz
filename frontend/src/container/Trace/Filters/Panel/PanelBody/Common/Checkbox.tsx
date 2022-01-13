@@ -12,7 +12,7 @@ import { bindActionCreators } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 
 const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
-	const { selectedFilter, filter, filterLoading } = useSelector<
+	const { selectedFilter, filter, filterLoading,filterToFetchData } = useSelector<
 		AppState,
 		TraceReducer
 	>((state) => state.traces);
@@ -46,7 +46,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		}
 
 		const mergedMaps = new Map([...selectedFilter, ...newSelectedMap]);
-		updateURL(filter, mergedMaps);
+		updateURL(filter, mergedMaps,filterToFetchData);
 	};
 
 	return (

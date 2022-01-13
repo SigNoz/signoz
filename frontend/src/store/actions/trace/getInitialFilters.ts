@@ -55,7 +55,7 @@ export const GetInitialFilter = (
 					},
 				});
 
-				updateURL(initialFilters, traces.selectedFilter);
+				updateURL(initialFilters, traces.selectedFilter,traces.filterToFetchData);
 			}
 
 			dispatch({
