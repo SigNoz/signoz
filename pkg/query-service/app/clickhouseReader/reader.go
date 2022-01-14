@@ -2450,13 +2450,26 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		case "p50":
 			aggregation_query = " quantile(0.50)(durationNano) as value "
 			break
-
 		case "p95":
 			aggregation_query = " quantile(0.95)(durationNano) as value "
 			break
-
+		case "p90":
+			aggregation_query = " quantile(0.90)(durationNano) as value "
+			break
 		case "p99":
 			aggregation_query = " quantile(0.99)(durationNano) as value "
+			break
+		case "max":
+			aggregation_query = " max(durationNano) as value "
+			break
+		case "min":
+			aggregation_query = " min(durationNano) as value "
+			break
+		case "avg":
+			aggregation_query = " avg(durationNano) as value "
+			break
+		case "sum":
+			aggregation_query = " sum(durationNano) as value "
 			break
 		}
 	} else if queryParams.Dimension == "calls" {

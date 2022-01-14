@@ -21,7 +21,7 @@ var allowedDimesions = []string{"calls", "duration"}
 
 var allowedAggregations = map[string][]string{
 	"calls":    {"count", "rate_per_sec"},
-	"duration": {"avg", "p50", "p95", "p99"},
+	"duration": {"avg", "p50", "p95", "p90", "p99", "min", "max", "sum"},
 }
 
 func parseUser(r *http.Request) (*model.User, error) {
