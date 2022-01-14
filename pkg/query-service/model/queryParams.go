@@ -137,6 +137,27 @@ type GetFilteredSpansParams struct {
 	Tags        []TagQueryV2
 }
 
+type GetFilteredSpanAggregatesParams struct {
+	ServiceName       []string
+	Operation         []string
+	Kind              string
+	Status            []string
+	HttpRoute         []string
+	HttpCode          []string
+	HttpUrl           []string
+	HttpHost          []string
+	HttpMethod        []string
+	Component         []string
+	MinDuration       string
+	MaxDuration       string
+	Tags              []TagQueryV2
+	Start             *time.Time
+	End               *time.Time
+	StepSeconds       int
+	Dimension         string
+	AggregationOption string
+}
+
 type SpanFilterParams struct {
 	Status      []string
 	ServiceName []string

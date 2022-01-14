@@ -628,6 +628,106 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 	return params, nil
 }
 
+func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpanAggregatesParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	stepStr := r.URL.Query().Get("step")
+	if len(stepStr) == 0 {
+		return nil, errors.New("step param missing in query")
+	}
+
+	stepInt, err := strconv.Atoi(stepStr)
+	if err != nil {
+		return nil, errors.New("step param is not in correct format")
+	}
+
+	dimension := r.URL.Query().Get("dimension")
+	if len(dimension) == 0 {
+		return nil, errors.New("dimension param missing in query")
+	} else {
+		if !DoesExistInSlice(dimension, allowedDimesions) {
+			return nil, errors.New(fmt.Sprintf("given dimension: %s is not allowed in query", dimension))
+		}
+	}
+
+	aggregationOption := r.URL.Query().Get("aggregation_option")
+	if len(aggregationOption) == 0 {
+		return nil, errors.New("Aggregation Option missing in query params")
+	} else {
+		if !DoesExistInSlice(aggregationOption, allowedAggregations[dimension]) {
+			return nil, errors.New(fmt.Sprintf("given aggregation option: %s is not allowed with dimension: %s", aggregationOption, dimension))
+		}
+	}
+
+	params := &model.GetFilteredSpanAggregatesParams{
+		Start:             startTime,
+		End:               endTime,
+		ServiceName:       []string{},
+		HttpRoute:         []string{},
+		HttpCode:          []string{},
+		HttpUrl:           []string{},
+		HttpHost:          []string{},
+		HttpMethod:        []string{},
+		Component:         []string{},
+		Status:            []string{},
+		Operation:         []string{},
+		StepSeconds:       stepInt,
+		Dimension:         dimension,
+		AggregationOption: aggregationOption,
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	tags, err := parseTagsV2("tags", r)
+	if err != nil {
+		return nil, err
+	}
+	if len(*tags) != 0 {
+		params.Tags = *tags
+	}
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	kind := r.URL.Query().Get("kind")
+	if len(kind) != 0 {
+		params.Kind = kind
+	}
+
+	return params, nil
+}
+
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 
 	startTime, err := parseTime("start", r)

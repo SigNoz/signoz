@@ -176,3 +176,7 @@ func (druid *DruidReader) GetTagFilters(_ context.Context, _ *model.TagFilterPar
 func (druid *DruidReader) GetFilteredSpans(_ context.Context, _ *model.GetFilteredSpansParams) (*[]model.GetFilterSpansResponse, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting FilteredSpans")}
 }
+
+func (druid *DruidReader) GetFilteredSpansAggregates(_ context.Context, _ *model.GetFilteredSpanAggregatesParams) (*[]model.SpanSearchAggregatesResponseItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting FilteredSpans")}
+}

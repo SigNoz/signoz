@@ -206,7 +206,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getSpanFilters", aH.getSpanFilters).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/getTagFilters", aH.getTagFilters).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/getFilteredSpans", aH.getFilteredSpans).Methods(http.MethodGet)
-
+	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.getFilteredSpanAggregates).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -945,6 +945,22 @@ func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := (*aH.reader).GetFilteredSpans(context.Background(), query)
+
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseFilteredSpanAggregatesRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).GetFilteredSpansAggregates(context.Background(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
