@@ -1817,8 +1817,8 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 
 	if queryParams.Offset > 0 {
-		query += " OFFSET ?"
-		args = append(args, queryParams.Offset)
+		query = query + fmt.Sprintf(" OFFSET %d", queryParams.Offset)
+		// args = append(args, queryParams.Offset)
 	}
 
 	var getFilterSpansResponses []model.GetFilterSpansResponse
