@@ -5,6 +5,10 @@ on:
     paths:
       - 'pkg/query-service/**'
       - 'frontend/**'
+    branches:
+      - main
+    tags:
+      - ^v[0-9]+.[0-9]+.[0-9]+$
 
 jobs:
 
