@@ -12,28 +12,22 @@ jobs:
   e2e-k3s:
     runs-on: ubuntu-latest
     if: ${{ github.event.label.name == 'ok-to-test' }}
+    env:
+      DOCKER_TAG: pull-${{ github.event.number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build query-service image
-        env:
-          DOCKER_TAG: pull-${{ github.event.number }}
         run: make build-query-service-amd64
       - name: Build frontend image
-        env:
-          DOCKER_TAG: pull-${{ github.event.number }}
         run: make build-frontend-amd64
       - name: Create a k3s cluster
         uses: AbsaOSS/k3d-action@v2
         with:
-          cluster-name: "signoz-cluster"
+          cluster-name: "signoz"
       - name: Inject the images to the cluster
-        env:
-          DOCKER_TAG: pull-${{ github.event.number }}
-        run: k3d image import signoz/query-service:$DOCKER_TAG signoz/frontend:$DOCKER_TAG -c signoz-cluster
+        run: k3d image import signoz/query-service:$DOCKER_TAG signoz/frontend:$DOCKER_TAG -c signoz
       - name: Deploy the app
-        env:
-          DOCKER_TAG: pull-${{ github.event.number }}
         run: |
           helm dependency update deploy/kubernetes/platform
           helm install signoz deploy/kubernetes/platform/ -n platform --create-namespace \
@@ -50,15 +44,21 @@ jobs:
         run: |
           kubectl create ns sample-application
           kubectl -n sample-application apply -Rf sample-apps/hotrod/
-          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status
+          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
+          #TODO: we can remove that sleep once the sample app readiness prob is fixed.
+          sleep 300 # if we don't wait the curl command return success but doesn't kick-of the requests
           kubectl -n sample-application run strzal --image=djbingham/curl \
             --restart='OnFailure' -i --rm --command -- curl -X POST -F \
             'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+          sleep 600 # give some time for the data to reach signoz
+      - name: Get commit short sha
+        uses: benjlevesque/short-sha@v1.2
+        id: short-sha
       - name: Start tunnel
         env:
-          DOCKER_TAG: pull-${{ github.event.number }}
+          COMMIT_SHA: pr-${{ steps.short-sha.outputs.sha }}
         run: |
           npm install -g localtunnel
           host=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f4)
           port=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
-          lt -p $port -l $host -s "$DOCKER_TAG"
+          lt -p $port -l $host -s $COMMIT_SHA
