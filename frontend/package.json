@@ -47,7 +47,7 @@
 		"history": "4.10.1",
 		"html-webpack-plugin": "5.1.0",
 		"jest": "26.6.0",
-		"mini-css-extract-plugin": "^2.4.5",
+		"mini-css-extract-plugin": "2.4.5",
 		"monaco-editor": "^0.30.0",
 		"react": "17.0.0",
 		"react-dom": "17.0.0",
