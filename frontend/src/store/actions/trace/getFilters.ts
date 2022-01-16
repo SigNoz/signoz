@@ -3,7 +3,11 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import getFiltersApi from 'api/trace/getFilters';
-import { parseQuery, parseSelectedFilter } from './util';
+import {
+	parseQuery,
+	parseSelectedFilter,
+	parseFilterToFetchData,
+} from './util';
 import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_TRACE_FILTER_LOADING,
@@ -29,6 +33,7 @@ export const GetFilter = (
 
 		const parsedQueryFilter = parseQuery(query);
 		const parsedQuerySelectedFilter = parseSelectedFilter(query);
+		const parsedQueryFetchSelectedData = parseFilterToFetchData(query);
 
 		const parsedFilter = Object.fromEntries(parsedQueryFilter);
 		const parsedSelectedFilter = Object.fromEntries(parsedQuerySelectedFilter);
@@ -39,7 +44,8 @@ export const GetFilter = (
 		// if filter in state and in query are same no need to fetch the filters
 		if (
 			isEqual(parsedFilter, parsedFilterInState) &&
-			isEqual(parsedSelectedFilter, parsedSelectedFilterInState)
+			isEqual(parsedSelectedFilter, parsedSelectedFilterInState) &&
+			isEqual(parsedQueryFetchSelectedData, traces.filterToFetchData)
 		) {
 			console.log('filters are equal');
 			return;
@@ -55,14 +61,14 @@ export const GetFilter = (
 
 		const response = await getFiltersApi({
 			end: String(maxTime),
-			getFilters: traces.filterToFetchData,
+			getFilters: parsedQueryFetchSelectedData,
 			start: String(minTime),
 			other: parsedSelectedFilter,
 		});
 
 		if (response.statusCode === 200) {
 			// updating the trace filter
-			traces.filterToFetchData.map((e) => {
+			parsedQueryFetchSelectedData.map((e) => {
 				traces.filter.set(e, response.payload[e]);
 			});
 
@@ -76,7 +82,7 @@ export const GetFilter = (
 				payload: {
 					filter: traces.filter,
 					selectedFilter: initialSelectedFilter,
-					filterToFetchData: traces.filterToFetchData,
+					filterToFetchData: parsedQueryFetchSelectedData,
 				},
 			});
 		}

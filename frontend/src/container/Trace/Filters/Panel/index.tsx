@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { ClearAllFilter } from 'store/actions/trace/clearAllFilter';
 import { ExpandPanel } from 'store/actions/trace/expandPanel';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -26,12 +27,13 @@ const Panel = (props: PanelProps): JSX.Element => {
 	}, [isDefaultOpen]);
 
 	const onClearHandler = (clearItem: TraceFilterEnum) => {
-		console.log(clearItem);
+		props.clearAllFilter(clearItem);
+		setIsOpen((state) => !state);
 	};
 
 	const onExpandHandler = (exp: TraceFilterEnum) => {
 		setIsOpen((state) => !state);
-		props.expandPanel(exp)
+		props.expandPanel(exp);
 	};
 
 	return (
@@ -48,20 +50,20 @@ const Panel = (props: PanelProps): JSX.Element => {
 	);
 };
 
-
 interface DispatchProps {
 	expandPanel: (props: TraceFilterEnum) => void;
+	clearAllFilter: (props: TraceFilterEnum) => void;
 }
 
 interface PanelProps extends DispatchProps {
 	name: TraceFilterEnum;
 }
 
-
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	expandPanel: bindActionCreators(ExpandPanel, dispatch),
+	clearAllFilter: bindActionCreators(ClearAllFilter, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(Panel);

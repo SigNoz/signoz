@@ -73,6 +73,28 @@ export const parseSelectedFilter = (query: string): Map<string, string[]> => {
 	return filters;
 };
 
+export const parseFilterToFetchData = (query: string) => {
+	const url = new URLSearchParams(query);
+
+	let filterToFetchData: TraceFilterEnum[] = [];
+
+	url.forEach((value, key) => {
+		if (key === 'filterToFetchData') {
+			try {
+				const parsedValue = JSON.parse(value);
+
+				if (Array.isArray(parsedValue)) {
+					filterToFetchData.push(...parsedValue);
+				}
+			} catch (error) {
+				console.log('error while parsing json');
+			}
+		}
+	});
+
+	return filterToFetchData;
+};
+
 export const convertMapIntoStringifyString = (
 	map: Map<TraceFilterEnum, Record<string, string>>,
 ) => {
@@ -86,7 +108,7 @@ export const convertMapIntoStringifyString = (
 export const updateURL = (
 	filter: TraceReducer['filter'],
 	selectedFilter: TraceReducer['selectedFilter'],
-	filterToFetchData:TraceReducer['filterToFetchData']
+	filterToFetchData: TraceReducer['filterToFetchData'],
 ) => {
 	const key = convertMapIntoStringifyString(filter);
 

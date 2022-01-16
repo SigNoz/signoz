@@ -2,7 +2,6 @@ import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceFilterEnum } from 'types/reducer/trace';
-import { UPDATE_FILTER_TO_FETCH_DATA } from 'types/actions/trace';
 import { updateURL } from './util';
 
 export const ExpandPanel = (
@@ -16,15 +15,10 @@ export const ExpandPanel = (
 
 		const { filterToFetchData } = traces;
 
-		const updatedFilterToFetchTheData = [...new Set([...filterToFetchData, props])]
+		const updatedFilterToFetchTheData = [
+			...new Set([...filterToFetchData, props]),
+		];
 
-		dispatch({
-			type: UPDATE_FILTER_TO_FETCH_DATA,
-			payload: {
-				filterToFetchData:updatedFilterToFetchTheData ,
-			},
-		});
-
-		updateURL(traces.filter,traces.selectedFilter,updatedFilterToFetchTheData)
+		updateURL(traces.filter, traces.selectedFilter, updatedFilterToFetchTheData);
 	};
 };

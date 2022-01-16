@@ -51,6 +51,7 @@ const traceReducer = (
 				selectedFilter: action.payload.selectedFilter,
 			};
 		}
+
 		default:
 			return state;
 	}
