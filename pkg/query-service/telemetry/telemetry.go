@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"time"
 
-	"github.com/google/uuid"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
@@ -20,6 +20,7 @@ type Telemetry struct {
 	operator   analytics.Client
 	ipAddress  string
 	distinctId string
+	enabled    bool
 }
 
 const (
@@ -27,7 +28,29 @@ const (
 	TELEMETRY_EVENT_USER               = "User"
 	TELEMETRY_EVENT_INPRODUCT_FEEDBACK = "InProduct Feeback Submitted"
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
+	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
 )
+
+func createTelemetry() {
+	telemetry = &Telemetry{
+		operator:  analytics.New(api_key),
+		ipAddress: getOutboundIP(),
+		enabled:   true,
+	}
+
+	data := map[string]interface{}{}
+
+	ticker := time.NewTicker(6 * time.Hour)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+			}
+		}
+	}()
+
+}
 
 // Get preferred outbound ip of this machine
 func getOutboundIP() string {
@@ -47,6 +70,9 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	if !a.isTelemetryEnabled() {
+		return
+	}
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
 		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
@@ -54,6 +80,10 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 }
 
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
+
+	if !a.isTelemetryEnabled() {
+		return
+	}
 
 	zap.S().Info(data)
 	properties := analytics.NewProperties()
@@ -69,6 +99,14 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 	})
 }
 
+func (a *Telemetry) isTelemetryEnabled() bool {
+	return a.enabled
+}
+
+func (a *Telemetry) SetTelemetryEnabled(value bool) {
+	a.enabled = value
+}
+
 func GetInstance() *Telemetry {
 
 	if telemetry == nil {
@@ -76,11 +114,7 @@ func GetInstance() *Telemetry {
 		defer telemetry.Unlock()
 		if telemetry == nil {
 			zap.S().Info("Creating single instance now.")
-			telemetry = &Telemetry{
-				operator:   analytics.New(api_key),
-				ipAddress:  getOutboundIP(),
-				distinctId: uuid.New().String(),
-			}
+			createTelemetry()
 		} else {
 			zap.S().Debug("Single instance already created.")
 		}

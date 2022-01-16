@@ -180,6 +180,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.deleteDashboard).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/feedback", aH.submitFeedback).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
@@ -199,6 +200,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/telemetry", aH.setTelemetrySettings).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/telemetry", aH.getTelemetrySettings).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -940,6 +943,35 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getTelemetrySettings(w http.ResponseWriter, r *http.Request) {
+	ttlParams, err := parseGetTTL(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).GetTelemetrySettings(context.Background(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) setTelemetrySettings(w http.ResponseWriter, r *http.Request) {
+	ttlParams, err := parseDuration(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).SetTelemetrySettings(context.Background(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
