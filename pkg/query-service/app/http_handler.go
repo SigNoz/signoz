@@ -13,8 +13,8 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type status string
@@ -33,23 +33,17 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath   string
-	apiPrefix  string
-	reader     *Reader
-	pc         *analytics.Client
-	distinctId string
-	ipAddress  string
-	ready      func(http.HandlerFunc) http.HandlerFunc
+	basePath  string
+	apiPrefix string
+	reader    *Reader
+	ready     func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, pc *analytics.Client, distinctId string, ipAddress string) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader) (*APIHandler, error) {
 
 	aH := &APIHandler{
-		reader:     reader,
-		pc:         pc,
-		distinctId: distinctId,
-		ipAddress:  ipAddress,
+		reader: reader,
 	}
 	aH.ready = aH.testReady
 
@@ -651,11 +645,11 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
 	email := postData["email"]
 
-	(*aH.pc).Enqueue(analytics.Track{
-		UserId:     aH.ipAddress,
-		Event:      "InProduct Feeback Submitted",
-		Properties: analytics.NewProperties().Set("email", email).Set("message", message).Set("ip", aH.ipAddress),
-	})
+	data := map[string]interface{}{
+		"email":   email,
+		"message": message,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data)
 
 }
 
@@ -668,15 +662,12 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	(*aH.pc).Enqueue(analytics.Identify{
-		UserId: aH.ipAddress,
-		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", aH.ipAddress),
-	})
-	(*aH.pc).Enqueue(analytics.Track{
-		UserId:     aH.ipAddress,
-		Event:      "User",
-		Properties: analytics.NewProperties().Set("name", user.Name).Set("email", user.Email).Set("ip", aH.ipAddress),
-	})
+	telemetry.GetInstance().IdentifyUser(user)
+	data := map[string]interface{}{
+		"name":  user.Name,
+		"email": user.Email,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
 
 }
 
@@ -852,11 +843,11 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	(*aH.pc).Enqueue(analytics.Track{
-		UserId:     aH.ipAddress,
-		Event:      "Number of Services",
-		Properties: analytics.NewProperties().Set("number", len(*result)).Set("ip", aH.ipAddress),
-	})
+	data := map[string]interface{}{
+		"number": len(*result),
+	}
+
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
 
 	aH.writeJSON(w, r, result)
 }

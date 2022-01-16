@@ -2,24 +2,23 @@ package app
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/druidReader"
 	"go.signoz.io/query-service/healthcheck"
+	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 type ServerOptions struct {
@@ -42,25 +41,11 @@ type Server struct {
 	httpServer         *http.Server
 	separatePorts      bool
 	unavailableChannel chan healthcheck.Status
-	analyticsClient    *analytics.Client
-	distinctId         string
-	ipAddress          string
 }
 
 // HealthCheckStatus returns health check status channel a client can subscribe to
 func (s Server) HealthCheckStatus() chan healthcheck.Status {
 	return s.unavailableChannel
-}
-
-// Get preferred outbound ip of this machine
-func getOutboundIP() string {
-
-	resp, _ := http.Get("https://api.ipify.org?format=text")
-
-	defer resp.Body.Close()
-	ip, _ := ioutil.ReadAll(resp.Body)
-
-	return string(ip)
 }
 
 // NewServer creates and initializes Server
@@ -93,12 +78,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		// separatePorts:      grpcPort != httpPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
-	analyticsClient := analytics.New("4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz")
-	s.analyticsClient = &analyticsClient
-
-	s.distinctId = uuid.New().String()
-	s.ipAddress = getOutboundIP()
-
 	httpServer, err := s.createHTTPServer()
 
 	if err != nil {
@@ -131,7 +110,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader, s.analyticsClient, s.distinctId, s.ipAddress)
+	apiHandler, err := NewAPIHandler(&reader)
 	if err != nil {
 		return nil, err
 	}
@@ -174,12 +153,9 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		(*s.analyticsClient).Enqueue(analytics.Track{
-			Event:  path,
-			UserId: s.ipAddress,
-			Properties: analytics.NewProperties().
-				Set("ip", s.ipAddress),
-		})
+		data := map[string]interface{}{"path": path}
+
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 
 		next.ServeHTTP(w, r)
 	})
