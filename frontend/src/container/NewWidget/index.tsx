@@ -21,6 +21,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import DashboardReducer from 'types/reducer/dashboards';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
 import RightContainer from './RightContainer';
@@ -42,9 +43,10 @@ const NewWidget = ({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { maxTime, minTime } = useSelector<AppState, GlobalTime>(
-		(state) => state.globalTime,
-	);
+	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const [selectedDashboard] = dashboards;
 
@@ -146,12 +148,11 @@ const NewWidget = ({
 	const getQueryResult = useCallback(() => {
 		if (selectedWidget?.id.length !== 0) {
 			getQueryResults({
-				maxTime,
-				minTime,
 				query: selectedWidget?.query || [],
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
+				globalSelectedInterval,
 			});
 		}
 	}, [

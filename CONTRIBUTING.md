@@ -1,12 +1,15 @@
 # How to Contribute
 
-There are primarily 3 areas in which you can contribute in SigNoz
+There are primarily 2 areas in which you can contribute in SigNoz
 
 - Frontend ( written in Typescript, React)
-- Query Service (written in Go)
-- Flattener Processor (written in Go)
+- Backend - ( Query Service - written in Go)
 
 Depending upon your area of expertise & interest, you can chose one or more to contribute. Below are detailed instructions to contribute in each area
+
+> Please note: If you want to work on an issue, please ask the maintainers to assign the issue to you before starting work on it. This would help us understand who is working on an issue and prevent duplicate work. 🙏🏻
+
+> If you just raise a PR, without the corresponding issue being assigned to you - it may not be accepted.
 
 # Develop Frontend
 
@@ -53,11 +56,6 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
-# Contribute to Flattener Processor
-
-Not needed to run for the ClickHouse setup
-
-more info at [https://github.com/SigNoz/signoz/tree/main/pkg/processors/flattener](https://github.com/SigNoz/signoz/tree/main/pkg/processors/flattener)
 
 ## General Instructions
 

@@ -28,10 +28,10 @@ dependencies:
     version: 6.0.0
   - name: query-service
     repository: "file://./signoz-charts/query-service"
-    version: 0.5.3
+    version: 0.5.4
   - name: frontend
     repository: "file://./signoz-charts/frontend"
-    version: 0.5.3
+    version: 0.5.4
   - name: alertmanager
     repository: "file://./signoz-charts/alertmanager"
     version: 0.5.0

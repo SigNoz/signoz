@@ -2,6 +2,7 @@ import { Button, Modal, notification, Typography } from 'antd';
 import getRetentionperoidApi from 'api/settings/getRetention';
 import setRetentionApi from 'api/settings/setRetention';
 import Spinner from 'components/Spinner';
+import TextToolTip from 'components/TextToolTip';
 import useFetch from 'hooks/useFetch';
 import convertIntoHr from 'lib/convertIntoHr';
 import getSettingsPeroid from 'lib/getSettingsPeroid';
@@ -14,6 +15,7 @@ import {
 	Container,
 	ErrorText,
 	ErrorTextContainer,
+	ToolTipContainer,
 } from './styles';
 
 const GeneralSettings = (): JSX.Element => {
@@ -182,10 +184,26 @@ const GeneralSettings = (): JSX.Element => {
 		<Container>
 			{Element}
 
-			{errorText && (
+			{errorText ? (
 				<ErrorTextContainer>
 					<ErrorText>{errorText}</ErrorText>
+
+					<TextToolTip
+						{...{
+							text: `More details on how to set retention period`,
+							url: 'https://signoz.io/docs/userguide/retention-period/',
+						}}
+					/>
 				</ErrorTextContainer>
+			) : (
+				<ToolTipContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to set retention period`,
+							url: 'https://signoz.io/docs/userguide/retention-period/',
+						}}
+					/>
+				</ToolTipContainer>
 			)}
 
 			<Retention

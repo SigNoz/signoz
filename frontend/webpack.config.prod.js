@@ -9,6 +9,29 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+	.BundleAnalyzerPlugin;
+
+const plugins = [
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new CompressionPlugin({
+		exclude: /.map$/,
+	}),
+	new CopyPlugin({
+		patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+	}),
+	new webpack.ProvidePlugin({
+		process: 'process/browser',
+	}),
+	new webpack.DefinePlugin({
+		'process.env': JSON.stringify(process.env),
+	}),
+	new MiniCssExtractPlugin(),
+];
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 const config = {
 	mode: 'production',
@@ -56,22 +79,7 @@ const config = {
 			},
 		],
 	},
-	plugins: [
-		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new CompressionPlugin({
-			exclude: /.map$/,
-		}),
-		new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
-		new webpack.ProvidePlugin({
-			process: 'process/browser',
-		}),
-		new webpack.DefinePlugin({
-			'process.env': JSON.stringify(process.env),
-		}),
-		new MiniCssExtractPlugin(),
-	],
+	plugins: plugins,
 	optimization: {
 		chunkIds: 'named',
 		concatenateModules: true,
@@ -106,5 +114,9 @@ const config = {
 		hints: 'warning',
 	},
 };
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 module.exports = config;
