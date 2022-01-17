@@ -1,6 +1,6 @@
 import React from 'react';
 import { CaretDownFilled, CaretUpFilled } from '@ant-design/icons';
-import { Card, Button, Typography } from 'antd';
+import { Card, Button, Typography, Spin } from 'antd';
 
 import { Container, IconContainer, TextCotainer } from './styles';
 import { useSelector } from 'react-redux';
@@ -32,6 +32,8 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					<Text style={{ textTransform: 'capitalize' }} ellipsis>
 						{props.name}
 					</Text>
+
+					{filterLoading && <Spin size="small" />}
 				</TextCotainer>
 
 				<Button onClick={() => props.onClearAllHandler(props.name)} type="link">
