@@ -12,46 +12,37 @@ import PanelBody from './PanelBody';
 import PanelHeading from './PanelHeading';
 
 const Panel = (props: PanelProps): JSX.Element => {
-	const { filter } = useSelector<AppState, TraceReducer>(
+	const { filterToFetchData } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
-	const isDefaultOpen = filter.get(props.name);
-
-	const [isOpen, setIsOpen] = useState<boolean>(isDefaultOpen !== undefined);
-
-	useEffect(() => {
-		if (isDefaultOpen) {
-			setIsOpen(true);
-		}
-	}, [isDefaultOpen]);
+	const isDefaultOpen =
+		filterToFetchData.find((e) => e === props.name) !== undefined;
 
 	const onClearHandler = (clearItem: TraceFilterEnum) => {
 		props.clearAllFilter(clearItem);
-		setIsOpen((state) => !state);
 	};
 
 	const onExpandHandler = (exp: TraceFilterEnum) => {
-		setIsOpen((state) => !state);
-		props.expandPanel(exp);
+		props.expandPanel(exp, !isDefaultOpen);
 	};
 
 	return (
 		<>
 			<PanelHeading
 				name={props.name}
-				isOpen={isOpen}
+				isOpen={isDefaultOpen}
 				onExpandHandler={onExpandHandler}
 				onClearAllHandler={onClearHandler}
 			/>
 
-			{isOpen && <PanelBody type={props.name} />}
+			{isDefaultOpen && <PanelBody type={props.name} />}
 		</>
 	);
 };
 
 interface DispatchProps {
-	expandPanel: (props: TraceFilterEnum) => void;
+	expandPanel: (props: TraceFilterEnum, isOpen: boolean) => void;
 	clearAllFilter: (props: TraceFilterEnum) => void;
 }
 

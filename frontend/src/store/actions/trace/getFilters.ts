@@ -14,6 +14,7 @@ import {
 } from 'types/actions/trace';
 import isEqual from 'lodash-es/isEqual';
 import { TraceFilterEnum } from 'types/reducer/trace';
+import { notification } from 'antd';
 
 export const GetFilter = (
 	query: string,
@@ -85,6 +86,10 @@ export const GetFilter = (
 						filterToFetchData: parsedQueryFetchSelectedData,
 					},
 				});
+			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
 			}
 
 			dispatch({
@@ -94,17 +99,6 @@ export const GetFilter = (
 				},
 			});
 		} catch (error) {
-			const { traces } = getState();
-
-			dispatch({
-				type: UPDATE_ALL_FILTERS,
-				payload: {
-					filter: traces.filter,
-					selectedFilter: traces.selectedFilter,
-					filterToFetchData: traces.filterToFetchData,
-				},
-			});
-
 			dispatch({
 				type: UPDATE_TRACE_FILTER_LOADING,
 				payload: {
