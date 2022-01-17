@@ -12,7 +12,7 @@ const AllTags = (): JSX.Element => {
 	const [currentTags, setCurrentTags] = useState<Tags[]>([
 		{
 			filters: ['first', 'second'],
-			name: 'asd',
+			name: ['asd'],
 			selectedFilter: 'IN',
 		},
 	]);
@@ -22,7 +22,7 @@ const AllTags = (): JSX.Element => {
 			...tags,
 			{
 				filters: [],
-				name: '',
+				name: [''],
 				selectedFilter: 'IN',
 			},
 		]);
@@ -35,11 +35,16 @@ const AllTags = (): JSX.Element => {
 		]);
 	};
 
+	const onRunQueryHandler = () => {
+		console.log('asd');
+	};
+
 	return (
 		<Container>
 			<CurrentTagsContainer>
 				{currentTags.map((tags, index) => (
 					<Tags
+						key={index}
 						{...{
 							...tags,
 						}}
@@ -61,7 +66,9 @@ const AllTags = (): JSX.Element => {
 
 			<ButtonContainer>
 				<Button>Reset</Button>
-				<Button icon={<PlayCircleFilled />}>Run Query</Button>
+				<Button onClick={onRunQueryHandler} icon={<PlayCircleFilled />}>
+					Run Query
+				</Button>
 			</ButtonContainer>
 		</Container>
 	);
@@ -70,7 +77,7 @@ const AllTags = (): JSX.Element => {
 export interface Tags {
 	filters: string[];
 	selectedFilter: 'NOT_IN' | 'IN';
-	name: string;
+	name: string[];
 }
 
 export default AllTags;

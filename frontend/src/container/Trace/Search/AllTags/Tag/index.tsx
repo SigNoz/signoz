@@ -1,26 +1,16 @@
 import React, { useState } from 'react';
 
 import { Tags } from '../index';
-import {
-	Button,
-	Dropdown,
-	notification,
-	Menu,
-	Tag,
-	SelectProps,
-	Spin,
-	Card,
-} from 'antd';
+import { Button, Dropdown, notification, Menu, SelectProps, Spin } from 'antd';
 import { Container, SelectComponent } from './styles';
-import { SelectValue } from 'antd/lib/select';
-import { SearchProps } from 'antd/lib/input';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
 import getTagFilters from 'api/trace/getTagFilter';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 import { CloseCircleOutlined } from '@ant-design/icons';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { SelectValue } from 'antd/lib/select';
 
 const AllMenu: Tags['selectedFilter'][] = ['IN', 'NOT_IN'];
 
@@ -30,19 +20,23 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 	);
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 	const [selectLoading, setSelectLoading] = useState<boolean>(false);
+	const [searchValue, setSearchValue] = useState<string[]>([]);
 
-	const [
-		notificationConfig,
-		NotificationElement,
-	] = notification.useNotification();
-
+	const [selectedValue, setSelectValue] = useState<string[]>([]);
 	const [selectedFilter, setSelectedFilter] = useState<Tags['selectedFilter']>(
 		'IN',
 	);
 
 	const [selectedOptions, setSelectedOptions] = useState<
-		SelectProps<''>['options']
+		SelectProps<SelectValue>['options']
 	>([]);
+
+	console.log({ searchValue, selectedValue, selectedFilter });
+
+	const [
+		notificationConfig,
+		NotificationElement,
+	] = notification.useNotification();
 
 	const AllMenuOptions = AllMenu.map((e) => (
 		<Menu.Item
@@ -55,10 +49,9 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 		</Menu.Item>
 	));
 
-	const onSearchHandler: SearchProps['onSearch'] = async (
-		selectValue: SelectValue,
-	) => {
+	const onSearchHandler = async (value: string, traces: TraceReducer) => {
 		try {
+			setSelectLoading(true);
 			const response = await getTagFilters({
 				start: globalTime.minTime,
 				end: globalTime.maxTime,
@@ -76,10 +69,25 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 					message: response.error || 'Something went wrong',
 				});
 			}
+			setSelectLoading(false);
 		} catch (error) {
 			notificationConfig.error({
 				message: 'Something went wrong',
 			});
+			setSelectLoading(false);
+		}
+	};
+
+	const onSearchDebounceFunction = useDebouncedFn(onSearchHandler, 1000);
+
+	const onSearchChangeHandler: SelectProps<SelectValue>['onChange'] = (
+		value,
+		options,
+	) => {
+		if (searchValue.length === 0) {
+			setSearchValue(options.map((e) => e.value) as string[]);
+		} else {
+			setSearchValue([]);
 		}
 	};
 
@@ -89,12 +97,15 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 
 			<Container>
 				<SelectComponent
-					onSearch={useDebouncedFn(onSearchHandler, 500)}
+					onSearch={(value) => {
+						onSearchDebounceFunction(value, traces);
+					}}
+					onChange={onSearchChangeHandler}
+					value={searchValue}
 					placeholder="Please select"
 					mode="multiple"
 					options={selectedOptions}
 					loading={selectLoading}
-					disabled={selectLoading}
 					filterOption={false}
 					notFoundContent={selectLoading ? <Spin size="small" /> : null}
 				/>
@@ -106,19 +117,10 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 				</Dropdown>
 
 				<SelectComponent
-					tagRender={({ value, closable, onClose, label }) => (
-						<Tag
-							color={value.toString()}
-							onMouseDown={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-							}}
-							closable={closable}
-							onClose={onClose}
-						>
-							{label}
-						</Tag>
-					)}
+					value={selectedValue}
+					onChange={(value) => {
+						setSelectValue(() => [...(value as string[])]);
+					}}
 					mode="tags"
 				/>
 

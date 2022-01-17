@@ -11,9 +11,9 @@ const Search = (): JSX.Element => {
 
 	const tagRef = useRef(null);
 
-	useClickOutside(tagRef, () => {
-		// setIsTagsModalHandler(false);
-	});
+	// useClickOutside(tagRef, () => {
+	// 	setIsTagsModalHandler(false);
+	// });
 
 	const onChangeHandler = (search: string) => {
 		setValue(search);
@@ -28,6 +28,10 @@ const Search = (): JSX.Element => {
 		setIsTagsModalHandler(true);
 	};
 
+	const onParseQueryToTagsHandler = () => {
+		console.log('asd');
+	};
+
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
 			<Container ref={tagRef}>
@@ -35,10 +39,10 @@ const Search = (): JSX.Element => {
 					onChange={(event) => onChangeHandler(event.target.value)}
 					value={value}
 					onFocus={onFocusHandler}
-					placeholder=""
+					placeholder="Click to filter by tags"
 				/>
 
-				<Button type="primary">
+				<Button onClick={onParseQueryToTagsHandler} type="primary">
 					<SearchOutlined />
 				</Button>
 
