@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { Slider } from 'antd';
 import { DurationText, InputComponent, TextCotainer, Text } from './styles';

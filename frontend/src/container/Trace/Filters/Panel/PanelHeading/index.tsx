@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CaretDownFilled, CaretUpFilled } from '@ant-design/icons';
 import { Card, Button, Typography } from 'antd';
 
@@ -9,10 +9,9 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
-	const { filterLoading, filterToFetchData } = useSelector<
-		AppState,
-		TraceReducer
-	>((state) => state.traces);
+	const { filterLoading } = useSelector<AppState, TraceReducer>(
+		(state) => state.traces,
+	);
 
 	const onExpandHandler = () => {
 		props.onExpandHandler(props.name);

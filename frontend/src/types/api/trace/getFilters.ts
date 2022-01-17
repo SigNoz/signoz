@@ -1,5 +1,3 @@
-import { TraceFilterEnum } from 'types/reducer/trace';
-
 export interface Props {
 	start: string;
 	end: string;

@@ -69,7 +69,7 @@ export const GetFilter = (
 
 			if (response.statusCode === 200) {
 				// updating the trace filter
-				parsedQueryFetchSelectedData.map((e) => {
+				parsedQueryFetchSelectedData.forEach((e) => {
 					traces.filter.set(e, response.payload[e]);
 				});
 

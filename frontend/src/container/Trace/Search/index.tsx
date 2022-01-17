@@ -17,7 +17,7 @@ const Search = () => {
 
 	const onChangeHandler = (search: string) => {
 		// make a ajax call and update the setValue
-		console.log(search);
+		console.log(search, setValue, setLoading);
 	};
 
 	const onDebounceChangeHandler = useDebouncedFunction(onChangeHandler, 300);
@@ -27,8 +27,8 @@ const Search = () => {
 		value,
 		options,
 		style: { width: '100%' },
-		onChange: (value) => {
-			console.log(value, 'asd');
+		onChange: (updatedValue) => {
+			console.log(updatedValue, 'asd');
 		},
 		onSearch: onDebounceChangeHandler,
 		placeholder: 'Select Item...',
