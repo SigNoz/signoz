@@ -274,6 +274,21 @@ type SpanSearchAggregatesResponseItem struct {
 	Value     float32 `json:"value,omitempty" db:"value"`
 }
 
+type GetFilteredSpansAggregatesResponse struct {
+	Items map[int64]SpanAggregatesResponseItem `json:"items"`
+}
+type SpanAggregatesResponseItem struct {
+	Timestamp int64              `json:"timestamp,omitempty" `
+	Value     float32            `json:"value,omitempty"`
+	GroupBy   map[string]float32 `json:"groupBy,omitempty"`
+}
+type SpanAggregatesDBResponseItem struct {
+	Timestamp int64   `json:"timestamp,omitempty" db:"timestamp" `
+	Time      string  `json:"time,omitempty" db:"time"`
+	Value     float32 `json:"value,omitempty" db:"value"`
+	GroupBy   string  `json:"groupBy,omitempty" db:"groupBy"`
+}
+
 type SetTTLResponseItem struct {
 	Message string `json:"message"`
 }

@@ -724,6 +724,10 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 	if len(kind) != 0 {
 		params.Kind = kind
 	}
+	groupBy := r.URL.Query().Get("groupBy")
+	if len(groupBy) != 0 {
+		params.GroupBy = groupBy
+	}
 
 	return params, nil
 }

@@ -156,6 +156,7 @@ type GetFilteredSpanAggregatesParams struct {
 	StepSeconds       int
 	Dimension         string
 	AggregationOption string
+	GroupBy           string
 }
 
 type SpanFilterParams struct {

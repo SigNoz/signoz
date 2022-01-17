@@ -2440,9 +2440,9 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 
 }
 
-func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*[]model.SpanSearchAggregatesResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
 
-	spanSearchAggregatesResponseItems := []model.SpanSearchAggregatesResponseItem{}
+	SpanAggregatesDBResponseItems := []model.SpanAggregatesDBResponseItem{}
 
 	aggregation_query := ""
 	if queryParams.Dimension == "duration" {
@@ -2476,9 +2476,42 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		aggregation_query = " count(*) as value "
 	}
 
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+
+	var query string
+	if queryParams.GroupBy != "" {
+		switch queryParams.GroupBy {
+		case "serviceName":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, serviceName as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpCode":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpCode as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpMethod":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpMethod as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpUrl":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpUrl as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpRoute":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpRoute as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpHost":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpHost as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "dbName":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbName as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "dbOperation":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbOperation as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "operation":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, name as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "msgSystem":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "msgOperation":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgOperation as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "dbSystem":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "component":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		}
+	} else {
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+	}
+
 	if len(queryParams.ServiceName) > 0 {
 		for i, e := range queryParams.ServiceName {
 			if i == 0 && i == len(queryParams.ServiceName)-1 {
@@ -2659,9 +2692,40 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 	}
 
-	query = query + " GROUP BY time ORDER BY time"
+	if queryParams.GroupBy != "" {
+		switch queryParams.GroupBy {
+		case "serviceName":
+			query = query + " GROUP BY time, serviceName as groupBy ORDER BY time"
+		case "httpCode":
+			query = query + " GROUP BY time, httpCode as groupBy ORDER BY time"
+		case "httpMethod":
+			query = query + " GROUP BY time, httpMethod as groupBy ORDER BY time"
+		case "httpUrl":
+			query = query + " GROUP BY time, httpUrl as groupBy ORDER BY time"
+		case "httpRoute":
+			query = query + " GROUP BY time, httpRoute as groupBy ORDER BY time"
+		case "httpHost":
+			query = query + " GROUP BY time, httpHost as groupBy ORDER BY time"
+		case "dbName":
+			query = query + " GROUP BY time, dbName as groupBy ORDER BY time"
+		case "dbOperation":
+			query = query + " GROUP BY time, dbOperation as groupBy ORDER BY time"
+		case "operation":
+			query = query + " GROUP BY time, name as groupBy ORDER BY time"
+		case "msgSystem":
+			query = query + " GROUP BY time, msgSystem as groupBy ORDER BY time"
+		case "msgOperation":
+			query = query + " GROUP BY time, msgOperation as groupBy ORDER BY time"
+		case "dbSystem":
+			query = query + " GROUP BY time, dbSystem as groupBy ORDER BY time"
+		case "component":
+			query = query + " GROUP BY time, component as groupBy ORDER BY time"
+		}
+	} else {
+		query = query + " GROUP BY time ORDER BY time"
+	}
 
-	err := r.db.Select(&spanSearchAggregatesResponseItems, query, args...)
+	err := r.db.Select(&SpanAggregatesDBResponseItems, query, args...)
 
 	zap.S().Info(query)
 
@@ -2670,17 +2734,42 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
 	}
 
-	for i, _ := range spanSearchAggregatesResponseItems {
+	GetFilteredSpansAggregatesResponse := model.GetFilteredSpansAggregatesResponse{
+		Items: map[int64]model.SpanAggregatesResponseItem{},
+	}
 
-		timeObj, _ := time.Parse(time.RFC3339Nano, spanSearchAggregatesResponseItems[i].Time)
-		spanSearchAggregatesResponseItems[i].Timestamp = int64(timeObj.UnixNano())
-		spanSearchAggregatesResponseItems[i].Time = ""
+	for i, _ := range SpanAggregatesDBResponseItems {
+
+		timeObj, _ := time.Parse(time.RFC3339Nano, SpanAggregatesDBResponseItems[i].Time)
+		SpanAggregatesDBResponseItems[i].Timestamp = int64(timeObj.UnixNano())
+		SpanAggregatesDBResponseItems[i].Time = ""
 		if queryParams.AggregationOption == "rate_per_sec" {
-			spanSearchAggregatesResponseItems[i].Value = float32(spanSearchAggregatesResponseItems[i].Value) / float32(queryParams.StepSeconds)
+			SpanAggregatesDBResponseItems[i].Value = float32(SpanAggregatesDBResponseItems[i].Value) / float32(queryParams.StepSeconds)
+		}
+		if responseElement, ok := GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp]; !ok {
+			if queryParams.GroupBy != "" {
+				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
+					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
+					Value:     SpanAggregatesDBResponseItems[i].Value,
+					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy: SpanAggregatesDBResponseItems[i].Value},
+				}
+			} else {
+				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
+					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
+					Value:     SpanAggregatesDBResponseItems[i].Value,
+				}
+			}
+
+		} else {
+			responseElement.Value += SpanAggregatesDBResponseItems[i].Value
+			if queryParams.GroupBy != "" {
+				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy] = SpanAggregatesDBResponseItems[i].Value
+			}
+			GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = responseElement
 		}
 	}
 
-	return &spanSearchAggregatesResponseItems, nil
+	return &GetFilteredSpansAggregatesResponse, nil
 }
 
 func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {

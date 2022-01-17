@@ -40,7 +40,7 @@ type Reader interface {
 	GetSpanFilters(ctx context.Context, query *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError)
 	GetTagFilters(ctx context.Context, query *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError)
 	GetFilteredSpans(ctx context.Context, query *model.GetFilteredSpansParams) (*[]model.GetFilterSpansResponse, *model.ApiError)
-	GetFilteredSpansAggregates(ctx context.Context, query *model.GetFilteredSpanAggregatesParams) (*[]model.SpanSearchAggregatesResponseItem, *model.ApiError)
+	GetFilteredSpansAggregates(ctx context.Context, query *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError)
 
 	// Search Interfaces
 	SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error)
