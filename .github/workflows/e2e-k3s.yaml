@@ -3,9 +3,6 @@ name: e2e-k3s
 on:
   pull_request:
     types: [labeled]
-    paths:
-      - 'pkg/query-service/**'
-      - 'frontend/**'
 
 jobs:
 

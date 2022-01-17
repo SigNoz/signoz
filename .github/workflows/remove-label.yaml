@@ -3,9 +3,6 @@ name: remove-label
 on:
   pull_request:
     types: [synchronize]
-    paths:
-      - 'pkg/query-service/**'
-      - 'frontend/**'
 
 jobs:
   remove:
