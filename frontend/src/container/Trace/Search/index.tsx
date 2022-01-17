@@ -1,48 +1,48 @@
-import React, { useState } from 'react';
-import { Space, Select, SelectProps, Input, Button } from 'antd';
+import React, { useRef, useState } from 'react';
+import { Space, Input, Button } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { Container } from './styles';
-import useDebouncedFunction from 'hooks/useDebouncedFunction';
+import useClickOutside from 'hooks/useClickOutside';
+import Tags from './AllTags';
 
-interface ItemProps {
-	label: string;
-	value: string;
-}
+const Search = (): JSX.Element => {
+	const [value, setValue] = useState<string>();
+	const [isTagsModalVisible, setIsTagsModalVisible] = useState<boolean>(true);
 
-const Search = () => {
-	const [value, setValue] = useState<string[]>([]);
-	const [loading, setLoading] = useState<boolean>(false);
+	const tagRef = useRef(null);
 
-	const options: ItemProps[] = [];
+	useClickOutside(tagRef, () => {
+		// setIsTagsModalHandler(false);
+	});
 
 	const onChangeHandler = (search: string) => {
-		// make a ajax call and update the setValue
-		console.log(search);
+		setValue(search);
 	};
 
-	const onDebounceChangeHandler = useDebouncedFunction(onChangeHandler, 300);
+	const setIsTagsModalHandler = (value: boolean) => {
+		setIsTagsModalVisible(value);
+	};
 
-	const selectProps: SelectProps<string[]> = {
-		mode: 'multiple' as const,
-		value,
-		options,
-		style: { width: '100%' },
-		onChange: (value) => {
-			console.log(value, 'asd');
-		},
-		onSearch: onDebounceChangeHandler,
-		placeholder: 'Select Item...',
-		maxTagCount: 'responsive' as const,
-		loading,
+	const onFocusHandler: React.FocusEventHandler<HTMLInputElement> = (e) => {
+		e.preventDefault();
+		setIsTagsModalHandler(true);
 	};
 
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
-			<Container>
-				<Select {...selectProps} />
+			<Container ref={tagRef}>
+				<Input
+					onChange={(event) => onChangeHandler(event.target.value)}
+					value={value}
+					onFocus={onFocusHandler}
+					placeholder=""
+				/>
+
 				<Button type="primary">
 					<SearchOutlined />
 				</Button>
+
+				{isTagsModalVisible && <Tags />}
 			</Container>
 		</Space>
 	);
