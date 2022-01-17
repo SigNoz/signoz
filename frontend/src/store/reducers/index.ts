@@ -7,7 +7,7 @@ import metricsReducers from './metric';
 import { ServiceMapReducer } from './serviceMap';
 import traceReducer from './trace';
 import TraceFilterReducer from './traceFilters';
-import { traceItemReducer, tracesReducer } from './traces';
+import { traceItemReducer } from './traces';
 import { usageDataReducer } from './usage';
 
 const reducers = combineReducers({

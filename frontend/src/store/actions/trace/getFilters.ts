@@ -14,6 +14,7 @@ import {
 } from 'types/actions/trace';
 import isEqual from 'lodash-es/isEqual';
 import { TraceFilterEnum } from 'types/reducer/trace';
+import { notification } from 'antd';
 
 export const GetFilter = (
 	query: string,
@@ -24,74 +25,86 @@ export const GetFilter = (
 	getState: Store<AppState>['getState'],
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
-		const { globalTime, traces } = getState();
-		const initialSelectedFilter = new Map<TraceFilterEnum, string[]>();
+		try {
+			const { globalTime, traces } = getState();
+			const initialSelectedFilter = new Map<TraceFilterEnum, string[]>();
 
-		if (globalTime.maxTime !== maxTime && globalTime.minTime !== minTime) {
-			return;
-		}
+			const parsedQueryFilter = parseQuery(query);
+			const parsedQuerySelectedFilter = parseSelectedFilter(query);
+			const parsedQueryFetchSelectedData = parseFilterToFetchData(query);
 
-		const parsedQueryFilter = parseQuery(query);
-		const parsedQuerySelectedFilter = parseSelectedFilter(query);
-		const parsedQueryFetchSelectedData = parseFilterToFetchData(query);
+			const parsedFilter = Object.fromEntries(parsedQueryFilter);
+			const parsedSelectedFilter = Object.fromEntries(parsedQuerySelectedFilter);
 
-		const parsedFilter = Object.fromEntries(parsedQueryFilter);
-		const parsedSelectedFilter = Object.fromEntries(parsedQuerySelectedFilter);
+			const parsedFilterInState = Object.fromEntries(traces.filter);
+			const parsedSelectedFilterInState = Object.fromEntries(
+				traces.selectedFilter,
+			);
 
-		const parsedFilterInState = Object.fromEntries(traces.filter);
-		const parsedSelectedFilterInState = Object.fromEntries(traces.selectedFilter);
+			// if filter in state and in query are same no need to fetch the filters
+			if (
+				(isEqual(parsedFilter, parsedFilterInState) &&
+					isEqual(parsedSelectedFilter, parsedSelectedFilterInState) &&
+					isEqual(parsedQueryFetchSelectedData, traces.filterToFetchData)) ||
+				(globalTime.maxTime !== maxTime && globalTime.minTime !== minTime)
+			) {
+				console.log('filters are equal');
+				return;
+			}
 
-		// if filter in state and in query are same no need to fetch the filters
-		if (
-			isEqual(parsedFilter, parsedFilterInState) &&
-			isEqual(parsedSelectedFilter, parsedSelectedFilterInState) &&
-			isEqual(parsedQueryFetchSelectedData, traces.filterToFetchData)
-		) {
-			console.log('filters are equal');
-			return;
-		}
-
-		// now filter are not matching we need to fetch the data and make in sync
-		dispatch({
-			type: UPDATE_TRACE_FILTER_LOADING,
-			payload: {
-				filterLoading: true,
-			},
-		});
-
-		const response = await getFiltersApi({
-			end: String(maxTime),
-			getFilters: parsedQueryFetchSelectedData,
-			start: String(minTime),
-			other: parsedSelectedFilter,
-		});
-
-		if (response.statusCode === 200) {
-			// updating the trace filter
-			parsedQueryFetchSelectedData.map((e) => {
-				traces.filter.set(e, response.payload[e]);
+			// now filter are not matching we need to fetch the data and make in sync
+			dispatch({
+				type: UPDATE_TRACE_FILTER_LOADING,
+				payload: {
+					filterLoading: true,
+				},
 			});
 
-			parsedQuerySelectedFilter.forEach((value, key) => {
-				// @TODO need to check the type of the key
-				initialSelectedFilter.set(key as TraceFilterEnum, value);
+			const response = await getFiltersApi({
+				end: String(maxTime),
+				getFilters: parsedQueryFetchSelectedData,
+				start: String(minTime),
+				other: parsedSelectedFilter,
 			});
+
+			if (response.statusCode === 200) {
+				// updating the trace filter
+				parsedQueryFetchSelectedData.forEach((e) => {
+					traces.filter.set(e, response.payload[e]);
+				});
+
+				parsedQuerySelectedFilter.forEach((value, key) => {
+					// @TODO need to check the type of the key
+					initialSelectedFilter.set(key as TraceFilterEnum, value);
+				});
+
+				dispatch({
+					type: UPDATE_ALL_FILTERS,
+					payload: {
+						filter: traces.filter,
+						selectedFilter: initialSelectedFilter,
+						filterToFetchData: parsedQueryFetchSelectedData,
+					},
+				});
+			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
+			}
 
 			dispatch({
-				type: UPDATE_ALL_FILTERS,
+				type: UPDATE_TRACE_FILTER_LOADING,
 				payload: {
-					filter: traces.filter,
-					selectedFilter: initialSelectedFilter,
-					filterToFetchData: parsedQueryFetchSelectedData,
+					filterLoading: false,
+				},
+			});
+		} catch (error) {
+			dispatch({
+				type: UPDATE_TRACE_FILTER_LOADING,
+				payload: {
+					filterLoading: false,
 				},
 			});
 		}
-
-		dispatch({
-			type: UPDATE_TRACE_FILTER_LOADING,
-			payload: {
-				filterLoading: false,
-			},
-		});
 	};
 };

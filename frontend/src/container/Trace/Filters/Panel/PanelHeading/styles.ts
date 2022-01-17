@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 interface Props {
 	disabled: boolean;
@@ -13,6 +13,12 @@ export const Container = styled.div<Props>`
 		min-height: 5vh;
 
 		cursor: ${({ disabled }) => disabled && 'not-allowed'};
+
+		${({ disabled }) =>
+			disabled &&
+			css`
+				opacity: 0.5;
+			`}
 	}
 `;
 

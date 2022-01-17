@@ -26,7 +26,7 @@ const TraceTable = () => {
 		},
 	];
 
-	return <Table />;
+	return <Table columns={columns} />;
 };
 
 interface DataProps {}

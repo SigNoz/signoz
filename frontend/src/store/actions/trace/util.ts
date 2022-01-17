@@ -7,7 +7,7 @@ export const parseQuery = (query: string): Map<string, string> => {
 	const filters = new Map<string, string>();
 
 	const setFilters = (value: string, key: string) => {
-		filters.set(key, JSON.parse(value));
+		filters.set(key, JSON.parse(decodeURIComponent(value)));
 	};
 
 	url.forEach((value, key) => {
@@ -58,7 +58,7 @@ export const parseSelectedFilter = (query: string): Map<string, string[]> => {
 	url.forEach((value, key) => {
 		if (key === 'selected') {
 			try {
-				const parsedValue = JSON.parse(value);
+				const parsedValue = JSON.parse(decodeURIComponent(value));
 				if (typeof parsedValue === 'object') {
 					Object.keys(parsedValue).forEach((e) => {
 						filters.set(e, parsedValue[e]);
@@ -81,7 +81,7 @@ export const parseFilterToFetchData = (query: string) => {
 	url.forEach((value, key) => {
 		if (key === 'filterToFetchData') {
 			try {
-				const parsedValue = JSON.parse(value);
+				const parsedValue = JSON.parse(decodeURIComponent(value));
 
 				if (Array.isArray(parsedValue)) {
 					filterToFetchData.push(...parsedValue);

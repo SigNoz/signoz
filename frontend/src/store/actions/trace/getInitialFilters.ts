@@ -17,10 +17,10 @@ export const GetInitialFilter = (
 		try {
 			const { globalTime, traces } = getState();
 
-			const queryFilters = parseQuery(query);
+			const parsedQueryFilter = parseQuery(query);
 
-			// only need to run when there is no filters
-			if (!isEmpty(queryFilters)) {
+			// only need to run when there is no filters update
+			if (!isEmpty(parsedQueryFilter)) {
 				return;
 			}
 
@@ -55,7 +55,7 @@ export const GetInitialFilter = (
 					},
 				});
 
-				updateURL(initialFilters, traces.selectedFilter,traces.filterToFetchData);
+				updateURL(initialFilters, traces.selectedFilter, traces.filterToFetchData);
 			}
 
 			dispatch({

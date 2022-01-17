@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CaretDownFilled, CaretUpFilled } from '@ant-design/icons';
-import { Card, Button, Typography } from 'antd';
+import { Card, Button, Typography, Spin } from 'antd';
 
 import { Container, IconContainer, TextCotainer } from './styles';
 import { useSelector } from 'react-redux';
@@ -9,10 +9,9 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
-	const { filterLoading, filterToFetchData } = useSelector<
-		AppState,
-		TraceReducer
-	>((state) => state.traces);
+	const { filterLoading } = useSelector<AppState, TraceReducer>(
+		(state) => state.traces,
+	);
 
 	const onExpandHandler = () => {
 		props.onExpandHandler(props.name);
@@ -33,6 +32,8 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					<Text style={{ textTransform: 'capitalize' }} ellipsis>
 						{props.name}
 					</Text>
+
+					{filterLoading && <Spin size="small" />}
 				</TextCotainer>
 
 				<Button onClick={() => props.onClearAllHandler(props.name)} type="link">
