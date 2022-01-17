@@ -21,7 +21,9 @@ const Trace = ({ getFilters }: Props): JSX.Element => {
 	);
 
 	useEffect(() => {
-		getFilters(search, minTime, maxTime);
+		if (search) {
+			getFilters(search, minTime, maxTime);
+		}
 	}, [search, minTime, maxTime, getFilters]);
 
 	return (
