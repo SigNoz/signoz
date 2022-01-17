@@ -271,3 +271,26 @@ type GetTTLResponseItem struct {
 	MetricsTime int `json:"metrics_ttl_duration_hrs"`
 	TracesTime  int `json:"traces_ttl_duration_hrs"`
 }
+
+type Error struct {
+	ExceptionType  string    `json:"exceptionType" db:"exceptionType"`
+	ExceptionMsg   string    `json:"exceptionMessage" db:"exceptionMessage"`
+	ExceptionCount int64     `json:"exceptionCount" db:"exceptionCount"`
+	LastSeen       time.Time `json:"lastSeen" db:"lastSeen"`
+	FirstSeen      time.Time `json:"firstSeen" db:"firstSeen"`
+	ServiceName    string    `json:"serviceName" db:"serviceName"`
+}
+
+type ErrorWithSpan struct {
+	ErrorID            string    `json:"errorId" db:"errorID"`
+	ExceptionType      string    `json:"exceptionType" db:"exceptionType"`
+	ExcepionStacktrace string    `json:"excepionStacktrace" db:"excepionStacktrace"`
+	ExceptionEscaped   string    `json:"exceptionEscaped" db:"exceptionEscaped"`
+	ExceptionMsg       string    `json:"exceptionMessage" db:"exceptionMessage"`
+	Timestamp          time.Time `json:"timestamp" db:"timestamp"`
+	SpanID             string    `json:"spanID" db:"spanID"`
+	TraceID            string    `json:"traceID" db:"traceID"`
+	ServiceName        string    `json:"serviceName" db:"serviceName"`
+	NewerErrorID       string    `json:"newerErrorId" db:"newerErrorId"`
+	OlderErrorID       string    `json:"olderErrorId" db:"olderErrorId"`
+}

@@ -203,6 +203,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -878,6 +881,51 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 	result, err := (*aH.reader).SearchTraces(context.Background(), traceId)
 	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) getErrors(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseErrorsRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := (*aH.reader).GetErrors(context.Background(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) getErrorForId(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseErrorRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := (*aH.reader).GetErrorForId(context.Background(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
+func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseErrorRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := (*aH.reader).GetErrorForType(context.Background(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
