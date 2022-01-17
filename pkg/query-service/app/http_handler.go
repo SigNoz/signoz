@@ -14,6 +14,7 @@ import (
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
+	"go.signoz.io/query-service/version"
 	"go.uber.org/zap"
 )
 
@@ -200,8 +201,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/telemetry", aH.setTelemetrySettings).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/telemetry", aH.getTelemetrySettings).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/userPreferences", aH.setUserPreferences).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/userPreferences", aH.getUserPreferences).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/version", aH.getVersion).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -945,13 +947,9 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) getTelemetrySettings(w http.ResponseWriter, r *http.Request) {
-	ttlParams, err := parseGetTTL(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
+func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := (*aH.reader).GetTelemetrySettings(context.Background(), ttlParams)
+	result, apiErr := (*aH.reader).GetUserPreferences(context.Background())
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -959,19 +957,26 @@ func (aH *APIHandler) getTelemetrySettings(w http.ResponseWriter, r *http.Reques
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) setTelemetrySettings(w http.ResponseWriter, r *http.Request) {
-	ttlParams, err := parseDuration(r)
+func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request) {
+	userParams, err := parseUserPreferences(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).SetTelemetrySettings(context.Background(), ttlParams)
+	apiErr := (*aH.reader).SetUserPreferences(context.Background(), userParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
-	aH.writeJSON(w, r, result)
+	aH.writeJSON(w, r, map[string]string{"data": "user preferences set successfully"})
 
+}
+
+func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
+
+	version := version.GetVersion()
+
+	aH.writeJSON(w, r, version)
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

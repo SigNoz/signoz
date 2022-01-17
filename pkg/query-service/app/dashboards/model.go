@@ -65,6 +65,17 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("Error in creating notification_channles table: ", err.Error())
 	}
 
+	table_schema = `CREATE TABLE IF NOT EXISTS user_preferences (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		isAnonymous BOOLEAN DEFAULT(TRUE),
+		hasOptedUpdates BOOLEAN DEFAULT(TRUE)
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating notification_channles table: ", err.Error())
+	}
+
 	return db, nil
 }
 

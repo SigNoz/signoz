@@ -45,5 +45,6 @@ type Reader interface {
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
-	GetTelemetrySettings(ctx context.Context, telemetryParams *model.TelemetryParams) *model.ApiError
+	GetUserPreferences(ctx context.Context) (*model.UserPreferences, *model.ApiError)
+	SetUserPreferences(ctx context.Context, userPreferences *model.UserPreferences) *model.ApiError
 }

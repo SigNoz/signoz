@@ -164,3 +164,13 @@ func (druid *DruidReader) SetTTL(_ context.Context, _ *model.TTLParams) (*model.
 func (druid *DruidReader) GetTTL(_ context.Context, _ *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
 }
+
+func (druid *DruidReader) SetUserPreferences(ctx context.Context, userPreferences *model.UserPreferences) *model.ApiError {
+
+	return &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting user preferences")}
+}
+
+func (druid *DruidReader) GetUserPreferences(ctx context.Context) (*model.UserPreferences, *model.ApiError) {
+
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting user preferences")}
+}
