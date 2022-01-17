@@ -28,7 +28,7 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	logger.Debug("START!")
+	logger.Debug("STARTING!")
 
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
