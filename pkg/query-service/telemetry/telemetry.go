@@ -7,21 +7,10 @@ import (
 	"time"
 
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/version"
 	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
-
-const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
-
-var telemetry *Telemetry
-
-type Telemetry struct {
-	sync.RWMutex
-	operator   analytics.Client
-	ipAddress  string
-	distinctId string
-	enabled    bool
-}
 
 const (
 	TELEMETRY_EVENT_PATH               = "API Call"
@@ -31,11 +20,24 @@ const (
 	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
 )
 
+const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
+
+var telemetry *Telemetry
+
+type Telemetry struct {
+	sync.RWMutex
+	operator    analytics.Client
+	ipAddress   string
+	isEnabled   bool
+	isAnonymous bool
+}
+
 func createTelemetry() {
 	telemetry = &Telemetry{
-		operator:  analytics.New(api_key),
-		ipAddress: getOutboundIP(),
-		enabled:   true,
+		operator:    analytics.New(api_key),
+		ipAddress:   getOutboundIP(),
+		isEnabled:   true,
+		isAnonymous: false,
 	}
 
 	data := map[string]interface{}{}
@@ -73,10 +75,17 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() {
 		return
 	}
-	a.operator.Enqueue(analytics.Identify{
-		UserId: a.ipAddress,
-		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
-	})
+	if a.isTelemetryAnonymous() {
+		a.operator.Enqueue(analytics.Identify{
+			UserId: a.ipAddress,
+		})
+	} else {
+		a.operator.Enqueue(analytics.Identify{
+			UserId: a.ipAddress,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+		})
+	}
+
 }
 
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
@@ -87,6 +96,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 
 	zap.S().Info(data)
 	properties := analytics.NewProperties()
+	properties.Set("version", version.GetVersion())
 
 	for k, v := range data {
 		properties.Set(k, v)
@@ -99,12 +109,20 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 	})
 }
 
+func (a *Telemetry) isTelemetryAnonymous() bool {
+	return a.isAnonymous
+}
+
+func (a *Telemetry) SetTelemetryAnonymous(value bool) {
+	a.isAnonymous = value
+}
+
 func (a *Telemetry) isTelemetryEnabled() bool {
-	return a.enabled
+	return a.isEnabled
 }
 
 func (a *Telemetry) SetTelemetryEnabled(value bool) {
-	a.enabled = value
+	a.isEnabled = value
 }
 
 func GetInstance() *Telemetry {
