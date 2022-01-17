@@ -1,7 +1,7 @@
 name: remove-label
 
 on:
-  pull_request:
+  pull_request_target:
     types: [synchronize]
 
 jobs:
@@ -13,5 +13,4 @@ jobs:
         with:
           label: ok-to-test
           type: remove
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-
+          token: ${{ secrets.GITHUB_TOKEN }}
