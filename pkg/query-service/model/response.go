@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -316,8 +317,8 @@ type DBResponseOperation struct {
 }
 
 type DBResponseComponent struct {
-	Component string `db:"component"`
-	Count     int    `db:"count"`
+	Component sql.NullString `db:"component"`
+	Count     int            `db:"count"`
 }
 
 type DBResponseErrors struct {

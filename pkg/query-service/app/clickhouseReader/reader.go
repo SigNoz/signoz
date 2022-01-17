@@ -1577,7 +1577,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.Component[service.Component] = service.Count
+				traceFilterReponse.Component[service.Component.String] = service.Count
 			}
 		case "status":
 			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))", r.indexTable)
