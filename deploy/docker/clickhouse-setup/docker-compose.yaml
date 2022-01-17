@@ -12,7 +12,7 @@ services:
       volumes:
         - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
         - ./docker-entrypoint-initdb.d/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-        - ./data/clickhouse/:/var/lib/clickhouse/
+        - /mnt/data/clickhouse/:/var/lib/clickhouse/
 
       healthcheck:
         # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
@@ -25,7 +25,7 @@ services:
     image: signoz/alertmanager:0.5.0
     volumes:
       - ./alertmanager.yml:/prometheus/alertmanager.yml
-      - ./data/alertmanager:/data
+      - /mnt/data/alertmanager:/data
     command:
       - '--config.file=/prometheus/alertmanager.yml'
       - '--storage.path=/data'
@@ -41,7 +41,7 @@ services:
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
-      - ./data/signoz/:/var/lib/signoz/
+      - /mnt/data/signoz/:/var/lib/signoz/
 
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
