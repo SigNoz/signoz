@@ -1,5 +1,6 @@
 import { Button, Divider } from 'antd';
 import Input from 'components/Input';
+import TextToolTip from 'components/TextToolTip';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
@@ -14,7 +15,12 @@ import {
 import AppActions from 'types/actions';
 import { DeleteQueryProps } from 'types/actions/dashboard';
 
-import { Container, InputContainer, QueryWrapper } from './styles';
+import {
+	Container,
+	InputContainer,
+	QueryWrapper,
+	ButtonContainer,
+} from './styles';
 
 const Query = ({
 	currentIndex,
@@ -82,7 +88,15 @@ const Query = ({
 					</InputContainer>
 				</QueryWrapper>
 
-				<Button onClick={onDeleteQueryHandler}>Delete</Button>
+				<ButtonContainer>
+					<Button onClick={onDeleteQueryHandler}>Delete</Button>
+					<TextToolTip
+						{...{
+							text: `More details on how to plot metrics graphs`,
+							url: 'https://signoz.io/docs/userguide/prometheus-metrics/',
+						}}
+					/>
+				</ButtonContainer>
 			</Container>
 
 			<Divider />

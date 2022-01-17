@@ -39,9 +39,9 @@ import (
 	"github.com/prometheus/prometheus/rules"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
+	"github.com/prometheus/prometheus/storage/tsdb"
 	"github.com/prometheus/prometheus/util/stats"
 	"github.com/prometheus/prometheus/util/strutil"
-	"github.com/prometheus/tsdb"
 
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
@@ -1548,9 +1548,9 @@ func (r *ClickHouseReader) GetTags(ctx context.Context, serviceName string) (*[]
 
 	tagItems := []model.TagItem{}
 
-	query := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE serviceName='%s'  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable, serviceName)
+	query := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE serviceName=?  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable)
 
-	err := r.db.Select(&tagItems, query)
+	err := r.db.Select(&tagItems, query, serviceName)
 
 	zap.S().Info(query)
 
@@ -1566,9 +1566,9 @@ func (r *ClickHouseReader) GetOperations(ctx context.Context, serviceName string
 
 	operations := []string{}
 
-	query := fmt.Sprintf(`SELECT DISTINCT(name) FROM %s WHERE serviceName='%s'  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable, serviceName)
+	query := fmt.Sprintf(`SELECT DISTINCT(name) FROM %s WHERE serviceName=?  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable)
 
-	err := r.db.Select(&operations, query)
+	err := r.db.Select(&operations, query, serviceName)
 
 	zap.S().Info(query)
 
@@ -1585,7 +1585,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID='%s'", r.indexTable, traceId)
 
-	err := r.db.Select(&searchScanReponses, query)
+	err := r.db.Select(&searchScanReponses, query, traceId)
 
 	zap.S().Info(query)
 

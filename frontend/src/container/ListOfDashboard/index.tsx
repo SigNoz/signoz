@@ -2,6 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -10,7 +11,7 @@ import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
-import { NewDashboardButton, TableContainer } from './styles';
+import { NewDashboardButton, TableContainer, ButtonContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
 import DeleteButton from './TableComponents/DeleteButton';
@@ -150,15 +151,25 @@ const ListOfAllDashboard = (): JSX.Element => {
 					return (
 						<Row justify="space-between">
 							<Typography>Dashboard List</Typography>
-							<NewDashboardButton
-								onClick={onNewDashboardHandler}
-								icon={<PlusOutlined />}
-								type="primary"
-								loading={newDashboardState.loading}
-								danger={newDashboardState.error}
-							>
-								{getText()}
-							</NewDashboardButton>
+
+							<ButtonContainer>
+								<TextToolTip
+									{...{
+										text: `More details on how to create dashboards`,
+										url: 'https://signoz.io/docs/userguide/metrics-dashboard',
+									}}
+								/>
+
+								<NewDashboardButton
+									onClick={onNewDashboardHandler}
+									icon={<PlusOutlined />}
+									type="primary"
+									loading={newDashboardState.loading}
+									danger={newDashboardState.error}
+								>
+									{getText()}
+								</NewDashboardButton>
+							</ButtonContainer>
 						</Row>
 					);
 				}}

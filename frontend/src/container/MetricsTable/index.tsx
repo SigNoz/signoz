@@ -31,10 +31,7 @@ const Metrics = (): JSX.Element => {
 		history.push(to);
 	};
 
-	if (
-		(services.length === 0 && loading === false && !skipOnboarding) ||
-		(loading == false && error === true)
-	) {
+	if (services.length === 0 && loading === false && !skipOnboarding && error === true) {
 		return <SkipBoardModal onContinueClick={onContinueClick} />;
 	}
 
