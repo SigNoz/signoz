@@ -22,13 +22,12 @@ func initZapLog() *zap.Logger {
 }
 
 func main() {
-	// Dummy test
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	logger.Debug("STARTING!")
+	logger.Debug("START!")
 
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
