@@ -2,23 +2,23 @@ import React, { useEffect } from 'react';
 
 const useClickOutside = (
 	ref: React.RefObject<HTMLElement>,
-	callback: VoidFunction | null,
+	callback: (e: HTMLElement) => void | null,
 ) => {
 	const listener = (e: Event) => {
-		if (ref.current && !ref.current.contains(e?.target as Node)) {
+		const node = e?.target as HTMLElement;
+
+		if (ref.current && !ref.current.contains(node)) {
 			if (callback) {
-				callback();
+				callback(node);
 			}
 		}
 	};
 
 	useEffect(() => {
-		document.addEventListener('mousedown', listener);
-		document.addEventListener('touchstart', listener);
+		document.addEventListener('click', listener);
 
 		return () => {
-			document.removeEventListener('mousedown', listener);
-			document.removeEventListener('touchstart', listener);
+			document.removeEventListener('click', listener);
 		};
 	}, [ref, callback]);
 };
