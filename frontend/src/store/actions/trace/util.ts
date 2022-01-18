@@ -95,6 +95,27 @@ export const parseFilterToFetchData = (query: string) => {
 	return filterToFetchData;
 };
 
+export const parseQueryIntoCurrent = (query: string) => {
+	const url = new URLSearchParams(query);
+
+	let current = 0;
+
+	url.forEach((value, key) => {
+		if (key === 'current') {
+			try {
+				const parsedValue = JSON.parse(decodeURIComponent(value));
+				if (Number.isInteger(parsedValue)) {
+					current = parseInt(parsedValue, 10);
+				}
+			} catch (error) {
+				console.log('error while parsing json');
+			}
+		}
+	});
+
+	return current;
+};
+
 export const convertMapIntoStringifyString = (
 	map: Map<TraceFilterEnum, Record<string, string>>,
 ) => {
@@ -109,12 +130,13 @@ export const updateURL = (
 	filter: TraceReducer['filter'],
 	selectedFilter: TraceReducer['selectedFilter'],
 	filterToFetchData: TraceReducer['filterToFetchData'],
+	current: TraceReducer['spansAggregate']['total'],
 ) => {
 	const key = convertMapIntoStringifyString(filter);
 
 	history.replace(
 		`${history.location.pathname}?${key}&selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
-		)}&filterToFetchData=${JSON.stringify(filterToFetchData)}`,
+		)}&filterToFetchData=${JSON.stringify(filterToFetchData)}&current=${current}`,
 	);
 };

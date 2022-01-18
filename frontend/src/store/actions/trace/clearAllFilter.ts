@@ -19,6 +19,11 @@ export const ClearAllFilter = (
 			...filterToFetchData.filter((e) => e == props),
 		];
 
-		updateURL(traces.filter, traces.selectedFilter, updatedFilterToFetchTheData);
+		updateURL(
+			traces.filter,
+			traces.selectedFilter,
+			updatedFilterToFetchTheData,
+			traces.spansAggregate.currentPage,
+		);
 	};
 };

@@ -8,4 +8,7 @@ export interface Props {
 	offset: number;
 }
 
-export type PayloadProps = TraceReducer['spansAggregate']['data'];
+export type PayloadProps = {
+	spans: TraceReducer['spansAggregate']['data'];
+	totalSpans: number;
+};

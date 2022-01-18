@@ -41,6 +41,7 @@ export interface UpdateAllFilters {
 		filter: TraceReducer['filter'];
 		selectedFilter: TraceReducer['selectedFilter'];
 		filterToFetchData: TraceReducer['filterToFetchData'];
+		current: TraceReducer['spansAggregate']['currentPage'];
 	};
 }
 

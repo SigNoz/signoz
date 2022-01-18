@@ -10,6 +10,7 @@ export interface TraceReducer {
 		currentPage: number;
 		data: SpansAggregateData[];
 		error: boolean;
+		total: number;
 	};
 }
 

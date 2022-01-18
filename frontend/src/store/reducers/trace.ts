@@ -24,10 +24,11 @@ const initialValue: TraceReducer = {
 	],
 	isTagModalOpen: false,
 	spansAggregate: {
-		currentPage: 1,
+		currentPage: 0,
 		loading: false,
 		data: [],
 		error: false,
+		total: 0,
 	},
 };
 
@@ -45,13 +46,17 @@ const traceReducer = (
 
 		case UPDATE_ALL_FILTERS: {
 			const { payload } = action;
-			const { filter, filterToFetchData, selectedFilter } = payload;
+			const { filter, filterToFetchData, selectedFilter, current } = payload;
 
 			return {
 				...state,
 				filter,
 				filterToFetchData,
 				selectedFilter,
+				spansAggregate: {
+					...state.spansAggregate,
+					currentPage: current,
+				},
 			};
 		}
 

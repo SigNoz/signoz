@@ -7,6 +7,7 @@ import {
 	parseQuery,
 	parseSelectedFilter,
 	parseFilterToFetchData,
+	parseQueryIntoCurrent,
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
@@ -32,6 +33,7 @@ export const GetFilter = (
 			const parsedQueryFilter = parseQuery(query);
 			const parsedQuerySelectedFilter = parseSelectedFilter(query);
 			const parsedQueryFetchSelectedData = parseFilterToFetchData(query);
+			const parsedQueryCurrent = parseQueryIntoCurrent(query);
 
 			const parsedFilter = Object.fromEntries(parsedQueryFilter);
 			const parsedSelectedFilter = Object.fromEntries(parsedQuerySelectedFilter);
@@ -46,7 +48,8 @@ export const GetFilter = (
 				(isEqual(parsedFilter, parsedFilterInState) &&
 					isEqual(parsedSelectedFilter, parsedSelectedFilterInState) &&
 					isEqual(parsedQueryFetchSelectedData, traces.filterToFetchData)) ||
-				(globalTime.maxTime !== maxTime && globalTime.minTime !== minTime)
+				(globalTime.maxTime !== maxTime && globalTime.minTime !== minTime) ||
+				isEqual(parsedQueryCurrent, traces.spansAggregate.currentPage)
 			) {
 				console.log('filters are equal');
 				return;
@@ -84,6 +87,7 @@ export const GetFilter = (
 						filter: traces.filter,
 						selectedFilter: initialSelectedFilter,
 						filterToFetchData: parsedQueryFetchSelectedData,
+						current: parsedQueryCurrent,
 					},
 				});
 			} else {

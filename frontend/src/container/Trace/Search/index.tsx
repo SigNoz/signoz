@@ -10,7 +10,7 @@ import { TraceReducer } from 'types/reducer/trace';
 import { ThunkDispatch } from 'redux-thunk';
 import AppActions from 'types/actions';
 import { bindActionCreators } from 'redux';
-import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisisblity';
+import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 
 const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 	const [value, setValue] = useState<string>();

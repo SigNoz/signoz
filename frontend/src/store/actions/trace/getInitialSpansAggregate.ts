@@ -6,6 +6,7 @@ import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 import isEqual from 'lodash-es/isEqual';
+import { parseQueryIntoCurrent, updateURL } from './util';
 
 export const GetInitialSpansAggregate = (
 	props: GetInitialSpansAggregateProps,
@@ -16,13 +17,15 @@ export const GetInitialSpansAggregate = (
 	return async (dispatch, getState): Promise<void> => {
 		const { traces, globalTime } = getState();
 		const { spansAggregate } = traces;
+		const { query } = props;
+
+		const parsedCurrent = parseQueryIntoCurrent(query);
 
 		// if there is any disparity in data return the action
 		if (
 			globalTime.maxTime !== props.maxTime ||
 			globalTime.minTime !== props.minTime ||
-			!isEqual(props.selectedTags, props.selectedTags) ||
-			spansAggregate.currentPage !== props.current
+			!isEqual(props.selectedTags, props.selectedTags)
 		) {
 			return;
 		}
@@ -37,6 +40,7 @@ export const GetInitialSpansAggregate = (
 						loading: true,
 						data: spansAggregate.data,
 						error: false,
+						total: spansAggregate.total,
 					},
 				},
 			});
@@ -56,11 +60,19 @@ export const GetInitialSpansAggregate = (
 						spansAggregate: {
 							currentPage: props.current,
 							loading: false,
-							data: response.payload,
+							data: response.payload.spans,
 							error: false,
+							total: response.payload.totalSpans,
 						},
 					},
 				});
+
+				updateURL(
+					traces.filter,
+					traces.selectedFilter,
+					traces.filterToFetchData,
+					props.current,
+				);
 			} else {
 				dispatch({
 					type: UPDATE_SPANS_AGGREEGATE,
@@ -70,6 +82,7 @@ export const GetInitialSpansAggregate = (
 							loading: false,
 							data: spansAggregate.data,
 							error: true,
+							total: spansAggregate.total,
 						},
 					},
 				});
@@ -83,6 +96,7 @@ export const GetInitialSpansAggregate = (
 						loading: false,
 						data: spansAggregate.data,
 						error: true,
+						total: spansAggregate.total,
 					},
 				},
 			});
@@ -95,4 +109,5 @@ export interface GetInitialSpansAggregateProps {
 	minTime: GlobalReducer['minTime'];
 	selectedTags: TraceReducer['selectedTags'];
 	current: number;
+	query: string;
 }

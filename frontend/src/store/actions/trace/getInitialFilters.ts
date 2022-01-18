@@ -55,7 +55,12 @@ export const GetInitialFilter = (
 					},
 				});
 
-				updateURL(initialFilters, traces.selectedFilter, traces.filterToFetchData);
+				updateURL(
+					initialFilters,
+					traces.selectedFilter,
+					traces.filterToFetchData,
+					traces.spansAggregate.currentPage,
+				);
 			}
 
 			dispatch({

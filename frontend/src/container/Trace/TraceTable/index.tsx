@@ -14,17 +14,19 @@ import {
 	GetInitialSpansAggregateProps,
 } from 'store/actions/trace/getInitialSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { useLocation } from 'react-router-dom';
 
 const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 	const { selectedTags, spansAggregate } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
+	const { search } = useLocation();
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const { loading } = spansAggregate;
+	const { loading, total } = spansAggregate;
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
@@ -62,7 +64,13 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 	];
 
 	const onChangeHandler: TableProps<TableType>['onChange'] = (props) => {
-		console.log('asd', props);
+		getInitialSpansAggregate({
+			maxTime: globalTime.maxTime,
+			minTime: globalTime.minTime,
+			selectedTags,
+			current: props.current || 0,
+			query: search,
+		});
 	};
 
 	useEffect(() => {
@@ -71,13 +79,9 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 			minTime: globalTime.minTime,
 			selectedTags,
 			current: spansAggregate.currentPage,
+			query: search,
 		});
-	}, [
-		globalTime.maxTime,
-		globalTime.minTime,
-		selectedTags,
-		spansAggregate.currentPage,
-	]);
+	}, [globalTime.maxTime, globalTime.minTime, selectedTags]);
 
 	return (
 		<Table
@@ -91,7 +95,7 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 				pageSize: 10,
 				responsive: true,
 				position: ['bottomLeft'],
-				total: Infinity,
+				total: total,
 			}}
 		/>
 	);

@@ -3,7 +3,6 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceFilterEnum } from 'types/reducer/trace';
 import { updateURL } from './util';
-import { SELECT_TRACE_FILTER } from 'types/actions/trace';
 
 export const SelectedTraceFilter = (props: {
 	topic: TraceFilterEnum;
@@ -39,13 +38,11 @@ export const SelectedTraceFilter = (props: {
 			}
 		}
 
-		updateURL(traces.filter, filter,traces.filterToFetchData);
-
-		dispatch({
-			type: SELECT_TRACE_FILTER,
-			payload: {
-				selectedFilter: filter,
-			},
-		});
+		updateURL(
+			traces.filter,
+			filter,
+			traces.filterToFetchData,
+			traces.spansAggregate.currentPage,
+		);
 	};
 };
