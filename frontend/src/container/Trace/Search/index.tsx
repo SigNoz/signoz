@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Space, Input, Button } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { Container } from './styles';
-// import useClickOutside from 'hooks/useClickOutside';
+import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
 import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -20,9 +20,25 @@ const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
-	// useClickOutside(tagRef, () => {
-	// 	console.log('asd');
-	// });
+	useClickOutside(tagRef, (e: HTMLElement) => {
+		// using this hack as overlay span is voilating this condition
+		const getClassCondition = (e: HTMLElement) => {
+			if (e.nodeName === 'SPAN') {
+				return 'ant-dropdown-menu-title-content';
+			}
+
+			if (e.nodeName === 'DIV') {
+				return 'ant-select-item-option-content';
+			}
+		};
+		const classCondition = getClassCondition(e);
+		if (
+			(e.nodeName !== 'SPAN' && e.className !== classCondition) ||
+			(e.nodeName !== 'DIV' && e.className !== classCondition)
+		) {
+			updateTagVisiblity(false);
+		}
+	});
 
 	const onChangeHandler = (search: string) => {
 		setValue(search);

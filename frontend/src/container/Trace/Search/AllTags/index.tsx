@@ -7,35 +7,43 @@ import { Container, ButtonContainer, CurrentTagsContainer } from './styles';
 import Tags from './Tag';
 const { Text } = Typography;
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import AppActions from 'types/actions';
+import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 
-const AllTags = (): JSX.Element => {
+const AllTags = ({ updateSelectedTags }: AllTagsProps): JSX.Element => {
 	const { selectedTags } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
 	const onTagAddHandler = () => {
-		// setCurrentTags((tags) => [
-		// 	...tags,
-		// 	{
-		// 		filters: [],
-		// 		name: [''],
-		// 		selectedFilter: 'IN',
-		// 	},
-		// ]);
+		updateSelectedTags([
+			...selectedTags,
+			{
+				filters: [],
+				name: [],
+				selectedFilter: 'IN',
+			},
+		]);
 	};
 
 	const onCloseHandler = (index: number) => {
-		// setCurrentTags([
-		// 	...currentTags.slice(0, index),
-		// 	...currentTags.slice(currentTags.length),
-		// ]);
+		updateSelectedTags([
+			...selectedTags.slice(0, index),
+			...selectedTags.slice(index + 1, selectedTags.length),
+		]);
 	};
 
 	const onRunQueryHandler = () => {
 		console.log('asd');
+	};
+
+	const onResetHandler = () => {
+		updateSelectedTags([]);
 	};
 
 	return (
@@ -44,9 +52,6 @@ const AllTags = (): JSX.Element => {
 				{selectedTags.map((tags, index) => (
 					<Tags
 						key={index}
-						{...{
-							...tags,
-						}}
 						index={index}
 						onCloseHandler={() => onCloseHandler(index)}
 					/>
@@ -64,7 +69,7 @@ const AllTags = (): JSX.Element => {
 			</Space>
 
 			<ButtonContainer>
-				<Button>Reset</Button>
+				<Button onClick={onResetHandler}>Reset</Button>
 				<Button
 					type="primary"
 					onClick={onRunQueryHandler}
@@ -77,4 +82,16 @@ const AllTags = (): JSX.Element => {
 	);
 };
 
-export default AllTags;
+interface DispatchProps {
+	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+});
+
+type AllTagsProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(AllTags);

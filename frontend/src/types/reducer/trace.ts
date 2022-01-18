@@ -24,11 +24,13 @@ interface SpansAggregateData {
 	httpMethod: string;
 }
 
-interface Tags {
+export interface Tags {
 	filters: string[];
-	selectedFilter: 'NOT_IN' | 'IN';
+	selectedFilter: selectedFilter;
 	name: string[];
 }
+
+type selectedFilter = 'NOT_IN' | 'IN';
 
 export type TraceFilterEnum =
 	| 'component'
