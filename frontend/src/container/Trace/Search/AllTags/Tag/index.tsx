@@ -1,37 +1,39 @@
 import React, { useState } from 'react';
 
-import { Tags } from '../index';
 import { Button, Dropdown, notification, Menu, SelectProps, Spin } from 'antd';
 import { Container, SelectComponent } from './styles';
 import getTagFilters from 'api/trace/getTagFilter';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { SelectValue } from 'antd/lib/select';
+import { ThunkDispatch } from 'redux-thunk';
+import AppActions from 'types/actions';
+import { bindActionCreators } from 'redux';
+import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 
-const AllMenu: Tags['selectedFilter'][] = ['IN', 'NOT_IN'];
+type Tags = FlatArray<TraceReducer['selectedTags'], 1>['selectedFilter'];
 
-const SingleTags = (props: TagsProps): JSX.Element => {
+const AllMenu: Tags[] = ['IN', 'NOT_IN'];
+
+const SingleTags = (props: AllTagsProps): JSX.Element => {
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
-	const [selectLoading, setSelectLoading] = useState<boolean>(false);
-	const [searchValue, setSearchValue] = useState<string[]>([]);
 
-	const [selectedValue, setSelectValue] = useState<string[]>([]);
-	const [selectedFilter, setSelectedFilter] = useState<Tags['selectedFilter']>(
-		'IN',
-	);
+	const { selectedTags } = traces;
+
+	const { filters, name, selectedFilter } = selectedTags[props.index];
+
+	const [selectLoading, setSelectLoading] = useState<boolean>(false);
 
 	const [selectedOptions, setSelectedOptions] = useState<
 		SelectProps<SelectValue>['options']
 	>([]);
-
-	console.log({ searchValue, selectedValue, selectedFilter });
 
 	const [
 		notificationConfig,
@@ -40,8 +42,20 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 
 	const AllMenuOptions = AllMenu.map((e) => (
 		<Menu.Item
-			onClick={() => {
-				setSelectedFilter(e);
+			onClick={(e) => {
+				const { key } = e;
+
+				const { updateSelectedTags } = props;
+				const current = traces.selectedTags[props.index];
+
+				updateSelectedTags([
+					...traces.selectedTags.slice(0, props.index),
+					{
+						...current,
+						selectedFilter: key as Tags,
+					},
+					...traces.selectedTags.slice(props.index + 1, traces.selectedTags.length),
+				]);
 			}}
 			key={e}
 		>
@@ -84,10 +98,27 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 		value,
 		options,
 	) => {
-		if (searchValue.length === 0) {
-			setSearchValue(options.map((e) => e.value) as string[]);
+		const { updateSelectedTags } = props;
+		const current = traces.selectedTags[props.index];
+
+		if (current.name.length === 0) {
+			updateSelectedTags([
+				...traces.selectedTags.slice(0, props.index),
+				{
+					...current,
+					name: options.map((e: { value: string }) => e.value),
+				},
+				...traces.selectedTags.slice(props.index + 1, traces.selectedTags.length),
+			]);
 		} else {
-			setSearchValue([]);
+			updateSelectedTags([
+				...traces.selectedTags.slice(0, props.index),
+				{
+					...current,
+					name: [],
+				},
+				...traces.selectedTags.slice(props.index + 1, traces.selectedTags.length),
+			]);
 		}
 	};
 
@@ -101,7 +132,7 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 						onSearchDebounceFunction(value, traces);
 					}}
 					onChange={onSearchChangeHandler}
-					value={searchValue}
+					value={name}
 					placeholder="Please select"
 					mode="multiple"
 					options={selectedOptions}
@@ -110,16 +141,29 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 					notFoundContent={selectLoading ? <Spin size="small" /> : null}
 				/>
 
-				<Dropdown overlay={() => <Menu>{AllMenuOptions}</Menu>}>
+				<Dropdown trigger={['hover']} overlay={() => <Menu>{AllMenuOptions}</Menu>}>
 					<Button style={{ marginLeft: '1rem', marginRight: '1rem' }}>
 						{selectedFilter}
 					</Button>
 				</Dropdown>
 
 				<SelectComponent
-					value={selectedValue}
+					value={filters}
 					onChange={(value) => {
-						setSelectValue(() => [...(value as string[])]);
+						const { updateSelectedTags } = props;
+						const current = traces.selectedTags[props.index];
+
+						updateSelectedTags([
+							...traces.selectedTags.slice(0, props.index),
+							{
+								...current,
+								filters: value as string[],
+							},
+							...traces.selectedTags.slice(
+								props.index + 1,
+								traces.selectedTags.length,
+							),
+						]);
 					}}
 					mode="tags"
 				/>
@@ -134,9 +178,19 @@ const SingleTags = (props: TagsProps): JSX.Element => {
 	);
 };
 
-interface TagsProps extends Tags {
+interface DispatchProps {
+	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+});
+
+interface AllTagsProps extends DispatchProps {
 	onCloseHandler: (index: number) => void;
 	index: number;
 }
 
-export default SingleTags;
+export default connect(null, mapDispatchToProps)(SingleTags);

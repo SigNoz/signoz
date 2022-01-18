@@ -5,6 +5,7 @@ import {
 	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_ALL_FILTERS,
 	UPDATE_SELECTED_TAGS,
+	UPDATE_TAG_MODAL_VISIBLITY,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -13,7 +14,13 @@ const initialValue: TraceReducer = {
 	filterToFetchData: ['duration', 'status', 'serviceName'],
 	filterLoading: false,
 	selectedFilter: new Map(),
-	selectedTags: [],
+	selectedTags: [
+		{
+			filters: [''],
+			name: [''],
+			selectedFilter: 'IN',
+		},
+	],
 	isTagModalOpen: false,
 };
 
@@ -59,6 +66,13 @@ const traceReducer = (
 			return {
 				...state,
 				selectedTags: action.payload.selectedTags,
+			};
+		}
+
+		case UPDATE_TAG_MODAL_VISIBLITY: {
+			return {
+				...state,
+				isTagModalOpen: action.payload.isTagModalOpen,
 			};
 		}
 
