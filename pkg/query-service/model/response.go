@@ -129,7 +129,7 @@ type SearchSpansResult struct {
 	Events  [][]interface{} `json:"events"`
 }
 
-type GetFilterSpansResponse struct {
+type GetFilterSpansResponseItem struct {
 	Timestamp    string `db:"timestamp" json:"timestamp"`
 	SpanID       string `db:"spanID" json:"spanID"`
 	TraceID      string `db:"traceID" json:"traceID"`
@@ -138,6 +138,11 @@ type GetFilterSpansResponse struct {
 	DurationNano int64  `db:"durationNano" json:"durationNano"`
 	HttpCode     string `db:"httpCode" json:"httpCode"`
 	HttpMethod   string `db:"httpMethod" json:"httpMethod"`
+}
+
+type GetFilterSpansResponse struct {
+	Spans      []GetFilterSpansResponseItem `json:"spans"`
+	TotalSpans int                          `json:"totalSpans"`
 }
 
 type TraceResult struct {

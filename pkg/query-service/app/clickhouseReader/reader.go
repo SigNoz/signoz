@@ -1617,10 +1617,11 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	return &traceFilterReponse, nil
 }
 
-func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*[]model.GetFilterSpansResponse, *model.ApiError) {
+func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
 
+	var query string
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
 	if len(queryParams.ServiceName) > 0 {
 		for i, e := range queryParams.ServiceName {
@@ -1802,6 +1803,20 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	}
 
+	var totalSpans []model.DBResponseTotal
+
+	totalSpansQuery := fmt.Sprintf(`SELECT count() as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+
+	totalSpansQuery += query
+	err := r.db.Select(&totalSpans, totalSpansQuery, args...)
+
+	zap.S().Info(totalSpansQuery)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
 	if len(queryParams.Order) != 0 {
 		if queryParams.Order == "descending" {
 			query = query + "  ORDER BY timestamp DESC"
@@ -1821,18 +1836,24 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		// args = append(args, queryParams.Offset)
 	}
 
-	var getFilterSpansResponses []model.GetFilterSpansResponse
+	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
 
-	err := r.db.Select(&getFilterSpansResponses, query, args...)
+	baseQuery += query
+	err = r.db.Select(&getFilterSpansResponseItems, baseQuery, args...)
 
-	zap.S().Info(query)
+	zap.S().Info(baseQuery)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
 	}
 
-	return &getFilterSpansResponses, nil
+	getFilterSpansResponse := model.GetFilterSpansResponse{
+		Spans:      getFilterSpansResponseItems,
+		TotalSpans: totalSpans[0].NumTotal,
+	}
+
+	return &getFilterSpansResponse, nil
 }
 
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
