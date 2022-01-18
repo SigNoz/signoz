@@ -3,6 +3,14 @@ export interface TraceReducer {
 	filterToFetchData: TraceFilterEnum[];
 	filterLoading: boolean;
 	selectedFilter: Map<TraceFilterEnum, string[]>;
+	selectedTags: Tags[];
+	isTagModalOpen: boolean;
+}
+
+interface Tags {
+	filters: string[];
+	selectedFilter: 'NOT_IN' | 'IN';
+	name: string[];
 }
 
 export type TraceFilterEnum =

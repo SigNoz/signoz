@@ -4,10 +4,19 @@ import { SearchOutlined } from '@ant-design/icons';
 import { Container } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { TraceReducer } from 'types/reducer/trace';
+import { ThunkDispatch } from 'redux-thunk';
+import AppActions from 'types/actions';
+import { bindActionCreators } from 'redux';
+import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisisblity';
 
-const Search = (): JSX.Element => {
+const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 	const [value, setValue] = useState<string>();
-	const [isTagsModalVisible, setIsTagsModalVisible] = useState<boolean>(true);
+	const { isTagModalOpen } = useSelector<AppState, TraceReducer>(
+		(state) => state.traces,
+	);
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
@@ -20,7 +29,7 @@ const Search = (): JSX.Element => {
 	};
 
 	const setIsTagsModalHandler = (value: boolean) => {
-		setIsTagsModalVisible(value);
+		updateTagVisiblity(value);
 	};
 
 	const onFocusHandler: React.FocusEventHandler<HTMLInputElement> = (e) => {
@@ -46,10 +55,22 @@ const Search = (): JSX.Element => {
 					<SearchOutlined />
 				</Button>
 
-				{isTagsModalVisible && <Tags />}
+				{isTagModalOpen && <Tags />}
 			</Container>
 		</Space>
 	);
 };
+
+interface DispatchProps {
+	updateTagVisiblity: (value: boolean) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
+});
+
+type SearchProps = DispatchProps;
 
 export default Search;

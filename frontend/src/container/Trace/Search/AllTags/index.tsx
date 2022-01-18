@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Button, Space, Typography } from 'antd';
 import { PlayCircleFilled } from '@ant-design/icons';
@@ -7,32 +7,31 @@ import { Container, ButtonContainer, CurrentTagsContainer } from './styles';
 import Tags from './Tag';
 const { Text } = Typography;
 import { PlusCircleOutlined } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { TraceReducer } from 'types/reducer/trace';
 
 const AllTags = (): JSX.Element => {
-	const [currentTags, setCurrentTags] = useState<Tags[]>([
-		{
-			filters: ['first', 'second'],
-			name: ['asd'],
-			selectedFilter: 'IN',
-		},
-	]);
+	const { selectedTags } = useSelector<AppState, TraceReducer>(
+		(state) => state.traces,
+	);
 
 	const onTagAddHandler = () => {
-		setCurrentTags((tags) => [
-			...tags,
-			{
-				filters: [],
-				name: [''],
-				selectedFilter: 'IN',
-			},
-		]);
+		// setCurrentTags((tags) => [
+		// 	...tags,
+		// 	{
+		// 		filters: [],
+		// 		name: [''],
+		// 		selectedFilter: 'IN',
+		// 	},
+		// ]);
 	};
 
 	const onCloseHandler = (index: number) => {
-		setCurrentTags([
-			...currentTags.slice(0, index),
-			...currentTags.slice(currentTags.length),
-		]);
+		// setCurrentTags([
+		// 	...currentTags.slice(0, index),
+		// 	...currentTags.slice(currentTags.length),
+		// ]);
 	};
 
 	const onRunQueryHandler = () => {
@@ -42,7 +41,7 @@ const AllTags = (): JSX.Element => {
 	return (
 		<Container>
 			<CurrentTagsContainer>
-				{currentTags.map((tags, index) => (
+				{selectedTags.map((tags, index) => (
 					<Tags
 						key={index}
 						{...{
@@ -77,11 +76,5 @@ const AllTags = (): JSX.Element => {
 		</Container>
 	);
 };
-
-export interface Tags {
-	filters: string[];
-	selectedFilter: 'NOT_IN' | 'IN';
-	name: string[];
-}
 
 export default AllTags;
