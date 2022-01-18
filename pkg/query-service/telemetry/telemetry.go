@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/version"
 	"gopkg.in/segmentio/analytics-go.v3"
@@ -33,10 +34,8 @@ type Telemetry struct {
 
 func createTelemetry() {
 	telemetry = &Telemetry{
-		operator:    analytics.New(api_key),
-		ipAddress:   getOutboundIP(),
-		isEnabled:   true,
-		isAnonymous: false,
+		operator:  analytics.New(api_key),
+		ipAddress: getOutboundIP(),
 	}
 
 	data := map[string]interface{}{}
@@ -128,6 +127,7 @@ func GetInstance() *Telemetry {
 
 	once.Do(func() {
 		createTelemetry()
+		telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
 	})
 
 	return telemetry

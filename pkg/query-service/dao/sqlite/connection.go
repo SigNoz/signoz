@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/telemetry"
 )
 
 type ModelDaoSqlite struct {
@@ -42,8 +44,13 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 }
 func (mds *ModelDaoSqlite) initializeUserPreferences() error {
+
+	// set anonymous setting as default in case of any failures to fetch UserPreference in below section
+	telemetry.GetInstance().SetTelemetryAnonymous(constants.DEFAULT_TELEMETRY_ANONYMOUS)
+
 	ctx := context.Background()
 	userPreference, apiError := mds.FetchUserPreference(ctx)
+
 	if apiError != nil {
 		return apiError.Err
 	}
@@ -53,6 +60,9 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 	if apiError != nil {
 		return apiError.Err
 	}
+
+	// override default anonymous preference if UserPreference is successfully fetched from DB
+	telemetry.GetInstance().SetTelemetryAnonymous(userPreference.GetIsAnonymous())
 
 	return nil
 }

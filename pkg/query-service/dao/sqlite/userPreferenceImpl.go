@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -69,6 +70,7 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 		zap.S().Errorf("Error in commiting transaction for INSERT to user_preferences\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+	telemetry.GetInstance().SetTelemetryAnonymous(userPreferences.GetIsAnonymous())
 
 	return nil
 }
