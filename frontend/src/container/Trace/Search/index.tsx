@@ -22,9 +22,19 @@ const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 
 	useClickOutside(tagRef, (e: HTMLElement) => {
 		// using this hack as overlay span is voilating this condition
+		const getClassCondition = (e: HTMLElement) => {
+			if (e.nodeName === 'SPAN') {
+				return 'ant-dropdown-menu-title-content';
+			}
+
+			if (e.nodeName === 'DIV') {
+				return 'ant-select-item-option-content';
+			}
+		};
+		const classCondition = getClassCondition(e);
 		if (
-			e.nodeName !== 'SPAN' &&
-			e.className !== 'ant-dropdown-menu-title-content'
+			(e.nodeName !== 'SPAN' && e.className !== classCondition) ||
+			(e.nodeName !== 'DIV' && e.className !== classCondition)
 		) {
 			updateTagVisiblity(false);
 		}
