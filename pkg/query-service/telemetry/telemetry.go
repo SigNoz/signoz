@@ -8,7 +8,6 @@ import (
 
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/version"
-	"go.uber.org/zap"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -23,9 +22,9 @@ const (
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
 
 var telemetry *Telemetry
+var once sync.Once
 
 type Telemetry struct {
-	sync.RWMutex
 	operator    analytics.Client
 	ipAddress   string
 	isEnabled   bool
@@ -94,7 +93,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		return
 	}
 
-	zap.S().Info(data)
+	// zap.S().Info(data)
 	properties := analytics.NewProperties()
 	properties.Set("version", version.GetVersion())
 
@@ -127,18 +126,9 @@ func (a *Telemetry) SetTelemetryEnabled(value bool) {
 
 func GetInstance() *Telemetry {
 
-	if telemetry == nil {
-		telemetry.Lock()
-		defer telemetry.Unlock()
-		if telemetry == nil {
-			zap.S().Info("Creating single instance now.")
-			createTelemetry()
-		} else {
-			zap.S().Debug("Single instance already created.")
-		}
-	} else {
-		zap.S().Debug("Single instance already created.")
-	}
+	once.Do(func() {
+		createTelemetry()
+	})
 
 	return telemetry
 }

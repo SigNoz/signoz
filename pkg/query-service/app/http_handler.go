@@ -12,6 +12,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
@@ -34,24 +35,26 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath  string
-	apiPrefix string
-	reader    *Reader
-	ready     func(http.HandlerFunc) http.HandlerFunc
+	basePath     string
+	apiPrefix    string
+	reader       *Reader
+	relationalDB *interfaces.ModelDao
+	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, relationalDB *interfaces.ModelDao) (*APIHandler, error) {
 
 	aH := &APIHandler{
-		reader: reader,
+		reader:       reader,
+		relationalDB: relationalDB,
 	}
 	aH.ready = aH.testReady
 
-	errReadingDashboards := dashboards.LoadDashboardFiles()
-	if errReadingDashboards != nil {
-		return nil, errReadingDashboards
-	}
+	dashboards.LoadDashboardFiles()
+	// if errReadingDashboards != nil {
+	// 	return nil, errReadingDashboards
+	// }
 	return aH, nil
 }
 
@@ -949,8 +952,9 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := (*aH.reader).GetUserPreferences(context.Background())
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	result, apiError := (*aH.relationalDB).FetchUserPreference(context.Background())
+	if apiError != nil {
+		aH.respondError(w, apiError, "Error from Fetch Dao")
 		return
 	}
 
@@ -963,7 +967,7 @@ func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	apiErr := (*aH.reader).SetUserPreferences(context.Background(), userParams)
+	apiErr := (*aH.relationalDB).UpdateUserPreferece(context.Background(), userParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -976,7 +980,7 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 
 	version := version.GetVersion()
 
-	aH.writeJSON(w, r, version)
+	aH.writeJSON(w, r, map[string]string{"version": version})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

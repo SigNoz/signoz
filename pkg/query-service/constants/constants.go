@@ -13,3 +13,4 @@ const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 
 const ALERTMANAGER_API_PREFIX = "http://alertmanager:9093/api/"
+const RELATIONAL_DATASOURCE_PATH = "/var/lib/signoz/signoz.db"

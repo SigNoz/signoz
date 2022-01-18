@@ -15,6 +15,8 @@ import (
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/druidReader"
+	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
@@ -90,10 +92,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 func (s *Server) createHTTPServer() (*http.Server, error) {
 
-	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
+	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
 		return nil, err
 	}
+	localDB.SetMaxOpenConns(10)
 
 	var reader Reader
 
@@ -110,7 +113,12 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader)
+	relationalDB, err := dao.FactoryDao("sqlite")
+	if err != nil {
+		return nil, err
+	}
+
+	apiHandler, err := NewAPIHandler(&reader, relationalDB)
 	if err != nil {
 		return nil, err
 	}

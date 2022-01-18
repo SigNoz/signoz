@@ -1,0 +1,58 @@
+package sqlite
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
+
+type ModelDaoSqlite struct {
+	db *sqlx.DB
+}
+
+// InitDB sets up setting up the connection pool global variable.
+func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
+	var err error
+
+	db, err := sqlx.Open("sqlite3", dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+	db.SetMaxOpenConns(10)
+
+	table_schema := `CREATE TABLE IF NOT EXISTS user_preferences (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
+		hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating user_preferences table: ", err.Error())
+	}
+
+	mds := &ModelDaoSqlite{db: db}
+
+	err = mds.initializeUserPreferences()
+	if err != nil {
+		return nil, err
+	}
+	return mds, nil
+
+}
+func (mds *ModelDaoSqlite) initializeUserPreferences() error {
+	ctx := context.Background()
+	userPreference, apiError := mds.FetchUserPreference(ctx)
+	if apiError != nil {
+		return apiError.Err
+	}
+	if userPreference == nil {
+		apiError = mds.CreateDefaultUserPreference(ctx)
+	}
+	if apiError != nil {
+		return apiError.Err
+	}
+
+	return nil
+}
