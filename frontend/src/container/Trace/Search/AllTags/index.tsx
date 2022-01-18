@@ -66,7 +66,11 @@ const AllTags = (): JSX.Element => {
 
 			<ButtonContainer>
 				<Button>Reset</Button>
-				<Button onClick={onRunQueryHandler} icon={<PlayCircleFilled />}>
+				<Button
+					type="primary"
+					onClick={onRunQueryHandler}
+					icon={<PlayCircleFilled />}
+				>
 					Run Query
 				</Button>
 			</ButtonContainer>

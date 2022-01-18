@@ -9,11 +9,11 @@ const Search = (): JSX.Element => {
 	const [value, setValue] = useState<string>();
 	const [isTagsModalVisible, setIsTagsModalVisible] = useState<boolean>(true);
 
-	const tagRef = useRef(null);
+	const tagRef = useRef<HTMLDivElement>(null);
 
-	// useClickOutside(tagRef, () => {
-	// 	setIsTagsModalHandler(false);
-	// });
+	useClickOutside(tagRef, () => {
+		console.log('asd');
+	});
 
 	const onChangeHandler = (search: string) => {
 		setValue(search);
