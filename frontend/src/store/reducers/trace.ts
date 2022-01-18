@@ -16,8 +16,8 @@ const initialValue: TraceReducer = {
 	selectedFilter: new Map(),
 	selectedTags: [
 		{
-			filters: [''],
-			name: [''],
+			filters: [],
+			name: [],
 			selectedFilter: 'IN',
 		},
 	],
