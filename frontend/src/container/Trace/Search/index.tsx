@@ -20,8 +20,14 @@ const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
-	useClickOutside(tagRef, () => {
-		console.log('asd');
+	useClickOutside(tagRef, (e: HTMLElement) => {
+		// using this hack as overlay span is voilating this condition
+		if (
+			e.nodeName !== 'SPAN' &&
+			e.className !== 'ant-dropdown-menu-title-content'
+		) {
+			updateTagVisiblity(false);
+		}
 	});
 
 	const onChangeHandler = (search: string) => {
