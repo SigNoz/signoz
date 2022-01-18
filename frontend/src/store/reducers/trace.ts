@@ -15,6 +15,10 @@ const initialValue: TraceReducer = {
 	selectedFilter: new Map(),
 	selectedTags: [],
 	isTagModalOpen: false,
+	spansAggregate: {
+		currentPage: 1,
+		loading: false,
+	},
 };
 
 const traceReducer = (

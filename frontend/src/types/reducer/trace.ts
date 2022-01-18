@@ -5,6 +5,10 @@ export interface TraceReducer {
 	selectedFilter: Map<TraceFilterEnum, string[]>;
 	selectedTags: Tags[];
 	isTagModalOpen: boolean;
+	spansAggregate: {
+		loading: boolean;
+		currentPage: number;
+	};
 }
 
 interface Tags {
