@@ -1486,7 +1486,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.ServiceName[service.ServiceName] = service.Count
+				if service.ServiceName != "" {
+					traceFilterReponse.ServiceName[service.ServiceName] = service.Count
+				}
 			}
 		case "httpCode":
 			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1499,7 +1501,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.HttpCode[service.HttpCode] = service.Count
+				if service.HttpCode != "" {
+					traceFilterReponse.HttpCode[service.HttpCode] = service.Count
+				}
 			}
 		case "httpRoute":
 			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1512,7 +1516,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.HttpRoute[service.HttpRoute] = service.Count
+				if service.HttpRoute != "" {
+					traceFilterReponse.HttpRoute[service.HttpRoute] = service.Count
+				}
 			}
 		case "httpUrl":
 			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1525,7 +1531,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.HttpUrl[service.HttpUrl] = service.Count
+				if service.HttpUrl != "" {
+					traceFilterReponse.HttpUrl[service.HttpUrl] = service.Count
+				}
 			}
 		case "httpMethod":
 			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1538,7 +1546,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.HttpMethod[service.HttpMethod] = service.Count
+				if service.HttpMethod != "" {
+					traceFilterReponse.HttpMethod[service.HttpMethod] = service.Count
+				}
 			}
 		case "httpHost":
 			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1551,7 +1561,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.HttpHost[service.HttpHost] = service.Count
+				if service.HttpHost != "" {
+					traceFilterReponse.HttpHost[service.HttpHost] = service.Count
+				}
 			}
 		case "operation":
 			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1564,7 +1576,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.Operation[service.Operation] = service.Count
+				if service.Operation != "" {
+					traceFilterReponse.Operation[service.Operation] = service.Count
+				}
 			}
 		case "component":
 			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1577,7 +1591,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				traceFilterReponse.Component[service.Component.String] = service.Count
+				if service.Component.String != "" {
+					traceFilterReponse.Component[service.Component.String] = service.Count
+				}
 			}
 		case "status":
 			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))", r.indexTable)
