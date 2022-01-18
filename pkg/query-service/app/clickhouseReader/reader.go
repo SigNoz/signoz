@@ -2750,7 +2750,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			if queryParams.GroupBy != "" {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
 					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
-					Value:     SpanAggregatesDBResponseItems[i].Value,
 					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy: SpanAggregatesDBResponseItems[i].Value},
 				}
 			} else {
@@ -2761,7 +2760,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			}
 
 		} else {
-			responseElement.Value += SpanAggregatesDBResponseItems[i].Value
 			if queryParams.GroupBy != "" {
 				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy] = SpanAggregatesDBResponseItems[i].Value
 			}

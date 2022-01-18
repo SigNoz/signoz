@@ -157,6 +157,7 @@ type GetFilteredSpanAggregatesParams struct {
 	Dimension         string
 	AggregationOption string
 	GroupBy           string
+	Function          string
 }
 
 type SpanFilterParams struct {

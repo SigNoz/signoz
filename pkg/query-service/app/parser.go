@@ -19,6 +19,8 @@ import (
 
 var allowedDimesions = []string{"calls", "duration"}
 
+var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
+
 var allowedAggregations = map[string][]string{
 	"calls":    {"count", "rate_per_sec"},
 	"duration": {"avg", "p50", "p95", "p90", "p99", "min", "max", "sum"},
@@ -650,22 +652,48 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 		return nil, errors.New("step param is not in correct format")
 	}
 
-	dimension := r.URL.Query().Get("dimension")
-	if len(dimension) == 0 {
-		return nil, errors.New("dimension param missing in query")
+	function := r.URL.Query().Get("function")
+	if len(function) == 0 {
+		return nil, errors.New("function param missing in query")
 	} else {
-		if !DoesExistInSlice(dimension, allowedDimesions) {
-			return nil, errors.New(fmt.Sprintf("given dimension: %s is not allowed in query", dimension))
+		if !DoesExistInSlice(function, allowedFunctions) {
+			return nil, errors.New(fmt.Sprintf("given function: %s is not allowed in query", function))
 		}
 	}
 
-	aggregationOption := r.URL.Query().Get("aggregation_option")
-	if len(aggregationOption) == 0 {
-		return nil, errors.New("Aggregation Option missing in query params")
-	} else {
-		if !DoesExistInSlice(aggregationOption, allowedAggregations[dimension]) {
-			return nil, errors.New(fmt.Sprintf("given aggregation option: %s is not allowed with dimension: %s", aggregationOption, dimension))
-		}
+	var dimension, aggregationOption string
+
+	switch function {
+	case "count":
+		dimension = "calls"
+		aggregationOption = "count"
+	case "ratePerSec":
+		dimension = "calls"
+		aggregationOption = "rate_per_sec"
+	case "avg":
+		dimension = "duration"
+		aggregationOption = "avg"
+	case "sum":
+		dimension = "duration"
+		aggregationOption = "sum"
+	case "p50":
+		dimension = "duration"
+		aggregationOption = "p50"
+	case "p90":
+		dimension = "duration"
+		aggregationOption = "p90"
+	case "p95":
+		dimension = "duration"
+		aggregationOption = "p95"
+	case "p99":
+		dimension = "duration"
+		aggregationOption = "p99"
+	case "min":
+		dimension = "duration"
+		aggregationOption = "min"
+	case "max":
+		dimension = "duration"
+		aggregationOption = "max"
 	}
 
 	params := &model.GetFilteredSpanAggregatesParams{
