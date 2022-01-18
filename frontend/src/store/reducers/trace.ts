@@ -5,6 +5,7 @@ import {
 	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_ALL_FILTERS,
 	UPDATE_SELECTED_TAGS,
+	UPDATE_SPANS_AGGREEGATE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -18,6 +19,8 @@ const initialValue: TraceReducer = {
 	spansAggregate: {
 		currentPage: 1,
 		loading: false,
+		data: [],
+		error: false,
 	},
 };
 
@@ -63,6 +66,13 @@ const traceReducer = (
 			return {
 				...state,
 				selectedTags: action.payload.selectedTags,
+			};
+		}
+
+		case UPDATE_SPANS_AGGREEGATE: {
+			return {
+				...state,
+				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 

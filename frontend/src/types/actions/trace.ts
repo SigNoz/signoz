@@ -7,6 +7,7 @@ export const SELECT_TRACE_FILTER = 'SELECT_TRACE_FILTER';
 export const UPDATE_ALL_FILTERS = 'UPDATE_ALL_FILTERS';
 export const UPDATE_SELECTED_TAGS = 'UPDATE_SELECTED_TAGS';
 export const UPDATE_TAG_MODAL_VISIBLITY = 'UPDATE_TAG_MODAL_VISIBLITY';
+export const UPDATE_SPANS_AGGREEGATE = 'UPDATE_SPANS_AGGREEGATE';
 
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
@@ -14,7 +15,12 @@ export interface UpdateFilter {
 		filter: TraceReducer['filter'];
 	};
 }
-
+export interface UpdateSpansAggregate {
+	type: typeof UPDATE_SPANS_AGGREEGATE;
+	payload: {
+		spansAggregate: TraceReducer['spansAggregate'];
+	};
+}
 export interface UpdateTagVisiblity {
 	type: typeof UPDATE_TAG_MODAL_VISIBLITY;
 	payload: {
@@ -66,4 +72,5 @@ export type TraceActions =
 	| SelectTraceFilter
 	| UpdateAllFilters
 	| UpdateSelectedTags
-	| UpdateTagVisiblity;
+	| UpdateTagVisiblity
+	| UpdateSpansAggregate;

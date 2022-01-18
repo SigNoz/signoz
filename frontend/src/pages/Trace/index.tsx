@@ -1,6 +1,7 @@
 import Filters from 'container/Trace/Filters';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
+import TraceTable from 'container/Trace/TraceTable';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -36,8 +37,8 @@ const Trace = ({ getFilters }: Props): JSX.Element => {
 
 				<RightContainer>
 					<TraceGraphFilter />
-					{/* <TraceGraph />
-					<TraceTable /> */}
+					{/* <TraceGraph /> */}
+					<TraceTable />
 				</RightContainer>
 			</Container>
 		</>

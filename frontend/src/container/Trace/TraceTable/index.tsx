@@ -1,18 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Table, { ColumnsType } from 'antd/lib/table';
-import { useSelector } from 'react-redux';
+import { TableProps } from 'antd';
+
+import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import AppActions from 'types/actions';
+import {
+	GetInitialSpansAggregate,
+	GetInitialSpansAggregateProps,
+} from 'store/actions/trace/getInitialSpansAggregate';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
-const TraceTable = () => {
+const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 	const { selectedTags, spansAggregate } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const { loading } = spansAggregate;
 
-	const columns: ColumnsType<DataProps> = [
+	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
+
+	const columns: ColumnsType<TableType> = [
 		{
 			title: 'Date',
 			dataIndex: 'timestamp',
@@ -45,27 +61,55 @@ const TraceTable = () => {
 		},
 	];
 
-	const onChangeHandler = () => {};
+	const onChangeHandler: TableProps<TableType>['onChange'] = (props) => {
+		console.log('asd', props);
+	};
+
+	useEffect(() => {
+		getInitialSpansAggregate({
+			maxTime: globalTime.maxTime,
+			minTime: globalTime.minTime,
+			selectedTags,
+			current: spansAggregate.currentPage,
+		});
+	}, [
+		globalTime.maxTime,
+		globalTime.minTime,
+		selectedTags,
+		spansAggregate.currentPage,
+	]);
 
 	return (
 		<Table
 			onChange={onChangeHandler}
-			dataSource={[]}
+			dataSource={spansAggregate.data}
 			loading={loading}
 			columns={columns}
+			rowKey={'timestamp'}
+			pagination={{
+				current: spansAggregate.currentPage,
+				pageSize: 10,
+				responsive: true,
+				position: ['bottomLeft'],
+				total: Infinity,
+			}}
 		/>
 	);
 };
 
-interface DataProps {
-	timestamp: string;
-	spanID: string;
-	traceID: string;
-	serviceName: string;
-	operation: string;
-	durationNano: number;
-	httpCode: string;
-	httpMethod: string;
+interface DispatchProps {
+	getInitialSpansAggregate: (props: GetInitialSpansAggregateProps) => void;
 }
 
-export default TraceTable;
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	getInitialSpansAggregate: bindActionCreators(
+		GetInitialSpansAggregate,
+		dispatch,
+	),
+});
+
+type TraceProps = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(TraceTable);

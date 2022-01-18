@@ -8,7 +8,20 @@ export interface TraceReducer {
 	spansAggregate: {
 		loading: boolean;
 		currentPage: number;
+		data: SpansAggregateData[];
+		error: boolean;
 	};
+}
+
+interface SpansAggregateData {
+	timestamp: string;
+	spanID: string;
+	traceID: string;
+	serviceName: string;
+	operation: string;
+	durationNano: number;
+	httpCode: string;
+	httpMethod: string;
 }
 
 interface Tags {
