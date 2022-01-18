@@ -4,7 +4,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { Container } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 import { ThunkDispatch } from 'redux-thunk';
@@ -73,4 +73,4 @@ const mapDispatchToProps = (
 
 type SearchProps = DispatchProps;
 
-export default Search;
+export default connect(null, mapDispatchToProps)(Search);
