@@ -11,6 +11,7 @@ export interface TraceReducer {
 		data: SpansAggregateData[];
 		error: boolean;
 		total: number;
+		pageSize: number;
 	};
 }
 

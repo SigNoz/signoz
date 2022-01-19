@@ -18,7 +18,9 @@ const getSpanAggregate = async (
 
 		const updatedQueryParams = `${convertObjectIntoParams(
 			preProps,
-		)}&${encodeURIComponent(convertObjectIntoParams(props.tags, true))}`;
+		)}&${encodeURIComponent(
+			convertObjectIntoParams(Object.fromEntries(props.selectedFilter), true),
+		)}`;
 
 		const response = await axios.get<PayloadProps>(
 			`/getFilteredSpans?${updatedQueryParams}`,

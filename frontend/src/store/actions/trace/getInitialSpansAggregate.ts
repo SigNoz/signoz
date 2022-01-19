@@ -5,30 +5,16 @@ import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';
 import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
-import isEqual from 'lodash-es/isEqual';
-import { parseQueryIntoCurrent, updateURL } from './util';
 
-export const GetInitialSpansAggregate = (
-	props: GetInitialSpansAggregateProps,
+export const GetSpansAggregate = (
+	props: GetSpansAggregateProps,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
-		const { traces, globalTime } = getState();
+		const { traces } = getState();
 		const { spansAggregate } = traces;
-		const { query } = props;
-
-		const parsedCurrent = parseQueryIntoCurrent(query);
-
-		// if there is any disparity in data return the action
-		if (
-			globalTime.maxTime !== props.maxTime ||
-			globalTime.minTime !== props.minTime ||
-			!isEqual(props.selectedTags, props.selectedTags)
-		) {
-			return;
-		}
 
 		try {
 			// triggering loading
@@ -41,6 +27,7 @@ export const GetInitialSpansAggregate = (
 						data: spansAggregate.data,
 						error: false,
 						total: spansAggregate.total,
+						pageSize: props.pageSize,
 					},
 				},
 			});
@@ -48,8 +35,8 @@ export const GetInitialSpansAggregate = (
 			const response = await getSpansAggregate({
 				end: props.maxTime,
 				start: props.minTime,
-				tags: props.selectedTags,
-				limit: 10,
+				selectedFilter: props.selectedFilter,
+				limit: props.pageSize,
 				offset: spansAggregate.currentPage,
 			});
 
@@ -63,16 +50,10 @@ export const GetInitialSpansAggregate = (
 							data: response.payload.spans,
 							error: false,
 							total: response.payload.totalSpans,
+							pageSize: props.pageSize,
 						},
 					},
 				});
-
-				updateURL(
-					traces.filter,
-					traces.selectedFilter,
-					traces.filterToFetchData,
-					props.current,
-				);
 			} else {
 				dispatch({
 					type: UPDATE_SPANS_AGGREEGATE,
@@ -83,6 +64,7 @@ export const GetInitialSpansAggregate = (
 							data: spansAggregate.data,
 							error: true,
 							total: spansAggregate.total,
+							pageSize: props.pageSize,
 						},
 					},
 				});
@@ -97,6 +79,7 @@ export const GetInitialSpansAggregate = (
 						data: spansAggregate.data,
 						error: true,
 						total: spansAggregate.total,
+						pageSize: props.pageSize,
 					},
 				},
 			});
@@ -104,10 +87,10 @@ export const GetInitialSpansAggregate = (
 	};
 };
 
-export interface GetInitialSpansAggregateProps {
+export interface GetSpansAggregateProps {
 	maxTime: GlobalReducer['maxTime'];
 	minTime: GlobalReducer['minTime'];
-	selectedTags: TraceReducer['selectedTags'];
-	current: number;
-	query: string;
+	selectedFilter: TraceReducer['selectedFilter'];
+	current: TraceReducer['spansAggregate']['currentPage'];
+	pageSize: TraceReducer['spansAggregate']['pageSize'];
 }

@@ -10,8 +10,8 @@ import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import AppActions from 'types/actions';
 import {
-	GetInitialSpansAggregate,
-	GetInitialSpansAggregateProps,
+	GetSpansAggregate,
+	GetSpansAggregateProps,
 } from 'store/actions/trace/getInitialSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { useLocation } from 'react-router-dom';
@@ -19,8 +19,8 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 dayjs.extend(duration);
 
-const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
-	const { selectedTags, spansAggregate } = useSelector<AppState, TraceReducer>(
+const TraceTable = ({ getSpansAggregate }: TraceProps) => {
+	const { spansAggregate, selectedFilter } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 	const { search } = useLocation();
@@ -90,24 +90,15 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 	];
 
 	const onChangeHandler: TableProps<TableType>['onChange'] = (props) => {
-		getInitialSpansAggregate({
+		getSpansAggregate({
 			maxTime: globalTime.maxTime,
 			minTime: globalTime.minTime,
-			selectedTags,
-			current: props.current || 0,
+			selectedFilter,
+			current: props.current || spansAggregate.currentPage,
 			query: search,
+			pageSize: props.pageSize || spansAggregate.pageSize,
 		});
 	};
-
-	useEffect(() => {
-		getInitialSpansAggregate({
-			maxTime: globalTime.maxTime,
-			minTime: globalTime.minTime,
-			selectedTags,
-			current: spansAggregate.currentPage,
-			query: search,
-		});
-	}, [globalTime.maxTime, globalTime.minTime, selectedTags]);
 
 	return (
 		<Table
@@ -115,10 +106,11 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 			dataSource={spansAggregate.data}
 			loading={loading}
 			columns={columns}
+			size="small"
 			rowKey={'timestamp'}
 			pagination={{
 				current: spansAggregate.currentPage,
-				pageSize: 10,
+				pageSize: spansAggregate.pageSize,
 				responsive: true,
 				position: ['bottomLeft'],
 				total: total,
@@ -128,16 +120,13 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 };
 
 interface DispatchProps {
-	getInitialSpansAggregate: (props: GetInitialSpansAggregateProps) => void;
+	getSpansAggregate: (props: GetSpansAggregateProps) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getInitialSpansAggregate: bindActionCreators(
-		GetInitialSpansAggregate,
-		dispatch,
-	),
+	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
 });
 
 type TraceProps = DispatchProps;

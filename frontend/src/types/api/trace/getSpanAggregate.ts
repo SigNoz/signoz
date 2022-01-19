@@ -3,7 +3,7 @@ import { TraceReducer } from 'types/reducer/trace';
 export interface Props {
 	start: number;
 	end: number;
-	tags: TraceReducer['selectedTags'];
+	selectedFilter: TraceReducer['selectedFilter'];
 	limit: number;
 	offset: number;
 }

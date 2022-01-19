@@ -4,7 +4,6 @@ import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import getFiltersApi from 'api/trace/getFilters';
 import {
-	parseQuery,
 	parseSelectedFilter,
 	parseFilterToFetchData,
 	parseQueryIntoCurrent,
@@ -27,33 +26,41 @@ export const GetFilter = (
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
 		try {
-			const { globalTime, traces } = getState();
-			const initialSelectedFilter = new Map<TraceFilterEnum, string[]>();
+			const { traces, globalTime } = getState();
 
-			const parsedQueryFilter = parseQuery(query);
-			const parsedQuerySelectedFilter = parseSelectedFilter(query);
-			const parsedQueryFetchSelectedData = parseFilterToFetchData(query);
-			const parsedQueryCurrent = parseQueryIntoCurrent(query);
-
-			const parsedFilter = Object.fromEntries(parsedQueryFilter);
-			const parsedSelectedFilter = Object.fromEntries(parsedQuerySelectedFilter);
-
-			const parsedFilterInState = Object.fromEntries(traces.filter);
-			const parsedSelectedFilterInState = Object.fromEntries(
-				traces.selectedFilter,
+			const getSelectedFilter = parseSelectedFilter(query, traces.selectedFilter);
+			const getFilterToFetchData = parseFilterToFetchData(
+				query,
+				traces.filterToFetchData,
+			);
+			const parsedQueryCurrent = parseQueryIntoCurrent(
+				query,
+				traces.spansAggregate.currentPage,
 			);
 
-			// if filter in state and in query are same no need to fetch the filters
-			if (
-				(isEqual(parsedFilter, parsedFilterInState) &&
-					isEqual(parsedSelectedFilter, parsedSelectedFilterInState) &&
-					isEqual(parsedQueryFetchSelectedData, traces.filterToFetchData)) ||
-				(globalTime.maxTime !== maxTime && globalTime.minTime !== minTime) ||
-				isEqual(parsedQueryCurrent, traces.spansAggregate.currentPage)
-			) {
-				console.log('filters are equal');
-				return;
-			}
+			// if (
+			// 	!(
+			// 		isEqual(getSelectedFilter.currentValue, getSelectedFilter.urlValue) &&
+			// 		isEqual(
+			// 			getFilterToFetchData.currentValue,
+			// 			getFilterToFetchData.urlValue,
+			// 		) &&
+			// 		isEqual(parsedQueryCurrent.currentValue, parsedQueryCurrent.urlValue)
+			// 	)
+			// ) {
+			// 	console.log('filter is equal');
+			// 	return;
+			// }
+
+			// if (
+			// 	!isAllowedToUpdateTheState(query, traces, {
+			// 		maxTime: globalTime.maxTime,
+			// 		minTime: globalTime.minTime,
+			// 	})
+			// ) {
+			// 	return;
+			// }
+			// get the reducer or url based initital value
 
 			// now filter are not matching we need to fetch the data and make in sync
 			dispatch({
@@ -65,29 +72,26 @@ export const GetFilter = (
 
 			const response = await getFiltersApi({
 				end: String(maxTime),
-				getFilters: parsedQueryFetchSelectedData,
+				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
-				other: parsedSelectedFilter,
+				other: Object.fromEntries(getSelectedFilter.currentValue),
 			});
 
 			if (response.statusCode === 200) {
-				// updating the trace filter
-				parsedQueryFetchSelectedData.forEach((e) => {
-					traces.filter.set(e, response.payload[e]);
-				});
+				const initialFilter = new Map<TraceFilterEnum, Record<string, string>>();
 
-				parsedQuerySelectedFilter.forEach((value, key) => {
-					// @TODO need to check the type of the key
-					initialSelectedFilter.set(key as TraceFilterEnum, value);
+				Object.keys(response.payload).forEach((key) => {
+					const value = response.payload[key];
+					initialFilter.set(key as TraceFilterEnum, value);
 				});
 
 				dispatch({
 					type: UPDATE_ALL_FILTERS,
 					payload: {
-						filter: traces.filter,
-						selectedFilter: initialSelectedFilter,
-						filterToFetchData: parsedQueryFetchSelectedData,
-						current: parsedQueryCurrent,
+						filter: initialFilter,
+						selectedFilter: getSelectedFilter.currentValue,
+						filterToFetchData: getFilterToFetchData.currentValue,
+						current: parsedQueryCurrent.currentValue,
 					},
 				});
 			} else {

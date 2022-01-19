@@ -1,20 +1,8 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GetInitialFilter } from 'store/actions/trace/getInitialFilters';
-import AppActions from 'types/actions';
+import React from 'react';
 
 import Panel from './Panel';
 
-const Filters = ({ getInitialFilter }: Props): JSX.Element => {
-	const { search } = useLocation();
-
-	useEffect(() => {
-		getInitialFilter(search);
-	}, [getInitialFilter, search]);
-
+const Filters = (): JSX.Element => {
 	return (
 		<>
 			<Panel name="duration" />
@@ -31,16 +19,4 @@ const Filters = ({ getInitialFilter }: Props): JSX.Element => {
 	);
 };
 
-interface DispatchProps {
-	getInitialFilter: (query: string) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getInitialFilter: bindActionCreators(GetInitialFilter, dispatch),
-});
-
-type Props = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(Filters);
+export default Filters;

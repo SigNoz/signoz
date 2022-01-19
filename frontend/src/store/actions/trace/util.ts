@@ -1,59 +1,40 @@
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import history from 'lib/history';
+import isEqual from 'lodash-es/isEqual';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { GlobalTime } from 'types/actions/globalTime';
 
-export const parseQuery = (query: string): Map<string, string> => {
+export const parseMinMaxTime = (query: string): GlobalTime => {
 	const url = new URLSearchParams(query);
+	let maxTime = 0;
+	let minTime = 0;
 
-	const filters = new Map<string, string>();
+	const urlMaxTime = url.get('minTime');
+	const urlMinTime = url.get('maxTime');
 
-	const setFilters = (value: string, key: string) => {
-		filters.set(key, JSON.parse(decodeURIComponent(value)));
+	if (urlMaxTime && urlMinTime) {
+		maxTime = parseInt(urlMaxTime);
+		minTime = parseInt(urlMinTime);
+	}
+
+	return {
+		maxTime,
+		minTime,
 	};
-
-	url.forEach((value, key) => {
-		if (key === 'status') {
-			setFilters(value, key);
-		}
-
-		if (key === 'serviceName') {
-			setFilters(value, key);
-		}
-
-		if (key === 'httpRoute') {
-			setFilters(value, key);
-		}
-
-		if (key === 'httpCode') {
-			setFilters(value, key);
-		}
-
-		if (key === 'httpUrl') {
-			setFilters(value, key);
-		}
-
-		if (key === 'httpHost') {
-			setFilters(value, key);
-		}
-
-		if (key === 'httpMethod') {
-			setFilters(value, key);
-		}
-
-		if (key === 'httpMethod') {
-			setFilters(value, key);
-		}
-		if (key === 'duration') {
-			setFilters(value, key);
-		}
-	});
-
-	return filters;
 };
 
-export const parseSelectedFilter = (query: string): Map<string, string[]> => {
+interface ParsedUrl<T> {
+	currentValue: T;
+	urlValue: T;
+}
+
+export const parseSelectedFilter = (
+	query: string,
+	selectedFilter: TraceReducer['selectedFilter'],
+): ParsedUrl<Map<TraceFilterEnum, string[]>> => {
 	const url = new URLSearchParams(query);
 
-	const filters = new Map<string, string[]>();
+	const filters = new Map<TraceFilterEnum, string[]>();
 
 	url.forEach((value, key) => {
 		if (key === 'selected') {
@@ -61,7 +42,7 @@ export const parseSelectedFilter = (query: string): Map<string, string[]> => {
 				const parsedValue = JSON.parse(decodeURIComponent(value));
 				if (typeof parsedValue === 'object') {
 					Object.keys(parsedValue).forEach((e) => {
-						filters.set(e, parsedValue[e]);
+						filters.set(e as TraceFilterEnum, parsedValue[e]);
 					});
 				}
 			} catch (error) {
@@ -70,10 +51,23 @@ export const parseSelectedFilter = (query: string): Map<string, string[]> => {
 		}
 	});
 
-	return filters;
+	if (filters.size === 0) {
+		return {
+			urlValue: filters,
+			currentValue: selectedFilter,
+		};
+	}
+
+	return {
+		urlValue: filters,
+		currentValue: filters,
+	};
 };
 
-export const parseFilterToFetchData = (query: string) => {
+export const parseFilterToFetchData = (
+	query: string,
+	stateTraceFilterData: TraceReducer['filterToFetchData'],
+): ParsedUrl<TraceFilterEnum[]> => {
 	const url = new URLSearchParams(query);
 
 	let filterToFetchData: TraceFilterEnum[] = [];
@@ -92,10 +86,23 @@ export const parseFilterToFetchData = (query: string) => {
 		}
 	});
 
-	return filterToFetchData;
+	if (filterToFetchData.length === 0) {
+		return {
+			currentValue: stateTraceFilterData,
+			urlValue: filterToFetchData,
+		};
+	}
+
+	return {
+		currentValue: filterToFetchData,
+		urlValue: filterToFetchData,
+	};
 };
 
-export const parseQueryIntoCurrent = (query: string) => {
+export const parseQueryIntoCurrent = (
+	query: string,
+	stateCurrent: TraceReducer['spansAggregate']['currentPage'],
+): ParsedUrl<TraceReducer['spansAggregate']['currentPage']> => {
 	const url = new URLSearchParams(query);
 
 	let current = 0;
@@ -113,7 +120,17 @@ export const parseQueryIntoCurrent = (query: string) => {
 		}
 	});
 
-	return current;
+	if (current === 0) {
+		return {
+			currentValue: stateCurrent,
+			urlValue: current,
+		};
+	}
+
+	return {
+		currentValue: current,
+		urlValue: current,
+	};
 };
 
 export const convertMapIntoStringifyString = (
@@ -127,16 +144,17 @@ export const convertMapIntoStringifyString = (
 };
 
 export const updateURL = (
-	filter: TraceReducer['filter'],
 	selectedFilter: TraceReducer['selectedFilter'],
 	filterToFetchData: TraceReducer['filterToFetchData'],
 	current: TraceReducer['spansAggregate']['total'],
+	maxTime: GlobalReducer['maxTime'],
+	minTime: GlobalReducer['minTime'],
 ) => {
-	const key = convertMapIntoStringifyString(filter);
-
 	history.replace(
-		`${history.location.pathname}?${key}&selected=${JSON.stringify(
+		`${history.location.pathname}?selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
-		)}&filterToFetchData=${JSON.stringify(filterToFetchData)}&current=${current}`,
+		)}&filterToFetchData=${JSON.stringify(
+			filterToFetchData,
+		)}&current=${current}&maxTime=${maxTime}&minTime=${minTime}`,
 	);
 };

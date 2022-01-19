@@ -15,13 +15,7 @@ const initialValue: TraceReducer = {
 	filterToFetchData: ['duration', 'status', 'serviceName'],
 	filterLoading: false,
 	selectedFilter: new Map(),
-	selectedTags: [
-		{
-			filters: [],
-			name: [],
-			selectedFilter: 'IN',
-		},
-	],
+	selectedTags: [],
 	isTagModalOpen: false,
 	spansAggregate: {
 		currentPage: 0,
@@ -29,6 +23,7 @@ const initialValue: TraceReducer = {
 		data: [],
 		error: false,
 		total: 0,
+		pageSize: 10,
 	},
 };
 
