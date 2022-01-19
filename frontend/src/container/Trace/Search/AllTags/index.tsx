@@ -2,7 +2,6 @@ import React from 'react';
 
 import { Button, Space, Typography } from 'antd';
 import { PlayCircleFilled } from '@ant-design/icons';
-
 import { Container, ButtonContainer, CurrentTagsContainer } from './styles';
 import Tags from './Tag';
 const { Text } = Typography;
@@ -14,9 +13,16 @@ import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import AppActions from 'types/actions';
 import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
+import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
+import { parseTagsToQuery } from '../util';
 
-const AllTags = ({ updateSelectedTags }: AllTagsProps): JSX.Element => {
-	const { selectedTags } = useSelector<AppState, TraceReducer>(
+const { Paragraph } = Typography;
+
+const AllTags = ({
+	updateSelectedTags,
+	updateTagIsError,
+}: AllTagsProps): JSX.Element => {
+	const { selectedTags, isTagModalError } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
@@ -39,12 +45,33 @@ const AllTags = ({ updateSelectedTags }: AllTagsProps): JSX.Element => {
 	};
 
 	const onRunQueryHandler = () => {
-		console.log('asd');
+		const parsedQuery = parseTagsToQuery(selectedTags);
+
+		if (parsedQuery.isError) {
+			updateTagIsError(true);
+		} else {
+			updateTagIsError(false);
+		}
 	};
 
 	const onResetHandler = () => {
 		updateSelectedTags([]);
 	};
+
+	if (isTagModalError) {
+		return (
+			<Container>
+				<Paragraph>
+					Unrecognised query format. Please reset your query by clicking `X` in the
+					search bar above.
+				</Paragraph>
+
+				<Paragraph>
+					Please click on the search bar to get a drop down to select relevant tags
+				</Paragraph>
+			</Container>
+		);
+	}
 
 	return (
 		<Container>
@@ -84,12 +111,14 @@ const AllTags = ({ updateSelectedTags }: AllTagsProps): JSX.Element => {
 
 interface DispatchProps {
 	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;
+	updateTagIsError: (value: boolean) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
 });
 
 type AllTagsProps = DispatchProps;

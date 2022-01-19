@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import Table, { ColumnsType } from 'antd/lib/table';
 import { TableProps, Tag } from 'antd';
@@ -14,7 +14,6 @@ import {
 	GetSpansAggregateProps,
 } from 'store/actions/trace/getInitialSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { useLocation } from 'react-router-dom';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 dayjs.extend(duration);
@@ -23,7 +22,6 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 	const { spansAggregate, selectedFilter } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
-	const { search } = useLocation();
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -95,7 +93,6 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			minTime: globalTime.minTime,
 			selectedFilter,
 			current: props.current || spansAggregate.currentPage,
-			query: search,
 			pageSize: props.pageSize || spansAggregate.pageSize,
 		});
 	};
@@ -106,7 +103,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			dataSource={spansAggregate.data}
 			loading={loading}
 			columns={columns}
-			size="small"
+			size="middle"
 			rowKey={'timestamp'}
 			pagination={{
 				current: spansAggregate.currentPage,

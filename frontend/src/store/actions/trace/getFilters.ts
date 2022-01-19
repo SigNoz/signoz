@@ -12,7 +12,6 @@ import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_TRACE_FILTER_LOADING,
 } from 'types/actions/trace';
-import isEqual from 'lodash-es/isEqual';
 import { TraceFilterEnum } from 'types/reducer/trace';
 import { notification } from 'antd';
 

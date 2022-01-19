@@ -11,7 +11,7 @@ export const SelectedTraceFilter = (props: {
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
-	return (dispatch, getState): void => {
+	return (_, getState): void => {
 		const { topic, value } = props;
 		const { traces, globalTime } = getState();
 

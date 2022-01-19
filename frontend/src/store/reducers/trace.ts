@@ -7,6 +7,7 @@ import {
 	UPDATE_SELECTED_TAGS,
 	UPDATE_SPANS_AGGREEGATE,
 	UPDATE_TAG_MODAL_VISIBLITY,
+	UPDATE_IS_TAG_ERROR,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -17,6 +18,7 @@ const initialValue: TraceReducer = {
 	selectedFilter: new Map(),
 	selectedTags: [],
 	isTagModalOpen: false,
+	isTagModalError: false,
 	spansAggregate: {
 		currentPage: 0,
 		loading: false,
@@ -87,6 +89,13 @@ const traceReducer = (
 			return {
 				...state,
 				isTagModalOpen: action.payload.isTagModalOpen,
+			};
+		}
+
+		case UPDATE_IS_TAG_ERROR: {
+			return {
+				...state,
+				isTagModalError: action.payload.isTagModalError,
 			};
 		}
 

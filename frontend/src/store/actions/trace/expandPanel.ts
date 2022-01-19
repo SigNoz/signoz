@@ -11,7 +11,7 @@ export const ExpandPanel = (
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
-	return (dispatch, getState): void => {
+	return (_, getState): void => {
 		const { traces, globalTime } = getState();
 
 		const { filterToFetchData } = traces;

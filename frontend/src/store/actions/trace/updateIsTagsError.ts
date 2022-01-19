@@ -1,16 +1,16 @@
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
-import { UPDATE_TAG_MODAL_VISIBLITY } from 'types/actions/trace';
+import { UPDATE_IS_TAG_ERROR } from 'types/actions/trace';
 
-export const UpdateTagVisiblity = (
-	isTagModalOpen: TraceReducer['isTagModalOpen'],
+export const UpdateTagIsError = (
+	isTagModalError: TraceReducer['isTagModalError'],
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return (dispatch): void => {
 		dispatch({
-			type: UPDATE_TAG_MODAL_VISIBLITY,
+			type: UPDATE_IS_TAG_ERROR,
 			payload: {
-				isTagModalOpen: isTagModalOpen,
+				isTagModalError,
 			},
 		});
 	};

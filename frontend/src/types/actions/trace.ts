@@ -8,6 +8,7 @@ export const UPDATE_ALL_FILTERS = 'UPDATE_ALL_FILTERS';
 export const UPDATE_SELECTED_TAGS = 'UPDATE_SELECTED_TAGS';
 export const UPDATE_TAG_MODAL_VISIBLITY = 'UPDATE_TAG_MODAL_VISIBLITY';
 export const UPDATE_SPANS_AGGREEGATE = 'UPDATE_SPANS_AGGREEGATE';
+export const UPDATE_IS_TAG_ERROR = 'UPDATE_IS_TAG_ERROR';
 
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
@@ -66,6 +67,13 @@ export interface GetTraceFilter {
 	};
 }
 
+export interface UpdateIsTagError {
+	type: typeof UPDATE_IS_TAG_ERROR;
+	payload: {
+		isTagModalError: TraceReducer['isTagModalError'];
+	};
+}
+
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter
@@ -74,4 +82,5 @@ export type TraceActions =
 	| UpdateAllFilters
 	| UpdateSelectedTags
 	| UpdateTagVisiblity
-	| UpdateSpansAggregate;
+	| UpdateSpansAggregate
+	| UpdateIsTagError;

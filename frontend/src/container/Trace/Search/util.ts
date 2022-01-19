@@ -1,9 +1,22 @@
-import { Tags } from './AllTags';
+import { TraceReducer } from 'types/reducer/trace';
 
-const parseQueryToTags = (query: string): Tags[] => {
-	return [];
+type Tags = TraceReducer['selectedTags'];
+
+interface PayloadProps<T> {
+	isError: boolean;
+	payload: T;
+}
+
+export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
+	return {
+		isError: false,
+		payload: [],
+	};
 };
 
-const parseTagsToQuery = (tags: Tags[]): string => {
-	return '';
+export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
+	return {
+		isError: false,
+		payload: '',
+	};
 };
