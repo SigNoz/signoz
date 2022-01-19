@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 import Table, { ColumnsType } from 'antd/lib/table';
-import { TableProps } from 'antd';
+import { TableProps, Tag } from 'antd';
 
 import { connect, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -15,6 +15,9 @@ import {
 } from 'store/actions/trace/getInitialSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { useLocation } from 'react-router-dom';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+dayjs.extend(duration);
 
 const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 	const { selectedTags, spansAggregate } = useSelector<AppState, TraceReducer>(
@@ -35,6 +38,10 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 			title: 'Date',
 			dataIndex: 'timestamp',
 			key: 'timestamp',
+			render: (value: TableType['timestamp']) => {
+				const day = dayjs(value);
+				return <div>{day.format('DD/MM/YYYY HH:MM:ss A')}</div>;
+			},
 		},
 		{
 			title: 'Service',
@@ -50,16 +57,35 @@ const TraceTable = ({ getInitialSpansAggregate }: TraceProps) => {
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
+			render: (value: TableType['durationNano']) => {
+				return (
+					<div>
+						{dayjs.duration({ milliseconds: value / 1000000 }).asMilliseconds()}
+					</div>
+				);
+			},
 		},
 		{
 			title: 'Method',
 			dataIndex: 'httpMethod',
 			key: 'httpMethod',
+			render: (value: TableType['httpMethod']) => {
+				if (value.length === 0) {
+					return <div>-</div>;
+				}
+				return <Tag color="magenta">{value}</Tag>;
+			},
 		},
 		{
 			title: 'Status Code',
 			dataIndex: 'httpCode',
 			key: 'httpCode',
+			render: (value: TableType['httpCode']) => {
+				if (value.length === 0) {
+					return <div>-</div>;
+				}
+				return <Tag color="magenta">{value}</Tag>;
+			},
 		},
 	];
 
