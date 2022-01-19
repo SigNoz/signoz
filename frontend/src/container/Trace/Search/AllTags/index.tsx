@@ -21,6 +21,7 @@ const { Paragraph } = Typography;
 const AllTags = ({
 	updateSelectedTags,
 	updateTagIsError,
+	onChangeHandler,
 }: AllTagsProps): JSX.Element => {
 	const { selectedTags, isTagModalError } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
@@ -50,6 +51,7 @@ const AllTags = ({
 		if (parsedQuery.isError) {
 			updateTagIsError(true);
 		} else {
+			onChangeHandler(parsedQuery.payload);
 			updateTagIsError(false);
 		}
 	};
@@ -121,6 +123,8 @@ const mapDispatchToProps = (
 	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
 });
 
-type AllTagsProps = DispatchProps;
+interface AllTagsProps extends DispatchProps {
+	onChangeHandler: (search: string) => void;
+}
 
 export default connect(null, mapDispatchToProps)(AllTags);

@@ -97,7 +97,7 @@ const Search = ({
 					}}
 				/>
 
-				{isTagModalOpen && <Tags />}
+				{isTagModalOpen && <Tags onChangeHandler={onChangeHandler} />}
 			</Container>
 		</Space>
 	);
