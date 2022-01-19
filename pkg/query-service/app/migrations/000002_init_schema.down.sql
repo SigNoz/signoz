@@ -1,1 +1,0 @@
-ALTER TABLE signoz_index DROP COLUMN IF EXISTS events
