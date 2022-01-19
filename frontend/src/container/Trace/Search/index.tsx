@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Space, Input, Button } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Space, Input } from 'antd';
 import { Container } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
@@ -11,12 +10,23 @@ import { ThunkDispatch } from 'redux-thunk';
 import AppActions from 'types/actions';
 import { bindActionCreators } from 'redux';
 import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
+import { parseQueryToTags, parseTagsToQuery } from './util';
+import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
+import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
+const { Search: SearchComponent } = Input;
 
-const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
-	const [value, setValue] = useState<string>();
-	const { isTagModalOpen } = useSelector<AppState, TraceReducer>(
+const Search = ({
+	updateTagVisiblity,
+	updateSelectedTags,
+	updateTagIsError,
+}: SearchProps): JSX.Element => {
+	const { isTagModalOpen, selectedTags } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
+
+	const initialTags = parseTagsToQuery(selectedTags);
+
+	const [value, setValue] = useState<string>(initialTags.payload);
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
@@ -64,23 +74,28 @@ const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 		setIsTagsModalHandler(true);
 	};
 
-	const onParseQueryToTagsHandler = () => {
-		console.log('asd');
-	};
-
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
 			<Container ref={tagRef}>
-				<Input
+				<SearchComponent
 					onChange={(event) => onChangeHandler(event.target.value)}
 					value={value}
+					allowClear
 					onFocus={onFocusHandler}
 					placeholder="Click to filter by tags"
-				/>
+					type={'search'}
+					enterButton
+					onSearch={(string) => {
+						const { isError, payload } = parseQueryToTags(string);
 
-				<Button onClick={onParseQueryToTagsHandler} type="primary">
-					<SearchOutlined />
-				</Button>
+						if (isError) {
+							updateTagIsError(true);
+						} else {
+							updateTagIsError(false);
+							updateSelectedTags(payload);
+						}
+					}}
+				/>
 
 				{isTagModalOpen && <Tags />}
 			</Container>
@@ -90,12 +105,16 @@ const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 
 interface DispatchProps {
 	updateTagVisiblity: (value: boolean) => void;
+	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;
+	updateTagIsError: (value: boolean) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
+	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
+	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
 });
 
 type SearchProps = DispatchProps;
