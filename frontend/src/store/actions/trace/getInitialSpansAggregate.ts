@@ -14,7 +14,12 @@ export const GetSpansAggregate = (
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
 		const { traces } = getState();
-		const { spansAggregate } = traces;
+		const { spansAggregate, filterLoading } = traces;
+		const search = location.search;
+
+		if (filterLoading && search.length !== 0) {
+			return;
+		}
 
 		try {
 			// triggering loading

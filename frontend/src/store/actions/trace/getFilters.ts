@@ -26,41 +26,18 @@ export const GetFilter = (
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
 		try {
-			const { traces, globalTime } = getState();
+			const { traces } = getState();
 
 			const getSelectedFilter = parseSelectedFilter(query, traces.selectedFilter);
 			const getFilterToFetchData = parseFilterToFetchData(
 				query,
 				traces.filterToFetchData,
 			);
+
 			const parsedQueryCurrent = parseQueryIntoCurrent(
 				query,
 				traces.spansAggregate.currentPage,
 			);
-
-			// if (
-			// 	!(
-			// 		isEqual(getSelectedFilter.currentValue, getSelectedFilter.urlValue) &&
-			// 		isEqual(
-			// 			getFilterToFetchData.currentValue,
-			// 			getFilterToFetchData.urlValue,
-			// 		) &&
-			// 		isEqual(parsedQueryCurrent.currentValue, parsedQueryCurrent.urlValue)
-			// 	)
-			// ) {
-			// 	console.log('filter is equal');
-			// 	return;
-			// }
-
-			// if (
-			// 	!isAllowedToUpdateTheState(query, traces, {
-			// 		maxTime: globalTime.maxTime,
-			// 		minTime: globalTime.minTime,
-			// 	})
-			// ) {
-			// 	return;
-			// }
-			// get the reducer or url based initital value
 
 			// now filter are not matching we need to fetch the data and make in sync
 			dispatch({
