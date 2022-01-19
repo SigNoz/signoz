@@ -5,12 +5,8 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"regexp"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/clickhouse"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -111,16 +107,6 @@ func createHTTPServer() (*http.Server, error) {
 		reader = druidReader.NewReader(localDB)
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		m1 := regexp.MustCompile(`(\w+)://`)
-		clickhouseUrl := m1.ReplaceAllString(os.Getenv("ClickHouseUrl"), "")
-		clickhouseUrl = fmt.Sprintf("clickhouse://%s/database=default&x-multi-statement=true", clickhouseUrl)
-		m, err := migrate.New(
-			"file://migrations",
-			clickhouseUrl)
-		if err != nil {
-			return nil, fmt.Errorf("Clickhouse Migrate failed to run, error: %s", err)
-		}
-		m.Up()
 		clickhouseReader := clickhouseReader.NewReader(localDB)
 		go clickhouseReader.Start()
 		reader = clickhouseReader

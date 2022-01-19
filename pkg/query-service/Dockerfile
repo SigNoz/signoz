@@ -34,7 +34,6 @@ WORKDIR /root
 COPY --from=builder /go/src/github.com/signoz/signoz/pkg/query-service/bin/query-service .
 
 COPY config/prometheus.yml /root/config/prometheus.yml
-COPY app/migrations /root/migrations
 
 # run the binary
 ENTRYPOINT ["./query-service"]
