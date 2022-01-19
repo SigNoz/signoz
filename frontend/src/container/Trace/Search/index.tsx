@@ -30,11 +30,22 @@ const Search = ({ updateTagVisiblity }: SearchProps): JSX.Element => {
 			if (e.nodeName === 'DIV') {
 				return 'ant-select-item-option-content';
 			}
+
+			if (e.nodeName === 'BUTTON') {
+				return 'ant-btn ant-btn-icon-only';
+			}
 		};
+
+		if (e.nodeName === 'svg' || e.nodeName === 'path') {
+			return;
+		}
+
 		const classCondition = getClassCondition(e);
+
 		if (
 			(e.nodeName !== 'SPAN' && e.className !== classCondition) ||
-			(e.nodeName !== 'DIV' && e.className !== classCondition)
+			(e.nodeName !== 'DIV' && e.className !== classCondition) ||
+			(e.nodeName !== 'BUTTON' && e.className !== classCondition)
 		) {
 			updateTagVisiblity(false);
 		}
