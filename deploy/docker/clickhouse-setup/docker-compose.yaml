@@ -32,6 +32,9 @@ services:
     ports:
       - 9093:9093
 
+# Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
+
+
   query-service:
     image: signoz/query-service:0.5.4
     container_name: query-service
