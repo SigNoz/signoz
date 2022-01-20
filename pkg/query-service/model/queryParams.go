@@ -120,3 +120,14 @@ type GetTTLParams struct {
 	Type      string
 	GetAllTTL bool
 }
+
+type GetErrorsParams struct {
+	Start *time.Time
+	End   *time.Time
+}
+
+type GetErrorParams struct {
+	ErrorType   string
+	ErrorID     string
+	ServiceName string
+}

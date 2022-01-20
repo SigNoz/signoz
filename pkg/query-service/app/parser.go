@@ -480,6 +480,47 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	return params, nil
 }
 
+func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
+
+	params := &model.GetErrorParams{}
+
+	serviceName := r.URL.Query().Get("serviceName")
+	if len(serviceName) != 0 {
+		params.ServiceName = serviceName
+	}
+
+	errorType := r.URL.Query().Get("errorType")
+	if len(errorType) != 0 {
+		params.ErrorType = errorType
+	}
+
+	errorId := r.URL.Query().Get("errorId")
+	if len(errorId) != 0 {
+		params.ErrorID = errorId
+	}
+
+	return params, nil
+}
+
+func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.GetErrorsParams{
+		Start: startTime,
+		End:   endTime,
+	}
+
+	return params, nil
+}
+
 func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
 
 	tags := new([]model.TagQuery)
