@@ -60,6 +60,17 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
+---
+Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
+
+Click the button below. A workspace with all required environments will be created.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/SigNoz/signoz)
+
+> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/signoz`
+
+---
+
 ## General Instructions
 
 You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA).
