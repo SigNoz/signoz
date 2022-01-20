@@ -18,7 +18,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 ### Contribute to Frontend with Docker installation of SigNoz
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz`
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L56`
+- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L59`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d`
@@ -26,6 +26,8 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
 - `yarn install`
 - `yarn dev`
+
+> Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
 
 ### Contribute to Frontend without installing SigNoz backend
 
@@ -45,17 +47,18 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 ### To run ClickHouse setup (recommended for local development)
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz/deploy`
-- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L56`
-- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L35`
+- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L59`
+- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 - Install signoz locally without the frontend and query-service
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d`
   - If you are on arm64 processors (Apple M1 Macbooks) run `sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml up -d`
 - `STORAGE=clickhouse ClickHouseUrl=tcp://localhost:9001 go run main.go`
 
+> Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
+
 **_Query Service should now be available at `http://localhost:8080`_**
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
-
 
 ## General Instructions
 
