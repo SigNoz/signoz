@@ -19,9 +19,10 @@ import duration from 'dayjs/plugin/duration';
 dayjs.extend(duration);
 
 const TraceTable = ({ getSpansAggregate }: TraceProps) => {
-	const { spansAggregate, selectedFilter } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
-	);
+	const { spansAggregate, selectedFilter, selectedTags } = useSelector<
+		AppState,
+		TraceReducer
+	>((state) => state.traces);
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -94,6 +95,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			selectedFilter,
 			current: props.current || spansAggregate.currentPage,
 			pageSize: props.pageSize || spansAggregate.pageSize,
+			selectedTags,
 		});
 	};
 

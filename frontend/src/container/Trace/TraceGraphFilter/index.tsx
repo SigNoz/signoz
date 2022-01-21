@@ -1,46 +1,53 @@
 import React, { useState } from 'react';
-import { Menu, Dropdown, Button, MenuItemProps } from 'antd';
+import { Menu, Dropdown, Button, MenuItemProps, Space } from 'antd';
+import { functions, groupBy } from './config';
 
 const TraceGraphFilter = () => {
 	const [selectedFunction, setSelectedFunction] = useState('Select Function');
 	const [selectedGroupBy, setSelectedGroupBy] = useState('Select Group By');
 
-	const onClickSelectedFunctionHandler: MenuItemProps['onClick'] = (e) => {
-		setSelectedFunction(e.key);
+	const onClickSelectedFunctionHandler: MenuItemProps['onClick'] = (ev) => {
+		const selected = functions.find((e) => e.key === ev.key);
+
+		if (selected) {
+			setSelectedFunction(selected.displayValue);
+		}
 	};
 
-	const onClickSelectedGroupByHandler: MenuItemProps['onClick'] = (e) => {
-		setSelectedGroupBy(e.key);
+	const onClickSelectedGroupByHandler: MenuItemProps['onClick'] = (ev) => {
+		const selected = groupBy.find((e) => e.key === ev.key);
+
+		if (selected) {
+			setSelectedGroupBy(selected.displayValue);
+		}
 	};
 
-	const menu = (
+	const functionMenu = (
 		<Menu onClick={onClickSelectedFunctionHandler}>
-			<Menu.Item key="0">asd</Menu.Item>
-			<Menu.Item key="1">asd</Menu.Item>
-			<Menu.Divider />
-			<Menu.Item key="3">3rd menu item</Menu.Item>
+			{functions.map(({ displayValue, key }) => (
+				<Menu.Item key={key}>{displayValue}</Menu.Item>
+			))}
 		</Menu>
 	);
 
-	const groupBy = (
+	const groupByMenu = (
 		<Menu onClick={onClickSelectedGroupByHandler}>
-			<Menu.Item key="0">asd</Menu.Item>
-			<Menu.Item key="1">asd</Menu.Item>
-			<Menu.Divider />
-			<Menu.Item key="3">3rd menu item</Menu.Item>
+			{groupBy.map(({ displayValue, key }) => (
+				<Menu.Item key={key}>{displayValue}</Menu.Item>
+			))}
 		</Menu>
 	);
 
 	return (
-		<>
-			<Dropdown overlay={menu} trigger={['click']}>
+		<Space>
+			<Dropdown overlay={functionMenu} trigger={['click']}>
 				<Button>{selectedFunction}</Button>
 			</Dropdown>
 
-			<Dropdown overlay={groupBy} trigger={['click']}>
+			<Dropdown overlay={groupByMenu} trigger={['click']}>
 				<Button>{selectedGroupBy}</Button>
 			</Dropdown>
-		</>
+		</Space>
 	);
 };
 
