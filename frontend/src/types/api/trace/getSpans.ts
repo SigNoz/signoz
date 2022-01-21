@@ -11,10 +11,11 @@ export interface Props {
 }
 
 export interface PayloadProps {
-	items: Record<number, SpanData>;
+	items: Record<string, SpanData>;
 }
 
 interface SpanData {
 	timestamp: number;
-	value: number;
+	value?: number;
+	groupBy?: Record<string, number>;
 }
