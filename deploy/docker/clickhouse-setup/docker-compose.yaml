@@ -11,7 +11,6 @@ services:
         - 8123:8123
       volumes:
         - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
-        - ./docker-entrypoint-initdb.d/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
         - ./data/clickhouse/:/var/lib/clickhouse/
 
       healthcheck:
@@ -66,7 +65,6 @@ services:
     volumes:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
-
   otel-collector:
     image: signoz/otelcontribcol:0.4.2
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
@@ -98,6 +96,7 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+  
   hotrod:
     image: jaegertracing/example-hotrod:latest
     container_name: hotrod
@@ -106,7 +105,6 @@ services:
     command: ["all"]
     environment:
     - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
-
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"

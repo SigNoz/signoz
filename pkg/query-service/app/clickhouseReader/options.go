@@ -20,6 +20,7 @@ const (
 	defaultOperationsTable   string        = "signoz_operations"
 	defaultIndexTable        string        = "signoz_index"
 	defaultSpansTable        string        = "signoz_spans"
+	defaultErrorTable        string        = "signoz_error_index"
 	defaultArchiveSpansTable string        = "signoz_archive_spans"
 	defaultWriteBatchDelay   time.Duration = 5 * time.Second
 	defaultWriteBatchSize    int           = 10000
@@ -45,6 +46,7 @@ type namespaceConfig struct {
 	OperationsTable string
 	IndexTable      string
 	SpansTable      string
+	ErrorTable      string
 	WriteBatchDelay time.Duration
 	WriteBatchSize  int
 	Encoding        Encoding
@@ -89,6 +91,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			SpansTable:      defaultSpansTable,
+			ErrorTable:      defaultErrorTable,
 			WriteBatchDelay: defaultWriteBatchDelay,
 			WriteBatchSize:  defaultWriteBatchSize,
 			Encoding:        defaultEncoding,
@@ -105,6 +108,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 				OperationsTable: "",
 				IndexTable:      "",
 				SpansTable:      defaultArchiveSpansTable,
+				ErrorTable:      "",
 				WriteBatchDelay: defaultWriteBatchDelay,
 				WriteBatchSize:  defaultWriteBatchSize,
 				Encoding:        defaultEncoding,
