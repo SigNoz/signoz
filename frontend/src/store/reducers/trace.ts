@@ -8,6 +8,8 @@ import {
 	UPDATE_SPANS_AGGREEGATE,
 	UPDATE_TAG_MODAL_VISIBLITY,
 	UPDATE_IS_TAG_ERROR,
+	UPDATE_SELECTED_FUNCTION,
+	UPDATE_SELECTED_GROUP_BY,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -26,6 +28,14 @@ const initialValue: TraceReducer = {
 		error: false,
 		total: 0,
 		pageSize: 10,
+	},
+	selectedGroupBy: '',
+	selectedFunction: '',
+	spansGraph: {
+		error: false,
+		errorMessage: '',
+		loading: false,
+		payload: [],
 	},
 };
 
@@ -96,6 +106,20 @@ const traceReducer = (
 			return {
 				...state,
 				isTagModalError: action.payload.isTagModalError,
+			};
+		}
+
+		case UPDATE_SELECTED_FUNCTION: {
+			return {
+				...state,
+				selectedFunction: action.payload.selectedFunction,
+			};
+		}
+
+		case UPDATE_SELECTED_GROUP_BY: {
+			return {
+				...state,
+				selectedGroupBy: action.payload.selectedGroupBy,
 			};
 		}
 

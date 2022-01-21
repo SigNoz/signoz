@@ -14,6 +14,14 @@ export interface TraceReducer {
 		total: number;
 		pageSize: number;
 	};
+	selectedGroupBy: string;
+	selectedFunction: string;
+	spansGraph: {
+		loading: boolean;
+		error: boolean;
+		errorMessage: string;
+		payload: [];
+	};
 }
 
 interface SpansAggregateData {

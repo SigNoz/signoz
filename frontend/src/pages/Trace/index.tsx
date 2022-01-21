@@ -1,4 +1,5 @@
 import Filters from 'container/Trace/Filters';
+import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
@@ -62,7 +63,7 @@ const Trace = ({ getFilters, getSpansAggregate }: Props): JSX.Element => {
 
 				<RightContainer>
 					<TraceGraphFilter />
-					{/* <TraceGraph /> */}
+					<TraceGraph />
 					<TraceTable />
 				</RightContainer>
 			</Container>
