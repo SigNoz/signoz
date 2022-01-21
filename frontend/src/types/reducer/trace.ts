@@ -1,3 +1,5 @@
+import { PayloadProps } from 'types/api/trace/getSpans';
+
 export interface TraceReducer {
 	filter: Map<TraceFilterEnum, Record<string, string>>;
 	filterToFetchData: TraceFilterEnum[];
@@ -20,7 +22,7 @@ export interface TraceReducer {
 		loading: boolean;
 		error: boolean;
 		errorMessage: string;
-		payload: [];
+		payload: PayloadProps;
 	};
 }
 

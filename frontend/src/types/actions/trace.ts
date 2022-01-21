@@ -100,6 +100,28 @@ export interface UpdateSelectedFunction {
 	};
 }
 
+export interface UpdateSpanLoading {
+	type: typeof UPDATE_TRACE_GRAPH_LOADING;
+	payload: {
+		loading: TraceReducer['spansGraph']['loading'];
+	};
+}
+
+export interface UpdateSpansError {
+	type: typeof UPDATE_TRACE_GRAPH_ERROR;
+	payload: {
+		error: TraceReducer['spansGraph']['error'];
+		errorMessage: TraceReducer['spansGraph']['errorMessage'];
+	};
+}
+
+export interface UpdateSpans {
+	type: typeof UPDATE_TRACE_GRAPH_SUCCESS;
+	payload: {
+		data: TraceReducer['spansGraph']['payload'];
+	};
+}
+
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter
@@ -111,4 +133,7 @@ export type TraceActions =
 	| UpdateSpansAggregate
 	| UpdateIsTagError
 	| UpdateSelectedGroupBy
-	| UpdateSelectedFunction;
+	| UpdateSelectedFunction
+	| UpdateSpanLoading
+	| UpdateSpansError
+	| UpdateSpans;
