@@ -3,7 +3,7 @@ interface Dropdown {
 	displayValue: string;
 }
 
-export const functions: Dropdown[] = [
+export const groupBy: Dropdown[] = [
 	{
 		key: 'serviceName',
 		displayValue: 'Service Name',
@@ -54,7 +54,7 @@ export const functions: Dropdown[] = [
 	},
 ];
 
-export const groupBy: Dropdown[] = [
+export const functions: Dropdown[] = [
 	{ displayValue: 'Count', key: 'count' },
 	{ displayValue: 'Rate per sec', key: 'ratePerSec' },
 	{ displayValue: 'Sum(duration)', key: 'sum' },

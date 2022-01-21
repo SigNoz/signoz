@@ -5,9 +5,10 @@ import { DurationText, InputComponent, TextCotainer, Text } from './styles';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
+import Spinner from 'components/Spinner';
 
 const Duration = (): JSX.Element => {
-	const { filter } = useSelector<AppState, TraceReducer>(
+	const { filter, filterLoading } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
@@ -17,6 +18,12 @@ const Duration = (): JSX.Element => {
 	const minDuration = duration['minDuration'] || '';
 
 	const defaultValue = [parseInt(minDuration, 10), parseInt(maxDuration, 10)];
+
+	if (filterLoading) {
+		return (
+				<Spinner height='10vh' tip="Loading.." />
+		);
+	}
 
 	return (
 		<div>

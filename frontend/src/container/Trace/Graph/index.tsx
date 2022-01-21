@@ -1,30 +1,20 @@
 import React from 'react';
 
 import Graph from 'components/Graph';
-import { Chart } from 'chart.js';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 import Spinner from 'components/Spinner';
 import { Container } from './styles';
 import { Typography } from 'antd';
+import { getChartData, getChartDataforGroupBy } from './config';
 
 const TraceGraph = () => {
-	const { spansGraph } = useSelector<AppState, TraceReducer>(
+	const { spansGraph, selectedGroupBy } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
-	const { loading, error, errorMessage } = spansGraph;
-
-	const data: Chart['data'] = { datasets: [], labels: [] };
-
-	if (loading) {
-		return (
-			<Container>
-				<Spinner height={'20vh'} size="small" tip="Loading..." />
-			</Container>
-		);
-	}
+	const { loading, error, errorMessage, payload } = spansGraph;
 
 	if (error) {
 		return (
@@ -34,17 +24,22 @@ const TraceGraph = () => {
 		);
 	}
 
+	if (loading || payload === undefined) {
+		return (
+			<Container>
+				<Spinner height={'20vh'} size="small" tip="Loading..." />
+			</Container>
+		);
+	}
+
+	const ChartData =
+		selectedGroupBy.length === 0
+			? getChartData(payload)
+			: getChartDataforGroupBy(payload);
+
 	return (
 		<Container>
-			{
-				<Graph
-					{...{
-						data: data,
-						name: 'asd',
-						type: 'line',
-					}}
-				/>
-			}
+			<Graph data={ChartData} name="traceGraphph" type="line" />
 		</Container>
 	);
 };
