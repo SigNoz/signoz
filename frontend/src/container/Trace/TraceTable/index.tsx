@@ -41,11 +41,13 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 				const day = dayjs(value);
 				return <div>{day.format('DD/MM/YYYY HH:MM:ss A')}</div>;
 			},
+			sorter: (a, b) => dayjs(a.timestamp).diff(dayjs(b.timestamp)),
 		},
 		{
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
+			sorter: (a, b) => a.serviceName.length - b.serviceName.length,
 		},
 		{
 			title: 'Resource',
@@ -79,6 +81,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			title: 'Status Code',
 			dataIndex: 'httpCode',
 			key: 'httpCode',
+			sorter: (a, b) => a.httpCode.length - b.httpCode.length,
 			render: (value: TableType['httpCode']) => {
 				if (value.length === 0) {
 					return <div>-</div>;

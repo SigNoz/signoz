@@ -38,7 +38,7 @@ const initialValue: TraceReducer = {
 		error: false,
 		errorMessage: '',
 		loading: true,
-		payload: [],
+		payload: { items: [] },
 	},
 };
 
