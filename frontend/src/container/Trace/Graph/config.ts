@@ -64,7 +64,7 @@ export const getChartDataforGroupBy = (
 		labels: [],
 	};
 
-	const numberOfGraphs = Object.keys(items[Object.keys(items)[0]].groupBy || {})
+	const numberOfGraphs = Object.keys(items[Object.keys(items)[0]]?.groupBy || {})
 		.length;
 
 	const spansGraph: number[][] = [];
