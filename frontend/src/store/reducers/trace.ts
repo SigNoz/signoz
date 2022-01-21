@@ -33,12 +33,12 @@ const initialValue: TraceReducer = {
 		pageSize: 10,
 	},
 	selectedGroupBy: '',
-	selectedFunction: '',
+	selectedFunction: 'count',
 	spansGraph: {
 		error: false,
 		errorMessage: '',
 		loading: true,
-		payload: { items: [] },
+		payload: { items: {} },
 	},
 };
 
@@ -155,6 +155,7 @@ const traceReducer = (
 					...state.spansGraph,
 					payload: action.payload.data,
 					loading: false,
+					error: false,
 				},
 			};
 		}
