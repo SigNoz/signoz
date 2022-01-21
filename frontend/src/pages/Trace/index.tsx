@@ -25,9 +25,10 @@ const Trace = ({ getFilters, getSpansAggregate }: Props): JSX.Element => {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { selectedFilter, spansAggregate } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
-	);
+	const { selectedFilter, spansAggregate, selectedTags } = useSelector<
+		AppState,
+		TraceReducer
+	>((state) => state.traces);
 
 	useEffect(() => {
 		getFilters(search, minTime, maxTime);
@@ -40,6 +41,7 @@ const Trace = ({ getFilters, getSpansAggregate }: Props): JSX.Element => {
 			selectedFilter,
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
+			selectedTags,
 		});
 	}, [
 		maxTime,
@@ -47,6 +49,7 @@ const Trace = ({ getFilters, getSpansAggregate }: Props): JSX.Element => {
 		selectedFilter,
 		spansAggregate.currentPage,
 		spansAggregate.pageSize,
+		selectedTags,
 	]);
 
 	return (

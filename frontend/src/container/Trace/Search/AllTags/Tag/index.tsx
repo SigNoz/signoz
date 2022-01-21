@@ -15,7 +15,7 @@ import AppActions from 'types/actions';
 import { bindActionCreators } from 'redux';
 import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 
-type Tags = FlatArray<TraceReducer['selectedTags'], 1>['selectedFilter'];
+type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
 
 const AllMenu: Tags[] = ['IN', 'NOT_IN'];
 
@@ -27,7 +27,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 
 	const { selectedTags } = traces;
 
-	const { filters, name, selectedFilter } = selectedTags[props.index];
+	const { Values, Key, Operator } = selectedTags[props.index];
 
 	const [selectLoading, setSelectLoading] = useState<boolean>(false);
 
@@ -52,7 +52,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 					...traces.selectedTags.slice(0, props.index),
 					{
 						...current,
-						selectedFilter: key as Tags,
+						Operator: key as Tags,
 					},
 					...traces.selectedTags.slice(props.index + 1, traces.selectedTags.length),
 				]);
@@ -101,12 +101,12 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 		const { updateSelectedTags } = props;
 		const current = traces.selectedTags[props.index];
 
-		if (current.name.length === 0) {
+		if (current.Key.length === 0) {
 			updateSelectedTags([
 				...traces.selectedTags.slice(0, props.index),
 				{
 					...current,
-					name: options.map((e: { value: string }) => e.value),
+					Key: options.map((e: { value: string }) => e.value),
 				},
 				...traces.selectedTags.slice(props.index + 1, traces.selectedTags.length),
 			]);
@@ -115,7 +115,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 				...traces.selectedTags.slice(0, props.index),
 				{
 					...current,
-					name: [],
+					Key: [],
 				},
 				...traces.selectedTags.slice(props.index + 1, traces.selectedTags.length),
 			]);
@@ -132,7 +132,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 						onSearchDebounceFunction(value, traces);
 					}}
 					onChange={onSearchChangeHandler}
-					value={name}
+					value={Key}
 					placeholder="Please select"
 					mode="multiple"
 					options={selectedOptions}
@@ -143,12 +143,12 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 
 				<Dropdown trigger={['hover']} overlay={() => <Menu>{AllMenuOptions}</Menu>}>
 					<Button style={{ marginLeft: '1rem', marginRight: '1rem' }}>
-						{selectedFilter}
+						{Operator}
 					</Button>
 				</Dropdown>
 
 				<SelectComponent
-					value={filters}
+					value={Values}
 					onChange={(value) => {
 						const { updateSelectedTags } = props;
 						const current = traces.selectedTags[props.index];
@@ -157,7 +157,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 							...traces.selectedTags.slice(0, props.index),
 							{
 								...current,
-								filters: value as string[],
+								Values: value as string[],
 							},
 							...traces.selectedTags.slice(
 								props.index + 1,

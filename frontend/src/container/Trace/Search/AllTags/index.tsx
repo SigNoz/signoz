@@ -31,9 +31,9 @@ const AllTags = ({
 		updateSelectedTags([
 			...selectedTags,
 			{
-				filters: [],
-				name: [],
-				selectedFilter: 'IN',
+				Key: [],
+				Operator: 'IN',
+				Values: [],
 			},
 		]);
 	};

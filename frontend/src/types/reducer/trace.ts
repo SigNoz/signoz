@@ -28,12 +28,12 @@ interface SpansAggregateData {
 }
 
 export interface Tags {
-	filters: string[];
-	selectedFilter: selectedFilter;
-	name: string[];
+	Key: string[];
+	Operator: OperatorValues;
+	Values: string[];
 }
 
-type selectedFilter = 'NOT_IN' | 'IN';
+type OperatorValues = 'NOT_IN' | 'IN';
 
 export type TraceFilterEnum =
 	| 'component'

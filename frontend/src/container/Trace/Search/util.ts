@@ -48,9 +48,9 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 		});
 
 		return {
-			name: [filteredtags[0]],
-			filters: noofFilters,
-			selectedFilter: splitBy as FlatArray<Tags, 1>['selectedFilter'],
+			Key: [filteredtags[0]],
+			Values: noofFilters,
+			Operator: splitBy as FlatArray<Tags, 1>['Operator'],
 		};
 	});
 
@@ -65,8 +65,8 @@ export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 		isError: false,
 		payload: tags
 			.map(
-				({ filters, name, selectedFilter }) =>
-					`${name[0]} ${selectedFilter} (${filters.map((e) => `"${e}"`).join(',')})`,
+				({ Values, Key, Operator }) =>
+					`${Key[0]} ${Operator} (${Values.map((e) => `"${e}"`).join(',')})`,
 			)
 			.join(' AND '),
 	};

@@ -43,6 +43,7 @@ export const GetSpansAggregate = (
 				selectedFilter: props.selectedFilter,
 				limit: props.pageSize,
 				offset: spansAggregate.currentPage,
+				selectedTags: props.selectedTags,
 			});
 
 			if (response.statusCode === 200) {
@@ -98,4 +99,5 @@ export interface GetSpansAggregateProps {
 	selectedFilter: TraceReducer['selectedFilter'];
 	current: TraceReducer['spansAggregate']['currentPage'];
 	pageSize: TraceReducer['spansAggregate']['pageSize'];
+	selectedTags: TraceReducer['selectedTags'];
 }

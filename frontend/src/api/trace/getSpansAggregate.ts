@@ -16,14 +16,21 @@ const getSpanAggregate = async (
 			offset: props.offset,
 		};
 
-		const updatedQueryParams = `${convertObjectIntoParams(
-			preProps,
-		)}&${encodeURIComponent(
-			convertObjectIntoParams(Object.fromEntries(props.selectedFilter), true),
-		)}`;
+		const updatedQueryParams = `${convertObjectIntoParams(preProps)}`;
+
+		const updatedSelectedTags = props.selectedTags.map((e) => ({
+			Key: e.Key[0],
+			Operator: e.Operator,
+			Values: e.Values,
+		}));
 
 		const response = await axios.get<PayloadProps>(
-			`/getFilteredSpans?${updatedQueryParams}`,
+			`/getFilteredSpans?${updatedQueryParams}&tags=${encodeURIComponent(
+				JSON.stringify(updatedSelectedTags),
+			)}&${convertObjectIntoParams(
+				Object.fromEntries(props.selectedFilter),
+				true,
+			)}`,
 		);
 
 		return {
