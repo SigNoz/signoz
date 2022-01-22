@@ -5,9 +5,14 @@ interface Dropdown {
 
 export const groupBy: Dropdown[] = [
 	{
+		key: '',
+		displayValue: 'None',
+	},
+	{
 		key: 'serviceName',
 		displayValue: 'Service Name',
 	},
+
 	{
 		displayValue: 'Operation',
 		key: 'operation',
@@ -55,6 +60,10 @@ export const groupBy: Dropdown[] = [
 ];
 
 export const functions: Dropdown[] = [
+	{
+		key: '',
+		displayValue: 'None',
+	},
 	{ displayValue: 'Count', key: 'count' },
 	{ displayValue: 'Rate per sec', key: 'ratePerSec' },
 	{ displayValue: 'Sum(duration)', key: 'sum' },
