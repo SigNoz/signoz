@@ -60,10 +60,6 @@ export const groupBy: Dropdown[] = [
 ];
 
 export const functions: Dropdown[] = [
-	{
-		key: '',
-		displayValue: 'None',
-	},
 	{ displayValue: 'Count', key: 'count' },
 	{ displayValue: 'Rate per sec', key: 'ratePerSec' },
 	{ displayValue: 'Sum(duration)', key: 'sum' },

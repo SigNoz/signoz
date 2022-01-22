@@ -8,6 +8,7 @@ import {
 } from 'types/actions/trace';
 import getSpans from 'api/trace/getSpans';
 import { Props } from 'types/api/trace/getSpans';
+import { notification } from 'antd';
 
 export const GetSpans = (
 	props: GetSpansProps,
@@ -53,6 +54,9 @@ export const GetSpans = (
 					},
 				});
 			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
 				dispatch({
 					type: UPDATE_TRACE_GRAPH_ERROR,
 					payload: {

@@ -5,6 +5,7 @@ import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';
 import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+import { notification } from 'antd';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
@@ -61,6 +62,10 @@ export const GetSpansAggregate = (
 					},
 				});
 			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
+
 				dispatch({
 					type: UPDATE_SPANS_AGGREEGATE,
 					payload: {
