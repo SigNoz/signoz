@@ -8,6 +8,9 @@ import { TraceReducer } from 'types/reducer/trace';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { updateURL } from 'store/actions/trace/util';
 import dayjs from 'dayjs';
+import durationPlugin from 'dayjs/plugin/duration';
+
+dayjs.extend(durationPlugin);
 
 const Duration = (): JSX.Element => {
 	const {
@@ -62,7 +65,13 @@ const Duration = (): JSX.Element => {
 			<DurationText>
 				<TextCotainer>
 					<Text>Min</Text>
-					<InputComponent value={localMin} />
+					<InputComponent
+						onChange={(event) => {
+							const value = event.target.value;
+							onRangeSliderHandler([parseInt(value, 10), parseInt(localMin, 10)]);
+						}}
+						value={localMin}
+					/>
 				</TextCotainer>
 
 				<TextCotainer>
@@ -86,7 +95,13 @@ const Duration = (): JSX.Element => {
 					if (value === undefined) {
 						return '';
 					}
-					return <div>asd</div>;
+					const millisecondDuration = dayjs
+						.duration({
+							milliseconds: value / 1000000,
+						})
+						.format('SSS'); // millisecond format
+
+					return <div>{`${millisecondDuration}ms`}</div>;
 				}}
 				onChange={onRangeSliderHandler}
 				value={[parseInt(localMin, 10), parseInt(localMax, 10)]}
