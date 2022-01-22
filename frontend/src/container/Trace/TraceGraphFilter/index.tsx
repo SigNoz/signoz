@@ -25,32 +25,28 @@ const TraceGraphFilter = () => {
 	const onClickSelectedFunctionHandler: SelectProps<SelectValue>['onChange'] = (
 		ev,
 	) => {
-		if (ev) {
-			const selected = functions.find((e) => e.key === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_FUNCTION,
-					payload: {
-						selectedFunction: selected.key,
-					},
-				});
-			}
+		const selected = functions.find((e) => e.key === ev);
+		if (selected) {
+			dispatch({
+				type: UPDATE_SELECTED_FUNCTION,
+				payload: {
+					selectedFunction: selected.key,
+				},
+			});
 		}
 	};
 
 	const onClickSelectedGroupByHandler: SelectProps<SelectValue>['onChange'] = (
 		ev,
 	) => {
-		if (ev) {
-			const selected = groupBy.find((e) => e.key === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_GROUP_BY,
-					payload: {
-						selectedGroupBy: selected.key,
-					},
-				});
-			}
+		const selected = groupBy.find((e) => e.key === ev);
+		if (selected) {
+			dispatch({
+				type: UPDATE_SELECTED_GROUP_BY,
+				payload: {
+					selectedGroupBy: selected.key,
+				},
+			});
 		}
 	};
 
