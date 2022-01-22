@@ -27,3 +27,8 @@ export const Text = styled(Typography)`
 		margin-right: 0.5rem;
 	}
 `;
+
+export const SliderContainer = styled.div`
+	padding-left: 1rem;
+	padding-right: 1rem;
+`;

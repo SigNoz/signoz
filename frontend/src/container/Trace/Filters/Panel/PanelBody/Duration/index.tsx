@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 
 import { Slider } from 'antd';
-import { DurationText, InputComponent, TextCotainer, Text } from './styles';
+import {
+	DurationText,
+	InputComponent,
+	TextCotainer,
+	Text,
+	SliderContainer,
+} from './styles';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
@@ -86,26 +92,28 @@ const Duration = (): JSX.Element => {
 				</TextCotainer>
 			</DurationText>
 
-			<Slider
-				defaultValue={[defaultValue[0], defaultValue[1]]}
-				min={parseInt((filter.get('duration') || {})['minDuration'], 10)}
-				max={parseInt((filter.get('duration') || {})['maxDuration'], 10)}
-				range
-				tipFormatter={(value) => {
-					if (value === undefined) {
-						return '';
-					}
-					const millisecondDuration = dayjs
-						.duration({
-							milliseconds: value / 1000000,
-						})
-						.format('SSS'); // millisecond format
+			<SliderContainer>
+				<Slider
+					defaultValue={[defaultValue[0], defaultValue[1]]}
+					min={parseInt((filter.get('duration') || {})['minDuration'], 10)}
+					max={parseInt((filter.get('duration') || {})['maxDuration'], 10)}
+					range
+					tipFormatter={(value) => {
+						if (value === undefined) {
+							return '';
+						}
+						const millisecondDuration = dayjs
+							.duration({
+								milliseconds: value / 1000000,
+							})
+							.format('SSS'); // millisecond format
 
-					return <div>{`${millisecondDuration}ms`}</div>;
-				}}
-				onChange={onRangeSliderHandler}
-				value={[parseInt(localMin, 10), parseInt(localMax, 10)]}
-			/>
+						return <div>{`${millisecondDuration}ms`}</div>;
+					}}
+					onChange={onRangeSliderHandler}
+					value={[parseInt(localMin, 10), parseInt(localMax, 10)]}
+				/>
+			</SliderContainer>
 		</div>
 	);
 };
