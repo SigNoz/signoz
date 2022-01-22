@@ -1,6 +1,6 @@
 import React from 'react';
 import { CaretDownFilled, CaretUpFilled } from '@ant-design/icons';
-import { Card, Button, Typography, Spin } from 'antd';
+import { Card, Button, Typography, Spin, Divider } from 'antd';
 
 import { Container, IconContainer, TextCotainer } from './styles';
 import { useSelector } from 'react-redux';
@@ -18,29 +18,33 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 	};
 
 	return (
-		<Card>
-			<Container
-				disabled={filterLoading}
-				aria-disabled={filterLoading}
-				aria-expanded={props.isOpen}
-			>
-				<TextCotainer onClick={onExpandHandler}>
-					<IconContainer>
-						{props.isOpen ? <CaretUpFilled /> : <CaretDownFilled />}
-					</IconContainer>
+		<>
+			{props.name !== 'duration' && <Divider plain style={{ margin: 0 }} />}
 
-					<Text style={{ textTransform: 'capitalize' }} ellipsis>
-						{props.name}
-					</Text>
+			<Card bordered={false}>
+				<Container
+					disabled={filterLoading}
+					aria-disabled={filterLoading}
+					aria-expanded={props.isOpen}
+				>
+					<TextCotainer onClick={onExpandHandler}>
+						<IconContainer>
+							{props.isOpen ? <CaretUpFilled /> : <CaretDownFilled />}
+						</IconContainer>
 
-					{filterLoading && <Spin size="small" />}
-				</TextCotainer>
+						<Text style={{ textTransform: 'capitalize' }} ellipsis>
+							{props.name}
+						</Text>
 
-				<Button onClick={() => props.onClearAllHandler(props.name)} type="link">
-					Clear All
-				</Button>
-			</Container>
-		</Card>
+						{filterLoading && <Spin size="small" />}
+					</TextCotainer>
+
+					<Button onClick={() => props.onClearAllHandler(props.name)} type="link">
+						Clear All
+					</Button>
+				</Container>
+			</Card>
+		</>
 	);
 };
 
