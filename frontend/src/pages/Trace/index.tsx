@@ -1,3 +1,4 @@
+import { Card } from 'antd';
 import Filters from 'container/Trace/Filters';
 import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
@@ -89,9 +90,14 @@ const Trace = ({
 				</LeftContainer>
 
 				<RightContainer>
-					<TraceGraphFilter />
-					<TraceGraph />
-					<TraceTable />
+					<Card>
+						<TraceGraphFilter />
+						<TraceGraph />
+					</Card>
+
+					<Card style={{ marginTop: '2rem' }}>
+						<TraceTable />
+					</Card>
 				</RightContainer>
 			</Container>
 		</>

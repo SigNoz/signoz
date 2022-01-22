@@ -22,4 +22,8 @@ export const RightContainer = styled(Card)`
 	&&& {
 		flex: 2;
 	}
+
+	.ant-card-body {
+		padding: 0.5rem;
+	}
 `;
