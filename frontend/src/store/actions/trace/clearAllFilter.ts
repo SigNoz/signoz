@@ -16,7 +16,7 @@ export const ClearAllFilter = (
 		const { filterToFetchData } = traces;
 
 		const updatedFilterToFetchTheData = [
-			...filterToFetchData.filter((e) => e == props),
+			...filterToFetchData.filter((e) => e !== props),
 		];
 
 		updateURL(
