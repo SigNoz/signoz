@@ -28,8 +28,6 @@ export const ExpandPanel = (
 			traces.selectedFilter,
 			updatedFilterToFetchTheData,
 			traces.spansAggregate.currentPage,
-			globalTime.maxTime,
-			globalTime.minTime,
 		);
 	};
 };

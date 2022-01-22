@@ -42,8 +42,6 @@ export const SelectedTraceFilter = (props: {
 			filter,
 			traces.filterToFetchData,
 			traces.spansAggregate.currentPage,
-			globalTime.maxTime,
-			globalTime.minTime,
 		);
 	};
 };

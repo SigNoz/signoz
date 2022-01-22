@@ -52,13 +52,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		}
 
 		const mergedMaps = new Map([...selectedFilter, ...newSelectedMap]);
-		updateURL(
-			mergedMaps,
-			filterToFetchData,
-			spansAggregate.currentPage,
-			globalTime.maxTime,
-			globalTime.minTime,
-		);
+		updateURL(mergedMaps, filterToFetchData, spansAggregate.currentPage);
 	};
 
 	return (

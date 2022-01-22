@@ -1,7 +1,5 @@
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import history from 'lib/history';
-import isEqual from 'lodash-es/isEqual';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { GlobalTime } from 'types/actions/globalTime';
 
 export const parseMinMaxTime = (query: string): GlobalTime => {
@@ -147,14 +145,10 @@ export const updateURL = (
 	selectedFilter: TraceReducer['selectedFilter'],
 	filterToFetchData: TraceReducer['filterToFetchData'],
 	current: TraceReducer['spansAggregate']['total'],
-	maxTime: GlobalReducer['maxTime'],
-	minTime: GlobalReducer['minTime'],
 ) => {
 	history.replace(
 		`${history.location.pathname}?selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
-		)}&filterToFetchData=${JSON.stringify(
-			filterToFetchData,
-		)}&current=${current}&maxTime=${maxTime}&minTime=${minTime}`,
+		)}&filterToFetchData=${JSON.stringify(filterToFetchData)}&current=${current}`,
 	);
 };

@@ -11,7 +11,7 @@ export const ClearAllFilter = (
 	getState: Store<AppState>['getState'],
 ) => void) => {
 	return (_, getState): void => {
-		const { traces, globalTime } = getState();
+		const { traces } = getState();
 
 		const { filterToFetchData } = traces;
 
@@ -23,8 +23,6 @@ export const ClearAllFilter = (
 			traces.selectedFilter,
 			updatedFilterToFetchTheData,
 			traces.spansAggregate.currentPage,
-			globalTime.maxTime,
-			globalTime.minTime,
 		);
 	};
 };
