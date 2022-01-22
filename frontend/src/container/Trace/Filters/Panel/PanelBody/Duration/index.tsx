@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 
-import { Slider } from 'antd';
-import {
-	DurationText,
-	InputComponent,
-	TextCotainer,
-	Text,
-	SliderContainer,
-} from './styles';
+import { Input, Slider } from 'antd';
+import { Container, InputContainer, Text } from './styles';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
@@ -17,6 +11,14 @@ import dayjs from 'dayjs';
 import durationPlugin from 'dayjs/plugin/duration';
 
 dayjs.extend(durationPlugin);
+
+const getMs = (value: string) => {
+	return dayjs
+		.duration({
+			milliseconds: parseInt(value, 10) / 1000000,
+		})
+		.format('SSS');
+};
 
 const Duration = (): JSX.Element => {
 	const {
@@ -68,31 +70,33 @@ const Duration = (): JSX.Element => {
 
 	return (
 		<div>
-			<DurationText>
-				<TextCotainer>
+			<Container>
+				<InputContainer>
 					<Text>Min</Text>
-					<InputComponent
-						onChange={(event) => {
-							const value = event.target.value;
-							onRangeSliderHandler([parseInt(value, 10), parseInt(localMin, 10)]);
-						}}
-						value={localMin}
-					/>
-				</TextCotainer>
+				</InputContainer>
+				<Input
+					addonAfter="ms"
+					onChange={(event) => {
+						const value = event.target.value;
+						onRangeSliderHandler([parseInt(value, 10), parseInt(localMin, 10)]);
+					}}
+					value={getMs(localMin)}
+				/>
 
-				<TextCotainer>
+				<InputContainer>
 					<Text>Max</Text>
-					<InputComponent
-						onChange={(event) => {
-							const value = event.target.value;
-							onRangeSliderHandler([parseInt(localMax, 10), parseInt(value, 10)]);
-						}}
-						value={localMax}
-					/>
-				</TextCotainer>
-			</DurationText>
+				</InputContainer>
+				<Input
+					addonAfter="ms"
+					onChange={(event) => {
+						const value = event.target.value;
+						onRangeSliderHandler([parseInt(localMax, 10), parseInt(value, 10)]);
+					}}
+					value={getMs(localMax)}
+				/>
+			</Container>
 
-			<SliderContainer>
+			<Container>
 				<Slider
 					defaultValue={[defaultValue[0], defaultValue[1]]}
 					min={parseInt((filter.get('duration') || {})['minDuration'], 10)}
@@ -102,18 +106,12 @@ const Duration = (): JSX.Element => {
 						if (value === undefined) {
 							return '';
 						}
-						const millisecondDuration = dayjs
-							.duration({
-								milliseconds: value / 1000000,
-							})
-							.format('SSS'); // millisecond format
-
-						return <div>{`${millisecondDuration}ms`}</div>;
+						return <div>{`${getMs(value.toString())}ms`}</div>;
 					}}
 					onChange={onRangeSliderHandler}
 					value={[parseInt(localMin, 10), parseInt(localMax, 10)]}
 				/>
-			</SliderContainer>
+			</Container>
 		</div>
 	);
 };

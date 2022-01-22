@@ -1,34 +1,27 @@
 import styled from 'styled-components';
-import { Input, Typography } from 'antd';
+import { Typography } from 'antd';
 
 export const DurationText = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: space-around;
 	min-height: 8vh;
+	flex-direction: column;
 `;
 
-export const InputComponent = styled(Input)`
-	&&& {
-		max-width: 3rem;
-	}
-`;
-
-export const TextCotainer = styled.div`
-	&&& {
-		display: flex;
-		align-items: center;
-	}
+export const InputContainer = styled.div`
+	width: 100%;
+	margin-top: 0.5rem;
+	margin-bottom: 0.2rem;
 `;
 
 export const Text = styled(Typography)`
 	&&& {
-		margin-left: 0.5rem;
-		margin-right: 0.5rem;
+		text-align: left;
 	}
 `;
 
-export const SliderContainer = styled.div`
+export const Container = styled.div`
 	padding-left: 1rem;
 	padding-right: 1rem;
 `;
