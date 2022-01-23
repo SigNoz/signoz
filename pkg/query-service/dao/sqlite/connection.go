@@ -25,6 +25,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	table_schema := `CREATE TABLE IF NOT EXISTS user_preferences (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		uuid TEXT NOT NULL,
 		isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
 		hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
 	);`
@@ -61,8 +62,9 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 		return apiError.Err
 	}
 
-	// override default anonymous preference if UserPreference is successfully fetched from DB
+	// set telemetry fields from userPreferences
 	telemetry.GetInstance().SetTelemetryAnonymous(userPreference.GetIsAnonymous())
+	telemetry.GetInstance().SetDistinctId(userPreference.GetUUID())
 
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
@@ -12,7 +13,7 @@ import (
 func (mds *ModelDaoSqlite) FetchUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError) {
 
 	userPreferences := []model.UserPreferences{}
-	query := fmt.Sprintf("SELECT id, isAnonymous, hasOptedUpdates FROM user_preferences")
+	query := fmt.Sprintf("SELECT id, uuid, isAnonymous, hasOptedUpdates FROM user_preferences;")
 
 	err := mds.db.Select(&userPreferences, query)
 
@@ -77,7 +78,8 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 
 func (mds *ModelDaoSqlite) CreateDefaultUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError) {
 
-	_, err := mds.db.ExecContext(ctx, `INSERT INTO user_preferences (isAnonymous, hasOptedUpdates) VALUES (0, 1);`)
+	uuid := uuid.New().String()
+	_, err := mds.db.ExecContext(ctx, `INSERT INTO user_preferences (uuid, isAnonymous, hasOptedUpdates) VALUES (?, 0, 1);`, uuid)
 
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for INSERT to user_preferences\n", err)

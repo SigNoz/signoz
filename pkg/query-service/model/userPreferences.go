@@ -1,9 +1,10 @@
 package model
 
 type UserPreferences struct {
-	Id              int  `json:"id" db:"id"`
-	IsAnonymous     bool `json:"isAnonymous" db:"isAnonymous"`
-	HasOptedUpdates bool `json:"hasOptedUpdates" db:"hasOptedUpdates"`
+	Id              int    `json:"id" db:"id"`
+	Uuid            string `json:"uuid" db:"uuid"`
+	IsAnonymous     bool   `json:"isAnonymous" db:"isAnonymous"`
+	HasOptedUpdates bool   `json:"hasOptedUpdates" db:"hasOptedUpdates"`
 }
 
 func (up *UserPreferences) SetIsAnonymous(isAnonymous bool) {
@@ -20,4 +21,7 @@ func (up *UserPreferences) GetHasOptedUpdate() bool {
 }
 func (up *UserPreferences) GetId() int {
 	return up.Id
+}
+func (up *UserPreferences) GetUUID() string {
+	return up.Uuid
 }

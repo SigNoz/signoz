@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/version"
@@ -31,6 +30,7 @@ type Telemetry struct {
 	ipAddress   string
 	isEnabled   bool
 	isAnonymous bool
+	distinctId  string
 }
 
 func createTelemetry() {
@@ -83,10 +83,22 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	})
 
 }
+func (a *Telemetry) checkEvents(event string) bool {
+	sendEvent := true
+	if event == TELEMETRY_EVENT_USER && a.isTelemetryAnonymous() {
+		sendEvent = false
+	}
+	return sendEvent
+}
 
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 
 	if !a.isTelemetryEnabled() {
+		return
+	}
+
+	ok := a.checkEvents(event)
+	if !ok {
 		return
 	}
 
@@ -100,7 +112,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 
 	userId := a.ipAddress
 	if a.isTelemetryAnonymous() {
-		userId = uuid.New().String()
+		userId = a.GetDistinctId()
 	}
 
 	a.operator.Enqueue(analytics.Track{
@@ -108,6 +120,13 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		UserId:     userId,
 		Properties: properties,
 	})
+}
+
+func (a *Telemetry) GetDistinctId() string {
+	return a.distinctId
+}
+func (a *Telemetry) SetDistinctId(distinctId string) {
+	a.distinctId = distinctId
 }
 
 func (a *Telemetry) isTelemetryAnonymous() bool {
