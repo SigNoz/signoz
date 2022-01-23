@@ -163,7 +163,9 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		data := map[string]interface{}{"path": path}
 
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		if _, ok := telemetry.IgnoredPaths()["path"]; ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		}
 
 		next.ServeHTTP(w, r)
 	})

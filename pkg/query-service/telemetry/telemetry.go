@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/version"
@@ -40,6 +41,8 @@ func createTelemetry() {
 
 	data := map[string]interface{}{}
 
+	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
+	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
 	ticker := time.NewTicker(6 * time.Hour)
 	go func() {
 		for {
@@ -59,9 +62,9 @@ func getOutboundIP() string {
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
 	defer resp.Body.Close()
-	if err != nil {
+	if err == nil {
 		ipBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
+		if err == nil {
 			ip = ipBody
 		}
 	}
@@ -70,19 +73,14 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
-	if !a.isTelemetryEnabled() {
+	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	if a.isTelemetryAnonymous() {
-		a.operator.Enqueue(analytics.Identify{
-			UserId: a.ipAddress,
-		})
-	} else {
-		a.operator.Enqueue(analytics.Identify{
-			UserId: a.ipAddress,
-			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
-		})
-	}
+
+	a.operator.Enqueue(analytics.Identify{
+		UserId: a.ipAddress,
+		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
+	})
 
 }
 
@@ -100,9 +98,14 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		properties.Set(k, v)
 	}
 
+	userId := a.ipAddress
+	if a.isTelemetryAnonymous() {
+		userId = uuid.New().String()
+	}
+
 	a.operator.Enqueue(analytics.Track{
 		Event:      event,
-		UserId:     a.ipAddress,
+		UserId:     userId,
 		Properties: properties,
 	})
 }
@@ -127,7 +130,6 @@ func GetInstance() *Telemetry {
 
 	once.Do(func() {
 		createTelemetry()
-		telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
 	})
 
 	return telemetry

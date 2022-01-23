@@ -75,15 +75,15 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 	return nil
 }
 
-func (mds *ModelDaoSqlite) CreateDefaultUserPreference(ctx context.Context) *model.ApiError {
+func (mds *ModelDaoSqlite) CreateDefaultUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError) {
 
 	_, err := mds.db.ExecContext(ctx, `INSERT INTO user_preferences (isAnonymous, hasOptedUpdates) VALUES (0, 1);`)
 
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for INSERT to user_preferences\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	return nil
+	return mds.FetchUserPreference(ctx)
 
 }

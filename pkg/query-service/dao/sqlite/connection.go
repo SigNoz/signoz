@@ -55,7 +55,7 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 		return apiError.Err
 	}
 	if userPreference == nil {
-		apiError = mds.CreateDefaultUserPreference(ctx)
+		userPreference, apiError = mds.CreateDefaultUserPreference(ctx)
 	}
 	if apiError != nil {
 		return apiError.Err
