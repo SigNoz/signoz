@@ -34,31 +34,31 @@ export const parseSelectedFilter = (
 
 	const filters = new Map<TraceFilterEnum, string[]>();
 
-	url.forEach((value, key) => {
-		if (key === 'selected') {
-			try {
-				const parsedValue = JSON.parse(decodeURIComponent(value));
-				if (typeof parsedValue === 'object') {
-					Object.keys(parsedValue).forEach((e) => {
-						filters.set(e as TraceFilterEnum, parsedValue[e]);
-					});
-				}
-			} catch (error) {
-				// if the parsing error happens
-			}
-		}
-	});
+	const selected = url.get('selected');
 
-	if (filters.size === 0) {
+	if (selected) {
+		try {
+			const parsedValue = JSON.parse(decodeURIComponent(selected));
+			if (typeof parsedValue === 'object') {
+				Object.keys(parsedValue).forEach((e) => {
+					filters.set(e as TraceFilterEnum, parsedValue[e]);
+				});
+			}
+		} catch (error) {
+			// if the parsing error happens
+		}
+	}
+
+	if (selected) {
 		return {
 			urlValue: filters,
-			currentValue: selectedFilter,
+			currentValue: filters,
 		};
 	}
 
 	return {
 		urlValue: filters,
-		currentValue: filters,
+		currentValue: selectedFilter,
 	};
 };
 
@@ -70,29 +70,29 @@ export const parseFilterToFetchData = (
 
 	let filterToFetchData: TraceFilterEnum[] = [];
 
-	url.forEach((value, key) => {
-		if (key === 'filterToFetchData') {
-			try {
-				const parsedValue = JSON.parse(decodeURIComponent(value));
+	const selected = url.get('filterToFetchData');
 
-				if (Array.isArray(parsedValue)) {
-					filterToFetchData.push(...parsedValue);
-				}
-			} catch (error) {
-				console.log('error while parsing json');
+	if (selected) {
+		try {
+			const parsedValue = JSON.parse(decodeURIComponent(selected));
+
+			if (Array.isArray(parsedValue)) {
+				filterToFetchData.push(...parsedValue);
 			}
+		} catch (error) {
+			console.log('error while parsing json');
 		}
-	});
+	}
 
-	if (filterToFetchData.length === 0) {
+	if (selected) {
 		return {
-			currentValue: stateTraceFilterData,
+			currentValue: filterToFetchData,
 			urlValue: filterToFetchData,
 		};
 	}
 
 	return {
-		currentValue: filterToFetchData,
+		currentValue: stateTraceFilterData,
 		urlValue: filterToFetchData,
 	};
 };
@@ -115,15 +115,15 @@ export const parseQueryIntoSelectedTags = (
 		}
 	}
 
-	if (selectedTags.length == 0) {
+	if (querySelectedTags) {
 		return {
-			currentValue: stateSelectedTags,
+			currentValue: selectedTags,
 			urlValue: selectedTags,
 		};
 	}
 
 	return {
-		currentValue: selectedTags,
+		currentValue: stateSelectedTags,
 		urlValue: selectedTags,
 	};
 };
@@ -136,28 +136,28 @@ export const parseQueryIntoCurrent = (
 
 	let current = 0;
 
-	url.forEach((value, key) => {
-		if (key === 'current') {
-			try {
-				const parsedValue = JSON.parse(decodeURIComponent(value));
-				if (Number.isInteger(parsedValue)) {
-					current = parseInt(parsedValue, 10);
-				}
-			} catch (error) {
-				console.log('error while parsing json');
-			}
-		}
-	});
+	const selected = url.get('current');
 
-	if (current === 0) {
+	if (selected) {
+		try {
+			const parsedValue = JSON.parse(decodeURIComponent(selected));
+			if (Number.isInteger(parsedValue)) {
+				current = parseInt(parsedValue, 10);
+			}
+		} catch (error) {
+			console.log('error while parsing json');
+		}
+	}
+
+	if (selected) {
 		return {
-			currentValue: stateCurrent,
+			currentValue: parseInt(selected, 10),
 			urlValue: current,
 		};
 	}
 
 	return {
-		currentValue: current,
+		currentValue: stateCurrent,
 		urlValue: current,
 	};
 };
