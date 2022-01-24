@@ -8,6 +8,8 @@ import { AppState } from 'store/reducers';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
+import { AllPanelHeading } from 'types/reducer/trace';
+
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 	const { filterLoading } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
@@ -33,7 +35,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						</IconContainer>
 
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>
-							{props.name}
+							{AllPanelHeading.find((e) => e.key === props.name)?.displayValue || ''}
 						</Text>
 
 						{filterLoading && <Spin size="small" />}

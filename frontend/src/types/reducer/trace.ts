@@ -56,3 +56,49 @@ export type TraceFilterEnum =
 	| 'operation'
 	| 'serviceName'
 	| 'status';
+
+export const AllPanelHeading: {
+	key: TraceFilterEnum;
+	displayValue: string;
+}[] = [
+	{
+		displayValue: 'Component',
+		key: 'component',
+	},
+	{
+		key: 'duration',
+		displayValue: 'Duration',
+	},
+	{
+		displayValue: 'HTTP Code',
+		key: 'httpCode',
+	},
+	{
+		key: 'httpHost',
+		displayValue: 'HTTP Host',
+	},
+	{
+		key: 'httpMethod',
+		displayValue: 'HTTP Method',
+	},
+	{
+		displayValue: 'HTTP Route',
+		key: 'httpRoute',
+	},
+	{
+		key: 'httpUrl',
+		displayValue: 'HTTP URL',
+	},
+	{
+		key: 'operation',
+		displayValue: 'Operation',
+	},
+	{
+		key: 'serviceName',
+		displayValue: 'Service Name',
+	},
+	{
+		key: 'status',
+		displayValue: 'Status',
+	},
+];
