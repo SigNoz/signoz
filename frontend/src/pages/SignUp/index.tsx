@@ -1,4 +1,12 @@
-import { Button, Input, notification, Typography } from 'antd';
+import {
+	Button,
+	Input,
+	notification,
+	Typography,
+	Switch,
+	Space,
+	Card,
+} from 'antd';
 import signup from 'api/user/signup';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -8,13 +16,16 @@ import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UserLoggedIn } from 'store/actions';
 import AppActions from 'types/actions';
+const { Title } = Typography;
 
 import {
 	ButtonContainer,
 	Container,
 	FormWrapper,
-	LogoImageContainer,
-	Title,
+	Label,
+	LeftContainer,
+	Logo,
+	MarginTop,
 } from './styles';
 
 const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
@@ -22,26 +33,17 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 
 	const [loading, setLoading] = useState(false);
 
-	const [formState, setFormState] = useState({
-		firstName: { value: '' },
-		email: { value: '' },
-	});
+	const [firstName, setFirstName] = useState<string>('');
+	const [email, setEmail] = useState<string>('');
+	const [organizationName, setOrganisationName] = useState<string>('');
+	const [keepMeUpdated, setKeepMeUpdated] = useState<boolean>(true);
+	const [anonymise, setAnonymise] = useState<boolean>(false);
 
-	const updateForm = (
-		name: string,
-		target: EventTarget & HTMLInputElement,
-	): void => {
-		if (name === 'firstName') {
-			setFormState({
-				...formState,
-				firstName: { ...formState.firstName, value: target.value },
-			});
-		} else if (name === 'email') {
-			setFormState({
-				...formState,
-				email: { ...formState.email, value: target.value },
-			});
-		}
+	const setState = (
+		value: string,
+		setFunction: React.Dispatch<React.SetStateAction<string>>,
+	) => {
+		setFunction(value);
 	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
@@ -50,13 +52,13 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 				e.preventDefault();
 				setLoading(true);
 				const payload = {
-					first_name: formState.firstName,
-					email: formState.email,
+					first_name: firstName,
+					email: email,
 				};
 
 				const response = await signup({
-					email: payload.email.value,
-					name: payload.first_name.value,
+					email: payload.email,
+					name: payload.first_name,
 				});
 
 				if (response.statusCode === 200) {
@@ -77,44 +79,97 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 		})();
 	};
 
+	const onSwitchHandler = (
+		value: boolean,
+		setFunction: React.Dispatch<React.SetStateAction<boolean>>,
+	) => {
+		setFunction(value);
+	};
+
 	return (
-		<div>
+		<Container>
 			{Element}
 
-			<Container direction="vertical">
-				<Title>Create your account</Title>
+			<LeftContainer direction="vertical">
+				<Space align="center">
+					<Logo src={'signoz.svg'} alt="logo" />
+					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
+				</Space>
 				<Typography>
 					Monitor your applications. Find what is causing issues.
 				</Typography>
-			</Container>
+				<Card
+					style={{ width: 'max-content' }}
+					bodyStyle={{ padding: '1px 8px', width: '100%' }}
+				>
+					SigNoz v0.5.4
+				</Card>
+			</LeftContainer>
 
 			<FormWrapper>
-				<LogoImageContainer src={'signoz.svg'} alt="logo" />
-
 				<form onSubmit={handleSubmit}>
+					<Title level={4}>Create your account</Title>
 					<div>
-						<label htmlFor="signupEmail">Email</label>
+						<Label htmlFor="signupEmail">Email</Label>
 						<Input
 							placeholder="mike@netflix.com"
 							type="email"
 							autoFocus
-							value={formState.email.value}
-							onChange={(e): void => updateForm('email', e.target)}
+							value={email}
+							onChange={(e): void => {
+								setState(e.target.value, setEmail);
+							}}
 							required
 							id="signupEmail"
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="signupFirstName">First Name</label>
+						<Label htmlFor="signupFirstName">First Name</Label>
 						<Input
 							placeholder="Mike"
-							value={formState.firstName.value}
-							onChange={(e): void => updateForm('firstName', e.target)}
+							value={firstName}
+							onChange={(e): void => {
+								setState(e.target.value, setFirstName);
+							}}
 							required
 							id="signupFirstName"
 						/>
 					</div>
+					<div>
+						<Label htmlFor="organizationName">Organization Name</Label>
+						<Input
+							placeholder="Netflix"
+							value={organizationName}
+							onChange={(e): void => {
+								setState(e.target.value, setOrganisationName);
+							}}
+							required
+							id="organizationName"
+						/>
+					</div>
+
+					<MarginTop marginTop={'2.4375rem'}>
+						<Space>
+							<Switch
+								onChange={(value) => onSwitchHandler(value, setKeepMeUpdated)}
+								checked={keepMeUpdated}
+							/>
+							<Typography>Keep me updated on new SigNoz features</Typography>
+						</Space>
+					</MarginTop>
+
+					<MarginTop marginTop={'0.5rem'}>
+						<Space>
+							<Switch
+								onChange={(value) => onSwitchHandler(value, setAnonymise)}
+								checked={anonymise}
+							/>
+							<Typography>
+								Anonymise my usage date. We collect data to measure product usage
+							</Typography>
+						</Space>
+					</MarginTop>
 
 					<ButtonContainer>
 						<Button
@@ -122,14 +177,14 @@ const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
 							htmlType="submit"
 							data-attr="signup"
 							loading={loading}
-							disabled={loading || !formState.email.value}
+							disabled={loading || !email || !organizationName || !firstName}
 						>
 							Get Started
 						</Button>
 					</ButtonContainer>
 				</form>
 			</FormWrapper>
-		</div>
+		</Container>
 	);
 };
 
