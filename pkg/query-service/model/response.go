@@ -288,10 +288,10 @@ type SpanAggregatesResponseItem struct {
 	GroupBy   map[string]float32 `json:"groupBy,omitempty"`
 }
 type SpanAggregatesDBResponseItem struct {
-	Timestamp int64   `json:"timestamp,omitempty" db:"timestamp" `
-	Time      string  `json:"time,omitempty" db:"time"`
-	Value     float32 `json:"value,omitempty" db:"value"`
-	GroupBy   string  `json:"groupBy,omitempty" db:"groupBy"`
+	Timestamp int64          `json:"timestamp,omitempty" db:"timestamp" `
+	Time      string         `json:"time,omitempty" db:"time"`
+	Value     float32        `json:"value,omitempty" db:"value"`
+	GroupBy   sql.NullString `json:"groupBy,omitempty" db:"groupBy"`
 }
 
 type SetTTLResponseItem struct {

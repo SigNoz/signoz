@@ -1627,6 +1627,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				traceFilterReponse.Duration["minDuration"] = service.MinDuration
 				traceFilterReponse.Duration["maxDuration"] = service.MaxDuration
 			}
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("filter type: %s not supported", e)}
 		}
 	}
 
@@ -2486,28 +2488,22 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		switch queryParams.AggregationOption {
 		case "p50":
 			aggregation_query = " quantile(0.50)(durationNano) as value "
-			break
 		case "p95":
 			aggregation_query = " quantile(0.95)(durationNano) as value "
-			break
 		case "p90":
 			aggregation_query = " quantile(0.90)(durationNano) as value "
-			break
 		case "p99":
 			aggregation_query = " quantile(0.99)(durationNano) as value "
-			break
 		case "max":
 			aggregation_query = " max(durationNano) as value "
-			break
 		case "min":
 			aggregation_query = " min(durationNano) as value "
-			break
 		case "avg":
 			aggregation_query = " avg(durationNano) as value "
-			break
 		case "sum":
 			aggregation_query = " sum(durationNano) as value "
-			break
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("Aggregate type: %s not supported", queryParams.AggregationOption)}
 		}
 	} else if queryParams.Dimension == "calls" {
 		aggregation_query = " count(*) as value "
@@ -2544,6 +2540,8 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
 		case "component":
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
 	} else {
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
@@ -2757,6 +2755,8 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			query = query + " GROUP BY time, dbSystem as groupBy ORDER BY time"
 		case "component":
 			query = query + " GROUP BY time, component as groupBy ORDER BY time"
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
 	} else {
 		query = query + " GROUP BY time ORDER BY time"
@@ -2787,7 +2787,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			if queryParams.GroupBy != "" {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
 					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
-					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy: SpanAggregatesDBResponseItems[i].Value},
+					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy.String: SpanAggregatesDBResponseItems[i].Value},
 				}
 			} else {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
@@ -2798,7 +2798,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 		} else {
 			if queryParams.GroupBy != "" {
-				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy] = SpanAggregatesDBResponseItems[i].Value
+				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy.String] = SpanAggregatesDBResponseItems[i].Value
 			}
 			GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = responseElement
 		}
