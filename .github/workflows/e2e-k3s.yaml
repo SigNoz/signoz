@@ -46,9 +46,9 @@ jobs:
             --set query-service.image.tag=$DOCKER_TAG \
             --set frontend.image.tag=$DOCKER_TAG
           
-          # log pods, services and the container images
-          kubectl describe deploy/signoz-frontend -n platform | grep Image
-          kubectl describe statefulset/signoz-query-service -n platform | grep Image
+          # get pods, services and the container images
+          kubectl describe deploy/frontend -n platform | grep Image
+          kubectl describe statefulset/query-service -n platform | grep Image
           kubectl get pods -n platform
           kubectl get svc -n platform
 
@@ -80,6 +80,6 @@ jobs:
           SUBDOMAIN: ${{ steps.get-subdomain.outputs.subdomain }}
         run: |
           npm install -g localtunnel
-          host=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f4)
-          port=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
+          host=$(kubectl get svc -n platform | grep frontend | tr -s ' ' | cut -d" " -f4)
+          port=$(kubectl get svc -n platform | grep frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
           lt -p $port -l $host -s $SUBDOMAIN
