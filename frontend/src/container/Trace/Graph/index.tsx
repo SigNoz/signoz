@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import Graph from 'components/Graph';
 import { useSelector } from 'react-redux';
@@ -16,6 +16,12 @@ const TraceGraph = () => {
 
 	const { loading, error, errorMessage, payload } = spansGraph;
 
+	const ChartData = useMemo(() => {
+		return selectedGroupBy.length === 0
+			? getChartData(payload)
+			: getChartDataforGroupBy(payload);
+	}, [payload]);
+
 	if (error) {
 		return (
 			<Container center>
@@ -31,11 +37,6 @@ const TraceGraph = () => {
 			</Container>
 		);
 	}
-
-	const ChartData =
-		selectedGroupBy.length === 0
-			? getChartData(payload)
-			: getChartDataforGroupBy(payload);
 
 	return (
 		<Container>
