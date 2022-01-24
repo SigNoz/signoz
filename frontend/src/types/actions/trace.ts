@@ -55,6 +55,7 @@ export interface UpdateAllFilters {
 		selectedFilter: TraceReducer['selectedFilter'];
 		filterToFetchData: TraceReducer['filterToFetchData'];
 		current: TraceReducer['spansAggregate']['currentPage'];
+		selectedTags: TraceReducer['selectedTags'];
 	};
 }
 

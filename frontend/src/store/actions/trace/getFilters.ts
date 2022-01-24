@@ -7,6 +7,7 @@ import {
 	parseSelectedFilter,
 	parseFilterToFetchData,
 	parseQueryIntoCurrent,
+	parseQueryIntoSelectedTags,
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
@@ -36,6 +37,11 @@ export const GetFilter = (
 			const parsedQueryCurrent = parseQueryIntoCurrent(
 				query,
 				traces.spansAggregate.currentPage,
+			);
+
+			const parsedSelectedTags = parseQueryIntoSelectedTags(
+				query,
+				traces.selectedTags,
 			);
 
 			// now filter are not matching we need to fetch the data and make in sync
@@ -68,6 +74,7 @@ export const GetFilter = (
 						selectedFilter: getSelectedFilter.currentValue,
 						filterToFetchData: getFilterToFetchData.currentValue,
 						current: parsedQueryCurrent.currentValue,
+						selectedTags: parsedSelectedTags.currentValue,
 					},
 				});
 			} else {

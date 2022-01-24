@@ -10,7 +10,6 @@ import AppActions from 'types/actions';
 import { ThunkDispatch } from 'redux-thunk';
 import { bindActionCreators } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	const {
@@ -18,11 +17,8 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		filterLoading,
 		filterToFetchData,
 		spansAggregate,
+		selectedTags,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
 	const isPresent = selectedFilter.get(props.name) || [];
 
 	const isSelected = isPresent.find((e) => e === props.keyValue) !== undefined;
@@ -52,7 +48,12 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		}
 
 		const mergedMaps = new Map([...selectedFilter, ...newSelectedMap]);
-		updateURL(mergedMaps, filterToFetchData, spansAggregate.currentPage);
+		updateURL(
+			mergedMaps,
+			filterToFetchData,
+			spansAggregate.currentPage,
+			selectedTags,
+		);
 	};
 
 	return (

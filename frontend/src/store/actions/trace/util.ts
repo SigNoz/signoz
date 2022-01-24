@@ -97,6 +97,37 @@ export const parseFilterToFetchData = (
 	};
 };
 
+export const parseQueryIntoSelectedTags = (
+	query: string,
+	stateSelectedTags: TraceReducer['selectedTags'],
+): ParsedUrl<TraceReducer['selectedTags']> => {
+	const url = new URLSearchParams(query);
+
+	let selectedTags: TraceReducer['selectedTags'] = [];
+
+	const querySelectedTags = url.get('selectedTags');
+
+	if (querySelectedTags) {
+		const parsedQuerySelectedTags = JSON.parse(querySelectedTags);
+
+		if (Array.isArray(parsedQuerySelectedTags)) {
+			selectedTags = parsedQuerySelectedTags;
+		}
+	}
+
+	if (selectedTags.length == 0) {
+		return {
+			currentValue: stateSelectedTags,
+			urlValue: selectedTags,
+		};
+	}
+
+	return {
+		currentValue: selectedTags,
+		urlValue: selectedTags,
+	};
+};
+
 export const parseQueryIntoCurrent = (
 	query: string,
 	stateCurrent: TraceReducer['spansAggregate']['currentPage'],
@@ -145,10 +176,13 @@ export const updateURL = (
 	selectedFilter: TraceReducer['selectedFilter'],
 	filterToFetchData: TraceReducer['filterToFetchData'],
 	current: TraceReducer['spansAggregate']['total'],
+	selectedTags: TraceReducer['selectedTags'],
 ) => {
 	history.replace(
 		`${history.location.pathname}?selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
-		)}&filterToFetchData=${JSON.stringify(filterToFetchData)}&current=${current}`,
+		)}&filterToFetchData=${JSON.stringify(
+			filterToFetchData,
+		)}&current=${current}&selectedTags=${JSON.stringify(selectedTags)}`,
 	);
 };

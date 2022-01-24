@@ -23,6 +23,7 @@ export const ClearAllFilter = (
 			traces.selectedFilter,
 			updatedFilterToFetchTheData,
 			traces.spansAggregate.currentPage,
+			traces.selectedTags,
 		);
 	};
 };

@@ -9,6 +9,13 @@ export const SpaceComponent = styled(Space)`
 
 export const SelectComponent = styled(Select)`
 	&&& {
+		min-width: 170px;
+		margin-right: 21.91px;
+	}
+`;
+
+export const ValueSelect = styled(Select)`
+	&&& {
 		width: 100%;
 	}
 `;
@@ -19,4 +26,13 @@ export const Container = styled.div`
 		margin-top: 1rem;
 		margin-bottom: 1rem;
 	}
+`;
+
+export const IconContainer = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+
+	margin-left: 1.125rem;
 `;

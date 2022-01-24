@@ -43,7 +43,7 @@ export interface Tags {
 	Values: string[];
 }
 
-type OperatorValues = 'NOT_IN' | 'IN';
+type OperatorValues = 'not in' | 'in';
 
 export type TraceFilterEnum =
 	| 'component'

@@ -26,6 +26,7 @@ const Duration = (): JSX.Element => {
 		selectedFilter,
 		filterToFetchData,
 		spansAggregate,
+		selectedTags,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const getDuration = () => {
@@ -54,7 +55,12 @@ const Duration = (): JSX.Element => {
 	const updatedUrl = (min: number, max: number) => {
 		const newMap = new Map(selectedFilter);
 		newMap.set('duration', [String(max), String(min)]);
-		updateURL(newMap, filterToFetchData, spansAggregate.currentPage);
+		updateURL(
+			newMap,
+			filterToFetchData,
+			spansAggregate.currentPage,
+			selectedTags,
+		);
 	};
 
 	const debounceUpdateUrl = useDebouncedFn(updatedUrl, 500);

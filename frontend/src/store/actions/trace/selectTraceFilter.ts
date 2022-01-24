@@ -13,7 +13,7 @@ export const SelectedTraceFilter = (props: {
 ) => void) => {
 	return (_, getState): void => {
 		const { topic, value } = props;
-		const { traces, globalTime } = getState();
+		const { traces } = getState();
 
 		const filter = traces.selectedFilter;
 
@@ -42,6 +42,7 @@ export const SelectedTraceFilter = (props: {
 			filter,
 			traces.filterToFetchData,
 			traces.spansAggregate.currentPage,
+			traces.selectedTags,
 		);
 	};
 };

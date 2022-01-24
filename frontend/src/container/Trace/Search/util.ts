@@ -61,13 +61,20 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 };
 
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
+	let isError = false;
+
+	const payload = tags
+		.map(({ Values, Key, Operator }) => {
+			if (Key[0] === undefined) {
+				isError = true;
+			}
+
+			return `${Key[0]} ${Operator} (${Values.map((e) => `"${e}"`).join(',')})`;
+		})
+		.join(' AND ');
+
 	return {
-		isError: false,
-		payload: tags
-			.map(
-				({ Values, Key, Operator }) =>
-					`${Key[0]} ${Operator} (${Values.map((e) => `"${e}"`).join(',')})`,
-			)
-			.join(' AND '),
+		isError,
+		payload,
 	};
 };

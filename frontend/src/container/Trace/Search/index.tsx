@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Space, Input } from 'antd';
 import { Container } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
@@ -13,6 +13,7 @@ import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity'
 import { parseQueryToTags, parseTagsToQuery } from './util';
 import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
+import { CaretRightFilled } from '@ant-design/icons';
 const { Search: SearchComponent } = Input;
 
 const Search = ({
@@ -20,13 +21,21 @@ const Search = ({
 	updateSelectedTags,
 	updateTagIsError,
 }: SearchProps): JSX.Element => {
-	const { isTagModalOpen, selectedTags } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
-	);
+	const { isTagModalOpen, selectedTags, filterLoading } = useSelector<
+		AppState,
+		TraceReducer
+	>((state) => state.traces);
 
-	const initialTags = parseTagsToQuery(selectedTags);
+	const [value, setValue] = useState<string>('');
 
-	const [value, setValue] = useState<string>(initialTags.payload);
+	useEffect(() => {
+		if (filterLoading) {
+			const initialTags = parseTagsToQuery(selectedTags);
+			if (!initialTags.isError) {
+				setValue(initialTags.payload);
+			}
+		}
+	}, [selectedTags, filterLoading]);
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +55,12 @@ const Search = ({
 			}
 		};
 
-		if (e.nodeName === 'svg' || e.nodeName === 'path') {
+		if (
+			e.nodeName === 'svg' ||
+			e.nodeName === 'path' ||
+			e.nodeName === 'span' ||
+			e.nodeName === 'button'
+		) {
 			return;
 		}
 
@@ -84,7 +98,7 @@ const Search = ({
 					onFocus={onFocusHandler}
 					placeholder="Click to filter by tags"
 					type={'search'}
-					enterButton
+					enterButton={<CaretRightFilled />}
 					onSearch={(string) => {
 						const { isError, payload } = parseQueryToTags(string);
 

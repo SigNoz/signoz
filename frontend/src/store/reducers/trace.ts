@@ -56,13 +56,20 @@ const traceReducer = (
 
 		case UPDATE_ALL_FILTERS: {
 			const { payload } = action;
-			const { filter, filterToFetchData, selectedFilter, current } = payload;
+			const {
+				filter,
+				filterToFetchData,
+				selectedFilter,
+				current,
+				selectedTags,
+			} = payload;
 
 			return {
 				...state,
 				filter,
 				filterToFetchData,
 				selectedFilter,
+				selectedTags,
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,

@@ -12,7 +12,7 @@ export const ExpandPanel = (
 	getState: Store<AppState>['getState'],
 ) => void) => {
 	return (_, getState): void => {
-		const { traces, globalTime } = getState();
+		const { traces } = getState();
 
 		const { filterToFetchData } = traces;
 
@@ -28,6 +28,7 @@ export const ExpandPanel = (
 			traces.selectedFilter,
 			updatedFilterToFetchTheData,
 			traces.spansAggregate.currentPage,
+			traces.selectedTags,
 		);
 	};
 };
