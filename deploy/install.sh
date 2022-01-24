@@ -272,9 +272,9 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo ""
         if [ $setup_type == 'clickhouse' ]; then
             if is_arm64; then
-                echo -e "sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+                echo -e "sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
             else
-                echo -e "sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml ps -a"
+                echo -e "sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml ps -a"
             fi
         else   
             echo -e "sudo docker-compose -f docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
@@ -417,9 +417,9 @@ echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz. To run as sudo it may ask for system password\n"
 if [ $setup_type == 'clickhouse' ]; then
     if is_arm64; then
-        sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f ./docker/clickhouse-setup/docker-compose.yaml pull
+        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
     else
-        sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f ./docker/clickhouse-setup/docker-compose.yaml pull
+        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
     fi
 else
     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
@@ -433,9 +433,9 @@ echo
 # script doesn't exit because this command looks like it failed to do it's thing.
 if [ $setup_type == 'clickhouse' ]; then
     if is_arm64; then
-        sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
     else
-        sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
     fi
 else
     sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
@@ -497,9 +497,9 @@ else
 
     if [ $setup_type == 'clickhouse' ]; then
         if is_arm64; then
-            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml down -v"
+            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml down -v"
         else
-            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml down -v"
+            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml down -v"
         fi
     else
         echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
