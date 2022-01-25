@@ -8,13 +8,13 @@ const Filters = (): JSX.Element => {
 			<Panel name="duration" />
 			<Panel name="status" />
 			<Panel name="serviceName" />
+			<Panel name="operation" />
 			<Panel name="component" />
 			<Panel name="httpCode" />
 			<Panel name="httpHost" />
 			<Panel name="httpMethod" />
 			<Panel name="httpRoute" />
 			<Panel name="httpUrl" />
-			<Panel name="operation" />
 		</>
 	);
 };
