@@ -34,6 +34,12 @@ const Search = ({
 		}
 	}, [traces.selectedTags, traces.filterLoading]);
 
+	useEffect(() => {
+		if (value.length === 0 && traces.isTagModalError) {
+			updateTagIsError(false);
+		}
+	}, [traces.isTagModalError, value]);
+
 	const tagRef = useRef<HTMLDivElement>(null);
 
 	useClickOutside(tagRef, (e: HTMLElement) => {
@@ -106,6 +112,7 @@ const Search = ({
 							);
 							return;
 						}
+
 						const { isError, payload } = parseQueryToTags(string);
 
 						if (isError) {
