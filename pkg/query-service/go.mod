@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.27.0 // indirect
 	github.com/containerd/containerd v1.4.12 // indirect
 	github.com/dhui/dktest v0.3.4 // indirect
-	github.com/docker/docker v20.10.12+incompatible
+	github.com/docker/docker v20.10.12+incompatible // indirect
 	github.com/frankban/quicktest v1.13.0 // indirect
 	github.com/go-kit/log v0.1.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
