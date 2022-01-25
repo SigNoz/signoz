@@ -5,7 +5,7 @@ import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
 import React, { useEffect, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -17,7 +17,6 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_TRACE_FILTER_LOADING } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -34,7 +33,6 @@ const Trace = ({
 		(state) => state.globalTime,
 	);
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const {
 		selectedFilter,
 		spansAggregate,
@@ -46,19 +44,10 @@ const Trace = ({
 
 	useEffect(() => {
 		getFilters(search, minTime, maxTime);
-
-		return () => {
-			dispatch({
-				type: UPDATE_TRACE_FILTER_LOADING,
-				payload: {
-					filterLoading: true,
-				},
-			});
-		};
 	}, [minTime, maxTime, getFilters, search]);
 
 	useEffect(() => {
-		if (!filterLoading) {
+		if (!filterLoading)
 			getSpansAggregate({
 				maxTime: maxTime,
 				minTime: minTime,
@@ -67,19 +56,17 @@ const Trace = ({
 				pageSize: spansAggregate.pageSize,
 				selectedTags,
 			});
-		}
 	}, [
-		maxTime,
-		minTime,
 		selectedFilter,
 		spansAggregate.currentPage,
 		spansAggregate.pageSize,
 		selectedTags,
 		filterLoading,
+		getSpansAggregate,
 	]);
 
 	useEffect(() => {
-		if (!filterLoading) {
+		if (!filterLoading)
 			getSpans({
 				end: maxTime,
 				function: selectedFunction,
@@ -89,15 +76,13 @@ const Trace = ({
 				start: minTime,
 				step: 60,
 			});
-		}
 	}, [
 		selectedFunction,
 		selectedGroupBy,
 		selectedFilter,
 		selectedTags,
-		minTime,
-		maxTime,
 		filterLoading,
+		getSpans,
 	]);
 
 	return (
