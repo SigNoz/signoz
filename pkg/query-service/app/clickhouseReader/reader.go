@@ -2306,7 +2306,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	var searchScanReponses []model.SearchSpanReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID='%s'", r.indexTable, traceId)
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID=?", r.indexTable)
 
 	err := r.db.Select(&searchScanReponses, query, traceId)
 
