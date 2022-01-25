@@ -54,5 +54,5 @@ func readCurrentDir(dir string) error {
 }
 
 func LoadDashboardFiles() error {
-	return readCurrentDir("./config/dashboards")
+	return readCurrentDir("/var/tmp/dashboards")
 }

@@ -1,4 +1,4 @@
-# stage1 as builder
+# builder stage
 FROM node:12.18.0 as builder
 
 # Add Maintainer Info
@@ -13,23 +13,19 @@ WORKDIR /frontend
 COPY package.json ./
 
 # Install the dependencies and make the folder
-RUN yarn install 
+RUN yarn install
 
 COPY . .
 
 # Build the project and copy the files
 RUN yarn build
 
-FROM nginx:1.18-alpine
-
-#!/bin/sh
+# FROM nginx:1.18-alpine
+FROM nginxinc/nginx-unprivileged
 
 COPY conf/default.conf /etc/nginx/conf.d/default.conf
 
-## Remove default nginx index page
-RUN rm -rf /usr/share/nginx/html/*
-
-# Copy from the stahg 1
+# Copy from the builder stage
 COPY --from=builder /frontend/build /usr/share/nginx/html
 
 EXPOSE 3301
