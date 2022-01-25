@@ -13,15 +13,13 @@ export const ClearAllFilter = (
 	return (_, getState): void => {
 		const { traces } = getState();
 
-		const { filterToFetchData } = traces;
+		const { selectedFilter, filterToFetchData } = traces;
 
-		const updatedFilterToFetchTheData = [
-			...filterToFetchData.filter((e) => e !== props),
-		];
+		selectedFilter.delete(props);
 
 		updateURL(
 			traces.selectedFilter,
-			updatedFilterToFetchTheData,
+			filterToFetchData,
 			traces.spansAggregate.currentPage,
 			traces.selectedTags,
 		);
