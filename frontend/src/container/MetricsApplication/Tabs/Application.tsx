@@ -36,7 +36,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
 		}
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.replace(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	const onClickhandler = async (
@@ -90,7 +90,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		}
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.replace(`${ROUTES.TRACE}?${urlParams.toString()}`);
 	};
 
 	return (
