@@ -19,7 +19,7 @@ import { TraceReducer } from 'types/reducer/trace';
 const initialValue: TraceReducer = {
 	filter: new Map(),
 	filterToFetchData: ['duration', 'status', 'serviceName'],
-	filterLoading: false,
+	filterLoading: true,
 	selectedFilter: new Map(),
 	selectedTags: [],
 	isTagModalOpen: false,

@@ -38,6 +38,7 @@ const Trace = ({
 		selectedTags,
 		selectedFunction,
 		selectedGroupBy,
+		filterLoading,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	useEffect(() => {
@@ -45,14 +46,16 @@ const Trace = ({
 	}, [minTime, maxTime, getFilters, search]);
 
 	useEffect(() => {
-		getSpansAggregate({
-			maxTime: maxTime,
-			minTime: minTime,
-			selectedFilter,
-			current: spansAggregate.currentPage,
-			pageSize: spansAggregate.pageSize,
-			selectedTags,
-		});
+		if (!filterLoading) {
+			getSpansAggregate({
+				maxTime: maxTime,
+				minTime: minTime,
+				selectedFilter,
+				current: spansAggregate.currentPage,
+				pageSize: spansAggregate.pageSize,
+				selectedTags,
+			});
+		}
 	}, [
 		maxTime,
 		minTime,
@@ -60,18 +63,21 @@ const Trace = ({
 		spansAggregate.currentPage,
 		spansAggregate.pageSize,
 		selectedTags,
+		filterLoading,
 	]);
 
 	useEffect(() => {
-		getSpans({
-			end: maxTime,
-			function: selectedFunction,
-			groupBy: selectedGroupBy,
-			selectedFilter,
-			selectedTags,
-			start: minTime,
-			step: 60,
-		});
+		if (!filterLoading) {
+			getSpans({
+				end: maxTime,
+				function: selectedFunction,
+				groupBy: selectedGroupBy,
+				selectedFilter,
+				selectedTags,
+				start: minTime,
+				step: 60,
+			});
+		}
 	}, [
 		selectedFunction,
 		selectedGroupBy,
@@ -79,6 +85,7 @@ const Trace = ({
 		selectedTags,
 		minTime,
 		maxTime,
+		filterLoading,
 	]);
 
 	return (
