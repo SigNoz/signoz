@@ -44,20 +44,6 @@ const Search = ({
 
 	useClickOutside(tagRef, (e: HTMLElement) => {
 		// using this hack as overlay span is voilating this condition
-		const getClassCondition = (e: HTMLElement) => {
-			if (e.nodeName === 'SPAN') {
-				return 'ant-dropdown-menu-title-content';
-			}
-
-			if (e.nodeName === 'DIV') {
-				return 'ant-select-item-option-content';
-			}
-
-			if (e.nodeName === 'BUTTON') {
-				return 'ant-btn ant-btn-icon-only';
-			}
-		};
-
 		if (
 			e.nodeName === 'svg' ||
 			e.nodeName === 'path' ||
@@ -67,12 +53,16 @@ const Search = ({
 			return;
 		}
 
-		const classCondition = getClassCondition(e);
-
 		if (
-			(e.nodeName !== 'SPAN' && e.className !== classCondition) ||
-			(e.nodeName !== 'DIV' && e.className !== classCondition) ||
-			(e.nodeName !== 'BUTTON' && e.className !== classCondition)
+			e.nodeName === 'DIV' &&
+			![
+				'ant-select-item-option-content',
+				'ant-empty-image',
+				'ant-select-item',
+				'ant-col',
+				'ant-select-item-option-active',
+			].find((p) => p.indexOf(e.className) !== -1) &&
+			!(e.ariaSelected === 'true')
 		) {
 			updateTagVisiblity(false);
 		}

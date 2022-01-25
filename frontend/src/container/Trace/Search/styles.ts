@@ -14,6 +14,15 @@ export const SearchComponent = styled(Search)`
 		margin-top: 0.5rem;
 	}
 
+	.ant-btn-primary {
+		width: 50px;
+		height: 50px;
+
+		svg {
+			transform: scale(1.5);
+		}
+	}
+
 	.ant-btn-primary,
 	.ant-input-affix-wrapper,
 	.ant-input-wrapper {

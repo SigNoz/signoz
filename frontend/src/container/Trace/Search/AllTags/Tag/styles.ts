@@ -11,6 +11,7 @@ export const SelectComponent = styled(Select)`
 	&&& {
 		min-width: 170px;
 		margin-right: 21.91px;
+		margin-left: 21.92px;
 	}
 `;
 

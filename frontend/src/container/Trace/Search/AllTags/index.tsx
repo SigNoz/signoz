@@ -22,12 +22,14 @@ import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { parseTagsToQuery } from '../util';
 import { isEqual } from 'lodash-es';
 import { updateURL } from 'store/actions/trace/util';
+import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 
 const { Paragraph } = Typography;
 
 const AllTags = ({
 	updateTagIsError,
 	onChangeHandler,
+	updateTagVisiblity,
 }: AllTagsProps): JSX.Element => {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
@@ -73,6 +75,7 @@ const AllTags = ({
 				localSelectedTags,
 			);
 			updateTagIsError(false);
+			updateTagVisiblity(false);
 		}
 	};
 
@@ -94,6 +97,8 @@ const AllTags = ({
 			</ErrorContainer>
 		);
 	}
+
+	console.log(localSelectedTags);
 
 	return (
 		<>
@@ -142,12 +147,14 @@ const AllTags = ({
 
 interface DispatchProps {
 	updateTagIsError: (value: boolean) => void;
+	updateTagVisiblity: (value: boolean) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
+	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
 });
 
 interface AllTagsProps extends DispatchProps {
