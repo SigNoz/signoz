@@ -13,7 +13,7 @@ const getFilters = async (
 			props.end
 		}&getFilters=${encodeURIComponent(
 			JSON.stringify(props.getFilters),
-		)}&${encodeURIComponent(convertObjectIntoParams(props.other, true))}`;
+		)}&${convertObjectIntoParams(props.other, true)}`;
 
 		const response = await axios.get<PayloadProps>(
 			`/getSpanFilters?${updatedQueryParams}`,
