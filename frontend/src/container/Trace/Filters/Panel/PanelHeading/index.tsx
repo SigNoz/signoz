@@ -1,5 +1,5 @@
 import React from 'react';
-import { UpOutlined, DownOutlined } from '@ant-design/icons';
+import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Card, Button, Typography, Spin, Divider } from 'antd';
 
 import { Container, IconContainer, TextCotainer } from './styles';
@@ -31,7 +31,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 				>
 					<TextCotainer onClick={onExpandHandler}>
 						<IconContainer>
-							{props.isOpen ? <UpOutlined /> : <DownOutlined />}
+							{!props.isOpen ? <RightOutlined /> : <DownOutlined />}
 						</IconContainer>
 
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>
