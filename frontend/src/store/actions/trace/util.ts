@@ -178,11 +178,15 @@ export const updateURL = (
 	current: TraceReducer['spansAggregate']['total'],
 	selectedTags: TraceReducer['selectedTags'],
 ) => {
+	const search = location.search;
+
 	history.replace(
 		`${history.location.pathname}?selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
 		)}&filterToFetchData=${JSON.stringify(
 			filterToFetchData,
-		)}&current=${current}&selectedTags=${JSON.stringify(selectedTags)}`,
+		)}&current=${current}&selectedTags=${JSON.stringify(
+			selectedTags,
+		)}&${search.slice(1)}`,
 	);
 };

@@ -34,7 +34,11 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 
 		const filterForTags = filteredtags[1];
 
-		const removingFirstAndLastBrackets = `${filterForTags.slice(1, -1)}`;
+		if (!filterForTags) {
+			isError = true;
+		}
+
+		const removingFirstAndLastBrackets = `${filterForTags?.slice(1, -1)}`;
 
 		const noofFilters = removingFirstAndLastBrackets.split(',');
 
