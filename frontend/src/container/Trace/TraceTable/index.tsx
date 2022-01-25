@@ -16,6 +16,8 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import history from 'lib/history';
+import ROUTES from 'constants/routes';
 dayjs.extend(duration);
 
 const TraceTable = ({ getSpansAggregate }: TraceProps) => {
@@ -51,8 +53,8 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 		},
 		{
 			title: 'Resource',
-			dataIndex: 'errorRate',
-			key: 'errorRate',
+			dataIndex: 'operation',
+			key: 'operation',
 		},
 		{
 			title: 'Duration',
@@ -108,6 +110,16 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			dataSource={spansAggregate.data}
 			loading={loading}
 			columns={columns}
+			onRow={(record) => ({
+				onClick: () => {
+					history.push({
+						pathname: ROUTES.TRACE + '/' + record.traceID,
+						state: {
+							spanId: record.spanID,
+						},
+					});
+				},
+			})}
 			size="middle"
 			rowKey={'timestamp'}
 			pagination={{
