@@ -180,3 +180,15 @@ func (druid *DruidReader) GetFilteredSpans(_ context.Context, _ *model.GetFilter
 func (druid *DruidReader) GetFilteredSpansAggregates(_ context.Context, _ *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting FilteredSpans")}
 }
+
+func (druid *DruidReader) GetErrors(_ context.Context, _ *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support get error API")}
+}
+
+func (druid *DruidReader) GetErrorForId(_ context.Context, _ *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support get error API")}
+}
+
+func (druid *DruidReader) GetErrorForType(_ context.Context, _ *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support get error API")}
+}
