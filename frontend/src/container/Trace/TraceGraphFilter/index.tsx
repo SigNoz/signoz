@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, SelectProps } from 'antd';
+import { Space, SelectProps, Input } from 'antd';
 import { functions, groupBy } from './config';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -52,6 +52,8 @@ const TraceGraphFilter = () => {
 
 	return (
 		<Space>
+			<label>Function</label>
+
 			<SelectComponent
 				dropdownMatchSelectWidth
 				value={functions.find((e) => selectedFunction === e.key)?.displayValue}
@@ -64,6 +66,7 @@ const TraceGraphFilter = () => {
 				))}
 			</SelectComponent>
 
+			<label>Group By</label>
 			<SelectComponent
 				dropdownMatchSelectWidth
 				value={groupBy.find((e) => selectedGroupBy === e.key)?.displayValue}

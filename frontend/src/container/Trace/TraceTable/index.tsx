@@ -52,7 +52,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			sorter: (a, b) => a.serviceName.length - b.serviceName.length,
 		},
 		{
-			title: 'Resource',
+			title: 'Operation',
 			dataIndex: 'operation',
 			key: 'operation',
 		},

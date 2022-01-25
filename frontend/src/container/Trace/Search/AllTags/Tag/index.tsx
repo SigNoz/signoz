@@ -32,10 +32,6 @@ const AllMenu: AllMenu[] = [
 		key: 'not in',
 		value: 'NOT IN',
 	},
-	{
-		key: '',
-		value: 'None',
-	},
 ];
 
 interface AllMenu {

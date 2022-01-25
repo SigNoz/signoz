@@ -66,7 +66,15 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 			>
 				{props.keyValue}
 			</Checkbox>
-			{props.value !== '-1' && <Typography>{props.value}</Typography>}
+			{props.value !== '-1' && (
+				<Typography
+					style={{
+						fontSize: '12px',
+					}}
+				>
+					{props.value}
+				</Typography>
+			)}
 		</CheckBoxContainer>
 	);
 };

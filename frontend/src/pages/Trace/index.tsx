@@ -4,10 +4,10 @@ import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
-import React, { useEffect } from 'react';
-import { connect, useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetFilter } from 'store/actions/trace/getFilters';
 import {
@@ -17,6 +17,7 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { UPDATE_TRACE_FILTER_LOADING } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -32,6 +33,8 @@ const Trace = ({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const {
 		selectedFilter,
 		spansAggregate,
@@ -43,6 +46,15 @@ const Trace = ({
 
 	useEffect(() => {
 		getFilters(search, minTime, maxTime);
+
+		return () => {
+			dispatch({
+				type: UPDATE_TRACE_FILTER_LOADING,
+				payload: {
+					filterLoading: true,
+				},
+			});
+		};
 	}, [minTime, maxTime, getFilters, search]);
 
 	useEffect(() => {

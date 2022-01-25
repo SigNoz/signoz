@@ -5,7 +5,7 @@ interface Props {
 }
 
 export const Container = styled.div<Props>`
-	height: 20vh;
+	height: 25vh;
 	margin-top: 1rem;
 	margin-bottom: 1rem;
 

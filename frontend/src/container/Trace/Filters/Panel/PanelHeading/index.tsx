@@ -41,7 +41,11 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						{filterLoading && <Spin size="small" />}
 					</TextCotainer>
 
-					<Button onClick={() => props.onClearAllHandler(props.name)} type="link">
+					<Button
+						style={{ fontSize: '12px' }}
+						onClick={() => props.onClearAllHandler(props.name)}
+						type="link"
+					>
 						Clear All
 					</Button>
 				</Container>

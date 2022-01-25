@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Space, Input } from 'antd';
-import { Container } from './styles';
+import { Container, SearchComponent } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
 import { connect, useSelector } from 'react-redux';
@@ -14,28 +14,25 @@ import { parseQueryToTags, parseTagsToQuery } from './util';
 import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { CaretRightFilled } from '@ant-design/icons';
-const { Search: SearchComponent } = Input;
+import { updateURL } from 'store/actions/trace/util';
 
 const Search = ({
 	updateTagVisiblity,
 	updateSelectedTags,
 	updateTagIsError,
 }: SearchProps): JSX.Element => {
-	const { isTagModalOpen, selectedTags, filterLoading } = useSelector<
-		AppState,
-		TraceReducer
-	>((state) => state.traces);
+	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const [value, setValue] = useState<string>('');
 
 	useEffect(() => {
-		if (filterLoading) {
-			const initialTags = parseTagsToQuery(selectedTags);
+		if (traces.filterLoading) {
+			const initialTags = parseTagsToQuery(traces.selectedTags);
 			if (!initialTags.isError) {
 				setValue(initialTags.payload);
 			}
 		}
-	}, [selectedTags, filterLoading]);
+	}, [traces.selectedTags, traces.filterLoading]);
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
@@ -100,18 +97,32 @@ const Search = ({
 					type={'search'}
 					enterButton={<CaretRightFilled />}
 					onSearch={(string) => {
+						if (string.length === 0) {
+							updateURL(
+								traces.selectedFilter,
+								traces.filterToFetchData,
+								traces.spansAggregate.currentPage,
+								[],
+							);
+							return;
+						}
 						const { isError, payload } = parseQueryToTags(string);
 
 						if (isError) {
 							updateTagIsError(true);
 						} else {
 							updateTagIsError(false);
-							updateSelectedTags(payload);
+							updateURL(
+								traces.selectedFilter,
+								traces.filterToFetchData,
+								traces.spansAggregate.currentPage,
+								payload,
+							);
 						}
 					}}
 				/>
 
-				{isTagModalOpen && <Tags onChangeHandler={onChangeHandler} />}
+				{traces.isTagModalOpen && <Tags onChangeHandler={onChangeHandler} />}
 			</Container>
 		</Space>
 	);
