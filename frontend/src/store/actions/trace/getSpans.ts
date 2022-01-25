@@ -18,12 +18,10 @@ export const GetSpans = (
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
 		try {
-			const { traces } = getState();
-			const { spansGraph, filterLoading } = traces;
+			const { traces, globalTime } = getState();
+			const { spansGraph } = traces;
 
-			const search = location.search;
-
-			if (filterLoading && search.length !== 0) {
+			if (globalTime.maxTime !== props.end && globalTime.minTime !== props.start) {
 				return;
 			}
 

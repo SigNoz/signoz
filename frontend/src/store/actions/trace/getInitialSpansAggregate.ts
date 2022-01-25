@@ -14,11 +14,13 @@ export const GetSpansAggregate = (
 	getState: Store<AppState>['getState'],
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
-		const { traces } = getState();
-		const { spansAggregate, filterLoading } = traces;
-		const search = location.search;
+		const { traces, globalTime } = getState();
+		const { spansAggregate } = traces;
 
-		if (filterLoading && search.length !== 0) {
+		if (
+			globalTime.maxTime !== props.maxTime &&
+			globalTime.minTime !== props.minTime
+		) {
 			return;
 		}
 

@@ -26,7 +26,11 @@ export const GetFilter = (
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
 		try {
-			const { traces } = getState();
+			const { traces, globalTime } = getState();
+
+			if (globalTime.maxTime !== maxTime && globalTime.minTime !== minTime) {
+				return;
+			}
 
 			const getSelectedFilter = parseSelectedFilter(query, traces.selectedFilter);
 			const getFilterToFetchData = parseFilterToFetchData(
