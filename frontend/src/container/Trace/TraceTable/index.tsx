@@ -63,7 +63,9 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			render: (value: TableType['durationNano']) => {
 				return (
 					<div>
-						{dayjs.duration({ milliseconds: value / 1000000 }).asMilliseconds()}
+						{`${dayjs
+							.duration({ milliseconds: value / 1000000 })
+							.asMilliseconds()} ms`}
 					</div>
 				);
 			},
