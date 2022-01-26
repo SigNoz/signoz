@@ -3,14 +3,19 @@
 
 
 tasks:
-  - name: Run Script, Docker yml file, install & start frontend dev server
+  - name: Run Script to Comment ut required lines
     init: |
       cd ./.scripts
       sh commentLinesForSetup.sh
-      cd ..
+
+  - name: Run Docker Images
+    init:
       cd ./deploy
+    command:
       sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d
-      cd ..
+
+  - name: Run Frontend
+    init:
       cd ./frontend
       yarn install
     command:
