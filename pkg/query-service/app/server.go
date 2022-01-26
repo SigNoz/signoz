@@ -94,7 +94,7 @@ func createHTTPServer() (*http.Server, error) {
 	posthogClient = posthog.New("H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w")
 	distinctId = uuid.New().String()
 
-	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
+	localDB, err := dashboards.InitDB("./signoz.db")
 	if err != nil {
 		return nil, err
 	}

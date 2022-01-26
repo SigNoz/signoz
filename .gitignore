@@ -42,8 +42,4 @@ frontend/cypress.env.json
 
 frontend/*.env
 pkg/query-service/signoz.db
-deploy/docker/clickhouse-setup/data/signoz/signoz.db
-deploy/docker/clickhouse-setup/data/clickhouse/status
-deploy/docker/clickhouse-setup/data/alertmanager/silences
-deploy/docker/clickhouse-setup/data/alertmanager/nflog
-deploy/docker/clickhouse-setup/data/clickhouse/uuid
+/deploy/docker/clickhouse-setup/data/

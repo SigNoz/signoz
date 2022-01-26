@@ -81,3 +81,17 @@ build-push-flattener:
 	@echo "------------------"
 	@cd $(FLATTENER_DIRECTORY) && \
 	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --tag $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .
+
+dev-setup:
+	mkdir -p /var/lib/signoz
+	sqlite3 /var/lib/signoz/signoz.db "VACUUM";
+	mkdir -p pkg/query-service/config/dashboards
+	@echo "------------------"
+	@echo "--> Local Setup completed"
+	@echo "------------------"
+
+run-x86:
+	@sudo docker-compose --env-file ./deploy/docker/clickhouse-setup/env/x86_64.env -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+
+run-arm:
+	@sudo docker-compose --env-file ./deploy/docker/clickhouse-setup/env/arm64.env -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d

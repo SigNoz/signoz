@@ -14,48 +14,72 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Build query-service image
         run: make build-query-service-amd64
+
       - name: Build frontend image
         run: make build-frontend-amd64
+
       - name: Create a k3s cluster
         uses: AbsaOSS/k3d-action@v2
         with:
           cluster-name: "signoz"
+
       - name: Inject the images to the cluster
         run: k3d image import signoz/query-service:$DOCKER_TAG signoz/frontend:$DOCKER_TAG -c signoz
+
       - name: Deploy the app
         run: |
-          helm dependency update deploy/kubernetes/platform
-          helm install signoz deploy/kubernetes/platform/ -n platform --create-namespace \
-            --wait --timeout 10m0s \
+          # add signoz helm repository
+          helm repo add signoz https://charts.signoz.io
+
+          # create platform namespace
+          kubectl create ns platform
+
+          # installing signoz using helm
+          helm install my-release signoz/signoz -n platform \
+            --wait \
+            --timeout 10m0s \
             --set cloud=null \
             --set frontend.service.type=LoadBalancer \
             --set query-service.image.tag=$DOCKER_TAG \
             --set frontend.image.tag=$DOCKER_TAG
-          kubectl describe deploy/signoz-frontend -n platform | grep Image
-          kubectl describe statefulset/signoz-query-service -n platform | grep Image
+          
+          # get pods, services and the container images
+          kubectl describe deploy/frontend -n platform | grep Image
+          kubectl describe statefulset/query-service -n platform | grep Image
           kubectl get pods -n platform
           kubectl get svc -n platform
+
       - name: Kick off a sample-app workload
         run: |
+          # create sample-application namespace
           kubectl create ns sample-application
-          kubectl -n sample-application apply -Rf sample-apps/hotrod/
+
+          # apply hotrod k8s manifest file
+          kubectl -n sample-application apply -f https://github.com/SigNoz/signoz/blob/main/sample-apps/hotrod/hotrod.yaml
+
+          # wait for all deployments in sample-application namespace to be READY
           kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
-          #TODO: we can remove that sleep once the sample app readiness prob is fixed.
-          sleep 300 # if we don't wait the curl command return success but doesn't kick-of the requests
+          
+          # start the locust swarm
           kubectl -n sample-application run strzal --image=djbingham/curl \
             --restart='OnFailure' -i --rm --command -- curl -X POST -F \
             'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
-          sleep 600 # give some time for the data to reach signoz
-      - name: Get commit short sha
-        uses: benjlevesque/short-sha@v1.2
-        id: short-sha
+
+      - name: Get short commit SHA and display tunnel URL
+        id: get-subdomain
+        run: |
+          subdomain="pr-$(git rev-parse --short HEAD)"
+          echo "URL for tunnelling: https://$subdomain.loca.lt"
+          echo "::set-output name=subdomain::$subdomain"
+
       - name: Start tunnel
         env:
-          COMMIT_SHA: pr-${{ steps.short-sha.outputs.sha }}
+          SUBDOMAIN: ${{ steps.get-subdomain.outputs.subdomain }}
         run: |
           npm install -g localtunnel
-          host=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f4)
-          port=$(kubectl get svc -n platform | grep signoz-frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
-          lt -p $port -l $host -s $COMMIT_SHA
+          host=$(kubectl get svc -n platform | grep frontend | tr -s ' ' | cut -d" " -f4)
+          port=$(kubectl get svc -n platform | grep frontend | tr -s ' ' | cut -d" " -f5 | cut -d":" -f1)
+          lt -p $port -l $host -s $SUBDOMAIN
