@@ -9,13 +9,13 @@ tasks:
       sh commentLinesForSetup.sh
 
   - name: Run Docker Images
-    init:
+    init: |
       cd ./deploy
-    command:
       sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d
+    # command:
 
   - name: Run Frontend
-    init:
+    init: |
       cd ./frontend
       yarn install
     command:
