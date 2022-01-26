@@ -78,6 +78,11 @@ type TagQuery struct {
 	Operator string
 }
 
+type TagQueryV2 struct {
+	Key      string
+	Values   []string
+	Operator string
+}
 type SpanSearchAggregatesParams struct {
 	ServiceName       string
 	OperationName     string
@@ -111,6 +116,82 @@ type SpanSearchParams struct {
 	Tags          []TagQuery
 }
 
+type GetFilteredSpansParams struct {
+	ServiceName []string
+	Operation   []string
+	Kind        string
+	Status      []string
+	HttpRoute   []string
+	HttpCode    []string
+	HttpUrl     []string
+	HttpHost    []string
+	HttpMethod  []string
+	Component   []string
+	Start       *time.Time
+	End         *time.Time
+	MinDuration string
+	MaxDuration string
+	Limit       int64
+	Order       string
+	Offset      int64
+	Tags        []TagQueryV2
+}
+
+type GetFilteredSpanAggregatesParams struct {
+	ServiceName       []string
+	Operation         []string
+	Kind              string
+	Status            []string
+	HttpRoute         []string
+	HttpCode          []string
+	HttpUrl           []string
+	HttpHost          []string
+	HttpMethod        []string
+	Component         []string
+	MinDuration       string
+	MaxDuration       string
+	Tags              []TagQueryV2
+	Start             *time.Time
+	End               *time.Time
+	StepSeconds       int
+	Dimension         string
+	AggregationOption string
+	GroupBy           string
+	Function          string
+}
+
+type SpanFilterParams struct {
+	Status      []string
+	ServiceName []string
+	HttpRoute   []string
+	HttpCode    []string
+	HttpUrl     []string
+	HttpHost    []string
+	HttpMethod  []string
+	Component   []string
+	Operation   []string
+	GetFilters  []string
+	MinDuration string
+	MaxDuration string
+	Start       *time.Time
+	End         *time.Time
+}
+
+type TagFilterParams struct {
+	Status      []string
+	ServiceName []string
+	HttpRoute   []string
+	HttpCode    []string
+	HttpUrl     []string
+	HttpHost    []string
+	HttpMethod  []string
+	Component   []string
+	Operation   []string
+	MinDuration string
+	MaxDuration string
+	Start       *time.Time
+	End         *time.Time
+}
 type TTLParams struct {
 	Type     string
 	Duration string

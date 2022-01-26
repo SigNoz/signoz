@@ -19,9 +19,11 @@ import (
 
 var allowedDimesions = []string{"calls", "duration"}
 
+var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
+
 var allowedAggregations = map[string][]string{
 	"calls":    {"count", "rate_per_sec"},
-	"duration": {"avg", "p50", "p95", "p99"},
+	"duration": {"avg", "p50", "p95", "p90", "p99", "min", "max", "sum"},
 }
 
 func parseUser(r *http.Request) (*model.User, error) {
@@ -480,6 +482,284 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	return params, nil
 }
 
+func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.SpanFilterParams{
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: []string{},
+		HttpRoute:   []string{},
+		HttpCode:    []string{},
+		HttpUrl:     []string{},
+		HttpHost:    []string{},
+		HttpMethod:  []string{},
+		Component:   []string{},
+		Status:      []string{},
+		Operation:   []string{},
+		GetFilters:  []string{},
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	params.GetFilters = fetchArrayValues("getFilters", r)
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	return params, nil
+}
+
+func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.GetFilteredSpansParams{
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: []string{},
+		HttpRoute:   []string{},
+		HttpCode:    []string{},
+		HttpUrl:     []string{},
+		HttpHost:    []string{},
+		HttpMethod:  []string{},
+		Component:   []string{},
+		Status:      []string{},
+		Operation:   []string{},
+		Limit:       100,
+		Order:       "descending",
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	limitStr := r.URL.Query().Get("limit")
+	if len(limitStr) != 0 {
+		limit, err := strconv.ParseInt(limitStr, 10, 64)
+		if err != nil {
+			return nil, errors.New("Limit param is not in correct format")
+		}
+		params.Limit = limit
+	} else {
+		params.Limit = 100
+	}
+
+	offsetStr := r.URL.Query().Get("offset")
+	if len(offsetStr) != 0 {
+		offset, err := strconv.ParseInt(offsetStr, 10, 64)
+		if err != nil {
+			return nil, errors.New("Offset param is not in correct format")
+		}
+		params.Offset = offset
+	}
+
+	tags, err := parseTagsV2("tags", r)
+	if err != nil {
+		return nil, err
+	}
+	if len(*tags) != 0 {
+		params.Tags = *tags
+	}
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	kind := r.URL.Query().Get("kind")
+	if len(kind) != 0 {
+		params.Kind = kind
+	}
+
+	return params, nil
+}
+
+func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpanAggregatesParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	stepStr := r.URL.Query().Get("step")
+	if len(stepStr) == 0 {
+		return nil, errors.New("step param missing in query")
+	}
+
+	stepInt, err := strconv.Atoi(stepStr)
+	if err != nil {
+		return nil, errors.New("step param is not in correct format")
+	}
+
+	function := r.URL.Query().Get("function")
+	if len(function) == 0 {
+		return nil, errors.New("function param missing in query")
+	} else {
+		if !DoesExistInSlice(function, allowedFunctions) {
+			return nil, errors.New(fmt.Sprintf("given function: %s is not allowed in query", function))
+		}
+	}
+
+	var dimension, aggregationOption string
+
+	switch function {
+	case "count":
+		dimension = "calls"
+		aggregationOption = "count"
+	case "ratePerSec":
+		dimension = "calls"
+		aggregationOption = "rate_per_sec"
+	case "avg":
+		dimension = "duration"
+		aggregationOption = "avg"
+	case "sum":
+		dimension = "duration"
+		aggregationOption = "sum"
+	case "p50":
+		dimension = "duration"
+		aggregationOption = "p50"
+	case "p90":
+		dimension = "duration"
+		aggregationOption = "p90"
+	case "p95":
+		dimension = "duration"
+		aggregationOption = "p95"
+	case "p99":
+		dimension = "duration"
+		aggregationOption = "p99"
+	case "min":
+		dimension = "duration"
+		aggregationOption = "min"
+	case "max":
+		dimension = "duration"
+		aggregationOption = "max"
+	}
+
+	params := &model.GetFilteredSpanAggregatesParams{
+		Start:             startTime,
+		End:               endTime,
+		ServiceName:       []string{},
+		HttpRoute:         []string{},
+		HttpCode:          []string{},
+		HttpUrl:           []string{},
+		HttpHost:          []string{},
+		HttpMethod:        []string{},
+		Component:         []string{},
+		Status:            []string{},
+		Operation:         []string{},
+		StepSeconds:       stepInt,
+		Dimension:         dimension,
+		AggregationOption: aggregationOption,
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	tags, err := parseTagsV2("tags", r)
+	if err != nil {
+		return nil, err
+	}
+	if len(*tags) != 0 {
+		params.Tags = *tags
+	}
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	kind := r.URL.Query().Get("kind")
+	if len(kind) != 0 {
+		params.Kind = kind
+	}
+	groupBy := r.URL.Query().Get("groupBy")
+	if len(groupBy) != 0 {
+		params.GroupBy = groupBy
+	}
+
+	return params, nil
+}
+
 func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
 
 	params := &model.GetErrorParams{}
@@ -502,6 +782,60 @@ func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
 	return params, nil
 }
 
+func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.TagFilterParams{
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: []string{},
+		HttpRoute:   []string{},
+		HttpCode:    []string{},
+		HttpUrl:     []string{},
+		HttpHost:    []string{},
+		HttpMethod:  []string{},
+		Component:   []string{},
+		Status:      []string{},
+		Operation:   []string{},
+	}
+
+	params.ServiceName = fetchArrayValues("serviceName", r)
+
+	params.Status = fetchArrayValues("status", r)
+
+	params.Operation = fetchArrayValues("operation", r)
+
+	params.HttpCode = fetchArrayValues("httpCode", r)
+
+	params.HttpUrl = fetchArrayValues("httpUrl", r)
+
+	params.HttpHost = fetchArrayValues("httpHost", r)
+
+	params.HttpRoute = fetchArrayValues("httpRoute", r)
+
+	params.HttpMethod = fetchArrayValues("httpMethod", r)
+
+	params.Component = fetchArrayValues("component", r)
+
+	minDuration, err := parseTimestamp("minDuration", r)
+	if err == nil {
+		params.MinDuration = *minDuration
+	}
+	maxDuration, err := parseTimestamp("maxDuration", r)
+	if err == nil {
+		params.MaxDuration = *maxDuration
+	}
+
+	return params, nil
+}
 func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 
 	startTime, err := parseTime("start", r)
@@ -521,9 +855,40 @@ func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 	return params, nil
 }
 
+func fetchArrayValues(param string, r *http.Request) []string {
+	valueStr := r.URL.Query().Get(param)
+	var values []string
+	if len(valueStr) == 0 {
+		return values
+	}
+	err := json.Unmarshal([]byte(valueStr), &values)
+	if err != nil {
+		zap.S().Error("Error in parsing service params", zap.Error(err))
+	}
+	return values
+}
+
 func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
 
 	tags := new([]model.TagQuery)
+	tagsStr := r.URL.Query().Get(param)
+
+	if len(tagsStr) == 0 {
+		return tags, nil
+	}
+	err := json.Unmarshal([]byte(tagsStr), tags)
+	if err != nil {
+		zap.S().Error("Error in parsig tags", zap.Error(err))
+		return nil, fmt.Errorf("error in parsing %s ", param)
+	}
+	// zap.S().Info("Tags: ", *tags)
+
+	return tags, nil
+}
+
+func parseTagsV2(param string, r *http.Request) (*[]model.TagQueryV2, error) {
+
+	tags := new([]model.TagQueryV2)
 	tagsStr := r.URL.Query().Get(param)
 
 	if len(tagsStr) == 0 {
