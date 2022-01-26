@@ -5,7 +5,7 @@
 tasks:
   - name: Run Script, Docker yml file, install & start frontend dev server
     init: |
-      cd ./scripts
+      cd ./.scripts
       sh commentLinesForSetup.sh
       cd ..
       cd ./deploy
