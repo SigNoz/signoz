@@ -88,6 +88,7 @@ const Search = ({
 					onChange={(event) => onChangeHandler(event.target.value)}
 					value={value}
 					allowClear
+					disabled={traces.filterLoading}
 					onFocus={onFocusHandler}
 					placeholder="Click to filter by tags"
 					type={'search'}

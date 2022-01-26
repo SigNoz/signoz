@@ -21,10 +21,12 @@ import ROUTES from 'constants/routes';
 dayjs.extend(duration);
 
 const TraceTable = ({ getSpansAggregate }: TraceProps) => {
-	const { spansAggregate, selectedFilter, selectedTags } = useSelector<
-		AppState,
-		TraceReducer
-	>((state) => state.traces);
+	const {
+		spansAggregate,
+		selectedFilter,
+		selectedTags,
+		filterLoading,
+	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -60,6 +62,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
+			sorter: (a, b) => a.durationNano - b.durationNano,
 			render: (value: TableType['durationNano']) => {
 				return (
 					<div>
@@ -110,7 +113,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 		<Table
 			onChange={onChangeHandler}
 			dataSource={spansAggregate.data}
-			loading={loading}
+			loading={loading || filterLoading}
 			columns={columns}
 			onRow={(record) => ({
 				onClick: () => {
