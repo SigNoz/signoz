@@ -1045,3 +1045,15 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 
 	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
 }
+
+func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
+
+	var userPreferences model.UserPreferences
+	err := json.NewDecoder(r.Body).Decode(&userPreferences)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userPreferences, nil
+
+}

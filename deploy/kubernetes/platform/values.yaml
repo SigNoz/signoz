@@ -6,6 +6,7 @@ query-service:
   configVars:
     ClickHouseUrl: http://signoz-clickhouse:9000?username=clickhouse_operator&password=clickhouse_operator_password
     STORAGE: clickhouse
+    TELEMETRY_ENABLED: true
 
 cloud: aws
 
