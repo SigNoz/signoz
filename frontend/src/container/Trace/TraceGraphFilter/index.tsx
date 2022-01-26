@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, SelectProps, Input } from 'antd';
+import { Space, SelectProps } from 'antd';
 import { functions, groupBy } from './config';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

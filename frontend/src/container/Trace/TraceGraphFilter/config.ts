@@ -23,7 +23,7 @@ export const groupBy: Dropdown[] = [
 	},
 	{
 		displayValue: 'HTTP method',
-		key: 'httpUrl',
+		key: 'httpMethod',
 	},
 	{
 		displayValue: 'HTTP host',
