@@ -116,6 +116,7 @@
 		"bundlesize": "^0.18.1",
 		"compression-webpack-plugin": "^9.0.0",
 		"copy-webpack-plugin": "^8.1.0",
+		"critters-webpack-plugin": "^3.0.1",
 		"cypress": "^8.3.0",
 		"eslint": "^7.30.0",
 		"eslint-config-prettier": "^8.3.0",

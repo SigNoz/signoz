@@ -11,6 +11,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
 	.BundleAnalyzerPlugin;
+const Critters = require('critters-webpack-plugin');
 
 const plugins = [
 	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
@@ -27,6 +28,14 @@ const plugins = [
 		'process.env': JSON.stringify(process.env),
 	}),
 	new MiniCssExtractPlugin(),
+	new Critters({
+		preload: 'swap',
+		// Base path location of the CSS files
+		path: resolve(__dirname, './build/css'),
+		// Public path of the CSS resources. This prefix is removed from the href
+		publicPath: resolve(__dirname, './public/css'),
+		fonts: true
+	  })
 ];
 
 if (process.env.BUNDLE_ANALYSER === 'true') {
