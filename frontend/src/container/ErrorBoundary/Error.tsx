@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Card, Typography, Divider, Button, Row } from 'antd';
+import { Typography, Divider, Button, Row } from 'antd';
 import * as monaco from 'monaco-editor';
-import { ErrorContainer } from '../AppLayout/styles';
 const { Paragraph } = Typography;
+import { Container, MonocoEditor } from './styles';
 
 const Error = ({ error, errorInfo }: ErrorProps) => {
 	const divEl = useRef<HTMLDivElement>(null);
@@ -28,7 +28,7 @@ const Error = ({ error, errorInfo }: ErrorProps) => {
 	}, []);
 
 	return (
-		<Card>
+		<Container>
 			<Row align="middle" justify="space-between">
 				<Paragraph ellipsis>
 					Something got messed up due to: {error.message}
@@ -47,8 +47,8 @@ const Error = ({ error, errorInfo }: ErrorProps) => {
 
 			<Typography>Stack Trace:</Typography>
 
-			<ErrorContainer ref={divEl}></ErrorContainer>
-		</Card>
+			<MonocoEditor ref={divEl}></MonocoEditor>
+		</Container>
 	);
 };
 
