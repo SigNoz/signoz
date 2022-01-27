@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   clickhouse:
-    image: yandex/clickhouse-server:21.12.3.32
+    image: altinity/clickhouse-server:21.12.3.32.altinitydev.arm
     expose:
       - 8123
       - 9000
@@ -12,7 +12,6 @@ services:
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
-
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
@@ -46,7 +45,6 @@ services:
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
-
     depends_on:
       clickhouse:
         condition: service_healthy

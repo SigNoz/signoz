@@ -91,7 +91,7 @@ dev-setup:
 	@echo "------------------"
 
 run-x86:
-	@sudo docker-compose --env-file ./deploy/docker/clickhouse-setup/env/x86_64.env -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+	@sudo docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
 
 run-arm:
-	@sudo docker-compose --env-file ./deploy/docker/clickhouse-setup/env/arm64.env -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+	@sudo docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.arm.yaml up -d

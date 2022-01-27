@@ -45,7 +45,6 @@ extensions:
 exporters:
   clickhouse:
     datasource: tcp://clickhouse:9000
-    migrations: /migrations
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
