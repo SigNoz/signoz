@@ -1,4 +1,5 @@
-import { Menu, Switch as ToggleButton, Typography } from 'antd';
+import { Menu, Typography } from 'antd';
+import { ToggleButton } from './styles';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
@@ -59,7 +60,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<ThemeSwitcherWrapper>
-				<ToggleButton checked={getTheme() === 'darkMode'} onChange={toggleTheme} />
+				<ToggleButton checked={isDarkMode} onChange={toggleTheme} defaultChecked={isDarkMode} />
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
 				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />

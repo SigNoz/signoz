@@ -19,7 +19,6 @@ configVars:
   DruidDatasource: flattened_spans
   ClickHouseUrl: http://signoz-clickhouse:9000?username=clickhouse_operator&password=clickhouse_operator_password
   STORAGE: clickhouse
-  POSTHOG_API_KEY: "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 
 
 serviceAccount:
