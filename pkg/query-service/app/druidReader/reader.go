@@ -165,6 +165,22 @@ func (druid *DruidReader) GetTTL(_ context.Context, _ *model.GetTTLParams) (*mod
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
 }
 
+func (druid *DruidReader) GetSpanFilters(_ context.Context, _ *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting spanfilters")}
+}
+
+func (druid *DruidReader) GetTagFilters(_ context.Context, _ *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting tagFilters")}
+}
+
+func (druid *DruidReader) GetFilteredSpans(_ context.Context, _ *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting FilteredSpans")}
+}
+
+func (druid *DruidReader) GetFilteredSpansAggregates(_ context.Context, _ *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting FilteredSpans")}
+}
+
 func (druid *DruidReader) GetErrors(_ context.Context, _ *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support get error API")}
 }

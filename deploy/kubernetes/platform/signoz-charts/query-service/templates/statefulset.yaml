@@ -41,6 +41,8 @@ spec:
             value: {{ .Values.configVars.ClickHouseUrl}}
           - name: GODEBUG
             value: netdns=go
+          - name: TELEMETRY_ENABLED
+            value: {{ .Values.configVars.TELEMETRY_ENABLED}}
           # livenessProbe:
           #   httpGet:
           #     path: /
