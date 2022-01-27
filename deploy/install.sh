@@ -338,16 +338,16 @@ send_event() {
 
     case "$1" in
         'install_started')
-			event="Installation Started"
-			;;
+            event="Installation Started"
+            ;;
 		'os_not_supported')
-			event="Installation Error"
+            event="Installation Error"
             error="OS Not Supported"
 			;;
-		'docker_not_installed')
-			event="Installation Error"
+        'docker_not_installed')
+            event="Installation Error"
             error="Docker not installed"
-			;;
+            ;;
         'docker_compose_not_found')
             event="Installation Error"
             event="Docker Compose not found"
@@ -378,21 +378,11 @@ send_event() {
             event="Identify Successful Installation"
             others='"email": "'"$email"'",'
             ;;
-		*)
-			print_error "unknown event type: $1"
-			exit 1
-			;;
+        *)
+            print_error "unknown event type: $1"
+            exit 1
+            ;;
 	esac
-
-    # if [ "$1" == "install_started" ]; then
-    #     event="Installation Started"
-	# elif [ "$1" == "os_not_supported" ]; then
-    #     event="Installation Error"
-    #     error="OS Not Supported"
-    # elif [ "$1" == "docker_not_installed" ]; then
-    #     event="Installation Error"
-    #     error="Docker not installed"
-    # fi
 
     if [ "$error" != "" ]; then
         error='"error": "'"$error"'", '
