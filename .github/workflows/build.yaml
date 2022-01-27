@@ -61,7 +61,7 @@ jobs:
       - name: Build  query-service image
         shell: bash
         run: |
-          make build-flattener-amd64
+          make build-query-service-amd64
 
   build-flattener:
     runs-on: ubuntu-latest
@@ -74,4 +74,4 @@ jobs:
       - name: Build flattener docker image
         shell: bash
         run: |
-          make build-query-service-amd64
+          make build-flattener-amd64

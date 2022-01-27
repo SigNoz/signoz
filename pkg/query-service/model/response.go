@@ -161,6 +161,7 @@ type SearchSpanReponseItem struct {
 	DurationNano int64    `db:"durationNano"`
 	TagsKeys     []string `db:"tagsKeys"`
 	TagsValues   []string `db:"tagsValues"`
+	Events       []string `db:"events"`
 }
 
 type OtelSpanRef struct {
@@ -186,8 +187,17 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
+	var errorEvent map[string]interface{}
+	for _, e := range item.Events {
+		json.Unmarshal([]byte(e), &errorEvent)
+		if errorEvent["name"] == "exception" {
+			break
+		} else {
+			errorEvent = nil
+		}
+	}
 
-	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray}
+	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, errorEvent}
 
 	return returnArray
 }
@@ -260,4 +270,27 @@ type DBResponseTTL struct {
 type GetTTLResponseItem struct {
 	MetricsTime int `json:"metrics_ttl_duration_hrs"`
 	TracesTime  int `json:"traces_ttl_duration_hrs"`
+}
+
+type Error struct {
+	ExceptionType  string    `json:"exceptionType" db:"exceptionType"`
+	ExceptionMsg   string    `json:"exceptionMessage" db:"exceptionMessage"`
+	ExceptionCount int64     `json:"exceptionCount" db:"exceptionCount"`
+	LastSeen       time.Time `json:"lastSeen" db:"lastSeen"`
+	FirstSeen      time.Time `json:"firstSeen" db:"firstSeen"`
+	ServiceName    string    `json:"serviceName" db:"serviceName"`
+}
+
+type ErrorWithSpan struct {
+	ErrorID            string    `json:"errorId" db:"errorID"`
+	ExceptionType      string    `json:"exceptionType" db:"exceptionType"`
+	ExcepionStacktrace string    `json:"excepionStacktrace" db:"excepionStacktrace"`
+	ExceptionEscaped   string    `json:"exceptionEscaped" db:"exceptionEscaped"`
+	ExceptionMsg       string    `json:"exceptionMessage" db:"exceptionMessage"`
+	Timestamp          time.Time `json:"timestamp" db:"timestamp"`
+	SpanID             string    `json:"spanID" db:"spanID"`
+	TraceID            string    `json:"traceID" db:"traceID"`
+	ServiceName        string    `json:"serviceName" db:"serviceName"`
+	NewerErrorID       string    `json:"newerErrorId" db:"newerErrorId"`
+	OlderErrorID       string    `json:"olderErrorId" db:"olderErrorId"`
 }

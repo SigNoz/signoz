@@ -10,8 +10,8 @@ REPONAME ?= signoz
 DOCKER_TAG ?= latest
 
 FRONTEND_DOCKER_IMAGE ?= frontend
-FLATTERNER_DOCKER_IMAGE ?= query-service
-QUERY_SERVICE_DOCKER_IMAGE ?= flattener-processor
+QUERY_SERVICE_DOCKER_IMAGE ?= query-service
+FLATTERNER_DOCKER_IMAGE ?= flattener-processor
 
 all: build-push-frontend build-push-query-service build-push-flattener
 # Steps to build and push docker image of frontend
@@ -29,8 +29,15 @@ build-push-frontend:
 	@echo "------------------"
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
+ifndef DOCKER_SECOND_TAG
 	@cd $(FRONTEND_DIRECTORY) && \
 	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 --tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
+else
+	@cd $(FRONTEND_DIRECTORY) && \
+	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 . \
+		--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) \
+		--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_SECOND_TAG)
+endif
 
 # Steps to build and push docker image of query service
 .PHONY: build-query-service-amd64  build-push-query-service
@@ -47,8 +54,15 @@ build-push-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
+ifndef DOCKER_SECOND_TAG
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
 	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+else
+	@cd $(QUERY_SERVICE_DIRECTORY) && \
+	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 . \
+		--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+		--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_SECOND_TAG)
+endif
 
 # Steps to build and push docker image of flattener
 .PHONY: build-flattener-amd64  build-push-flattener
@@ -67,3 +81,17 @@ build-push-flattener:
 	@echo "------------------"
 	@cd $(FLATTENER_DIRECTORY) && \
 	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --tag $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .
+
+dev-setup:
+	mkdir -p /var/lib/signoz
+	sqlite3 /var/lib/signoz/signoz.db "VACUUM";
+	mkdir -p pkg/query-service/config/dashboards
+	@echo "------------------"
+	@echo "--> Local Setup completed"
+	@echo "------------------"
+
+run-x86:
+	@sudo docker-compose --env-file ./deploy/docker/clickhouse-setup/env/x86_64.env -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+
+run-arm:
+	@sudo docker-compose --env-file ./deploy/docker/clickhouse-setup/env/arm64.env -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d

@@ -1,0 +1,16 @@
+name: remove-label
+
+on:
+  pull_request_target:
+    types: [synchronize]
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove label
+        uses: buildsville/add-remove-label@v1
+        with:
+          label: ok-to-test
+          type: remove
+          token: ${{ secrets.GITHUB_TOKEN }}

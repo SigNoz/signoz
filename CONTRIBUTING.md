@@ -1,12 +1,15 @@
 # How to Contribute
 
-There are primarily 3 areas in which you can contribute in SigNoz
+There are primarily 2 areas in which you can contribute in SigNoz
 
 - Frontend ( written in Typescript, React)
-- Query Service (written in Go)
-- Flattener Processor (written in Go)
+- Backend - ( Query Service - written in Go)
 
 Depending upon your area of expertise & interest, you can chose one or more to contribute. Below are detailed instructions to contribute in each area
+
+> Please note: If you want to work on an issue, please ask the maintainers to assign the issue to you before starting work on it. This would help us understand who is working on an issue and prevent duplicate work. 🙏🏻
+
+> If you just raise a PR, without the corresponding issue being assigned to you - it may not be accepted.
 
 # Develop Frontend
 
@@ -41,23 +44,18 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 ### To run ClickHouse setup (recommended for local development)
 
-- `git clone https://github.com/SigNoz/signoz.git && cd signoz/deploy`
-- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
-- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L22`
+- git clone https://github.com/SigNoz/signoz.git
+- run `sudo make dev-setup` to configure local setup to run query-service
+- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L38`
+- comment out query-service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L22`
 - Install signoz locally without the frontend and query-service
-  - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d`
-  - If you are on arm64 processors (Apple M1 Macbooks) run `sudo docker-compose --env-file ./docker/clickhouse-setup/env/arm64.env -f docker/clickhouse-setup/docker-compose.yaml up -d`
-- `STORAGE=clickhouse ClickHouseUrl=tcp://localhost:9001 go run main.go`
+  - If you are using x86_64 processors (All Intel/AMD processors) run `sudo make run-x86`
+  - If you are on arm64 processors (Apple M1 Macbooks) run `sudo make run-arm`
 
 **_Query Service should now be available at `http://localhost:8080`_**
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
-# Contribute to Flattener Processor
-
-Not needed to run for the ClickHouse setup
-
-more info at [https://github.com/SigNoz/signoz/tree/main/pkg/processors/flattener](https://github.com/SigNoz/signoz/tree/main/pkg/processors/flattener)
 
 ## General Instructions
 

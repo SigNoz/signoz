@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -38,9 +39,9 @@ import (
 	"github.com/prometheus/prometheus/rules"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
+	"github.com/prometheus/prometheus/storage/tsdb"
 	"github.com/prometheus/prometheus/util/stats"
 	"github.com/prometheus/prometheus/util/strutil"
-	"github.com/prometheus/tsdb"
 
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
@@ -72,6 +73,7 @@ type ClickHouseReader struct {
 	localDB         *sqlx.DB
 	operationsTable string
 	indexTable      string
+	errorTable      string
 	spansTable      string
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
@@ -97,6 +99,7 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		spansTable:      options.primary.SpansTable,
+		errorTable:      options.primary.ErrorTable,
 	}
 }
 
@@ -1580,7 +1583,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	var searchScanReponses []model.SearchSpanReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references FROM %s WHERE traceID=?", r.indexTable)
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID='%s'", r.indexTable, traceId)
 
 	err := r.db.Select(&searchScanReponses, query, traceId)
 
@@ -1593,7 +1596,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	searchSpansResult := []model.SearchSpansResult{
 		model.SearchSpansResult{
-			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References"},
+			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events"},
 			Events:  make([][]interface{}, len(searchScanReponses)),
 		},
 	}
@@ -1875,5 +1878,80 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	}
 
 	return &model.GetTTLResponseItem{TracesTime: parseTTL(db1.EngineFull), MetricsTime: parseTTL(db2.EngineFull)}, nil
+
+}
+
+func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {
+
+	var getErrorReponses []model.Error
+
+	query := fmt.Sprintf("SELECT exceptionType, exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, serviceName FROM %s WHERE timestamp >= ? AND timestamp <= ? GROUP BY serviceName, exceptionType, exceptionMessage", r.errorTable)
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+
+	err := r.db.Select(&getErrorReponses, query, args...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	return &getErrorReponses, nil
+
+}
+
+func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+
+	if queryParams.ErrorID == "" {
+		zap.S().Debug("errorId missing from params")
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("ErrorID missing from params")}
+	}
+	var getErrorWithSpanReponse model.ErrorWithSpan
+
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, olderErrorId, newerErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s window w as (ORDER BY exceptionType, serviceName, timestamp rows between unbounded preceding and unbounded following)) WHERE errorID = ?", r.errorTable)
+	args := []interface{}{queryParams.ErrorID}
+
+	err := r.db.Get(&getErrorWithSpanReponse, query, args...)
+
+	zap.S().Info(query)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	return &getErrorWithSpanReponse, nil
+
+}
+
+func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+
+	if queryParams.ErrorType == "" || queryParams.ServiceName == "" {
+		zap.S().Debug("errorType/serviceName missing from params")
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("ErrorType/serviceName missing from params")}
+	}
+	var getErrorWithSpanReponse model.ErrorWithSpan
+
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s WHERE serviceName = ? AND exceptionType = ? window w as (ORDER BY timestamp rows between unbounded preceding and unbounded following)) limit 1", r.errorTable)
+	args := []interface{}{queryParams.ServiceName, queryParams.ErrorType}
+
+	err := r.db.Get(&getErrorWithSpanReponse, query, args...)
+
+	zap.S().Info(query)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	return &getErrorWithSpanReponse, nil
 
 }
