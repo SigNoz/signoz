@@ -388,7 +388,7 @@ send_event() {
         error='"error": "'"$error"'", '
     fi
 
-    DATA='{ "anonymousId": "'"$SIGNOZ_INSTALLATION_ID"'", "event": "'"$event"'", "properties": { "os": "'"$os"'", '"$error $others"' "setup_type": "'"$setup_type"'" } }'
+    DATA='{ "anonymousId": "'"$SIGNOZ_INSTALLATION_ID"'", "event": "'"$event"'", "context": { "direct": true }, "properties": { "os": "'"$os"'", '"$error $others"' "setup_type": "'"$setup_type"'" } }'
 
     if has_curl; then
         curl -sfL -d "$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
