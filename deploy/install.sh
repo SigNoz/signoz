@@ -331,7 +331,7 @@ trap bye EXIT
 
 URL="https://api.segment.io/v1/track"
 HEADER_1="Content-Type: application/json"
-HEADER_2="Authorization: Basic ZU9IeDd2bjd4MkNGdGFIV3cxaWw4cEpXRE5lUjZQSng6"
+HEADER_2="Authorization: Basic NEdtb2E0aXhKQVVIeDJCcEp4c2p3QTFiRWZud0VlUno6"
 
 send_event() {
     error=""
@@ -340,10 +340,10 @@ send_event() {
         'install_started')
             event="Installation Started"
             ;;
-		'os_not_supported')
+        'os_not_supported')
             event="Installation Error"
             error="OS Not Supported"
-			;;
+            ;;
         'docker_not_installed')
             event="Installation Error"
             error="Docker not installed"
@@ -382,7 +382,7 @@ send_event() {
             print_error "unknown event type: $1"
             exit 1
             ;;
-	esac
+    esac
 
     if [ "$error" != "" ]; then
         error='"error": "'"$error"'", '
