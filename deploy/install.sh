@@ -264,7 +264,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
             echo -e "sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
         fi
         # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
-        echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
+        echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
         echo -e "\n📨 Please share your email to receive support with the installation"
@@ -479,7 +479,7 @@ if [[ $status_code -ne 200 ]]; then
         echo -e "sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
     fi
     echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
-    echo "or reach us on SigNoz for support https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
+    echo "or reach us on SigNoz for support https://signoz.io/slack"
     echo "++++++++++++++++++++++++++++++++++++++++"
 
     send_event "installation_error_checks"
@@ -509,7 +509,7 @@ else
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
     echo ""
     echo "👉 Need help Getting Started?"
-    echo -e "Join us on Slack https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
+    echo -e "Join us on Slack https://signoz.io/slack"
     echo ""
     echo -e "\n📨 Please share your email to receive support & updates about SigNoz!"
     read -rp 'Email: ' email
