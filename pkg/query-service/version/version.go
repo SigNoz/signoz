@@ -26,9 +26,9 @@ Commit SHA-1     : %v
 Commit timestamp : %v
 Branch           : %v
 Go version       : %v
-For SigNoz Official Documentation,	visit https://signoz.io/docs
-For SigNoz Community Slack,			visit http://signoz.io/slack
-For discussions about SigNoz,		visit https://community.signoz.io
+For SigNoz Official Documentation,  visit https://signoz.io/docs
+For SigNoz Community Slack,         visit http://signoz.io/slack
+For discussions about SigNoz,       visit https://community.signoz.io
 %s.
 Copyright 2021 SigNoz
 `,
