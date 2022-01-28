@@ -296,9 +296,14 @@ email=""
 echo -e "Detecting your OS ..."
 check_os
 
-SIGNOZ_INSTALLATION_ID=$(uuidgen)
-if [ "$?" -ne 0 ]; then
-    SIGNOZ_INSTALLATION_ID=$(cat /proc/sys/kernel/random/uuid)
+# Obtain unique installation id
+sysinfo="$(uname -a)"
+if [ $? -ne 0 ]; then
+    uuid="$(uuidgen)"
+    uuid="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
+    SIGNOZ_INSTALLATION_ID="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
+else
+    SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | shasum | cut -d ' ' -f1)
 fi
 
 # echo ""
