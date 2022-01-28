@@ -136,7 +136,7 @@ Jaeger只做分布式跟踪，SigNoz则是做了矩阵和跟踪两块，我们�
 
 ## 社区
 
-加入[slack community](https://signoz.io/slack)，以及SigNoz。同时与其他用户和贡献者一起交流。
+加入[slack community](https://signoz.io/slack)，了解更多关于分布式跟踪、可观察性(observability)，以及SigNoz。同时与其他用户和贡献者一起交流。
 
 如果你有任何想法、问题或者反馈，请在[Github Discussions](https://github.com/SigNoz/signoz/discussions)分享给我们。
 
