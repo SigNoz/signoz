@@ -29,7 +29,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 
 ### Contribute to Frontend without installing SigNoz backend
 
-If you don't want to install SigNoz backend just for doing frontend development, we can provide you with test environments which you can use as the backend. Please ping us in #contributing channel in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) and we will DM you with `<test environment URL>`
+If you don't want to install SigNoz backend just for doing frontend development, we can provide you with test environments which you can use as the backend. Please ping us in #contributing channel in our [slack community](https://signoz.io/slack) and we will DM you with `<test environment URL>`
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
 - Create a file `.env` with `FRONTEND_API_ENDPOINT=<test environment URL>`
@@ -59,7 +59,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 ## General Instructions
 
-You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA).
+You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack](https://signoz.io/slack).
 
 - If you find any bugs, please create an issue
 - If you find anything missing in documentation, you can create an issue with label **documentation**
