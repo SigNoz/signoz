@@ -19,7 +19,6 @@ const (
 	defaultDatasource        string        = "tcp://localhost:9000"
 	defaultOperationsTable   string        = "signoz_operations"
 	defaultIndexTable        string        = "signoz_index"
-	defaultSpansTable        string        = "signoz_spans"
 	defaultErrorTable        string        = "signoz_error_index"
 	defaultArchiveSpansTable string        = "signoz_archive_spans"
 	defaultWriteBatchDelay   time.Duration = 5 * time.Second
@@ -90,7 +89,6 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			Datasource:      datasource,
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
-			SpansTable:      defaultSpansTable,
 			ErrorTable:      defaultErrorTable,
 			WriteBatchDelay: defaultWriteBatchDelay,
 			WriteBatchSize:  defaultWriteBatchSize,
