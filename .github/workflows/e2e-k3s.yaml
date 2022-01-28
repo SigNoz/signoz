@@ -47,8 +47,8 @@ jobs:
             --set frontend.image.tag=$DOCKER_TAG
           
           # get pods, services and the container images
-          kubectl describe deploy/frontend -n platform | grep Image
-          kubectl describe statefulset/query-service -n platform | grep Image
+          kubectl describe deploy/my-release-frontend -n platform | grep Image
+          kubectl describe statefulset/my-release-query-service -n platform | grep Image
           kubectl get pods -n platform
           kubectl get svc -n platform
 
