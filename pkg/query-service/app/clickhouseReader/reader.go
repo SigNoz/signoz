@@ -1329,121 +1329,62 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 	return &searchSpansResult, nil
 }
 
+func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
+	for i, e := range params {
+		if i == 0 && i == len(params)-1 {
+			if _, ok := excludeMap[filter]; ok {
+				*query += fmt.Sprintf(" AND NOT (%s=?)", filter)
+			} else {
+				*query += fmt.Sprintf(" AND (%s=?)", filter)
+			}
+		} else if i == 0 && i != len(params)-1 {
+			if _, ok := excludeMap[filter]; ok {
+				*query += fmt.Sprintf(" AND NOT (%s=?", filter)
+			} else {
+				*query += fmt.Sprintf(" AND (%s=?", filter)
+			}
+		} else if i != 0 && i == len(params)-1 {
+			*query += fmt.Sprintf(" OR %s=?)", filter)
+		} else {
+			*query += fmt.Sprintf(" OR %s=?", filter)
+		}
+		args = append(args, e)
+	}
+	return args
+}
+
 func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
 
 	var query string
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		excludeMap[e] = struct{}{}
+	}
+
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
 	if len(queryParams.ServiceName) > 0 {
-		for i, e := range queryParams.ServiceName {
-			if i == 0 && i == len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?)"
-			} else if i == 0 && i != len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?"
-			} else if i != 0 && i == len(queryParams.ServiceName)-1 {
-				query += " OR serviceName=?)"
-			} else {
-				query += " OR serviceName=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
 	if len(queryParams.HttpRoute) > 0 {
-		for i, e := range queryParams.HttpRoute {
-			if i == 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?)"
-			} else if i == 0 && i != len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?"
-			} else if i != 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " OR httpRoute=?)"
-			} else {
-				query += " OR httpRoute=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
 	if len(queryParams.HttpCode) > 0 {
-		for i, e := range queryParams.HttpCode {
-			if i == 0 && i == len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?)"
-			} else if i == 0 && i != len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?"
-			} else if i != 0 && i == len(queryParams.HttpCode)-1 {
-				query += " OR httpCode=?)"
-			} else {
-				query += " OR httpCode=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
 	}
 	if len(queryParams.HttpHost) > 0 {
-		for i, e := range queryParams.HttpHost {
-			if i == 0 && i == len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?)"
-			} else if i == 0 && i != len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?"
-			} else if i != 0 && i == len(queryParams.HttpHost)-1 {
-				query += " OR httpHost=?)"
-			} else {
-				query += " OR httpHost=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
 	if len(queryParams.HttpMethod) > 0 {
-		for i, e := range queryParams.HttpMethod {
-			if i == 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?)"
-			} else if i == 0 && i != len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?"
-			} else if i != 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " OR httpMethod=?)"
-			} else {
-				query += " OR httpMethod=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
 	}
 	if len(queryParams.HttpUrl) > 0 {
-		for i, e := range queryParams.HttpUrl {
-			if i == 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?)"
-			} else if i == 0 && i != len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?"
-			} else if i != 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " OR httpUrl=?)"
-			} else {
-				query += " OR httpUrl=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
 	}
 	if len(queryParams.Component) > 0 {
-		for i, e := range queryParams.Component {
-			if i == 0 && i == len(queryParams.Component)-1 {
-				query += " AND (component=?)"
-			} else if i == 0 && i != len(queryParams.Component)-1 {
-				query += " AND (component=?"
-			} else if i != 0 && i == len(queryParams.Component)-1 {
-				query += " OR component=?)"
-			} else {
-				query += " OR component=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		for i, e := range queryParams.Operation {
-			if i == 0 && i == len(queryParams.Operation)-1 {
-				query += " AND (name=?)"
-			} else if i == 0 && i != len(queryParams.Operation)-1 {
-				query += " AND (name=?"
-			} else if i != 0 && i == len(queryParams.Operation)-1 {
-				query += " OR name=?)"
-			} else {
-				query += " OR name=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
 	}
 
 	if len(queryParams.MinDuration) != 0 {
@@ -1499,6 +1440,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY httpCode"
 			var dBResponse []model.DBResponseHttpCode
+			fmt.Println(finalQuery)
 			err := r.db.Select(&dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
@@ -1643,119 +1585,36 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
 
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		excludeMap[e] = struct{}{}
+	}
+
 	var query string
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
 	if len(queryParams.ServiceName) > 0 {
-		for i, e := range queryParams.ServiceName {
-			if i == 0 && i == len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?)"
-			} else if i == 0 && i != len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?"
-			} else if i != 0 && i == len(queryParams.ServiceName)-1 {
-				query += " OR serviceName=?)"
-			} else {
-				query += " OR serviceName=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
 	if len(queryParams.HttpRoute) > 0 {
-		for i, e := range queryParams.HttpRoute {
-			if i == 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?)"
-			} else if i == 0 && i != len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?"
-			} else if i != 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " OR httpRoute=?)"
-			} else {
-				query += " OR httpRoute=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
 	if len(queryParams.HttpCode) > 0 {
-		for i, e := range queryParams.HttpCode {
-			if i == 0 && i == len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?)"
-			} else if i == 0 && i != len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?"
-			} else if i != 0 && i == len(queryParams.HttpCode)-1 {
-				query += " OR httpCode=?)"
-			} else {
-				query += " OR httpCode=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
 	}
 	if len(queryParams.HttpHost) > 0 {
-		for i, e := range queryParams.HttpHost {
-			if i == 0 && i == len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?)"
-			} else if i == 0 && i != len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?"
-			} else if i != 0 && i == len(queryParams.HttpHost)-1 {
-				query += " OR httpHost=?)"
-			} else {
-				query += " OR httpHost=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
 	if len(queryParams.HttpMethod) > 0 {
-		for i, e := range queryParams.HttpMethod {
-			if i == 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?)"
-			} else if i == 0 && i != len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?"
-			} else if i != 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " OR httpMethod=?)"
-			} else {
-				query += " OR httpMethod=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
 	}
 	if len(queryParams.HttpUrl) > 0 {
-		for i, e := range queryParams.HttpUrl {
-			if i == 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?)"
-			} else if i == 0 && i != len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?"
-			} else if i != 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " OR httpUrl=?)"
-			} else {
-				query += " OR httpUrl=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
 	}
 	if len(queryParams.Component) > 0 {
-		for i, e := range queryParams.Component {
-			if i == 0 && i == len(queryParams.Component)-1 {
-				query += " AND (component=?)"
-			} else if i == 0 && i != len(queryParams.Component)-1 {
-				query += " AND (component=?"
-			} else if i != 0 && i == len(queryParams.Component)-1 {
-				query += " OR component=?)"
-			} else {
-				query += " OR component=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		for i, e := range queryParams.Operation {
-			if i == 0 && i == len(queryParams.Operation)-1 {
-				query += " AND (name=?)"
-			} else if i == 0 && i != len(queryParams.Operation)-1 {
-				query += " AND (name=?"
-			} else if i != 0 && i == len(queryParams.Operation)-1 {
-				query += " OR name=?)"
-			} else {
-				query += " OR name=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
@@ -1880,121 +1739,37 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
 
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		excludeMap[e] = struct{}{}
+	}
+
 	var query string
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
 	if len(queryParams.ServiceName) > 0 {
-		for i, e := range queryParams.ServiceName {
-			if i == 0 && i == len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?)"
-			} else if i == 0 && i != len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?"
-			} else if i != 0 && i == len(queryParams.ServiceName)-1 {
-				query += " OR serviceName=?)"
-			} else {
-				query += " OR serviceName=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
 	if len(queryParams.HttpRoute) > 0 {
-		for i, e := range queryParams.HttpRoute {
-			if i == 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?)"
-			} else if i == 0 && i != len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?"
-			} else if i != 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " OR httpRoute=?)"
-			} else {
-				query += " OR httpRoute=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
 	if len(queryParams.HttpCode) > 0 {
-		for i, e := range queryParams.HttpCode {
-			if i == 0 && i == len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?)"
-			} else if i == 0 && i != len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?"
-			} else if i != 0 && i == len(queryParams.HttpCode)-1 {
-				query += " OR httpCode=?)"
-			} else {
-				query += " OR httpCode=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
 	}
 	if len(queryParams.HttpHost) > 0 {
-		for i, e := range queryParams.HttpHost {
-			if i == 0 && i == len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?)"
-			} else if i == 0 && i != len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?"
-			} else if i != 0 && i == len(queryParams.HttpHost)-1 {
-				query += " OR httpHost=?)"
-			} else {
-				query += " OR httpHost=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
 	if len(queryParams.HttpMethod) > 0 {
-		for i, e := range queryParams.HttpMethod {
-			if i == 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?)"
-			} else if i == 0 && i != len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?"
-			} else if i != 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " OR httpMethod=?)"
-			} else {
-				query += " OR httpMethod=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
 	}
 	if len(queryParams.HttpUrl) > 0 {
-		for i, e := range queryParams.HttpUrl {
-			if i == 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?)"
-			} else if i == 0 && i != len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?"
-			} else if i != 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " OR httpUrl=?)"
-			} else {
-				query += " OR httpUrl=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
 	}
 	if len(queryParams.Component) > 0 {
-		for i, e := range queryParams.Component {
-			if i == 0 && i == len(queryParams.Component)-1 {
-				query += " AND (component=?)"
-			} else if i == 0 && i != len(queryParams.Component)-1 {
-				query += " AND (component=?"
-			} else if i != 0 && i == len(queryParams.Component)-1 {
-				query += " OR component=?)"
-			} else {
-				query += " OR component=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		for i, e := range queryParams.Operation {
-			if i == 0 && i == len(queryParams.Operation)-1 {
-				query += " AND (name=?)"
-			} else if i == 0 && i != len(queryParams.Operation)-1 {
-				query += " AND (name=?"
-			} else if i != 0 && i == len(queryParams.Operation)-1 {
-				query += " OR name=?)"
-			} else {
-				query += " OR name=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
 	}
-
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
 		args = append(args, queryParams.MinDuration)
@@ -2485,6 +2260,11 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 
 func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
 
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		excludeMap[e] = struct{}{}
+	}
+
 	SpanAggregatesDBResponseItems := []model.SpanAggregatesDBResponseItem{}
 
 	aggregation_query := ""
@@ -2552,116 +2332,28 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 
 	if len(queryParams.ServiceName) > 0 {
-		for i, e := range queryParams.ServiceName {
-			if i == 0 && i == len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?)"
-			} else if i == 0 && i != len(queryParams.ServiceName)-1 {
-				query += " AND (serviceName=?"
-			} else if i != 0 && i == len(queryParams.ServiceName)-1 {
-				query += " OR serviceName=?)"
-			} else {
-				query += " OR serviceName=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
 	if len(queryParams.HttpRoute) > 0 {
-		for i, e := range queryParams.HttpRoute {
-			if i == 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?)"
-			} else if i == 0 && i != len(queryParams.HttpRoute)-1 {
-				query += " AND (httpRoute=?"
-			} else if i != 0 && i == len(queryParams.HttpRoute)-1 {
-				query += " OR httpRoute=?)"
-			} else {
-				query += " OR httpRoute=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
 	if len(queryParams.HttpCode) > 0 {
-		for i, e := range queryParams.HttpCode {
-			if i == 0 && i == len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?)"
-			} else if i == 0 && i != len(queryParams.HttpCode)-1 {
-				query += " AND (httpCode=?"
-			} else if i != 0 && i == len(queryParams.HttpCode)-1 {
-				query += " OR httpCode=?)"
-			} else {
-				query += " OR httpCode=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
 	}
 	if len(queryParams.HttpHost) > 0 {
-		for i, e := range queryParams.HttpHost {
-			if i == 0 && i == len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?)"
-			} else if i == 0 && i != len(queryParams.HttpHost)-1 {
-				query += " AND (httpHost=?"
-			} else if i != 0 && i == len(queryParams.HttpHost)-1 {
-				query += " OR httpHost=?)"
-			} else {
-				query += " OR httpHost=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
 	if len(queryParams.HttpMethod) > 0 {
-		for i, e := range queryParams.HttpMethod {
-			if i == 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?)"
-			} else if i == 0 && i != len(queryParams.HttpMethod)-1 {
-				query += " AND (httpMethod=?"
-			} else if i != 0 && i == len(queryParams.HttpMethod)-1 {
-				query += " OR httpMethod=?)"
-			} else {
-				query += " OR httpMethod=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
 	}
 	if len(queryParams.HttpUrl) > 0 {
-		for i, e := range queryParams.HttpUrl {
-			if i == 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?)"
-			} else if i == 0 && i != len(queryParams.HttpUrl)-1 {
-				query += " AND (httpUrl=?"
-			} else if i != 0 && i == len(queryParams.HttpUrl)-1 {
-				query += " OR httpUrl=?)"
-			} else {
-				query += " OR httpUrl=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
 	}
 	if len(queryParams.Component) > 0 {
-		for i, e := range queryParams.Component {
-			if i == 0 && i == len(queryParams.Component)-1 {
-				query += " AND (component=?)"
-			} else if i == 0 && i != len(queryParams.Component)-1 {
-				query += " AND (component=?"
-			} else if i != 0 && i == len(queryParams.Component)-1 {
-				query += " OR component=?)"
-			} else {
-				query += " OR component=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		for i, e := range queryParams.Operation {
-			if i == 0 && i == len(queryParams.Operation)-1 {
-				query += " AND (name=?)"
-			} else if i == 0 && i != len(queryParams.Operation)-1 {
-				query += " AND (name=?"
-			} else if i != 0 && i == len(queryParams.Operation)-1 {
-				query += " OR name=?)"
-			} else {
-				query += " OR name=?"
-			}
-			args = append(args, e)
-		}
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
@@ -2788,12 +2480,12 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			SpanAggregatesDBResponseItems[i].Value = float32(SpanAggregatesDBResponseItems[i].Value) / float32(queryParams.StepSeconds)
 		}
 		if responseElement, ok := GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp]; !ok {
-			if queryParams.GroupBy != "" {
+			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy.String != "" {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
 					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
 					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy.String: SpanAggregatesDBResponseItems[i].Value},
 				}
-			} else {
+			} else if queryParams.GroupBy == "" {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
 					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
 					Value:     SpanAggregatesDBResponseItems[i].Value,
@@ -2801,7 +2493,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			}
 
 		} else {
-			if queryParams.GroupBy != "" {
+			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy.String != "" {
 				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy.String] = SpanAggregatesDBResponseItems[i].Value
 			}
 			GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = responseElement

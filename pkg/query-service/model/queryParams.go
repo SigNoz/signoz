@@ -135,6 +135,7 @@ type GetFilteredSpansParams struct {
 	Order       string
 	Offset      int64
 	Tags        []TagQueryV2
+	Exclude     []string
 }
 
 type GetFilteredSpanAggregatesParams struct {
@@ -158,6 +159,7 @@ type GetFilteredSpanAggregatesParams struct {
 	AggregationOption string
 	GroupBy           string
 	Function          string
+	Exclude           []string
 }
 
 type SpanFilterParams struct {
@@ -171,6 +173,7 @@ type SpanFilterParams struct {
 	Component   []string
 	Operation   []string
 	GetFilters  []string
+	Exclude     []string
 	MinDuration string
 	MaxDuration string
 	Start       *time.Time
@@ -187,6 +190,7 @@ type TagFilterParams struct {
 	HttpMethod  []string
 	Component   []string
 	Operation   []string
+	Exclude     []string
 	MinDuration string
 	MaxDuration string
 	Start       *time.Time

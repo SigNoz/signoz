@@ -506,6 +506,7 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 		Status:      []string{},
 		Operation:   []string{},
 		GetFilters:  []string{},
+		Exclude:     []string{},
 	}
 
 	params.ServiceName = fetchArrayValues("serviceName", r)
@@ -527,6 +528,8 @@ func parseSpanFilterRequest(r *http.Request) (*model.SpanFilterParams, error) {
 	params.Component = fetchArrayValues("component", r)
 
 	params.GetFilters = fetchArrayValues("getFilters", r)
+
+	params.Exclude = fetchArrayValues("exclude", r)
 
 	minDuration, err := parseTimestamp("minDuration", r)
 	if err == nil {
@@ -565,6 +568,7 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 		Operation:   []string{},
 		Limit:       100,
 		Order:       "descending",
+		Exclude:     []string{},
 	}
 
 	params.ServiceName = fetchArrayValues("serviceName", r)
@@ -584,6 +588,8 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 	params.HttpMethod = fetchArrayValues("httpMethod", r)
 
 	params.Component = fetchArrayValues("component", r)
+
+	params.Exclude = fetchArrayValues("exclude", r)
 
 	limitStr := r.URL.Query().Get("limit")
 	if len(limitStr) != 0 {
@@ -711,6 +717,7 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 		StepSeconds:       stepInt,
 		Dimension:         dimension,
 		AggregationOption: aggregationOption,
+		Exclude:           []string{},
 	}
 
 	params.ServiceName = fetchArrayValues("serviceName", r)
@@ -730,6 +737,8 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 	params.HttpMethod = fetchArrayValues("httpMethod", r)
 
 	params.Component = fetchArrayValues("component", r)
+
+	params.Exclude = fetchArrayValues("exclude", r)
 
 	tags, err := parseTagsV2("tags", r)
 	if err != nil {
@@ -805,6 +814,7 @@ func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 		Component:   []string{},
 		Status:      []string{},
 		Operation:   []string{},
+		Exclude:     []string{},
 	}
 
 	params.ServiceName = fetchArrayValues("serviceName", r)
@@ -824,6 +834,8 @@ func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 	params.HttpMethod = fetchArrayValues("httpMethod", r)
 
 	params.Component = fetchArrayValues("component", r)
+
+	params.Exclude = fetchArrayValues("exclude", r)
 
 	minDuration, err := parseTimestamp("minDuration", r)
 	if err == nil {
