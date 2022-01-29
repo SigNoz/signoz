@@ -27,7 +27,7 @@ buildHash=${PACKAGE}/version.buildHash
 buildTime=${PACKAGE}/version.buildTime
 gitBranch=${PACKAGE}/version.gitBranch
 
-LD_FLAGS="-linkmode external -extldflags '-static' -s -w -X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}"
+LD_FLAGS="-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}"
 
 all: build-push-frontend build-push-query-service build-push-flattener
 # Steps to build and push docker image of frontend
