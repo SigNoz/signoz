@@ -26,11 +26,13 @@ Commit SHA-1     : %v
 Commit timestamp : %v
 Branch           : %v
 Go version       : %v
+
 For SigNoz Official Documentation,  visit https://signoz.io/docs
 For SigNoz Community Slack,         visit http://signoz.io/slack
 For discussions about SigNoz,       visit https://community.signoz.io
+
 %s.
-Copyright 2021 SigNoz
+Copyright 2022 SigNoz
 `,
 		buildVersion, buildHash, buildTime, gitBranch,
 		runtime.Version(), licenseInfo)
@@ -38,7 +40,7 @@ Copyright 2021 SigNoz
 
 // PrintVersion prints version and other helpful information.
 func PrintVersion() {
-	zap.S().Info("\n%s\n", BuildDetails())
+	zap.S().Infof("\n%s\n", BuildDetails())
 }
 
 func GetVersion() string {
