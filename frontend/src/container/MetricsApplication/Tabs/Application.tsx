@@ -36,7 +36,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}`,
 		);
 	};
 
@@ -90,7 +90,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}selected={"serviceName":["${servicename}"],"status":["error"]}`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}`,
 		);
 	};
 
