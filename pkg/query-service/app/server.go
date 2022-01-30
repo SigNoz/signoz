@@ -7,16 +7,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/posthog/posthog-go"
+
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/druidReader"
+	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
+	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
 )
@@ -66,38 +68,35 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
-	httpServer, err := createHTTPServer()
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &Server{
+	s := &Server{
 		// logger: logger,
 		// querySvc:           querySvc,
 		// queryOptions:       options,
 		// tracer:             tracer,
 		// grpcServer:         grpcServer,
 		serverOptions: serverOptions,
-		httpServer:    httpServer,
 		separatePorts: true,
 		// separatePorts:      grpcPort != httpPort,
 		unavailableChannel: make(chan healthcheck.Status),
-	}, nil
-}
+	}
+	httpServer, err := s.createHTTPServer()
 
-var posthogClient posthog.Client
-var distinctId string
-
-func createHTTPServer() (*http.Server, error) {
-
-	posthogClient = posthog.New("H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w")
-	distinctId = uuid.New().String()
-
-	localDB, err := dashboards.InitDB("/var/lib/signoz/signoz.db")
 	if err != nil {
 		return nil, err
 	}
+	s.httpServer = httpServer
+
+	return s, nil
+}
+
+func (s *Server) createHTTPServer() (*http.Server, error) {
+
+	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+	localDB.SetMaxOpenConns(10)
 
 	var reader Reader
 
@@ -114,14 +113,19 @@ func createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader, &posthogClient, distinctId)
+	relationalDB, err := dao.FactoryDao("sqlite")
+	if err != nil {
+		return nil, err
+	}
+
+	apiHandler, err := NewAPIHandler(&reader, relationalDB)
 	if err != nil {
 		return nil, err
 	}
 
 	r := NewRouter()
 
-	r.Use(analyticsMiddleware)
+	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r)
@@ -152,15 +156,16 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func analyticsMiddleware(next http.Handler) http.Handler {
+func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		posthogClient.Enqueue(posthog.Capture{
-			DistinctId: distinctId,
-			Event:      path,
-		})
+		data := map[string]interface{}{"path": path}
+
+		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		}
 
 		next.ServeHTTP(w, r)
 	})

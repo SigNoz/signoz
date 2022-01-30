@@ -1,0 +1,29 @@
+# Configuration for welcome - https://github.com/behaviorbot/welcome
+
+# Configuration for new-issue-welcome - https://github.com/behaviorbot/new-issue-welcome
+# Comment to be posted to on first time issues
+newIssueWelcomeComment: >
+  Thanks for opening this issue. A team member should give feedback soon.
+  In the meantime, feel free to check out the [contributing guidelines](https://github.com/signoz/signoz/blob/main/CONTRIBUTING.md).
+
+
+# Configuration for new-pr-welcome - https://github.com/behaviorbot/new-pr-welcome
+# Comment to be posted to on PRs from first time contributors in your repository
+newPRWelcomeComment: >
+  Welcome to the SigNoz community! Thank you for your first pull request and making this project better. 🤗 
+
+
+# Configuration for first-pr-merge - https://github.com/behaviorbot/first-pr-merge
+# Comment to be posted to on pull requests merged by a first time user
+firstPRMergeComment: >
+  Congrats on merging your first pull request!
+  
+  ![minion-party](https://i.imgur.com/Xlg59lP.gif)
+
+  We here at SigNoz are proud of you! 🥳
+
+
+# Configuration for request-info - https://github.com/behaviorbot/request-info
+# Comment to be posted in issues or pull requests, when no description is provided. 
+requestInfoReplyComment: >
+  We would appreciate it if you could provide us with more info about this issue/pr!
