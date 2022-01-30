@@ -1,20 +1,27 @@
 import React from 'react';
+import { TraceFilterEnum } from 'types/reducer/trace';
 
 import Panel from './Panel';
 
 const Filters = (): JSX.Element => {
+	const name: TraceFilterEnum[] = [
+		'duration',
+		'status',
+		'serviceName',
+		'operation',
+		'component',
+		'httpCode',
+		'httpHost',
+		'httpMethod',
+		'httpRoute',
+		'httpUrl',
+	];
+
 	return (
 		<>
-			<Panel name="duration" />
-			<Panel name="status" />
-			<Panel name="serviceName" />
-			<Panel name="operation" />
-			<Panel name="component" />
-			<Panel name="httpCode" />
-			<Panel name="httpHost" />
-			<Panel name="httpMethod" />
-			<Panel name="httpRoute" />
-			<Panel name="httpUrl" />
+			{name.map((panelName) => (
+				<Panel key={panelName} name={panelName} />
+			))}
 		</>
 	);
 };

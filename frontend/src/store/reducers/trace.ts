@@ -24,6 +24,7 @@ const initialValue: TraceReducer = {
 	selectedTags: [],
 	isTagModalOpen: false,
 	isTagModalError: false,
+	preSelectedFilter: true,
 	spansAggregate: {
 		currentPage: 0,
 		loading: false,
@@ -70,6 +71,7 @@ const traceReducer = (
 				filterToFetchData,
 				selectedFilter,
 				selectedTags,
+				preSelectedFilter: false,
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,

@@ -25,16 +25,7 @@ const PanelBody = (props: PanelBodyProps): JSX.Element => {
 
 	return (
 		<Card bordered={false}>
-			{type === 'duration' && <Duration />}
-			{type === 'status' && <CommonCheckBox name={type} />}
-			{type === 'component' && <CommonCheckBox name={type} />}
-			{type === 'httpCode' && <CommonCheckBox name={type} />}
-			{type === 'httpHost' && <CommonCheckBox name={type} />}
-			{type === 'httpMethod' && <CommonCheckBox name={type} />}
-			{type === 'httpRoute' && <CommonCheckBox name={type} />}
-			{type === 'httpUrl' && <CommonCheckBox name={type} />}
-			{type === 'serviceName' && <CommonCheckBox name={type} />}
-			{type === 'operation' && <CommonCheckBox name={type} />}
+			{type === 'duration' ? <Duration /> : <CommonCheckBox name={type} />}
 		</Card>
 	);
 };

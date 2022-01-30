@@ -15,6 +15,7 @@ import {
 } from 'types/actions/trace';
 import { TraceFilterEnum } from 'types/reducer/trace';
 import { notification } from 'antd';
+import isEqual from 'lodash-es/isEqual';
 
 export const GetFilter = (
 	query: string,
@@ -56,18 +57,47 @@ export const GetFilter = (
 				},
 			});
 
+			const allFilterResponse = await getFiltersApi({
+				end: String(maxTime),
+				getFilters: getFilterToFetchData.currentValue,
+				start: String(minTime),
+				other: {},
+			});
+
+			let preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
+				getSelectedFilter.currentValue,
+			);
+
+			// update the selected Filter
+			if (
+				(allFilterResponse.payload && traces.preSelectedFilter) ||
+				(allFilterResponse.payload &&
+					!isEqual(traces.filterToFetchData, getFilterToFetchData.currentValue))
+			) {
+				Object.keys(allFilterResponse.payload).map((key) => {
+					const value = allFilterResponse.payload[key];
+					Object.keys(value)
+						// remove maxDuration and minDuration filter from initial selection logic
+						.filter((e) => !['maxDuration', 'minDuration'].includes(e))
+						.map((preKey) => {
+							const preValue = preSelectedFilter?.get(key as TraceFilterEnum) || [];
+							preSelectedFilter?.set(key as TraceFilterEnum, [...preValue, preKey]);
+						});
+				});
+			}
+
 			const response = await getFiltersApi({
 				end: String(maxTime),
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
-				other: Object.fromEntries(getSelectedFilter.currentValue),
+				other: Object.fromEntries(preSelectedFilter),
 			});
 
-			if (response.statusCode === 200) {
+			if (response.statusCode === 200 && allFilterResponse.statusCode === 200) {
 				const initialFilter = new Map<TraceFilterEnum, Record<string, string>>();
 
-				Object.keys(response.payload).forEach((key) => {
-					const value = response.payload[key];
+				Object.keys(allFilterResponse.payload).forEach((key) => {
+					const value = allFilterResponse.payload[key];
 					initialFilter.set(key as TraceFilterEnum, value);
 				});
 
@@ -75,7 +105,7 @@ export const GetFilter = (
 					type: UPDATE_ALL_FILTERS,
 					payload: {
 						filter: initialFilter,
-						selectedFilter: getSelectedFilter.currentValue,
+						selectedFilter: preSelectedFilter,
 						filterToFetchData: getFilterToFetchData.currentValue,
 						current: parsedQueryCurrent.currentValue,
 						selectedTags: parsedSelectedTags.currentValue,
@@ -94,6 +124,7 @@ export const GetFilter = (
 				},
 			});
 		} catch (error) {
+			console.log(error);
 			dispatch({
 				type: UPDATE_TRACE_FILTER_LOADING,
 				payload: {

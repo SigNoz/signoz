@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Space, Input } from 'antd';
+import { Space } from 'antd';
 import { Container, SearchComponent } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
@@ -11,17 +11,17 @@ import AppActions from 'types/actions';
 import { bindActionCreators } from 'redux';
 import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 import { parseQueryToTags, parseTagsToQuery } from './util';
-import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { CaretRightFilled } from '@ant-design/icons';
 import { updateURL } from 'store/actions/trace/util';
 
 const Search = ({
 	updateTagVisiblity,
-	updateSelectedTags,
 	updateTagIsError,
 }: SearchProps): JSX.Element => {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
+
+	console.log(traces);
 
 	const [value, setValue] = useState<string>('');
 
@@ -128,7 +128,6 @@ const Search = ({
 
 interface DispatchProps {
 	updateTagVisiblity: (value: boolean) => void;
-	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;
 	updateTagIsError: (value: boolean) => void;
 }
 
@@ -136,7 +135,6 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
-	updateSelectedTags: bindActionCreators(UpdateSelectedTags, dispatch),
 	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
 });
 

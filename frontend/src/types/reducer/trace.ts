@@ -5,6 +5,7 @@ export interface TraceReducer {
 	filterToFetchData: TraceFilterEnum[];
 	filterLoading: boolean;
 	selectedFilter: Map<TraceFilterEnum, string[]>;
+	preSelectedFilter: boolean;
 	selectedTags: Tags[];
 	isTagModalOpen: boolean;
 	isTagModalError: boolean;

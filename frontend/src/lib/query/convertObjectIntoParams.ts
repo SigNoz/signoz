@@ -3,7 +3,12 @@ const convertObjectIntoParams = (
 	stringify = false,
 ) => {
 	return Object.keys(props)
-		.map((e) => `${e}=${stringify ? JSON.stringify(props[e]) : props[e]}`)
+		.map(
+			(e) =>
+				`${e}=${
+					stringify ? encodeURIComponent(JSON.stringify(props[e])) : props[e]
+				}`,
+		)
 		.join('&');
 };
 

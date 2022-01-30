@@ -22,6 +22,7 @@ export const ExpandPanel = (
 			updatedFilterToFetchTheData = [...new Set([...filterToFetchData, props])];
 		} else {
 			updatedFilterToFetchTheData = filterToFetchData.filter((e) => e !== props);
+			traces.selectedFilter.delete(props);
 		}
 
 		updateURL(
