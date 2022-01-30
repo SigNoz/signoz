@@ -1,6 +1,7 @@
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import history from 'lib/history';
 import { GlobalTime } from 'types/actions/globalTime';
+import { AllTraceFilterEnum } from 'container/Trace/Filters';
 
 export const parseMinMaxTime = (query: string): GlobalTime => {
 	const url = new URLSearchParams(query);
@@ -26,6 +27,15 @@ interface ParsedUrl<T> {
 	urlValue: T;
 }
 
+export function isTraceFilterEnum(
+	value: TraceFilterEnum | string,
+): value is TraceFilterEnum {
+	if (AllTraceFilterEnum.find((enums) => enums === value)) {
+		return true;
+	}
+	return false;
+}
+
 export const parseSelectedFilter = (
 	query: string,
 	selectedFilter: TraceReducer['selectedFilter'],
@@ -41,7 +51,9 @@ export const parseSelectedFilter = (
 			const parsedValue = JSON.parse(decodeURIComponent(selected));
 			if (typeof parsedValue === 'object') {
 				Object.keys(parsedValue).forEach((e) => {
-					filters.set(e as TraceFilterEnum, parsedValue[e]);
+					if (isTraceFilterEnum(e)) {
+						filters.set(e, parsedValue[e]);
+					}
 				});
 			}
 		} catch (error) {

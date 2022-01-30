@@ -8,6 +8,7 @@ import {
 	parseFilterToFetchData,
 	parseQueryIntoCurrent,
 	parseQueryIntoSelectedTags,
+	isTraceFilterEnum,
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
@@ -80,8 +81,10 @@ export const GetFilter = (
 						// remove maxDuration and minDuration filter from initial selection logic
 						.filter((e) => !['maxDuration', 'minDuration'].includes(e))
 						.map((preKey) => {
-							const preValue = preSelectedFilter?.get(key as TraceFilterEnum) || [];
-							preSelectedFilter?.set(key as TraceFilterEnum, [...preValue, preKey]);
+							if (isTraceFilterEnum(key)) {
+								const preValue = preSelectedFilter?.get(key) || [];
+								preSelectedFilter?.set(key, [...preValue, preKey]);
+							}
 						});
 				});
 			}
@@ -98,7 +101,9 @@ export const GetFilter = (
 
 				Object.keys(allFilterResponse.payload).forEach((key) => {
 					const value = allFilterResponse.payload[key];
-					initialFilter.set(key as TraceFilterEnum, value);
+					if (isTraceFilterEnum(key)) {
+						initialFilter.set(key as TraceFilterEnum, value);
+					}
 				});
 
 				dispatch({
