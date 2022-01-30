@@ -27,6 +27,10 @@ const Panel = (props: PanelProps): JSX.Element => {
 		props.expandPanel(exp, !isDefaultOpen);
 	};
 
+	const onSelectHandler = (props: TraceFilterEnum) => {
+		console.log(props);
+	};
+
 	return (
 		<>
 			<PanelHeading
@@ -34,6 +38,7 @@ const Panel = (props: PanelProps): JSX.Element => {
 				isOpen={isDefaultOpen}
 				onExpandHandler={onExpandHandler}
 				onClearAllHandler={onClearHandler}
+				onSelectAllHandler={onSelectHandler}
 			/>
 
 			{isDefaultOpen && <PanelBody type={props.name} />}

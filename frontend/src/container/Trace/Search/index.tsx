@@ -21,8 +21,6 @@ const Search = ({
 }: SearchProps): JSX.Element => {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	console.log(traces);
-
 	const [value, setValue] = useState<string>('');
 
 	useEffect(() => {

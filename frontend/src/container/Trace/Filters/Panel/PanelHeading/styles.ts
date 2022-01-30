@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import styled, { css } from 'styled-components';
 
 interface Props {
@@ -32,5 +33,17 @@ export const TextCotainer = styled.div`
 	&&& {
 		display: flex;
 		cursor: pointer;
+	}
+`;
+
+export const ButtonComponent = styled(Button)`
+	&&& {
+		font-size: 0.75rem;
+	}
+`;
+
+export const ButtonContainer = styled.div`
+	&&& {
+		display: flex;
 	}
 `;

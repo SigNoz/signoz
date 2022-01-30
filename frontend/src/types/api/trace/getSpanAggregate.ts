@@ -7,6 +7,8 @@ export interface Props {
 	limit: number;
 	offset: number;
 	selectedTags: TraceReducer['selectedTags'];
+	preSelectedFilter: TraceReducer['preSelectedFilter'];
+	isFilterExclude: TraceReducer['isFilterExclude'];
 }
 
 export type PayloadProps = {

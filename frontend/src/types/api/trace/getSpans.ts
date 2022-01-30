@@ -8,6 +8,7 @@ export interface Props {
 	groupBy: TraceReducer['selectedGroupBy'];
 	selectedFilter: TraceReducer['selectedFilter'];
 	selectedTags: TraceReducer['selectedTags'];
+	preSelectedFilter: TraceReducer['preSelectedFilter'];
 }
 
 export interface PayloadProps {

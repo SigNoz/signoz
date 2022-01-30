@@ -16,7 +16,7 @@ import {
 } from 'types/actions/trace';
 import { TraceFilterEnum } from 'types/reducer/trace';
 import { notification } from 'antd';
-import isEqual from 'lodash-es/isEqual';
+import xor from 'lodash-es/xor';
 
 export const GetFilter = (
 	query: string,
@@ -70,18 +70,18 @@ export const GetFilter = (
 			);
 
 			// update the selected Filter
-			if (
-				(allFilterResponse.payload && traces.preSelectedFilter) ||
-				(allFilterResponse.payload &&
-					!isEqual(traces.filterToFetchData, getFilterToFetchData.currentValue))
-			) {
+			if (allFilterResponse.payload) {
+				const diff = traces.preSelectedFilter
+					? traces.filterToFetchData
+					: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
+
 				Object.keys(allFilterResponse.payload).map((key) => {
 					const value = allFilterResponse.payload[key];
 					Object.keys(value)
 						// remove maxDuration and minDuration filter from initial selection logic
 						.filter((e) => !['maxDuration', 'minDuration'].includes(e))
 						.map((preKey) => {
-							if (isTraceFilterEnum(key)) {
+							if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
 								const preValue = preSelectedFilter?.get(key) || [];
 								preSelectedFilter?.set(key, [...preValue, preKey]);
 							}
@@ -93,7 +93,9 @@ export const GetFilter = (
 				end: String(maxTime),
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
-				other: Object.fromEntries(preSelectedFilter),
+				other: Object.fromEntries(
+					traces.preSelectedFilter ? [] : preSelectedFilter,
+				),
 			});
 
 			if (response.statusCode === 200 && allFilterResponse.statusCode === 200) {

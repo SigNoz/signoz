@@ -47,6 +47,8 @@ export const GetSpansAggregate = (
 				limit: props.pageSize,
 				offset: spansAggregate.currentPage,
 				selectedTags: props.selectedTags,
+				isFilterExclude: traces.isFilterExclude,
+				preSelectedFilter: traces.preSelectedFilter,
 			});
 
 			if (response.statusCode === 200) {

@@ -29,9 +29,11 @@ const getSpans = async (
 			`/getFilteredSpans/aggregates?${updatedQueryParams}&tags=${encodeURIComponent(
 				JSON.stringify(updatedSelectedTags),
 			)}&${convertObjectIntoParams(
-				Object.fromEntries(props.selectedFilter),
+				Object.fromEntries(
+					props.preSelectedFilter ? new Map() : props.selectedFilter,
+				),
 				true,
-			)}`,
+			)}&exclude=${encodeURIComponent(JSON.stringify([]))}`,
 		);
 
 		return {

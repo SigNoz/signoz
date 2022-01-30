@@ -2,7 +2,13 @@ import React from 'react';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Card, Button, Typography, Spin, Divider } from 'antd';
 
-import { Container, IconContainer, TextCotainer } from './styles';
+import {
+	ButtonComponent,
+	ButtonContainer,
+	Container,
+	IconContainer,
+	TextCotainer,
+} from './styles';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
@@ -37,17 +43,23 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>
 							{AllPanelHeading.find((e) => e.key === props.name)?.displayValue || ''}
 						</Text>
-
-						{filterLoading && <Spin size="small" />}
 					</TextCotainer>
 
-					<Button
-						style={{ fontSize: '12px' }}
-						onClick={() => props.onClearAllHandler(props.name)}
-						type="link"
-					>
-						Clear All
-					</Button>
+					<ButtonContainer>
+						{/* <ButtonComponent
+							onClick={() => props.onSelectAllHandler(props.name)}
+							type="link"
+						>
+							Select All
+						</ButtonComponent> */}
+
+						<ButtonComponent
+							onClick={() => props.onClearAllHandler(props.name)}
+							type="link"
+						>
+							Clear All
+						</ButtonComponent>
+					</ButtonContainer>
 				</Container>
 			</Card>
 		</>
@@ -56,6 +68,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 interface PanelHeadingProps {
 	onClearAllHandler: (name: TraceFilterEnum) => void;
+	onSelectAllHandler: (name: TraceFilterEnum) => void;
 	onExpandHandler: (name: TraceFilterEnum) => void;
 	name: TraceFilterEnum;
 	isOpen: boolean;

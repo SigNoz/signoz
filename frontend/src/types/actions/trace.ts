@@ -20,6 +20,7 @@ export const UPDATE_TRACE_GRAPH_LOADING = 'UPDATE_TRACE_GRAPH_LOADING';
 export const UPDATE_TRACE_GRAPH_ERROR = 'UPDATE_TRACE_GRAPH_ERROR';
 export const UPDATE_TRACE_GRAPH_SUCCESS = 'UPDATE_TRACE_GRAPH_SUCCESS';
 
+export const UPDATE_PRE_SELECTED = 'UPDATE_PRE_SELECTED';
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
 	payload: {
@@ -56,6 +57,13 @@ export interface UpdateAllFilters {
 		filterToFetchData: TraceReducer['filterToFetchData'];
 		current: TraceReducer['spansAggregate']['currentPage'];
 		selectedTags: TraceReducer['selectedTags'];
+	};
+}
+
+export interface UpdatePreSelected {
+	type: typeof UPDATE_PRE_SELECTED;
+	payload: {
+		preSelectedFilter: TraceReducer['preSelectedFilter'];
 	};
 }
 
@@ -137,4 +145,5 @@ export type TraceActions =
 	| UpdateSelectedFunction
 	| UpdateSpanLoading
 	| UpdateSpansError
-	| UpdateSpans;
+	| UpdateSpans
+	| UpdatePreSelected;

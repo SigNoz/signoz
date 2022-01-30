@@ -13,8 +13,9 @@ import {
 	UPDATE_TRACE_GRAPH_LOADING,
 	UPDATE_TRACE_GRAPH_ERROR,
 	UPDATE_TRACE_GRAPH_SUCCESS,
+	UPDATE_PRE_SELECTED,
 } from 'types/actions/trace';
-import { TraceReducer } from 'types/reducer/trace';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 const initialValue: TraceReducer = {
 	filter: new Map(),
@@ -24,7 +25,12 @@ const initialValue: TraceReducer = {
 	selectedTags: [],
 	isTagModalOpen: false,
 	isTagModalError: false,
-	preSelectedFilter: true,
+	preSelectedFilter: window.location.search.length === 0 ? true : false,
+	isFilterExclude: new Map<TraceFilterEnum, boolean>([
+		['duration', true],
+		['status', true],
+		['serviceName', true],
+	]),
 	spansAggregate: {
 		currentPage: 0,
 		loading: false,
@@ -71,7 +77,6 @@ const traceReducer = (
 				filterToFetchData,
 				selectedFilter,
 				selectedTags,
-				preSelectedFilter: false,
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
@@ -104,6 +109,13 @@ const traceReducer = (
 			return {
 				...state,
 				spansAggregate: action.payload.spansAggregate,
+			};
+		}
+
+		case UPDATE_PRE_SELECTED: {
+			return {
+				...state,
+				preSelectedFilter: action.payload.preSelectedFilter,
 			};
 		}
 

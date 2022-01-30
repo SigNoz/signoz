@@ -4,8 +4,8 @@ import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
-import React, { useEffect, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -17,6 +17,7 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { UPDATE_PRE_SELECTED } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -33,6 +34,8 @@ const Trace = ({
 		(state) => state.globalTime,
 	);
 
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
 	const {
 		selectedFilter,
 		spansAggregate,
@@ -40,6 +43,8 @@ const Trace = ({
 		selectedFunction,
 		selectedGroupBy,
 		filterLoading,
+		spansGraph,
+		preSelectedFilter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	useEffect(() => {
@@ -75,6 +80,7 @@ const Trace = ({
 				selectedTags,
 				start: minTime,
 				step: 60,
+				preSelectedFilter,
 			});
 	}, [
 		selectedFunction,
@@ -84,6 +90,17 @@ const Trace = ({
 		filterLoading,
 		getSpans,
 	]);
+
+	useEffect(() => {
+		if (!spansAggregate.loading && !spansGraph.loading) {
+			dispatch({
+				type: UPDATE_PRE_SELECTED,
+				payload: {
+					preSelectedFilter: false,
+				},
+			});
+		}
+	}, [spansGraph, spansAggregate]);
 
 	return (
 		<>

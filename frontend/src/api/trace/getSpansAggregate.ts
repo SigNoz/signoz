@@ -4,11 +4,13 @@ import { AxiosError } from 'axios';
 import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getSpanAggregate';
+import { TraceFilterEnum } from 'types/reducer/trace';
 
 const getSpanAggregate = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
+		const exclude: TraceFilterEnum[] = [];
 		const preProps = {
 			start: props.start,
 			end: props.end,
@@ -28,9 +30,11 @@ const getSpanAggregate = async (
 			`/getFilteredSpans?${updatedQueryParams}&tags=${encodeURIComponent(
 				JSON.stringify(updatedSelectedTags),
 			)}&${convertObjectIntoParams(
-				Object.fromEntries(props.selectedFilter),
+				Object.fromEntries(
+					props.preSelectedFilter ? new Map() : props.selectedFilter,
+				),
 				true,
-			)}`,
+			)}&exclude=${encodeURIComponent(JSON.stringify(exclude))}`,
 		);
 
 		return {
