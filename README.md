@@ -41,7 +41,7 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 ## Join our Slack community
 
-Come say Hi to us on [Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 👋
+Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
 
