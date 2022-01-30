@@ -209,10 +209,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/userPreferences", aH.getUserPreferences).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/version", aH.getVersion).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getSpanFilters", aH.getSpanFilters).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/getTagFilters", aH.getTagFilters).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/getFilteredSpans", aH.getFilteredSpans).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.getFilteredSpanAggregates).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/getSpanFilters", aH.getSpanFilters).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagFilters", aH.getTagFilters).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans", aH.getFilteredSpans).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.getFilteredSpanAggregates).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
@@ -978,7 +978,7 @@ func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseSpanFilterRequest(r)
+	query, err := parseSpanFilterRequestBody(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
