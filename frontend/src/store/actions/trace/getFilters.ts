@@ -83,7 +83,7 @@ export const GetFilter = (
 						.map((preKey) => {
 							if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
 								const preValue = preSelectedFilter?.get(key) || [];
-								preSelectedFilter?.set(key, [...preValue, preKey]);
+								preSelectedFilter?.set(key, [...new Set([...preValue, preKey])]);
 							}
 						});
 				});
@@ -104,7 +104,7 @@ export const GetFilter = (
 				Object.keys(allFilterResponse.payload).forEach((key) => {
 					const value = allFilterResponse.payload[key];
 					if (isTraceFilterEnum(key)) {
-						initialFilter.set(key as TraceFilterEnum, value);
+						initialFilter.set(key, value);
 					}
 				});
 
