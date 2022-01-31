@@ -69,6 +69,15 @@ export const GetFilter = (
 				getSelectedFilter.currentValue,
 			);
 
+			const response = await getFiltersApi({
+				end: String(maxTime),
+				getFilters: getFilterToFetchData.currentValue,
+				start: String(minTime),
+				other: Object.fromEntries(
+					traces.preSelectedFilter ? [] : preSelectedFilter,
+				),
+			});
+
 			// update the selected Filter
 			if (allFilterResponse.payload) {
 				const diff = traces.preSelectedFilter
@@ -89,20 +98,11 @@ export const GetFilter = (
 				});
 			}
 
-			const response = await getFiltersApi({
-				end: String(maxTime),
-				getFilters: getFilterToFetchData.currentValue,
-				start: String(minTime),
-				other: Object.fromEntries(
-					traces.preSelectedFilter ? [] : preSelectedFilter,
-				),
-			});
-
 			if (response.statusCode === 200 && allFilterResponse.statusCode === 200) {
 				const initialFilter = new Map<TraceFilterEnum, Record<string, string>>();
 
-				Object.keys(allFilterResponse.payload).forEach((key) => {
-					const value = allFilterResponse.payload[key];
+				Object.keys(response.payload).forEach((key) => {
+					const value = response.payload[key];
 					if (isTraceFilterEnum(key)) {
 						initialFilter.set(key, value);
 					}
