@@ -98,8 +98,6 @@ const AllTags = ({
 		);
 	}
 
-	console.log(localSelectedTags);
-
 	return (
 		<>
 			<Container>

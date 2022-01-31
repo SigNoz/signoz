@@ -49,10 +49,8 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 	};
 
 	useEffect(() => {
-		if (!traces.filterLoading) {
-			onSearchHandler();
-		}
-	}, [traces.filterLoading, onSearchHandler]);
+		onSearchHandler();
+	}, []);
 
 	return (
 		<AutoComplete
