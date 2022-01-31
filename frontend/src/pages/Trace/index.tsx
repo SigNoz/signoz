@@ -17,7 +17,7 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_PRE_SELECTED } from 'types/actions/trace';
+import { RESET_TRACE_FILTER, UPDATE_PRE_SELECTED } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -90,6 +90,15 @@ const Trace = ({
 		filterLoading,
 		getSpans,
 	]);
+
+	// resetting the whole data when the page un mount
+	useEffect(() => {
+		return () => {
+			dispatch({
+				type: RESET_TRACE_FILTER,
+			});
+		};
+	}, []);
 
 	useEffect(() => {
 		if (!spansAggregate.loading && !spansGraph.loading) {
