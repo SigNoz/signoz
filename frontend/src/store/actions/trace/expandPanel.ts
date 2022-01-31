@@ -48,7 +48,7 @@ export const ExpandPanel = (
 			}
 		} else {
 			updatedFilterToFetchTheData = filterToFetchData.filter((e) => e !== props);
-			traces.selectedFilter.delete(props);
+			updatedSelectedFilter.delete(props);
 		}
 
 		updateURL(

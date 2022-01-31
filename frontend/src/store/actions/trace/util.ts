@@ -190,7 +190,18 @@ export const updateURL = (
 	current: TraceReducer['spansAggregate']['total'],
 	selectedTags: TraceReducer['selectedTags'],
 ) => {
-	const search = location.search;
+	const search = new URLSearchParams(location.search);
+	const preResult: { key: string; value: string }[] = [];
+
+	const keyToSkip = ['selected', 'filterToFetchData', 'current', 'selectedTags'];
+	search.forEach((value, key) => {
+		if (!keyToSkip.includes(key)) {
+			preResult.push({
+				key,
+				value,
+			});
+		}
+	});
 
 	history.replace(
 		`${history.location.pathname}?selected=${JSON.stringify(
@@ -199,6 +210,6 @@ export const updateURL = (
 			filterToFetchData,
 		)}&current=${current}&selectedTags=${JSON.stringify(
 			selectedTags,
-		)}&${search.slice(1)}`,
+		)}&${preResult.map((e) => `${e.key}=${e.value}`).join('&')}`,
 	);
 };
