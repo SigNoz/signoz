@@ -13,9 +13,11 @@ const getTagFilters = async (
 			props.end
 		}&${encodeURIComponent(convertObjectIntoParams(props.other, true))}`;
 
-		const response = await axios.get<PayloadProps>(
-			`/getTagFilters?${updatedQueryParams}`,
-		);
+		const response = await axios.post<PayloadProps>(`/getTagFilters`, {
+			start: String(props.start),
+			end: String(props.end),
+			...props.other,
+		});
 
 		return {
 			statusCode: 200,

@@ -3,21 +3,17 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getFilters';
-import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 
 const getFilters = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const updatedQueryParams = `start=${props.start}&end=${
-			props.end
-		}&getFilters=${encodeURIComponent(
-			JSON.stringify(props.getFilters),
-		)}&${convertObjectIntoParams(props.other, true)}`;
-
-		const response = await axios.get<PayloadProps>(
-			`/getSpanFilters?${updatedQueryParams}`,
-		);
+		const response = await axios.post<PayloadProps>(`/getSpanFilters`, {
+			start: props.start,
+			end: props.end,
+			getFilters: props.getFilters,
+			...props.other,
+		});
 
 		return {
 			statusCode: 200,

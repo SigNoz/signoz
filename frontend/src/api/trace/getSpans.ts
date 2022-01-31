@@ -1,7 +1,6 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
-import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getSpans';
 
@@ -9,31 +8,25 @@ const getSpans = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const preProps = {
-			start: props.start,
-			end: props.end,
-			function: props.function,
-			groupBy: props.groupBy,
-			step: props.step,
-		};
-
-		const updatedQueryParams = `${convertObjectIntoParams(preProps)}`;
-
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
 			Key: e.Key[0],
 			Operator: e.Operator,
 			Values: e.Values,
 		}));
 
-		const response = await axios.get<PayloadProps>(
-			`/getFilteredSpans/aggregates?${updatedQueryParams}&tags=${encodeURIComponent(
-				JSON.stringify(updatedSelectedTags),
-			)}&${convertObjectIntoParams(
-				Object.fromEntries(
+		const response = await axios.post<PayloadProps>(
+			`/getFilteredSpans/aggregates`,
+			{
+				start: String(props.start),
+				end: String(props.end),
+				function: props.function,
+				groupBy: props.groupBy,
+				step: props.step,
+				tags: updatedSelectedTags,
+				...Object.fromEntries(
 					props.preSelectedFilter ? new Map() : props.selectedFilter,
 				),
-				true,
-			)}&exclude=${encodeURIComponent(JSON.stringify([]))}`,
+			},
 		);
 
 		return {

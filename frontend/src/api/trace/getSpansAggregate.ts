@@ -1,7 +1,6 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
-import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getSpanAggregate';
 import { TraceFilterEnum } from 'types/reducer/trace';
@@ -12,13 +11,11 @@ const getSpanAggregate = async (
 	try {
 		const exclude: TraceFilterEnum[] = [];
 		const preProps = {
-			start: props.start,
-			end: props.end,
+			start: String(props.start),
+			end: String(props.end),
 			limit: props.limit,
 			offset: props.offset,
 		};
-
-		const updatedQueryParams = `${convertObjectIntoParams(preProps)}`;
 
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
 			Key: e.Key[0],
@@ -26,16 +23,14 @@ const getSpanAggregate = async (
 			Values: e.Values,
 		}));
 
-		const response = await axios.get<PayloadProps>(
-			`/getFilteredSpans?${updatedQueryParams}&tags=${encodeURIComponent(
-				JSON.stringify(updatedSelectedTags),
-			)}&${convertObjectIntoParams(
-				Object.fromEntries(
-					props.preSelectedFilter ? new Map() : props.selectedFilter,
-				),
-				true,
-			)}&exclude=${encodeURIComponent(JSON.stringify(exclude))}`,
-		);
+		const response = await axios.post<PayloadProps>(`/getFilteredSpans`, {
+			...preProps,
+			tags: updatedSelectedTags,
+			...Object.fromEntries(
+				props.preSelectedFilter ? new Map() : props.selectedFilter,
+			),
+			exclude,
+		});
 
 		return {
 			statusCode: 200,
