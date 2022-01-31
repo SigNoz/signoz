@@ -1,6 +1,7 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import omitBy from 'lodash-es/omitBy';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getSpans';
 
@@ -14,6 +15,14 @@ const getSpans = async (
 			Values: e.Values,
 		}));
 
+		const other = Object.fromEntries(
+			props.preSelectedFilter ? new Map() : props.selectedFilter,
+		);
+
+		const duration = omitBy(other, (_, key) => !key.startsWith('duration')) || [];
+
+		const nonDuration = omitBy(other, (_, key) => key.startsWith('duration'));
+
 		const response = await axios.post<PayloadProps>(
 			`/getFilteredSpans/aggregates`,
 			{
@@ -23,9 +32,9 @@ const getSpans = async (
 				groupBy: props.groupBy,
 				step: props.step,
 				tags: updatedSelectedTags,
-				...Object.fromEntries(
-					props.preSelectedFilter ? new Map() : props.selectedFilter,
-				),
+				...nonDuration,
+				maxDuration: (duration['duration'] || [])[0],
+				minDuration: (duration['duration'] || [])[1],
 			},
 		);
 

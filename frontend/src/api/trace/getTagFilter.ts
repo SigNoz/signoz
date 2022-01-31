@@ -1,7 +1,7 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
-import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
+import { omitBy } from 'lodash-es';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getTagFilters';
 
@@ -9,14 +9,19 @@ const getTagFilters = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const updatedQueryParams = `start=${props.start}&end=${
-			props.end
-		}&${encodeURIComponent(convertObjectIntoParams(props.other, true))}`;
+		const duration =
+			omitBy(props.other, (_, key) => !key.startsWith('duration')) || [];
+
+		const nonDuration = omitBy(props.other, (_, key) =>
+			key.startsWith('duration'),
+		);
 
 		const response = await axios.post<PayloadProps>(`/getTagFilters`, {
 			start: String(props.start),
 			end: String(props.end),
-			...props.other,
+			...nonDuration,
+			maxDuration: (duration['duration'] || [])[0],
+			minDuration: (duration['duration'] || [])[1],
 		});
 
 		return {
