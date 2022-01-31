@@ -90,7 +90,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error","ok"]}`,
 		);
 	};
 
