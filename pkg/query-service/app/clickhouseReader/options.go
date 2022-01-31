@@ -20,7 +20,6 @@ const (
 	defaultOperationsTable   string        = "signoz_operations"
 	defaultIndexTable        string        = "signoz_index"
 	defaultErrorTable        string        = "signoz_error_index"
-	defaultArchiveSpansTable string        = "signoz_archive_spans"
 	defaultWriteBatchDelay   time.Duration = 5 * time.Second
 	defaultWriteBatchSize    int           = 10000
 	defaultEncoding          Encoding      = EncodingJSON
@@ -105,7 +104,6 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 				Datasource:      datasource,
 				OperationsTable: "",
 				IndexTable:      "",
-				SpansTable:      defaultArchiveSpansTable,
 				ErrorTable:      "",
 				WriteBatchDelay: defaultWriteBatchDelay,
 				WriteBatchSize:  defaultWriteBatchSize,

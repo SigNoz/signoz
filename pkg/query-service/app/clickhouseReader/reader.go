@@ -74,7 +74,6 @@ type ClickHouseReader struct {
 	operationsTable string
 	indexTable      string
 	errorTable      string
-	spansTable      string
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
@@ -98,7 +97,6 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		localDB:         localDB,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
-		spansTable:      options.primary.SpansTable,
 		errorTable:      options.primary.ErrorTable,
 	}
 }
