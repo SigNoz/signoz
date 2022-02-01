@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 
 import { Input, Slider } from 'antd';
 import { Container, InputContainer, Text } from './styles';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { updateURL } from 'store/actions/trace/util';
 import dayjs from 'dayjs';
 import durationPlugin from 'dayjs/plugin/duration';
+import { Dispatch } from 'redux';
+import AppActions from 'types/actions';
+import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 
 dayjs.extend(durationPlugin);
 
@@ -28,6 +31,8 @@ const Duration = (): JSX.Element => {
 		spansAggregate,
 		selectedTags,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const getDuration = () => {
 		const selectedDuration = selectedFilter.get('duration');
@@ -52,9 +57,30 @@ const Duration = (): JSX.Element => {
 
 	const defaultValue = [parseInt(minDuration, 10), parseInt(maxDuration, 10)];
 
-	const updatedUrl = (min: number, max: number) => {
+	const updatedUrl = (
+		min: number,
+		max: number,
+		selectedFilter: TraceReducer['selectedFilter'],
+		spansAggregate: TraceReducer['spansAggregate'],
+		filter: TraceReducer['filter'],
+		filterToFetchData: TraceReducer['filterToFetchData'],
+		selectedTags: TraceReducer['selectedTags'],
+	) => {
 		const newMap = new Map(selectedFilter);
 		newMap.set('duration', [String(max), String(min)]);
+		console.log('i m running');
+
+		dispatch({
+			type: UPDATE_ALL_FILTERS,
+			payload: {
+				current: spansAggregate.currentPage,
+				filter,
+				filterToFetchData,
+				selectedFilter: newMap,
+				selectedTags,
+			},
+		});
+
 		updateURL(
 			newMap,
 			filterToFetchData,
@@ -63,7 +89,27 @@ const Duration = (): JSX.Element => {
 		);
 	};
 
-	const debounceUpdateUrl = useDebouncedFn(updatedUrl, 500);
+	const debounceUpdateUrl = useDebouncedFn(
+		(
+			min,
+			max,
+			selectedFilter,
+			spansAggregate,
+			filter,
+			filterToFetchData,
+			selectedTags,
+		) =>
+			updatedUrl(
+				min,
+				max,
+				selectedFilter,
+				spansAggregate,
+				filter,
+				filterToFetchData,
+				selectedTags,
+			),
+		500,
+	);
 
 	const onRangeSliderHandler = (number: [number, number]) => {
 		const [min, max] = number;
@@ -71,7 +117,15 @@ const Duration = (): JSX.Element => {
 		setLocalMin(min.toString());
 		setLocalMax(max.toString());
 
-		debounceUpdateUrl(min, max);
+		debounceUpdateUrl(
+			min,
+			max,
+			selectedFilter,
+			spansAggregate,
+			filter,
+			filterToFetchData,
+			selectedTags,
+		);
 	};
 
 	return (
