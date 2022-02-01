@@ -56,6 +56,40 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
+# Contribute to SigNoz Helm Chart
+
+Need to update [https://github.com/SigNoz/charts](https://github.com/SigNoz/charts).
+
+### To run helm chart for local development
+
+- run `git clone https://github.com/SigNoz/charts.git` followed by `cd charts`
+- it is recommended to use lightweight kubernetes (k8s) cluster for local development:
+  - [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+  - [k3d](https://k3d.io/#installation)
+  - [minikube](https://minikube.sigs.k8s.io/docs/start/)
+- create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster
+- run `helm install -n platform --create-namespace my-release charts/signoz` to install SigNoz chart
+- run `kubectl -n platform port-forward svc/my-release-frontend 3000:3000` to make SigNoz UI available at [localhost:3000](http://localhost:3000)
+
+**To load data with HotROD sample app:**
+
+```sh
+kubectl create ns sample-application
+
+kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
+
+kubectl -n sample-application run strzal --image=djbingham/curl \
+--restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
+'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+```
+
+**To stop the load generation:**
+
+```sh
+kubectl -n sample-application run strzal --image=djbingham/curl \
+ --restart='OnFailure' -i --tty --rm --command -- curl \
+ http://locust-master:8089/stop
+```
 
 ## General Instructions
 
