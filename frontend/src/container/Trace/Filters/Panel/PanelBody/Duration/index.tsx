@@ -159,8 +159,8 @@ const Duration = (): JSX.Element => {
 			<Container>
 				<Slider
 					defaultValue={[defaultValue[0], defaultValue[1]]}
-					min={parseInt((filter.get('duration') || {})['minDuration'], 10)}
-					max={parseInt((filter.get('duration') || {})['maxDuration'], 10)}
+					min={parseFloat((filter.get('duration') || {})['minDuration'])}
+					max={parseFloat((filter.get('duration') || {})['maxDuration'])}
 					range
 					tipFormatter={(value) => {
 						if (value === undefined) {
