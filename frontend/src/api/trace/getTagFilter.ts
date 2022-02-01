@@ -20,8 +20,8 @@ const getTagFilters = async (
 			start: String(props.start),
 			end: String(props.end),
 			...nonDuration,
-			maxDuration: (duration['duration'] || [])[0],
-			minDuration: (duration['duration'] || [])[1],
+			maxDuration: String((duration['duration'] || [])[0] || ''),
+			minDuration: String((duration['duration'] || [])[1] || ''),
 		});
 
 		return {

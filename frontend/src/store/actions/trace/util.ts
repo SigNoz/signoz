@@ -2,6 +2,7 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import history from 'lib/history';
 import { GlobalTime } from 'types/actions/globalTime';
 import { AllTraceFilterEnum } from 'container/Trace/Filters';
+import { PayloadProps as GetFilterPayload } from 'types/api/trace/getFilters';
 
 export const parseMinMaxTime = (query: string): GlobalTime => {
 	const url = new URLSearchParams(query);
@@ -212,4 +213,17 @@ export const updateURL = (
 			selectedTags,
 		)}&${preResult.map((e) => `${e.key}=${e.value}`).join('&')}`,
 	);
+};
+
+export const getFilter = (data: GetFilterPayload): TraceReducer['filter'] => {
+	const filter = new Map<TraceFilterEnum, Record<string, string>>();
+
+	Object.keys(data).forEach((key) => {
+		const value = data[key];
+		if (isTraceFilterEnum(key)) {
+			filter.set(key, value);
+		}
+	});
+
+	return filter;
 };

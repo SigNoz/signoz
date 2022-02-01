@@ -33,8 +33,8 @@ const getSpans = async (
 				step: props.step,
 				tags: updatedSelectedTags,
 				...nonDuration,
-				maxDuration: (duration['duration'] || [])[0],
-				minDuration: (duration['duration'] || [])[1],
+				maxDuration: String((duration['duration'] || [])[0] || ''),
+				minDuration: String((duration['duration'] || [])[1] || ''),
 			},
 		);
 

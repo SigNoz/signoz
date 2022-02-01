@@ -10,6 +10,7 @@ import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetFilter } from 'store/actions/trace/getFilters';
+import { GetInitialTraceFilter } from 'store/actions/trace/getInitialFilter';
 import {
 	GetSpansAggregate,
 	GetSpansAggregateProps,
@@ -27,9 +28,8 @@ const Trace = ({
 	getFilters,
 	getSpansAggregate,
 	getSpans,
+	getInitialFilter,
 }: Props): JSX.Element => {
-	const { search } = useLocation();
-
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -48,8 +48,8 @@ const Trace = ({
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	useEffect(() => {
-		getFilters(search, minTime, maxTime);
-	}, [minTime, maxTime, getFilters, search]);
+		getInitialFilter(minTime, maxTime);
+	}, [getFilters, maxTime, minTime]);
 
 	useEffect(() => {
 		if (!filterLoading)
@@ -142,12 +142,17 @@ interface DispatchProps {
 	) => void;
 	getSpansAggregate: (props: GetSpansAggregateProps) => void;
 	getSpans: (props: GetSpansProps) => void;
+	getInitialFilter: (
+		minTime: GlobalReducer['minTime'],
+		maxTime: GlobalReducer['maxTime'],
+	) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getFilters: bindActionCreators(GetFilter, dispatch),
+	getInitialFilter: bindActionCreators(GetInitialTraceFilter, dispatch),
 	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
 	getSpans: bindActionCreators(GetSpans, dispatch),
 });

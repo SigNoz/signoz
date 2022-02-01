@@ -93,6 +93,7 @@ const Search = ({
 					enterButton={<CaretRightFilled />}
 					onSearch={(string) => {
 						if (string.length === 0) {
+							updateTagVisiblity(false);
 							updateURL(
 								traces.selectedFilter,
 								traces.filterToFetchData,
@@ -108,6 +109,7 @@ const Search = ({
 							updateTagIsError(true);
 						} else {
 							updateTagIsError(false);
+							updateTagVisiblity(false);
 							updateURL(
 								traces.selectedFilter,
 								traces.filterToFetchData,

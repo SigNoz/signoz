@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
-import { Card, Button, Typography, Spin, Divider } from 'antd';
+import { Card, Typography, Divider, notification } from 'antd';
 
 import {
 	ButtonComponent,
@@ -9,20 +9,205 @@ import {
 	IconContainer,
 	TextCotainer,
 } from './styles';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
 import { AllPanelHeading } from 'types/reducer/trace';
+import getFilters from 'api/trace/getFilters';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { getFilter, updateURL } from 'store/actions/trace/util';
+import AppActions from 'types/actions';
+import { Dispatch } from 'redux';
+import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import { AxiosError } from 'axios';
 
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
-	const { filterLoading } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
+	const {
+		filterLoading,
+		filterToFetchData,
+		selectedFilter,
+		spansAggregate,
+		selectedTags,
+		filter,
+	} = useSelector<AppState, TraceReducer>((state) => state.traces);
+
+	const isDefaultOpen =
+		filterToFetchData.find((e) => e === props.name) !== undefined;
+
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const global = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
 	);
 
-	const onExpandHandler = () => {
-		props.onExpandHandler(props.name);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const onExpandHandler = async () => {
+		try {
+			setIsLoading(true);
+			let updatedFilterData: TraceReducer['filterToFetchData'] = [];
+			const getprepdatedSelectedFilter = new Map(selectedFilter);
+
+			if (!isDefaultOpen) {
+				updatedFilterData = [...filterToFetchData, props.name];
+			} else {
+				// removing the selected filter
+				updatedFilterData = [
+					...filterToFetchData.filter((name) => name !== props.name),
+				];
+				getprepdatedSelectedFilter.delete(props.name);
+			}
+
+			const response = await getFilters({
+				end: String(global.maxTime),
+				start: String(global.minTime),
+				getFilters: updatedFilterData,
+				other: Object.fromEntries(getprepdatedSelectedFilter),
+			});
+
+			if (response.statusCode === 200) {
+				const updatedFilter = getFilter(response.payload);
+
+				// is closed
+				if (!isDefaultOpen) {
+					getprepdatedSelectedFilter.set(
+						props.name,
+						Object.keys(updatedFilter.get(props.name) || {}),
+					);
+				}
+
+				dispatch({
+					type: UPDATE_ALL_FILTERS,
+					payload: {
+						current: spansAggregate.currentPage,
+						filter: updatedFilter,
+						filterToFetchData: updatedFilterData,
+						selectedFilter: getprepdatedSelectedFilter,
+						selectedTags,
+					},
+				});
+
+				updateURL(
+					getprepdatedSelectedFilter,
+					updatedFilterData,
+					spansAggregate.currentPage,
+					selectedTags,
+				);
+			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
+			}
+
+			setIsLoading(false);
+		} catch (error) {
+			notification.error({
+				message: (error as AxiosError).toString() || 'Something went wrong',
+			});
+		}
+	};
+
+	const onClearAllHandler = async () => {
+		try {
+			setIsLoading(true);
+			const updatedFilter = new Map(selectedFilter);
+			updatedFilter.delete(props.name);
+
+			const response = await getFilters({
+				end: String(global.maxTime),
+				start: String(global.minTime),
+				getFilters: filterToFetchData,
+				other: Object.fromEntries(updatedFilter),
+			});
+
+			if (response.statusCode === 200 && response.payload) {
+				const getUpatedFilter = getFilter(response.payload);
+
+				dispatch({
+					type: UPDATE_ALL_FILTERS,
+					payload: {
+						current: spansAggregate.currentPage,
+						filter: getUpatedFilter,
+						filterToFetchData,
+						selectedFilter: updatedFilter,
+						selectedTags,
+					},
+				});
+
+				updateURL(
+					updatedFilter,
+					filterToFetchData,
+					spansAggregate.currentPage,
+					selectedTags,
+				);
+			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
+			}
+			setIsLoading(false);
+		} catch (error) {
+			notification.error({
+				message: (error as AxiosError).toString(),
+			});
+			setIsLoading(false);
+		}
+	};
+
+	const onSelectAllHandler = async () => {
+		try {
+			setIsLoading(true);
+			const preFilter = new Map(filter);
+			const preSelectedFilter = new Map(selectedFilter);
+
+			preSelectedFilter.set(
+				props.name,
+				Object.keys(preFilter.get(props.name) || {}),
+			);
+
+			const response = await getFilters({
+				end: String(global.maxTime),
+				start: String(global.minTime),
+				getFilters: filterToFetchData,
+				other: Object.fromEntries(preSelectedFilter),
+			});
+
+			if (response.statusCode === 200 && response.payload) {
+				const getUpatedFilter = getFilter(response.payload);
+
+				preSelectedFilter.set(
+					props.name,
+					Object.keys(getUpatedFilter.get(props.name) || {}),
+				);
+
+				dispatch({
+					type: UPDATE_ALL_FILTERS,
+					payload: {
+						current: spansAggregate.currentPage,
+						filter: preFilter,
+						filterToFetchData,
+						selectedFilter: preSelectedFilter,
+						selectedTags,
+					},
+				});
+
+				updateURL(
+					preSelectedFilter,
+					filterToFetchData,
+					spansAggregate.currentPage,
+					selectedTags,
+				);
+			}
+			setIsLoading(false);
+		} catch (error) {
+			setIsLoading(false);
+
+			notification.error({
+				message: (error as AxiosError).toString(),
+			});
+		}
 	};
 
 	return (
@@ -31,8 +216,8 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 			<Card bordered={false}>
 				<Container
-					disabled={filterLoading}
-					aria-disabled={filterLoading}
+					disabled={filterLoading || isLoading}
+					aria-disabled={filterLoading || isLoading}
 					aria-expanded={props.isOpen}
 				>
 					<TextCotainer onClick={onExpandHandler}>
@@ -46,15 +231,19 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					</TextCotainer>
 
 					<ButtonContainer>
-						{/* <ButtonComponent
-							onClick={() => props.onSelectAllHandler(props.name)}
+						<ButtonComponent
+							aria-disabled={isLoading || filterLoading}
+							disabled={isLoading || filterLoading}
+							onClick={onSelectAllHandler}
 							type="link"
 						>
 							Select All
-						</ButtonComponent> */}
+						</ButtonComponent>
 
 						<ButtonComponent
-							onClick={() => props.onClearAllHandler(props.name)}
+							aria-disabled={isLoading || filterLoading}
+							disabled={isLoading || filterLoading}
+							onClick={onClearAllHandler}
 							type="link"
 						>
 							Clear All
@@ -67,9 +256,6 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 };
 
 interface PanelHeadingProps {
-	onClearAllHandler: (name: TraceFilterEnum) => void;
-	onSelectAllHandler: (name: TraceFilterEnum) => void;
-	onExpandHandler: (name: TraceFilterEnum) => void;
 	name: TraceFilterEnum;
 	isOpen: boolean;
 }
