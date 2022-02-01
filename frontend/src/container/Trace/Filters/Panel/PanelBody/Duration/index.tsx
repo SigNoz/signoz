@@ -55,7 +55,7 @@ const Duration = (): JSX.Element => {
 	const [localMax, setLocalMax] = useState<string>(maxDuration);
 	const [localMin, setLocalMin] = useState<string>(minDuration);
 
-	const defaultValue = [parseInt(minDuration, 10), parseInt(maxDuration, 10)];
+	const defaultValue = [parseFloat(minDuration), parseFloat(maxDuration)];
 
 	const updatedUrl = (
 		min: number,
