@@ -99,14 +99,16 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 	];
 
 	const onChangeHandler: TableProps<TableType>['onChange'] = (props) => {
-		getSpansAggregate({
-			maxTime: globalTime.maxTime,
-			minTime: globalTime.minTime,
-			selectedFilter,
-			current: props.current || spansAggregate.currentPage,
-			pageSize: props.pageSize || spansAggregate.pageSize,
-			selectedTags,
-		});
+		if (props.current && props.pageSize) {
+			getSpansAggregate({
+				maxTime: globalTime.maxTime,
+				minTime: globalTime.minTime,
+				selectedFilter,
+				current: props.current,
+				pageSize: props.pageSize,
+				selectedTags,
+			});
+		}
 	};
 
 	return (

@@ -63,7 +63,6 @@ const Trace = ({
 			});
 	}, [
 		selectedFilter,
-		spansAggregate.currentPage,
 		spansAggregate.pageSize,
 		selectedTags,
 		filterLoading,
