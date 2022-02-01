@@ -1,12 +1,7 @@
 import { Typography } from 'antd';
-import getQueryResult from 'api/widgets/getQuery';
-import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
-import getChartData from 'lib/getChartData';
-import GetMaxMinTime from 'lib/getMaxMinTime';
-import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -20,6 +15,7 @@ import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import useQuery from '../utils/useQuery';
 import Bar from './Bar';
 import FullView from './FullView';
 import { ErrorContainer, FullViewContainer, Modal } from './styles';
@@ -45,75 +41,11 @@ function GridCardGraph({
 
 	useEffect(() => {
 		(async (): Promise<void> => {
-			try {
-				const getMaxMinTime = GetMaxMinTime({
-					graphType: widget?.panelTypes,
-					maxTime,
-					minTime,
-				});
-
-				const { start, end } = GetStartAndEndTime({
-					type: widget.timePreferance,
-					maxTime: getMaxMinTime.maxTime,
-					minTime: getMaxMinTime.minTime,
-				});
-
-				const response = await Promise.all(
-					widget.query
-						.filter((e) => e.query.length !== 0)
-						.map(async (query) => {
-							const result = await getQueryResult({
-								end,
-								query: query.query,
-								start,
-								step: '60',
-							});
-
-							return {
-								query: query.query,
-								queryData: result,
-								legend: query.legend,
-							};
-						}),
-				);
-
-				const isError = response.find((e) => e.queryData.statusCode !== 200);
-
-				if (isError !== undefined) {
-					setState((state) => ({
-						...state,
-						error: true,
-						errorMessage: isError.queryData.error || 'Something went wrong',
-						loading: false,
-					}));
-				} else {
-					const chartDataSet = getChartData({
-						queryData: {
-							data: response.map((e) => ({
-								query: e.query,
-								legend: e.legend,
-								queryData: e.queryData.payload?.result || [],
-							})),
-							error: false,
-							errorMessage: '',
-							loading: false,
-						},
-					});
-
-					setState((state) => ({
-						...state,
-						loading: false,
-						payload: chartDataSet,
-					}));
-				}
-			} catch (error) {
-				setState((state) => ({
-					...state,
-					error: true,
-					errorMessage: (error as AxiosError).toString(),
-					loading: false,
-				}));
-			}
+			const graphData = await useQuery(widget, minTime, maxTime); // eslint-disable-line react-hooks/rules-of-hooks
+			setState((state) => ({
+				...state,
+				...graphData,
+			}));
 		})();
 	}, [widget, maxTime, minTime]);
 
