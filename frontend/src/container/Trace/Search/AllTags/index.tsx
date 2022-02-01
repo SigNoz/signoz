@@ -73,6 +73,7 @@ const AllTags = ({
 				traces.filterToFetchData,
 				traces.spansAggregate.currentPage,
 				localSelectedTags,
+				traces.filter,
 			);
 			updateTagIsError(false);
 			updateTagVisiblity(false);

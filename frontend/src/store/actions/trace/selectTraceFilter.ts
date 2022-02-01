@@ -43,6 +43,7 @@ export const SelectedTraceFilter = (props: {
 			traces.filterToFetchData,
 			traces.spansAggregate.currentPage,
 			traces.selectedTags,
+			traces.filter,
 		);
 	};
 };

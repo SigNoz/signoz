@@ -94,6 +94,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					updatedFilterData,
 					spansAggregate.currentPage,
 					selectedTags,
+					updatedFilter,
 				);
 			} else {
 				notification.error({
@@ -141,6 +142,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
+					getUpatedFilter,
 				);
 			} else {
 				notification.error({
@@ -198,6 +200,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
+					preFilter,
 				);
 			}
 			setIsLoading(false);

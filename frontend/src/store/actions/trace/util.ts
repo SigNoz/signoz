@@ -121,10 +121,14 @@ export const parseQueryIntoSelectedTags = (
 	const querySelectedTags = url.get('selectedTags');
 
 	if (querySelectedTags) {
-		const parsedQuerySelectedTags = JSON.parse(querySelectedTags);
+		try {
+			const parsedQuerySelectedTags = JSON.parse(querySelectedTags);
 
-		if (Array.isArray(parsedQuerySelectedTags)) {
-			selectedTags = parsedQuerySelectedTags;
+			if (Array.isArray(parsedQuerySelectedTags)) {
+				selectedTags = parsedQuerySelectedTags;
+			}
+		} catch (error) {
+			//error while parsing
 		}
 	}
 
@@ -138,6 +142,47 @@ export const parseQueryIntoSelectedTags = (
 	return {
 		currentValue: stateSelectedTags,
 		urlValue: selectedTags,
+	};
+};
+
+export const parseQueryIntoFilter = (
+	query: string,
+	stateFilter: TraceReducer['filter'],
+): ParsedUrl<TraceReducer['filter']> => {
+	const urlFilter = new Map<TraceFilterEnum, Record<string, string>>();
+	const url = new URLSearchParams(query);
+
+	const selected = url.get('filter');
+
+	if (selected) {
+		try {
+			const parsedValue = JSON.parse(selected);
+
+			if (typeof parsedValue === 'object') {
+				Object.keys(parsedValue).forEach((key) => {
+					if (isTraceFilterEnum(key)) {
+						const value = parsedValue[key];
+						if (typeof value === 'object') {
+							urlFilter.set(key, value);
+						}
+					}
+				});
+			}
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	if (selected) {
+		return {
+			currentValue: urlFilter,
+			urlValue: urlFilter,
+		};
+	}
+
+	return {
+		currentValue: stateFilter,
+		urlValue: urlFilter,
 	};
 };
 
@@ -190,11 +235,18 @@ export const updateURL = (
 	filterToFetchData: TraceReducer['filterToFetchData'],
 	current: TraceReducer['spansAggregate']['total'],
 	selectedTags: TraceReducer['selectedTags'],
+	filter: TraceReducer['filter'],
 ) => {
 	const search = new URLSearchParams(location.search);
 	const preResult: { key: string; value: string }[] = [];
 
-	const keyToSkip = ['selected', 'filterToFetchData', 'current', 'selectedTags'];
+	const keyToSkip = [
+		'selected',
+		'filterToFetchData',
+		'current',
+		'selectedTags',
+		'filter',
+	];
 	search.forEach((value, key) => {
 		if (!keyToSkip.includes(key)) {
 			preResult.push({
@@ -211,7 +263,9 @@ export const updateURL = (
 			filterToFetchData,
 		)}&current=${current}&selectedTags=${JSON.stringify(
 			selectedTags,
-		)}&${preResult.map((e) => `${e.key}=${e.value}`).join('&')}`,
+		)}&filter=${JSON.stringify(Object.fromEntries(filter))}&${preResult
+			.map((e) => `${e.key}=${e.value}`)
+			.join('&')}`,
 	);
 };
 

@@ -99,6 +99,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
+					updatedFilter,
 				);
 			} else {
 				setIsLoading(false);

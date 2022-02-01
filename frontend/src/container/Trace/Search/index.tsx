@@ -99,6 +99,7 @@ const Search = ({
 								traces.filterToFetchData,
 								traces.spansAggregate.currentPage,
 								[],
+								traces.filter,
 							);
 							return;
 						}
@@ -115,6 +116,7 @@ const Search = ({
 								traces.filterToFetchData,
 								traces.spansAggregate.currentPage,
 								payload,
+								traces.filter,
 							);
 						}
 					}}

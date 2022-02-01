@@ -19,7 +19,6 @@ export const UPDATE_SELECTED_GROUP_BY = 'UPDATE_SELECTED_GROUP_BY';
 export const UPDATE_TRACE_GRAPH_LOADING = 'UPDATE_TRACE_GRAPH_LOADING';
 export const UPDATE_TRACE_GRAPH_ERROR = 'UPDATE_TRACE_GRAPH_ERROR';
 export const UPDATE_TRACE_GRAPH_SUCCESS = 'UPDATE_TRACE_GRAPH_SUCCESS';
-export const RESET_TRACE_FILTER = 'RESET_TRACE_FILTER';
 
 export const UPDATE_PRE_SELECTED = 'UPDATE_PRE_SELECTED';
 export interface UpdateFilter {
@@ -59,10 +58,6 @@ export interface UpdateAllFilters {
 		current: TraceReducer['spansAggregate']['currentPage'];
 		selectedTags: TraceReducer['selectedTags'];
 	};
-}
-
-export interface ResetTrace {
-	type: typeof RESET_TRACE_FILTER;
 }
 
 export interface UpdatePreSelected {
@@ -151,5 +146,4 @@ export type TraceActions =
 	| UpdateSpanLoading
 	| UpdateSpansError
 	| UpdateSpans
-	| UpdatePreSelected
-	| ResetTrace;
+	| UpdatePreSelected;

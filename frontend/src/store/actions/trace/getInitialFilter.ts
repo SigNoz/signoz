@@ -10,6 +10,7 @@ import {
 	parseQueryIntoSelectedTags,
 	isTraceFilterEnum,
 	updateURL,
+	parseQueryIntoFilter,
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
@@ -52,6 +53,8 @@ export const GetInitialTraceFilter = (
 				traces.selectedTags,
 			);
 
+			const parsedFilter = parseQueryIntoFilter(query, traces.filter);
+
 			// now filter are not matching we need to fetch the data and make in sync
 			dispatch({
 				type: UPDATE_TRACE_FILTER_LOADING,
@@ -93,12 +96,17 @@ export const GetInitialTraceFilter = (
 			}
 
 			if (response.statusCode === 200) {
-				const initialFilter = new Map<TraceFilterEnum, Record<string, string>>();
+				const initialFilter = new Map<TraceFilterEnum, Record<string, string>>(
+					parsedFilter.currentValue,
+				);
 
 				Object.keys(response.payload).forEach((key) => {
 					const value = response.payload[key];
 					if (isTraceFilterEnum(key)) {
-						initialFilter.set(key, value);
+						initialFilter.set(key, {
+							...initialFilter.get(key),
+							...value,
+						});
 					}
 				});
 
@@ -132,6 +140,7 @@ export const GetInitialTraceFilter = (
 				},
 			});
 		} catch (error) {
+			console.log(error);
 			dispatch({
 				type: UPDATE_TRACE_FILTER_LOADING,
 				payload: {

@@ -86,6 +86,7 @@ const Duration = (): JSX.Element => {
 			filterToFetchData,
 			spansAggregate.currentPage,
 			selectedTags,
+			filter,
 		);
 	};
 

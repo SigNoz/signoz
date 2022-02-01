@@ -56,6 +56,7 @@ export const ExpandPanel = (
 			updatedFilterToFetchTheData,
 			traces.spansAggregate.currentPage,
 			traces.selectedTags,
+			traces.filter,
 		);
 	};
 };

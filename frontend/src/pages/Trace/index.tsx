@@ -6,7 +6,6 @@ import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
 import React, { useEffect } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetFilter } from 'store/actions/trace/getFilters';
@@ -18,7 +17,7 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { RESET_TRACE_FILTER, UPDATE_PRE_SELECTED } from 'types/actions/trace';
+import { UPDATE_PRE_SELECTED } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -49,7 +48,7 @@ const Trace = ({
 
 	useEffect(() => {
 		getInitialFilter(minTime, maxTime);
-	}, [getFilters, maxTime, minTime]);
+	}, [maxTime, minTime]);
 
 	useEffect(() => {
 		if (!filterLoading)
@@ -89,15 +88,6 @@ const Trace = ({
 		filterLoading,
 		getSpans,
 	]);
-
-	// resetting the whole data when the page un mount
-	useEffect(() => {
-		return () => {
-			dispatch({
-				type: RESET_TRACE_FILTER,
-			});
-		};
-	}, []);
 
 	useEffect(() => {
 		if (!spansAggregate.loading && !spansGraph.loading) {
