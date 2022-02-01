@@ -28,12 +28,16 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 			});
 
 			if (response.statusCode === 200) {
-				setOptions(
-					response.payload.map((e) => ({
-						value: e.tagKeys,
-						label: e.tagKeys,
-					})),
-				);
+				if (response.payload === null) {
+					setOptions([]);
+				} else {
+					setOptions(
+						response.payload.map((e) => ({
+							value: e.tagKeys,
+							label: e.tagKeys,
+						})),
+					);
+				}
 			} else {
 				notification.error({
 					message: response.error || 'Something went wrong',
