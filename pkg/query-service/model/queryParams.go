@@ -146,10 +146,10 @@ type GetFilteredSpanAggregatesParams struct {
 	Kind              string       `json:"kind"`
 	Status            []string     `json:"status"`
 	HttpRoute         []string     `json:"httpRoute"`
-	HttpCode          []string     `json:"http_code"`
-	HttpUrl           []string     `json:"http_url"`
-	HttpHost          []string     `json:"http_host"`
-	HttpMethod        []string     `json:"http_method"`
+	HttpCode          []string     `json:"httpCode"`
+	HttpUrl           []string     `json:"httpUrl"`
+	HttpHost          []string     `json:"httpHost"`
+	HttpMethod        []string     `json:"httpMethod"`
 	Component         []string     `json:"component"`
 	MinDuration       string       `json:"minDuration"`
 	MaxDuration       string       `json:"maxDuration"`
