@@ -1,22 +1,17 @@
 import { Button, Typography } from 'antd';
-import getQueryResult from 'api/widgets/getQuery';
-import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
+import useQuery from 'container/GridGraphLayout/utils/useQuery';
 import {
 	timeItems,
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import getChartData from 'lib/getChartData';
-import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
-import getStartAndEndTime from 'lib/getStartAndEndTime';
-import getStep from 'lib/getStep';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -55,94 +50,34 @@ function FullView({
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
 
-	const onFetchDataHandler = useCallback(async () => {
-		try {
-			const maxMinTime = GetMaxMinTime({
-				graphType: widget.panelTypes,
-				maxTime,
-				minTime,
-			});
-
-			const getMinMax = (
-				time: timePreferenceType,
-			): { min: string | number; max: string | number } => {
-				if (time === 'GLOBAL_TIME') {
-					const minMax = GetMinMax(globalSelectedTime);
-					return {
-						min: convertToNanoSecondsToSecond(minMax.minTime / 1000),
-						max: convertToNanoSecondsToSecond(minMax.maxTime / 1000),
-					};
-				}
-
-				const minMax = getStartAndEndTime({
-					type: selectedTime.enum,
-					maxTime: maxMinTime.maxTime,
-					minTime: maxMinTime.minTime,
-				});
-				return { min: parseInt(minMax.start, 10), max: parseInt(minMax.end, 10) };
-			};
-
-			const queryMinMax = getMinMax(selectedTime.enum);
-			const response = await Promise.all(
-				widget.query
-					.filter((e) => e.query.length !== 0)
-					.map(async (query) => {
-						const result = await getQueryResult({
-							end: queryMinMax.max.toString(),
-							query: query.query,
-							start: queryMinMax.min.toString(),
-							step: `${getStep({
-								start: queryMinMax.min,
-								end: queryMinMax.max,
-								inputFormat: 's',
-							})}`,
-						});
-						return {
-							query: query.query,
-							queryData: result,
-							legend: query.legend,
-						};
-					}),
-			);
-
-			const isError = response.find((e) => e.queryData.statusCode !== 200);
-
-			if (isError !== undefined) {
-				setState((state) => ({
-					...state,
-					error: true,
-					errorMessage: isError.queryData.error || 'Something went wrong',
-					loading: false,
-				}));
-			} else {
-				const chartDataSet = getChartData({
-					queryData: {
-						data: response.map((e) => ({
-							query: e.query,
-							legend: e.legend,
-							queryData: e.queryData.payload?.result || [],
-						})),
-						error: false,
-						errorMessage: '',
-						loading: false,
-					},
-				});
-
-				setState((state) => ({
-					...state,
-					loading: false,
-					payload: chartDataSet,
-				}));
+	const onFetchDataHandler = useCallback(async (): Promise<void> => {
+		const getGlobalMinMax = (
+			time: timePreferenceType,
+		): GlobalMinMaxTime | undefined => {
+			if (time === 'GLOBAL_TIME') {
+				const minMax = GetMinMax(globalSelectedTime);
+				return {
+					min: convertToNanoSecondsToSecond(minMax.minTime / 1000),
+					max: convertToNanoSecondsToSecond(minMax.maxTime / 1000),
+				};
 			}
-		} catch (error) {
-			setState((state) => ({
-				...state,
-				error: true,
-				errorMessage: (error as AxiosError).toString(),
-				loading: false,
-			}));
-		}
-	}, [widget, maxTime, minTime, selectedTime.enum, globalSelectedTime]);
+
+			return undefined;
+		};
+
+		// eslint-disable-next-line react-hooks/rules-of-hooks
+		const graphData = await useQuery(
+			widget,
+			minTime,
+			maxTime,
+			getGlobalMinMax(selectedTime.enum),
+			selectedTime,
+		);
+		setState((state) => ({
+			...state,
+			...graphData,
+		}));
+	}, [widget, minTime, maxTime, selectedTime, globalSelectedTime]);
 
 	useEffect(() => {
 		onFetchDataHandler();
@@ -196,6 +131,11 @@ function FullView({
 			{/* </GraphContainer> */}
 		</>
 	);
+}
+
+interface GlobalMinMaxTime {
+	min: string;
+	max: string;
 }
 
 interface FullViewState {
