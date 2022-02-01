@@ -102,7 +102,7 @@ services:
     logging:
       options:
         max-size: 50m
-        max-file: 3
+        max-file: "3"
     command: ["all"]
     environment:
       - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
