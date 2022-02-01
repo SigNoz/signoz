@@ -49,8 +49,8 @@ const Duration = (): JSX.Element => {
 
 	const duration = getDuration();
 
-	const maxDuration = duration['maxDuration'] || '';
-	const minDuration = duration['minDuration'] || '';
+	const maxDuration = duration['maxDuration'] || '0';
+	const minDuration = duration['minDuration'] || '0';
 
 	const [localMax, setLocalMax] = useState<string>(maxDuration);
 	const [localMin, setLocalMin] = useState<string>(minDuration);
@@ -68,7 +68,6 @@ const Duration = (): JSX.Element => {
 	) => {
 		const newMap = new Map(selectedFilter);
 		newMap.set('duration', [String(max), String(min)]);
-		console.log('i m running');
 
 		dispatch({
 			type: UPDATE_ALL_FILTERS,
@@ -139,7 +138,7 @@ const Duration = (): JSX.Element => {
 					addonAfter="ms"
 					onChange={(event) => {
 						const value = event.target.value;
-						onRangeSliderHandler([parseInt(value, 10), parseInt(localMin, 10)]);
+						onRangeSliderHandler([parseFloat(value) * 1000000, parseFloat(localMax)]);
 					}}
 					value={getMs(localMin)}
 				/>
@@ -151,7 +150,7 @@ const Duration = (): JSX.Element => {
 					addonAfter="ms"
 					onChange={(event) => {
 						const value = event.target.value;
-						onRangeSliderHandler([parseInt(localMax, 10), parseInt(value, 10)]);
+						onRangeSliderHandler([parseFloat(localMin), parseFloat(value) * 1000000]);
 					}}
 					value={getMs(localMax)}
 				/>
@@ -170,7 +169,7 @@ const Duration = (): JSX.Element => {
 						return <div>{`${getMs(value.toString())}ms`}</div>;
 					}}
 					onChange={onRangeSliderHandler}
-					value={[parseInt(localMin, 10), parseInt(localMax, 10)]}
+					value={[parseFloat(localMin), parseFloat(localMax)]}
 				/>
 			</Container>
 		</div>
