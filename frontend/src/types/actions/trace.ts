@@ -21,6 +21,8 @@ export const UPDATE_TRACE_GRAPH_ERROR = 'UPDATE_TRACE_GRAPH_ERROR';
 export const UPDATE_TRACE_GRAPH_SUCCESS = 'UPDATE_TRACE_GRAPH_SUCCESS';
 
 export const UPDATE_PRE_SELECTED = 'UPDATE_PRE_SELECTED';
+export const RESET_TRACE_FILTER = 'RESET_TRACE_FILTER';
+
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
 	payload: {
@@ -81,6 +83,10 @@ export interface SelectTraceFilter {
 	};
 }
 
+export interface ResetTraceFilter {
+	type: typeof RESET_TRACE_FILTER;
+}
+
 export interface GetTraceFilter {
 	type: typeof GET_TRACE_FILTER;
 	payload: {
@@ -131,6 +137,10 @@ export interface UpdateSpans {
 	};
 }
 
+export interface ResetTraceFilter {
+	type: typeof RESET_TRACE_FILTER;
+}
+
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter
@@ -146,4 +156,5 @@ export type TraceActions =
 	| UpdateSpanLoading
 	| UpdateSpansError
 	| UpdateSpans
-	| UpdatePreSelected;
+	| UpdatePreSelected
+	| ResetTraceFilter;

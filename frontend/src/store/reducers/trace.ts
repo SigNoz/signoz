@@ -14,6 +14,7 @@ import {
 	UPDATE_TRACE_GRAPH_ERROR,
 	UPDATE_TRACE_GRAPH_SUCCESS,
 	UPDATE_PRE_SELECTED,
+	RESET_TRACE_FILTER,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
@@ -95,6 +96,12 @@ const traceReducer = (
 			return {
 				...state,
 				selectedFilter: action.payload.selectedFilter,
+			};
+		}
+
+		case RESET_TRACE_FILTER: {
+			return {
+				...initialValue,
 			};
 		}
 
