@@ -8,7 +8,6 @@ import React, { useEffect } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { GetFilter } from 'store/actions/trace/getFilters';
 import { GetInitialTraceFilter } from 'store/actions/trace/getInitialFilter';
 import {
 	GetSpansAggregate,
@@ -17,14 +16,13 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_PRE_SELECTED } from 'types/actions/trace';
+import { UPDATE_PRE_SELECTED, RESET_TRACE_FILTER } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { Container, LeftContainer, RightContainer } from './styles';
 
 const Trace = ({
-	getFilters,
 	getSpansAggregate,
 	getSpans,
 	getInitialFilter,
@@ -61,11 +59,11 @@ const Trace = ({
 				selectedTags,
 			});
 	}, [
-		selectedFilter,
+		spansAggregate.currentPage,
 		spansAggregate.pageSize,
 		selectedTags,
 		filterLoading,
-		getSpansAggregate,
+		selectedFilter,
 	]);
 
 	useEffect(() => {
@@ -86,8 +84,15 @@ const Trace = ({
 		selectedFilter,
 		selectedTags,
 		filterLoading,
-		getSpans,
 	]);
+
+	useEffect(() => {
+		return () => {
+			dispatch({
+				type: RESET_TRACE_FILTER,
+			});
+		};
+	}, []);
 
 	useEffect(() => {
 		if (!spansAggregate.loading && !spansGraph.loading) {
@@ -124,11 +129,6 @@ const Trace = ({
 };
 
 interface DispatchProps {
-	getFilters: (
-		query: string,
-		minTime: GlobalReducer['minTime'],
-		maxTime: GlobalReducer['maxTime'],
-	) => void;
 	getSpansAggregate: (props: GetSpansAggregateProps) => void;
 	getSpans: (props: GetSpansProps) => void;
 	getInitialFilter: (
@@ -140,7 +140,6 @@ interface DispatchProps {
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getFilters: bindActionCreators(GetFilter, dispatch),
 	getInitialFilter: bindActionCreators(GetInitialTraceFilter, dispatch),
 	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
 	getSpans: bindActionCreators(GetSpans, dispatch),

@@ -9,8 +9,8 @@ import {
 	parseQueryIntoCurrent,
 	parseQueryIntoSelectedTags,
 	isTraceFilterEnum,
-	updateURL,
 	parseQueryIntoFilter,
+	parseIsSkippedSelection,
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
@@ -48,6 +48,8 @@ export const GetInitialTraceFilter = (
 				traces.spansAggregate.currentPage,
 			);
 
+			const isSelectionSkipped = parseIsSkippedSelection(query);
+
 			const parsedSelectedTags = parseQueryIntoSelectedTags(
 				query,
 				traces.selectedTags,
@@ -76,7 +78,7 @@ export const GetInitialTraceFilter = (
 				getSelectedFilter.currentValue,
 			);
 
-			if (response.payload) {
+			if (response.payload && !isSelectionSkipped.currentValue) {
 				const diff = traces.preSelectedFilter
 					? traces.filterToFetchData
 					: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
