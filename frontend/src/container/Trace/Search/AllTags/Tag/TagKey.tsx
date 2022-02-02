@@ -29,7 +29,12 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 
 			if (response.statusCode === 200) {
 				if (response.payload === null) {
-					setOptions([]);
+					setOptions([
+						{
+							value: '',
+							label: 'No tags available',
+						},
+					]);
 				} else {
 					setOptions(
 						response.payload.map((e) => ({
