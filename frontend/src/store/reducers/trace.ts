@@ -33,7 +33,7 @@ const initialValue: TraceReducer = {
 		['serviceName', true],
 	]),
 	spansAggregate: {
-		currentPage: 0,
+		currentPage: 1,
 		loading: false,
 		data: [],
 		error: false,

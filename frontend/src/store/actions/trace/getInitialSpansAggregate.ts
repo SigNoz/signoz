@@ -45,7 +45,7 @@ export const GetSpansAggregate = (
 				start: props.minTime,
 				selectedFilter: props.selectedFilter,
 				limit: props.pageSize,
-				offset: props.current * props.pageSize,
+				offset: props.current * props.pageSize - props.pageSize,
 				selectedTags: props.selectedTags,
 				isFilterExclude: traces.isFilterExclude,
 				preSelectedFilter: traces.preSelectedFilter,

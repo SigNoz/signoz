@@ -6,12 +6,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { updateURL } from 'store/actions/trace/util';
+import { getFilter, updateURL } from 'store/actions/trace/util';
 import dayjs from 'dayjs';
 import durationPlugin from 'dayjs/plugin/duration';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import getFilters from 'api/trace/getFilters';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 dayjs.extend(durationPlugin);
 
@@ -33,6 +35,9 @@ const Duration = (): JSX.Element => {
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const getDuration = () => {
 		const selectedDuration = selectedFilter.get('duration');
@@ -57,7 +62,7 @@ const Duration = (): JSX.Element => {
 
 	const defaultValue = [parseFloat(minDuration), parseFloat(maxDuration)];
 
-	const updatedUrl = (
+	const updatedUrl = async (
 		min: number,
 		max: number,
 		selectedFilter: TraceReducer['selectedFilter'],
@@ -65,28 +70,40 @@ const Duration = (): JSX.Element => {
 		filter: TraceReducer['filter'],
 		filterToFetchData: TraceReducer['filterToFetchData'],
 		selectedTags: TraceReducer['selectedTags'],
+		globalTime: GlobalReducer,
 	) => {
 		const newMap = new Map(selectedFilter);
 		newMap.set('duration', [String(max), String(min)]);
 
-		dispatch({
-			type: UPDATE_ALL_FILTERS,
-			payload: {
-				current: spansAggregate.currentPage,
-				filter,
-				filterToFetchData,
-				selectedFilter: newMap,
-				selectedTags,
-			},
+		const response = await getFilters({
+			end: String(globalTime.maxTime),
+			getFilters: filterToFetchData,
+			other: Object.fromEntries(newMap),
+			start: String(globalTime.minTime),
 		});
 
-		updateURL(
-			newMap,
-			filterToFetchData,
-			spansAggregate.currentPage,
-			selectedTags,
-			filter,
-		);
+		if (response.statusCode === 200) {
+			const preFilter = getFilter(response.payload);
+
+			dispatch({
+				type: UPDATE_ALL_FILTERS,
+				payload: {
+					current: spansAggregate.currentPage,
+					filter: preFilter,
+					filterToFetchData,
+					selectedFilter: newMap,
+					selectedTags,
+				},
+			});
+
+			updateURL(
+				newMap,
+				filterToFetchData,
+				spansAggregate.currentPage,
+				selectedTags,
+				preFilter,
+			);
+		}
 	};
 
 	const debounceUpdateUrl = useDebouncedFn(
@@ -107,6 +124,7 @@ const Duration = (): JSX.Element => {
 				filter,
 				filterToFetchData,
 				selectedTags,
+				globalTime,
 			),
 		500,
 	);
@@ -116,16 +134,6 @@ const Duration = (): JSX.Element => {
 
 		setLocalMin(min.toString());
 		setLocalMax(max.toString());
-
-		debounceUpdateUrl(
-			min,
-			max,
-			selectedFilter,
-			spansAggregate,
-			filter,
-			filterToFetchData,
-			selectedTags,
-		);
 	};
 
 	return (
@@ -138,7 +146,18 @@ const Duration = (): JSX.Element => {
 					addonAfter="ms"
 					onChange={(event) => {
 						const value = event.target.value;
-						onRangeSliderHandler([parseFloat(value) * 1000000, parseFloat(localMax)]);
+						const min = parseFloat(value) * 1000000;
+						const max = parseFloat(localMax);
+						onRangeSliderHandler([min, max]);
+						debounceUpdateUrl(
+							min,
+							max,
+							selectedFilter,
+							spansAggregate,
+							filter,
+							filterToFetchData,
+							selectedTags,
+						);
 					}}
 					value={getMs(localMin)}
 				/>
@@ -150,7 +169,19 @@ const Duration = (): JSX.Element => {
 					addonAfter="ms"
 					onChange={(event) => {
 						const value = event.target.value;
-						onRangeSliderHandler([parseFloat(localMin), parseFloat(value) * 1000000]);
+						const min = parseFloat(localMin);
+						const max = parseFloat(value) * 1000000;
+
+						onRangeSliderHandler([min, max]);
+						debounceUpdateUrl(
+							min,
+							max,
+							selectedFilter,
+							spansAggregate,
+							filter,
+							filterToFetchData,
+							selectedTags,
+						);
 					}}
 					value={getMs(localMax)}
 				/>
@@ -169,6 +200,17 @@ const Duration = (): JSX.Element => {
 						return <div>{`${getMs(value.toString())}ms`}</div>;
 					}}
 					onChange={onRangeSliderHandler}
+					onAfterChange={([min, max]) => {
+						debounceUpdateUrl(
+							min,
+							max,
+							selectedFilter,
+							spansAggregate,
+							filter,
+							filterToFetchData,
+							selectedTags,
+						);
+					}}
 					value={[parseFloat(localMin), parseFloat(localMax)]}
 				/>
 			</Container>

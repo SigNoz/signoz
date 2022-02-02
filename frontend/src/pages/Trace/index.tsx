@@ -58,13 +58,7 @@ const Trace = ({
 				pageSize: spansAggregate.pageSize,
 				selectedTags,
 			});
-	}, [
-		spansAggregate.currentPage,
-		spansAggregate.pageSize,
-		selectedTags,
-		filterLoading,
-		selectedFilter,
-	]);
+	}, [selectedTags, filterLoading, selectedFilter]);
 
 	useEffect(() => {
 		if (!filterLoading)
