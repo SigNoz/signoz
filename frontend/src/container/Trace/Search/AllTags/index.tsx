@@ -30,6 +30,7 @@ const AllTags = ({
 	updateTagIsError,
 	onChangeHandler,
 	updateTagVisiblity,
+	updateFilters,
 }: AllTagsProps): JSX.Element => {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
@@ -68,13 +69,7 @@ const AllTags = ({
 			updateTagIsError(true);
 		} else {
 			onChangeHandler(parsedQuery.payload);
-			updateURL(
-				traces.selectedFilter,
-				traces.filterToFetchData,
-				traces.spansAggregate.currentPage,
-				localSelectedTags,
-				traces.filter,
-			);
+			updateFilters(localSelectedTags);
 			updateTagIsError(false);
 			updateTagVisiblity(false);
 		}
@@ -157,6 +152,7 @@ const mapDispatchToProps = (
 });
 
 interface AllTagsProps extends DispatchProps {
+	updateFilters: (tags: TraceReducer['selectedTags']) => void;
 	onChangeHandler: (search: string) => void;
 }
 

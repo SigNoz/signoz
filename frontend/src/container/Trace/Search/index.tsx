@@ -3,25 +3,31 @@ import { Space } from 'antd';
 import { Container, SearchComponent } from './styles';
 import useClickOutside from 'hooks/useClickOutside';
 import Tags from './AllTags';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 import { ThunkDispatch } from 'redux-thunk';
 import AppActions from 'types/actions';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 import { parseQueryToTags, parseTagsToQuery } from './util';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { CaretRightFilled } from '@ant-design/icons';
 import { updateURL } from 'store/actions/trace/util';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 
 const Search = ({
 	updateTagVisiblity,
 	updateTagIsError,
 }: SearchProps): JSX.Element => {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const [value, setValue] = useState<string>('');
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	useEffect(() => {
 		if (traces.filterLoading) {
@@ -79,6 +85,27 @@ const Search = ({
 		setIsTagsModalHandler(true);
 	};
 
+	const updateFilters = async (selectedTags: TraceReducer['selectedTags']) => {
+		dispatch({
+			type: UPDATE_ALL_FILTERS,
+			payload: {
+				selectedTags,
+				current: traces.spansAggregate.currentPage,
+				filter: traces.filter,
+				filterToFetchData: traces.filterToFetchData,
+				selectedFilter: traces.selectedFilter,
+			},
+		});
+
+		updateURL(
+			traces.selectedFilter,
+			traces.filterToFetchData,
+			traces.spansAggregate.currentPage,
+			selectedTags,
+			traces.filter,
+		);
+	};
+
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
 			<Container ref={tagRef}>
@@ -94,13 +121,7 @@ const Search = ({
 					onSearch={(string) => {
 						if (string.length === 0) {
 							updateTagVisiblity(false);
-							updateURL(
-								traces.selectedFilter,
-								traces.filterToFetchData,
-								traces.spansAggregate.currentPage,
-								[],
-								traces.filter,
-							);
+							updateFilters([]);
 							return;
 						}
 
@@ -111,18 +132,14 @@ const Search = ({
 						} else {
 							updateTagIsError(false);
 							updateTagVisiblity(false);
-							updateURL(
-								traces.selectedFilter,
-								traces.filterToFetchData,
-								traces.spansAggregate.currentPage,
-								payload,
-								traces.filter,
-							);
+							updateFilters(payload);
 						}
 					}}
 				/>
 
-				{traces.isTagModalOpen && <Tags onChangeHandler={onChangeHandler} />}
+				{traces.isTagModalOpen && (
+					<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
+				)}
 			</Container>
 		</Space>
 	);
