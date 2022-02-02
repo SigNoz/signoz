@@ -1,4 +1,4 @@
-import { Button, Select as DefaultSelect } from 'antd';
+import { Button, Select as DefaultSelect, Space } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
@@ -20,6 +20,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import RefreshText from './Refresh';
+import Spinner from 'components/Spinner';
 
 const DateTimeSelection = ({
 	location,
@@ -75,6 +76,9 @@ const DateTimeSelection = ({
 		false,
 	);
 
+	const refreshButtonLoading = useSelector<AppState, boolean>(
+		(state) => state.metrics.loading,
+	);
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -131,6 +135,7 @@ const DateTimeSelection = ({
 	};
 
 	const onRefreshHandler = (): void => {
+		if (refreshButtonLoading) return;
 		onSelectHandler(selectedTimeInterval);
 		onLastRefreshHandler();
 	};
@@ -278,7 +283,10 @@ const DateTimeSelection = ({
 
 				<FormItem hidden={refreshButtonHidden}>
 					<Button type="primary" onClick={onRefreshHandler}>
-						Refresh
+						<Space>
+							Refresh
+							{refreshButtonLoading && <Spinner height="20px" color="#fff" />}
+						</Space>
 					</Button>
 				</FormItem>
 			</Form>

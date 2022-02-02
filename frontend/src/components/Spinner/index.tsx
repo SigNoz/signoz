@@ -4,8 +4,8 @@ import React from 'react';
 
 import { SpinerStyle } from './styles';
 
-const Spinner = ({ size, tip, height }: SpinnerProps): JSX.Element => (
-	<SpinerStyle height={height}>
+const Spinner = ({ size, tip, height, color }: SpinnerProps): JSX.Element => (
+	<SpinerStyle height={height} color={color}>
 		<Spin spinning size={size} tip={tip} indicator={<LoadingOutlined spin />} />
 	</SpinerStyle>
 );
@@ -14,6 +14,7 @@ interface SpinnerProps {
 	size?: SpinProps['size'];
 	tip?: SpinProps['tip'];
 	height?: React.CSSProperties['height'];
+	color?: React.CSSProperties['color'];
 }
 
 export default Spinner;
