@@ -70,7 +70,9 @@ export const GetInitialTraceFilter = (
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
 				other: Object.fromEntries(
-					traces.preSelectedFilter ? [] : getSelectedFilter.currentValue,
+					traces.preSelectedFilter && query.length === 0
+						? []
+						: getSelectedFilter.currentValue,
 				),
 			});
 

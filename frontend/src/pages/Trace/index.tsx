@@ -46,7 +46,7 @@ const Trace = ({
 
 	useEffect(() => {
 		getInitialFilter(minTime, maxTime);
-	}, [maxTime, minTime]);
+	}, [maxTime, minTime, getInitialFilter]);
 
 	useEffect(() => {
 		if (!filterLoading)
@@ -58,7 +58,7 @@ const Trace = ({
 				pageSize: spansAggregate.pageSize,
 				selectedTags,
 			});
-	}, [selectedTags, filterLoading, selectedFilter]);
+	}, [selectedTags, filterLoading, selectedFilter, maxTime, minTime]);
 
 	useEffect(() => {
 		if (!filterLoading)
@@ -78,6 +78,8 @@ const Trace = ({
 		selectedFilter,
 		selectedTags,
 		filterLoading,
+		maxTime,
+		minTime,
 	]);
 
 	useEffect(() => {
