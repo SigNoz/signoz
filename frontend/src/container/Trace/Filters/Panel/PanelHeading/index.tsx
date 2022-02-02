@@ -235,14 +235,14 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 					{props.name !== 'duration' && (
 						<ButtonContainer>
-							<ButtonComponent
+							{/* <ButtonComponent
 								aria-disabled={isLoading || filterLoading}
 								disabled={isLoading || filterLoading}
 								onClick={onSelectAllHandler}
 								type="link"
 							>
 								Select All
-							</ButtonComponent>
+							</ButtonComponent> */}
 
 							<ButtonComponent
 								aria-disabled={isLoading || filterLoading}
