@@ -1622,13 +1622,12 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		query = query + " AND durationNano <= ?"
 		args = append(args, queryParams.MaxDuration)
 	}
-	if len(queryParams.Status) != 0 {
-		for _, e := range queryParams.Status {
-			if e == "error" {
-				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-			} else if e == "ok" {
-				query += " AND (NOT ( has(tags, 'error:true') AND statusCode<500 AND statusCode!=2))"
-			}
+	// status can only be two and if both are selected than they are equivalent to none selected
+	if len(queryParams.Status) == 1 {
+		if queryParams.Status[0] == "error" {
+			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+		} else if queryParams.Status[0] == "ok" {
+			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
 		}
 	}
 	if len(queryParams.Kind) != 0 {
@@ -1776,13 +1775,12 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		query = query + " AND durationNano <= ?"
 		args = append(args, queryParams.MaxDuration)
 	}
-	if len(queryParams.Status) != 0 {
-		for _, e := range queryParams.Status {
-			if e == "error" {
-				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-			} else if e == "ok" {
-				query += " AND (NOT ( has(tags, 'error:true') AND statusCode<500 AND statusCode!=2))"
-			}
+	// status can only be two and if both are selected than they are equivalent to none selected
+	if len(queryParams.Status) == 1 {
+		if queryParams.Status[0] == "error" {
+			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+		} else if queryParams.Status[0] == "ok" {
+			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
 		}
 	}
 	tagFilters := []model.TagFilters{}
@@ -2361,13 +2359,12 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		query = query + " AND durationNano <= ?"
 		args = append(args, queryParams.MaxDuration)
 	}
-	if len(queryParams.Status) != 0 {
-		for _, e := range queryParams.Status {
-			if e == "error" {
-				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-			} else if e == "ok" {
-				query += " AND (NOT ( has(tags, 'error:true') AND statusCode<500 AND statusCode!=2))"
-			}
+	// status can only be two and if both are selected than they are equivalent to none selected
+	if len(queryParams.Status) == 1 {
+		if queryParams.Status[0] == "error" {
+			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+		} else if queryParams.Status[0] == "ok" {
+			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
 		}
 	}
 	if len(queryParams.Kind) != 0 {
