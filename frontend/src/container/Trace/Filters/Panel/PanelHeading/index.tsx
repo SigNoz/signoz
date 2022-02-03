@@ -51,7 +51,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			const getprepdatedSelectedFilter = new Map(selectedFilter);
 
 			if (!isDefaultOpen) {
-				updatedFilterData = [...filterToFetchData, props.name];
+				updatedFilterData = [props.name];
 			} else {
 				// removing the selected filter
 				updatedFilterData = [
@@ -76,7 +76,21 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						props.name,
 						Object.keys(updatedFilter.get(props.name) || {}),
 					);
+
+					updatedFilterData = [...filterToFetchData, props.name];
 				}
+
+				// now append the non prop.name trace filter enum over the list
+				selectedFilter.forEach((value, key) => {
+					if (key !== props.name) {
+						getprepdatedSelectedFilter.set(key, value);
+					}
+				});
+				filter.forEach((value, key) => {
+					if (key !== props.name) {
+						updatedFilter.set(key, value);
+					}
+				});
 
 				dispatch({
 					type: UPDATE_ALL_FILTERS,
@@ -158,60 +172,60 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		}
 	};
 
-	const onSelectAllHandler = async () => {
-		try {
-			setIsLoading(true);
-			const preFilter = new Map(filter);
-			const preSelectedFilter = new Map(selectedFilter);
+	// const onSelectAllHandler = async () => {
+	// 	try {
+	// 		setIsLoading(true);
+	// 		const preFilter = new Map(filter);
+	// 		const preSelectedFilter = new Map(selectedFilter);
 
-			preSelectedFilter.set(
-				props.name,
-				Object.keys(preFilter.get(props.name) || {}),
-			);
+	// 		preSelectedFilter.set(
+	// 			props.name,
+	// 			Object.keys(preFilter.get(props.name) || {}),
+	// 		);
 
-			const response = await getFilters({
-				end: String(global.maxTime),
-				start: String(global.minTime),
-				getFilters: filterToFetchData,
-				other: Object.fromEntries(preSelectedFilter),
-			});
+	// 		const response = await getFilters({
+	// 			end: String(global.maxTime),
+	// 			start: String(global.minTime),
+	// 			getFilters: filterToFetchData,
+	// 			other: Object.fromEntries(preSelectedFilter),
+	// 		});
 
-			if (response.statusCode === 200 && response.payload) {
-				const getUpatedFilter = getFilter(response.payload);
+	// 		if (response.statusCode === 200 && response.payload) {
+	// 			const getUpatedFilter = getFilter(response.payload);
 
-				preSelectedFilter.set(
-					props.name,
-					Object.keys(getUpatedFilter.get(props.name) || {}),
-				);
+	// 			preSelectedFilter.set(
+	// 				props.name,
+	// 				Object.keys(getUpatedFilter.get(props.name) || {}),
+	// 			);
 
-				dispatch({
-					type: UPDATE_ALL_FILTERS,
-					payload: {
-						current: spansAggregate.currentPage,
-						filter: preFilter,
-						filterToFetchData,
-						selectedFilter: preSelectedFilter,
-						selectedTags,
-					},
-				});
+	// 			dispatch({
+	// 				type: UPDATE_ALL_FILTERS,
+	// 				payload: {
+	// 					current: spansAggregate.currentPage,
+	// 					filter: preFilter,
+	// 					filterToFetchData,
+	// 					selectedFilter: preSelectedFilter,
+	// 					selectedTags,
+	// 				},
+	// 			});
 
-				updateURL(
-					preSelectedFilter,
-					filterToFetchData,
-					spansAggregate.currentPage,
-					selectedTags,
-					preFilter,
-				);
-			}
-			setIsLoading(false);
-		} catch (error) {
-			setIsLoading(false);
+	// 			updateURL(
+	// 				preSelectedFilter,
+	// 				filterToFetchData,
+	// 				spansAggregate.currentPage,
+	// 				selectedTags,
+	// 				preFilter,
+	// 			);
+	// 		}
+	// 		setIsLoading(false);
+	// 	} catch (error) {
+	// 		setIsLoading(false);
 
-			notification.error({
-				message: (error as AxiosError).toString(),
-			});
-		}
-	};
+	// 		notification.error({
+	// 			message: (error as AxiosError).toString(),
+	// 		});
+	// 	}
+	// };
 
 	return (
 		<>
