@@ -75,6 +75,10 @@ const DateTimeSelection = ({
 		false,
 	);
 
+	const refreshButtonLoading = useSelector<AppState, boolean>(
+		(state) => state.metrics.loading,
+	);
+
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -277,7 +281,11 @@ const DateTimeSelection = ({
 				</DefaultSelect>
 
 				<FormItem hidden={refreshButtonHidden}>
-					<Button type="primary" onClick={onRefreshHandler}>
+					<Button
+						type="primary"
+						onClick={onRefreshHandler}
+						loading={refreshButtonLoading}
+					>
 						Refresh
 					</Button>
 				</FormItem>
