@@ -4,6 +4,7 @@ import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
+import convertIntoEpoc from 'lib/covertIntoEpoc';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import React, { useRef } from 'react';
@@ -21,7 +22,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
-	const { topEndPoints, serviceOverview } = useSelector<AppState, MetricReducer>(
+	const { topEndPoints, serviceOverview, rpsEndpoints } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
 
@@ -177,19 +178,28 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					<Card>
 						<GraphTitle>Request per sec</GraphTitle>
 						<GraphContainer>
-							<FullView
-								name="request_per_sec"
-								noDataGraph
-								fullViewOptions={false}
-								onClickHandler={(event, element, chart, data): void => {
-									onClickhandler(event, element, chart, data, 'Request');
+							<Graph
+								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+									onClickhandler(ChartEvent, activeElements, chart, data, 'Request');
 								}}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[2m]))`,
-										legend: 'Request per second',
-									},
-								])}
+								name="request_per_sec"
+								type="line"
+								data={{
+									datasets: [
+										{
+											data: rpsEndpoints.map((value) => Number(parseFloat(value[1]).toFixed(2))),
+											borderColor: "#F2994A",
+											label: "Request per second",
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										}
+									],
+									labels: rpsEndpoints.map((value) => {
+										return new Date(parseInt(convertIntoEpoc(value[0] * 1000), 10))
+									})
+								}}
 							/>
 						</GraphContainer>
 					</Card>

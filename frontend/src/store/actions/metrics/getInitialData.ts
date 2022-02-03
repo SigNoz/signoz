@@ -3,6 +3,7 @@
 // import getExternalError from 'api/metrics/getExternalError';
 // import getExternalService from 'api/metrics/getExternalService';
 import getServiceOverview from 'api/metrics/getServiceOverview';
+import getRPS from 'api/metrics/getRPS';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
@@ -11,6 +12,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/metrics/getDBOverview';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import getMicroSeconds from 'lib/getStartAndEndTime/getMicroSeconds';
 
 export const GetInitialData = (
 	props: GetInitialDataProps,
@@ -38,6 +40,8 @@ export const GetInitialData = (
 				globalTime.maxTime / 1000000,
 			]);
 
+			const start = getMicroSeconds({ time: minTime / 1000000 });
+			const end = getMicroSeconds({ time: maxTime / 1000000 });
 			const step = 60;
 
 			const [
@@ -47,6 +51,7 @@ export const GetInitialData = (
 				// getExternalServiceResponse,
 				getServiceOverviewResponse,
 				getTopEndPointsResponse,
+				getRPSEndpointResponse,
 			] = await Promise.all([
 				// getDBOverView({
 				// 	...props,
@@ -71,6 +76,12 @@ export const GetInitialData = (
 					service: props.serviceName,
 					start: minTime,
 				}),
+				getRPS({
+					start: start,
+					end: end,
+					service: props.serviceName,
+					step: step,
+				}),
 			]);
 
 			if (
@@ -79,7 +90,8 @@ export const GetInitialData = (
 				// getExternalErrorResponse.statusCode === 200 &&
 				// getExternalServiceResponse.statusCode === 200 &&
 				getServiceOverviewResponse.statusCode === 200 &&
-				getTopEndPointsResponse.statusCode === 200
+				getTopEndPointsResponse.statusCode === 200 &&
+				getRPSEndpointResponse.statusCode === 200
 			) {
 				dispatch({
 					type: 'GET_INTIAL_APPLICATION_DATA',
@@ -90,6 +102,7 @@ export const GetInitialData = (
 						// externalService: getExternalServiceResponse.payload,
 						serviceOverview: getServiceOverviewResponse.payload,
 						topEndPoints: getTopEndPointsResponse.payload,
+						rpsEndpoints: getRPSEndpointResponse.payload.result[0].values,
 					},
 				});
 			} else {
@@ -99,6 +112,7 @@ export const GetInitialData = (
 						errorMessage:
 							getTopEndPointsResponse.error ||
 							getServiceOverviewResponse.error ||
+							getRPSEndpointResponse.error ||
 							// getExternalServiceResponse.error ||
 							// getExternalErrorResponse.error ||
 							// getExternalAverageDurationResponse.error ||

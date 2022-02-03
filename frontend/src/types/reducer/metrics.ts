@@ -5,6 +5,7 @@ import { ExternalService } from 'types/api/metrics/getExternalService';
 import { ServicesList } from 'types/api/metrics/getService';
 import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
+import { rpsEndpointValues } from 'types/api/metrics/getRPS';
 
 interface MetricReducer {
 	services: ServicesList[];
@@ -15,6 +16,7 @@ interface MetricReducer {
 	dbOverView: DBOverView[];
 	externalService: ExternalService[];
 	topEndPoints: TopEndPoints[];
+	rpsEndpoints: rpsEndpointValues[];
 	externalAverageDuration: ExternalAverageDuration[];
 	externalError: ExternalError[];
 	serviceOverview: ServiceOverview[];
