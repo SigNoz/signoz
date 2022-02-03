@@ -64,8 +64,19 @@ export const getChartDataforGroupBy = (
 		labels: [],
 	};
 
-	const numberOfGraphs = Object.keys(items[Object.keys(items)[0]]?.groupBy || {})
-		.length;
+	let max = 0;
+
+	const allGroupBy = Object.keys(items).map((e) => items[e].groupBy);
+
+	Object.keys(allGroupBy).map((e) => {
+		const length = Object.keys(allGroupBy[e]).length;
+
+		if (length >= max) {
+			max = length;
+		}
+	});
+
+	const numberOfGraphs = max;
 
 	const spansGraph: number[][] = [];
 
@@ -86,6 +97,7 @@ export const getChartDataforGroupBy = (
 		if (groupBy) {
 			Object.keys(groupBy).forEach((key) => {
 				const value = groupBy[key];
+				console.log(value, key);
 				preData.push(value);
 				names.push(key);
 			});
@@ -94,7 +106,7 @@ export const getChartDataforGroupBy = (
 		}
 	});
 
-	const updatedName = names.splice(0, numberOfGraphs);
+	const updatedName = [...new Set(names)];
 
 	transposeArray(spansGraph, numberOfGraphs).forEach((values, index) => {
 		chartData.datasets.push({
