@@ -76,6 +76,12 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
+				updatedFilter.set(props.name, {
+					[`${props.keyValue}`]: '-1',
+					...(filter.get(props.name) || {}),
+					...(updatedFilter.get(props.name) || {}),
+				});
+
 				dispatch({
 					type: UPDATE_ALL_FILTERS,
 					payload: {
