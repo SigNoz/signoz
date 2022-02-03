@@ -13,8 +13,8 @@ import {
 	UPDATE_TRACE_GRAPH_LOADING,
 	UPDATE_TRACE_GRAPH_ERROR,
 	UPDATE_TRACE_GRAPH_SUCCESS,
-	UPDATE_PRE_SELECTED,
 	RESET_TRACE_FILTER,
+	UPDATE_FILTER_RESPONSE_SELECTED,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
@@ -22,11 +22,11 @@ const initialValue: TraceReducer = {
 	filter: new Map(),
 	filterToFetchData: ['duration', 'status', 'serviceName'],
 	filterLoading: true,
+	filterResponseSelected: new Set(),
 	selectedFilter: new Map(),
 	selectedTags: [],
 	isTagModalOpen: false,
 	isTagModalError: false,
-	preSelectedFilter: window.location.search.length === 0 ? true : false,
 	isFilterExclude: new Map<TraceFilterEnum, boolean>([
 		['duration', true],
 		['status', true],
@@ -119,13 +119,6 @@ const traceReducer = (
 			};
 		}
 
-		case UPDATE_PRE_SELECTED: {
-			return {
-				...state,
-				preSelectedFilter: action.payload.preSelectedFilter,
-			};
-		}
-
 		case UPDATE_TAG_MODAL_VISIBLITY: {
 			return {
 				...state,
@@ -185,6 +178,13 @@ const traceReducer = (
 					loading: false,
 					error: false,
 				},
+			};
+		}
+
+		case UPDATE_FILTER_RESPONSE_SELECTED: {
+			return {
+				...state,
+				filterResponseSelected: action.payload.filterResponseSelected,
 			};
 		}
 

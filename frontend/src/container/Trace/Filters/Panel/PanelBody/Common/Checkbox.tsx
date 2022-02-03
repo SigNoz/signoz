@@ -23,6 +23,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		spansAggregate,
 		selectedTags,
 		filter,
+		filterResponseSelected,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -36,6 +37,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	const isPresent = selectedFilter.get(props.name) || [];
 
 	const isSelected = isPresent.find((e) => e === props.keyValue) !== undefined;
+	const isDefaultSelected = filterResponseSelected.has(props.keyValue);
 
 	const onCheckHandler = async () => {
 		try {
@@ -117,32 +119,23 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		}
 	};
 
+	const isCheckBoxSelected = isSelected;
+
 	return (
 		<CheckBoxContainer>
 			<Checkbox
 				disabled={isLoading || filterLoading}
 				onClick={onCheckHandler}
-				checked={isSelected}
+				checked={isCheckBoxSelected}
+				defaultChecked
 				key={props.keyValue}
 			>
 				{props.keyValue}
 			</Checkbox>
-			{isSelected ? (
-				<Typography
-					style={{
-						fontSize: '12px',
-					}}
-				>
-					{props.value}
-				</Typography>
+			{isCheckBoxSelected ? (
+				<Typography>{props.value}</Typography>
 			) : (
-				<Typography
-					style={{
-						fontSize: '12px',
-					}}
-				>
-					-
-				</Typography>
+				<Typography>-</Typography>
 			)}
 		</CheckBoxContainer>
 	);

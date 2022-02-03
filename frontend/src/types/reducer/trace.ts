@@ -5,10 +5,10 @@ export interface TraceReducer {
 	filterToFetchData: TraceFilterEnum[];
 	filterLoading: boolean;
 	selectedFilter: Map<TraceFilterEnum, string[]>;
-	preSelectedFilter: boolean;
 	isFilterExclude: Map<TraceFilterEnum, boolean>;
 	selectedTags: Tags[];
 	isTagModalOpen: boolean;
+	filterResponseSelected: Set<string>;
 	isTagModalError: boolean;
 	spansAggregate: {
 		loading: boolean;

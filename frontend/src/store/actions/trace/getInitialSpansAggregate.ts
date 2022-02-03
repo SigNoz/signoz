@@ -48,7 +48,6 @@ export const GetSpansAggregate = (
 				offset: props.current * props.pageSize - props.pageSize,
 				selectedTags: props.selectedTags,
 				isFilterExclude: traces.isFilterExclude,
-				preSelectedFilter: traces.preSelectedFilter,
 			});
 
 			if (response.statusCode === 200) {

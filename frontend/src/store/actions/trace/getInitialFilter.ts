@@ -14,9 +14,10 @@ import {
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
+	UPDATE_FILTER_RESPONSE_SELECTED,
 	UPDATE_TRACE_FILTER_LOADING,
 } from 'types/actions/trace';
-import { TraceFilterEnum } from 'types/reducer/trace';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import { notification } from 'antd';
 import xor from 'lodash-es/xor';
 
@@ -69,11 +70,7 @@ export const GetInitialTraceFilter = (
 				end: String(maxTime),
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
-				other: Object.fromEntries(
-					traces.preSelectedFilter && query.length === 0
-						? []
-						: getSelectedFilter.currentValue,
-				),
+				other: Object.fromEntries(getSelectedFilter.currentValue),
 			});
 
 			let preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
@@ -81,9 +78,10 @@ export const GetInitialTraceFilter = (
 			);
 
 			if (response.payload && !isSelectionSkipped.currentValue) {
-				const diff = traces.preSelectedFilter
-					? traces.filterToFetchData
-					: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
+				const diff = xor(
+					traces.filterToFetchData,
+					getFilterToFetchData.currentValue,
+				);
 
 				Object.keys(response.payload).map((key) => {
 					const value = response.payload[key];
@@ -100,6 +98,8 @@ export const GetInitialTraceFilter = (
 			}
 
 			if (response.statusCode === 200) {
+				const preResponseSelected: TraceReducer['filterResponseSelected'] = new Set();
+
 				const initialFilter = new Map<TraceFilterEnum, Record<string, string>>(
 					parsedFilter.currentValue,
 				);
@@ -107,6 +107,8 @@ export const GetInitialTraceFilter = (
 				Object.keys(response.payload).forEach((key) => {
 					const value = response.payload[key];
 					if (isTraceFilterEnum(key)) {
+						Object.keys(value).forEach((e) => preResponseSelected.add(e));
+
 						initialFilter.set(key, {
 							...initialFilter.get(key),
 							...value,
@@ -125,12 +127,12 @@ export const GetInitialTraceFilter = (
 					},
 				});
 
-				// updateURL(
-				// 	preSelectedFilter,
-				// 	getFilterToFetchData.currentValue,
-				// 	parsedQueryCurrent.currentValue,
-				// 	parsedSelectedTags.currentValue,
-				// );
+				dispatch({
+					type: UPDATE_FILTER_RESPONSE_SELECTED,
+					payload: {
+						filterResponseSelected: preResponseSelected,
+					},
+				});
 			} else {
 				notification.error({
 					message: response.error || 'Something went wrong',

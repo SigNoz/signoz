@@ -16,7 +16,7 @@ import {
 import { GetSpans, GetSpansProps } from 'store/actions/trace/getSpans';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_PRE_SELECTED, RESET_TRACE_FILTER } from 'types/actions/trace';
+import { RESET_TRACE_FILTER } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -40,8 +40,6 @@ const Trace = ({
 		selectedFunction,
 		selectedGroupBy,
 		filterLoading,
-		spansGraph,
-		preSelectedFilter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	useEffect(() => {
@@ -70,7 +68,6 @@ const Trace = ({
 				selectedTags,
 				start: minTime,
 				step: 60,
-				preSelectedFilter,
 			});
 	}, [
 		selectedFunction,
@@ -89,17 +86,6 @@ const Trace = ({
 			});
 		};
 	}, []);
-
-	useEffect(() => {
-		if (!spansAggregate.loading && !spansGraph.loading) {
-			dispatch({
-				type: UPDATE_PRE_SELECTED,
-				payload: {
-					preSelectedFilter: false,
-				},
-			});
-		}
-	}, [spansGraph, spansAggregate]);
 
 	return (
 		<>

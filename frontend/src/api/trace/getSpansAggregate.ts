@@ -24,9 +24,7 @@ const getSpanAggregate = async (
 			Values: e.Values,
 		}));
 
-		const other = Object.fromEntries(
-			props.preSelectedFilter ? new Map() : props.selectedFilter,
-		);
+		const other = Object.fromEntries(props.selectedFilter);
 
 		const duration = omitBy(other, (_, key) => !key.startsWith('duration')) || [];
 
