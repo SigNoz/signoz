@@ -97,7 +97,6 @@ export const getChartDataforGroupBy = (
 		if (groupBy) {
 			Object.keys(groupBy).forEach((key) => {
 				const value = groupBy[key];
-				console.log(value, key);
 				preData.push(value);
 				names.push(key);
 			});
@@ -110,7 +109,7 @@ export const getChartDataforGroupBy = (
 
 	transposeArray(spansGraph, numberOfGraphs).forEach((values, index) => {
 		chartData.datasets.push({
-			data: values,
+			data: values.map((e) => e || 0),
 			borderWidth: 1.5,
 			spanGaps: true,
 			borderColor: colors[index] || 'red',
