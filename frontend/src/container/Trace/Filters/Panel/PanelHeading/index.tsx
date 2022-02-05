@@ -31,6 +31,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		spansAggregate,
 		selectedTags,
 		filter,
+		userSelectedFilter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const isDefaultOpen =
@@ -49,6 +50,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			setIsLoading(true);
 			let updatedFilterData: TraceReducer['filterToFetchData'] = [];
 			const getprepdatedSelectedFilter = new Map(selectedFilter);
+			const getPreUserSelected = new Map(userSelectedFilter);
 
 			if (!isDefaultOpen) {
 				updatedFilterData = [props.name];
@@ -58,6 +60,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					...filterToFetchData.filter((name) => name !== props.name),
 				];
 				getprepdatedSelectedFilter.delete(props.name);
+				getPreUserSelected.delete(props.name);
 			}
 
 			const response = await getFilters({
@@ -72,7 +75,12 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 				// is closed
 				if (!isDefaultOpen) {
-					getprepdatedSelectedFilter.set(
+					// getprepdatedSelectedFilter.set(
+					// 	props.name,
+					// 	Object.keys(updatedFilter.get(props.name) || {}),
+					// );
+
+					getPreUserSelected.set(
 						props.name,
 						Object.keys(updatedFilter.get(props.name) || {}),
 					);
@@ -81,9 +89,15 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 				}
 
 				// now append the non prop.name trace filter enum over the list
-				selectedFilter.forEach((value, key) => {
+				// selectedFilter.forEach((value, key) => {
+				// 	if (key !== props.name) {
+				// 		getprepdatedSelectedFilter.set(key, value);
+				// 	}
+				// });
+
+				getPreUserSelected.forEach((value, key) => {
 					if (key !== props.name) {
-						getprepdatedSelectedFilter.set(key, value);
+						getPreUserSelected.set(key, value);
 					}
 				});
 				filter.forEach((value, key) => {
@@ -100,6 +114,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						filterToFetchData: updatedFilterData,
 						selectedFilter: getprepdatedSelectedFilter,
 						selectedTags,
+						userSelected: getPreUserSelected,
 					},
 				});
 
@@ -128,7 +143,10 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		try {
 			setIsLoading(true);
 			const updatedFilter = new Map(selectedFilter);
+			const preUserSelected = new Map(userSelectedFilter);
+
 			updatedFilter.delete(props.name);
+			preUserSelected.delete(props.name);
 
 			const response = await getFilters({
 				end: String(global.maxTime),
@@ -148,6 +166,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						filterToFetchData,
 						selectedFilter: updatedFilter,
 						selectedTags,
+						userSelected: preUserSelected,
 					},
 				});
 

@@ -43,6 +43,8 @@ export const GetInitialTraceFilter = (
 				traces.filterToFetchData,
 			);
 
+			const getUserSelected = new Map();
+
 			const parsedQueryCurrent = parseQueryIntoCurrent(
 				query,
 				traces.spansAggregate.currentPage,
@@ -89,8 +91,10 @@ export const GetInitialTraceFilter = (
 						.filter((e) => !['maxDuration', 'minDuration'].includes(e))
 						.map((preKey) => {
 							if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
-								const preValue = preSelectedFilter?.get(key) || [];
-								preSelectedFilter?.set(key, [...new Set([...preValue, preKey])]);
+								// const preValue = preSelectedFilter?.get(key) || [];
+								const preValue = getUserSelected?.get(key) || [];
+								// preSelectedFilter?.set(key, [...new Set([...preValue, preKey])]);
+								getUserSelected.set(key, [...new Set([...preValue, preKey])]);
 							}
 						});
 				});
@@ -123,6 +127,7 @@ export const GetInitialTraceFilter = (
 						filterToFetchData: getFilterToFetchData.currentValue,
 						current: parsedQueryCurrent.currentValue,
 						selectedTags: parsedSelectedTags.currentValue,
+						userSelected: getUserSelected,
 					},
 				});
 			} else {

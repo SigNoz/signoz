@@ -15,6 +15,7 @@ import {
 	UPDATE_TRACE_GRAPH_SUCCESS,
 	RESET_TRACE_FILTER,
 	UPDATE_FILTER_RESPONSE_SELECTED,
+	UPDATE_USER_SELECTED,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
@@ -32,6 +33,7 @@ const initialValue: TraceReducer = {
 		['status', true],
 		['serviceName', true],
 	]),
+	userSelectedFilter: new Map(),
 	spansAggregate: {
 		currentPage: 1,
 		loading: false,
@@ -70,6 +72,7 @@ const traceReducer = (
 				selectedFilter,
 				current,
 				selectedTags,
+				userSelected,
 			} = payload;
 
 			return {
@@ -78,6 +81,7 @@ const traceReducer = (
 				filterToFetchData,
 				selectedFilter,
 				selectedTags,
+				userSelectedFilter: userSelected,
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
@@ -185,6 +189,13 @@ const traceReducer = (
 			return {
 				...state,
 				filterResponseSelected: action.payload.filterResponseSelected,
+			};
+		}
+
+		case UPDATE_USER_SELECTED: {
+			return {
+				...state,
+				userSelectedFilter: action.payload.updatedUserSelected,
 			};
 		}
 

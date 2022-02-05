@@ -32,6 +32,7 @@ const Duration = (): JSX.Element => {
 		filterToFetchData,
 		spansAggregate,
 		selectedTags,
+		userSelectedFilter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -93,6 +94,7 @@ const Duration = (): JSX.Element => {
 					filterToFetchData,
 					selectedFilter: newMap,
 					selectedTags,
+					userSelected: userSelectedFilter,
 				},
 			});
 

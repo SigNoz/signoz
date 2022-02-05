@@ -14,7 +14,6 @@ import { parseQueryToTags, parseTagsToQuery } from './util';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { CaretRightFilled } from '@ant-design/icons';
 import { updateURL } from 'store/actions/trace/util';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 
 const Search = ({
@@ -22,9 +21,6 @@ const Search = ({
 	updateTagIsError,
 }: SearchProps): JSX.Element => {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const [value, setValue] = useState<string>('');
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -94,6 +90,7 @@ const Search = ({
 				filter: traces.filter,
 				filterToFetchData: traces.filterToFetchData,
 				selectedFilter: traces.selectedFilter,
+				userSelected: traces.userSelectedFilter,
 			},
 		});
 
