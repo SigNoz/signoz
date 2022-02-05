@@ -14,7 +14,6 @@ import {
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
-	UPDATE_FILTER_RESPONSE_SELECTED,
 	UPDATE_TRACE_FILTER_LOADING,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
@@ -78,10 +77,10 @@ export const GetInitialTraceFilter = (
 			);
 
 			if (response.payload && !isSelectionSkipped.currentValue) {
-				const diff = xor(
-					traces.filterToFetchData,
-					getFilterToFetchData.currentValue,
-				);
+				const diff =
+					query.length === 0
+						? traces.filterToFetchData
+						: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
 
 				Object.keys(response.payload).map((key) => {
 					const value = response.payload[key];
@@ -124,13 +123,6 @@ export const GetInitialTraceFilter = (
 						filterToFetchData: getFilterToFetchData.currentValue,
 						current: parsedQueryCurrent.currentValue,
 						selectedTags: parsedSelectedTags.currentValue,
-					},
-				});
-
-				dispatch({
-					type: UPDATE_FILTER_RESPONSE_SELECTED,
-					payload: {
-						filterResponseSelected: preResponseSelected,
 					},
 				});
 			} else {

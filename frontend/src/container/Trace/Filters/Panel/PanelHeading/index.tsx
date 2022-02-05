@@ -72,20 +72,20 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 				// is closed
 				if (!isDefaultOpen) {
-					// getprepdatedSelectedFilter.set(
-					// 	props.name,
-					// 	Object.keys(updatedFilter.get(props.name) || {}),
-					// );
+					getprepdatedSelectedFilter.set(
+						props.name,
+						Object.keys(updatedFilter.get(props.name) || {}),
+					);
 
 					updatedFilterData = [...filterToFetchData, props.name];
 				}
 
 				// now append the non prop.name trace filter enum over the list
-				// selectedFilter.forEach((value, key) => {
-				// 	if (key !== props.name) {
-				// 		getprepdatedSelectedFilter.set(key, value);
-				// 	}
-				// });
+				selectedFilter.forEach((value, key) => {
+					if (key !== props.name) {
+						getprepdatedSelectedFilter.set(key, value);
+					}
+				});
 				filter.forEach((value, key) => {
 					if (key !== props.name) {
 						updatedFilter.set(key, value);
