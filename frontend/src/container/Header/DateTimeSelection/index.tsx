@@ -1,4 +1,4 @@
-import { Button, Select as DefaultSelect } from 'antd';
+import { Select as DefaultSelect } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { getDefaultOption, getOptions, Time } from './config';
@@ -20,6 +20,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import RefreshText from './Refresh';
+import RefreshButton from './RefreshButton';
 
 const DateTimeSelection = ({
 	location,
@@ -279,16 +280,10 @@ const DateTimeSelection = ({
 						</Option>
 					))}
 				</DefaultSelect>
-
-				<FormItem hidden={refreshButtonHidden}>
-					<Button
-						type="primary"
-						onClick={onRefreshHandler}
-						loading={refreshButtonLoading}
-					>
-						Refresh
-					</Button>
-				</FormItem>
+				<RefreshButton
+					refreshButtonHidden={refreshButtonHidden}
+					onRefreshHandler={onRefreshHandler}
+				/>
 			</Form>
 
 			<RefreshText
