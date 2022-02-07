@@ -22,9 +22,12 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
-	const { topEndPoints, serviceOverview, rpsEndpoints } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const {
+		topEndPoints,
+		serviceOverview,
+		rpsEndpoints,
+		errorPercentEndpoints,
+	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp;
@@ -187,18 +190,20 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								data={{
 									datasets: [
 										{
-											data: rpsEndpoints.map((value) => Number(parseFloat(value[1]).toFixed(2))),
-											borderColor: "#F2994A",
-											label: "Request per second",
+											data: rpsEndpoints.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: '#F2994A',
+											label: 'Request per second',
 											showLine: true,
 											borderWidth: 1.5,
 											spanGaps: true,
 											pointRadius: 0,
-										}
+										},
 									],
 									labels: rpsEndpoints.map((value) => {
-										return new Date(parseInt(convertIntoEpoc(value[0] * 1000), 10))
-									})
+										return new Date(parseInt(convertIntoEpoc(value[0] * 1000), 10));
+									}),
 								}}
 							/>
 						</GraphContainer>
@@ -221,19 +226,32 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					<Card>
 						<GraphTitle>Error Percentage (%)</GraphTitle>
 						<GraphContainer>
-							<FullView
-								name="error_percentage_%"
-								noDataGraph
-								fullViewOptions={false}
+							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
 								}}
-								widget={getWidget([
-									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))) < 1000 OR vector(0)`,
-										legend: 'Error Percentage (%)',
-									},
-								])}
+								name="error_percentage_%"
+								// noDataGraph
+								// FullViewOptions
+								type="line"
+								data={{
+									datasets: [
+										{
+											data: errorPercentEndpoints.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: '#F2994A',
+											label: 'Request per second',
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										},
+									],
+									labels: errorPercentEndpoints.map((value) => {
+										return new Date(parseInt(convertIntoEpoc(value[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>

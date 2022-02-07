@@ -4,6 +4,7 @@
 // import getExternalService from 'api/metrics/getExternalService';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getRPS from 'api/metrics/getRPS';
+import getErrorPercentage from 'api/metrics/getErrorPercentage';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
@@ -52,6 +53,7 @@ export const GetInitialData = (
 				getServiceOverviewResponse,
 				getTopEndPointsResponse,
 				getRPSEndpointResponse,
+				getErrorPercentageResponse,
 			] = await Promise.all([
 				// getDBOverView({
 				// 	...props,
@@ -82,6 +84,12 @@ export const GetInitialData = (
 					service: props.serviceName,
 					step: step,
 				}),
+				getErrorPercentage({
+					start: start,
+					end: end,
+					service: props.serviceName,
+					step: step,
+				}),
 			]);
 
 			if (
@@ -91,7 +99,8 @@ export const GetInitialData = (
 				// getExternalServiceResponse.statusCode === 200 &&
 				getServiceOverviewResponse.statusCode === 200 &&
 				getTopEndPointsResponse.statusCode === 200 &&
-				getRPSEndpointResponse.statusCode === 200
+				getRPSEndpointResponse.statusCode === 200 &&
+				getErrorPercentageResponse.statusCode === 200
 			) {
 				dispatch({
 					type: 'GET_INTIAL_APPLICATION_DATA',
@@ -103,6 +112,8 @@ export const GetInitialData = (
 						serviceOverview: getServiceOverviewResponse.payload,
 						topEndPoints: getTopEndPointsResponse.payload,
 						rpsEndpoints: getRPSEndpointResponse.payload.result[0].values,
+						errorPercentEndpoints:
+							getErrorPercentageResponse.payload.result[0].values,
 					},
 				});
 			} else {
@@ -113,6 +124,7 @@ export const GetInitialData = (
 							getTopEndPointsResponse.error ||
 							getServiceOverviewResponse.error ||
 							getRPSEndpointResponse.error ||
+							getErrorPercentageResponse.error ||
 							// getExternalServiceResponse.error ||
 							// getExternalErrorResponse.error ||
 							// getExternalAverageDurationResponse.error ||
