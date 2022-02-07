@@ -32,7 +32,7 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 		history.push(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&selected={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&isSelectedFilterSkipped=true&userSelectedFilter={"status":["error","ok"],"serviceName":[${servicename}],"operation":["${operation}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
 

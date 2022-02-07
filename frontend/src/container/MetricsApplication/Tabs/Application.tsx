@@ -36,7 +36,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&isFilterExclude={"serviceName":true}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
 
@@ -90,7 +90,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&isFilterExclude={"serviceName":true}&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
 

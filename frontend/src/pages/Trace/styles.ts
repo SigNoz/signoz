@@ -12,6 +12,7 @@ export const Container = styled.div`
 export const LeftContainer = styled(Card)`
 	flex: 0.5;
 	width: 95%;
+	padding-right: 0.5rem;
 
 	.ant-card-body {
 		padding: 0;
@@ -33,9 +34,4 @@ export const ClearAllFilter = styled(Button)`
 		width: 95%;
 		margin-bottom: 0.5rem;
 	}
-`;
-
-export const LeftWrapper = styled.div`
-	width: 95%;
-	max-width: 202px;
 `;

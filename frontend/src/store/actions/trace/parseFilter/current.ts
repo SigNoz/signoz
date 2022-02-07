@@ -7,7 +7,7 @@ export const parseQueryIntoCurrent = (
 ): ParsedUrl<TraceReducer['spansAggregate']['currentPage']> => {
 	const url = new URLSearchParams(query);
 
-	let current = 0;
+	let current = 1;
 
 	const selected = url.get('current');
 

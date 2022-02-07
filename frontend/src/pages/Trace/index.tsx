@@ -27,7 +27,6 @@ import {
 	LeftContainer,
 	RightContainer,
 	ClearAllFilter,
-	LeftWrapper,
 } from './styles';
 
 const Trace = ({
@@ -110,14 +109,14 @@ const Trace = ({
 		<>
 			<Search />
 			<Container>
-				<LeftWrapper>
+				<div>
 					<ClearAllFilter onClick={onClickHandler} type="primary">
 						Clear all filters
 					</ClearAllFilter>
 					<LeftContainer>
 						<Filters />
 					</LeftContainer>
-				</LeftWrapper>
+				</div>
 
 				<RightContainer>
 					<Card>

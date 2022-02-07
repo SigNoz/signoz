@@ -38,7 +38,12 @@ export const GetInitialTraceFilter = (
 				return;
 			}
 
-			const getSelectedFilter = parseSelectedFilter(query, traces.selectedFilter);
+			const getSelectedFilter = parseSelectedFilter(
+				query,
+				traces.selectedFilter,
+				true,
+			);
+
 			const getFilterToFetchData = parseFilterToFetchData(
 				query,
 				traces.filterToFetchData,
@@ -82,7 +87,7 @@ export const GetInitialTraceFilter = (
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
 				other: Object.fromEntries(getUserSelected.currentValue),
-				isFilterExclude: traces.isFilterExclude,
+				isFilterExclude: getIsFilterExcluded.currentValue,
 			});
 
 			let preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
@@ -131,6 +136,8 @@ export const GetInitialTraceFilter = (
 						});
 					}
 				});
+
+				console.log({ preSelectedFilter });
 
 				dispatch({
 					type: UPDATE_ALL_FILTERS,
