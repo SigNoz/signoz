@@ -31,6 +31,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		spansAggregate,
 		selectedTags,
 		filter,
+		isFilterExclude,
 		userSelectedFilter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
@@ -68,6 +69,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 				start: String(global.minTime),
 				getFilters: updatedFilterData,
 				other: Object.fromEntries(getprepdatedSelectedFilter),
+				isFilterExclude,
 			});
 
 			if (response.statusCode === 200) {
@@ -115,6 +117,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						selectedFilter: getprepdatedSelectedFilter,
 						selectedTags,
 						userSelected: getPreUserSelected,
+						isFilterExclude,
 					},
 				});
 
@@ -124,6 +127,8 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					spansAggregate.currentPage,
 					selectedTags,
 					updatedFilter,
+					isFilterExclude,
+					getPreUserSelected,
 				);
 			} else {
 				notification.error({
@@ -148,11 +153,16 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			updatedFilter.delete(props.name);
 			preUserSelected.delete(props.name);
 
+			const postIsFilterExclude = new Map(isFilterExclude);
+
+			postIsFilterExclude.set(props.name, false);
+
 			const response = await getFilters({
 				end: String(global.maxTime),
 				start: String(global.minTime),
 				getFilters: filterToFetchData,
-				other: Object.fromEntries(updatedFilter),
+				other: Object.fromEntries(preUserSelected),
+				isFilterExclude: postIsFilterExclude,
 			});
 
 			if (response.statusCode === 200 && response.payload) {
@@ -167,6 +177,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						selectedFilter: updatedFilter,
 						selectedTags,
 						userSelected: preUserSelected,
+						isFilterExclude: postIsFilterExclude,
 					},
 				});
 
@@ -176,6 +187,8 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					spansAggregate.currentPage,
 					selectedTags,
 					getUpatedFilter,
+					postIsFilterExclude,
+					preUserSelected,
 				);
 			} else {
 				notification.error({

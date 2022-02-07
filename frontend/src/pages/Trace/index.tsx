@@ -1,10 +1,12 @@
 import { Card } from 'antd';
+import ROUTES from 'constants/routes';
 import Filters from 'container/Trace/Filters';
 import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
-import React, { useEffect } from 'react';
+import history from 'lib/history';
+import React, { useCallback, useEffect } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -20,7 +22,13 @@ import { RESET_TRACE_FILTER } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { Container, LeftContainer, RightContainer } from './styles';
+import {
+	Container,
+	LeftContainer,
+	RightContainer,
+	ClearAllFilter,
+	LeftWrapper,
+} from './styles';
 
 const Trace = ({
 	getSpansAggregate,
@@ -40,11 +48,14 @@ const Trace = ({
 		selectedFunction,
 		selectedGroupBy,
 		filterLoading,
+		isFilterExclude,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	useEffect(() => {
-		getInitialFilter(minTime, maxTime);
-	}, [maxTime, minTime, getInitialFilter]);
+		if (filterLoading) {
+			getInitialFilter(minTime, maxTime);
+		}
+	}, [maxTime, minTime, getInitialFilter, filterLoading]);
 
 	useEffect(() => {
 		if (!filterLoading)
@@ -68,6 +79,7 @@ const Trace = ({
 				selectedTags,
 				start: minTime,
 				step: 60,
+				isFilterExclude,
 			});
 	}, [
 		selectedFunction,
@@ -87,13 +99,25 @@ const Trace = ({
 		};
 	}, []);
 
+	const onClickHandler = useCallback(() => {
+		dispatch({
+			type: RESET_TRACE_FILTER,
+		});
+		history.replace(ROUTES.TRACE);
+	}, []);
+
 	return (
 		<>
 			<Search />
 			<Container>
-				<LeftContainer>
-					<Filters />
-				</LeftContainer>
+				<LeftWrapper>
+					<ClearAllFilter onClick={onClickHandler} type="primary">
+						Clear all filters
+					</ClearAllFilter>
+					<LeftContainer>
+						<Filters />
+					</LeftContainer>
+				</LeftWrapper>
 
 				<RightContainer>
 					<Card>

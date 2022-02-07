@@ -55,6 +55,7 @@ export const GetSpans = (
 				selectedTags: props.selectedTags,
 				start: start,
 				step: props.step,
+				isFilterExclude: props.isFilterExclude,
 			});
 
 			if (response.statusCode === 200) {

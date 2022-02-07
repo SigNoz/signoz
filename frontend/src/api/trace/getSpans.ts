@@ -15,6 +15,14 @@ const getSpans = async (
 			Values: e.Values,
 		}));
 
+		const exclude: string[] = [];
+
+		props.isFilterExclude.forEach((value, key) => {
+			if (value) {
+				exclude.push(key);
+			}
+		});
+
 		const other = Object.fromEntries(props.selectedFilter);
 
 		const duration = omitBy(other, (_, key) => !key.startsWith('duration')) || [];
@@ -33,6 +41,7 @@ const getSpans = async (
 				...nonDuration,
 				maxDuration: String((duration['duration'] || [])[0] || ''),
 				minDuration: String((duration['duration'] || [])[1] || ''),
+				exclude,
 			},
 		);
 

@@ -10,13 +10,20 @@ const getSpanAggregate = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const exclude: TraceFilterEnum[] = [];
 		const preProps = {
 			start: String(props.start),
 			end: String(props.end),
 			limit: props.limit,
 			offset: props.offset,
 		};
+
+		const exclude: TraceFilterEnum[] = [];
+
+		props.isFilterExclude.forEach((value, key) => {
+			if (value) {
+				exclude.push(key);
+			}
+		});
 
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
 			Key: e.Key[0],

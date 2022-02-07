@@ -16,6 +16,14 @@ const getFilters = async (
 			key.startsWith('duration'),
 		);
 
+		const exclude: string[] = [];
+
+		props.isFilterExclude.forEach((value, key) => {
+			if (value) {
+				exclude.push(key);
+			}
+		});
+
 		const response = await axios.post<PayloadProps>(`/getSpanFilters`, {
 			start: props.start,
 			end: props.end,
@@ -23,6 +31,7 @@ const getFilters = async (
 			...nonDuration,
 			maxDuration: String((duration['duration'] || [])[0] || ''),
 			minDuration: String((duration['duration'] || [])[1] || ''),
+			exclude: exclude,
 		});
 
 		return {

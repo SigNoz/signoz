@@ -33,6 +33,7 @@ const Duration = (): JSX.Element => {
 		spansAggregate,
 		selectedTags,
 		userSelectedFilter,
+		isFilterExclude,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -72,6 +73,7 @@ const Duration = (): JSX.Element => {
 		filterToFetchData: TraceReducer['filterToFetchData'],
 		selectedTags: TraceReducer['selectedTags'],
 		globalTime: GlobalReducer,
+		isFilterExclude: TraceReducer['isFilterExclude'],
 	) => {
 		const newMap = new Map(selectedFilter);
 		newMap.set('duration', [String(max), String(min)]);
@@ -95,6 +97,7 @@ const Duration = (): JSX.Element => {
 					selectedFilter: newMap,
 					selectedTags,
 					userSelected: userSelectedFilter,
+					isFilterExclude,
 				},
 			});
 
@@ -104,6 +107,8 @@ const Duration = (): JSX.Element => {
 				spansAggregate.currentPage,
 				selectedTags,
 				preFilter,
+				isFilterExclude,
+				userSelectedFilter,
 			);
 		}
 	};
@@ -127,6 +132,7 @@ const Duration = (): JSX.Element => {
 				filterToFetchData,
 				selectedTags,
 				globalTime,
+				isFilterExclude,
 			),
 		500,
 	);

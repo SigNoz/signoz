@@ -21,7 +21,6 @@ import AppActions from 'types/actions';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { parseTagsToQuery } from '../util';
 import { isEqual } from 'lodash-es';
-import { updateURL } from 'store/actions/trace/util';
 import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 
 const { Paragraph } = Typography;

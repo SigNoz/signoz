@@ -13,7 +13,7 @@ import { getFilter, updateURL } from 'store/actions/trace/util';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { UPDATE_ALL_FILTERS, UPDATE_USER_SELECTED } from 'types/actions/trace';
+import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 
 const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	const {
@@ -23,8 +23,8 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		spansAggregate,
 		selectedTags,
 		filter,
-		filterResponseSelected,
 		userSelectedFilter,
+		isFilterExclude,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -35,9 +35,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	const isPresent = selectedFilter.get(props.name) || [];
-
-	const isSelected = isPresent.find((e) => e === props.keyValue) !== undefined;
+	console.log(userSelectedFilter, selectedFilter);
 
 	const isUserSelected =
 		(userSelectedFilter.get(props.name) || []).find(
@@ -50,6 +48,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 			const newSelectedMap = new Map(selectedFilter);
 			const preUserSelectedMap = new Map(userSelectedFilter);
+			const preIsFilterExclude = new Map(isFilterExclude);
 
 			const isTopicPresent = preUserSelectedMap.get(props.name);
 
@@ -61,18 +60,21 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 				const isValuePresent =
 					isTopicPresent.find((e) => e === props.keyValue) !== undefined;
 
-				// check the value if present then remove the value
+				// check the value if present then remove the value or isChecked
 				if (isValuePresent) {
-					newSelectedMap.set(
-						props.name,
-						isTopicPresent.filter((e) => e !== props.keyValue),
-					);
+					preIsFilterExclude.set(props.name, true);
+
+					newSelectedMap.set(props.name, [
+						...new Set([...(newSelectedMap.get(props.name) || []), props.keyValue]),
+					]);
 
 					preUserSelectedMap.set(
 						props.name,
 						isTopicPresent.filter((e) => e !== props.keyValue),
 					);
 				} else {
+					// preIsFilterExclude.set(props.name, false);
+
 					// if not present add into the array of string
 					newSelectedMap.set(props.name, [...isTopicPresent, props.keyValue]);
 					preUserSelectedMap.set(props.name, [...isTopicPresent, props.keyValue]);
@@ -85,11 +87,14 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 				...preUserSelectedMap,
 			]);
 
+			// preIsFilterExclude.set(props.name, true);
+
 			const response = await getFilters({
 				other: Object.fromEntries(mergedMaps),
 				end: String(globalTime.maxTime),
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData.filter((e) => e !== props.name),
+				isFilterExclude: preIsFilterExclude,
 			});
 
 			if (response.statusCode === 200) {
@@ -116,24 +121,20 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 						filterToFetchData,
 						selectedFilter: mergedMaps,
 						userSelected: userMergedmaps,
+						isFilterExclude: preIsFilterExclude,
 					},
 				});
 
 				setIsLoading(false);
 
-				// updateURL(
-				// 	mergedMaps,
-				// 	filterToFetchData,
-				// 	spansAggregate.currentPage,
-				// 	selectedTags,
-				// 	updatedFilter,
-				// );
 				updateURL(
 					userMergedmaps,
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
 					updatedFilter,
+					isFilterExclude,
+					userMergedmaps,
 				);
 			} else {
 				setIsLoading(false);
@@ -164,12 +165,11 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 			>
 				{props.keyValue}
 			</Checkbox>
-			<Typography>{props.value}</Typography>
-			{/* {isCheckBoxSelected ? (
+			{isCheckBoxSelected ? (
 				<Typography>{props.value}</Typography>
 			) : (
 				<Typography>-</Typography>
-			)} */}
+			)}
 		</CheckBoxContainer>
 	);
 };

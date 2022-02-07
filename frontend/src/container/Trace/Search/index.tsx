@@ -91,6 +91,7 @@ const Search = ({
 				filterToFetchData: traces.filterToFetchData,
 				selectedFilter: traces.selectedFilter,
 				userSelected: traces.userSelectedFilter,
+				isFilterExclude: traces.isFilterExclude,
 			},
 		});
 
@@ -100,6 +101,8 @@ const Search = ({
 			traces.spansAggregate.currentPage,
 			selectedTags,
 			traces.filter,
+			traces.isFilterExclude,
+			traces.userSelectedFilter,
 		);
 	};
 

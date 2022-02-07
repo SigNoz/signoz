@@ -1,4 +1,4 @@
-import { Input } from 'antd';
+import { Button, Input } from 'antd';
 import styled from 'styled-components';
 
 export const DurationContainer = styled.div`

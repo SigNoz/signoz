@@ -44,6 +44,7 @@ export const SelectedTraceFilter = (props: {
 			traces.spansAggregate.currentPage,
 			traces.selectedTags,
 			traces.filter,
+			traces.isFilterExclude,
 		);
 	};
 };

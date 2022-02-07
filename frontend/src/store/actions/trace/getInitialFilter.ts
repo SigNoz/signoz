@@ -11,6 +11,7 @@ import {
 	isTraceFilterEnum,
 	parseQueryIntoFilter,
 	parseIsSkippedSelection,
+	parseFilterExclude,
 } from './util';
 import {
 	UPDATE_ALL_FILTERS,
@@ -43,7 +44,16 @@ export const GetInitialTraceFilter = (
 				traces.filterToFetchData,
 			);
 
-			const getUserSelected = new Map();
+			const getUserSelected = parseSelectedFilter(
+				query,
+				traces.userSelectedFilter,
+				true,
+			);
+
+			const getIsFilterExcluded = parseFilterExclude(
+				query,
+				traces.isFilterExclude,
+			);
 
 			const parsedQueryCurrent = parseQueryIntoCurrent(
 				query,
@@ -71,7 +81,8 @@ export const GetInitialTraceFilter = (
 				end: String(maxTime),
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
-				other: Object.fromEntries(getSelectedFilter.currentValue),
+				other: Object.fromEntries(getUserSelected.currentValue),
+				isFilterExclude: traces.isFilterExclude,
 			});
 
 			let preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
@@ -92,9 +103,11 @@ export const GetInitialTraceFilter = (
 						.map((preKey) => {
 							if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
 								// const preValue = preSelectedFilter?.get(key) || [];
-								const preValue = getUserSelected?.get(key) || [];
+								const preValue = getUserSelected.currentValue?.get(key) || [];
 								// preSelectedFilter?.set(key, [...new Set([...preValue, preKey])]);
-								getUserSelected.set(key, [...new Set([...preValue, preKey])]);
+								getUserSelected.currentValue.set(key, [
+									...new Set([...preValue, preKey]),
+								]);
 							}
 						});
 				});
@@ -127,7 +140,8 @@ export const GetInitialTraceFilter = (
 						filterToFetchData: getFilterToFetchData.currentValue,
 						current: parsedQueryCurrent.currentValue,
 						selectedTags: parsedSelectedTags.currentValue,
-						userSelected: getUserSelected,
+						userSelected: getUserSelected.currentValue,
+						isFilterExclude: getIsFilterExcluded.currentValue,
 					},
 				});
 			} else {
