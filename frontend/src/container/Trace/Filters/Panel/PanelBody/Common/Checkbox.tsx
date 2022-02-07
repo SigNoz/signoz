@@ -124,12 +124,12 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 				setIsLoading(false);
 
 				updateURL(
-					preUserSelectedMap,
+					newSelectedMap,
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
 					updatedFilter,
-					isFilterExclude,
+					preIsFilterExclude,
 					preUserSelectedMap,
 				);
 			} else {
@@ -147,7 +147,6 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 		}
 	};
 
-	// const isCheckBoxSelected = isSelected;
 	const isCheckBoxSelected = isUserSelected;
 
 	return (

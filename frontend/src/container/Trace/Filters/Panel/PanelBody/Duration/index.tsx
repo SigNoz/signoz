@@ -78,16 +78,12 @@ const Duration = (): JSX.Element => {
 		const newMap = new Map(selectedFilter);
 		newMap.set('duration', [String(max), String(min)]);
 
-		const preExclude = new Map(isFilterExclude);
-
-		preExclude.set('duration', true);
-
 		const response = await getFilters({
 			end: String(globalTime.maxTime),
 			getFilters: filterToFetchData,
 			other: Object.fromEntries(newMap),
 			start: String(globalTime.minTime),
-			isFilterExclude: preExclude,
+			isFilterExclude,
 		});
 
 		if (response.statusCode === 200) {
@@ -102,7 +98,7 @@ const Duration = (): JSX.Element => {
 					selectedFilter: newMap,
 					selectedTags,
 					userSelected: userSelectedFilter,
-					isFilterExclude: preExclude,
+					isFilterExclude,
 				},
 			});
 
@@ -112,7 +108,7 @@ const Duration = (): JSX.Element => {
 				spansAggregate.currentPage,
 				selectedTags,
 				preFilter,
-				preExclude,
+				isFilterExclude,
 				userSelectedFilter,
 			);
 		}

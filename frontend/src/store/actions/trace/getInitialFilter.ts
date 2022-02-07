@@ -52,7 +52,6 @@ export const GetInitialTraceFilter = (
 			const getUserSelected = parseSelectedFilter(
 				query,
 				traces.userSelectedFilter,
-				true,
 			);
 
 			const getIsFilterExcluded = parseFilterExclude(
@@ -136,8 +135,6 @@ export const GetInitialTraceFilter = (
 						});
 					}
 				});
-
-				console.log({ preSelectedFilter });
 
 				dispatch({
 					type: UPDATE_ALL_FILTERS,

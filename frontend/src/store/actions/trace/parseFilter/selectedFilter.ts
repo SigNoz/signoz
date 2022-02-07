@@ -10,7 +10,9 @@ export const parseSelectedFilter = (
 
 	const filters = new Map<TraceFilterEnum, string[]>();
 
-	const selected = url.get(isUserSelected ? 'selected' : 'userSelectedFilter');
+	const title = isUserSelected ? 'selected' : 'userSelectedFilter';
+
+	const selected = url.get(title);
 
 	if (selected) {
 		try {
