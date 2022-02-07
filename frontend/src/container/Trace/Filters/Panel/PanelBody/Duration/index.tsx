@@ -83,6 +83,7 @@ const Duration = (): JSX.Element => {
 			getFilters: filterToFetchData,
 			other: Object.fromEntries(newMap),
 			start: String(globalTime.minTime),
+			isFilterExclude,
 		});
 
 		if (response.statusCode === 200) {

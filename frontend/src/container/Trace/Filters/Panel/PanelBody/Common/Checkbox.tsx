@@ -35,8 +35,6 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	console.log(userSelectedFilter, selectedFilter);
-
 	const isUserSelected =
 		(userSelectedFilter.get(props.name) || []).find(
 			(e) => e === props.keyValue,
