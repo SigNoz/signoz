@@ -1,3 +1,5 @@
+import { TraceReducer } from 'types/reducer/trace';
+
 export interface Props {
 	start: string;
 	end: string;
@@ -5,6 +7,7 @@ export interface Props {
 	other: {
 		[k: string]: string[];
 	};
+	isFilterExclude: TraceReducer['isFilterExclude'];
 }
 
 export interface PayloadProps {

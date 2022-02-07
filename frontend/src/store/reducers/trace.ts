@@ -15,7 +15,7 @@ import {
 	UPDATE_TRACE_GRAPH_SUCCESS,
 	RESET_TRACE_FILTER,
 	UPDATE_FILTER_RESPONSE_SELECTED,
-	UPDATE_USER_SELECTED,
+	UPDATE_FILTER_EXCLUDE,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
@@ -28,11 +28,7 @@ const initialValue: TraceReducer = {
 	selectedTags: [],
 	isTagModalOpen: false,
 	isTagModalError: false,
-	isFilterExclude: new Map<TraceFilterEnum, boolean>([
-		['duration', true],
-		['status', true],
-		['serviceName', true],
-	]),
+	isFilterExclude: new Map<TraceFilterEnum, boolean>([]),
 	userSelectedFilter: new Map(),
 	spansAggregate: {
 		currentPage: 1,
@@ -73,6 +69,7 @@ const traceReducer = (
 				current,
 				selectedTags,
 				userSelected,
+				isFilterExclude,
 			} = payload;
 
 			return {
@@ -82,6 +79,7 @@ const traceReducer = (
 				selectedFilter,
 				selectedTags,
 				userSelectedFilter: userSelected,
+				isFilterExclude,
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
@@ -192,10 +190,10 @@ const traceReducer = (
 			};
 		}
 
-		case UPDATE_USER_SELECTED: {
+		case UPDATE_FILTER_EXCLUDE: {
 			return {
 				...state,
-				userSelectedFilter: action.payload.updatedUserSelected,
+				isFilterExclude: action.payload.isFilterExclude,
 			};
 		}
 

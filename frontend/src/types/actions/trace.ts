@@ -23,7 +23,7 @@ export const UPDATE_TRACE_GRAPH_SUCCESS = 'UPDATE_TRACE_GRAPH_SUCCESS';
 export const RESET_TRACE_FILTER = 'RESET_TRACE_FILTER';
 export const UPDATE_FILTER_RESPONSE_SELECTED =
 	'UPDATE_FILTER_RESPONSE_SELECTED';
-export const UPDATE_USER_SELECTED = 'UPDATE_USER_SELECTED';
+export const UPDATE_FILTER_EXCLUDE = 'UPDATE_FILTER_EXCLUDE';
 
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
@@ -69,6 +69,7 @@ export interface UpdateAllFilters {
 		current: TraceReducer['spansAggregate']['currentPage'];
 		selectedTags: TraceReducer['selectedTags'];
 		userSelected: TraceReducer['userSelectedFilter'];
+		isFilterExclude: TraceReducer['isFilterExclude'];
 	};
 }
 
@@ -133,6 +134,13 @@ export interface UpdateSpansError {
 	};
 }
 
+export interface UpdateFilterExclude {
+	type: typeof UPDATE_FILTER_EXCLUDE;
+	payload: {
+		isFilterExclude: TraceReducer['isFilterExclude'];
+	};
+}
+
 export interface UpdateSpans {
 	type: typeof UPDATE_TRACE_GRAPH_SUCCESS;
 	payload: {
@@ -142,13 +150,6 @@ export interface UpdateSpans {
 
 export interface ResetTraceFilter {
 	type: typeof RESET_TRACE_FILTER;
-}
-
-export interface UpdateUserSelected {
-	type: typeof UPDATE_USER_SELECTED;
-	payload: {
-		updatedUserSelected: TraceReducer['userSelectedFilter'];
-	};
 }
 
 export type TraceActions =
@@ -168,4 +169,4 @@ export type TraceActions =
 	| UpdateSpans
 	| ResetTraceFilter
 	| UpdateSelected
-	| UpdateUserSelected;
+	| UpdateFilterExclude;
