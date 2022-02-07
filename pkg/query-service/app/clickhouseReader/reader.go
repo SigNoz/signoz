@@ -1395,7 +1395,15 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	}
 
 	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
+	if _, ok := excludeMap["status"]; ok {
+		if len(queryParams.Status) == 1 {
+			if queryParams.Status[0] == "error" {
+				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			} else if queryParams.Status[0] == "ok" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			}
+		}
+	} else if len(queryParams.Status) == 1 {
 		if queryParams.Status[0] == "error" {
 			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
 		} else if queryParams.Status[0] == "ok" {
@@ -1623,7 +1631,15 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		args = append(args, queryParams.MaxDuration)
 	}
 	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
+	if _, ok := excludeMap["status"]; ok {
+		if len(queryParams.Status) == 1 {
+			if queryParams.Status[0] == "error" {
+				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			} else if queryParams.Status[0] == "ok" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			}
+		}
+	} else if len(queryParams.Status) == 1 {
 		if queryParams.Status[0] == "error" {
 			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
 		} else if queryParams.Status[0] == "ok" {
@@ -1776,7 +1792,15 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		args = append(args, queryParams.MaxDuration)
 	}
 	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
+	if _, ok := excludeMap["status"]; ok {
+		if len(queryParams.Status) == 1 {
+			if queryParams.Status[0] == "error" {
+				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			} else if queryParams.Status[0] == "ok" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			}
+		}
+	} else if len(queryParams.Status) == 1 {
 		if queryParams.Status[0] == "error" {
 			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
 		} else if queryParams.Status[0] == "ok" {
@@ -2360,7 +2384,15 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		args = append(args, queryParams.MaxDuration)
 	}
 	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
+	if _, ok := excludeMap["status"]; ok {
+		if len(queryParams.Status) == 1 {
+			if queryParams.Status[0] == "error" {
+				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			} else if queryParams.Status[0] == "ok" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			}
+		}
+	} else if len(queryParams.Status) == 1 {
 		if queryParams.Status[0] == "error" {
 			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
 		} else if queryParams.Status[0] == "ok" {
