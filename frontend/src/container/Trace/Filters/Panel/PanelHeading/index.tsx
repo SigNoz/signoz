@@ -279,9 +279,8 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						</Text>
 					</TextCotainer>
 
-					{props.name !== 'duration' && (
-						<ButtonContainer>
-							{/* <ButtonComponent
+					<ButtonContainer>
+						{/* <ButtonComponent
 								aria-disabled={isLoading || filterLoading}
 								disabled={isLoading || filterLoading}
 								onClick={onSelectAllHandler}
@@ -290,16 +289,15 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 								Select All
 							</ButtonComponent> */}
 
-							<ButtonComponent
-								aria-disabled={isLoading || filterLoading}
-								disabled={isLoading || filterLoading}
-								onClick={onClearAllHandler}
-								type="link"
-							>
-								Clear All
-							</ButtonComponent>
-						</ButtonContainer>
-					)}
+						<ButtonComponent
+							aria-disabled={isLoading || filterLoading}
+							disabled={isLoading || filterLoading}
+							onClick={onClearAllHandler}
+							type="link"
+						>
+							Clear All
+						</ButtonComponent>
+					</ButtonContainer>
 				</Container>
 			</Card>
 		</>
