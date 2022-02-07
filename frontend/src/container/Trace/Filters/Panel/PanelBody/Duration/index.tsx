@@ -123,6 +123,7 @@ const Duration = (): JSX.Element => {
 			filter,
 			filterToFetchData,
 			selectedTags,
+			isFilterExclude,
 		) =>
 			updatedUrl(
 				min,
@@ -166,6 +167,7 @@ const Duration = (): JSX.Element => {
 							filter,
 							filterToFetchData,
 							selectedTags,
+							isFilterExclude,
 						);
 					}}
 					value={getMs(localMin)}
@@ -190,6 +192,7 @@ const Duration = (): JSX.Element => {
 							filter,
 							filterToFetchData,
 							selectedTags,
+							isFilterExclude,
 						);
 					}}
 					value={getMs(localMax)}
@@ -218,6 +221,7 @@ const Duration = (): JSX.Element => {
 							filter,
 							filterToFetchData,
 							selectedTags,
+							isFilterExclude,
 						);
 					}}
 					value={[parseFloat(localMin), parseFloat(localMax)]}
