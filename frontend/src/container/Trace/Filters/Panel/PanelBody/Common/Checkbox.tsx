@@ -52,7 +52,6 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 			// append the value
 			if (!isTopicPresent) {
-				newSelectedMap.set(props.name, [props.keyValue]);
 				preUserSelectedMap.set(props.name, [props.keyValue]);
 			} else {
 				const isValuePresent =
@@ -60,35 +59,34 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 				// check the value if present then remove the value or isChecked
 				if (isValuePresent) {
-					preIsFilterExclude.set(props.name, true);
-
-					newSelectedMap.set(props.name, [
-						...new Set([...(newSelectedMap.get(props.name) || []), props.keyValue]),
-					]);
-
 					preUserSelectedMap.set(
 						props.name,
 						isTopicPresent.filter((e) => e !== props.keyValue),
 					);
 				} else {
-					// preIsFilterExclude.set(props.name, false);
-
 					// if not present add into the array of string
-					newSelectedMap.set(props.name, [...isTopicPresent, props.keyValue]);
 					preUserSelectedMap.set(props.name, [...isTopicPresent, props.keyValue]);
 				}
 			}
 
-			const mergedMaps = new Map([...selectedFilter, ...newSelectedMap]);
-			const userMergedmaps = new Map([
-				...userSelectedFilter,
-				...preUserSelectedMap,
-			]);
+			if (newSelectedMap.get(props.name)?.find((e) => e === props.keyValue)) {
+				newSelectedMap.set(props.name, [
+					...(newSelectedMap.get(props.name) || []).filter(
+						(e) => e !== props.keyValue,
+					),
+				]);
+			} else {
+				newSelectedMap.set(props.name, [
+					...new Set([...(newSelectedMap.get(props.name) || []), props.keyValue]),
+				]);
+			}
 
-			// preIsFilterExclude.set(props.name, true);
+			if (preIsFilterExclude.get(props.name) !== false) {
+				preIsFilterExclude.set(props.name, true);
+			}
 
 			const response = await getFilters({
-				other: Object.fromEntries(mergedMaps),
+				other: Object.fromEntries(newSelectedMap),
 				end: String(globalTime.maxTime),
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData.filter((e) => e !== props.name),
@@ -100,7 +98,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 
 				updatedFilter.forEach((value, key) => {
 					if (key !== 'duration' && props.name !== key) {
-						userMergedmaps.set(key, Object.keys(value));
+						preUserSelectedMap.set(key, Object.keys(value));
 					}
 				});
 
@@ -117,8 +115,8 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 						current: spansAggregate.currentPage,
 						filter: updatedFilter,
 						filterToFetchData,
-						selectedFilter: mergedMaps,
-						userSelected: userMergedmaps,
+						selectedFilter: newSelectedMap,
+						userSelected: preUserSelectedMap,
 						isFilterExclude: preIsFilterExclude,
 					},
 				});
@@ -126,13 +124,13 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 				setIsLoading(false);
 
 				updateURL(
-					userMergedmaps,
+					preUserSelectedMap,
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
 					updatedFilter,
 					isFilterExclude,
-					userMergedmaps,
+					preUserSelectedMap,
 				);
 			} else {
 				setIsLoading(false);
