@@ -1394,14 +1394,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		args = append(args, queryParams.MaxDuration)
 	}
 
-	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
-		if queryParams.Status[0] == "error" {
-			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-		} else if queryParams.Status[0] == "ok" {
-			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
-		}
-	}
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	traceFilterReponse := model.SpanFiltersResponse{
 		Status:      map[string]int{},
@@ -1579,6 +1572,27 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	return &traceFilterReponse, nil
 }
 
+func getStatusFilters(query string, statusParams []string, excludeMap map[string]struct{}) string {
+
+	// status can only be two and if both are selected than they are equivalent to none selected
+	if _, ok := excludeMap["status"]; ok {
+		if len(statusParams) == 1 {
+			if statusParams[0] == "error" {
+				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			} else if statusParams[0] == "ok" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			}
+		}
+	} else if len(statusParams) == 1 {
+		if statusParams[0] == "error" {
+			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+		} else if statusParams[0] == "ok" {
+			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+		}
+	}
+	return query
+}
+
 func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
 
 	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
@@ -1622,14 +1636,8 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		query = query + " AND durationNano <= ?"
 		args = append(args, queryParams.MaxDuration)
 	}
-	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
-		if queryParams.Status[0] == "error" {
-			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-		} else if queryParams.Status[0] == "ok" {
-			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
-		}
-	}
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
 	if len(queryParams.Kind) != 0 {
 		query = query + " AND kind = ?"
 		args = append(args, queryParams.Kind)
@@ -1775,14 +1783,9 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		query = query + " AND durationNano <= ?"
 		args = append(args, queryParams.MaxDuration)
 	}
-	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
-		if queryParams.Status[0] == "error" {
-			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-		} else if queryParams.Status[0] == "ok" {
-			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
-		}
-	}
+
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
 	tagFilters := []model.TagFilters{}
 
 	finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
@@ -2359,14 +2362,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		query = query + " AND durationNano <= ?"
 		args = append(args, queryParams.MaxDuration)
 	}
-	// status can only be two and if both are selected than they are equivalent to none selected
-	if len(queryParams.Status) == 1 {
-		if queryParams.Status[0] == "error" {
-			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
-		} else if queryParams.Status[0] == "ok" {
-			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
-		}
-	}
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
 	if len(queryParams.Kind) != 0 {
 		query = query + " AND kind = ?"
 		args = append(args, queryParams.Kind)
