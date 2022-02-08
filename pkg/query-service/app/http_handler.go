@@ -214,6 +214,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getFilteredSpans", aH.getFilteredSpans).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.getFilteredSpanAggregates).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/getTagValues", aH.getTagValues).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
@@ -1032,6 +1033,22 @@ func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := (*aH.reader).GetTagFilters(context.Background(), query)
+
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseTagValueRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, apiErr := (*aH.reader).GetTagValues(context.Background(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return

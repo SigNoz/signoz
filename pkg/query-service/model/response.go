@@ -267,6 +267,10 @@ type TagItem struct {
 type TagFilters struct {
 	TagKeys string `json:"tagKeys" db:"tagKeys"`
 }
+
+type TagValues struct {
+	TagValues string `json:"tagValues" db:"tagValues"`
+}
 type ServiceMapDependencyResponseItem struct {
 	Parent    string `json:"parent,omitempty" db:"parent,omitempty"`
 	Child     string `json:"child,omitempty" db:"child,omitempty"`
