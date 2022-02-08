@@ -33,7 +33,7 @@ For Mac with Apple chip (arm):
 docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d
 ```
 
-Open http://localhost:3000 in your favourite browser. In couple of minutes, you should see
+Open http://localhost:3301 in your favourite browser. In couple of minutes, you should see
 the data generated from hotrod in SigNoz UI.
 
 ## Kubernetes
@@ -53,10 +53,10 @@ helm -n platform install my-release signoz/signoz
 To access the UI, you can `port-forward` the frontend service:
 
 ```sh
-kubectl -n platform port-forward svc/my-release-frontend 3000:3000
+kubectl -n platform port-forward svc/my-release-frontend 3301:3301
 ```
 
-Open http://localhost:3000 in your favourite browser. Few minutes after you generate load
+Open http://localhost:3301 in your favourite browser. Few minutes after you generate load
 from the HotROD application, you should see the data generated from hotrod in SigNoz UI.
 
 #### Test HotROD application with SigNoz
