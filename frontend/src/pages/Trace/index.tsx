@@ -94,14 +94,17 @@ const Trace = ({
 		};
 	}, []);
 
-	const onClickHandler = useCallback(() => {
+	const onClickHandler = useCallback((e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		history.replace(ROUTES.TRACE);
+
 		dispatch({
 			type: RESET_TRACE_FILTER,
 		});
 
 		setIsChanged((state) => !state);
-
-		history.replace(ROUTES.TRACE);
 	}, []);
 
 	return (

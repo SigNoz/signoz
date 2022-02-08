@@ -85,7 +85,7 @@ export const GetInitialTraceFilter = (
 				end: String(maxTime),
 				getFilters: getFilterToFetchData.currentValue,
 				start: String(minTime),
-				other: Object.fromEntries(getUserSelected.currentValue),
+				other: Object.fromEntries(getSelectedFilter.currentValue),
 				isFilterExclude: getIsFilterExcluded.currentValue,
 			});
 

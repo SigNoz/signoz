@@ -46,8 +46,11 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const onExpandHandler = async () => {
+	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
+			e.preventDefault();
+			e.stopPropagation();
+
 			setIsLoading(true);
 			let updatedFilterData: TraceReducer['filterToFetchData'] = [];
 			const getprepdatedSelectedFilter = new Map(selectedFilter);

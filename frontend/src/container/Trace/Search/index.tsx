@@ -62,7 +62,8 @@ const Search = ({
 				'ant-col',
 				'ant-select-item-option-active',
 			].find((p) => p.indexOf(e.className) !== -1) &&
-			!(e.ariaSelected === 'true')
+			!(e.ariaSelected === 'true') &&
+			traces.isTagModalOpen
 		) {
 			updateTagVisiblity(false);
 		}
