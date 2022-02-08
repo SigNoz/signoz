@@ -140,6 +140,17 @@ const Duration = (): JSX.Element => {
 				isFilterExclude,
 			),
 		500,
+		{
+			trailing: true,
+		},
+		[
+			selectedFilter,
+			spansAggregate,
+			filterToFetchData,
+			selectedTags,
+			globalTime,
+			isFilterExclude,
+		],
 	);
 
 	const onRangeSliderHandler = (number: [number, number]) => {
@@ -224,6 +235,9 @@ const Duration = (): JSX.Element => {
 							isFilterExclude,
 						);
 					}}
+					// onAfterChange={([min, max]) => {
+
+					// }}
 					value={[parseFloat(localMin), parseFloat(localMax)]}
 				/>
 			</Container>

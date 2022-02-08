@@ -24,6 +24,10 @@ export const GetSpansAggregate = (
 			return;
 		}
 
+		if (traces.filterLoading) {
+			return;
+		}
+
 		try {
 			// triggering loading
 			dispatch({

@@ -6,7 +6,7 @@ import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
 import history from 'lib/history';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -40,52 +40,48 @@ const Trace = ({
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
+	const [isChanged, setIsChanged] = useState<boolean>(true);
+
 	const {
 		selectedFilter,
 		spansAggregate,
 		selectedTags,
 		selectedFunction,
 		selectedGroupBy,
-		filterLoading,
 		isFilterExclude,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	useEffect(() => {
-		if (filterLoading) {
-			getInitialFilter(minTime, maxTime);
-		}
-	}, [maxTime, minTime, getInitialFilter, filterLoading]);
+		getInitialFilter(minTime, maxTime);
+	}, [maxTime, minTime, getInitialFilter, isChanged]);
 
 	useEffect(() => {
-		if (!filterLoading)
-			getSpansAggregate({
-				maxTime: maxTime,
-				minTime: minTime,
-				selectedFilter,
-				current: spansAggregate.currentPage,
-				pageSize: spansAggregate.pageSize,
-				selectedTags,
-			});
-	}, [selectedTags, filterLoading, selectedFilter, maxTime, minTime]);
+		getSpansAggregate({
+			maxTime: maxTime,
+			minTime: minTime,
+			selectedFilter,
+			current: spansAggregate.currentPage,
+			pageSize: spansAggregate.pageSize,
+			selectedTags,
+		});
+	}, [selectedTags, selectedFilter, maxTime, minTime]);
 
 	useEffect(() => {
-		if (!filterLoading)
-			getSpans({
-				end: maxTime,
-				function: selectedFunction,
-				groupBy: selectedGroupBy,
-				selectedFilter,
-				selectedTags,
-				start: minTime,
-				step: 60,
-				isFilterExclude,
-			});
+		getSpans({
+			end: maxTime,
+			function: selectedFunction,
+			groupBy: selectedGroupBy,
+			selectedFilter,
+			selectedTags,
+			start: minTime,
+			step: 60,
+			isFilterExclude,
+		});
 	}, [
 		selectedFunction,
 		selectedGroupBy,
 		selectedFilter,
 		selectedTags,
-		filterLoading,
 		maxTime,
 		minTime,
 	]);
@@ -102,6 +98,9 @@ const Trace = ({
 		dispatch({
 			type: RESET_TRACE_FILTER,
 		});
+
+		setIsChanged((state) => !state);
+
 		history.replace(ROUTES.TRACE);
 	}, []);
 

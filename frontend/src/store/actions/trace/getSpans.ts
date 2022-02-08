@@ -27,6 +27,10 @@ export const GetSpans = (
 
 			const { selectedTime } = globalTime;
 
+			if (traces.filterLoading) {
+				return;
+			}
+
 			// @TODO refactor this logic when share url functionlity is updated
 			const isCustomSelected = selectedTime === 'custom';
 
