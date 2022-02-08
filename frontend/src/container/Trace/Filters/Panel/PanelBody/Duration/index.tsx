@@ -69,7 +69,6 @@ const Duration = (): JSX.Element => {
 		max: number,
 		selectedFilter: TraceReducer['selectedFilter'],
 		spansAggregate: TraceReducer['spansAggregate'],
-		filter: TraceReducer['filter'],
 		filterToFetchData: TraceReducer['filterToFetchData'],
 		selectedTags: TraceReducer['selectedTags'],
 		globalTime: GlobalReducer,
@@ -126,7 +125,6 @@ const Duration = (): JSX.Element => {
 			max,
 			selectedFilter,
 			spansAggregate,
-			filter,
 			filterToFetchData,
 			selectedTags,
 			isFilterExclude,
@@ -136,7 +134,6 @@ const Duration = (): JSX.Element => {
 				max,
 				selectedFilter,
 				spansAggregate,
-				filter,
 				filterToFetchData,
 				selectedTags,
 				globalTime,
@@ -170,7 +167,6 @@ const Duration = (): JSX.Element => {
 							max,
 							selectedFilter,
 							spansAggregate,
-							filter,
 							filterToFetchData,
 							selectedTags,
 							isFilterExclude,
@@ -195,7 +191,6 @@ const Duration = (): JSX.Element => {
 							max,
 							selectedFilter,
 							spansAggregate,
-							filter,
 							filterToFetchData,
 							selectedTags,
 							isFilterExclude,
@@ -217,14 +212,13 @@ const Duration = (): JSX.Element => {
 						}
 						return <div>{`${getMs(value.toString())}ms`}</div>;
 					}}
-					onChange={onRangeSliderHandler}
-					onAfterChange={([min, max]) => {
+					onChange={([min, max]) => {
+						onRangeSliderHandler([min, max]);
 						debounceUpdateUrl(
 							min,
 							max,
 							selectedFilter,
 							spansAggregate,
-							filter,
 							filterToFetchData,
 							selectedTags,
 							isFilterExclude,
