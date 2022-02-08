@@ -18,7 +18,7 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 ### Contribute to Frontend with Docker installation of SigNoz
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz`
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L38`
+- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L59`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d`
@@ -26,6 +26,8 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
 - `yarn install`
 - `yarn dev`
+
+> Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
 
 ### Contribute to Frontend without installing SigNoz backend
 
@@ -46,16 +48,28 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 
 - git clone https://github.com/SigNoz/signoz.git
 - run `sudo make dev-setup` to configure local setup to run query-service
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L38`
-- comment out query-service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L22`
+- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L59`
+- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 - Install signoz locally without the frontend and query-service
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo make run-x86`
   - If you are on arm64 processors (Apple M1 Macbooks) run `sudo make run-arm`
+
+> Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
 
 **_Query Service should now be available at `http://localhost:8080`_**
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
+---
+Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
+
+Click the button below. A workspace with all required environments will be created.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/SigNoz/signoz)
+
+> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/signoz`
+
+---
 
 ## General Instructions
 
