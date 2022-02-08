@@ -89,6 +89,12 @@ const Duration = (): JSX.Element => {
 		if (response.statusCode === 200) {
 			const preFilter = getFilter(response.payload);
 
+			preFilter.forEach((value, key) => {
+				if (key !== 'duration') {
+					userSelectedFilter.set(key, Object.keys(value));
+				}
+			});
+
 			dispatch({
 				type: UPDATE_ALL_FILTERS,
 				payload: {
