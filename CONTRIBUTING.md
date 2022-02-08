@@ -36,7 +36,7 @@ If you don't want to install SigNoz backend just for doing frontend development,
 - `yarn install`
 - `yarn dev`
 
-**_Frontend should now be accessible at `http://localhost:3000/application`_**
+**_Frontend should now be accessible at `http://localhost:3301/application`_**
 
 # Contribute to Query-Service
 
@@ -69,7 +69,7 @@ Need to update [https://github.com/SigNoz/charts](https://github.com/SigNoz/char
   - [minikube](https://minikube.sigs.k8s.io/docs/start/)
 - create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster
 - run `helm install -n platform --create-namespace my-release charts/signoz` to install SigNoz chart
-- run `kubectl -n platform port-forward svc/my-release-frontend 3000:3000` to make SigNoz UI available at [localhost:3000](http://localhost:3000)
+- run `kubectl -n platform port-forward svc/my-release-frontend 3301:3301` to make SigNoz UI available at [localhost:3301](http://localhost:3301)
 
 **To load data with HotROD sample app:**
 

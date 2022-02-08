@@ -102,7 +102,7 @@ check_os() {
 # The script should error out in case they aren't available
 check_ports_occupied() {
     local port_check_output
-    local ports_pattern="80|3000|8080"
+    local ports_pattern="80|3301|8080"
 
     if is_mac; then
         port_check_output="$(netstat -anp tcp | awk '$6 == "LISTEN" && $4 ~ /^.*\.('"$ports_pattern"')$/')"
@@ -225,7 +225,7 @@ wait_for_containers_start() {
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/v1/services/list || true)"
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3301/api/v1/services/list || true)"
         if [[ status_code -eq 200 ]]; then
             break
         else
@@ -492,7 +492,7 @@ else
     echo ""
     echo "🟢 Your installation is complete!"
     echo ""
-    echo -e "🟢 Your frontend is running on http://localhost:3000"
+    echo -e "🟢 Your frontend is running on http://localhost:3301"
     echo ""
 
     if [ $setup_type == 'clickhouse' ]; then

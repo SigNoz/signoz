@@ -168,7 +168,7 @@ func (r *ClickHouseReader) Start() {
 	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
 	// notifier.ApplyConfig(conf)
 
-	ExternalURL, err := computeExternalURL("", "0.0.0.0:3000")
+	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
 		os.Exit(2)
