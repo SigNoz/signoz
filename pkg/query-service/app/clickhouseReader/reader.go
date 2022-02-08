@@ -1356,6 +1356,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	var query string
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
 		excludeMap[e] = struct{}{}
 	}
 
@@ -1382,7 +1386,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 
 	if len(queryParams.MinDuration) != 0 {
@@ -1599,6 +1603,10 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
 		excludeMap[e] = struct{}{}
 	}
 
@@ -1626,7 +1634,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
@@ -1746,6 +1754,10 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
 		excludeMap[e] = struct{}{}
 	}
 
@@ -1773,7 +1785,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
@@ -2261,6 +2273,10 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
 		excludeMap[e] = struct{}{}
 	}
 
@@ -2352,7 +2368,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.Operation, &query, args)
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= ?"
