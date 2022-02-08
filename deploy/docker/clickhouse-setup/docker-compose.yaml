@@ -45,7 +45,7 @@ services:
     depends_on:
       - query-service
     ports:
-      - "3000:3000"
+      - "3301:3301"
     volumes:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
