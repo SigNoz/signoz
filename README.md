@@ -33,7 +33,9 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 👉 Run aggregates on trace data to get business relevant metrics
 
 
-![SigNoz Feature](https://signoz-public.s3.us-east-2.amazonaws.com/signoz_hero_github.png)
+![screenzy-1644432902955](https://user-images.githubusercontent.com/504541/153270713-1b2156e6-ec03-42de-975b-3c02b8ec1836.png)
+
+![screenzy-1644432986784](https://user-images.githubusercontent.com/504541/153270725-0efb73b3-06ed-4207-bf13-9b7e2e17c4b8.png)
 
 <br /><br />
 
