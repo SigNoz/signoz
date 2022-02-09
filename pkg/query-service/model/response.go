@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -128,6 +129,22 @@ type SearchSpansResult struct {
 	Events  [][]interface{} `json:"events"`
 }
 
+type GetFilterSpansResponseItem struct {
+	Timestamp    string `db:"timestamp" json:"timestamp"`
+	SpanID       string `db:"spanID" json:"spanID"`
+	TraceID      string `db:"traceID" json:"traceID"`
+	ServiceName  string `db:"serviceName" json:"serviceName"`
+	Operation    string `db:"name" json:"operation"`
+	DurationNano int64  `db:"durationNano" json:"durationNano"`
+	HttpCode     string `db:"httpCode" json:"httpCode"`
+	HttpMethod   string `db:"httpMethod" json:"httpMethod"`
+}
+
+type GetFilterSpansResponse struct {
+	Spans      []GetFilterSpansResponseItem `json:"spans"`
+	TotalSpans int                          `json:"totalSpans"`
+}
+
 type TraceResult struct {
 	Data   []interface{} `json:"data" db:"data"`
 	Total  int           `json:"total" db:"total"`
@@ -247,6 +264,9 @@ type TagItem struct {
 	TagCount int    `json:"tagCount" db:"tagCount"`
 }
 
+type TagFilters struct {
+	TagKeys string `json:"tagKeys" db:"tagKeys"`
+}
 type ServiceMapDependencyResponseItem struct {
 	Parent    string `json:"parent,omitempty" db:"parent,omitempty"`
 	Child     string `json:"child,omitempty" db:"child,omitempty"`
@@ -257,6 +277,21 @@ type SpanSearchAggregatesResponseItem struct {
 	Timestamp int64   `json:"timestamp,omitempty" db:"timestamp" `
 	Time      string  `json:"time,omitempty" db:"time"`
 	Value     float32 `json:"value,omitempty" db:"value"`
+}
+
+type GetFilteredSpansAggregatesResponse struct {
+	Items map[int64]SpanAggregatesResponseItem `json:"items"`
+}
+type SpanAggregatesResponseItem struct {
+	Timestamp int64              `json:"timestamp,omitempty" `
+	Value     float32            `json:"value,omitempty"`
+	GroupBy   map[string]float32 `json:"groupBy,omitempty"`
+}
+type SpanAggregatesDBResponseItem struct {
+	Timestamp int64          `json:"timestamp,omitempty" db:"timestamp" `
+	Time      string         `json:"time,omitempty" db:"time"`
+	Value     float32        `json:"value,omitempty" db:"value"`
+	GroupBy   sql.NullString `json:"groupBy,omitempty" db:"groupBy"`
 }
 
 type SetTTLResponseItem struct {
@@ -272,6 +307,71 @@ type GetTTLResponseItem struct {
 	TracesTime  int `json:"traces_ttl_duration_hrs"`
 }
 
+type DBResponseMinMaxDuration struct {
+	MinDuration int `db:"min(durationNano)"`
+	MaxDuration int `db:"max(durationNano)"`
+}
+
+type DBResponseServiceName struct {
+	ServiceName string `db:"serviceName"`
+	Count       int    `db:"count"`
+}
+
+type DBResponseHttpCode struct {
+	HttpCode string `db:"httpCode"`
+	Count    int    `db:"count"`
+}
+
+type DBResponseHttpRoute struct {
+	HttpRoute string `db:"httpRoute"`
+	Count     int    `db:"count"`
+}
+
+type DBResponseHttpUrl struct {
+	HttpUrl string `db:"httpUrl"`
+	Count   int    `db:"count"`
+}
+
+type DBResponseHttpMethod struct {
+	HttpMethod string `db:"httpMethod"`
+	Count      int    `db:"count"`
+}
+
+type DBResponseHttpHost struct {
+	HttpHost string `db:"httpHost"`
+	Count    int    `db:"count"`
+}
+
+type DBResponseOperation struct {
+	Operation string `db:"name"`
+	Count     int    `db:"count"`
+}
+
+type DBResponseComponent struct {
+	Component sql.NullString `db:"component"`
+	Count     int            `db:"count"`
+}
+
+type DBResponseErrors struct {
+	NumErrors int `db:"numErrors"`
+}
+
+type DBResponseTotal struct {
+	NumTotal int `db:"numTotal"`
+}
+
+type SpanFiltersResponse struct {
+	ServiceName map[string]int `json:"serviceName"`
+	Status      map[string]int `json:"status"`
+	Duration    map[string]int `json:"duration"`
+	Operation   map[string]int `json:"operation"`
+	HttpCode    map[string]int `json:"httpCode"`
+	HttpUrl     map[string]int `json:"httpUrl"`
+	HttpMethod  map[string]int `json:"httpMethod"`
+	HttpRoute   map[string]int `json:"httpRoute"`
+	HttpHost    map[string]int `json:"httpHost"`
+	Component   map[string]int `json:"component"`
+}
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" db:"exceptionType"`
 	ExceptionMsg   string    `json:"exceptionMessage" db:"exceptionMessage"`

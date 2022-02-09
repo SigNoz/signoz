@@ -1,20 +1,16 @@
+import { TraceReducer } from 'types/reducer/trace';
+
 export interface Props {
 	start: number;
 	end: number;
-	service: string;
-	operation: string;
-	maxDuration: string;
-	minDuration: string;
-	kind: string;
-	tags: string;
-	dimension: string;
-	aggregation_option: string;
-	step: string;
+	selectedFilter: TraceReducer['selectedFilter'];
+	limit: number;
+	offset: number;
+	selectedTags: TraceReducer['selectedTags'];
+	isFilterExclude: TraceReducer['isFilterExclude'];
 }
 
-interface Timestamp {
-	timestamp: number;
-	value: number;
-}
-
-export type PayloadProps = Timestamp[];
+export type PayloadProps = {
+	spans: TraceReducer['spansAggregate']['data'];
+	totalSpans: number;
+};

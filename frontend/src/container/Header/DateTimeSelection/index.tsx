@@ -8,7 +8,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCAL_STORAGE } from 'constants/localStorage';
 import getTimeString from 'lib/getTimeString';
-import moment from 'moment';
+import dayjs, { Dayjs } from 'dayjs';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -37,26 +37,18 @@ const DateTimeSelection = ({
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
-			const startMoment = moment(
+			const startDate = dayjs(
 				new Date(parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const endMoment = moment(
-				new Date(parseInt(getTimeString(searchEndTime), 10)),
-			);
+			const endDate = dayjs(new Date(parseInt(getTimeString(searchEndTime), 10)));
 
-			return [
-				startMoment.toDate().getTime() || 0,
-				endMoment.toDate().getTime() || 0,
-			];
+			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
 		if (localstorageStartTime && localstorageEndTime) {
-			const startMoment = moment(localstorageStartTime);
-			const endMoment = moment(localstorageEndTime);
+			const startDate = dayjs(localstorageStartTime);
+			const endDate = dayjs(localstorageEndTime);
 
-			return [
-				startMoment.toDate().getTime() || 0,
-				endMoment.toDate().getTime() || 0,
-			];
+			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
 		return undefined;
 	}, [
@@ -66,8 +58,8 @@ const DateTimeSelection = ({
 		searchStartTime,
 	]);
 
-	const [startTime, setStartTime] = useState<moment.Moment>();
-	const [endTime, setEndTime] = useState<moment.Moment>();
+	const [startTime, setStartTime] = useState<Dayjs>();
+	const [endTime, setEndTime] = useState<Dayjs>();
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
@@ -136,8 +128,8 @@ const DateTimeSelection = ({
 	};
 
 	const getInputLabel = (
-		startTime?: moment.Moment,
-		endTime?: moment.Moment,
+		startTime?: Dayjs,
+		endTime?: Dayjs,
 		timeInterval: Time = '15min',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
@@ -153,18 +145,18 @@ const DateTimeSelection = ({
 	};
 
 	const onLastRefreshHandler = useCallback(() => {
-		const currentTime = moment();
+		const currentTime = dayjs();
 
-		const lastRefresh = moment(
+		const lastRefresh = dayjs(
 			selectedTimeInterval === 'custom' ? minTime / 1000000 : maxTime / 1000000,
 		);
-		const duration = moment.duration(currentTime.diff(lastRefresh));
 
-		const secondsDiff = Math.floor(duration.asSeconds());
-		const minutedDiff = Math.floor(duration.asMinutes());
-		const hoursDiff = Math.floor(duration.asHours());
-		const daysDiff = Math.floor(duration.asDays());
-		const monthsDiff = Math.floor(duration.asMonths());
+		const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
+
+		const minutedDiff = currentTime.diff(lastRefresh, 'minutes');
+		const hoursDiff = currentTime.diff(lastRefresh, 'hours');
+		const daysDiff = currentTime.diff(lastRefresh, 'days');
+		const monthsDiff = currentTime.diff(lastRefresh, 'months');
 
 		if (monthsDiff > 0) {
 			return `Last refresh -${monthsDiff} months ago`;
@@ -242,8 +234,8 @@ const DateTimeSelection = ({
 
 		const [preStartTime = 0, preEndTime = 0] = getTime() || [];
 
-		setStartTime(moment(preStartTime));
-		setEndTime(moment(preEndTime));
+		setStartTime(dayjs(preStartTime));
+		setEndTime(dayjs(preEndTime));
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 	}, [
@@ -318,8 +310,3 @@ const mapDispatchToProps = (
 type Props = DispatchProps & RouteComponentProps;
 
 export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
-
-// DateTimeSelection.whyDidYouRender = {
-// 	logOnDifferentValues: true,
-// 	customName: 'DateTimeSelection',
-// };

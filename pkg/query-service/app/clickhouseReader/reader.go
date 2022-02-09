@@ -74,7 +74,6 @@ type ClickHouseReader struct {
 	operationsTable string
 	indexTable      string
 	errorTable      string
-	spansTable      string
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
@@ -98,7 +97,6 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		localDB:         localDB,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
-		spansTable:      options.primary.SpansTable,
 		errorTable:      options.primary.ErrorTable,
 	}
 }
@@ -170,7 +168,7 @@ func (r *ClickHouseReader) Start() {
 	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
 	// notifier.ApplyConfig(conf)
 
-	ExternalURL, err := computeExternalURL("", "0.0.0.0:3000")
+	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
 		os.Exit(2)
@@ -1329,6 +1327,518 @@ func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.S
 	return &searchSpansResult, nil
 }
 
+func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
+	for i, e := range params {
+		if i == 0 && i == len(params)-1 {
+			if _, ok := excludeMap[filter]; ok {
+				*query += fmt.Sprintf(" AND NOT (%s=?)", filter)
+			} else {
+				*query += fmt.Sprintf(" AND (%s=?)", filter)
+			}
+		} else if i == 0 && i != len(params)-1 {
+			if _, ok := excludeMap[filter]; ok {
+				*query += fmt.Sprintf(" AND NOT (%s=?", filter)
+			} else {
+				*query += fmt.Sprintf(" AND (%s=?", filter)
+			}
+		} else if i != 0 && i == len(params)-1 {
+			*query += fmt.Sprintf(" OR %s=?)", filter)
+		} else {
+			*query += fmt.Sprintf(" OR %s=?", filter)
+		}
+		args = append(args, e)
+	}
+	return args
+}
+
+func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError) {
+
+	var query string
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
+		excludeMap[e] = struct{}{}
+	}
+
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	if len(queryParams.ServiceName) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
+	}
+	if len(queryParams.HttpCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
+	}
+	if len(queryParams.HttpHost) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
+	}
+	if len(queryParams.Component) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
+	}
+	if len(queryParams.Operation) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
+	traceFilterReponse := model.SpanFiltersResponse{
+		Status:      map[string]int{},
+		Duration:    map[string]int{},
+		ServiceName: map[string]int{},
+		Operation:   map[string]int{},
+		HttpCode:    map[string]int{},
+		HttpMethod:  map[string]int{},
+		HttpUrl:     map[string]int{},
+		HttpRoute:   map[string]int{},
+		HttpHost:    map[string]int{},
+		Component:   map[string]int{},
+	}
+
+	for _, e := range queryParams.GetFilters {
+		switch e {
+		case "serviceName":
+			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY serviceName"
+			var dBResponse []model.DBResponseServiceName
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.ServiceName != "" {
+					traceFilterReponse.ServiceName[service.ServiceName] = service.Count
+				}
+			}
+		case "httpCode":
+			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpCode"
+			var dBResponse []model.DBResponseHttpCode
+			fmt.Println(finalQuery)
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.HttpCode != "" {
+					traceFilterReponse.HttpCode[service.HttpCode] = service.Count
+				}
+			}
+		case "httpRoute":
+			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpRoute"
+			var dBResponse []model.DBResponseHttpRoute
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.HttpRoute != "" {
+					traceFilterReponse.HttpRoute[service.HttpRoute] = service.Count
+				}
+			}
+		case "httpUrl":
+			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpUrl"
+			var dBResponse []model.DBResponseHttpUrl
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.HttpUrl != "" {
+					traceFilterReponse.HttpUrl[service.HttpUrl] = service.Count
+				}
+			}
+		case "httpMethod":
+			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpMethod"
+			var dBResponse []model.DBResponseHttpMethod
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.HttpMethod != "" {
+					traceFilterReponse.HttpMethod[service.HttpMethod] = service.Count
+				}
+			}
+		case "httpHost":
+			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY httpHost"
+			var dBResponse []model.DBResponseHttpHost
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.HttpHost != "" {
+					traceFilterReponse.HttpHost[service.HttpHost] = service.Count
+				}
+			}
+		case "operation":
+			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY name"
+			var dBResponse []model.DBResponseOperation
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.Operation != "" {
+					traceFilterReponse.Operation[service.Operation] = service.Count
+				}
+			}
+		case "component":
+			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY component"
+			var dBResponse []model.DBResponseComponent
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				if service.Component.String != "" {
+					traceFilterReponse.Component[service.Component.String] = service.Count
+				}
+			}
+		case "status":
+			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))", r.indexTable)
+			finalQuery += query
+			var dBResponse []model.DBResponseErrors
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+
+			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery2 += query
+			var dBResponse2 []model.DBResponseTotal
+			err = r.db.Select(&dBResponse2, finalQuery2, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			traceFilterReponse.Status = map[string]int{"ok": dBResponse2[0].NumTotal - dBResponse[0].NumErrors, "error": dBResponse[0].NumErrors}
+		case "duration":
+			finalQuery := fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery += query
+			var dBResponse []model.DBResponseMinMaxDuration
+			err := r.db.Select(&dBResponse, finalQuery, args...)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+			}
+			for _, service := range dBResponse {
+				traceFilterReponse.Duration["minDuration"] = service.MinDuration
+				traceFilterReponse.Duration["maxDuration"] = service.MaxDuration
+			}
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("filter type: %s not supported", e)}
+		}
+	}
+
+	return &traceFilterReponse, nil
+}
+
+func getStatusFilters(query string, statusParams []string, excludeMap map[string]struct{}) string {
+
+	// status can only be two and if both are selected than they are equivalent to none selected
+	if _, ok := excludeMap["status"]; ok {
+		if len(statusParams) == 1 {
+			if statusParams[0] == "error" {
+				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			} else if statusParams[0] == "ok" {
+				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			}
+		}
+	} else if len(statusParams) == 1 {
+		if statusParams[0] == "error" {
+			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+		} else if statusParams[0] == "ok" {
+			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+		}
+	}
+	return query
+}
+
+func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
+
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
+		excludeMap[e] = struct{}{}
+	}
+
+	var query string
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	if len(queryParams.ServiceName) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
+	}
+	if len(queryParams.HttpCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
+	}
+	if len(queryParams.HttpHost) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
+	}
+	if len(queryParams.Component) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
+	}
+	if len(queryParams.Operation) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
+	if len(queryParams.Kind) != 0 {
+		query = query + " AND kind = ?"
+		args = append(args, queryParams.Kind)
+	}
+
+	for _, item := range queryParams.Tags {
+
+		if item.Operator == "in" {
+			for i, value := range item.Values {
+				if i == 0 && i == len(item.Values)-1 {
+					query += " AND has(tags, ?)"
+				} else if i == 0 && i != len(item.Values)-1 {
+					query += " AND (has(tags, ?)"
+				} else if i != 0 && i == len(item.Values)-1 {
+					query += " OR has(tags, ?))"
+				} else {
+					query += " OR has(tags, ?)"
+				}
+				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
+			}
+		} else if item.Operator == "not in" {
+			for i, value := range item.Values {
+				if i == 0 && i == len(item.Values)-1 {
+					query += " AND NOT has(tags, ?)"
+				} else if i == 0 && i != len(item.Values)-1 {
+					query += " AND NOT (has(tags, ?)"
+				} else if i != 0 && i == len(item.Values)-1 {
+					query += " OR has(tags, ?))"
+				} else {
+					query += " OR has(tags, ?)"
+				}
+				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
+			}
+		} else if item.Operator == "regex" {
+			if len(item.Values) != 1 {
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Regex tag operator should only have one value")}
+			}
+			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
+			args = append(args, item.Key)
+			args = append(args, item.Values[0])
+		} else if item.Operator == "isnotnull" {
+			for range item.Values {
+				query = query + " AND has(tagsKeys, ?)"
+				args = append(args, item.Key)
+			}
+		} else {
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+		}
+
+	}
+
+	var totalSpans []model.DBResponseTotal
+
+	totalSpansQuery := fmt.Sprintf(`SELECT count() as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+
+	totalSpansQuery += query
+	err := r.db.Select(&totalSpans, totalSpansQuery, args...)
+
+	zap.S().Info(totalSpansQuery)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	if len(queryParams.Order) != 0 {
+		if queryParams.Order == "descending" {
+			query = query + "  ORDER BY timestamp DESC"
+		}
+		if queryParams.Order == "ascending" {
+			query = query + "  ORDER BY timestamp ASC"
+		}
+	}
+	if queryParams.Limit > 0 {
+		query = query + " LIMIT ?"
+		args = append(args, queryParams.Limit)
+	}
+
+	if queryParams.Offset > 0 {
+		// due to bug in SQLx driver, using %d temporarily
+		query = query + fmt.Sprintf(" OFFSET %d", queryParams.Offset)
+		// args = append(args, queryParams.Offset)
+	}
+
+	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
+
+	baseQuery += query
+	err = r.db.Select(&getFilterSpansResponseItems, baseQuery, args...)
+
+	zap.S().Info(baseQuery)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	getFilterSpansResponse := model.GetFilterSpansResponse{
+		Spans:      getFilterSpansResponseItems,
+		TotalSpans: totalSpans[0].NumTotal,
+	}
+
+	return &getFilterSpansResponse, nil
+}
+
+func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
+
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
+		excludeMap[e] = struct{}{}
+	}
+
+	var query string
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	if len(queryParams.ServiceName) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
+	}
+	if len(queryParams.HttpCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
+	}
+	if len(queryParams.HttpHost) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
+	}
+	if len(queryParams.Component) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
+	}
+	if len(queryParams.Operation) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
+	tagFilters := []model.TagFilters{}
+
+	finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+	finalQuery += query
+	fmt.Println(finalQuery)
+	err := r.db.Select(&tagFilters, finalQuery, args...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+	tagFilters = excludeTags(ctx, tagFilters)
+
+	return &tagFilters, nil
+}
+
+func excludeTags(ctx context.Context, tags []model.TagFilters) []model.TagFilters {
+	excludedTagsMap := map[string]bool{
+		"http.code":           true,
+		"http.route":          true,
+		"http.method":         true,
+		"http.url":            true,
+		"http.status_code":    true,
+		"http.host":           true,
+		"messaging.system":    true,
+		"messaging.operation": true,
+		"component":           true,
+		"error":               true,
+	}
+	var newTags []model.TagFilters
+	for _, tag := range tags {
+		_, ok := excludedTagsMap[tag.TagKeys]
+		if !ok {
+			newTags = append(newTags, tag)
+		}
+	}
+	return newTags
+}
+
 func (r *ClickHouseReader) GetServiceDBOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
 
 	var serviceDBOverviewItems []model.ServiceDBOverviewItem
@@ -1583,7 +2093,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	var searchScanReponses []model.SearchSpanReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID='%s'", r.indexTable, traceId)
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID=?", r.indexTable)
 
 	err := r.db.Select(&searchScanReponses, query, traceId)
 
@@ -1757,6 +2267,247 @@ func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams
 
 	return spanSearchAggregatesResponseItems, nil
 
+}
+
+func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
+
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
+		excludeMap[e] = struct{}{}
+	}
+
+	SpanAggregatesDBResponseItems := []model.SpanAggregatesDBResponseItem{}
+
+	aggregation_query := ""
+	if queryParams.Dimension == "duration" {
+		switch queryParams.AggregationOption {
+		case "p50":
+			aggregation_query = " quantile(0.50)(durationNano) as value "
+		case "p95":
+			aggregation_query = " quantile(0.95)(durationNano) as value "
+		case "p90":
+			aggregation_query = " quantile(0.90)(durationNano) as value "
+		case "p99":
+			aggregation_query = " quantile(0.99)(durationNano) as value "
+		case "max":
+			aggregation_query = " max(durationNano) as value "
+		case "min":
+			aggregation_query = " min(durationNano) as value "
+		case "avg":
+			aggregation_query = " avg(durationNano) as value "
+		case "sum":
+			aggregation_query = " sum(durationNano) as value "
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("Aggregate type: %s not supported", queryParams.AggregationOption)}
+		}
+	} else if queryParams.Dimension == "calls" {
+		aggregation_query = " count(*) as value "
+	}
+
+	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+
+	var query string
+	if queryParams.GroupBy != "" {
+		switch queryParams.GroupBy {
+		case "serviceName":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, serviceName as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpCode":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpCode as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpMethod":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpMethod as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpUrl":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpUrl as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpRoute":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpRoute as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "httpHost":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpHost as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "dbName":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbName as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "dbOperation":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbOperation as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "operation":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, name as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "msgSystem":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "msgOperation":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgOperation as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "dbSystem":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case "component":
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
+		}
+	} else {
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+	}
+
+	if len(queryParams.ServiceName) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
+	}
+	if len(queryParams.HttpCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
+	}
+	if len(queryParams.HttpHost) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
+	}
+	if len(queryParams.Component) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
+	}
+	if len(queryParams.Operation) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+	if len(queryParams.Kind) != 0 {
+		query = query + " AND kind = ?"
+		args = append(args, queryParams.Kind)
+	}
+
+	for _, item := range queryParams.Tags {
+
+		if item.Operator == "in" {
+			for i, value := range item.Values {
+				if i == 0 && i == len(item.Values)-1 {
+					query += " AND has(tags, ?)"
+				} else if i == 0 && i != len(item.Values)-1 {
+					query += " AND (has(tags, ?)"
+				} else if i != 0 && i == len(item.Values)-1 {
+					query += " OR has(tags, ?))"
+				} else {
+					query += " OR has(tags, ?)"
+				}
+				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
+			}
+		} else if item.Operator == "not in" {
+			for i, value := range item.Values {
+				if i == 0 && i == len(item.Values)-1 {
+					query += " AND NOT has(tags, ?)"
+				} else if i == 0 && i != len(item.Values)-1 {
+					query += " AND NOT (has(tags, ?)"
+				} else if i != 0 && i == len(item.Values)-1 {
+					query += " OR has(tags, ?))"
+				} else {
+					query += " OR has(tags, ?)"
+				}
+				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
+			}
+		} else if item.Operator == "regex" {
+			if len(item.Values) != 1 {
+				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Regex tag operator should only have one value")}
+			}
+			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
+			args = append(args, item.Key)
+			args = append(args, item.Values[0])
+		} else if item.Operator == "isnotnull" {
+			for range item.Values {
+				query = query + " AND has(tagsKeys, ?)"
+				args = append(args, item.Key)
+			}
+		} else {
+			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+		}
+
+	}
+
+	if queryParams.GroupBy != "" {
+		switch queryParams.GroupBy {
+		case "serviceName":
+			query = query + " GROUP BY time, serviceName as groupBy ORDER BY time"
+		case "httpCode":
+			query = query + " GROUP BY time, httpCode as groupBy ORDER BY time"
+		case "httpMethod":
+			query = query + " GROUP BY time, httpMethod as groupBy ORDER BY time"
+		case "httpUrl":
+			query = query + " GROUP BY time, httpUrl as groupBy ORDER BY time"
+		case "httpRoute":
+			query = query + " GROUP BY time, httpRoute as groupBy ORDER BY time"
+		case "httpHost":
+			query = query + " GROUP BY time, httpHost as groupBy ORDER BY time"
+		case "dbName":
+			query = query + " GROUP BY time, dbName as groupBy ORDER BY time"
+		case "dbOperation":
+			query = query + " GROUP BY time, dbOperation as groupBy ORDER BY time"
+		case "operation":
+			query = query + " GROUP BY time, name as groupBy ORDER BY time"
+		case "msgSystem":
+			query = query + " GROUP BY time, msgSystem as groupBy ORDER BY time"
+		case "msgOperation":
+			query = query + " GROUP BY time, msgOperation as groupBy ORDER BY time"
+		case "dbSystem":
+			query = query + " GROUP BY time, dbSystem as groupBy ORDER BY time"
+		case "component":
+			query = query + " GROUP BY time, component as groupBy ORDER BY time"
+		default:
+			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
+		}
+	} else {
+		query = query + " GROUP BY time ORDER BY time"
+	}
+
+	err := r.db.Select(&SpanAggregatesDBResponseItems, query, args...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	GetFilteredSpansAggregatesResponse := model.GetFilteredSpansAggregatesResponse{
+		Items: map[int64]model.SpanAggregatesResponseItem{},
+	}
+
+	for i, _ := range SpanAggregatesDBResponseItems {
+
+		timeObj, _ := time.Parse(time.RFC3339Nano, SpanAggregatesDBResponseItems[i].Time)
+		SpanAggregatesDBResponseItems[i].Timestamp = int64(timeObj.UnixNano())
+		SpanAggregatesDBResponseItems[i].Time = ""
+		if queryParams.AggregationOption == "rate_per_sec" {
+			SpanAggregatesDBResponseItems[i].Value = float32(SpanAggregatesDBResponseItems[i].Value) / float32(queryParams.StepSeconds)
+		}
+		if responseElement, ok := GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp]; !ok {
+			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy.String != "" {
+				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
+					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
+					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy.String: SpanAggregatesDBResponseItems[i].Value},
+				}
+			} else if queryParams.GroupBy == "" {
+				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
+					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
+					Value:     SpanAggregatesDBResponseItems[i].Value,
+				}
+			}
+
+		} else {
+			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy.String != "" {
+				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy.String] = SpanAggregatesDBResponseItems[i].Value
+			}
+			GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = responseElement
+		}
+	}
+
+	return &GetFilteredSpansAggregatesResponse, nil
 }
 
 func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {

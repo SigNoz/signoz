@@ -9,8 +9,7 @@ const signup = async (
 ): Promise<SuccessResponse<undefined> | ErrorResponse> => {
 	try {
 		const response = await axios.post(`/user`, {
-			email: props.email,
-			name: props.name,
+			...props,
 		});
 
 		return {

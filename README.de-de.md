@@ -17,7 +17,7 @@
   <a href="https://signoz.io/docs"><b>Dokumentation</b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe auf Chinesisch</b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe auf Portugiesisch</b></a> &bull;
-  <a href="https://bit.ly/signoz-slack"><b>Slack Community</b></a> &bull;
+  <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
 
@@ -39,7 +39,7 @@ SigNoz hilft Entwicklern, Anwendungen zu überwachen und Probleme in ihren berei
 
 ## Werde Teil unserer Slack Community
 
-Sag Hi zu uns auf [Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 👋
+Sag Hi zu uns auf [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
 
@@ -130,7 +130,7 @@ Außerdem hat SigNoz noch mehr spezielle Funktionen im Vergleich zu Jaeger:
 
 Wir ❤️  Beiträge zum Projekt, egal ob große oder kleine. Bitte lies dir zuerst die [CONTRIBUTING.md](CONTRIBUTING.md) durch, bevor du anfängst, Beiträge zu SigNoz zu machen.
 
-Du bist dir nicht sicher, wie du anfangen sollst? Schreib uns einfach auf dem `#contributing` Kanal in unserer [Slack Community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA).
+Du bist dir nicht sicher, wie du anfangen sollst? Schreib uns einfach auf dem `#contributing` Kanal in unserer [Slack Community](https://signoz.io/slack).
 
 <br /><br />
 
@@ -146,7 +146,7 @@ Du findest unsere Dokumentation unter https://signoz.io/docs/. Falls etwas unver
 
 ## Community
 
-Werde Teil der [Slack Community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) um mehr über verteilte Einzelschritt-Fehlersuche, Messung von Systemzuständen oder SigNoz zu erfahren und sich mit anderen Nutzern und Mitwirkenden in Verbindung zu setzen.
+Werde Teil der [Slack Community](https://signoz.io/slack) um mehr über verteilte Einzelschritt-Fehlersuche, Messung von Systemzuständen oder SigNoz zu erfahren und sich mit anderen Nutzern und Mitwirkenden in Verbindung zu setzen.
 
 Falls du irgendwelche Ideen, Fragen oder Feedback hast, kannst du sie gerne über unsere [Github Discussions](https://github.com/SigNoz/signoz/discussions) mit uns teilen.
 

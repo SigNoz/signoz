@@ -1,8 +1,8 @@
-import { DatePicker, Modal } from 'antd';
-import { Moment } from 'moment';
-import moment from 'moment';
+import { Modal } from 'antd';
 import React, { useState } from 'react';
-export type DateTimeRangeType = [Moment | null, Moment | null] | null;
+export type DateTimeRangeType = [Dayjs | null, Dayjs | null] | null;
+import DatePicker from 'components/DatePicker';
+import dayjs, { Dayjs } from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
@@ -20,8 +20,8 @@ const CustomDateTimeModal = ({
 		setCustomDateTimeRange(date_time);
 	}
 
-	function disabledDate(current: Moment): boolean {
-		if (current > moment()) {
+	function disabledDate(current: Dayjs): boolean {
+		if (current > dayjs()) {
 			return true;
 		} else {
 			return false;

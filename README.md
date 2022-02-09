@@ -18,7 +18,7 @@
   <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>ReadMe in German</b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
-  <a href="https://bit.ly/signoz-slack"><b>Slack Community</b></a> &bull;
+  <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
 
@@ -132,7 +132,7 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 We ❤️  contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz. 
 
-Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)
+Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://signoz.io/slack)
 
 <br /><br />
 
@@ -148,7 +148,7 @@ You can find docs at https://signoz.io/docs/. If you need any clarification or f
 
 ## Community
 
-Join the [slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
+Join the [slack community](https://signoz.io/slack) to know more about distributed tracing, observability, or SigNoz and to connect with other users and contributors.
 
 If you have any ideas, questions, or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
 
