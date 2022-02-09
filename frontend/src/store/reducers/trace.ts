@@ -1,200 +1,199 @@
 import {
-	GET_TRACE_INITIAL_DATA_ERROR,
-	GET_TRACE_INITIAL_DATA_SUCCESS,
-	GET_TRACE_LOADING_END,
-	GET_TRACE_LOADING_START,
-	RESET_TRACE_DATA,
+	SELECT_TRACE_FILTER,
 	TraceActions,
-	UPDATE_AGGREGATES,
-	UPDATE_SELECTED_AGG_OPTION,
-	UPDATE_SELECTED_ENTITY,
-	UPDATE_SELECTED_TRACE_DATA,
-	UPDATE_SPANS_LOADING,
-	UPDATE_TRACE_SELECTED_KIND,
-	UPDATE_TRACE_SELECTED_LATENCY_VALUE,
-	UPDATE_TRACE_SELECTED_OPERATION,
-	UPDATE_TRACE_SELECTED_SERVICE,
-	UPDATE_TRACE_SELECTED_TAGS,
+	UPDATE_TRACE_FILTER,
+	UPDATE_TRACE_FILTER_LOADING,
+	UPDATE_ALL_FILTERS,
+	UPDATE_SELECTED_TAGS,
+	UPDATE_SPANS_AGGREEGATE,
+	UPDATE_TAG_MODAL_VISIBLITY,
+	UPDATE_IS_TAG_ERROR,
+	UPDATE_SELECTED_FUNCTION,
+	UPDATE_SELECTED_GROUP_BY,
+	UPDATE_TRACE_GRAPH_LOADING,
+	UPDATE_TRACE_GRAPH_ERROR,
+	UPDATE_TRACE_GRAPH_SUCCESS,
+	RESET_TRACE_FILTER,
+	UPDATE_FILTER_RESPONSE_SELECTED,
+	UPDATE_FILTER_EXCLUDE,
 } from 'types/actions/trace';
-import { TraceReducer } from 'types/reducer/trace';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
-const intitalState: TraceReducer = {
-	error: false,
-	errorMessage: '',
-	loading: true,
-	operationsList: [],
-	selectedKind: '',
-	selectedLatency: {
-		max: '',
-		min: '',
-	},
-	selectedOperation: '',
-	selectedService: '',
+const initialValue: TraceReducer = {
+	filter: new Map(),
+	filterToFetchData: ['duration', 'status', 'serviceName'],
+	filterLoading: true,
+	filterResponseSelected: new Set(),
+	selectedFilter: new Map(),
 	selectedTags: [],
-	serviceList: [],
-	spanList: [],
-	tagsSuggestions: [],
-	selectedAggOption: 'count',
-	selectedEntity: 'calls',
-	spansAggregate: [],
-	spansLoading: false,
+	isTagModalOpen: false,
+	isTagModalError: false,
+	isFilterExclude: new Map<TraceFilterEnum, boolean>([]),
+	userSelectedFilter: new Map(),
+	spansAggregate: {
+		currentPage: 1,
+		loading: false,
+		data: [],
+		error: false,
+		total: 0,
+		pageSize: 10,
+	},
+	selectedGroupBy: '',
+	selectedFunction: 'count',
+	spansGraph: {
+		error: false,
+		errorMessage: '',
+		loading: true,
+		payload: { items: {} },
+	},
 };
 
-export const traceReducer = (
-	state = intitalState,
+const traceReducer = (
+	state = initialValue,
 	action: TraceActions,
 ): TraceReducer => {
 	switch (action.type) {
-		case GET_TRACE_INITIAL_DATA_ERROR: {
+		case UPDATE_TRACE_FILTER: {
 			return {
 				...state,
-				errorMessage: action.payload.errorMessage,
-				loading: false,
-				error: true,
+				filter: action.payload.filter,
 			};
 		}
 
-		case GET_TRACE_LOADING_START: {
-			return {
-				...state,
-				loading: true,
-				spansLoading: true,
-			};
-		}
-
-		case GET_TRACE_INITIAL_DATA_SUCCESS: {
+		case UPDATE_ALL_FILTERS: {
+			const { payload } = action;
 			const {
-				serviceList,
-				operationList,
-				tagsSuggestions,
-				selectedOperation,
-				selectedService,
+				filter,
+				filterToFetchData,
+				selectedFilter,
+				current,
 				selectedTags,
-				spansList,
-				selectedKind,
-				selectedLatency,
-				spansAggregate,
-			} = action.payload;
+				userSelected,
+				isFilterExclude,
+			} = payload;
 
 			return {
 				...state,
-				serviceList: serviceList,
-				tagsSuggestions,
-				selectedOperation,
-				selectedService,
+				filter,
+				filterToFetchData,
+				selectedFilter,
 				selectedTags,
-				spanList: spansList,
-				operationsList: operationList,
-				error: false,
-				selectedKind,
-				selectedLatency,
-				spansAggregate,
-				spansLoading: false,
+				userSelectedFilter: userSelected,
+				isFilterExclude,
+				spansAggregate: {
+					...state.spansAggregate,
+					currentPage: current,
+				},
 			};
 		}
 
-		case UPDATE_TRACE_SELECTED_KIND: {
+		case UPDATE_TRACE_FILTER_LOADING: {
 			return {
 				...state,
-				selectedKind: action.payload.selectedKind,
+				filterLoading: action.payload.filterLoading,
 			};
 		}
 
-		case UPDATE_TRACE_SELECTED_LATENCY_VALUE: {
+		case SELECT_TRACE_FILTER: {
 			return {
 				...state,
-				selectedLatency: action.payload.selectedLatency,
+				selectedFilter: action.payload.selectedFilter,
 			};
 		}
 
-		case UPDATE_TRACE_SELECTED_OPERATION: {
+		case RESET_TRACE_FILTER: {
 			return {
-				...state,
-				selectedOperation: action.payload.selectedOperation,
+				...initialValue,
 			};
 		}
 
-		case UPDATE_TRACE_SELECTED_SERVICE: {
-			return {
-				...state,
-				selectedService: action.payload.selectedService,
-			};
-		}
-
-		case UPDATE_TRACE_SELECTED_TAGS: {
+		case UPDATE_SELECTED_TAGS: {
 			return {
 				...state,
 				selectedTags: action.payload.selectedTags,
-				spanList: action.payload.spansList,
-				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 
-		case UPDATE_SELECTED_TRACE_DATA: {
-			const {
-				spansList,
-				tagsSuggestions,
-				operationList,
-				selectedOperation,
-				selectedLatency,
-				selectedService,
-				selectedKind,
-				spansAggregate,
-			} = action.payload;
-
-			return {
-				...state,
-				spanList: spansList,
-				tagsSuggestions,
-				operationsList: operationList,
-				selectedOperation,
-				selectedLatency,
-				selectedService,
-				selectedKind,
-				spansAggregate,
-			};
-		}
-
-		case GET_TRACE_LOADING_END: {
-			return {
-				...state,
-				loading: false,
-			};
-		}
-
-		case UPDATE_SELECTED_AGG_OPTION: {
-			return {
-				...state,
-				selectedAggOption: action.payload.selectedAggOption,
-			};
-		}
-
-		case UPDATE_SELECTED_ENTITY: {
-			return {
-				...state,
-				selectedEntity: action.payload.selectedEntity,
-			};
-		}
-
-		case UPDATE_SPANS_LOADING: {
-			return {
-				...state,
-				spansLoading: action.payload.loading,
-			};
-		}
-
-		case RESET_TRACE_DATA: {
-			return {
-				...intitalState,
-			};
-		}
-
-		case UPDATE_AGGREGATES: {
+		case UPDATE_SPANS_AGGREEGATE: {
 			return {
 				...state,
 				spansAggregate: action.payload.spansAggregate,
-				selectedAggOption: action.payload.selectedAggOption,
-				selectedEntity: action.payload.selectedEntity,
+			};
+		}
+
+		case UPDATE_TAG_MODAL_VISIBLITY: {
+			return {
+				...state,
+				isTagModalOpen: action.payload.isTagModalOpen,
+			};
+		}
+
+		case UPDATE_IS_TAG_ERROR: {
+			return {
+				...state,
+				isTagModalError: action.payload.isTagModalError,
+			};
+		}
+
+		case UPDATE_SELECTED_FUNCTION: {
+			return {
+				...state,
+				selectedFunction: action.payload.selectedFunction,
+			};
+		}
+
+		case UPDATE_SELECTED_GROUP_BY: {
+			return {
+				...state,
+				selectedGroupBy: action.payload.selectedGroupBy,
+			};
+		}
+
+		case UPDATE_TRACE_GRAPH_LOADING: {
+			return {
+				...state,
+				spansGraph: {
+					...state.spansGraph,
+					loading: action.payload.loading,
+				},
+			};
+		}
+
+		case UPDATE_TRACE_GRAPH_ERROR: {
+			return {
+				...state,
+				spansGraph: {
+					...state.spansGraph,
+					error: action.payload.error,
+					errorMessage: action.payload.errorMessage,
+					loading: false,
+				},
+			};
+		}
+
+		case UPDATE_TRACE_GRAPH_SUCCESS: {
+			return {
+				...state,
+				spansGraph: {
+					...state.spansGraph,
+					payload: action.payload.data,
+					loading: false,
+					error: false,
+				},
+			};
+		}
+
+		case UPDATE_FILTER_RESPONSE_SELECTED: {
+			return {
+				...state,
+				filterResponseSelected: action.payload.filterResponseSelected,
+			};
+		}
+
+		case UPDATE_FILTER_EXCLUDE: {
+			return {
+				...state,
+				isFilterExclude: action.payload.isFilterExclude,
 			};
 		}
 
@@ -202,3 +201,5 @@ export const traceReducer = (
 			return state;
 	}
 };
+
+export default traceReducer;

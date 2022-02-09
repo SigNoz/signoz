@@ -1,151 +1,172 @@
-export const GET_TRACE_INITIAL_DATA_SUCCESS = 'GET_TRACE_INITIAL_DATA_SUCCESS';
-export const GET_TRACE_INITIAL_DATA_ERROR = 'GET_TRACE_INITIAL_DATA_ERROR';
-export const GET_TRACE_LOADING_START = 'GET_TRACE_LOADING_START';
-export const GET_TRACE_LOADING_END = 'GET_TRACE_LOADING_END';
-
-export const UPDATE_TRACE_SELECTED_SERVICE = 'UPDATE_TRACE_SELECTED_SERVICE';
-export const UPDATE_TRACE_SELECTED_OPERATION =
-	'UPDATE_TRACE_SELECTED_OPERATION';
-export const UPDATE_TRACE_SELECTED_LATENCY_VALUE =
-	'UPDATE_TRACE_SELECTED_LATENCY_VALUE';
-export const UPDATE_TRACE_SELECTED_KIND = 'UPDATE_TRACE_SELECTED_KIND';
-export const UPDATE_TRACE_SELECTED_TAGS = 'UPDATE_TRACE_SELECTED_TAGS';
-
-export const UPDATE_SELECTED_AGG_OPTION = 'UPDATE_SELECTED_AGG_OPTION';
-export const UPDATE_SELECTED_ENTITY = 'UPDATE_SELECTED_ENTITY';
-export const UPDATE_SPANS_LOADING = 'UPDATE_SPANS_LOADING';
-
-export const UPDATE_SELECTED_TRACE_DATA = 'UPDATE_SELECTED_TRACE_DATA';
-export const UPDATE_AGGREGATES = 'UPDATE_AGGREGATES';
-
-export const RESET_TRACE_DATA = 'RESET_TRACE_DATA';
-
 import { TraceReducer } from 'types/reducer/trace';
 
-interface GetTraceLoading {
-	type: typeof GET_TRACE_LOADING_START | typeof GET_TRACE_LOADING_END;
-}
+export const UPDATE_TRACE_FILTER = 'UPDATE_TRACE_FILTER';
+export const GET_TRACE_FILTER = 'GET_TRACE_FILTER';
+export const UPDATE_TRACE_FILTER_LOADING = 'UPDATE_TRACE_FILTER_LOADING';
 
-interface UpdateSpansLoading {
-	type: typeof UPDATE_SPANS_LOADING;
+export const SELECT_TRACE_FILTER = 'SELECT_TRACE_FILTER';
+export const UPDATE_ALL_FILTERS = 'UPDATE_ALL_FILTERS';
+export const UPDATE_SELECTED_TAGS = 'UPDATE_SELECTED_TAGS';
+export const UPDATE_TAG_MODAL_VISIBLITY = 'UPDATE_TAG_MODAL_VISIBLITY';
+
+export const UPDATE_SPANS_AGGREEGATE = 'UPDATE_SPANS_AGGREEGATE';
+
+export const UPDATE_IS_TAG_ERROR = 'UPDATE_IS_TAG_ERROR';
+
+export const UPDATE_SELECTED_FUNCTION = 'UPDATE_SELECTED_FUNCTION';
+export const UPDATE_SELECTED_GROUP_BY = 'UPDATE_SELECTED_GROUP_BY';
+
+export const UPDATE_TRACE_GRAPH_LOADING = 'UPDATE_TRACE_GRAPH_LOADING';
+export const UPDATE_TRACE_GRAPH_ERROR = 'UPDATE_TRACE_GRAPH_ERROR';
+export const UPDATE_TRACE_GRAPH_SUCCESS = 'UPDATE_TRACE_GRAPH_SUCCESS';
+
+export const RESET_TRACE_FILTER = 'RESET_TRACE_FILTER';
+export const UPDATE_FILTER_RESPONSE_SELECTED =
+	'UPDATE_FILTER_RESPONSE_SELECTED';
+export const UPDATE_FILTER_EXCLUDE = 'UPDATE_FILTER_EXCLUDE';
+
+export interface UpdateFilter {
+	type: typeof UPDATE_TRACE_FILTER;
 	payload: {
-		loading: boolean;
+		filter: TraceReducer['filter'];
 	};
 }
 
-interface GetTraceInitialData {
-	type: typeof GET_TRACE_INITIAL_DATA_SUCCESS;
+export interface UpdateSpansAggregate {
+	type: typeof UPDATE_SPANS_AGGREEGATE;
 	payload: {
-		serviceList: TraceReducer['serviceList'];
-		selectedTags: TraceReducer['selectedTags'];
-		operationList: TraceReducer['operationsList'];
-		tagsSuggestions: TraceReducer['tagsSuggestions'];
-		spansList: TraceReducer['spanList'];
-		selectedService: TraceReducer['selectedService'];
-		selectedOperation: TraceReducer['selectedOperation'];
-		selectedLatency: TraceReducer['selectedLatency'];
-		selectedKind: TraceReducer['selectedKind'];
 		spansAggregate: TraceReducer['spansAggregate'];
 	};
 }
 
-interface UpdateSelectedDate {
-	type: typeof UPDATE_SELECTED_TRACE_DATA;
+export interface UpdateTagVisiblity {
+	type: typeof UPDATE_TAG_MODAL_VISIBLITY;
 	payload: {
-		operationList: TraceReducer['operationsList'];
-		tagsSuggestions: TraceReducer['tagsSuggestions'];
-		spansList: TraceReducer['spanList'];
-		selectedKind: TraceReducer['selectedKind'];
-		selectedService: TraceReducer['selectedService'];
-		selectedLatency: TraceReducer['selectedLatency'];
-		selectedOperation: TraceReducer['selectedOperation'];
-		spansAggregate: TraceReducer['spansAggregate'];
+		isTagModalOpen: TraceReducer['isTagModalOpen'];
 	};
 }
 
-export interface GetTraceInitialDataError {
-	type: typeof GET_TRACE_INITIAL_DATA_ERROR;
-	payload: {
-		errorMessage: string;
-	};
-}
-
-interface UpdateTraceSelectedService {
-	type: typeof UPDATE_TRACE_SELECTED_SERVICE;
-	payload: {
-		selectedService: TraceReducer['selectedService'];
-	};
-}
-
-interface UpdateTraceSelectedOperation {
-	type: typeof UPDATE_TRACE_SELECTED_OPERATION;
-	payload: {
-		selectedOperation: TraceReducer['selectedOperation'];
-	};
-}
-
-interface UpdateTraceSelectedKind {
-	type: typeof UPDATE_TRACE_SELECTED_KIND;
-	payload: {
-		selectedKind: TraceReducer['selectedKind'];
-	};
-}
-
-interface UpdateTraceSelectedLatencyValue {
-	type: typeof UPDATE_TRACE_SELECTED_LATENCY_VALUE;
-	payload: {
-		selectedLatency: TraceReducer['selectedLatency'];
-	};
-}
-
-interface UpdateTraceSelectedTags {
-	type: typeof UPDATE_TRACE_SELECTED_TAGS;
+export interface UpdateSelectedTags {
+	type: typeof UPDATE_SELECTED_TAGS;
 	payload: {
 		selectedTags: TraceReducer['selectedTags'];
-		spansList: TraceReducer['spanList'];
-		spansAggregate: TraceReducer['spansAggregate'];
 	};
 }
 
-interface UpdateSelectedAggOption {
-	type: typeof UPDATE_SELECTED_AGG_OPTION;
+export interface UpdateSelected {
+	type: typeof UPDATE_FILTER_RESPONSE_SELECTED;
 	payload: {
-		selectedAggOption: TraceReducer['selectedAggOption'];
+		filterResponseSelected: TraceReducer['filterResponseSelected'];
 	};
 }
 
-interface UpdateSelectedEntity {
-	type: typeof UPDATE_SELECTED_ENTITY;
+export interface UpdateAllFilters {
+	type: typeof UPDATE_ALL_FILTERS;
 	payload: {
-		selectedEntity: TraceReducer['selectedEntity'];
+		filter: TraceReducer['filter'];
+		selectedFilter: TraceReducer['selectedFilter'];
+		filterToFetchData: TraceReducer['filterToFetchData'];
+		current: TraceReducer['spansAggregate']['currentPage'];
+		selectedTags: TraceReducer['selectedTags'];
+		userSelected: TraceReducer['userSelectedFilter'];
+		isFilterExclude: TraceReducer['isFilterExclude'];
 	};
 }
 
-interface UpdateAggregates {
-	type: typeof UPDATE_AGGREGATES;
+export interface UpdateFilterLoading {
+	type: typeof UPDATE_TRACE_FILTER_LOADING;
 	payload: {
-		spansAggregate: TraceReducer['spansAggregate'];
-		selectedEntity: TraceReducer['selectedEntity'];
-		selectedAggOption: TraceReducer['selectedAggOption'];
+		filterLoading: TraceReducer['filterLoading'];
 	};
 }
 
-interface ResetTraceData {
-	type: typeof RESET_TRACE_DATA;
+export interface SelectTraceFilter {
+	type: typeof SELECT_TRACE_FILTER;
+	payload: {
+		selectedFilter: TraceReducer['selectedFilter'];
+	};
+}
+
+export interface ResetTraceFilter {
+	type: typeof RESET_TRACE_FILTER;
+}
+
+export interface GetTraceFilter {
+	type: typeof GET_TRACE_FILTER;
+	payload: {
+		filter: TraceReducer['filter'];
+	};
+}
+
+export interface UpdateIsTagError {
+	type: typeof UPDATE_IS_TAG_ERROR;
+	payload: {
+		isTagModalError: TraceReducer['isTagModalError'];
+	};
+}
+
+export interface UpdateSelectedGroupBy {
+	type: typeof UPDATE_SELECTED_GROUP_BY;
+	payload: {
+		selectedGroupBy: TraceReducer['selectedGroupBy'];
+	};
+}
+
+export interface UpdateSelectedFunction {
+	type: typeof UPDATE_SELECTED_FUNCTION;
+	payload: {
+		selectedFunction: TraceReducer['selectedFunction'];
+	};
+}
+
+export interface UpdateSpanLoading {
+	type: typeof UPDATE_TRACE_GRAPH_LOADING;
+	payload: {
+		loading: TraceReducer['spansGraph']['loading'];
+	};
+}
+
+export interface UpdateSpansError {
+	type: typeof UPDATE_TRACE_GRAPH_ERROR;
+	payload: {
+		error: TraceReducer['spansGraph']['error'];
+		errorMessage: TraceReducer['spansGraph']['errorMessage'];
+	};
+}
+
+export interface UpdateFilterExclude {
+	type: typeof UPDATE_FILTER_EXCLUDE;
+	payload: {
+		isFilterExclude: TraceReducer['isFilterExclude'];
+	};
+}
+
+export interface UpdateSpans {
+	type: typeof UPDATE_TRACE_GRAPH_SUCCESS;
+	payload: {
+		data: TraceReducer['spansGraph']['payload'];
+	};
+}
+
+export interface ResetTraceFilter {
+	type: typeof RESET_TRACE_FILTER;
 }
 
 export type TraceActions =
-	| GetTraceLoading
-	| GetTraceInitialData
-	| GetTraceInitialDataError
-	| UpdateTraceSelectedService
-	| UpdateTraceSelectedLatencyValue
-	| UpdateTraceSelectedKind
-	| UpdateTraceSelectedOperation
-	| UpdateTraceSelectedTags
-	| UpdateSelectedDate
-	| UpdateSelectedAggOption
-	| UpdateSelectedEntity
-	| UpdateSpansLoading
-	| ResetTraceData
-	| UpdateAggregates;
+	| UpdateFilter
+	| GetTraceFilter
+	| UpdateFilterLoading
+	| SelectTraceFilter
+	| UpdateAllFilters
+	| UpdateSelectedTags
+	| UpdateTagVisiblity
+	| UpdateSpansAggregate
+	| UpdateIsTagError
+	| UpdateSelectedGroupBy
+	| UpdateSelectedFunction
+	| UpdateSpanLoading
+	| UpdateSpansError
+	| UpdateSpans
+	| ResetTraceFilter
+	| UpdateSelected
+	| UpdateFilterExclude;
