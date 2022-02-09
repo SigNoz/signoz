@@ -4,6 +4,6 @@ import styled from 'styled-components';
 
 export const SelectComponent = styled(Select)`
 	&&& {
-		min-width: 8rem;
+		min-width: 10rem;
 	}
 `;

@@ -62,30 +62,30 @@ export const groupBy: Dropdown[] = [
 export const functions: Dropdown[] = [
 	{ displayValue: 'Count', key: 'count' },
 	{ displayValue: 'Rate per sec', key: 'ratePerSec' },
-	{ displayValue: 'Sum(duration)', key: 'sum' },
-	{ displayValue: 'Avg(duration)', key: 'avg' },
+	{ displayValue: 'Sum(duration in ns)', key: 'sum' },
+	{ displayValue: 'Avg(duration in ns)', key: 'avg' },
 	{
-		displayValue: 'Max(duration)',
+		displayValue: 'Max(duration in ns)',
 		key: 'max',
 	},
 	{
-		displayValue: 'Min(duration)',
+		displayValue: 'Min(duration in ns)',
 		key: 'min',
 	},
 	{
-		displayValue: '50th percentile(duration)',
+		displayValue: '50th percentile(duration in ns)',
 		key: 'p50',
 	},
 	{
-		displayValue: '90th percentile(duration',
+		displayValue: '90th percentile(duration in ns',
 		key: 'p90',
 	},
 	{
-		displayValue: '95th percentile(duration)',
+		displayValue: '95th percentile(duration in ns)',
 		key: 'p95',
 	},
 	{
-		displayValue: '99th percentile(duration)',
+		displayValue: '99th percentile(duration in ns)',
 		key: 'p99',
 	},
 ];
