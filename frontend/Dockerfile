@@ -32,6 +32,6 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy from the stahg 1
 COPY --from=builder /frontend/build /usr/share/nginx/html
 
-EXPOSE 3000
+EXPOSE 3301
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

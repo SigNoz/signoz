@@ -29,7 +29,7 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 
 ## 加入我们的Slack社区
 
-来[Slack](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA) 跟我们打声招呼👋
+来[Slack](https://signoz.io/slack) 跟我们打声招呼👋
 
 <br /><br />
 
@@ -120,7 +120,7 @@ Jaeger只做分布式跟踪，SigNoz则是做了矩阵和跟踪两块，我们�
 
 我们 ❤️ 任何贡献无论大小。 请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 然后开始给Signoz做贡献。
 
-还不清楚怎么开始？ 只需在[slack社区](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)的`#contributing`频道里ping我们。
+还不清楚怎么开始？ 只需在[slack社区](https://signoz.io/slack)的`#contributing`频道里ping我们。
 
 <br /><br />
 
@@ -136,7 +136,7 @@ Jaeger只做分布式跟踪，SigNoz则是做了矩阵和跟踪两块，我们�
 
 ## 社区
 
-加入[slack community](https://join.slack.com/t/signoz-community/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA)，了解更多关于分布式跟踪、可观察性(observability)，以及SigNoz。同时与其他用户和贡献者一起交流。
+加入[slack community](https://signoz.io/slack)，了解更多关于分布式跟踪、可观察性(observability)，以及SigNoz。同时与其他用户和贡献者一起交流。
 
 如果你有任何想法、问题或者反馈，请在[Github Discussions](https://github.com/SigNoz/signoz/discussions)分享给我们。
 

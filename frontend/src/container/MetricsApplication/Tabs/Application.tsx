@@ -32,11 +32,12 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
-		if (servicename) {
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
-		}
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.replace(
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+		);
 	};
 
 	const onClickhandler = async (
@@ -85,12 +86,12 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
-		if (servicename) {
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
-		}
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.replace(
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+		);
 	};
 
 	return (

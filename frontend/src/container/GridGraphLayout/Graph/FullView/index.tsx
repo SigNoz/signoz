@@ -9,18 +9,21 @@ import GridGraphComponent from 'container/GridGraphComponent';
 import {
 	timeItems,
 	timePreferance,
+	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
+import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import EmptyGraph from './EmptyGraph';
-import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
+import { NotFoundContainer, TimeContainer } from './styles';
 
 const FullView = ({
 	widget,
@@ -29,9 +32,10 @@ const FullView = ({
 	noDataGraph = false,
 	name,
 }: FullViewProps): JSX.Element => {
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const [state, setState] = useState<FullViewState>({
 		error: false,
@@ -59,20 +63,33 @@ const FullView = ({
 				minTime,
 			});
 
-			const { end, start } = getStartAndEndTime({
-				type: selectedTime.enum,
-				maxTime: maxMinTime.maxTime,
-				minTime: maxMinTime.minTime,
-			});
+			const getMinMax = (time: timePreferenceType) => {
+				if (time === 'GLOBAL_TIME') {
+					const minMax = GetMinMax(globalSelectedTime);
+					return {
+						min: convertToNanoSecondsToSecond(minMax.minTime / 1000),
+						max: convertToNanoSecondsToSecond(minMax.maxTime / 1000),
+					};
+				}
+
+				const minMax = getStartAndEndTime({
+					type: selectedTime.enum,
+					maxTime: maxMinTime.maxTime,
+					minTime: maxMinTime.minTime,
+				});
+				return { min: parseInt(minMax.start, 10), max: parseInt(minMax.end, 10) };
+			};
+
+			const queryMinMax = getMinMax(selectedTime.enum);
 
 			const response = await Promise.all(
 				widget.query
 					.filter((e) => e.query.length !== 0)
 					.map(async (query) => {
 						const result = await getQueryResult({
-							end,
+							end: queryMinMax.max.toString(),
 							query: query.query,
-							start: start,
+							start: queryMinMax.min.toString(),
 							step: '60',
 						});
 						return {
