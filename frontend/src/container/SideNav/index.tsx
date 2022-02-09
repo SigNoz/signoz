@@ -73,10 +73,12 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 				mode="inline"
 			>
 				{menus.map(({ to, Icon, name }) => (
-					<Menu.Item key={to} icon={<Icon />}>
-						<div onClick={(): void => onClickHandler(to)}>
-							<Typography>{name}</Typography>
-						</div>
+					<Menu.Item
+						key={to}
+						icon={<Icon />}
+						onClick={(): void => onClickHandler(to)}
+					>
+						<Typography>{name}</Typography>
 					</Menu.Item>
 				))}
 			</Menu>
