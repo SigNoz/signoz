@@ -64,13 +64,14 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 
 				const userPrefernceResponse = await setPreference({
 					isAnonymous,
-					optOutUpdates: hasOptedUpdates,
+					hasOptedUpdates,
 				});
 
 				if (userPrefernceResponse.statusCode === 200) {
 					const response = await signup({
 						email: email,
 						name: firstName,
+						organizationName,
 					});
 
 					if (response.statusCode === 200) {
