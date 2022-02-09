@@ -110,7 +110,7 @@ const config = {
 	plugins: plugins,
 	optimization: {
 		chunkIds: 'named',
-		concatenateModules: true,
+		concatenateModules: false,
 		emitOnErrors: true,
 		flagIncludedChunks: true,
 		innerGraph: true, //tells webpack whether to conduct inner graph analysis for unused exports.
