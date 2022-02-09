@@ -660,7 +660,7 @@ func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiErr
 		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
+	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
 
 	if err != nil {
 		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
@@ -730,7 +730,7 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 	values := map[string]string{"name": channelToDelete.Name}
 	jsonValue, _ := json.Marshal(values)
 
-	req, err := http.NewRequest(http.MethodDelete, constants.ALERTMANAGER_API_PREFIX+"v1/receivers", bytes.NewBuffer(jsonValue))
+	req, err := http.NewRequest(http.MethodDelete, constants.GetAlertManagerApiPrefix()+"v1/receivers", bytes.NewBuffer(jsonValue))
 
 	if err != nil {
 		zap.S().Errorf("Error in creating new delete request to alertmanager/v1/receivers\n", err)
@@ -855,7 +855,7 @@ func (r *ClickHouseReader) EditChannel(receiver *model.Receiver, id string) (*mo
 		}
 	}
 
-	req, err := http.NewRequest(http.MethodPut, constants.ALERTMANAGER_API_PREFIX+"v1/receivers", bytes.NewBuffer(receiverString))
+	req, err := http.NewRequest(http.MethodPut, constants.GetAlertManagerApiPrefix()+"v1/receivers", bytes.NewBuffer(receiverString))
 
 	if err != nil {
 		zap.S().Errorf("Error in creating new update request to alertmanager/v1/receivers\n", err)
@@ -917,7 +917,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Recei
 		}
 	}
 
-	response, err := http.Post(constants.ALERTMANAGER_API_PREFIX+"v1/receivers", "application/json", bytes.NewBuffer(receiverString))
+	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer(receiverString))
 
 	if err != nil {
 		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
