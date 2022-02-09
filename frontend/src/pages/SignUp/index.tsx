@@ -1,148 +1,43 @@
-import { Button, Input, notification, Typography } from 'antd';
-import signup from 'api/user/signup';
-import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import React, { useState } from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { UserLoggedIn } from 'store/actions';
-import AppActions from 'types/actions';
+import useFetch from 'hooks/useFetch';
+import React from 'react';
+import SignUpComponent from './SignUp';
+import getVersion from 'api/user/getVersion';
+import { PayloadProps as VersionPayload } from 'types/api/user/getVersion';
+import { PayloadProps as UserPrefPayload } from 'types/api/user/getUserPreference';
 
-import {
-	ButtonContainer,
-	Container,
-	FormWrapper,
-	LogoImageContainer,
-	Title,
-} from './styles';
+import Spinner from 'components/Spinner';
+import { Typography } from 'antd';
+import getPreference from 'api/user/getPreference';
 
-const Signup = ({ loggedIn }: SignupProps): JSX.Element => {
-	const [notificationsInstance, Element] = notification.useNotification();
+const SignUp = () => {
+	const versionResponse = useFetch<VersionPayload, undefined>(getVersion);
 
-	const [loading, setLoading] = useState(false);
+	const userPrefResponse = useFetch<UserPrefPayload, undefined>(getPreference);
 
-	const [formState, setFormState] = useState({
-		firstName: { value: '' },
-		email: { value: '' },
-	});
+	if (versionResponse.error || userPrefResponse.error) {
+		return (
+			<Typography>
+				{versionResponse.errorMessage ||
+					userPrefResponse.errorMessage ||
+					'Somehthing went wrong'}
+			</Typography>
+		);
+	}
 
-	const updateForm = (
-		name: string,
-		target: EventTarget & HTMLInputElement,
-	): void => {
-		if (name === 'firstName') {
-			setFormState({
-				...formState,
-				firstName: { ...formState.firstName, value: target.value },
-			});
-		} else if (name === 'email') {
-			setFormState({
-				...formState,
-				email: { ...formState.email, value: target.value },
-			});
-		}
-	};
+	if (
+		versionResponse.loading ||
+		versionResponse.payload === undefined ||
+		userPrefResponse.loading ||
+		userPrefResponse.payload === undefined
+	) {
+		return <Spinner tip="Loading.." />;
+	}
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-		(async (): Promise<void> => {
-			try {
-				e.preventDefault();
-				setLoading(true);
-				const payload = {
-					first_name: formState.firstName,
-					email: formState.email,
-				};
+	const version = versionResponse.payload.version;
 
-				const response = await signup({
-					email: payload.email.value,
-					name: payload.first_name.value,
-				});
+	const userpref = userPrefResponse.payload;
 
-				if (response.statusCode === 200) {
-					loggedIn();
-					history.push(ROUTES.APPLICATION);
-				} else {
-					notificationsInstance.error({
-						message: 'Something went wrong',
-					});
-				}
-				setLoading(false);
-			} catch (error) {
-				notificationsInstance.error({
-					message: 'Something went wrong',
-				});
-				setLoading(false);
-			}
-		})();
-	};
-
-	return (
-		<div>
-			{Element}
-
-			<Container direction="vertical">
-				<Title>Create your account</Title>
-				<Typography>
-					Monitor your applications. Find what is causing issues.
-				</Typography>
-			</Container>
-
-			<FormWrapper>
-				<LogoImageContainer src={'signoz.svg'} alt="logo" />
-
-				<form onSubmit={handleSubmit}>
-					<div>
-						<label htmlFor="signupEmail">Email</label>
-						<Input
-							placeholder="mike@netflix.com"
-							type="email"
-							autoFocus
-							value={formState.email.value}
-							onChange={(e): void => updateForm('email', e.target)}
-							required
-							id="signupEmail"
-						/>
-					</div>
-
-					<div>
-						<label htmlFor="signupFirstName">First Name</label>
-						<Input
-							placeholder="Mike"
-							value={formState.firstName.value}
-							onChange={(e): void => updateForm('firstName', e.target)}
-							required
-							id="signupFirstName"
-						/>
-					</div>
-
-					<ButtonContainer>
-						<Button
-							type="primary"
-							htmlType="submit"
-							data-attr="signup"
-							loading={loading}
-							disabled={loading || !formState.email.value}
-						>
-							Get Started
-						</Button>
-					</ButtonContainer>
-				</form>
-			</FormWrapper>
-		</div>
-	);
+	return <SignUpComponent userpref={userpref} version={version} />;
 };
 
-interface DispatchProps {
-	loggedIn: () => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	loggedIn: bindActionCreators(UserLoggedIn, dispatch),
-});
-
-type SignupProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(Signup);
+export default SignUp;
