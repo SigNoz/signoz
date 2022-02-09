@@ -2,14 +2,11 @@ name: push
 
 on:
   push:
-    paths:
-      - 'pkg/query-service/**'
-      - 'frontend/**'
     branches:
       - main
       - develop
     tags:
-      - ^v[0-9]+.[0-9]+.[0-9]+$
+      - v*
 
 jobs:
 
@@ -37,7 +34,9 @@ jobs:
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=$tag" >> $GITHUB_ENV
           elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
             echo "DOCKER_TAG=latest" >> $GITHUB_ENV
           else
@@ -79,7 +78,9 @@ jobs:
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
-            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=$tag" >> $GITHUB_ENV
           elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
             echo "DOCKER_TAG=latest" >> $GITHUB_ENV
           else
