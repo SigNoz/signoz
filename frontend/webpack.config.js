@@ -41,6 +41,7 @@ const config = {
 			publicPath: '/',
 			watch: true,
 		},
+		allowedHosts: 'all',
 	},
 	target: 'web',
 	output: {
