@@ -7,6 +7,7 @@ on:
       - 'frontend/**'
     branches:
       - main
+      - develop
     tags:
       - ^v[0-9]+.[0-9]+.[0-9]+$
 
@@ -33,10 +34,16 @@ jobs:
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
+      - name: Set docker tag environment
+        run: |
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+          fi
       - name: Build and push docker image
-        env:
-          DOCKER_TAG: ${{ steps.short-sha.outputs.sha }}
-          DOCKER_SECOND_TAG: ${{ steps.branch-name.outputs.current_branch }}
         run: make build-push-query-service
 
   image-build-and-push-frontend:
@@ -69,8 +76,14 @@ jobs:
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
+      - name: Set docker tag environment
+        run: |
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+          fi
       - name: Build and push docker image
-        env:
-          DOCKER_TAG: ${{ steps.short-sha.outputs.sha }}
-          DOCKER_SECOND_TAG: ${{ steps.branch-name.outputs.current_branch }}
         run: make build-push-frontend
