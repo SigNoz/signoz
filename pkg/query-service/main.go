@@ -10,6 +10,7 @@ import (
 
 	"go.signoz.io/query-service/app"
 	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -31,7 +32,7 @@ func main() {
 	defer loggerMgr.Sync() // flushes buffer, if any
 
 	logger := loggerMgr.Sugar()
-	logger.Debug("STARTING!")
+	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),

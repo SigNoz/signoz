@@ -1,51 +1,22 @@
-import { GlobalTime } from 'types/actions/globalTime';
-
-export interface TraceTagItem {
-	key: string;
-	value: string;
-}
-
-export interface pushDStree {
-	id: string;
-	name: string;
-	value: number;
-	time: number;
-	startTime: number;
-	tags: TraceTagItem[];
-	children: pushDStree[];
-}
-
-export type span = [
-	number,
-	string,
-	string,
-	string,
-	string,
-	string,
-	string,
-	string | string[],
-	string | string[],
-	string | string[],
-	pushDStree[],
-];
-
-export interface SpanList {
-	events: span[];
-	segmentID: string;
-	columns: string[];
-}
-
-export type PayloadProps = SpanList[];
+import { TraceReducer } from 'types/reducer/trace';
 
 export interface Props {
-	start: GlobalTime['minTime'];
-	end: GlobalTime['maxTime'];
-	lookback: string;
-	service: string;
-	operation: string;
-	maxDuration: string;
-	minDuration: string;
-	kind: string;
-	limit: string;
-	tags: string;
+	start: number;
+	end: number;
+	function: TraceReducer['selectedFunction'];
+	step: number;
+	groupBy: TraceReducer['selectedGroupBy'];
+	selectedFilter: TraceReducer['selectedFilter'];
+	selectedTags: TraceReducer['selectedTags'];
+	isFilterExclude: TraceReducer['isFilterExclude'];
+}
+
+export interface PayloadProps {
+	items: Record<string, SpanData>;
+}
+
+interface SpanData {
+	timestamp: number;
+	value?: number;
+	groupBy?: Record<string, number>;
 }

@@ -29,6 +29,17 @@ jobs:
       - name: Inject the images to the cluster
         run: k3d image import signoz/query-service:$DOCKER_TAG signoz/frontend:$DOCKER_TAG -c signoz
 
+      - name: Set up HotROD sample-app 
+        run: |
+          # create sample-application namespace
+          kubectl create ns sample-application
+
+          # apply hotrod k8s manifest file
+          kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
+
+          # wait for all deployments in sample-application namespace to be READY
+          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
+
       - name: Deploy the app
         run: |
           # add signoz helm repository
@@ -47,22 +58,13 @@ jobs:
             --set frontend.image.tag=$DOCKER_TAG
           
           # get pods, services and the container images
-          kubectl describe deploy/frontend -n platform | grep Image
-          kubectl describe statefulset/query-service -n platform | grep Image
+          kubectl describe deploy/my-release-frontend -n platform | grep Image
+          kubectl describe statefulset/my-release-query-service -n platform | grep Image
           kubectl get pods -n platform
           kubectl get svc -n platform
 
       - name: Kick off a sample-app workload
         run: |
-          # create sample-application namespace
-          kubectl create ns sample-application
-
-          # apply hotrod k8s manifest file
-          kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
-
-          # wait for all deployments in sample-application namespace to be READY
-          kubectl -n sample-application get deploy --output name | xargs -r -n1 -t kubectl -n sample-application rollout status --timeout=300s
-          
           # start the locust swarm
           kubectl -n sample-application run strzal --image=djbingham/curl \
             --restart='OnFailure' -i --rm --command -- curl -X POST -F \

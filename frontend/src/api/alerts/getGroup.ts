@@ -3,14 +3,13 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/alerts/getGroups';
+import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 
 const getGroups = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const queryParams = Object.keys(props)
-			.map((e) => `${e}=${props[e]}`)
-			.join('&');
+		const queryParams = convertObjectIntoParams(props);
 
 		const response = await AxiosAlertManagerInstance.get(
 			`/alerts/groups?${queryParams}`,

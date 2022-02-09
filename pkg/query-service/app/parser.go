@@ -19,9 +19,11 @@ import (
 
 var allowedDimesions = []string{"calls", "duration"}
 
+var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
+
 var allowedAggregations = map[string][]string{
 	"calls":    {"count", "rate_per_sec"},
-	"duration": {"avg", "p50", "p95", "p99"},
+	"duration": {"avg", "p50", "p95", "p90", "p99", "min", "max", "sum"},
 }
 
 func parseUser(r *http.Request) (*model.User, error) {
@@ -480,6 +482,132 @@ func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
 	return params, nil
 }
 
+func parseSpanFilterRequestBody(r *http.Request) (*model.SpanFilterParams, error) {
+
+	var postData *model.SpanFilterParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
+}
+
+func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, error) {
+
+	var postData *model.GetFilteredSpansParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	if postData.Limit == 0 {
+		postData.Limit = 100
+	}
+
+	return postData, nil
+}
+
+func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpanAggregatesParams, error) {
+
+	var postData *model.GetFilteredSpanAggregatesParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	step := postData.StepSeconds
+	if step == 0 {
+		return nil, errors.New("step param missing in query")
+	}
+
+	function := postData.Function
+	if len(function) == 0 {
+		return nil, errors.New("function param missing in query")
+	} else {
+		if !DoesExistInSlice(function, allowedFunctions) {
+			return nil, errors.New(fmt.Sprintf("given function: %s is not allowed in query", function))
+		}
+	}
+
+	var dimension, aggregationOption string
+
+	switch function {
+	case "count":
+		dimension = "calls"
+		aggregationOption = "count"
+	case "ratePerSec":
+		dimension = "calls"
+		aggregationOption = "rate_per_sec"
+	case "avg":
+		dimension = "duration"
+		aggregationOption = "avg"
+	case "sum":
+		dimension = "duration"
+		aggregationOption = "sum"
+	case "p50":
+		dimension = "duration"
+		aggregationOption = "p50"
+	case "p90":
+		dimension = "duration"
+		aggregationOption = "p90"
+	case "p95":
+		dimension = "duration"
+		aggregationOption = "p95"
+	case "p99":
+		dimension = "duration"
+		aggregationOption = "p99"
+	case "min":
+		dimension = "duration"
+		aggregationOption = "min"
+	case "max":
+		dimension = "duration"
+		aggregationOption = "max"
+	}
+
+	postData.AggregationOption = aggregationOption
+	postData.Dimension = dimension
+	// tags, err := parseTagsV2("tags", r)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if len(*tags) != 0 {
+	// 	params.Tags = *tags
+	// }
+
+	return postData, nil
+}
+
 func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
 
 	params := &model.GetErrorParams{}
@@ -502,6 +630,26 @@ func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
 	return params, nil
 }
 
+func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
+	var postData *model.TagFilterParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
+
+}
 func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 
 	startTime, err := parseTime("start", r)
@@ -521,9 +669,40 @@ func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 	return params, nil
 }
 
+func fetchArrayValues(param string, r *http.Request) []string {
+	valueStr := r.URL.Query().Get(param)
+	var values []string
+	if len(valueStr) == 0 {
+		return values
+	}
+	err := json.Unmarshal([]byte(valueStr), &values)
+	if err != nil {
+		zap.S().Error("Error in parsing service params", zap.Error(err))
+	}
+	return values
+}
+
 func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
 
 	tags := new([]model.TagQuery)
+	tagsStr := r.URL.Query().Get(param)
+
+	if len(tagsStr) == 0 {
+		return tags, nil
+	}
+	err := json.Unmarshal([]byte(tagsStr), tags)
+	if err != nil {
+		zap.S().Error("Error in parsig tags", zap.Error(err))
+		return nil, fmt.Errorf("error in parsing %s ", param)
+	}
+	// zap.S().Info("Tags: ", *tags)
+
+	return tags, nil
+}
+
+func parseTagsV2(param string, r *http.Request) (*[]model.TagQueryV2, error) {
+
+	tags := new([]model.TagQueryV2)
 	tagsStr := r.URL.Query().Get(param)
 
 	if len(tagsStr) == 0 {
@@ -577,6 +756,45 @@ func parseApplicationPercentileRequest(r *http.Request) (*model.ApplicationPerce
 	params.SetGranPeriod(stepInt)
 
 	return params, nil
+
+}
+
+func parseTimeStr(timeStr string, param string) (*time.Time, error) {
+
+	if len(timeStr) == 0 {
+		return nil, fmt.Errorf("%s param missing in query", param)
+	}
+
+	timeUnix, err := strconv.ParseInt(timeStr, 10, 64)
+	if err != nil || len(timeStr) == 0 {
+		return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
+	}
+
+	timeFmt := time.Unix(0, timeUnix)
+
+	return &timeFmt, nil
+
+}
+
+func parseTimeMinusBufferStr(timeStr string, param string) (*time.Time, error) {
+
+	if len(timeStr) == 0 {
+		return nil, fmt.Errorf("%s param missing in query", param)
+	}
+
+	timeUnix, err := strconv.ParseInt(timeStr, 10, 64)
+	if err != nil || len(timeStr) == 0 {
+		return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
+	}
+
+	timeUnixNow := time.Now().UnixNano()
+	if timeUnix > timeUnixNow-30000000000 {
+		timeUnix = timeUnix - 30000000000
+	}
+
+	timeFmt := time.Unix(0, timeUnix)
+
+	return &timeFmt, nil
 
 }
 
@@ -679,4 +897,16 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	}
 
 	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
+}
+
+func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
+
+	var userPreferences model.UserPreferences
+	err := json.NewDecoder(r.Body).Decode(&userPreferences)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userPreferences, nil
+
 }
