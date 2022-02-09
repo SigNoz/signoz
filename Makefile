@@ -45,13 +45,8 @@ build-push-frontend:
 	@echo "------------------"
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
-ifndef DOCKER_SECOND_TAG
 	@cd $(FRONTEND_DIRECTORY) && \
 	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 --tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
-else
-	@cd $(FRONTEND_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 --tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) --tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_SECOND_TAG) .
-endif
 
 # Steps to build and push docker image of query service
 .PHONY: build-query-service-amd64  build-push-query-service
@@ -68,13 +63,8 @@ build-push-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
-ifndef DOCKER_SECOND_TAG
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
 	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
-else
-	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_SECOND_TAG) .
-endif
 
 # Steps to build and push docker image of flattener
 .PHONY: build-flattener-amd64  build-push-flattener
