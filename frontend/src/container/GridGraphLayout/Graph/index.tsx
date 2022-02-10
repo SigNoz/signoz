@@ -23,7 +23,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal, FullViewContainer } from './styles';
+import { Modal, FullViewContainer, ErrorContainer } from './styles';
 
 const GridCardGraph = ({
 	widget,
@@ -131,7 +131,17 @@ const GridCardGraph = ({
 	}, [deleteWidget, widget, onToggleModal, isDeleted]);
 
 	if (state.error) {
-		return <div>{state.errorMessage}</div>;
+		return (
+			<>
+				<Bar
+					onViewFullScreenHandler={(): void => onToggleModal(setModal)}
+					widget={widget}
+					onDeleteHandler={(): void => onToggleModal(setDeletModal)}
+				/>
+
+				<ErrorContainer>{state.errorMessage}</ErrorContainer>
+			</>
+		);
 	}
 
 	if (state.loading === true || state.payload === undefined) {
