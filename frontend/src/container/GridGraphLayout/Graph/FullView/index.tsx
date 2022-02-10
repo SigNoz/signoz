@@ -16,6 +16,7 @@ import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
+import getStep from 'lib/getStep';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -90,7 +91,11 @@ const FullView = ({
 							end: queryMinMax.max.toString(),
 							query: query.query,
 							start: queryMinMax.min.toString(),
-							step: '60',
+							step: `${getStep({
+								start: queryMinMax.min,
+								end: queryMinMax.max,
+								inputFormat: 's',
+							})}`,
 						});
 						return {
 							query: query.query,
