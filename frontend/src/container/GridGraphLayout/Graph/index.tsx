@@ -149,7 +149,7 @@ const GridCardGraph = ({
 					destroyOnClose
 				>
 					<FullViewContainer>
-						<FullView name={name} widget={widget} />
+						<FullView name={name + 'expanded'} widget={widget} />
 					</FullViewContainer>
 				</Modal>
 			</>
