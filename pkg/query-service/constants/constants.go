@@ -23,7 +23,13 @@ func IsTelemetryEnabled() bool {
 const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 
-const ALERTMANAGER_API_PREFIX = "http://alertmanager:9093/api/"
+func GetAlertManagerApiPrefix() string {
+	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
+		return os.Getenv("ALERTMANAGER_API_PREFIX")
+	}
+	return "http://alertmanager:9093/api/"
+}
+
 const RELATIONAL_DATASOURCE_PATH = "/var/lib/signoz/signoz.db"
 
 const (
