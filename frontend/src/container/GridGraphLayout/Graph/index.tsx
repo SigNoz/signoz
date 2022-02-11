@@ -124,6 +124,38 @@ const GridCardGraph = ({
 		[],
 	);
 
+	const getModals = () => {
+		return (
+			<>
+				<Modal
+					destroyOnClose
+					onCancel={(): void => onToggleModal(setDeletModal)}
+					visible={deleteModal}
+					title="Delete"
+					height="10vh"
+					onOk={onDeleteHandler}
+					centered
+				>
+					<Typography>Are you sure you want to delete this widget</Typography>
+				</Modal>
+
+				<Modal
+					title="View"
+					footer={[]}
+					centered
+					visible={modal}
+					onCancel={(): void => onToggleModal(setModal)}
+					width="85%"
+					destroyOnClose
+				>
+					<FullViewContainer>
+						<FullView name={name} widget={widget} />
+					</FullViewContainer>
+				</Modal>
+			</>
+		);
+	};
+
 	const onDeleteHandler = useCallback(() => {
 		deleteWidget({ widgetId: widget.id });
 		onToggleModal(setDeletModal);
@@ -133,6 +165,7 @@ const GridCardGraph = ({
 	if (state.error) {
 		return (
 			<>
+				{getModals()}
 				<Bar
 					onViewFullScreenHandler={(): void => onToggleModal(setModal)}
 					widget={widget}
@@ -156,31 +189,7 @@ const GridCardGraph = ({
 				onDeleteHandler={(): void => onToggleModal(setDeletModal)}
 			/>
 
-			<Modal
-				destroyOnClose
-				onCancel={(): void => onToggleModal(setDeletModal)}
-				visible={deleteModal}
-				title="Delete"
-				height="10vh"
-				onOk={onDeleteHandler}
-				centered
-			>
-				<Typography>Are you sure you want to delete this widget</Typography>
-			</Modal>
-
-			<Modal
-				title="View"
-				footer={[]}
-				centered
-				visible={modal}
-				onCancel={(): void => onToggleModal(setModal)}
-				width="85%"
-				destroyOnClose
-			>
-				<FullViewContainer>
-					<FullView name={name} widget={widget} />
-				</FullViewContainer>
-			</Modal>
+			{getModals()}
 
 			<GridGraphComponent
 				{...{
