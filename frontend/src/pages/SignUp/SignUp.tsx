@@ -82,17 +82,19 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 
 						history.push(ROUTES.APPLICATION);
 					} else {
+						setLoading(false);
+
 						notification.error({
 							message: 'Something went wrong',
 						});
 					}
 				} else {
+					setLoading(false);
+
 					notification.error({
 						message: 'Something went wrong',
 					});
 				}
-
-				setLoading(false);
 			} catch (error) {
 				notification.error({
 					message: 'Something went wrong',
