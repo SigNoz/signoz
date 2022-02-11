@@ -148,7 +148,7 @@ const Graph = ({
 
 	useEffect(() => {
 		buildChart();
-	}, []);
+	}, [buildChart]);
 
 	return (
 		<div style={{ height: '85%' }}>
