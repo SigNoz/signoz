@@ -1,4 +1,4 @@
-import { Layout, Switch } from 'antd';
+import { Layout, Menu, Switch, Typography } from 'antd';
 import styled from 'styled-components';
 const { Sider: SiderComponent } = Layout;
 
@@ -36,3 +36,18 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 	}
 `;
 
+export const SlackButton = styled(Typography)`
+	&&& {
+		margin-left: 1rem;
+	}
+`;
+
+export const MenuItem = styled(Menu.Item)`
+	&&& {
+		position: fixed;
+		bottom: 48px;
+		width: 100%;
+		height: 48px;
+		background: #262626;
+	}
+`;
