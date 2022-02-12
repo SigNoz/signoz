@@ -45,7 +45,9 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 				const day = dayjs(value);
 				return <div>{day.format('DD/MM/YYYY HH:MM:ss A')}</div>;
 			},
-			sorter: (a, b) => dayjs(a.timestamp).diff(dayjs(b.timestamp)),
+			sorter: (a, b) =>
+				dayjs(a.timestamp).toDate().getTime() -
+				dayjs(b.timestamp).toDate().getTime(),
 		},
 		{
 			title: 'Service',
