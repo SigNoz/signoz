@@ -1,5 +1,10 @@
 import { Menu, Typography } from 'antd';
-import { MenuItem, SlackButton, ToggleButton } from './styles';
+import {
+	MenuItem,
+	SlackButton,
+	SlackMenuItemContainer,
+	ToggleButton,
+} from './styles';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
@@ -91,9 +96,11 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 					</Menu.Item>
 				))}
 
-				<MenuItem onClick={onClickSlackHandler} icon={<Slack />}>
-					<SlackButton>Slack</SlackButton>
-				</MenuItem>
+				<SlackMenuItemContainer collapsed={collapsed}>
+					<MenuItem onClick={onClickSlackHandler} icon={<Slack />}>
+						<SlackButton>Slack</SlackButton>
+					</MenuItem>
+				</SlackMenuItemContainer>
 			</Menu>
 		</Sider>
 	);
