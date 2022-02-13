@@ -98,7 +98,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 
 				<SlackMenuItemContainer collapsed={collapsed}>
 					<MenuItem onClick={onClickSlackHandler} icon={<Slack />}>
-						<SlackButton>Slack</SlackButton>
+						<SlackButton>Support</SlackButton>
 					</MenuItem>
 				</SlackMenuItemContainer>
 			</Menu>
