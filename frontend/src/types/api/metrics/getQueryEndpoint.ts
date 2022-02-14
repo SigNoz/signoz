@@ -1,21 +1,21 @@
 export interface Props {
-	service: string;
+	query: string;
 	start: string;
 	end: string;
 	step: number;
 }
 
-export type rpsEndpointValues = [number, string];
+export type queryEndpointValues = [number, string];
 
-export interface rpsEndpointData {
+export interface queryEndpointData {
 	metric?: {
 		__name__: string;
 		[key: string]: string;
 	};
-	values: rpsEndpointValues[];
+	values: queryEndpointValues[];
 }
 
 export interface PayloadProps {
 	status: 'success' | 'error';
-	result: rpsEndpointData[];
+	result: queryEndpointData[];
 }

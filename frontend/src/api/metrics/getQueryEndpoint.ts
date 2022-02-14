@@ -2,15 +2,14 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Props, PayloadProps } from 'types/api/metrics/getRPS';
+import { Props, PayloadProps } from 'types/api/metrics/getQueryEndpoint';
 
-const getRPS = async (
+const getQueryEndpoint = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const query = `sum(rate(signoz_latency_count{service_name="${props.service}", span_kind="SPAN_KIND_SERVER"}[2m]))`;
 		const response = await axios.get(
-			`/query_range?query=${query}&start=${props.start}&end=${props.end}&step=${props.step}`,
+			`/query_range?query=${props.query}&start=${props.start}&end=${props.end}&step=${props.step}`,
 		);
 		const payloadData = response.data;
 
@@ -25,4 +24,4 @@ const getRPS = async (
 	}
 };
 
-export default getRPS;
+export default getQueryEndpoint;

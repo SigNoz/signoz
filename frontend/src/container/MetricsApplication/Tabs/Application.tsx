@@ -2,7 +2,6 @@ import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import convertIntoEpoc from 'lib/covertIntoEpoc';
 import { colors } from 'lib/getRandomColor';
@@ -11,22 +10,21 @@ import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
-const Application = ({ getWidget }: DashboardProps): JSX.Element => {
+const Application = (): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
 	const {
 		topEndPoints,
 		serviceOverview,
-		rpsEndpoints,
-		errorPercentEndpoints,
+		applicationRpsEndpoints,
+		applicationErrorEndpoints,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const onTracePopupClick = (timestamp: number): void => {
@@ -188,22 +186,25 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								name="request_per_sec"
 								type="line"
 								data={{
-									datasets: [
-										{
-											data: rpsEndpoints.map((value) =>
+									datasets: applicationRpsEndpoints.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
 												Number(parseFloat(value[1]).toFixed(2)),
 											),
-											borderColor: '#F2994A',
+											borderColor: colors[index % colors.length],
 											label: 'Request per second',
 											showLine: true,
 											borderWidth: 1.5,
 											spanGaps: true,
 											pointRadius: 0,
-										},
-									],
-									labels: rpsEndpoints.map((value) => {
-										return new Date(parseInt(convertIntoEpoc(value[0] * 1000), 10));
+										};
 									}),
+									labels:
+										applicationRpsEndpoints[0] === undefined
+											? []
+											: applicationRpsEndpoints[0].values.map((data) => {
+													return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+											  }),
 								}}
 							/>
 						</GraphContainer>
@@ -231,26 +232,27 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
 								}}
 								name="error_percentage_%"
-								// noDataGraph
-								// FullViewOptions
 								type="line"
 								data={{
-									datasets: [
-										{
-											data: errorPercentEndpoints.map((value) =>
+									datasets: applicationErrorEndpoints.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
 												Number(parseFloat(value[1]).toFixed(2)),
 											),
-											borderColor: '#F2994A',
-											label: 'Request per second',
+											borderColor: colors[index % colors.length],
+											label: 'Error Percentage (%)',
 											showLine: true,
 											borderWidth: 1.5,
 											spanGaps: true,
 											pointRadius: 0,
-										},
-									],
-									labels: errorPercentEndpoints.map((value) => {
-										return new Date(parseInt(convertIntoEpoc(value[0] * 1000), 10));
+										};
 									}),
+									labels:
+										applicationErrorEndpoints[0] === undefined
+											? []
+											: applicationErrorEndpoints[0].values.map((data) => {
+													return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+											  }),
 								}}
 							/>
 						</GraphContainer>
@@ -266,9 +268,5 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		</>
 	);
 };
-
-interface DashboardProps {
-	getWidget: (query: Widgets['query']) => Widgets;
-}
 
 export default Application;

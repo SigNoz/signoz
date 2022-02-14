@@ -1,13 +1,21 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
+import Graph from 'components/Graph';
+import convertIntoEpoc from 'lib/covertIntoEpoc';
+import { colors } from 'lib/getRandomColor';
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
-const External = ({ getWidget }: ExternalProps): JSX.Element => {
-	const { servicename } = useParams<{ servicename?: string }>();
+const External = (): JSX.Element => {
+	const {
+		externalCallEndpoint,
+		externalErrorEndpoints,
+		addressedExternalCallRPSResponse,
+		addressedExternalCallDurationResponse,
+	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	return (
 		<>
@@ -16,16 +24,27 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 					<Card>
 						<GraphTitle>External Call Error Percentage (%)</GraphTitle>
 						<GraphContainer>
-							<FullView
-								name="external_call_error_percentage"
-								fullViewOptions={false}
-								noDataGraph
-								widget={getWidget([
-									{
-										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."}[1m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[1m])) by (http_url)) < 1000 OR vector(0)`,
-										legend: '{{http_url}}',
-									},
-								])}
+							<Graph
+								name="external_call_error_percentage%"
+								type="line"
+								data={{
+									datasets: externalErrorEndpoints.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: colors[index % colors.length],
+											label: 'External Call Error Percentage (%)',
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										};
+									}),
+									labels: externalErrorEndpoints[0].values.map((data) => {
+										return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -35,16 +54,27 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 					<Card>
 						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
-							<FullView
-								name="external_call_duration"
-								noDataGraph
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m]))/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m]))`,
-										legend: 'Average Duration',
-									},
-								])}
+							<Graph
+								name="external_call_duration%"
+								type="line"
+								data={{
+									datasets: externalCallEndpoint.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: colors[index % colors.length],
+											label: 'Average Duration',
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										};
+									}),
+									labels: externalCallEndpoint[0].values.map((data) => {
+										return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -56,16 +86,26 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 					<Card>
 						<GraphTitle>External Call RPS(by Address)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_rps_by_address"
-								noDataGraph
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
-										legend: '{{http_url}}',
-									},
-								])}
+								type="line"
+								data={{
+									datasets: addressedExternalCallRPSResponse.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: colors[index % colors.length],
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										};
+									}),
+									labels: addressedExternalCallRPSResponse[0].values.map((data) => {
+										return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -75,16 +115,26 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 					<Card>
 						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>
-							<FullView
-								noDataGraph
+							<Graph
 								name="external_call_duration_by_address"
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m])/rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
-										legend: '{{http_url}}',
-									},
-								])}
+								type="line"
+								data={{
+									datasets: addressedExternalCallDurationResponse.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: colors[index % colors.length],
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										};
+									}),
+									labels: addressedExternalCallDurationResponse[0].values.map((data) => {
+										return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -93,9 +143,5 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 		</>
 	);
 };
-
-interface ExternalProps {
-	getWidget: (query: Widgets['query']) => Widgets;
-}
 
 export default External;

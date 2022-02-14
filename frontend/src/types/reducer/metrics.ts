@@ -1,12 +1,7 @@
-import { DBOverView } from 'types/api/metrics/getDBOverview';
-import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
-import { ExternalError } from 'types/api/metrics/getExternalError';
-import { ExternalService } from 'types/api/metrics/getExternalService';
+import { queryEndpointData } from 'types/api/metrics/getQueryEndpoint';
 import { ServicesList } from 'types/api/metrics/getService';
 import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
-import { rpsEndpointValues } from 'types/api/metrics/getRPS';
-import { errorPercentageValue } from 'types/api/metrics/getErrorPercentage';
 
 interface MetricReducer {
 	services: ServicesList[];
@@ -14,13 +9,15 @@ interface MetricReducer {
 	metricsApplicationLoading: boolean;
 	error: boolean;
 	errorMessage: string;
-	dbOverView: DBOverView[];
-	externalService: ExternalService[];
 	topEndPoints: TopEndPoints[];
-	rpsEndpoints: rpsEndpointValues[];
-	errorPercentEndpoints: errorPercentageValue[];
-	externalAverageDuration: ExternalAverageDuration[];
-	externalError: ExternalError[];
+	applicationRpsEndpoints: queryEndpointData[];
+	applicationErrorEndpoints: queryEndpointData[];
+	dbRpsEndpoints: queryEndpointData[];
+	dbAvgDurationEndpoints: queryEndpointData[];
+	externalCallEndpoint: queryEndpointData[];
+	externalErrorEndpoints: queryEndpointData[];
+	addressedExternalCallDurationResponse: queryEndpointData[];
+	addressedExternalCallRPSResponse: queryEndpointData[];
 	serviceOverview: ServiceOverview[];
 }
 

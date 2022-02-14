@@ -1,13 +1,18 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
-
+import Graph from 'components/Graph';
+import { AppState } from 'store/reducers';
+import MetricReducer from 'types/reducer/metrics';
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
+import { useSelector } from 'react-redux';
+import { colors } from 'lib/getRandomColor';
+import convertIntoEpoc from 'lib/covertIntoEpoc';
 
-const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
-	const { servicename } = useParams<{ servicename?: string }>();
+const DBCall = (): JSX.Element => {
+	const { dbRpsEndpoints, dbAvgDurationEndpoints } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
 
 	return (
 		<>
@@ -16,16 +21,26 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 					<Card>
 						<GraphTitle>Database Calls RPS</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="database_call_rps"
-								noDataGraph
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"}[1m])) by (db_system)`,
-										legend: '{{db_system}}',
-									},
-								])}
+								type="line"
+								data={{
+									datasets: dbRpsEndpoints.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: colors[index % colors.length],
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										};
+									}),
+									labels: dbRpsEndpoints[0].values.map((data) => {
+										return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -35,16 +50,26 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 					<Card>
 						<GraphTitle>Database Calls Avg Duration (in ms)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="database_call_avg_duration"
-								noDataGraph
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_db_latency_sum{service_name="${servicename}"}[5m]))/sum(rate(signoz_db_latency_count{service_name="${servicename}"}[5m]))`,
-										legend: '',
-									},
-								])}
+								type="line"
+								data={{
+									datasets: dbAvgDurationEndpoints.map((data, index) => {
+										return {
+											data: data.values.map((value) =>
+												Number(parseFloat(value[1]).toFixed(2)),
+											),
+											borderColor: colors[index % colors.length],
+											showLine: true,
+											borderWidth: 1.5,
+											spanGaps: true,
+											pointRadius: 0,
+										};
+									}),
+									labels: dbRpsEndpoints[0].values.map((data) => {
+										return new Date(parseInt(convertIntoEpoc(data[0] * 1000), 10));
+									}),
+								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -53,9 +78,5 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 		</>
 	);
 };
-
-interface DBCallProps {
-	getWidget: (query: Widgets['query']) => Widgets;
-}
 
 export default DBCall;
