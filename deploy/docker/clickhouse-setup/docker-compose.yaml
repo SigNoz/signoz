@@ -2,24 +2,16 @@ version: "2.4"
 
 services:
   clickhouse:
-      image: ${clickhouse_image}
-      expose:
-        - 8123
-        - 9000
-      ports:
-        - 9001:9000
-        - 8123:8123
-      volumes:
-        - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
-        - ./docker-entrypoint-initdb.d/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-        - ./data/clickhouse/:/var/lib/clickhouse/
-
-      healthcheck:
-        # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-        test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
-        interval: 30s
-        timeout: 5s
-        retries: 3
+    image: yandex/clickhouse-server:21.12.3.32
+    volumes:
+      - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ./data/clickhouse/:/var/lib/clickhouse/
+    healthcheck:
+      # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   alertmanager:
     image: signoz/alertmanager:0.5.0
@@ -29,61 +21,44 @@ services:
     command:
       - '--config.file=/prometheus/alertmanager.yml'
       - '--storage.path=/data'
-    ports:
-      - 9093:9093
+
+# Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
+
 
   query-service:
-    image: signoz/query-service:0.5.4
+    image: signoz/query-service:0.6.1
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
-    ports:
-      - "8080:8080"
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
-
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - STORAGE=clickhouse
-      - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
       - GODEBUG=netdns=go
-
+      - TELEMETRY_ENABLED=true
     depends_on:
       clickhouse:
         condition: service_healthy
-    
-  frontend:
-    image: signoz/frontend:0.5.4
-    container_name: frontend
 
+  frontend:
+    image: signoz/frontend:0.6.1
+    container_name: frontend
     depends_on:
       - query-service
-    links:
-      - "query-service"
     ports:
-      - "3000:3000"
+      - "3301:3301"
     volumes:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
-
   otel-collector:
-    image: signoz/otelcontribcol:0.4.2
+    image: signoz/otelcontribcol:0.5.0
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "1777:1777"   # pprof extension
-      - "8887:8888"   # Prometheus metrics exposed by the agent
-      - "14268:14268"       # Jaeger receiver
-      - "55678"       # OpenCensus receiver
-      - "55680:55680"       # OTLP HTTP/2.0 legacy port
-      - "55681:55681"       # OTLP HTTP/1.0 receiver
       - "4317:4317"       # OTLP GRPC receiver
-      - "55679:55679" # zpages extension
-      - "13133"       # health_check
-      - "8889:8889"   # prometheus exporter
-    
     mem_limit: 2000m
     restart: always
     depends_on:
@@ -91,29 +66,29 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.4.2
+    image: signoz/otelcontribcol:0.5.0
     command: ["--config=/etc/otel-collector-metrics-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
     depends_on:
       clickhouse:
         condition: service_healthy
+
   hotrod:
-    image: jaegertracing/example-hotrod:latest
+    image: jaegertracing/example-hotrod:1.30
     container_name: hotrod
-    ports: 
-    - "9000:8080"
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
     command: ["all"]
     environment:
-    - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
-
+      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
     container_name: load-hotrod
     hostname: load-hotrod
-    ports:
-     - "8089:8089"
     environment:
       ATTACKED_HOST: http://hotrod:8080
       LOCUST_MODE: standalone

@@ -1,31 +1,53 @@
-import { Space, Typography } from 'antd';
+import { Card, Space } from 'antd';
+import React from 'react';
 import styled from 'styled-components';
 
-export const Container = styled(Space)`
+export const Container = styled.div`
 	&&& {
-		padding-left: 2rem;
-		margin-top: 3rem;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 100vh;
+
+		max-width: 1024px;
+		margin: 0 auto;
 	}
 `;
 
-export const Title = styled(Typography)`
-	&&& {
-		font-size: 1rem;
-		font-weight: bold;
-	}
-`;
-
-export const FormWrapper = styled.div`
+export const FormWrapper = styled(Card)`
 	display: flex;
 	justify-content: center;
+	max-width: 432px;
+	flex: 1;
+`;
 
-	margin-top: 2rem;
+export const Label = styled.label`
+	margin-bottom: 11px;
+	margin-top: 19px;
+	display: inline-block;
+	font-size: 1rem;
+	line-height: 24px;
+`;
+
+export const LeftContainer = styled(Space)`
+	flex: 1;
 `;
 
 export const ButtonContainer = styled.div`
-	margin-top: 0.5rem;
+	margin-top: 1.8125rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 `;
 
-export const LogoImageContainer = styled.img`
-	width: 320px;
+interface Props {
+	marginTop: React.CSSProperties['marginTop'];
+}
+
+export const MarginTop = styled.div<Props>`
+	margin-top: ${({ marginTop }) => marginTop};
+`;
+
+export const Logo = styled.img`
+	width: 60px;
 `;

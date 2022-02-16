@@ -35,12 +35,13 @@ const config = {
 		open: true,
 		hot: true,
 		liveReload: true,
-		port: portFinderSync.getPort(3000),
+		port: portFinderSync.getPort(3301),
 		static: {
 			directory: resolve(__dirname, 'public'),
 			publicPath: '/',
 			watch: true,
 		},
+		allowedHosts: 'all',
 	},
 	target: 'web',
 	output: {
@@ -72,6 +73,25 @@ const config = {
 			{
 				test: /\.(ttf|eot|woff|woff2)$/,
 				use: ['file-loader'],
+			},
+			{
+				test: /\.less$/i,
+				use: [
+					{
+						loader: 'style-loader',
+					},
+					{
+						loader: 'css-loader',
+					},
+					{
+						loader: 'less-loader',
+						options: {
+							lessOptions: {
+								javascriptEnabled: true,
+							},
+						},
+					},
+				],
 			},
 		],
 	},

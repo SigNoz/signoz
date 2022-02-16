@@ -28,12 +28,12 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 			METRICS_PAGE_QUERY_PARAM.endTime,
 			(maxTime / 1000000).toString(),
 		);
-		if (servicename) {
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
-		}
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.operation, operation);
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.push(
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&isSelectedFilterSkipped=true&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&isSelectedFilterSkipped=true`,
+		);
 	};
 
 	const columns: ColumnsType<DataProps> = [
