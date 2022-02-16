@@ -1,6 +1,6 @@
 import './TraceGraph.css';
-
-import { Affix, Card, Col, Row, Space } from 'antd';
+import dayjs from 'dayjs';
+import { Affix, Card, Col, Row, Space, Typography } from 'antd';
 import * as d3 from 'd3';
 import { flamegraph } from 'd3-flame-graph';
 import * as d3Tip from 'd3-tip';
@@ -16,10 +16,11 @@ import {
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { spanToTreeUtil } from 'utils/spanToTree';
-
+import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
+import { colors } from 'lib/getRandomColor';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import TraceGanttChart from './TraceGanttChart';
-
+import TraceFlameGraph from 'container/TraceFlameGraph';
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
@@ -62,7 +63,21 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		}
 	};
 
+	const spanServiceNameToColourMapping = (spans: span[]) => {
+		const serviceNameSet = new Set();
+		spans.forEach((spanItem) => {
+			serviceNameSet.add(spanItem[3]);
+		});
+		const serviceToColurMap = {};
+		Array.from(serviceNameSet).forEach((serviceName, idx) => {
+			serviceToColurMap[serviceName] = colors[idx % colors.length];
+		});
+	};
+
+	spanServiceNameToColourMapping(props.traceItem[0].events);
 	const tree = spanToTreeUtil(props.traceItem[0].events);
+	const traceMetaData = getSpanTreeMetadata(tree);
+
 	const dispatch = useDispatch();
 
 	useEffect(() => {
@@ -70,19 +85,19 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		fetchTraceItem(id || '')(dispatch);
 	}, [dispatch, id]);
 
-	useEffect(() => {
-		if (props.traceItem) {
-			const sortedData = getSortedData([tree]);
-			setSortedTreeData(sortedData?.[0]);
-			getSpanInfo(sortedData?.[0], spanId);
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select('#chart')
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
-		}
-	}, [props.traceItem]);
+	// useEffect(() => {
+	// 	if (props.traceItem) {
+	// 		const sortedData = getSortedData([tree]);
+	// 		setSortedTreeData(sortedData?.[0]);
+	// 		getSpanInfo(sortedData?.[0], spanId);
+	// 		// This is causing element to change ref. Can use both useRef or this approach.
+	// 		d3
+	// 			.select('#chart')
+	// 			.datum(tree)
+	// 			.call(chart)
+	// 			.sort((item) => item.startTime);
+	// 	}
+	// }, [props.traceItem]);
 	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
 	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
 
@@ -163,27 +178,60 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const handleResetZoom = (value) => {
 		setResetZoom(value);
 	};
-
+	console.log(traceMetaData.globalStart, dayjs(traceMetaData.globalStart / 1e6));
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
 			<Col md={18} sm={18}>
 				<Space direction="vertical" size="middle" style={{ width: '100%' }}>
-					<Card bodyStyle={{ padding: 24 }} style={{ height: 320 }}>
-						<div
-							style={{
-								display: 'flex',
-								justifyContent: 'center',
-								flexDirection: 'column',
-								alignItems: 'center',
-							}}
-						>
-							<div style={{ textAlign: 'center' }}>
-								Trace Graph component ID is {id}{' '}
-							</div>
-							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
-						</div>
+					<Card>
+						<Row>
+							<Col flex="175px">
+								<div
+									style={{
+										textAlign: 'center',
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'center',
+										justifyContent: 'center',
+										height: '100%',
+									}}
+								>
+									<Typography.Title level={4} style={{ margin: 0 }}>
+										Trace Details
+									</Typography.Title>
+									<Typography.Text style={{ margin: 0 }}>
+										{traceMetaData.totalSpans} Span
+									</Typography.Text>
+								</div>
+							</Col>
+							<Col flex={'auto'}>
+								<div
+									style={{
+										display: 'flex',
+										justifyContent: 'center',
+										flexDirection: 'column',
+										alignItems: 'center',
+									}}
+								>
+									<TraceFlameGraph treeData={tree} />
+									<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
+								</div>
+							</Col>
+						</Row>
+						<Row>
+							<Col
+								flex="175px"
+								style={{
+									textAlign: 'end',
+									paddingRight: '1rem',
+								}}
+							>
+								{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
+							</Col>
+							<Col flex="auto">Timeline</Col>
+						</Row>
 					</Card>
-					<Affix offsetTop={24}>
+					{/* <Affix offsetTop={24}>
 						<TraceGanttChartContainer id={'collapsable'}>
 							<TraceGanttChart
 								treeData={sortedTreeData}
@@ -193,7 +241,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 								setSpanTagsInfo={setSpanTagsInfo}
 							/>
 						</TraceGanttChartContainer>
-					</Affix>
+					</Affix> */}
 				</Space>
 			</Col>
 			<Col md={6} sm={6}>

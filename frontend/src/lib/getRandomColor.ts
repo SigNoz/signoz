@@ -2,11 +2,11 @@ export const colors = [
 	'#F2994A',
 	'#56CCF2',
 	'#F2C94C',
-	'#219653',
-	'#2F80ED',
-	'#EB5757',
-	'#BB6BD9',
-	'#BDBDBD',
+	// '#219653',
+	// '#2F80ED',
+	// '#EB5757',
+	// '#BB6BD9',
+	// '#BDBDBD',
 ];
 
 export function getRandomNumber(min: number, max: number): number {
