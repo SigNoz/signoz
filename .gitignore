@@ -42,3 +42,4 @@ frontend/cypress.env.json
 
 frontend/*.env
 pkg/query-service/signoz.db
+/deploy/docker/clickhouse-setup/data/

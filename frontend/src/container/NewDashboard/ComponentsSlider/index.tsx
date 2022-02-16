@@ -1,5 +1,8 @@
 import React, { useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import menuItems, { ITEMS } from './menuItems';
@@ -22,7 +25,8 @@ const DashboardGraphSlider = (): JSX.Element => {
 		},
 		[push, pathname],
 	);
-
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const fillColor:React.CSSProperties['color'] =  isDarkMode?"white" : "black";
 	return (
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
@@ -33,7 +37,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 					key={name}
 					draggable
 				>
-					<Icon />
+					<Icon fillColor={fillColor}/>
 					<Text>{display}</Text>
 				</Card>
 			))}

@@ -19,7 +19,7 @@ export const ServiceMapPage = Loadable(
 );
 
 export const TraceDetailPages = Loadable(
-	() => import(/* webpackChunkName: "TraceDetailPage" */ 'pages/TraceDetails'),
+	() => import(/* webpackChunkName: "TraceDetailPage" */ 'pages/Trace'),
 );
 
 export const TraceGraphPage = Loadable(

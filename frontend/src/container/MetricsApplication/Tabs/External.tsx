@@ -81,7 +81,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m])/rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
+										query: `(sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m])) by (http_url))/(sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url))`,
 										legend: '{{http_url}}',
 									},
 								])}

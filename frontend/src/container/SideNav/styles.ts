@@ -1,4 +1,4 @@
-import { Layout } from 'antd';
+import { Layout, Switch } from 'antd';
 import styled from 'styled-components';
 const { Sider: SiderComponent } = Layout;
 
@@ -24,3 +24,15 @@ export const Sider = styled(SiderComponent)`
 		color: white;
 	}
 `;
+
+interface DarkModeProps {
+	checked?: boolean;
+	defaultChecked?: boolean;
+}
+
+export const ToggleButton = styled(Switch)<DarkModeProps>`
+	&&& {
+		background: ${({ checked }) => checked === false && 'grey'};
+	}
+`;
+
