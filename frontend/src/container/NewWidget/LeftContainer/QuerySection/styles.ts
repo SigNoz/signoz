@@ -24,3 +24,15 @@ export const QueryWrapper = styled.div`
 		width: 95%; // each child is taking 95% of the parent
 	}
 `;
+
+export const ButtonContainer = styled.div`
+	&&& {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+
+		> button {
+			margin-bottom: 1rem;
+		}
+	}
+`;

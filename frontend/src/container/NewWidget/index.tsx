@@ -17,10 +17,12 @@ import {
 	SaveDashboard,
 	SaveDashboardProps,
 } from 'store/actions/dashboard/saveDashboard';
+import { UpdateQuery, UpdateQueryProps } from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import DashboardReducer from 'types/reducer/dashboards';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
 import RightContainer from './RightContainer';
@@ -38,13 +40,15 @@ const NewWidget = ({
 	applySettingsToPanel,
 	saveSettingOfPanel,
 	getQueryResults,
+	updateQuery
 }: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { maxTime, minTime } = useSelector<AppState, GlobalTime>(
-		(state) => state.globalTime,
-	);
+	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const [selectedDashboard] = dashboards;
 
@@ -118,7 +122,16 @@ const NewWidget = ({
 		dashboardId,
 	]);
 
-	const onClickApplyHandler = useCallback(() => {
+	const onClickApplyHandler = () => {
+		selectedWidget?.query.forEach((element, index) => {
+			updateQuery({
+				widgetId: selectedWidget?.id || '',
+				query: element.query || '',
+				legend: element.legend || '', 
+				currentIndex: index
+			});
+		})
+		
 		applySettingsToPanel({
 			description,
 			isStacked: stacked,
@@ -128,16 +141,7 @@ const NewWidget = ({
 			title,
 			widgetId: selectedWidget?.id || '',
 		});
-	}, [
-		applySettingsToPanel,
-		description,
-		opacity,
-		selectedTime,
-		selectedWidget?.id,
-		selectedNullZeroValue,
-		stacked,
-		title,
-	]);
+	}
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
@@ -146,12 +150,11 @@ const NewWidget = ({
 	const getQueryResult = useCallback(() => {
 		if (selectedWidget?.id.length !== 0) {
 			getQueryResults({
-				maxTime,
-				minTime,
 				query: selectedWidget?.query || [],
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
+				globalSelectedInterval,
 			});
 		}
 	}, [
@@ -219,6 +222,9 @@ interface DispatchProps {
 	getQueryResults: (
 		props: GetQueryResultsProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
+	updateQuery: (
+		props: UpdateQueryProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
@@ -227,6 +233,7 @@ const mapDispatchToProps = (
 	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
 	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
+	updateQuery: bindActionCreators(UpdateQuery, dispatch)
 });
 
 type Props = DispatchProps & NewWidgetProps;

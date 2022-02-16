@@ -1,6 +1,14 @@
 import './TraceGanttChart.css';
 
-import { Button, Col, Progress, Row, Table, Tabs } from 'antd';
+import {
+	Button,
+	Col,
+	Progress,
+	Row,
+	Table as TableComponent,
+	Tabs,
+} from 'antd';
+import TextToolTip from 'components/TextToolTip';
 import { has, isEmpty, max } from 'lodash-es';
 import traverseTreeData from 'modules/Traces/TraceGanttChart/TraceGanttChartHelpers';
 import React, { useEffect, useRef, useState } from 'react';
@@ -15,6 +23,15 @@ const StyledButton = styled(Button)`
 	color: #f2f2f2;
 	font-size: 14px;
 	line-height: 20px;
+	margin-right: 0.5rem;
+	margin-left: 0.5rem;
+`;
+
+const Table = styled(TableComponent)`
+	.ant-tabs-nav-list {
+		width: 100%;
+		justify-content: space-between;
+	}
 `;
 
 interface TraceGanttChartProps {
@@ -318,18 +335,23 @@ const TraceGanttChart = ({
 			{id !== 'empty' && (
 				<>
 					<Row
-						justify="end"
+						justify="space-between"
+						align="middle"
 						gutter={32}
 						style={{
 							marginBottom: '24px',
 						}}
 					>
 						<Col>
+							<TextToolTip
+								text={`More details on how to understand trace details`}
+								url="https://signoz.io/docs/userguide/trace-details/"
+							/>
+						</Col>
+						<Col>
 							<StyledButton onClick={handleFocusOnSelectedPath}>
 								Focus on selected path
 							</StyledButton>
-						</Col>
-						<Col>
 							<StyledButton onClick={handleResetFocus}> Reset Focus </StyledButton>
 						</Col>
 					</Row>

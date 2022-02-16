@@ -9,6 +9,38 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+	.BundleAnalyzerPlugin;
+const Critters = require('critters-webpack-plugin');
+
+const plugins = [
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new CompressionPlugin({
+		exclude: /.map$/,
+	}),
+	new CopyPlugin({
+		patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+	}),
+	new webpack.ProvidePlugin({
+		process: 'process/browser',
+	}),
+	new webpack.DefinePlugin({
+		'process.env': JSON.stringify(process.env),
+	}),
+	new MiniCssExtractPlugin(),
+	new Critters({
+		preload: 'swap',
+		// Base path location of the CSS files
+		path: resolve(__dirname, './build/css'),
+		// Public path of the CSS resources. This prefix is removed from the href
+		publicPath: resolve(__dirname, './public/css'),
+		fonts: true,
+	}),
+];
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 const config = {
 	mode: 'production',
@@ -16,6 +48,7 @@ const config = {
 	output: {
 		path: resolve(__dirname, './build'),
 		publicPath: '/',
+		filename: '[name].[contenthash].js',
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
@@ -75,25 +108,10 @@ const config = {
 			},
 		],
 	},
-	plugins: [
-		new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
-		new CompressionPlugin({
-			exclude: /.map$/,
-		}),
-		new CopyPlugin({
-			patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
-		}),
-		new webpack.ProvidePlugin({
-			process: 'process/browser',
-		}),
-		new webpack.DefinePlugin({
-			'process.env': JSON.stringify(process.env),
-		}),
-		new MiniCssExtractPlugin(),
-	],
+	plugins: plugins,
 	optimization: {
 		chunkIds: 'named',
-		concatenateModules: true,
+		concatenateModules: false,
 		emitOnErrors: true,
 		flagIncludedChunks: true,
 		innerGraph: true, //tells webpack whether to conduct inner graph analysis for unused exports.
@@ -125,5 +143,9 @@ const config = {
 		hints: 'warning',
 	},
 };
+
+if (process.env.BUNDLE_ANALYSER === 'true') {
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
+}
 
 module.exports = config;

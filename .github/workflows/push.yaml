@@ -1,172 +1,90 @@
-name: push-pipeline
+name: push
+
 on:
   push:
     branches:
       - main
-      - ^v[0-9]*.[0-9]*.x$
+      - develop
     tags:
-      - "*"
-  # pull_request:
-  #   branches:
-  #     - main
-  #     - v*
-  #   paths:
-  #     - 'pkg/**'
-  #     - 'frontend/**'
+      - v*
+
 jobs:
-  get-envs:
+
+  image-build-and-push-query-service:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
-      - shell: bash
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+      - name: Set docker tag environment
         run: |
-          img_tag=""
-          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ ${array[1]} == "tags" ]
-          then
-              echo "tag build"
-              img_tag=${GITHUB_REF#refs/*/v}
-          elif [ ${array[1]} == "pull" ]
-          then
-            img_tag="pull-${{ github.event.number }}"
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=$tag" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
           else
-              echo "non tag build"
-              img_tag="latest"
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
           fi
-          # This is a condition where image tag looks like "pull/<pullrequest-name>" during pull request build
-          NEW_IMG_TAG=`echo $img_tag | sed "s/\//-/g"`
-          echo $NEW_IMG_TAG
-          echo export IMG_TAG=$NEW_IMG_TAG >> env-vars
-          echo export FRONTEND_IMAGE="frontend" >> env-vars
-          echo export QUERY_SERVICE="query-service" >> env-vars
-          echo export FLATTENER_PROCESSOR="flattener-processor" >> env-vars
+      - name: Build and push docker image
+        run: make build-push-query-service
 
-      - name: Uploading envs
-        uses: actions/upload-artifact@v2
-        with:
-          name: env_artifact
-          path: env-vars
-
-  build-and-push-frontend:
+  image-build-and-push-frontend:
     runs-on: ubuntu-latest
-    needs:
-      - get-envs
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Downloading image artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: env_artifact
-
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install
+      - name: Run Prettier
+        working-directory: frontend
+        run: npm run prettify
+        continue-on-error: true
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+        continue-on-error: true
       - name: Set up Docker Buildx
-        id: buildx
         uses: docker/setup-buildx-action@v1
         with:
           version: latest
-
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build & Push Frontend Docker Image
-        shell: bash
-        env: 
-          FRONTEND_DIRECTORY: "frontend"
-          REPONAME: ${{ secrets.REPONAME }}
-          FRONTEND_DOCKER_IMAGE: ${FRONTEND_IMAGE}
-          DOCKER_TAG: ${IMG_TAG} 
+      - uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+      - name: Set docker tag environment
         run: |
-          branch=${GITHUB_REF#refs/*/}
-          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [ ${array[1]} == "pull" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
-          then
-            source env-vars
-            make build-push-frontend
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=$tag" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
           fi
-
-  build-and-push-query-service:
-    runs-on: ubuntu-latest
-    needs:
-      - get-envs
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      
-      - name: Downloading image artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: env_artifact
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          version: latest
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build & Push Query Service Docker Image
-        shell: bash
-        env: 
-          QUERY_SERVICE_DIRECTORY: "pkg/query-service"
-          REPONAME: ${{ secrets.REPONAME }}
-          QUERY_SERVICE_DOCKER_IMAGE: ${QUERY_SERVICE}
-          DOCKER_TAG: ${IMG_TAG} 
-        run: |
-          branch=${GITHUB_REF#refs/*/}
-          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [ ${array[1]} == "pull" ] ||[[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
-          then
-            source env-vars
-            make build-push-query-service
-          fi
-
-  build-and-push-flattener:
-    runs-on: ubuntu-latest
-    needs:
-      - get-envs
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Downloading image artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: env_artifact
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          version: latest
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build & Push Flattener Processor Docker Image
-        shell: bash
-        env: 
-          FLATTENER_DIRECTORY: "pkg/processors/flattener"
-          REPONAME: ${{ secrets.REPONAME }}
-          FLATTERNER_DOCKER_IMAGE: ${FLATTENER_PROCESSOR}
-          DOCKER_TAG: ${IMG_TAG} 
-        run: |
-          branch=${GITHUB_REF#refs/*/}
-          array=(`echo ${GITHUB_REF} | sed 's/\//\n/g'`)
-          if [ $branch == "main" ] || [ ${array[1]} == "tags" ] || [ ${array[1]} == "pull" ] || [[ $branch =~ ^v[0-9]*.[0-9]*.x$ ]]
-          then
-            source env-vars
-            make build-push-flattener
-          fi
+      - name: Build and push docker image
+        run: make build-push-frontend
