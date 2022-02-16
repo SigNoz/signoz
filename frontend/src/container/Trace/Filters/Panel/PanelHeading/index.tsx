@@ -164,7 +164,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 				end: String(global.maxTime),
 				start: String(global.minTime),
 				getFilters: filterToFetchData,
-				other: Object.fromEntries(preUserSelected),
+				other: Object.fromEntries(updatedFilter),
 				isFilterExclude: postIsFilterExclude,
 			});
 
