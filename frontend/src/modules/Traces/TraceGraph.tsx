@@ -1,6 +1,6 @@
 import './TraceGraph.css';
 import dayjs from 'dayjs';
-import { Affix, Card, Col, Row, Space, Typography } from 'antd';
+import { Affix, Card, Col, Row, Space, Typography, Divider } from 'antd';
 import * as d3 from 'd3';
 import { flamegraph } from 'd3-flame-graph';
 import * as d3Tip from 'd3-tip';
@@ -17,7 +17,7 @@ import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { spanToTreeUtil } from 'utils/spanToTree';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
-import { colors } from 'lib/getRandomColor';
+import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import TraceGanttChart from './TraceGanttChart';
 import TraceFlameGraph from 'container/TraceFlameGraph';
@@ -63,20 +63,14 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		}
 	};
 
-	const spanServiceNameToColourMapping = (spans: span[]) => {
-		const serviceNameSet = new Set();
-		spans.forEach((spanItem) => {
-			serviceNameSet.add(spanItem[3]);
-		});
-		const serviceToColurMap = {};
-		Array.from(serviceNameSet).forEach((serviceName, idx) => {
-			serviceToColurMap[serviceName] = colors[idx % colors.length];
-		});
-	};
+	const spanServiceColors = spanServiceNameToColorMapping(
+		props.traceItem[0].events,
+	);
 
-	spanServiceNameToColourMapping(props.traceItem[0].events);
-	const tree = spanToTreeUtil(props.traceItem[0].events);
-	const traceMetaData = getSpanTreeMetadata(tree);
+	const { treeData: tree, ...traceMetaData } = getSpanTreeMetadata(
+		spanToTreeUtil(props.traceItem[0].events),
+		spanServiceColors,
+	);
 
 	const dispatch = useDispatch();
 
@@ -178,60 +172,89 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const handleResetZoom = (value) => {
 		setResetZoom(value);
 	};
-	console.log(traceMetaData.globalStart, dayjs(traceMetaData.globalStart / 1e6));
+
 	return (
-		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
-			<Col md={18} sm={18}>
-				<Space direction="vertical" size="middle" style={{ width: '100%' }}>
-					<Card>
-						<Row>
-							<Col flex="175px">
-								<div
-									style={{
-										textAlign: 'center',
-										display: 'flex',
-										flexDirection: 'column',
-										alignItems: 'center',
-										justifyContent: 'center',
-										height: '100%',
-									}}
-								>
-									<Typography.Title level={4} style={{ margin: 0 }}>
-										Trace Details
-									</Typography.Title>
-									<Typography.Text style={{ margin: 0 }}>
-										{traceMetaData.totalSpans} Span
-									</Typography.Text>
-								</div>
-							</Col>
-							<Col flex={'auto'}>
-								<div
-									style={{
-										display: 'flex',
-										justifyContent: 'center',
-										flexDirection: 'column',
-										alignItems: 'center',
-									}}
-								>
-									<TraceFlameGraph treeData={tree} />
-									<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
-								</div>
-							</Col>
-						</Row>
-						<Row>
-							<Col
-								flex="175px"
-								style={{
-									textAlign: 'end',
-									paddingRight: '1rem',
-								}}
-							>
-								{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
-							</Col>
-							<Col flex="auto">Timeline</Col>
-						</Row>
-					</Card>
-					{/* <Affix offsetTop={24}>
+		<Row style={{ flex: 1 }}>
+			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
+				<Row>
+					<Col flex="175px">
+						<div
+							style={{
+								textAlign: 'center',
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: 'center',
+								height: '100%',
+							}}
+						>
+							<Typography.Title level={5} style={{ margin: 0 }}>
+								Trace Details
+							</Typography.Title>
+							<Typography.Text style={{ margin: 0 }}>
+								{traceMetaData.totalSpans} Span
+							</Typography.Text>
+						</div>
+					</Col>
+					<Col flex={'auto'}>
+						<div
+							style={{
+								display: 'flex',
+								justifyContent: 'center',
+								flexDirection: 'column',
+								alignItems: 'center',
+								marginRight: '1rem',
+							}}
+						>
+							<TraceFlameGraph treeData={tree} traceMetaData={traceMetaData} />
+							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
+						</div>
+					</Col>
+				</Row>
+				<Row>
+					<Col
+						flex="175px"
+						style={{
+							textAlign: 'end',
+							paddingRight: '1rem',
+						}}
+					>
+						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
+					</Col>
+					<Col flex="auto" style={{ marginRight: '1rem' }}>
+						Timeline
+					</Col>
+				</Row>
+				<Divider></Divider>
+				<div
+					style={{
+						width: '100%',
+						flex: '0 1 auto',
+						height: '100%',
+						overflowY: 'hidden',
+						position: 'relative',
+						display: 'flex',
+					}}
+				>
+					<div
+						style={{
+							overflowY: 'scroll',
+							height: '100%',
+							width: '100%',
+							position: 'absolute',
+							flex: 1,
+						}}
+					>
+						<div
+							style={{
+								minHeight: '200vh', // Remove this
+							}}
+						>
+							Scrollable Gantt Chart
+						</div>
+					</div>
+				</div>
+				{/* <Affix offsetTop={24}>
 						<TraceGanttChartContainer id={'collapsable'}>
 							<TraceGanttChart
 								treeData={sortedTreeData}
@@ -242,9 +265,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							/>
 						</TraceGanttChartContainer>
 					</Affix> */}
-				</Space>
 			</Col>
-			<Col md={6} sm={6}>
+			<Col>
+				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
+			</Col>
+			<Col md={5} sm={5}>
 				<Affix offsetTop={24}>
 					<SelectedSpanDetails data={clickedSpanTags} />
 				</Affix>

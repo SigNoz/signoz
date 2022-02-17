@@ -44,6 +44,7 @@ export interface pushDStree {
 	tags: TraceTagItem[];
 	children: pushDStree[];
 	serviceName: string;
+	serviceColour?: string;
 }
 
 export interface spanItem {

@@ -1,86 +1,70 @@
 import React, { useState } from 'react';
+import Color from 'color';
 import { Tooltip } from 'antd';
 import { pushDStree, span } from 'store/actions';
-import { SpanItemContainer, TraceFlameGraphContainer } from './styles';
 
-/**
- * Traverses the Span Tree data and returns the relevant meta data.
- * Metadata includes globalStart, globalEnd,
- */
-
-// const spanServiceNameToColourMapping = (spans: span[]) => {
-// 	const serviceNameSet = new Set();
-// 	spans.forEach((spanItem) => {
-// 		serviceNameSet.add(spanItem[3]);
-// 	});
-// 	debugger;
-// };
-const getMetaDataFromSpanTree = (treeData: pushDStree) => {
-	let globalStart = Number.POSITIVE_INFINITY;
-	let globalEnd = Number.NEGATIVE_INFINITY;
-	let totalSpans = 0;
-	let levels = 1;
-	const traverse = (treeNode: pushDStree, level: number = 0) => {
-		if (!treeNode) {
-			return;
-		}
-		totalSpans++;
-		levels = Math.max(levels, level);
-		const startTime = treeNode.startTime;
-		const endTime = startTime + treeNode.value;
-		globalStart = Math.min(globalStart, startTime);
-		globalEnd = Math.max(globalEnd, endTime);
-
-		for (const childNode of treeNode.children) {
-			traverse(childNode, level + 1);
-		}
-	};
-	traverse(treeData, 1);
-
-	globalStart = globalStart * 1e6;
-	globalEnd = globalEnd * 1e6;
-
-	return {
-		globalStart,
-		globalEnd,
-		spread: globalEnd - globalStart,
-		totalSpans,
-		levels,
-	};
-};
+import {
+	SpanItemContainer,
+	TraceFlameGraphContainer,
+	TOTAL_SPAN_HEIGHT,
+} from './styles';
 
 const SpanItem = ({
-	topOffset = 0,
-	leftOffset = 0,
-	width = 10,
-	nodeData,
-	onSpanSelect,
+	topOffset = 0, // top offset in px
+	leftOffset = 0, // left offset in %
+	width = 10, // width in %
+	spanData,
+	tooltipText,
+	onSpanClick, // function which gets invoked on clicking span
+	onSpanHover,
 }: {
 	topOffset: number;
 	leftOffset: number;
 	width: number;
-	nodeData: pushDStree;
-	onSpanSelect: Function;
+	spanData: pushDStree;
+	tooltipText: string;
+	onSpanClick?: Function;
+	onSpanHover?: Function;
 }) => {
 	const [isSelected, setIsSelected] = useState<boolean>(false);
-	const handleHover = () => {
-		setIsSelected((prevState) => !prevState);
+
+	const handleHover = (hoverState: boolean) => {
+		setIsSelected(hoverState);
+		// onSpanHover()
 	};
+
+	const handleClick = () => {
+		setIsSelected(true);
+		// onSpanClick();
+		// TODO
+	};
+
 	return (
 		<>
-			<Tooltip placement="top" title={nodeData.name} key={nodeData.name}>
+			<Tooltip
+				placement="top"
+				overlayStyle={{
+					whiteSpace: 'pre-line',
+					fontSize: '0.7rem',
+				}}
+				title={tooltipText}
+				key={spanData.name}
+			>
 				<SpanItemContainer
-					onClick={() => onSpanSelect(nodeData)}
+					onClick={handleClick}
 					topOffset={topOffset}
 					leftOffset={leftOffset}
 					width={width}
+					spanColor={
+						isSelected
+							? `${Color(spanData.serviceColour).lighten(0.3)}`
+							: `${spanData.serviceColour}`
+					}
 					onMouseEnter={() => {
-						setIsSelected(true);
-						console.log('Enter');
+						handleHover(true);
 					}}
 					onMouseLeave={() => {
-						setIsSelected(false);
-						console.log('leave');
+						handleHover(false);
 					}}
 					selected={isSelected}
 				></SpanItemContainer>
@@ -89,53 +73,52 @@ const SpanItem = ({
 	);
 };
 
-const TraceFlameGraph = (props: { treeData: pushDStree }) => {
+const TraceFlameGraph = (props: {
+	treeData: pushDStree;
+	traceMetaData: any;
+}) => {
 	if (!props.treeData || props.treeData.id === 'empty') {
 		return null;
 	}
-
-	const [treeData, setTreeData] = useState<pushDStree>(props.treeData);
-
-	const handleSpanSelection = (selectedNodeData: pushDStree) => {
-		setTreeData(selectedNodeData);
-	};
 	const {
 		globalStart,
 		globalEnd,
 		spread,
 		totalSpans,
 		levels,
-	} = getMetaDataFromSpanTree(treeData);
-	const vSize = 12;
+	} = props.traceMetaData;
 
+	const [treeData, setTreeData] = useState<pushDStree>(props.treeData);
 	const RenderSpanRecursive = ({
 		level = 0,
-		nodeData,
+		spanData,
 		parentLeftOffset = 0,
 	}: {
-		nodeData: pushDStree;
+		spanData: pushDStree;
 		level?: number;
 		parentLeftOffset?: number;
 	}) => {
-		if (!nodeData) {
+		if (!spanData) {
 			return null;
 		}
-		const leftOffset = ((nodeData.startTime * 1e6 - globalStart) * 1e8) / spread;
 
-		const width = (nodeData.value * 1e8) / spread;
+		const leftOffset = ((spanData.startTime * 1e6 - globalStart) * 1e8) / spread;
+		const width = (spanData.value * 1e8) / spread;
+		const toolTipText = `${spanData.name}\n${spanData.value / 1e6} ms`;
+
 		return (
 			<>
 				<SpanItem
-					topOffset={level * vSize}
+					topOffset={level * TOTAL_SPAN_HEIGHT}
 					leftOffset={leftOffset}
 					width={width}
-					nodeData={nodeData}
-					onSpanSelect={handleSpanSelection}
+					spanData={spanData}
+					tooltipText={toolTipText}
 				/>
-				{nodeData.children.map((childData) => (
+				{spanData.children.map((childData) => (
 					<RenderSpanRecursive
 						level={level + 1}
-						nodeData={childData}
+						spanData={childData}
 						key={childData.id}
 						parentLeftOffset={leftOffset + parentLeftOffset}
 					/>
@@ -145,10 +128,9 @@ const TraceFlameGraph = (props: { treeData: pushDStree }) => {
 	};
 	return (
 		<>
-			<TraceFlameGraphContainer height={vSize * levels}>
-				<RenderSpanRecursive nodeData={treeData} />
+			<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
+				<RenderSpanRecursive spanData={treeData} />
 			</TraceFlameGraphContainer>
-			<button onClick={() => setTreeData(props.treeData)}>Reset</button>
 		</>
 	);
 };

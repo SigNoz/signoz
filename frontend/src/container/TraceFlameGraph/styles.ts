@@ -1,20 +1,36 @@
 import styled from 'styled-components';
 
-export const SpanItemContainer = styled.div`
+const SPAN_HEIGHT = 10;
+const SPAN_V_PADDING = 1;
+export const TOTAL_SPAN_HEIGHT = SPAN_HEIGHT + 2 * SPAN_V_PADDING;
+
+/**
+ * An individual span for traces flame graph
+ */
+export const SpanItemContainer = styled.div<{
+	topOffset: number;
+	leftOffset: number;
+	width: number;
+	spanColor: string;
+	selected: boolean;
+}>`
 	position: absolute;
 	top: ${(props) => props.topOffset}px;
 	left: ${(props) => props.leftOffset}%;
 	width: ${(props) => props.width}%;
-	height: 10px;
-	margin: 1px 0;
-	background-color: #0ca;
-	border-radius: 5px;
-	opacity: ${(props) => (props.selected ? 1 : 0.3)};
+	height: ${SPAN_HEIGHT}px;
+	margin: ${SPAN_V_PADDING}px 0;
+	background-color: ${({ spanColor }) => spanColor};
+	border-radius: ${SPAN_HEIGHT / 2}px;
 `;
 
-export const TraceFlameGraphContainer = styled.div`
+/**
+ * Container for spans, for traces flame graph.
+ */
+export const TraceFlameGraphContainer = styled.div<{
+	height: number;
+}>`
 	position: relative;
-	border: 1px dotted #ccc;
 	width: 100%;
 	height: ${({ height }) => (height ? height : 120)}px;
 `;

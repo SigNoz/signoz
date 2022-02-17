@@ -4,7 +4,10 @@ import { pushDStree } from 'store/actions';
  * Traverses the Span Tree data and returns the relevant meta data.
  * Metadata includes globalStart, globalEnd,
  */
-export const getSpanTreeMetadata = (treeData: pushDStree) => {
+export const getSpanTreeMetadata = (
+	treeData: pushDStree,
+	spanServiceColours: { [key: string]: string },
+) => {
 	let globalStart = Number.POSITIVE_INFINITY;
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
@@ -19,7 +22,7 @@ export const getSpanTreeMetadata = (treeData: pushDStree) => {
 		const endTime = startTime + treeNode.value;
 		globalStart = Math.min(globalStart, startTime);
 		globalEnd = Math.max(globalEnd, endTime);
-
+		treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
 		for (const childNode of treeNode.children) {
 			traverse(childNode, level + 1);
 		}
@@ -35,5 +38,6 @@ export const getSpanTreeMetadata = (treeData: pushDStree) => {
 		spread: globalEnd - globalStart,
 		totalSpans,
 		levels,
+		treeData,
 	};
 };
