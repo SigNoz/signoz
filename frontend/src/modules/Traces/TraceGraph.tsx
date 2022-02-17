@@ -19,6 +19,7 @@ import { spanToTreeUtil } from 'utils/spanToTree';
 
 import SelectedSpanDetails from './SelectedSpanDetails';
 import TraceGanttChart from './TraceGanttChart';
+import GanttChart from 'container/GantChart';
 
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
@@ -73,58 +74,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	useEffect(() => {
 		if (props.traceItem) {
 			const sortedData = getSortedData([tree]);
-			setSortedTreeData(sortedData?.[0]);
-			getSpanInfo(sortedData?.[0], spanId);
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select('#chart')
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
+			if (sortedData) {
+				setSortedTreeData(sortedData?.[0] || []);
+			}
 		}
 	}, [props.traceItem]);
-	// if this monitoring of props.traceItem.data is removed then zoom on click doesn't work
-	// Doesn't work if only do initial check, works if monitor an element - as it may get updated in sometime
-
-	useEffect(() => {
-		if (
-			!isEmpty(sortedTreeData) &&
-			sortedTreeData?.id !== 'empty' &&
-			isEmpty(clickedSpanTags)
-		) {
-			setClickedSpanTags(sortedTreeData?.[0]);
-		}
-	}, [sortedTreeData]);
-
-	useEffect(() => {
-		if (resetZoom) {
-			// This is causing element to change ref. Can use both useRef or this approach.
-			d3
-				.select('#chart')
-				.datum(tree)
-				.call(chart)
-				.sort((item) => item.startTime);
-			setResetZoom(false);
-		}
-	}, [resetZoom]);
-
-	const tip = d3Tip
-		.default()
-		.attr('class', 'd3-tip')
-		.html(function (d: any) {
-			return d.data.name + '<br>duration: ' + d.data.value / 1000000 + 'ms';
-		});
-
-	const onClick = (z: any) => {
-		setClickedSpanTags(z.data);
-		setClickedSpan(z.data);
-		setSelectedSpan([]);
-		console.log(`Clicked on ${z.data.name}, id: "${z.id}"`);
-	};
-
-	const setSpanTagsInfo = (z: any) => {
-		setClickedSpanTags(z.data);
-	};
 
 	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
 		if (resetZoom) {
@@ -144,31 +98,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		}
 	};
 
-	const chart = flamegraph()
-		.cellHeight(18)
-		.transitionDuration(500)
-		.inverted(true)
-		.tooltip(tip)
-		.minFrameSize(4)
-		.elided(false)
-		.differential(false)
-		.sort((item) => item.startTime)
-		//Use self value=true when we're using not using aggregated option, Which is not our case.
-		// In that case it's doing step function sort of stuff thru computation.
-		// Source flamegraph.js line 557 and 573.
-		// .selfValue(true)
-		.onClick(onClick)
-		.width(800);
-
-	const handleResetZoom = (value) => {
-		setResetZoom(value);
-	};
-
 	return (
 		<Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
 			<Col md={18} sm={18}>
 				<Space direction="vertical" size="middle" style={{ width: '100%' }}>
-					<Card bodyStyle={{ padding: 24 }} style={{ height: 320 }}>
+					{/* <Card bodyStyle={{ padding: 24 }} style={{ height: 320 }}>
 						<div
 							style={{
 								display: 'flex',
@@ -180,11 +114,12 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							<div style={{ textAlign: 'center' }}>
 								Trace Graph component ID is {id}{' '}
 							</div>
-							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
 						</div>
-					</Card>
+					</Card> */}
 					<Affix offsetTop={24}>
-						<TraceGanttChartContainer id={'collapsable'}>
+						<GanttChart data={sortedTreeData} />
+
+						{/* <TraceGanttChartContainer id={'collapsable'}>
 							<TraceGanttChart
 								treeData={sortedTreeData}
 								clickedSpan={clickedSpan}
@@ -192,7 +127,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 								resetZoom={handleResetZoom}
 								setSpanTagsInfo={setSpanTagsInfo}
 							/>
-						</TraceGanttChartContainer>
+						</TraceGanttChartContainer> */}
 					</Affix>
 				</Space>
 			</Col>
