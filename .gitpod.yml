@@ -11,7 +11,7 @@ tasks:
   - name: Run Docker Images
     init: |
       cd ./deploy
-      sudo docker-compose --env-file ./docker/clickhouse-setup/env/x86_64.env -f docker/clickhouse-setup/docker-compose.yaml up -d
+      sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
     # command:
 
   - name: Run Frontend
@@ -22,7 +22,7 @@ tasks:
       yarn dev
 
 ports:
-  - port: 3000
+  - port: 3301
     onOpen: open-browser
   - port: 8080
     onOpen: ignore
