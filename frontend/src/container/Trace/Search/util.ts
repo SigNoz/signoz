@@ -13,14 +13,14 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	const noOfTags = query.split(' AND ');
 
 	const tags: Tags = noOfTags.map((filter) => {
-		const isInPresent = filter.includes('IN');
-		const isNotInPresent = filter.includes('NOT_IN');
+		const isInPresent = filter.includes('in');
+		const isNotInPresent = filter.includes('not in');
 
-		if (!isNotInPresent || !isInPresent) {
+		if (!isNotInPresent && !isInPresent) {
 			isError = true;
 		}
 
-		const splitBy = isNotInPresent ? 'NOT_IN' : isInPresent ? 'IN' : '';
+		const splitBy = isNotInPresent ? 'not in' : isInPresent ? 'in' : '';
 
 		if (splitBy.length === 0) {
 			isError = true;
@@ -63,6 +63,8 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 		payload: tags,
 	};
 };
+
+console.log(parseQueryToTags('net/http.reused in ("1")'));
 
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	let isError = false;
