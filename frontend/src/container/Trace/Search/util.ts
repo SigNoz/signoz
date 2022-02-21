@@ -40,16 +40,9 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 
 		const removingFirstAndLastBrackets = `${filterForTags?.slice(1, -1)}`;
 
-		const noofFilters = removingFirstAndLastBrackets.split(',');
-
-		noofFilters.forEach((e) => {
-			const firstChar = e.charAt(0);
-			const lastChar = e.charAt(e.length - 1);
-
-			if (!(firstChar === '"' && lastChar === '"')) {
-				isError = true;
-			}
-		});
+		const noofFilters = removingFirstAndLastBrackets
+			.split(',')
+			.map((e) => e.replaceAll(/"/g, ''));
 
 		return {
 			Key: [filteredtags[0]],
@@ -74,7 +67,7 @@ export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 			}
 
 			return `${Key[0]} ${Operator} (${Values.map((e) => {
-				return `"${e}"`;
+				return `"${e.replaceAll(/"/g, '')}"`;
 			}).join(',')})`;
 		})
 		.join(' AND ');
