@@ -10,7 +10,7 @@ import {
 import signup from 'api/user/signup';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 
 import AppActions from 'types/actions';
@@ -30,6 +30,7 @@ import { IS_LOGGED_IN } from 'constants/auth';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from 'redux';
 import setPreference from 'api/user/setPreference';
+import { Footer } from 'container/AppLayout/styles';
 
 const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	const [loading, setLoading] = useState(false);
@@ -41,6 +42,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 		userpref.hasOptedUpdates,
 	);
 	const [isAnonymous, setisAnonymous] = useState<boolean>(userpref.isAnonymous);
+	const currentYear = useMemo(() => new Date().getFullYear(), []);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -114,102 +116,105 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	};
 
 	return (
-		<Container>
-			<LeftContainer direction="vertical">
-				<Space align="center">
-					<Logo src={'signoz-signup.svg'} alt="logo" />
-					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
-				</Space>
-				<Typography>
-					Monitor your applications. Find what is causing issues.
-				</Typography>
-				<Card
-					style={{ width: 'max-content' }}
-					bodyStyle={{ padding: '1px 8px', width: '100%' }}
-				>
-					SigNoz {version}
-				</Card>
-			</LeftContainer>
+		<>
+			<Container>
+				<LeftContainer direction="vertical">
+					<Space align="center">
+						<Logo src={'signoz-signup.svg'} alt="logo" />
+						<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
+					</Space>
+					<Typography>
+						Monitor your applications. Find what is causing issues.
+					</Typography>
+					<Card
+						style={{ width: 'max-content' }}
+						bodyStyle={{ padding: '1px 8px', width: '100%' }}
+					>
+						SigNoz {version}
+					</Card>
+				</LeftContainer>
 
-			<FormWrapper>
-				<form onSubmit={handleSubmit}>
-					<Title level={4}>Create your account</Title>
-					<div>
-						<Label htmlFor="signupEmail">Email</Label>
-						<Input
-							placeholder="mike@netflix.com"
-							type="email"
-							autoFocus
-							value={email}
-							onChange={(e): void => {
-								setState(e.target.value, setEmail);
-							}}
-							required
-							id="signupEmail"
-						/>
-					</div>
-
-					<div>
-						<Label htmlFor="signupFirstName">First Name</Label>
-						<Input
-							placeholder="Mike"
-							value={firstName}
-							onChange={(e): void => {
-								setState(e.target.value, setFirstName);
-							}}
-							required
-							id="signupFirstName"
-						/>
-					</div>
-					<div>
-						<Label htmlFor="organizationName">Organization Name</Label>
-						<Input
-							placeholder="Netflix"
-							value={organizationName}
-							onChange={(e): void => {
-								setState(e.target.value, setOrganisationName);
-							}}
-							required
-							id="organizationName"
-						/>
-					</div>
-
-					<MarginTop marginTop={'2.4375rem'}>
-						<Space>
-							<Switch
-								onChange={(value) => onSwitchHandler(value, setHasOptedUpdates)}
-								checked={hasOptedUpdates}
+				<FormWrapper>
+					<form onSubmit={handleSubmit}>
+						<Title level={4}>Create your account</Title>
+						<div>
+							<Label htmlFor="signupEmail">Email</Label>
+							<Input
+								placeholder="mike@netflix.com"
+								type="email"
+								autoFocus
+								value={email}
+								onChange={(e): void => {
+									setState(e.target.value, setEmail);
+								}}
+								required
+								id="signupEmail"
 							/>
-							<Typography>Keep me updated on new SigNoz features</Typography>
-						</Space>
-					</MarginTop>
+						</div>
 
-					<MarginTop marginTop={'0.5rem'}>
-						<Space>
-							<Switch
-								onChange={(value) => onSwitchHandler(value, setisAnonymous)}
-								checked={isAnonymous}
+						<div>
+							<Label htmlFor="signupFirstName">First Name</Label>
+							<Input
+								placeholder="Mike"
+								value={firstName}
+								onChange={(e): void => {
+									setState(e.target.value, setFirstName);
+								}}
+								required
+								id="signupFirstName"
 							/>
-							<Typography>
-								Anonymise my usage date. We collect data to measure product usage
-							</Typography>
-						</Space>
-					</MarginTop>
+						</div>
+						<div>
+							<Label htmlFor="organizationName">Organization Name</Label>
+							<Input
+								placeholder="Netflix"
+								value={organizationName}
+								onChange={(e): void => {
+									setState(e.target.value, setOrganisationName);
+								}}
+								required
+								id="organizationName"
+							/>
+						</div>
 
-					<ButtonContainer>
-						<Button
-							type="primary"
-							htmlType="submit"
-							data-attr="signup"
-							loading={loading}
-							disabled={loading || !email || !organizationName || !firstName}
-						>
-							Get Started
-						</Button>
-					</ButtonContainer>
-				</form>
-			</FormWrapper>
-		</Container>
+						<MarginTop marginTop={'2.4375rem'}>
+							<Space>
+								<Switch
+									onChange={(value) => onSwitchHandler(value, setHasOptedUpdates)}
+									checked={hasOptedUpdates}
+								/>
+								<Typography>Keep me updated on new SigNoz features</Typography>
+							</Space>
+						</MarginTop>
+
+						<MarginTop marginTop={'0.5rem'}>
+							<Space>
+								<Switch
+									onChange={(value) => onSwitchHandler(value, setisAnonymous)}
+									checked={isAnonymous}
+								/>
+								<Typography>
+									Anonymise my usage date. We collect data to measure product usage
+								</Typography>
+							</Space>
+						</MarginTop>
+
+						<ButtonContainer>
+							<Button
+								type="primary"
+								htmlType="submit"
+								data-attr="signup"
+								loading={loading}
+								disabled={loading || !email || !organizationName || !firstName}
+							>
+								Get Started
+							</Button>
+						</ButtonContainer>
+					</form>
+				</FormWrapper>
+			</Container>
+			<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
+		</>
 	);
 };
 
