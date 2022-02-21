@@ -64,8 +64,6 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	};
 };
 
-console.log(parseQueryToTags('net/http.reused in ("1")'));
-
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	let isError = false;
 
