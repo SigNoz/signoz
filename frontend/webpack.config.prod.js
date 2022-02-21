@@ -74,7 +74,15 @@ const config = {
 			},
 			{
 				test: /\.css$/,
-				use: [MiniCssExtractPlugin.loader, 'css-loader'],
+				use: [
+					MiniCssExtractPlugin.loader,
+					{
+						loader: 'css-loader',
+						options: {
+							modules: true,
+						},
+					},
+				],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
@@ -95,6 +103,9 @@ const config = {
 					},
 					{
 						loader: 'css-loader',
+						options: {
+							modules: true,
+						},
 					},
 					{
 						loader: 'less-loader',

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Color from 'color';
 import { Tooltip } from 'antd';
 import { pushDStree, span } from 'store/actions';
-
 import {
 	SpanItemContainer,
 	TraceFlameGraphContainer,
@@ -57,7 +56,7 @@ const SpanItem = ({
 					width={width}
 					spanColor={
 						isSelected
-							? `${Color(spanData.serviceColour).lighten(0.3)}`
+							? `${Color(spanData.serviceColour).darken(0.3)}`
 							: `${spanData.serviceColour}`
 					}
 					onMouseEnter={() => {
@@ -77,7 +76,7 @@ const TraceFlameGraph = (props: {
 	treeData: pushDStree;
 	traceMetaData: any;
 }) => {
-	if (!props.treeData || props.treeData.id === 'empty') {
+	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return null;
 	}
 	const {
@@ -89,6 +88,7 @@ const TraceFlameGraph = (props: {
 	} = props.traceMetaData;
 
 	const [treeData, setTreeData] = useState<pushDStree>(props.treeData);
+
 	const RenderSpanRecursive = ({
 		level = 0,
 		spanData,

@@ -1,0 +1,8 @@
+.svg-container {
+	overflow: visible;
+	position: absolute;
+}
+.timeline-tick {
+	text-anchor: middle;
+	font-size: 0.6rem;
+}

@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import './TraceGraph.css';
 import dayjs from 'dayjs';
 import { Affix, Card, Col, Row, Space, Typography, Divider } from 'antd';
@@ -5,7 +6,6 @@ import * as d3 from 'd3';
 import { flamegraph } from 'd3-flame-graph';
 import * as d3Tip from 'd3-tip';
 import { isEmpty, sortBy } from 'lodash-es';
-import React, { useEffect, useState } from 'react';
 import { connect, useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import {
@@ -21,6 +21,7 @@ import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import TraceGanttChart from './TraceGanttChart';
 import TraceFlameGraph from 'container/TraceFlameGraph';
+import Timeline from 'container/Timeline';
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
@@ -221,11 +222,11 @@ const _TraceGraph = (props: TraceGraphProps) => {
 					>
 						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
 					</Col>
-					<Col flex="auto" style={{ marginRight: '1rem' }}>
-						Timeline
+					<Col flex="auto" style={{ marginRight: '1rem', overflow: 'visible' }}>
+						<Timeline traceMetaData={traceMetaData} />
 					</Col>
+					<Divider style={{ margin: 0 }} />
 				</Row>
-				<Divider></Divider>
 				<div
 					style={{
 						width: '100%',
