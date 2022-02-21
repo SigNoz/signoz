@@ -44,6 +44,15 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 			.split(',')
 			.map((e) => e.replaceAll(/"/g, ''));
 
+		noofFilters.forEach((e) => {
+			const firstChar = e.charAt(0);
+			const lastChar = e.charAt(e.length - 1);
+
+			if (firstChar === '"' && lastChar === '"') {
+				isError = true;
+			}
+		});
+
 		return {
 			Key: [filteredtags[0]],
 			Values: noofFilters,
