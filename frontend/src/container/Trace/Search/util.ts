@@ -74,7 +74,7 @@ export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 			}
 
 			return `${Key[0]} ${Operator} (${Values.map((e) => {
-				return `"${e.replace(/"|'/, '')}"`;
+				return `"${e}"`;
 			}).join(',')})`;
 		})
 		.join(' AND ');
