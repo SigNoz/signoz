@@ -47,11 +47,8 @@ const CustomSubText = styled(Paragraph)`
 	}
 `;
 
-const CardContainer = styled(Card)`
-	.ant-card-body {
-		max-height: 90vh;
-		overflow-y: auto;
-	}
+const CardContainer = styled.div`
+	margin: 0 0.5rem;
 `;
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
