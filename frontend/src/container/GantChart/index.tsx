@@ -1,20 +1,33 @@
-import React from 'react';
-import { Card } from 'antd';
-import { CaretDownFilled } from '@ant-design/icons';
+import React, { useState } from 'react';
+import Trace from './Trace';
 
-import { CardComponent } from './styles';
+import { Wrapper, CardWrapper, CardContainer } from './styles';
 
 const GanttChart = (props: GanttChartProps): JSX.Element => {
 	const { data } = props;
-	console.log(data);
+	const [activeHoverId, setActiveHoverId] = useState<string>('');
+
+	if (!Array.isArray(data)) {
+		return <></>;
+	}
 
 	return (
-		<div>
-			<CardComponent>
-				243
-				<CaretDownFilled />
-			</CardComponent>
-		</div>
+		<>
+			<Wrapper>
+				<CardContainer>
+					<CardWrapper>
+						{data.map((e) => (
+							<Trace
+								activeHoverId={activeHoverId}
+								setActiveHoverId={setActiveHoverId}
+								key={e.id}
+								{...{ ...e }}
+							/>
+						))}
+					</CardWrapper>
+				</CardContainer>
+			</Wrapper>
+		</>
 	);
 };
 
@@ -23,7 +36,7 @@ interface TraceTagItem {
 	value: string;
 }
 
-interface pushDStree {
+export interface pushDStree {
 	id: string;
 	name: string;
 	value: number;
@@ -31,6 +44,7 @@ interface pushDStree {
 	startTime: number;
 	tags: TraceTagItem[];
 	children: pushDStree[];
+	parent: pushDStree;
 }
 
 interface GanttChartProps {

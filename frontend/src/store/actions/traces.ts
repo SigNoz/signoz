@@ -43,6 +43,7 @@ export interface pushDStree {
 	startTime: number;
 	tags: TraceTagItem[];
 	children: pushDStree[];
+	parent: pushDStree;
 }
 
 export interface spanItem {

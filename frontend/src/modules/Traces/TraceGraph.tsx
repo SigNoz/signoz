@@ -116,10 +116,10 @@ const _TraceGraph = (props: TraceGraphProps) => {
 							</div>
 						</div>
 					</Card> */}
-					<Affix offsetTop={24}>
-						<GanttChart data={sortedTreeData} />
+					{/* <Affix offsetTop={24}> */}
+					<GanttChart data={sortedTreeData} />
 
-						{/* <TraceGanttChartContainer id={'collapsable'}>
+					{/* <TraceGanttChartContainer id={'collapsable'}>
 							<TraceGanttChart
 								treeData={sortedTreeData}
 								clickedSpan={clickedSpan}
@@ -128,10 +128,10 @@ const _TraceGraph = (props: TraceGraphProps) => {
 								setSpanTagsInfo={setSpanTagsInfo}
 							/>
 						</TraceGanttChartContainer> */}
-					</Affix>
+					{/* </Affix> */}
 				</Space>
 			</Col>
-			<Col md={6} sm={6}>
+			<Col style={{ position: 'relative', zIndex: 99 }} md={6} sm={6}>
 				<Affix offsetTop={24}>
 					<SelectedSpanDetails data={clickedSpanTags} />
 				</Affix>
