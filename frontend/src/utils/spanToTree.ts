@@ -11,6 +11,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		startTime: 0,
 		tags: [],
 		children: [],
+		serviceName: '',
 	};
 
 	// let spans :spanItem[]= trace.spans;
@@ -62,6 +63,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 				startTime: child_span[0],
 				tags: tags_temp,
 				children: mapped_array[id][10],
+				serviceName: child_span[3],
 			};
 			const referencesArr = mapped_array[id][9];
 			let refArray = [];
