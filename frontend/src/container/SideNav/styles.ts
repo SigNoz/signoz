@@ -20,6 +20,7 @@ interface LogoProps {
 }
 
 export const Sider = styled(SiderComponent)`
+	z-index: 999;
 	.ant-typography {
 		color: white;
 	}
@@ -35,4 +36,3 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 		background: ${({ checked }) => checked === false && 'grey'};
 	}
 `;
-

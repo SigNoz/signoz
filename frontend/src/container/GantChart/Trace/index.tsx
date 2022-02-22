@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import {
 	CardComponent,
@@ -11,110 +11,123 @@ import { CaretDownFilled, CaretUpFilled } from '@ant-design/icons';
 import SpanLength from '../SpanLength';
 import SpanName from '../SpanName';
 import { pushDStree } from 'store/actions';
-import { getMetaDataFromSpanTree } from '../utils';
-
-function getCoords(elem: HTMLElement) {
-	// crossbrowser version
-	let box = elem.getBoundingClientRect();
-
-	let body = document.body;
-	let docEl = document.documentElement;
-
-	let scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
-	let scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
-
-	let clientTop = docEl.clientTop || body.clientTop || 0;
-	let clientLeft = docEl.clientLeft || body.clientLeft || 0;
-
-	let top = box.top + scrollTop - clientTop;
-	let left = box.left + scrollLeft - clientLeft;
-
-	return { top: Math.round(top), left: Math.round(left) };
-}
+import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
+import { ITraceMetaData } from '..';
+import { useMeasure } from 'react-use';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const [isOpen, setOpen] = useState<boolean>(false);
-	const containerRef = useRef<HTMLUListElement>(null);
-	const { name, children, activeHoverId, setActiveHoverId } = props;
+	const {
+		name,
+		activeHoverId,
+		setActiveHoverId,
+		globalSpread,
+		globalStart,
+		serviceName,
+		startTime,
+		value,
+		serviceColour,
+		id,
+		setActiveSelectedId,
+		activeSelectedId,
+	} = props;
+
 	const isOnlyChild = props.children.length === 1;
 	const [top, setTop] = useState<number>(0);
 
-	useEffect(() => {
-		if (containerRef.current) {
-			setTop(getCoords(containerRef.current).top);
-		}
-	}, []);
+	const ref = useRef<HTMLUListElement>(null);
 
 	const onMouseEnterHandler = () => {
 		setActiveHoverId(props.id);
+		if (ref.current) {
+			const { top } = getTopLeftFromBody(ref.current);
+			setTop(top);
+		}
 	};
 
 	const onMouseLeaveHandler = () => {
 		setActiveHoverId('');
 	};
 
-	useEffect(() => {
-		const ref = containerRef.current;
+	const { totalSpans } = getMetaDataFromSpanTree(props);
 
-		ref?.addEventListener('mouseenter', onMouseEnterHandler);
-		ref?.addEventListener('mouseleave', onMouseLeaveHandler);
-
-		return () => {
-			ref?.removeEventListener('mouseenter', onMouseEnterHandler);
-			ref?.removeEventListener('mouseleave', onMouseLeaveHandler);
-		};
-	}, []);
-
-	const { totalSpans, spread, globalStart } = getMetaDataFromSpanTree(props);
-
-	const width = props.time / spread;
-
-	// const width = (props.value * 1e8) / spread;
-	const leftOffset = ((props.startTime * 1e6 - globalStart) * 1e8) / spread;
+	const nodeLeftOffset = ((startTime * 1e6 - globalStart) * 1e8) / globalSpread;
+	const width = (value * 1e8) / globalSpread;
+	const toolTipText = `${name}\n${value / 1e6} ms`;
 
 	return (
-		<Wrapper ref={containerRef} isOnlyChild={isOnlyChild}>
-			{/* <HoverCard top={top} isHovered={activeHoverId === props.id} /> */}
-			<CardContainer>
-				{totalSpans !== 1 && (
-					<CardComponent
-						onClick={() => {
-							setOpen((state) => !state);
-						}}
-					>
-						{totalSpans}
-						<CaretContainer>
-							{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
-						</CaretContainer>
-					</CardComponent>
-				)}
-
-				<SpanName name={name} serviceName={'service'} />
-				<SpanLength
-					leftOffset={leftOffset.toString()}
-					percentage={width.toString()}
+		<>
+			<Wrapper
+				onMouseEnter={onMouseEnterHandler}
+				onMouseLeave={onMouseLeaveHandler}
+				isOnlyChild={isOnlyChild}
+				ref={ref}
+				onClick={() => {
+					setActiveSelectedId(id);
+				}}
+			>
+				<HoverCard
+					isSelected={activeSelectedId === id}
+					top={top}
+					isHovered={activeHoverId === id}
 				/>
-			</CardContainer>
 
-			{isOpen && (
-				<>
-					{props.children.map((child) => (
-						<Trace
-							key={child.id}
-							activeHoverId={props.activeHoverId}
-							setActiveHoverId={props.setActiveHoverId}
-							{...child}
-						/>
-					))}
-				</>
-			)}
-		</Wrapper>
+				<CardContainer>
+					{totalSpans !== 1 && (
+						<CardComponent
+							onClick={() => {
+								setOpen((state) => !state);
+							}}
+						>
+							{totalSpans}
+							<CaretContainer>
+								{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+							</CaretContainer>
+						</CardComponent>
+					)}
+
+					<SpanName name={name} serviceName={serviceName} />
+
+					<SpanLength
+						leftOffset={nodeLeftOffset.toString()}
+						width={width.toString()}
+						bgColor={serviceColour}
+						toolTipText={toolTipText}
+						id={id}
+					/>
+				</CardContainer>
+
+				{isOpen && (
+					<>
+						{props.children.map((child) => (
+							<Trace
+								key={child.id}
+								activeHoverId={props.activeHoverId}
+								setActiveHoverId={props.setActiveHoverId}
+								{...child}
+								globalSpread={globalSpread}
+								globalStart={globalStart}
+								setActiveSelectedId={setActiveSelectedId}
+								activeSelectedId={activeSelectedId}
+							/>
+						))}
+					</>
+				)}
+			</Wrapper>
+		</>
 	);
 };
 
-interface TraceProps extends pushDStree {
+interface ITraceGlobal {
+	globalSpread: ITraceMetaData['spread'];
+	globalStart: ITraceMetaData['globalStart'];
+}
+
+interface TraceProps extends pushDStree, ITraceGlobal {
 	activeHoverId: string;
 	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
+	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
+	activeSelectedId: string;
 }
 
 export default Trace;

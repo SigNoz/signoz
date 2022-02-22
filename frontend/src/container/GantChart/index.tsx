@@ -1,29 +1,54 @@
 import React, { useState } from 'react';
 import Trace from './Trace';
 
-import { Wrapper, CardWrapper, CardContainer } from './styles';
+import { Wrapper, CardWrapper, CardContainer, ButtonContainer } from './styles';
+import { pushDStree } from 'store/actions';
+import { Button } from 'antd';
+import { getNodeById } from './utils';
 
 const GanttChart = (props: GanttChartProps): JSX.Element => {
-	const { data } = props;
-	const [activeHoverId, setActiveHoverId] = useState<string>('');
+	const {
+		data,
+		traceMetaData,
+		onResetHandler,
+		setTreeData,
+		activeHoverId,
+		setActiveHoverId,
+		activeSelectedId,
+		setActiveSelectedId,
+	} = props;
 
-	if (!Array.isArray(data)) {
-		return <></>;
-	}
+	const { globalStart, spread: globalSpread } = traceMetaData;
+
+	const onFocusHandler = () => {
+		const treeNode = getNodeById(activeSelectedId, data);
+		if (treeNode) {
+			setTreeData(treeNode);
+		}
+	};
 
 	return (
 		<>
 			<Wrapper>
+				<ButtonContainer>
+					<Button onClick={onFocusHandler}>Focus on selected spans</Button>
+					<Button onClick={onResetHandler}>Reset</Button>
+				</ButtonContainer>
+
 				<CardContainer>
 					<CardWrapper>
-						{data.map((e) => (
-							<Trace
-								activeHoverId={activeHoverId}
-								setActiveHoverId={setActiveHoverId}
-								key={e.id}
-								{...{ ...e }}
-							/>
-						))}
+						<Trace
+							activeHoverId={activeHoverId}
+							setActiveHoverId={setActiveHoverId}
+							key={data.id}
+							{...{
+								...data,
+								globalSpread,
+								globalStart,
+								setActiveSelectedId,
+								activeSelectedId,
+							}}
+						/>
 					</CardWrapper>
 				</CardContainer>
 			</Wrapper>
@@ -31,24 +56,23 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 	);
 };
 
-interface TraceTagItem {
-	key: string;
-	value: string;
+export interface ITraceMetaData {
+	globalEnd: number;
+	globalStart: number;
+	levels: number;
+	spread: number;
+	totalSpans: number;
 }
 
-export interface pushDStree {
-	id: string;
-	name: string;
-	value: number;
-	time: number;
-	startTime: number;
-	tags: TraceTagItem[];
-	children: pushDStree[];
-	parent: pushDStree;
-}
-
-interface GanttChartProps {
-	data: pushDStree[];
+export interface GanttChartProps {
+	data: pushDStree;
+	traceMetaData: ITraceMetaData;
+	onResetHandler: VoidFunction;
+	setTreeData: React.Dispatch<React.SetStateAction<pushDStree>>;
+	activeSelectedId: string;
+	activeHoverId: string;
+	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
+	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default GanttChart;

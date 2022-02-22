@@ -1,16 +1,20 @@
 import styled from 'styled-components';
 
 interface Props {
-	percentage: string;
+	width: string;
 	leftOffset: string;
+	bgColor: string;
 }
 
 export const SpanBorder = styled.div<Props>`
-	background: #8fd460;
+	background: ${({ bgColor }) => bgColor};
 	border-radius: 5px;
 	height: 0.625rem;
-	width: ${({ percentage }) => `${percentage}%`};
-	padding-left: ${({ leftOffset }) => `${leftOffset}px`};
+	width: ${({ width }) => `${width}%`};
+	left: ${({ leftOffset }) => `${leftOffset}%`};
+	top: 35%;
+
+	position: absolute;
 `;
 
 export const SpanWrapper = styled.div`

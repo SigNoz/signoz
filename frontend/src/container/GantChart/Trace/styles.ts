@@ -56,16 +56,19 @@ export const CaretContainer = styled.span`
 interface HoverCardProps {
 	isHovered: boolean;
 	top: number;
+	isSelected: boolean;
 }
 
 export const HoverCard = styled.div<HoverCardProps>`
 	display: ${({ isHovered }) => (isHovered ? 'block' : 'none')};
-	left: 200px;
-	width: 100vw;
+	width: 200%;
 
-	position: fixed;
-	top: ${({ top }) => `${top}px`};
+	background-color: ${({ isHovered }) => isHovered && '#262626'};
+
+	position: absolute;
+	top: 0;
+	left: -100%;
+	right: 0;
 	height: 3.5rem;
-	background-color: #262626;
 	opacity: 0.5;
 `;

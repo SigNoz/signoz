@@ -12,7 +12,6 @@ import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
-import getTheme from 'lib/theme/getTheme';
 import setTheme from 'lib/theme/setTheme';
 
 import menus from './menuItems';
@@ -60,7 +59,11 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<ThemeSwitcherWrapper>
-				<ToggleButton checked={isDarkMode} onChange={toggleTheme} defaultChecked={isDarkMode} />
+				<ToggleButton
+					checked={isDarkMode}
+					onChange={toggleTheme}
+					defaultChecked={isDarkMode}
+				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
 				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />

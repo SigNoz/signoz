@@ -1,15 +1,29 @@
+import { Tooltip } from 'antd';
 import React from 'react';
 import { SpanBorder, SpanWrapper } from './styles';
 
 interface SpanLengthProps {
-	percentage: string;
+	width: string;
 	leftOffset: string;
+	bgColor: string;
+	toolTipText: string;
+	id: string;
 }
 const SpanLength = (props: SpanLengthProps): JSX.Element => {
-	const { percentage, leftOffset } = props;
+	const { width, leftOffset, bgColor } = props;
 	return (
 		<SpanWrapper>
-			<SpanBorder leftOffset={leftOffset} percentage={percentage} />
+			<Tooltip
+				placement="top"
+				overlayStyle={{
+					whiteSpace: 'pre-line',
+					fontSize: '0.7rem',
+				}}
+				title={props.toolTipText}
+				key={props.id}
+			>
+				<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
+			</Tooltip>
 		</SpanWrapper>
 	);
 };

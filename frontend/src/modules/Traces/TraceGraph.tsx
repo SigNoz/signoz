@@ -17,6 +17,7 @@ import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import TraceGanttChart from './TraceGanttChart';
 import GanttChart from 'container/GantChart';
+import { isEqual } from 'lodash-es';
 
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import Timeline from 'container/Timeline';
@@ -105,81 +106,55 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		}
 	};
 
+	const [treeData, setTreeData] = useState<pushDStree>(tree);
+	const [activeHoverId, setActiveHoverId] = useState<string>('');
+	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
+
+	const onResetHandler = () => {
+		setTreeData(tree);
+	};
+
+	useEffect(() => {
+		if (!isEqual(tree, treeData)) {
+			setTreeData(tree);
+		}
+	}, [tree]);
+
 	return (
 		<Row style={{ flex: 1 }}>
 			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
 				<Row>
 					<Col flex="175px">
-						<div
-							style={{
-								textAlign: 'center',
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								justifyContent: 'center',
-								height: '100%',
-							}}
-						>
-							<Typography.Title level={5} style={{ margin: 0 }}>
-								Trace Details
-							</Typography.Title>
-							<Typography.Text style={{ margin: 0 }}>
-								{traceMetaData.totalSpans} Span
-							</Typography.Text>
-						</div>
+						<Typography.Title level={5} style={{ margin: 0 }}>
+							Trace Details
+						</Typography.Title>
+						<Typography.Text style={{ margin: 0 }}>
+							{traceMetaData.totalSpans} Span
+						</Typography.Text>
 					</Col>
 					<Col flex={'auto'}>
-						<div
-							style={{
-								display: 'flex',
-								justifyContent: 'center',
-								flexDirection: 'column',
-								alignItems: 'center',
-								marginRight: '1rem',
-							}}
-						>
-							<TraceFlameGraph treeData={tree} traceMetaData={traceMetaData} />
-							<div id="chart" style={{ fontSize: 12, marginTop: 20 }}></div>
-						</div>
+						<TraceFlameGraph treeData={treeData} traceMetaData={traceMetaData} />
 					</Col>
 				</Row>
 				<Row>
-					<Col
-						flex="175px"
-						style={{
-							textAlign: 'end',
-							paddingRight: '1rem',
-						}}
-					>
+					<Col>
 						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
 					</Col>
 					<Col flex="auto" style={{ marginRight: '1rem', overflow: 'visible' }}>
 						<Timeline traceMetaData={traceMetaData} />
 					</Col>
-					<Divider style={{ margin: 0 }} />
+					<Divider style={{ height: '100%', margin: '0' }} />
 				</Row>
-				<div
-					style={{
-						width: '100%',
-						flex: '0 1 auto',
-						height: '100%',
-						overflowY: 'hidden',
-						position: 'relative',
-						display: 'flex',
-					}}
-				>
-					<div
-						style={{
-							overflowY: 'scroll',
-							height: '100%',
-							width: '100%',
-							position: 'absolute',
-							flex: 1,
-						}}
-					>
-						<GanttChart data={sortedTreeData} />
-					</div>
-				</div>
+				<GanttChart
+					onResetHandler={onResetHandler}
+					traceMetaData={traceMetaData}
+					data={treeData}
+					setTreeData={setTreeData}
+					activeSelectedId={activeSelectedId}
+					activeHoverId={activeHoverId}
+					setActiveHoverId={setActiveHoverId}
+					setActiveSelectedId={setActiveSelectedId}
+				/>
 			</Col>
 			<Col>
 				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
