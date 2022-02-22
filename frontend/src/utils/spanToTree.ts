@@ -57,7 +57,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 
 			const push_object: pushDStree = {
 				id: child_span[1],
-				name: child_span[3] + ': ' + child_span[4],
+				name: child_span[4],
 				value: parseInt(child_span[6]),
 				time: parseInt(child_span[6]),
 				startTime: child_span[0],
