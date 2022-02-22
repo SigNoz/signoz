@@ -23,6 +23,9 @@ export const Sider = styled(SiderComponent)`
 	.ant-typography {
 		color: white;
 	}
+	.ant-layout-sider-trigger {
+		background-color: #1f1f1f;
+	}
 `;
 
 interface DarkModeProps {
