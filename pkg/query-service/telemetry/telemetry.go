@@ -61,6 +61,10 @@ func getOutboundIP() string {
 	ip := []byte("NA")
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
+	if err != nil {
+		return ""
+	}
+
 	defer resp.Body.Close()
 	if err == nil {
 		ipBody, err := ioutil.ReadAll(resp.Body)
