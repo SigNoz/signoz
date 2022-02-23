@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { Affix, Col, Row, Typography, Divider } from 'antd';
 import { connect, useDispatch } from 'react-redux';
@@ -18,6 +18,7 @@ import GanttChart from 'container/GantChart';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import Timeline from 'container/Timeline';
 import { getNodeById } from 'container/GantChart/utils';
+import { isEqual } from 'lodash-es';
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
@@ -44,6 +45,17 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const [treeData, setTreeData] = useState<pushDStree>(tree);
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
+
+	/**
+	 * Need to remove this hack
+	 */
+	const ref = useRef(0);
+	useEffect(() => {
+		if (!isEqual(treeData, tree) && ref.current === 0) {
+			ref.current = 1;
+			setTreeData(tree);
+		}
+	}, [tree]);
 
 	const onResetHandler = () => {
 		setTreeData(tree);
