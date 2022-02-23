@@ -75,3 +75,33 @@ export const getNodeById = (
 
 	return foundNode;
 };
+
+const getSpanWithoutChildren = (
+	span: pushDStree,
+): Omit<pushDStree, 'children'> => {
+	return {
+		id: span.id,
+		name: span.name,
+		parent: span.parent,
+		serviceColour: span.serviceColour,
+		serviceName: span.serviceName,
+		startTime: span.startTime,
+		tags: span.tags,
+		time: span.time,
+		value: span.value,
+	};
+};
+
+export const isSpanPresentInSearchString = (
+	searchedString: string,
+	tree: pushDStree,
+): boolean => {
+	const parsedTree = getSpanWithoutChildren(tree);
+
+	const stringifyTree = JSON.stringify(parsedTree);
+
+	if (stringifyTree.includes(searchedString)) {
+		return true;
+	}
+	return false;
+};
