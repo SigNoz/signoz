@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import styled from 'styled-components';
 
 interface Props {
@@ -33,5 +34,16 @@ export const SpanWrapper = styled.div`
 		left: -30px;
 		width: 30px;
 		z-index: 0;
+	}
+`;
+
+export const SpanText = styled(Typography)<Pick<Props, 'leftOffset'>>`
+	&&& {
+		left: ${({ leftOffset }) => `${leftOffset}%`};
+		top: 65%;
+
+		position: absolute;
+		color: #acacac;
+		font-size: 0.75rem;
 	}
 `;

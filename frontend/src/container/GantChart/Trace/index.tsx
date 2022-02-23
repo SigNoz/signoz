@@ -14,6 +14,7 @@ import { pushDStree } from 'store/actions';
 import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import { ITraceMetaData } from '..';
 import { useMeasure } from 'react-use';
+import dayjs from 'dayjs';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const [isOpen, setOpen] = useState<boolean>(false);
@@ -51,9 +52,10 @@ const Trace = (props: TraceProps): JSX.Element => {
 
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
+	const inMsCount = value / 1e6;
 	const nodeLeftOffset = ((startTime * 1e6 - globalStart) * 1e8) / globalSpread;
 	const width = (value * 1e8) / globalSpread;
-	const toolTipText = `${name}\n${value / 1e6} ms`;
+	const toolTipText = `${name}\n${inMsCount} ms`;
 
 	return (
 		<>
@@ -94,6 +96,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 						bgColor={serviceColour}
 						toolTipText={toolTipText}
 						id={id}
+						inMsCount={inMsCount}
 					/>
 				</CardContainer>
 
