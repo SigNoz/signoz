@@ -1,67 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { Affix, Card, Col, Row, Space, Typography, Divider } from 'antd';
-import { isEmpty, sortBy } from 'lodash-es';
+import { Affix, Col, Row, Typography, Divider } from 'antd';
 import { connect, useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
 	fetchTraceItem,
 	pushDStree,
 	spansWSameTraceIDResponse,
 } from 'store/actions';
 import { AppState } from 'store/reducers';
-import styled from 'styled-components';
 import { spanToTreeUtil } from 'utils/spanToTree';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import SelectedSpanDetails from './SelectedSpanDetails';
-import TraceGanttChart from './TraceGanttChart';
 import GanttChart from 'container/GantChart';
-import { isEqual } from 'lodash-es';
 
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import Timeline from 'container/Timeline';
+import { getNodeById } from 'container/GantChart/utils';
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
 }
 
-const TraceGanttChartContainer = styled(Card)`
-	background: #333333;
-	border-radius: 5px;
-`;
-
 const _TraceGraph = (props: TraceGraphProps) => {
-	const location = useLocation();
-	const spanId = location?.state?.spanId;
 	const { id } = useParams<{ id?: string }>();
-
-	const [clickedSpanTags, setClickedSpanTags] = useState<pushDStree>([]);
-	const [selectedSpan, setSelectedSpan] = useState({});
-	const [clickedSpan, setClickedSpan] = useState(null);
-	const [resetZoom, setResetZoom] = useState(false);
-	const [sortedTreeData, setSortedTreeData] = useState<pushDStree[]>([]);
-
-	let sortedData = {};
-
-	const getSortedData = (treeData: pushDStree[], parent = {}) => {
-		if (!isEmpty(treeData)) {
-			if (treeData[0].id !== 'empty') {
-				return Array.from(treeData).map((item, key) => {
-					if (!isEmpty(item.children)) {
-						getSortedData(item.children, item);
-						sortedData = sortBy(item.children, (i) => i.startTime);
-						treeData[key].children = sortedData;
-					}
-					if (!isEmpty(parent)) {
-						treeData[key].parent = parent;
-					}
-					return treeData;
-				});
-			}
-			return treeData;
-		}
-	};
 
 	const spanServiceColors = spanServiceNameToColorMapping(
 		props.traceItem[0].events,
@@ -75,36 +38,8 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const dispatch = useDispatch();
 
 	useEffect(() => {
-		//sets span width based on value - which is mapped to duration
 		fetchTraceItem(id || '')(dispatch);
 	}, [dispatch, id]);
-
-	useEffect(() => {
-		if (props.traceItem) {
-			const sortedData = getSortedData([tree]);
-			if (sortedData) {
-				setSortedTreeData(sortedData?.[0] || []);
-			}
-		}
-	}, [props.traceItem]);
-
-	const getSpanInfo = (data: [pushDStree], spanId: string): void => {
-		if (resetZoom) {
-			setSelectedSpan({});
-			return;
-		}
-		if (data?.[0]?.id !== 'empty') {
-			Array.from(data).map((item) => {
-				if (item.id === spanId) {
-					setSelectedSpan(item);
-					setClickedSpanTags(item);
-					return item;
-				} else if (!isEmpty(item.children)) {
-					getSpanInfo(item.children, spanId);
-				}
-			});
-		}
-	};
 
 	const [treeData, setTreeData] = useState<pushDStree>(tree);
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
@@ -113,6 +48,10 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const onResetHandler = () => {
 		setTreeData(tree);
 	};
+
+	const getSelectedNode = useMemo(() => {
+		return getNodeById(activeSelectedId, treeData);
+	}, [activeSelectedId, treeData]);
 
 	return (
 		<Row style={{ flex: 1 }}>
@@ -155,7 +94,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 			</Col>
 			<Col md={5} sm={5}>
 				<Affix offsetTop={24}>
-					<SelectedSpanDetails data={clickedSpanTags} />
+					<SelectedSpanDetails data={getSelectedNode} />
 				</Affix>
 			</Col>
 		</Row>
