@@ -87,8 +87,6 @@ const TraceFlameGraph = (props: {
 		levels,
 	} = props.traceMetaData;
 
-	const [treeData, setTreeData] = useState<pushDStree>(props.treeData);
-
 	const RenderSpanRecursive = ({
 		level = 0,
 		spanData,
@@ -129,7 +127,7 @@ const TraceFlameGraph = (props: {
 	return (
 		<>
 			<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
-				<RenderSpanRecursive spanData={treeData} />
+				<RenderSpanRecursive spanData={props.treeData} />
 			</TraceFlameGraphContainer>
 		</>
 	);

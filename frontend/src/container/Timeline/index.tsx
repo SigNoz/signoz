@@ -10,7 +10,7 @@ interface Interval {
 	percentage: number;
 }
 const Timeline = ({ traceMetaData }: TimelineProps) => {
-	const [ref, { width, height }] = useMeasure();
+	const [ref, { width, height }] = useMeasure<HTMLDivElement>();
 	const Timeline_Height = 22;
 	const Timeline_H_Spacing = 0;
 
@@ -68,13 +68,14 @@ const Timeline = ({ traceMetaData }: TimelineProps) => {
 					stroke-width="1"
 				/>
 				{intervals &&
-					intervals.map((interval) => (
+					intervals.map((interval, index) => (
 						<g
 							transform={`translate(${
 								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
 							},0)`}
 							className={styles['timeline-tick']}
+							key={interval.label + interval.percentage + index}
 						>
 							<text y={13} fill="white">
 								{interval.label}

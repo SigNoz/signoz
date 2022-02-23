@@ -8,7 +8,7 @@ const { TabPane } = Tabs;
 const { Text, Title, Paragraph } = Typography;
 
 interface SelectedSpanDetailsProps {
-	data: pushDStree;
+	data?: pushDStree;
 }
 
 // Check this discussion for antd with styled components
