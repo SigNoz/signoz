@@ -105,3 +105,33 @@ export const isSpanPresentInSearchString = (
 	}
 	return false;
 };
+
+export const isSpanPresent = (
+	tree: pushDStree,
+	searchedKey: string,
+): pushDStree[] => {
+	const foundNode: pushDStree[] = [];
+
+	const traverse = (
+		treeNode: pushDStree,
+		level: number = 0,
+		foundNode: pushDStree[],
+	) => {
+		if (!treeNode) {
+			return;
+		}
+
+		const isPresent = isSpanPresentInSearchString(searchedKey, treeNode);
+
+		if (isPresent) {
+			foundNode.push(treeNode);
+		}
+
+		for (const childNode of treeNode.children) {
+			traverse(childNode, level + 1, foundNode);
+		}
+	};
+	traverse(tree, 1, foundNode);
+
+	return foundNode;
+};

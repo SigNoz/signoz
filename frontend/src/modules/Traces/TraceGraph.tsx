@@ -25,7 +25,7 @@ interface TraceGraphProps {
 }
 
 const _TraceGraph = (props: TraceGraphProps) => {
-	const { id } = useParams<{ id?: string }>();
+	const { id } = useParams<{ id: string }>();
 
 	const spanServiceColors = spanServiceNameToColorMapping(
 		props.traceItem[0].events,

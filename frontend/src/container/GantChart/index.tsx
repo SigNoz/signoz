@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Trace from './Trace';
 
 import { Wrapper, CardWrapper, CardContainer, ButtonContainer } from './styles';
 import { pushDStree } from 'store/actions';
 import { Button } from 'antd';
 import { getNodeById } from './utils';
+import { FilterOutlined } from '@ant-design/icons';
 
 const GanttChart = (props: GanttChartProps): JSX.Element => {
 	const {
@@ -31,7 +32,9 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 		<>
 			<Wrapper>
 				<ButtonContainer>
-					<Button onClick={onFocusHandler}>Focus on selected spans</Button>
+					<Button icon={<FilterOutlined />} onClick={onFocusHandler}>
+						Focus on selected spans
+					</Button>
 					<Button onClick={onResetHandler}>Reset</Button>
 				</ButtonContainer>
 
