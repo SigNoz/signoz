@@ -25,8 +25,8 @@ const SpanLength = (props: SpanLengthProps): JSX.Element => {
 				key={props.id}
 			>
 				<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
-				<SpanText leftOffset={leftOffset}>{`${props.inMsCount} ms`}</SpanText>
 			</Tooltip>
+			<SpanText leftOffset={leftOffset}>{`${props.inMsCount} ms`}</SpanText>
 		</SpanWrapper>
 	);
 };
