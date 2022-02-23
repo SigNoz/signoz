@@ -1537,7 +1537,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case "status":
-			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))", r.indexTable)
+			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND hasError = 1", r.indexTable)
 			finalQuery += query
 			var dBResponse []model.DBResponseErrors
 			err := r.db.Select(&dBResponse, finalQuery, args...)
@@ -1582,16 +1582,16 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 	if _, ok := excludeMap["status"]; ok {
 		if len(statusParams) == 1 {
 			if statusParams[0] == "error" {
-				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+				query += " AND hasError = 0"
 			} else if statusParams[0] == "ok" {
-				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+				query += " AND hasError = 1"
 			}
 		}
 	} else if len(statusParams) == 1 {
 		if statusParams[0] == "error" {
-			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			query += " AND hasError = 1"
 		} else if statusParams[0] == "ok" {
-			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			query += " AND hasError = 0"
 		}
 	}
 	return query
@@ -2093,7 +2093,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	var searchScanReponses []model.SearchSpanReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID=?", r.indexTable)
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events, hasError FROM %s WHERE traceID=?", r.indexTable)
 
 	err := r.db.Select(&searchScanReponses, query, traceId)
 
@@ -2106,7 +2106,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	searchSpansResult := []model.SearchSpansResult{
 		model.SearchSpansResult{
-			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events"},
+			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 			Events:  make([][]interface{}, len(searchScanReponses)),
 		},
 	}
