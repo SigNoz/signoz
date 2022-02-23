@@ -35,6 +35,7 @@ export const Wrapper = styled.ul<Props>`
 export const CardContainer = styled.li`
 	display: flex;
 	width: 100%;
+	cursor: pointer;
 `;
 
 export const CardComponent = styled.div`
@@ -54,16 +55,15 @@ export const CaretContainer = styled.span`
 `;
 
 interface HoverCardProps {
-	isHovered: boolean;
+	isActive: boolean;
 	top: number;
-	isSelected: boolean;
 }
 
 export const HoverCard = styled.div<HoverCardProps>`
-	display: ${({ isHovered }) => (isHovered ? 'block' : 'none')};
+	display: ${({ isActive }) => (isActive ? 'block' : 'none')};
 	width: 200%;
 
-	background-color: ${({ isHovered }) => isHovered && '#262626'};
+	background-color: ${({ isActive }) => isActive && '#262626'};
 
 	position: absolute;
 	top: 0;

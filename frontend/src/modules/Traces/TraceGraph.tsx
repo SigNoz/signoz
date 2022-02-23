@@ -114,12 +114,6 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		setTreeData(tree);
 	};
 
-	useEffect(() => {
-		if (!isEqual(tree, treeData)) {
-			setTreeData(tree);
-		}
-	}, [tree]);
-
 	return (
 		<Row style={{ flex: 1 }}>
 			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>

@@ -62,17 +62,17 @@ const Trace = (props: TraceProps): JSX.Element => {
 				onMouseLeave={onMouseLeaveHandler}
 				isOnlyChild={isOnlyChild}
 				ref={ref}
-				onClick={() => {
-					setActiveSelectedId(id);
-				}}
 			>
 				<HoverCard
-					isSelected={activeSelectedId === id}
 					top={top}
-					isHovered={activeHoverId === id}
+					isActive={activeHoverId === id || activeSelectedId === id}
 				/>
 
-				<CardContainer>
+				<CardContainer
+					onClick={() => {
+						setActiveSelectedId(id);
+					}}
+				>
 					{totalSpans !== 1 && (
 						<CardComponent
 							onClick={() => {
