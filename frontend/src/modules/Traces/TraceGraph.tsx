@@ -18,7 +18,7 @@ import GanttChart from 'container/GantChart';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import Timeline from 'container/Timeline';
 import { getNodeById } from 'container/GantChart/utils';
-import { isEqual } from 'lodash-es';
+import { filterSpansByString } from './utils';
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
@@ -31,9 +31,8 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		props.traceItem[0].events,
 	);
 
-	const { treeData: tree, ...traceMetaData } = getSpanTreeMetadata(
-		spanToTreeUtil(props.traceItem[0].events),
-		spanServiceColors,
+	const [treeData, setTreeData] = useState<pushDStree>(
+		spanToTreeUtil(filterSpansByString('', props.traceItem[0].events)),
 	);
 
 	const dispatch = useDispatch();
@@ -42,20 +41,21 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		fetchTraceItem(id || '')(dispatch);
 	}, [dispatch, id]);
 
-	const [treeData, setTreeData] = useState<pushDStree>(tree);
+	useEffect(() => {
+		if (props.traceItem[0].events.length) {
+			setTreeData(
+				spanToTreeUtil(filterSpansByString('route', props.traceItem[0].events)),
+			);
+		}
+	}, [props.traceItem[0]]);
+
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
 
-	/**
-	 * Need to remove this hack
-	 */
-	const ref = useRef(0);
-	useEffect(() => {
-		if (!isEqual(treeData, tree) && ref.current === 0) {
-			ref.current = 1;
-			setTreeData(tree);
-		}
-	}, [tree]);
+	const { treeData: tree, ...traceMetaData } = getSpanTreeMetadata(
+		treeData,
+		spanServiceColors,
+	);
 
 	const onResetHandler = () => {
 		setTreeData(tree);

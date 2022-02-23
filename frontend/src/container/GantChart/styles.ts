@@ -6,7 +6,7 @@ export const Wrapper = styled.ul`
 	ul {
 		list-style: none;
 		border-left: 1px solid #434343;
-		padding-left: 0.5rem;
+		padding-left: 8px;
 		width: 100%;
 	}
 

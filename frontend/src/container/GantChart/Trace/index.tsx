@@ -13,8 +13,7 @@ import SpanName from '../SpanName';
 import { pushDStree } from 'store/actions';
 import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import { ITraceMetaData } from '..';
-import { useMeasure } from 'react-use';
-import dayjs from 'dayjs';
+import { Col } from 'antd';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const [isOpen, setOpen] = useState<boolean>(false);
@@ -31,6 +30,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		id,
 		setActiveSelectedId,
 		activeSelectedId,
+		level,
 	} = props;
 
 	const isOnlyChild = props.children.length === 1;
@@ -57,6 +57,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 	const width = (value * 1e8) / globalSpread;
 	const toolTipText = `${name}\n${inMsCount} ms`;
 
+	const panelWidth = 200 - level * 9;
+
 	return (
 		<>
 			<Wrapper
@@ -75,29 +77,32 @@ const Trace = (props: TraceProps): JSX.Element => {
 						setActiveSelectedId(id);
 					}}
 				>
-					{totalSpans !== 1 && (
-						<CardComponent
-							onClick={() => {
-								setOpen((state) => !state);
-							}}
-						>
-							{totalSpans}
-							<CaretContainer>
-								{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
-							</CaretContainer>
-						</CardComponent>
-					)}
+					<Col flex={`${panelWidth}px`}>
+						{totalSpans !== 1 && (
+							<CardComponent
+								onClick={() => {
+									setOpen((state) => !state);
+								}}
+							>
+								{totalSpans}
+								<CaretContainer>
+									{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+								</CaretContainer>
+							</CardComponent>
+						)}
 
-					<SpanName name={name} serviceName={serviceName} />
-
-					<SpanLength
-						leftOffset={nodeLeftOffset.toString()}
-						width={width.toString()}
-						bgColor={serviceColour}
-						toolTipText={toolTipText}
-						id={id}
-						inMsCount={inMsCount}
-					/>
+						<SpanName name={name} serviceName={serviceName} />
+					</Col>
+					<Col flex={'1'}>
+						<SpanLength
+							leftOffset={nodeLeftOffset.toString()}
+							width={width.toString()}
+							bgColor={serviceColour}
+							toolTipText={toolTipText}
+							id={id}
+							inMsCount={inMsCount}
+						/>
+					</Col>
 				</CardContainer>
 
 				{isOpen && (
@@ -112,6 +117,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 								globalStart={globalStart}
 								setActiveSelectedId={setActiveSelectedId}
 								activeSelectedId={activeSelectedId}
+								level={level + 1}
 							/>
 						))}
 					</>
@@ -131,6 +137,7 @@ interface TraceProps extends pushDStree, ITraceGlobal {
 	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
 	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
 	activeSelectedId: string;
+	level: number;
 }
 
 export default Trace;

@@ -12,6 +12,8 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		tags: [],
 		children: [],
 		serviceName: '',
+		serviceColour: 'red',
+		parent: undefined,
 	};
 
 	// let spans :spanItem[]= trace.spans;

@@ -51,6 +51,7 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 								setActiveSelectedId,
 								activeSelectedId,
 							}}
+							level={0}
 						/>
 					</CardWrapper>
 				</CardContainer>
