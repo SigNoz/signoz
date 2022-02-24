@@ -1,55 +1,15 @@
-import { Card, Space, Tabs, Typography } from 'antd';
+import { Space, Tabs } from 'antd';
 import React from 'react';
-import { pushDStree } from 'store/actions';
-import styled from 'styled-components';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 const { TabPane } = Tabs;
-
-const { Text, Title, Paragraph } = Typography;
-
-interface SelectedSpanDetailsProps {
-	data?: pushDStree;
-}
-
-// Check this discussion for antd with styled components
-// https://gist.github.com/newswim/fa916c66477ddd5952f7d6548e6a0605
-
-const CustomTitle = styled(Title)`
-	&&& {
-		color: #f2f2f2;
-		font-size: 14px;
-	}
-`;
-
-const CustomText = styled(Text)`
-	&&& {
-		color: #2d9cdb;
-		font-size: 14px;
-	}
-`;
-
-const CustomSubTitle = styled(Title)`
-	&&& {
-		color: #bdbdbd;
-		font-size: 14px;
-		margin-bottom: 8px;
-	}
-`;
-
-const CustomSubText = styled(Paragraph)`
-	&&& {
-		background: #4f4f4f;
-		color: #2d9cdb;
-		font-size: 12px;
-		padding: 6px 8px;
-		word-break: break-all;
-		margin-bottom: 16px;
-	}
-`;
-
-const CardContainer = styled.div`
-	margin: 0 0.5rem;
-`;
+import {
+	CardContainer,
+	CustomSubText,
+	CustomSubTitle,
+	CustomText,
+	CustomTitle,
+} from './styles';
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 	const spanTags = props.data?.tags;
@@ -102,5 +62,9 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 		</CardContainer>
 	);
 };
+
+interface SelectedSpanDetailsProps {
+	data?: ITraceTree;
+}
 
 export default SelectedSpanDetails;

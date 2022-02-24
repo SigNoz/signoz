@@ -1,73 +1,45 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import dayjs from 'dayjs';
 import {
 	Affix,
 	Col,
+	Divider,
 	Row,
 	Typography,
-	Divider,
-	Button,
-	Space,
 	Input,
+	Space,
+	Button,
 } from 'antd';
-import { connect, useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import {
-	fetchTraceItem,
-	pushDStree,
-	spansWSameTraceIDResponse,
-} from 'store/actions';
-import { AppState } from 'store/reducers';
-import { spanToTreeUtil } from 'utils/spanToTree';
-import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
-import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import SelectedSpanDetails from './SelectedSpanDetails';
 import GanttChart from 'container/GantChart';
-
-import TraceFlameGraph from 'container/TraceFlameGraph';
-import Timeline from 'container/Timeline';
 import { getNodeById } from 'container/GantChart/utils';
+import Timeline from 'container/Timeline';
+import TraceFlameGraph from 'container/TraceFlameGraph';
+import dayjs from 'dayjs';
+import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import { filterSpansByString } from './utils';
+import React, { useMemo, useState } from 'react';
+import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
+import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
+import { spanToTreeUtil } from 'utils/spanToTree';
+import SelectedSpanDetails from './SelectedSpanDetails';
 import styles from './TraceGraph.module.css';
 
 const { Search } = Input;
-interface TraceGraphProps {
-	traceItem: spansWSameTraceIDResponse;
-	fetchTraceItem: Function;
-}
 
-const _TraceGraph = (props: TraceGraphProps) => {
-	const { id } = useParams<{ id: string }>();
-
-	const spanServiceColors = spanServiceNameToColorMapping(
-		props.traceItem[0].events,
+const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
+	const spanServiceColors = useMemo(
+		() => spanServiceNameToColorMapping(response[0].events),
+		[response],
 	);
 
-	const [treeData, setTreeData] = useState<pushDStree>(
-		spanToTreeUtil(filterSpansByString('', props.traceItem[0].events)),
+	const [treeData, setTreeData] = useState<ITraceTree>(
+		spanToTreeUtil(filterSpansByString('', response[0].events)),
 	);
-
-	const dispatch = useDispatch();
-
-	useEffect(() => {
-		fetchTraceItem(id || '')(dispatch);
-	}, [dispatch, id]);
-
-	useEffect(() => {
-		if (props.traceItem[0].events.length) {
-			setTreeData(
-				spanToTreeUtil(filterSpansByString('route', props.traceItem[0].events)),
-			);
-		}
-	}, [props.traceItem[0]]);
 
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
 
-	const { treeData: tree, ...traceMetaData } = getSpanTreeMetadata(
-		spanToTreeUtil(props.traceItem[0].events), // treeData,
-		spanServiceColors,
-	);
+	const { treeData: tree, ...traceMetaData } = useMemo(() => {
+		return getSpanTreeMetadata(treeData, spanServiceColors);
+	}, [treeData]);
 
 	const onResetHandler = () => {
 		setTreeData(tree);
@@ -78,7 +50,6 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	}, [activeSelectedId, treeData]);
 
 	const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
-	const SPAN_DETAILS_CONTENT_RIGHT_PADDING = 16;
 	return (
 		<Row style={{ flex: 1 }}>
 			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -173,12 +144,8 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	);
 };
 
-const mapStateToProps = (
-	state: AppState,
-): { traceItem: spansWSameTraceIDResponse } => {
-	return { traceItem: state.traceItem };
-};
+interface TraceDetailProps {
+	response: PayloadProps;
+}
 
-export const TraceGraph = connect(mapStateToProps, {
-	fetchTraceItem: fetchTraceItem,
-})(_TraceGraph);
+export default TraceDetail;
