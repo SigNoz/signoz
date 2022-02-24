@@ -1,5 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { isEqual } from 'lodash'
+import React, { useMemo, useState } from 'react';
 import {
 	Affix,
 	Col,
