@@ -17,8 +17,8 @@ import {
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
-	TraceDetailPages,
-	TraceGraphPage,
+	TraceFilter,
+	TraceDetail,
 	UsageExplorerPage,
 } from './pageComponents';
 
@@ -44,9 +44,9 @@ const routes: AppRoutes[] = [
 		exact: true,
 	},
 	{
-		path: ROUTES.TRACE_GRAPH,
+		path: ROUTES.TRACE_DETAIL,
 		exact: true,
-		component: TraceGraphPage,
+		component: TraceDetail,
 	},
 	{
 		path: ROUTES.SETTINGS,
@@ -96,7 +96,7 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.TRACE,
 		exact: true,
-		component: TraceDetailPages,
+		component: TraceFilter,
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
