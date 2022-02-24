@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
 	Affix,
 	Col,
@@ -22,6 +22,7 @@ import { spanToTreeUtil } from 'utils/spanToTree';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
+import history from 'lib/history';
 
 const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
 
@@ -33,13 +34,12 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		[response],
 	);
 
-	const urlQuery = useUrlQuery()
+	const urlQuery = useUrlQuery();
 	const [spanId, _setSpanId] = useState<string | null>(urlQuery.get('spanId'));
 
 	const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
-	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
-
+	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId);
 
 	const [treeData, setTreeData] = useState<ITraceTree>(
 		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
@@ -49,9 +49,18 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		return getSpanTreeMetadata(treeData, spanServiceColors);
 	}, [treeData]);
 
+	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({
+		...traceMetaData,
+	});
 
-	const [originalTree, setOriginalTree] = useState<ITraceTree>({ ...treeData })
-	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({ ...traceMetaData })
+	useEffect(() => {
+		if (activeSelectedId) {
+			history.replace({
+				pathname: history.location.pathname,
+				search: `?spanId=${activeSelectedId}`,
+			});
+		}
+	}, [activeSelectedId]);
 
 	const getSelectedNode = useMemo(() => {
 		return getNodeById(activeSelectedId, treeData);
@@ -69,8 +78,9 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	};
 
 	const onResetHandler = () => {
-		setTreeData(spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)));
-
+		setTreeData(
+			spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
+		);
 	};
 
 	return (
@@ -99,7 +109,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						/>
 					</Col>
 				</Row>
-				<Row>
+				<Row style={{ marginTop: '2rem' }}>
 					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
 						style={{
@@ -115,13 +125,16 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						style={{ overflow: 'visible' }}
 						className={styles['trace-detail-content-spacing']}
 					>
-						<Timeline globalTraceMetadata={globalTraceMetadata} traceMetaData={traceMetaData} />
+						<Timeline
+							globalTraceMetadata={globalTraceMetadata}
+							traceMetaData={traceMetaData}
+						/>
 					</Col>
 					<Divider style={{ height: '100%', margin: '0' }} />
 				</Row>
 				<Row
 					className={styles['trace-detail-content-spacing']}
-					style={{ margin: '1rem' }}
+					style={{ margin: '1.5rem 1rem' }}
 				>
 					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
@@ -144,8 +157,12 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button type="default" onClick={onFocusSelectedSpanHandler} >Focus on selected span</Button>
-							<Button type="default" onClick={onResetHandler}>Reset Focus</Button>
+							<Button type="default" onClick={onFocusSelectedSpanHandler}>
+								Focus on selected span
+							</Button>
+							<Button type="default" onClick={onResetHandler}>
+								Reset Focus
+							</Button>
 						</Space>
 					</Col>
 				</Row>
@@ -159,7 +176,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						activeHoverId={activeHoverId}
 						setActiveHoverId={setActiveHoverId}
 						setActiveSelectedId={setActiveSelectedId}
-						spanId={spanId}
+						spanId={spanId || ''}
 					/>
 				</div>
 			</Col>

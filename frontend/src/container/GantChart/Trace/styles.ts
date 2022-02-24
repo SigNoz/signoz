@@ -65,7 +65,7 @@ export const HoverCard = styled.div<HoverCardProps>`
 		isSelected || isHovered ? 'block' : 'none'};
 	width: 200%;
 	background-color: ${({ isHovered }) => isHovered && '#262626'};
-	background-color: ${({ isSelected }) => isSelected && '#521b00'};
+	background-color: ${({ isSelected }) => isSelected && '#4f4f4f'};
 	position: absolute;
 	top: 0;
 	left: -100%;
