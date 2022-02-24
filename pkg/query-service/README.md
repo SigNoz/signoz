@@ -16,7 +16,7 @@ Query service is the interface between forntend and databases. It is written in 
 
 ```
     ClickHouseUrl=tcp://localhost:9001
-    TORAGE=clickhouse
+    STORAGE=clickhouse
 ```
 
 <!-- The above values are the default ones used by SigNoz and are kept at `deploy/kubernetes/platform/signoz-charts/query-service/values.yaml` -->
@@ -25,7 +25,7 @@ Query service is the interface between forntend and databases. It is written in 
 ```console
 cd pkg/query-service
 go build -o build/query-service main.go
-ClickHouseUrl=tcp://localhost:9001 TORAGE=clickhouse build/query-service
+ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse build/query-service
 ```
 
 #### Docker Images
