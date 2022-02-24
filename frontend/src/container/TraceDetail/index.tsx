@@ -1,3 +1,5 @@
+import React, { useMemo, useState, useEffect } from 'react';
+import { isEqual } from 'lodash'
 import {
 	Affix,
 	Col,
@@ -15,7 +17,6 @@ import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import { filterSpansByString } from './utils';
-import React, { useMemo, useState } from 'react';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
@@ -46,7 +47,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 
 	const [originalTree, setOriginalTree] = useState<ITraceTree>({ ...treeData })
-	const [originalTrace, setOriginalTrace] = useState<object>({ ...tree, ...traceMetaData })
+	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({ ...traceMetaData })
 
 	const getSelectedNode = useMemo(() => {
 		return getNodeById(activeSelectedId, treeData);
@@ -109,7 +110,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						style={{ overflow: 'visible' }}
 						className={styles['trace-detail-content-spacing']}
 					>
-						<Timeline traceMetaData={traceMetaData} />
+						<Timeline globalTraceMetadata={globalTraceMetadata} traceMetaData={traceMetaData} />
 					</Col>
 					<Divider style={{ height: '100%', margin: '0' }} />
 				</Row>

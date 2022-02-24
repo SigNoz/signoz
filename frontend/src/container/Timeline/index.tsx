@@ -1,27 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { isEqual } from 'lodash'
 import styles from './style.module.css';
 import { useMeasure } from 'react-use';
-
+import { toFixed } from 'utils/toFixed'
 interface TimelineProps {
 	traceMetaData: object;
+	globalTraceMetadata: object;
 }
 interface Interval {
 	label: string;
 	percentage: number;
 }
-const Timeline = ({ traceMetaData }: TimelineProps) => {
+const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 	const [ref, { width, height }] = useMeasure<HTMLDivElement>();
 	const Timeline_Height = 22;
 	const Timeline_H_Spacing = 0;
 
 	const [intervals, setIntervals] = useState<Interval[] | null>(null);
 
-	const getInterval = ({ globalStart, globalEnd, spread } = traceMetaData) => {
-		// TODO incorporate localization when span is selected
+	const getIntervals = (traceMetaData, globalTraceMetadata) => {
+		//TODO time unit normalization
+		const { globalStart: localStart, globalEnd: localEnd, spread: localSpread } = traceMetaData;
+		const { globalStart, globalEnd, globalSpread } = globalTraceMetadata
+
+		let baseInterval = 0;
+
+		if (!isEqual(traceMetaData, globalTraceMetadata)) {
+			baseInterval = (localStart - globalStart) / 1e6
+		}
+		console.log({ baseInterval })
+
 		const TOTAL_INTERVAL = 6;
-		const baseInterval = 0;
 		const intervalUnit = 'ms';
-		let baseSpread = spread / 1e12;
+		let baseSpread = localSpread / 1e12;
 		let intervalSpread = (baseSpread / TOTAL_INTERVAL) * 1.0;
 		const integerPartString = intervalSpread.toString().split('.')[0];
 		const integerPartLength = integerPartString.length;
@@ -34,12 +45,12 @@ const Timeline = ({ traceMetaData }: TimelineProps) => {
 			interval_count <= TOTAL_INTERVAL;
 			interval_count++
 		) {
-			let interval_time = baseInterval + interval_count * intervalSpreadNormalized;
+			let interval_time = interval_count * intervalSpreadNormalized;
 			if (interval_count === TOTAL_INTERVAL) {
-				interval_time = baseInterval + baseSpread;
+				interval_time = baseSpread;
 			}
 			const interval: Interval = {
-				label: `${interval_time}${intervalUnit}`,
+				label: `${toFixed((interval_time + baseInterval), 2)}${intervalUnit}`,
 				percentage: (interval_time / baseSpread) * 100,
 			};
 			intervals.push(interval);
@@ -47,9 +58,10 @@ const Timeline = ({ traceMetaData }: TimelineProps) => {
 		setIntervals(intervals);
 	};
 
-	useEffect(() => {
-		getInterval(traceMetaData);
-	}, [traceMetaData]);
+	useMemo(() => {
+		getIntervals(traceMetaData, globalTraceMetadata);
+	}, [traceMetaData, globalTraceMetadata])
+
 
 	return (
 		<div ref={ref} style={{ flex: 1, overflow: 'inherit' }}>
@@ -70,10 +82,9 @@ const Timeline = ({ traceMetaData }: TimelineProps) => {
 				{intervals &&
 					intervals.map((interval, index) => (
 						<g
-							transform={`translate(${
-								Timeline_H_Spacing +
+							transform={`translate(${Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-							},0)`}
+								},0)`}
 							className={styles['timeline-tick']}
 							key={interval.label + interval.percentage + index}
 						>
