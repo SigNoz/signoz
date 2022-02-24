@@ -13,6 +13,7 @@ export const SpanItemContainer = styled.div<{
 	width: number;
 	spanColor: string;
 	selected: boolean;
+	zIdx: number;
 }>`
 	position: absolute;
 	top: ${(props) => props.topOffset}px;
@@ -22,6 +23,7 @@ export const SpanItemContainer = styled.div<{
 	margin: ${SPAN_V_PADDING}px 0;
 	background-color: ${({ spanColor }) => spanColor};
 	border-radius: ${SPAN_HEIGHT / 2}px;
+	z-index: ${(props) => props.zIdx};
 `;
 
 /**

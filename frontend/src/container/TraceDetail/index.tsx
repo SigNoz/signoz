@@ -1,3 +1,4 @@
+import React, { useMemo, useState } from 'react';
 import {
 	Affix,
 	Col,
@@ -15,12 +16,13 @@ import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import { filterSpansByString } from './utils';
-import React, { useMemo, useState } from 'react';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
 import SelectedSpanDetails from './SelectedSpanDetails';
+import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
+
 const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
 
 const { Search } = Input;
@@ -31,22 +33,25 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		[response],
 	);
 
+	const urlQuery = useUrlQuery()
+	const [spanId, _setSpanId] = useState<string | null>(urlQuery.get('spanId'));
+
 	const [searchSpanString, setSearchSpanString] = useState('');
+	const [activeHoverId, setActiveHoverId] = useState<string>('');
+	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
+
 
 	const [treeData, setTreeData] = useState<ITraceTree>(
 		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
 	);
 
-	const [activeHoverId, setActiveHoverId] = useState<string>('');
-	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
-
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
 		return getSpanTreeMetadata(treeData, spanServiceColors);
 	}, [treeData]);
 
-	const onResetHandler = () => {
-		setTreeData(tree);
-	};
+
+	const [originalTree, setOriginalTree] = useState<ITraceTree>({ ...treeData })
+	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({ ...traceMetaData })
 
 	const getSelectedNode = useMemo(() => {
 		return getNodeById(activeSelectedId, treeData);
@@ -55,6 +60,17 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const onSearchHandler = (value: string) => {
 		setSearchSpanString(value);
 		setTreeData(spanToTreeUtil(filterSpansByString(value, response[0].events)));
+	};
+	const onFocusSelectedSpanHandler = () => {
+		const treeNode = getNodeById(activeSelectedId, tree);
+		if (treeNode) {
+			setTreeData(treeNode);
+		}
+	};
+
+	const onResetHandler = () => {
+		setTreeData(spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)));
+
 	};
 
 	return (
@@ -73,7 +89,14 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						</Typography.Text>
 					</Col>
 					<Col flex={'auto'}>
-						<TraceFlameGraph treeData={tree} traceMetaData={traceMetaData} />
+						<TraceFlameGraph
+							treeData={tree}
+							traceMetaData={traceMetaData}
+							hoveredSpanId={activeHoverId}
+							selectedSpanId={activeSelectedId}
+							onSpanHover={setActiveHoverId}
+							onSpanSelect={setActiveSelectedId}
+						/>
 					</Col>
 				</Row>
 				<Row>
@@ -92,7 +115,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						style={{ overflow: 'visible' }}
 						className={styles['trace-detail-content-spacing']}
 					>
-						<Timeline traceMetaData={traceMetaData} />
+						<Timeline globalTraceMetadata={globalTraceMetadata} traceMetaData={traceMetaData} />
 					</Col>
 					<Divider style={{ height: '100%', margin: '0' }} />
 				</Row>
@@ -121,8 +144,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button type="default">Focus on selected span</Button>
-							<Button type="default">Reset Focus</Button>
+							<Button type="default" onClick={onFocusSelectedSpanHandler} >Focus on selected span</Button>
+							<Button type="default" onClick={onResetHandler}>Reset Focus</Button>
 						</Space>
 					</Col>
 				</Row>
@@ -136,6 +159,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						activeHoverId={activeHoverId}
 						setActiveHoverId={setActiveHoverId}
 						setActiveSelectedId={setActiveSelectedId}
+						spanId={spanId}
 					/>
 				</div>
 			</Col>
