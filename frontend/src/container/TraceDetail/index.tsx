@@ -21,7 +21,9 @@ import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
 import SelectedSpanDetails from './SelectedSpanDetails';
+import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
+
 const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
 
 const { Search } = Input;
@@ -32,10 +34,13 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		[response],
 	);
 
-	const [searchSpanString, setSearchSpanString] = useState('');
+	const urlQuery = useUrlQuery()
+	const [spanId, _setSpanId] = useState<string | null>(urlQuery.get('spanId'));
 
+	const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
+
 
 	const [treeData, setTreeData] = useState<ITraceTree>(
 		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
@@ -65,7 +70,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	};
 
 	const onResetHandler = () => {
-		setTreeData(originalTree);
+		setTreeData(spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)));
+
 	};
 
 	return (
@@ -154,6 +160,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						activeHoverId={activeHoverId}
 						setActiveHoverId={setActiveHoverId}
 						setActiveSelectedId={setActiveSelectedId}
+						spanId={spanId}
 					/>
 				</div>
 			</Col>

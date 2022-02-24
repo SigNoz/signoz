@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Trace from './Trace';
 
 import { Wrapper, CardWrapper, CardContainer, ButtonContainer } from './styles';
 import { pushDStree } from 'store/actions';
 import { Button } from 'antd';
-import { getNodeById } from './utils';
+import { getNodeById, getSpanPath } from './utils';
 import { FilterOutlined } from '@ant-design/icons';
 
 const GanttChart = (props: GanttChartProps): JSX.Element => {
@@ -17,10 +17,14 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 		setActiveHoverId,
 		activeSelectedId,
 		setActiveSelectedId,
+		spanId
 	} = props;
 
 	const { globalStart, spread: globalSpread } = traceMetaData;
 
+	const activeSpanPath = useMemo(() => {
+		return getSpanPath(data, spanId)
+	}, [spanId])
 
 	return (
 		<>
@@ -29,6 +33,7 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 					<CardWrapper>
 						<Trace
 							activeHoverId={activeHoverId}
+							activeSpanPath={activeSpanPath}
 							setActiveHoverId={setActiveHoverId}
 							key={data.id}
 							{...{
@@ -64,6 +69,7 @@ export interface GanttChartProps {
 	activeHoverId: string;
 	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
 	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
+	spanId: string;
 }
 
 export default GanttChart;

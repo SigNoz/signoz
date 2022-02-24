@@ -28,7 +28,6 @@ const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 		if (!isEqual(traceMetaData, globalTraceMetadata)) {
 			baseInterval = (localStart - globalStart) / 1e6
 		}
-		console.log({ baseInterval })
 
 		const TOTAL_INTERVAL = 6;
 		const intervalUnit = 'ms';

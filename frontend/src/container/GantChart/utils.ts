@@ -57,7 +57,6 @@ export const getNodeById = (
 	treeData: pushDStree,
 ): pushDStree | undefined => {
 	let foundNode: pushDStree | undefined = undefined;
-
 	const traverse = (treeNode: pushDStree, level: number = 0) => {
 		if (!treeNode) {
 			return;
@@ -134,4 +133,31 @@ export const isSpanPresent = (
 	traverse(tree, 1, foundNode);
 
 	return foundNode;
+};
+
+export const getSpanPath = (tree: pushDStree, spanId: string): string[] => {
+	const spanPath = [];
+	
+	const traverse = (treeNode) => {
+		if (!treeNode) {
+			return false;
+		}
+
+		spanPath.push(treeNode.id);
+
+		if (spanId === treeNode.id) {
+			return true;
+		}
+
+		let foundInChild = false;
+		for (const childNode of treeNode.children) {
+			if (traverse(childNode)) foundInChild = true;
+		}
+		if (!foundInChild) {
+			spanPath.pop();
+		}
+		return foundInChild;
+	};
+	traverse(tree);
+	return spanPath;
 };
