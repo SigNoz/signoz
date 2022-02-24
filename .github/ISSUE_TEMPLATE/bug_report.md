@@ -26,6 +26,7 @@ assignees: ''
 * **Signoz version**:
 * **Browser version**:
 * **Your OS and version**:
+* **Your CPU Architecture**(ARM/Intel): 
 
 ## Additional context
 
