@@ -13,7 +13,7 @@ const SpanNameComponent = ({
 	serviceName,
 }: SpanNameComponent): JSX.Element => {
 	return (
-		<Container>
+		<Container title={`${name} ${serviceName}`}>
 			<SpanWrapper>
 				<Span ellipsis>{name}</Span>
 				<Service>{serviceName}</Service>

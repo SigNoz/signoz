@@ -46,6 +46,7 @@ export interface pushDStree {
 	parent: pushDStree;
 	serviceName: string;
 	serviceColour: string;
+	hasError: boolean;
 }
 
 export interface spanItem {

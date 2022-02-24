@@ -11,8 +11,6 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		startTime: 0,
 		tags: [],
 		children: [],
-		serviceName: '',
-		serviceColour: 'red',
 		parent: undefined,
 	};
 
@@ -66,6 +64,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 				tags: tags_temp,
 				children: mapped_array[id][10],
 				serviceName: child_span[3],
+				hasError: !!child_span[11],
 			};
 			const referencesArr = mapped_array[id][9];
 			let refArray = [];

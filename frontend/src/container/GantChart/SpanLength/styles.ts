@@ -7,6 +7,13 @@ interface Props {
 	bgColor: string;
 }
 
+export const SpanLine = styled.div<Props>`
+	width: ${({ leftOffset }) => `${leftOffset}%`};
+	height: 1px;
+	background: #303030;
+	top: 50%;
+	position: absolute;
+`;
 export const SpanBorder = styled.div<Props>`
 	background: ${({ bgColor }) => bgColor};
 	border-radius: 5px;
@@ -14,7 +21,6 @@ export const SpanBorder = styled.div<Props>`
 	width: ${({ width }) => `${width}%`};
 	left: ${({ leftOffset }) => `${leftOffset}%`};
 	top: 35%;
-
 	position: absolute;
 `;
 
@@ -25,8 +31,9 @@ export const SpanWrapper = styled.div`
 	align-items: center;
 	position: relative;
 	z-index: 2;
+	min-height: 2rem;
 
-	&:before {
+	/* &:before {
 		display: inline-block;
 		content: '';
 		border-bottom: 1px solid #303030;
@@ -34,7 +41,7 @@ export const SpanWrapper = styled.div`
 		left: -30px;
 		width: 30px;
 		z-index: 0;
-	}
+	} */
 `;
 
 export const SpanText = styled(Typography)<Pick<Props, 'leftOffset'>>`

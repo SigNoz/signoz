@@ -13,7 +13,7 @@ import SpanName from '../SpanName';
 import { pushDStree } from 'store/actions';
 import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import { ITraceMetaData } from '..';
-import { Col } from 'antd';
+import { Col, Row } from 'antd';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const [isOpen, setOpen] = useState<boolean>(false);
@@ -77,23 +77,28 @@ const Trace = (props: TraceProps): JSX.Element => {
 						setActiveSelectedId(id);
 					}}
 				>
-					<Col flex={`${panelWidth}px`}>
-						{totalSpans !== 1 && (
-							<CardComponent
-								onClick={() => {
-									setOpen((state) => !state);
-								}}
-							>
-								{totalSpans}
-								<CaretContainer>
-									{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
-								</CaretContainer>
-							</CardComponent>
-						)}
-
-						<SpanName name={name} serviceName={serviceName} />
+					<Col flex={`${panelWidth}px`} style={{ overflow: 'hidden' }}>
+						<Row style={{ flexWrap: 'nowrap' }}>
+							<Col>
+								{totalSpans !== 1 && (
+									<CardComponent
+										onClick={() => {
+											setOpen((state) => !state);
+										}}
+									>
+										{totalSpans}
+										<CaretContainer>
+											{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+										</CaretContainer>
+									</CardComponent>
+								)}
+							</Col>
+							<Col>
+								<SpanName name={name} serviceName={serviceName} />
+							</Col>
+						</Row>
 					</Col>
-					<Col flex={'1'}>
+					<Col flex={'1'} >
 						<SpanLength
 							leftOffset={nodeLeftOffset.toString()}
 							width={width.toString()}

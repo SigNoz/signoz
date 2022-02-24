@@ -1,5 +1,5 @@
 import { pushDStree } from 'store/actions';
-
+import { errorColor } from 'lib/getRandomColor';
 /**
  * Traverses the Span Tree data and returns the relevant meta data.
  * Metadata includes globalStart, globalEnd,
@@ -22,7 +22,9 @@ export const getSpanTreeMetadata = (
 		const endTime = startTime + treeNode.value;
 		globalStart = Math.min(globalStart, startTime);
 		globalEnd = Math.max(globalEnd, endTime);
-		treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
+		if (treeNode.hasError) {
+			treeNode.serviceColour = errorColor;
+		} else treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
 		for (const childNode of treeNode.children) {
 			traverse(childNode, level + 1);
 		}

@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
-import { Affix, Col, Row, Typography, Divider } from 'antd';
+import {
+	Affix,
+	Col,
+	Row,
+	Typography,
+	Divider,
+	Button,
+	Space,
+	Input,
+} from 'antd';
 import { connect, useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import {
@@ -19,6 +28,9 @@ import TraceFlameGraph from 'container/TraceFlameGraph';
 import Timeline from 'container/Timeline';
 import { getNodeById } from 'container/GantChart/utils';
 import { filterSpansByString } from './utils';
+import styles from './TraceGraph.module.css';
+
+const { Search } = Input;
 interface TraceGraphProps {
 	traceItem: spansWSameTraceIDResponse;
 	fetchTraceItem: Function;
@@ -53,7 +65,7 @@ const _TraceGraph = (props: TraceGraphProps) => {
 	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
 
 	const { treeData: tree, ...traceMetaData } = getSpanTreeMetadata(
-		treeData,
+		spanToTreeUtil(props.traceItem[0].events), // treeData,
 		spanServiceColors,
 	);
 
@@ -65,11 +77,16 @@ const _TraceGraph = (props: TraceGraphProps) => {
 		return getNodeById(activeSelectedId, treeData);
 	}, [activeSelectedId, treeData]);
 
+	const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
+	const SPAN_DETAILS_CONTENT_RIGHT_PADDING = 16;
 	return (
 		<Row style={{ flex: 1 }}>
 			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
-				<Row>
-					<Col flex="175px">
+				<Row className={styles['trace-detail-content-spacing']}>
+					<Col
+						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
+						style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}
+					>
 						<Typography.Title level={5} style={{ margin: 0 }}>
 							Trace Details
 						</Typography.Title>
@@ -78,28 +95,71 @@ const _TraceGraph = (props: TraceGraphProps) => {
 						</Typography.Text>
 					</Col>
 					<Col flex={'auto'}>
-						<TraceFlameGraph treeData={treeData} traceMetaData={traceMetaData} />
+						<TraceFlameGraph treeData={tree} traceMetaData={traceMetaData} />
 					</Col>
 				</Row>
 				<Row>
-					<Col>
+					<Col
+						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+						}}
+					>
 						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
 					</Col>
-					<Col flex="auto" style={{ marginRight: '1rem', overflow: 'visible' }}>
+					<Col
+						flex="auto"
+						style={{ overflow: 'visible' }}
+						className={styles['trace-detail-content-spacing']}
+					>
 						<Timeline traceMetaData={traceMetaData} />
 					</Col>
 					<Divider style={{ height: '100%', margin: '0' }} />
 				</Row>
-				<GanttChart
-					onResetHandler={onResetHandler}
-					traceMetaData={traceMetaData}
-					data={treeData}
-					setTreeData={setTreeData}
-					activeSelectedId={activeSelectedId}
-					activeHoverId={activeHoverId}
-					setActiveHoverId={setActiveHoverId}
-					setActiveSelectedId={setActiveSelectedId}
-				/>
+				<Row
+					className={styles['trace-detail-content-spacing']}
+					style={{ margin: '1rem' }}
+				>
+					<Col
+						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
+						style={{
+							justifyContent: 'center',
+							alignItems: 'center',
+							display: 'flex',
+							padding: '0 0.5rem',
+						}}
+					>
+						<Search
+							placeholder="Type to filter.."
+							allowClear
+							// onSearch={}
+						/>
+					</Col>
+					<Col flex={'auto'}>
+						<Space
+							style={{
+								float: 'right',
+							}}
+						>
+							<Button type="default">Focus on selected span</Button>
+							<Button type="default">Reset Focus</Button>
+						</Space>
+					</Col>
+				</Row>
+				<div className={styles['trace-detail-content-spacing']}>
+					<GanttChart
+						onResetHandler={onResetHandler}
+						traceMetaData={traceMetaData}
+						data={tree}
+						setTreeData={setTreeData}
+						activeSelectedId={activeSelectedId}
+						activeHoverId={activeHoverId}
+						setActiveHoverId={setActiveHoverId}
+						setActiveSelectedId={setActiveSelectedId}
+					/>
+				</div>
 			</Col>
 			<Col>
 				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
