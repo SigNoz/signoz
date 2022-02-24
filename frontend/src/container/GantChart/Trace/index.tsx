@@ -16,7 +16,6 @@ import { ITraceMetaData } from '..';
 import { Col, Row } from 'antd';
 
 const Trace = (props: TraceProps): JSX.Element => {
-	const [isOpen, setOpen] = useState<boolean>(false);
 	const {
 		name,
 		activeHoverId,
@@ -31,8 +30,10 @@ const Trace = (props: TraceProps): JSX.Element => {
 		setActiveSelectedId,
 		activeSelectedId,
 		level,
+		activeSpanPath
 	} = props;
 
+	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 	const isOnlyChild = props.children.length === 1;
 	const [top, setTop] = useState<number>(0);
 
@@ -69,7 +70,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 			>
 				<HoverCard
 					top={top}
-					isActive={activeHoverId === id || activeSelectedId === id}
+					isHovered={activeHoverId === id}
+					isSelected={activeSelectedId === id}
 				/>
 
 				<CardContainer
@@ -82,7 +84,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 							<Col>
 								{totalSpans !== 1 && (
 									<CardComponent
-										onClick={() => {
+										onClick={(e) => {
+											e.stopPropagation()
 											setOpen((state) => !state);
 										}}
 									>
@@ -123,6 +126,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 								setActiveSelectedId={setActiveSelectedId}
 								activeSelectedId={activeSelectedId}
 								level={level + 1}
+								activeSpanPath={activeSpanPath}
 							/>
 						))}
 					</>
@@ -143,6 +147,7 @@ interface TraceProps extends pushDStree, ITraceGlobal {
 	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
 	activeSelectedId: string;
 	level: number;
+	activeSpanPath: string[]
 }
 
 export default Trace;

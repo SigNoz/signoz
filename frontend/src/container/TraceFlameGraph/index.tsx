@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import Color from 'color';
 import { Tooltip } from 'antd';
 import { pushDStree, span } from 'store/actions';
@@ -14,60 +14,69 @@ const SpanItem = ({
 	width = 10, // width in %
 	spanData,
 	tooltipText,
-	onSpanClick, // function which gets invoked on clicking span
+	onSpanSelect, // function which gets invoked on clicking span
 	onSpanHover,
+	hoveredSpanId,
+	selectedSpanId,
 }: {
 	topOffset: number;
 	leftOffset: number;
 	width: number;
 	spanData: pushDStree;
 	tooltipText: string;
-	onSpanClick?: Function;
-	onSpanHover?: Function;
+	onSpanSelect: Function;
+	onSpanHover: Function;
+	hoveredSpanId: string;
+	selectedSpanId: string;
 }) => {
 	const [isSelected, setIsSelected] = useState<boolean>(false);
+	const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
+
+	useLayoutEffect(() => {
+		if (!isSelected && (spanData.id === hoveredSpanId || spanData.id === selectedSpanId)) {
+			setIsSelected(true)
+		}
+	}, [hoveredSpanId, selectedSpanId])
 
 	const handleHover = (hoverState: boolean) => {
-		setIsSelected(hoverState);
-		// onSpanHover()
+
+		setIsLocalHover(hoverState);
+
+		if (hoverState)
+			onSpanHover(spanData.id);
+		else
+			onSpanHover(null);
+
 	};
 
 	const handleClick = () => {
-		setIsSelected(true);
-		// onSpanClick();
-		// TODO
+		onSpanSelect(spanData.id);
 	};
 
 	return (
 		<>
-			<Tooltip
-				placement="top"
-				overlayStyle={{
-					whiteSpace: 'pre-line',
-					fontSize: '0.7rem',
-				}}
+
+			<SpanItemContainer
 				title={tooltipText}
-				key={spanData.name}
-			>
-				<SpanItemContainer
-					onClick={handleClick}
-					topOffset={topOffset}
-					leftOffset={leftOffset}
-					width={width}
-					spanColor={
-						isSelected
-							? `${Color(spanData.serviceColour).darken(0.3)}`
-							: `${spanData.serviceColour}`
-					}
-					onMouseEnter={() => {
-						handleHover(true);
-					}}
-					onMouseLeave={() => {
-						handleHover(false);
-					}}
-					selected={isSelected}
-				></SpanItemContainer>
-			</Tooltip>
+				onClick={handleClick}
+				onMouseEnter={() => {
+					handleHover(true);
+				}}
+				onMouseLeave={() => {
+					handleHover(false);
+				}}
+				topOffset={topOffset}
+				leftOffset={leftOffset}
+				width={width}
+				spanColor={
+					isSelected
+						? `${Color(spanData.serviceColour).darken(0.3)}`
+						: `${spanData.serviceColour}`
+				}
+				selected={isSelected}
+				zIdx={isSelected ? 1 : 0}
+			></SpanItemContainer>
+
 		</>
 	);
 };
@@ -75,6 +84,10 @@ const SpanItem = ({
 const TraceFlameGraph = (props: {
 	treeData: pushDStree;
 	traceMetaData: any;
+	onSpanHover: Function;
+	onSpanSelect: Function;
+	hoveredSpanId: string;
+	selectedSpanId: string;
 }) => {
 	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return null;
@@ -91,10 +104,18 @@ const TraceFlameGraph = (props: {
 		level = 0,
 		spanData,
 		parentLeftOffset = 0,
+		onSpanHover,
+		onSpanSelect,
+		hoveredSpanId,
+		selectedSpanId
 	}: {
 		spanData: pushDStree;
 		level?: number;
 		parentLeftOffset?: number;
+		onSpanHover: Function;
+		onSpanSelect: Function;
+		hoveredSpanId: string;
+		selectedSpanId: string;
 	}) => {
 		if (!spanData) {
 			return null;
@@ -112,6 +133,10 @@ const TraceFlameGraph = (props: {
 					width={width}
 					spanData={spanData}
 					tooltipText={toolTipText}
+					onSpanHover={onSpanHover}
+					onSpanSelect={onSpanSelect}
+					hoveredSpanId={hoveredSpanId}
+					selectedSpanId={selectedSpanId}
 				/>
 				{spanData.children.map((childData) => (
 					<RenderSpanRecursive
@@ -119,6 +144,10 @@ const TraceFlameGraph = (props: {
 						spanData={childData}
 						key={childData.id}
 						parentLeftOffset={leftOffset + parentLeftOffset}
+						onSpanHover={onSpanHover}
+						onSpanSelect={onSpanSelect}
+						hoveredSpanId={hoveredSpanId}
+						selectedSpanId={selectedSpanId}
 					/>
 				))}
 			</>
@@ -127,7 +156,13 @@ const TraceFlameGraph = (props: {
 	return (
 		<>
 			<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
-				<RenderSpanRecursive spanData={props.treeData} />
+				<RenderSpanRecursive
+					spanData={props.treeData}
+					onSpanHover={props.onSpanHover}
+					onSpanSelect={props.onSpanSelect}
+					hoveredSpanId={props.hoveredSpanId}
+					selectedSpanId={props.selectedSpanId}
+				/>
 			</TraceFlameGraphContainer>
 		</>
 	);

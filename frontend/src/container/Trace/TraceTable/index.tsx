@@ -121,9 +121,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 				onClick: () => {
 					history.push({
 						pathname: ROUTES.TRACE + '/' + record.traceID,
-						state: {
-							spanId: record.spanID,
-						},
+						search: '?' + 'spanId=' + record.spanID,
 					});
 				},
 			})}
