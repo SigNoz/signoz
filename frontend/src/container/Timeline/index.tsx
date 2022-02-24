@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { isEqual } from 'lodash'
+import { isEqual } from 'lodash-es'
 import styles from './style.module.css';
 import { useMeasure } from 'react-use';
 import { toFixed } from 'utils/toFixed'
