@@ -69,7 +69,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 			>
 				<HoverCard
 					top={top}
-					isActive={activeHoverId === id || activeSelectedId === id}
+					isHovered={activeHoverId === id}
+					isSelected={activeSelectedId === id}
 				/>
 
 				<CardContainer
@@ -82,7 +83,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 							<Col>
 								{totalSpans !== 1 && (
 									<CardComponent
-										onClick={() => {
+										onClick={(e) => {
+											e.stopPropagation()
 											setOpen((state) => !state);
 										}}
 									>

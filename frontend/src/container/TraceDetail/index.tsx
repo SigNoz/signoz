@@ -33,20 +33,20 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	const [searchSpanString, setSearchSpanString] = useState('');
 
+	const [activeHoverId, setActiveHoverId] = useState<string>('');
+	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
+
 	const [treeData, setTreeData] = useState<ITraceTree>(
 		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
 	);
-
-	const [activeHoverId, setActiveHoverId] = useState<string>('');
-	const [activeSelectedId, setActiveSelectedId] = useState<string>('');
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
 		return getSpanTreeMetadata(treeData, spanServiceColors);
 	}, [treeData]);
 
-	const onResetHandler = () => {
-		setTreeData(tree);
-	};
+
+	const [originalTree, setOriginalTree] = useState<ITraceTree>({ ...treeData })
+	const [originalTrace, setOriginalTrace] = useState<object>({ ...tree, ...traceMetaData })
 
 	const getSelectedNode = useMemo(() => {
 		return getNodeById(activeSelectedId, treeData);
@@ -55,6 +55,16 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const onSearchHandler = (value: string) => {
 		setSearchSpanString(value);
 		setTreeData(spanToTreeUtil(filterSpansByString(value, response[0].events)));
+	};
+	const onFocusSelectedSpanHandler = () => {
+		const treeNode = getNodeById(activeSelectedId, tree);
+		if (treeNode) {
+			setTreeData(treeNode);
+		}
+	};
+
+	const onResetHandler = () => {
+		setTreeData(originalTree);
 	};
 
 	return (
@@ -73,7 +83,14 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						</Typography.Text>
 					</Col>
 					<Col flex={'auto'}>
-						<TraceFlameGraph treeData={tree} traceMetaData={traceMetaData} />
+						<TraceFlameGraph
+							treeData={tree}
+							traceMetaData={traceMetaData}
+							hoveredSpanId={activeHoverId}
+							selectedSpanId={activeSelectedId}
+							onSpanHover={setActiveHoverId}
+							onSpanSelect={setActiveSelectedId}
+						/>
 					</Col>
 				</Row>
 				<Row>
@@ -121,8 +138,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button type="default">Focus on selected span</Button>
-							<Button type="default">Reset Focus</Button>
+							<Button type="default" onClick={onFocusSelectedSpanHandler} >Focus on selected span</Button>
+							<Button type="default" onClick={onResetHandler}>Reset Focus</Button>
 						</Space>
 					</Col>
 				</Row>

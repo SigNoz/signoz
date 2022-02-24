@@ -21,23 +21,10 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 
 	const { globalStart, spread: globalSpread } = traceMetaData;
 
-	const onFocusHandler = () => {
-		const treeNode = getNodeById(activeSelectedId, data);
-		if (treeNode) {
-			setTreeData(treeNode);
-		}
-	};
 
 	return (
 		<>
 			<Wrapper>
-				<ButtonContainer>
-					<Button icon={<FilterOutlined />} onClick={onFocusHandler}>
-						Focus on selected spans
-					</Button>
-					<Button onClick={onResetHandler}>Reset</Button>
-				</ButtonContainer>
-
 				<CardContainer>
 					<CardWrapper>
 						<Trace
