@@ -53,7 +53,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 							.filter((tags) => tags.key === 'error')
 							.map((error) => (
 								<>
-									<CustomSubTitle>{error.key}</CustomSubTitle>
+									<CustomSubTitle key={error.key}>{error.key}</CustomSubTitle>
 									<CustomSubText>true</CustomSubText>
 								</>
 							))}
