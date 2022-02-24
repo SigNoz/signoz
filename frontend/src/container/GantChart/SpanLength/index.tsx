@@ -1,6 +1,6 @@
 import { Tooltip, Typography } from 'antd';
 import React from 'react';
-import { SpanBorder, SpanText, SpanWrapper } from './styles';
+import { SpanBorder, SpanText, SpanWrapper, SpanLine } from './styles';
 
 interface SpanLengthProps {
 	width: string;
@@ -15,17 +15,8 @@ const SpanLength = (props: SpanLengthProps): JSX.Element => {
 	const { width, leftOffset, bgColor } = props;
 	return (
 		<SpanWrapper>
-			<Tooltip
-				placement="top"
-				overlayStyle={{
-					whiteSpace: 'pre-line',
-					fontSize: '0.7rem',
-				}}
-				title={props.toolTipText}
-				key={props.id}
-			>
-				<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
-			</Tooltip>
+			<SpanLine leftOffset={leftOffset} />
+			<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
 			<SpanText leftOffset={leftOffset}>{`${props.inMsCount} ms`}</SpanText>
 		</SpanWrapper>
 	);

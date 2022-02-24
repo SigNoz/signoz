@@ -10,6 +10,8 @@ export const colors = [
 	'#BDBDBD',
 ];
 
+export const errorColor = '#d32f2f';
+
 export function getRandomNumber(min: number, max: number): number {
 	return Math.random() * (max - min) + min;
 }
