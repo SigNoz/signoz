@@ -21,6 +21,7 @@ import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import styles from './TraceGraph.module.css';
+const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
 
 const { Search } = Input;
 
@@ -30,8 +31,10 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		[response],
 	);
 
+	const [searchSpanString, setSearchSpanString] = useState('');
+
 	const [treeData, setTreeData] = useState<ITraceTree>(
-		spanToTreeUtil(filterSpansByString('', response[0].events)),
+		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
 	);
 
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
@@ -49,7 +52,11 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		return getNodeById(activeSelectedId, treeData);
 	}, [activeSelectedId, treeData]);
 
-	const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
+	const onSearchHandler = (value: string) => {
+		setSearchSpanString(value);
+		setTreeData(spanToTreeUtil(filterSpansByString(value, response[0].events)));
+	};
+
 	return (
 		<Row style={{ flex: 1 }}>
 			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -105,7 +112,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						<Search
 							placeholder="Type to filter.."
 							allowClear
-							// onSearch={}
+							onSearch={onSearchHandler}
 						/>
 					</Col>
 					<Col flex={'auto'}>
