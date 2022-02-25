@@ -5,7 +5,7 @@ export const Wrapper = styled.ul`
 	position: absolute;
 	width: 100%;
 	height: 100%;
-	overflow: scroll;
+	overflow-y: scroll;
 
 	ul {
 		list-style: none;
