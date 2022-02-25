@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 import {
 	CardComponent,
@@ -31,10 +31,15 @@ const Trace = (props: TraceProps): JSX.Element => {
 		setActiveSelectedId,
 		activeSelectedId,
 		level,
-		activeSpanPath
+		activeSpanPath,
+		isExpandAll
 	} = props;
 
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
+
+	useEffect(() => {
+		setOpen(isExpandAll || activeSpanPath[level] === id)
+	}, [isExpandAll, activeSpanPath])
 	const isOnlyChild = props.children.length === 1;
 	const [top, setTop] = useState<number>(0);
 
@@ -128,6 +133,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 								activeSelectedId={activeSelectedId}
 								level={level + 1}
 								activeSpanPath={activeSpanPath}
+								isExpandAll={isExpandAll}
 							/>
 						))}
 					</>
@@ -148,7 +154,8 @@ interface TraceProps extends pushDStree, ITraceGlobal {
 	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
 	activeSelectedId: string;
 	level: number;
-	activeSpanPath: string[]
+	activeSpanPath: string[];
+	isExpandAll: boolean;
 }
 
 export default Trace;

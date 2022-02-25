@@ -32,6 +32,8 @@ export const Wrapper = styled.ul`
 export const CardWrapper = styled.div`
 	display: flex;
 	width: 100%;
+	margin-left: 0.5rem;
+	margin-top: 1.5rem;
 `;
 
 export const CardContainer = styled.li`
@@ -43,10 +45,15 @@ export const ButtonContainer = styled.div`
 	&&& {
 		margin-top: 2rem;
 		padding-right: 3rem;
-
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
 		gap: 2rem;
 	}
+`;
+
+export const CollapseButton = styled.div`
+	position: absolute;
+	top: 0;
+	left: 0;
 `;
