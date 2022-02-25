@@ -7,7 +7,7 @@ import {
 	Wrapper,
 	HoverCard,
 } from './styles';
-import { CaretDownFilled, CaretUpFilled } from '@ant-design/icons';
+import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
 import SpanLength from '../SpanLength';
 import SpanName from '../SpanName';
 import { pushDStree } from 'store/actions';
@@ -97,7 +97,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 									>
 										{totalSpans}
 										<CaretContainer>
-											{!isOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+											{isOpen ? <CaretDownFilled /> : <CaretRightFilled />}
 										</CaretContainer>
 									</CardComponent>
 								)}
