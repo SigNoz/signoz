@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import Trace from './Trace';
-
-import { Wrapper, CardWrapper, CardContainer, ButtonContainer } from './styles';
+import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons'
+import { Wrapper, CardWrapper, CardContainer, ButtonContainer, CollapseButton } from './styles';
 import { pushDStree } from 'store/actions';
 import { Button } from 'antd';
 import { getNodeById, getSpanPath } from './utils';
@@ -22,14 +22,22 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 
 	const { globalStart, spread: globalSpread } = traceMetaData;
 
+	const [isExpandAll, setIsExpandAll] = useState<boolean>(false);
+
 	const activeSpanPath = useMemo(() => {
 		return getSpanPath(data, spanId)
 	}, [spanId])
 
+	const handleCollapse = () => {
+		setIsExpandAll(prev => !prev)
+	}
 	return (
 		<>
 			<Wrapper>
 				<CardContainer>
+					<CollapseButton onClick={handleCollapse} style={{ fontSize: '1.2rem' }} title={isExpandAll ? 'Collapse All': "Expand All"}>
+						{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
+					</CollapseButton>
 					<CardWrapper>
 						<Trace
 							activeHoverId={activeHoverId}
@@ -44,6 +52,7 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 								activeSelectedId,
 							}}
 							level={0}
+							isExpandAll={isExpandAll}
 						/>
 					</CardWrapper>
 				</CardContainer>

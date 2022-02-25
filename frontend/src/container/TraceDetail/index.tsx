@@ -9,6 +9,7 @@ import {
 	Space,
 	Button,
 } from 'antd';
+import { FilterOutlined } from '@ant-design/icons'
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -133,22 +134,17 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 				</Row>
 				<Row
 					className={styles['trace-detail-content-spacing']}
-					style={{ margin: '1.5rem 1rem' }}
+					style={{ margin: '1.5rem 1rem 0.5rem' }}
 				>
 					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
-						style={{
-							justifyContent: 'center',
-							alignItems: 'center',
-							display: 'flex',
-							padding: '0 0.5rem',
-						}}
 					>
-						<Search
+						{/* <Search
 							placeholder="Type to filter.."
 							allowClear
 							onSearch={onSearchHandler}
-						/>
+							style={{ width: 200 }}
+						/> */}
 					</Col>
 					<Col flex={'auto'}>
 						<Space
@@ -156,7 +152,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button type="default" onClick={onFocusSelectedSpanHandler}>
+							<Button type="primary" onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
@@ -169,7 +165,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 					display: 'flex',
 					flexDirection: 'column',
 					position: 'relative',
-					flex: 1
+					flex: 1,
+					overflowY: 'scroll'
 				}}>
 					<GanttChart
 						onResetHandler={onResetHandler}
