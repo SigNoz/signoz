@@ -134,7 +134,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 				</Row>
 				<Row
 					className={styles['trace-detail-content-spacing']}
-					style={{ margin: '1.5rem 1rem' }}
+					style={{ margin: '1.5rem 1rem 0.5rem' }}
 				>
 					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}

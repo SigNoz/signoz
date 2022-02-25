@@ -1,7 +1,7 @@
 import { Tooltip, Typography } from 'antd';
 import React from 'react';
 import { SpanBorder, SpanText, SpanWrapper, SpanLine } from './styles';
-
+import { toFixed } from 'utils/toFixed'
 interface SpanLengthProps {
 	width: string;
 	leftOffset: string;
@@ -17,7 +17,7 @@ const SpanLength = (props: SpanLengthProps): JSX.Element => {
 		<SpanWrapper>
 			<SpanLine leftOffset={leftOffset} />
 			<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
-			<SpanText leftOffset={leftOffset}>{`${props.inMsCount} ms`}</SpanText>
+			<SpanText leftOffset={leftOffset}>{`${toFixed(props.inMsCount, 2)} ms`}</SpanText>
 		</SpanWrapper>
 	);
 };
