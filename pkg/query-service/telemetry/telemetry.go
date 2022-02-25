@@ -62,7 +62,7 @@ func getOutboundIP() string {
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
 	if err != nil {
-		return ""
+		return string(ip)
 	}
 
 	defer resp.Body.Close()
