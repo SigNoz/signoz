@@ -23,8 +23,7 @@ import SelectedSpanDetails from './SelectedSpanDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
 import history from 'lib/history';
-
-const SPAN_DETAILS_LEFT_COL_WIDTH = 225;
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
 
 const { Search } = Input;
 
@@ -166,7 +165,12 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						</Space>
 					</Col>
 				</Row>
-				<div className={styles['trace-detail-content-spacing']}>
+				<div className={styles['trace-detail-content-spacing']} style={{
+					display: 'flex',
+					flexDirection: 'column',
+					position: 'relative',
+					flex: 1
+				}}>
 					<GanttChart
 						onResetHandler={onResetHandler}
 						traceMetaData={traceMetaData}
@@ -183,10 +187,13 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 			<Col>
 				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
 			</Col>
-			<Col md={5} sm={5}>
-				<Affix offsetTop={24}>
-					<SelectedSpanDetails data={getSelectedNode} />
-				</Affix>
+			<Col md={5} sm={5} style={{
+				height: '100%',
+				position: 'relative',
+				display: 'flex',
+				flexDirection: 'column'
+			}}>
+				<SelectedSpanDetails data={getSelectedNode} />
 			</Col>
 		</Row>
 	);

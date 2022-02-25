@@ -37,4 +37,9 @@ export const CustomSubText = styled(Paragraph)`
 
 export const CardContainer = styled.div`
 	margin: 0 0.5rem;
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	flex: 1;
+	overflow: scroll;
 `;
