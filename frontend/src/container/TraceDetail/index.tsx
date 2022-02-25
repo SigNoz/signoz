@@ -9,7 +9,7 @@ import {
 	Space,
 	Button,
 } from 'antd';
-import { FilterOutlined } from '@ant-design/icons'
+import { FilterOutlined } from '@ant-design/icons';
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -24,7 +24,7 @@ import SelectedSpanDetails from './SelectedSpanDetails';
 import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
 import history from 'lib/history';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 
 const { Search } = Input;
 
@@ -136,9 +136,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 					className={styles['trace-detail-content-spacing']}
 					style={{ margin: '1.5rem 1rem 0.5rem' }}
 				>
-					<Col
-						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
-					>
+					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}>
 						{/* <Search
 							placeholder="Type to filter.."
 							allowClear
@@ -152,7 +150,11 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button type="primary" onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
+							<Button
+								type="primary"
+								onClick={onFocusSelectedSpanHandler}
+								icon={<FilterOutlined />}
+							>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
@@ -161,13 +163,16 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						</Space>
 					</Col>
 				</Row>
-				<div className={styles['trace-detail-content-spacing']} style={{
-					display: 'flex',
-					flexDirection: 'column',
-					position: 'relative',
-					flex: 1,
-					overflowY: 'scroll'
-				}}>
+				<div
+					className={styles['trace-detail-content-spacing']}
+					style={{
+						display: 'flex',
+						flexDirection: 'column',
+						position: 'relative',
+						flex: 1,
+						overflowY: 'auto',
+					}}
+				>
 					<GanttChart
 						onResetHandler={onResetHandler}
 						traceMetaData={traceMetaData}
@@ -184,12 +189,16 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 			<Col>
 				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
 			</Col>
-			<Col md={5} sm={5} style={{
-				height: '100%',
-				position: 'relative',
-				display: 'flex',
-				flexDirection: 'column'
-			}}>
+			<Col
+				md={5}
+				sm={5}
+				style={{
+					height: '100%',
+					position: 'relative',
+					display: 'flex',
+					flexDirection: 'column',
+				}}
+			>
 				<SelectedSpanDetails data={getSelectedNode} />
 			</Col>
 		</Row>
