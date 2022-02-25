@@ -40,7 +40,7 @@ const TraceGraph = () => {
 
 	return (
 		<Container>
-			<Graph data={ChartData} name="traceGraphph" type="line" />
+			<Graph data={ChartData} name="traceGraph" type="line" />
 		</Container>
 	);
 };
