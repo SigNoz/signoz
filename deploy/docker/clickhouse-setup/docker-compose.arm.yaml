@@ -23,7 +23,7 @@ services:
       - '--storage.path=/data'
 
   query-service:
-    image: signoz/query-service:0.6.1
+    image: signoz/query-service:0.6.2
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     volumes:
@@ -40,7 +40,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: signoz/frontend:0.6.1
+    image: signoz/frontend:0.6.2
     container_name: frontend
     depends_on:
       - query-service
@@ -50,7 +50,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.5.0
+    image: signoz/otelcontribcol:0.6.0
     command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -63,7 +63,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.5.0
+    image: signoz/otelcontribcol:0.6.0
     command: ["--config=/etc/otel-collector-metrics-config.yaml", "--mem-ballast-size-mib=683"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

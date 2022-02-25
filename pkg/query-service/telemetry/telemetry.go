@@ -18,6 +18,7 @@ const (
 	TELEMETRY_EVENT_INPRODUCT_FEEDBACK = "InProduct Feeback Submitted"
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
 	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
+	TELEMETRY_EVENT_USER_PREFERENCES   = "User Preferences"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -60,6 +61,10 @@ func getOutboundIP() string {
 
 	ip := []byte("NA")
 	resp, err := http.Get("https://api.ipify.org?format=text")
+
+	if err != nil {
+		return string(ip)
+	}
 
 	defer resp.Body.Close()
 	if err == nil {

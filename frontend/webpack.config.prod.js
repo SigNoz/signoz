@@ -144,8 +144,4 @@ const config = {
 	},
 };
 
-if (process.env.BUNDLE_ANALYSER === 'true') {
-	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
-}
-
 module.exports = config;
