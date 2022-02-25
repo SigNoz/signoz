@@ -683,8 +683,9 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.GetInstance().IdentifyUser(user)
 	data := map[string]interface{}{
-		"name":  user.Name,
-		"email": user.Email,
+		"name":             user.Name,
+		"email":            user.Email,
+		"organizationName": user.OrganizationName,
 	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
 
@@ -1107,6 +1108,12 @@ func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
+
+	data := map[string]interface{}{
+		"hasOptedUpdates": userParams.HasOptedUpdates,
+		"isAnonymous":     userParams.IsAnonymous,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_PREFERENCES, data)
 
 	aH.writeJSON(w, r, map[string]string{"data": "user preferences set successfully"})
 

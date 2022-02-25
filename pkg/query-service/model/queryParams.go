@@ -6,8 +6,9 @@ import (
 )
 
 type User struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name             string `json:"name"`
+	Email            string `json:"email"`
+	OrganizationName string `json:"organizationName"`
 }
 
 type InstantQueryMetricsParams struct {
