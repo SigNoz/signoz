@@ -14,6 +14,7 @@ import { pushDStree } from 'store/actions';
 import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import { ITraceMetaData } from '..';
 import { Col, Row } from 'antd';
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const {
@@ -58,7 +59,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 	const width = (value * 1e8) / globalSpread;
 	const toolTipText = `${name}\n${inMsCount} ms`;
 
-	const panelWidth = 200 - level * 9;
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * 9;
 
 	return (
 		<>

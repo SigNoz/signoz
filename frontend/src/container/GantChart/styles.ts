@@ -2,6 +2,10 @@ import styled from 'styled-components';
 
 export const Wrapper = styled.ul`
 	padding-left: 0;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	overflow: scroll;
 
 	ul {
 		list-style: none;
