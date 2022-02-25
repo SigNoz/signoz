@@ -1,5 +1,10 @@
 import { Menu, Typography } from 'antd';
-import { ToggleButton } from './styles';
+import {
+	MenuItem,
+	SlackButton,
+	SlackMenuItemContainer,
+	ToggleButton,
+} from './styles';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
@@ -16,6 +21,7 @@ import setTheme from 'lib/theme/setTheme';
 
 import menus from './menuItems';
 import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
+import Slack from './Slack';
 
 const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
@@ -56,6 +62,10 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		[pathname],
 	);
 
+	const onClickSlackHandler = () => {
+		window.open('https://signoz.io/slack', '_blank');
+	};
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<ThemeSwitcherWrapper>
@@ -84,6 +94,12 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 						<Typography>{name}</Typography>
 					</Menu.Item>
 				))}
+
+				<SlackMenuItemContainer collapsed={collapsed}>
+					<MenuItem onClick={onClickSlackHandler} icon={<Slack />}>
+						<SlackButton>Support</SlackButton>
+					</MenuItem>
+				</SlackMenuItemContainer>
 			</Menu>
 		</Sider>
 	);

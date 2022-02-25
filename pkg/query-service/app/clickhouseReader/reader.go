@@ -1537,7 +1537,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				}
 			}
 		case "status":
-			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))", r.indexTable)
+			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND hasError = 1", r.indexTable)
 			finalQuery += query
 			var dBResponse []model.DBResponseErrors
 			err := r.db.Select(&dBResponse, finalQuery, args...)
@@ -1582,16 +1582,16 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 	if _, ok := excludeMap["status"]; ok {
 		if len(statusParams) == 1 {
 			if statusParams[0] == "error" {
-				query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+				query += " AND hasError = 0"
 			} else if statusParams[0] == "ok" {
-				query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+				query += " AND hasError = 1"
 			}
 		}
 	} else if len(statusParams) == 1 {
 		if statusParams[0] == "error" {
-			query += " AND ( ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2))"
+			query += " AND hasError = 1"
 		} else if statusParams[0] == "ok" {
-			query += " AND ((NOT ( has(tags, 'error:true')) AND statusCode<500 AND statusCode!=2))"
+			query += " AND hasError = 0"
 		}
 	}
 	return query
@@ -1837,6 +1837,79 @@ func excludeTags(ctx context.Context, tags []model.TagFilters) []model.TagFilter
 		}
 	}
 	return newTags
+}
+
+func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagValues, *model.ApiError) {
+
+	excludeMap := make(map[string]struct{})
+	for _, e := range queryParams.Exclude {
+		if e == constants.OperationRequest {
+			excludeMap[constants.OperationDB] = struct{}{}
+			continue
+		}
+		excludeMap[e] = struct{}{}
+	}
+
+	var query string
+	args := []interface{}{queryParams.TagKey, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	if len(queryParams.ServiceName) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
+	}
+	if len(queryParams.HttpRoute) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
+	}
+	if len(queryParams.HttpCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
+	}
+	if len(queryParams.HttpHost) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
+	}
+	if len(queryParams.HttpMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpMethod, constants.HttpMethod, &query, args)
+	}
+	if len(queryParams.HttpUrl) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
+	}
+	if len(queryParams.Component) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
+	}
+	if len(queryParams.Operation) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+	if len(queryParams.MinDuration) != 0 {
+		query = query + " AND durationNano >= ?"
+		args = append(args, queryParams.MinDuration)
+	}
+	if len(queryParams.MaxDuration) != 0 {
+		query = query + " AND durationNano <= ?"
+		args = append(args, queryParams.MaxDuration)
+	}
+
+	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
+	tagValues := []model.TagValues{}
+
+	finalQuery := fmt.Sprintf(`SELECT tagMap[?] as tagValues FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+	finalQuery += query
+	fmt.Println(finalQuery)
+	finalQuery += "GROUP BY tagMap[?]"
+	args = append(args, queryParams.TagKey)
+	err := r.db.Select(&tagValues, finalQuery, args...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+	}
+
+	cleanedTagValues := []model.TagValues{}
+	for _, e := range tagValues {
+		if e.TagValues != "" {
+			cleanedTagValues = append(cleanedTagValues, e)
+		}
+	}
+	return &cleanedTagValues, nil
 }
 
 func (r *ClickHouseReader) GetServiceDBOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
@@ -2093,7 +2166,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	var searchScanReponses []model.SearchSpanReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events FROM %s WHERE traceID=?", r.indexTable)
+	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events, hasError FROM %s WHERE traceID=?", r.indexTable)
 
 	err := r.db.Select(&searchScanReponses, query, traceId)
 
@@ -2106,7 +2179,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	searchSpansResult := []model.SearchSpansResult{
 		model.SearchSpansResult{
-			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events"},
+			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 			Events:  make([][]interface{}, len(searchScanReponses)),
 		},
 	}

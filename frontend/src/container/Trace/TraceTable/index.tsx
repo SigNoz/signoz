@@ -43,7 +43,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			key: 'timestamp',
 			render: (value: TableType['timestamp']) => {
 				const day = dayjs(value);
-				return <div>{day.format('DD/MM/YYYY HH:MM:ss A')}</div>;
+				return <div>{day.format('DD/MM/YYYY hh:mm:ss A')}</div>;
 			},
 			sorter: (a, b) => dayjs(a.timestamp).diff(dayjs(b.timestamp)),
 		},
@@ -127,6 +127,9 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			})}
 			size="middle"
 			rowKey={'timestamp'}
+			style={{
+				cursor: 'pointer',
+			}}
 			pagination={{
 				current: spansAggregate.currentPage,
 				pageSize: spansAggregate.pageSize,
