@@ -1,23 +1,21 @@
-import React from 'react';
-
-import Table, { ColumnsType } from 'antd/lib/table';
 import { TableProps, Tag } from 'antd';
-
+import Table, { ColumnsType } from 'antd/lib/table';
+import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+import history from 'lib/history';
+import React from 'react';
 import { connect, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
 import {
 	GetSpansAggregate,
 	GetSpansAggregateProps,
 } from 'store/actions/trace/getInitialSpansAggregate';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import history from 'lib/history';
-import ROUTES from 'constants/routes';
+import { TraceReducer } from 'types/reducer/trace';
 dayjs.extend(duration);
 
 const TraceTable = ({ getSpansAggregate }: TraceProps) => {

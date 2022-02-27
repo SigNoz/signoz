@@ -1,9 +1,10 @@
 import ROUTES from 'constants/routes';
-import { TraceFilterEnum } from 'types/reducer/trace';
-import TableInitialResponse from '../../fixtures/trace/initialSpans.json';
-import FilterInitialResponse from '../../fixtures/trace/initialSpanFilter.json';
-import GraphInitialResponse from '../../fixtures/trace/initialAggregates.json';
 import { AppState } from 'store/reducers';
+import { TraceFilterEnum } from 'types/reducer/trace';
+
+import GraphInitialResponse from '../../fixtures/trace/initialAggregates.json';
+import FilterInitialResponse from '../../fixtures/trace/initialSpanFilter.json';
+import TableInitialResponse from '../../fixtures/trace/initialSpans.json';
 
 describe('Trace', () => {
 	beforeEach(() => {

@@ -1,5 +1,5 @@
-import { useMemo, useRef } from 'react';
 import debounce from 'lodash-es/debounce';
+import { useMemo, useRef } from 'react';
 
 export interface DebouncedFunc<T extends (...args: any[]) => any> {
 	(...args: Parameters<T>): ReturnType<T> | undefined;
@@ -22,7 +22,7 @@ const defaultOptions: DebounceOptions = {
 
 const useDebouncedFn = <T extends (...args: any) => any>(
 	fn: T,
-	wait: number = 100,
+	wait = 100,
 	options: DebounceOptions = defaultOptions,
 	dependencies?: ReadonlyArray<any>,
 ): DebouncedFunc<T> => {

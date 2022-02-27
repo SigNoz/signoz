@@ -34,9 +34,8 @@ const TimeSeries = (props: TimeSeriesProps): JSX.Element => (
 	</React.Fragment>
 );
 
-export interface TimeSeriesProps{
+export interface TimeSeriesProps {
 	fillColor: React.CSSProperties['color'];
 }
-
 
 export default TimeSeries;

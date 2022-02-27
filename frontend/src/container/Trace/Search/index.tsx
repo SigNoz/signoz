@@ -1,20 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Space } from 'antd';
-import { Container, SearchComponent } from './styles';
-import useClickOutside from 'hooks/useClickOutside';
-import Tags from './AllTags';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
-import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
-import { bindActionCreators, Dispatch } from 'redux';
-import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
-import { parseQueryToTags, parseTagsToQuery } from './util';
-import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { CaretRightFilled } from '@ant-design/icons';
+import { Space } from 'antd';
+import useClickOutside from 'hooks/useClickOutside';
+import React, { useEffect, useRef, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
+import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 import { updateURL } from 'store/actions/trace/util';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import { TraceReducer } from 'types/reducer/trace';
+
+import Tags from './AllTags';
+import { Container, SearchComponent } from './styles';
+import { parseQueryToTags, parseTagsToQuery } from './util';
 
 const Search = ({
 	updateTagVisiblity,
@@ -62,7 +63,7 @@ const Search = ({
 				'ant-col',
 				'ant-select-item-option-active',
 			].find((p) => p.indexOf(e.className) !== -1) &&
-			!(e.ariaSelected === 'true') &&
+			e.ariaSelected !== 'true' &&
 			traces.isTagModalOpen
 		) {
 			updateTagVisiblity(false);

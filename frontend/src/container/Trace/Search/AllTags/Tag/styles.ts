@@ -1,5 +1,5 @@
-import styled from 'styled-components';
 import { Button, Select, Space } from 'antd';
+import styled from 'styled-components';
 
 export const SpaceComponent = styled(Space)`
 	&&& {

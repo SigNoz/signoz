@@ -2,12 +2,11 @@ import { Col } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React from 'react';
-import { useLocation, matchPath } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { Container } from './styles';
-
 
 const routesToSkip = [
 	ROUTES.SETTINGS,

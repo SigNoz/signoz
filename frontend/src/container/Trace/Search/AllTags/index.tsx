@@ -1,27 +1,28 @@
+import { CaretRightFilled } from '@ant-design/icons';
+import { Button, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 
-import { Button, Space, Typography } from 'antd';
-import { CaretRightFilled } from '@ant-design/icons';
 import {
-	Container,
 	ButtonContainer,
+	Container,
 	CurrentTagsContainer,
-	Wrapper,
 	ErrorContainer,
+	Wrapper,
 } from './styles';
 import Tags from './Tag';
 const { Text } = Typography;
 import { PlusOutlined } from '@ant-design/icons';
+import { isEqual } from 'lodash-es';
 import { connect, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
-import { parseTagsToQuery } from '../util';
-import { isEqual } from 'lodash-es';
 import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { TraceReducer } from 'types/reducer/trace';
+
+import { parseTagsToQuery } from '../util';
 
 const { Paragraph } = Typography;
 

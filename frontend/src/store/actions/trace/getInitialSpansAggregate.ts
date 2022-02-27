@@ -1,11 +1,11 @@
+import { notification } from 'antd';
+import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';
-import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
-import { notification } from 'antd';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
