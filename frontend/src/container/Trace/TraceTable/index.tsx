@@ -1,26 +1,24 @@
-import React from 'react';
-
-import Table, { ColumnsType } from 'antd/lib/table';
 import { TableProps, Tag } from 'antd';
-
+import Table, { ColumnsType } from 'antd/lib/table';
+import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+import history from 'lib/history';
+import React from 'react';
 import { connect, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
 import {
 	GetSpansAggregate,
 	GetSpansAggregateProps,
 } from 'store/actions/trace/getInitialSpansAggregate';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import history from 'lib/history';
-import ROUTES from 'constants/routes';
+import { TraceReducer } from 'types/reducer/trace';
 dayjs.extend(duration);
 
-const TraceTable = ({ getSpansAggregate }: TraceProps) => {
+const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 	const {
 		spansAggregate,
 		selectedFilter,
@@ -41,19 +39,16 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			title: 'Date',
 			dataIndex: 'timestamp',
 			key: 'timestamp',
-			render: (value: TableType['timestamp']) => {
+			sorter: true,
+			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
 				return <div>{day.format('DD/MM/YYYY hh:mm:ss A')}</div>;
 			},
-			sorter: (a, b) =>
-				dayjs(a.timestamp).toDate().getTime() -
-				dayjs(b.timestamp).toDate().getTime(),
 		},
 		{
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
-			sorter: (a, b) => a.serviceName.length - b.serviceName.length,
 		},
 		{
 			title: 'Operation',
@@ -64,22 +59,19 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
-			sorter: (a, b) => a.durationNano - b.durationNano,
-			render: (value: TableType['durationNano']) => {
-				return (
-					<div>
-						{`${dayjs
-							.duration({ milliseconds: value / 1000000 })
-							.asMilliseconds()} ms`}
-					</div>
-				);
-			},
+			render: (value: TableType['durationNano']): JSX.Element => (
+				<div>
+					{`${dayjs
+						.duration({ milliseconds: value / 1000000 })
+						.asMilliseconds()} ms`}
+				</div>
+			),
 		},
 		{
 			title: 'Method',
 			dataIndex: 'httpMethod',
 			key: 'httpMethod',
-			render: (value: TableType['httpMethod']) => {
+			render: (value: TableType['httpMethod']): JSX.Element => {
 				if (value.length === 0) {
 					return <div>-</div>;
 				}
@@ -90,8 +82,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			title: 'Status Code',
 			dataIndex: 'httpCode',
 			key: 'httpCode',
-			sorter: (a, b) => a.httpCode.length - b.httpCode.length,
-			render: (value: TableType['httpCode']) => {
+			render: (value: TableType['httpCode']): JSX.Element => {
 				if (value.length === 0) {
 					return <div>-</div>;
 				}
@@ -100,7 +91,13 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 		},
 	];
 
-	const onChangeHandler: TableProps<TableType>['onChange'] = (props) => {
+	const onChangeHandler: TableProps<TableType>['onChange'] = (
+		props,
+		_,
+		sort,
+	) => {
+		const { order = 'ascend' } = sort;
+
 		if (props.current && props.pageSize) {
 			getSpansAggregate({
 				maxTime: globalTime.maxTime,
@@ -109,6 +106,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 				current: props.current,
 				pageSize: props.pageSize,
 				selectedTags,
+				order: order === 'ascend' ? 'ascending' : 'descending',
 			});
 		}
 	};
@@ -120,7 +118,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps) => {
 			loading={loading || filterLoading}
 			columns={columns}
 			onRow={(record) => ({
-				onClick: () => {
+				onClick: (): void => {
 					history.push({
 						pathname: ROUTES.TRACE + '/' + record.traceID,
 						state: {
