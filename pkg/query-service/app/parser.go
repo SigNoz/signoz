@@ -650,6 +650,31 @@ func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 	return postData, nil
 
 }
+
+func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
+	var postData *model.TagFilterParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+	if postData.TagKey == "" {
+		return nil, fmt.Errorf("%s param missing in query", postData.TagKey)
+	}
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
+
+}
+
 func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 
 	startTime, err := parseTime("start", r)

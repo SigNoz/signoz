@@ -2,5 +2,5 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 * @ankitnayan
-/frontend/ @palash-signoz
+/frontend/ @palash-signoz @pranshuchittora
 /deploy/ @prashant-shahi

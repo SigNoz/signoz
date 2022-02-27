@@ -8,7 +8,7 @@ const TextToolTip = ({ text, url }: TextToolTipProps) => (
 			return (
 				<div>
 					{`${text} `}
-					<a href={url} target={'_blank'}>
+					<a href={url} rel="noopener noreferrer" target={'_blank'}>
 						here
 					</a>
 				</div>
