@@ -6,8 +6,9 @@ import (
 )
 
 type User struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name             string `json:"name"`
+	Email            string `json:"email"`
+	OrganizationName string `json:"organizationName"`
 }
 
 type InstantQueryMetricsParams struct {
@@ -201,6 +202,7 @@ type TagFilterParams struct {
 	MaxDuration string   `json:"maxDuration"`
 	StartStr    string   `json:"start"`
 	EndStr      string   `json:"end"`
+	TagKey      string   `json:"tagKey"`
 	Start       *time.Time
 	End         *time.Time
 }

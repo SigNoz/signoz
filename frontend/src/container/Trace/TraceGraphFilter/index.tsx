@@ -56,6 +56,7 @@ const TraceGraphFilter = () => {
 
 			<SelectComponent
 				dropdownMatchSelectWidth
+				data-testid="selectedFunction"
 				value={functions.find((e) => selectedFunction === e.key)?.displayValue}
 				onChange={onClickSelectedFunctionHandler}
 			>
@@ -69,6 +70,7 @@ const TraceGraphFilter = () => {
 			<label>Group By</label>
 			<SelectComponent
 				dropdownMatchSelectWidth
+				data-testid="selectedGroupBy"
 				value={groupBy.find((e) => selectedGroupBy === e.key)?.displayValue}
 				onChange={onClickSelectedGroupByHandler}
 			>

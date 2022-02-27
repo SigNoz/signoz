@@ -9,17 +9,10 @@ import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
 import { Store } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
-import { connect } from 'react-redux';
 import { useParams } from 'react-router';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { ToggleSettingsTab } from 'store/actions';
-import AppActions from 'types/actions';
-import { SettingTab } from 'types/reducer/app';
 
 const EditAlertChannels = ({
 	initialValue,
-	toggleSettingsTab,
 }: EditAlertChannelsProps): JSX.Element => {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
@@ -52,7 +45,6 @@ const EditAlertChannels = ({
 				message: 'Success',
 				description: 'Channels Edited Successfully',
 			});
-			toggleSettingsTab('Alert Channels');
 
 			setTimeout(() => {
 				history.replace(ROUTES.SETTINGS);
@@ -100,18 +92,8 @@ const EditAlertChannels = ({
 	);
 };
 
-interface DispatchProps {
-	toggleSettingsTab: (props: SettingTab) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	toggleSettingsTab: bindActionCreators(ToggleSettingsTab, dispatch),
-});
-
-interface EditAlertChannelsProps extends DispatchProps {
+interface EditAlertChannelsProps {
 	initialValue: Store;
 }
 
-export default connect(null, mapDispatchToProps)(EditAlertChannels);
+export default EditAlertChannels;

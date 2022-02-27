@@ -1,18 +1,12 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_LOGGED_IN } from 'constants/auth';
+import { AppAction, LOGGED_IN, SWITCH_DARK_MODE } from 'types/actions/app';
 import getTheme from 'lib/theme/getTheme';
-import {
-	AppAction,
-	LOGGED_IN,
-	SWITCH_DARK_MODE,
-	TOGGLE_SETTINGS_TABS,
-} from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
 	isDarkMode: getTheme() === 'darkMode' ? true : false,
 	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
-	settingsActiveTab: 'General',
 };
 
 const appReducer = (
@@ -31,13 +25,6 @@ const appReducer = (
 			return {
 				...state,
 				isLoggedIn: true,
-			};
-		}
-
-		case TOGGLE_SETTINGS_TABS: {
-			return {
-				...state,
-				settingsActiveTab: action.payload.activeTab,
 			};
 		}
 
