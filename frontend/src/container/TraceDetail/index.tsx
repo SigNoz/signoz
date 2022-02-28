@@ -16,6 +16,8 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
 import history from 'lib/history';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import { Mock_Response } from '../../pages/TraceDetail/mockTraceData'
+import { INTERVAL_UNITS } from './utils'
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const spanServiceColors = useMemo(
@@ -26,6 +28,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const urlQuery = useUrlQuery();
 	const [spanId, _setSpanId] = useState<string | null>(urlQuery.get('spanId'));
 
+	const [intervalUnit, setIntervalUnit] = useState(INTERVAL_UNITS[0]);
 	const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
@@ -117,6 +120,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
 							traceMetaData={traceMetaData}
+							intervalUnit={intervalUnit}
+							setIntervalUnit={setIntervalUnit}
 						/>
 					</Col>
 					<Divider style={{ height: '100%', margin: '0' }} />
@@ -172,6 +177,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						setActiveHoverId={setActiveHoverId}
 						setActiveSelectedId={setActiveSelectedId}
 						spanId={spanId || ''}
+						intervalUnit={intervalUnit}
 					/>
 				</div>
 			</Col>

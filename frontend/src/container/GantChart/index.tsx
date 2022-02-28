@@ -6,6 +6,7 @@ import { pushDStree } from 'store/actions';
 import { Button } from 'antd';
 import { getNodeById, getSpanPath } from './utils';
 import { FilterOutlined } from '@ant-design/icons';
+import { IIntervalUnit } from 'container/TraceDetail/utils'
 
 const GanttChart = (props: GanttChartProps): JSX.Element => {
 	const {
@@ -17,7 +18,8 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 		setActiveHoverId,
 		activeSelectedId,
 		setActiveSelectedId,
-		spanId
+		spanId,
+		intervalUnit
 	} = props;
 
 	const { globalStart, spread: globalSpread } = traceMetaData;
@@ -35,7 +37,7 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 		<>
 			<Wrapper>
 				<CardContainer>
-					<CollapseButton onClick={handleCollapse} style={{ fontSize: '1.2rem' }} title={isExpandAll ? 'Collapse All': "Expand All"}>
+					<CollapseButton onClick={handleCollapse} style={{ fontSize: '1.2rem' }} title={isExpandAll ? 'Collapse All' : "Expand All"}>
 						{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
 					</CollapseButton>
 					<CardWrapper>
@@ -53,6 +55,7 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 							}}
 							level={0}
 							isExpandAll={isExpandAll}
+							intervalUnit={intervalUnit}
 						/>
 					</CardWrapper>
 				</CardContainer>
@@ -79,6 +82,7 @@ export interface GanttChartProps {
 	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
 	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
 	spanId: string;
+	intervalUnit: IIntervalUnit
 }
 
 export default GanttChart;

@@ -15,6 +15,7 @@ import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import { ITraceMetaData } from '..';
 import { Col, Row } from 'antd';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
+import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const {
@@ -32,7 +33,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 		activeSelectedId,
 		level,
 		activeSpanPath,
-		isExpandAll
+		isExpandAll,
+		intervalUnit
 	} = props;
 
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
@@ -115,6 +117,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 							toolTipText={toolTipText}
 							id={id}
 							inMsCount={inMsCount}
+							intervalUnit={intervalUnit}
 						/>
 					</Col>
 				</CardContainer>
@@ -134,6 +137,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 								level={level + 1}
 								activeSpanPath={activeSpanPath}
 								isExpandAll={isExpandAll}
+								intervalUnit={intervalUnit}
 							/>
 						))}
 					</>
@@ -156,6 +160,7 @@ interface TraceProps extends pushDStree, ITraceGlobal {
 	level: number;
 	activeSpanPath: string[];
 	isExpandAll: boolean;
+	intervalUnit: IIntervalUnit;
 }
 
 export default Trace;
