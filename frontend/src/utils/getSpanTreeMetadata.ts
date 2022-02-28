@@ -1,18 +1,18 @@
-import { pushDStree } from 'store/actions';
 import { errorColor } from 'lib/getRandomColor';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 /**
  * Traverses the Span Tree data and returns the relevant meta data.
  * Metadata includes globalStart, globalEnd,
  */
 export const getSpanTreeMetadata = (
-	treeData: pushDStree,
+	treeData: ITraceTree,
 	spanServiceColours: { [key: string]: string },
 ) => {
 	let globalStart = Number.POSITIVE_INFINITY;
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
 	let levels = 1;
-	const traverse = (treeNode: pushDStree, level: number = 0) => {
+	const traverse = (treeNode: ITraceTree, level: number = 0) => {
 		if (!treeNode) {
 			return;
 		}

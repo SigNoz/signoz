@@ -1,11 +1,11 @@
-import { pushDStree } from 'store/actions';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-export const getMetaDataFromSpanTree = (treeData: pushDStree) => {
+export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 	let globalStart = Number.POSITIVE_INFINITY;
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
 	let levels = 1;
-	const traverse = (treeNode: pushDStree, level: number = 0) => {
+	const traverse = (treeNode: ITraceTree, level: number = 0) => {
 		if (!treeNode) {
 			return;
 		}
@@ -54,10 +54,10 @@ export function getTopLeftFromBody(elem: HTMLElement) {
 
 export const getNodeById = (
 	searchingId: string,
-	treeData: pushDStree,
-): pushDStree | undefined => {
-	let foundNode: pushDStree | undefined = undefined;
-	const traverse = (treeNode: pushDStree, level: number = 0) => {
+	treeData: ITraceTree,
+): ITraceTree | undefined => {
+	let foundNode: ITraceTree | undefined = undefined;
+	const traverse = (treeNode: ITraceTree, level: number = 0) => {
 		if (!treeNode) {
 			return;
 		}
@@ -76,8 +76,8 @@ export const getNodeById = (
 };
 
 const getSpanWithoutChildren = (
-	span: pushDStree,
-): Omit<pushDStree, 'children'> => {
+	span: ITraceTree,
+): Omit<ITraceTree, 'children'> => {
 	return {
 		id: span.id,
 		name: span.name,
@@ -93,7 +93,7 @@ const getSpanWithoutChildren = (
 
 export const isSpanPresentInSearchString = (
 	searchedString: string,
-	tree: pushDStree,
+	tree: ITraceTree,
 ): boolean => {
 	const parsedTree = getSpanWithoutChildren(tree);
 
@@ -106,15 +106,15 @@ export const isSpanPresentInSearchString = (
 };
 
 export const isSpanPresent = (
-	tree: pushDStree,
+	tree: ITraceTree,
 	searchedKey: string,
-): pushDStree[] => {
-	const foundNode: pushDStree[] = [];
+): ITraceTree[] => {
+	const foundNode: ITraceTree[] = [];
 
 	const traverse = (
-		treeNode: pushDStree,
+		treeNode: ITraceTree,
 		level: number = 0,
-		foundNode: pushDStree[],
+		foundNode: ITraceTree[],
 	) => {
 		if (!treeNode) {
 			return;
@@ -135,10 +135,10 @@ export const isSpanPresent = (
 	return foundNode;
 };
 
-export const getSpanPath = (tree: pushDStree, spanId: string): string[] => {
-	const spanPath = [];
-	
-	const traverse = (treeNode) => {
+export const getSpanPath = (tree: ITraceTree, spanId: string): string[] => {
+	const spanPath: string[] = [];
+
+	const traverse = (treeNode: ITraceTree) => {
 		if (!treeNode) {
 			return false;
 		}

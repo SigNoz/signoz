@@ -7,7 +7,7 @@ import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import { filterSpansByString } from './utils';
+import { filterSpansByString, getSortedData } from './utils';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
@@ -35,7 +35,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		return getSpanTreeMetadata(treeData, spanServiceColors);
+		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
 	}, [treeData]);
 
 	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({
@@ -139,11 +139,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button
-								type="primary"
-								onClick={onFocusSelectedSpanHandler}
-								icon={<FilterOutlined />}
-							>
+							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
@@ -188,7 +184,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 					flexDirection: 'column',
 				}}
 			>
-				<SelectedSpanDetails data={getSelectedNode} />
+				<SelectedSpanDetails tree={getSelectedNode} />
 			</Col>
 		</Row>
 	);
