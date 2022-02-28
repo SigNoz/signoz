@@ -16,7 +16,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
 import history from 'lib/history';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import { Mock_Response } from '../../pages/TraceDetail/mockTraceData'
 import { INTERVAL_UNITS } from './utils'
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
