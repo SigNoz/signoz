@@ -77,7 +77,7 @@ export const functions: Dropdown[] = [
 		key: 'p50',
 	},
 	{
-		displayValue: '90th percentile(duration in ns',
+		displayValue: '90th percentile(duration in ns)',
 		key: 'p90',
 	},
 	{
