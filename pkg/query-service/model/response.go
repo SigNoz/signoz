@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -205,8 +206,13 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
+	events := []string{}
+	// encoding event string due to bug in frontend parser
+	for _, e := range item.Events {
+		events = append(events, url.QueryEscape(e))
+	}
 
-	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, item.Events, item.HasError}
+	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, events, item.HasError}
 
 	return returnArray
 }
