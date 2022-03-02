@@ -4,23 +4,25 @@ import {
 	FullscreenOutlined,
 } from '@ant-design/icons';
 import React, { useCallback } from 'react';
-import { useHistory, useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container } from './styles';
+import history from 'lib/history';
 
 const Bar = ({
 	widget,
 	onViewFullScreenHandler,
 	onDeleteHandler,
 }: BarProps): JSX.Element => {
-	const { push } = useHistory();
 	const { pathname } = useLocation();
 
 	const onEditHandler = useCallback(() => {
 		const widgetId = widget.id;
-		push(`${pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`);
-	}, [push, pathname, widget]);
+		history.push(
+			`${pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
+		);
+	}, [pathname, widget]);
 
 	return (
 		<Container>

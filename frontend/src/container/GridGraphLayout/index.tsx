@@ -6,10 +6,11 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
+import history from 'lib/history';
 
 import AddWidget from './AddWidget';
 import Graph from './Graph';
@@ -22,7 +23,6 @@ import {
 } from './styles';
 
 const GridGraph = (): JSX.Element => {
-	const { push } = useHistory();
 	const { pathname } = useLocation();
 
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
@@ -113,10 +113,12 @@ const GridGraph = (): JSX.Element => {
 			if (event.dataTransfer) {
 				const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
 				const generateWidgetId = v4();
-				push(`${pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`);
+				history.push(
+					`${pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`,
+				);
 			}
 		},
-		[pathname, push],
+		[pathname],
 	);
 
 	const onLayoutSaveHanlder = async (): Promise<void> => {
