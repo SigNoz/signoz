@@ -36,7 +36,7 @@ export interface ITraceTree {
 	serviceName: string;
 	serviceColour: string;
 	hasError?: boolean;
-	error?: ITraceTag[];
+	event?: ITraceTag[];
 }
 
 export interface ITraceTag {
