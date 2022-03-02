@@ -154,6 +154,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						position: 'relative',
 						flex: 1,
 						overflowY: 'auto',
+						overflowX: 'hidden',
 					}}
 				>
 					<GanttChart
