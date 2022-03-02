@@ -7,7 +7,7 @@ import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import { filterSpansByString } from './utils';
+import { getSortedData } from './utils';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
@@ -31,11 +31,11 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
 
 	const [treeData, setTreeData] = useState<ITraceTree>(
-		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
+		spanToTreeUtil(response[0].events),
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		return getSpanTreeMetadata(treeData, spanServiceColors);
+		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
 	}, [treeData]);
 
 	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({
@@ -57,7 +57,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	const onSearchHandler = (value: string) => {
 		setSearchSpanString(value);
-		setTreeData(spanToTreeUtil(filterSpansByString(value, response[0].events)));
+		setTreeData(spanToTreeUtil(response[0].events));
 	};
 	const onFocusSelectedSpanHandler = () => {
 		const treeNode = getNodeById(activeSelectedId, tree);
@@ -67,9 +67,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	};
 
 	const onResetHandler = () => {
-		setTreeData(
-			spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
-		);
+		setTreeData(spanToTreeUtil(response[0].events));
 	};
 
 	return (
@@ -139,11 +137,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 								float: 'right',
 							}}
 						>
-							<Button
-								type="primary"
-								onClick={onFocusSelectedSpanHandler}
-								icon={<FilterOutlined />}
-							>
+							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
@@ -160,13 +154,12 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						position: 'relative',
 						flex: 1,
 						overflowY: 'auto',
+						overflowX: 'hidden',
 					}}
 				>
 					<GanttChart
-						onResetHandler={onResetHandler}
 						traceMetaData={traceMetaData}
 						data={tree}
-						setTreeData={setTreeData}
 						activeSelectedId={activeSelectedId}
 						activeHoverId={activeHoverId}
 						setActiveHoverId={setActiveHoverId}
@@ -188,7 +181,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 					flexDirection: 'column',
 				}}
 			>
-				<SelectedSpanDetails data={getSelectedNode} />
+				<SelectedSpanDetails tree={getSelectedNode} />
 			</Col>
 		</Row>
 	);

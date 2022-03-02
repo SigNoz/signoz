@@ -12,33 +12,33 @@ import {
 } from './styles';
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
-	const { data: { tags } } = props
-	const spanTags = tags && Array.isArray(tags) && tags.length > 0 ? tags : null
-	const service = props.data?.name?.split(':')[0];
-	const operation = props.data?.name?.split(':')[1];
-	const errorTags = spanTags && spanTags
-		.filter((tags) => tags.key === 'isError').length > 0 ? spanTags
-			.filter((tags) => tags.key === 'isError').length : null
+	const { tree } = props;
+
+	if (!tree) {
+		return <></>;
+	}
+
+	const { name, tags, serviceName, hasError } = tree;
 
 	return (
 		<CardContainer>
 			<Space direction="vertical" style={{ marginLeft: '0.5rem' }}>
 				<strong> Details for selected Span </strong>
 				<Space direction="vertical" size={2}>
-					<CustomTitle >Service</CustomTitle>
-					<CustomText>{service}</CustomText>
+					<CustomTitle>Service</CustomTitle>
+					<CustomText>{serviceName}</CustomText>
 				</Space>
 				<Space direction="vertical" size={2}>
 					<CustomTitle>Operation</CustomTitle>
-					<CustomText>{operation}</CustomText>
+					<CustomText>{name}</CustomText>
 				</Space>
 			</Space>
 			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
-					{spanTags ?
-						spanTags.map((tags) => {
+					{tags.length !== 0 ? (
+						tags.map((tags) => {
 							return (
-								<>
+								<React.Fragment>
 									{tags.value && (
 										<>
 											<CustomSubTitle>{tags.key}</CustomSubTitle>
@@ -47,19 +47,24 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 											</CustomSubText>
 										</>
 									)}
-								</>
+								</React.Fragment>
 							);
-						}) : <Typography>No tags in selected span</Typography>}
+						})
+					) : (
+						<Typography>No tags in selected span</Typography>
+					)}
 				</TabPane>
 				<TabPane tab="Errors" key="2">
-					{errorTags ?
-						errorTags.map((errorTag) => (
-							<>
-								<CustomSubTitle key={errorTag.key}>{errorTag.key}</CustomSubTitle>
+					{hasError && tree.error && tree.error.length !== 0 ? (
+						tree.error.map((errorTag) => (
+							<React.Fragment key={errorTag.key}>
+								<CustomSubTitle>{errorTag.key}</CustomSubTitle>
 								<CustomSubText>true</CustomSubText>
-							</>
-						)) :
-						<Typography>No errors data in selected span</Typography>}
+							</React.Fragment>
+						))
+					) : (
+						<Typography>No errors data in selected span</Typography>
+					)}
 				</TabPane>
 			</Tabs>
 		</CardContainer>
@@ -67,7 +72,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 };
 
 interface SelectedSpanDetailsProps {
-	data?: ITraceTree;
+	tree?: ITraceTree;
 }
 
 export default SelectedSpanDetails;
