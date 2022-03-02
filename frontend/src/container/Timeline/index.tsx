@@ -28,11 +28,11 @@ const Timeline = ({ traceMetaData, globalTraceMetadata, intervalUnit, setInterva
 		let baseInterval = 0;
 
 		if (!isEqual(traceMetaData, globalTraceMetadata)) {
-			baseInterval = (localStart - globalStart) / 1e6
+			baseInterval = (localStart - globalStart)
 		}
 
 		const MIN_INTERVALS = 5;
-		const baseSpread = localSpread / 1e12;
+		const baseSpread = localSpread;
 		let intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
 		const integerPartString = intervalSpread.toString().split('.')[0];
 		const integerPartLength = integerPartString.length;
@@ -75,7 +75,7 @@ const Timeline = ({ traceMetaData, globalTraceMetadata, intervalUnit, setInterva
 			intervals.push(interval);
 		}
 
-		setIntervals(intervals);
+		return intervals
 	};
 
 	useMemo(() => {
@@ -88,12 +88,11 @@ const Timeline = ({ traceMetaData, globalTraceMetadata, intervalUnit, setInterva
 				intervalUnit = INTERVAL_UNITS[idx - 1];
 				break;
 			}
-			debugger;
+
 		}
 
-		debugger;
 		setIntervalUnit(intervalUnit)
-		getIntervals({ baseInterval, baseSpread, intervalSpreadNormalized });
+		setIntervals(getIntervals({ baseInterval, baseSpread, intervalSpreadNormalized }))
 	}, [traceMetaData, globalTraceMetadata])
 
 

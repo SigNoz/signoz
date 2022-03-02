@@ -19,7 +19,7 @@ const SpanLength = (props: SpanLengthProps): JSX.Element => {
 		<SpanWrapper>
 			<SpanLine leftOffset={leftOffset} />
 			<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
-			<SpanText leftOffset={leftOffset}>{`${toFixed(resolveTimeFromInterval(props.inMsCount, intervalUnit), 2)} ${intervalUnit.name}`}</SpanText>
+			<SpanText leftOffset={leftOffset}>{`${toFixed(resolveTimeFromInterval(props.inMsCount , intervalUnit), 2)} ${intervalUnit.name}`}</SpanText>
 		</SpanWrapper>
 	);
 };

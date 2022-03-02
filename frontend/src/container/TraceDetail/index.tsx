@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { cloneDeep } from 'lodash-es'
 import { Col, Divider, Row, Typography, Space, Button } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
 import GanttChart from 'container/GantChart';
@@ -17,6 +18,7 @@ import styles from './TraceGraph.module.css';
 import history from 'lib/history';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import { INTERVAL_UNITS } from './utils'
+import { Mock_Response } from 'pages/TraceDetail/mockTraceData'
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const spanServiceColors = useMemo(
@@ -33,7 +35,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
 
 	const [treeData, setTreeData] = useState<ITraceTree>(
-		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
+		spanToTreeUtil(cloneDeep(filterSpansByString(searchSpanString, response[0].events))),
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
@@ -59,7 +61,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	const onSearchHandler = (value: string) => {
 		setSearchSpanString(value);
-		setTreeData(spanToTreeUtil(filterSpansByString(value, response[0].events)));
+		setTreeData(spanToTreeUtil([...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)), ...cloneDeep(filterSpansByString(value, response[0].events)),]));
 	};
 	const onFocusSelectedSpanHandler = () => {
 		const treeNode = getNodeById(activeSelectedId, tree);

@@ -121,9 +121,9 @@ const TraceFlameGraph = (props: {
 			return null;
 		}
 
-		const leftOffset = ((spanData.startTime * 1e6 - globalStart) * 1e8) / spread;
-		const width = (spanData.value * 1e8) / spread;
-		const toolTipText = `${spanData.name}\n${spanData.value / 1e6} ms`;
+		const leftOffset = ((spanData.startTime - globalStart) * 100) / (spread);
+		const width = (spanData.value / 1e6) * 100 / (spread);
+		const toolTipText = `${spanData.name}\n${spanData.value} ms`;
 
 		return (
 			<>

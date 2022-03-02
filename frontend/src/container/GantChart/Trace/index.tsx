@@ -61,12 +61,10 @@ const Trace = (props: TraceProps): JSX.Element => {
 
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
-	const inMsCount = value / 1e6;
-	const nodeLeftOffset = ((startTime * 1e6 - globalStart) * 1e8) / globalSpread;
-	const width = (value * 1e8) / globalSpread;
-	const toolTipText = `${name}\n${inMsCount} ms`;
-
-	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * 9;
+	const inMsCount = value;
+	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
+	const width = (value * 1e2) / (globalSpread * 1e6);
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * 9 - 16;
 
 	return (
 		<>
@@ -114,9 +112,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 							leftOffset={nodeLeftOffset.toString()}
 							width={width.toString()}
 							bgColor={serviceColour}
-							toolTipText={toolTipText}
 							id={id}
-							inMsCount={inMsCount}
+							inMsCount={(inMsCount/1e6)}
 							intervalUnit={intervalUnit}
 						/>
 					</Col>
