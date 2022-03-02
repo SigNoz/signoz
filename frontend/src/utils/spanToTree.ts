@@ -1,9 +1,10 @@
-import { pushDStree, RefItem, span } from 'store/actions';
+import { cloneDeep } from 'lodash-es';
+import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 // PNOTE - should the data be taken from redux or only through props? - Directly as arguments
 
-export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
+export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 	// Initializing tree. What should be returned is trace is empty? We should have better error handling
-	let tree: pushDStree = {
+	let tree: ITraceTree = {
 		id: 'empty',
 		name: 'default',
 		value: 0,
@@ -11,8 +12,11 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		startTime: 0,
 		tags: [],
 		children: [],
-		parent: undefined,
+		serviceColour: '',
+		serviceName: '',
 	};
+
+	let spanlist = cloneDeep(originalList);
 
 	// let spans :spanItem[]= trace.spans;
 
@@ -25,12 +29,15 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		//May1
 		//https://stackoverflow.com/questions/13315131/enforcing-the-type-of-the-indexed-members-of-a-typescript-object
 
-		const mapped_array: { [id: string]: span } = {};
+		const mapped_array: { [id: string]: Span } = {};
+		const originalListArray: { [id: string]: Span } = {};
 
 		for (let i = 0; i < spanlist.length; i++) {
+			originalListArray[spanlist[i][1]] = originalList[i];
+
 			mapped_array[spanlist[i][1]] = spanlist[i];
-			mapped_array[spanlist[i][1]][10] = []; //initialising the 10th element in the span data structure which is array
-			//  of type pushDStree
+			mapped_array[spanlist[i][1]][10] = []; //initialising the 10th element in the Span data structure which is array
+			//  of type ITraceTree
 			// console.log('IDs while creating mapped array')
 			// console.log(`SpanID is ${spanlist[i][1]}\n`);
 		}
@@ -55,7 +62,11 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 				}
 			}
 
-			const push_object: pushDStree = {
+			const errorKey =
+				JSON.parse(decodeURIComponent(originalListArray[id][10][0] || '{}'))
+					.attributeMap || {};
+
+			const push_object: ITraceTree = {
 				id: child_span[1],
 				name: child_span[4],
 				value: parseInt(child_span[6]),
@@ -65,7 +76,13 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 				children: mapped_array[id][10],
 				serviceName: child_span[3],
 				hasError: !!child_span[11],
+				serviceColour: '',
+				event: Object.keys(errorKey).map((e) => ({
+					key: e,
+					value: errorKey[e],
+				})),
 			};
+
 			const referencesArr = mapped_array[id][9];
 			let refArray = [];
 			if (typeof referencesArr === 'string') {
@@ -73,7 +90,7 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 			} else {
 				refArray = referencesArr;
 			}
-			const references: RefItem[] = [];
+			const references = [];
 
 			refArray.forEach((element) => {
 				element = element
@@ -119,5 +136,5 @@ export const spanToTreeUtil = (spanlist: span[]): pushDStree => {
 		} // end of for loop
 	} // end of if(spans)
 
-	return tree;
+	return { ...tree };
 };

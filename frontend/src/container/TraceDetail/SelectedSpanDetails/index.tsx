@@ -10,6 +10,7 @@ import {
 	CustomText,
 	CustomTitle,
 } from './styles';
+import ErrorTag from './ErrorTag';
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 	const { tree } = props;
@@ -18,7 +19,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 		return <></>;
 	}
 
-	const { name, tags, serviceName, hasError } = tree;
+	const { name, tags, serviceName, hasError, event } = tree;
 
 	return (
 		<CardContainer>
@@ -54,13 +55,15 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 						<Typography>No tags in selected span</Typography>
 					)}
 				</TabPane>
-				<TabPane tab="Errors" key="2">
-					{hasError && tree.error && tree.error.length !== 0 ? (
-						tree.error.map((errorTag) => (
-							<React.Fragment key={errorTag.key}>
-								<CustomSubTitle>{errorTag.key}</CustomSubTitle>
-								<CustomSubText>true</CustomSubText>
-							</React.Fragment>
+				<TabPane tab="Events" key="2">
+					{hasError && tree.event && tree.event.length !== 0 ? (
+						tree.event.map(({ key, value }) => (
+							<ErrorTag
+								{...{
+									keyName: key,
+									value,
+								}}
+							/>
 						))
 					) : (
 						<Typography>No errors data in selected span</Typography>
