@@ -2,6 +2,7 @@ import { Tooltip, Typography } from 'antd';
 import React from 'react';
 import { SpanBorder, SpanText, SpanWrapper, SpanLine } from './styles';
 import { toFixed } from 'utils/toFixed'
+import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
 interface SpanLengthProps {
 	width: string;
 	leftOffset: string;
@@ -9,15 +10,16 @@ interface SpanLengthProps {
 	toolTipText: string;
 	id: string;
 	inMsCount: number;
+	intervalUnit: IIntervalUnit;
 }
 
 const SpanLength = (props: SpanLengthProps): JSX.Element => {
-	const { width, leftOffset, bgColor } = props;
+	const { width, leftOffset, bgColor, intervalUnit } = props;
 	return (
 		<SpanWrapper>
 			<SpanLine leftOffset={leftOffset} />
 			<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
-			<SpanText leftOffset={leftOffset}>{`${toFixed(props.inMsCount, 2)} ms`}</SpanText>
+			<SpanText leftOffset={leftOffset}>{`${toFixed(resolveTimeFromInterval(props.inMsCount , intervalUnit), 2)} ${intervalUnit.name}`}</SpanText>
 		</SpanWrapper>
 	);
 };

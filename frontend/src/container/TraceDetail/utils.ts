@@ -13,6 +13,32 @@ export const filterSpansByString = (
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
+export interface IIntervalUnit {
+	name: 'ms' | 's' | 'm';
+	multiplier: number;
+}
+export const INTERVAL_UNITS: IIntervalUnit[] = [
+	{
+		name: 'ms',
+		multiplier: 1,
+	},
+	{
+		name: 's',
+		multiplier: 1 / 1e3,
+	},
+	{
+		name: 'm',
+		multiplier: 1 / (1e3 * 60),
+	},
+];
+
+export const resolveTimeFromInterval = (
+	intervalTime: number,
+	intervalUnit: IIntervalUnit,
+) => {
+	return intervalTime * intervalUnit.multiplier;
+};
+
 export const getSortedData = (treeData: ITraceTree) => {
 	const traverse = (treeNode: ITraceTree, level: number = 0) => {
 		if (!treeNode) {

@@ -15,6 +15,7 @@ import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import { ITraceMetaData } from '..';
 import { Col, Row } from 'antd';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
+import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const {
@@ -32,7 +33,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 		activeSelectedId,
 		level,
 		activeSpanPath,
-		isExpandAll
+		isExpandAll,
+		intervalUnit
 	} = props;
 
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
@@ -59,12 +61,10 @@ const Trace = (props: TraceProps): JSX.Element => {
 
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
-	const inMsCount = value / 1e6;
-	const nodeLeftOffset = ((startTime * 1e6 - globalStart) * 1e8) / globalSpread;
-	const width = (value * 1e8) / globalSpread;
-	const toolTipText = `${name}\n${inMsCount} ms`;
-
-	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * 9;
+	const inMsCount = value;
+	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
+	const width = (value * 1e2) / (globalSpread * 1e6);
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * 9 - 16;
 
 	return (
 		<>
@@ -112,9 +112,9 @@ const Trace = (props: TraceProps): JSX.Element => {
 							leftOffset={nodeLeftOffset.toString()}
 							width={width.toString()}
 							bgColor={serviceColour}
-							toolTipText={toolTipText}
 							id={id}
-							inMsCount={inMsCount}
+							inMsCount={(inMsCount/1e6)}
+							intervalUnit={intervalUnit}
 						/>
 					</Col>
 				</CardContainer>
@@ -134,6 +134,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 								level={level + 1}
 								activeSpanPath={activeSpanPath}
 								isExpandAll={isExpandAll}
+								intervalUnit={intervalUnit}
 							/>
 						))}
 					</>
@@ -156,6 +157,7 @@ interface TraceProps extends pushDStree, ITraceGlobal {
 	level: number;
 	activeSpanPath: string[];
 	isExpandAll: boolean;
+	intervalUnit: IIntervalUnit;
 }
 
 export default Trace;

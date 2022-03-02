@@ -7,6 +7,8 @@ import {
 	TraceFlameGraphContainer,
 	TOTAL_SPAN_HEIGHT,
 } from './styles';
+import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
+import { toFixed } from 'utils/toFixed';
 
 const SpanItem = ({
 	topOffset = 0, // top offset in px
@@ -85,10 +87,13 @@ const TraceFlameGraph = (props: {
 	onSpanSelect: Function;
 	hoveredSpanId: string;
 	selectedSpanId: string;
+	intervalUnit: IIntervalUnit
 }) => {
 	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return null;
 	}
+	const { intervalUnit } = props;
+
 	const {
 		globalStart,
 		globalEnd,
@@ -96,7 +101,6 @@ const TraceFlameGraph = (props: {
 		totalSpans,
 		levels,
 	} = props.traceMetaData;
-
 	const RenderSpanRecursive = ({
 		level = 0,
 		spanData,
@@ -118,9 +122,9 @@ const TraceFlameGraph = (props: {
 			return null;
 		}
 
-		const leftOffset = ((spanData.startTime * 1e6 - globalStart) * 1e8) / spread;
-		const width = (spanData.value * 1e8) / spread;
-		const toolTipText = `${spanData.name}\n${spanData.value / 1e6} ms`;
+		const leftOffset = ((spanData.startTime - globalStart) * 100) / (spread);
+		const width = (spanData.value / 1e6) * 100 / (spread);
+		const toolTipText = `${spanData.name}\n${toFixed(resolveTimeFromInterval(spanData.value / 1e6, intervalUnit), 2)} ${intervalUnit.name}`;
 
 		return (
 			<>
