@@ -7,7 +7,7 @@ import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import { filterSpansByString, getSortedData } from './utils';
+import { getSortedData } from './utils';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
@@ -31,7 +31,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
 
 	const [treeData, setTreeData] = useState<ITraceTree>(
-		spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
+		spanToTreeUtil(response[0].events),
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
@@ -57,7 +57,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	const onSearchHandler = (value: string) => {
 		setSearchSpanString(value);
-		setTreeData(spanToTreeUtil(filterSpansByString(value, response[0].events)));
+		setTreeData(spanToTreeUtil(response[0].events));
 	};
 	const onFocusSelectedSpanHandler = () => {
 		const treeNode = getNodeById(activeSelectedId, tree);
@@ -67,9 +67,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	};
 
 	const onResetHandler = () => {
-		setTreeData(
-			spanToTreeUtil(filterSpansByString(searchSpanString, response[0].events)),
-		);
+		setTreeData(spanToTreeUtil(response[0].events));
 	};
 
 	return (
@@ -159,10 +157,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 					}}
 				>
 					<GanttChart
-						onResetHandler={onResetHandler}
 						traceMetaData={traceMetaData}
 						data={tree}
-						setTreeData={setTreeData}
 						activeSelectedId={activeSelectedId}
 						activeHoverId={activeHoverId}
 						setActiveHoverId={setActiveHoverId}

@@ -22,7 +22,7 @@ const TraceDetail = (): JSX.Element => {
 		);
 	}
 
-	if (traceDetailResponse.loading || !traceDetailResponse.payload) {
+	if (traceDetailResponse.loading || traceDetailResponse.payload === undefined) {
 		return <Spinner tip="Loading.." />;
 	}
 

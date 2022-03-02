@@ -33,20 +33,19 @@ const SpanItem = ({
 	const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
 
 	useLayoutEffect(() => {
-		if (!isSelected && (spanData.id === hoveredSpanId || spanData.id === selectedSpanId)) {
-			setIsSelected(true)
+		if (
+			!isSelected &&
+			(spanData.id === hoveredSpanId || spanData.id === selectedSpanId)
+		) {
+			setIsSelected(true);
 		}
-	}, [hoveredSpanId, selectedSpanId])
+	}, [hoveredSpanId, selectedSpanId]);
 
 	const handleHover = (hoverState: boolean) => {
-
 		setIsLocalHover(hoverState);
 
-		if (hoverState)
-			onSpanHover(spanData.id);
-		else
-			onSpanHover(null);
-
+		if (hoverState) onSpanHover(spanData.id);
+		else onSpanHover(null);
 	};
 
 	const handleClick = () => {
@@ -55,7 +54,6 @@ const SpanItem = ({
 
 	return (
 		<>
-
 			<SpanItemContainer
 				title={tooltipText}
 				onClick={handleClick}
@@ -76,7 +74,6 @@ const SpanItem = ({
 				selected={isSelected}
 				zIdx={isSelected ? 1 : 0}
 			></SpanItemContainer>
-
 		</>
 	);
 };
@@ -107,7 +104,7 @@ const TraceFlameGraph = (props: {
 		onSpanHover,
 		onSpanSelect,
 		hoveredSpanId,
-		selectedSpanId
+		selectedSpanId,
 	}: {
 		spanData: pushDStree;
 		level?: number;

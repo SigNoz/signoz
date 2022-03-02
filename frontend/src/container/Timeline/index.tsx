@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { isEqual } from 'lodash-es'
+import { isEqual } from 'lodash-es';
 import styles from './style.module.css';
 import { useMeasure } from 'react-use';
-import { toFixed } from 'utils/toFixed'
+import { toFixed } from 'utils/toFixed';
 interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: object;
@@ -20,13 +20,17 @@ const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 
 	const getIntervals = (traceMetaData, globalTraceMetadata) => {
 		//TODO time unit normalization
-		const { globalStart: localStart, globalEnd: localEnd, spread: localSpread } = traceMetaData;
-		const { globalStart, globalEnd, globalSpread } = globalTraceMetadata
+		const {
+			globalStart: localStart,
+			globalEnd: localEnd,
+			spread: localSpread,
+		} = traceMetaData;
+		const { globalStart, globalEnd, globalSpread } = globalTraceMetadata;
 
 		let baseInterval = 0;
 
 		if (!isEqual(traceMetaData, globalTraceMetadata)) {
-			baseInterval = (localStart - globalStart) / 1e6
+			baseInterval = (localStart - globalStart) / 1e6;
 		}
 
 		const TOTAL_INTERVAL = 6;
@@ -49,7 +53,7 @@ const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 				interval_time = baseSpread;
 			}
 			const interval: Interval = {
-				label: `${toFixed((interval_time + baseInterval), 2)}${intervalUnit}`,
+				label: `${toFixed(interval_time + baseInterval, 2)}${intervalUnit}`,
 				percentage: (interval_time / baseSpread) * 100,
 			};
 			intervals.push(interval);
@@ -59,8 +63,7 @@ const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 
 	useMemo(() => {
 		getIntervals(traceMetaData, globalTraceMetadata);
-	}, [traceMetaData, globalTraceMetadata])
-
+	}, [traceMetaData, globalTraceMetadata]);
 
 	return (
 		<div ref={ref} style={{ flex: 1, overflow: 'inherit' }}>
@@ -76,14 +79,15 @@ const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 					x2={width - Timeline_H_Spacing}
 					y2={Timeline_Height}
 					stroke="grey"
-					stroke-width="1"
+					strokeWidth="1"
 				/>
 				{intervals &&
 					intervals.map((interval, index) => (
 						<g
-							transform={`translate(${Timeline_H_Spacing +
+							transform={`translate(${
+								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-								},0)`}
+							},0)`}
 							className={styles['timeline-tick']}
 							key={interval.label + interval.percentage + index}
 						>
@@ -94,7 +98,7 @@ const Timeline = ({ traceMetaData, globalTraceMetadata }: TimelineProps) => {
 								y1={Timeline_Height - 5}
 								y2={Timeline_Height + 0.5}
 								stroke="grey"
-								stroke-width="1"
+								strokeWidth="1"
 							/>
 						</g>
 					))}

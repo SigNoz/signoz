@@ -35,7 +35,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 			</Space>
 			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
-					{!hasError ? (
+					{tags.length !== 0 ? (
 						tags.map((tags) => {
 							return (
 								<React.Fragment>
@@ -55,8 +55,8 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					)}
 				</TabPane>
 				<TabPane tab="Errors" key="2">
-					{hasError ? (
-						tags.map((errorTag) => (
+					{hasError && tree.error && tree.error.length !== 0 ? (
+						tree.error.map((errorTag) => (
 							<React.Fragment key={errorTag.key}>
 								<CustomSubTitle>{errorTag.key}</CustomSubTitle>
 								<CustomSubText>true</CustomSubText>

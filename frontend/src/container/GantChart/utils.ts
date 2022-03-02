@@ -88,6 +88,8 @@ const getSpanWithoutChildren = (
 		tags: span.tags,
 		time: span.time,
 		value: span.value,
+		error: span.error,
+		hasError: span.hasError,
 	};
 };
 

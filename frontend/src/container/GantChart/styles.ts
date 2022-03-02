@@ -40,17 +40,6 @@ export const CardContainer = styled.li`
 	width: 100%;
 `;
 
-export const ButtonContainer = styled.div`
-	&&& {
-		margin-top: 2rem;
-		padding-right: 3rem;
-		display: flex;
-		justify-content: flex-end;
-		align-items: center;
-		gap: 2rem;
-	}
-`;
-
 export const CollapseButton = styled.div`
 	position: absolute;
 	top: 0;

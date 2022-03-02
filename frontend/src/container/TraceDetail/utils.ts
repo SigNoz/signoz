@@ -2,14 +2,14 @@
  * string is present on the span or not
  */
 import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
-import { isEmpty, sortBy } from 'lodash-es';
+import { sortBy } from 'lodash-es';
 
 export const filterSpansByString = (
 	searchString: string,
 	spans: Span[],
 ): Span[] =>
 	spans.filter((span) => {
-		const spanWithoutChildren = [...span].slice(0, 10);
+		const spanWithoutChildren = [...span].slice(0, 11);
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
