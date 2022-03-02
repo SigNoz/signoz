@@ -5,7 +5,6 @@ export const Wrapper = styled.ul`
 	position: absolute;
 	width: 100%;
 	height: 100%;
-	overflow-y: scroll;
 
 	ul {
 		list-style: none;
@@ -39,17 +38,6 @@ export const CardWrapper = styled.div`
 export const CardContainer = styled.li`
 	display: flex;
 	width: 100%;
-`;
-
-export const ButtonContainer = styled.div`
-	&&& {
-		margin-top: 2rem;
-		padding-right: 3rem;
-		display: flex;
-		justify-content: flex-end;
-		align-items: center;
-		gap: 2rem;
-	}
 `;
 
 export const CollapseButton = styled.div`

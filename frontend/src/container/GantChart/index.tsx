@@ -1,19 +1,15 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import Trace from './Trace';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons'
-import { Wrapper, CardWrapper, CardContainer, ButtonContainer, CollapseButton } from './styles';
-import { pushDStree } from 'store/actions';
-import { Button } from 'antd';
-import { getNodeById, getSpanPath } from './utils';
-import { FilterOutlined } from '@ant-design/icons';
+import { Wrapper, CardWrapper, CardContainer, CollapseButton } from './styles';
+import { getSpanPath } from './utils';
 import { IIntervalUnit } from 'container/TraceDetail/utils'
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 const GanttChart = (props: GanttChartProps): JSX.Element => {
 	const {
 		data,
 		traceMetaData,
-		onResetHandler,
-		setTreeData,
 		activeHoverId,
 		setActiveHoverId,
 		activeSelectedId,
@@ -27,12 +23,12 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 	const [isExpandAll, setIsExpandAll] = useState<boolean>(false);
 
 	const activeSpanPath = useMemo(() => {
-		return getSpanPath(data, spanId)
-	}, [spanId])
+		return getSpanPath(data, spanId);
+	}, [spanId]);
 
 	const handleCollapse = () => {
-		setIsExpandAll(prev => !prev)
-	}
+		setIsExpandAll((prev) => !prev);
+	};
 	return (
 		<>
 			<Wrapper>
@@ -73,10 +69,8 @@ export interface ITraceMetaData {
 }
 
 export interface GanttChartProps {
-	data: pushDStree;
+	data: ITraceTree;
 	traceMetaData: ITraceMetaData;
-	onResetHandler: VoidFunction;
-	setTreeData: React.Dispatch<React.SetStateAction<pushDStree>>;
 	activeSelectedId: string;
 	activeHoverId: string;
 	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;

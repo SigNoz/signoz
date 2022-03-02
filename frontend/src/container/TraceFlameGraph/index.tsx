@@ -7,6 +7,8 @@ import {
 	TraceFlameGraphContainer,
 	TOTAL_SPAN_HEIGHT,
 } from './styles';
+import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
+import { toFixed } from 'utils/toFixed';
 
 const SpanItem = ({
 	topOffset = 0, // top offset in px
@@ -33,20 +35,19 @@ const SpanItem = ({
 	const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
 
 	useLayoutEffect(() => {
-		if (!isSelected && (spanData.id === hoveredSpanId || spanData.id === selectedSpanId)) {
-			setIsSelected(true)
+		if (
+			!isSelected &&
+			(spanData.id === hoveredSpanId || spanData.id === selectedSpanId)
+		) {
+			setIsSelected(true);
 		}
-	}, [hoveredSpanId, selectedSpanId])
+	}, [hoveredSpanId, selectedSpanId]);
 
 	const handleHover = (hoverState: boolean) => {
-
 		setIsLocalHover(hoverState);
 
-		if (hoverState)
-			onSpanHover(spanData.id);
-		else
-			onSpanHover(null);
-
+		if (hoverState) onSpanHover(spanData.id);
+		else onSpanHover(null);
 	};
 
 	const handleClick = () => {
@@ -55,7 +56,6 @@ const SpanItem = ({
 
 	return (
 		<>
-
 			<SpanItemContainer
 				title={tooltipText}
 				onClick={handleClick}
@@ -76,7 +76,6 @@ const SpanItem = ({
 				selected={isSelected}
 				zIdx={isSelected ? 1 : 0}
 			></SpanItemContainer>
-
 		</>
 	);
 };
@@ -88,10 +87,13 @@ const TraceFlameGraph = (props: {
 	onSpanSelect: Function;
 	hoveredSpanId: string;
 	selectedSpanId: string;
+	intervalUnit: IIntervalUnit
 }) => {
 	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return null;
 	}
+	const { intervalUnit } = props;
+
 	const {
 		globalStart,
 		globalEnd,
@@ -99,7 +101,6 @@ const TraceFlameGraph = (props: {
 		totalSpans,
 		levels,
 	} = props.traceMetaData;
-
 	const RenderSpanRecursive = ({
 		level = 0,
 		spanData,
@@ -107,7 +108,7 @@ const TraceFlameGraph = (props: {
 		onSpanHover,
 		onSpanSelect,
 		hoveredSpanId,
-		selectedSpanId
+		selectedSpanId,
 	}: {
 		spanData: pushDStree;
 		level?: number;
@@ -123,7 +124,7 @@ const TraceFlameGraph = (props: {
 
 		const leftOffset = ((spanData.startTime - globalStart) * 100) / (spread);
 		const width = (spanData.value / 1e6) * 100 / (spread);
-		const toolTipText = `${spanData.name}\n${spanData.value} ms`;
+		const toolTipText = `${spanData.name}\n${toFixed(resolveTimeFromInterval(spanData.value / 1e6, intervalUnit), 2)} ${intervalUnit.name}`;
 
 		return (
 			<>

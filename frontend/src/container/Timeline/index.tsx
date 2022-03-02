@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { isEqual } from 'lodash-es'
 import styles from './style.module.css';
 import { useMeasure } from 'react-use';
 import { toFixed } from 'utils/toFixed'
 import { INTERVAL_UNITS, resolveTimeFromInterval } from 'container/TraceDetail/utils'
+
 interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: object;
@@ -110,7 +111,7 @@ const Timeline = ({ traceMetaData, globalTraceMetadata, intervalUnit, setInterva
 					x2={width - Timeline_H_Spacing}
 					y2={Timeline_Height}
 					stroke="grey"
-					stroke-width="1"
+					strokeWidth="1"
 				/>
 				{intervals &&
 					intervals.map((interval, index) => (
@@ -128,7 +129,7 @@ const Timeline = ({ traceMetaData, globalTraceMetadata, intervalUnit, setInterva
 								y1={Timeline_Height - 5}
 								y2={Timeline_Height + 0.5}
 								stroke="grey"
-								stroke-width="1"
+								strokeWidth="1"
 							/>
 						</g>
 					))}

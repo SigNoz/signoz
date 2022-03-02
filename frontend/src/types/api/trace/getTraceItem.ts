@@ -32,9 +32,11 @@ export interface ITraceTree {
 	startTime: number;
 	tags: ITraceTag[];
 	children: ITraceTree[];
-	parent: ITraceTree;
+	parent?: ITraceTree;
 	serviceName: string;
 	serviceColour: string;
+	hasError?: boolean;
+	event?: ITraceTag[];
 }
 
 export interface ITraceTag {
