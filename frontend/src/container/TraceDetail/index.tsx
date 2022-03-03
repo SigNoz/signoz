@@ -20,7 +20,6 @@ import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import { INTERVAL_UNITS } from './utils'
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
-
 	const spanServiceColors = useMemo(
 		() => spanServiceNameToColorMapping(response[0].events),
 		[response],

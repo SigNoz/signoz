@@ -1,8 +1,10 @@
 import { Button, Modal } from 'antd';
+import useThemeMode from 'hooks/useThemeMode';
 import React, { useState } from 'react';
 import { CustomSubText, CustomSubTitle } from './styles';
 
 const ErrorTag = ({ keyName, value }: ErrorTagProps) => {
+	const { isDarkMode } = useThemeMode()
 	const [isOpen, setIsOpen] = useState(false);
 	const [isEllipsed] = useState(value.length > 24);
 
@@ -13,12 +15,12 @@ const ErrorTag = ({ keyName, value }: ErrorTagProps) => {
 	return (
 		<React.Fragment key={keyName}>
 			<CustomSubTitle>{keyName}</CustomSubTitle>
-			<CustomSubText ellipsis={isEllipsed}>{value}</CustomSubText>
-			{isEllipsed && (
-				<Button onClick={() => onToggleHandler(true)} type="link">
+			<CustomSubText isDarkMode={isDarkMode} ellipsis={isEllipsed}>{value} <br />{isEllipsed && (
+				<Button onClick={() => onToggleHandler(true)} type="link" style={{ margin: 0, padding: 0 }}>
 					View full log event message
 				</Button>
-			)}
+			)}</CustomSubText>
+
 
 			<Modal
 				onCancel={() => onToggleHandler(false)}
@@ -28,7 +30,7 @@ const ErrorTag = ({ keyName, value }: ErrorTagProps) => {
 				destroyOnClose
 			>
 				<CustomSubTitle>{keyName}</CustomSubTitle>
-				<CustomSubText>{value}</CustomSubText>
+				<CustomSubText isDarkMode={isDarkMode}>{value}</CustomSubText>
 			</Modal>
 		</React.Fragment>
 	);

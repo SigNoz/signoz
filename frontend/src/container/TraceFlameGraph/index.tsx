@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useMemo } from 'react';
 import Color from 'color';
-import { Tooltip } from 'antd';
-import { pushDStree, span } from 'store/actions';
+import { pushDStree } from 'store/actions';
 import {
 	SpanItemContainer,
 	TraceFlameGraphContainer,
 	TOTAL_SPAN_HEIGHT,
 } from './styles';
-import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
+import {
+	IIntervalUnit,
+	resolveTimeFromInterval,
+} from 'container/TraceDetail/utils';
 import { toFixed } from 'utils/toFixed';
+import useThemeMode from 'hooks/useThemeMode';
 
 const SpanItem = ({
 	topOffset = 0, // top offset in px
@@ -31,8 +34,10 @@ const SpanItem = ({
 	hoveredSpanId: string;
 	selectedSpanId: string;
 }) => {
+	const { serviceColour } = spanData;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
+	const { isDarkMode } = useThemeMode();
 
 	useLayoutEffect(() => {
 		if (
@@ -54,6 +59,13 @@ const SpanItem = ({
 		onSpanSelect(spanData.id);
 	};
 
+	const spanColor = useMemo((): string => {
+		const selectedSpanColor = isDarkMode
+			? Color(serviceColour).lighten(0.3)
+			: Color(serviceColour).darken(0.3);
+		return `${isSelected ? selectedSpanColor : serviceColour}`;
+	}, [isSelected, serviceColour]);
+
 	return (
 		<>
 			<SpanItemContainer
@@ -68,11 +80,7 @@ const SpanItem = ({
 				topOffset={topOffset}
 				leftOffset={leftOffset}
 				width={width}
-				spanColor={
-					isSelected
-						? `${Color(spanData.serviceColour).darken(0.3)}`
-						: `${spanData.serviceColour}`
-				}
+				spanColor={spanColor}
 				selected={isSelected}
 				zIdx={isSelected ? 1 : 0}
 			></SpanItemContainer>
@@ -87,7 +95,7 @@ const TraceFlameGraph = (props: {
 	onSpanSelect: Function;
 	hoveredSpanId: string;
 	selectedSpanId: string;
-	intervalUnit: IIntervalUnit
+	intervalUnit: IIntervalUnit;
 }) => {
 	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return null;
@@ -122,9 +130,12 @@ const TraceFlameGraph = (props: {
 			return null;
 		}
 
-		const leftOffset = ((spanData.startTime - globalStart) * 100) / (spread);
-		const width = (spanData.value / 1e6) * 100 / (spread);
-		const toolTipText = `${spanData.name}\n${toFixed(resolveTimeFromInterval(spanData.value / 1e6, intervalUnit), 2)} ${intervalUnit.name}`;
+		const leftOffset = ((spanData.startTime - globalStart) * 100) / spread;
+		const width = ((spanData.value / 1e6) * 100) / spread;
+		const toolTipText = `${spanData.name}\n${toFixed(
+			resolveTimeFromInterval(spanData.value / 1e6, intervalUnit),
+			2,
+		)} ${intervalUnit.name}`;
 
 		return (
 			<>

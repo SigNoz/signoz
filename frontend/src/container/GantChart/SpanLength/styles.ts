@@ -5,12 +5,14 @@ interface Props {
 	width: string;
 	leftOffset: string;
 	bgColor: string;
+	isDarkMode: boolean;
 }
 
 export const SpanLine = styled.div<Props>`
 	width: ${({ leftOffset }) => `${leftOffset}%`};
-	height: 1px;
-	background: #303030;
+	height: 0px;
+	border-bottom: 0.1px solid
+		${({ isDarkMode }) => (isDarkMode ? '#303030' : '#c0c0c0')};
 	top: 50%;
 	position: absolute;
 `;
@@ -48,9 +50,8 @@ export const SpanText = styled(Typography)<Pick<Props, 'leftOffset'>>`
 	&&& {
 		left: ${({ leftOffset }) => `${leftOffset}%`};
 		top: 65%;
-
 		position: absolute;
-		color: #acacac;
+		color: ${({ isDarkMode }) => (isDarkMode ? '##ACACAC' : '#666')};
 		font-size: 0.75rem;
 	}
 `;

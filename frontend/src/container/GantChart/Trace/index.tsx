@@ -16,6 +16,7 @@ import { ITraceMetaData } from '..';
 import { Col, Row } from 'antd';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
 import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
+import useThemeMode from 'hooks/useThemeMode';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const {
@@ -37,6 +38,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		intervalUnit
 	} = props;
 
+	const { isDarkMode } = useThemeMode()
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 
 	useEffect(() => {
@@ -78,6 +80,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 					top={top}
 					isHovered={activeHoverId === id}
 					isSelected={activeSelectedId === id}
+					isDarkMode={isDarkMode}
 				/>
 
 				<CardContainer
@@ -90,6 +93,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 							<Col>
 								{totalSpans !== 1 && (
 									<CardComponent
+										isDarkMode={isDarkMode}
 										onClick={(e) => {
 											e.stopPropagation()
 											setOpen((state) => !state);
@@ -113,7 +117,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 							width={width.toString()}
 							bgColor={serviceColour}
 							id={id}
-							inMsCount={(inMsCount/1e6)}
+							inMsCount={(inMsCount / 1e6)}
 							intervalUnit={intervalUnit}
 						/>
 					</Col>
