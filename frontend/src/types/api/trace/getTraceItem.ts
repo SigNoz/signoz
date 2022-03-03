@@ -36,10 +36,15 @@ export interface ITraceTree {
 	serviceName: string;
 	serviceColour: string;
 	hasError?: boolean;
-	event?: ITraceTag[];
+	event?: ITraceEvents[];
 }
 
 export interface ITraceTag {
 	key: string;
 	value: string;
+}
+
+interface ITraceEvents {
+	attributeMap: { event: string; [key: string]: string };
+	name?: string;
 }

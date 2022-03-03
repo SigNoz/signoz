@@ -1,42 +1,75 @@
-import { Button, Modal } from 'antd';
+import { Button, Modal, Collapse } from 'antd';
 import React, { useState } from 'react';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { CustomSubText, CustomSubTitle } from './styles';
 
-const ErrorTag = ({ keyName, value }: ErrorTagProps) => {
+const { Panel } = Collapse;
+
+const ErrorTag = ({ event }: ErrorTagProps) => {
 	const [isOpen, setIsOpen] = useState(false);
-	const [isEllipsed] = useState(value.length > 24);
 
 	const onToggleHandler = (state: boolean) => {
 		setIsOpen(state);
 	};
 
 	return (
-		<React.Fragment key={keyName}>
-			<CustomSubTitle>{keyName}</CustomSubTitle>
-			<CustomSubText ellipsis={isEllipsed}>{value}</CustomSubText>
-			{isEllipsed && (
-				<Button onClick={() => onToggleHandler(true)} type="link">
-					View full log event message
-				</Button>
-			)}
+		<>
+			{event?.map(({ attributeMap, name }) => {
+				const attributes = Object.keys(attributeMap);
 
-			<Modal
-				onCancel={() => onToggleHandler(false)}
-				title="Log Message"
-				footer={[]}
-				visible={isOpen}
-				destroyOnClose
-			>
-				<CustomSubTitle>{keyName}</CustomSubTitle>
-				<CustomSubText>{value}</CustomSubText>
-			</Modal>
-		</React.Fragment>
+				return (
+					<Collapse
+						accordion
+						defaultActiveKey={[name || attributeMap.event]}
+						expandIconPosition="right"
+						collapsible="header"
+					>
+						<Panel
+							header={name || attributeMap?.event}
+							key={name || attributeMap.event}
+						>
+							{attributes.map((event) => {
+								const value = attributeMap[event];
+								const isEllipsed = event.length > 24;
+
+								return (
+									<>
+										<CustomSubTitle>{event}</CustomSubTitle>
+										<CustomSubText>{value}</CustomSubText>
+
+										{isEllipsed && (
+											<Button
+												style={{ padding: 0, marginBottom: '1rem' }}
+												onClick={() => onToggleHandler(true)}
+												type="link"
+											>
+												View full log event message
+											</Button>
+										)}
+
+										<Modal
+											onCancel={() => onToggleHandler(false)}
+											title="Log Message"
+											footer={[]}
+											visible={isOpen}
+											destroyOnClose
+										>
+											<CustomSubTitle>{event}</CustomSubTitle>
+											<CustomSubText>{value}</CustomSubText>
+										</Modal>
+									</>
+								);
+							})}
+						</Panel>
+					</Collapse>
+				);
+			})}
+		</>
 	);
 };
 
 interface ErrorTagProps {
-	keyName: string;
-	value: string;
+	event: ITraceTree['event'];
 }
 
 export default ErrorTag;
