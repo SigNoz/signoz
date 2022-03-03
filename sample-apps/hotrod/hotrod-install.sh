@@ -4,6 +4,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")";
 
 # Namespace to install sample app
 HOTROD_NAMESPACE="${HOTROD_NAMESPACE:-sample-application}"
+SIGNOZ_NAMESPACE="${SIGNOZ_NAMESPACE:-platform}"
 
 # HotROD's docker image
 if [[ -z $HOTROD_IMAGE ]]; then
@@ -25,9 +26,9 @@ HELM_RELEASE="${HELM_RELEASE:-my-release}"
 # Otel Collector service address
 if [[ -z $JAEGER_ENDPOINT ]]; then
     if [[ "$HELM_RELEASE" == *"signoz"* ]]; then
-        JAEGER_ENDPOINT="http://${HELM_RELEASE}-otel-collector.${HOTROD_NAMESPACE}.svc.cluster.local:14268/api/traces"
+        JAEGER_ENDPOINT="http://${HELM_RELEASE}-otel-collector.${SIGNOZ_NAMESPACE}.svc.cluster.local:14268/api/traces"
     else
-        JAEGER_ENDPOINT="http://${HELM_RELEASE}-signoz-otel-collector.${HOTROD_NAMESPACE}.svc.cluster.local:14268/api/traces"
+        JAEGER_ENDPOINT="http://${HELM_RELEASE}-signoz-otel-collector.${SIGNOZ_NAMESPACE}.svc.cluster.local:14268/api/traces"
     fi
 fi
 
