@@ -4,7 +4,6 @@ const { Text, Title, Paragraph } = Typography;
 
 export const CustomTitle = styled(Title)`
 	&&& {
-		color: #f2f2f2;
 		font-size: 14px;
 	}
 `;
@@ -12,13 +11,12 @@ export const CustomTitle = styled(Title)`
 export const CustomText = styled(Text)`
 	&&& {
 		color: #2d9cdb;
-		font-size: 14px;
 	}
 `;
 
 export const CustomSubTitle = styled(Title)`
 	&&& {
-		color: #bdbdbd;
+		/* color: #bdbdbd; */
 		font-size: 14px;
 		margin-bottom: 8px;
 	}
@@ -26,8 +24,7 @@ export const CustomSubTitle = styled(Title)`
 
 export const CustomSubText = styled(Paragraph)`
 	&&& {
-		background: #4f4f4f;
-		color: #2d9cdb;
+		background: ${({ isDarkMode }) => (isDarkMode ? '#444' : '#ddd')};
 		font-size: 12px;
 		padding: 6px 8px;
 		word-break: break-all;

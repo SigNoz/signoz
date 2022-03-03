@@ -1,8 +1,6 @@
 import { Space, Tabs, Typography } from 'antd';
 import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
-
-const { TabPane } = Tabs;
 import {
 	CardContainer,
 	CustomSubText,
@@ -11,10 +9,13 @@ import {
 	CustomTitle,
 } from './styles';
 import ErrorTag from './ErrorTag';
+import useThemeMode from 'hooks/useThemeMode';
+
+const { TabPane } = Tabs;
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 	const { tree } = props;
-
+	const { isDarkMode } = useThemeMode()
 	if (!tree) {
 		return <></>;
 	}
@@ -36,7 +37,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					<CustomText>{name}</CustomText>
 				</Space>
 			</Space>
-			<Tabs defaultActiveKey="1">
+			<Tabs defaultActiveKey="1" style={{ marginTop: '1rem' }}>
 				<TabPane tab="Tags" key="1">
 					{tags.length !== 0 ? (
 						tags.map((tags) => {
@@ -45,7 +46,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 									{tags.value && (
 										<>
 											<CustomSubTitle>{tags.key}</CustomSubTitle>
-											<CustomSubText>
+											<CustomSubText isDarkMode={isDarkMode}>
 												{tags.key === 'error' ? 'true' : tags.value}
 											</CustomSubText>
 										</>

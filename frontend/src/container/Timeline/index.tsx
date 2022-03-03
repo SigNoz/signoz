@@ -7,16 +7,14 @@ import {
 	INTERVAL_UNITS,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
-
+import useThemeMode from 'hooks/useThemeMode';
+import { Interval } from './types';
+import { getIntervalSpread, getIntervals } from './utils';
 interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: object;
 	intervalUnit: object;
 	setIntervalUnit: Function;
-}
-interface Interval {
-	label: string;
-	percentage: number;
 }
 const Timeline = ({
 	traceMetaData,
@@ -24,86 +22,23 @@ const Timeline = ({
 	intervalUnit,
 	setIntervalUnit,
 }: TimelineProps) => {
-	const [ref, { width, height }] = useMeasure<HTMLDivElement>();
+	const [ref, { width }] = useMeasure<HTMLDivElement>();
+	const { isDarkMode } = useThemeMode();
+
 	const Timeline_Height = 22;
 	const Timeline_H_Spacing = 0;
 
 	const [intervals, setIntervals] = useState<Interval[] | null>(null);
-
-	const {
-		globalStart: localStart,
-		globalEnd: localEnd,
-		spread: localSpread,
-	} = traceMetaData;
-	const { globalStart, globalEnd, globalSpread } = globalTraceMetadata;
-
-	const getIntervalSpread = () => {
-		let baseInterval = 0;
-
-		if (!isEqual(traceMetaData, globalTraceMetadata)) {
-			baseInterval = localStart - globalStart;
-		}
-
-		const MIN_INTERVALS = 5;
-		const baseSpread = localSpread;
-		let intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
-		const integerPartString = intervalSpread.toString().split('.')[0];
-		const integerPartLength = integerPartString.length;
-		const intervalSpreadNormalized =
-			Math.floor(Number(integerPartString) / Math.pow(10, integerPartLength - 1)) *
-			Math.pow(10, integerPartLength - 1);
-		return {
-			baseInterval,
-			baseSpread,
-			intervalSpreadNormalized,
-		};
-	};
-
-	const getIntervals = ({
-		baseInterval,
-		baseSpread,
-		intervalSpreadNormalized,
-	}) => {
-		const intervals: Interval[] = [
-			{
-				label: `${toFixed(resolveTimeFromInterval(baseInterval, intervalUnit), 2)}${
-					intervalUnit.name
-				}`,
-				percentage: 0,
-			},
-		];
-
-		let tempBaseSpread = baseSpread;
-		let elapsedIntervals = 0;
-
-		// while (tempBaseSpread) {
-		// 	let interval_time;
-		// 	if (tempBaseSpread <= 1.5 * intervalSpreadNormalized) {
-		// 		interval_time = elapsedIntervals + tempBaseSpread
-		// 		tempBaseSpread = 0
-		// 	}
-		// 	else {
-		// 		interval_time = elapsedIntervals + intervalSpreadNormalized;
-		// 		tempBaseSpread -= intervalSpreadNormalized
-		// 	}
-		// 	elapsedIntervals = interval_time;
-
-		// 	const interval: Interval = {
-		// 		label: `${toFixed(resolveTimeFromInterval((interval_time + baseInterval), intervalUnit), 2)}${intervalUnit.name}`,
-		// 		percentage: (interval_time / baseSpread) * 100,
-		// 	};
-		// 	intervals.push(interval);
-		// }
-
-		return intervals;
-	};
 
 	useMemo(() => {
 		const {
 			baseInterval,
 			baseSpread,
 			intervalSpreadNormalized,
-		} = getIntervalSpread();
+		} = getIntervalSpread({
+			globalTraceMetadata: globalTraceMetadata,
+			localTraceMetaData: traceMetaData,
+		});
 
 		let intervalUnit = INTERVAL_UNITS[0];
 		for (const idx in INTERVAL_UNITS) {
@@ -116,7 +51,12 @@ const Timeline = ({
 
 		setIntervalUnit(intervalUnit);
 		setIntervals(
-			getIntervals({ baseInterval, baseSpread, intervalSpreadNormalized }),
+			getIntervals({
+				baseInterval,
+				baseSpread,
+				intervalSpreadNormalized,
+				intervalUnit,
+			}),
 		);
 	}, [traceMetaData, globalTraceMetadata]);
 
@@ -133,7 +73,7 @@ const Timeline = ({
 					y1={Timeline_Height}
 					x2={width - Timeline_H_Spacing}
 					y2={Timeline_Height}
-					stroke="grey"
+					stroke={isDarkMode ? 'white' : 'black'}
 					strokeWidth="1"
 				/>
 				{intervals &&
@@ -146,13 +86,13 @@ const Timeline = ({
 							className={styles['timeline-tick']}
 							key={interval.label + interval.percentage + index}
 						>
-							<text y={13} fill="white">
+							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
 								{interval.label}
 							</text>
 							<line
 								y1={Timeline_Height - 5}
 								y2={Timeline_Height + 0.5}
-								stroke="grey"
+								stroke={isDarkMode ? 'white' : 'black'}
 								strokeWidth="1"
 							/>
 						</g>

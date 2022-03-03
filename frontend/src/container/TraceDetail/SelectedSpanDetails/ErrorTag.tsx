@@ -1,4 +1,5 @@
 import { Button, Modal, Collapse } from 'antd';
+import useThemeMode from 'hooks/useThemeMode';
 import React, { useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { CustomSubText, CustomSubTitle } from './styles';
