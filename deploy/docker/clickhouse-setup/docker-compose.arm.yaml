@@ -50,8 +50,8 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.6.0
-    command: ["--config=/etc/otel-collector-config.yaml", "--mem-ballast-size-mib=683"]
+    image: signoz/otelcontribcol:0.43.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
@@ -64,7 +64,7 @@ services:
 
   otel-collector-metrics:
     image: signoz/otelcontribcol:0.6.0
-    command: ["--config=/etc/otel-collector-metrics-config.yaml", "--mem-ballast-size-mib=683"]
+    command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
     depends_on:
