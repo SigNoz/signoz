@@ -28,10 +28,8 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 
 				return (
 					<Collapse
-						accordion
 						defaultActiveKey={[name || attributeMap.event]}
 						expandIconPosition="right"
-						collapsible="header"
 					>
 						<Panel
 							header={name || attributeMap?.event}
