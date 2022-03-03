@@ -6,14 +6,18 @@ cd "$(dirname "${BASH_SOURCE[0]}")";
 HOTROD_NAMESPACE="${HOTROD_NAMESPACE:-sample-application}"
 
 # HotROD's docker image
-HOTROD_REPO="${HOTROD_REPO:-jaegertracing/example-hotrod}"
-HOTROD_TAG="${HOTROD_TAG:-1.30}"
-HOTROD_REPO="${HOTROD_REPO}:${HOTROD_TAG}"
+if [[ -z $HOTROD_IMAGE ]]; then
+    HOTROD_REPO="${HOTROD_REPO:-jaegertracing/example-hotrod}"
+    HOTROD_TAG="${HOTROD_TAG:-1.30}"
+    HOTROD_IMAGE="${HOTROD_REPO}:${HOTROD_TAG}"
+fi
 
 # Locust's docker image
-LOCUST_REPO="${LOCUST_REPO:-grubykarol/locust}"
-LOCUST_TAG="${LOCUST_TAG:-0.8.1-py3.6}"
-LOCUST_IMAGE="${LOCUST_REPO}:${LOCUST_TAG}"
+if [[ -z $LOCUST_IMAGE ]]; then
+    LOCUST_REPO="${LOCUST_REPO:-grubykarol/locust}"
+    LOCUST_TAG="${LOCUST_TAG:-0.8.1-py3.6}"
+    LOCUST_IMAGE="${LOCUST_REPO}:${LOCUST_TAG}"
+fi
 
 # Helm release name
 HELM_RELEASE="${HELM_RELEASE:-my-release}"
