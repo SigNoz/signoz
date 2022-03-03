@@ -3,7 +3,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}")";
 
 # Namespace to install sample app
-HOTROD_NAMESPACE="${HOTROD_NAMESPACE:-sample-application}"
+HOTROD_NAMESPACE=${HOTROD_NAMESPACE:-"sample-application"}
 SIGNOZ_NAMESPACE="${SIGNOZ_NAMESPACE:-platform}"
 
 # HotROD's docker image

@@ -2,7 +2,7 @@
 
 cd "$(dirname "${BASH_SOURCE[0]}")";
 
-HOTROD_NAMESPACE="${HOTROD_NAMESPACE:-sample-application}"
+HOTROD_NAMESPACE=${HOTROD_NAMESPACE:-"sample-application"}
 
 if [[ "${HOTROD_NAMESPACE}" == "default" || "${HOTROD_NAMESPACE}" == "kube-system" || "${HOTROD_NAMESPACE}" == "platform" ]]; then
     echo "Default k8s namespace and SigNoz namespace must not be deleted"
