@@ -46,24 +46,26 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 										<CustomSubTitle>{event}</CustomSubTitle>
 										<CustomSubText ellipsis={isEllipsed} isDarkMode={isDarkMode}>
 											{value}
+											<br />
+											{isEllipsed && (
+												<Button
+													style={{ padding: 0, margin: 0 }}
+													onClick={() => {
+														onToggleHandler(true);
+														setText({
+															subText: value,
+															text: event,
+														});
+														// useTextRef.current = value;
+													}}
+													type="link"
+												>
+													View full log event message
+												</Button>
+											)}
 										</CustomSubText>
 
-										{isEllipsed && (
-											<Button
-												style={{ padding: 0, marginBottom: '1rem' }}
-												onClick={() => {
-													onToggleHandler(true);
-													setText({
-														subText: value,
-														text: event,
-													});
-													// useTextRef.current = value;
-												}}
-												type="link"
-											>
-												View full log event message
-											</Button>
-										)}
+
 									</>
 								);
 							})}
