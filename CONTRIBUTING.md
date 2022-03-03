@@ -21,6 +21,12 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 - comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L59`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
+    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L36`
+
+    ```docker
+    ports:
+      - "8080:8080"
+    ```
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d`
   - If you are on arm64 processors (Apple M1 Macbooks) run `sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d`
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
