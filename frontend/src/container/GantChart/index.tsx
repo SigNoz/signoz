@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Trace from './Trace';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons'
 import { Wrapper, CardWrapper, CardContainer, CollapseButton } from './styles';
@@ -21,10 +21,15 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 	const { globalStart, spread: globalSpread } = traceMetaData;
 
 	const [isExpandAll, setIsExpandAll] = useState<boolean>(false);
+	const [activeSpanPath, setActiveSpanPath] = useState<string[]>([]);
 
-	const activeSpanPath = useMemo(() => {
-		return getSpanPath(data, spanId);
+	useEffect(() => {
+		setActiveSpanPath(getSpanPath(data, spanId))
 	}, [spanId]);
+
+	useEffect(() => {
+		setActiveSpanPath(getSpanPath(data, activeSelectedId))
+	}, [activeSelectedId]);
 
 	const handleCollapse = () => {
 		setIsExpandAll((prev) => !prev);

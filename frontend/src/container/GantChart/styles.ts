@@ -9,7 +9,7 @@ export const Wrapper = styled.ul`
 	ul {
 		list-style: none;
 		border-left: 1px solid #434343;
-		padding-left: 8px;
+		padding-left: 1rem;
 		width: 100%;
 	}
 
@@ -18,11 +18,11 @@ export const Wrapper = styled.ul`
 
 		&:before {
 			position: absolute;
-			left: -0.5rem;
+			left: -1rem;
 			top: 10px;
 			content: '';
 			height: 1px;
-			width: 0.5rem;
+			width: 1rem;
 			background-color: #434343;
 		}
 	}
@@ -31,7 +31,7 @@ export const Wrapper = styled.ul`
 export const CardWrapper = styled.div`
 	display: flex;
 	width: 100%;
-	margin-left: 0.5rem;
+	margin-left: 1rem;
 	margin-top: 1.5rem;
 `;
 

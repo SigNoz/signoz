@@ -60,7 +60,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					{tree.event && Object.keys(tree.event).length !== 0 ? (
 						<ErrorTag event={tree.event} />
 					) : (
-						<Typography>No errors data in selected span</Typography>
+						<Typography>No events data in selected span</Typography>
 					)}
 				</TabPane>
 			</Tabs>

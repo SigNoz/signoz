@@ -1,1 +1,1 @@
-export const SPAN_DETAILS_LEFT_COL_WIDTH = 300;
+export const SPAN_DETAILS_LEFT_COL_WIDTH = 350;
