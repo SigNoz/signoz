@@ -20,7 +20,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 		return <></>;
 	}
 
-	const { name, tags, serviceName, hasError, event } = tree;
+	const { name, tags, serviceName } = tree;
 
 	return (
 		<CardContainer>
