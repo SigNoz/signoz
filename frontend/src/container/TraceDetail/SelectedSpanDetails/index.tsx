@@ -15,14 +15,12 @@ const { TabPane } = Tabs;
 
 const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 	const { tree } = props;
-	const { isDarkMode } = useThemeMode()
+	const { isDarkMode } = useThemeMode();
 	if (!tree) {
 		return <></>;
 	}
 
 	const { name, tags, serviceName, hasError, event } = tree;
-
-	console.log({ event });
 
 	return (
 		<CardContainer>

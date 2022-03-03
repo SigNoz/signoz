@@ -62,8 +62,6 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 				}
 			}
 
-			console.log('asdasd');
-
 			const push_object: ITraceTree = {
 				id: child_span[1],
 				name: child_span[4],
