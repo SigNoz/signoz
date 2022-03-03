@@ -18,15 +18,12 @@ export const ServiceMapPage = Loadable(
 		),
 );
 
-export const TraceDetailPages = Loadable(
-	() => import(/* webpackChunkName: "TraceDetailPage" */ 'pages/Trace'),
+export const TraceFilter = Loadable(
+	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
 );
 
-export const TraceGraphPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "TraceGraphPage" */ 'modules/Traces/TraceGraphDef'
-		),
+export const TraceDetail = Loadable(
+	() => import(/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetail'),
 );
 
 export const UsageExplorerPage = Loadable(

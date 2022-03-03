@@ -61,7 +61,15 @@ const config = {
 			},
 			{
 				test: /\.css$/,
-				use: ['style-loader', 'css-loader'],
+				use: [
+					'style-loader',
+					{
+						loader: 'css-loader',
+						options: {
+							modules: true,
+						},
+					},
+				],
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
@@ -82,6 +90,9 @@ const config = {
 					},
 					{
 						loader: 'css-loader',
+						options: {
+							modules: true,
+						},
 					},
 					{
 						loader: 'less-loader',
