@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,9 +13,16 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"
 
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+type AppConfig struct {
+	Storage string
+}
+
+var configs *AppConfig
 
 func initZapLog() *zap.Logger {
 	config := zap.NewDevelopmentConfig()
@@ -25,7 +33,25 @@ func initZapLog() *zap.Logger {
 	return logger
 }
 
+func loadConfig() *AppConfig {
+	viper.AutomaticEnv()
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+
+	conf := &AppConfig{}
+	err = viper.Unmarshal(conf)
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+
+	return conf
+}
+
 func main() {
+	configs = loadConfig()
 
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
@@ -42,7 +68,7 @@ func main() {
 		// DruidClientUrl: constants.DruidClientUrl,
 	}
 
-	server, err := app.NewServer(serverOptions)
+	server, err := app.NewServer(serverOptions, configs.Storage)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
