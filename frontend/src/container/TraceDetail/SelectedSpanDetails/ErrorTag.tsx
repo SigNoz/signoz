@@ -1,4 +1,5 @@
 import { Button, Modal, Collapse } from 'antd';
+import useThemeMode from 'hooks/useThemeMode';
 import React, { useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { CustomSubText, CustomSubTitle } from './styles';
@@ -7,6 +8,7 @@ const { Panel } = Collapse;
 
 const ErrorTag = ({ event }: ErrorTagProps) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const { isDarkMode } = useThemeMode();
 
 	const onToggleHandler = (state: boolean) => {
 		setIsOpen(state);
@@ -35,7 +37,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 								return (
 									<>
 										<CustomSubTitle>{event}</CustomSubTitle>
-										<CustomSubText>{value}</CustomSubText>
+										<CustomSubText isDarkMode={isDarkMode}>{value}</CustomSubText>
 
 										{isEllipsed && (
 											<Button
@@ -55,7 +57,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 											destroyOnClose
 										>
 											<CustomSubTitle>{event}</CustomSubTitle>
-											<CustomSubText>{value}</CustomSubText>
+											<CustomSubText isDarkMode={isDarkMode}>{value}</CustomSubText>
 										</Modal>
 									</>
 								);
