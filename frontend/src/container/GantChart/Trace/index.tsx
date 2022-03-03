@@ -35,19 +35,37 @@ const Trace = (props: TraceProps): JSX.Element => {
 		level,
 		activeSpanPath,
 		isExpandAll,
-		intervalUnit
+		intervalUnit,
 	} = props;
 
 	const { isDarkMode } = useThemeMode()
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 
 	useEffect(() => {
-		setOpen(isExpandAll || activeSpanPath[level] === id)
-	}, [isExpandAll, activeSpanPath])
+		if (!isOpen) {
+			setOpen(activeSpanPath[level] === id)
+		}
+	}, [activeSpanPath, isOpen])
+
+	useEffect(() => {
+		if (isExpandAll) {
+			setOpen(isExpandAll)
+		}
+		else {
+			setOpen(activeSpanPath[level] === id)
+		}
+	}, [isExpandAll])
+
 	const isOnlyChild = props.children.length === 1;
 	const [top, setTop] = useState<number>(0);
 
 	const ref = useRef<HTMLUListElement>(null);
+
+	React.useEffect(() => {
+		if (activeSelectedId === id) {
+			ref.current?.scrollIntoView({ block: 'nearest', behavior: 'auto', inline: 'nearest' });
+		}
+	}, [activeSelectedId])
 
 	const onMouseEnterHandler = () => {
 		setActiveHoverId(props.id);
@@ -61,12 +79,15 @@ const Trace = (props: TraceProps): JSX.Element => {
 		setActiveHoverId('');
 	};
 
+	const onClick = () => {
+		setActiveSelectedId(id);
+	}
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
 	const inMsCount = value;
 	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
 	const width = (value * 1e2) / (globalSpread * 1e6);
-	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * 9 - 16;
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - (level * (16 + 1)) - 16;
 
 	return (
 		<>
@@ -84,9 +105,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 				/>
 
 				<CardContainer
-					onClick={() => {
-						setActiveSelectedId(id);
-					}}
+					onClick={onClick}
 				>
 					<Col flex={`${panelWidth}px`} style={{ overflow: 'hidden' }}>
 						<Row style={{ flexWrap: 'nowrap' }}>
