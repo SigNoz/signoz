@@ -1,10 +1,5 @@
 import { Menu, Typography } from 'antd';
-import {
-	MenuItem,
-	SlackButton,
-	SlackMenuItemContainer,
-	ToggleButton,
-} from './styles';
+import { SlackButton, SlackMenuItemContainer, ToggleButton } from './styles';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
@@ -17,7 +12,6 @@ import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
-import getTheme from 'lib/theme/getTheme';
 import setTheme from 'lib/theme/setTheme';
 
 import menus from './menuItems';
@@ -95,11 +89,10 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 						<Typography>{name}</Typography>
 					</Menu.Item>
 				))}
-
 				<SlackMenuItemContainer collapsed={collapsed}>
-					<MenuItem onClick={onClickSlackHandler} icon={<Slack />}>
+					<Menu.Item onClick={onClickSlackHandler} icon={<Slack />}>
 						<SlackButton>Support</SlackButton>
-					</MenuItem>
+					</Menu.Item>
 				</SlackMenuItemContainer>
 			</Menu>
 		</Sider>
