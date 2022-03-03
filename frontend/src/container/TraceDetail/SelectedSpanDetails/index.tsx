@@ -22,6 +22,8 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 
 	const { name, tags, serviceName, hasError, event } = tree;
 
+	console.log({ event });
+
 	return (
 		<CardContainer>
 			<Space direction="vertical" style={{ marginLeft: '0.5rem' }}>
@@ -57,15 +59,8 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					)}
 				</TabPane>
 				<TabPane tab="Events" key="2">
-					{hasError && tree.event && tree.event.length !== 0 ? (
-						tree.event.map(({ key, value }) => (
-							<ErrorTag
-								{...{
-									keyName: key,
-									value,
-								}}
-							/>
-						))
+					{tree.event && Object.keys(tree.event).length !== 0 ? (
+						<ErrorTag event={tree.event} />
 					) : (
 						<Typography>No errors data in selected span</Typography>
 					)}

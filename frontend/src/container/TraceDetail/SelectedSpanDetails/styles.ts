@@ -22,7 +22,11 @@ export const CustomSubTitle = styled(Title)`
 	}
 `;
 
-export const CustomSubText = styled(Paragraph)`
+interface CustomSubTextProps {
+	isDarkMode: boolean;
+}
+
+export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 	&&& {
 		background: ${({ isDarkMode }) => (isDarkMode ? '#444' : '#ddd')};
 		font-size: 12px;

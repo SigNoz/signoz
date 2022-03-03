@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { cloneDeep } from 'lodash-es'
 import { Col, Divider, Row, Typography, Space, Button } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
 import GanttChart from 'container/GantChart';
@@ -17,7 +16,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
 import history from 'lib/history';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import { INTERVAL_UNITS } from './utils'
+import { INTERVAL_UNITS } from './utils';
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const spanServiceColors = useMemo(

@@ -62,9 +62,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 				}
 			}
 
-			const errorKey =
-				JSON.parse(decodeURIComponent(originalListArray[id][10][0] || '{}'))
-					.attributeMap || {};
+			console.log('asdasd');
 
 			const push_object: ITraceTree = {
 				id: child_span[1],
@@ -77,10 +75,9 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 				serviceName: child_span[3],
 				hasError: !!child_span[11],
 				serviceColour: '',
-				event: Object.keys(errorKey).map((e) => ({
-					key: e,
-					value: errorKey[e],
-				})),
+				event: originalListArray[id][10].map((e) => {
+					return JSON.parse(decodeURIComponent(e || '{}')) || {};
+				}),
 			};
 
 			const referencesArr = mapped_array[id][9];

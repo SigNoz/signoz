@@ -16,7 +16,6 @@ interface TimelineProps {
 	intervalUnit: object;
 	setIntervalUnit: Function;
 }
-
 const Timeline = ({
 	traceMetaData,
 	globalTraceMetadata,
