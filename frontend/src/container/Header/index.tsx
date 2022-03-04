@@ -11,7 +11,7 @@ import { Container } from './styles';
 const routesToSkip = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
-	ROUTES.TRACE_DETAIL,
+	ROUTES.TRACE_GRAPH,
 ];
 
 const TopNav = (): JSX.Element | null => {

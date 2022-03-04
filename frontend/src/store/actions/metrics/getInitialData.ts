@@ -6,7 +6,6 @@ import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
-import getStep from 'lib/getStep';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -65,7 +64,7 @@ export const GetInitialData = (
 					end: maxTime,
 					service: props.serviceName,
 					start: minTime,
-					step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
+					step,
 				}),
 				getTopEndPoints({
 					end: maxTime,

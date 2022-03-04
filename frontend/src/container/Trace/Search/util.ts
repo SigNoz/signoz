@@ -13,14 +13,14 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	const noOfTags = query.split(' AND ');
 
 	const tags: Tags = noOfTags.map((filter) => {
-		const isInPresent = filter.includes('in');
-		const isNotInPresent = filter.includes('not in');
+		const isInPresent = filter.includes('IN');
+		const isNotInPresent = filter.includes('NOT_IN');
 
-		if (!isNotInPresent && !isInPresent) {
+		if (!isNotInPresent || !isInPresent) {
 			isError = true;
 		}
 
-		const splitBy = isNotInPresent ? 'not in' : isInPresent ? 'in' : '';
+		const splitBy = isNotInPresent ? 'NOT_IN' : isInPresent ? 'IN' : '';
 
 		if (splitBy.length === 0) {
 			isError = true;
@@ -40,15 +40,13 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 
 		const removingFirstAndLastBrackets = `${filterForTags?.slice(1, -1)}`;
 
-		const noofFilters = removingFirstAndLastBrackets
-			.split(',')
-			.map((e) => e.replaceAll(/"/g, ''));
+		const noofFilters = removingFirstAndLastBrackets.split(',');
 
 		noofFilters.forEach((e) => {
 			const firstChar = e.charAt(0);
 			const lastChar = e.charAt(e.length - 1);
 
-			if (firstChar === '"' && lastChar === '"') {
+			if (!(firstChar === '"' && lastChar === '"')) {
 				isError = true;
 			}
 		});
@@ -75,9 +73,7 @@ export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 				isError = true;
 			}
 
-			return `${Key[0]} ${Operator} (${Values.map((e) => {
-				return `"${e.replaceAll(/"/g, '')}"`;
-			}).join(',')})`;
+			return `${Key[0]} ${Operator} (${Values.map((e) => `"${e}"`).join(',')})`;
 		})
 		.join(' AND ');
 

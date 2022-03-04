@@ -20,7 +20,6 @@ interface LogoProps {
 }
 
 export const Sider = styled(SiderComponent)`
-	z-index: 999;
 	.ant-typography {
 		color: white;
 	}
@@ -46,12 +45,17 @@ export const SlackButton = styled(Typography)`
 	}
 `;
 
-export const SlackMenuItemContainer = styled.div<LogoProps>`
-	position: fixed;
-	bottom: 48px;
-	background: #262626;
-	width: ${({ collapsed }) => (!collapsed ? '200px' : '80px')};
+export const MenuItem = styled(Menu.Item)`
+	&&& {
+		position: fixed;
+		bottom: 48px;
+		width: 100%;
+		height: 48px;
+		background: #262626;
+	}
+`;
 
+export const SlackMenuItemContainer = styled.div<LogoProps>`
 	&&& {
 		li {
 			${({ collapsed }) =>

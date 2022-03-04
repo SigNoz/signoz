@@ -205,8 +205,17 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
+	var errorEvent map[string]interface{}
+	for _, e := range item.Events {
+		json.Unmarshal([]byte(e), &errorEvent)
+		if errorEvent["name"] == "exception" {
+			break
+		} else {
+			errorEvent = nil
+		}
+	}
 
-	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, item.Events, item.HasError}
+	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, errorEvent, item.HasError}
 
 	return returnArray
 }

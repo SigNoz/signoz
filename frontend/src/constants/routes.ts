@@ -3,7 +3,7 @@ const ROUTES = {
 	SERVICE_METRICS: '/application/:servicename',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
-	TRACE_DETAIL: '/trace/:id',
+	TRACE_GRAPH: '/trace/:id',
 	SETTINGS: '/settings',
 	INSTRUMENTATION: '/add-instrumentation',
 	USAGE_EXPLORER: '/usage-explorer',

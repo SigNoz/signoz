@@ -5,6 +5,7 @@ export const Container = styled.div`
 	display: flex;
 	flex: 1;
 	min-height: 80vh;
+
 	margin-top: 1rem;
 `;
 

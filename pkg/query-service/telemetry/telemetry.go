@@ -22,7 +22,6 @@ const (
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
-const IP_NOT_FOUND_PLACEHOLDER = "NA"
 
 var telemetry *Telemetry
 var once sync.Once
@@ -60,7 +59,7 @@ func createTelemetry() {
 // Get preferred outbound ip of this machine
 func getOutboundIP() string {
 
-	ip := []byte(IP_NOT_FOUND_PLACEHOLDER)
+	ip := []byte("NA")
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
 	if err != nil {
@@ -117,7 +116,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 	}
 
 	userId := a.ipAddress
-	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
+	if a.isTelemetryAnonymous() {
 		userId = a.GetDistinctId()
 	}
 
