@@ -7,13 +7,19 @@ require (
 	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
+	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/aws/aws-sdk-go v1.27.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/containerd/containerd v1.4.12 // indirect
+	github.com/coreos/etcd v3.3.10+incompatible // indirect
+	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
+	github.com/cpuguy83/go-md2man v1.0.10 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/dhui/dktest v0.3.4 // indirect
 	github.com/docker/docker v20.10.12+incompatible // indirect
 	github.com/frankban/quicktest v1.13.0 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-kit/log v0.1.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/golang/snappy v0.0.4 // indirect
@@ -22,21 +28,21 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gosimple/slug v1.10.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
-	github.com/hashicorp/memberlist v0.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.11
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.0 // indirect
+	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
+	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/oklog/oklog v0.3.2
 	github.com/oklog/run v1.1.0 // indirect
@@ -44,6 +50,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pascaldekloe/goe v0.1.0 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v0.9.0-pre1.0.20181001174001-0a8115f42e03
@@ -57,11 +64,16 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/spf13/afero v1.8.1 // indirect
+	github.com/spf13/cast v1.4.1 // indirect
+	github.com/spf13/cobra v1.2.0 // indirect
+	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
+	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect
+	go.uber.org/zap v1.17.0
 	golang.org/x/net v0.0.0-20211013171255-e13a2654a71e // indirect
-	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c // indirect
+	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/api v0.51.0 // indirect
 	google.golang.org/genproto v0.0.0-20211013025323-ce878158c4d4 // indirect
@@ -69,9 +81,12 @@ require (
 	google.golang.org/grpc/examples v0.0.0-20210803221256-6ba56c814be7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gotest.tools/v3 v3.1.0 // indirect
 
 )
 
 replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.68
+
+replace github.com/hashicorp/consul => github.com/hashicorp/consul/api v1.1.0

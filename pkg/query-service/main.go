@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -13,16 +14,17 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-type AppConfig struct {
-	Storage string
-}
-
-var configs *AppConfig
+const (
+	defaultConfigFilename = "signoz-config"
+	envPrefix             = "SIGNOZ"
+)
 
 func initZapLog() *zap.Logger {
 	config := zap.NewDevelopmentConfig()
@@ -33,26 +35,67 @@ func initZapLog() *zap.Logger {
 	return logger
 }
 
-func loadConfig() *AppConfig {
-	viper.AutomaticEnv()
+func NewRootCommand() *cobra.Command {
+	storage := ""
+	datasource := ""
 
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Printf("%v", err)
+	rootCmd := &cobra.Command{
+		Use:   "query-service",
+		Short: "Query Service for SigNoz",
+		Long: `
+To specify the datastore, use the --storage flag:
+query-service --storage clickhouse
+
+To specify a data source, use the --datasource flag:
+query-service --datasource <URI>
+		`,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return initializeConfig(cmd)
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			setup(storage, datasource)
+		},
 	}
 
-	conf := &AppConfig{}
-	err = viper.Unmarshal(conf)
-	if err != nil {
-		fmt.Printf("%v", err)
-	}
+	rootCmd.Flags().StringVarP(&storage, "storage", "s", "", "Datastore for SigNoz (clickhouse, druid, etc.)")
+	rootCmd.Flags().StringVarP(&datasource, "datasource", "d", "", "Data source URI for the specified datastore")
 
-	return conf
+	return rootCmd
 }
 
-func main() {
-	configs = loadConfig()
+func initializeConfig(cmd *cobra.Command) error {
+	v := viper.New()
+	v.SetConfigName(defaultConfigFilename)
+	v.AddConfigPath(".")
 
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return err
+		}
+	}
+
+	v.SetEnvPrefix(envPrefix)
+	v.AutomaticEnv()
+	bindFlags(cmd, v)
+
+	return nil
+}
+
+func bindFlags(cmd *cobra.Command, v *viper.Viper) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		if strings.Contains(f.Name, "-") {
+			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
+			v.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix))
+		}
+
+		if !f.Changed && v.IsSet(f.Name) {
+			val := v.Get(f.Name)
+			cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
+		}
+	})
+}
+
+func setup(storageURI string, datasource string) {
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
@@ -68,7 +111,7 @@ func main() {
 		// DruidClientUrl: constants.DruidClientUrl,
 	}
 
-	server, err := app.NewServer(serverOptions, configs.Storage)
+	server, err := app.NewServer(serverOptions, storageURI, datasource)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
@@ -88,5 +131,11 @@ func main() {
 			logger.Fatal("Received OS Interrupt Signal ... ")
 		}
 	}
+}
 
+func main() {
+	cmd := NewRootCommand()
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
