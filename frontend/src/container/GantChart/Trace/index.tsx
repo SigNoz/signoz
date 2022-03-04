@@ -41,8 +41,14 @@ const Trace = (props: TraceProps): JSX.Element => {
 	const { isDarkMode } = useThemeMode()
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 
+	const localTreeExpandInteraction = useRef<boolean | 0>(0); // Boolean is for the state of the expansion whereas the number i.e. 0 is for skipping the user interaction.
+
 	useEffect(() => {
-		if (!isOpen) {
+		if (localTreeExpandInteraction.current !== 0) {
+			setOpen(localTreeExpandInteraction.current);
+			localTreeExpandInteraction.current = 0;
+		}
+		else if (!isOpen) {
 			setOpen(activeSpanPath[level] === id)
 		}
 	}, [activeSpanPath, isOpen])
@@ -82,6 +88,11 @@ const Trace = (props: TraceProps): JSX.Element => {
 	const onClick = () => {
 		setActiveSelectedId(id);
 	}
+
+	const onClickTreeExpansion = (event) => {
+		event.stopPropagation()
+		setOpen((state) => { localTreeExpandInteraction.current = !isOpen; return !state });
+	}
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
 	const inMsCount = value;
@@ -113,10 +124,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 								{totalSpans !== 1 && (
 									<CardComponent
 										isDarkMode={isDarkMode}
-										onClick={(e) => {
-											e.stopPropagation()
-											setOpen((state) => !state);
-										}}
+										onClick={onClickTreeExpansion}
 									>
 										{totalSpans}
 										<CaretContainer>
