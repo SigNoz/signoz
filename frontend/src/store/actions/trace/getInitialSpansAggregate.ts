@@ -1,11 +1,12 @@
+import { notification } from 'antd';
+import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';
-import getSpansAggregate from 'api/trace/getSpansAggregate';
+import { Props as GetSpanAggregateProps } from 'types/api/trace/getSpanAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
-import { notification } from 'antd';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
@@ -52,6 +53,7 @@ export const GetSpansAggregate = (
 				offset: props.current * props.pageSize - props.pageSize,
 				selectedTags: props.selectedTags,
 				isFilterExclude: traces.isFilterExclude,
+				order: props.order,
 			});
 
 			if (response.statusCode === 200) {
@@ -112,4 +114,5 @@ export interface GetSpansAggregateProps {
 	current: TraceReducer['spansAggregate']['currentPage'];
 	pageSize: TraceReducer['spansAggregate']['pageSize'];
 	selectedTags: TraceReducer['selectedTags'];
+	order: GetSpanAggregateProps['order'];
 }
