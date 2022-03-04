@@ -1,20 +1,18 @@
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
-import React, { useCallback } from 'react';
-import { generatePath, useHistory } from 'react-router-dom';
-
+import React from 'react';
+import { generatePath } from 'react-router-dom';
+import history from 'lib/history';
 import { Data } from '..';
 
 const Name = (name: Data['name'], data: Data): JSX.Element => {
-	const { push } = useHistory();
-
-	const onClickHandler = useCallback(() => {
-		push(
+	const onClickHandler = () => {
+		history.push(
 			generatePath(ROUTES.DASHBOARD, {
 				dashboardId: data.id,
 			}),
 		);
-	}, [data.id, push]);
+	};
 
 	return (
 		<Button onClick={onClickHandler} type="link">
