@@ -15,7 +15,6 @@ const getSpanAggregate = async (
 			end: String(props.end),
 			limit: props.limit,
 			offset: props.offset,
-			order: props.order,
 		};
 
 		const exclude: TraceFilterEnum[] = [];

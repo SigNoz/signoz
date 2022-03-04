@@ -75,7 +75,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 					value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
 				>
 					{AllMenu.map((e) => (
-						<Option key={e.value} value={e.key}>
+						<Option key={e.key} value={e.value}>
 							{e.value}
 						</Option>
 					))}
