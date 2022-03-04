@@ -13,8 +13,7 @@
 		"cypress:run": "cypress run",
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
-		"jest:watch": "jest --watch",
-		"bundle:size": "bundlesize"
+		"jest:watch": "jest --watch"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -119,7 +118,6 @@
 		"@welldone-software/why-did-you-render": "^6.2.1",
 		"autoprefixer": "^9.0.0",
 		"babel-plugin-styled-components": "^1.12.0",
-		"bundlesize": "^0.18.1",
 		"compression-webpack-plugin": "^9.0.0",
 		"copy-webpack-plugin": "^8.1.0",
 		"critters-webpack-plugin": "^3.0.1",
