@@ -132,6 +132,7 @@
 		"eslint-plugin-prettier": "^4.0.0",
 		"eslint-plugin-promise": "^5.1.0",
 		"eslint-plugin-react": "^7.24.0",
+		"eslint-plugin-react-hooks": "^4.3.0",
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"husky": "4.3.8",
 		"less-plugin-npm-import": "^2.1.0",
