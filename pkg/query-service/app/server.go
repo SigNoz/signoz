@@ -51,7 +51,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 
 // NewServer creates and initializes Server
 // func NewServer(logger *zap.Logger, querySvc *querysvc.QueryService, options *QueryOptions, tracer opentracing.Tracer) (*Server, error) {
-func NewServer(serverOptions *ServerOptions, storageURI string, datasource string) (*Server, error) {
+func NewServer(serverOptions *ServerOptions, storage string, datasource string) (*Server, error) {
 
 	// _, httpPort, err := net.SplitHostPort(serverOptions.HTTPHostPort)
 	// if err != nil {
@@ -79,7 +79,7 @@ func NewServer(serverOptions *ServerOptions, storageURI string, datasource strin
 		// separatePorts:      grpcPort != httpPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
-	httpServer, err := s.createHTTPServer(storageURI, datasource)
+	httpServer, err := s.createHTTPServer(storage, datasource)
 
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func NewServer(serverOptions *ServerOptions, storageURI string, datasource strin
 	return s, nil
 }
 
-func (s *Server) createHTTPServer(storageURI string, datasource string) (*http.Server, error) {
+func (s *Server) createHTTPServer(storage string, datasource string) (*http.Server, error) {
 
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
@@ -99,7 +99,6 @@ func (s *Server) createHTTPServer(storageURI string, datasource string) (*http.S
 
 	var reader Reader
 
-	storage := storageURI
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
 		reader = druidReader.NewReader(localDB, datasource)
