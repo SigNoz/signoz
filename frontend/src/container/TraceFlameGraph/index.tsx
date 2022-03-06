@@ -1,6 +1,5 @@
 import React, { useState, useLayoutEffect, useMemo } from 'react';
 import Color from 'color';
-import { pushDStree } from 'store/actions';
 import {
 	SpanItemContainer,
 	TraceFlameGraphContainer,
@@ -12,6 +11,7 @@ import {
 } from 'container/TraceDetail/utils';
 import { toFixed } from 'utils/toFixed';
 import useThemeMode from 'hooks/useThemeMode';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 const SpanItem = ({
 	topOffset = 0, // top offset in px
@@ -27,7 +27,7 @@ const SpanItem = ({
 	topOffset: number;
 	leftOffset: number;
 	width: number;
-	spanData: pushDStree;
+	spanData: ITraceTree;
 	tooltipText: string;
 	onSpanSelect: Function;
 	onSpanHover: Function;
@@ -89,7 +89,7 @@ const SpanItem = ({
 };
 
 const TraceFlameGraph = (props: {
-	treeData: pushDStree;
+	treeData: ITraceTree;
 	traceMetaData: any;
 	onSpanHover: Function;
 	onSpanSelect: Function;
@@ -118,7 +118,7 @@ const TraceFlameGraph = (props: {
 		hoveredSpanId,
 		selectedSpanId,
 	}: {
-		spanData: pushDStree;
+		spanData: ITraceTree;
 		level?: number;
 		parentLeftOffset?: number;
 		onSpanHover: Function;
