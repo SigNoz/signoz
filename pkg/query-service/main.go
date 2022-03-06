@@ -95,7 +95,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	})
 }
 
-func setup(storageURI string, datasource string) {
+func setup(storage string, datasource string) {
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
@@ -111,7 +111,7 @@ func setup(storageURI string, datasource string) {
 		// DruidClientUrl: constants.DruidClientUrl,
 	}
 
-	server, err := app.NewServer(serverOptions, storageURI, datasource)
+	server, err := app.NewServer(serverOptions, storage, datasource)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
