@@ -37,7 +37,10 @@ export const CardContainer = styled.li`
 	cursor: pointer;
 `;
 
-export const CardComponent = styled.div`
+interface CardComponentProps {
+	isDarkMode: boolean;
+}
+export const CardComponent = styled.div<CardComponentProps>`
 	border: 1px solid ${({ isDarkMode }) => (isDarkMode ? '#434343' : '#333')};
 	box-sizing: border-box;
 	border-radius: 2px;

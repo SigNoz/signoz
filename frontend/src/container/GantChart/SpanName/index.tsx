@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-	Service,
-	Span,
-	SpanWrapper,
-	SpanConnector,
-	Container,
-	SpanName,
-} from './styles';
+import { Service, Span, SpanWrapper, Container } from './styles';
 
 const SpanNameComponent = ({
 	name,

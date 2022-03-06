@@ -23,19 +23,8 @@ export const SpanWrapper = styled.div`
 	width: 10rem;
 `;
 
-export const SpanConnector = styled.div`
-	width: 37px;
-	border: 1px solid #303030;
-	height: 0;
-`;
-
 export const Container = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
-`;
-
-export const SpanName = styled.div`
-	width: fit-content;
-	border-bottom: 1px solid black;
 `;

@@ -1,0 +1,123 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Span Name render Span Name 1`] = `
+.c2.c2.c2 {
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.c3.c3.c3 {
+  color: #acacac;
+  font-size: 0.75rem;
+}
+
+.c1 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  margin-left: 0.625rem;
+  width: 10rem;
+}
+
+.c0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: start;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+}
+
+<div>
+  <div
+    class="c0"
+    title="Same Name Sample Service Name"
+  >
+    <div
+      class="c1"
+    >
+      <div
+        class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line c2"
+      >
+        Same Name
+      </div>
+      <article
+        class="ant-typography c3"
+      >
+        Sample Service Name
+      </article>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Span Name render Span Name 2`] = `
+.c2.c2.c2 {
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.c3.c3.c3 {
+  color: #acacac;
+  font-size: 0.75rem;
+}
+
+.c1 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  margin-left: 0.625rem;
+  width: 10rem;
+}
+
+.c0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: start;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+}
+
+<div>
+  <div
+    class="c0"
+    title="Same Name Sample Service Name"
+  >
+    <div
+      class="c1"
+    >
+      <div
+        class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line c2"
+      >
+        Same Name
+      </div>
+      <article
+        class="ant-typography c3"
+      >
+        Sample Service Name
+      </article>
+    </div>
+  </div>
+</div>
+`;
