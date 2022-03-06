@@ -45,6 +45,7 @@ export interface ITraceTag {
 }
 
 interface ITraceEvents {
-	attributeMap: { event: string; [key: string]: string };
+	attributeMap: { event: string; [key: string]: string | undefined };
 	name?: string;
+	timeUnixNano: number;
 }
