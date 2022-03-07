@@ -1,21 +1,24 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Divider, Row, Typography, Space, Button } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
+import { Button, Col, Divider, Row, Space, Typography } from 'antd';
+import { StyledCol, StyledDiv, StyledRow } from 'components/Styled';
+import * as StyledStyles from 'components/Styled/styles';
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import { getSortedData } from './utils';
+import history from 'lib/history';
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
+
 import SelectedSpanDetails from './SelectedSpanDetails';
-import useUrlQuery from 'hooks/useUrlQuery';
-import styles from './TraceGraph.module.css';
-import history from 'lib/history';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import * as styles from './styles';
+import { getSortedData } from './utils';
 import { INTERVAL_UNITS } from './utils';
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
@@ -73,9 +76,21 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	};
 
 	return (
-		<Row style={{ flex: 1 }}>
-			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
-				<Row className={styles['trace-detail-content-spacing']}>
+		<StyledRow styledClass={[StyledStyles.Flex({ flex: 1 })]}>
+			<StyledCol
+				flex={'auto'}
+				styledClass={[
+					StyledStyles.Flex({ flexDirection: 'column' }),
+					StyledStyles.Display({ display: 'flex' }),
+				]}
+			>
+				<StyledRow
+					styledClass={[
+						StyledStyles.Spacing({
+							margin: '0 1rem 0 0',
+						}),
+					]}
+				>
 					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
 						style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}
@@ -98,7 +113,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							intervalUnit={intervalUnit}
 						/>
 					</Col>
-				</Row>
+				</StyledRow>
 				<Row style={{ marginTop: '2rem' }}>
 					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
@@ -110,10 +125,14 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 					>
 						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
 					</Col>
-					<Col
+					<StyledCol
 						flex="auto"
 						style={{ overflow: 'visible' }}
-						className={styles['trace-detail-content-spacing']}
+						styledClass={[
+							StyledStyles.Spacing({
+								margin: '0 1rem 0 0',
+							}),
+						]}
 					>
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
@@ -121,12 +140,16 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							intervalUnit={intervalUnit}
 							setIntervalUnit={setIntervalUnit}
 						/>
-					</Col>
+					</StyledCol>
 					<Divider style={{ height: '100%', margin: '0' }} />
 				</Row>
-				<Row
-					className={styles['trace-detail-content-spacing']}
-					style={{ margin: '1.5rem 1rem 0.5rem' }}
+				<StyledRow
+					styledClass={[
+						styles.traceDetailContentSpacing,
+						StyledStyles.Spacing({
+							margin: '1.5rem 1rem 0.5rem',
+						}),
+					]}
 				>
 					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}>
 						{/* <Search
@@ -150,12 +173,21 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							</Button>
 						</Space>
 					</Col>
-				</Row>
-				<div
-					className={styles['trace-detail-content-spacing']}
+				</StyledRow>
+				<StyledDiv
+					styledClass={[
+						styles.traceDetailContentSpacing,
+						StyledStyles.Spacing({
+							margin: '1.5rem 1rem 0.5rem',
+						}),
+						StyledStyles.Flex({
+							flexDirection: 'column',
+						}),
+						StyledStyles.Display({
+							display: 'flex',
+						}),
+					]}
 					style={{
-						display: 'flex',
-						flexDirection: 'column',
 						position: 'relative',
 						flex: 1,
 						overflowY: 'auto',
@@ -172,8 +204,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						spanId={spanId || ''}
 						intervalUnit={intervalUnit}
 					/>
-				</div>
-			</Col>
+				</StyledDiv>
+			</StyledCol>
 			<Col>
 				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
 			</Col>
@@ -189,7 +221,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 			>
 				<SelectedSpanDetails tree={getSelectedNode} />
 			</Col>
-		</Row>
+		</StyledRow>
 	);
 };
 
