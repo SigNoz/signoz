@@ -34,8 +34,6 @@ describe('Span Length', () => {
 			</Provider>,
 		);
 
-		renderComponent.debug();
-
 		const innerText = toFixed(resolveTimeFromInterval(msCount, intervalUnit), 2);
 
 		const container = renderComponent.getByRole('article');
