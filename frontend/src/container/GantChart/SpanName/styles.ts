@@ -5,7 +5,6 @@ export const Span = styled(Typography.Paragraph)`
 	&&& {
 		font-size: 0.75rem;
 		margin: 0;
-		/* border-bottom: 1px solid grey; */
 	}
 `;
 

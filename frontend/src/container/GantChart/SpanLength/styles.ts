@@ -3,16 +3,16 @@ import styled from 'styled-components';
 
 interface Props {
 	width: string;
-	leftOffset: string;
 	bgColor: string;
-	isDarkMode: boolean;
+	leftoffset: string;
+	isdarkmode: boolean;
 }
 
 export const SpanLine = styled.div<Props>`
-	width: ${({ leftOffset }) => `${leftOffset}%`};
+	width: ${({ leftoffset }) => `${leftoffset}%`};
 	height: 0px;
 	border-bottom: 0.1px solid
-		${({ isDarkMode }) => (isDarkMode ? '#303030' : '#c0c0c0')};
+		${({ isdarkmode }) => (isdarkmode ? '#303030' : '#c0c0c0')};
 	top: 50%;
 	position: absolute;
 `;
@@ -21,7 +21,7 @@ export const SpanBorder = styled.div<Props>`
 	border-radius: 5px;
 	height: 0.625rem;
 	width: ${({ width }) => `${width}%`};
-	left: ${({ leftOffset }) => `${leftOffset}%`};
+	left: ${({ leftoffset }) => `${leftoffset}%`};
 	top: 35%;
 	position: absolute;
 `;
@@ -34,24 +34,17 @@ export const SpanWrapper = styled.div`
 	position: relative;
 	z-index: 2;
 	min-height: 2rem;
-
-	/* &:before {
-		display: inline-block;
-		content: '';
-		border-bottom: 1px solid #303030;
-		position: absolute;
-		left: -30px;
-		width: 30px;
-		z-index: 0;
-	} */
 `;
 
-export const SpanText = styled(Typography)<Pick<Props, 'leftOffset'>>`
+export const SpanText = styled(Typography)<{
+	leftoffset: string;
+	isdarkmode: boolean;
+}>`
 	&&& {
-		left: ${({ leftOffset }) => `${leftOffset}%`};
+		left: ${({ leftoffset }) => `${leftoffset}%`};
 		top: 65%;
 		position: absolute;
-		color: ${({ isDarkMode }) => (isDarkMode ? '##ACACAC' : '#666')};
+		color: ${({ isdarkmode }) => (isdarkmode ? '##ACACAC' : '#666')};
 		font-size: 0.75rem;
 	}
 `;
