@@ -1,7 +1,9 @@
 import React from 'react';
 import { CardContainer } from './styles';
 import { render } from '@testing-library/react';
-import { expect } from '@jest/globals';
+import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
+import 'jest-styled-components';
 
 describe('Gant Chart Styles', () => {
 	it('Card Container', async () => {
@@ -11,5 +13,7 @@ describe('Gant Chart Styles', () => {
 
 		expect(wrapper).not.toBeUndefined();
 		expect(wrapper.className).not.toBe('');
+		expect(wrapper).toHaveStyleRule('display', 'flex');
+		expect(wrapper).toHaveStyleRule('width', '100%');
 	});
 });

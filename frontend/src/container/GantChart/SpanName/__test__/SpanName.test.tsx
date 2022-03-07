@@ -30,7 +30,5 @@ describe('Span Name', () => {
 
 		const el = response.getByText('Sample Service Name');
 		expect(el.nodeName).toEqual('ARTICLE');
-
-		console.log(el);
 	});
 });

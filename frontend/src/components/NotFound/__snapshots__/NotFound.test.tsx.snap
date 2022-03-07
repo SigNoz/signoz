@@ -2,8 +2,102 @@
 
 exports[`Not Found page test should render Not Found page without errors 1`] = `
 <DocumentFragment>
-  <div
-    class="sc-gsDKAQ cLXpIa"
+  .c3 {
+  border: 2px solid #2f80ed;
+  box-sizing: border-box;
+  border-radius: 10px;
+  width: 400px;
+  background: inherit;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 24px;
+  line-height: 20px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  color: #2f80ed;
+}
+
+.c0 {
+  min-height: 80vh;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.c2 {
+  font-style: normal;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 20px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  text-align: center;
+  color: #828282;
+  text-align: center;
+  margin: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.c1 {
+  min-height: 50px;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  margin-bottom: 30px;
+  margin-top: 20px;
+}
+
+<div
+    class="c0"
   >
     <svg
       fill="none"
@@ -272,21 +366,21 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
       </defs>
     </svg>
     <div
-      class="sc-hKwDye foaleg"
+      class="c1"
     >
       <p
-        class="sc-dkPtRN fcyVIq"
+        class="c2"
       >
         Ah, seems like we reached a dead end!
       </p>
       <p
-        class="sc-dkPtRN fcyVIq"
+        class="c2"
       >
         Page Not Found
       </p>
     </div>
     <a
-      class="sc-bdvvtL dbTZkj"
+      class="c3"
       href="/application"
       tabindex="0"
     >

@@ -1,9 +1,11 @@
-import { expect } from '@jest/globals';
 import React from 'react';
 import { render } from '@testing-library/react';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import { Provider } from 'react-redux';
 import store from 'store';
+import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
+import 'jest-styled-components';
 
 it('loads and displays greeting', async () => {
 	const { asFragment } = render(
