@@ -303,7 +303,7 @@ if [ $? -ne 0 ]; then
     uuid="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
     SIGNOZ_INSTALLATION_ID="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
 else
-    SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | shasum | cut -d ' ' -f1)
+    SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | (shasum 2> /dev/null || sha1sum) | cut -d ' ' -f1)
 fi
 
 # echo ""
