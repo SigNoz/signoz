@@ -904,7 +904,7 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	return &model.TTLParams{Duration: duration, Type: typeTTL}, nil
+	return &model.TTLParams{Duration: duration, TableName: typeTTL}, nil
 }
 
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
@@ -921,7 +921,7 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		}
 	}
 
-	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
+	return &model.GetTTLParams{TableName: typeTTL, GetAllTTL: getAllTTL}, nil
 }
 
 func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
