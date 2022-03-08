@@ -18,7 +18,8 @@
 		"isolatedModules": true,
 		"noEmit": true,
 		"baseUrl": "./src",
-		"downlevelIteration": true
+		"downlevelIteration": true,
+		"plugins": [{ "name": "typescript-plugin-css-modules" }]
 	},
 	"exclude": ["node_modules"],
 	"include": ["./src"]

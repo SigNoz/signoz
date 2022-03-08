@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-import Feedback from './FeedBack';
 import { Content, Footer, Layout } from './styles';
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
@@ -38,10 +37,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 					{!isSignUpPage && <TopNav />}
 					{children}
 				</Content>
-				<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
+				{/* <Footer>{`SigNoz Inc. © ${currentYear}`}</Footer> */}
 			</Layout>
-
-			<Feedback />
 		</Layout>
 	);
 };

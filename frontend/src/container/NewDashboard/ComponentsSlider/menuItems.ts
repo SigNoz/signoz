@@ -1,5 +1,6 @@
 import TimeSeries from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
+import { TimeSeriesProps as IconProps } from 'assets/Dashboard/TimeSeries';
 
 const Items: ItemsProps[] = [
 	{
@@ -18,7 +19,7 @@ export type ITEMS = 'TIME_SERIES' | 'VALUE';
 
 interface ItemsProps {
 	name: ITEMS;
-	Icon: () => JSX.Element;
+	Icon: (props: IconProps) => JSX.Element;
 	display: string;
 }
 

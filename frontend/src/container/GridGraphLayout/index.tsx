@@ -61,7 +61,7 @@ const GridGraph = (): JSX.Element => {
 					x: (index % 2) * 6,
 					Component: (): JSX.Element => (
 						<Graph
-							name={e.id + index}
+							name={e.id + index + 'non-expanded'}
 							isDeleted={isDeleted}
 							widget={widgets[index]}
 						/>

@@ -32,11 +32,12 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
-		if (servicename) {
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
-		}
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.replace(
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+		);
 	};
 
 	const onClickhandler = async (
@@ -85,12 +86,12 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
-		if (servicename) {
-			urlParams.set(METRICS_PAGE_QUERY_PARAM.service, servicename);
-		}
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.error, 'true');
 
-		history.push(`${ROUTES.TRACE}?${urlParams.toString()}`);
+		history.replace(
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+		);
 	};
 
 	return (
@@ -220,7 +221,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								}}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]) OR vector(0))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))`,
+										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))) < 1000 OR vector(0)`,
 										legend: 'Error Percentage (%)',
 									},
 								])}
