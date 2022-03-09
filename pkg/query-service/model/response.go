@@ -294,10 +294,6 @@ type SetTTLResponseItem struct {
 	Message string `json:"message"`
 }
 
-type StoragePolicyResponseItem struct {
-	Message string `json:"message"`
-}
-
 type DBResponseTTL struct {
 	EngineFull string `db:"engine_full"`
 }
