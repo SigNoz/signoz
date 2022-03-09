@@ -7,7 +7,6 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
@@ -21,11 +20,9 @@ import {
 	CardContainer,
 	ReactGridLayout,
 } from './styles';
+import { updateDashboard } from './utils';
 
 const GridGraph = (): JSX.Element => {
-	const { push } = useHistory();
-	const { pathname } = useLocation();
-
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -116,37 +113,11 @@ const GridGraph = (): JSX.Element => {
 					const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
 					const generateWidgetId = v4();
 
-					const response = await updateDashboardApi({
-						title: data.title,
-						uuid: selectedDashboard.uuid,
-						description: data.description,
-						name: data.name,
-						tags: data.tags,
-						widgets: [
-							...(data.widgets || []),
-							{
-								description: '',
-								id: generateWidgetId,
-								isStacked: false,
-								nullZeroValues: '',
-								opacity: '',
-								panelTypes: graphType,
-								query: [
-									{
-										query: '',
-										legend: '',
-									},
-								],
-								queryData: {
-									data: [],
-									error: false,
-									errorMessage: '',
-									loading: false,
-								},
-								timePreferance: 'GLOBAL_TIME',
-								title: '',
-							},
-						],
+					await updateDashboard({
+						data,
+						generateWidgetId,
+						graphType,
+						selectedDashboard: selectedDashboard,
 						layout: allLayouts
 							.map((e, index) => ({
 								...e,
@@ -157,16 +128,6 @@ const GridGraph = (): JSX.Element => {
 							}))
 							.filter((e) => e.maxW === undefined),
 					});
-
-					if (response.statusCode === 200) {
-						push(
-							`${pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`,
-						);
-					} else {
-						notification.error({
-							message: response.error || 'Something went wrong',
-						});
-					}
 				} catch (error) {
 					notification.error({
 						message: error.toString() || 'Something went wrong',
@@ -174,7 +135,7 @@ const GridGraph = (): JSX.Element => {
 				}
 			}
 		},
-		[pathname, push, data, selectedDashboard],
+		[data, selectedDashboard],
 	);
 
 	const onLayoutSaveHandler = async (): Promise<void> => {
