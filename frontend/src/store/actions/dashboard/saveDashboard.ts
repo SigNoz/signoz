@@ -17,7 +17,6 @@ export const SaveDashboard = ({
 	timePreferance,
 	title,
 	widgetId,
-	dashboardId,
 }: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
@@ -55,6 +54,7 @@ export const SaveDashboard = ({
 			];
 
 			const response = await updateDashboardApi({
+				...selectedDashboard.data,
 				uuid,
 				// this is the data for the dashboard
 				title: selectedDashboard.data.title,

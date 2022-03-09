@@ -1,5 +1,6 @@
 /* eslint-disable react/display-name */
 import { SaveFilled } from '@ant-design/icons';
+import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -51,6 +52,7 @@ const GridGraph = (): JSX.Element => {
 			return [];
 		}
 
+		// when the layout is not present
 		if (data.layout === undefined) {
 			return widgets.map((e, index) => {
 				return {
@@ -71,7 +73,6 @@ const GridGraph = (): JSX.Element => {
 		} else {
 			return data.layout.map((e, index) => ({
 				...e,
-				y: 0,
 				Component: (): JSX.Element => (
 					<Graph name={e.i + index} isDeleted={isDeleted} widget={widgets[index]} />
 				),
@@ -89,7 +90,7 @@ const GridGraph = (): JSX.Element => {
 				...preLayouts,
 				{
 					i: (preLayouts.length + 1).toString(),
-					x: (preLayouts.length % 2) * 6,
+					x: 0,
 					y: Infinity,
 					w: 6,
 					h: 2,
@@ -108,18 +109,75 @@ const GridGraph = (): JSX.Element => {
 	}, [widgets, layouts.length, AddWidgetWrapper, loading, getPreLayouts]);
 
 	const onDropHandler = useCallback(
-		(allLayouts: Layout[], currectLayout: Layout, event: DragEvent) => {
+		async (allLayouts: Layout[], currentLayout: Layout, event: DragEvent) => {
 			event.preventDefault();
 			if (event.dataTransfer) {
-				const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
-				const generateWidgetId = v4();
-				push(`${pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`);
+				try {
+					const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
+					const generateWidgetId = v4();
+
+					const response = await updateDashboardApi({
+						title: data.title,
+						uuid: selectedDashboard.uuid,
+						description: data.description,
+						name: data.name,
+						tags: data.tags,
+						widgets: [
+							...(data.widgets || []),
+							{
+								description: '',
+								id: generateWidgetId,
+								isStacked: false,
+								nullZeroValues: '',
+								opacity: '',
+								panelTypes: graphType,
+								query: [
+									{
+										query: '',
+										legend: '',
+									},
+								],
+								queryData: {
+									data: [],
+									error: false,
+									errorMessage: '',
+									loading: false,
+								},
+								timePreferance: 'GLOBAL_TIME',
+								title: '',
+							},
+						],
+						layout: allLayouts
+							.map((e, index) => ({
+								...e,
+								i: index.toString(),
+								// when a new element drops
+								w: e.i === '__dropping-elem__' ? 6 : e.w,
+								h: e.i === '__dropping-elem__' ? 2 : e.h,
+							}))
+							.filter((e) => e.maxW === undefined),
+					});
+
+					if (response.statusCode === 200) {
+						push(
+							`${pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`,
+						);
+					} else {
+						notification.error({
+							message: response.error || 'Something went wrong',
+						});
+					}
+				} catch (error) {
+					notification.error({
+						message: error.toString() || 'Something went wrong',
+					});
+				}
 			}
 		},
-		[pathname, push],
+		[pathname, push, data, selectedDashboard],
 	);
 
-	const onLayoutSaveHanlder = async (): Promise<void> => {
+	const onLayoutSaveHandler = async (): Promise<void> => {
 		setSaveLayoutState((state) => ({
 			...state,
 			error: false,
@@ -171,7 +229,7 @@ const GridGraph = (): JSX.Element => {
 			<ButtonContainer>
 				<Button
 					loading={saveLayoutState.loading}
-					onClick={onLayoutSaveHanlder}
+					onClick={onLayoutSaveHandler}
 					icon={<SaveFilled />}
 					danger={saveLayoutState.error}
 				>
@@ -194,7 +252,7 @@ const GridGraph = (): JSX.Element => {
 				{layouts.map(({ Component, ...rest }, index) => {
 					const widget = (widgets || [])[index] || {};
 
-					const type = widget.panelTypes;
+					const type = widget?.panelTypes || 'TIME_SERIES';
 
 					const isQueryType = type === 'VALUE';
 

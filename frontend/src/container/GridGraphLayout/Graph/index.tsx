@@ -23,7 +23,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal, FullViewContainer, ErrorContainer } from './styles';
+import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
 const GridCardGraph = ({
 	widget,
@@ -47,7 +47,7 @@ const GridCardGraph = ({
 		(async (): Promise<void> => {
 			try {
 				const getMaxMinTime = GetMaxMinTime({
-					graphType: widget.panelTypes,
+					graphType: widget?.panelTypes,
 					maxTime,
 					minTime,
 				});
@@ -124,7 +124,7 @@ const GridCardGraph = ({
 		[],
 	);
 
-	const getModals = () => {
+	const getModals = (): JSX.Element => {
 		return (
 			<>
 				<Modal
