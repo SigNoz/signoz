@@ -2606,6 +2606,19 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 	}
 
+	// TODO: Do parameter validation for coldStorage.
+	if len(ttlParams.ColdStorage) > 0 {
+		policyQuery := fmt.Sprintf("alter table %s modify setting storage_policy=tiered", ttlParams.TableName)
+		if _, err := r.db.Exec(policyQuery); err != nil {
+			zap.S().Error(fmt.Errorf("error while setting policy. Err=%v", err))
+			return nil, &model.ApiError{
+				model.ErrorExec,
+				fmt.Errorf("error while setting ttl. Err=%v", err),
+			}
+		}
+		query += fmt.Sprintf(" to volume %s", ttlParams.ColdStorage)
+	}
+
 	if _, err := r.db.Exec(query); err != nil {
 		zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
 		return nil, &model.ApiError{
@@ -2613,7 +2626,6 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			fmt.Errorf("error while setting ttl. Err=%v", err),
 		}
 	}
-
 	return &model.SetTTLResponseItem{Message: "ttl has been successfully set up"}, nil
 }
 

@@ -208,8 +208,9 @@ type TagFilterParams struct {
 }
 
 type TTLParams struct {
-	TableName string
-	Duration  string
+	TableName   string
+	Duration    string
+	ColdStorage string
 }
 
 type GetTTLParams struct {

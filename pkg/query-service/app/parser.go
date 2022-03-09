@@ -888,6 +888,7 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 	// make sure either of the query params are present
 	typeTTL := r.URL.Query().Get("type")
 	duration := r.URL.Query().Get("duration")
+	coldStorage := r.URL.Query().Get("coldstorage")
 
 	if len(typeTTL) == 0 || len(duration) == 0 {
 		return nil, fmt.Errorf("type and duration param cannot be empty from the query")
@@ -904,7 +905,7 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	return &model.TTLParams{Duration: duration, TableName: typeTTL}, nil
+	return &model.TTLParams{Duration: duration, TableName: typeTTL, ColdStorage: coldStorage}, nil
 }
 
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
