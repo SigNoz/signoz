@@ -907,7 +907,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	toColdParsed, err := time.ParseDuration(toColdDuration)
 	if err != nil {
-		return nil, fmt.Errorf("Not a valid to cold TTL duration %v", toColdDuration)
+		return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
 	}
 
 	return &model.TTLParams{
