@@ -883,6 +883,20 @@ func parseSetRulesRequest(r *http.Request) (string, *model.ApiError) {
 	return "", nil
 }
 
+func parseStoragePolicy(r *http.Request) (*model.StoragePolicyParams, error) {
+	table := r.URL.Query().Get("table")
+	policy := r.URL.Query().Get("policy")
+
+	if len(table) == 0 || len(policy) == 0 {
+		return nil, fmt.Errorf("table or policy cannot be empty.")
+	}
+
+	return &model.StoragePolicyParams{
+		table,
+		policy,
+	}, nil
+}
+
 func parseDuration(r *http.Request) (*model.TTLParams, error) {
 
 	// make sure either of the query params are present
@@ -905,7 +919,7 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	return &model.TTLParams{Duration: duration, TableName: typeTTL, ColdStorage: coldStorage}, nil
+	return &model.TTLParams{Duration: duration, Type: typeTTL, ColdStorage: coldStorage}, nil
 }
 
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
@@ -922,7 +936,7 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		}
 	}
 
-	return &model.GetTTLParams{TableName: typeTTL, GetAllTTL: getAllTTL}, nil
+	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
 }
 
 func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {

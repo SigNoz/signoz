@@ -208,14 +208,19 @@ type TagFilterParams struct {
 }
 
 type TTLParams struct {
-	TableName   string
+	Type        string
 	Duration    string
 	ColdStorage string
 }
 
 type GetTTLParams struct {
-	TableName string
+	Type      string
 	GetAllTTL bool
+}
+
+type StoragePolicyParams struct {
+	TableName  string
+	PolicyName string
 }
 
 type GetErrorsParams struct {

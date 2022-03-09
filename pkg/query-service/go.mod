@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	cloud.google.com/go v0.88.0 // indirect
-	github.com/ClickHouse/clickhouse-go v1.4.5
+	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
