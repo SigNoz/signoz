@@ -2591,10 +2591,7 @@ func (r *ClickHouseReader) SetStoragePolicy(ctx context.Context,
 
 	if _, err := r.db.Exec(req); err != nil {
 		zap.S().Error(fmt.Errorf("error while setting storage policy. Err=%v", err))
-		return nil, &model.ApiError{
-			Typ: model.ErrorExec,
-			Err: fmt.Errorf("error while setting storage policy. Err=%v", err),
-		}
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting storage policy. Err=%v", err)}
 	}
 	return &model.StoragePolicyResponseItem{Message: "storage policy successfully set up"}, nil
 }
@@ -2615,10 +2612,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		query = fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL %v SECOND", signozMetricDBName, signozSampleName, seconds)
 
 	default:
-		return nil, &model.ApiError{
-			Typ: model.ErrorExec,
-			Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type),
-		}
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
 	}
 
 	if len(ttlParams.ColdStorage) > 0 {
@@ -2627,10 +2621,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	if _, err := r.db.Exec(query); err != nil {
 		zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-		return nil, &model.ApiError{
-			Typ: model.ErrorExec,
-			Err: fmt.Errorf("error while setting ttl. Err=%v", err),
-		}
+		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
 	}
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }

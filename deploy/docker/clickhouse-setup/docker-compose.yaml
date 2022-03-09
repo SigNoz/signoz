@@ -12,10 +12,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    ports:
-        - "8123:8123"
-        - "9000:9000"
-        - "9009:9009"
 
   alertmanager:
     image: signoz/alertmanager:0.5.0
@@ -45,8 +41,6 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-    ports:
-        - "8080:8080"
 
   frontend:
     image: signoz/frontend:0.7.1
