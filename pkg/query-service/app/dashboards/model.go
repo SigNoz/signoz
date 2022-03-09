@@ -9,7 +9,6 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -23,7 +22,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	db, err = sqlx.Open("sqlite3", dataSourceName)
 	if err != nil {
-		return nil, errors.Wrap(err, "while opening sqlite3 db: ")
+		return nil, err
 	}
 
 	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
