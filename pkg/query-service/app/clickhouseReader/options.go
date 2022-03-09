@@ -16,13 +16,14 @@ const (
 )
 
 const (
-	defaultDatasource        string        = "tcp://localhost:9000"
-	defaultOperationsTable   string        = "signoz_operations"
-	defaultIndexTable        string        = "signoz_index"
-	defaultErrorTable        string        = "signoz_error_index"
-	defaultWriteBatchDelay   time.Duration = 5 * time.Second
-	defaultWriteBatchSize    int           = 10000
-	defaultEncoding          Encoding      = EncodingJSON
+	defaultDatasource      string        = "tcp://localhost:9000"
+	defaultOperationsTable string        = "signoz_operations"
+	defaultIndexTable      string        = "signoz_index_v2"
+	defaultErrorTable      string        = "signoz_error_index"
+	defaultSpansTable      string        = "signoz_spans"
+	defaultWriteBatchDelay time.Duration = 5 * time.Second
+	defaultWriteBatchSize  int           = 10000
+	defaultEncoding        Encoding      = EncodingJSON
 )
 
 const (
@@ -89,6 +90,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			ErrorTable:      defaultErrorTable,
+			SpansTable:      defaultSpansTable,
 			WriteBatchDelay: defaultWriteBatchDelay,
 			WriteBatchSize:  defaultWriteBatchSize,
 			Encoding:        defaultEncoding,

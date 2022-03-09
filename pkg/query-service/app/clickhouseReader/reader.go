@@ -51,7 +51,7 @@ import (
 const (
 	primaryNamespace     = "clickhouse"
 	archiveNamespace     = "clickhouse-archive"
-	signozTraceTableName = "signoz_index"
+	signozTraceTableName = "signoz_index_v2"
 	signozMetricDBName   = "signoz_metrics"
 	signozSampleName     = "samples"
 	signozTSName         = "time_series"
@@ -74,6 +74,7 @@ type ClickHouseReader struct {
 	operationsTable string
 	indexTable      string
 	errorTable      string
+	spansTable      string
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
@@ -98,6 +99,7 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		errorTable:      options.primary.ErrorTable,
+		spansTable:      options.primary.SpansTable,
 	}
 }
 
@@ -2164,9 +2166,9 @@ func (r *ClickHouseReader) GetOperations(ctx context.Context, serviceName string
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
 
-	var searchScanReponses []model.SearchSpanReponseItem
+	var searchScanReponses []model.SearchSpanDBReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues, references, events, hasError FROM %s WHERE traceID=?", r.indexTable)
+	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s WHERE traceID=?", r.spansTable)
 
 	err := r.db.Select(&searchScanReponses, query, traceId)
 
@@ -2185,13 +2187,25 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 	}
 
 	for i, item := range searchScanReponses {
-		spanEvents := item.GetValues()
+		fmt.Println(item.Model)
+		var jsonItem model.SearchSpanReponseItem
+		json.Unmarshal([]byte(item.Model), &jsonItem)
+		jsonItem.Timestamp = item.Timestamp
+		spanEvents := jsonItem.GetValues()
 		searchSpansResult[0].Events[i] = spanEvents
 	}
 
 	return &searchSpansResult, nil
 
 }
+func interfaceArrayToStringArray(array []interface{}) []string {
+	var strArray []string
+	for _, item := range array {
+		strArray = append(strArray, item.(string))
+	}
+	return strArray
+}
+
 func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 	serviceMapDependencyItems := []model.ServiceMapDependencyItem{}
 

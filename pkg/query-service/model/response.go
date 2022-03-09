@@ -167,19 +167,32 @@ type TraceResultSpan struct {
 	TagsValues   []string `db:"tagsValues"`
 }
 
+type SearchSpanDBReponseItem struct {
+	Timestamp string `db:"timestamp"`
+	TraceID   string `db:"traceID"`
+	Model     string `db:"model"`
+}
+
+type Event struct {
+	Name         string                 `json:"name,omitempty"`
+	TimeUnixNano uint64                 `json:"timeUnixNano,omitempty"`
+	AttributeMap map[string]interface{} `json:"attributeMap,omitempty"`
+	IsError      bool                   `json:"isError,omitempty"`
+}
+
 type SearchSpanReponseItem struct {
-	Timestamp    string   `db:"timestamp"`
-	SpanID       string   `db:"spanID"`
-	TraceID      string   `db:"traceID"`
-	ServiceName  string   `db:"serviceName"`
-	Name         string   `db:"name"`
-	Kind         int32    `db:"kind"`
-	References   string   `db:"references,omitempty"`
-	DurationNano int64    `db:"durationNano"`
-	TagsKeys     []string `db:"tagsKeys"`
-	TagsValues   []string `db:"tagsValues"`
-	Events       []string `db:"events"`
-	HasError     int32    `db:"hasError"`
+	Timestamp    string        `json:"timestamp"`
+	SpanID       string        `json:"spanID"`
+	TraceID      string        `json:"traceID"`
+	ServiceName  string        `json:"serviceName"`
+	Name         string        `json:"name"`
+	Kind         int32         `json:"kind"`
+	References   []OtelSpanRef `json:"references,omitempty"`
+	DurationNano int64         `json:"durationNano"`
+	TagsKeys     []string      `json:"tagsKeys"`
+	TagsValues   []string      `json:"tagsValues"`
+	Events       []string      `json:"event"`
+	HasError     int32         `json:"hasError"`
 }
 
 type OtelSpanRef struct {
@@ -199,13 +212,17 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
 	timeObj, _ := time.Parse(time.RFC3339Nano, item.Timestamp)
 	references := []OtelSpanRef{}
-	json.Unmarshal([]byte(item.References), &references)
+	jsonbody, _ := json.Marshal(item.References)
+	json.Unmarshal(jsonbody, &references)
 
 	referencesStringArray := []string{}
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
 
+	if item.Events == nil {
+		item.Events = []string{}
+	}
 	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, item.Events, item.HasError}
 
 	return returnArray
