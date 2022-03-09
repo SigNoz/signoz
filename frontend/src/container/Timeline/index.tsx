@@ -1,15 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { isEqual } from 'lodash-es';
-import styles from './style.module.css';
-import { useMeasure } from 'react-use';
-import { toFixed } from 'utils/toFixed';
-import {
-	INTERVAL_UNITS,
-	resolveTimeFromInterval,
-} from 'container/TraceDetail/utils';
+import { StyledDiv } from 'components/Styled';
+import { INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
+import React, { useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
+
+import { styles, Svg, TimelineInterval } from './styles';
 import { Interval } from './types';
-import { getIntervalSpread, getIntervals } from './utils';
+import { getIntervals, getIntervalSpread } from './utils';
 interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: object;
@@ -21,7 +18,7 @@ const Timeline = ({
 	globalTraceMetadata,
 	intervalUnit,
 	setIntervalUnit,
-}: TimelineProps) => {
+}: TimelineProps): JSX.Element => {
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const { isDarkMode } = useThemeMode();
 
@@ -61,12 +58,10 @@ const Timeline = ({
 	}, [traceMetaData, globalTraceMetadata]);
 
 	return (
-		<div ref={ref} style={{ flex: 1, overflow: 'inherit' }}>
-			<svg
-				style={{ overflow: 'inherit' }}
+		<StyledDiv ref={ref} styledclass={[styles.timelineContainer]}>
+			<Svg
 				viewBox={`0 0 ${width} ${Timeline_Height}`}
 				xmlns="http://www.w3.org/2000/svg"
-				className={styles['svg-container']}
 			>
 				<line
 					x1={Timeline_H_Spacing}
@@ -78,13 +73,12 @@ const Timeline = ({
 				/>
 				{intervals &&
 					intervals.map((interval, index) => (
-						<g
+						<TimelineInterval
 							transform={`translate(${
 								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
 							},0)`}
-							className={styles['timeline-tick']}
-							key={interval.label + interval.percentage + index}
+							key={`${interval.label + interval.percentage + index}`}
 						>
 							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
 								{interval.label}
@@ -95,10 +89,10 @@ const Timeline = ({
 								stroke={isDarkMode ? 'white' : 'black'}
 								strokeWidth="1"
 							/>
-						</g>
+						</TimelineInterval>
 					))}
-			</svg>
-		</div>
+			</Svg>
+		</StyledDiv>
 	);
 };
 

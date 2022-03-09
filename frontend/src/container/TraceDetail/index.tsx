@@ -1,6 +1,13 @@
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Col, Divider, Row, Space, Typography } from 'antd';
-import { StyledCol, StyledDiv, StyledRow } from 'components/Styled';
+import { Button, Col } from 'antd';
+import {
+	StyledCol,
+	StyledDiv,
+	StyledDivider,
+	StyledRow,
+	StyledSpace,
+	StyledTypography,
+} from 'components/Styled';
 import * as StyledStyles from 'components/Styled/styles';
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
@@ -43,7 +50,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
 	}, [treeData]);
 
-	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({
+	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState({
 		...traceMetaData,
 	});
 
@@ -60,7 +67,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		return getNodeById(activeSelectedId, treeData);
 	}, [activeSelectedId, treeData]);
 
-	const onSearchHandler = (value: string) => {
+	const onSearchHandler = (value: string): void => {
 		setSearchSpanString(value);
 		setTreeData(spanToTreeUtil(response[0].events));
 	};
@@ -71,37 +78,25 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		}
 	};
 
-	const onResetHandler = () => {
+	const onResetHandler = (): void => {
 		setTreeData(spanToTreeUtil(response[0].events));
 	};
 
 	return (
-		<StyledRow styledClass={[StyledStyles.Flex({ flex: 1 })]}>
-			<StyledCol
-				flex={'auto'}
-				styledClass={[
-					StyledStyles.Flex({ flexDirection: 'column' }),
-					StyledStyles.Display({ display: 'flex' }),
-				]}
-			>
-				<StyledRow
-					styledClass={[
-						StyledStyles.Spacing({
-							margin: '0 1rem 0 0',
-						}),
-					]}
-				>
-					<Col
+		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
+			<StyledCol flex={'auto'} styledclass={styles.leftContainer}>
+				<StyledRow styledclass={styles.flameAndTimelineContainer}>
+					<StyledCol
+						styledclass={styles.traceMetaDataContainer}
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
-						style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}
 					>
-						<Typography.Title level={5} style={{ margin: 0 }}>
+						<StyledTypography.Title styledclass={[styles.removeMargin]} level={5}>
 							Trace Details
-						</Typography.Title>
-						<Typography.Text style={{ margin: 0 }}>
+						</StyledTypography.Title>
+						<StyledTypography.Text styledclass={[styles.removeMargin]}>
 							{traceMetaData.totalSpans} Span
-						</Typography.Text>
-					</Col>
+						</StyledTypography.Text>
+					</StyledCol>
 					<Col flex={'auto'}>
 						<TraceFlameGraph
 							treeData={tree}
@@ -114,8 +109,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						/>
 					</Col>
 				</StyledRow>
-				<Row style={{ marginTop: '2rem' }}>
-					<Col
+				<StyledRow styledclass={[styles.traceDateAndTimelineContainer]}>
+					<StyledCol
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
 						style={{
 							display: 'flex',
@@ -124,16 +119,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						}}
 					>
 						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
-					</Col>
-					<StyledCol
-						flex="auto"
-						style={{ overflow: 'visible' }}
-						styledClass={[
-							StyledStyles.Spacing({
-								margin: '0 1rem 0 0',
-							}),
-						]}
-					>
+					</StyledCol>
+					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
 							traceMetaData={traceMetaData}
@@ -141,10 +128,10 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							setIntervalUnit={setIntervalUnit}
 						/>
 					</StyledCol>
-					<Divider style={{ height: '100%', margin: '0' }} />
-				</Row>
+					<StyledDivider styledclass={[styles.verticalSeparator]} />
+				</StyledRow>
 				<StyledRow
-					styledClass={[
+					styledclass={[
 						styles.traceDetailContentSpacing,
 						StyledStyles.Spacing({
 							margin: '1.5rem 1rem 0.5rem',
@@ -160,40 +147,17 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						/> */}
 					</Col>
 					<Col flex={'auto'}>
-						<Space
-							style={{
-								float: 'right',
-							}}
-						>
+						<StyledSpace styledclass={[styles.floatRight]}>
 							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
 								Reset Focus
 							</Button>
-						</Space>
+						</StyledSpace>
 					</Col>
 				</StyledRow>
-				<StyledDiv
-					styledClass={[
-						styles.traceDetailContentSpacing,
-						StyledStyles.Spacing({
-							margin: '1.5rem 1rem 0.5rem',
-						}),
-						StyledStyles.Flex({
-							flexDirection: 'column',
-						}),
-						StyledStyles.Display({
-							display: 'flex',
-						}),
-					]}
-					style={{
-						position: 'relative',
-						flex: 1,
-						overflowY: 'auto',
-						overflowX: 'hidden',
-					}}
-				>
+				<StyledDiv styledclass={[styles.ganttChartContainer]}>
 					<GanttChart
 						traceMetaData={traceMetaData}
 						data={tree}
@@ -207,20 +171,11 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 				</StyledDiv>
 			</StyledCol>
 			<Col>
-				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
+				<StyledDivider styledclass={[styles.verticalSeparator]} type="vertical" />
 			</Col>
-			<Col
-				md={5}
-				sm={5}
-				style={{
-					height: '100%',
-					position: 'relative',
-					display: 'flex',
-					flexDirection: 'column',
-				}}
-			>
+			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
 				<SelectedSpanDetails tree={getSelectedNode} />
-			</Col>
+			</StyledCol>
 		</StyledRow>
 	);
 };

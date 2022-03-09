@@ -1,17 +1,18 @@
-import React, { useState, useLayoutEffect, useMemo } from 'react';
 import Color from 'color';
-import { pushDStree } from 'store/actions';
-import {
-	SpanItemContainer,
-	TraceFlameGraphContainer,
-	TOTAL_SPAN_HEIGHT,
-} from './styles';
 import {
 	IIntervalUnit,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
-import { toFixed } from 'utils/toFixed';
 import useThemeMode from 'hooks/useThemeMode';
+import React, { useLayoutEffect, useMemo, useState } from 'react';
+import { pushDStree } from 'store/actions';
+import { toFixed } from 'utils/toFixed';
+
+import {
+	SpanItemContainer,
+	TOTAL_SPAN_HEIGHT,
+	TraceFlameGraphContainer,
+} from './styles';
 
 const SpanItem = ({
 	topOffset = 0, // top offset in px
@@ -33,7 +34,7 @@ const SpanItem = ({
 	onSpanHover: Function;
 	hoveredSpanId: string;
 	selectedSpanId: string;
-}) => {
+}): JSX.Element => {
 	const { serviceColour } = spanData;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
@@ -48,14 +49,14 @@ const SpanItem = ({
 		}
 	}, [hoveredSpanId, selectedSpanId]);
 
-	const handleHover = (hoverState: boolean) => {
+	const handleHover = (hoverState: boolean): void => {
 		setIsLocalHover(hoverState);
 
 		if (hoverState) onSpanHover(spanData.id);
 		else onSpanHover(null);
 	};
 
-	const handleClick = () => {
+	const handleClick = (): void => {
 		onSpanSelect(spanData.id);
 	};
 
@@ -96,7 +97,7 @@ const TraceFlameGraph = (props: {
 	hoveredSpanId: string;
 	selectedSpanId: string;
 	intervalUnit: IIntervalUnit;
-}) => {
+}): null | JSX.Element => {
 	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return null;
 	}
@@ -125,7 +126,7 @@ const TraceFlameGraph = (props: {
 		onSpanSelect: Function;
 		hoveredSpanId: string;
 		selectedSpanId: string;
-	}) => {
+	}): null | JSX.Element => {
 		if (!spanData) {
 			return null;
 		}
