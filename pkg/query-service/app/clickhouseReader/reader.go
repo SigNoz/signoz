@@ -2637,6 +2637,21 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
+// GetDisks returns a list of disks {name, type} configured in clickhouse DB.
+func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError) {
+	diskItems := []model.DiskItem{}
+
+	query := "SELECT name,type FROM system.disks"
+	if err := r.db.Select(&diskItems, query); err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{model.ErrorExec,
+			fmt.Errorf("error while getting disks. Err=%v", err)}
+	}
+
+	zap.S().Infof("Got response: %+v\n", diskItems)
+	return &diskItems, nil
+}
+
 func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 
 	parseTTL := func(queryResp string) int {
