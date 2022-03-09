@@ -53,5 +53,4 @@ type Reader interface {
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
-	SetStoragePolicy(ctx context.Context, policyParams *model.StoragePolicyParams) (*model.StoragePolicyResponseItem, *model.ApiError)
 }

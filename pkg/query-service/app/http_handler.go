@@ -204,7 +204,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/storagePolicy", aH.setStoragePolicy).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/userPreferences", aH.setUserPreferences).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/userPreferences", aH.getUserPreferences).Methods(http.MethodGet)
@@ -1059,22 +1058,8 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) setStoragePolicy(w http.ResponseWriter, r *http.Request) {
-	params, err := parseStoragePolicy(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, apiErr := (*aH.reader).SetStoragePolicy(context.Background(), params)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-}
-
 func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
-	ttlParams, err := parseDuration(r)
+	ttlParams, err := parseTTLParams(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}

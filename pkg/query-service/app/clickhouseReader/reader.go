@@ -2583,45 +2583,56 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	return &GetFilteredSpansAggregatesResponse, nil
 }
 
-func (r *ClickHouseReader) SetStoragePolicy(ctx context.Context,
-	params *model.StoragePolicyParams) (*model.StoragePolicyResponseItem, *model.ApiError) {
-
-	req := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='%s'",
-		params.TableName, params.PolicyName)
-
-	if _, err := r.db.Exec(req); err != nil {
-		zap.S().Error(fmt.Errorf("error while setting storage policy. Err=%v", err))
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting storage policy. Err=%v", err)}
-	}
-	return &model.StoragePolicyResponseItem{Message: "storage policy successfully set up"}, nil
-}
-
 func (r *ClickHouseReader) SetTTL(ctx context.Context,
-	ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 
-	// error is skipped, handled earlier as bad request
-	duration, _ := time.ParseDuration(ttlParams.Duration)
-	seconds := duration.Seconds()
-
-	var query string
-	switch ttlParams.Type {
+	var req, tableName string
+	switch params.Type {
 	case constants.TraceTTL:
-		query = fmt.Sprintf("ALTER TABLE default.%v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND", signozTraceTableName, seconds)
+		tableName = signozTraceTableName
+		req = fmt.Sprintf(
+			"ALTER TABLE default.%v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
+			tableName, params.DelDuration)
+		if len(params.ColdStorageVolume) > 0 {
+			req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
+				params.ToColdStorageDuration, params.ColdStorageVolume)
+		}
 
 	case constants.MetricsTTL:
-		query = fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL %v SECOND", signozMetricDBName, signozSampleName, seconds)
+		tableName = signozMetricDBName + "." + signozSampleName
+		req = fmt.Sprintf(
+			"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
+				"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+		if len(params.ColdStorageVolume) > 0 {
+			req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
+				" + INTERVAL %v SECOND TO VOLUME '%s'",
+				params.ToColdStorageDuration, params.ColdStorageVolume)
+		}
 
 	default:
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
+		return nil, &model.ApiError{model.ErrorExec,
+			fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v",
+				params.Type)}
 	}
 
-	if len(ttlParams.ColdStorage) > 0 {
-		query += fmt.Sprintf(" to volume '%s'", ttlParams.ColdStorage)
+	// Set the storage policy for the required table. If it is already set, then setting it again
+	// will not a problem.
+	if len(params.ColdStorageVolume) > 0 {
+		policyReq := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='tiered'", tableName)
+
+		zap.S().Info("Executing Storage policy request: %s\n", policyReq)
+		if _, err := r.db.Exec(policyReq); err != nil {
+			zap.S().Error(fmt.Errorf("error while setting storage policy. Err=%v", err))
+			return nil, &model.ApiError{model.ErrorExec,
+				fmt.Errorf("error while setting storage policy. Err=%v", err)}
+		}
 	}
 
-	if _, err := r.db.Exec(query); err != nil {
+	zap.S().Info("Executing TTL request: %s\n", req)
+	if _, err := r.db.Exec(req); err != nil {
 		zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+		return nil, &model.ApiError{model.ErrorExec,
+			fmt.Errorf("error while setting ttl. Err=%v", err)}
 	}
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }

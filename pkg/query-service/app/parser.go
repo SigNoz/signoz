@@ -883,35 +883,16 @@ func parseSetRulesRequest(r *http.Request) (string, *model.ApiError) {
 	return "", nil
 }
 
-func parseStoragePolicy(r *http.Request) (*model.StoragePolicyParams, error) {
-	table := r.URL.Query().Get("table")
-	policy := r.URL.Query().Get("policy")
-
-	if len(table) == 0 || len(policy) == 0 {
-		return nil, fmt.Errorf("table or policy cannot be empty.")
-	}
-
-	return &model.StoragePolicyParams{
-		table,
-		policy,
-	}, nil
-}
-
-func parseDuration(r *http.Request) (*model.TTLParams, error) {
+func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	// make sure either of the query params are present
 	typeTTL := r.URL.Query().Get("type")
-	duration := r.URL.Query().Get("duration")
-	coldStorage := r.URL.Query().Get("coldstorage")
+	delDuration := r.URL.Query().Get("duration")
+	coldStorage := r.URL.Query().Get("coldStorage")
+	toColdDuration := r.URL.Query().Get("toColdDuration")
 
-	if len(typeTTL) == 0 || len(duration) == 0 {
+	if len(typeTTL) == 0 || len(delDuration) == 0 {
 		return nil, fmt.Errorf("type and duration param cannot be empty from the query")
-	}
-
-	// Validate the duration as a valid time.Duration
-	_, err := time.ParseDuration(duration)
-	if err != nil {
-		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
 	}
 
 	// Validate the type parameter
@@ -919,7 +900,22 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	return &model.TTLParams{Duration: duration, Type: typeTTL, ColdStorage: coldStorage}, nil
+	durationParsed, err := time.ParseDuration(delDuration)
+	if err != nil {
+		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
+	}
+
+	toColdParsed, err := time.ParseDuration(toColdDuration)
+	if err != nil {
+		return nil, fmt.Errorf("Not a valid to cold TTL duration %v", toColdDuration)
+	}
+
+	return &model.TTLParams{
+		Type:                  typeTTL,
+		DelDuration:           durationParsed.Seconds(),
+		ColdStorageVolume:     coldStorage,
+		ToColdStorageDuration: toColdParsed.Seconds(),
+	}, nil
 }
 
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
