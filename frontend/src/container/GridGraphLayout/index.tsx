@@ -68,12 +68,23 @@ const GridGraph = (): JSX.Element => {
 				};
 			});
 		} else {
-			return data.layout.map((e, index) => ({
-				...e,
-				Component: (): JSX.Element => (
-					<Graph name={e.i + index} isDeleted={isDeleted} widget={widgets[index]} />
-				),
-			}));
+			return data.layout
+				.filter((_, index) => widgets[index])
+				.map((e, index) => ({
+					...e,
+					Component: (): JSX.Element => {
+						if (widgets[index]) {
+							return (
+								<Graph
+									name={e.i + index}
+									isDeleted={isDeleted}
+									widget={widgets[index]}
+								/>
+							);
+						}
+						return <></>;
+					},
+				}));
 		}
 	}, [widgets, data.layout]);
 
