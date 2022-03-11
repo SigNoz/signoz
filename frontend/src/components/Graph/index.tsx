@@ -27,7 +27,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-import { ITimeRange, useXAxisTimeUnit } from './xAxisConfig';
+import { useXAxisTimeUnit } from './xAxisConfig';
 Chart.register(
 	LineElement,
 	PointElement,
@@ -60,10 +60,7 @@ const Graph = ({
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const currentTheme = isDarkMode ? 'dark' : 'light';
 
-	/**
-	 * Computes the relevant time unit for x axis by analyzing the time stamp data
-	 */
-	const xAxisTimeUnit = useXAxisTimeUnit(data);
+	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
 	const lineChartRef = useRef<Chart>();
 
