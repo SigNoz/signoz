@@ -9,7 +9,7 @@ import { TraceReducer } from 'types/reducer/trace';
 import { getChartData, getChartDataforGroupBy } from './config';
 import { Container } from './styles';
 
-const TraceGraph = () => {
+const TraceGraph = (): JSX.Element => {
 	const { spansGraph, selectedGroupBy } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
