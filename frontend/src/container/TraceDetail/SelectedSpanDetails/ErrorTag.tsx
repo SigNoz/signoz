@@ -1,7 +1,9 @@
-import { Button, Modal, Collapse } from 'antd';
+import { Button, Collapse, Modal } from 'antd';
 import useThemeMode from 'hooks/useThemeMode';
+import { keys, map } from 'lodash-es';
 import React, { useRef, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
+
 import { CustomSubText, CustomSubTitle } from './styles';
 // import Editor from 'components/Editor';
 
@@ -23,9 +25,8 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 
 	return (
 		<>
-			{event?.map(({ attributeMap, name }) => {
-				const attributes = Object.keys(attributeMap);
-
+			{map(event, ({ attributeMap, name }) => {
+				const attributes = keys(attributeMap);
 				return (
 					<Collapse
 						defaultActiveKey={[name || attributeMap.event]}
@@ -35,7 +36,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 							header={name || attributeMap?.event}
 							key={name || attributeMap.event}
 						>
-							{attributes.map((event) => {
+							{map(attributes, (event) => {
 								const value = attributeMap[event];
 								const isEllipsed = value.length > 24;
 
@@ -62,8 +63,6 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 												</Button>
 											)}
 										</CustomSubText>
-
-
 									</>
 								);
 							})}

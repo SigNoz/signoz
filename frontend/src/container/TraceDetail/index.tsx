@@ -17,8 +17,9 @@ import styles from './TraceGraph.module.css';
 import history from 'lib/history';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import { INTERVAL_UNITS } from './utils';
-
+import { Mock_Response } from './MockResponse'
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
+	response = Mock_Response
 	const spanServiceColors = useMemo(
 		() => spanServiceNameToColorMapping(response[0].events),
 		[response],

@@ -49,7 +49,8 @@ const Timeline = ({
 			}
 		}
 
-		setIntervalUnit(intervalUnit);
+		debugger;
+		intervalUnit = intervalUnit || INTERVAL_UNITS[0]
 		setIntervals(
 			getIntervals({
 				baseInterval,
@@ -58,6 +59,7 @@ const Timeline = ({
 				intervalUnit,
 			}),
 		);
+		setIntervalUnit(intervalUnit);
 	}, [traceMetaData, globalTraceMetadata]);
 
 	return (
@@ -79,10 +81,9 @@ const Timeline = ({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<g
-							transform={`translate(${
-								Timeline_H_Spacing +
+							transform={`translate(${Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-							},0)`}
+								},0)`}
 							className={styles['timeline-tick']}
 							key={interval.label + interval.percentage + index}
 						>

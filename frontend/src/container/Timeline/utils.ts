@@ -46,6 +46,7 @@ export const getIntervals = ({
 	intervalSpreadNormalized,
 	intervalUnit,
 }) => {
+	debugger
 	const intervals: Interval[] = [
 		{
 			label: `${toFixed(resolveTimeFromInterval(baseInterval, intervalUnit), 2)}${
@@ -68,7 +69,7 @@ export const getIntervals = ({
 			tempBaseSpread -= intervalSpreadNormalized;
 		}
 		elapsedIntervals = interval_time;
-
+		debugger;
 		const interval: Interval = {
 			label: `${toFixed(
 				resolveTimeFromInterval(interval_time + baseInterval, intervalUnit),
