@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { CheckBoxContainer } from './styles';
 import { Checkbox, notification, Typography } from 'antd';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
-
-import { SelectedTraceFilter } from 'store/actions/trace/selectTraceFilter';
-import AppActions from 'types/actions';
-import { ThunkDispatch } from 'redux-thunk';
-import { bindActionCreators, Dispatch } from 'redux';
-import { getFilter, updateURL } from 'store/actions/trace/util';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import React, { useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { SelectedTraceFilter } from 'store/actions/trace/selectTraceFilter';
+import { getFilter, updateURL } from 'store/actions/trace/util';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+
+import { CheckBoxContainer } from './styles';
 
 const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	const {
@@ -40,7 +40,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 			(e) => e === props.keyValue,
 		) !== undefined;
 
-	const onCheckHandler = async () => {
+	const onCheckHandler = async (): Promise<void> => {
 		try {
 			setIsLoading(true);
 
@@ -118,6 +118,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 						selectedFilter: newSelectedMap,
 						userSelected: preUserSelectedMap,
 						isFilterExclude: preIsFilterExclude,
+						order: spansAggregate.order,
 					},
 				});
 
@@ -131,6 +132,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 					updatedFilter,
 					preIsFilterExclude,
 					preUserSelectedMap,
+					spansAggregate.order,
 				);
 			} else {
 				setIsLoading(false);

@@ -7,9 +7,9 @@ export const UPDATE_TRACE_FILTER_LOADING = 'UPDATE_TRACE_FILTER_LOADING';
 export const SELECT_TRACE_FILTER = 'SELECT_TRACE_FILTER';
 export const UPDATE_ALL_FILTERS = 'UPDATE_ALL_FILTERS';
 export const UPDATE_SELECTED_TAGS = 'UPDATE_SELECTED_TAGS';
-export const UPDATE_TAG_MODAL_VISIBLITY = 'UPDATE_TAG_MODAL_VISIBLITY';
+export const UPDATE_TAG_MODAL_VISIBILITY = 'UPDATE_TAG_MODAL_VISIBILITY';
 
-export const UPDATE_SPANS_AGGREEGATE = 'UPDATE_SPANS_AGGREEGATE';
+export const UPDATE_SPANS_AGGREGATE = 'UPDATE_SPANS_AGGREGATE';
 
 export const UPDATE_IS_TAG_ERROR = 'UPDATE_IS_TAG_ERROR';
 
@@ -33,14 +33,14 @@ export interface UpdateFilter {
 }
 
 export interface UpdateSpansAggregate {
-	type: typeof UPDATE_SPANS_AGGREEGATE;
+	type: typeof UPDATE_SPANS_AGGREGATE;
 	payload: {
 		spansAggregate: TraceReducer['spansAggregate'];
 	};
 }
 
-export interface UpdateTagVisiblity {
-	type: typeof UPDATE_TAG_MODAL_VISIBLITY;
+export interface UpdateTagVisibility {
+	type: typeof UPDATE_TAG_MODAL_VISIBILITY;
 	payload: {
 		isTagModalOpen: TraceReducer['isTagModalOpen'];
 	};
@@ -70,6 +70,7 @@ export interface UpdateAllFilters {
 		selectedTags: TraceReducer['selectedTags'];
 		userSelected: TraceReducer['userSelectedFilter'];
 		isFilterExclude: TraceReducer['isFilterExclude'];
+		order: TraceReducer['spansAggregate']['order'];
 	};
 }
 
@@ -159,7 +160,7 @@ export type TraceActions =
 	| SelectTraceFilter
 	| UpdateAllFilters
 	| UpdateSelectedTags
-	| UpdateTagVisiblity
+	| UpdateTagVisibility
 	| UpdateSpansAggregate
 	| UpdateIsTagError
 	| UpdateSelectedGroupBy

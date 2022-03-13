@@ -23,10 +23,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
 import {
+	ClearAllFilter,
 	Container,
 	LeftContainer,
 	RightContainer,
-	ClearAllFilter,
 } from './styles';
 
 const Trace = ({
@@ -63,6 +63,7 @@ const Trace = ({
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
 			selectedTags,
+			order: spansAggregate.order === 'ascend' ? 'ascending' : 'descending',
 		});
 	}, [selectedTags, selectedFilter, maxTime, minTime]);
 
@@ -87,25 +88,28 @@ const Trace = ({
 	]);
 
 	useEffect(() => {
-		return () => {
+		return (): void => {
 			dispatch({
 				type: RESET_TRACE_FILTER,
 			});
 		};
-	}, []);
+	}, [dispatch]);
 
-	const onClickHandler = useCallback((e) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const onClickHandler = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
 
-		history.replace(ROUTES.TRACE);
+			history.replace(ROUTES.TRACE);
 
-		dispatch({
-			type: RESET_TRACE_FILTER,
-		});
+			dispatch({
+				type: RESET_TRACE_FILTER,
+			});
 
-		setIsChanged((state) => !state);
-	}, []);
+			setIsChanged((state) => !state);
+		},
+		[dispatch],
+	);
 
 	return (
 		<>

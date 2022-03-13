@@ -1,7 +1,7 @@
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
-import history from 'lib/history';
 import { AllTraceFilterEnum } from 'container/Trace/Filters';
+import history from 'lib/history';
 import { PayloadProps as GetFilterPayload } from 'types/api/trace/getFilters';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 export * from './parseFilter';
 export interface ParsedUrl<T> {
 	currentValue: T;
@@ -11,32 +11,31 @@ export interface ParsedUrl<T> {
 export function isTraceFilterEnum(
 	value: TraceFilterEnum | string,
 ): value is TraceFilterEnum {
-	if (AllTraceFilterEnum.find((enums) => enums === value)) {
-		return true;
-	}
-	return false;
+	return AllTraceFilterEnum.find((enums) => enums === value) ? true : false;
 }
 
 export const updateURL = (
 	selectedFilter: TraceReducer['selectedFilter'],
 	filterToFetchData: TraceReducer['filterToFetchData'],
-	current: TraceReducer['spansAggregate']['total'],
+	spanAggregateCurrentPage: TraceReducer['spansAggregate']['currentPage'],
 	selectedTags: TraceReducer['selectedTags'],
 	filter: TraceReducer['filter'],
 	isFilterExclude: TraceReducer['isFilterExclude'],
 	userSelectedFilter: TraceReducer['userSelectedFilter'],
-) => {
+	spanAggregateOrder: TraceReducer['spansAggregate']['order'],
+): void => {
 	const search = new URLSearchParams(location.search);
 	const preResult: { key: string; value: string }[] = [];
 
 	const keyToSkip = [
 		'selected',
 		'filterToFetchData',
-		'current',
 		'selectedTags',
 		'filter',
 		'isFilterExclude',
 		'userSelectedFilter',
+		'spanAggregateCurrentPage',
+		'spanAggregateOrder',
 	];
 
 	search.forEach((value, key) => {
@@ -53,7 +52,7 @@ export const updateURL = (
 			Object.fromEntries(selectedFilter),
 		)}&filterToFetchData=${JSON.stringify(
 			filterToFetchData,
-		)}&current=${current}&selectedTags=${JSON.stringify(
+		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&selectedTags=${JSON.stringify(
 			selectedTags,
 		)}&filter=${JSON.stringify(Object.fromEntries(filter))}&${preResult
 			.map((e) => `${e.key}=${e.value}`)
@@ -61,7 +60,7 @@ export const updateURL = (
 			Object.fromEntries(isFilterExclude),
 		)}&userSelectedFilter=${JSON.stringify(
 			Object.fromEntries(userSelectedFilter),
-		)}`,
+		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&spanAggregateOrder=${spanAggregateOrder}`,
 	);
 };
 

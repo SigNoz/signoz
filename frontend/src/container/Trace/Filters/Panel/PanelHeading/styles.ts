@@ -29,7 +29,7 @@ export const IconContainer = styled.div`
 	}
 `;
 
-export const TextCotainer = styled.div`
+export const TextContainer = styled.div`
 	&&& {
 		display: flex;
 		cursor: pointer;

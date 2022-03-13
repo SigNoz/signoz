@@ -1,21 +1,21 @@
 import {
+	RESET_TRACE_FILTER,
 	SELECT_TRACE_FILTER,
 	TraceActions,
-	UPDATE_TRACE_FILTER,
-	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_ALL_FILTERS,
-	UPDATE_SELECTED_TAGS,
-	UPDATE_SPANS_AGGREEGATE,
-	UPDATE_TAG_MODAL_VISIBLITY,
+	UPDATE_FILTER_EXCLUDE,
+	UPDATE_FILTER_RESPONSE_SELECTED,
 	UPDATE_IS_TAG_ERROR,
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
-	UPDATE_TRACE_GRAPH_LOADING,
+	UPDATE_SELECTED_TAGS,
+	UPDATE_SPANS_AGGREGATE,
+	UPDATE_TAG_MODAL_VISIBILITY,
+	UPDATE_TRACE_FILTER,
+	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_TRACE_GRAPH_ERROR,
+	UPDATE_TRACE_GRAPH_LOADING,
 	UPDATE_TRACE_GRAPH_SUCCESS,
-	RESET_TRACE_FILTER,
-	UPDATE_FILTER_RESPONSE_SELECTED,
-	UPDATE_FILTER_EXCLUDE,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
@@ -37,6 +37,7 @@ const initialValue: TraceReducer = {
 		error: false,
 		total: 0,
 		pageSize: 10,
+		order: 'ascend',
 	},
 	selectedGroupBy: '',
 	selectedFunction: 'count',
@@ -70,6 +71,7 @@ const traceReducer = (
 				selectedTags,
 				userSelected,
 				isFilterExclude,
+				order,
 			} = payload;
 
 			return {
@@ -83,6 +85,7 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
+					order: order,
 				},
 			};
 		}
@@ -114,14 +117,14 @@ const traceReducer = (
 			};
 		}
 
-		case UPDATE_SPANS_AGGREEGATE: {
+		case UPDATE_SPANS_AGGREGATE: {
 			return {
 				...state,
 				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 
-		case UPDATE_TAG_MODAL_VISIBLITY: {
+		case UPDATE_TAG_MODAL_VISIBILITY: {
 			return {
 				...state,
 				isTagModalOpen: action.payload.isTagModalOpen,

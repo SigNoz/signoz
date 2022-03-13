@@ -1,25 +1,27 @@
+import { notification } from 'antd';
+import getFiltersApi from 'api/trace/getFilters';
+import xor from 'lodash-es/xor';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import getFiltersApi from 'api/trace/getFilters';
-import {
-	parseSelectedFilter,
-	parseFilterToFetchData,
-	parseQueryIntoCurrent,
-	parseQueryIntoSelectedTags,
-	isTraceFilterEnum,
-	parseQueryIntoFilter,
-	parseIsSkippedSelection,
-	parseFilterExclude,
-} from './util';
 import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_TRACE_FILTER_LOADING,
 } from 'types/actions/trace';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
-import { notification } from 'antd';
-import xor from 'lodash-es/xor';
+
+import {
+	isTraceFilterEnum,
+	parseFilterExclude,
+	parseFilterToFetchData,
+	parseIsSkippedSelection,
+	parseQueryIntoCurrent,
+	parseQueryIntoFilter,
+	parseQueryIntoOrder,
+	parseQueryIntoSelectedTags,
+	parseSelectedFilter,
+} from './util';
 
 export const GetInitialTraceFilter = (
 	minTime: GlobalReducer['minTime'],
@@ -64,6 +66,11 @@ export const GetInitialTraceFilter = (
 				traces.spansAggregate.currentPage,
 			);
 
+			const parsedQueryOrder = parseQueryIntoOrder(
+				query,
+				traces.spansAggregate.order,
+			);
+
 			const isSelectionSkipped = parseIsSkippedSelection(query);
 
 			const parsedSelectedTags = parseQueryIntoSelectedTags(
@@ -89,7 +96,7 @@ export const GetInitialTraceFilter = (
 				isFilterExclude: getIsFilterExcluded.currentValue,
 			});
 
-			let preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
+			const preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
 				getSelectedFilter.currentValue,
 			);
 
@@ -146,6 +153,7 @@ export const GetInitialTraceFilter = (
 						selectedTags: parsedSelectedTags.currentValue,
 						userSelected: getUserSelected.currentValue,
 						isFilterExclude: getIsFilterExcluded.currentValue,
+						order: parsedQueryOrder.currentValue,
 					},
 				});
 			} else {

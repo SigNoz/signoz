@@ -3,10 +3,12 @@ import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';
+import { UPDATE_SPANS_AGGREGATE } from 'types/actions/trace';
 import { Props as GetSpanAggregateProps } from 'types/api/trace/getSpanAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+
+import { updateURL } from './util';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
@@ -32,7 +34,7 @@ export const GetSpansAggregate = (
 		try {
 			// triggering loading
 			dispatch({
-				type: UPDATE_SPANS_AGGREEGATE,
+				type: UPDATE_SPANS_AGGREGATE,
 				payload: {
 					spansAggregate: {
 						currentPage: props.current,
@@ -41,6 +43,7 @@ export const GetSpansAggregate = (
 						error: false,
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
+						order: props.order || spansAggregate.order,
 					},
 				},
 			});
@@ -58,7 +61,7 @@ export const GetSpansAggregate = (
 
 			if (response.statusCode === 200) {
 				dispatch({
-					type: UPDATE_SPANS_AGGREEGATE,
+					type: UPDATE_SPANS_AGGREGATE,
 					payload: {
 						spansAggregate: {
 							currentPage: props.current,
@@ -67,16 +70,28 @@ export const GetSpansAggregate = (
 							error: false,
 							total: response.payload.totalSpans,
 							pageSize: props.pageSize,
+							order: props.order === 'ascending' ? 'ascend' : 'descend',
 						},
 					},
 				});
+
+				updateURL(
+					traces.selectedFilter,
+					traces.filterToFetchData,
+					props.current,
+					traces.selectedTags,
+					traces.filter,
+					traces.isFilterExclude,
+					traces.userSelectedFilter,
+					props.order === 'ascending' ? 'ascend' : 'descend',
+				);
 			} else {
 				notification.error({
 					message: response.error || 'Something went wrong',
 				});
 
 				dispatch({
-					type: UPDATE_SPANS_AGGREEGATE,
+					type: UPDATE_SPANS_AGGREGATE,
 					payload: {
 						spansAggregate: {
 							currentPage: props.current,
@@ -85,13 +100,14 @@ export const GetSpansAggregate = (
 							error: true,
 							total: spansAggregate.total,
 							pageSize: props.pageSize,
+							order: props.order === 'ascending' ? 'ascend' : 'descend',
 						},
 					},
 				});
 			}
 		} catch (error) {
 			dispatch({
-				type: UPDATE_SPANS_AGGREEGATE,
+				type: UPDATE_SPANS_AGGREGATE,
 				payload: {
 					spansAggregate: {
 						currentPage: props.current,
@@ -100,6 +116,7 @@ export const GetSpansAggregate = (
 						error: true,
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
+						order: props.order === 'ascending' ? 'ascend' : 'descend',
 					},
 				},
 			});

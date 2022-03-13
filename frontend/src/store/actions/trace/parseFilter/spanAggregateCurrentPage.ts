@@ -1,4 +1,5 @@
 import { TraceReducer } from 'types/reducer/trace';
+
 import { ParsedUrl } from '../util';
 
 export const parseQueryIntoCurrent = (
@@ -9,7 +10,7 @@ export const parseQueryIntoCurrent = (
 
 	let current = 1;
 
-	const selected = url.get('current');
+	const selected = url.get('spanAggregateCurrentPage');
 
 	if (selected) {
 		try {

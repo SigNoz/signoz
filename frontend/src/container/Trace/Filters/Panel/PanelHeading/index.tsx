@@ -1,27 +1,27 @@
-import React, { useState } from 'react';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
-import { Card, Typography, Divider, notification } from 'antd';
+import { Card, Divider, notification, Typography } from 'antd';
+import React, { useCallback, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import {
 	ButtonComponent,
 	ButtonContainer,
 	Container,
 	IconContainer,
-	TextCotainer,
+	TextContainer,
 } from './styles';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
-import { AllPanelHeading } from 'types/reducer/trace';
 import getFilters from 'api/trace/getFilters';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { AxiosError } from 'axios';
+import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import AppActions from 'types/actions';
-import { Dispatch } from 'redux';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
-import { AxiosError } from 'axios';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { AllPanelHeading } from 'types/reducer/trace';
 
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 	const {
@@ -56,16 +56,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			const getprepdatedSelectedFilter = new Map(selectedFilter);
 			const getPreUserSelected = new Map(userSelectedFilter);
 
-			if (!isDefaultOpen) {
-				updatedFilterData = [props.name];
-			} else {
-				// removing the selected filter
-				updatedFilterData = [
-					...filterToFetchData.filter((name) => name !== props.name),
-				];
-				getprepdatedSelectedFilter.delete(props.name);
-				getPreUserSelected.delete(props.name);
-			}
+			updatedFilterData = [props.name];
 
 			const response = await getFilters({
 				end: String(global.maxTime),
@@ -78,33 +69,16 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
-				// is closed
-				if (!isDefaultOpen) {
-					// getprepdatedSelectedFilter.set(
-					// 	props.name,
-					// 	Object.keys(updatedFilter.get(props.name) || {}),
-					// );
+				updatedFilterData = [...filterToFetchData, props.name];
 
-					getPreUserSelected.set(
-						props.name,
-						Object.keys(updatedFilter.get(props.name) || {}),
-					);
-
-					updatedFilterData = [...filterToFetchData, props.name];
+				if (getPreUserSelected.get(props.name)) {
+					getPreUserSelected.forEach((value, key) => {
+						if (key !== props.name) {
+							getPreUserSelected.set(key, value);
+						}
+					});
 				}
 
-				// now append the non prop.name trace filter enum over the list
-				// selectedFilter.forEach((value, key) => {
-				// 	if (key !== props.name) {
-				// 		getprepdatedSelectedFilter.set(key, value);
-				// 	}
-				// });
-
-				getPreUserSelected.forEach((value, key) => {
-					if (key !== props.name) {
-						getPreUserSelected.set(key, value);
-					}
-				});
 				filter.forEach((value, key) => {
 					if (key !== props.name) {
 						updatedFilter.set(key, value);
@@ -121,6 +95,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						selectedTags,
 						userSelected: getPreUserSelected,
 						isFilterExclude,
+						order: spansAggregate.order,
 					},
 				});
 
@@ -132,6 +107,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					updatedFilter,
 					isFilterExclude,
 					getPreUserSelected,
+					spansAggregate.order,
 				);
 			} else {
 				notification.error({
@@ -147,7 +123,45 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		}
 	};
 
-	const onClearAllHandler = async () => {
+	/**
+	 * @description this function removes the selected filter
+	 */
+	const onCloseHandler = (): void => {
+		const preSelectedFilter = new Map(selectedFilter);
+		// removing the filter from filter to fetch the data
+		const preFilterToFetchTheData = [
+			...filterToFetchData.filter((name) => name !== props.name),
+		];
+
+		preSelectedFilter.delete(props.name);
+
+		dispatch({
+			type: UPDATE_ALL_FILTERS,
+			payload: {
+				current: spansAggregate.currentPage,
+				filter: filter,
+				filterToFetchData: preFilterToFetchTheData,
+				selectedFilter: preSelectedFilter,
+				selectedTags,
+				userSelected: userSelectedFilter,
+				isFilterExclude,
+				order: spansAggregate.order,
+			},
+		});
+
+		updateURL(
+			preSelectedFilter,
+			preFilterToFetchTheData,
+			spansAggregate.currentPage,
+			selectedTags,
+			filter,
+			isFilterExclude,
+			userSelectedFilter,
+			spansAggregate.order,
+		);
+	};
+
+	const onClearAllHandler = async (): Promise<void> => {
 		try {
 			setIsLoading(true);
 			const updatedFilter = new Map(selectedFilter);
@@ -181,6 +195,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						selectedTags,
 						userSelected: preUserSelected,
 						isFilterExclude: postIsFilterExclude,
+						order: spansAggregate.order,
 					},
 				});
 
@@ -192,6 +207,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					getUpatedFilter,
 					postIsFilterExclude,
 					preUserSelected,
+					spansAggregate.order,
 				);
 			} else {
 				notification.error({
@@ -272,7 +288,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 					aria-disabled={filterLoading || isLoading}
 					aria-expanded={props.isOpen}
 				>
-					<TextCotainer onClick={onExpandHandler}>
+					<TextContainer onClick={isDefaultOpen ? onCloseHandler : onExpandHandler}>
 						<IconContainer>
 							{!props.isOpen ? <RightOutlined /> : <DownOutlined />}
 						</IconContainer>
@@ -280,7 +296,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>
 							{AllPanelHeading.find((e) => e.key === props.name)?.displayValue || ''}
 						</Text>
-					</TextCotainer>
+					</TextContainer>
 
 					{props.name !== 'duration' && (
 						<ButtonContainer>

@@ -1,5 +1,6 @@
 import { TableProps, Tag } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
+import { SortOrder } from 'antd/lib/table/interface';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -30,7 +31,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 		(state) => state.globalTime,
 	);
 
-	const { loading, total } = spansAggregate;
+	const { loading, total, order: spansAggregateOrder } = spansAggregate;
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
@@ -44,6 +45,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 				const day = dayjs(value);
 				return <div>{day.format('DD/MM/YYYY hh:mm:ss A')}</div>;
 			},
+			sortOrder: spansAggregateOrder === 'ascend' ? 'ascend' : 'descend',
 		},
 		{
 			title: 'Service',
@@ -96,7 +98,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 		_,
 		sort,
 	) => {
-		const { order = 'ascend' } = sort;
+		const { order = spansAggregateOrder } = sort;
 
 		if (props.current && props.pageSize) {
 			getSpansAggregate({
@@ -126,7 +128,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 				},
 			})}
 			size="middle"
-			rowKey={'timestamp'}
+			rowKey={(record): string => `${record.traceID}-${record.spanID}`}
 			style={{
 				cursor: 'pointer',
 			}}
@@ -137,6 +139,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 				position: ['bottomLeft'],
 				total: total,
 			}}
+			sortDirections={['ascend', 'descend']}
 		/>
 	);
 };
@@ -146,7 +149,7 @@ interface DispatchProps {
 }
 
 const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+	dispatch: ThunkDispatch<AppState, unknown, AppActions>,
 ): DispatchProps => ({
 	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
 });
