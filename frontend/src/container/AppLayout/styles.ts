@@ -12,6 +12,8 @@ export const Layout = styled(LayoutComponent)`
 export const Content = styled(LayoutComponent.Content)`
 	&&& {
 		margin: 0 1rem;
+		display: flex;
+		flex-direction: column;
 	}
 `;
 
