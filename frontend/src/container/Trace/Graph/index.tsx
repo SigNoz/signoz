@@ -1,13 +1,13 @@
-import React, { useMemo } from 'react';
-
+import { Typography } from 'antd';
 import Graph from 'components/Graph';
+import Spinner from 'components/Spinner';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
-import Spinner from 'components/Spinner';
-import { Container } from './styles';
-import { Typography } from 'antd';
+
 import { getChartData, getChartDataforGroupBy } from './config';
+import { Container } from './styles';
 
 const TraceGraph = () => {
 	const { spansGraph, selectedGroupBy } = useSelector<AppState, TraceReducer>(

@@ -39,8 +39,6 @@ export const GetInitialData = (
 				globalTime.maxTime / 1000000,
 			]);
 
-			const step = 60;
-
 			const [
 				// getDBOverViewResponse,
 				// getExternalAverageDurationResponse,

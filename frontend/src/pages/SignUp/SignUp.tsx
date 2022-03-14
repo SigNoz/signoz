@@ -1,20 +1,23 @@
 import {
 	Button,
+	Card,
 	Input,
 	notification,
-	Typography,
-	Switch,
 	Space,
-	Card,
+	Switch,
+	Typography,
 } from 'antd';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import signup from 'api/user/signup';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
-import setLocalStorageKey from 'api/browser/localstorage/set';
-
 import AppActions from 'types/actions';
 const { Title } = Typography;
+import setPreference from 'api/user/setPreference';
+import { IS_LOGGED_IN } from 'constants/auth';
+import { useDispatch } from 'react-redux';
+import { Dispatch } from 'redux';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
 import {
@@ -26,10 +29,6 @@ import {
 	Logo,
 	MarginTop,
 } from './styles';
-import { IS_LOGGED_IN } from 'constants/auth';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import setPreference from 'api/user/setPreference';
 
 const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	const [loading, setLoading] = useState(false);
@@ -52,7 +51,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	const setState = (
 		value: string,
 		setFunction: React.Dispatch<React.SetStateAction<string>>,
-	) => {
+	): void => {
 		setFunction(value);
 	};
 
@@ -109,7 +108,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	const onSwitchHandler = (
 		value: boolean,
 		setFunction: React.Dispatch<React.SetStateAction<boolean>>,
-	) => {
+	): void => {
 		setFunction(value);
 	};
 

@@ -1,5 +1,5 @@
-import styled from 'styled-components';
 import { Typography } from 'antd';
+import styled from 'styled-components';
 
 export const DurationText = styled.div`
 	display: flex;

@@ -17,7 +17,10 @@ import {
 	SaveDashboard,
 	SaveDashboardProps,
 } from 'store/actions/dashboard/saveDashboard';
-import { UpdateQuery, UpdateQueryProps } from 'store/actions/dashboard/updateQuery';
+import {
+	UpdateQuery,
+	UpdateQueryProps,
+} from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -40,7 +43,7 @@ const NewWidget = ({
 	applySettingsToPanel,
 	saveSettingOfPanel,
 	getQueryResults,
-	updateQuery
+	updateQuery,
 }: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -127,11 +130,11 @@ const NewWidget = ({
 			updateQuery({
 				widgetId: selectedWidget?.id || '',
 				query: element.query || '',
-				legend: element.legend || '', 
-				currentIndex: index
+				legend: element.legend || '',
+				currentIndex: index,
 			});
-		})
-		
+		});
+
 		applySettingsToPanel({
 			description,
 			isStacked: stacked,
@@ -141,7 +144,7 @@ const NewWidget = ({
 			title,
 			widgetId: selectedWidget?.id || '',
 		});
-	}
+	};
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
@@ -233,7 +236,7 @@ const mapDispatchToProps = (
 	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
 	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
-	updateQuery: bindActionCreators(UpdateQuery, dispatch)
+	updateQuery: bindActionCreators(UpdateQuery, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

@@ -1,4 +1,4 @@
-import { span } from 'store/actions';
+import { Span } from 'types/api/trace/getTraceItem';
 
 export const colors = [
 	'#2F80ED',
@@ -21,7 +21,9 @@ const getRandomColor = (): string => {
 	return colors[index];
 };
 
-export const spanServiceNameToColorMapping = (spans: span[]) => {
+export const spanServiceNameToColorMapping = (
+	spans: Span[],
+): { [key: string]: string } => {
 	const serviceNameSet = new Set();
 	spans.forEach((spanItem) => {
 		serviceNameSet.add(spanItem[3]);

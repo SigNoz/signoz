@@ -1,15 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import { isEqual } from 'lodash-es';
-import styles from './style.module.css';
-import { useMeasure } from 'react-use';
-import { toFixed } from 'utils/toFixed';
 import {
 	INTERVAL_UNITS,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
+import { isEqual } from 'lodash-es';
+import React, { useMemo, useState } from 'react';
+import { useMeasure } from 'react-use';
+import { toFixed } from 'utils/toFixed';
+
+import styles from './style.module.css';
 import { Interval } from './types';
-import { getIntervalSpread, getIntervals } from './utils';
+import { getIntervals, getIntervalSpread } from './utils';
 interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: object;

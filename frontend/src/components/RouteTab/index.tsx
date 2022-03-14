@@ -1,5 +1,5 @@
-import React from 'react';
 import { Tabs, TabsProps } from 'antd';
+import React from 'react';
 
 const { TabPane } = Tabs;
 import history from 'lib/history';
