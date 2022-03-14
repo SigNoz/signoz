@@ -18,7 +18,7 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 
 	const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
 
-	const onSearchHandler = useCallback(() => {
+	const onSearchHandler = useCallback(async () => {
 		try {
 			setSelectLoading(true);
 			const response = await getTagFilters({
