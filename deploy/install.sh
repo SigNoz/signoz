@@ -133,11 +133,11 @@ install_docker() {
 
 
     if [[ $package_manager == apt-get ]]; then
-        apt_cmd="apt-get --yes --quiet"
+        apt_cmd="$sudo_cmd apt-get --yes --quiet"
         $apt_cmd update
         $apt_cmd install software-properties-common gnupg-agent
-        curl -fsSL "https://download.docker.com/linux/$os/gpg" | apt-key add -
-        add-apt-repository \
+        curl -fsSL "https://download.docker.com/linux/$os/gpg" | $sudo_cmd apt-key add -
+        $sudo_cmd add-apt-repository \
             "deb [arch=amd64] https://download.docker.com/linux/$os $(lsb_release -cs) stable"
         $apt_cmd update
         echo "Installing docker"
@@ -220,7 +220,7 @@ wait_for_containers_start() {
 
                 if [[ LEN_SUPERVISORS -ne 19 && $timeout -eq 50 ]];then
                     echo -e "\n🟠 Supervisors taking time to start ⏳ ... let's wait for some more time ⏱️\n\n"
-                    docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up -d
+                    $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up -d
                 fi
             fi
 
@@ -241,24 +241,26 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo ""
         if [ $setup_type == 'clickhouse' ]; then
             if is_arm64; then
-                echo -e "sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
+                echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
             else
-                echo -e "sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+                echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
             fi
         else   
-            echo -e "sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
+            echo -e "$sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
         fi
         # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
-        echo -e "\n📨 Please share your email to receive support with the installation"
-        read -rp 'Email: ' email
-
-        while [[ $email == "" ]]
-        do
+        if [[ email == "" ]]; then
+            echo -e "\n📨 Please share your email to receive support with the installation"
             read -rp 'Email: ' email
-        done
+
+            while [[ $email == "" ]]
+            do
+                read -rp 'Email: ' email
+            done
+        fi
 
         send_event "installation_support"
 
@@ -269,22 +271,43 @@ bye() {  # Prints a friendly good bye message and exits the script.
     fi
 }
 
+request_sudo() {
+	if hash sudo 2>/dev/null && (( $EUID != 0 )); then
+        echo "We will need sudo access to complete automatic Docker installation."
+        echo "Please enter your sudo password now:"
+        if ! $sudo_cmd -v; then
+            echo "Need sudo privileges to proceed with the installation."
+            exit 1;
+        fi
+        sudo_cmd="sudo"
+        echo -e "Thanks! 🙏\n"
+        echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
+	fi
+}
+
 echo ""
 echo -e "👋 Thank you for trying out SigNoz! "
 echo ""
 
+sudo_cmd=""
+
 # Check sudo permissions
 if (( $EUID != 0 )); then
-    echo "🟡 Running with non-sudo permissions."
-    echo "In case of any failure, please re-run the script with sudo privileges."
+    echo "🟡 Running installer with non-sudo permissions."
+    if ! is_command_present docker; then
+        $sudo_cmd docker ps
+    fi
+    echo "   In case of any failure, please consider running the script with sudo privileges."
     echo ""
+else
+    sudo_cmd="sudo"
 fi
 
 # Checking OS and assigning package manager
 desired_os=0
 os=""
 email=""
-echo -e "Detecting your OS ..."
+echo -e "🌏 Detecting your OS ...\n"
 check_os
 
 # Obtain unique installation id
@@ -416,13 +439,26 @@ fi
 
 # Check is Docker daemon is installed and available. If not, the install & start Docker for Linux machines. We cannot automatically install Docker Desktop on Mac OS
 if ! is_command_present docker; then
+
     if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
+        request_sudo
         install_docker
-    else
+        # enable docker without sudo from next reboot
+        sudo usermod -aG docker "${USER}"
+    elif is_mac; then
         echo ""
         echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
         echo "Docker Desktop must be installed manually on Mac OS to proceed. Docker can only be installed automatically on Ubuntu / openSUSE / SLES / Redhat / Cent OS"
         echo "https://docs.docker.com/docker-for-mac/install/"
+        echo "++++++++++++++++++++++++++++++++++++++++++++++++"
+
+        send_event "docker_not_installed"
+        exit 1
+    else
+        echo ""
+        echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
+        echo "Docker must be installed manually on your machine to proceed. Docker can only be installed automatically on Ubuntu / openSUSE / SLES / Redhat / Cent OS"
+        echo "https://docs.docker.com/get-docker/"
         echo "++++++++++++++++++++++++++++++++++++++++++++++++"
 
         send_event "docker_not_installed"
@@ -432,6 +468,7 @@ fi
 
 # Install docker-compose
 if ! is_command_present docker-compose; then
+    request_sudo
     install_docker_compose
 fi
 
@@ -439,19 +476,19 @@ fi
 start_docker
 
 
-# docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
+# $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
 
 
 echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz.\n"
 if [ $setup_type == 'clickhouse' ]; then
     if is_arm64; then
-        docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
+        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
     else
-        docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
+        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
     fi
 else
-    docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
+    $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
 fi
 
 
@@ -462,12 +499,12 @@ echo
 # script doesn't exit because this command looks like it failed to do it's thing.
 if [ $setup_type == 'clickhouse' ]; then
     if is_arm64; then
-        docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
+        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
     else
-        docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
     fi
 else
-    docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
+    $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
 fi
 
 wait_for_containers_start 60
@@ -478,9 +515,9 @@ if [[ $status_code -ne 200 ]]; then
     echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
     if [ $setup_type == 'clickhouse' ]; then
-        echo -e "sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+        echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
     else
-        echo -e "sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
+        echo -e "$sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
     fi
     echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
@@ -501,12 +538,12 @@ else
 
     if [ $setup_type == 'clickhouse' ]; then
         if is_arm64; then
-            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml down -v"
+            echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml down -v"
         else
-            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
+            echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
         fi
     else
-        echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
+        echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
     fi
 
     echo ""
