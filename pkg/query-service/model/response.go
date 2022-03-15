@@ -6,10 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/prometheus/prometheus/pkg/labels"
-	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/util/stats"
 )
 
 type ApiError struct {
@@ -30,11 +26,11 @@ const (
 	ErrorNotImplemented ErrorType = "not_implemented"
 )
 
-type QueryData struct {
-	ResultType promql.ValueType  `json:"resultType"`
-	Result     promql.Value      `json:"result"`
-	Stats      *stats.QueryStats `json:"stats,omitempty"`
-}
+// type QueryData struct {
+// 	ResultType promql.ValueType  `json:"resultType"`
+// 	Result     promql.Value      `json:"result"`
+// 	Stats      *stats.QueryStats `json:"stats,omitempty"`
+// }
 
 type RuleResponseItem struct {
 	Id        int       `json:"id" db:"id"`
@@ -73,55 +69,47 @@ type ReceiverResponse struct {
 }
 
 // AlertDiscovery has info for all active alerts.
-type AlertDiscovery struct {
-	Alerts []*AlertingRuleResponse `json:"rules"`
-}
+// type AlertDiscovery struct {
+// 	Alerts []*AlertingRuleResponse `json:"rules"`
+// }
 
 // Alert has info for an alert.
-type AlertingRuleResponse struct {
-	Labels      labels.Labels `json:"labels"`
-	Annotations labels.Labels `json:"annotations"`
-	State       string        `json:"state"`
-	Name        string        `json:"name"`
-	Id          int           `json:"id"`
-	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
-	// Value       float64       `json:"value"`
-}
+// type AlertingRuleResponse struct {
+// 	Labels      labels.Labels `json:"labels"`
+// 	Annotations labels.Labels `json:"annotations"`
+// 	State       string        `json:"state"`
+// 	Name        string        `json:"name"`
+// 	Id          int           `json:"id"`
+// 	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
+// 	// Value       float64       `json:"value"`
+// }
 
 type ServiceItem struct {
-	ServiceName  string  `json:"serviceName" db:"serviceName"`
-	Percentile99 float32 `json:"p99" db:"p99"`
-	AvgDuration  float32 `json:"avgDuration" db:"avgDuration"`
-	NumCalls     int     `json:"numCalls" db:"numCalls"`
-	CallRate     float32 `json:"callRate" db:"callRate"`
-	NumErrors    int     `json:"numErrors" db:"numErrors"`
-	ErrorRate    float32 `json:"errorRate" db:"errorRate"`
-	Num4XX       int     `json:"num4XX" db:"num4xx"`
-	FourXXRate   float32 `json:"fourXXRate" db:"fourXXRate"`
+	ServiceName  string  `json:"serviceName" ch:"serviceName"`
+	Percentile99 float64 `json:"p99" ch:"p99"`
+	AvgDuration  float64 `json:"avgDuration" ch:"avgDuration"`
+	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
+	CallRate     float64 `json:"callRate" ch:"callRate"`
+	NumErrors    uint64  `json:"numErrors" ch:"numErrors"`
+	ErrorRate    float64 `json:"errorRate" ch:"errorRate"`
+	Num4XX       uint64  `json:"num4XX" ch:"num4xx"`
+	FourXXRate   float64 `json:"fourXXRate" ch:"fourXXRate"`
 }
-
-type ServiceListErrorItem struct {
-	ServiceName string `json:"serviceName"`
-	NumErrors   int    `json:"numErrors"`
-	Num4xx      int    `json:"num4xx"`
-}
-
 type ServiceErrorItem struct {
-	Time      string `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp int64  `json:"timestamp" db:"timestamp"`
-	NumErrors int    `json:"numErrors" db:"numErrors"`
+	Time      time.Time `json:"time" ch:"time"`
+	Timestamp int64     `json:"timestamp" ch:"timestamp"`
+	NumErrors uint64    `json:"numErrors" ch:"numErrors"`
 }
-
 type ServiceOverviewItem struct {
-	Time         string  `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp    int64   `json:"timestamp" db:"timestamp"`
-	Percentile50 float32 `json:"p50" db:"p50"`
-	Percentile95 float32 `json:"p95" db:"p95"`
-	Percentile99 float32 `json:"p99" db:"p99"`
-	NumCalls     int     `json:"numCalls" db:"numCalls"`
-	CallRate     float32 `json:"callRate" db:"callRate"`
-	NumErrors    int     `json:"numErrors" db:"numErrors"`
-	ErrorRate    float32 `json:"errorRate" db:"errorRate"`
+	Time         time.Time `json:"time" ch:"time"`
+	Timestamp    int64     `json:"timestamp" ch:"timestamp"`
+	Percentile50 float64   `json:"p50" ch:"p50"`
+	Percentile95 float64   `json:"p95" ch:"p95"`
+	Percentile99 float64   `json:"p99" ch:"p99"`
+	NumCalls     uint64    `json:"numCalls" ch:"numCalls"`
+	CallRate     float64   `json:"callRate" ch:"callRate"`
+	NumErrors    uint64    `json:"numErrors" ch:"numErrors"`
+	ErrorRate    float64   `json:"errorRate" ch:"errorRate"`
 }
 
 type SearchSpansResult struct {
@@ -130,14 +118,14 @@ type SearchSpansResult struct {
 }
 
 type GetFilterSpansResponseItem struct {
-	Timestamp    string `db:"timestamp" json:"timestamp"`
-	SpanID       string `db:"spanID" json:"spanID"`
-	TraceID      string `db:"traceID" json:"traceID"`
-	ServiceName  string `db:"serviceName" json:"serviceName"`
-	Operation    string `db:"name" json:"operation"`
-	DurationNano int64  `db:"durationNano" json:"durationNano"`
-	HttpCode     string `db:"httpCode" json:"httpCode"`
-	HttpMethod   string `db:"httpMethod" json:"httpMethod"`
+	Timestamp    string `ch:"timestamp" json:"timestamp"`
+	SpanID       string `ch:"spanID" json:"spanID"`
+	TraceID      string `ch:"traceID" json:"traceID"`
+	ServiceName  string `ch:"serviceName" json:"serviceName"`
+	Operation    string `ch:"name" json:"operation"`
+	DurationNano int64  `ch:"durationNano" json:"durationNano"`
+	HttpCode     string `ch:"httpCode" json:"httpCode"`
+	HttpMethod   string `ch:"httpMethod" json:"httpMethod"`
 }
 
 type GetFilterSpansResponse struct {
@@ -145,32 +133,10 @@ type GetFilterSpansResponse struct {
 	TotalSpans int                          `json:"totalSpans"`
 }
 
-type TraceResult struct {
-	Data   []interface{} `json:"data" db:"data"`
-	Total  int           `json:"total" db:"total"`
-	Limit  int           `json:"limit" db:"limit"`
-	Offset int           `json:"offset" db:"offset"`
-}
-type TraceResultItem struct {
-	TraceID string
-	Spans   []TraceResultSpan
-}
-type TraceResultSpan struct {
-	Timestamp    string   `db:"timestamp"`
-	SpanID       string   `db:"spanID"`
-	TraceID      string   `db:"traceID"`
-	ServiceName  string   `db:"serviceName"`
-	Name         string   `db:"name"`
-	Kind         int32    `db:"kind"`
-	DurationNano int64    `db:"durationNano"`
-	TagsKeys     []string `db:"tagsKeys"`
-	TagsValues   []string `db:"tagsValues"`
-}
-
 type SearchSpanDBReponseItem struct {
-	Timestamp string `db:"timestamp"`
-	TraceID   string `db:"traceID"`
-	Model     string `db:"model"`
+	Timestamp time.Time `ch:"timestamp"`
+	TraceID   string    `ch:"traceID"`
+	Model     string    `ch:"model"`
 }
 
 type Event struct {
@@ -181,7 +147,7 @@ type Event struct {
 }
 
 type SearchSpanReponseItem struct {
-	Timestamp    string        `json:"timestamp"`
+	TimeUnixNano uint64        `json:"timestamp"`
 	SpanID       string        `json:"spanID"`
 	TraceID      string        `json:"traceID"`
 	ServiceName  string        `json:"serviceName"`
@@ -210,7 +176,6 @@ func (ref *OtelSpanRef) toString() string {
 
 func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
-	timeObj, _ := time.Parse(time.RFC3339Nano, item.Timestamp)
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
 	json.Unmarshal(jsonbody, &references)
@@ -223,29 +188,9 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	if item.Events == nil {
 		item.Events = []string{}
 	}
-	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, item.Events, item.HasError}
+	returnArray := []interface{}{item.TimeUnixNano, item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, item.Events, item.HasError}
 
 	return returnArray
-}
-
-type ServiceExternalItem struct {
-	Time            string  `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp       int64   `json:"timestamp,omitempty" db:"timestamp,omitempty"`
-	ExternalHttpUrl string  `json:"externalHttpUrl,omitempty" db:"externalHttpUrl,omitempty"`
-	AvgDuration     float32 `json:"avgDuration,omitempty" db:"avgDuration,omitempty"`
-	NumCalls        int     `json:"numCalls,omitempty" db:"numCalls,omitempty"`
-	CallRate        float32 `json:"callRate,omitempty" db:"callRate,omitempty"`
-	NumErrors       int     `json:"numErrors" db:"numErrors"`
-	ErrorRate       float32 `json:"errorRate" db:"errorRate"`
-}
-
-type ServiceDBOverviewItem struct {
-	Time        string  `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp   int64   `json:"timestamp,omitempty" db:"timestamp,omitempty"`
-	DBSystem    string  `json:"dbSystem,omitempty" db:"dbSystem,omitempty"`
-	AvgDuration float32 `json:"avgDuration,omitempty" db:"avgDuration,omitempty"`
-	NumCalls    int     `json:"numCalls,omitempty" db:"numCalls,omitempty"`
-	CallRate    float32 `json:"callRate,omitempty" db:"callRate,omitempty"`
 }
 
 type ServiceMapDependencyItem struct {
@@ -261,16 +206,11 @@ type UsageItem struct {
 }
 
 type TopEndpointsItem struct {
-	Percentile50 float32 `json:"p50" db:"p50"`
-	Percentile95 float32 `json:"p95" db:"p95"`
-	Percentile99 float32 `json:"p99" db:"p99"`
-	NumCalls     int     `json:"numCalls" db:"numCalls"`
-	Name         string  `json:"name" db:"name"`
-}
-
-type TagItem struct {
-	TagKeys  string `json:"tagKeys" db:"tagKeys"`
-	TagCount int    `json:"tagCount" db:"tagCount"`
+	Percentile50 float64 `json:"p50" ch:"p50"`
+	Percentile95 float64 `json:"p95" ch:"p95"`
+	Percentile99 float64 `json:"p99" ch:"p99"`
+	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
+	Name         string  `json:"name" ch:"name"`
 }
 
 type TagFilters struct {
@@ -284,12 +224,6 @@ type ServiceMapDependencyResponseItem struct {
 	Parent    string `json:"parent,omitempty" db:"parent,omitempty"`
 	Child     string `json:"child,omitempty" db:"child,omitempty"`
 	CallCount int    `json:"callCount,omitempty" db:"callCount,omitempty"`
-}
-
-type SpanSearchAggregatesResponseItem struct {
-	Timestamp int64   `json:"timestamp,omitempty" db:"timestamp" `
-	Time      string  `json:"time,omitempty" db:"time"`
-	Value     float32 `json:"value,omitempty" db:"value"`
 }
 
 type GetFilteredSpansAggregatesResponse struct {

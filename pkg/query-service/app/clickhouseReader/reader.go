@@ -3,45 +3,21 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"database/sql"
 	"encoding/json"
-	"flag"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
-
-	sd_config "github.com/prometheus/prometheus/discovery/config"
-	"github.com/prometheus/prometheus/scrape"
 
 	"github.com/pkg/errors"
 
-	_ "github.com/ClickHouse/clickhouse-go"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jmoiron/sqlx"
-	"github.com/oklog/oklog/pkg/group"
-	"github.com/prometheus/client_golang/prometheus"
-	promModel "github.com/prometheus/common/model"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/discovery"
-	"github.com/prometheus/prometheus/notifier"
-	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/rules"
-	"github.com/prometheus/prometheus/storage"
-	"github.com/prometheus/prometheus/storage/remote"
-	"github.com/prometheus/prometheus/storage/tsdb"
-	"github.com/prometheus/prometheus/util/stats"
-	"github.com/prometheus/prometheus/util/strutil"
 
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
@@ -69,16 +45,16 @@ var (
 
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
-	db              *sqlx.DB
+	db              clickhouse.Conn
 	localDB         *sqlx.DB
 	operationsTable string
 	indexTable      string
 	errorTable      string
 	spansTable      string
-	queryEngine     *promql.Engine
-	remoteStorage   *remote.Storage
-	ruleManager     *rules.Manager
-	promConfig      *config.Config
+	// queryEngine     *promql.Engine
+	// remoteStorage *remote.Storage
+	// ruleManager   *rules.Manager
+	// promConfig *config.Config
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -103,347 +79,347 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 	}
 }
 
-func (r *ClickHouseReader) Start() {
-	logLevel := promlog.AllowedLevel{}
-	logLevel.Set("debug")
-	// allowedFormat := promlog.AllowedFormat{}
-	// allowedFormat.Set("logfmt")
+// func (r *ClickHouseReader) Start() {
+// 	logLevel := promlog.AllowedLevel{}
+// 	logLevel.Set("debug")
+// 	// allowedFormat := promlog.AllowedFormat{}
+// 	// allowedFormat.Set("logfmt")
 
-	// promlogConfig := promlog.Config{
-	// 	Level:  &logLevel,
-	// 	Format: &allowedFormat,
-	// }
+// 	// promlogConfig := promlog.Config{
+// 	// 	Level:  &logLevel,
+// 	// 	Format: &allowedFormat,
+// 	// }
 
-	logger := promlog.New(logLevel)
+// 	logger := promlog.New(logLevel)
 
-	startTime := func() (int64, error) {
-		return int64(promModel.Latest), nil
+// 	startTime := func() (int64, error) {
+// 		return int64(promModel.Latest), nil
 
-	}
+// 	}
 
-	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
+// 	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
 
-	// conf, err := config.LoadFile(*filename)
-	// if err != nil {
-	// 	zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
-	// }
+// 	// conf, err := config.LoadFile(*filename)
+// 	// if err != nil {
+// 	// 	zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
+// 	// }
 
-	// err = remoteStorage.ApplyConfig(conf)
-	// if err != nil {
-	// 	zap.S().Error("Error in remoteStorage.ApplyConfig: ", err)
-	// }
-	cfg := struct {
-		configFile string
+// 	// err = remoteStorage.ApplyConfig(conf)
+// 	// if err != nil {
+// 	// 	zap.S().Error("Error in remoteStorage.ApplyConfig: ", err)
+// 	// }
+// 	cfg := struct {
+// 		configFile string
 
-		localStoragePath    string
-		notifier            notifier.Options
-		notifierTimeout     promModel.Duration
-		forGracePeriod      promModel.Duration
-		outageTolerance     promModel.Duration
-		resendDelay         promModel.Duration
-		tsdb                tsdb.Options
-		lookbackDelta       promModel.Duration
-		webTimeout          promModel.Duration
-		queryTimeout        promModel.Duration
-		queryConcurrency    int
-		queryMaxSamples     int
-		RemoteFlushDeadline promModel.Duration
+// 		localStoragePath    string
+// 		notifier            notifier.Options
+// 		notifierTimeout     promModel.Duration
+// 		forGracePeriod      promModel.Duration
+// 		outageTolerance     promModel.Duration
+// 		resendDelay         promModel.Duration
+// 		tsdb                tsdb.Options
+// 		lookbackDelta       promModel.Duration
+// 		webTimeout          promModel.Duration
+// 		queryTimeout        promModel.Duration
+// 		queryConcurrency    int
+// 		queryMaxSamples     int
+// 		RemoteFlushDeadline promModel.Duration
 
-		prometheusURL string
+// 		prometheusURL string
 
-		logLevel promlog.AllowedLevel
-	}{
-		notifier: notifier.Options{
-			Registerer: prometheus.DefaultRegisterer,
-		},
-	}
+// 		logLevel promlog.AllowedLevel
+// 	}{
+// 		notifier: notifier.Options{
+// 			Registerer: prometheus.DefaultRegisterer,
+// 		},
+// 	}
 
-	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
-	flag.Parse()
+// 	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+// 	flag.Parse()
 
-	// fanoutStorage := remoteStorage
-	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-	localStorage := remoteStorage
+// 	// fanoutStorage := remoteStorage
+// 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
+// 	localStorage := remoteStorage
 
-	cfg.notifier.QueueCapacity = 10000
-	cfg.notifierTimeout = promModel.Duration(time.Duration.Seconds(10))
-	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
-	// notifier.ApplyConfig(conf)
+// 	cfg.notifier.QueueCapacity = 10000
+// 	cfg.notifierTimeout = promModel.Duration(time.Duration.Seconds(10))
+// 	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
+// 	// notifier.ApplyConfig(conf)
 
-	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
-		os.Exit(2)
-	}
+// 	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
+// 	if err != nil {
+// 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
+// 		os.Exit(2)
+// 	}
 
-	cfg.outageTolerance = promModel.Duration(time.Duration.Hours(1))
-	cfg.forGracePeriod = promModel.Duration(time.Duration.Minutes(10))
-	cfg.resendDelay = promModel.Duration(time.Duration.Minutes(1))
+// 	cfg.outageTolerance = promModel.Duration(time.Duration.Hours(1))
+// 	cfg.forGracePeriod = promModel.Duration(time.Duration.Minutes(10))
+// 	cfg.resendDelay = promModel.Duration(time.Duration.Minutes(1))
 
-	ctxScrape, cancelScrape := context.WithCancel(context.Background())
-	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
+// 	ctxScrape, cancelScrape := context.WithCancel(context.Background())
+// 	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
 
-	ctxNotify, cancelNotify := context.WithCancel(context.Background())
-	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
+// 	ctxNotify, cancelNotify := context.WithCancel(context.Background())
+// 	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
 
-	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
+// 	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
 
-	opts := promql.EngineOpts{
-		Logger:        log.With(logger, "component", "query engine"),
-		Reg:           nil,
-		MaxConcurrent: 20,
-		MaxSamples:    50000000,
-		Timeout:       time.Duration(2 * time.Minute),
-	}
+// 	opts := promql.EngineOpts{
+// 		Logger:        log.With(logger, "component", "query engine"),
+// 		Reg:           nil,
+// 		MaxConcurrent: 20,
+// 		MaxSamples:    50000000,
+// 		Timeout:       time.Duration(2 * time.Minute),
+// 	}
 
-	queryEngine := promql.NewEngine(opts)
+// 	queryEngine := promql.NewEngine(opts)
 
-	ruleManager := rules.NewManager(&rules.ManagerOptions{
-		Appendable:      fanoutStorage,
-		TSDB:            localStorage,
-		QueryFunc:       rules.EngineQueryFunc(queryEngine, fanoutStorage),
-		NotifyFunc:      sendAlerts(notifier, ExternalURL.String()),
-		Context:         context.Background(),
-		ExternalURL:     ExternalURL,
-		Registerer:      prometheus.DefaultRegisterer,
-		Logger:          log.With(logger, "component", "rule manager"),
-		OutageTolerance: time.Duration(cfg.outageTolerance),
-		ForGracePeriod:  time.Duration(cfg.forGracePeriod),
-		ResendDelay:     time.Duration(cfg.resendDelay),
-	})
+// 	ruleManager := rules.NewManager(&rules.ManagerOptions{
+// 		Appendable:      fanoutStorage,
+// 		TSDB:            localStorage,
+// 		QueryFunc:       rules.EngineQueryFunc(queryEngine, fanoutStorage),
+// 		NotifyFunc:      sendAlerts(notifier, ExternalURL.String()),
+// 		Context:         context.Background(),
+// 		ExternalURL:     ExternalURL,
+// 		Registerer:      prometheus.DefaultRegisterer,
+// 		Logger:          log.With(logger, "component", "rule manager"),
+// 		OutageTolerance: time.Duration(cfg.outageTolerance),
+// 		ForGracePeriod:  time.Duration(cfg.forGracePeriod),
+// 		ResendDelay:     time.Duration(cfg.resendDelay),
+// 	})
 
-	reloaders := []func(cfg *config.Config) error{
-		remoteStorage.ApplyConfig,
-		// The Scrape and notifier managers need to reload before the Discovery manager as
-		// they need to read the most updated config when receiving the new targets list.
-		notifier.ApplyConfig,
-		scrapeManager.ApplyConfig,
-		func(cfg *config.Config) error {
-			c := make(map[string]sd_config.ServiceDiscoveryConfig)
-			for _, v := range cfg.ScrapeConfigs {
-				c[v.JobName] = v.ServiceDiscoveryConfig
-			}
-			return discoveryManagerScrape.ApplyConfig(c)
-		},
-		func(cfg *config.Config) error {
-			c := make(map[string]sd_config.ServiceDiscoveryConfig)
-			for _, v := range cfg.AlertingConfig.AlertmanagerConfigs {
-				// AlertmanagerConfigs doesn't hold an unique identifier so we use the config hash as the identifier.
-				b, err := json.Marshal(v)
-				if err != nil {
-					return err
-				}
-				c[fmt.Sprintf("%x", md5.Sum(b))] = v.ServiceDiscoveryConfig
-			}
-			return discoveryManagerNotify.ApplyConfig(c)
-		},
-		// func(cfg *config.Config) error {
-		// 	// Get all rule files matching the configuration oaths.
-		// 	var files []string
-		// 	for _, pat := range cfg.RuleFiles {
-		// 		fs, err := filepath.Glob(pat)
-		// 		if err != nil {
-		// 			// The only error can be a bad pattern.
-		// 			return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
-		// 		}
-		// 		files = append(files, fs...)
-		// 	}
-		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
-		// },
+// 	reloaders := []func(cfg *config.Config) error{
+// 		remoteStorage.ApplyConfig,
+// 		// The Scrape and notifier managers need to reload before the Discovery manager as
+// 		// they need to read the most updated config when receiving the new targets list.
+// 		notifier.ApplyConfig,
+// 		scrapeManager.ApplyConfig,
+// 		func(cfg *config.Config) error {
+// 			c := make(map[string]sd_config.ServiceDiscoveryConfig)
+// 			for _, v := range cfg.ScrapeConfigs {
+// 				c[v.JobName] = v.ServiceDiscoveryConfig
+// 			}
+// 			return discoveryManagerScrape.ApplyConfig(c)
+// 		},
+// 		func(cfg *config.Config) error {
+// 			c := make(map[string]sd_config.ServiceDiscoveryConfig)
+// 			for _, v := range cfg.AlertingConfig.AlertmanagerConfigs {
+// 				// AlertmanagerConfigs doesn't hold an unique identifier so we use the config hash as the identifier.
+// 				b, err := json.Marshal(v)
+// 				if err != nil {
+// 					return err
+// 				}
+// 				c[fmt.Sprintf("%x", md5.Sum(b))] = v.ServiceDiscoveryConfig
+// 			}
+// 			return discoveryManagerNotify.ApplyConfig(c)
+// 		},
+// 		// func(cfg *config.Config) error {
+// 		// 	// Get all rule files matching the configuration oaths.
+// 		// 	var files []string
+// 		// 	for _, pat := range cfg.RuleFiles {
+// 		// 		fs, err := filepath.Glob(pat)
+// 		// 		if err != nil {
+// 		// 			// The only error can be a bad pattern.
+// 		// 			return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
+// 		// 		}
+// 		// 		files = append(files, fs...)
+// 		// 	}
+// 		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
+// 		// },
 
-	}
+// 	}
 
-	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
-	type closeOnce struct {
-		C     chan struct{}
-		once  sync.Once
-		Close func()
-	}
-	// Wait until the server is ready to handle reloading.
-	reloadReady := &closeOnce{
-		C: make(chan struct{}),
-	}
-	reloadReady.Close = func() {
-		reloadReady.once.Do(func() {
-			close(reloadReady.C)
-		})
-	}
+// 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
+// 	type closeOnce struct {
+// 		C     chan struct{}
+// 		once  sync.Once
+// 		Close func()
+// 	}
+// 	// Wait until the server is ready to handle reloading.
+// 	reloadReady := &closeOnce{
+// 		C: make(chan struct{}),
+// 	}
+// 	reloadReady.Close = func() {
+// 		reloadReady.once.Do(func() {
+// 			close(reloadReady.C)
+// 		})
+// 	}
 
-	var g group.Group
-	{
-		// Scrape discovery manager.
-		g.Add(
-			func() error {
-				err := discoveryManagerScrape.Run()
-				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
-				return err
-			},
-			func(err error) {
-				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
-				cancelScrape()
-			},
-		)
-	}
-	{
-		// Notify discovery manager.
-		g.Add(
-			func() error {
-				err := discoveryManagerNotify.Run()
-				level.Info(logger).Log("msg", "Notify discovery manager stopped")
-				return err
-			},
-			func(err error) {
-				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
-				cancelNotify()
-			},
-		)
-	}
-	{
-		// Scrape manager.
-		g.Add(
-			func() error {
-				// When the scrape manager receives a new targets list
-				// it needs to read a valid config for each job.
-				// It depends on the config being in sync with the discovery manager so
-				// we wait until the config is fully loaded.
-				<-reloadReady.C
+// 	var g group.Group
+// 	{
+// 		// Scrape discovery manager.
+// 		g.Add(
+// 			func() error {
+// 				err := discoveryManagerScrape.Run()
+// 				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
+// 				return err
+// 			},
+// 			func(err error) {
+// 				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
+// 				cancelScrape()
+// 			},
+// 		)
+// 	}
+// 	{
+// 		// Notify discovery manager.
+// 		g.Add(
+// 			func() error {
+// 				err := discoveryManagerNotify.Run()
+// 				level.Info(logger).Log("msg", "Notify discovery manager stopped")
+// 				return err
+// 			},
+// 			func(err error) {
+// 				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
+// 				cancelNotify()
+// 			},
+// 		)
+// 	}
+// 	{
+// 		// Scrape manager.
+// 		g.Add(
+// 			func() error {
+// 				// When the scrape manager receives a new targets list
+// 				// it needs to read a valid config for each job.
+// 				// It depends on the config being in sync with the discovery manager so
+// 				// we wait until the config is fully loaded.
+// 				<-reloadReady.C
 
-				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
-				level.Info(logger).Log("msg", "Scrape manager stopped")
-				return err
-			},
-			func(err error) {
-				// Scrape manager needs to be stopped before closing the local TSDB
-				// so that it doesn't try to write samples to a closed storage.
-				level.Info(logger).Log("msg", "Stopping scrape manager...")
-				scrapeManager.Stop()
-			},
-		)
-	}
-	{
-		// Initial configuration loading.
-		cancel := make(chan struct{})
-		g.Add(
-			func() error {
-				// select {
-				// case <-dbOpen:
-				// 	break
-				// // In case a shutdown is initiated before the dbOpen is released
-				// case <-cancel:
-				// 	reloadReady.Close()
-				// 	return nil
-				// }
-				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
-				if err != nil {
-					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
-				}
+// 				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
+// 				level.Info(logger).Log("msg", "Scrape manager stopped")
+// 				return err
+// 			},
+// 			func(err error) {
+// 				// Scrape manager needs to be stopped before closing the local TSDB
+// 				// so that it doesn't try to write samples to a closed storage.
+// 				level.Info(logger).Log("msg", "Stopping scrape manager...")
+// 				scrapeManager.Stop()
+// 			},
+// 		)
+// 	}
+// 	{
+// 		// Initial configuration loading.
+// 		cancel := make(chan struct{})
+// 		g.Add(
+// 			func() error {
+// 				// select {
+// 				// case <-dbOpen:
+// 				// 	break
+// 				// // In case a shutdown is initiated before the dbOpen is released
+// 				// case <-cancel:
+// 				// 	reloadReady.Close()
+// 				// 	return nil
+// 				// }
+// 				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
+// 				if err != nil {
+// 					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
+// 				}
 
-				reloadReady.Close()
+// 				reloadReady.Close()
 
-				rules, apiErrorObj := r.GetRulesFromDB()
+// 				rules, apiErrorObj := r.GetRulesFromDB()
 
-				if apiErrorObj != nil {
-					zap.S().Errorf("Not able to read rules from DB")
-				}
-				for _, rule := range *rules {
-					apiErrorObj = r.LoadRule(rule)
-					if apiErrorObj != nil {
-						zap.S().Errorf("Not able to load rule with id=%d loaded from DB", rule.Id, rule.Data)
-					}
-				}
+// 				if apiErrorObj != nil {
+// 					zap.S().Errorf("Not able to read rules from DB")
+// 				}
+// 				for _, rule := range *rules {
+// 					apiErrorObj = r.LoadRule(rule)
+// 					if apiErrorObj != nil {
+// 						zap.S().Errorf("Not able to load rule with id=%d loaded from DB", rule.Id, rule.Data)
+// 					}
+// 				}
 
-				channels, apiErrorObj := r.GetChannels()
+// 				channels, apiErrorObj := r.GetChannels()
 
-				if apiErrorObj != nil {
-					zap.S().Errorf("Not able to read channels from DB")
-				}
-				for _, channel := range *channels {
-					apiErrorObj = r.LoadChannel(&channel)
-					if apiErrorObj != nil {
-						zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
-					}
-				}
+// 				if apiErrorObj != nil {
+// 					zap.S().Errorf("Not able to read channels from DB")
+// 				}
+// 				for _, channel := range *channels {
+// 					apiErrorObj = r.LoadChannel(&channel)
+// 					if apiErrorObj != nil {
+// 						zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
+// 					}
+// 				}
 
-				<-cancel
+// 				<-cancel
 
-				return nil
-			},
-			func(err error) {
-				close(cancel)
-			},
-		)
-	}
-	{
-		// Rule manager.
-		// TODO(krasi) refactor ruleManager.Run() to be blocking to avoid using an extra blocking channel.
-		cancel := make(chan struct{})
-		g.Add(
-			func() error {
-				<-reloadReady.C
-				ruleManager.Run()
-				<-cancel
-				return nil
-			},
-			func(err error) {
-				ruleManager.Stop()
-				close(cancel)
-			},
-		)
-	}
-	{
-		// Notifier.
+// 				return nil
+// 			},
+// 			func(err error) {
+// 				close(cancel)
+// 			},
+// 		)
+// 	}
+// 	{
+// 		// Rule manager.
+// 		// TODO(krasi) refactor ruleManager.Run() to be blocking to avoid using an extra blocking channel.
+// 		cancel := make(chan struct{})
+// 		g.Add(
+// 			func() error {
+// 				<-reloadReady.C
+// 				ruleManager.Run()
+// 				<-cancel
+// 				return nil
+// 			},
+// 			func(err error) {
+// 				ruleManager.Stop()
+// 				close(cancel)
+// 			},
+// 		)
+// 	}
+// 	{
+// 		// Notifier.
 
-		// Calling notifier.Stop() before ruleManager.Stop() will cause a panic if the ruleManager isn't running,
-		// so keep this interrupt after the ruleManager.Stop().
-		g.Add(
-			func() error {
-				// When the notifier manager receives a new targets list
-				// it needs to read a valid config for each job.
-				// It depends on the config being in sync with the discovery manager
-				// so we wait until the config is fully loaded.
-				<-reloadReady.C
+// 		// Calling notifier.Stop() before ruleManager.Stop() will cause a panic if the ruleManager isn't running,
+// 		// so keep this interrupt after the ruleManager.Stop().
+// 		g.Add(
+// 			func() error {
+// 				// When the notifier manager receives a new targets list
+// 				// it needs to read a valid config for each job.
+// 				// It depends on the config being in sync with the discovery manager
+// 				// so we wait until the config is fully loaded.
+// 				<-reloadReady.C
 
-				notifier.Run(discoveryManagerNotify.SyncCh())
-				level.Info(logger).Log("msg", "Notifier manager stopped")
-				return nil
-			},
-			func(err error) {
-				notifier.Stop()
-			},
-		)
-	}
-	r.queryEngine = queryEngine
-	r.remoteStorage = remoteStorage
-	r.ruleManager = ruleManager
+// 				notifier.Run(discoveryManagerNotify.SyncCh())
+// 				level.Info(logger).Log("msg", "Notifier manager stopped")
+// 				return nil
+// 			},
+// 			func(err error) {
+// 				notifier.Stop()
+// 			},
+// 		)
+// 	}
+// 	r.queryEngine = queryEngine
+// 	r.remoteStorage = remoteStorage
+// 	r.ruleManager = ruleManager
 
-	if err := g.Run(); err != nil {
-		level.Error(logger).Log("err", err)
-		os.Exit(1)
-	}
+// 	if err := g.Run(); err != nil {
+// 		level.Error(logger).Log("err", err)
+// 		os.Exit(1)
+// 	}
 
-}
+// }
 
-func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
-	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
+// func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
+// 	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
 
-	conf, err := config.LoadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
-	}
+// 	conf, err := config.LoadFile(filename)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
+// 	}
 
-	failed := false
-	for _, rl := range rls {
-		if err := rl(conf); err != nil {
-			level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
-			failed = true
-		}
-	}
-	if failed {
-		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
-	}
-	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
-	return conf, nil
-}
+// 	failed := false
+// 	for _, rl := range rls {
+// 		if err := rl(conf); err != nil {
+// 			level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
+// 			failed = true
+// 		}
+// 	}
+// 	if failed {
+// 		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
+// 	}
+// 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
+// 	return conf, nil
+// }
 
 func startsOrEndsWithQuote(s string) bool {
 	return strings.HasPrefix(s, "\"") || strings.HasPrefix(s, "'") ||
@@ -484,32 +460,32 @@ func computeExternalURL(u, listenAddr string) (*url.URL, error) {
 }
 
 // sendAlerts implements the rules.NotifyFunc for a Notifier.
-func sendAlerts(n *notifier.Manager, externalURL string) rules.NotifyFunc {
-	return func(ctx context.Context, expr string, alerts ...*rules.Alert) {
-		var res []*notifier.Alert
+// func sendAlerts(n *notifier.Manager, externalURL string) rules.NotifyFunc {
+// 	return func(ctx context.Context, expr string, alerts ...*rules.Alert) {
+// 		var res []*notifier.Alert
 
-		for _, alert := range alerts {
-			a := &notifier.Alert{
-				StartsAt:     alert.FiredAt,
-				Labels:       alert.Labels,
-				Annotations:  alert.Annotations,
-				GeneratorURL: externalURL + strutil.TableLinkForExpression(expr),
-			}
-			if !alert.ResolvedAt.IsZero() {
-				a.EndsAt = alert.ResolvedAt
-			} else {
-				a.EndsAt = alert.ValidUntil
-			}
-			res = append(res, a)
-		}
+// 		for _, alert := range alerts {
+// 			a := &notifier.Alert{
+// 				StartsAt:     alert.FiredAt,
+// 				Labels:       alert.Labels,
+// 				Annotations:  alert.Annotations,
+// 				GeneratorURL: externalURL + strutil.TableLinkForExpression(expr),
+// 			}
+// 			if !alert.ResolvedAt.IsZero() {
+// 				a.EndsAt = alert.ResolvedAt
+// 			} else {
+// 				a.EndsAt = alert.ValidUntil
+// 			}
+// 			res = append(res, a)
+// 		}
 
-		if len(alerts) > 0 {
-			n.Send(res...)
-		}
-	}
-}
+// 		if len(alerts) > 0 {
+// 			n.Send(res...)
+// 		}
+// 	}
+// }
 
-func initialize(options *Options) (*sqlx.DB, error) {
+func initialize(options *Options) (clickhouse.Conn, error) {
 
 	db, err := connect(options.getPrimary())
 	if err != nil {
@@ -519,7 +495,7 @@ func initialize(options *Options) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
+func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	if cfg.Encoding != EncodingJSON && cfg.Encoding != EncodingProto {
 		return nil, fmt.Errorf("unknown encoding %q, supported: %q, %q", cfg.Encoding, EncodingJSON, EncodingProto)
 	}
@@ -527,28 +503,28 @@ func connect(cfg *namespaceConfig) (*sqlx.DB, error) {
 	return cfg.Connector(cfg)
 }
 
-type byAlertStateAndNameSorter struct {
-	alerts []*AlertingRuleWithGroup
-}
+// type byAlertStateAndNameSorter struct {
+// 	alerts []*AlertingRuleWithGroup
+// }
 
-func (s byAlertStateAndNameSorter) Len() int {
-	return len(s.alerts)
-}
+// func (s byAlertStateAndNameSorter) Len() int {
+// 	return len(s.alerts)
+// }
 
-func (s byAlertStateAndNameSorter) Less(i, j int) bool {
-	return s.alerts[i].State() > s.alerts[j].State() ||
-		(s.alerts[i].State() == s.alerts[j].State() &&
-			s.alerts[i].Name() < s.alerts[j].Name())
-}
+// func (s byAlertStateAndNameSorter) Less(i, j int) bool {
+// 	return s.alerts[i].State() > s.alerts[j].State() ||
+// 		(s.alerts[i].State() == s.alerts[j].State() &&
+// 			s.alerts[i].Name() < s.alerts[j].Name())
+// }
 
-func (s byAlertStateAndNameSorter) Swap(i, j int) {
-	s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i]
-}
+// func (s byAlertStateAndNameSorter) Swap(i, j int) {
+// 	s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i]
+// }
 
-type AlertingRuleWithGroup struct {
-	rules.AlertingRule
-	Id int
-}
+// type AlertingRuleWithGroup struct {
+// 	rules.AlertingRule
+// 	Id int
+// }
 
 func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.ApiError) {
 
@@ -588,97 +564,97 @@ func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.A
 	return rule, nil
 }
 
-func (r *ClickHouseReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
+// func (r *ClickHouseReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
 
-	groups := r.ruleManager.RuleGroups()
+// 	groups := r.ruleManager.RuleGroups()
 
-	alertingRulesWithGroupObjects := []*AlertingRuleWithGroup{}
+// 	alertingRulesWithGroupObjects := []*AlertingRuleWithGroup{}
 
-	for _, group := range groups {
-		groupNameParts := strings.Split(group.Name(), "-groupname")
-		if len(groupNameParts) < 2 {
-			continue
-		}
-		id, _ := strconv.Atoi(groupNameParts[0])
-		for _, rule := range group.Rules() {
-			if alertingRule, ok := rule.(*rules.AlertingRule); ok {
-				alertingRulesWithGroupObject := AlertingRuleWithGroup{
-					*alertingRule,
-					id,
-				}
-				alertingRulesWithGroupObjects = append(alertingRulesWithGroupObjects, &alertingRulesWithGroupObject)
-			}
-		}
-	}
+// 	for _, group := range groups {
+// 		groupNameParts := strings.Split(group.Name(), "-groupname")
+// 		if len(groupNameParts) < 2 {
+// 			continue
+// 		}
+// 		id, _ := strconv.Atoi(groupNameParts[0])
+// 		for _, rule := range group.Rules() {
+// 			if alertingRule, ok := rule.(*rules.AlertingRule); ok {
+// 				alertingRulesWithGroupObject := AlertingRuleWithGroup{
+// 					*alertingRule,
+// 					id,
+// 				}
+// 				alertingRulesWithGroupObjects = append(alertingRulesWithGroupObjects, &alertingRulesWithGroupObject)
+// 			}
+// 		}
+// 	}
 
-	// alertingRules := r.ruleManager.AlertingRules()
+// 	// alertingRules := r.ruleManager.AlertingRules()
 
-	alertsSorter := byAlertStateAndNameSorter{alerts: alertingRulesWithGroupObjects}
-	sort.Sort(alertsSorter)
-	alerts := []*model.AlertingRuleResponse{}
+// 	alertsSorter := byAlertStateAndNameSorter{alerts: alertingRulesWithGroupObjects}
+// 	sort.Sort(alertsSorter)
+// 	alerts := []*model.AlertingRuleResponse{}
 
-	for _, alertingRule := range alertsSorter.alerts {
+// 	for _, alertingRule := range alertsSorter.alerts {
 
-		alertingRuleResponseObject := &model.AlertingRuleResponse{
-			Labels: alertingRule.Labels(),
-			// Annotations: alertingRule.Annotations(),
-			Name: alertingRule.Name(),
-			Id:   alertingRule.Id,
-		}
-		if len(alertingRule.ActiveAlerts()) == 0 {
-			alertingRuleResponseObject.State = rules.StateInactive.String()
-		} else {
-			alertingRuleResponseObject.State = (*(alertingRule.ActiveAlerts()[0])).State.String()
-		}
+// 		alertingRuleResponseObject := &model.AlertingRuleResponse{
+// 			Labels: alertingRule.Labels(),
+// 			// Annotations: alertingRule.Annotations(),
+// 			Name: alertingRule.Name(),
+// 			Id:   alertingRule.Id,
+// 		}
+// 		if len(alertingRule.ActiveAlerts()) == 0 {
+// 			alertingRuleResponseObject.State = rules.StateInactive.String()
+// 		} else {
+// 			alertingRuleResponseObject.State = (*(alertingRule.ActiveAlerts()[0])).State.String()
+// 		}
 
-		alerts = append(
-			alerts,
-			alertingRuleResponseObject,
-		)
-	}
+// 		alerts = append(
+// 			alerts,
+// 			alertingRuleResponseObject,
+// 		)
+// 	}
 
-	res := &model.AlertDiscovery{Alerts: alerts}
+// 	res := &model.AlertDiscovery{Alerts: alerts}
 
-	return res, nil
-}
+// 	return res, nil
+// }
 
-func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError {
+// func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError {
 
-	groupName := fmt.Sprintf("%d-groupname", rule.Id)
+// 	groupName := fmt.Sprintf("%d-groupname", rule.Id)
 
-	err := r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule.Data, groupName)
+// 	err := r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule.Data, groupName)
 
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 	if err != nil {
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
+// func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
 
-	receiver := &model.Receiver{}
-	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
-		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
-	}
+// 	receiver := &model.Receiver{}
+// 	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
+// 		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+// 	}
 
-	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
+// 	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
 
-	if err != nil {
-		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	if response.StatusCode > 299 {
-		responseData, _ := ioutil.ReadAll(response.Body)
+// 	if err != nil {
+// 		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
+// 	if response.StatusCode > 299 {
+// 		responseData, _ := ioutil.ReadAll(response.Body)
 
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status, string(responseData))
-		zap.S().Error(err)
+// 		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status, string(responseData))
+// 		zap.S().Error(err)
 
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
 
@@ -943,176 +919,176 @@ func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Recei
 
 }
 
-func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
+// func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 	tx, err := r.localDB.Begin()
+// 	if err != nil {
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	var lastInsertId int64
+// 	var lastInsertId int64
 
-	{
-		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
-		if err != nil {
-			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
+// 	{
+// 		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
+// 		if err != nil {
+// 			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
+// 			tx.Rollback()
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
+// 		defer stmt.Close()
 
-		result, err := stmt.Exec(time.Now(), rule)
-		if err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		lastInsertId, _ = result.LastInsertId()
+// 		result, err := stmt.Exec(time.Now(), rule)
+// 		if err != nil {
+// 			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
+// 			tx.Rollback() // return an error too, we may want to wrap them
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
+// 		lastInsertId, _ = result.LastInsertId()
 
-		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
+// 		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
 
-		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+// 		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
-		if err != nil {
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for INSERT to rules\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
+// 		if err != nil {
+// 			tx.Rollback()
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
+// 	}
+// 	err = tx.Commit()
+// 	if err != nil {
+// 		zap.S().Errorf("Error in commiting transaction for INSERT to rules\n", err)
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
+// 	return nil
+// }
 
-func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
+// func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
 
-	idInt, _ := strconv.Atoi(id)
+// 	idInt, _ := strconv.Atoi(id)
 
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 	tx, err := r.localDB.Begin()
+// 	if err != nil {
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	{
-		stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
-		if err != nil {
-			zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
+// 	{
+// 		stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
+// 		if err != nil {
+// 			zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
+// 			tx.Rollback()
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
+// 		defer stmt.Close()
 
-		if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
+// 		if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
+// 			zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
+// 			tx.Rollback() // return an error too, we may want to wrap them
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
 
-		groupName := fmt.Sprintf("%d-groupname", idInt)
+// 		groupName := fmt.Sprintf("%d-groupname", idInt)
 
-		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+// 		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
-		if err != nil {
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
+// 		if err != nil {
+// 			tx.Rollback()
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
+// 	}
 
-	err = tx.Commit()
-	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for UPDATE to rules\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 	err = tx.Commit()
+// 	if err != nil {
+// 		zap.S().Errorf("Error in commiting transaction for UPDATE to rules\n", err)
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
+// func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
 
-	idInt, _ := strconv.Atoi(id)
+// 	idInt, _ := strconv.Atoi(id)
 
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 	tx, err := r.localDB.Begin()
+// 	if err != nil {
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	{
-		stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
+// 	{
+// 		stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
 
-		if err != nil {
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
+// 		if err != nil {
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
+// 		defer stmt.Close()
 
-		if _, err := stmt.Exec(idInt); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
+// 		if _, err := stmt.Exec(idInt); err != nil {
+// 			zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
+// 			tx.Rollback() // return an error too, we may want to wrap them
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
 
-		groupName := fmt.Sprintf("%d-groupname", idInt)
+// 		groupName := fmt.Sprintf("%d-groupname", idInt)
 
-		rule := "" // dummy rule to pass to function
-		// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
-		err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+// 		rule := "" // dummy rule to pass to function
+// 		// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
+// 		err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
-		if err != nil {
-			tx.Rollback()
-			zap.S().Errorf("Error in deleting rule from rulemanager...\n", err)
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
+// 		if err != nil {
+// 			tx.Rollback()
+// 			zap.S().Errorf("Error in deleting rule from rulemanager...\n", err)
+// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 		}
 
-	}
+// 	}
 
-	err = tx.Commit()
-	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for deleting rules\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
+// 	err = tx.Commit()
+// 	if err != nil {
+// 		zap.S().Errorf("Error in commiting transaction for deleting rules\n", err)
+// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
-	if err != nil {
-		return nil, nil, &model.ApiError{model.ErrorBadData, err}
-	}
+// func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+// 	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
+// 	if err != nil {
+// 		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+// 	}
 
-	res := qry.Exec(ctx)
+// 	res := qry.Exec(ctx)
 
-	// Optional stats field in response if parameter "stats" is not empty.
-	var qs *stats.QueryStats
-	if queryParams.Stats != "" {
-		qs = stats.NewQueryStats(qry.Stats())
-	}
+// 	// Optional stats field in response if parameter "stats" is not empty.
+// 	var qs *stats.QueryStats
+// 	if queryParams.Stats != "" {
+// 		qs = stats.NewQueryStats(qry.Stats())
+// 	}
 
-	qry.Close()
-	return res, qs, nil
+// 	qry.Close()
+// 	return res, qs, nil
 
-}
+// }
 
-func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+// func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
 
-	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
+// 	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
 
-	if err != nil {
-		return nil, nil, &model.ApiError{model.ErrorBadData, err}
-	}
+// 	if err != nil {
+// 		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+// 	}
 
-	res := qry.Exec(ctx)
+// 	res := qry.Exec(ctx)
 
-	// Optional stats field in response if parameter "stats" is not empty.
-	var qs *stats.QueryStats
-	if query.Stats != "" {
-		qs = stats.NewQueryStats(qry.Stats())
-	}
+// 	// Optional stats field in response if parameter "stats" is not empty.
+// 	var qs *stats.QueryStats
+// 	if query.Stats != "" {
+// 		qs = stats.NewQueryStats(qry.Stats())
+// 	}
 
-	qry.Close()
-	return res, qs, nil
-}
+// 	qry.Close()
+// 	return res, qs, nil
+// }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, error) {
 
@@ -1124,7 +1100,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 	query := fmt.Sprintf("SELECT serviceName, quantile(0.99)(durationNano) as p99, avg(durationNano) as avgDuration, count(*) as numCalls FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' GROUP BY serviceName ORDER BY p99 DESC", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
-	err := r.db.Select(&serviceItems, query)
+	err := r.db.Select(ctx, &serviceItems, query)
 
 	zap.S().Info(query)
 
@@ -1138,7 +1114,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 	query = fmt.Sprintf("SELECT serviceName, count(*) as numErrors FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND (statusCode>=500 OR statusCode=2) GROUP BY serviceName", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
-	err = r.db.Select(&serviceErrorItems, query)
+	err = r.db.Select(ctx, &serviceErrorItems, query)
 
 	zap.S().Info(query)
 
@@ -1147,7 +1123,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	m5xx := make(map[string]int)
+	m5xx := make(map[string]uint64)
 
 	for j, _ := range serviceErrorItems {
 		m5xx[serviceErrorItems[j].ServiceName] = serviceErrorItems[j].NumErrors
@@ -1160,7 +1136,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 	query = fmt.Sprintf("SELECT serviceName, count(*) as num4xx FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND statusCode>=400 AND statusCode<500 GROUP BY serviceName", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
-	err = r.db.Select(&service4xxItems, query)
+	err = r.db.Select(ctx, &service4xxItems, query)
 
 	zap.S().Info(query)
 
@@ -1169,22 +1145,22 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	m4xx := make(map[string]int)
+	m4xx := make(map[string]uint64)
 
-	for j, _ := range service4xxItems {
+	for j := range service4xxItems {
 		m5xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
 	}
 
-	for i, _ := range serviceItems {
+	for i := range serviceItems {
 		if val, ok := m5xx[serviceItems[i].ServiceName]; ok {
 			serviceItems[i].NumErrors = val
 		}
 		if val, ok := m4xx[serviceItems[i].ServiceName]; ok {
 			serviceItems[i].Num4XX = val
 		}
-		serviceItems[i].CallRate = float32(serviceItems[i].NumCalls) / float32(queryParams.Period)
-		serviceItems[i].FourXXRate = float32(serviceItems[i].Num4XX) / float32(queryParams.Period)
-		serviceItems[i].ErrorRate = float32(serviceItems[i].NumErrors) / float32(queryParams.Period)
+		serviceItems[i].CallRate = float64(serviceItems[i].NumCalls) / float64(queryParams.Period)
+		serviceItems[i].FourXXRate = float64(serviceItems[i].Num4XX) / float64(queryParams.Period)
+		serviceItems[i].ErrorRate = float64(serviceItems[i].NumErrors) / float64(queryParams.Period)
 	}
 
 	return &serviceItems, nil
@@ -1196,7 +1172,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 
 	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, quantile(0.99)(durationNano) as p99, quantile(0.95)(durationNano) as p95,quantile(0.50)(durationNano) as p50, count(*) as numCalls FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s' GROUP BY time ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
 
-	err := r.db.Select(&serviceOverviewItems, query)
+	err := r.db.Select(ctx, &serviceOverviewItems, query)
 
 	zap.S().Info(query)
 
@@ -1209,7 +1185,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 
 	query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, count(*) as numErrors FROM %s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s' AND (statusCode>=500 OR statusCode=2) GROUP BY time ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
 
-	err = r.db.Select(&serviceErrorItems, query)
+	err = r.db.Select(ctx, &serviceErrorItems, query)
 
 	zap.S().Info(query)
 
@@ -1221,112 +1197,21 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	m := make(map[int64]int)
 
 	for j, _ := range serviceErrorItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceErrorItems[j].Time)
-		m[int64(timeObj.UnixNano())] = serviceErrorItems[j].NumErrors
+		m[int64(serviceErrorItems[j].Time.UnixNano())] = int(serviceErrorItems[j].NumErrors)
 	}
 
-	for i, _ := range serviceOverviewItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceOverviewItems[i].Time)
-		serviceOverviewItems[i].Timestamp = int64(timeObj.UnixNano())
-		serviceOverviewItems[i].Time = ""
+	for i := range serviceOverviewItems {
+		serviceOverviewItems[i].Timestamp = int64(serviceErrorItems[i].Time.UnixNano())
 
 		if val, ok := m[serviceOverviewItems[i].Timestamp]; ok {
-			serviceOverviewItems[i].NumErrors = val
+			serviceOverviewItems[i].NumErrors = uint64(val)
 		}
-		serviceOverviewItems[i].ErrorRate = float32(serviceOverviewItems[i].NumErrors) * 100 / float32(serviceOverviewItems[i].NumCalls)
-		serviceOverviewItems[i].CallRate = float32(serviceOverviewItems[i].NumCalls) / float32(queryParams.StepSeconds)
+		serviceOverviewItems[i].ErrorRate = float64(serviceOverviewItems[i].NumErrors) * 100 / float64(serviceOverviewItems[i].NumCalls)
+		serviceOverviewItems[i].CallRate = float64(serviceOverviewItems[i].NumCalls) / float64(queryParams.StepSeconds)
 	}
 
 	return &serviceOverviewItems, nil
 
-}
-
-func (r *ClickHouseReader) SearchSpans(ctx context.Context, queryParams *model.SpanSearchParams) (*[]model.SearchSpansResult, error) {
-
-	query := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, kind, durationNano, tagsKeys, tagsValues FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
-
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
-
-	if len(queryParams.ServiceName) != 0 {
-		query = query + " AND serviceName = ?"
-		args = append(args, queryParams.ServiceName)
-	}
-
-	if len(queryParams.OperationName) != 0 {
-
-		query = query + " AND name = ?"
-		args = append(args, queryParams.OperationName)
-
-	}
-
-	if len(queryParams.Kind) != 0 {
-		query = query + " AND kind = ?"
-		args = append(args, queryParams.Kind)
-
-	}
-
-	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
-	}
-	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
-	}
-
-	for _, item := range queryParams.Tags {
-
-		if item.Key == "error" && item.Value == "true" {
-			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2)"
-			continue
-		}
-
-		if item.Operator == "equals" {
-			query = query + " AND has(tags, ?)"
-			args = append(args, fmt.Sprintf("%s:%s", item.Key, item.Value))
-		} else if item.Operator == "contains" {
-			query = query + " AND tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
-			args = append(args, item.Key)
-			args = append(args, fmt.Sprintf("%%%s%%", item.Value))
-		} else if item.Operator == "regex" {
-			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
-			args = append(args, item.Key)
-			args = append(args, item.Value)
-		} else if item.Operator == "isnotnull" {
-			query = query + " AND has(tagsKeys, ?)"
-			args = append(args, item.Key)
-		} else {
-			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
-		}
-
-	}
-
-	query = query + " ORDER BY timestamp DESC LIMIT 100"
-
-	var searchScanReponses []model.SearchSpanReponseItem
-
-	err := r.db.Select(&searchScanReponses, query, args...)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	searchSpansResult := []model.SearchSpansResult{
-		model.SearchSpansResult{
-			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues"},
-			Events:  make([][]interface{}, len(searchScanReponses)),
-		},
-	}
-
-	for i, item := range searchScanReponses {
-		spanEvents := item.GetValues()
-		searchSpansResult[0].Events[i] = spanEvents
-	}
-
-	return &searchSpansResult, nil
 }
 
 func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
@@ -1422,7 +1307,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY serviceName"
 			var dBResponse []model.DBResponseServiceName
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1438,7 +1323,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpCode"
 			var dBResponse []model.DBResponseHttpCode
 			fmt.Println(finalQuery)
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1453,7 +1338,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY httpRoute"
 			var dBResponse []model.DBResponseHttpRoute
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1468,7 +1353,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY httpUrl"
 			var dBResponse []model.DBResponseHttpUrl
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1483,7 +1368,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY httpMethod"
 			var dBResponse []model.DBResponseHttpMethod
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1498,7 +1383,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY httpHost"
 			var dBResponse []model.DBResponseHttpHost
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1513,7 +1398,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY name"
 			var dBResponse []model.DBResponseOperation
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1528,7 +1413,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			finalQuery += " GROUP BY component"
 			var dBResponse []model.DBResponseComponent
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1542,7 +1427,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND hasError = 1", r.indexTable)
 			finalQuery += query
 			var dBResponse []model.DBResponseErrors
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1551,7 +1436,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
 			finalQuery2 += query
 			var dBResponse2 []model.DBResponseTotal
-			err = r.db.Select(&dBResponse2, finalQuery2, args...)
+			err = r.db.Select(ctx, &dBResponse2, finalQuery2, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1561,7 +1446,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery := fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
 			finalQuery += query
 			var dBResponse []model.DBResponseMinMaxDuration
-			err := r.db.Select(&dBResponse, finalQuery, args...)
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
@@ -1704,7 +1589,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	totalSpansQuery := fmt.Sprintf(`SELECT count() as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
 
 	totalSpansQuery += query
-	err := r.db.Select(&totalSpans, totalSpansQuery, args...)
+	err := r.db.Select(ctx, &totalSpans, totalSpansQuery, args...)
 
 	zap.S().Info(totalSpansQuery)
 
@@ -1735,7 +1620,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
 
 	baseQuery += query
-	err = r.db.Select(&getFilterSpansResponseItems, baseQuery, args...)
+	err = r.db.Select(ctx, &getFilterSpansResponseItems, baseQuery, args...)
 
 	zap.S().Info(baseQuery)
 
@@ -1805,7 +1690,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
 	finalQuery += query
 	fmt.Println(finalQuery)
-	err := r.db.Select(&tagFilters, finalQuery, args...)
+	err := r.db.Select(ctx, &tagFilters, finalQuery, args...)
 
 	zap.S().Info(query)
 
@@ -1896,7 +1781,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	fmt.Println(finalQuery)
 	finalQuery += "GROUP BY tagMap[?]"
 	args = append(args, queryParams.TagKey)
-	err := r.db.Select(&tagValues, finalQuery, args...)
+	err := r.db.Select(ctx, &tagValues, finalQuery, args...)
 
 	zap.S().Info(query)
 
@@ -1914,155 +1799,13 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	return &cleanedTagValues, nil
 }
 
-func (r *ClickHouseReader) GetServiceDBOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceDBOverviewItem, error) {
-
-	var serviceDBOverviewItems []model.ServiceDBOverviewItem
-
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, dbSystem FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND dbName IS NOT NULL GROUP BY time, dbSystem ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
-
-	err := r.db.Select(&serviceDBOverviewItems, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	for i, _ := range serviceDBOverviewItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceDBOverviewItems[i].Time)
-		serviceDBOverviewItems[i].Timestamp = int64(timeObj.UnixNano())
-		serviceDBOverviewItems[i].Time = ""
-		serviceDBOverviewItems[i].CallRate = float32(serviceDBOverviewItems[i].NumCalls) / float32(queryParams.StepSeconds)
-	}
-
-	if serviceDBOverviewItems == nil {
-		serviceDBOverviewItems = []model.ServiceDBOverviewItem{}
-	}
-
-	return &serviceDBOverviewItems, nil
-
-}
-
-func (r *ClickHouseReader) GetServiceExternalAvgDuration(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
-
-	var serviceExternalItems []model.ServiceExternalItem
-
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL GROUP BY time ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
-
-	err := r.db.Select(&serviceExternalItems, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	for i, _ := range serviceExternalItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalItems[i].Time)
-		serviceExternalItems[i].Timestamp = int64(timeObj.UnixNano())
-		serviceExternalItems[i].Time = ""
-		serviceExternalItems[i].CallRate = float32(serviceExternalItems[i].NumCalls) / float32(queryParams.StepSeconds)
-	}
-
-	if serviceExternalItems == nil {
-		serviceExternalItems = []model.ServiceExternalItem{}
-	}
-
-	return &serviceExternalItems, nil
-}
-
-func (r *ClickHouseReader) GetServiceExternalErrors(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
-
-	var serviceExternalErrorItems []model.ServiceExternalItem
-
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL AND (statusCode >= 500 OR statusCode=2) GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
-
-	err := r.db.Select(&serviceExternalErrorItems, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-	var serviceExternalTotalItems []model.ServiceExternalItem
-
-	queryTotal := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
-
-	errTotal := r.db.Select(&serviceExternalTotalItems, queryTotal)
-
-	if errTotal != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	m := make(map[string]int)
-
-	for j, _ := range serviceExternalErrorItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalErrorItems[j].Time)
-		m[strconv.FormatInt(timeObj.UnixNano(), 10)+"-"+serviceExternalErrorItems[j].ExternalHttpUrl] = serviceExternalErrorItems[j].NumCalls
-	}
-
-	for i, _ := range serviceExternalTotalItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalTotalItems[i].Time)
-		serviceExternalTotalItems[i].Timestamp = int64(timeObj.UnixNano())
-		serviceExternalTotalItems[i].Time = ""
-		// serviceExternalTotalItems[i].CallRate = float32(serviceExternalTotalItems[i].NumCalls) / float32(queryParams.StepSeconds)
-
-		if val, ok := m[strconv.FormatInt(serviceExternalTotalItems[i].Timestamp, 10)+"-"+serviceExternalTotalItems[i].ExternalHttpUrl]; ok {
-			serviceExternalTotalItems[i].NumErrors = val
-			serviceExternalTotalItems[i].ErrorRate = float32(serviceExternalTotalItems[i].NumErrors) * 100 / float32(serviceExternalTotalItems[i].NumCalls)
-		}
-		serviceExternalTotalItems[i].CallRate = 0
-		serviceExternalTotalItems[i].NumCalls = 0
-
-	}
-
-	if serviceExternalTotalItems == nil {
-		serviceExternalTotalItems = []model.ServiceExternalItem{}
-	}
-
-	return &serviceExternalTotalItems, nil
-}
-
-func (r *ClickHouseReader) GetServiceExternal(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceExternalItem, error) {
-
-	var serviceExternalItems []model.ServiceExternalItem
-
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, avg(durationNano) as avgDuration, count(1) as numCalls, externalHttpUrl FROM %s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' AND kind='3' AND externalHttpUrl IS NOT NULL GROUP BY time, externalHttpUrl ORDER BY time DESC", strconv.Itoa(int(queryParams.StepSeconds/60)), r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
-
-	err := r.db.Select(&serviceExternalItems, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	for i, _ := range serviceExternalItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, serviceExternalItems[i].Time)
-		serviceExternalItems[i].Timestamp = int64(timeObj.UnixNano())
-		serviceExternalItems[i].Time = ""
-		serviceExternalItems[i].CallRate = float32(serviceExternalItems[i].NumCalls) / float32(queryParams.StepSeconds)
-	}
-
-	if serviceExternalItems == nil {
-		serviceExternalItems = []model.ServiceExternalItem{}
-	}
-
-	return &serviceExternalItems, nil
-}
-
 func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, error) {
 
 	var topEndpointsItems []model.TopEndpointsItem
 
 	query := fmt.Sprintf("SELECT quantile(0.5)(durationNano) as p50, quantile(0.95)(durationNano) as p95, quantile(0.99)(durationNano) as p99, COUNT(1) as numCalls, name  FROM %s WHERE  timestamp >= '%s' AND timestamp <= '%s' AND  kind='2' and serviceName='%s' GROUP BY name", r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
 
-	err := r.db.Select(&topEndpointsItems, query)
+	err := r.db.Select(ctx, &topEndpointsItems, query)
 
 	zap.S().Info(query)
 
@@ -2089,7 +1832,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	}
 
-	err := r.db.Select(&usageItems, query)
+	err := r.db.Select(ctx, &usageItems, query)
 
 	zap.S().Info(query)
 
@@ -2111,66 +1854,13 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
-
-	services := []string{}
-
-	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable)
-
-	err := r.db.Select(&services, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	return &services, nil
-}
-
-func (r *ClickHouseReader) GetTags(ctx context.Context, serviceName string) (*[]model.TagItem, error) {
-
-	tagItems := []model.TagItem{}
-
-	query := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE serviceName=?  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable)
-
-	err := r.db.Select(&tagItems, query, serviceName)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	return &tagItems, nil
-}
-
-func (r *ClickHouseReader) GetOperations(ctx context.Context, serviceName string) (*[]string, error) {
-
-	operations := []string{}
-
-	query := fmt.Sprintf(`SELECT DISTINCT(name) FROM %s WHERE serviceName=?  AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.indexTable)
-
-	err := r.db.Select(&operations, query, serviceName)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-	return &operations, nil
-}
-
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
 
 	var searchScanReponses []model.SearchSpanDBReponseItem
 
-	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s WHERE traceID=?", r.spansTable)
+	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s WHERE traceID=$1", r.spansTable)
 
-	err := r.db.Select(&searchScanReponses, query, traceId)
+	err := r.db.Select(ctx, &searchScanReponses, query, traceId)
 
 	zap.S().Info(query)
 
@@ -2190,7 +1880,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 		fmt.Println(item.Model)
 		var jsonItem model.SearchSpanReponseItem
 		json.Unmarshal([]byte(item.Model), &jsonItem)
-		jsonItem.Timestamp = item.Timestamp
+		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		spanEvents := jsonItem.GetValues()
 		searchSpansResult[0].Events[i] = spanEvents
 	}
@@ -2211,7 +1901,7 @@ func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryP
 
 	query := fmt.Sprintf(`SELECT spanID, parentSpanID, serviceName FROM %s WHERE timestamp>='%s' AND timestamp<='%s'`, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
-	err := r.db.Select(&serviceMapDependencyItems, query)
+	err := r.db.Select(ctx, &serviceMapDependencyItems, query)
 
 	zap.S().Info(query)
 
@@ -2248,112 +1938,6 @@ func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryP
 	}
 
 	return &retMe, nil
-}
-
-func (r *ClickHouseReader) SearchSpansAggregate(ctx context.Context, queryParams *model.SpanSearchAggregatesParams) ([]model.SpanSearchAggregatesResponseItem, error) {
-
-	spanSearchAggregatesResponseItems := []model.SpanSearchAggregatesResponseItem{}
-
-	aggregation_query := ""
-	if queryParams.Dimension == "duration" {
-		switch queryParams.AggregationOption {
-		case "p50":
-			aggregation_query = " quantile(0.50)(durationNano) as value "
-			break
-
-		case "p95":
-			aggregation_query = " quantile(0.95)(durationNano) as value "
-			break
-
-		case "p99":
-			aggregation_query = " quantile(0.99)(durationNano) as value "
-			break
-		}
-	} else if queryParams.Dimension == "calls" {
-		aggregation_query = " count(*) as value "
-	}
-
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
-
-	if len(queryParams.ServiceName) != 0 {
-		query = query + " AND serviceName = ?"
-		args = append(args, queryParams.ServiceName)
-	}
-
-	if len(queryParams.OperationName) != 0 {
-
-		query = query + " AND name = ?"
-		args = append(args, queryParams.OperationName)
-
-	}
-
-	if len(queryParams.Kind) != 0 {
-		query = query + " AND kind = ?"
-		args = append(args, queryParams.Kind)
-
-	}
-
-	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
-	}
-	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
-	}
-
-	for _, item := range queryParams.Tags {
-
-		if item.Key == "error" && item.Value == "true" {
-			query = query + " AND ( has(tags, 'error:true') OR statusCode>=500 OR statusCode=2)"
-			continue
-		}
-
-		if item.Operator == "equals" {
-			query = query + " AND has(tags, ?)"
-			args = append(args, fmt.Sprintf("%s:%s", item.Key, item.Value))
-		} else if item.Operator == "contains" {
-			query = query + " AND tagsValues[indexOf(tagsKeys, ?)] ILIKE ?"
-			args = append(args, item.Key)
-			args = append(args, fmt.Sprintf("%%%s%%", item.Value))
-		} else if item.Operator == "regex" {
-			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
-			args = append(args, item.Key)
-			args = append(args, item.Value)
-		} else if item.Operator == "isnotnull" {
-			query = query + " AND has(tagsKeys, ?)"
-			args = append(args, item.Key)
-		} else {
-			return nil, fmt.Errorf("Tag Operator %s not supported", item.Operator)
-		}
-
-	}
-
-	query = query + " GROUP BY time ORDER BY time"
-
-	err := r.db.Select(&spanSearchAggregatesResponseItems, query, args...)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	for i, _ := range spanSearchAggregatesResponseItems {
-
-		timeObj, _ := time.Parse(time.RFC3339Nano, spanSearchAggregatesResponseItems[i].Time)
-		spanSearchAggregatesResponseItems[i].Timestamp = int64(timeObj.UnixNano())
-		spanSearchAggregatesResponseItems[i].Time = ""
-		if queryParams.AggregationOption == "rate_per_sec" {
-			spanSearchAggregatesResponseItems[i].Value = float32(spanSearchAggregatesResponseItems[i].Value) / float32(queryParams.StepSeconds)
-		}
-	}
-
-	return spanSearchAggregatesResponseItems, nil
-
 }
 
 func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
@@ -2552,7 +2136,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		query = query + " GROUP BY time ORDER BY time"
 	}
 
-	err := r.db.Select(&SpanAggregatesDBResponseItems, query, args...)
+	err := r.db.Select(ctx, &SpanAggregatesDBResponseItems, query, args...)
 
 	zap.S().Info(query)
 
@@ -2606,7 +2190,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParam
 		tracesDuration, _ := time.ParseDuration(ttlParams.Duration)
 		second := int(tracesDuration.Seconds())
 		query := fmt.Sprintf("ALTER TABLE default.%v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND", signozTraceTableName, second)
-		_, err := r.db.Exec(query)
+		err := r.db.Exec(ctx, query)
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
@@ -2618,7 +2202,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParam
 		metricsDuration, _ := time.ParseDuration(ttlParams.Duration)
 		second := int(metricsDuration.Seconds())
 		query := fmt.Sprintf("ALTER TABLE %v.%v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL %v SECOND", signozMetricDBName, signozSampleName, second)
-		_, err := r.db.Exec(query)
+		err := r.db.Exec(ctx, query)
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
@@ -2664,7 +2248,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
 
-		err := r.db.QueryRowx(query).StructScan(&dbResp)
+		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
@@ -2678,7 +2262,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozTraceTableName)
 
-		err := r.db.QueryRowx(query).StructScan(&dbResp)
+		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
@@ -2726,7 +2310,7 @@ func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.Get
 	query := fmt.Sprintf("SELECT exceptionType, exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, serviceName FROM %s WHERE timestamp >= ? AND timestamp <= ? GROUP BY serviceName, exceptionType, exceptionMessage", r.errorTable)
 	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
 
-	err := r.db.Select(&getErrorReponses, query, args...)
+	err := r.db.Select(ctx, &getErrorReponses, query, args...)
 
 	zap.S().Info(query)
 
@@ -2750,7 +2334,7 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, olderErrorId, newerErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s window w as (ORDER BY exceptionType, serviceName, timestamp rows between unbounded preceding and unbounded following)) WHERE errorID = ?", r.errorTable)
 	args := []interface{}{queryParams.ErrorID}
 
-	err := r.db.Get(&getErrorWithSpanReponse, query, args...)
+	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
 
 	zap.S().Info(query)
 
@@ -2778,7 +2362,7 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s WHERE serviceName = ? AND exceptionType = ? window w as (ORDER BY timestamp rows between unbounded preceding and unbounded following)) limit 1", r.errorTable)
 	args := []interface{}{queryParams.ServiceName, queryParams.ErrorType}
 
-	err := r.db.Get(&getErrorWithSpanReponse, query, args...)
+	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
 
 	zap.S().Info(query)
 

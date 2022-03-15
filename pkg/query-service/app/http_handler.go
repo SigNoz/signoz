@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/model"
@@ -164,18 +163,18 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", aH.getChannel).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", aH.editChannel).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/channels/{id}", aH.deleteChannel).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/channels", aH.createChannel).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", aH.getRule).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", aH.editRule).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", aH.deleteRule).Methods(http.MethodDelete)
+	// router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
+	// router.HandleFunc("/api/v1/rules/{id}", aH.editRule).Methods(http.MethodPut)
+	// router.HandleFunc("/api/v1/rules/{id}", aH.deleteRule).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
@@ -188,17 +187,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/feedback", aH.submitFeedback).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/dbOverview", aH.getServiceDBOverview).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/externalAvgDuration", aH.GetServiceExternalAvgDuration).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/externalErrors", aH.getServiceExternalErrors).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/external", aH.getServiceExternal).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/{service}/operations", aH.getOperations).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/spans", aH.searchSpans).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/spans/aggregates", aH.searchSpansAggregates).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/tags", aH.searchTags).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
@@ -245,14 +235,14 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	aH.respond(w, alertList)
 }
 
-func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
-	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
-	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
-		return
-	}
-	aH.respond(w, alertList)
-}
+// func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
+// 	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
+// 	if apiErrorObj != nil {
+// 		aH.respondError(w, apiErrorObj, nil)
+// 		return
+// 	}
+// 	aH.respond(w, alertList)
+// }
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
@@ -390,39 +380,39 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+// func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
+// 	id := mux.Vars(r)["id"]
 
-	apiErrorObj := (*aH.reader).DeleteRule(id)
+// 	apiErrorObj := (*aH.reader).DeleteRule(id)
 
-	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
-		return
-	}
+// 	if apiErrorObj != nil {
+// 		aH.respondError(w, apiErrorObj, nil)
+// 		return
+// 	}
 
-	aH.respond(w, "rule successfully deleted")
+// 	aH.respond(w, "rule successfully deleted")
 
-}
-func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+// }
+// func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
+// 	id := mux.Vars(r)["id"]
 
-	var postData map[string]string
-	err := json.NewDecoder(r.Body).Decode(&postData)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
+// 	var postData map[string]string
+// 	err := json.NewDecoder(r.Body).Decode(&postData)
+// 	if err != nil {
+// 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+// 		return
+// 	}
 
-	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
+// 	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
 
-	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
-		return
-	}
+// 	if apiErrorObj != nil {
+// 		aH.respondError(w, apiErrorObj, nil)
+// 		return
+// 	}
 
-	aH.respond(w, "rule successfully edited")
+// 	aH.respond(w, "rule successfully edited")
 
-}
+// }
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
@@ -511,136 +501,136 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
+// func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
-	decoder := json.NewDecoder(r.Body)
+// 	decoder := json.NewDecoder(r.Body)
 
-	var postData map[string]string
-	err := decoder.Decode(&postData)
+// 	var postData map[string]string
+// 	err := decoder.Decode(&postData)
 
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
+// 	if err != nil {
+// 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+// 		return
+// 	}
 
-	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
+// 	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
 
-	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
-		return
-	}
+// 	if apiErrorObj != nil {
+// 		aH.respondError(w, apiErrorObj, nil)
+// 		return
+// 	}
 
-	aH.respond(w, "rule successfully added")
+// 	aH.respond(w, "rule successfully added")
 
-}
+// }
 
-func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
+// func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
-	query, apiErrorObj := parseQueryRangeRequest(r)
+// 	query, apiErrorObj := parseQueryRangeRequest(r)
 
-	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
-		return
-	}
+// 	if apiErrorObj != nil {
+// 		aH.respondError(w, apiErrorObj, nil)
+// 		return
+// 	}
 
-	// zap.S().Info(query, apiError)
+// 	// zap.S().Info(query, apiError)
 
-	ctx := r.Context()
-	if to := r.FormValue("timeout"); to != "" {
-		var cancel context.CancelFunc
-		timeout, err := parseMetricsDuration(to)
-		if aH.handleError(w, err, http.StatusBadRequest) {
-			return
-		}
+// 	ctx := r.Context()
+// 	if to := r.FormValue("timeout"); to != "" {
+// 		var cancel context.CancelFunc
+// 		timeout, err := parseMetricsDuration(to)
+// 		if aH.handleError(w, err, http.StatusBadRequest) {
+// 			return
+// 		}
 
-		ctx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
-	}
+// 		ctx, cancel = context.WithTimeout(ctx, timeout)
+// 		defer cancel()
+// 	}
 
-	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
+// 	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
 
-	if apiError != nil {
-		aH.respondError(w, apiError, nil)
-		return
-	}
+// 	if apiError != nil {
+// 		aH.respondError(w, apiError, nil)
+// 		return
+// 	}
 
-	if res.Err != nil {
-		zap.S().Error(res.Err)
-	}
+// 	if res.Err != nil {
+// 		zap.S().Error(res.Err)
+// 	}
 
-	if res.Err != nil {
-		switch res.Err.(type) {
-		case promql.ErrQueryCanceled:
-			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
-		case promql.ErrQueryTimeout:
-			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
-		}
-		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
-	}
+// 	if res.Err != nil {
+// 		switch res.Err.(type) {
+// 		case promql.ErrQueryCanceled:
+// 			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+// 		case promql.ErrQueryTimeout:
+// 			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+// 		}
+// 		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+// 	}
 
-	response_data := &model.QueryData{
-		ResultType: res.Value.Type(),
-		Result:     res.Value,
-		Stats:      qs,
-	}
+// 	response_data := &model.QueryData{
+// 		ResultType: res.Value.Type(),
+// 		Result:     res.Value,
+// 		Stats:      qs,
+// 	}
 
-	aH.respond(w, response_data)
+// 	aH.respond(w, response_data)
 
-}
+// }
 
-func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
+// func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 
-	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
+// 	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
 
-	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
-		return
-	}
+// 	if apiErrorObj != nil {
+// 		aH.respondError(w, apiErrorObj, nil)
+// 		return
+// 	}
 
-	// zap.S().Info(query, apiError)
+// 	// zap.S().Info(query, apiError)
 
-	ctx := r.Context()
-	if to := r.FormValue("timeout"); to != "" {
-		var cancel context.CancelFunc
-		timeout, err := parseMetricsDuration(to)
-		if aH.handleError(w, err, http.StatusBadRequest) {
-			return
-		}
+// 	ctx := r.Context()
+// 	if to := r.FormValue("timeout"); to != "" {
+// 		var cancel context.CancelFunc
+// 		timeout, err := parseMetricsDuration(to)
+// 		if aH.handleError(w, err, http.StatusBadRequest) {
+// 			return
+// 		}
 
-		ctx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
-	}
+// 		ctx, cancel = context.WithTimeout(ctx, timeout)
+// 		defer cancel()
+// 	}
 
-	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
+// 	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
 
-	if apiError != nil {
-		aH.respondError(w, apiError, nil)
-		return
-	}
+// 	if apiError != nil {
+// 		aH.respondError(w, apiError, nil)
+// 		return
+// 	}
 
-	if res.Err != nil {
-		zap.S().Error(res.Err)
-	}
+// 	if res.Err != nil {
+// 		zap.S().Error(res.Err)
+// 	}
 
-	if res.Err != nil {
-		switch res.Err.(type) {
-		case promql.ErrQueryCanceled:
-			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
-		case promql.ErrQueryTimeout:
-			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
-		}
-		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
-	}
+// 	if res.Err != nil {
+// 		switch res.Err.(type) {
+// 		case promql.ErrQueryCanceled:
+// 			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+// 		case promql.ErrQueryTimeout:
+// 			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+// 		}
+// 		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+// 	}
 
-	response_data := &model.QueryData{
-		ResultType: res.Value.Type(),
-		Result:     res.Value,
-		Stats:      qs,
-	}
+// 	response_data := &model.QueryData{
+// 		ResultType: res.Value.Type(),
+// 		Result:     res.Value,
+// 		Stats:      qs,
+// 	}
 
-	aH.respond(w, response_data)
+// 	aH.respond(w, response_data)
 
-}
+// }
 
 func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
@@ -691,52 +681,6 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-	serviceName := vars["service"]
-
-	var err error
-	if len(serviceName) == 0 {
-		err = fmt.Errorf("service param not found")
-	}
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetOperations(context.Background(), serviceName)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
-
-	result, err := (*aH.reader).GetServicesList(context.Background())
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) searchTags(w http.ResponseWriter, r *http.Request) {
-
-	serviceName := r.URL.Query().Get("service")
-
-	result, err := (*aH.reader).GetTags(context.Background(), serviceName)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
 func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetTopEndpointsRequest(r)
@@ -762,71 +706,6 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := (*aH.reader).GetUsage(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceDBOverview(context.Background(), query)
-
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceExternal(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) GetServiceExternalAvgDuration(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceExternalAvgDuration(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceExternalErrors(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceExternalErrors(context.Background(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -944,38 +823,6 @@ func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
 
 	aH.writeJSON(w, r, result)
 
-}
-
-func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseSearchSpanAggregatesRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).SearchSpansAggregate(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-}
-
-func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseSpanSearchRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	// result, err := druidQuery.SearchSpans(aH.client, query)
-	result, err := (*aH.reader).SearchSpans(context.Background(), query)
-
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
 }
 
 func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
