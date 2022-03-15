@@ -194,13 +194,19 @@ install_docker_compose() {
 }
 
 start_docker() {
-    echo "Starting Docker ..."
+    echo -e "🐳 Starting Docker ...\n"
     if [ $os = "Mac" ]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else 
         if ! systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
             systemctl start docker.service
+        fi
+        if [ -z $sudo_cmd ]; then
+            docker ps > /dev/null && true
+            if [ $? -ne 0 ]; then
+                request_sudo
+            fi
         fi
     fi
 }
@@ -259,16 +265,20 @@ bye() {  # Prints a friendly good bye message and exits the script.
 }
 
 request_sudo() {
-	if hash sudo 2>/dev/null && (( $EUID != 0 )); then
-        echo "We will need sudo access to complete automatic Docker installation."
-        echo "Please enter your sudo password now:"
-        if ! $sudo_cmd -v; then
-            echo "Need sudo privileges to proceed with the installation."
-            exit 1;
-        fi
+    if hash sudo 2>/dev/null; then
         sudo_cmd="sudo"
-        echo -e "Thanks! 🙏\n"
-        echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
+        echo -e "\n\n🙇 We will need sudo access to complete the installation."
+        if ! $sudo_cmd -v && (( $EUID != 0 )); then
+            echo -e "Please enter your sudo password now:"
+            
+            if ! $sudo_cmd -v; then
+                echo "Need sudo privileges to proceed with the installation."
+                exit 1;
+            fi
+
+            echo -e "Thanks! 🙏\n"
+            echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
+        fi
 	fi
 }
 
@@ -453,9 +463,7 @@ if ! is_command_present docker-compose; then
     install_docker_compose
 fi
 
-
 start_docker
-
 
 # $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
 
