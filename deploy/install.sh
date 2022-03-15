@@ -214,16 +214,6 @@ wait_for_containers_start() {
         if [[ status_code -eq 200 ]]; then
             break
         else
-            if [ $setup_type == 'druid' ]; then
-                SUPERVISORS="$(curl -so -  http://localhost:8888/druid/indexer/v1/supervisor)"
-                LEN_SUPERVISORS="${#SUPERVISORS}"
-
-                if [[ LEN_SUPERVISORS -ne 19 && $timeout -eq 50 ]];then
-                    echo -e "\n🟠 Supervisors taking time to start ⏳ ... let's wait for some more time ⏱️\n\n"
-                    $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up -d
-                fi
-            fi
-
             echo -ne "Waiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
         fi
         ((timeout--))
@@ -239,15 +229,12 @@ bye() {  # Prints a friendly good bye message and exits the script.
 
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
         echo ""
-        if [ $setup_type == 'clickhouse' ]; then
-            if is_arm64; then
-                echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
-            else
-                echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
-            fi
-        else   
-            echo -e "$sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
+        if is_arm64; then
+            echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
+        else
+            echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
         fi
+
         # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
@@ -297,7 +284,7 @@ if (( $EUID != 0 )); then
     if ! is_command_present docker; then
         $sudo_cmd docker ps
     fi
-    echo "   In case of any failure, please consider running the script with sudo privileges."
+    echo "   In case of any failure or prompt, please consider running the script with sudo privileges."
     echo ""
 else
     sudo_cmd="sudo"
@@ -391,13 +378,7 @@ send_event() {
         'installation_error_checks')
             event="Installation Error - Checks"
             error="Containers not started"
-            if [ $setup_type == 'clickhouse' ]; then
-                others='"data": "some_checks",'
-            else
-                supervisors="$(curl -so -  http://localhost:8888/druid/indexer/v1/supervisor)"
-                datasources="$(curl -so -  http://localhost:8888/druid/coordinator/v1/datasources)"
-                others='"supervisors": "'"$supervisors"'", "datasources": "'"$datasources"'",'
-            fi
+            others='"data": "some_checks",'
             ;;
         'installation_support')
             event="Installation Support"
@@ -481,30 +462,21 @@ start_docker
 
 echo ""
 echo -e "\n🟡 Pulling the latest container images for SigNoz.\n"
-if [ $setup_type == 'clickhouse' ]; then
-    if is_arm64; then
-        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
-    else
-        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
-    fi
+if is_arm64; then
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
 else
-    $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
 fi
-
 
 echo ""
 echo "🟡 Starting the SigNoz containers. It may take a few minutes ..."
 echo
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
-if [ $setup_type == 'clickhouse' ]; then
-    if is_arm64; then
-        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
-    else
-        $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
-    fi
+if is_arm64; then
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
 else
-    $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
 fi
 
 wait_for_containers_start 60
@@ -514,11 +486,9 @@ if [[ $status_code -ne 200 ]]; then
     echo "+++++++++++ ERROR ++++++++++++++++++++++"
     echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
-    if [ $setup_type == 'clickhouse' ]; then
-        echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
-    else
-        echo -e "$sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
-    fi
+
+    echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+
     echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
     echo "++++++++++++++++++++++++++++++++++++++++"
@@ -536,14 +506,10 @@ else
     echo -e "🟢 Your frontend is running on http://localhost:3301"
     echo ""
 
-    if [ $setup_type == 'clickhouse' ]; then
-        if is_arm64; then
-            echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml down -v"
-        else
-            echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
-        fi
+    if is_arm64; then
+        echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml down -v"
     else
-        echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
+        echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
     fi
 
     echo ""
