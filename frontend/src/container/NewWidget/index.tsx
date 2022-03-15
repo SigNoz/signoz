@@ -17,7 +17,10 @@ import {
 	SaveDashboard,
 	SaveDashboardProps,
 } from 'store/actions/dashboard/saveDashboard';
-import { UpdateQuery, UpdateQueryProps } from 'store/actions/dashboard/updateQuery';
+import {
+	UpdateQuery,
+	UpdateQueryProps,
+} from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -40,7 +43,7 @@ const NewWidget = ({
 	applySettingsToPanel,
 	saveSettingOfPanel,
 	getQueryResults,
-	updateQuery
+	updateQuery,
 }: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -74,6 +77,7 @@ const NewWidget = ({
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
 	);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(selectedWidget?.yAxisUnit);
 
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
@@ -106,6 +110,7 @@ const NewWidget = ({
 			opacity,
 			timePreferance: selectedTime.enum,
 			title,
+			yAxisUnit,
 			widgetId: query.get('widgetId') || '',
 			dashboardId: dashboardId,
 		});
@@ -127,11 +132,12 @@ const NewWidget = ({
 			updateQuery({
 				widgetId: selectedWidget?.id || '',
 				query: element.query || '',
-				legend: element.legend || '', 
-				currentIndex: index
+				legend: element.legend || '',
+				currentIndex: index,
+				yAxisUnit,
 			});
-		})
-		
+		});
+
 		applySettingsToPanel({
 			description,
 			isStacked: stacked,
@@ -140,8 +146,9 @@ const NewWidget = ({
 			timePreferance: selectedTime.enum,
 			title,
 			widgetId: selectedWidget?.id || '',
+			yAxisUnit
 		});
-	}
+	};
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
@@ -181,7 +188,7 @@ const NewWidget = ({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} />
+					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} yAxisUnit={yAxisUnit}/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -194,12 +201,14 @@ const NewWidget = ({
 							stacked,
 							setStacked,
 							opacity,
+							yAxisUnit,
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
 							selectedGraph,
 							setSelectedTime,
 							selectedTime,
+							setYAxisUnit,
 						}}
 					/>
 				</RightContainerWrapper>
@@ -233,7 +242,7 @@ const mapDispatchToProps = (
 	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
 	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
-	updateQuery: bindActionCreators(UpdateQuery, dispatch)
+	updateQuery: bindActionCreators(UpdateQuery, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

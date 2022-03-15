@@ -32,6 +32,7 @@ const FullView = ({
 	onClickHandler,
 	noDataGraph = false,
 	name,
+	yAxisUnit,
 }: FullViewProps): JSX.Element => {
 	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -221,6 +222,7 @@ const FullView = ({
 					title: widget.title,
 					onClickHandler: onClickHandler,
 					name,
+					yAxisUnit,
 				}}
 			/>
 			{/* </GraphContainer> */}
@@ -241,6 +243,7 @@ interface FullViewProps {
 	onClickHandler?: graphOnClickHandler;
 	noDataGraph?: boolean;
 	name: string;
+	yAxisUnit?: string;
 }
 
 export default FullView;

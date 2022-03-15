@@ -31,6 +31,7 @@ const TraceGraphFilter = () => {
 				type: UPDATE_SELECTED_FUNCTION,
 				payload: {
 					selectedFunction: selected.key,
+					yAxisUnit: selected.yAxisUnit,
 				},
 			});
 		}
