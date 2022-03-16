@@ -91,7 +91,7 @@ const Timeline = ({
 
 interface TimelineProps {
 	traceMetaData: object;
-	globalTraceMetadata: object;
+	globalTraceMetadata: Record<string, number>;
 	intervalUnit: IIntervalUnit;
 	setIntervalUnit: () => void;
 }
