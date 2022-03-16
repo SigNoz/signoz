@@ -11,7 +11,6 @@ import AppReducer from 'types/reducer/app';
 
 import routes from './routes';
 
-
 const App = (): JSX.Element => {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -20,8 +19,8 @@ const App = (): JSX.Element => {
 			<AppLayout>
 				<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 					<Switch>
-						{routes.map(({ path, component, exact }, index) => (
-							<Route key={index} exact={exact} path={path} component={component} />
+						{routes.map(({ path, component, exact }) => (
+							<Route key={`${path}`} exact={exact} path={path} component={component} />
 						))}
 						<Route
 							path="/"
@@ -41,6 +40,5 @@ const App = (): JSX.Element => {
 		</Router>
 	);
 };
-
 
 export default App;

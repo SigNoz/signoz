@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import styles from './style.module.css';
-import { useMeasure } from 'react-use';
 import { INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
+import React, { useEffect, useState } from 'react';
+import { useMeasure } from 'react-use';
+
+import styles from './style.module.css';
 import { Interval } from './types';
-import { getIntervalSpread, getIntervals } from './utils';
+import { getIntervals, getIntervalSpread } from './utils';
 
 const Timeline_Height = 22;
 const Timeline_H_Spacing = 0;
@@ -68,9 +69,10 @@ const Timeline = ({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<g
-							transform={`translate(${Timeline_H_Spacing +
+							transform={`translate(${
+								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-								},0)`}
+							},0)`}
 							className={styles['timeline-tick']}
 							key={interval.label + interval.percentage + index}
 						>

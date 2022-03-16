@@ -1,20 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Space } from 'antd';
-import { Container, SearchComponent } from './styles';
-import useClickOutside from 'hooks/useClickOutside';
-import Tags from './AllTags';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
-import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
-import { bindActionCreators, Dispatch } from 'redux';
-import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
-import { parseQueryToTags, parseTagsToQuery } from './util';
-import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { CaretRightFilled } from '@ant-design/icons';
+import { Space } from 'antd';
+import useClickOutside from 'hooks/useClickOutside';
+import React, { useEffect, useRef, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
+import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 import { updateURL } from 'store/actions/trace/util';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import { TraceReducer } from 'types/reducer/trace';
+
+import Tags from './AllTags';
+import { Container, SearchComponent } from './styles';
+import { parseQueryToTags, parseTagsToQuery } from './util';
 
 const Search = ({
 	updateTagVisiblity,
@@ -38,7 +39,7 @@ const Search = ({
 		if (value.length === 0 && traces.isTagModalError) {
 			updateTagIsError(false);
 		}
-	}, [traces.isTagModalError, value]);
+	}, [traces.isTagModalError, value, updateTagIsError]);
 
 	const tagRef = useRef<HTMLDivElement>(null);
 
@@ -69,11 +70,11 @@ const Search = ({
 		}
 	});
 
-	const onChangeHandler = (search: string) => {
+	const onChangeHandler = (search: string): void => {
 		setValue(search);
 	};
 
-	const setIsTagsModalHandler = (value: boolean) => {
+	const setIsTagsModalHandler = (value: boolean): void => {
 		updateTagVisiblity(value);
 	};
 
@@ -82,7 +83,9 @@ const Search = ({
 		setIsTagsModalHandler(true);
 	};
 
-	const updateFilters = async (selectedTags: TraceReducer['selectedTags']) => {
+	const updateFilters = async (
+		selectedTags: TraceReducer['selectedTags'],
+	): Promise<void> => {
 		dispatch({
 			type: UPDATE_ALL_FILTERS,
 			payload: {
@@ -111,7 +114,7 @@ const Search = ({
 		<Space direction="vertical" style={{ width: '100%' }}>
 			<Container ref={tagRef}>
 				<SearchComponent
-					onChange={(event) => onChangeHandler(event.target.value)}
+					onChange={(event): void => onChangeHandler(event.target.value)}
 					value={value}
 					allowClear
 					disabled={traces.filterLoading}
@@ -119,7 +122,7 @@ const Search = ({
 					placeholder="Click to filter by tags"
 					type={'search'}
 					enterButton={<CaretRightFilled />}
-					onSearch={(string) => {
+					onSearch={(string): void => {
 						if (string.length === 0) {
 							updateTagVisiblity(false);
 							updateFilters([]);

@@ -1,6 +1,9 @@
 import { Space, Tabs, Typography } from 'antd';
+import useThemeMode from 'hooks/useThemeMode';
 import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
+
+import ErrorTag from './ErrorTag';
 import {
 	CardContainer,
 	CustomSubText,
@@ -8,8 +11,6 @@ import {
 	CustomText,
 	CustomTitle,
 } from './styles';
-import ErrorTag from './ErrorTag';
-import useThemeMode from 'hooks/useThemeMode';
 
 const { TabPane } = Tabs;
 
@@ -40,7 +41,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					{tags.length !== 0 ? (
 						tags.map((tags) => {
 							return (
-								<React.Fragment>
+								<React.Fragment key={tags.key}>
 									{tags.value && (
 										<>
 											<CustomSubTitle>{tags.key}</CustomSubTitle>
