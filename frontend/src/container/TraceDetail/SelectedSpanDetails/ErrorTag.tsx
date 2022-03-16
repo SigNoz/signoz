@@ -1,6 +1,7 @@
 import { Collapse, Modal } from 'antd';
 import { StyledButton } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
+import { keys, map } from 'lodash-es';
 import React, { useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -24,9 +25,8 @@ const ErrorTag = ({ event }: ErrorTagProps): JSX.Element => {
 
 	return (
 		<>
-			{event?.map(({ attributeMap, name }) => {
-				const attributes = Object.keys(attributeMap);
-
+			{map(event, ({ attributeMap, name }) => {
+				const attributes = keys(attributeMap);
 				return (
 					<Collapse
 						key={`${name}${JSON.stringify(attributeMap)}`}
@@ -38,7 +38,7 @@ const ErrorTag = ({ event }: ErrorTagProps): JSX.Element => {
 							header={name || attributeMap?.event}
 							key={name || attributeMap.event}
 						>
-							{attributes.map((event) => {
+							{map(attributes, (event) => {
 								const value = attributeMap[event];
 								const isEllipsed = value.length > 24;
 

@@ -70,7 +70,6 @@ export const getIntervals = ({
 			tempBaseSpread -= intervalSpreadNormalized;
 		}
 		elapsedIntervals = interval_time;
-
 		const interval: Interval = {
 			label: `${toFixed(
 				resolveTimeFromInterval(interval_time + baseInterval, intervalUnit),

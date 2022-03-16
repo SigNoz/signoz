@@ -32,7 +32,7 @@ const Timeline = ({
 		});
 
 		let intervalUnit = INTERVAL_UNITS[0];
-		for (const idx in INTERVAL_UNITS) {
+		for (let idx = 0; idx < INTERVAL_UNITS.length; idx++) {
 			const standard_interval = INTERVAL_UNITS[idx];
 			if (baseSpread * standard_interval.multiplier < 1) {
 				const index = parseInt(idx, 10);
@@ -41,7 +41,7 @@ const Timeline = ({
 			}
 		}
 
-		setIntervalUnit(intervalUnit);
+		intervalUnit = intervalUnit || INTERVAL_UNITS[0];
 		setIntervals(
 			getIntervals({
 				baseInterval,
@@ -50,7 +50,8 @@ const Timeline = ({
 				intervalUnit,
 			}),
 		);
-	}, [globalTraceMetadata, traceMetaData, setIntervalUnit]);
+		setIntervalUnit(intervalUnit);
+	}, [traceMetaData, globalTraceMetadata, setIntervalUnit]);
 
 	return (
 		<StyledDiv ref={ref} styledclass={[styles.timelineContainer]}>
