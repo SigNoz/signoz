@@ -1,6 +1,9 @@
-import { Props as GetDBOverViewProps } from './getDBOverview';
-
-export type Props = GetDBOverViewProps;
+export interface Props {
+	service: string;
+	start: number;
+	end: number;
+	step: number;
+}
 
 export interface ServiceOverview {
 	callRate: number;

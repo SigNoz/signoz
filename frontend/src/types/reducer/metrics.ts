@@ -1,7 +1,4 @@
-import { DBOverView } from 'types/api/metrics/getDBOverview';
-import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
-import { ExternalError } from 'types/api/metrics/getExternalError';
-import { ExternalService } from 'types/api/metrics/getExternalService';
+import { QueryEndpointData } from 'types/api/metrics/getQueryEndpoint';
 import { ServicesList } from 'types/api/metrics/getService';
 import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
@@ -12,11 +9,15 @@ interface MetricReducer {
 	metricsApplicationLoading: boolean;
 	error: boolean;
 	errorMessage: string;
-	dbOverView: DBOverView[];
-	externalService: ExternalService[];
 	topEndPoints: TopEndPoints[];
-	externalAverageDuration: ExternalAverageDuration[];
-	externalError: ExternalError[];
+	applicationRpsEndpoints: QueryEndpointData[];
+	applicationErrorEndpoints: QueryEndpointData[];
+	dbRpsEndpoints: QueryEndpointData[];
+	dbAvgDurationEndpoints: QueryEndpointData[];
+	externalCallEndpoint: QueryEndpointData[];
+	externalErrorEndpoints: QueryEndpointData[];
+	addressedExternalCallDurationResponse: QueryEndpointData[];
+	addressedExternalCallRPSResponse: QueryEndpointData[];
 	serviceOverview: ServiceOverview[];
 }
 

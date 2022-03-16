@@ -7,9 +7,11 @@ import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
-	GetInitialData,
+	GetApplicationData,
 	GetInitialDataProps,
-} from 'store/actions/metrics/getInitialData';
+} from 'store/actions/metrics/getApplicationMetrics';
+import { GetDatabaseMetrics } from 'store/actions/metrics/getDatabaseMetrics';
+import { GetExternalCallMetrics } from 'store/actions/metrics/getExternalCallMetrics';
 import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -17,7 +19,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
 const MetricsApplication = ({
-	getInitialData,
+	getInitialApplicationMetrics,
+	getInitialDatabaseMetrics,
+	getInitialExternalCallMetrics,
 	resetInitialData,
 }: MetricsProps): JSX.Element => {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -32,17 +36,29 @@ const MetricsApplication = ({
 
 	useEffect(() => {
 		if (servicename !== undefined) {
-			getInitialData({
+			const props = {
 				serviceName: servicename,
 				maxTime,
 				minTime,
-			});
+			};
+
+			getInitialApplicationMetrics(props);
+			getInitialDatabaseMetrics(props);
+			getInitialExternalCallMetrics(props);
 		}
 
 		return (): void => {
 			resetInitialData();
 		};
-	}, [servicename, getInitialData, resetInitialData, maxTime, minTime]);
+	}, [
+		servicename,
+		getInitialApplicationMetrics,
+		getInitialDatabaseMetrics,
+		resetInitialData,
+		getInitialExternalCallMetrics,
+		maxTime,
+		minTime,
+	]);
 
 	if (metricsApplicationLoading) {
 		return <Spinner tip="Loading..." />;
@@ -56,7 +72,9 @@ const MetricsApplication = ({
 };
 
 interface DispatchProps {
-	getInitialData: (props: GetInitialDataProps) => void;
+	getInitialApplicationMetrics: (props: GetInitialDataProps) => void;
+	getInitialDatabaseMetrics: (props: GetInitialDataProps) => void;
+	getInitialExternalCallMetrics: (props: GetInitialDataProps) => void;
 	resetInitialData: () => void;
 }
 
@@ -67,7 +85,12 @@ interface ServiceProps {
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getInitialData: bindActionCreators(GetInitialData, dispatch),
+	getInitialApplicationMetrics: bindActionCreators(GetApplicationData, dispatch),
+	getInitialDatabaseMetrics: bindActionCreators(GetDatabaseMetrics, dispatch),
+	getInitialExternalCallMetrics: bindActionCreators(
+		GetExternalCallMetrics,
+		dispatch,
+	),
 	resetInitialData: bindActionCreators(ResetInitialData, dispatch),
 });
 

@@ -1,7 +1,9 @@
 import {
 	GET_INITIAL_APPLICATION_ERROR,
 	GET_INITIAL_APPLICATION_LOADING,
-	GET_INTIAL_APPLICATION_DATA,
+	GET_INITIAL_APPLICATION_METRICS,
+	GET_INITIAL_DATABASE_METRICS,
+	GET_INITIAL_EXTERNAL_CALL_METRICS,
 	GET_SERVICE_LIST_ERROR,
 	GET_SERVICE_LIST_LOADING_START,
 	GET_SERVICE_LIST_SUCCESS,
@@ -16,12 +18,19 @@ const InitialValue: InitialValueTypes = {
 	loading: true,
 	metricsApplicationLoading: true,
 	services: [],
-	dbOverView: [],
-	externalService: [],
+	// Application metrics
 	topEndPoints: [],
-	externalAverageDuration: [],
-	externalError: [],
 	serviceOverview: [],
+	applicationRpsEndpoints: [],
+	applicationErrorEndpoints: [],
+	// DB overview.
+	dbRpsEndpoints: [],
+	dbAvgDurationEndpoints: [],
+	// External call.
+	externalCallEndpoint: [],
+	externalErrorEndpoints: [],
+	addressedExternalCallRPSResponse: [],
+	addressedExternalCallDurationResponse: [],
 };
 
 const metrics = (
@@ -76,24 +85,49 @@ const metrics = (
 			};
 		}
 
-		case GET_INTIAL_APPLICATION_DATA: {
+		case GET_INITIAL_APPLICATION_METRICS: {
 			const {
-				// dbOverView,
-				topEndPoints,
 				serviceOverview,
-				// externalService,
-				// externalAverageDuration,
-				// externalError,
+				topEndPoints,
+				applicationRpsEndpoints,
+				applicationErrorEndpoints,
 			} = action.payload;
 
 			return {
 				...state,
-				// dbOverView,
 				topEndPoints,
+				applicationRpsEndpoints,
+				applicationErrorEndpoints,
 				serviceOverview,
-				// externalService,
-				// externalAverageDuration,
-				// externalError,
+				metricsApplicationLoading: false,
+			};
+		}
+
+		case GET_INITIAL_DATABASE_METRICS: {
+			const { dbRpsEndpoints, dbAvgDurationEndpoints } = action.payload;
+
+			return {
+				...state,
+				dbRpsEndpoints,
+				dbAvgDurationEndpoints,
+				metricsApplicationLoading: false,
+			};
+		}
+
+		case GET_INITIAL_EXTERNAL_CALL_METRICS: {
+			const {
+				externalCallEndpoint,
+				externalErrorEndpoints,
+				addressedExternalCallRPSResponse,
+				addressedExternalCallDurationResponse,
+			} = action.payload;
+
+			return {
+				...state,
+				externalCallEndpoint,
+				externalErrorEndpoints,
+				addressedExternalCallRPSResponse,
+				addressedExternalCallDurationResponse,
 				metricsApplicationLoading: false,
 			};
 		}

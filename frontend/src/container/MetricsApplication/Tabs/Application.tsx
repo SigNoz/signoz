@@ -1,8 +1,8 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
+import DashboardGraph from 'components/DashboardGraph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
@@ -10,20 +10,22 @@ import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
-const Application = ({ getWidget }: DashboardProps): JSX.Element => {
+const Application = (): JSX.Element => {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
-	const { topEndPoints, serviceOverview } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const {
+		topEndPoints,
+		serviceOverview,
+		applicationRpsEndpoints,
+		applicationErrorEndpoints,
+	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp;
@@ -175,24 +177,15 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Request per sec</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="request_per_sec"
-								noDataGraph
-								fullViewOptions={false}
-								onClickHandler={(event, element, chart, data): void => {
-									onClickhandler(event, element, chart, data, 'Request');
-								}}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[2m]))`,
-										legend: 'Request per second',
-									},
-								])}
-								yAxisUnit="short"
-							/>
-						</GraphContainer>
+						<DashboardGraph
+							title="Request per sec"
+							onClickhandler={onClickhandler}
+							name="request_per_sec"
+							type="line"
+							endpointData={applicationRpsEndpoints}
+							eventFrom="Request"
+							label="Request per second"
+						/>
 					</Card>
 				</Col>
 			</Row>
@@ -210,24 +203,15 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage (%)</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="error_percentage_%"
-								noDataGraph
-								fullViewOptions={false}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
-								}}
-								widget={getWidget([
-									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))) < 1000 OR vector(0)`,
-										legend: 'Error Percentage (%)',
-									},
-								])}
-								yAxisUnit="%"
-							/>
-						</GraphContainer>
+						<DashboardGraph
+							title="Error Percentage (%)"
+							onClickhandler={onClickhandler}
+							name="error_percentage_%"
+							type="line"
+							endpointData={applicationErrorEndpoints}
+							eventFrom="Error"
+							label="Error Percentage (%)"
+						/>
 					</Card>
 				</Col>
 
@@ -240,9 +224,5 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		</>
 	);
 };
-
-interface DashboardProps {
-	getWidget: (query: Widgets['query']) => Widgets;
-}
 
 export default Application;

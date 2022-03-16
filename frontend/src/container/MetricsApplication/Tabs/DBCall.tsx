@@ -1,63 +1,44 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { AppState } from 'store/reducers';
+import MetricReducer from 'types/reducer/metrics';
+import { Card, Row } from '../styles';
+import { useSelector } from 'react-redux';
+import DashboardGraph from 'components/DashboardGraph';
 
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
-
-const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
-	const { servicename } = useParams<{ servicename?: string }>();
+const DBCall = (): JSX.Element => {
+	const { dbRpsEndpoints, dbAvgDurationEndpoints } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
 
 	return (
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
 					<Card>
-						<GraphTitle>Database Calls RPS</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="database_call_rps"
-								noDataGraph
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"}[1m])) by (db_system)`,
-										legend: '{{db_system}}',
-									},
-								])}
-								yAxisUnit="short"
-							/>
-						</GraphContainer>
+						<DashboardGraph
+							title="Database Calls RPS"
+							name="database_call_rps"
+							type="line"
+							endpointData={dbRpsEndpoints}
+						/>
 					</Card>
 				</Col>
 
 				<Col span={12}>
 					<Card>
-						<GraphTitle>Database Calls Avg Duration (in ms)</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="database_call_avg_duration"
-								noDataGraph
-								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_db_latency_sum{service_name="${servicename}"}[5m]))/sum(rate(signoz_db_latency_count{service_name="${servicename}"}[5m]))`,
-										legend: '',
-									},
-								])}
-								yAxisUnit="ms"
-							/>
-						</GraphContainer>
+						<DashboardGraph
+							title="Database Calls Avg Duration (in ms)"
+							name="database_call_avg_duration"
+							type="line"
+							endpointData={dbAvgDurationEndpoints}
+						/>
 					</Card>
 				</Col>
 			</Row>
 		</>
 	);
 };
-
-interface DBCallProps {
-	getWidget: (query: Widgets['query']) => Widgets;
-}
 
 export default DBCall;
