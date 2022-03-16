@@ -1,6 +1,6 @@
 import { AutoComplete, AutoCompleteProps, Input, notification } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -18,7 +18,7 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 
 	const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
 
-	const onSearchHandler = async () => {
+	const onSearchHandler = useCallback(async () => {
 		try {
 			setSelectLoading(true);
 			const response = await getTagFilters({
@@ -55,11 +55,16 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 			});
 			setSelectLoading(false);
 		}
-	};
+	}, [globalTime, traces]);
+
+	const counter = useRef(0);
 
 	useEffect(() => {
-		onSearchHandler();
-	}, []);
+		if (counter.current === 0) {
+			counter.current = 1;
+			onSearchHandler();
+		}
+	}, [onSearchHandler]);
 
 	return (
 		<AutoComplete
@@ -68,7 +73,7 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 			style={{ width: 300 }}
 			options={options}
 			value={selectedKey}
-			onChange={(value) => {
+			onChange={(value): void => {
 				if (options && options.find((option) => option.value === value)) {
 					setSelectedKey(value);
 

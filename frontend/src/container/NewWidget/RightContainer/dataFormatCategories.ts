@@ -97,7 +97,23 @@ export const dataTypeCategories = [
 			{ name: 'exahashes/sec', id: 'EHs' },
 		],
 	},
-
+	{
+		name: 'Misc',
+		formats: [
+			{ name: 'none', id: 'none' },
+			{ name: 'String', id: 'string' },
+			{ name: 'short', id: 'short' },
+			{ name: 'Percent (0-100)', id: 'percent' },
+			{ name: 'Percent (0.0-1.0)', id: 'percentunit' },
+			{ name: 'Humidity (%H)', id: 'humidity' },
+			{ name: 'Decibel', id: 'dB' },
+			{ name: 'Hexadecimal (0x)', id: 'hex0x' },
+			{ name: 'Hexadecimal', id: 'hex' },
+			{ name: 'Scientific notation', id: 'sci' },
+			{ name: 'Locale format', id: 'locale' },
+			{ name: 'Pixels', id: 'pixel' },
+		],
+	},
 	{
 		name: 'Acceleration',
 		formats: [
@@ -362,22 +378,6 @@ export const dataTypeCategories = [
 			{ name: 'True / False', id: 'bool' },
 			{ name: 'Yes / No', id: 'bool_yes_no' },
 			{ name: 'On / Off', id: 'bool_on_off' },
-		],
-	},
-	{
-		name: 'Misc',
-		formats: [
-			{ name: 'String', id: 'string' },
-			{ name: 'short', id: 'short' },
-			{ name: 'Percent (0-100)', id: 'percent' },
-			{ name: 'Percent (0.0-1.0)', id: 'percentunit' },
-			{ name: 'Humidity (%H)', id: 'humidity' },
-			{ name: 'Decibel', id: 'dB' },
-			{ name: 'Hexadecimal (0x)', id: 'hex0x' },
-			{ name: 'Hexadecimal', id: 'hex' },
-			{ name: 'Scientific notation', id: 'sci' },
-			{ name: 'Locale format', id: 'locale' },
-			{ name: 'Pixels', id: 'pixel' },
 		],
 	},
 ];

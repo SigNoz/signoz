@@ -1,21 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Divider, Row, Typography, Space, Button } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
+import { Button, Col, Divider, Row, Space, Typography } from 'antd';
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import { getSortedData } from './utils';
+import history from 'lib/history';
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
+
 import SelectedSpanDetails from './SelectedSpanDetails';
-import useUrlQuery from 'hooks/useUrlQuery';
 import styles from './TraceGraph.module.css';
-import history from 'lib/history';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import { getSortedData } from './utils';
 import { INTERVAL_UNITS } from './utils';
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
@@ -25,10 +26,10 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	);
 
 	const urlQuery = useUrlQuery();
-	const [spanId, _setSpanId] = useState<string | null>(urlQuery.get('spanId'));
+	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
 
 	const [intervalUnit, setIntervalUnit] = useState(INTERVAL_UNITS[0]);
-	const [searchSpanString, setSearchSpanString] = useState('');
+	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
 
@@ -38,9 +39,9 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
 		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
-	}, [treeData]);
+	}, [treeData, spanServiceColors]);
 
-	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({
+	const [globalTraceMetadata] = useState<Record<string, number>>({
 		...traceMetaData,
 	});
 
@@ -57,10 +58,10 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		return getNodeById(activeSelectedId, treeData);
 	}, [activeSelectedId, treeData]);
 
-	const onSearchHandler = (value: string) => {
-		setSearchSpanString(value);
-		setTreeData(spanToTreeUtil(response[0].events));
-	};
+	// const onSearchHandler = (value: string) => {
+	// 	setSearchSpanString(value);
+	// 	setTreeData(spanToTreeUtil(response[0].events));
+	// };
 	const onFocusSelectedSpanHandler = () => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 		if (treeNode) {
@@ -68,7 +69,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		}
 	};
 
-	const onResetHandler = () => {
+	const onResetHandler = (): void => {
 		setTreeData(spanToTreeUtil(response[0].events));
 	};
 

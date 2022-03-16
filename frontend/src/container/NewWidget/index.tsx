@@ -77,7 +77,7 @@ const NewWidget = ({
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
 	);
-	const [yAxisUnit, setYAxisUnit] = useState<string>(selectedWidget?.yAxisUnit);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(selectedWidget?.yAxisUnit || 'none');
 
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,

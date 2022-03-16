@@ -1,13 +1,13 @@
-import { Button, Modal, Collapse } from 'antd';
+import { Button, Collapse, Modal } from 'antd';
 import useThemeMode from 'hooks/useThemeMode';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
+
 import { CustomSubText, CustomSubTitle } from './styles';
-// import Editor from 'components/Editor';
 
 const { Panel } = Collapse;
 
-const ErrorTag = ({ event }: ErrorTagProps) => {
+const ErrorTag = ({ event }: ErrorTagProps): JSX.Element => {
 	const [isOpen, setIsOpen] = useState(false);
 	const { isDarkMode } = useThemeMode();
 	// const useTextRef = useRef('');
@@ -17,7 +17,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 		subText: '',
 	});
 
-	const onToggleHandler = (state: boolean) => {
+	const onToggleHandler = (state: boolean): void => {
 		setIsOpen(state);
 	};
 
@@ -30,6 +30,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 					<Collapse
 						defaultActiveKey={[name || attributeMap.event]}
 						expandIconPosition="right"
+						key={name}
 					>
 						<Panel
 							header={name || attributeMap?.event}
@@ -48,7 +49,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 											{isEllipsed && (
 												<Button
 													style={{ padding: 0, margin: 0 }}
-													onClick={() => {
+													onClick={(): void => {
 														onToggleHandler(true);
 														setText({
 															subText: value,
@@ -62,8 +63,6 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 												</Button>
 											)}
 										</CustomSubText>
-
-
 									</>
 								);
 							})}
@@ -72,7 +71,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 				);
 			})}
 			<Modal
-				onCancel={() => onToggleHandler(false)}
+				onCancel={(): void => onToggleHandler(false)}
 				title="Log Message"
 				visible={isOpen}
 				destroyOnClose

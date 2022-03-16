@@ -11,7 +11,7 @@ import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
-import { NewDashboardButton, TableContainer, ButtonContainer } from './styles';
+import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
 import DeleteButton from './TableComponents/DeleteButton';

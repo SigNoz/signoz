@@ -1,7 +1,6 @@
 const get = (key: string): string | null => {
 	try {
-		const value = localStorage.getItem(key);
-		return value;
+		return localStorage.getItem(key);
 	} catch (e) {
 		return '';
 	}
