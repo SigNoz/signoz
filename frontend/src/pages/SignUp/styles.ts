@@ -45,7 +45,7 @@ interface Props {
 }
 
 export const MarginTop = styled.div<Props>`
-	margin-top: ${({ marginTop }) => marginTop};
+	margin-top: ${({ marginTop = 0 }): number | string => marginTop};
 `;
 
 export const Logo = styled.img`

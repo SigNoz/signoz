@@ -1,22 +1,25 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
+import { Col, Row } from 'antd';
+import {
+	IIntervalUnit,
+	resolveTimeFromInterval,
+} from 'container/TraceDetail/utils';
+import useThemeMode from 'hooks/useThemeMode';
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import React, { useEffect, useRef, useState } from 'react';
+import { pushDStree } from 'store/actions';
 
+import { ITraceMetaData } from '..';
+import SpanLength from '../SpanLength';
+import SpanName from '../SpanName';
+import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import {
 	CardComponent,
 	CardContainer,
 	CaretContainer,
-	Wrapper,
 	HoverCard,
+	Wrapper,
 } from './styles';
-import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import SpanLength from '../SpanLength';
-import SpanName from '../SpanName';
-import { pushDStree } from 'store/actions';
-import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
-import { ITraceMetaData } from '..';
-import { Col, Row } from 'antd';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants'
-import { IIntervalUnit, resolveTimeFromInterval } from 'container/TraceDetail/utils';
-import useThemeMode from 'hooks/useThemeMode';
 
 const Trace = (props: TraceProps): JSX.Element => {
 	const {
@@ -38,7 +41,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		intervalUnit,
 	} = props;
 
-	const { isDarkMode } = useThemeMode()
+	const { isDarkMode } = useThemeMode();
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 
 	const localTreeExpandInteraction = useRef<boolean | 0>(0); // Boolean is for the state of the expansion whereas the number i.e. 0 is for skipping the user interaction.
@@ -47,20 +50,18 @@ const Trace = (props: TraceProps): JSX.Element => {
 		if (localTreeExpandInteraction.current !== 0) {
 			setOpen(localTreeExpandInteraction.current);
 			localTreeExpandInteraction.current = 0;
+		} else if (!isOpen) {
+			setOpen(activeSpanPath[level] === id);
 		}
-		else if (!isOpen) {
-			setOpen(activeSpanPath[level] === id)
-		}
-	}, [activeSpanPath, isOpen])
+	}, [activeSpanPath, isOpen]);
 
 	useEffect(() => {
 		if (isExpandAll) {
-			setOpen(isExpandAll)
+			setOpen(isExpandAll);
+		} else {
+			setOpen(activeSpanPath[level] === id);
 		}
-		else {
-			setOpen(activeSpanPath[level] === id)
-		}
-	}, [isExpandAll])
+	}, [isExpandAll]);
 
 	const isOnlyChild = props.children.length === 1;
 	const [top, setTop] = useState<number>(0);
@@ -69,9 +70,13 @@ const Trace = (props: TraceProps): JSX.Element => {
 
 	React.useEffect(() => {
 		if (activeSelectedId === id) {
-			ref.current?.scrollIntoView({ block: 'nearest', behavior: 'auto', inline: 'nearest' });
+			ref.current?.scrollIntoView({
+				block: 'nearest',
+				behavior: 'auto',
+				inline: 'nearest',
+			});
 		}
-	}, [activeSelectedId])
+	}, [activeSelectedId]);
 
 	const onMouseEnterHandler = () => {
 		setActiveHoverId(props.id);
@@ -87,18 +92,21 @@ const Trace = (props: TraceProps): JSX.Element => {
 
 	const onClick = () => {
 		setActiveSelectedId(id);
-	}
+	};
 
 	const onClickTreeExpansion = (event) => {
-		event.stopPropagation()
-		setOpen((state) => { localTreeExpandInteraction.current = !isOpen; return !state });
-	}
+		event.stopPropagation();
+		setOpen((state) => {
+			localTreeExpandInteraction.current = !isOpen;
+			return !state;
+		});
+	};
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
 	const inMsCount = value;
 	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
 	const width = (value * 1e2) / (globalSpread * 1e6);
-	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - (level * (16 + 1)) - 16;
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 16;
 
 	return (
 		<>
@@ -115,17 +123,12 @@ const Trace = (props: TraceProps): JSX.Element => {
 					isDarkMode={isDarkMode}
 				/>
 
-				<CardContainer
-					onClick={onClick}
-				>
+				<CardContainer onClick={onClick}>
 					<Col flex={`${panelWidth}px`} style={{ overflow: 'hidden' }}>
 						<Row style={{ flexWrap: 'nowrap' }}>
 							<Col>
 								{totalSpans !== 1 && (
-									<CardComponent
-										isDarkMode={isDarkMode}
-										onClick={onClickTreeExpansion}
-									>
+									<CardComponent isDarkMode={isDarkMode} onClick={onClickTreeExpansion}>
 										{totalSpans}
 										<CaretContainer>
 											{isOpen ? <CaretDownFilled /> : <CaretRightFilled />}
@@ -138,13 +141,13 @@ const Trace = (props: TraceProps): JSX.Element => {
 							</Col>
 						</Row>
 					</Col>
-					<Col flex={'1'} >
+					<Col flex={'1'}>
 						<SpanLength
 							leftOffset={nodeLeftOffset.toString()}
 							width={width.toString()}
 							bgColor={serviceColour}
 							id={id}
-							inMsCount={(inMsCount / 1e6)}
+							inMsCount={inMsCount / 1e6}
 							intervalUnit={intervalUnit}
 						/>
 					</Col>

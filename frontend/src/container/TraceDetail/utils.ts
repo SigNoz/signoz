@@ -1,8 +1,8 @@
 /**
  * string is present on the span or not
  */
-import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 import { sortBy } from 'lodash-es';
+import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
 export const filterSpansByString = (
 	searchString: string,
@@ -35,12 +35,12 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 export const resolveTimeFromInterval = (
 	intervalTime: number,
 	intervalUnit: IIntervalUnit,
-) => {
+): number => {
 	return intervalTime * intervalUnit.multiplier;
 };
 
-export const getSortedData = (treeData: ITraceTree) => {
-	const traverse = (treeNode: ITraceTree, level: number = 0) => {
+export const getSortedData = (treeData: ITraceTree): undefined | ITraceTree => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}

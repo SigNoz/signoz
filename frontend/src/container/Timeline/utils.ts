@@ -10,13 +10,13 @@ import { Interval } from './types';
 export const getIntervalSpread = ({
 	localTraceMetaData,
 	globalTraceMetadata,
-}) => {
-	const {
-		globalStart: localStart,
-		globalEnd: localEnd,
-		spread: localSpread,
-	} = localTraceMetaData;
-	const { globalStart, globalEnd, globalSpread } = globalTraceMetadata;
+}): {
+	baseInterval: number;
+	baseSpread: number;
+	intervalSpreadNormalized: number;
+} => {
+	const { globalStart: localStart, spread: localSpread } = localTraceMetaData;
+	const { globalStart } = globalTraceMetadata;
 
 	let baseInterval = 0;
 
@@ -47,7 +47,7 @@ export const getIntervals = ({
 	baseSpread,
 	intervalSpreadNormalized,
 	intervalUnit,
-}) => {
+}): Interval[] => {
 	const intervals: Interval[] = [
 		{
 			label: `${toFixed(resolveTimeFromInterval(baseInterval, intervalUnit), 2)}${

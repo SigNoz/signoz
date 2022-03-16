@@ -70,9 +70,10 @@ const Timeline = ({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<g
-							transform={`translate(${Timeline_H_Spacing +
+							transform={`translate(${
+								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-								},0)`}
+							},0)`}
 							className={styles['timeline-tick']}
 							key={interval.label + interval.percentage + index}
 						>
