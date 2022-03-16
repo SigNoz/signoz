@@ -77,8 +77,8 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 	try {
 		let minTime = Number.POSITIVE_INFINITY;
 		let maxTime = Number.NEGATIVE_INFINITY;
-		data?.labels?.forEach((timeStamp: any) => {
-			timeStamp = Date.parse(timeStamp);
+		data?.labels?.forEach((timeStamp: string | number): void => {
+			if (typeof timeStamp === 'string') timeStamp = Date.parse(timeStamp);
 			minTime = Math.min(timeStamp, minTime);
 			maxTime = Math.max(timeStamp, maxTime);
 		});
