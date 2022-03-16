@@ -1,33 +1,27 @@
 import { StyledDiv } from 'components/Styled';
 import { INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { styles, Svg, TimelineInterval } from './styles';
 import { Interval } from './types';
 import { getIntervals, getIntervalSpread } from './utils';
-interface TimelineProps {
-	traceMetaData: object;
-	globalTraceMetadata: object;
-	intervalUnit: object;
-	setIntervalUnit: Function;
-}
+
+const Timeline_Height = 22;
+const Timeline_H_Spacing = 0;
+
 const Timeline = ({
 	traceMetaData,
 	globalTraceMetadata,
-	intervalUnit,
 	setIntervalUnit,
 }: TimelineProps): JSX.Element => {
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const { isDarkMode } = useThemeMode();
 
-	const Timeline_Height = 22;
-	const Timeline_H_Spacing = 0;
-
 	const [intervals, setIntervals] = useState<Interval[] | null>(null);
 
-	useMemo(() => {
+	useEffect(() => {
 		const {
 			baseInterval,
 			baseSpread,
@@ -41,7 +35,7 @@ const Timeline = ({
 		for (const idx in INTERVAL_UNITS) {
 			const standard_interval = INTERVAL_UNITS[idx];
 			if (baseSpread * standard_interval.multiplier < 1) {
-				intervalUnit = INTERVAL_UNITS[idx - 1];
+				if (idx > 1) intervalUnit = INTERVAL_UNITS[idx - 1];
 				break;
 			}
 		}
@@ -55,7 +49,7 @@ const Timeline = ({
 				intervalUnit,
 			}),
 		);
-	}, [traceMetaData, globalTraceMetadata]);
+	}, []);
 
 	return (
 		<StyledDiv ref={ref} styledclass={[styles.timelineContainer]}>
@@ -95,5 +89,12 @@ const Timeline = ({
 		</StyledDiv>
 	);
 };
+
+interface TimelineProps {
+	traceMetaData: object;
+	globalTraceMetadata: object;
+	intervalUnit: object;
+	setIntervalUnit: any;
+}
 
 export default Timeline;

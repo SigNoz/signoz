@@ -2,6 +2,7 @@ import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceFilterEnum } from 'types/reducer/trace';
+
 import { updateURL } from './util';
 
 export const SelectedTraceFilter = (props: {

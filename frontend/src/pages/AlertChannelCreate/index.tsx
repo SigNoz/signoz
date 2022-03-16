@@ -18,7 +18,7 @@ const SettingsPage = (): JSX.Element => {
 						route: ROUTES.SETTINGS,
 					},
 					{
-						Component: () => {
+						Component: (): JSX.Element => {
 							return <CreateAlertChannels />;
 						},
 						name: 'Alert Channels',

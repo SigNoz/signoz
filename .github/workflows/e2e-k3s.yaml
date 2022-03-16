@@ -52,14 +52,11 @@ jobs:
           helm install my-release signoz/signoz -n platform \
             --wait \
             --timeout 10m0s \
-            --set cloud=null \
             --set frontend.service.type=LoadBalancer \
-            --set query-service.image.tag=$DOCKER_TAG \
+            --set queryService.image.tag=$DOCKER_TAG \
             --set frontend.image.tag=$DOCKER_TAG
           
           # get pods, services and the container images
-          kubectl describe deploy/my-release-frontend -n platform | grep Image
-          kubectl describe statefulset/my-release-query-service -n platform | grep Image
           kubectl get pods -n platform
           kubectl get svc -n platform
 
