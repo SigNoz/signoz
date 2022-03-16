@@ -26,6 +26,7 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 										legend: '{{db_system}}',
 									},
 								])}
+								yAxisUnit="short"
 							/>
 						</GraphContainer>
 					</Card>
@@ -45,6 +46,7 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 										legend: '',
 									},
 								])}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>

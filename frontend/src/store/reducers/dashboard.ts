@@ -402,7 +402,7 @@ const dashboard = (
 		}
 
 		case UPDATE_QUERY: {
-			const { query, widgetId } = action.payload;
+			const { query, widgetId, yAxisUnit } = action.payload;
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
 			const { data } = selectedDashboard;
@@ -431,6 +431,7 @@ const dashboard = (
 								{
 									...selectedWidget,
 									query,
+									yAxisUnit,
 								},
 								...afterWidget,
 							],

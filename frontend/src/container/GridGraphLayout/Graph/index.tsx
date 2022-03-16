@@ -23,13 +23,14 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal, FullViewContainer, ErrorContainer } from './styles';
+import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
 const GridCardGraph = ({
 	widget,
 	deleteWidget,
 	isDeleted,
 	name,
+	yAxisUnit
 }: GridCardGraphProps): JSX.Element => {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -149,7 +150,7 @@ const GridCardGraph = ({
 					destroyOnClose
 				>
 					<FullViewContainer>
-						<FullView name={name + 'expanded'} widget={widget} />
+						<FullView name={name + 'expanded'} widget={widget} yAxisUnit={yAxisUnit} />
 					</FullViewContainer>
 				</Modal>
 			</>
@@ -199,6 +200,7 @@ const GridCardGraph = ({
 					opacity: widget.opacity,
 					title: widget.title,
 					name,
+					yAxisUnit,
 				}}
 			/>
 		</>
@@ -222,6 +224,7 @@ interface GridCardGraphProps extends DispatchProps {
 	widget: Widgets;
 	isDeleted: React.MutableRefObject<boolean>;
 	name: string;
+	yAxisUnit: string | undefined;
 }
 
 const mapDispatchToProps = (

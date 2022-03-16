@@ -27,6 +27,9 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { useXAxisTimeUnit } from './xAxisConfig';
+import { getYAxisFormattedValue } from './yAxisConfig';
+
 Chart.register(
 	LineElement,
 	PointElement,
@@ -54,12 +57,14 @@ const Graph = ({
 	isStacked,
 	onClickHandler,
 	name,
+	yAxisUnit = 'short',
 }: GraphProps): JSX.Element => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const currentTheme = isDarkMode ? 'dark' : 'light';
 
-	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
+	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
+
 	const lineChartRef = useRef<Chart>();
 
 	const getGridColor = useCallback(() => {
@@ -109,7 +114,18 @@ const Graph = ({
 							date: chartjsAdapter,
 						},
 						time: {
-							unit: 'minute',
+							unit: xAxisTimeUnit?.unitName || 'minute',
+							stepSize: xAxisTimeUnit?.stepSize || 1,
+							displayFormats: {
+								millisecond: 'hh:mm:ss',
+								second: 'hh:mm:ss',
+								minute: 'HH:mm',
+								hour: 'MM/dd HH:mm',
+								day: 'MM/dd',
+								week: 'MM/dd',
+								month: 'yy-MM',
+								year: 'yy',
+							},
 						},
 						type: 'time',
 					},
@@ -118,6 +134,12 @@ const Graph = ({
 						grid: {
 							display: true,
 							color: getGridColor(),
+						},
+						ticks: {
+							// Include a dollar sign in the ticks
+							callback: function (value, index, ticks) {
+								return getYAxisFormattedValue(value, yAxisUnit);
+							},
 						},
 					},
 					stacked: {
@@ -166,6 +188,7 @@ interface GraphProps {
 	label?: string[];
 	onClickHandler?: graphOnClickHandler;
 	name: string;
+	yAxisUnit?: string;
 }
 
 export type graphOnClickHandler = (

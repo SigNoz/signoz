@@ -75,3 +75,16 @@ export const HoverCard = styled.div<HoverCardProps>`
 	height: 3rem;
 	opacity: 0.5;
 `;
+
+const flexNoWrap = css`
+	flex-wrap: nowrap;
+`;
+
+const overFlowHidden = css`
+	overflow: hidden;
+`;
+
+export const styles = {
+	flexNoWrap,
+	overFlowHidden,
+};

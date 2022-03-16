@@ -27,6 +27,7 @@ export interface TraceReducer {
 		errorMessage: string;
 		payload: PayloadProps;
 	};
+	yAxisUnit: string | undefined;
 }
 
 interface SpansAggregateData {

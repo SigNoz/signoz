@@ -1,9 +1,9 @@
 import { AxiosAlertManagerInstance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/alerts/getGroups';
-import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
 
 const getGroups = async (
 	props: Props,

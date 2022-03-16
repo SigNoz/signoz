@@ -1,5 +1,5 @@
-import styled from 'styled-components';
 import { Button, Card } from 'antd';
+import styled from 'styled-components';
 
 export const Container = styled.div`
 	display: flex;

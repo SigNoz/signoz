@@ -26,6 +26,9 @@ const CreateAlert = (): JSX.Element => {
 	});
 	const [notifications, Element] = notification.useNotification();
 
+	const defaultError =
+		'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io';
+
 	const onSaveHandler = useCallback(async () => {
 		try {
 			setNewAlertState((state) => ({
@@ -65,24 +68,19 @@ const CreateAlert = (): JSX.Element => {
 				}, 3000);
 			} else {
 				notifications.error({
-					description:
-						response.error ||
-						'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
+					description: response.error || defaultError,
 					message: 'Error',
 				});
 				setNewAlertState((state) => ({
 					...state,
 					loading: false,
 					error: true,
-					errorMessage:
-						response.error ||
-						'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
+					errorMessage: response.error || defaultError,
 				}));
 			}
 		} catch (error) {
 			notifications.error({
-				message:
-					'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
+				message: defaultError,
 			});
 		}
 	}, [notifications]);

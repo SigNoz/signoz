@@ -16,10 +16,10 @@ import AppActions from 'types/actions';
 import { DeleteQueryProps } from 'types/actions/dashboard';
 
 import {
+	ButtonContainer,
 	Container,
 	InputContainer,
 	QueryWrapper,
-	ButtonContainer,
 } from './styles';
 
 const Query = ({

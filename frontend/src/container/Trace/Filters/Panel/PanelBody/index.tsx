@@ -1,12 +1,12 @@
-import React from 'react';
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import { Card } from 'antd';
-
-import Duration from './Duration';
-import CommonCheckBox from './CommonCheckBox';
+import Spinner from 'components/Spinner';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import Spinner from 'components/Spinner';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+
+import CommonCheckBox from './CommonCheckBox';
+import Duration from './Duration';
 
 const PanelBody = (props: PanelBodyProps): JSX.Element => {
 	const { type } = props;

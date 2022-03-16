@@ -1,4 +1,5 @@
 import { TraceReducer } from 'types/reducer/trace';
+
 import { ParsedUrl } from '../util';
 
 export const parseQueryIntoCurrent = (
