@@ -31,6 +31,7 @@ export const UpdateQuery = (
 			payload: {
 				query: queryArray,
 				widgetId: props.widgetId,
+				yAxisUnit: props.yAxisUnit,
 			},
 		});
 	};
@@ -41,4 +42,5 @@ export interface UpdateQueryProps {
 	query: string;
 	legend: string;
 	currentIndex: number;
+	yAxisUnit: string | undefined;
 }

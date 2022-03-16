@@ -77,6 +77,7 @@ const NewWidget = ({
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
 	);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(selectedWidget?.yAxisUnit || 'none');
 
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
@@ -109,6 +110,7 @@ const NewWidget = ({
 			opacity,
 			timePreferance: selectedTime.enum,
 			title,
+			yAxisUnit,
 			widgetId: query.get('widgetId') || '',
 			dashboardId: dashboardId,
 		});
@@ -132,6 +134,7 @@ const NewWidget = ({
 				query: element.query || '',
 				legend: element.legend || '',
 				currentIndex: index,
+				yAxisUnit,
 			});
 		});
 
@@ -143,6 +146,7 @@ const NewWidget = ({
 			timePreferance: selectedTime.enum,
 			title,
 			widgetId: selectedWidget?.id || '',
+			yAxisUnit
 		});
 	};
 
@@ -184,7 +188,7 @@ const NewWidget = ({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} />
+					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} yAxisUnit={yAxisUnit}/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -197,12 +201,14 @@ const NewWidget = ({
 							stacked,
 							setStacked,
 							opacity,
+							yAxisUnit,
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
 							selectedGraph,
 							setSelectedTime,
 							selectedTime,
+							setYAxisUnit,
 						}}
 					/>
 				</RightContainerWrapper>

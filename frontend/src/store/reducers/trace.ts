@@ -40,6 +40,7 @@ const initialValue: TraceReducer = {
 	},
 	selectedGroupBy: '',
 	selectedFunction: 'count',
+	yAxisUnit: '',
 	spansGraph: {
 		error: false,
 		errorMessage: '',
@@ -139,6 +140,7 @@ const traceReducer = (
 			return {
 				...state,
 				selectedFunction: action.payload.selectedFunction,
+				yAxisUnit: action.payload.yAxisUnit,
 			};
 		}
 

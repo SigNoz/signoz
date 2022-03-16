@@ -10,9 +10,10 @@ import { getChartData, getChartDataforGroupBy } from './config';
 import { Container } from './styles';
 
 const TraceGraph = (): JSX.Element => {
-	const { spansGraph, selectedGroupBy } = useSelector<AppState, TraceReducer>(
-		(state) => state.traces,
-	);
+	const { spansGraph, selectedGroupBy, yAxisUnit } = useSelector<
+		AppState,
+		TraceReducer
+	>((state) => state.traces);
 
 	const { loading, error, errorMessage, payload } = spansGraph;
 
@@ -40,7 +41,12 @@ const TraceGraph = (): JSX.Element => {
 
 	return (
 		<Container>
-			<Graph data={ChartData} name="traceGraph" type="line" />
+			<Graph
+				data={ChartData}
+				name="traceGraph"
+				type="line"
+				yAxisUnit={yAxisUnit}
+			/>
 		</Container>
 	);
 };
