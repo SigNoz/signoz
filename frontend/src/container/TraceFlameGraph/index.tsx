@@ -5,7 +5,6 @@ import {
 } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useLayoutEffect, useMemo, useState } from 'react';
-import { pushDStree } from 'store/actions';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { toFixed } from 'utils/toFixed';
 

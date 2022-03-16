@@ -1,5 +1,5 @@
 import { StyledDiv } from 'components/Styled';
-import { INTERVAL_UNITS } from 'container/TraceDetail/utils';
+import { IIntervalUnit, INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
@@ -68,10 +68,9 @@ const Timeline = ({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<TimelineInterval
-							transform={`translate(${
-								Timeline_H_Spacing +
+							transform={`translate(${Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-							},0)`}
+								},0)`}
 							key={`${interval.label + interval.percentage + index}`}
 						>
 							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
@@ -93,7 +92,7 @@ const Timeline = ({
 interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: object;
-	intervalUnit: object;
+	intervalUnit: IIntervalUnit;
 	setIntervalUnit: any;
 }
 

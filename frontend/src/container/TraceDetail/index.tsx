@@ -25,8 +25,7 @@ import { spanToTreeUtil } from 'utils/spanToTree';
 
 import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
-import { getSortedData } from './utils';
-import { INTERVAL_UNITS } from './utils';
+import { getSortedData, IIntervalUnit, INTERVAL_UNITS } from './utils';
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const spanServiceColors = useMemo(
@@ -37,7 +36,9 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const urlQuery = useUrlQuery();
 	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
 
-	const [intervalUnit, setIntervalUnit] = useState(INTERVAL_UNITS[0]);
+	const [intervalUnit, setIntervalUnit] = useState<IIntervalUnit>(
+		INTERVAL_UNITS[0],
+	);
 	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');

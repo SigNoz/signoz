@@ -1,6 +1,6 @@
 import { css, FlattenSimpleInterpolation } from 'styled-components';
 
-const cssProprty = (key: string, value: any): FlattenSimpleInterpolation =>
+const cssProprty = (key: string, value): FlattenSimpleInterpolation =>
 	key &&
 	value &&
 	css`

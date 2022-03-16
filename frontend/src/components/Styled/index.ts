@@ -3,10 +3,7 @@ import { TextProps } from 'antd/lib/typography/Text';
 import { TitleProps } from 'antd/lib/typography/Title';
 import React from 'react';
 import styled, {
-	css,
-	DefaultTheme,
 	FlattenSimpleInterpolation,
-	ThemedCssFunction,
 } from 'styled-components';
 
 import { IStyledClass } from './types';
@@ -14,52 +11,50 @@ import { IStyledClass } from './types';
 const styledClass = (props: IStyledClass): FlattenSimpleInterpolation =>
 	props.styledclass;
 
-interface IStyledCol extends AntD.ColProps, IStyledClass {}
-const StyledCol = styled(AntD.Col)<IStyledCol>`
+type TStyledCol = AntD.ColProps & IStyledClass;
+const StyledCol = styled(AntD.Col)<TStyledCol>`
 	${styledClass}
 `;
 
-interface IStyledRow extends AntD.RowProps, IStyledClass {}
-const StyledRow = styled(AntD.Row)<IStyledRow>`
+type TStyledRow = AntD.RowProps & IStyledClass;
+const StyledRow = styled(AntD.Row)<TStyledRow>`
 	${styledClass}
 `;
 
-interface IStyledDivider extends AntD.DividerProps, IStyledClass {}
-const StyledDivider = styled(AntD.Divider)<IStyledDivider>`
+type TStyledDivider = AntD.DividerProps & IStyledClass;
+const StyledDivider = styled(AntD.Divider)<TStyledDivider>`
 	${styledClass}
 `;
 
-interface IStyledSpace extends AntD.SpaceProps, IStyledClass {}
-const StyledSpace = styled(AntD.Space)<IStyledSpace>`
+type TStyledSpace = AntD.SpaceProps & IStyledClass;
+const StyledSpace = styled(AntD.Space)<TStyledSpace>`
 	${styledClass}
 `;
 
-interface IStyledTabs extends AntD.TabsProps, IStyledClass {}
-const StyledTabs = styled(AntD.Divider)<IStyledTabs>`
+type TStyledTabs = AntD.TabsProps & IStyledClass;
+const StyledTabs = styled(AntD.Divider)<TStyledTabs>`
 	${styledClass}
 `;
 
-interface IStyledButton extends AntD.ButtonProps, IStyledClass {}
-const StyledButton = styled(AntD.Button)<IStyledButton>`
+type TStyledButton = AntD.ButtonProps & IStyledClass;
+const StyledButton = styled(AntD.Button)<TStyledButton>`
 	${styledClass}
 `;
 
 const { Text } = AntD.Typography;
-interface IStyledTypographyText extends TextProps, IStyledClass {}
-const StyledTypographyText = styled(Text)<IStyledTypographyText>`
+type TStyledTypographyText = TextProps & IStyledClass;
+const StyledTypographyText = styled(Text)<TStyledTypographyText>`
 	${styledClass}
 `;
 
 const { Title } = AntD.Typography;
-interface IStyledTypographyTitle extends TitleProps, IStyledClass {}
-const StyledTypographyTitle = styled(Title)<IStyledTypographyTitle>`
+type TStyledTypographyTitle = TitleProps & IStyledClass;
+const StyledTypographyTitle = styled(Title)<TStyledTypographyTitle>`
 	${styledClass}
 `;
 
-interface IStyledDiv
-	extends React.HTMLAttributes<HTMLDivElement>,
-		IStyledClass {}
-const StyledDiv = styled.div<IStyledDiv>`
+type TStyledDiv = React.HTMLAttributes<HTMLDivElement> & IStyledClass;
+const StyledDiv = styled.div<TStyledDiv>`
 	${styledClass}
 `;
 
