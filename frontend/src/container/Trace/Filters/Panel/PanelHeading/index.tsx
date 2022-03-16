@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
-import { Card, Typography, Divider, notification } from 'antd';
+import { Card, Divider, notification, Typography } from 'antd';
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import {
 	ButtonComponent,
@@ -9,19 +12,16 @@ import {
 	IconContainer,
 	TextCotainer,
 } from './styles';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 const { Text } = Typography;
 
-import { AllPanelHeading } from 'types/reducer/trace';
 import getFilters from 'api/trace/getFilters';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { AxiosError } from 'axios';
+import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import AppActions from 'types/actions';
-import { Dispatch } from 'redux';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
-import { AxiosError } from 'axios';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { AllPanelHeading } from 'types/reducer/trace';
 
 const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 	const {

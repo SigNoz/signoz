@@ -16,6 +16,7 @@ const GridGraphComponent = ({
 	isStacked,
 	onClickHandler,
 	name,
+	yAxisUnit,
 }: GridGraphComponentProps): JSX.Element | null => {
 	const location = history.location.pathname;
 
@@ -33,6 +34,7 @@ const GridGraphComponent = ({
 					xAxisType: 'time',
 					onClickHandler: onClickHandler,
 					name,
+					yAxisUnit: yAxisUnit,
 				}}
 			/>
 		);
@@ -72,6 +74,7 @@ export interface GridGraphComponentProps {
 	isStacked?: boolean;
 	onClickHandler?: graphOnClickHandler;
 	name: string;
+	yAxisUnit?: string;
 }
 
 export default GridGraphComponent;

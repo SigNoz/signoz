@@ -5,7 +5,7 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
 	let levels = 1;
-	const traverse = (treeNode: ITraceTree, level: number = 0) => {
+	const traverse = (treeNode: ITraceTree, level = 0) => {
 		if (!treeNode) {
 			return;
 		}
@@ -35,19 +35,19 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 };
 
 export function getTopLeftFromBody(elem: HTMLElement) {
-	let box = elem.getBoundingClientRect();
+	const box = elem.getBoundingClientRect();
 
-	let body = document.body;
-	let docEl = document.documentElement;
+	const body = document.body;
+	const docEl = document.documentElement;
 
-	let scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
-	let scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
+	const scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
+	const scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
 
-	let clientTop = docEl.clientTop || body.clientTop || 0;
-	let clientLeft = docEl.clientLeft || body.clientLeft || 0;
+	const clientTop = docEl.clientTop || body.clientTop || 0;
+	const clientLeft = docEl.clientLeft || body.clientLeft || 0;
 
-	let top = box.top + scrollTop - clientTop;
-	let left = box.left + scrollLeft - clientLeft;
+	const top = box.top + scrollTop - clientTop;
+	const left = box.left + scrollLeft - clientLeft;
 
 	return { top: Math.round(top), left: Math.round(left) };
 }
@@ -57,7 +57,7 @@ export const getNodeById = (
 	treeData: ITraceTree,
 ): ITraceTree | undefined => {
 	let foundNode: ITraceTree | undefined = undefined;
-	const traverse = (treeNode: ITraceTree, level: number = 0) => {
+	const traverse = (treeNode: ITraceTree, level = 0) => {
 		if (!treeNode) {
 			return;
 		}
@@ -115,7 +115,7 @@ export const isSpanPresent = (
 
 	const traverse = (
 		treeNode: ITraceTree,
-		level: number = 0,
+		level = 0,
 		foundNode: ITraceTree[],
 	) => {
 		if (!treeNode) {

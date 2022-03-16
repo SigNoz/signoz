@@ -1,21 +1,21 @@
 import {
+	RESET_TRACE_FILTER,
 	SELECT_TRACE_FILTER,
 	TraceActions,
-	UPDATE_TRACE_FILTER,
-	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_ALL_FILTERS,
-	UPDATE_SELECTED_TAGS,
-	UPDATE_SPANS_AGGREEGATE,
-	UPDATE_TAG_MODAL_VISIBLITY,
+	UPDATE_FILTER_EXCLUDE,
+	UPDATE_FILTER_RESPONSE_SELECTED,
 	UPDATE_IS_TAG_ERROR,
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
-	UPDATE_TRACE_GRAPH_LOADING,
+	UPDATE_SELECTED_TAGS,
+	UPDATE_SPANS_AGGREEGATE,
+	UPDATE_TAG_MODAL_VISIBLITY,
+	UPDATE_TRACE_FILTER,
+	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_TRACE_GRAPH_ERROR,
+	UPDATE_TRACE_GRAPH_LOADING,
 	UPDATE_TRACE_GRAPH_SUCCESS,
-	RESET_TRACE_FILTER,
-	UPDATE_FILTER_RESPONSE_SELECTED,
-	UPDATE_FILTER_EXCLUDE,
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
@@ -40,6 +40,7 @@ const initialValue: TraceReducer = {
 	},
 	selectedGroupBy: '',
 	selectedFunction: 'count',
+	yAxisUnit: '',
 	spansGraph: {
 		error: false,
 		errorMessage: '',
@@ -139,6 +140,7 @@ const traceReducer = (
 			return {
 				...state,
 				selectedFunction: action.payload.selectedFunction,
+				yAxisUnit: action.payload.yAxisUnit,
 			};
 		}
 

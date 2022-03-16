@@ -16,7 +16,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 		serviceName: '',
 	};
 
-	let spanlist = cloneDeep(originalList);
+	const spanlist = cloneDeep(originalList);
 
 	// let spans :spanItem[]= trace.spans;
 

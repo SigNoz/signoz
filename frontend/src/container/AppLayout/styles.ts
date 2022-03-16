@@ -16,10 +16,3 @@ export const Content = styled(LayoutComponent.Content)`
 		flex-direction: column;
 	}
 `;
-
-export const Footer = styled(LayoutComponent.Footer)`
-	&&& {
-		text-align: center;
-		font-size: 0.7rem;
-	}
-`;
