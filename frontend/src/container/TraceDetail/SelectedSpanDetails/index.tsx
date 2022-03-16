@@ -1,5 +1,4 @@
 import { Space, Tabs, Typography } from 'antd';
-import { StyledSpace, StyledTabs } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
 import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
@@ -11,7 +10,6 @@ import {
 	CustomSubTitle,
 	CustomText,
 	CustomTitle,
-	styles,
 } from './styles';
 
 const { TabPane } = Tabs;
@@ -27,11 +25,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 
 	return (
 		<CardContainer>
-			<StyledSpace
-				styledclass={[styles.selectedSpanDetailsContainer]}
-				direction="vertical"
-				style={{ marginLeft: '0.5rem' }}
-			>
+			<Space direction="vertical" style={{ marginLeft: '0.5rem' }}>
 				<strong> Details for selected Span </strong>
 				<Space direction="vertical" size={2}>
 					<CustomTitle>Service</CustomTitle>
@@ -41,16 +35,13 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					<CustomTitle>Operation</CustomTitle>
 					<CustomText>{name}</CustomText>
 				</Space>
-			</StyledSpace>
-			<StyledTabs
-				styledclass={[styles.spanEventsTabsContainer]}
-				defaultActiveKey="1"
-			>
+			</Space>
+			<Tabs defaultActiveKey="1" style={{ marginTop: '1rem' }}>
 				<TabPane tab="Tags" key="1">
 					{tags.length !== 0 ? (
 						tags.map((tags) => {
 							return (
-								<React.Fragment key={JSON.stringify(tags)}>
+								<React.Fragment key={tags.key}>
 									{tags.value && (
 										<>
 											<CustomSubTitle>{tags.key}</CustomSubTitle>
@@ -73,7 +64,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 						<Typography>No events data in selected span</Typography>
 					)}
 				</TabPane>
-			</StyledTabs>
+			</Tabs>
 		</CardContainer>
 	);
 };

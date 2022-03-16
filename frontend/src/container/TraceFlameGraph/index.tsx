@@ -1,4 +1,5 @@
 import Color from 'color';
+import { ITraceMetaData } from 'container/GantChart';
 import {
 	IIntervalUnit,
 	resolveTimeFromInterval,

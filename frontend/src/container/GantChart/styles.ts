@@ -44,5 +44,4 @@ export const CollapseButton = styled.div`
 	position: absolute;
 	top: 0;
 	left: 0;
-	font-size: 1.2rem;
 `;

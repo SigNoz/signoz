@@ -1,14 +1,5 @@
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Col } from 'antd';
-import {
-	StyledCol,
-	StyledDiv,
-	StyledDivider,
-	StyledRow,
-	StyledSpace,
-	StyledTypography,
-} from 'components/Styled';
-import * as StyledStyles from 'components/Styled/styles';
+import { Button, Col, Divider, Row, Space, Typography } from 'antd';
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -24,8 +15,9 @@ import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
 import SelectedSpanDetails from './SelectedSpanDetails';
-import * as styles from './styles';
-import { getSortedData, IIntervalUnit, INTERVAL_UNITS } from './utils';
+import styles from './TraceGraph.module.css';
+import { getSortedData } from './utils';
+import { INTERVAL_UNITS } from './utils';
 
 const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const spanServiceColors = useMemo(
@@ -36,9 +28,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	const urlQuery = useUrlQuery();
 	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
 
-	const [intervalUnit, setIntervalUnit] = useState<IIntervalUnit>(
-		INTERVAL_UNITS[0],
-	);
+	const [intervalUnit, setIntervalUnit] = useState(INTERVAL_UNITS[0]);
 	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
@@ -84,20 +74,20 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	};
 
 	return (
-		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
-			<StyledCol flex={'auto'} styledclass={styles.leftContainer}>
-				<StyledRow styledclass={styles.flameAndTimelineContainer}>
-					<StyledCol
-						styledclass={styles.traceMetaDataContainer}
+		<Row style={{ flex: 1 }}>
+			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
+				<Row className={styles['trace-detail-content-spacing']}>
+					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
+						style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}
 					>
-						<StyledTypography.Title styledclass={[styles.removeMargin]} level={5}>
+						<Typography.Title level={5} style={{ margin: 0 }}>
 							Trace Details
-						</StyledTypography.Title>
-						<StyledTypography.Text styledclass={[styles.removeMargin]}>
+						</Typography.Title>
+						<Typography.Text style={{ margin: 0 }}>
 							{traceMetaData.totalSpans} Span
-						</StyledTypography.Text>
-					</StyledCol>
+						</Typography.Text>
+					</Col>
 					<Col flex={'auto'}>
 						<TraceFlameGraph
 							treeData={tree}
@@ -109,9 +99,9 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							intervalUnit={intervalUnit}
 						/>
 					</Col>
-				</StyledRow>
-				<StyledRow styledclass={[styles.traceDateAndTimelineContainer]}>
-					<StyledCol
+				</Row>
+				<Row style={{ marginTop: '2rem' }}>
+					<Col
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
 						style={{
 							display: 'flex',
@@ -120,24 +110,24 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						}}
 					>
 						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
-					</StyledCol>
-					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
+					</Col>
+					<Col
+						flex="auto"
+						style={{ overflow: 'visible' }}
+						className={styles['trace-detail-content-spacing']}
+					>
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
 							traceMetaData={traceMetaData}
 							intervalUnit={intervalUnit}
 							setIntervalUnit={setIntervalUnit}
 						/>
-					</StyledCol>
-					<StyledDivider styledclass={[styles.verticalSeparator]} />
-				</StyledRow>
-				<StyledRow
-					styledclass={[
-						styles.traceDetailContentSpacing,
-						StyledStyles.Spacing({
-							margin: '1.5rem 1rem 0.5rem',
-						}),
-					]}
+					</Col>
+					<Divider style={{ height: '100%', margin: '0' }} />
+				</Row>
+				<Row
+					className={styles['trace-detail-content-spacing']}
+					style={{ margin: '1.5rem 1rem 0.5rem' }}
 				>
 					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}>
 						{/* <Search
@@ -148,17 +138,31 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						/> */}
 					</Col>
 					<Col flex={'auto'}>
-						<StyledSpace styledclass={[styles.floatRight]}>
+						<Space
+							style={{
+								float: 'right',
+							}}
+						>
 							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
 								Reset Focus
 							</Button>
-						</StyledSpace>
+						</Space>
 					</Col>
-				</StyledRow>
-				<StyledDiv styledclass={[styles.ganttChartContainer]}>
+				</Row>
+				<div
+					className={styles['trace-detail-content-spacing']}
+					style={{
+						display: 'flex',
+						flexDirection: 'column',
+						position: 'relative',
+						flex: 1,
+						overflowY: 'auto',
+						overflowX: 'hidden',
+					}}
+				>
 					<GanttChart
 						traceMetaData={traceMetaData}
 						data={tree}
@@ -169,15 +173,24 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						spanId={spanId || ''}
 						intervalUnit={intervalUnit}
 					/>
-				</StyledDiv>
-			</StyledCol>
-			<Col>
-				<StyledDivider styledclass={[styles.verticalSeparator]} type="vertical" />
+				</div>
 			</Col>
-			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
+			<Col>
+				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
+			</Col>
+			<Col
+				md={5}
+				sm={5}
+				style={{
+					height: '100%',
+					position: 'relative',
+					display: 'flex',
+					flexDirection: 'column',
+				}}
+			>
 				<SelectedSpanDetails tree={getSelectedNode} />
-			</StyledCol>
-		</StyledRow>
+			</Col>
+		</Row>
 	);
 };
 
