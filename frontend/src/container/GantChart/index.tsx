@@ -41,7 +41,6 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 				<CardContainer>
 					<CollapseButton
 						onClick={handleCollapse}
-						style={{ fontSize: '1.2rem' }}
 						title={isExpandAll ? 'Collapse All' : 'Expand All'}
 					>
 						{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}

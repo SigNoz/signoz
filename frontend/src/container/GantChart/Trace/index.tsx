@@ -1,9 +1,7 @@
 import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col, Row } from 'antd';
-import {
-	IIntervalUnit,
-	resolveTimeFromInterval,
-} from 'container/TraceDetail/utils';
+import { Col } from 'antd';
+import { StyledCol, StyledRow } from 'components/Styled';
+import { IIntervalUnit } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import React, { useEffect, useRef, useState } from 'react';
@@ -18,6 +16,7 @@ import {
 	CardContainer,
 	CaretContainer,
 	HoverCard,
+	styles,
 	Wrapper,
 } from './styles';
 
@@ -106,7 +105,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 	const inMsCount = value;
 	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
 	const width = (value * 1e2) / (globalSpread * 1e6);
-	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 16;
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 48;
 
 	return (
 		<>
@@ -124,8 +123,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 				/>
 
 				<CardContainer onClick={onClick}>
-					<Col flex={`${panelWidth}px`} style={{ overflow: 'hidden' }}>
-						<Row style={{ flexWrap: 'nowrap' }}>
+					<StyledCol flex={`${panelWidth}px`} styledclass={[styles.overFlowHidden]}>
+						<StyledRow styledclass={[styles.flexNoWrap]}>
 							<Col>
 								{totalSpans !== 1 && (
 									<CardComponent isDarkMode={isDarkMode} onClick={onClickTreeExpansion}>
@@ -139,8 +138,8 @@ const Trace = (props: TraceProps): JSX.Element => {
 							<Col>
 								<SpanName name={name} serviceName={serviceName} />
 							</Col>
-						</Row>
-					</Col>
+						</StyledRow>
+					</StyledCol>
 					<Col flex={'1'}>
 						<SpanLength
 							leftOffset={nodeLeftOffset.toString()}
