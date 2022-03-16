@@ -82,7 +82,6 @@ const FullView = ({
 			};
 
 			const queryMinMax = getMinMax(selectedTime.enum);
-
 			const response = await Promise.all(
 				widget.query
 					.filter((e) => e.query.length !== 0)

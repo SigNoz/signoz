@@ -27,7 +27,6 @@ export const getChartData = (
 		data: [],
 		type: 'line',
 	};
-
 	const chartLabels: ChartData<'line'>['labels'] = [];
 
 	Object.keys(allDataPoints).forEach((timestamp) => {
