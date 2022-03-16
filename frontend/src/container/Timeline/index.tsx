@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import styles from './style.module.css';
-import { useMeasure } from 'react-use';
 import { INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
+import React, { useEffect, useState } from 'react';
+import { useMeasure } from 'react-use';
+
+import styles from './style.module.css';
 import { Interval } from './types';
-import { getIntervalSpread, getIntervals } from './utils';
+import { getIntervals, getIntervalSpread } from './utils';
 
 const Timeline_Height = 22;
 const Timeline_H_Spacing = 0;
@@ -13,7 +14,7 @@ const Timeline = ({
 	traceMetaData,
 	globalTraceMetadata,
 	setIntervalUnit,
-}: TimelineProps) => {
+}: TimelineProps): JSX.Element => {
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const { isDarkMode } = useThemeMode();
 
@@ -30,7 +31,7 @@ const Timeline = ({
 		});
 
 		let intervalUnit = INTERVAL_UNITS[0];
-		for (const idx in INTERVAL_UNITS) {
+		for (let idx = 0; idx < INTERVAL_UNITS.length; idx++) {
 			const standard_interval = INTERVAL_UNITS[idx];
 			if (baseSpread * standard_interval.multiplier < 1) {
 				if (idx > 1) intervalUnit = INTERVAL_UNITS[idx - 1];
@@ -38,8 +39,7 @@ const Timeline = ({
 			}
 		}
 
-		debugger;
-		intervalUnit = intervalUnit || INTERVAL_UNITS[0]
+		intervalUnit = intervalUnit || INTERVAL_UNITS[0];
 		setIntervals(
 			getIntervals({
 				baseInterval,
@@ -49,7 +49,7 @@ const Timeline = ({
 			}),
 		);
 		setIntervalUnit(intervalUnit);
-	}, [traceMetaData, globalTraceMetadata]);
+	}, [traceMetaData, globalTraceMetadata, setIntervalUnit]);
 
 	return (
 		<div ref={ref} style={{ flex: 1, overflow: 'inherit' }}>

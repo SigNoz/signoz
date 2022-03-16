@@ -1,9 +1,11 @@
-import { isEqual } from 'lodash-es';
-import { toFixed } from 'utils/toFixed';
 import {
 	INTERVAL_UNITS,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
+import { isEqual } from 'lodash-es';
+import { toFixed } from 'utils/toFixed';
+
+import { Interval } from './types';
 
 export const getIntervalSpread = ({
 	localTraceMetaData,
@@ -24,7 +26,7 @@ export const getIntervalSpread = ({
 
 	const MIN_INTERVALS = 5;
 	const baseSpread = localSpread;
-	let intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
+	const intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
 	const integerPartString = intervalSpread.toString().split('.')[0];
 	const integerPartLength = integerPartString.length;
 	const intervalSpreadNormalized =
@@ -46,7 +48,6 @@ export const getIntervals = ({
 	intervalSpreadNormalized,
 	intervalUnit,
 }) => {
-	debugger
 	const intervals: Interval[] = [
 		{
 			label: `${toFixed(resolveTimeFromInterval(baseInterval, intervalUnit), 2)}${
@@ -69,7 +70,6 @@ export const getIntervals = ({
 			tempBaseSpread -= intervalSpreadNormalized;
 		}
 		elapsedIntervals = interval_time;
-		debugger;
 		const interval: Interval = {
 			label: `${toFixed(
 				resolveTimeFromInterval(interval_time + baseInterval, intervalUnit),
