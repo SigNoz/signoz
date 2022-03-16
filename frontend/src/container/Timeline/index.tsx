@@ -93,7 +93,7 @@ interface TimelineProps {
 	traceMetaData: object;
 	globalTraceMetadata: Record<string, number>;
 	intervalUnit: IIntervalUnit;
-	setIntervalUnit: () => void;
+	setIntervalUnit: VoidFunction;
 }
 
 export default Timeline;
