@@ -1,6 +1,6 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Card, Divider, notification, Typography } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';

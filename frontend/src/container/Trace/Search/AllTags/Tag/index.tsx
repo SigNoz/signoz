@@ -1,21 +1,21 @@
-import React from 'react';
-
+import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
+import { SelectValue } from 'antd/lib/select';
+import React from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { TraceReducer } from 'types/reducer/trace';
+
 import {
 	Container,
 	IconContainer,
 	SelectComponent,
 	ValueSelect,
 } from './styles';
-import { connect, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
-import { CloseOutlined } from '@ant-design/icons';
-import { SelectValue } from 'antd/lib/select';
-import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
-import { bindActionCreators } from 'redux';
-import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 import TagsKey from './TagKey';
 const { Option } = Select;
 
@@ -45,11 +45,11 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 		Values: selectedValues,
 	} = props.tag;
 
-	const onDeleteTagHandler = (index: number) => {
+	const onDeleteTagHandler = (index: number): void => {
 		props.onCloseHandler(index);
 	};
 
-	const onChangeOperatorHandler = (key: SelectValue) => {
+	const onChangeOperatorHandler = (key: SelectValue): void => {
 		props.setLocalSelectedTags([
 			...traces.selectedTags.slice(0, props.index),
 			{
@@ -83,7 +83,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 
 				<ValueSelect
 					value={selectedValues}
-					onChange={(value) => {
+					onChange={(value): void => {
 						props.setLocalSelectedTags((tags) => [
 							...tags.slice(0, props.index),
 							{
@@ -99,7 +99,7 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 
 				<IconContainer
 					role={'button'}
-					onClick={() => onDeleteTagHandler(props.index)}
+					onClick={(): void => onDeleteTagHandler(props.index)}
 				>
 					<CloseOutlined />
 				</IconContainer>

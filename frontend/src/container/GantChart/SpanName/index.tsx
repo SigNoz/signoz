@@ -1,11 +1,12 @@
 import React from 'react';
+
 import {
+	Container,
 	Service,
 	Span,
-	SpanWrapper,
 	SpanConnector,
-	Container,
 	SpanName,
+	SpanWrapper,
 } from './styles';
 
 const SpanNameComponent = ({

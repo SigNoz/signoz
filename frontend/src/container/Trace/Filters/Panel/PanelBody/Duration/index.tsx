@@ -138,11 +138,10 @@ const Duration = (): JSX.Element => {
 
 	const debouncedFunction = useDebouncedFn(
 		(min, max) => {
-			updatedUrl(min, max);
+			updatedUrl(min as number, max as number);
 		},
 		500,
 		undefined,
-		[],
 	);
 
 	const onChangeMaxHandler: React.ChangeEventHandler<HTMLInputElement> = (

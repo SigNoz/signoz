@@ -2,7 +2,7 @@ import { Col } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React from 'react';
-import { useLocation, matchPath } from 'react-router-dom';
+import { matchPath, useLocation } from 'react-router-dom';
 
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
@@ -12,6 +12,7 @@ const routesToSkip = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
 	ROUTES.TRACE_DETAIL,
+	ROUTES.ALL_CHANNELS,
 ];
 
 const TopNav = (): JSX.Element | null => {

@@ -1,8 +1,8 @@
-import { IS_LOGGED_IN } from 'constants/auth';
-import { AppAction, LOGGED_IN, SWITCH_DARK_MODE } from 'types/actions/app';
-import getTheme from 'lib/theme/getTheme';
-import InitialValueTypes from 'types/reducer/app';
 import getLocalStorageKey from 'api/browser/localstorage/get';
+import { IS_LOGGED_IN } from 'constants/auth';
+import getTheme from 'lib/theme/getTheme';
+import { AppAction, LOGGED_IN, SWITCH_DARK_MODE } from 'types/actions/app';
+import InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
 	isDarkMode: getTheme() === 'darkMode' ? true : false,

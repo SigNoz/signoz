@@ -1,9 +1,9 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import omitBy from 'lodash-es/omitBy';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getFilters';
-import omitBy from 'lodash-es/omitBy';
 
 const getFilters = async (
 	props: Props,
