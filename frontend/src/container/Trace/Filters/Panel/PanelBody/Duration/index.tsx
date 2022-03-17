@@ -60,24 +60,27 @@ const Duration = (): JSX.Element => {
 		return filter.get('duration') || {};
 	}, [selectedFilter, filter]);
 
-	const duration = getDuration || {};
-
-	const maxDuration = duration['maxDuration'] || '0';
-	const minDuration = duration['minDuration'] || '0';
+	const [preMax, setPreMax] = useState<string>('');
+	const [preMin, setPreMin] = useState<string>('');
 
 	useEffect(() => {
+		const duration = getDuration || {};
+
+		const maxDuration = duration['maxDuration'] || '0';
+		const minDuration = duration['minDuration'] || '0';
+
 		if (preLocalMaxDuration.current === undefined) {
 			preLocalMaxDuration.current = parseFloat(maxDuration);
 		}
 		if (preLocalMinDuration.current === undefined) {
 			preLocalMinDuration.current = parseFloat(minDuration);
 		}
-	}, [maxDuration, minDuration]);
 
-	const [localMax, setLocalMax] = useState<string>(maxDuration);
-	const [localMin, setLocalMin] = useState<string>(minDuration);
+		setPreMax(maxDuration);
+		setPreMin(minDuration);
+	}, [getDuration]);
 
-	const defaultValue = [parseFloat(minDuration), parseFloat(maxDuration)];
+	const defaultValue = [parseFloat(preMin), parseFloat(preMax)];
 
 	const updatedUrl = async (min: number, max: number): Promise<void> => {
 		const preSelectedFilter = new Map(selectedFilter);
@@ -132,8 +135,8 @@ const Duration = (): JSX.Element => {
 	const onRangeSliderHandler = (number: [number, number]): void => {
 		const [min, max] = number;
 
-		setLocalMin(min.toString());
-		setLocalMax(max.toString());
+		setPreMin(min.toString());
+		setPreMax(max.toString());
 	};
 
 	const debouncedFunction = useDebouncedFn(
@@ -148,7 +151,7 @@ const Duration = (): JSX.Element => {
 		event,
 	) => {
 		const value = event.target.value;
-		const min = parseFloat(localMin);
+		const min = parseFloat(preMin);
 		const max = parseFloat(value) * 1000000;
 
 		onRangeSliderHandler([min, max]);
@@ -160,7 +163,7 @@ const Duration = (): JSX.Element => {
 	) => {
 		const value = event.target.value;
 		const min = parseFloat(value) * 1000000;
-		const max = parseFloat(localMax);
+		const max = parseFloat(preMax);
 		onRangeSliderHandler([min, max]);
 		debouncedFunction(min, max);
 	};
@@ -178,7 +181,7 @@ const Duration = (): JSX.Element => {
 				<Input
 					addonAfter="ms"
 					onChange={onChangeMinHandler}
-					value={getMs(localMin)}
+					value={getMs(preMin)}
 				/>
 
 				<InputContainer>
@@ -187,7 +190,7 @@ const Duration = (): JSX.Element => {
 				<Input
 					addonAfter="ms"
 					onChange={onChangeMaxHandler}
-					value={getMs(localMax)}
+					value={getMs(preMax)}
 				/>
 			</Container>
 
@@ -201,13 +204,13 @@ const Duration = (): JSX.Element => {
 						if (value === undefined) {
 							return <></>;
 						}
-						return <div>{`${getMs(value.toString())}ms`}</div>;
+						return <div>{`${getMs(value?.toString())}ms`}</div>;
 					}}
 					onChange={([min, max]): void => {
 						onRangeSliderHandler([min, max]);
 					}}
 					onAfterChange={onRangeHandler}
-					value={[parseFloat(localMin), parseFloat(localMax)]}
+					value={[parseFloat(preMin), parseFloat(preMax)]}
 				/>
 			</Container>
 		</div>

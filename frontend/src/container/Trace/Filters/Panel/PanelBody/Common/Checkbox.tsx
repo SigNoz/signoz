@@ -100,6 +100,13 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 					if (key !== 'duration' && props.name !== key) {
 						preUserSelectedMap.set(key, Object.keys(value));
 					}
+
+					if (key === 'duration') {
+						newSelectedMap.set('duration', [
+							value['maxDuration'],
+							value['minDuration'],
+						]);
+					}
 				});
 
 				updatedFilter.set(props.name, {
