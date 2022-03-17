@@ -143,7 +143,7 @@ install_docker() {
         echo "Installing docker"
         $apt_cmd install docker-ce docker-ce-cli containerd.io
     elif [[ $package_manager == zypper ]]; then
-        zypper_cmd="zypper --quiet --no-gpg-checks --non-interactive"
+        zypper_cmd="$sudo_cmd zypper --quiet --no-gpg-checks --non-interactive"
         echo "Installing docker"
         if [[ $os == sles ]]; then
             os_sp="$(cat /etc/*-release | awk -F= '$1 == "VERSION_ID" { gsub(/"/, ""); print $2; exit }')"
@@ -151,19 +151,19 @@ install_docker() {
             SUSEConnect -p sle-module-containers/$os_sp/$os_arch -r ''
         fi
         $zypper_cmd install docker docker-runc containerd
-        systemctl enable docker.service
+        $sudo_cmd systemctl enable docker.service
     elif [[ $package_manager == yum && $os == 'amazon linux' ]]; then
         echo
         echo "Amazon Linux detected ... "
         echo
         # yum install docker
         # service docker start
-        amazon-linux-extras install docker
+        $sudo_cmd amazon-linux-extras install docker
     else
 
-        yum_cmd="yum --assumeyes --quiet"
+        yum_cmd="$sudo_cmd yum --assumeyes --quiet"
         $yum_cmd install yum-utils
-        yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
+        $sudo_cmd yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
         echo "Installing docker"
         $yum_cmd install docker-ce docker-ce-cli containerd.io
 
@@ -176,9 +176,9 @@ install_docker_compose() {
         if [[ ! -f /usr/bin/docker-compose ]];then
             echo "++++++++++++++++++++++++"
             echo "Installing docker-compose"
-            curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            chmod +x /usr/local/bin/docker-compose
-            ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+            $sudo_cmd curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            $sudo_cmd chmod +x /usr/local/bin/docker-compose
+            $sudo_cmd ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
             echo "docker-compose installed!"
             echo ""
         fi
@@ -198,9 +198,9 @@ start_docker() {
     if [ $os = "Mac" ]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else 
-        if ! systemctl is-active docker.service > /dev/null; then
+        if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
-            systemctl start docker.service
+            $sudo_cmd systemctl start docker.service
         fi
         if [ -z $sudo_cmd ]; then
             docker ps > /dev/null && true
