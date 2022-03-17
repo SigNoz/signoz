@@ -36,7 +36,6 @@ const GridGraph = (): JSX.Element => {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 	const { widgets } = data;
-
 	const [layouts, setLayout] = useState<LayoutProps[]>([]);
 
 	const AddWidgetWrapper = useCallback(() => <AddWidget />, []);
@@ -63,6 +62,7 @@ const GridGraph = (): JSX.Element => {
 							name={e.id + index + 'non-expanded'}
 							isDeleted={isDeleted}
 							widget={widgets[index]}
+							yAxisUnit={e.yAxisUnit}
 						/>
 					),
 				};
@@ -79,6 +79,7 @@ const GridGraph = (): JSX.Element => {
 									name={e.i + index}
 									isDeleted={isDeleted}
 									widget={widgets[index]}
+									yAxisUnit={widgets[index].yAxisUnit}
 								/>
 							);
 						}

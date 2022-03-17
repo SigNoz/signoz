@@ -1,10 +1,10 @@
 import { ChartData, ChartDataset, ChartDatasetProperties } from 'chart.js';
-import { TraceReducer } from 'types/reducer/trace';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
+import { TraceReducer } from 'types/reducer/trace';
 
 function transposeArray(array: number[][], arrayLength: number) {
-	let newArray: number[][] = [];
+	const newArray: number[][] = [];
 	for (let i = 0; i < array.length; i++) {
 		newArray.push([]);
 	}
@@ -27,7 +27,6 @@ export const getChartData = (
 		data: [],
 		type: 'line',
 	};
-
 	const chartLabels: ChartData<'line'>['labels'] = [];
 
 	Object.keys(allDataPoints).forEach((timestamp) => {

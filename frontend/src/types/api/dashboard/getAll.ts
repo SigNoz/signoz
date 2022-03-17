@@ -44,6 +44,7 @@ export interface Widgets {
 		}[];
 	};
 	stepSize?: number;
+	yAxisUnit?: string;
 }
 
 export interface Query {

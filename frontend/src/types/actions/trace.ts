@@ -116,6 +116,7 @@ export interface UpdateSelectedFunction {
 	type: typeof UPDATE_SELECTED_FUNCTION;
 	payload: {
 		selectedFunction: TraceReducer['selectedFunction'];
+		yAxisUnit: string | undefined;
 	};
 }
 

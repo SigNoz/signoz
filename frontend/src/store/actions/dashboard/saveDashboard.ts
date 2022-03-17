@@ -123,4 +123,5 @@ export interface SaveDashboardProps {
 	nullZeroValues: Widgets['nullZeroValues'];
 	widgetId: Widgets['id'];
 	dashboardId: string;
+	yAxisUnit: Widgets['yAxisUnit'];
 }

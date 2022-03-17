@@ -1,7 +1,7 @@
-import { useMemo, useRef } from 'react';
 import debounce from 'lodash-es/debounce';
+import { useMemo, useRef } from 'react';
 
-export interface DebouncedFunc<T extends (...args: any[]) => any> {
+export interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
 	(...args: Parameters<T>): ReturnType<T> | undefined;
 
 	cancel(): void;
@@ -20,18 +20,17 @@ const defaultOptions: DebounceOptions = {
 	trailing: true,
 };
 
-const useDebouncedFn = <T extends (...args: any) => any>(
+const useDebouncedFn = <T extends (...args: Array<unknown>) => unknown>(
 	fn: T,
-	wait: number = 100,
+	wait = 100,
 	options: DebounceOptions = defaultOptions,
-	dependencies?: ReadonlyArray<any>,
 ): DebouncedFunc<T> => {
 	const fnRef = useRef(fn);
 	fnRef.current = fn;
 
 	return useMemo(
 		() => debounce(((...args) => fnRef.current(...args)) as T, wait, options),
-		[...(dependencies || [])],
+		[options, wait],
 	);
 };
 
