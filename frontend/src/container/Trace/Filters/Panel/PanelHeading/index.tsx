@@ -77,6 +77,11 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 							getPreUserSelected.set(key, value);
 						}
 					});
+				} else {
+					getPreUserSelected.set(
+						props.name,
+						Object.keys(updatedFilter.get(props.name) || []),
+					);
 				}
 
 				filter.forEach((value, key) => {
