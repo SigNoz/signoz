@@ -2620,7 +2620,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	if len(params.ColdStorageVolume) > 0 {
 		policyReq := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='tiered'", tableName)
 
-		zap.S().Info("Executing Storage policy request: %s\n", policyReq)
+		zap.S().Debugf("Executing Storage policy request: %s\n", policyReq)
 		if _, err := r.db.Exec(policyReq); err != nil {
 			zap.S().Error(fmt.Errorf("error while setting storage policy. Err=%v", err))
 			return nil, &model.ApiError{model.ErrorExec,
@@ -2628,7 +2628,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 	}
 
-	zap.S().Info("Executing TTL request: %s\n", req)
+	zap.S().Debugf("Executing TTL request: %s\n", req)
 	if _, err := r.db.Exec(req); err != nil {
 		zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
 		return nil, &model.ApiError{model.ErrorExec,

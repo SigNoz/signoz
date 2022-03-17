@@ -900,14 +900,23 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
+	// Validate the TTL duration.
 	durationParsed, err := time.ParseDuration(delDuration)
 	if err != nil {
 		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
 	}
 
-	toColdParsed, err := time.ParseDuration(toColdDuration)
-	if err != nil {
-		return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
+	var toColdParsed time.Duration
+
+	// If some cold storage is provided, validate the cold storage move TTL.
+	if len(coldStorage) > 0 {
+		toColdParsed, err = time.ParseDuration(toColdDuration)
+		if err != nil {
+			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
+		}
+		if toColdParsed.Seconds() >= durationParsed.Seconds() {
+			return nil, fmt.Errorf("Delete TTL should be greater than cold storage move TTL.")
+		}
 	}
 
 	return &model.TTLParams{
