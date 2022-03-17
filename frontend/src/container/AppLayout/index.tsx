@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-import { Content, Footer, Layout } from './styles';
+import { Content, Layout } from './styles';
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -27,8 +27,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 		}
 	}, [isLoggedIn, isSignUpPage]);
 
-	const currentYear = new Date().getFullYear();
-
 	return (
 		<Layout>
 			{!isSignUpPage && <SideNav />}
@@ -37,7 +35,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 					{!isSignUpPage && <TopNav />}
 					{children}
 				</Content>
-				{/* <Footer>{`SigNoz Inc. © ${currentYear}`}</Footer> */}
 			</Layout>
 		</Layout>
 	);

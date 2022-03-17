@@ -17,8 +17,8 @@ import {
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
-	TraceFilter,
 	TraceDetail,
+	TraceFilter,
 	UsageExplorerPage,
 } from './pageComponents';
 

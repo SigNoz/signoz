@@ -1,4 +1,5 @@
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+
 import { isTraceFilterEnum, ParsedUrl } from '../util';
 
 export const parseSelectedFilter = (

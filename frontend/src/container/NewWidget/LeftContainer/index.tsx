@@ -9,10 +9,11 @@ import WidgetGraph from './WidgetGraph';
 const LeftContainer = ({
 	selectedGraph,
 	selectedTime,
+	yAxisUnit,
 }: LeftContainerProps): JSX.Element => {
 	return (
 		<>
-			<WidgetGraph selectedGraph={selectedGraph} />
+			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit}/>
 
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} />

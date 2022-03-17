@@ -21,4 +21,5 @@ export interface ApplySettingsToPanelProps {
 	timePreferance: Widgets['timePreferance'];
 	nullZeroValues: Widgets['nullZeroValues'];
 	widgetId: Widgets['id'];
+	yAxisUnit: Widgets['yAxisUnit'];
 }

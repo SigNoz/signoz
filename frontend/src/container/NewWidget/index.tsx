@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -23,7 +24,7 @@ import {
 } from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalTime } from 'types/actions/globalTime';
+import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -37,7 +38,6 @@ import {
 	PanelContainer,
 	RightContainerWrapper,
 } from './styles';
-import history from 'lib/history';
 
 const NewWidget = ({
 	selectedGraph,
@@ -77,6 +77,9 @@ const NewWidget = ({
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
 	);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(
+		selectedWidget?.yAxisUnit || 'none',
+	);
 
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
@@ -109,6 +112,7 @@ const NewWidget = ({
 			opacity,
 			timePreferance: selectedTime.enum,
 			title,
+			yAxisUnit,
 			widgetId: query.get('widgetId') || '',
 			dashboardId: dashboardId,
 		});
@@ -123,15 +127,17 @@ const NewWidget = ({
 		saveSettingOfPanel,
 		selectedDashboard,
 		dashboardId,
+		yAxisUnit,
 	]);
 
-	const onClickApplyHandler = () => {
+	const onClickApplyHandler = (): void => {
 		selectedWidget?.query.forEach((element, index) => {
 			updateQuery({
 				widgetId: selectedWidget?.id || '',
 				query: element.query || '',
 				legend: element.legend || '',
 				currentIndex: index,
+				yAxisUnit,
 			});
 		});
 
@@ -143,6 +149,7 @@ const NewWidget = ({
 			timePreferance: selectedTime.enum,
 			title,
 			widgetId: selectedWidget?.id || '',
+			yAxisUnit,
 		});
 	};
 
@@ -163,11 +170,10 @@ const NewWidget = ({
 	}, [
 		selectedWidget?.query,
 		selectedTime.enum,
-		maxTime,
-		minTime,
 		selectedWidget?.id,
 		selectedGraph,
 		getQueryResults,
+		globalSelectedInterval,
 	]);
 
 	useEffect(() => {
@@ -184,7 +190,11 @@ const NewWidget = ({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} />
+					<LeftContainer
+						selectedTime={selectedTime}
+						selectedGraph={selectedGraph}
+						yAxisUnit={yAxisUnit}
+					/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -197,12 +207,14 @@ const NewWidget = ({
 							stacked,
 							setStacked,
 							opacity,
+							yAxisUnit,
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
 							selectedGraph,
 							setSelectedTime,
 							selectedTime,
+							setYAxisUnit,
 						}}
 					/>
 				</RightContainerWrapper>
@@ -213,6 +225,7 @@ const NewWidget = ({
 
 export interface NewWidgetProps {
 	selectedGraph: GRAPH_TYPES;
+	yAxisUnit: Widgets['yAxisUnit'];
 }
 
 interface DispatchProps {

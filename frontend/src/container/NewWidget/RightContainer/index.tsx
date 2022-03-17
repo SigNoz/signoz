@@ -10,7 +10,10 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import React, { useCallback } from 'react';
 
+import { dataTypeCategories } from './dataFormatCategories';
+// import {ca} from '@grafana/data'
 import { timePreferance } from './timeItems';
+import YAxisUnitSelector from './YAxisUnitSelector';
 
 const { TextArea } = Input;
 import TimePreference from 'components/TimePreferenceDropDown';
@@ -35,6 +38,8 @@ const RightContainer = ({
 	selectedGraph,
 	setSelectedTime,
 	selectedTime,
+	yAxisUnit,
+	setYAxisUnit,
 }: RightContainerProps): JSX.Element => {
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -144,6 +149,7 @@ const RightContainer = ({
 					setSelectedTime,
 				}}
 			/>
+			<YAxisUnitSelector defaultValue={yAxisUnit} onSelect={setYAxisUnit} />
 		</Container>
 	);
 };
@@ -162,6 +168,8 @@ interface RightContainerProps {
 	selectedGraph: GRAPH_TYPES;
 	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
+	yAxisUnit: string;
+	setYAxisUnit: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default RightContainer;

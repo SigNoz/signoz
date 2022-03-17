@@ -1,15 +1,15 @@
-import useFetch from 'hooks/useFetch';
-import React from 'react';
-import SignUpComponent from './SignUp';
-import getVersion from 'api/user/getVersion';
-import { PayloadProps as VersionPayload } from 'types/api/user/getVersion';
-import { PayloadProps as UserPrefPayload } from 'types/api/user/getUserPreference';
-
-import Spinner from 'components/Spinner';
 import { Typography } from 'antd';
 import getPreference from 'api/user/getPreference';
+import getVersion from 'api/user/getVersion';
+import Spinner from 'components/Spinner';
+import useFetch from 'hooks/useFetch';
+import React from 'react';
+import { PayloadProps as UserPrefPayload } from 'types/api/user/getUserPreference';
+import { PayloadProps as VersionPayload } from 'types/api/user/getVersion';
 
-const SignUp = () => {
+import SignUpComponent from './SignUp';
+
+const SignUp = (): JSX.Element => {
 	const versionResponse = useFetch<VersionPayload, undefined>(getVersion);
 
 	const userPrefResponse = useFetch<UserPrefPayload, undefined>(getPreference);

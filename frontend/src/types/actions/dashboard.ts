@@ -138,6 +138,7 @@ interface UpdateQuery {
 	payload: {
 		query: Query[];
 		widgetId: string;
+		yAxisUnit: string | undefined;
 	};
 }
 
