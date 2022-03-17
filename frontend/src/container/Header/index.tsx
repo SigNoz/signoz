@@ -12,6 +12,7 @@ const routesToSkip = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
 	ROUTES.TRACE_DETAIL,
+	ROUTES.ALL_CHANNELS,
 ];
 
 const TopNav = (): JSX.Element | null => {

@@ -1,5 +1,5 @@
 import { Space, Tabs, Typography } from 'antd';
-import { StyledSpace, StyledTabs } from 'components/Styled';
+import { StyledSpace } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
 import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
@@ -42,10 +42,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 					<CustomText>{name}</CustomText>
 				</Space>
 			</StyledSpace>
-			<StyledTabs
-				styledclass={[styles.spanEventsTabsContainer]}
-				defaultActiveKey="1"
-			>
+			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
 					{tags.length !== 0 ? (
 						tags.map((tags) => {
@@ -73,7 +70,7 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 						<Typography>No events data in selected span</Typography>
 					)}
 				</TabPane>
-			</StyledTabs>
+			</Tabs>
 		</CardContainer>
 	);
 };
