@@ -48,7 +48,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
+		const tree = getSortedData(treeData);
+		return getSpanTreeMetadata(tree, spanServiceColors);
 	}, [treeData, spanServiceColors]);
 
 	const [globalTraceMetadata] = useState<Record<string, number>>({
@@ -119,7 +120,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							justifyContent: 'center',
 						}}
 					>
-						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
+						{tree && dayjs(tree.startTime).format('hh:mm:ss a MM/DD')}
 					</StyledCol>
 					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
 						<Timeline

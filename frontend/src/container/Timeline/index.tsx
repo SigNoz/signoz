@@ -35,7 +35,8 @@ const Timeline = ({
 		for (let idx = 0; idx < INTERVAL_UNITS.length; idx++) {
 			const standard_interval = INTERVAL_UNITS[idx];
 			if (baseSpread * standard_interval.multiplier < 1) {
-				if (idx > 1) intervalUnit = INTERVAL_UNITS[idx - 1];
+				const index = parseInt(idx, 10);
+				if (index > 1) intervalUnit = INTERVAL_UNITS[index - 1];
 				break;
 			}
 		}
@@ -69,9 +70,10 @@ const Timeline = ({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<TimelineInterval
-							transform={`translate(${Timeline_H_Spacing +
+							transform={`translate(${
+								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-								},0)`}
+							},0)`}
 							key={`${interval.label + interval.percentage + index}`}
 						>
 							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
@@ -91,10 +93,16 @@ const Timeline = ({
 };
 
 interface TimelineProps {
-	traceMetaData: object;
+	traceMetaData: {
+		globalStart: number;
+		globalEnd: number;
+		spread: number;
+		totalSpans: number;
+		levels: number;
+	};
 	globalTraceMetadata: Record<string, number>;
 	intervalUnit: IIntervalUnit;
-	setIntervalUnit: VoidFunction;
+	setIntervalUnit: React.Dispatch<React.SetStateAction<IIntervalUnit>>;
 }
 
 export default Timeline;
