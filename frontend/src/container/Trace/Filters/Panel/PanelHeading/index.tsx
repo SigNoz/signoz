@@ -46,6 +46,9 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
+	const defaultErrorMessage = 'Something went wrong';
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
 			e.preventDefault();
@@ -135,19 +138,19 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 				);
 			} else {
 				notification.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultErrorMessage,
 				});
 			}
 
 			setIsLoading(false);
 		} catch (error) {
 			notification.error({
-				message: (error as AxiosError).toString() || 'Something went wrong',
+				message: (error as AxiosError).toString() || defaultErrorMessage,
 			});
 		}
 	};
 
-	const onClearAllHandler = async () => {
+	const onClearAllHandler = async (): Promise<void> => {
 		try {
 			setIsLoading(true);
 			const updatedFilter = new Map(selectedFilter);

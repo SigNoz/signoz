@@ -1,8 +1,8 @@
-import { Tag } from 'antd';
+import { Select, SelectProps, Tag } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
-import { Container, Select } from './styles';
+import { Container } from './styles';
 
 const Filter = ({
 	setSelectedFilter,
@@ -47,6 +47,19 @@ const Filter = ({
 		value: e,
 	}));
 
+	const getTags: SelectProps['tagRender'] = ({ closable, label, onClose }) => {
+		return (
+			<Tag
+				color={'magenta'}
+				closable={closable}
+				onClose={onClose}
+				style={{ marginRight: 3 }}
+			>
+				{label}
+			</Tag>
+		);
+	};
+
 	return (
 		<Container>
 			<Select
@@ -55,18 +68,9 @@ const Filter = ({
 				mode="tags"
 				value={selectedFilter.map((e) => e.value)}
 				placeholder="Filter by Tags - e.g. severity:warning, alertname:Sample Alert"
-				tagRender={(props): JSX.Element => {
-					const { label, closable, onClose } = props;
-					return (
-						<Tag
-							color={'magenta'}
-							closable={closable}
-							onClose={onClose}
-							style={{ marginRight: 3 }}
-						>
-							{label}
-						</Tag>
-					);
+				tagRender={getTags}
+				style={{
+					minWidth: '350px',
 				}}
 				options={[]}
 			/>
@@ -76,20 +80,11 @@ const Filter = ({
 				mode="tags"
 				defaultValue={selectedGroup.map((e) => e.value)}
 				showArrow
-				placeholder="Group by any tag"
-				tagRender={(props): JSX.Element => {
-					const { label, closable, onClose } = props;
-					return (
-						<Tag
-							color={'magenta'}
-							closable={closable}
-							onClose={onClose}
-							style={{ marginRight: 3 }}
-						>
-							{label}
-						</Tag>
-					);
+				style={{
+					minWidth: '350px',
 				}}
+				placeholder="Group by any tag"
+				tagRender={getTags}
 				options={options}
 			/>
 		</Container>

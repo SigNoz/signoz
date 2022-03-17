@@ -46,7 +46,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	useEffect(() => {
 		setisAnonymous(userpref.isAnonymous);
 		setHasOptedUpdates(userpref.hasOptedUpdates);
-	}, []);
+	}, [userpref]);
 
 	const setState = (
 		value: string,
@@ -54,6 +54,8 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	): void => {
 		setFunction(value);
 	};
+
+	const defaultErrorMessage = 'Something went wrong';
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
 		(async (): Promise<void> => {
@@ -84,19 +86,19 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 						setLoading(false);
 
 						notification.error({
-							message: 'Something went wrong',
+							message: defaultErrorMessage,
 						});
 					}
 				} else {
 					setLoading(false);
 
 					notification.error({
-						message: 'Something went wrong',
+						message: defaultErrorMessage,
 					});
 				}
 			} catch (error) {
 				notification.error({
-					message: 'Something went wrong',
+					message: defaultErrorMessage,
 				});
 				setLoading(false);
 			}
@@ -176,7 +178,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 					<MarginTop marginTop={'2.4375rem'}>
 						<Space>
 							<Switch
-								onChange={(value) => onSwitchHandler(value, setHasOptedUpdates)}
+								onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
 								checked={hasOptedUpdates}
 							/>
 							<Typography>Keep me updated on new SigNoz features</Typography>
@@ -186,7 +188,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 					<MarginTop marginTop={'0.5rem'}>
 						<Space>
 							<Switch
-								onChange={(value) => onSwitchHandler(value, setisAnonymous)}
+								onChange={(value): void => onSwitchHandler(value, setisAnonymous)}
 								checked={isAnonymous}
 							/>
 							<Typography>

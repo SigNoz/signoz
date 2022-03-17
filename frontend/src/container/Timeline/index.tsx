@@ -3,6 +3,7 @@ import { IIntervalUnit, INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
+import { GetSpanTreeMetaData } from 'utils/getSpanTreeMetadata';
 
 import { styles, Svg, TimelineInterval } from './styles';
 import { Interval } from './types';
@@ -69,9 +70,10 @@ const Timeline = ({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<TimelineInterval
-							transform={`translate(${Timeline_H_Spacing +
+							transform={`translate(${
+								Timeline_H_Spacing +
 								(interval.percentage * (width - 2 * Timeline_H_Spacing)) / 100
-								},0)`}
+							},0)`}
 							key={`${interval.label + interval.percentage + index}`}
 						>
 							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
@@ -91,10 +93,10 @@ const Timeline = ({
 };
 
 interface TimelineProps {
-	traceMetaData: object;
+	traceMetaData: Omit<GetSpanTreeMetaData, 'treeData'>;
 	globalTraceMetadata: Record<string, number>;
 	intervalUnit: IIntervalUnit;
-	setIntervalUnit: VoidFunction;
+	setIntervalUnit: React.Dispatch<React.SetStateAction<IIntervalUnit>>;
 }
 
 export default Timeline;

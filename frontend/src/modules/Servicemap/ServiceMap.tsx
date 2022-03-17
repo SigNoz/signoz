@@ -1,3 +1,8 @@
+/* eslint-disable */
+// @ts-nocheck
+/**
+ * NOTE: need to remove this above rule
+ */
 import Spinner from 'components/Spinner';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';

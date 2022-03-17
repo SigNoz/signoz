@@ -34,7 +34,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
+			`${
+				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
@@ -87,7 +88,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
+			`${
+				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};

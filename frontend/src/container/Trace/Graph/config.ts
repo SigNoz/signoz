@@ -1,9 +1,9 @@
-import { ChartData, ChartDataset, ChartDatasetProperties } from 'chart.js';
+import { ChartData, ChartDatasetProperties } from 'chart.js';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
 import { TraceReducer } from 'types/reducer/trace';
 
-function transposeArray(array: number[][], arrayLength: number) {
+function transposeArray(array: number[][], arrayLength: number): number[][] {
 	const newArray: number[][] = [];
 	for (let i = 0; i < array.length; i++) {
 		newArray.push([]);

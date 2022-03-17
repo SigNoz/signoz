@@ -35,15 +35,10 @@ const InitialValue: InitialValueTypes = {
 const dashboard = (
 	state = InitialValue,
 	action: DashboardActions,
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): InitialValueTypes => {
 	switch (action.type) {
-		case GET_ALL_DASHBOARD_LOADING_START: {
-			return {
-				...state,
-				loading: true,
-			};
-		}
-
+		case GET_ALL_DASHBOARD_LOADING_START:
 		case GET_DASHBOARD_LOADING_START: {
 			return {
 				...state,

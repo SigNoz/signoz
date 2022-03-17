@@ -48,7 +48,11 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
+		const tree = getSortedData(treeData);
+
+		if (tree) {
+			return getSpanTreeMetadata(tree, spanServiceColors);
+		}
 	}, [treeData, spanServiceColors]);
 
 	const [globalTraceMetadata] = useState<Record<string, number>>({
@@ -72,7 +76,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	// 	setSearchSpanString(value);
 	// 	setTreeData(spanToTreeUtil(response[0].events));
 	// };
-	const onFocusSelectedSpanHandler = () => {
+	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 		if (treeNode) {
 			setTreeData(treeNode);

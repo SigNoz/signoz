@@ -1,3 +1,8 @@
+/* eslint-disable */
+// @ts-nocheck
+/**
+ * NOTE: need to refactor this function
+ */
 import { cloneDeep } from 'lodash-es';
 import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 // PNOTE - should the data be taken from redux or only through props? - Directly as arguments
@@ -85,7 +90,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 			} else {
 				refArray = referencesArr;
 			}
-			const references = [];
+			const references: { spanID: any }[] = [];
 
 			refArray.forEach((element) => {
 				element = element

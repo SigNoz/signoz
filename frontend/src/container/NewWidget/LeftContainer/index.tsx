@@ -13,7 +13,7 @@ const LeftContainer = ({
 }: LeftContainerProps): JSX.Element => {
 	return (
 		<>
-			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit}/>
+			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
 
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} />
@@ -24,6 +24,7 @@ const LeftContainer = ({
 
 interface LeftContainerProps extends NewWidgetProps {
 	selectedTime: timePreferance;
+	yAxisUnit: string;
 }
 
 export default memo(LeftContainer);

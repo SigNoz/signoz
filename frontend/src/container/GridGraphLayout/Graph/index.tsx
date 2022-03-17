@@ -30,7 +30,7 @@ const GridCardGraph = ({
 	deleteWidget,
 	isDeleted,
 	name,
-	yAxisUnit
+	yAxisUnit,
 }: GridCardGraphProps): JSX.Element => {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -125,7 +125,7 @@ const GridCardGraph = ({
 		[],
 	);
 
-	const getModals = () => {
+	const getModals = (): JSX.Element => {
 		return (
 			<>
 				<Modal
@@ -150,7 +150,11 @@ const GridCardGraph = ({
 					destroyOnClose
 				>
 					<FullViewContainer>
-						<FullView name={name + 'expanded'} widget={widget} yAxisUnit={yAxisUnit} />
+						<FullView
+							name={name + 'expanded'}
+							widget={widget}
+							yAxisUnit={yAxisUnit}
+						/>
 					</FullViewContainer>
 				</Modal>
 			</>

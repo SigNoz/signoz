@@ -171,11 +171,9 @@ const GeneralSettings = (): JSX.Element => {
 	};
 
 	const isDisabledHandler = (): boolean => {
-		if (retentionPeroidTrace === '' || retentionPeroidMetrics === '') {
-			return true;
-		}
-
-		return false;
+		return retentionPeroidTrace === '' || retentionPeroidMetrics === ''
+			? true
+			: false;
 	};
 
 	const errorText = getErrorText();

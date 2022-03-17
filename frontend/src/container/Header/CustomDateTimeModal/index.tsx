@@ -21,11 +21,7 @@ const CustomDateTimeModal = ({
 	}
 
 	function disabledDate(current: Dayjs): boolean {
-		if (current > dayjs()) {
-			return true;
-		} else {
-			return false;
-		}
+		return current > dayjs();
 	}
 
 	return (

@@ -1,7 +1,7 @@
-import {
-	INTERVAL_UNITS,
-	resolveTimeFromInterval,
-} from 'container/TraceDetail/utils';
+/* eslint-disable */
+//@ts-nocheck
+
+import { resolveTimeFromInterval } from 'container/TraceDetail/utils';
 import { isEqual } from 'lodash-es';
 import { toFixed } from 'utils/toFixed';
 
@@ -42,6 +42,7 @@ export const getIntervalSpread = ({
 	};
 };
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const getIntervals = ({
 	baseInterval,
 	baseSpread,

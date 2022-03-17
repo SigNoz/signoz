@@ -1,5 +1,6 @@
-import { TableProps, Tag } from 'antd';
+import { TablePaginationConfig, Tag } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
+import { FilterValue, SorterResult } from 'antd/lib/table/interface';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -33,6 +34,13 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 	const { loading, total } = spansAggregate;
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
+
+	const getTags = (value: string): JSX.Element => {
+		if (value.length === 0) {
+			return <div>-</div>;
+		}
+		return <Tag color="magenta">{value}</Tag>;
+	};
 
 	const columns: ColumnsType<TableType> = [
 		{
@@ -72,10 +80,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			dataIndex: 'httpMethod',
 			key: 'httpMethod',
 			render: (value: TableType['httpMethod']): JSX.Element => {
-				if (value.length === 0) {
-					return <div>-</div>;
-				}
-				return <Tag color="magenta">{value}</Tag>;
+				return getTags(value);
 			},
 		},
 		{
@@ -83,31 +88,30 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			dataIndex: 'httpCode',
 			key: 'httpCode',
 			render: (value: TableType['httpCode']): JSX.Element => {
-				if (value.length === 0) {
-					return <div>-</div>;
-				}
-				return <Tag color="magenta">{value}</Tag>;
+				return getTags(value);
 			},
 		},
 	];
 
-	const onChangeHandler: TableProps<TableType>['onChange'] = (
-		props,
-		_,
-		sort,
-	) => {
-		const { order = 'ascend' } = sort;
+	const onChangeHandler = (
+		props: TablePaginationConfig,
+		_: Record<string, FilterValue | null>,
+		sort: SorterResult<TableType> | SorterResult<TableType>[],
+	): void => {
+		if (typeof sort !== 'object') {
+			const { order = 'ascend' } = sort;
 
-		if (props.current && props.pageSize) {
-			getSpansAggregate({
-				maxTime: globalTime.maxTime,
-				minTime: globalTime.minTime,
-				selectedFilter,
-				current: props.current,
-				pageSize: props.pageSize,
-				selectedTags,
-				order: order === 'ascend' ? 'ascending' : 'descending',
-			});
+			if (props.current && props.pageSize) {
+				getSpansAggregate({
+					maxTime: globalTime.maxTime,
+					minTime: globalTime.minTime,
+					selectedFilter,
+					current: props.current,
+					pageSize: props.pageSize,
+					selectedTags,
+					order: order === 'ascend' ? 'ascending' : 'descending',
+				});
+			}
 		}
 	};
 
@@ -117,7 +121,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			dataSource={spansAggregate.data}
 			loading={loading || filterLoading}
 			columns={columns}
-			onRow={(record) => ({
+			onRow={(record): React.HTMLAttributes<HTMLTableElement> => ({
 				onClick: (): void => {
 					history.push({
 						pathname: ROUTES.TRACE + '/' + record.traceID,

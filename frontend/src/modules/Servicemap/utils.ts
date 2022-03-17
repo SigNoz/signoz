@@ -1,3 +1,6 @@
+/* eslint-disable */
+//@ts-nocheck
+
 import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash-es';
 import { serviceMapStore } from 'store/actions';
 

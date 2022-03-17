@@ -41,7 +41,7 @@ export const getSpanTreeMetadata = (
 	};
 };
 
-interface GetSpanTreeMetaData {
+export interface GetSpanTreeMetaData {
 	globalStart: number;
 	globalEnd: number;
 	spread: number;

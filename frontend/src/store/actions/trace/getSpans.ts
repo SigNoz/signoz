@@ -17,6 +17,7 @@ export const GetSpans = (
 	getState: Store<AppState>['getState'],
 ) => void) => {
 	return async (dispatch, getState): Promise<void> => {
+		const defaultErrorMessage = 'Something went wrong';
 		try {
 			const { traces, globalTime } = getState();
 			const { spansGraph } = traces;
@@ -71,13 +72,13 @@ export const GetSpans = (
 				});
 			} else {
 				notification.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultErrorMessage,
 				});
 				dispatch({
 					type: UPDATE_TRACE_GRAPH_ERROR,
 					payload: {
 						error: true,
-						errorMessage: response.error || 'Something went wrong',
+						errorMessage: response.error || defaultErrorMessage,
 					},
 				});
 			}
@@ -86,7 +87,7 @@ export const GetSpans = (
 				type: UPDATE_TRACE_GRAPH_ERROR,
 				payload: {
 					error: true,
-					errorMessage: (error as Error)?.toString() || 'Something went wrong',
+					errorMessage: (error as Error)?.toString() || defaultErrorMessage,
 				},
 			});
 		}

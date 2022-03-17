@@ -1,5 +1,9 @@
 import { Button } from 'antd';
-import styled, { css } from 'styled-components';
+import styled, {
+	css,
+	DefaultTheme,
+	ThemedCssFunction,
+} from 'styled-components';
 
 interface Props {
 	disabled: boolean;
@@ -13,9 +17,17 @@ export const Container = styled.div<Props>`
 		padding-left: 0.5rem;
 		min-height: 5vh;
 
-		cursor: ${({ disabled }) => disabled && 'not-allowed'};
+		cursor: ${({
+			disabled,
+		}):
+			| ReturnType<ThemedCssFunction<DefaultTheme>>
+			| string
+			| false
+			| undefined => disabled && 'not-allowed'};
 
-		${({ disabled }) =>
+		${({
+			disabled,
+		}): ReturnType<ThemedCssFunction<DefaultTheme>> | false | undefined =>
 			disabled &&
 			css`
 				opacity: 0.5;

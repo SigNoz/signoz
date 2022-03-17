@@ -28,7 +28,8 @@ interface CustomSubTextProps {
 
 export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 	&&& {
-		background: ${({ isDarkMode }) => (isDarkMode ? '#444' : '#ddd')};
+		background: ${({ isDarkMode }): string | number =>
+			isDarkMode ? '#444' : '#ddd'};
 		font-size: 12px;
 		padding: 6px 8px;
 		word-break: break-all;
@@ -59,6 +60,7 @@ const selectedSpanDetailsContainer = css`
 const spanEventsTabsContainer = css`
 	margin-top: 1rem;
 `;
+
 export const styles = {
 	removeMargin,
 	removePadding,

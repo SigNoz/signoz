@@ -22,7 +22,7 @@ const TopNav = (): JSX.Element | null => {
 		return null;
 	}
 
-	const checkRouteExists = (currentPath: string) => {
+	const checkRouteExists = (currentPath: string): boolean => {
 		for (let i = 0; i < routesToSkip.length; ++i) {
 			if (
 				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })

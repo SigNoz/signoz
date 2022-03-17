@@ -40,7 +40,8 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 			(e) => e === props.keyValue,
 		) !== undefined;
 
-	const onCheckHandler = async () => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const onCheckHandler = async (): Promise<void> => {
 		try {
 			setIsLoading(true);
 

@@ -57,7 +57,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		[pathname],
 	);
 
-	const onClickSlackHandler = () => {
+	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 

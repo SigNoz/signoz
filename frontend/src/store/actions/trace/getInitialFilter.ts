@@ -29,6 +29,7 @@ export const GetInitialTraceFilter = (
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	return async (dispatch, getState): Promise<void> => {
 		try {
 			const query = location.search;

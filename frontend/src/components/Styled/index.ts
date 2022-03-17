@@ -2,14 +2,13 @@ import * as AntD from 'antd';
 import { TextProps } from 'antd/lib/typography/Text';
 import { TitleProps } from 'antd/lib/typography/Title';
 import React from 'react';
-import styled, {
-	FlattenSimpleInterpolation,
-} from 'styled-components';
+import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';
 
-const styledClass = (props: IStyledClass): FlattenSimpleInterpolation =>
-	props.styledclass;
+const styledClass = (
+	props: IStyledClass,
+): undefined | FlattenSimpleInterpolation => props.styledclass;
 
 type TStyledCol = AntD.ColProps & IStyledClass;
 const StyledCol = styled(AntD.Col)<TStyledCol>`

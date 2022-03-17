@@ -1,11 +1,4 @@
-import { Select as SelectComponent } from 'antd';
 import styled from 'styled-components';
-
-export const Select = styled(SelectComponent)`
-	&&& {
-		min-width: 350px;
-	}
-`;
 
 export const Container = styled.div`
 	&&& {

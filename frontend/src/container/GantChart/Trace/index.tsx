@@ -5,7 +5,6 @@ import { IIntervalUnit } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import React, { useEffect, useRef, useState } from 'react';
-import { pushDStree } from 'store/actions';
 
 import { ITraceMetaData } from '..';
 import SpanLength from '../SpanLength';
@@ -75,9 +74,9 @@ const Trace = (props: TraceProps): JSX.Element => {
 				inline: 'nearest',
 			});
 		}
-	}, [activeSelectedId]);
+	}, [activeSelectedId, id]);
 
-	const onMouseEnterHandler = () => {
+	const onMouseEnterHandler = (): void => {
 		setActiveHoverId(props.id);
 		if (ref.current) {
 			const { top } = getTopLeftFromBody(ref.current);
@@ -85,15 +84,15 @@ const Trace = (props: TraceProps): JSX.Element => {
 		}
 	};
 
-	const onMouseLeaveHandler = () => {
+	const onMouseLeaveHandler = (): void => {
 		setActiveHoverId('');
 	};
 
-	const onClick = () => {
+	const onClick = (): void => {
 		setActiveSelectedId(id);
 	};
 
-	const onClickTreeExpansion = (event) => {
+	const onClickTreeExpansion = (event): void => {
 		event.stopPropagation();
 		setOpen((state) => {
 			localTreeExpandInteraction.current = !isOpen;

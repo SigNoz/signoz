@@ -65,7 +65,9 @@ const FullView = ({
 				minTime,
 			});
 
-			const getMinMax = (time: timePreferenceType) => {
+			const getMinMax = (
+				time: timePreferenceType,
+			): { max: string | number; min: string | number } => {
 				if (time === 'GLOBAL_TIME') {
 					const minMax = GetMinMax(globalSelectedTime);
 					return {

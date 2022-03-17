@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-small-switch */
 import { Action, ActionTypes, usageDataItem } from 'store/actions';
 
 export const usageDataReducer = (

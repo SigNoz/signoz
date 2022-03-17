@@ -26,11 +26,11 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, spanId));
-	}, [spanId]);
+	}, [spanId, data]);
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, activeSelectedId));
-	}, [activeSelectedId]);
+	}, [activeSelectedId, data]);
 
 	const handleCollapse = () => {
 		setIsExpandAll((prev) => !prev);

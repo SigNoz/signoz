@@ -1,5 +1,9 @@
-import { Layout, Menu, Switch, Typography } from 'antd';
-import styled, { css } from 'styled-components';
+import { Layout, Switch, Typography } from 'antd';
+import styled, {
+	css,
+	DefaultTheme,
+	ThemedCssFunction,
+} from 'styled-components';
 const { Sider: SiderComponent } = Layout;
 
 export const ThemeSwitcherWrapper = styled.div`
@@ -36,7 +40,7 @@ interface DarkModeProps {
 
 export const ToggleButton = styled(Switch)<DarkModeProps>`
 	&&& {
-		background: ${({ checked }) => checked === false && 'grey'};
+		background: ${({ checked }): string => (checked === false ? 'grey' : '')};
 	}
 `;
 
@@ -50,11 +54,13 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 	position: fixed;
 	bottom: 48px;
 	background: #262626;
-	width: ${({ collapsed }) => (!collapsed ? '200px' : '80px')};
+	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
 
 	&&& {
 		li {
-			${({ collapsed }) =>
+			${({
+				collapsed,
+			}): ReturnType<ThemedCssFunction<DefaultTheme>> | false | undefined =>
 				collapsed &&
 				css`
 					padding-left: 24px;
@@ -62,9 +68,11 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 		}
 
 		svg {
-			margin-left: ${({ collapsed }) => (collapsed ? '0' : '24px')};
+			margin-left: ${({ collapsed }): string => (collapsed ? '0' : '24px')};
 
-			${({ collapsed }) =>
+			${({
+				collapsed,
+			}): ReturnType<ThemedCssFunction<DefaultTheme>> | false | undefined =>
 				collapsed &&
 				css`
 					height: 100%;

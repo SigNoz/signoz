@@ -1,11 +1,14 @@
 import { ITraceTree } from 'types/api/trace/getTraceItem';
+import { GetSpanTreeMetaData } from 'utils/getSpanTreeMetadata';
 
-export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
+export const getMetaDataFromSpanTree = (
+	treeData: ITraceTree,
+): GetSpanTreeMetaData => {
 	let globalStart = Number.POSITIVE_INFINITY;
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
 	let levels = 1;
-	const traverse = (treeNode: ITraceTree, level = 0) => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
@@ -31,10 +34,13 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 		spread: globalEnd - globalStart,
 		totalSpans,
 		levels,
+		treeData,
 	};
 };
 
-export function getTopLeftFromBody(elem: HTMLElement) {
+export function getTopLeftFromBody(
+	elem: HTMLElement,
+): { left: number; top: number } {
 	const box = elem.getBoundingClientRect();
 
 	const body = document.body;
@@ -57,7 +63,7 @@ export const getNodeById = (
 	treeData: ITraceTree,
 ): ITraceTree | undefined => {
 	let foundNode: ITraceTree | undefined = undefined;
-	const traverse = (treeNode: ITraceTree, level = 0) => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
@@ -88,7 +94,7 @@ const getSpanWithoutChildren = (
 		tags: span.tags,
 		time: span.time,
 		value: span.value,
-		error: span.error,
+		event: span.event,
 		hasError: span.hasError,
 	};
 };
@@ -101,10 +107,7 @@ export const isSpanPresentInSearchString = (
 
 	const stringifyTree = JSON.stringify(parsedTree);
 
-	if (stringifyTree.includes(searchedString)) {
-		return true;
-	}
-	return false;
+	return stringifyTree.includes(searchedString) ? true : false;
 };
 
 export const isSpanPresent = (
@@ -117,7 +120,7 @@ export const isSpanPresent = (
 		treeNode: ITraceTree,
 		level = 0,
 		foundNode: ITraceTree[],
-	) => {
+	): void => {
 		if (!treeNode) {
 			return;
 		}
@@ -140,7 +143,7 @@ export const isSpanPresent = (
 export const getSpanPath = (tree: ITraceTree, spanId: string): string[] => {
 	const spanPath: string[] = [];
 
-	const traverse = (treeNode: ITraceTree) => {
+	const traverse = (treeNode: ITraceTree): boolean => {
 		if (!treeNode) {
 			return false;
 		}

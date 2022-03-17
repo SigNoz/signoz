@@ -21,7 +21,8 @@ export type Span = [
 	string | string[],
 	string | string[],
 	string | string[],
-	ITraceTree[],
+	string[],
+	number,
 ];
 
 export interface ITraceTree {
