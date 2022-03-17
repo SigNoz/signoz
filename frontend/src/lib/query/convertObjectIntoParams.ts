@@ -1,7 +1,7 @@
 const convertObjectIntoParams = (
-	props: Record<any, any>,
+	props: Record<string, unknown>,
 	stringify = false,
-) => {
+): string => {
 	return Object.keys(props)
 		.map(
 			(e) =>

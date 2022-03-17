@@ -21,6 +21,12 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 - comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L59`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
+    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L36`
+
+    ```docker
+    ports:
+      - "8080:8080"
+    ```
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d`
   - If you are on arm64 processors (Apple M1 Macbooks) run `sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d`
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
@@ -47,19 +53,31 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 ### To run ClickHouse setup (recommended for local development)
 
 - git clone https://github.com/SigNoz/signoz.git
+- run `cd signoz` to move to signoz directory
 - run `sudo make dev-setup` to configure local setup to run query-service
 - comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L45`
 - comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L28`
-- add below configuration to clickhouse section at `docker/clickhouse-setup/docker-compose.yaml`
-```
+- add below configuration to clickhouse section at `docker/clickhouse-setup/docker-compose.yaml#L6`
+```docker
     expose:
       - 9000
     ports:
       - 9001:9000
 ```
+
+- run `cd pkg/query-service/` to move to query-service directory
+- Open ./constants/constants.go
+    - Replace ```const RELATIONAL_DATASOURCE_PATH = "/var/lib/signoz/signoz.db"``` \
+        with ```const RELATIONAL_DATASOURCE_PATH = "./signoz.db".```
+
 - Install signoz locally without the frontend and query-service
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo make run-x86`
   - If you are on arm64 processors (Apple M1 Macbooks) run `sudo make run-arm`
+
+#### Run locally
+```console
+ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse go run main.go
+```
 
 > Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
 
@@ -68,13 +86,13 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
 ---
-Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
+<!-- Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
 
 Click the button below. A workspace with all required environments will be created.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/SigNoz/signoz)
 
-> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/signoz`
+> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/signoz` -->
 
 # Contribute to SigNoz Helm Chart
 

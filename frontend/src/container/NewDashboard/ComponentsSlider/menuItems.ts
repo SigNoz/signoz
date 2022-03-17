@@ -1,6 +1,6 @@
 import TimeSeries from 'assets/Dashboard/TimeSeries';
-import ValueIcon from 'assets/Dashboard/Value';
 import { TimeSeriesProps as IconProps } from 'assets/Dashboard/TimeSeries';
+import ValueIcon from 'assets/Dashboard/Value';
 
 const Items: ItemsProps[] = [
 	{

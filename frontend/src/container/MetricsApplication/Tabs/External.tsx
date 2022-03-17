@@ -26,6 +26,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 										legend: '{{http_url}}',
 									},
 								])}
+								yAxisUnit="%"
 							/>
 						</GraphContainer>
 					</Card>
@@ -45,6 +46,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 										legend: 'Average Duration',
 									},
 								])}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>
@@ -66,6 +68,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 										legend: '{{http_url}}',
 									},
 								])}
+								yAxisUnit="short"
 							/>
 						</GraphContainer>
 					</Card>
@@ -85,6 +88,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 										legend: '{{http_url}}',
 									},
 								])}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>
