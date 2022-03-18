@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"context"
@@ -13,9 +13,15 @@ import (
 )
 
 const (
-	composeFile = "./test-deploy/docker-compose.yaml"
-	prefix      = "signoz_test"
+	composeFile   = "./test-deploy/docker-compose.yaml"
+	prefix        = "signoz_test"
+	minioEndpoint = "localhost:9100"
+	accessKey     = "ash"
+	secretKey     = "password"
+	bucketName    = "test"
 )
+
+var minioClient *minio.Client
 
 func getCmd(args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(context.Background(), args[0], args[1:]...)
@@ -36,15 +42,12 @@ func startMinio() error {
 		return err
 	}
 
-	endpoint := "localhost:9100"
-	accessKeyID := "ash"
-	secretAccessKey := "password"
-
-	minioClient, err := minio.New(endpoint, accessKeyID, secretAccessKey, false)
+	var err error
+	minioClient, err = minio.New(minioEndpoint, accessKey, secretKey, false)
 	if err != nil {
 		return err
 	}
-	if err = minioClient.MakeBucket("test", ""); err != nil {
+	if err = minioClient.MakeBucket(bucketName, ""); err != nil {
 		return err
 	}
 	return nil

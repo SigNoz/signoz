@@ -1,10 +1,11 @@
-package main
+package tests
 
 import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +73,7 @@ func TestSetTTL(t *testing.T) {
 			"move ttl has been successfully set up",
 		},
 		{
-			5, "traces", "30s", "60s",
+			5, "traces", "10s", "600s",
 			"move ttl has been successfully set up",
 		},
 	}
@@ -81,8 +82,19 @@ func TestSetTTL(t *testing.T) {
 		r, err := setTTL(tc.table, tc.coldTTL, tc.deleteTTL)
 		require.NoErrorf(t, err, "Failed case: %d", tc.caseNo)
 		require.Containsf(t, string(r), tc.expected, "Failed case: %d", tc.caseNo)
-
 	}
+
+	time.Sleep(20 * time.Second)
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+
+	count := 0
+	for range minioClient.ListObjects(bucketName, "", false, doneCh) {
+		count++
+	}
+
+	require.True(t, count > 0, "No objects are present in Minio")
+	fmt.Printf("=== Found %d objects in Minio\n", count)
 }
 
 func TestMain(m *testing.M) {
