@@ -3,6 +3,8 @@ import FormItem from 'antd/lib/form/FormItem';
 import {
 	ChannelType,
 	SlackChannel,
+	SlackType,
+	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import React from 'react';
 const { Option } = Select;
@@ -12,6 +14,7 @@ import history from 'lib/history';
 import { Store } from 'rc-field-form/lib/interface';
 
 import SlackSettings from './Settings/Slack';
+import WebhookSettings from './Settings/webhook';
 import { Button } from './styles';
 
 const FormAlertChannels = ({
@@ -27,6 +30,17 @@ const FormAlertChannels = ({
 	initialValue,
 	nameDisable = false,
 }: FormAlertChannelsProps): JSX.Element => {
+	const renderSettings = () => {
+		console.log('type:', type);
+		switch (type) {
+			case SlackType:
+				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
+			case WebhookType:
+				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+			default:
+				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
+		}
+	};
 	return (
 		<>
 			{NotificationElement}
@@ -51,14 +65,13 @@ const FormAlertChannels = ({
 						<Option value="slack" key="slack">
 							Slack
 						</Option>
+						<Option value="webhook" key="webhook">
+							Webhook
+						</Option>
 					</Select>
 				</FormItem>
 
-				<FormItem>
-					{type === 'slack' && (
-						<SlackSettings setSelectedConfig={setSelectedConfig} />
-					)}
-				</FormItem>
+				<FormItem>{renderSettings()}</FormItem>
 
 				<FormItem>
 					<Button
