@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.27.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/containerd/containerd v1.4.12 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhui/dktest v0.3.4 // indirect
 	github.com/docker/docker v20.10.12+incompatible // indirect
 	github.com/frankban/quicktest v1.13.0 // indirect
@@ -57,6 +58,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
