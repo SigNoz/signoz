@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/util/stats"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ApiError struct {
@@ -26,11 +30,11 @@ const (
 	ErrorNotImplemented ErrorType = "not_implemented"
 )
 
-// type QueryData struct {
-// 	ResultType promql.ValueType  `json:"resultType"`
-// 	Result     promql.Value      `json:"result"`
-// 	Stats      *stats.QueryStats `json:"stats,omitempty"`
-// }
+type QueryData struct {
+	ResultType promql.ValueType  `json:"resultType"`
+	Result     promql.Value      `json:"result"`
+	Stats      *stats.QueryStats `json:"stats,omitempty"`
+}
 
 type RuleResponseItem struct {
 	Id        int       `json:"id" db:"id"`
@@ -69,20 +73,20 @@ type ReceiverResponse struct {
 }
 
 // AlertDiscovery has info for all active alerts.
-// type AlertDiscovery struct {
-// 	Alerts []*AlertingRuleResponse `json:"rules"`
-// }
+type AlertDiscovery struct {
+	Alerts []*AlertingRuleResponse `json:"rules"`
+}
 
 // Alert has info for an alert.
-// type AlertingRuleResponse struct {
-// 	Labels      labels.Labels `json:"labels"`
-// 	Annotations labels.Labels `json:"annotations"`
-// 	State       string        `json:"state"`
-// 	Name        string        `json:"name"`
-// 	Id          int           `json:"id"`
-// 	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
-// 	// Value       float64       `json:"value"`
-// }
+type AlertingRuleResponse struct {
+	Labels      labels.Labels `json:"labels"`
+	Annotations labels.Labels `json:"annotations"`
+	State       string        `json:"state"`
+	Name        string        `json:"name"`
+	Id          int           `json:"id"`
+	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
+	// Value       float64       `json:"value"`
+}
 
 type ServiceItem struct {
 	ServiceName  string  `json:"serviceName" ch:"serviceName"`
