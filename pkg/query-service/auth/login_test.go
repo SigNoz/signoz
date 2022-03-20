@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,5 +10,9 @@ import (
 func TestLogin(t *testing.T) {
 	resp, err := Login(context.Background(), &LoginRequest{"ahsan", "pass"})
 	require.NoError(t, err)
-	fmt.Printf("%+v\n", resp)
+
+	claims, err := ParseJWT(resp.accessJwt)
+	require.NoError(t, err)
+
+	require.Equal(t, "ahsan", claims["userId"].(string))
 }
