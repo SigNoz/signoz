@@ -105,15 +105,15 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 func (r *ClickHouseReader) Start() {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
-	allowedFormat := promlog.AllowedFormat{}
-	allowedFormat.Set("logfmt")
+	// allowedFormat := promlog.AllowedFormat{}
+	// allowedFormat.Set("logfmt")
 
-	promlogConfig := promlog.Config{
-		Level:  &logLevel,
-		Format: &allowedFormat,
-	}
+	// promlogConfig := promlog.Config{
+	// 	Level:  &logLevel,
+	// 	Format: &allowedFormat,
+	// }
 
-	logger := promlog.New(&promlogConfig)
+	logger := promlog.New(logLevel)
 
 	startTime := func() (int64, error) {
 		return int64(promModel.Latest), nil
