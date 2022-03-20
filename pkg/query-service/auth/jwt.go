@@ -46,7 +46,7 @@ func generateAccessJwt(userId string, groups []Group) (string, error) {
 		return gids
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userid": userId,
+		"userId": userId,
 		"groups": getIds(groups),
 		"exp":    time.Now().Add(JwtExpiry).Unix(),
 	})
