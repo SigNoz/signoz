@@ -70,3 +70,16 @@ func generateRefreshJwt(userId string) (string, error) {
 	}
 	return jwtStr, nil
 }
+
+func generateInviteJwt(req *InviteRequest) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": req.Email,
+		"exp":   time.Now().Add(inviteValidity).Unix(),
+	})
+
+	jwtStr, err := token.SignedString([]byte(JwtSecret))
+	if err != nil {
+		return "", errors.Errorf("failed to encode jwt: %v", err)
+	}
+	return jwtStr, nil
+}
