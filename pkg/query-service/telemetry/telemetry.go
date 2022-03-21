@@ -3,6 +3,7 @@ package telemetry
 import (
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -111,6 +112,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 	// zap.S().Info(data)
 	properties := analytics.NewProperties()
 	properties.Set("version", version.GetVersion())
+	properties.Set("deploymentType", getDeploymentType())
 
 	for k, v := range data {
 		properties.Set(k, v)
@@ -158,4 +160,12 @@ func GetInstance() *Telemetry {
 	})
 
 	return telemetry
+}
+
+func getDeploymentType() string {
+	deploymentType := os.Getenv("DEPLOYMENT_TYPE")
+	if deploymentType == "" {
+		return "unknown"
+	}
+	return deploymentType
 }
