@@ -2644,7 +2644,9 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 			fmt.Errorf("error while getting disks. Err=%v", err)}
 	}
 
-	zap.S().Debugf("GetDisks response: %+v\n", diskItems)
+
+	zap.S().Infof("Got response: %+v\n", diskItems)
+
 	return &diskItems, nil
 }
 

@@ -35,7 +35,8 @@ require (
 	github.com/lib/pq v1.10.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/minio/minio-go v6.0.14+incompatible
+	github.com/minio/minio-go/v6 v6.0.57
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/oklog/oklog v0.3.2
@@ -57,6 +58,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
