@@ -37,6 +37,11 @@ services:
       - STORAGE=clickhouse
       - POSTHOG_API_KEY=H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w
       - GODEBUG=netdns=go
+      - TELEMETRY_ENABLED=true
+      - DEPLOYMENT_TYPE=docker-swarm
+    deploy:
+      restart_policy:
+        condition: on-failure
     depends_on:
     - clickhouse
 
