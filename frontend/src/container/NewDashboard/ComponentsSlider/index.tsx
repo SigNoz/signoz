@@ -29,6 +29,15 @@ const DashboardGraphSlider = (): JSX.Element => {
 		async (name: ITEMS) => {
 			try {
 				const generateWidgetId = v4();
+
+				const getX = (): number => {
+					if (data.layout && data.layout?.length > 0) {
+						const lastIndexX = data.layout[data.layout?.length - 1];
+						return (lastIndexX.w + lastIndexX.x) % 12;
+					}
+					return 0;
+				};
+
 				await updateDashboard({
 					data,
 					generateWidgetId,
@@ -39,7 +48,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 							h: 2,
 							i: ((data.layout || [])?.length + 1).toString(),
 							w: 6,
-							x: 0,
+							x: getX(),
 							y: 0,
 						},
 					],

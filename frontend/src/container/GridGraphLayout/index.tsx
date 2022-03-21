@@ -95,21 +95,34 @@ const GridGraph = (): JSX.Element => {
 			(isMounted.current === true || isDeleted.current === true)
 		) {
 			const preLayouts = getPreLayouts();
-			setLayout(() => [
-				...preLayouts,
-				{
-					i: (preLayouts.length + 1).toString(),
-					x: 0,
-					y: Infinity,
-					w: 6,
-					h: 2,
-					Component: AddWidgetWrapper,
-					maxW: 6,
-					isDraggable: false,
-					isResizable: false,
-					isBounded: true,
-				},
-			]);
+			setLayout(() => {
+				const getX = (): number => {
+					if (preLayouts && preLayouts?.length > 0) {
+						const last = preLayouts[preLayouts?.length - 1];
+
+						return (last.w + last.x) % 12;
+					}
+					return 0;
+				};
+
+				console.log({ x: getX() });
+
+				return [
+					...preLayouts,
+					{
+						i: (preLayouts.length + 1).toString(),
+						x: getX(),
+						y: Infinity,
+						w: 6,
+						h: 2,
+						Component: AddWidgetWrapper,
+						maxW: 6,
+						isDraggable: false,
+						isResizable: false,
+						isBounded: true,
+					},
+				];
+			});
 		}
 
 		return (): void => {
