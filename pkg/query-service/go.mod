@@ -77,6 +77,5 @@ require (
 
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.68
-
 replace github.com/hashicorp/consul => github.com/hashicorp/consul/api v1.1.0
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.69

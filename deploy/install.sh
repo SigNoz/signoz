@@ -102,7 +102,7 @@ check_os() {
 # The script should error out in case they aren't available
 check_ports_occupied() {
     local port_check_output
-    local ports_pattern="80|3301|8080"
+    local ports_pattern="3301|4317"
 
     if is_mac; then
         port_check_output="$(netstat -anp tcp | awk '$6 == "LISTEN" && $4 ~ /^.*\.('"$ports_pattern"')$/')"
@@ -119,7 +119,7 @@ check_ports_occupied() {
         send_event "port_not_available"
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
-        echo "SigNoz requires ports 80 & 443 to be open. Please shut down any other service(s) that may be running on these ports."
+        echo "SigNoz requires ports 3301 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
         echo "You can run SigNoz on another port following this guide https://signoz.io/docs/deployment/docker#troubleshooting"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
@@ -133,57 +133,41 @@ install_docker() {
 
 
     if [[ $package_manager == apt-get ]]; then
-        apt_cmd="sudo apt-get --yes --quiet"
+        apt_cmd="$sudo_cmd apt-get --yes --quiet"
         $apt_cmd update
         $apt_cmd install software-properties-common gnupg-agent
-        curl -fsSL "https://download.docker.com/linux/$os/gpg" | sudo apt-key add -
-        sudo add-apt-repository \
+        curl -fsSL "https://download.docker.com/linux/$os/gpg" | $sudo_cmd apt-key add -
+        $sudo_cmd add-apt-repository \
             "deb [arch=amd64] https://download.docker.com/linux/$os $(lsb_release -cs) stable"
         $apt_cmd update
         echo "Installing docker"
         $apt_cmd install docker-ce docker-ce-cli containerd.io
     elif [[ $package_manager == zypper ]]; then
-        zypper_cmd="sudo zypper --quiet --no-gpg-checks --non-interactive"
+        zypper_cmd="$sudo_cmd zypper --quiet --no-gpg-checks --non-interactive"
         echo "Installing docker"
         if [[ $os == sles ]]; then
             os_sp="$(cat /etc/*-release | awk -F= '$1 == "VERSION_ID" { gsub(/"/, ""); print $2; exit }')"
             os_arch="$(uname -i)"
-            sudo SUSEConnect -p sle-module-containers/$os_sp/$os_arch -r ''
+            SUSEConnect -p sle-module-containers/$os_sp/$os_arch -r ''
         fi
         $zypper_cmd install docker docker-runc containerd
-        sudo systemctl enable docker.service
+        $sudo_cmd systemctl enable docker.service
     elif [[ $package_manager == yum && $os == 'amazon linux' ]]; then
         echo
         echo "Amazon Linux detected ... "
         echo
-        # sudo yum install docker
-        # sudo service docker start
-        sudo amazon-linux-extras install docker
+        # yum install docker
+        # service docker start
+        $sudo_cmd amazon-linux-extras install docker
     else
 
-        yum_cmd="sudo yum --assumeyes --quiet"
+        yum_cmd="$sudo_cmd yum --assumeyes --quiet"
         $yum_cmd install yum-utils
-        sudo yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
+        $sudo_cmd yum-config-manager --add-repo https://download.docker.com/linux/$os/docker-ce.repo
         echo "Installing docker"
         $yum_cmd install docker-ce docker-ce-cli containerd.io
 
     fi
-
-}
-install_docker_machine() {
-
-    echo "\nInstalling docker machine ..."
-
-    if [[ $os == "Mac" ]];then
-        curl -sL https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
-        chmod +x /usr/local/bin/docker-machine
-    else
-        curl -sL https://github.com/docker/machine/releases/download/v0.16.2/docker-machine-`uname -s`-`uname -m` >/tmp/docker-machine
-        chmod +x /tmp/docker-machine
-        sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
-
-    fi
-
 
 }
 
@@ -192,9 +176,9 @@ install_docker_compose() {
         if [[ ! -f /usr/bin/docker-compose ]];then
             echo "++++++++++++++++++++++++"
             echo "Installing docker-compose"
-            sudo curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-            sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+            $sudo_cmd curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            $sudo_cmd chmod +x /usr/local/bin/docker-compose
+            $sudo_cmd ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
             echo "docker-compose installed!"
             echo ""
         fi
@@ -210,16 +194,23 @@ install_docker_compose() {
 }
 
 start_docker() {
-    echo "Starting Docker ..."
+    echo -e "🐳 Starting Docker ...\n"
     if [ $os = "Mac" ]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else 
-        if ! sudo systemctl is-active docker.service > /dev/null; then
+        if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
-            sudo systemctl start docker.service
+            $sudo_cmd systemctl start docker.service
+        fi
+        if [ -z $sudo_cmd ]; then
+            docker ps > /dev/null && true
+            if [ $? -ne 0 ]; then
+                request_sudo
+            fi
         fi
     fi
 }
+
 wait_for_containers_start() {
     local timeout=$1
 
@@ -229,16 +220,6 @@ wait_for_containers_start() {
         if [[ status_code -eq 200 ]]; then
             break
         else
-            if [ $setup_type == 'druid' ]; then
-                SUPERVISORS="$(curl -so -  http://localhost:8888/druid/indexer/v1/supervisor)"
-                LEN_SUPERVISORS="${#SUPERVISORS}"
-
-                if [[ LEN_SUPERVISORS -ne 19 && $timeout -eq 50 ]];then
-                    echo -e "\n🟠 Supervisors taking time to start ⏳ ... let's wait for some more time ⏱️\n\n"
-                    sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up -d
-                fi
-            fi
-
             echo -ne "Waiting for all containers to start. This check will timeout in $timeout seconds ...\r\c"
         fi
         ((timeout--))
@@ -254,26 +235,25 @@ bye() {  # Prints a friendly good bye message and exits the script.
 
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
         echo ""
-        if [ $setup_type == 'clickhouse' ]; then
-            if is_arm64; then
-                echo -e "sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
-            else
-                echo -e "sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
-            fi
-        else   
-            echo -e "sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
+        if is_arm64; then
+            echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml ps -a"
+        else
+            echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
         fi
+
         # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
-        echo -e "\n📨 Please share your email to receive support with the installation"
-        read -rp 'Email: ' email
-
-        while [[ $email == "" ]]
-        do
+        if [[ email == "" ]]; then
+            echo -e "\n📨 Please share your email to receive support with the installation"
             read -rp 'Email: ' email
-        done
+
+            while [[ $email == "" ]]
+            do
+                read -rp 'Email: ' email
+            done
+        fi
 
         send_event "installation_support"
 
@@ -284,16 +264,47 @@ bye() {  # Prints a friendly good bye message and exits the script.
     fi
 }
 
+request_sudo() {
+    if hash sudo 2>/dev/null; then
+        sudo_cmd="sudo"
+        echo -e "\n\n🙇 We will need sudo access to complete the installation."
+        if ! $sudo_cmd -v && (( $EUID != 0 )); then
+            echo -e "Please enter your sudo password now:"
+            
+            if ! $sudo_cmd -v; then
+                echo "Need sudo privileges to proceed with the installation."
+                exit 1;
+            fi
 
+            echo -e "Thanks! 🙏\n"
+            echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
+        fi
+	fi
+}
+
+echo ""
 echo -e "👋 Thank you for trying out SigNoz! "
 echo ""
 
+sudo_cmd=""
+
+# Check sudo permissions
+if (( $EUID != 0 )); then
+    echo "🟡 Running installer with non-sudo permissions."
+    if ! is_command_present docker; then
+        $sudo_cmd docker ps
+    fi
+    echo "   In case of any failure or prompt, please consider running the script with sudo privileges."
+    echo ""
+else
+    sudo_cmd="sudo"
+fi
 
 # Checking OS and assigning package manager
 desired_os=0
 os=""
 email=""
-echo -e "Detecting your OS ..."
+echo -e "🌏 Detecting your OS ...\n"
 check_os
 
 # Obtain unique installation id
@@ -301,9 +312,22 @@ sysinfo="$(uname -a)"
 if [ $? -ne 0 ]; then
     uuid="$(uuidgen)"
     uuid="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
-    SIGNOZ_INSTALLATION_ID="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
+    sysinfo="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
+fi
+
+digest_cmd=""
+if hash shasum 2>/dev/null; then
+    digest_cmd="shasum -a 256"
+elif hash sha256sum 2>/dev/null; then
+    digest_cmd="sha256sum"
+elif hash openssl 2>/dev/null; then
+    digest_cmd="openssl dgst -sha256"
+fi
+
+if [ -z $digest_cmd ]; then
+    SIGNOZ_INSTALLATION_ID="$sysinfo"
 else
-    SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | shasum | cut -d ' ' -f1)
+    SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | $digest_cmd | grep -E -o '[a-zA-Z0-9]{64}')
 fi
 
 # echo ""
@@ -364,13 +388,7 @@ send_event() {
         'installation_error_checks')
             event="Installation Error - Checks"
             error="Containers not started"
-            if [ $setup_type == 'clickhouse' ]; then
-                others='"data": "some_checks",'
-            else
-                supervisors="$(curl -so -  http://localhost:8888/druid/indexer/v1/supervisor)"
-                datasources="$(curl -so -  http://localhost:8888/druid/coordinator/v1/datasources)"
-                others='"supervisors": "'"$supervisors"'", "datasources": "'"$datasources"'",'
-            fi
+            others='"data": "some_checks",'
             ;;
         'installation_support')
             event="Installation Support"
@@ -412,13 +430,26 @@ fi
 
 # Check is Docker daemon is installed and available. If not, the install & start Docker for Linux machines. We cannot automatically install Docker Desktop on Mac OS
 if ! is_command_present docker; then
+
     if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
+        request_sudo
         install_docker
-    else
+        # enable docker without sudo from next reboot
+        sudo usermod -aG docker "${USER}"
+    elif is_mac; then
         echo ""
         echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
         echo "Docker Desktop must be installed manually on Mac OS to proceed. Docker can only be installed automatically on Ubuntu / openSUSE / SLES / Redhat / Cent OS"
         echo "https://docs.docker.com/docker-for-mac/install/"
+        echo "++++++++++++++++++++++++++++++++++++++++++++++++"
+
+        send_event "docker_not_installed"
+        exit 1
+    else
+        echo ""
+        echo "+++++++++++ IMPORTANT READ ++++++++++++++++++++++"
+        echo "Docker must be installed manually on your machine to proceed. Docker can only be installed automatically on Ubuntu / openSUSE / SLES / Redhat / Cent OS"
+        echo "https://docs.docker.com/get-docker/"
         echo "++++++++++++++++++++++++++++++++++++++++++++++++"
 
         send_event "docker_not_installed"
@@ -428,42 +459,32 @@ fi
 
 # Install docker-compose
 if ! is_command_present docker-compose; then
+    request_sudo
     install_docker_compose
 fi
 
-
 start_docker
 
-
-# sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
+# $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
 
 
 echo ""
-echo -e "\n🟡 Pulling the latest container images for SigNoz. To run as sudo it may ask for system password\n"
-if [ $setup_type == 'clickhouse' ]; then
-    if is_arm64; then
-        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
-    else
-        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
-    fi
+echo -e "\n🟡 Pulling the latest container images for SigNoz.\n"
+if is_arm64; then
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml pull
 else
-    sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml pull
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml pull
 fi
-
 
 echo ""
 echo "🟡 Starting the SigNoz containers. It may take a few minutes ..."
 echo
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
-if [ $setup_type == 'clickhouse' ]; then
-    if is_arm64; then
-        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
-    else
-        sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
-    fi
+if is_arm64; then
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml up --detach --remove-orphans || true
 else
-    sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml up --detach --remove-orphans || true
+    $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
 fi
 
 wait_for_containers_start 60
@@ -473,11 +494,9 @@ if [[ $status_code -ne 200 ]]; then
     echo "+++++++++++ ERROR ++++++++++++++++++++++"
     echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
     echo ""
-    if [ $setup_type == 'clickhouse' ]; then
-        echo -e "sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
-    else
-        echo -e "sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml ps -a"
-    fi
+
+    echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
+
     echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
     echo "++++++++++++++++++++++++++++++++++++++++"
@@ -495,14 +514,10 @@ else
     echo -e "🟢 Your frontend is running on http://localhost:3301"
     echo ""
 
-    if [ $setup_type == 'clickhouse' ]; then
-        if is_arm64; then
-            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml down -v"
-        else
-            echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
-        fi
+    if is_arm64; then
+        echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.arm.yaml down -v"
     else
-        echo "ℹ️  To bring down SigNoz and clean volumes : sudo docker-compose -f ./docker/druid-kafka-setup/docker-compose-tiny.yaml down -v"
+        echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
     fi
 
     echo ""

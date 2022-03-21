@@ -16,6 +16,7 @@ import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
+import getStep from 'lib/getStep';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -31,6 +32,7 @@ const FullView = ({
 	onClickHandler,
 	noDataGraph = false,
 	name,
+	yAxisUnit,
 }: FullViewProps): JSX.Element => {
 	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -81,7 +83,6 @@ const FullView = ({
 			};
 
 			const queryMinMax = getMinMax(selectedTime.enum);
-
 			const response = await Promise.all(
 				widget.query
 					.filter((e) => e.query.length !== 0)
@@ -90,7 +91,11 @@ const FullView = ({
 							end: queryMinMax.max.toString(),
 							query: query.query,
 							start: queryMinMax.min.toString(),
-							step: '60',
+							step: `${getStep({
+								start: queryMinMax.min,
+								end: queryMinMax.max,
+								inputFormat: 's',
+							})}`,
 						});
 						return {
 							query: query.query,
@@ -217,6 +222,7 @@ const FullView = ({
 					title: widget.title,
 					onClickHandler: onClickHandler,
 					name,
+					yAxisUnit,
 				}}
 			/>
 			{/* </GraphContainer> */}
@@ -237,6 +243,7 @@ interface FullViewProps {
 	onClickHandler?: graphOnClickHandler;
 	noDataGraph?: boolean;
 	name: string;
+	yAxisUnit?: string;
 }
 
 export default FullView;

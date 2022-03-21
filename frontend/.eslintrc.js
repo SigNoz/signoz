@@ -10,6 +10,7 @@ module.exports = {
 		'plugin:@typescript-eslint/recommended',
 		'plugin:@typescript-eslint/eslint-recommended',
 		'plugin:prettier/recommended',
+		'plugin:sonarjs/recommended',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -42,7 +43,10 @@ module.exports = {
 		'@typescript-eslint/explicit-function-return-type': 'error',
 		'@typescript-eslint/no-var-requires': 0,
 		'react/no-array-index-key': 2,
-		'linebreak-style': ['error', process.platform === 'win32' ? 'windows' : 'unix'],
+		'linebreak-style': [
+			'error',
+			process.platform === 'win32' ? 'windows' : 'unix',
+		],
 
 		// simple sort error
 		'simple-import-sort/imports': 'error',

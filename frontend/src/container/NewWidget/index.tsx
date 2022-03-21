@@ -17,10 +17,13 @@ import {
 	SaveDashboard,
 	SaveDashboardProps,
 } from 'store/actions/dashboard/saveDashboard';
-import { UpdateQuery, UpdateQueryProps } from 'store/actions/dashboard/updateQuery';
+import {
+	UpdateQuery,
+	UpdateQueryProps,
+} from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalTime } from 'types/actions/globalTime';
+import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -40,12 +43,12 @@ const NewWidget = ({
 	applySettingsToPanel,
 	saveSettingOfPanel,
 	getQueryResults,
-	updateQuery
+	updateQuery,
 }: Props): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -73,6 +76,9 @@ const NewWidget = ({
 	const [title, setTitle] = useState<string>(selectedWidget?.title || '');
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
+	);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(
+		selectedWidget?.yAxisUnit || 'none',
 	);
 
 	const [stacked, setStacked] = useState<boolean>(
@@ -106,6 +112,7 @@ const NewWidget = ({
 			opacity,
 			timePreferance: selectedTime.enum,
 			title,
+			yAxisUnit,
 			widgetId: query.get('widgetId') || '',
 			dashboardId: dashboardId,
 		});
@@ -120,18 +127,20 @@ const NewWidget = ({
 		saveSettingOfPanel,
 		selectedDashboard,
 		dashboardId,
+		yAxisUnit,
 	]);
 
-	const onClickApplyHandler = () => {
+	const onClickApplyHandler = (): void => {
 		selectedWidget?.query.forEach((element, index) => {
 			updateQuery({
 				widgetId: selectedWidget?.id || '',
 				query: element.query || '',
-				legend: element.legend || '', 
-				currentIndex: index
+				legend: element.legend || '',
+				currentIndex: index,
+				yAxisUnit,
 			});
-		})
-		
+		});
+
 		applySettingsToPanel({
 			description,
 			isStacked: stacked,
@@ -140,8 +149,9 @@ const NewWidget = ({
 			timePreferance: selectedTime.enum,
 			title,
 			widgetId: selectedWidget?.id || '',
+			yAxisUnit,
 		});
-	}
+	};
 
 	const onClickDiscardHandler = useCallback(() => {
 		push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
@@ -160,11 +170,10 @@ const NewWidget = ({
 	}, [
 		selectedWidget?.query,
 		selectedTime.enum,
-		maxTime,
-		minTime,
 		selectedWidget?.id,
 		selectedGraph,
 		getQueryResults,
+		globalSelectedInterval,
 	]);
 
 	useEffect(() => {
@@ -181,7 +190,11 @@ const NewWidget = ({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} />
+					<LeftContainer
+						selectedTime={selectedTime}
+						selectedGraph={selectedGraph}
+						yAxisUnit={yAxisUnit}
+					/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -194,12 +207,14 @@ const NewWidget = ({
 							stacked,
 							setStacked,
 							opacity,
+							yAxisUnit,
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
 							selectedGraph,
 							setSelectedTime,
 							selectedTime,
+							setYAxisUnit,
 						}}
 					/>
 				</RightContainerWrapper>
@@ -210,6 +225,7 @@ const NewWidget = ({
 
 export interface NewWidgetProps {
 	selectedGraph: GRAPH_TYPES;
+	yAxisUnit: Widgets['yAxisUnit'];
 }
 
 interface DispatchProps {
@@ -233,7 +249,7 @@ const mapDispatchToProps = (
 	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
 	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
-	updateQuery: bindActionCreators(UpdateQuery, dispatch)
+	updateQuery: bindActionCreators(UpdateQuery, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

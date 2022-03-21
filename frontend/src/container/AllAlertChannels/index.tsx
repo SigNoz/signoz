@@ -10,7 +10,7 @@ import React, { useCallback } from 'react';
 const { Paragraph } = Typography;
 
 import AlertChannlesComponent from './AlertChannels';
-import { ButtonContainer, Button } from './styles';
+import { Button, ButtonContainer } from './styles';
 
 const AlertChannels = (): JSX.Element => {
 	const onToggleHandler = useCallback(() => {

@@ -1,9 +1,9 @@
-import AlertChannels from 'container/AllAlertChannels';
-import GeneralSettings from 'container/GeneralSettings';
-import React from 'react';
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
+import AlertChannels from 'container/AllAlertChannels';
+import GeneralSettings from 'container/GeneralSettings';
 import history from 'lib/history';
+import React from 'react';
 
 const AllAlertChannels = (): JSX.Element => {
 	const pathName = history.location.pathname;

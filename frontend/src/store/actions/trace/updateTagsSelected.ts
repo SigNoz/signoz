@@ -1,7 +1,7 @@
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { TraceReducer } from 'types/reducer/trace';
 import { UPDATE_SELECTED_TAGS } from 'types/actions/trace';
+import { TraceReducer } from 'types/reducer/trace';
 
 export const UpdateSelectedTags = (
 	selectedTags: TraceReducer['selectedTags'],

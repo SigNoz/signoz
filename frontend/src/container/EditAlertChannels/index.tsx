@@ -56,7 +56,7 @@ const EditAlertChannels = ({
 			});
 		}
 		setSavingState(false);
-	}, [selectedConfig, notifications, toggleSettingsTab, id]);
+	}, [selectedConfig, notifications, id]);
 
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {

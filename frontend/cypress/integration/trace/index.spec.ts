@@ -1,9 +1,15 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
-import { TraceFilterEnum } from 'types/reducer/trace';
-import TableInitialResponse from '../../fixtures/trace/initialSpans.json';
-import FilterInitialResponse from '../../fixtures/trace/initialSpanFilter.json';
-import GraphInitialResponse from '../../fixtures/trace/initialAggregates.json';
 import { AppState } from 'store/reducers';
+import { TraceFilterEnum } from 'types/reducer/trace';
+
+import GraphInitialResponse from '../../fixtures/trace/initialAggregates.json';
+import FilterInitialResponse from '../../fixtures/trace/initialSpanFilter.json';
+import TableInitialResponse from '../../fixtures/trace/initialSpans.json';
+
+const allFilters = '@Filters.all';
+const allGraphs = '@Graph.all';
+const allTable = '@Table.all';
 
 describe('Trace', () => {
 	beforeEach(() => {
@@ -74,9 +80,9 @@ describe('Trace', () => {
 				JSON.stringify(TableInitialResponse),
 			);
 		});
-		cy.get('@Filters.all').should('have.length', 1);
-		cy.get('@Graph.all').should('have.length', 1);
-		cy.get('@Table.all').should('have.length', 1);
+		cy.get(allFilters).should('have.length', 1);
+		cy.get(allGraphs).should('have.length', 1);
+		cy.get(allTable).should('have.length', 1);
 	});
 
 	it('Clear All', () => {
@@ -102,9 +108,9 @@ describe('Trace', () => {
 			cy.wait(['@Filters', '@Graph', '@Table']);
 
 			// insuring the api get call
-			cy.get('@Filters.all').should('have.length', 2);
-			cy.get('@Graph.all').should('have.length', 2);
-			cy.get('@Table.all').should('have.length', 2);
+			cy.get(allFilters).should('have.length', 2);
+			cy.get(allGraphs).should('have.length', 2);
+			cy.get(allTable).should('have.length', 2);
 
 			cy
 				.window()
@@ -146,9 +152,9 @@ describe('Trace', () => {
 				expect(tableBody.exclude[0] === 'status').to.be.true;
 			});
 
-			cy.get('@Filters.all').should('have.length', 2);
-			cy.get('@Graph.all').should('have.length', 2);
-			cy.get('@Table.all').should('have.length', 2);
+			cy.get(allFilters).should('have.length', 2);
+			cy.get(allGraphs).should('have.length', 2);
+			cy.get(allTable).should('have.length', 2);
 		});
 	});
 });
