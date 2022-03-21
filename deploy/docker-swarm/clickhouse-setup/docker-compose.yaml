@@ -42,6 +42,8 @@ services:
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
+      - DEPLOYMENT_TYPE=docker-swarm
+
     deploy:
       restart_policy:
         condition: on-failure

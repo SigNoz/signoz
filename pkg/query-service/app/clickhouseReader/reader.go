@@ -55,10 +55,6 @@ const (
 	signozMetricDBName   = "signoz_metrics"
 	signozSampleName     = "samples"
 	signozTSName         = "time_series"
-
-	minTimespanForProgressiveSearch       = time.Hour
-	minTimespanForProgressiveSearchMargin = time.Minute
-	maxProgressiveSteps                   = 4
 )
 
 var (
