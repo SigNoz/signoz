@@ -6,6 +6,7 @@ services:
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
+    restart: on-failure
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
@@ -36,6 +37,7 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-arm
+      
     restart: on-failure
     depends_on:
       clickhouse:
@@ -57,9 +59,17 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4317:4317"       # OTLP GRPC receiver
+      - "4317:4317"     # OTLP gRPC receiver
+      - "4318:4318"     # OTLP HTTP receiver
+      # - "8889:8889"     # Prometheus metrics exposed by the agent
+      # - "13133"         # health_check
+      # - "14268:14268"   # Jaeger receiver
+      # - "55678:55678"   # OpenCensus receiver
+      # - "55679:55679"   # zpages extension
+      # - "55680:55680"   # OTLP gRPC legacy port
+      # - "55681:55681"   # OTLP HTTP legacy receiver
     mem_limit: 2000m
-    restart: always
+    restart: on-failure
     depends_on:
       clickhouse:
         condition: service_healthy
@@ -69,6 +79,7 @@ services:
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
+    restart: on-failure
     depends_on:
       clickhouse:
         condition: service_healthy
