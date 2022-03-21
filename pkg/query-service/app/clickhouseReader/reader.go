@@ -77,9 +77,7 @@ type ClickHouseReader struct {
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB) *ClickHouseReader {
-
-	datasource := os.Getenv("ClickHouseUrl")
+func NewReader(localDB *sqlx.DB, datasource string) *ClickHouseReader {
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 

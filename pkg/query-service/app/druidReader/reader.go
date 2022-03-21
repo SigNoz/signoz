@@ -3,7 +3,6 @@ package druidReader
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/prometheus/promql"
@@ -19,10 +18,10 @@ type DruidReader struct {
 	LocalDB   *sqlx.DB
 }
 
-func NewReader(localDB *sqlx.DB) *DruidReader {
+func NewReader(localDB *sqlx.DB, datasource string) *DruidReader {
 
 	initialize()
-	druidClientUrl := os.Getenv("DruidClientUrl")
+	druidClientUrl := datasource
 
 	client := godruid.Client{
 		Url:   druidClientUrl,
