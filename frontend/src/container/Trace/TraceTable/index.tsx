@@ -42,7 +42,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			sorter: true,
 			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
-				return <div>{day.format('DD/MM/YYYY hh:mm:ss A')}</div>;
+				return <div>{day.format('YYYY/MM/DD HH:mm:ss')}</div>;
 			},
 		},
 		{

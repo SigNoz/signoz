@@ -34,7 +34,7 @@ const DBCall = ({ getWidget }: DBCallProps): JSX.Element => {
 
 				<Col span={12}>
 					<Card>
-						<GraphTitle>Database Calls Avg Duration (in ms)</GraphTitle>
+						<GraphTitle>Database Calls Avg Duration</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="database_call_avg_duration"
