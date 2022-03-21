@@ -161,6 +161,10 @@ func (druid *DruidReader) SetTTL(_ context.Context, _ *model.TTLParams) (*model.
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
 }
 
+func (druid *DruidReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting disk list")}
+}
+
 func (druid *DruidReader) GetTTL(_ context.Context, _ *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
 }
