@@ -23,7 +23,7 @@ import {
 } from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalTime } from 'types/actions/globalTime';
+import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -48,7 +48,7 @@ const NewWidget = ({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -77,7 +77,9 @@ const NewWidget = ({
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
 	);
-	const [yAxisUnit, setYAxisUnit] = useState<string>(selectedWidget?.yAxisUnit || 'none');
+	const [yAxisUnit, setYAxisUnit] = useState<string>(
+		selectedWidget?.yAxisUnit || 'none',
+	);
 
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
@@ -125,9 +127,10 @@ const NewWidget = ({
 		saveSettingOfPanel,
 		selectedDashboard,
 		dashboardId,
+		yAxisUnit,
 	]);
 
-	const onClickApplyHandler = () => {
+	const onClickApplyHandler = (): void => {
 		selectedWidget?.query.forEach((element, index) => {
 			updateQuery({
 				widgetId: selectedWidget?.id || '',
@@ -146,7 +149,7 @@ const NewWidget = ({
 			timePreferance: selectedTime.enum,
 			title,
 			widgetId: selectedWidget?.id || '',
-			yAxisUnit
+			yAxisUnit,
 		});
 	};
 
@@ -167,11 +170,10 @@ const NewWidget = ({
 	}, [
 		selectedWidget?.query,
 		selectedTime.enum,
-		maxTime,
-		minTime,
 		selectedWidget?.id,
 		selectedGraph,
 		getQueryResults,
+		globalSelectedInterval,
 	]);
 
 	useEffect(() => {
@@ -188,7 +190,11 @@ const NewWidget = ({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer selectedTime={selectedTime} selectedGraph={selectedGraph} yAxisUnit={yAxisUnit}/>
+					<LeftContainer
+						selectedTime={selectedTime}
+						selectedGraph={selectedGraph}
+						yAxisUnit={yAxisUnit}
+					/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -219,6 +225,7 @@ const NewWidget = ({
 
 export interface NewWidgetProps {
 	selectedGraph: GRAPH_TYPES;
+	yAxisUnit: Widgets['yAxisUnit'];
 }
 
 interface DispatchProps {
