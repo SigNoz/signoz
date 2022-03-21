@@ -18,10 +18,10 @@ var (
 	client http.Client
 )
 
-func setTTL(table, toColdTTL, deleteTTL string) ([]byte, error) {
+func setTTL(table, coldStorage, toColdTTL, deleteTTL string) ([]byte, error) {
 	params := fmt.Sprintf("type=%s&duration=%s", table, deleteTTL)
 	if len(toColdTTL) > 0 {
-		params += fmt.Sprintf("&coldStorage=s3&toColdDuration=%s", toColdTTL)
+		params += fmt.Sprintf("&coldStorage=%s&toColdDuration=%s", coldStorage, toColdTTL)
 	}
 	resp, err := client.Post(endpoint+"/api/v1/settings/ttl?"+params, "", nil)
 	if err != nil {
@@ -50,36 +50,41 @@ func TestListDisks(t *testing.T) {
 func TestSetTTL(t *testing.T) {
 
 	testCases := []struct {
-		caseNo    int
-		table     string
-		coldTTL   string
-		deleteTTL string
-		expected  string
+		caseNo      int
+		coldStorage string
+		table       string
+		coldTTL     string
+		deleteTTL   string
+		expected    string
 	}{
 		{
-			1, "traces", "100s", "60s",
+			1, "s3", "traces", "100s", "60s",
 			"Delete TTL should be greater than cold storage move TTL.",
 		},
 		{
-			2, "traces", "100", "60s",
+			2, "s3", "traces", "100", "60s",
 			"Not a valid toCold TTL duration 100",
 		},
 		{
-			3, "traces", "100s", "100",
+			3, "s3", "traces", "100s", "100",
 			"Not a valid TTL duration 100",
 		},
 		{
-			4, "traces", "", "60s",
+			4, "s3", "traces", "", "60s",
 			"move ttl has been successfully set up",
 		},
 		{
-			5, "traces", "10s", "600s",
+			5, "s3", "traces", "10s", "600s",
 			"move ttl has been successfully set up",
+		},
+		{
+			6, "s4", "traces", "10s", "600s",
+			"No such volume `s4` in storage policy `tiered`",
 		},
 	}
 
 	for _, tc := range testCases {
-		r, err := setTTL(tc.table, tc.coldTTL, tc.deleteTTL)
+		r, err := setTTL(tc.table, tc.coldStorage, tc.coldTTL, tc.deleteTTL)
 		require.NoErrorf(t, err, "Failed case: %d", tc.caseNo)
 		require.Containsf(t, string(r), tc.expected, "Failed case: %d", tc.caseNo)
 	}

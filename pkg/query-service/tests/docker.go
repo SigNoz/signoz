@@ -6,14 +6,17 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
+	"log"
+
 	minio "github.com/minio/minio-go/v6"
+	"go.uber.org/zap"
 )
 
 const (
-	composeFile   = "./test-deploy/docker-compose.yaml"
 	prefix        = "signoz_test"
 	minioEndpoint = "localhost:9100"
 	accessKey     = "ash"
@@ -21,7 +24,21 @@ const (
 	bucketName    = "test"
 )
 
-var minioClient *minio.Client
+var (
+	minioClient *minio.Client
+	composeFile string
+)
+
+func init() {
+	goArch := runtime.GOARCH
+	if goArch == "arm64" {
+		composeFile = "./test-deploy/docker-compose.arm.yaml"
+	} else if goArch == "amd64" {
+		composeFile = "./test-deploy/docker-compose.yaml"
+	} else {
+		zap.S().Fatalf("Unsupported architecture: %s", goArch)
+	}
+}
 
 func getCmd(args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(context.Background(), args[0], args[1:]...)
@@ -32,7 +49,7 @@ func getCmd(args ...string) *exec.Cmd {
 }
 
 func startMinio() error {
-	fmt.Printf("Starting minio")
+	log.Printf("Starting minio")
 	cmd := getCmd("docker", "run", "-d", "-p", "9100:9000", "-p", "9101:9001",
 		"--name", "signoz-minio-test", "-e", "MINIO_ROOT_USER=ash",
 		"-e", "MINIO_ROOT_PASSWORD=password",
@@ -65,9 +82,9 @@ func startCluster() error {
 	cmd := getCmd("docker-compose", "-f", composeFile, "-p", prefix,
 		"up", "--force-recreate", "--build", "--remove-orphans", "--detach")
 
-	fmt.Printf("Starting signoz cluster...\n")
+	log.Printf("Starting signoz cluster...\n")
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("While running command: %q Error: %v\n", strings.Join(cmd.Args, " "), err)
+		log.Printf("While running command: %q Error: %v\n", strings.Join(cmd.Args, " "), err)
 		return err
 	}
 
@@ -76,7 +93,7 @@ func startCluster() error {
 		if _, err := client.Get("http://localhost:8180/api/v1/version"); err != nil {
 			time.Sleep(2 * time.Second)
 		} else {
-			fmt.Printf("CLUSTER UP\n")
+			log.Printf("CLUSTER UP\n")
 			return nil
 		}
 	}
@@ -86,16 +103,16 @@ func startCluster() error {
 func stopCluster() {
 	cmd := getCmd("docker-compose", "-f", composeFile, "-p", prefix, "down", "-v")
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error while stopping the cluster. Error: %v\n", err)
+		log.Printf("Error while stopping the cluster. Error: %v\n", err)
 	}
 	if err := os.RemoveAll("./test-deploy/data"); err != nil {
-		fmt.Printf("Error while cleaning temporary dir. Error: %v\n", err)
+		log.Printf("Error while cleaning temporary dir. Error: %v\n", err)
 	}
 
 	cmd = getCmd("docker", "container", "rm", "-f", "signoz-minio-test")
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("While running command: %q Error: %v\n", strings.Join(cmd.Args, " "), err)
+		log.Printf("While running command: %q Error: %v\n", strings.Join(cmd.Args, " "), err)
 	}
 
-	fmt.Printf("CLUSTER DOWN: %s\n", prefix)
+	log.Printf("CLUSTER DOWN: %s\n", prefix)
 }

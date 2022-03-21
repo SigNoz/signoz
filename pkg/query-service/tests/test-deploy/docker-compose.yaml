@@ -24,7 +24,8 @@ services:
 
 
   query-service:
-    image: golang:1.17.8
+    image: signoz/query-service:latest
+    command: ["-config=/root/config/prometheus.yml"]
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
@@ -40,14 +41,9 @@ services:
         - "8180:8080"
     volumes:
       - type: bind
-        source: $GOPATH/bin
-        target: /gobin
-        read_only: true
-      - type: bind
         source: ./data
         target: /var/lib/signoz
         read_only: false
-    command: /gobin/query-service -config=/root/config/prometheus.yml
 
   otel-collector:
     image: signoz/otelcontribcol:0.43.0
