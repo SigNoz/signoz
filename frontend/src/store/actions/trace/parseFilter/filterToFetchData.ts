@@ -1,4 +1,5 @@
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+
 import { ParsedUrl } from '../util';
 
 export const parseFilterToFetchData = (
@@ -7,7 +8,7 @@ export const parseFilterToFetchData = (
 ): ParsedUrl<TraceFilterEnum[]> => {
 	const url = new URLSearchParams(query);
 
-	let filterToFetchData: TraceFilterEnum[] = [];
+	const filterToFetchData: TraceFilterEnum[] = [];
 
 	const selected = url.get('filterToFetchData');
 

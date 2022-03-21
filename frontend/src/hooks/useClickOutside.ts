@@ -1,26 +1,27 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 const useClickOutside = (
 	ref: React.RefObject<HTMLElement>,
 	callback: (e: HTMLElement) => void | null,
-) => {
-	const listener = (e: Event) => {
-		const node = e?.target as HTMLElement;
+): void => {
+	const listener = useCallback(
+		(e: Event) => {
+			const node = e?.target as HTMLElement;
 
-		if (ref.current && !ref.current.contains(node)) {
-			if (callback) {
+			if (ref.current && !ref.current.contains(node) && callback) {
 				callback(node);
 			}
-		}
-	};
+		},
+		[callback, ref],
+	);
 
 	useEffect(() => {
 		document.addEventListener('click', listener);
 
-		return () => {
+		return (): void => {
 			document.removeEventListener('click', listener);
 		};
-	}, [ref, callback]);
+	}, [ref, callback, listener]);
 };
 
 export default useClickOutside;

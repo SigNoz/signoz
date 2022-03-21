@@ -10,7 +10,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 import { NotFoundContainer } from './styles';
 
-const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
+const WidgetGraph = ({ selectedGraph,yAxisUnit }: WidgetGraphProps): JSX.Element => {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -51,6 +51,7 @@ const WidgetGraph = ({ selectedGraph }: WidgetGraphProps): JSX.Element => {
 			data={chartDataSet}
 			GRAPH_TYPES={selectedGraph}
 			name={widgetId || 'legend_widget'}
+			yAxisUnit={yAxisUnit}
 		/>
 	);
 };

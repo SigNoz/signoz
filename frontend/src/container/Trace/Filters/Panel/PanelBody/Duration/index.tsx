@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-
 import { Input, Slider } from 'antd';
-import { Container, InputContainer, Text } from './styles';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { getFilter, updateURL } from 'store/actions/trace/util';
+import { SliderRangeProps } from 'antd/lib/slider';
+import getFilters from 'api/trace/getFilters';
 import dayjs from 'dayjs';
 import durationPlugin from 'dayjs/plugin/duration';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
+import { getFilter, updateURL } from 'store/actions/trace/util';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
-import getFilters from 'api/trace/getFilters';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { SliderRangeProps } from 'antd/lib/slider';
+import { TraceReducer } from 'types/reducer/trace';
+
+import { Container, InputContainer, Text } from './styles';
 
 dayjs.extend(durationPlugin);
 

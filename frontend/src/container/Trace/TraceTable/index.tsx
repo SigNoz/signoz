@@ -119,10 +119,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			columns={columns}
 			onRow={(record) => ({
 				onClick: (): void => {
-					history.push({
-						pathname: ROUTES.TRACE + '/' + record.traceID,
-						search: '?' + 'spanId=' + record.spanID,
-					});
+					window.open(`${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`);
 				},
 			})}
 			size="middle"

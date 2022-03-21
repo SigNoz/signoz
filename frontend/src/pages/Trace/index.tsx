@@ -23,10 +23,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
 import {
+	ClearAllFilter,
 	Container,
 	LeftContainer,
 	RightContainer,
-	ClearAllFilter,
 } from './styles';
 
 const Trace = ({
