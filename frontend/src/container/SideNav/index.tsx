@@ -6,7 +6,7 @@ import history from 'lib/history';
 import setTheme from 'lib/theme/setTheme';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
@@ -32,7 +32,8 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { pathname } = history.location;
+
+	const { pathname } = useLocation();
 
 	const toggleTheme = useCallback(() => {
 		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
