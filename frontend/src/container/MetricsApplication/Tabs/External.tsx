@@ -68,7 +68,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 										legend: '{{http_url}}',
 									},
 								])}
-								yAxisUnit="short"
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>

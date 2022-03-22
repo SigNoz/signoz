@@ -25,7 +25,7 @@ function DBCall({ getWidget }: DBCallProps): JSX.Element {
 									legend: '{{db_system}}',
 								},
 							])}
-							yAxisUnit="short"
+							yAxisUnit="reqps"
 						/>
 					</GraphContainer>
 				</Card>
