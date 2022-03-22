@@ -6,7 +6,7 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import PanelBody from './PanelBody';
 import PanelHeading from './PanelHeading';
 
-const Panel = (props: PanelProps): JSX.Element => {
+function Panel(props: PanelProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const isDefaultOpen =
@@ -19,7 +19,7 @@ const Panel = (props: PanelProps): JSX.Element => {
 			{isDefaultOpen && <PanelBody type={props.name} />}
 		</>
 	);
-};
+}
 
 interface PanelProps {
 	name: TraceFilterEnum;

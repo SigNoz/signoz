@@ -26,14 +26,14 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import EmptyGraph from './EmptyGraph';
 import { NotFoundContainer, TimeContainer } from './styles';
 
-const FullView = ({
+function FullView({
 	widget,
 	fullViewOptions = true,
 	onClickHandler,
 	noDataGraph = false,
 	name,
 	yAxisUnit,
-}: FullViewProps): JSX.Element => {
+}: FullViewProps): JSX.Element {
 	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -220,7 +220,7 @@ const FullView = ({
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,
 					title: widget.title,
-					onClickHandler: onClickHandler,
+					onClickHandler,
 					name,
 					yAxisUnit,
 				}}
@@ -228,7 +228,7 @@ const FullView = ({
 			{/* </GraphContainer> */}
 		</>
 	);
-};
+}
 
 interface FullViewState {
 	loading: boolean;

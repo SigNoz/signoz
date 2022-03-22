@@ -6,7 +6,7 @@ import AppReducer from 'types/reducer/app';
 
 import { Container, Heading } from './styles';
 
-const InstrumentationPage = (): JSX.Element => {
+function InstrumentationPage(): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	return (
@@ -19,7 +19,7 @@ const InstrumentationPage = (): JSX.Element => {
 					docs -
 				</Typography>
 				<a
-					href={'https://signoz.io/docs/instrumentation/overview'}
+					href="https://signoz.io/docs/instrumentation/overview"
 					target="_blank"
 					rel="noreferrer"
 				>
@@ -27,21 +27,19 @@ const InstrumentationPage = (): JSX.Element => {
 				</a>
 				&nbsp;If you face any issues, join our
 				<a
-					href={
-						'https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA'
-					}
+					href="https://signoz-community.slack.com/join/shared_invite/zt-lrjknbbp-J_mI13rlw8pGF4EWBnorJA"
 					target="_blank"
 					rel="noreferrer"
 				>
 					&nbsp;slack community&nbsp;
 				</a>
 				to ask any questions or mail us at&nbsp;
-				<a href={'mailto:support@signoz.io'} target="_blank" rel="noreferrer">
+				<a href="mailto:support@signoz.io" target="_blank" rel="noreferrer">
 					support@signoz.io
 				</a>
 			</Container>
 		</>
 	);
-};
+}
 
 export default InstrumentationPage;

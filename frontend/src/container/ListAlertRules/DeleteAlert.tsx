@@ -6,11 +6,11 @@ import React, { useState } from 'react';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import { Alerts } from 'types/api/alerts/getAll';
 
-const DeleteAlert = ({
+function DeleteAlert({
 	id,
 	setData,
 	notifications,
-}: DeleteAlertProps): JSX.Element => {
+}: DeleteAlertProps): JSX.Element {
 	const [deleteAlertState, setDeleteAlertState] = useState<
 		State<DeleteAlertPayloadProps>
 	>({
@@ -70,18 +70,16 @@ const DeleteAlert = ({
 	};
 
 	return (
-		<>
-			<Button
-				disabled={deleteAlertState.loading || false}
-				loading={deleteAlertState.loading || false}
-				onClick={(): Promise<void> => onDeleteHandler(id)}
-				type="link"
-			>
-				Delete
-			</Button>
-		</>
+		<Button
+			disabled={deleteAlertState.loading || false}
+			loading={deleteAlertState.loading || false}
+			onClick={(): Promise<void> => onDeleteHandler(id)}
+			type="link"
+		>
+			Delete
+		</Button>
 	);
-};
+}
 
 interface DeleteAlertProps {
 	id: Alerts['id'];

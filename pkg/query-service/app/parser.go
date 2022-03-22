@@ -883,20 +883,16 @@ func parseSetRulesRequest(r *http.Request) (string, *model.ApiError) {
 	return "", nil
 }
 
-func parseDuration(r *http.Request) (*model.TTLParams, error) {
+func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	// make sure either of the query params are present
 	typeTTL := r.URL.Query().Get("type")
-	duration := r.URL.Query().Get("duration")
+	delDuration := r.URL.Query().Get("duration")
+	coldStorage := r.URL.Query().Get("coldStorage")
+	toColdDuration := r.URL.Query().Get("toColdDuration")
 
-	if len(typeTTL) == 0 || len(duration) == 0 {
+	if len(typeTTL) == 0 || len(delDuration) == 0 {
 		return nil, fmt.Errorf("type and duration param cannot be empty from the query")
-	}
-
-	// Validate the duration as a valid time.Duration
-	_, err := time.ParseDuration(duration)
-	if err != nil {
-		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
 	}
 
 	// Validate the type parameter
@@ -904,7 +900,31 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	return &model.TTLParams{Duration: duration, Type: typeTTL}, nil
+	// Validate the TTL duration.
+	durationParsed, err := time.ParseDuration(delDuration)
+	if err != nil {
+		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
+	}
+
+	var toColdParsed time.Duration
+
+	// If some cold storage is provided, validate the cold storage move TTL.
+	if len(coldStorage) > 0 {
+		toColdParsed, err = time.ParseDuration(toColdDuration)
+		if err != nil {
+			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
+		}
+		if toColdParsed.Seconds() >= durationParsed.Seconds() {
+			return nil, fmt.Errorf("Delete TTL should be greater than cold storage move TTL.")
+		}
+	}
+
+	return &model.TTLParams{
+		Type:                  typeTTL,
+		DelDuration:           durationParsed.Seconds(),
+		ColdStorageVolume:     coldStorage,
+		ToColdStorageDuration: toColdParsed.Seconds(),
+	}, nil
 }
 
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {

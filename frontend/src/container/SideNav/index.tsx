@@ -6,8 +6,7 @@ import history from 'lib/history';
 import setTheme from 'lib/theme/setTheme';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
@@ -18,10 +17,16 @@ import AppReducer from 'types/reducer/app';
 
 import menus from './menuItems';
 import Slack from './Slack';
-import { SlackButton, SlackMenuItemContainer, ToggleButton } from './styles';
-import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
+import {
+	Logo,
+	Sider,
+	SlackButton,
+	SlackMenuItemContainer,
+	ThemeSwitcherWrapper,
+	ToggleButton,
+} from './styles';
 
-const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
+function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const dispatch = useDispatch();
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
@@ -34,7 +39,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		setTheme(preMode);
 
 		const id: appMode = preMode;
-		const head = document.head;
+		const { head } = document;
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
@@ -67,7 +72,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		[pathname],
 	);
 
-	const onClickSlackHandler = () => {
+	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 
@@ -81,7 +86,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
-				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
+				<Logo src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -107,7 +112,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 			</Menu>
 		</Sider>
 	);
-};
+}
 
 type appMode = 'darkMode' | 'lightMode';
 

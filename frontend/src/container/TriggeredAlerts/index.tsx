@@ -7,7 +7,7 @@ import { PayloadProps } from 'types/api/alerts/getGroups';
 
 import TriggerComponent from './TriggeredAlert';
 
-const TriggeredAlerts = (): JSX.Element => {
+function TriggeredAlerts(): JSX.Element {
 	const [groupState, setGroupState] = useState<State<PayloadProps>>({
 		error: false,
 		errorMessage: '',
@@ -72,6 +72,6 @@ const TriggeredAlerts = (): JSX.Element => {
 	}, initialAlerts);
 
 	return <TriggerComponent allAlerts={allAlerts} />;
-};
+}
 
 export default TriggeredAlerts;

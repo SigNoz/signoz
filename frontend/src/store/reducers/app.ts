@@ -11,7 +11,7 @@ import {
 import InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
-	isDarkMode: getTheme() === 'darkMode' ? true : false,
+	isDarkMode: getTheme() === 'darkMode',
 	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 };

@@ -18,7 +18,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
-const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
+function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { search } = useLocation();
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
@@ -80,7 +80,7 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 	}
 
 	return <NewWidget selectedGraph={selectedGraph} />;
-};
+}
 
 export interface DashboardWidgetPageParams {
 	dashboardId: string;

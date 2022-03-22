@@ -52,12 +52,12 @@ export const GetSpans = (
 			}
 
 			const response = await getSpans({
-				end: end,
+				end,
 				function: props.function,
 				groupBy: props.groupBy,
 				selectedFilter: props.selectedFilter,
 				selectedTags: props.selectedTags,
-				start: start,
+				start,
 				step: props.step,
 				isFilterExclude: props.isFilterExclude,
 			});

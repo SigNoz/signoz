@@ -35,7 +35,7 @@ const metrics = (
 			return {
 				...state,
 				error: true,
-				errorMessage: errorMessage,
+				errorMessage,
 				loading: false,
 			};
 		}

@@ -6,7 +6,7 @@ import { generatePath } from 'react-router-dom';
 
 import { Data } from '..';
 
-const Name = (name: Data['name'], data: Data): JSX.Element => {
+function Name(name: Data['name'], data: Data): JSX.Element {
 	const onClickHandler = () => {
 		history.push(
 			generatePath(ROUTES.DASHBOARD, {
@@ -20,6 +20,6 @@ const Name = (name: Data['name'], data: Data): JSX.Element => {
 			{name}
 		</Button>
 	);
-};
+}
 
 export default Name;
