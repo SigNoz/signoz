@@ -1,13 +1,16 @@
 import { Menu, Typography } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import setTheme from 'lib/theme/setTheme';
-import React, { useCallback, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
+import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
@@ -24,7 +27,10 @@ import {
 } from './styles';
 
 function SideNav({ toggleDarkMode }: Props): JSX.Element {
-	const [collapsed, setCollapsed] = useState<boolean>(false);
+	const dispatch = useDispatch();
+	const [collapsed, setCollapsed] = useState<boolean>(
+		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	);
 	const { pathname } = useLocation();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -53,6 +59,10 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		setCollapsed((collapsed) => !collapsed);
 	}, []);
 
+	useLayoutEffect(() => {
+		dispatch(SideBarCollapse(collapsed));
+	}, [collapsed]);
+
 	const onClickHandler = useCallback(
 		(to: string) => {
 			if (pathname !== to) {
@@ -62,7 +72,7 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		[pathname],
 	);
 
-	const onClickSlackHandler = () => {
+	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 

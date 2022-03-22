@@ -3,6 +3,7 @@ import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useMeasure } from 'react-use';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -10,6 +11,8 @@ import { getChartData, getChartDataforGroupBy } from './config';
 import { Container } from './styles';
 
 function TraceGraph(): JSX.Element {
+	const [ref, { width }] = useMeasure();
+
 	const { spansGraph, selectedGroupBy, yAxisUnit } = useSelector<
 		AppState,
 		TraceReducer
@@ -21,7 +24,7 @@ function TraceGraph(): JSX.Element {
 		return selectedGroupBy.length === 0
 			? getChartData(payload)
 			: getChartDataforGroupBy(payload);
-	}, [payload]);
+	}, [payload, selectedGroupBy.length]);
 
 	if (error) {
 		return (
@@ -40,12 +43,14 @@ function TraceGraph(): JSX.Element {
 	}
 
 	return (
-		<Container>
+		<Container ref={ref}>
 			<Graph
+				animate={false}
 				data={ChartData}
 				name="traceGraph"
 				type="line"
 				yAxisUnit={yAxisUnit}
+				forceReRender={width}
 			/>
 		</Container>
 	);

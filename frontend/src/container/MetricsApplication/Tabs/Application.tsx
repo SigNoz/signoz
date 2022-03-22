@@ -107,7 +107,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Application latency in ms</GraphTitle>
+						<GraphTitle>Application latency</GraphTitle>
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -175,7 +175,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Request per sec</GraphTitle>
+						<GraphTitle>Requests</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="request_per_sec"
@@ -190,7 +190,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 										legend: 'Request per second',
 									},
 								])}
-								yAxisUnit="short"
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
@@ -210,7 +210,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage (%)</GraphTitle>
+						<GraphTitle>Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="error_percentage_%"
