@@ -1,6 +1,7 @@
 import { ChartData, ChartDataset, ChartDatasetProperties } from 'chart.js';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
+import { keys } from 'lodash-es';
 import { TraceReducer } from 'types/reducer/trace';
 
 function transposeArray(array: number[][], arrayLength: number) {
@@ -67,8 +68,8 @@ export const getChartDataforGroupBy = (
 
 	const allGroupBy = Object.keys(items).map((e) => items[e].groupBy);
 
-	Object.keys(allGroupBy).map((e) => {
-		const { length } = Object.keys(allGroupBy[e]);
+	keys(allGroupBy).forEach((e: string): void => {
+		const { length } = keys(allGroupBy[e]);
 
 		if (length >= max) {
 			max = length;
