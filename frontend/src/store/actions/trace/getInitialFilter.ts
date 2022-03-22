@@ -29,9 +29,10 @@ export const GetInitialTraceFilter = (
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	return async (dispatch, getState): Promise<void> => {
 		try {
-			const query = location.search;
+			const query = window.location.search;
 
 			const { traces, globalTime } = getState();
 
@@ -100,12 +101,12 @@ export const GetInitialTraceFilter = (
 						? traces.filterToFetchData
 						: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
 
-				Object.keys(response.payload).map((key) => {
+				Object.keys(response.payload).forEach((key) => {
 					const value = response.payload[key];
 					Object.keys(value)
 						// remove maxDuration and minDuration filter from initial selection logic
 						.filter((e) => !['maxDuration', 'minDuration'].includes(e))
-						.map((preKey) => {
+						.forEach((preKey) => {
 							if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
 								// const preValue = preSelectedFilter?.get(key) || [];
 								const preValue = getUserSelected.currentValue?.get(key) || [];
