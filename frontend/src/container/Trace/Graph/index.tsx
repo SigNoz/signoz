@@ -21,7 +21,7 @@ const TraceGraph = (): JSX.Element => {
 		return selectedGroupBy.length === 0
 			? getChartData(payload)
 			: getChartDataforGroupBy(payload);
-	}, [payload]);
+	}, [payload, selectedGroupBy]);
 
 	if (error) {
 		return (

@@ -1,4 +1,3 @@
-import { Tooltip, Typography } from 'antd';
 import {
 	IIntervalUnit,
 	resolveTimeFromInterval,
@@ -12,7 +11,6 @@ interface SpanLengthProps {
 	width: string;
 	leftOffset: string;
 	bgColor: string;
-	toolTipText: string;
 	id: string;
 	inMsCount: number;
 	intervalUnit: IIntervalUnit;
@@ -23,8 +21,18 @@ const SpanLength = (props: SpanLengthProps): JSX.Element => {
 	const { isDarkMode } = useThemeMode();
 	return (
 		<SpanWrapper>
-			<SpanLine leftOffset={leftOffset} isDarkMode={isDarkMode} />
-			<SpanBorder bgColor={bgColor} leftOffset={leftOffset} width={width} />
+			<SpanLine
+				bgColor=""
+				width=""
+				leftOffset={leftOffset}
+				isDarkMode={isDarkMode}
+			/>
+			<SpanBorder
+				isDarkMode={isDarkMode}
+				bgColor={bgColor}
+				leftOffset={leftOffset}
+				width={width}
+			/>
 			<SpanText leftOffset={leftOffset} isDarkMode={isDarkMode}>{`${toFixed(
 				resolveTimeFromInterval(props.inMsCount, intervalUnit),
 				2,

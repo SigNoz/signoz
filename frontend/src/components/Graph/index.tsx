@@ -137,7 +137,7 @@ const Graph = ({
 						},
 						ticks: {
 							// Include a dollar sign in the ticks
-							callback: function (value, index, ticks) {
+							callback: function (value) {
 								return getYAxisFormattedValue(value, yAxisUnit);
 							},
 						},

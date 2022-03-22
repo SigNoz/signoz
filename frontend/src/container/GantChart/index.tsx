@@ -32,7 +32,7 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 		setActiveSpanPath(getSpanPath(data, activeSelectedId));
 	}, [activeSelectedId, data]);
 
-	const handleCollapse = () => {
+	const handleCollapse = (): void => {
 		setIsExpandAll((prev) => !prev);
 	};
 	return (

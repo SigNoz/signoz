@@ -4,7 +4,6 @@ import { FilterValue, SorterResult } from 'antd/lib/table/interface';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import history from 'lib/history';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';

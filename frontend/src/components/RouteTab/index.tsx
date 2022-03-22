@@ -10,7 +10,7 @@ const RouteTab = ({
 	onChangeHandler,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element => {
-	const onChange = (activeRoute: string) => {
+	const onChange = (activeRoute: string): void => {
 		onChangeHandler && onChangeHandler();
 
 		const selectedRoute = routes.find((e) => e.name === activeRoute);

@@ -1,13 +1,17 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 
 export const getYAxisFormattedValue = (
-	value: number,
+	value: number | string,
 	format: string,
-	decimal?: number,
 ): string => {
 	try {
 		return formattedValueToString(
-			getValueFormat(format)(value, undefined, undefined, undefined),
+			getValueFormat(format)(
+				parseInt(value.toString(), 10),
+				undefined,
+				undefined,
+				undefined,
+			),
 		);
 	} catch (error) {
 		console.error(error);

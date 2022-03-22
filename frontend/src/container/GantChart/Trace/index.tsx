@@ -5,6 +5,7 @@ import { IIntervalUnit } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import React, { useEffect, useRef, useState } from 'react';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { ITraceMetaData } from '..';
 import SpanLength from '../SpanLength';
@@ -51,7 +52,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		} else if (!isOpen) {
 			setOpen(activeSpanPath[level] === id);
 		}
-	}, [activeSpanPath, isOpen]);
+	}, [activeSpanPath, isOpen, id, level]);
 
 	useEffect(() => {
 		if (isExpandAll) {
@@ -59,7 +60,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		} else {
 			setOpen(activeSpanPath[level] === id);
 		}
-	}, [isExpandAll]);
+	}, [isExpandAll, activeSpanPath, setOpen, id, level]);
 
 	const isOnlyChild = props.children.length === 1;
 	const [top, setTop] = useState<number>(0);
@@ -92,7 +93,9 @@ const Trace = (props: TraceProps): JSX.Element => {
 		setActiveSelectedId(id);
 	};
 
-	const onClickTreeExpansion = (event): void => {
+	const onClickTreeExpansion: React.MouseEventHandler<HTMLDivElement> = (
+		event,
+	): void => {
 		event.stopPropagation();
 		setOpen((state) => {
 			localTreeExpandInteraction.current = !isOpen;
@@ -181,7 +184,7 @@ interface ITraceGlobal {
 	globalStart: ITraceMetaData['globalStart'];
 }
 
-interface TraceProps extends pushDStree, ITraceGlobal {
+interface TraceProps extends ITraceTree, ITraceGlobal {
 	activeHoverId: string;
 	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
 	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;

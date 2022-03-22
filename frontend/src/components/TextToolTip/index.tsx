@@ -2,9 +2,9 @@ import { QuestionCircleFilled } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import React from 'react';
 
-const TextToolTip = ({ text, url }: TextToolTipProps) => (
+const TextToolTip = ({ text, url }: TextToolTipProps): JSX.Element => (
 	<Tooltip
-		overlay={() => {
+		overlay={(): JSX.Element => {
 			return (
 				<div>
 					{`${text} `}

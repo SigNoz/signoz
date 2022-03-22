@@ -144,7 +144,7 @@ const FullView = ({
 				loading: false,
 			}));
 		}
-	}, [widget, maxTime, minTime, selectedTime.enum]);
+	}, [widget, maxTime, minTime, selectedTime.enum, globalSelectedTime]);
 
 	useEffect(() => {
 		onFetchDataHandler();
