@@ -7,7 +7,7 @@ import getTimeString from 'lib/getTimeString';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import type { RouteComponentProps } from 'react-router';
-import { withRouter } from 'react-router';
+import { withRouter } from 'react-router-dom';
 import type { Dispatch } from 'redux';
 import { bindActionCreators } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
@@ -18,8 +18,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
-import RefreshText from './Refresh';
-import { Container, Form, FormItem } from './styles';
+import {
+	Container,
+	Form,
+	FormItem,
+	RefreshTextContainer,
+	Typography,
+} from './styles';
 
 const { Option } = DefaultSelect;
 
@@ -29,6 +34,7 @@ function DateTimeSelection({
 	globalTimeLoading,
 }: Props): JSX.Element {
 	const [form_dtselector] = Form.useForm();
+	const [refreshText, setRefreshText] = useState<string>('');
 
 	const params = new URLSearchParams(location.search);
 	const searchStartTime = params.get('startTime');
@@ -81,14 +87,31 @@ function DateTimeSelection({
 
 		if (routes !== null) {
 			const routesObject = JSON.parse(routes || '{}');
-			const selectedTime = routesObject[pathName];
+			const updatedSelectedTime = routesObject[pathName];
 
-			if (selectedTime) {
-				return selectedTime;
+			if (updatedSelectedTime) {
+				return updatedSelectedTime;
 			}
 		}
 
 		return defaultSelectedOption;
+	};
+
+	const getInputLabel = (
+		startTime?: Dayjs,
+		endTime?: Dayjs,
+		timeInterval: Time = '15min',
+	): string | Time => {
+		if (startTime && endTime && timeInterval === 'custom') {
+			const format = 'YYYY/MM/DD HH:mm';
+
+			const startString = startTime.format(format);
+			const endString = endTime.format(format);
+
+			return `${startString} - ${endString}`;
+		}
+
+		return timeInterval;
 	};
 
 	const [selectedTimeInterval, setSelectedTimeInterval] = useState<Time>(
@@ -110,40 +133,6 @@ function DateTimeSelection({
 				JSON.stringify(preRoute),
 			);
 		}
-	};
-
-	const onSelectHandler = (value: Time): void => {
-		if (value !== 'custom') {
-			updateTimeInterval(value);
-			const selectedLabel = getInputLabel(undefined, undefined, value);
-			setSelectedTimeInterval(selectedLabel as Time);
-			updateLocalStorageForRoutes(value);
-		} else {
-			setRefreshButtonHidden(true);
-			setCustomDTPickerVisible(true);
-		}
-	};
-
-	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTimeInterval);
-		onLastRefreshHandler();
-	};
-
-	const getInputLabel = (
-		startTime?: Dayjs,
-		endTime?: Dayjs,
-		timeInterval: Time = '15min',
-	): string | Time => {
-		if (startTime && endTime && timeInterval === 'custom') {
-			const format = 'YYYY/MM/DD HH:mm';
-
-			const startString = startTime.format(format);
-			const endString = endTime.format(format);
-
-			return `${startString} - ${endString}`;
-		}
-
-		return timeInterval;
 	};
 
 	const onLastRefreshHandler = useCallback(() => {
@@ -177,7 +166,24 @@ function DateTimeSelection({
 		}
 
 		return `Last refresh - ${secondsDiff} sec ago`;
-	}, [maxTime, minTime, selectedTimeInterval]);
+	}, [selectedTimeInterval, minTime, maxTime]);
+
+	const onSelectHandler = (value: Time): void => {
+		if (value !== 'custom') {
+			updateTimeInterval(value);
+			const selectedLabel = getInputLabel(undefined, undefined, value);
+			setSelectedTimeInterval(selectedLabel as Time);
+			updateLocalStorageForRoutes(value);
+		} else {
+			setRefreshButtonHidden(true);
+			setCustomDTPickerVisible(true);
+		}
+	};
+
+	const onRefreshHandler = (): void => {
+		onSelectHandler(selectedTimeInterval);
+		onLastRefreshHandler();
+	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
@@ -197,6 +203,18 @@ function DateTimeSelection({
 			}
 		}
 	};
+
+	// this is to update the refresh text
+	// useEffect(() => {
+	// 	const interval = setInterval(() => {
+	// 		const text = onLastRefreshHandler();
+	// 		setRefreshText(text);
+	// 	}, 2000);
+
+	// 	return (): void => {
+	// 		clearInterval(interval);
+	// 	};
+	// }, [onLastRefreshHandler, refreshText]);
 
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
@@ -242,13 +260,13 @@ function DateTimeSelection({
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 	}, [
 		location.pathname,
-		getTime,
 		localstorageEndTime,
 		localstorageStartTime,
 		searchEndTime,
 		searchStartTime,
 		updateTimeInterval,
 		globalTimeLoading,
+		getTime,
 	]);
 
 	return (
@@ -277,11 +295,9 @@ function DateTimeSelection({
 				</FormItem>
 			</Form>
 
-			<RefreshText
-				{...{
-					onLastRefreshHandler,
-				}}
-			/>
+			<RefreshTextContainer>
+				<Typography>{refreshText}</Typography>
+			</RefreshTextContainer>
 
 			<CustomDateTimeModal
 				visible={customDateTimeVisible}
