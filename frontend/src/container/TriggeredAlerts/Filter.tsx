@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unstable-nested-components */
+import type { SelectProps } from 'antd';
 import { Tag } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
@@ -12,23 +14,27 @@ function Filter({
 	selectedFilter,
 }: FilterProps): JSX.Element {
 	const onChangeSelectGroupHandler = useCallback(
-		(value: string[]) => {
-			setSelectedGroup(
-				value.map((e) => ({
-					value: e,
-				})),
-			);
+		(value: unknown) => {
+			if (typeof value === 'object' && Array.isArray(value)) {
+				setSelectedGroup(
+					value.map((e) => ({
+						value: e,
+					})),
+				);
+			}
 		},
 		[setSelectedGroup],
 	);
 
 	const onChangeSelectedFilterHandler = useCallback(
-		(value: string[]) => {
-			setSelectedFilter(
-				value.map((e) => ({
-					value: e,
-				})),
-			);
+		(value: unknown) => {
+			if (typeof value === 'object' && Array.isArray(value)) {
+				setSelectedFilter(
+					value.map((e) => ({
+						value: e,
+					})),
+				);
+			}
 		},
 		[setSelectedFilter],
 	);
@@ -36,7 +42,7 @@ function Filter({
 	const uniqueLabels: Array<string> = useMemo(() => {
 		const allLabelsSet = new Set<string>();
 		allAlerts.forEach((e) =>
-			Object.keys(e.labels).map((e) => {
+			Object.keys(e.labels).forEach((e) => {
 				allLabelsSet.add(e);
 			}),
 		);
@@ -47,6 +53,21 @@ function Filter({
 		value: e,
 	}));
 
+	const getTags: SelectProps['tagRender'] = (props): JSX.Element => {
+		const { closable, onClose, label } = props;
+
+		return (
+			<Tag
+				color="magenta"
+				closable={closable}
+				onClose={onClose}
+				style={{ marginRight: 3 }}
+			>
+				{label}
+			</Tag>
+		);
+	};
+
 	return (
 		<Container>
 			<Select
@@ -55,19 +76,7 @@ function Filter({
 				mode="tags"
 				value={selectedFilter.map((e) => e.value)}
 				placeholder="Filter by Tags - e.g. severity:warning, alertname:Sample Alert"
-				tagRender={(props): JSX.Element => {
-					const { label, closable, onClose } = props;
-					return (
-						<Tag
-							color="magenta"
-							closable={closable}
-							onClose={onClose}
-							style={{ marginRight: 3 }}
-						>
-							{label}
-						</Tag>
-					);
-				}}
+				tagRender={(props): JSX.Element => getTags(props)}
 				options={[]}
 			/>
 			<Select
@@ -77,19 +86,7 @@ function Filter({
 				defaultValue={selectedGroup.map((e) => e.value)}
 				showArrow
 				placeholder="Group by any tag"
-				tagRender={(props): JSX.Element => {
-					const { label, closable, onClose } = props;
-					return (
-						<Tag
-							color="magenta"
-							closable={closable}
-							onClose={onClose}
-							style={{ marginRight: 3 }}
-						>
-							{label}
-						</Tag>
-					);
-				}}
+				tagRender={(props): JSX.Element => getTags(props)}
 				options={options}
 			/>
 		</Container>

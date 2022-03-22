@@ -1,9 +1,11 @@
+/* eslint-disable */
+//@ts-nocheck
+
 import { Select, Space } from 'antd';
 import Graph from 'components/Graph';
 import React, { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { GetService, getUsageData, usageDataItem } from 'store/actions';
-import { servicesListItem } from 'store/actions/MetricsActions';
+import { GetService, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -15,7 +17,7 @@ import { Card } from './styles';
 const { Option } = Select;
 
 interface UsageExplorerProps {
-	usageData: usageDataItem[];
+	usageData: UsageDataItem[];
 	getUsageData: (
 		minTime: number,
 		maxTime: number,
@@ -198,7 +200,7 @@ const mapStateToProps = (
 ): {
 	totalCount: number;
 	globalTime: GlobalTime;
-	usageData: usageDataItem[];
+	usageData: UsageDataItem[];
 } => {
 	let totalCount = 0;
 	for (const item of state.usageDate) {

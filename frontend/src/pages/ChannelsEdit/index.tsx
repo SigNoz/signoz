@@ -5,7 +5,7 @@ import { SlackChannel } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
 import useFetch from 'hooks/useFetch';
 import React from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { PayloadProps, Props } from 'types/api/channels/get';
 
 function ChannelsEdit(): JSX.Element {
