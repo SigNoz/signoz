@@ -1218,22 +1218,22 @@ func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, 
 	for i, e := range params {
 		if i == 0 && i == len(params)-1 {
 			if _, ok := excludeMap[filter]; ok {
-				*query += fmt.Sprintf(" AND NOT (%s=?)", filter)
+				*query += fmt.Sprintf(" AND NOT (%s=@%s)", filter, filter)
 			} else {
-				*query += fmt.Sprintf(" AND (%s=?)", filter)
+				*query += fmt.Sprintf(" AND (%s=@%s)", filter, filter)
 			}
 		} else if i == 0 && i != len(params)-1 {
 			if _, ok := excludeMap[filter]; ok {
-				*query += fmt.Sprintf(" AND NOT (%s=?", filter)
+				*query += fmt.Sprintf(" AND NOT (%s=@%s", filter, filter)
 			} else {
-				*query += fmt.Sprintf(" AND (%s=?", filter)
+				*query += fmt.Sprintf(" AND (%s=@%s", filter, filter)
 			}
 		} else if i != 0 && i == len(params)-1 {
-			*query += fmt.Sprintf(" OR %s=?)", filter)
+			*query += fmt.Sprintf(" OR %s=@%s)", filter, filter)
 		} else {
-			*query += fmt.Sprintf(" OR %s=?", filter)
+			*query += fmt.Sprintf(" OR %s=@%s", filter, filter)
 		}
-		args = append(args, e)
+		args = append(args, clickhouse.Named(filter, e))
 	}
 	return args
 }
@@ -1250,7 +1250,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		excludeMap[e] = struct{}{}
 	}
 
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1277,33 +1277,33 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	}
 
 	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
+		query = query + " AND durationNano >= @durationNanoMin"
+		args = append(args, clickhouse.Named("durationNanoMin", queryParams.MinDuration))
 	}
 	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
+		query = query + " AND durationNano <= @durationNanoMax"
+		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	traceFilterReponse := model.SpanFiltersResponse{
-		Status:      map[string]int{},
-		Duration:    map[string]int{},
-		ServiceName: map[string]int{},
-		Operation:   map[string]int{},
-		HttpCode:    map[string]int{},
-		HttpMethod:  map[string]int{},
-		HttpUrl:     map[string]int{},
-		HttpRoute:   map[string]int{},
-		HttpHost:    map[string]int{},
-		Component:   map[string]int{},
+		Status:      map[string]uint64{},
+		Duration:    map[string]uint64{},
+		ServiceName: map[string]uint64{},
+		Operation:   map[string]uint64{},
+		HttpCode:    map[string]uint64{},
+		HttpMethod:  map[string]uint64{},
+		HttpUrl:     map[string]uint64{},
+		HttpRoute:   map[string]uint64{},
+		HttpHost:    map[string]uint64{},
+		Component:   map[string]uint64{},
 	}
 
 	for _, e := range queryParams.GetFilters {
 		switch e {
-		case "serviceName":
-			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.ServiceName:
+			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY serviceName"
 			var dBResponse []model.DBResponseServiceName
@@ -1317,12 +1317,11 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.ServiceName[service.ServiceName] = service.Count
 				}
 			}
-		case "httpCode":
-			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.HttpCode:
+			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY httpCode"
 			var dBResponse []model.DBResponseHttpCode
-			fmt.Println(finalQuery)
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
@@ -1333,8 +1332,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.HttpCode[service.HttpCode] = service.Count
 				}
 			}
-		case "httpRoute":
-			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.HttpRoute:
+			finalQuery := fmt.Sprintf("SELECT httpRoute, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY httpRoute"
 			var dBResponse []model.DBResponseHttpRoute
@@ -1348,8 +1347,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.HttpRoute[service.HttpRoute] = service.Count
 				}
 			}
-		case "httpUrl":
-			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.HttpUrl:
+			finalQuery := fmt.Sprintf("SELECT httpUrl, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY httpUrl"
 			var dBResponse []model.DBResponseHttpUrl
@@ -1363,8 +1362,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.HttpUrl[service.HttpUrl] = service.Count
 				}
 			}
-		case "httpMethod":
-			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.HttpMethod:
+			finalQuery := fmt.Sprintf("SELECT httpMethod, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY httpMethod"
 			var dBResponse []model.DBResponseHttpMethod
@@ -1378,8 +1377,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.HttpMethod[service.HttpMethod] = service.Count
 				}
 			}
-		case "httpHost":
-			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.HttpHost:
+			finalQuery := fmt.Sprintf("SELECT httpHost, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY httpHost"
 			var dBResponse []model.DBResponseHttpHost
@@ -1393,8 +1392,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.HttpHost[service.HttpHost] = service.Count
 				}
 			}
-		case "operation":
-			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.OperationRequest:
+			finalQuery := fmt.Sprintf("SELECT name, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY name"
 			var dBResponse []model.DBResponseOperation
@@ -1408,8 +1407,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 					traceFilterReponse.Operation[service.Operation] = service.Count
 				}
 			}
-		case "component":
-			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+		case constants.Component:
+			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			finalQuery += " GROUP BY component"
 			var dBResponse []model.DBResponseComponent
@@ -1419,12 +1418,12 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 			for _, service := range dBResponse {
-				if service.Component.String != "" {
-					traceFilterReponse.Component[service.Component.String] = service.Count
+				if service.Component != "" {
+					traceFilterReponse.Component[service.Component] = service.Count
 				}
 			}
-		case "status":
-			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= ? AND timestamp <= ? AND hasError = 1", r.indexTable)
+		case constants.Status:
+			finalQuery := fmt.Sprintf("SELECT COUNT(*) as numErrors FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU AND hasError = true", r.indexTable)
 			finalQuery += query
 			var dBResponse []model.DBResponseErrors
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
@@ -1433,7 +1432,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
 
-			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery2 += query
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery2, args...)
@@ -1441,9 +1440,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
 			}
-			traceFilterReponse.Status = map[string]int{"ok": dBResponse2[0].NumTotal - dBResponse[0].NumErrors, "error": dBResponse[0].NumErrors}
-		case "duration":
-			finalQuery := fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+			traceFilterReponse.Status = map[string]uint64{"ok": dBResponse2[0].NumTotal - dBResponse[0].NumErrors, "error": dBResponse[0].NumErrors}
+		case constants.Duration:
+			finalQuery := fmt.Sprintf("SELECT min(durationNano), max(durationNano) FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 			finalQuery += query
 			var dBResponse []model.DBResponseMinMaxDuration
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
@@ -1469,16 +1468,16 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 	if _, ok := excludeMap["status"]; ok {
 		if len(statusParams) == 1 {
 			if statusParams[0] == "error" {
-				query += " AND hasError = 0"
+				query += " AND hasError = false"
 			} else if statusParams[0] == "ok" {
-				query += " AND hasError = 1"
+				query += " AND hasError = true"
 			}
 		}
 	} else if len(statusParams) == 1 {
 		if statusParams[0] == "error" {
-			query += " AND hasError = 1"
+			query += " AND hasError = true"
 		} else if statusParams[0] == "ok" {
-			query += " AND hasError = 0"
+			query += " AND hasError = false"
 		}
 	}
 	return query
@@ -1486,7 +1485,7 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 
 func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
 
-	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.indexTable)
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
@@ -1498,7 +1497,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 
 	var query string
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1524,18 +1523,18 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
+		query = query + " AND durationNano >= @durationNanoMin"
+		args = append(args, clickhouse.Named("durationNanoMin", queryParams.MinDuration))
 	}
 	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
+		query = query + " AND durationNano <= @durationNanoMax"
+		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	if len(queryParams.Kind) != 0 {
-		query = query + " AND kind = ?"
-		args = append(args, queryParams.Kind)
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
 
 	for _, item := range queryParams.Tags {
@@ -1586,7 +1585,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	var totalSpans []model.DBResponseTotal
 
-	totalSpansQuery := fmt.Sprintf(`SELECT count() as numTotal FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+	totalSpansQuery := fmt.Sprintf(`SELECT count() as numTotal FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.indexTable)
 
 	totalSpansQuery += query
 	err := r.db.Select(ctx, &totalSpans, totalSpansQuery, args...)
@@ -1607,14 +1606,13 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		}
 	}
 	if queryParams.Limit > 0 {
-		query = query + " LIMIT ?"
-		args = append(args, queryParams.Limit)
+		query = query + " LIMIT @limit"
+		args = append(args, clickhouse.Named("limit", queryParams.Limit))
 	}
 
 	if queryParams.Offset > 0 {
-		// due to bug in SQLx driver, using %d temporarily
-		query = query + fmt.Sprintf(" OFFSET %d", queryParams.Offset)
-		// args = append(args, queryParams.Offset)
+		query = query + " OFFSET @offset"
+		args = append(args, clickhouse.Named("offset", queryParams.Offset))
 	}
 
 	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
@@ -1649,7 +1647,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	}
 
 	var query string
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1675,21 +1673,21 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
+		query = query + " AND durationNano >= @durationNanoMin"
+		args = append(args, clickhouse.Named("durationNanoMin", queryParams.MinDuration))
 	}
 	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
+		query = query + " AND durationNano <= @durationNanoMax"
+		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	tagFilters := []model.TagFilters{}
 
-	finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagsKeys) as tagKeys FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+	finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagMap.keys) as tagKeys FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.indexTable)
+	// Alternative query: SELECT groupUniqArrayArray(mapKeys(tagMap)) as tagKeys  FROM signoz_index_v2
 	finalQuery += query
-	fmt.Println(finalQuery)
 	err := r.db.Select(ctx, &tagFilters, finalQuery, args...)
 
 	zap.S().Info(query)
@@ -1738,7 +1736,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	}
 
 	var query string
-	args := []interface{}{queryParams.TagKey, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1764,23 +1762,22 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
+		query = query + " AND durationNano >= @durationNanoMin"
+		args = append(args, clickhouse.Named("durationNanoMin", queryParams.MinDuration))
 	}
 	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
+		query = query + " AND durationNano <= @durationNanoMax"
+		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	tagValues := []model.TagValues{}
 
-	finalQuery := fmt.Sprintf(`SELECT tagMap[?] as tagValues FROM %s WHERE timestamp >= ? AND timestamp <= ?`, r.indexTable)
+	finalQuery := fmt.Sprintf(`SELECT tagMap[@key] as tagValues FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.indexTable)
 	finalQuery += query
-	fmt.Println(finalQuery)
-	finalQuery += "GROUP BY tagMap[?]"
-	args = append(args, queryParams.TagKey)
+	finalQuery += " GROUP BY tagMap[@key]"
+	args = append(args, clickhouse.Named("key", queryParams.TagKey))
 	err := r.db.Select(ctx, &tagValues, finalQuery, args...)
 
 	zap.S().Info(query)
@@ -1842,9 +1839,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	}
 
 	for i, _ := range usageItems {
-		timeObj, _ := time.Parse(time.RFC3339Nano, usageItems[i].Time)
-		usageItems[i].Timestamp = int64(timeObj.UnixNano())
-		usageItems[i].Time = ""
+		usageItems[i].Timestamp = uint64(usageItems[i].Time.UnixNano())
 	}
 
 	if usageItems == nil {
@@ -1869,15 +1864,13 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	searchSpansResult := []model.SearchSpansResult{
-		model.SearchSpansResult{
-			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-			Events:  make([][]interface{}, len(searchScanReponses)),
-		},
+	searchSpansResult := []model.SearchSpansResult{{
+		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Events:  make([][]interface{}, len(searchScanReponses)),
+	},
 	}
 
 	for i, item := range searchScanReponses {
-		fmt.Println(item.Model)
 		var jsonItem model.SearchSpanReponseItem
 		json.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
@@ -1979,42 +1972,42 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		aggregation_query = " count(*) as value "
 	}
 
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 
 	var query string
 	if queryParams.GroupBy != "" {
 		switch queryParams.GroupBy {
-		case "serviceName":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, serviceName as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "httpCode":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpCode as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "httpMethod":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpMethod as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "httpUrl":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpUrl as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "httpRoute":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpRoute as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "httpHost":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpHost as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "dbName":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbName as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "dbOperation":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbOperation as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "operation":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, name as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "msgSystem":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "msgOperation":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgOperation as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "dbSystem":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
-		case "component":
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.ServiceName:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, serviceName as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.HttpCode:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpCode as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.HttpMethod:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpMethod as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.HttpUrl:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpUrl as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.HttpRoute:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpRoute as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.HttpHost:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpHost as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.DBName:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbName as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.DBOperation:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbOperation as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.OperationRequest:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, name as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.MsgSystem:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgSystem as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.MsgOperation:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgOperation as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.DBSystem:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		case constants.Component:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
 		default:
 			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
 	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= ? AND timestamp <= ?", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.indexTable)
 	}
 
 	if len(queryParams.ServiceName) > 0 {
@@ -2042,17 +2035,18 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
-		query = query + " AND durationNano >= ?"
-		args = append(args, queryParams.MinDuration)
+		query = query + " AND durationNano >= @durationNanoMin"
+		args = append(args, clickhouse.Named("durationNanoMin", queryParams.MinDuration))
 	}
 	if len(queryParams.MaxDuration) != 0 {
-		query = query + " AND durationNano <= ?"
-		args = append(args, queryParams.MaxDuration)
+		query = query + " AND durationNano <= @durationNanoMax"
+		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
+
 	if len(queryParams.Kind) != 0 {
-		query = query + " AND kind = ?"
-		args = append(args, queryParams.Kind)
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
 
 	for _, item := range queryParams.Tags {
@@ -2103,31 +2097,31 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 	if queryParams.GroupBy != "" {
 		switch queryParams.GroupBy {
-		case "serviceName":
+		case constants.ServiceName:
 			query = query + " GROUP BY time, serviceName as groupBy ORDER BY time"
-		case "httpCode":
+		case constants.HttpCode:
 			query = query + " GROUP BY time, httpCode as groupBy ORDER BY time"
-		case "httpMethod":
+		case constants.HttpMethod:
 			query = query + " GROUP BY time, httpMethod as groupBy ORDER BY time"
-		case "httpUrl":
+		case constants.HttpUrl:
 			query = query + " GROUP BY time, httpUrl as groupBy ORDER BY time"
-		case "httpRoute":
+		case constants.HttpRoute:
 			query = query + " GROUP BY time, httpRoute as groupBy ORDER BY time"
-		case "httpHost":
+		case constants.HttpHost:
 			query = query + " GROUP BY time, httpHost as groupBy ORDER BY time"
-		case "dbName":
+		case constants.DBName:
 			query = query + " GROUP BY time, dbName as groupBy ORDER BY time"
-		case "dbOperation":
+		case constants.DBOperation:
 			query = query + " GROUP BY time, dbOperation as groupBy ORDER BY time"
-		case "operation":
+		case constants.OperationRequest:
 			query = query + " GROUP BY time, name as groupBy ORDER BY time"
-		case "msgSystem":
+		case constants.MsgSystem:
 			query = query + " GROUP BY time, msgSystem as groupBy ORDER BY time"
-		case "msgOperation":
+		case constants.MsgOperation:
 			query = query + " GROUP BY time, msgOperation as groupBy ORDER BY time"
-		case "dbSystem":
+		case constants.DBSystem:
 			query = query + " GROUP BY time, dbSystem as groupBy ORDER BY time"
-		case "component":
+		case constants.Component:
 			query = query + " GROUP BY time, component as groupBy ORDER BY time"
 		default:
 			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
@@ -2149,30 +2143,29 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		Items: map[int64]model.SpanAggregatesResponseItem{},
 	}
 
-	for i, _ := range SpanAggregatesDBResponseItems {
+	for i := range SpanAggregatesDBResponseItems {
 
-		timeObj, _ := time.Parse(time.RFC3339Nano, SpanAggregatesDBResponseItems[i].Time)
-		SpanAggregatesDBResponseItems[i].Timestamp = int64(timeObj.UnixNano())
-		SpanAggregatesDBResponseItems[i].Time = ""
+		SpanAggregatesDBResponseItems[i].Timestamp = int64(SpanAggregatesDBResponseItems[i].Time.UnixNano())
+		SpanAggregatesDBResponseItems[i].FloatValue = float32(SpanAggregatesDBResponseItems[i].Value)
 		if queryParams.AggregationOption == "rate_per_sec" {
-			SpanAggregatesDBResponseItems[i].Value = float32(SpanAggregatesDBResponseItems[i].Value) / float32(queryParams.StepSeconds)
+			SpanAggregatesDBResponseItems[i].FloatValue = float32(SpanAggregatesDBResponseItems[i].Value) / float32(queryParams.StepSeconds)
 		}
 		if responseElement, ok := GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp]; !ok {
-			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy.String != "" {
+			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy != "" {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
 					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
-					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy.String: SpanAggregatesDBResponseItems[i].Value},
+					GroupBy:   map[string]float32{SpanAggregatesDBResponseItems[i].GroupBy: SpanAggregatesDBResponseItems[i].FloatValue},
 				}
 			} else if queryParams.GroupBy == "" {
 				GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = model.SpanAggregatesResponseItem{
 					Timestamp: SpanAggregatesDBResponseItems[i].Timestamp,
-					Value:     SpanAggregatesDBResponseItems[i].Value,
+					Value:     SpanAggregatesDBResponseItems[i].FloatValue,
 				}
 			}
 
 		} else {
-			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy.String != "" {
-				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy.String] = SpanAggregatesDBResponseItems[i].Value
+			if queryParams.GroupBy != "" && SpanAggregatesDBResponseItems[i].GroupBy != "" {
+				responseElement.GroupBy[SpanAggregatesDBResponseItems[i].GroupBy] = SpanAggregatesDBResponseItems[i].FloatValue
 			}
 			GetFilteredSpansAggregatesResponse.Items[SpanAggregatesDBResponseItems[i].Timestamp] = responseElement
 		}
@@ -2307,8 +2300,8 @@ func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.Get
 
 	var getErrorReponses []model.Error
 
-	query := fmt.Sprintf("SELECT exceptionType, exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, serviceName FROM %s WHERE timestamp >= ? AND timestamp <= ? GROUP BY serviceName, exceptionType, exceptionMessage", r.errorTable)
-	args := []interface{}{strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10)}
+	query := fmt.Sprintf("SELECT exceptionType, exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, serviceName FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU GROUP BY serviceName, exceptionType, exceptionMessage", r.errorTable)
+	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorReponses, query, args...)
 
@@ -2329,10 +2322,11 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 		zap.S().Debug("errorId missing from params")
 		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("ErrorID missing from params")}
 	}
-	var getErrorWithSpanReponse model.ErrorWithSpan
+	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, olderErrorId, newerErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s window w as (ORDER BY exceptionType, serviceName, timestamp rows between unbounded preceding and unbounded following)) WHERE errorID = ?", r.errorTable)
-	args := []interface{}{queryParams.ErrorID}
+	// TODO: Optimize this query further
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, olderErrorId, newerErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s window w as (ORDER BY exceptionType, serviceName, timestamp rows between unbounded preceding and unbounded following)) WHERE errorID = @errorID", r.errorTable)
+	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID)}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
 
@@ -2347,7 +2341,11 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
 	}
 
-	return &getErrorWithSpanReponse, nil
+	if len(getErrorWithSpanReponse) > 0 {
+		return &getErrorWithSpanReponse[0], nil
+	} else {
+		return nil, &model.ApiError{model.ErrorNotFound, fmt.Errorf("Error ID not found")}
+	}
 
 }
 
@@ -2357,23 +2355,25 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 		zap.S().Debug("errorType/serviceName missing from params")
 		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("ErrorType/serviceName missing from params")}
 	}
-	var getErrorWithSpanReponse model.ErrorWithSpan
+	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s WHERE serviceName = ? AND exceptionType = ? window w as (ORDER BY timestamp rows between unbounded preceding and unbounded following)) limit 1", r.errorTable)
-	args := []interface{}{queryParams.ServiceName, queryParams.ErrorType}
+	// TODO: Optimize this query further
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s WHERE serviceName = @serviceName AND exceptionType = @errorType window w as (ORDER BY timestamp rows between unbounded preceding and unbounded following))", r.errorTable)
+	args := []interface{}{clickhouse.Named("serviceName", queryParams.ServiceName), clickhouse.Named("errorType", queryParams.ErrorType)}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
 
 	zap.S().Info(query)
 
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
 	}
 
-	return &getErrorWithSpanReponse, nil
+	if len(getErrorWithSpanReponse) > 0 {
+		return &getErrorWithSpanReponse[0], nil
+	} else {
+		return nil, &model.ApiError{model.ErrorNotFound, fmt.Errorf("Error not found")}
+	}
 
 }
