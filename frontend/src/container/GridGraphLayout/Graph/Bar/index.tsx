@@ -3,26 +3,26 @@ import {
 	EditFilled,
 	FullscreenOutlined,
 } from '@ant-design/icons';
+import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { useLocation } from 'react-router';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container } from './styles';
-import history from 'lib/history';
 
-const Bar = ({
+function Bar({
 	widget,
 	onViewFullScreenHandler,
 	onDeleteHandler,
-}: BarProps): JSX.Element => {
+}: BarProps): JSX.Element {
 	const { pathname } = useLocation();
 
-	const onEditHandler = useCallback(() => {
+	const onEditHandler = (): void => {
 		const widgetId = widget.id;
 		history.push(
 			`${pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
 		);
-	}, [pathname, widget]);
+	};
 
 	return (
 		<Container>
@@ -31,7 +31,7 @@ const Bar = ({
 			<DeleteOutlined onClick={onDeleteHandler} />
 		</Container>
 	);
-};
+}
 
 interface BarProps {
 	widget: Widgets;

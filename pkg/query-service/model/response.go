@@ -294,6 +294,11 @@ type SetTTLResponseItem struct {
 	Message string `json:"message"`
 }
 
+type DiskItem struct {
+	Name string `json:"name,omitempty" db:"name,omitempty"`
+	Type string `json:"type,omitempty" db:"type,omitempty"`
+}
+
 type DBResponseTTL struct {
 	EngineFull string `db:"engine_full"`
 }

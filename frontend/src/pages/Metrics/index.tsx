@@ -12,7 +12,7 @@ import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-const Metrics = ({ getService }: MetricsProps): JSX.Element => {
+function Metrics({ getService }: MetricsProps): JSX.Element {
 	const { minTime, maxTime, loading, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -54,7 +54,7 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 	}
 
 	return <MetricTable />;
-};
+}
 
 interface DispatchProps {
 	getService: (

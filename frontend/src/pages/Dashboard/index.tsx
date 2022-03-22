@@ -6,13 +6,13 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GetAllDashboards } from 'store/actions';
 import AppActions from 'types/actions';
 
-const Dashboard = ({ getAllDashboards }: DashboardProps): JSX.Element => {
+function Dashboard({ getAllDashboards }: DashboardProps): JSX.Element {
 	useEffect(() => {
 		getAllDashboards();
 	}, [getAllDashboards]);
 
 	return <ListOfAllDashboard />;
-};
+}
 
 interface DispatchProps {
 	getAllDashboards: () => void;

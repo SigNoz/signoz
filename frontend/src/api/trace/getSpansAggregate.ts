@@ -42,8 +42,8 @@ const getSpanAggregate = async (
 			...preProps,
 			tags: updatedSelectedTags,
 			...nonDuration,
-			maxDuration: String((duration['duration'] || [])[0] || ''),
-			minDuration: String((duration['duration'] || [])[1] || ''),
+			maxDuration: String((duration.duration || [])[0] || ''),
+			minDuration: String((duration.duration || [])[1] || ''),
 			exclude,
 		});
 

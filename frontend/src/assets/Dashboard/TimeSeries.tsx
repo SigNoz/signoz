@@ -1,7 +1,7 @@
 import React from 'react';
 
-const TimeSeries = (): JSX.Element => (
-	<React.Fragment>
+function TimeSeries(): JSX.Element {
+	return (
 		<svg
 			width="81"
 			height="46"
@@ -31,7 +31,7 @@ const TimeSeries = (): JSX.Element => (
 				/>
 			</defs>
 		</svg>
-	</React.Fragment>
-);
+	);
+}
 
 export default TimeSeries;

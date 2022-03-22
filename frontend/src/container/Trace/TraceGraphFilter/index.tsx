@@ -16,7 +16,7 @@ import { SelectComponent } from './styles';
 
 const { Option } = SelectComponent;
 
-const TraceGraphFilter = (): JSX.Element => {
+function TraceGraphFilter(): JSX.Element {
 	const { selectedFunction, selectedGroupBy } = useSelector<
 		AppState,
 		TraceReducer
@@ -86,6 +86,6 @@ const TraceGraphFilter = (): JSX.Element => {
 			</SelectComponent>
 		</Space>
 	);
-};
+}
 
 export default TraceGraphFilter;

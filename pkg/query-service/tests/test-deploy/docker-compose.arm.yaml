@@ -1,0 +1,98 @@
+version: "2.4"
+
+services:
+  clickhouse:
+    image: altinity/clickhouse-server:21.12.3.32.altinitydev.arm
+    volumes:
+      - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ./data/clickhouse/:/var/lib/clickhouse/
+    healthcheck:
+      # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  alertmanager:
+    image: signoz/alertmanager:0.5.0
+    volumes:
+      - ./alertmanager.yml:/prometheus/alertmanager.yml
+      - ./data/alertmanager:/data
+    command:
+      - '--config.file=/prometheus/alertmanager.yml'
+      - '--storage.path=/data'
+
+  query-service:
+    image: signoz/query-service:0.7.1
+    container_name: query-service
+    command: ["-config=/root/config/prometheus.yml"]
+    volumes:
+      - ./prometheus.yml:/root/config/prometheus.yml
+      - ../dashboards:/root/config/dashboards
+      - ./data/signoz/:/var/lib/signoz/
+    environment:
+      - ClickHouseUrl=tcp://clickhouse:9000
+      - STORAGE=clickhouse
+      - GODEBUG=netdns=go
+      - TELEMETRY_ENABLED=true
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  frontend:
+    image: signoz/frontend:0.7.1
+    container_name: frontend
+    depends_on:
+      - query-service
+    ports:
+      - "3301:3301"
+    volumes:
+      - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
+
+  otel-collector:
+    image: signoz/otelcontribcol:0.43.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"       # OTLP GRPC receiver
+    mem_limit: 2000m
+    restart: always
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  otel-collector-metrics:
+    image: signoz/otelcontribcol:0.43.0
+    command: ["--config=/etc/otel-collector-metrics-config.yaml"]
+    volumes:
+      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  hotrod:
+    image: jaegertracing/example-hotrod:1.30
+    container_name: hotrod
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
+    command: ["all"]
+    environment:
+    - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+
+  load-hotrod:
+    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+    container_name: load-hotrod
+    hostname: load-hotrod
+    environment:
+      ATTACKED_HOST: http://hotrod:8080
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
+    volumes:
+      - ../common/locust-scripts:/locust

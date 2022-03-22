@@ -14,7 +14,7 @@ import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 import history from 'lib/history';
 
-const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
+function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { search } = useLocation();
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
@@ -75,7 +75,7 @@ const DashboardWidget = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 	}
 
 	return <NewWidget selectedGraph={selectedGraph} />;
-};
+}
 
 export interface DashboardWidgetPageParams {
 	dashboardId: string;

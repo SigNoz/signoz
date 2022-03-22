@@ -51,7 +51,7 @@ export interface graphDataType {
 	links: graphLink[];
 }
 
-const ServiceMap = (props: ServiceMapProps): JSX.Element => {
+function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
 	const {
@@ -106,9 +106,9 @@ const ServiceMap = (props: ServiceMapProps): JSX.Element => {
 				linkDirectionalParticleSpeed={(d) => d.value}
 				nodeCanvasObject={(node, ctx, globalScale) => {
 					const label = transformLabel(node.id);
-					const fontSize = node.fontSize;
+					const { fontSize } = node;
 					ctx.font = `${fontSize}px Roboto`;
-					const width = node.width;
+					const { width } = node;
 
 					ctx.fillStyle = node.color;
 					ctx.beginPath();
@@ -134,7 +134,7 @@ const ServiceMap = (props: ServiceMapProps): JSX.Element => {
 			/>
 		</Container>
 	);
-};
+}
 
 const mapStateToProps = (
 	state: AppState,
@@ -150,7 +150,7 @@ const mapStateToProps = (
 
 export default withRouter(
 	connect(mapStateToProps, {
-		getServiceMapItems: getServiceMapItems,
-		getDetailedServiceMapItems: getDetailedServiceMapItems,
+		getServiceMapItems,
+		getDetailedServiceMapItems,
 	})(ServiceMap),
 );

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
@@ -19,7 +20,7 @@ import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
-const ListOfAllDashboard = (): JSX.Element => {
+function ListOfAllDashboard(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -179,7 +180,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 			/>
 		</TableContainer>
 	);
-};
+}
 
 export interface Data {
 	key: React.Key;

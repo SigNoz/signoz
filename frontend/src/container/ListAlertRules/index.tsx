@@ -6,7 +6,7 @@ import { PayloadProps } from 'types/api/alerts/getAll';
 
 import ListAlert from './ListAlert';
 
-const ListAlertRules = (): JSX.Element => {
+function ListAlertRules(): JSX.Element {
 	const { loading, payload, error, errorMessage } = useFetch<
 		PayloadProps,
 		undefined
@@ -27,6 +27,6 @@ const ListAlertRules = (): JSX.Element => {
 			}}
 		/>
 	);
-};
+}
 
 export default ListAlertRules;

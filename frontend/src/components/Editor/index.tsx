@@ -1,42 +1,17 @@
-import * as monaco from 'monaco-editor';
-import React, { useEffect, useRef } from 'react';
+import MEditor from '@monaco-editor/react';
+import React from 'react';
 
-import { Container } from './styles';
-
-const Editor = ({ value }: EditorProps): JSX.Element => {
-	const divEl = useRef<HTMLDivElement>(null);
-	const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
-
-	useEffect(() => {
-		let editor = editorRef.current;
-
-		if (divEl.current) {
-			editor = monaco.editor.create(divEl.current, {
-				value: value.current || '',
-				useShadowDOM: true,
-				theme: 'vs-dark',
-				automaticLayout: true,
-				fontSize: 16,
-				minimap: {
-					enabled: false,
-				},
-				language: 'yaml',
-			});
-		}
-
-		editor?.getModel()?.onDidChangeContent(() => {
-			value.current = editor?.getValue() || '';
-		});
-
-		return (): void => {
-			if (editor) {
-				editor.dispose();
-			}
-		};
-	}, [value]);
-
-	return <Container ref={divEl} />;
-};
+function Editor({ value }: EditorProps): JSX.Element {
+	return (
+		<MEditor
+			theme="vs-dark"
+			defaultLanguage="yaml"
+			value={value.current}
+			options={{ fontSize: 16, automaticLayout: true }}
+			height="40vh"
+		/>
+	);
+}
 
 interface EditorProps {
 	value: React.MutableRefObject<string>;

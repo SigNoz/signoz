@@ -1,15 +1,23 @@
+import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
 import menuItems, { ITEMS } from './menuItems';
 import { Card, Container, Text } from './styles';
-import history from 'lib/history';
 
-const DashboardGraphSlider = (): JSX.Element => {
+function DashboardGraphSlider(): JSX.Element {
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
+	const [selectedDashboard] = dashboards;
+	const { data } = selectedDashboard;
+
 	const onDragStartHandler: React.DragEventHandler<HTMLDivElement> = useCallback(
 		(event: React.DragEvent<HTMLDivElement>) => {
 			event.dataTransfer.setData('text/plain', event.currentTarget.id);
@@ -29,6 +37,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const fillColor: React.CSSProperties['color'] = isDarkMode ? 'white' : 'black';
+
 	return (
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
@@ -45,7 +54,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 			))}
 		</Container>
 	);
-};
+}
 
 export type GRAPH_TYPES = ITEMS;
 

@@ -31,7 +31,7 @@ export const SaveDashboard = ({
 				throw new Error('Dashboard Not Found');
 			}
 
-			const data = selectedDashboard.data;
+			const { data } = selectedDashboard;
 
 			const updatedTitle = title;
 			const updatedDescription = description;
@@ -55,6 +55,7 @@ export const SaveDashboard = ({
 			];
 
 			const response = await updateDashboardApi({
+				...selectedDashboard.data,
 				uuid,
 				// this is the data for the dashboard
 				title: selectedDashboard.data.title,

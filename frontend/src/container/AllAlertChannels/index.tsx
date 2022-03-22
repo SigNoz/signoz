@@ -7,12 +7,13 @@ import ROUTES from 'constants/routes';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
-const { Paragraph } = Typography;
 
 import AlertChannlesComponent from './AlertChannels';
 import { Button, ButtonContainer } from './styles';
 
-const AlertChannels = (): JSX.Element => {
+const { Paragraph } = Typography;
+
+function AlertChannels(): JSX.Element {
 	const onToggleHandler = useCallback(() => {
 		history.push(ROUTES.CHANNELS_NEW);
 	}, []);
@@ -24,7 +25,7 @@ const AlertChannels = (): JSX.Element => {
 	}
 
 	if (loading || payload === undefined) {
-		return <Spinner tip="Loading Channels.." height={'90vh'} />;
+		return <Spinner tip="Loading Channels.." height="90vh" />;
 	}
 
 	return (
@@ -36,7 +37,7 @@ const AlertChannels = (): JSX.Element => {
 
 				<div>
 					<TextToolTip
-						text={`More details on how to setting notification channels`}
+						text="More details on how to setting notification channels"
 						url="https://signoz.io/docs/userguide/alerts-management/#setting-notification-channel"
 					/>
 
@@ -49,6 +50,6 @@ const AlertChannels = (): JSX.Element => {
 			<AlertChannlesComponent allChannels={payload} />
 		</>
 	);
-};
+}
 
 export default AlertChannels;

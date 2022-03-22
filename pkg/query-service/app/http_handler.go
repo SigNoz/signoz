@@ -218,6 +218,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1059,7 +1061,7 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
-	ttlParams, err := parseDuration(r)
+	ttlParams, err := parseTTLParams(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1080,6 +1082,15 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := (*aH.reader).GetTTL(context.Background(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
+	result, apiErr := (*aH.reader).GetDisks(context.Background())
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

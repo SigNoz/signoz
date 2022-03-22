@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Slack = (): JSX.Element => {
+function Slack(): JSX.Element {
 	return (
 		<svg
 			width="28"
@@ -43,6 +43,6 @@ const Slack = (): JSX.Element => {
 			/>
 		</svg>
 	);
-};
+}
 
 export default Slack;

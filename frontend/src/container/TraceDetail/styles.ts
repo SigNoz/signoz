@@ -57,7 +57,6 @@ export const selectedSpanDetailContainer = css`
 	flex-direction: column;
 `;
 
-
 /**
  * Generic / Common styles
  */
