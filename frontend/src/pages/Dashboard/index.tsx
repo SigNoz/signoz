@@ -9,7 +9,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
-const Dashboard = ({ getAllDashboards }: DashboardProps): JSX.Element => {
+function Dashboard({ getAllDashboards }: DashboardProps): JSX.Element {
 	const { loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -23,7 +23,7 @@ const Dashboard = ({ getAllDashboards }: DashboardProps): JSX.Element => {
 	}
 
 	return <ListOfAllDashboard />;
-};
+}
 
 interface DispatchProps {
 	getAllDashboards: () => void;

@@ -6,21 +6,21 @@ import QuerySection from './QuerySection';
 import { QueryContainer } from './styles';
 import WidgetGraph from './WidgetGraph';
 
-const LeftContainer = ({
+function LeftContainer({
 	selectedGraph,
 	selectedTime,
 	yAxisUnit,
-}: LeftContainerProps): JSX.Element => {
+}: LeftContainerProps): JSX.Element {
 	return (
 		<>
-			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit}/>
+			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
 
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} />
 			</QueryContainer>
 		</>
 	);
-};
+}
 
 interface LeftContainerProps extends NewWidgetProps {
 	selectedTime: timePreferance;

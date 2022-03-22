@@ -5,13 +5,14 @@ import { connect, useSelector } from 'react-redux';
 import { GetService, getUsageData, usageDataItem } from 'store/actions';
 import { servicesListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
-import { isOnboardingSkipped } from 'utils/app';
-const { Option } = Select;
 import { GlobalTime } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
+import { isOnboardingSkipped } from 'utils/app';
 
 import { Card } from './styles';
+
+const { Option } = Select;
 
 interface UsageExplorerProps {
 	usageData: usageDataItem[];
@@ -57,7 +58,7 @@ const interval = [
 	},
 ];
 
-const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
+function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 	const [selectedTime, setSelectedTime] = useState(timeDaysOptions[1]);
 	const [selectedInterval, setSelectedInterval] = useState(interval[2]);
 	const [selectedService, setSelectedService] = useState<string>('');
@@ -105,7 +106,7 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 	};
 
 	return (
-		<React.Fragment>
+		<>
 			<Space style={{ marginTop: 40, marginLeft: 20 }}>
 				<Space>
 					<Select
@@ -149,7 +150,7 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 						}}
 						value={selectedService || 'All Services'}
 					>
-						<Option value={''}>All Services</Option>
+						<Option value="">All Services</Option>
 						{services?.map((service) => (
 							<Option key={service.serviceName} value={service.serviceName}>
 								{service.serviceName}
@@ -169,8 +170,8 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 					>
 						No spans found. Please add instrumentation (follow this
 						<a
-							href={'https://signoz.io/docs/instrumentation/overview'}
-							target={'_blank'}
+							href="https://signoz.io/docs/instrumentation/overview"
+							target="_blank"
 							style={{ marginLeft: 3 }}
 							rel="noreferrer"
 						>
@@ -188,9 +189,9 @@ const _UsageExplorer = (props: UsageExplorerProps): JSX.Element => {
 			<Card>
 				<Graph name="usage" data={data} type="bar" />
 			</Card>
-		</React.Fragment>
+		</>
 	);
-};
+}
 
 const mapStateToProps = (
 	state: AppState,
@@ -201,16 +202,16 @@ const mapStateToProps = (
 } => {
 	let totalCount = 0;
 	for (const item of state.usageDate) {
-		totalCount = totalCount + item.count;
+		totalCount += item.count;
 	}
 	return {
-		totalCount: totalCount,
+		totalCount,
 		usageData: state.usageDate,
 		globalTime: state.globalTime,
 	};
 };
 
 export const UsageExplorer = connect(mapStateToProps, {
-	getUsageData: getUsageData,
+	getUsageData,
 	getServicesList: GetService,
 })(_UsageExplorer);

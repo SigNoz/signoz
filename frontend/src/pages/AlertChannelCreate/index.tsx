@@ -5,7 +5,7 @@ import GeneralSettings from 'container/GeneralSettings';
 import history from 'lib/history';
 import React from 'react';
 
-const SettingsPage = (): JSX.Element => {
+function SettingsPage(): JSX.Element {
 	const pathName = history.location.pathname;
 
 	return (
@@ -30,6 +30,6 @@ const SettingsPage = (): JSX.Element => {
 			}}
 		/>
 	);
-};
+}
 
 export default SettingsPage;

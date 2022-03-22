@@ -104,12 +104,11 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 				minTime: localTime.minTime,
 				maxTime: localTime.maxTime,
 			};
-		} else {
-			return {
-				minTime: globalTime.minTime / 1e6,
-				maxTime: globalTime.maxTime / 1e6,
-			};
 		}
+		return {
+			minTime: globalTime.minTime / 1e6,
+			maxTime: globalTime.maxTime / 1e6,
+		};
 	}, [globalTime, localTime]);
 
 	return convertTimeRange(minTime, maxTime);

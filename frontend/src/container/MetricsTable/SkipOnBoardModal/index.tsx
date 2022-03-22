@@ -2,11 +2,11 @@ import { Button, Typography } from 'antd';
 import Modal from 'components/Modal';
 import React from 'react';
 
-const SkipOnBoardingModal = ({ onContinueClick }: Props): JSX.Element => {
+function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 	return (
 		<Modal
-			title={'Setup instrumentation'}
-			isModalVisible={true}
+			title="Setup instrumentation"
+			isModalVisible
 			closable={false}
 			footer={[
 				<Button key="submit" type="primary" onClick={onContinueClick}>
@@ -22,14 +22,14 @@ const SkipOnBoardingModal = ({ onContinueClick }: Props): JSX.Element => {
 					frameBorder="0"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 					allowFullScreen
-				></iframe>
+				/>
 				<div>
 					<Typography>No instrumentation data.</Typography>
 					<Typography>
 						Please instrument your application as mentioned&nbsp;
 						<a
-							href={'https://signoz.io/docs/instrumentation/overview'}
-							target={'_blank'}
+							href="https://signoz.io/docs/instrumentation/overview"
+							target="_blank"
 							rel="noreferrer"
 						>
 							here
@@ -39,7 +39,7 @@ const SkipOnBoardingModal = ({ onContinueClick }: Props): JSX.Element => {
 			</>
 		</Modal>
 	);
-};
+}
 
 interface Props {
 	onContinueClick: () => void;

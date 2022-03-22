@@ -8,7 +8,7 @@ import External from './Tabs/External';
 
 const { TabPane } = Tabs;
 
-const ServiceMetrics = (): JSX.Element => {
+function ServiceMetrics(): JSX.Element {
 	const getWidget = (query: Widgets['query']): Widgets => {
 		return {
 			description: '',
@@ -17,7 +17,7 @@ const ServiceMetrics = (): JSX.Element => {
 			nullZeroValues: '',
 			opacity: '0',
 			panelTypes: 'TIME_SERIES',
-			query: query,
+			query,
 			queryData: {
 				data: [],
 				error: false,
@@ -45,6 +45,6 @@ const ServiceMetrics = (): JSX.Element => {
 			</TabPane>
 		</Tabs>
 	);
-};
+}
 
 export default ServiceMetrics;

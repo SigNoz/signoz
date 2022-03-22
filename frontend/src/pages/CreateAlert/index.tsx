@@ -10,7 +10,7 @@ import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create
 
 import { ButtonContainer, Title } from './styles';
 
-const CreateAlert = (): JSX.Element => {
+function CreateAlert(): JSX.Element {
 	const value = useRef<string>(
 		`\n        alert: High RPS\n        expr: sum(rate(signoz_latency_count{span_kind="SPAN_KIND_SERVER"}[2m])) by (service_name) > 100\n        for: 0m\n        labels:\n            severity: warning\n        annotations:\n            summary: High RPS of Applications\n            description: "RPS is > 100\n\t\t\t VALUE = {{ $value }}\n\t\t\t LABELS = {{ $labels }}"\n    `,
 	);
@@ -104,6 +104,6 @@ const CreateAlert = (): JSX.Element => {
 			</ButtonContainer>
 		</>
 	);
-};
+}
 
 export default CreateAlert;

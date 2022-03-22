@@ -68,7 +68,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				const boxSpan = document.createElement('span');
 				boxSpan.style.background = item.strokeStyle || colors[0];
 				boxSpan.style.borderColor = item?.strokeStyle;
-				boxSpan.style.borderWidth = item.lineWidth + 'px';
+				boxSpan.style.borderWidth = `${item.lineWidth}px`;
 				boxSpan.style.display = 'inline-block';
 				boxSpan.style.minHeight = '20px';
 				boxSpan.style.marginRight = '10px';

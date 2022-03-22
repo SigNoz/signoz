@@ -16,12 +16,14 @@ export const AllTraceFilterEnum: TraceFilterEnum[] = [
 	'httpUrl',
 ];
 
-const Filters = (): JSX.Element => (
-	<React.Fragment>
-		{AllTraceFilterEnum.map((panelName) => (
-			<Panel key={panelName} name={panelName} />
-		))}
-	</React.Fragment>
-);
+function Filters(): JSX.Element {
+	return (
+		<>
+			{AllTraceFilterEnum.map((panelName) => (
+				<Panel key={panelName} name={panelName} />
+			))}
+		</>
+	);
+}
 
 export default Filters;

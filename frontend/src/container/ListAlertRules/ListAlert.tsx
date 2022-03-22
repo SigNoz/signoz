@@ -15,7 +15,7 @@ import DeleteAlert from './DeleteAlert';
 import { Button, ButtonContainer } from './styles';
 import Status from './TableComponents/Status';
 
-const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
+function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
 
 	useInterval(() => {
@@ -62,7 +62,7 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			dataIndex: 'labels',
 			key: 'severity',
 			sorter: (a, b): number =>
-				a.labels['severity'].length - b.labels['severity'].length,
+				a.labels.severity.length - b.labels.severity.length,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
@@ -144,7 +144,7 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			<Table rowKey="id" columns={columns} dataSource={data} />
 		</>
 	);
-};
+}
 
 interface ListAlertProps {
 	allAlertRules: Alerts[];

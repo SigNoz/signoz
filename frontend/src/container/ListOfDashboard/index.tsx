@@ -18,7 +18,7 @@ import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
-const ListOfAllDashboard = (): JSX.Element => {
+function ListOfAllDashboard(): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -179,7 +179,7 @@ const ListOfAllDashboard = (): JSX.Element => {
 			/>
 		</TableContainer>
 	);
-};
+}
 
 export interface Data {
 	key: React.Key;

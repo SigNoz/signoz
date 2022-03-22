@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 
 import { InputContainer, NewTagContainer, TagsContainer } from './styles';
 
-const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
+function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [inputVisible, setInputVisible] = useState<boolean>(false);
 	const [editInputIndex, setEditInputIndex] = useState(-1);
@@ -110,7 +110,7 @@ const AddTags = ({ tags, setTags }: AddTagsProps): JSX.Element => {
 			)}
 		</TagsContainer>
 	);
-};
+}
 
 interface AddTagsProps {
 	tags: string[];

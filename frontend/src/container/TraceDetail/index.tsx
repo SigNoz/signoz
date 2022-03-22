@@ -27,7 +27,7 @@ import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
 import { getSortedData, IIntervalUnit, INTERVAL_UNITS } from './utils';
 
-const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
+function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(
 		() => spanServiceNameToColorMapping(response[0].events),
 		[response],
@@ -48,7 +48,8 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
+		const tree = getSortedData(treeData);
+		return getSpanTreeMetadata(tree, spanServiceColors);
 	}, [treeData, spanServiceColors]);
 
 	const [globalTraceMetadata] = useState<Record<string, number>>({
@@ -85,7 +86,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	return (
 		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
-			<StyledCol flex={'auto'} styledclass={styles.leftContainer}>
+			<StyledCol flex="auto" styledclass={styles.leftContainer}>
 				<StyledRow styledclass={styles.flameAndTimelineContainer}>
 					<StyledCol
 						styledclass={styles.traceMetaDataContainer}
@@ -98,7 +99,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							{traceMetaData.totalSpans} Span
 						</StyledTypography.Text>
 					</StyledCol>
-					<Col flex={'auto'}>
+					<Col flex="auto">
 						<TraceFlameGraph
 							treeData={tree}
 							traceMetaData={traceMetaData}
@@ -119,7 +120,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							justifyContent: 'center',
 						}}
 					>
-						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
+						{tree && dayjs(tree.startTime).format('hh:mm:ss a MM/DD')}
 					</StyledCol>
 					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
 						<Timeline
@@ -147,7 +148,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							style={{ width: 200 }}
 						/> */}
 					</Col>
-					<Col flex={'auto'}>
+					<Col flex="auto">
 						<StyledSpace styledclass={[styles.floatRight]}>
 							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
@@ -179,7 +180,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 			</StyledCol>
 		</StyledRow>
 	);
-};
+}
 
 interface TraceDetailProps {
 	response: PayloadProps;

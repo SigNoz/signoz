@@ -11,7 +11,7 @@ import AppReducer from 'types/reducer/app';
 
 import routes from './routes';
 
-const App = (): JSX.Element => {
+function App(): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	return (
@@ -39,6 +39,6 @@ const App = (): JSX.Element => {
 			</AppLayout>
 		</Router>
 	);
-};
+}
 
 export default App;

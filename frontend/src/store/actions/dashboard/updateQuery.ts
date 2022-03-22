@@ -8,7 +8,7 @@ export const UpdateQuery = (
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return (dispatch: Dispatch<AppActions>): void => {
 		const state = store.getState();
-		const dashboards = state.dashboards.dashboards;
+		const { dashboards } = state.dashboards;
 		const [selectedDashboard] = dashboards;
 		const { data } = selectedDashboard;
 		const { widgets = [] } = data;

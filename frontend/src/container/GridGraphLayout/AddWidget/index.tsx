@@ -14,7 +14,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 import { Button, Container } from './styles';
 
-const AddWidget = ({ toggleAddWidget }: Props): JSX.Element => {
+function AddWidget({ toggleAddWidget }: Props): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -26,17 +26,15 @@ const AddWidget = ({ toggleAddWidget }: Props): JSX.Element => {
 	return (
 		<Container>
 			{!isAddWidget ? (
-				<>
-					<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
-						Add Widgets
-					</Button>
-				</>
+				<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
+					Add Widgets
+				</Button>
 			) : (
 				<Typography>Click a widget icon to add it here</Typography>
 			)}
 		</Container>
 	);
-};
+}
 
 interface DispatchProps {
 	toggleAddWidget: (

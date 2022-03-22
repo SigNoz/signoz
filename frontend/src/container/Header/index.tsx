@@ -15,7 +15,7 @@ const routesToSkip = [
 	ROUTES.ALL_CHANNELS,
 ];
 
-const TopNav = (): JSX.Element | null => {
+function TopNav(): JSX.Element | null {
 	const { pathname } = useLocation();
 
 	if (history.location.pathname === ROUTES.SIGN_UP) {
@@ -46,6 +46,6 @@ const TopNav = (): JSX.Element | null => {
 			)}
 		</Container>
 	);
-};
+}
 
 export default TopNav;

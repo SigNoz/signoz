@@ -7,10 +7,10 @@ import React, { useCallback } from 'react';
 
 import { TextContainer } from './styles';
 
-const TimePreference = ({
+function TimePreference({
 	setSelectedTime,
 	selectedTime,
-}: TimePreferenceDropDownProps): JSX.Element => {
+}: TimePreferenceDropDownProps): JSX.Element {
 	const timeMenuItemOnChangeHandler = useCallback(
 		(event: TimeMenuItemOnChangeHandlerEvent) => {
 			const selectedTime = timeItems.find((e) => e.enum === event.key);
@@ -38,7 +38,7 @@ const TimePreference = ({
 			</Dropdown>
 		</TextContainer>
 	);
-};
+}
 
 interface TimeMenuItemOnChangeHandlerEvent {
 	key: timePreferenceType | string;

@@ -10,10 +10,10 @@ import { Alerts } from 'types/api/alerts/getAll';
 import { Value } from './Filter';
 import { FilterAlerts } from './utils';
 
-const NoFilterTable = ({
+function NoFilterTable({
 	allAlerts,
 	selectedFilter,
-}: NoFilterTableProps): JSX.Element => {
+}: NoFilterTableProps): JSX.Element {
 	const filteredAlerts = FilterAlerts(allAlerts, selectedFilter);
 
 	// need to add the filter
@@ -63,8 +63,8 @@ const NoFilterTable = ({
 			dataIndex: 'labels',
 			key: 'severity',
 			sorter: (a, b): number => {
-				const severityValueA = a.labels['severity'];
-				const severityValueB = b.labels['severity'];
+				const severityValueA = a.labels.severity;
+				const severityValueB = b.labels.severity;
 				return severityValueA.length - severityValueB.length;
 			},
 			render: (value): JSX.Element => {
@@ -95,7 +95,7 @@ const NoFilterTable = ({
 	return (
 		<Table rowKey="startsAt" dataSource={filteredAlerts} columns={columns} />
 	);
-};
+}
 
 interface NoFilterTableProps {
 	allAlerts: Alerts[];

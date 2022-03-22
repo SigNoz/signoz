@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Data } from '../index';
 
-const Tags = (props: Data['tags']): JSX.Element => {
+function Tags(props: Data['tags']): JSX.Element {
 	return (
 		<>
 			{props.map((e) => (
@@ -11,6 +11,6 @@ const Tags = (props: Data['tags']): JSX.Element => {
 			))}
 		</>
 	);
-};
+}
 
 export default Tags;

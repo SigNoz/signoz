@@ -14,16 +14,13 @@ import DashboardReducer from 'types/reducer/dashboards';
 import Query from './Query';
 import { QueryButton } from './styles';
 
-const QuerySection = ({
-	selectedTime,
-	createQuery,
-}: QueryProps): JSX.Element => {
+function QuerySection({ selectedTime, createQuery }: QueryProps): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
-	const widgets = selectedDashboards.data.widgets;
+	const { widgets } = selectedDashboards.data;
 
 	const urlQuery = useMemo(() => {
 		return new URLSearchParams(search);
@@ -63,7 +60,7 @@ const QuerySection = ({
 			</QueryButton>
 		</>
 	);
-};
+}
 
 interface DispatchProps {
 	createQuery: ({
