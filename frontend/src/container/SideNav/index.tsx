@@ -26,7 +26,7 @@ import {
 function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { pathname } = window.location;
+	const { pathname } = history.location;
 
 	const toggleTheme = useCallback(() => {
 		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
