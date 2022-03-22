@@ -4,7 +4,7 @@ import history from 'lib/history';
 import setTheme from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
@@ -25,8 +25,8 @@ import {
 
 function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
-	const { pathname } = useLocation();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { pathname } = window.location;
 
 	const toggleTheme = useCallback(() => {
 		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
@@ -62,7 +62,7 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		[pathname],
 	);
 
-	const onClickSlackHandler = () => {
+	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 

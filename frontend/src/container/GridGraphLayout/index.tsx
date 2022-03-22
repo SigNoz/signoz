@@ -27,8 +27,6 @@ import {
 import { updateDashboard } from './utils';
 
 function GridGraph(): JSX.Element {
-	const { pathname } = useLocation();
-
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -103,7 +101,7 @@ function GridGraph(): JSX.Element {
 			setLayout(() => {
 				const getX = (): number => {
 					if (preLayouts && preLayouts?.length > 0) {
-						const last = preLayouts[preLayouts?.length || 0 - 1];
+						const last = preLayouts[(preLayouts?.length || 0) - 1];
 
 						return (last.w + last.x) % 12;
 					}
