@@ -4,13 +4,13 @@ import { Alerts } from 'types/api/alerts/getAll';
 
 import { Container, Select } from './styles';
 
-const Filter = ({
+function Filter({
 	setSelectedFilter,
 	setSelectedGroup,
 	allAlerts,
 	selectedGroup,
 	selectedFilter,
-}: FilterProps): JSX.Element => {
+}: FilterProps): JSX.Element {
 	const onChangeSelectGroupHandler = useCallback(
 		(value: string[]) => {
 			setSelectedGroup(
@@ -59,7 +59,7 @@ const Filter = ({
 					const { label, closable, onClose } = props;
 					return (
 						<Tag
-							color={'magenta'}
+							color="magenta"
 							closable={closable}
 							onClose={onClose}
 							style={{ marginRight: 3 }}
@@ -81,7 +81,7 @@ const Filter = ({
 					const { label, closable, onClose } = props;
 					return (
 						<Tag
-							color={'magenta'}
+							color="magenta"
 							closable={closable}
 							onClose={onClose}
 							style={{ marginRight: 3 }}
@@ -94,7 +94,7 @@ const Filter = ({
 			/>
 		</Container>
 	);
-};
+}
 
 interface FilterProps {
 	setSelectedFilter: React.Dispatch<React.SetStateAction<Array<Value>>>;

@@ -17,6 +17,7 @@ import {
 	ValueSelect,
 } from './styles';
 import TagsKey from './TagKey';
+
 const { Option } = Select;
 
 type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
@@ -37,7 +38,7 @@ interface AllMenu {
 	value: string;
 }
 
-const SingleTags = (props: AllTagsProps): JSX.Element => {
+function SingleTags(props: AllTagsProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 	const {
 		Key: selectedKey,
@@ -62,51 +63,49 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 	};
 
 	return (
-		<>
-			<Container>
-				<TagsKey
-					index={props.index}
-					tag={props.tag}
-					setLocalSelectedTags={props.setLocalSelectedTags}
-				/>
+		<Container>
+			<TagsKey
+				index={props.index}
+				tag={props.tag}
+				setLocalSelectedTags={props.setLocalSelectedTags}
+			/>
 
-				<SelectComponent
-					onChange={onChangeOperatorHandler}
-					value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
-				>
-					{AllMenu.map((e) => (
-						<Option key={e.value} value={e.key}>
-							{e.value}
-						</Option>
-					))}
-				</SelectComponent>
+			<SelectComponent
+				onChange={onChangeOperatorHandler}
+				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
+			>
+				{AllMenu.map((e) => (
+					<Option key={e.value} value={e.key}>
+						{e.value}
+					</Option>
+				))}
+			</SelectComponent>
 
-				<ValueSelect
-					value={selectedValues}
-					onChange={(value): void => {
-						props.setLocalSelectedTags((tags) => [
-							...tags.slice(0, props.index),
-							{
-								Key: selectedKey,
-								Operator: selectedOperator,
-								Values: value as string[],
-							},
-							...tags.slice(props.index + 1, tags.length),
-						]);
-					}}
-					mode="tags"
-				/>
+			<ValueSelect
+				value={selectedValues}
+				onChange={(value): void => {
+					props.setLocalSelectedTags((tags) => [
+						...tags.slice(0, props.index),
+						{
+							Key: selectedKey,
+							Operator: selectedOperator,
+							Values: value as string[],
+						},
+						...tags.slice(props.index + 1, tags.length),
+					]);
+				}}
+				mode="tags"
+			/>
 
-				<IconContainer
-					role={'button'}
-					onClick={(): void => onDeleteTagHandler(props.index)}
-				>
-					<CloseOutlined />
-				</IconContainer>
-			</Container>
-		</>
+			<IconContainer
+				role="button"
+				onClick={(): void => onDeleteTagHandler(props.index)}
+			>
+				<CloseOutlined />
+			</IconContainer>
+		</Container>
 	);
-};
+}
 
 interface DispatchProps {
 	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;

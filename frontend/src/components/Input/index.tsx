@@ -1,7 +1,7 @@
 import { Form, Input, InputProps } from 'antd';
 import React from 'react';
 
-const InputComponent = ({
+function InputComponent({
 	value,
 	type = 'text',
 	onChangeHandler,
@@ -14,22 +14,24 @@ const InputComponent = ({
 	labelOnTop,
 	addonBefore,
 	...props
-}: InputComponentProps): JSX.Element => (
-	<Form.Item labelCol={{ span: labelOnTop ? 24 : 4 }} label={label}>
-		<Input
-			placeholder={placeholder}
-			type={type}
-			onChange={onChangeHandler}
-			value={value}
-			ref={ref}
-			size={size}
-			addonBefore={addonBefore}
-			onBlur={onBlurHandler}
-			onPressEnter={onPressEnterHandler}
-			{...props}
-		/>
-	</Form.Item>
-);
+}: InputComponentProps): JSX.Element {
+	return (
+		<Form.Item labelCol={{ span: labelOnTop ? 24 : 4 }} label={label}>
+			<Input
+				placeholder={placeholder}
+				type={type}
+				onChange={onChangeHandler}
+				value={value}
+				ref={ref}
+				size={size}
+				addonBefore={addonBefore}
+				onBlur={onBlurHandler}
+				onPressEnter={onPressEnterHandler}
+				{...props}
+			/>
+		</Form.Item>
+	);
+}
 
 interface InputComponentProps extends InputProps {
 	value: InputProps['value'];

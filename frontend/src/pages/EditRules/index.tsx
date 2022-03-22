@@ -6,7 +6,7 @@ import React from 'react';
 import { useParams } from 'react-router';
 import { PayloadProps, Props } from 'types/api/alerts/get';
 
-const EditRules = (): JSX.Element => {
+function EditRules(): JSX.Element {
 	const { ruleId } = useParams<EditRulesParam>();
 
 	const { loading, error, payload, errorMessage } = useFetch<
@@ -25,7 +25,7 @@ const EditRules = (): JSX.Element => {
 	}
 
 	return <EditRulesContainer ruleId={ruleId} initialData={payload.data} />;
-};
+}
 
 interface EditRulesParam {
 	ruleId: string;

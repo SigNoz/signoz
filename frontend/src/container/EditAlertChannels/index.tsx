@@ -11,9 +11,9 @@ import { Store } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router';
 
-const EditAlertChannels = ({
+function EditAlertChannels({
 	initialValue,
-}: EditAlertChannelsProps): JSX.Element => {
+}: EditAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
 		...initialValue,
@@ -72,25 +72,23 @@ const EditAlertChannels = ({
 	}, []);
 
 	return (
-		<>
-			<FormAlertChannels
-				{...{
-					formInstance,
-					onTypeChangeHandler,
-					setSelectedConfig,
-					type,
-					onTestHandler,
-					onSaveHandler,
-					savingState,
-					NotificationElement,
-					title: 'Edit Notification Channels',
-					initialValue,
-					nameDisable: true,
-				}}
-			/>
-		</>
+		<FormAlertChannels
+			{...{
+				formInstance,
+				onTypeChangeHandler,
+				setSelectedConfig,
+				type,
+				onTestHandler,
+				onSaveHandler,
+				savingState,
+				NotificationElement,
+				title: 'Edit Notification Channels',
+				initialValue,
+				nameDisable: true,
+			}}
+		/>
 	);
-};
+}
 
 interface EditAlertChannelsProps {
 	initialValue: Store;

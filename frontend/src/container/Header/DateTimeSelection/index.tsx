@@ -1,14 +1,10 @@
 import { Button, Select as DefaultSelect } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
-
-import { getDefaultOption, getOptions, Time } from './config';
-import { Container, Form, FormItem } from './styles';
-const { Option } = DefaultSelect;
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCAL_STORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
 import getTimeString from 'lib/getTimeString';
+import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -19,13 +15,17 @@ import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
+import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
+import { Container, Form, FormItem } from './styles';
 
-const DateTimeSelection = ({
+const { Option } = DefaultSelect;
+
+function DateTimeSelection({
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
-}: Props): JSX.Element => {
+}: Props): JSX.Element {
 	const [form_dtselector] = Form.useForm();
 
 	const params = new URLSearchParams(location.search);
@@ -290,7 +290,7 @@ const DateTimeSelection = ({
 			/>
 		</Container>
 	);
-};
+}
 
 interface DispatchProps {
 	updateTimeInterval: (

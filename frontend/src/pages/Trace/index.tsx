@@ -29,11 +29,11 @@ import {
 	RightContainer,
 } from './styles';
 
-const Trace = ({
+function Trace({
 	getSpansAggregate,
 	getSpans,
 	getInitialFilter,
-}: Props): JSX.Element => {
+}: Props): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -57,8 +57,8 @@ const Trace = ({
 
 	useEffect(() => {
 		getSpansAggregate({
-			maxTime: maxTime,
-			minTime: minTime,
+			maxTime,
+			minTime,
 			selectedFilter,
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
@@ -133,7 +133,7 @@ const Trace = ({
 			</Container>
 		</>
 	);
-};
+}
 
 interface DispatchProps {
 	getSpansAggregate: (props: GetSpansAggregateProps) => void;

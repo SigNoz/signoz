@@ -27,6 +27,8 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { legend } from './Plugin';
+import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getYAxisFormattedValue } from './yAxisConfig';
 
@@ -47,10 +49,8 @@ Chart.register(
 	BarController,
 	BarElement,
 );
-import { legend } from './Plugin';
-import { LegendsContainer } from './styles';
 
-const Graph = ({
+function Graph({
 	data,
 	type,
 	title,
@@ -58,7 +58,7 @@ const Graph = ({
 	onClickHandler,
 	name,
 	yAxisUnit = 'short',
-}: GraphProps): JSX.Element => {
+}: GraphProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const currentTheme = isDarkMode ? 'dark' : 'light';
@@ -94,7 +94,7 @@ const Graph = ({
 				},
 				plugins: {
 					title: {
-						display: title === undefined ? false : true,
+						display: title !== undefined,
 						text: title,
 					},
 					legend: {
@@ -137,7 +137,7 @@ const Graph = ({
 						},
 						ticks: {
 							// Include a dollar sign in the ticks
-							callback: function (value, index, ticks) {
+							callback(value, index, ticks) {
 								return getYAxisFormattedValue(value, yAxisUnit);
 							},
 						},
@@ -160,8 +160,8 @@ const Graph = ({
 			};
 
 			lineChartRef.current = new Chart(chartRef.current, {
-				type: type,
-				data: data,
+				type,
+				data,
 				options,
 				plugins: [legend(name, data.datasets.length > 3)],
 			});
@@ -178,7 +178,7 @@ const Graph = ({
 			<LegendsContainer id={name} />
 		</div>
 	);
-};
+}
 
 interface GraphProps {
 	type: ChartType;

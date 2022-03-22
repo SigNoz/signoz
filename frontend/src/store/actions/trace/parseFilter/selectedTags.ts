@@ -20,7 +20,7 @@ export const parseQueryIntoSelectedTags = (
 				selectedTags = parsedQuerySelectedTags;
 			}
 		} catch (error) {
-			//error while parsing
+			// error while parsing
 		}
 	}
 

@@ -6,7 +6,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-const TagsKey = (props: TagsKeysProps): JSX.Element => {
+function TagsKey(props: TagsKeysProps): JSX.Element {
 	const [selectLoading, setSelectLoading] = useState<boolean>(false);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -94,7 +94,7 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 			<Input disabled={selectLoading} placeholder="Please select" />
 		</AutoComplete>
 	);
-};
+}
 
 interface TagsKeysProps {
 	index: number;

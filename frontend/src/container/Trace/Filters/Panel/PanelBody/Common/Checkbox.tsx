@@ -15,7 +15,7 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import { CheckBoxContainer } from './styles';
 
-const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
+function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const {
 		selectedFilter,
 		filterLoading,
@@ -167,7 +167,7 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 			)}
 		</CheckBoxContainer>
 	);
-};
+}
 
 interface DispatchProps {
 	selectedTraceFilter: (props: {

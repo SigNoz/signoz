@@ -2,9 +2,9 @@ import React from 'react';
 
 import { Value } from './styles';
 
-const ValueGraph = ({ value }: ValueGraphProps): JSX.Element => (
-	<Value>{value}</Value>
-);
+function ValueGraph({ value }: ValueGraphProps): JSX.Element {
+	return <Value>{value}</Value>;
+}
 
 interface ValueGraphProps {
 	value: string;

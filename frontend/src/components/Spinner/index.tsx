@@ -4,11 +4,13 @@ import React from 'react';
 
 import { SpinerStyle } from './styles';
 
-const Spinner = ({ size, tip, height }: SpinnerProps): JSX.Element => (
-	<SpinerStyle height={height}>
-		<Spin spinning size={size} tip={tip} indicator={<LoadingOutlined spin />} />
-	</SpinerStyle>
-);
+function Spinner({ size, tip, height }: SpinnerProps): JSX.Element {
+	return (
+		<SpinerStyle height={height}>
+			<Spin spinning size={size} tip={tip} indicator={<LoadingOutlined spin />} />
+		</SpinerStyle>
+	);
+}
 
 interface SpinnerProps {
 	size?: SpinProps['size'];

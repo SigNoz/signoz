@@ -9,11 +9,11 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container } from './styles';
 
-const Bar = ({
+function Bar({
 	widget,
 	onViewFullScreenHandler,
 	onDeleteHandler,
-}: BarProps): JSX.Element => {
+}: BarProps): JSX.Element {
 	const { push } = useHistory();
 	const { pathname } = useLocation();
 
@@ -29,7 +29,7 @@ const Bar = ({
 			<DeleteOutlined onClick={onDeleteHandler} />
 		</Container>
 	);
-};
+}
 
 interface BarProps {
 	widget: Widgets;

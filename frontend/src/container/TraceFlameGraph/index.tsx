@@ -26,7 +26,7 @@ interface SpanItem {
 	selectedSpanId: string;
 }
 
-const SpanItem = ({
+function SpanItem({
 	topOffset = 0, // top offset in px
 	leftOffset = 0, // left offset in %
 	width = 10, // width in %
@@ -36,7 +36,7 @@ const SpanItem = ({
 	onSpanHover,
 	hoveredSpanId,
 	selectedSpanId,
-}: SpanItem): JSX.Element => {
+}: SpanItem): JSX.Element {
 	const { serviceColour } = spanData;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	// const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
@@ -70,28 +70,26 @@ const SpanItem = ({
 	}, [isSelected, serviceColour, isDarkMode]);
 
 	return (
-		<>
-			<SpanItemContainer
-				title={tooltipText}
-				onClick={handleClick}
-				onMouseEnter={(): void => {
-					handleHover(true);
-				}}
-				onMouseLeave={(): void => {
-					handleHover(false);
-				}}
-				topOffset={topOffset}
-				leftOffset={leftOffset}
-				width={width}
-				spanColor={spanColor}
-				selected={isSelected}
-				zIdx={isSelected ? 1 : 0}
-			></SpanItemContainer>
-		</>
+		<SpanItemContainer
+			title={tooltipText}
+			onClick={handleClick}
+			onMouseEnter={(): void => {
+				handleHover(true);
+			}}
+			onMouseLeave={(): void => {
+				handleHover(false);
+			}}
+			topOffset={topOffset}
+			leftOffset={leftOffset}
+			width={width}
+			spanColor={spanColor}
+			selected={isSelected}
+			zIdx={isSelected ? 1 : 0}
+		/>
 	);
-};
+}
 
-const TraceFlameGraph = (props: {
+function TraceFlameGraph(props: {
 	treeData: ITraceTree;
 	traceMetaData: ITraceMetaData;
 	onSpanHover: SpanItem['onSpanHover'];
@@ -99,14 +97,14 @@ const TraceFlameGraph = (props: {
 	hoveredSpanId: string;
 	selectedSpanId: string;
 	intervalUnit: IIntervalUnit;
-}): JSX.Element => {
+}): JSX.Element {
 	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
 		return <></>;
 	}
 	const { intervalUnit } = props;
 
 	const { globalStart, spread, levels } = props.traceMetaData;
-	const RenderSpanRecursive = ({
+	function RenderSpanRecursive({
 		level = 0,
 		spanData,
 		parentLeftOffset = 0,
@@ -122,7 +120,7 @@ const TraceFlameGraph = (props: {
 		onSpanSelect: SpanItem['onSpanSelect'];
 		hoveredSpanId: string;
 		selectedSpanId: string;
-	}): JSX.Element => {
+	}): JSX.Element {
 		if (!spanData) {
 			return <></>;
 		}
@@ -161,20 +159,18 @@ const TraceFlameGraph = (props: {
 				))}
 			</>
 		);
-	};
+	}
 	return (
-		<>
-			<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
-				<RenderSpanRecursive
-					spanData={props.treeData}
-					onSpanHover={props.onSpanHover}
-					onSpanSelect={props.onSpanSelect}
-					hoveredSpanId={props.hoveredSpanId}
-					selectedSpanId={props.selectedSpanId}
-				/>
-			</TraceFlameGraphContainer>
-		</>
+		<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
+			<RenderSpanRecursive
+				spanData={props.treeData}
+				onSpanHover={props.onSpanHover}
+				onSpanSelect={props.onSpanSelect}
+				hoveredSpanId={props.hoveredSpanId}
+				selectedSpanId={props.selectedSpanId}
+			/>
+		</TraceFlameGraphContainer>
 	);
-};
+}
 
 export default TraceFlameGraph;

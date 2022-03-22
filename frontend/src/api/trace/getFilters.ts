@@ -29,9 +29,9 @@ const getFilters = async (
 			end: props.end,
 			getFilters: props.getFilters,
 			...nonDuration,
-			maxDuration: String((duration['duration'] || [])[0] || ''),
-			minDuration: String((duration['duration'] || [])[1] || ''),
-			exclude: exclude,
+			maxDuration: String((duration.duration || [])[0] || ''),
+			minDuration: String((duration.duration || [])[1] || ''),
+			exclude,
 		});
 
 		return {
