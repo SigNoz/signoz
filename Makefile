@@ -12,6 +12,8 @@ BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 FRONTEND_DIRECTORY ?= frontend
 FLATTENER_DIRECTORY ?= pkg/processors/flattener
 QUERY_SERVICE_DIRECTORY ?= pkg/query-service
+STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
+SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
 
 REPONAME ?= signoz
 DOCKER_TAG ?= latest
@@ -99,15 +101,23 @@ dev-setup:
 	@echo "------------------"
 
 run-x86:
-	@docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml up -d
 
 run-arm:
-	@docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.arm.yaml up -d
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.arm.yaml up -d
+
+down-x86:
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
+
+down-arm:
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.arm.yaml down -v
 
 clear-standalone-data:
-	@docker run --rm -v "$(PWD)/deploy/docker/clickhouse-setup:/pwd" busybox \
-	sh -c "cd /pwd/data && rm -rf alertmanager/* clickhouse/* signoz/*"
+	@cd $(STANDALONE_DIRECTORY)
+	@docker run --rm -v "data:/pwd" busybox \
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
 
 clear-swarm-data:
-	@docker run --rm -v "$(PWD)/deploy/docker-swarm/clickhouse-setup:/pwd" busybox \
-	sh -c "cd /pwd/data && rm -rf alertmanager/* clickhouse/* signoz/*"
+	@cd $(SWARM_DIRECTORY)
+	@docker run --rm -v "data:/pwd" busybox \
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
