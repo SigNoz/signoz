@@ -16,7 +16,7 @@ describe('Alerts', () => {
 			})
 			.as('defaultRules');
 
-		cy.visit(Cypress.env('baseUrl') + `${ROUTES.LIST_ALL_ALERT}`);
+		cy.visit(`${Cypress.env('baseUrl')}${ROUTES.LIST_ALL_ALERT}`);
 
 		cy.wait('@defaultRules');
 	});
@@ -97,7 +97,7 @@ describe('Alerts', () => {
 
 						const defaultLabels = defaultRules.data.rules[index].labels;
 
-						expect(label).to.be.equals(defaultLabels['severity']);
+						expect(label).to.be.equals(defaultLabels.severity);
 					});
 				});
 			});

@@ -56,7 +56,7 @@ export const getChartData = (
 export const getChartDataforGroupBy = (
 	props: TraceReducer['spansGraph']['payload'],
 ): ChartData => {
-	const items = props.items;
+	const { items } = props;
 
 	const chartData: ChartData = {
 		datasets: [],
@@ -68,7 +68,7 @@ export const getChartDataforGroupBy = (
 	const allGroupBy = Object.keys(items).map((e) => items[e].groupBy);
 
 	Object.keys(allGroupBy).map((e) => {
-		const length = Object.keys(allGroupBy[e]).length;
+		const { length } = Object.keys(allGroupBy[e]);
 
 		if (length >= max) {
 			max = length;
@@ -90,7 +90,7 @@ export const getChartDataforGroupBy = (
 
 		chartData.labels?.push(date);
 
-		const groupBy = spanData.groupBy;
+		const { groupBy } = spanData;
 		const preData: number[] = [];
 
 		if (groupBy) {

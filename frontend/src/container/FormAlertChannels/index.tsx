@@ -1,21 +1,22 @@
 import type { FormInstance } from 'antd';
 import { Form, Input, Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
+import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	SlackChannel,
 } from 'container/CreateAlertChannels/config';
-import React from 'react';
-const { Option } = Select;
-const { Title } = Typography;
-import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Store } from 'rc-field-form/lib/interface';
+import React from 'react';
 
 import SlackSettings from './Settings/Slack';
 import { Button } from './styles';
 
-const FormAlertChannels = ({
+const { Option } = Select;
+const { Title } = Typography;
+
+function FormAlertChannels({
 	formInstance,
 	type,
 	setSelectedConfig,
@@ -27,7 +28,7 @@ const FormAlertChannels = ({
 	title,
 	initialValue,
 	nameDisable = false,
-}: FormAlertChannelsProps): JSX.Element => {
+}: FormAlertChannelsProps): JSX.Element {
 	return (
 		<>
 			{NotificationElement}
@@ -82,7 +83,7 @@ const FormAlertChannels = ({
 			</Form>
 		</>
 	);
-};
+}
 
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;

@@ -1,18 +1,19 @@
 // shared config (dev and prod)
 import { config as _config } from 'dotenv';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { dirname, resolve } from 'path';
 import { getPort } from 'portfinder-sync';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import { fileURLToPath } from 'url';
 import webpack from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+
 const { DefinePlugin, ProvidePlugin } = webpack;
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const fileName = fileURLToPath(import.meta.url);
+const dirName = dirname(fileName);
 _config();
 
-console.log(resolve(__dirname, './src/'));
+console.log(resolve(dirName, './src/'));
 
 const plugins = [
 	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
@@ -31,7 +32,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 const config = {
 	mode: 'development',
 	devtool: 'source-map',
-	entry: resolve(__dirname, './src/index.tsx'),
+	entry: resolve(dirName, './src/index.tsx'),
 	devServer: {
 		historyApiFallback: true,
 		open: true,
@@ -39,7 +40,7 @@ const config = {
 		liveReload: true,
 		port: getPort(3301),
 		static: {
-			directory: resolve(__dirname, 'public'),
+			directory: resolve(dirName, 'public'),
 			publicPath: '/',
 			watch: true,
 		},
@@ -47,7 +48,7 @@ const config = {
 	},
 	target: 'web',
 	output: {
-		path: resolve(__dirname, './build'),
+		path: resolve(dirName, './build'),
 		publicPath: '/',
 	},
 	resolve: {
@@ -108,7 +109,7 @@ const config = {
 			},
 		],
 	},
-	plugins: plugins,
+	plugins,
 	performance: {
 		hints: false,
 	},

@@ -18,10 +18,10 @@ import Tags from './AllTags';
 import { Container, SearchComponent } from './styles';
 import { parseQueryToTags, parseTagsToQuery } from './util';
 
-const Search = ({
+function Search({
 	updateTagVisiblity,
 	updateTagIsError,
-}: SearchProps): JSX.Element => {
+}: SearchProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const [value, setValue] = useState<string>('');
@@ -121,7 +121,7 @@ const Search = ({
 					disabled={traces.filterLoading}
 					onFocus={onFocusHandler}
 					placeholder="Click to filter by tags"
-					type={'search'}
+					type="search"
 					enterButton={<CaretRightFilled />}
 					onSearch={(string): void => {
 						if (string.length === 0) {
@@ -148,7 +148,7 @@ const Search = ({
 			</Container>
 		</Space>
 	);
-};
+}
 
 interface DispatchProps {
 	updateTagVisiblity: (value: boolean) => void;

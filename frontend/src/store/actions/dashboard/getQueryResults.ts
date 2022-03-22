@@ -44,7 +44,7 @@ export const GetQueryResults = (
 						const result = await getQueryResult({
 							end,
 							query: encodeURIComponent(query.query),
-							start: start,
+							start,
 							step: '60',
 						});
 						return {

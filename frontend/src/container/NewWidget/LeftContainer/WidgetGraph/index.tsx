@@ -11,10 +11,10 @@ import { NewWidgetProps } from '../../index';
 import { AlertIconContainer, Container, NotFoundContainer } from './styles';
 import WidgetGraphComponent from './WidgetGraph';
 
-const WidgetGraph = ({
+function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
-}: WidgetGraphProps): JSX.Element => {
+}: WidgetGraphProps): JSX.Element {
 	const { dashboards, isQueryFired } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -55,7 +55,7 @@ const WidgetGraph = ({
 			)}
 		</Container>
 	);
-};
+}
 
 type WidgetGraphProps = NewWidgetProps;
 

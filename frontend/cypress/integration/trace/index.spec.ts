@@ -33,7 +33,7 @@ describe('Trace', () => {
 			})
 			.as('Filters');
 
-		cy.visit(Cypress.env('baseUrl') + `${ROUTES.TRACE}`);
+		cy.visit(`${Cypress.env('baseUrl')}${ROUTES.TRACE}`);
 	});
 
 	it('First Initial Load should go with 3 AJAX request', () => {

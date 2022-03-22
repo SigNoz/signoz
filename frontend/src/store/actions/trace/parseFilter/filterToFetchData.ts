@@ -20,7 +20,7 @@ export const parseFilterToFetchData = (
 				filterToFetchData.push(...parsedValue);
 			}
 		} catch (error) {
-			//error while parsing json
+			// error while parsing json
 		}
 	}
 

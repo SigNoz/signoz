@@ -5,12 +5,12 @@ import { AppAction, LOGGED_IN, SWITCH_DARK_MODE } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
-	isDarkMode: getTheme() === 'darkMode' ? true : false,
+	isDarkMode: getTheme() === 'darkMode',
 	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
 };
 
 const appReducer = (
-	state = InitialValue,
+	state: InitialValueTypes = InitialValue,
 	action: AppAction,
 ): InitialValueTypes => {
 	switch (action.type) {

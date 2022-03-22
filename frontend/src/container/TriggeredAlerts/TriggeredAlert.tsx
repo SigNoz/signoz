@@ -8,7 +8,7 @@ import FilteredTable from './FilteredTable';
 import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';
 
-const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
+function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
 	const [allInitialAlerts, setInitialAlerts] = useState(allAlerts || []);
 
 	useInterval(() => {
@@ -75,7 +75,7 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 			)}
 		</div>
 	);
-};
+}
 
 interface TriggeredAlertsProps {
 	allAlerts: Alerts[];

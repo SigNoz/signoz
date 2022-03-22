@@ -22,7 +22,7 @@ import {
 } from './styles';
 import { updateDashboard } from './utils';
 
-const GridGraph = (): JSX.Element => {
+function GridGraph(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -59,7 +59,7 @@ const GridGraph = (): JSX.Element => {
 					x: (index % 2) * 6,
 					Component: (): JSX.Element => (
 						<Graph
-							name={e.id + index + 'non-expanded'}
+							name={`${e.id + index}non-expanded`}
 							isDeleted={isDeleted}
 							widget={widgets[index]}
 							yAxisUnit={e.yAxisUnit}
@@ -67,26 +67,25 @@ const GridGraph = (): JSX.Element => {
 					),
 				};
 			});
-		} else {
-			return data.layout
-				.filter((_, index) => widgets[index])
-				.map((e, index) => ({
-					...e,
-					Component: (): JSX.Element => {
-						if (widgets[index]) {
-							return (
-								<Graph
-									name={e.i + index}
-									isDeleted={isDeleted}
-									widget={widgets[index]}
-									yAxisUnit={widgets[index].yAxisUnit}
-								/>
-							);
-						}
-						return <></>;
-					},
-				}));
 		}
+		return data.layout
+			.filter((_, index) => widgets[index])
+			.map((e, index) => ({
+				...e,
+				Component: (): JSX.Element => {
+					if (widgets[index]) {
+						return (
+							<Graph
+								name={e.i + index}
+								isDeleted={isDeleted}
+								widget={widgets[index]}
+								yAxisUnit={widgets[index].yAxisUnit}
+							/>
+						);
+					}
+					return <></>;
+				},
+			}));
 	}, [widgets, data.layout]);
 
 	useEffect(() => {
@@ -142,7 +141,7 @@ const GridGraph = (): JSX.Element => {
 						data,
 						generateWidgetId,
 						graphType,
-						selectedDashboard: selectedDashboard,
+						selectedDashboard,
 						layout: allLayouts
 							.map((e, index) => ({
 								...e,
@@ -253,7 +252,7 @@ const GridGraph = (): JSX.Element => {
 			</ReactGridLayout>
 		</>
 	);
-};
+}
 
 interface LayoutProps extends Layout {
 	Component: () => JSX.Element;

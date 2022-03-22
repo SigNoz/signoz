@@ -18,7 +18,7 @@ import {
 	ToolTipContainer,
 } from './styles';
 
-const GeneralSettings = (): JSX.Element => {
+function GeneralSettings(): JSX.Element {
 	const [
 		selectedMetricsPeroid,
 		setSelectedMetricsPeroid,
@@ -171,9 +171,7 @@ const GeneralSettings = (): JSX.Element => {
 	};
 
 	const isDisabledHandler = (): boolean => {
-		return retentionPeroidTrace === '' || retentionPeroidMetrics === ''
-			? true
-			: false;
+		return !!(retentionPeroidTrace === '' || retentionPeroidMetrics === '');
 	};
 
 	const errorText = getErrorText();
@@ -205,7 +203,7 @@ const GeneralSettings = (): JSX.Element => {
 			)}
 
 			<Retention
-				text={'Retention Period for Metrics'}
+				text="Retention Period for Metrics"
 				selectedRetentionPeroid={selectedMetricsPeroid}
 				setRentionValue={setRetentionPeroidMetrics}
 				retentionValue={retentionPeroidMetrics}
@@ -213,7 +211,7 @@ const GeneralSettings = (): JSX.Element => {
 			/>
 
 			<Retention
-				text={'Retention Period for Traces'}
+				text="Retention Period for Traces"
 				selectedRetentionPeroid={selectedTracePeroid}
 				setRentionValue={setRetentionPeroidTrace}
 				retentionValue={retentionPeroidTrace}
@@ -248,7 +246,7 @@ const GeneralSettings = (): JSX.Element => {
 			</ButtonContainer>
 		</Container>
 	);
-};
+}
 
 export type SettingPeroid = 'hr' | 'day' | 'month';
 

@@ -11,7 +11,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
-const NewDashboardPage = ({ getDashboard }: NewDashboardProps): JSX.Element => {
+function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { loading, dashboards, error, errorMessage } = useSelector<
 		AppState,
 		DashboardReducer
@@ -34,7 +34,7 @@ const NewDashboardPage = ({ getDashboard }: NewDashboardProps): JSX.Element => {
 	}
 
 	return <NewDashboard />;
-};
+}
 
 interface Params {
 	dashboardId: string;

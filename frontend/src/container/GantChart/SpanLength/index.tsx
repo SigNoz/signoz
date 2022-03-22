@@ -7,6 +7,7 @@ import React from 'react';
 import { toFixed } from 'utils/toFixed';
 
 import { SpanBorder, SpanLine, SpanText, SpanWrapper } from './styles';
+
 interface SpanLengthProps {
 	width: string;
 	leftOffset: string;
@@ -16,7 +17,7 @@ interface SpanLengthProps {
 	intervalUnit: IIntervalUnit;
 }
 
-const SpanLength = (props: SpanLengthProps): JSX.Element => {
+function SpanLength(props: SpanLengthProps): JSX.Element {
 	const { width, leftOffset, bgColor, intervalUnit } = props;
 	const { isDarkMode } = useThemeMode();
 	return (
@@ -39,6 +40,6 @@ const SpanLength = (props: SpanLengthProps): JSX.Element => {
 			)} ${intervalUnit.name}`}</SpanText>
 		</SpanWrapper>
 	);
-};
+}
 
 export default SpanLength;

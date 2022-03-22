@@ -10,7 +10,7 @@ export const UpdateTagVisiblity = (
 		dispatch({
 			type: UPDATE_TAG_MODAL_VISIBLITY,
 			payload: {
-				isTagModalOpen: isTagModalOpen,
+				isTagModalOpen,
 			},
 		});
 	};

@@ -14,8 +14,8 @@ import { fileURLToPath } from 'url';
 import webpack from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const filname = fileURLToPath(import.meta.url);
+const directoryName = dirname(filname);
 
 const { DefinePlugin, ProvidePlugin } = webpack;
 
@@ -25,7 +25,7 @@ const plugins = [
 		exclude: /.map$/,
 	}),
 	new CopyPlugin({
-		patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
+		patterns: [{ from: resolve(directoryName, 'public/'), to: '.' }],
 	}),
 	new ProvidePlugin({
 		process: 'process/browser',
@@ -43,9 +43,9 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 /** @type { import('webpack').Configuration } */
 const config = {
 	mode: 'production',
-	entry: resolve(__dirname, './src/index.tsx'),
+	entry: resolve(directoryName, './src/index.tsx'),
 	output: {
-		path: resolve(__dirname, './build'),
+		path: resolve(directoryName, './build'),
 		publicPath: '/',
 		filename: '[name].[contenthash].js',
 	},
@@ -56,10 +56,10 @@ const config = {
 	cache: {
 		type: 'filesystem',
 		allowCollectingMemory: true,
-		cacheDirectory: resolve(__dirname, '.temp_cache'),
+		cacheDirectory: resolve(directoryName, '.temp_cache'),
 		buildDependencies: {
 			// This makes all dependencies of this file - build dependencies
-			config: [__filename],
+			config: [filname],
 			// By default webpack and loaders are build dependencies
 		},
 	},
@@ -118,13 +118,13 @@ const config = {
 			},
 		],
 	},
-	plugins: plugins,
+	plugins,
 	optimization: {
 		chunkIds: 'named',
 		concatenateModules: false,
 		emitOnErrors: true,
 		flagIncludedChunks: true,
-		innerGraph: true, //tells webpack whether to conduct inner graph analysis for unused exports.
+		innerGraph: true, // tells webpack whether to conduct inner graph analysis for unused exports.
 		mangleWasmImports: true,
 		mergeDuplicateChunks: true,
 		minimize: true,

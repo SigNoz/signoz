@@ -7,7 +7,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
 
-const TraceDetail = (): JSX.Element => {
+function TraceDetail(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
 
 	const traceDetailResponse = useFetch(getTraceItem, {
@@ -27,6 +27,6 @@ const TraceDetail = (): JSX.Element => {
 	}
 
 	return <TraceDetailContainer response={traceDetailResponse.payload} />;
-};
+}
 
 export default TraceDetail;

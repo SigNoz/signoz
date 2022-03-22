@@ -1,16 +1,16 @@
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
+import history from 'lib/history';
 import React from 'react';
 
 const { TabPane } = Tabs;
-import history from 'lib/history';
 
-const RouteTab = ({
+function RouteTab({
 	routes,
 	activeKey,
 	onChangeHandler,
 	...rest
-}: RouteTabProps & TabsProps): JSX.Element => {
+}: RouteTabProps & TabsProps): JSX.Element {
 	const onChange = (activeRoute: string): void => {
 		onChangeHandler && onChangeHandler();
 
@@ -37,7 +37,7 @@ const RouteTab = ({
 			)}
 		</Tabs>
 	);
-};
+}
 
 interface RouteTabProps {
 	routes: {

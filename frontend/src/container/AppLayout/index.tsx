@@ -20,10 +20,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 		if (!isLoggedIn) {
 			setIsSignUpPage(true);
 			history.push(ROUTES.SIGN_UP);
-		} else {
-			if (isSignUpPage) {
-				setIsSignUpPage(false);
-			}
+		} else if (isSignUpPage) {
+			setIsSignUpPage(false);
 		}
 	}, [isLoggedIn, isSignUpPage]);
 

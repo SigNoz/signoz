@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import styled, { css } from 'styled-components';
+
 const { Text, Title, Paragraph } = Typography;
 
 export const CustomTitle = styled(Title)`

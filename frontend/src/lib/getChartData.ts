@@ -11,7 +11,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 			const { values = [], metric } = e || {};
 			const labelNames = getLabelName(
 				metric,
-				query, //query
+				query, // query
 				legend || '', // legends
 			);
 

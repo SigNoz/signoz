@@ -26,7 +26,7 @@ const getMs = (value: string): string => {
 		.format('SSS');
 };
 
-const Duration = (): JSX.Element => {
+function Duration(): JSX.Element {
 	const {
 		filter,
 		selectedFilter,
@@ -57,8 +57,8 @@ const Duration = (): JSX.Element => {
 
 	const duration = getDuration();
 
-	const maxDuration = duration['maxDuration'] || '0';
-	const minDuration = duration['minDuration'] || '0';
+	const maxDuration = duration.maxDuration || '0';
+	const minDuration = duration.minDuration || '0';
 
 	const [localMax, setLocalMax] = useState<string>(maxDuration);
 	const [localMin, setLocalMin] = useState<string>(minDuration);
@@ -133,7 +133,7 @@ const Duration = (): JSX.Element => {
 	const onChangeMaxHandler: React.ChangeEventHandler<HTMLInputElement> = (
 		event,
 	) => {
-		const value = event.target.value;
+		const { value } = event.target;
 		const min = parseFloat(localMin);
 		const max = parseFloat(value) * 1000000;
 
@@ -146,7 +146,7 @@ const Duration = (): JSX.Element => {
 	const onChangeMinHandler: React.ChangeEventHandler<HTMLInputElement> = (
 		event,
 	) => {
-		const value = event.target.value;
+		const { value } = event.target;
 		const min = parseFloat(value) * 1000000;
 		const max = parseFloat(localMax);
 		onRangeSliderHandler([min, max]);
@@ -183,8 +183,8 @@ const Duration = (): JSX.Element => {
 			<Container>
 				<Slider
 					defaultValue={[defaultValue[0], defaultValue[1]]}
-					min={parseFloat((filter.get('duration') || {})['minDuration'])}
-					max={parseFloat((filter.get('duration') || {})['maxDuration'])}
+					min={parseFloat((filter.get('duration') || {}).minDuration)}
+					max={parseFloat((filter.get('duration') || {}).maxDuration)}
 					range
 					tipFormatter={(value): JSX.Element => {
 						if (value === undefined) {
@@ -206,6 +206,6 @@ const Duration = (): JSX.Element => {
 			</Container>
 		</div>
 	);
-};
+}
 
 export default Duration;

@@ -10,7 +10,7 @@ export const UpdateSelectedTags = (
 		dispatch({
 			type: UPDATE_SELECTED_TAGS,
 			payload: {
-				selectedTags: selectedTags,
+				selectedTags,
 			},
 		});
 	};

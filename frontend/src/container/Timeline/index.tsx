@@ -11,11 +11,11 @@ import { getIntervals, getIntervalSpread } from './utils';
 const Timeline_Height = 22;
 const Timeline_H_Spacing = 0;
 
-const Timeline = ({
+function Timeline({
 	traceMetaData,
 	globalTraceMetadata,
 	setIntervalUnit,
-}: TimelineProps): JSX.Element => {
+}: TimelineProps): JSX.Element {
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const { isDarkMode } = useThemeMode();
 
@@ -27,7 +27,7 @@ const Timeline = ({
 			baseSpread,
 			intervalSpreadNormalized,
 		} = getIntervalSpread({
-			globalTraceMetadata: globalTraceMetadata,
+			globalTraceMetadata,
 			localTraceMetaData: traceMetaData,
 		});
 
@@ -90,7 +90,7 @@ const Timeline = ({
 			</Svg>
 		</StyledDiv>
 	);
-};
+}
 
 interface TimelineProps {
 	traceMetaData: {

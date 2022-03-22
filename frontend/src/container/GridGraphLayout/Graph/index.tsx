@@ -25,13 +25,13 @@ import Bar from './Bar';
 import FullView from './FullView';
 import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
-const GridCardGraph = ({
+function GridCardGraph({
 	widget,
 	deleteWidget,
 	isDeleted,
 	name,
 	yAxisUnit,
-}: GridCardGraphProps): JSX.Element => {
+}: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
 		errorMessage: '',
@@ -66,7 +66,7 @@ const GridCardGraph = ({
 							const result = await getQueryResult({
 								end,
 								query: query.query,
-								start: start,
+								start,
 								step: '60',
 							});
 
@@ -151,7 +151,7 @@ const GridCardGraph = ({
 				>
 					<FullViewContainer>
 						<FullView
-							name={name + 'expanded'}
+							name={`${name}expanded`}
 							widget={widget}
 							yAxisUnit={yAxisUnit}
 						/>
@@ -209,7 +209,7 @@ const GridCardGraph = ({
 			/>
 		</>
 	);
-};
+}
 
 interface GridCardGraphState {
 	loading: boolean;

@@ -23,7 +23,7 @@ import {
 	ToggleButton,
 } from './styles';
 
-const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
+function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(false);
 	const { pathname } = useLocation();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -33,7 +33,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		setTheme(preMode);
 
 		const id: appMode = preMode;
-		const head = document.head;
+		const { head } = document;
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
@@ -76,7 +76,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
-				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
+				<Logo src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -102,7 +102,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 			</Menu>
 		</Sider>
 	);
-};
+}
 
 type appMode = 'darkMode' | 'lightMode';
 

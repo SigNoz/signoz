@@ -43,7 +43,7 @@ export const updateDashboard = async ({
 				title: '',
 			},
 		],
-		layout: layout,
+		layout,
 	});
 
 	if (response.statusCode === 200) {

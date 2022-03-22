@@ -8,16 +8,15 @@ import {
 	Typography,
 } from 'antd';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import setPreference from 'api/user/setPreference';
 import signup from 'api/user/signup';
+import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
-import AppActions from 'types/actions';
-const { Title } = Typography;
-import setPreference from 'api/user/setPreference';
-import { IS_LOGGED_IN } from 'constants/auth';
 import { useDispatch } from 'react-redux';
 import type { Dispatch } from 'redux';
+import AppActions from 'types/actions';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
 import {
@@ -30,7 +29,9 @@ import {
 	MarginTop,
 } from './styles';
 
-const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
+const { Title } = Typography;
+
+function Signup({ version, userpref }: SignupProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
 	const [firstName, setFirstName] = useState<string>('');
@@ -70,7 +71,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 
 				if (userPrefernceResponse.statusCode === 200) {
 					const response = await signup({
-						email: email,
+						email,
 						name: firstName,
 						organizationName,
 					});
@@ -118,7 +119,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 		<Container>
 			<LeftContainer direction="vertical">
 				<Space align="center">
-					<Logo src={'signoz-signup.svg'} alt="logo" />
+					<Logo src="signoz-signup.svg" alt="logo" />
 					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
 				</Space>
 				<Typography>
@@ -175,7 +176,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 						/>
 					</div>
 
-					<MarginTop marginTop={'2.4375rem'}>
+					<MarginTop marginTop="2.4375rem">
 						<Space>
 							<Switch
 								onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
@@ -185,7 +186,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 						</Space>
 					</MarginTop>
 
-					<MarginTop marginTop={'0.5rem'}>
+					<MarginTop marginTop="0.5rem">
 						<Space>
 							<Switch
 								onChange={(value): void => onSwitchHandler(value, setisAnonymous)}
@@ -212,7 +213,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 			</FormWrapper>
 		</Container>
 	);
-};
+}
 
 interface SignupProps {
 	version: string;

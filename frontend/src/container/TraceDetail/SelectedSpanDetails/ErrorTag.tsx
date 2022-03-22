@@ -10,7 +10,7 @@ import { CustomSubText, CustomSubTitle, styles } from './styles';
 
 const { Panel } = Collapse;
 
-const ErrorTag = ({ event }: ErrorTagProps): JSX.Element => {
+function ErrorTag({ event }: ErrorTagProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState(false);
 	const { isDarkMode } = useThemeMode();
 
@@ -84,7 +84,7 @@ const ErrorTag = ({ event }: ErrorTagProps): JSX.Element => {
 			</Modal>
 		</>
 	);
-};
+}
 
 interface ErrorTagProps {
 	event: ITraceTree['event'];

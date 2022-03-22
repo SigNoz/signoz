@@ -10,7 +10,7 @@ export const UpdateDashboardTitleDescriptionTags = ({
 ) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
-			const data = dashboard.data;
+			const { data } = dashboard;
 
 			const response = await update({
 				...dashboard.data,

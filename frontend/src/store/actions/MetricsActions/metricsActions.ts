@@ -8,8 +8,7 @@ import * as MetricsInterfaces from './metricsInterfaces';
 
 export const getServicesList = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
+		const request_string = `/services?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
 
 		const response = await api.get<MetricsInterfaces.servicesListItem[]>(
 			request_string,
@@ -27,14 +26,7 @@ export const getDbOverViewMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/service/dbOverview?service=' +
-			serviceName +
-			'&start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime +
-			'&step=60';
+		const request_string = `/service/dbOverview?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 		const response = await api.get<MetricsInterfaces.dbOverviewMetricsItem[]>(
 			request_string,
 		);
@@ -50,14 +42,7 @@ export const getExternalMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/service/external?service=' +
-			serviceName +
-			'&start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime +
-			'&step=60';
+		const request_string = `/service/external?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 		const response = await api.get<MetricsInterfaces.externalMetricsItem[]>(
 			request_string,
 		);
@@ -73,14 +58,7 @@ export const getExternalAvgDurationMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/service/externalAvgDuration?service=' +
-			serviceName +
-			'&start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime +
-			'&step=60';
+		const request_string = `/service/externalAvgDuration?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 
 		const response = await api.get<
 			MetricsInterfaces.externalMetricsAvgDurationItem[]
@@ -96,14 +74,7 @@ export const getExternalErrCodeMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/service/externalErrors?service=' +
-			serviceName +
-			'&start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime +
-			'&step=60';
+		const request_string = `/service/externalErrors?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 		const response = await api.get<
 			MetricsInterfaces.externalErrCodeMetricsItem[]
 		>(request_string);
@@ -120,14 +91,7 @@ export const getServicesMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/service/overview?service=' +
-			serviceName +
-			'&start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime +
-			'&step=60';
+		const request_string = `/service/overview?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 		const response = await api.get<MetricsInterfaces.metricItem[]>(
 			request_string,
 		);
@@ -144,13 +108,7 @@ export const getTopEndpoints = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/service/top_endpoints?service=' +
-			serviceName +
-			'&start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime;
+		const request_string = `/service/top_endpoints?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}`;
 		const response = await api.get<MetricsInterfaces.topEndpointListItem[]>(
 			request_string,
 		);
@@ -167,13 +125,9 @@ export const getFilteredTraceMetrics = (
 	globalTime: GlobalTime,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string =
-			'/spans/aggregates?start=' +
-			toUTCEpoch(globalTime.minTime) +
-			'&end=' +
-			toUTCEpoch(globalTime.maxTime) +
-			'&' +
-			filter_params;
+		const request_string = `/spans/aggregates?start=${toUTCEpoch(
+			globalTime.minTime,
+		)}&end=${toUTCEpoch(globalTime.maxTime)}&${filter_params}`;
 		const response = await api.get<MetricsInterfaces.customMetricsItem[]>(
 			request_string,
 		);
@@ -191,58 +145,17 @@ export const getInitialMerticData = ({
 }: getInitialMerticDataProps) => {
 	return async (dispatch: Dispatch): Promise<void> => {
 		try {
-			const dbOverviewString =
-				'/service/dbOverview?service=' +
-				serviceName +
-				'&start=' +
-				globalTime.minTime +
-				'&end=' +
-				globalTime.maxTime +
-				'&step=60';
+			const dbOverviewString = `/service/dbOverview?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 
-			const externalServicesString =
-				'/service/external?service=' +
-				serviceName +
-				'&start=' +
-				globalTime.minTime +
-				'&end=' +
-				globalTime.maxTime +
-				'&step=60';
+			const externalServicesString = `/service/external?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 
-			const topEndPointsString =
-				'/service/top_endpoints?service=' +
-				serviceName +
-				'&start=' +
-				globalTime.minTime +
-				'&end=' +
-				globalTime.maxTime;
+			const topEndPointsString = `/service/top_endpoints?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}`;
 
-			const avgExternalDurationString =
-				'/service/externalAvgDuration?service=' +
-				serviceName +
-				'&start=' +
-				globalTime.minTime +
-				'&end=' +
-				globalTime.maxTime +
-				'&step=60';
+			const avgExternalDurationString = `/service/externalAvgDuration?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 
-			const serviceOverviewString =
-				'/service/overview?service=' +
-				serviceName +
-				'&start=' +
-				globalTime.minTime +
-				'&end=' +
-				globalTime.maxTime +
-				'&step=60';
+			const serviceOverviewString = `/service/overview?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 
-			const externalErrorCodeMetricsString =
-				'/service/externalErrors?service=' +
-				serviceName +
-				'&start=' +
-				globalTime.minTime +
-				'&end=' +
-				globalTime.maxTime +
-				'&step=60';
+			const externalErrorCodeMetricsString = `/service/externalErrors?service=${serviceName}&start=${globalTime.minTime}&end=${globalTime.maxTime}&step=60`;
 
 			dispatch({
 				type: 'UPDATE_INITIAL_VALUE_START',

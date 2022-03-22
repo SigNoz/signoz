@@ -39,13 +39,13 @@ import {
 	RightContainerWrapper,
 } from './styles';
 
-const NewWidget = ({
+function NewWidget({
 	selectedGraph,
 	applySettingsToPanel,
 	saveSettingOfPanel,
 	getQueryResults,
 	updateQuery,
-}: Props): JSX.Element => {
+}: Props): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -56,7 +56,7 @@ const NewWidget = ({
 
 	const [selectedDashboard] = dashboards;
 
-	const widgets = selectedDashboard.data.widgets;
+	const { widgets } = selectedDashboard.data;
 
 	const { push } = useHistory();
 	const { search } = useLocation();
@@ -115,7 +115,7 @@ const NewWidget = ({
 			title,
 			yAxisUnit,
 			widgetId: query.get('widgetId') || '',
-			dashboardId: dashboardId,
+			dashboardId,
 		});
 	}, [
 		opacity,
@@ -222,7 +222,7 @@ const NewWidget = ({
 			</PanelContainer>
 		</Container>
 	);
-};
+}
 
 export interface NewWidgetProps {
 	selectedGraph: GRAPH_TYPES;

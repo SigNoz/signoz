@@ -1,6 +1,8 @@
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
 import React from 'react';
+import type { RouteComponentProps } from 'react-router';
+import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
 
 const breadcrumbNameMap = {
@@ -13,10 +15,7 @@ const breadcrumbNameMap = {
 	[ROUTES.DASHBOARD]: 'Dashboard',
 };
 
-import type { RouteComponentProps } from 'react-router';
-import { withRouter } from 'react-router';
-
-const ShowBreadcrumbs = (props: RouteComponentProps): JSX.Element => {
+function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
 	const pathArray = props.location.pathname.split('/').filter((i) => i);
 
 	const extraBreadcrumbItems = pathArray.map((_, index) => {
@@ -28,13 +27,12 @@ const ShowBreadcrumbs = (props: RouteComponentProps): JSX.Element => {
 					<Link to={url}>{url.split('/').slice(-1)[0]}</Link>
 				</Breadcrumb.Item>
 			);
-		} else {
-			return (
-				<Breadcrumb.Item key={url}>
-					<Link to={url}>{breadcrumbNameMap[url]}</Link>
-				</Breadcrumb.Item>
-			);
 		}
+		return (
+			<Breadcrumb.Item key={url}>
+				<Link to={url}>{breadcrumbNameMap[url]}</Link>
+			</Breadcrumb.Item>
+		);
 	});
 
 	const breadcrumbItems = [
@@ -44,6 +42,6 @@ const ShowBreadcrumbs = (props: RouteComponentProps): JSX.Element => {
 	].concat(extraBreadcrumbItems);
 
 	return <Breadcrumb>{breadcrumbItems}</Breadcrumb>;
-};
+}
 
 export default withRouter(ShowBreadcrumbs);

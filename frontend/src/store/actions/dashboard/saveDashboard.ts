@@ -31,7 +31,7 @@ export const SaveDashboard = ({
 				throw new Error('Dashboard Not Found');
 			}
 
-			const data = selectedDashboard.data;
+			const { data } = selectedDashboard;
 
 			const updatedTitle = title;
 			const updatedDescription = description;

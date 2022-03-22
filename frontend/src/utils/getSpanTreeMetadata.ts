@@ -18,7 +18,7 @@ export const getSpanTreeMetadata = (
 		}
 		totalSpans++;
 		levels = Math.max(levels, level);
-		const startTime = treeNode.startTime;
+		const { startTime } = treeNode;
 		const endTime = startTime + treeNode.value / 1e6;
 		globalStart = Math.min(globalStart, startTime);
 		globalEnd = Math.max(globalEnd, endTime);

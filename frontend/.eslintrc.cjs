@@ -6,6 +6,8 @@ module.exports = {
 		'jest/globals': true,
 	},
 	extends: [
+		'airbnb',
+		'airbnb-typescript',
 		'eslint:recommended',
 		'plugin:react/recommended',
 		'plugin:@typescript-eslint/recommended',
@@ -17,6 +19,7 @@ module.exports = {
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
+		project: './tsconfig.json',
 		ecmaFeatures: {
 			jsx: true,
 		},
@@ -57,6 +60,7 @@ module.exports = {
 			'error',
 			process.platform === 'win32' ? 'windows' : 'unix',
 		],
+		'@typescript-eslint/default-param-last': 'off',
 
 		// simple sort error
 		'simple-import-sort/imports': 'error',
@@ -65,6 +69,21 @@ module.exports = {
 		// hooks
 		'react-hooks/rules-of-hooks': 'error',
 		'react-hooks/exhaustive-deps': 'error',
+
+		// airbnb
+		'no-underscore-dangle': 'off',
+		'no-console': 'off',
+		'import/prefer-default-export': 'off',
+		'import/extensions': [
+			'error',
+			'ignorePackages',
+			{
+				js: 'never',
+				jsx: 'never',
+				ts: 'never',
+				tsx: 'never',
+			},
+		],
 
 		'prettier/prettier': [
 			'error',

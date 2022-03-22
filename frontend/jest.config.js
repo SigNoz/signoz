@@ -1,4 +1,4 @@
-/**@type import("@jest/types").Config.InitialOptions */
+/** @type import("@jest/types").Config.InitialOptions */
 const config = {
 	clearMocks: true,
 	coverageDirectory: 'coverage',

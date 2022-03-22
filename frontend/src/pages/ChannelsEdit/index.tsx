@@ -8,7 +8,7 @@ import React from 'react';
 import { useParams } from 'react-router';
 import { PayloadProps, Props } from 'types/api/channels/get';
 
-const ChannelsEdit = (): JSX.Element => {
+function ChannelsEdit(): JSX.Element {
 	const { id } = useParams<Params>();
 
 	const { errorMessage, payload, error, loading } = useFetch<
@@ -30,7 +30,7 @@ const ChannelsEdit = (): JSX.Element => {
 
 	const value = JSON.parse(data);
 
-	const channel: SlackChannel = value['slack_configs'][0];
+	const channel: SlackChannel = value.slack_configs[0];
 
 	return (
 		<EditAlertChannels
@@ -43,7 +43,7 @@ const ChannelsEdit = (): JSX.Element => {
 			}}
 		/>
 	);
-};
+}
 interface Params {
 	id: string;
 }

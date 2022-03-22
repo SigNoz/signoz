@@ -10,11 +10,11 @@ const intitalState: GlobalReducer = {
 	maxTime: Date.now() * 1000000,
 	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
 	loading: true,
-	selectedTime: getDefaultOption(location.pathname),
+	selectedTime: getDefaultOption(window.location.pathname),
 };
 
 const globalTimeReducer = (
-	state = intitalState,
+	state: GlobalReducer = intitalState,
 	action: GlobalTimeAction,
 ): GlobalReducer => {
 	switch (action.type) {

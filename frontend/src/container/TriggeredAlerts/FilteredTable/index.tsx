@@ -8,11 +8,11 @@ import { FilterAlerts } from '../utils';
 import { Container, TableHeader, TableHeaderContainer } from './styles';
 import TableRowComponent from './TableRow';
 
-const FilteredTable = ({
+function FilteredTable({
 	selectedGroup,
 	allAlerts,
 	selectedFilter,
-}: FilteredTableProps): JSX.Element => {
+}: FilteredTableProps): JSX.Element {
 	const allGroupsAlerts: Dictionary<Alerts[]> = useMemo(
 		() =>
 			groupBy(FilterAlerts(allAlerts, selectedFilter), (obj) =>
@@ -65,7 +65,7 @@ const FilteredTable = ({
 			})}
 		</Container>
 	);
-};
+}
 
 interface FilteredTableProps {
 	selectedGroup: Value[];

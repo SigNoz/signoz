@@ -17,9 +17,10 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+
 dayjs.extend(duration);
 
-const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
+function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 	const {
 		spansAggregate,
 		selectedFilter,
@@ -127,7 +128,7 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 				},
 			})}
 			size="middle"
-			rowKey={'timestamp'}
+			rowKey="timestamp"
 			style={{
 				cursor: 'pointer',
 			}}
@@ -136,11 +137,11 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 				pageSize: spansAggregate.pageSize,
 				responsive: true,
 				position: ['bottomLeft'],
-				total: total,
+				total,
 			}}
 		/>
 	);
-};
+}
 
 interface DispatchProps {
 	getSpansAggregate: (props: GetSpansAggregateProps) => void;

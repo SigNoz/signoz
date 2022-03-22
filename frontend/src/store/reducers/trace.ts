@@ -1,3 +1,4 @@
+import AppActions from 'types/actions';
 import {
 	RESET_TRACE_FILTER,
 	SELECT_TRACE_FILTER,
@@ -50,8 +51,8 @@ const initialValue: TraceReducer = {
 };
 
 const traceReducer = (
-	state = initialValue,
-	action: TraceActions,
+	state: TraceReducer = initialValue,
+	action: TraceActions = {},
 ): TraceReducer => {
 	switch (action.type) {
 		case UPDATE_TRACE_FILTER: {

@@ -16,10 +16,10 @@ import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-const MetricsApplication = ({
+function MetricsApplication({
 	getInitialData,
 	resetInitialData,
-}: MetricsProps): JSX.Element => {
+}: MetricsProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -53,7 +53,7 @@ const MetricsApplication = ({
 	}
 
 	return <MetricsApplicationContainer />;
-};
+}
 
 interface DispatchProps {
 	getInitialData: (props: GetInitialDataProps) => void;

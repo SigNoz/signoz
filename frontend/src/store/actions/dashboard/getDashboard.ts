@@ -16,7 +16,7 @@ export const GetDashboard = ({
 			});
 
 			const response = await getDashboard({
-				uuid: uuid,
+				uuid,
 			});
 
 			if (response.statusCode === 200) {

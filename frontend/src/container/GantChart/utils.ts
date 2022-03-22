@@ -14,7 +14,7 @@ export const getMetaDataFromSpanTree = (
 		}
 		totalSpans++;
 		levels = Math.max(levels, level);
-		const startTime = treeNode.startTime;
+		const { startTime } = treeNode;
 		const endTime = startTime + treeNode.value;
 		globalStart = Math.min(globalStart, startTime);
 		globalEnd = Math.max(globalEnd, endTime);
@@ -25,8 +25,8 @@ export const getMetaDataFromSpanTree = (
 	};
 	traverse(treeData, 1);
 
-	globalStart = globalStart * 1e6;
-	globalEnd = globalEnd * 1e6;
+	globalStart *= 1e6;
+	globalEnd *= 1e6;
 
 	return {
 		globalStart,
@@ -43,7 +43,7 @@ export function getTopLeftFromBody(
 ): { left: number; top: number } {
 	const box = elem.getBoundingClientRect();
 
-	const body = document.body;
+	const { body } = document;
 	const docEl = document.documentElement;
 
 	const scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
@@ -62,7 +62,7 @@ export const getNodeById = (
 	searchingId: string,
 	treeData: ITraceTree,
 ): ITraceTree | undefined => {
-	let foundNode: ITraceTree | undefined = undefined;
+	let foundNode: ITraceTree | undefined;
 	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
@@ -107,7 +107,7 @@ export const isSpanPresentInSearchString = (
 
 	const stringifyTree = JSON.stringify(parsedTree);
 
-	return stringifyTree.includes(searchedString) ? true : false;
+	return !!stringifyTree.includes(searchedString);
 };
 
 export const isSpanPresent = (

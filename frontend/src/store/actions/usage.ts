@@ -23,14 +23,14 @@ export const getUsageData = (
 	return async (dispatch: Dispatch): Promise<void> => {
 		const request_string = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
 			maxTime,
-		)}&step=${step}&service=${service ? service : ''}`;
-		//Step can only be multiple of 3600
+		)}&step=${step}&service=${service || ''}`;
+		// Step can only be multiple of 3600
 		const response = await api.get<usageDataItem[]>(request_string);
 
 		dispatch<getUsageDataAction>({
 			type: ActionTypes.getUsageData,
 			payload: response.data,
-			//PNOTE - response.data in the axios response has the actual API response
+			// PNOTE - response.data in the axios response has the actual API response
 		});
 	};
 };

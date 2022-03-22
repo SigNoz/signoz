@@ -56,7 +56,7 @@ export interface spanItem {
 	startTime: number; // index 3
 	duration: number; // index 4
 	references: RefItem[]; // index 5
-	tags: []; //index 6
+	tags: []; // index 6
 	logs: []; // index 7
 	processID: string; // index 8
 	warnings: []; // index 9
@@ -64,7 +64,7 @@ export interface spanItem {
 	// Should this field be optional?
 }
 
-//let mapped_array :{ [id: string] : spanItem; } = {};
+// let mapped_array :{ [id: string] : spanItem; } = {};
 
 export interface traceItem {
 	traceID: string;
@@ -125,19 +125,15 @@ export interface FetchTraceItemAction {
 export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 	return async (dispatch: Dispatch): Promise<void> => {
 		if (globalTime) {
-			const request_string =
-				'/spans?limit=100&lookback=2d&start=' +
-				toUTCEpoch(globalTime.minTime) +
-				'&end=' +
-				toUTCEpoch(globalTime.maxTime) +
-				'&' +
-				filter_params;
+			const request_string = `/spans?limit=100&lookback=2d&start=${toUTCEpoch(
+				globalTime.minTime,
+			)}&end=${toUTCEpoch(globalTime.maxTime)}&${filter_params}`;
 			const response = await api.get<traceResponseNew>(request_string);
 
 			dispatch<FetchTracesAction>({
 				type: ActionTypes.fetchTraces,
 				payload: response.data,
-				//PNOTE - response.data in the axios response has the actual API response?
+				// PNOTE - response.data in the axios response has the actual API response?
 			});
 		}
 	};
@@ -145,13 +141,13 @@ export const fetchTraces = (globalTime: GlobalTime, filter_params: string) => {
 
 export const fetchTraceItem = (traceID: string) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string = '/traces' + '/' + traceID;
+		const request_string = `${'/traces' + '/'}${traceID}`;
 		const response = await api.get<spansWSameTraceIDResponse>(request_string);
 
 		dispatch<FetchTraceItemAction>({
 			type: ActionTypes.fetchTraceItem,
 			payload: response.data,
-			//PNOTE - response.data in the axios response has the actual API response?
+			// PNOTE - response.data in the axios response has the actual API response?
 		});
 	};
 };

@@ -17,10 +17,10 @@ const findCategoryById = (searchValue: string): SearchValue | undefined =>
 const findCategoryByName = (searchValue: string): SearchValue | undefined =>
 	find(flattenedCategories, (option) => option.name === searchValue);
 
-const YAxisUnitSelector = ({
+function YAxisUnitSelector({
 	defaultValue,
 	onSelect,
-}: YAxisUnitSelectorProps): JSX.Element => {
+}: YAxisUnitSelectorProps): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
 		if (onSelect) {
 			onSelect(
@@ -57,7 +57,7 @@ const YAxisUnitSelector = ({
 			</AutoComplete>
 		</Col>
 	);
-};
+}
 
 interface YAxisUnitSelectorProps {
 	defaultValue: string;

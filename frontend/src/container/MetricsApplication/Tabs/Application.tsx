@@ -18,7 +18,7 @@ import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
-const Application = ({ getWidget }: DashboardProps): JSX.Element => {
+function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
@@ -72,10 +72,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						selectedTimeStamp.current = time.getTime();
 					}
 				}
-			} else {
-				if (buttonElement && buttonElement.style.display === 'block') {
-					buttonElement.style.display = 'none';
-				}
+			} else if (buttonElement && buttonElement.style.display === 'block') {
+				buttonElement.style.display = 'none';
 			}
 		}
 	};
@@ -242,7 +240,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 			</Row>
 		</>
 	);
-};
+}
 
 interface DashboardProps {
 	getWidget: (query: Widgets['query']) => Widgets;

@@ -6,7 +6,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
-const External = ({ getWidget }: ExternalProps): JSX.Element => {
+function External({ getWidget }: ExternalProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 
 	const legend = '{{http_url}}';
@@ -98,7 +98,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 			</Row>
 		</>
 	);
-};
+}
 
 interface ExternalProps {
 	getWidget: (query: Widgets['query']) => Widgets;

@@ -9,7 +9,7 @@ import { topEndpointListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
+function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -97,7 +97,7 @@ const TopEndpointsTable = (props: TopEndpointsTableProps): JSX.Element => {
 			rowKey="name"
 		/>
 	);
-};
+}
 
 type DataProps = topEndpointListItem;
 
