@@ -120,8 +120,8 @@ function Graph({
 							unit: xAxisTimeUnit?.unitName || 'minute',
 							stepSize: xAxisTimeUnit?.stepSize || 1,
 							displayFormats: {
-								millisecond: 'hh:mm:ss',
-								second: 'hh:mm:ss',
+								millisecond: 'HH:mm:ss',
+								second: 'HH:mm:ss',
 								minute: 'HH:mm',
 								hour: 'MM/dd HH:mm',
 								day: 'MM/dd',
