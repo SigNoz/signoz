@@ -14,7 +14,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 			<Row gutter={24}>
 				<Col span={12}>
 					<Card>
-						<GraphTitle>External Call Error Percentage (%)</GraphTitle>
+						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="external_call_error_percentage"
@@ -68,7 +68,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 										legend: '{{http_url}}',
 									},
 								])}
-								yAxisUnit="short"
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
