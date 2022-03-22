@@ -3,7 +3,6 @@ import { IIntervalUnit, INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
-import { GetSpanTreeMetaData } from 'utils/getSpanTreeMetadata';
 
 import { styles, Svg, TimelineInterval } from './styles';
 import { Interval } from './types';
@@ -36,7 +35,8 @@ const Timeline = ({
 		for (let idx = 0; idx < INTERVAL_UNITS.length; idx++) {
 			const standard_interval = INTERVAL_UNITS[idx];
 			if (baseSpread * standard_interval.multiplier < 1) {
-				if (idx > 1) intervalUnit = INTERVAL_UNITS[idx - 1];
+				const index = parseInt(idx.toString(), 10);
+				if (index > 1) intervalUnit = INTERVAL_UNITS[index - 1];
 				break;
 			}
 		}
@@ -93,7 +93,13 @@ const Timeline = ({
 };
 
 interface TimelineProps {
-	traceMetaData: Omit<GetSpanTreeMetaData, 'treeData'>;
+	traceMetaData: {
+		globalStart: number;
+		globalEnd: number;
+		spread: number;
+		totalSpans: number;
+		levels: number;
+	};
 	globalTraceMetadata: Record<string, number>;
 	intervalUnit: IIntervalUnit;
 	setIntervalUnit: React.Dispatch<React.SetStateAction<IIntervalUnit>>;

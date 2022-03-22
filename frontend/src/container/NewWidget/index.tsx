@@ -23,6 +23,7 @@ import {
 } from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -224,7 +225,7 @@ const NewWidget = ({
 
 export interface NewWidgetProps {
 	selectedGraph: GRAPH_TYPES;
-	yAxisUnit: string;
+	yAxisUnit: Widgets['yAxisUnit'];
 }
 
 interface DispatchProps {

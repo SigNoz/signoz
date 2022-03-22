@@ -48,7 +48,7 @@ const GridCardGraph = ({
 		(async (): Promise<void> => {
 			try {
 				const getMaxMinTime = GetMaxMinTime({
-					graphType: widget.panelTypes,
+					graphType: widget?.panelTypes,
 					maxTime,
 					minTime,
 				});

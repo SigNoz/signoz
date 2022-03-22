@@ -3,7 +3,6 @@ import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { servicesListItem } from 'store/actions/MetricsActions/metricsInterfaces';
@@ -28,7 +27,7 @@ const Metrics = (): JSX.Element => {
 	};
 
 	const onClickHandler = (to: string): void => {
-		history.push(to);
+		window.open(to, '_blank');
 	};
 
 	if (

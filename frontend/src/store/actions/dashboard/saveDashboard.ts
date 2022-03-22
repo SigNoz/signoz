@@ -55,6 +55,7 @@ export const SaveDashboard = ({
 			];
 
 			const response = await updateDashboardApi({
+				...selectedDashboard.data,
 				uuid,
 				// this is the data for the dashboard
 				title: selectedDashboard.data.title,
