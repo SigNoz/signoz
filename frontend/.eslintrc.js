@@ -85,10 +85,12 @@ module.exports = {
 			},
 		],
 
+		// eslint rules need to remove
 		'no-shadow': 'off',
 		'@typescript-eslint/no-shadow': 'off',
 		'global-require': 'off',
 		'@typescript-eslint/no-var-requires': 'off',
+		'import/no-cycle': 'off',
 
 		'prettier/prettier': [
 			'error',

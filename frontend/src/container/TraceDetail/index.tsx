@@ -27,7 +27,7 @@ import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
 import { getSortedData, IIntervalUnit, INTERVAL_UNITS } from './utils';
 
-const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
+function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(
 		() => spanServiceNameToColorMapping(response[0].events),
 		[response],
@@ -86,7 +86,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 
 	return (
 		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
-			<StyledCol flex={'auto'} styledclass={styles.leftContainer}>
+			<StyledCol flex="auto" styledclass={styles.leftContainer}>
 				<StyledRow styledclass={styles.flameAndTimelineContainer}>
 					<StyledCol
 						styledclass={styles.traceMetaDataContainer}
@@ -99,7 +99,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							{traceMetaData.totalSpans} Span
 						</StyledTypography.Text>
 					</StyledCol>
-					<Col flex={'auto'}>
+					<Col flex="auto">
 						<TraceFlameGraph
 							treeData={tree}
 							traceMetaData={traceMetaData}
@@ -148,7 +148,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							style={{ width: 200 }}
 						/> */}
 					</Col>
-					<Col flex={'auto'}>
+					<Col flex="auto">
 						<StyledSpace styledclass={[styles.floatRight]}>
 							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
@@ -180,7 +180,7 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 			</StyledCol>
 		</StyledRow>
 	);
-};
+}
 
 interface TraceDetailProps {
 	response: PayloadProps;

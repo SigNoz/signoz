@@ -11,7 +11,7 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 		}
 		totalSpans++;
 		levels = Math.max(levels, level);
-		const startTime = treeNode.startTime;
+		const { startTime } = treeNode;
 		const endTime = startTime + treeNode.value;
 		globalStart = Math.min(globalStart, startTime);
 		globalEnd = Math.max(globalEnd, endTime);
@@ -22,8 +22,8 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 	};
 	traverse(treeData, 1);
 
-	globalStart = globalStart * 1e6;
-	globalEnd = globalEnd * 1e6;
+	globalStart *= 1e6;
+	globalEnd *= 1e6;
 
 	return {
 		globalStart,
@@ -37,7 +37,7 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 export function getTopLeftFromBody(elem: HTMLElement) {
 	const box = elem.getBoundingClientRect();
 
-	const body = document.body;
+	const { body } = document;
 	const docEl = document.documentElement;
 
 	const scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
@@ -56,7 +56,7 @@ export const getNodeById = (
 	searchingId: string,
 	treeData: ITraceTree,
 ): ITraceTree | undefined => {
-	let foundNode: ITraceTree | undefined = undefined;
+	let foundNode: ITraceTree | undefined;
 	const traverse = (treeNode: ITraceTree, level = 0) => {
 		if (!treeNode) {
 			return;

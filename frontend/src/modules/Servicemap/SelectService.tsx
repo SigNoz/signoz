@@ -1,10 +1,11 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
+import { cloneDeep } from 'lodash-es';
 import React, { useState } from 'react';
 import { servicesItem } from 'store/actions';
 import styled from 'styled-components';
+
 const { Option } = Select;
-import { cloneDeep } from 'lodash-es';
 
 const Container = styled.div`
 	margin-top: 12px;
@@ -33,7 +34,7 @@ const defaultOption = {
 	serviceName: 'Default',
 };
 
-const SelectService = (props: SelectServiceProps): JSX.Element => {
+function SelectService(props: SelectServiceProps): JSX.Element {
 	const [selectedVal, setSelectedVal] = useState<string>(
 		defaultOption.serviceName,
 	);
@@ -75,6 +76,6 @@ const SelectService = (props: SelectServiceProps): JSX.Element => {
 			</div>
 		</Container>
 	);
-};
+}
 
 export default SelectService;

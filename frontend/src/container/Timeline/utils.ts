@@ -32,9 +32,8 @@ export const getIntervalSpread = ({
 	const intervalSpreadNormalized =
 		intervalSpread < 1.0
 			? intervalSpread
-			: Math.floor(
-					Number(integerPartString) / Math.pow(10, integerPartLength - 1),
-			  ) * Math.pow(10, integerPartLength - 1);
+			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
+			  10 ** (integerPartLength - 1);
 	return {
 		baseInterval,
 		baseSpread,

@@ -5,7 +5,7 @@ import GeneralSettings from 'container/GeneralSettings';
 import history from 'lib/history';
 import React from 'react';
 
-const AllAlertChannels = (): JSX.Element => {
+function AllAlertChannels(): JSX.Element {
 	const pathName = history.location.pathname;
 
 	return (
@@ -28,6 +28,6 @@ const AllAlertChannels = (): JSX.Element => {
 			}}
 		/>
 	);
-};
+}
 
 export default AllAlertChannels;

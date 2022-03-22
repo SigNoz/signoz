@@ -1,5 +1,6 @@
 import { Layout, Menu, Switch, Typography } from 'antd';
 import styled, { css } from 'styled-components';
+
 const { Sider: SiderComponent } = Layout;
 
 export const ThemeSwitcherWrapper = styled.div`

@@ -9,7 +9,7 @@ import { PayloadProps as VersionPayload } from 'types/api/user/getVersion';
 
 import SignUpComponent from './SignUp';
 
-const SignUp = (): JSX.Element => {
+function SignUp(): JSX.Element {
 	const versionResponse = useFetch<VersionPayload, undefined>(getVersion);
 
 	const userPrefResponse = useFetch<UserPrefPayload, undefined>(getPreference);
@@ -33,11 +33,11 @@ const SignUp = (): JSX.Element => {
 		return <Spinner tip="Loading.." />;
 	}
 
-	const version = versionResponse.payload.version;
+	const { version } = versionResponse.payload;
 
 	const userpref = userPrefResponse.payload;
 
 	return <SignUpComponent userpref={userpref} version={version} />;
-};
+}
 
 export default SignUp;

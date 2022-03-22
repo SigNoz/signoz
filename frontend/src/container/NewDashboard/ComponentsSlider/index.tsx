@@ -10,7 +10,7 @@ import { v4 } from 'uuid';
 import menuItems, { ITEMS } from './menuItems';
 import { Card, Container, Text } from './styles';
 
-const DashboardGraphSlider = (): JSX.Element => {
+function DashboardGraphSlider(): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -81,7 +81,7 @@ const DashboardGraphSlider = (): JSX.Element => {
 			))}
 		</Container>
 	);
-};
+}
 
 export type GRAPH_TYPES = ITEMS;
 
