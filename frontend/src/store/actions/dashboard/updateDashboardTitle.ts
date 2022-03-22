@@ -1,5 +1,5 @@
 import update from 'api/dashboard/update';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Dashboard } from 'types/api/dashboard/getAll';
 

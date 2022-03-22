@@ -2,7 +2,8 @@ import * as AntD from 'antd';
 import { TextProps } from 'antd/lib/typography/Text';
 import { TitleProps } from 'antd/lib/typography/Title';
 import React from 'react';
-import styled, { FlattenSimpleInterpolation } from 'styled-components';
+import type { FlattenSimpleInterpolation } from 'styled-components';
+import styled from 'styled-components';
 
 import { IStyledClass } from './types';
 

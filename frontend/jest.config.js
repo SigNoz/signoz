@@ -1,6 +1,5 @@
-import type { Config } from '@jest/types';
-
-const config: Config.InitialOptions = {
+/**@type import("@jest/types").Config.InitialOptions */
+const config = {
 	clearMocks: true,
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
@@ -15,7 +14,7 @@ const config: Config.InitialOptions = {
 	transform: {
 		'\\.(js|jsx|ts|tsx)?$': 'babel-jest',
 	},
-	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
+	setupFilesAfterEnv: ['<rootDir>jest.setup.js'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
 };

@@ -1,4 +1,4 @@
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { DeleteQueryProps } from 'types/actions/dashboard';
 

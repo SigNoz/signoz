@@ -1,4 +1,4 @@
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { UPDATE_SELECTED_TAGS } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';

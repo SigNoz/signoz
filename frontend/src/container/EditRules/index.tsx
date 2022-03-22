@@ -1,6 +1,5 @@
 import { SaveFilled } from '@ant-design/icons';
-import { Button } from 'antd';
-import { notification } from 'antd';
+import { Button, notification } from 'antd';
 import put from 'api/alerts/put';
 import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';

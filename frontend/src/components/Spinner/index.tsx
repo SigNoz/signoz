@@ -1,5 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, SpinProps } from 'antd';
+import type { SpinProps } from 'antd';
+import { Spin } from 'antd';
 import React from 'react';
 
 import { SpinerStyle } from './styles';

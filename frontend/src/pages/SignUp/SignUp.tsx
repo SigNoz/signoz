@@ -17,7 +17,7 @@ const { Title } = Typography;
 import setPreference from 'api/user/setPreference';
 import { IS_LOGGED_IN } from 'constants/auth';
 import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
 import {

@@ -3,12 +3,13 @@
 import React from 'react';
 
 if (process.env.NODE_ENV === 'development') {
-	const whyDidYouRender = require('@welldone-software/why-did-you-render');
-	whyDidYouRender(React, {
-		trackAllPureComponents: false,
-		trackExtraHooks: [[require('react-redux/lib'), 'useSelector']],
-		include: [/^ConnectFunction/],
-		logOnDifferentValues: true,
+	import('@welldone-software/why-did-you-render').then((func) => {
+		func.default(React, {
+			trackAllPureComponents: false,
+			trackExtraHooks: [[import('react-redux'), 'useSelector']],
+			include: [/^ConnectFunction/],
+			logOnDifferentValues: true,
+		});
 	});
 }
 

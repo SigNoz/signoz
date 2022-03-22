@@ -1,4 +1,5 @@
-import { Form, Input, InputProps } from 'antd';
+import type { InputProps } from 'antd';
+import { Form, Input } from 'antd';
 import React from 'react';
 
 const InputComponent = ({

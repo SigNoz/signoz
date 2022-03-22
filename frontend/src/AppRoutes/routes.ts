@@ -1,6 +1,6 @@
 import ROUTES from 'constants/routes';
 import DashboardWidget from 'pages/DashboardWidget';
-import { RouteProps } from 'react-router-dom';
+import type { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,

@@ -1,8 +1,9 @@
-import { SelectProps, Space } from 'antd';
+import type { SelectProps } from 'antd';
+import { Space } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {

@@ -1,4 +1,5 @@
-import { Tabs, TabsProps } from 'antd';
+import type { TabsProps } from 'antd';
+import { Tabs } from 'antd';
 import React from 'react';
 
 const { TabPane } = Tabs;

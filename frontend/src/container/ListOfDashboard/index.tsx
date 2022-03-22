@@ -1,5 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Row, Table, TableColumnProps, Typography } from 'antd';
+import type { TableColumnProps } from 'antd';
+import { Row, Table, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import TextToolTip from 'components/TextToolTip';

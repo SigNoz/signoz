@@ -3,8 +3,7 @@ import useInterval from 'hooks/useInterval';
 import React, { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
-import { Value } from './Filter';
-import Filter from './Filter';
+import Filter, { Value } from './Filter';
 import FilteredTable from './FilteredTable';
 import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';

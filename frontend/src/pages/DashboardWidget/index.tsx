@@ -11,8 +11,9 @@ import {
 	useLocation,
 	useParams,
 } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import { GetDashboard, GetDashboardProps } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

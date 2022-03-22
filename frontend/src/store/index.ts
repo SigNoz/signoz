@@ -1,5 +1,6 @@
 import { applyMiddleware, compose, createStore } from 'redux';
-import thunk, { ThunkMiddleware } from 'redux-thunk';
+import type { ThunkMiddleware } from 'redux-thunk';
+import thunk from 'redux-thunk';
 
 import reducers, { AppState } from './reducers';
 

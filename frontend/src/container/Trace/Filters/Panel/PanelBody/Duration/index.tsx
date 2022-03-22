@@ -6,7 +6,7 @@ import durationPlugin from 'dayjs/plugin/duration';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

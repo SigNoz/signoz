@@ -1,4 +1,5 @@
-import { TablePaginationConfig, Tag } from 'antd';
+import type { TablePaginationConfig } from 'antd';
+import { Tag } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import { FilterValue, SorterResult } from 'antd/lib/table/interface';
 import ROUTES from 'constants/routes';
@@ -7,7 +8,7 @@ import duration from 'dayjs/plugin/duration';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { ThunkDispatch } from 'redux-thunk';
 import {
 	GetSpansAggregate,
 	GetSpansAggregateProps,

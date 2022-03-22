@@ -1,4 +1,4 @@
-import { ChartData } from 'chart.js';
+import type { ChartData } from 'chart.js';
 import getLabelName from 'lib/getLabelName';
 import { Widgets } from 'types/api/dashboard/getAll';
 

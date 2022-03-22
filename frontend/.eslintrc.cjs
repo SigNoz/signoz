@@ -3,6 +3,7 @@ module.exports = {
 		browser: true,
 		es2021: true,
 		node: true,
+		'jest/globals': true,
 	},
 	extends: [
 		'eslint:recommended',
@@ -11,6 +12,8 @@ module.exports = {
 		'plugin:@typescript-eslint/eslint-recommended',
 		'plugin:prettier/recommended',
 		'plugin:sonarjs/recommended',
+		'plugin:import/errors',
+		'plugin:import/warnings',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -26,10 +29,17 @@ module.exports = {
 		'simple-import-sort',
 		'react-hooks',
 		'prettier',
+		'jest',
 	],
 	settings: {
 		react: {
 			version: 'detect',
+		},
+		'import/resolver': {
+			node: {
+				paths: ['src'],
+				extensions: ['.js', '.jsx', '.ts', '.tsx'],
+			},
 		},
 	},
 	rules: {
@@ -41,8 +51,8 @@ module.exports = {
 		],
 		'react/prop-types': 'off',
 		'@typescript-eslint/explicit-function-return-type': 'error',
-		'@typescript-eslint/no-var-requires': 0,
-		'react/no-array-index-key': 2,
+		'@typescript-eslint/no-var-requires': 'error',
+		'react/no-array-index-key': 'error',
 		'linebreak-style': [
 			'error',
 			process.platform === 'win32' ? 'windows' : 'unix',
@@ -54,7 +64,7 @@ module.exports = {
 
 		// hooks
 		'react-hooks/rules-of-hooks': 'error',
-		'react-hooks/exhaustive-deps': 'warn',
+		'react-hooks/exhaustive-deps': 'error',
 
 		'prettier/prettier': [
 			'error',

@@ -1,6 +1,6 @@
 import getAll from 'api/dashboard/getAll';
 import { AxiosError } from 'axios';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 
 export const GetAllDashboards = (): ((

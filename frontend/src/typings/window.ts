@@ -1,5 +1,5 @@
 import Cypress from 'cypress';
-import { compose, Store } from 'redux';
+import type { compose, Store } from 'redux';
 
 declare global {
 	interface Window {

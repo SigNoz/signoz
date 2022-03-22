@@ -1,7 +1,7 @@
 import { notification } from 'antd';
 import getFiltersApi from 'api/trace/getFilters';
 import xor from 'lodash-es/xor';
-import { Dispatch, Store } from 'redux';
+import type { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {

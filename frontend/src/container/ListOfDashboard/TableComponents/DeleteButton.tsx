@@ -1,9 +1,9 @@
 import { Button } from 'antd';
 import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
+import type { Dispatch } from 'redux';
 import { bindActionCreators } from 'redux';
-import { Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { ThunkDispatch } from 'redux-thunk';
 import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
 

@@ -2,10 +2,8 @@ import { Checkbox, notification, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import React, { useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { SelectedTraceFilter } from 'store/actions/trace/selectTraceFilter';
+import { useDispatch, useSelector } from 'react-redux';
+import type { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -170,23 +168,10 @@ const CheckBoxComponent = (props: CheckBoxProps): JSX.Element => {
 	);
 };
 
-interface DispatchProps {
-	selectedTraceFilter: (props: {
-		topic: TraceFilterEnum;
-		value: string;
-	}) => void;
-}
-
-interface CheckBoxProps extends DispatchProps {
+interface CheckBoxProps {
 	keyValue: string;
 	value: string;
 	name: TraceFilterEnum;
 }
 
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	selectedTraceFilter: bindActionCreators(SelectedTraceFilter, dispatch),
-});
-
-export default connect(null, mapDispatchToProps)(CheckBoxComponent);
+export default CheckBoxComponent;

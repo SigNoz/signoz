@@ -1,5 +1,5 @@
 import api from 'api';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { GlobalTime } from 'types/actions/globalTime';
 import { toUTCEpoch } from 'utils/timeUtils';
 

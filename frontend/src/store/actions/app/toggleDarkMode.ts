@@ -1,4 +1,4 @@
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 
 export const ToggleDarkMode = (): ((

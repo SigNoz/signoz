@@ -1,6 +1,6 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';

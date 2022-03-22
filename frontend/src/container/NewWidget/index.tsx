@@ -6,8 +6,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useHistory, useLocation, useParams } from 'react-router';
 import { generatePath } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
 import {
 	GetQueryResults,

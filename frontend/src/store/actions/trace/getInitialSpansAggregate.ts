@@ -1,6 +1,6 @@
 import { notification } from 'antd';
 import getSpansAggregate from 'api/trace/getSpansAggregate';
-import { Dispatch, Store } from 'redux';
+import type { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';

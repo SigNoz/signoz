@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { generatePath } from 'react-router-dom';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';

@@ -1,4 +1,4 @@
-import { ChartData, ChartDatasetProperties } from 'chart.js';
+import type { ChartData, ChartDatasetProperties } from 'chart.js';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
 import { TraceReducer } from 'types/reducer/trace';

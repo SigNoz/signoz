@@ -1,7 +1,7 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';

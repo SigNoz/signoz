@@ -4,10 +4,9 @@ import history from 'lib/history';
 import setTheme from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -15,8 +14,14 @@ import AppReducer from 'types/reducer/app';
 
 import menus from './menuItems';
 import Slack from './Slack';
-import { SlackButton, SlackMenuItemContainer, ToggleButton } from './styles';
-import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
+import {
+	Logo,
+	Sider,
+	SlackButton,
+	SlackMenuItemContainer,
+	ThemeSwitcherWrapper,
+	ToggleButton,
+} from './styles';
 
 const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	const [collapsed, setCollapsed] = useState<boolean>(false);

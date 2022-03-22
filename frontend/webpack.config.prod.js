@@ -1,17 +1,23 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+
 // shared config (dev and prod)
-const { resolve } = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
-const webpack = require('webpack');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
-	.BundleAnalyzerPlugin;
-const Critters = require('critters-webpack-plugin');
+import CompressionPlugin from 'compression-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import { dirname, resolve } from 'path';
+import TerserPlugin from 'terser-webpack-plugin';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+import { fileURLToPath } from 'url';
+import webpack from 'webpack';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const { DefinePlugin, ProvidePlugin } = webpack;
 
 const plugins = [
 	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
@@ -21,27 +27,20 @@ const plugins = [
 	new CopyPlugin({
 		patterns: [{ from: resolve(__dirname, 'public/'), to: '.' }],
 	}),
-	new webpack.ProvidePlugin({
+	new ProvidePlugin({
 		process: 'process/browser',
 	}),
-	new webpack.DefinePlugin({
+	new DefinePlugin({
 		'process.env': JSON.stringify(process.env),
 	}),
 	new MiniCssExtractPlugin(),
-	new Critters({
-		preload: 'swap',
-		// Base path location of the CSS files
-		path: resolve(__dirname, './build/css'),
-		// Public path of the CSS resources. This prefix is removed from the href
-		publicPath: resolve(__dirname, './public/css'),
-		fonts: true,
-	}),
 ];
 
 if (process.env.BUNDLE_ANALYSER === 'true') {
 	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
 }
 
+/** @type { import('webpack').Configuration } */
 const config = {
 	mode: 'production',
 	entry: resolve(__dirname, './src/index.tsx'),
@@ -155,4 +154,4 @@ const config = {
 	},
 };
 
-module.exports = config;
+export default config;

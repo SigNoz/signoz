@@ -1,8 +1,7 @@
-import { css, FlattenSimpleInterpolation } from 'styled-components';
+import type { FlattenSimpleInterpolation } from 'styled-components';
+import { css } from 'styled-components';
 
-const cssProprty = (key: string, value): FlattenSimpleInterpolation =>
-	key &&
-	value &&
+const cssProprty = (key: string, value: string): FlattenSimpleInterpolation =>
 	css`
 		${key}: ${value};
 	`;
@@ -15,7 +14,7 @@ export const Flex = ({
 	flexDirection,
 	flex,
 }: IFlexProps): FlattenSimpleInterpolation => css`
-	${cssProprty('flex-direction', flexDirection)}
+	${cssProprty('flex-direction', flexDirection || '')}
 	${cssProprty('flex', flex)}
 `;
 

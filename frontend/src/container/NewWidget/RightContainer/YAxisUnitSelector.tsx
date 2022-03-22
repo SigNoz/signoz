@@ -1,4 +1,5 @@
-import { AutoComplete, Col, Input, SelectProps, Typography } from 'antd';
+import type { SelectProps } from 'antd';
+import { AutoComplete, Col, Input, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/lib/select';
 import { find } from 'lodash-es';
 import React from 'react';

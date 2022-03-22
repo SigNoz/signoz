@@ -1,17 +1,17 @@
 import { Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
-import { ChartData } from 'chart.js';
+import type { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { connect, useSelector } from 'react-redux';
+import type { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import {
 	DeleteWidget,
 	DeleteWidgetProps,

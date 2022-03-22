@@ -4,8 +4,9 @@ import AddTags from 'container/NewDashboard/DescriptionOfDashboard/AddTags';
 import NameOfTheDashboard from 'container/NewDashboard/DescriptionOfDashboard/NameOfTheDashboard';
 import React, { useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import {
 	ToggleEditMode,
 	UpdateDashboardTitleDescriptionTags,

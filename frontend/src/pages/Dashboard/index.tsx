@@ -3,7 +3,7 @@ import ListOfAllDashboard from 'container/ListOfDashboard';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { ThunkDispatch } from 'redux-thunk';
 import { GetAllDashboards } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

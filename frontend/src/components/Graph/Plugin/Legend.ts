@@ -1,4 +1,5 @@
-import { Chart, ChartType, Plugin } from 'chart.js';
+import type { ChartType, Plugin } from 'chart.js';
+import { Chart } from 'chart.js';
 import { colors } from 'lib/getRandomColor';
 
 const getOrCreateLegendList = (

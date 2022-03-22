@@ -1,4 +1,5 @@
-import { Form, FormInstance, Input, Select, Typography } from 'antd';
+import type { FormInstance } from 'antd';
+import { Form, Input, Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import {
 	ChannelType,

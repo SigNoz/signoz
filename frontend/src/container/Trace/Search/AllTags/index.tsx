@@ -1,4 +1,4 @@
-import { CaretRightFilled } from '@ant-design/icons';
+import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 
@@ -11,11 +11,10 @@ import {
 } from './styles';
 import Tags from './Tag';
 const { Text } = Typography;
-import { PlusOutlined } from '@ant-design/icons';
 import { isEqual } from 'lodash-es';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
 import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
 import { AppState } from 'store/reducers';

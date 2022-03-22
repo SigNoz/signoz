@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const breadcrumbNameMap = {
 	[ROUTES.APPLICATION]: 'Application',
-	[ROUTES.TRACES]: 'Traces',
+	[ROUTES.TRACE]: 'Trace',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
 	[ROUTES.INSTRUMENTATION]: 'Add instrumentation',
@@ -13,7 +13,8 @@ const breadcrumbNameMap = {
 	[ROUTES.DASHBOARD]: 'Dashboard',
 };
 
-import { RouteComponentProps, withRouter } from 'react-router';
+import type { RouteComponentProps } from 'react-router';
+import { withRouter } from 'react-router';
 
 const ShowBreadcrumbs = (props: RouteComponentProps): JSX.Element => {
 	const pathArray = props.location.pathname.split('/').filter((i) => i);

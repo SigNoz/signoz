@@ -5,7 +5,7 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';

@@ -1,13 +1,9 @@
-// import getDBOverView from 'api/metrics/getDBOverView';
-// import getExternalAverageDuration from 'api/metrics/getExternalAverageDuration';
-// import getExternalError from 'api/metrics/getExternalError';
-// import getExternalService from 'api/metrics/getExternalService';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
 import getStep from 'lib/getStep';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/metrics/getDBOverview';

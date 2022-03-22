@@ -1,6 +1,6 @@
 import getDashboard from 'api/dashboard/get';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
 

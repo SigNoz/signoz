@@ -1,4 +1,5 @@
-import { Select, SelectProps, Tag } from 'antd';
+import type { SelectProps } from 'antd';
+import { Select, Tag } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 

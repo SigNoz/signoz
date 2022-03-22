@@ -1,6 +1,6 @@
 import { notification } from 'antd';
 import getSpans from 'api/trace/getSpans';
-import { Dispatch, Store } from 'redux';
+import type { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {

@@ -1,9 +1,6 @@
 import { Button } from 'antd';
-import styled, {
-	css,
-	DefaultTheme,
-	ThemedCssFunction,
-} from 'styled-components';
+import type { DefaultTheme, ThemedCssFunction } from 'styled-components';
+import styled, { css } from 'styled-components';
 
 interface Props {
 	disabled: boolean;

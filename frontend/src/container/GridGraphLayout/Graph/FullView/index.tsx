@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
-import { ChartData } from 'chart.js';
+import type { ChartData } from 'chart.js';
 import { graphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';

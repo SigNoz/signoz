@@ -8,8 +8,9 @@ import TraceTable from 'container/Trace/TraceTable';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import { GetInitialTraceFilter } from 'store/actions/trace/getInitialFilter';
 import {
 	GetSpansAggregate,

@@ -1,5 +1,5 @@
 import api from 'api';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import { toUTCEpoch } from 'utils/timeUtils';
 
 import { ActionTypes } from './types';

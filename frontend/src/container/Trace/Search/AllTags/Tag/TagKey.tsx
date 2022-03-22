@@ -1,4 +1,5 @@
-import { AutoComplete, AutoCompleteProps, Input, notification } from 'antd';
+import type { AutoCompleteProps } from 'antd';
+import { AutoComplete, Input, notification } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';

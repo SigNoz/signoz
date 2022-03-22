@@ -1,6 +1,6 @@
 import { Time } from 'container/Header/DateTimeSelection/config';
 import GetMinMax from 'lib/getMinMax';
-import { Dispatch } from 'redux';
+import type { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 
 export const UpdateTimeInterval = (

@@ -1,13 +1,17 @@
-import {
+/*eslint-disable import/namespace*/
+
+import type {
 	ActiveElement,
-	BarController,
-	BarElement,
-	CategoryScale,
-	Chart,
 	ChartData,
 	ChartEvent,
 	ChartOptions,
 	ChartType,
+} from 'chart.js';
+import {
+	BarController,
+	BarElement,
+	CategoryScale,
+	Chart,
 	Decimation,
 	Filler,
 	Legend,

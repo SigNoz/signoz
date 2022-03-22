@@ -1,4 +1,5 @@
-import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import type { ActiveElement, ChartData, ChartEvent } from 'chart.js';
+import { Chart } from 'chart.js';
 import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
