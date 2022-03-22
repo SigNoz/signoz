@@ -51,6 +51,7 @@ import { legend } from './Plugin';
 import { LegendsContainer } from './styles';
 
 const Graph = ({
+	animate = true,
 	data,
 	type,
 	title,
@@ -58,15 +59,14 @@ const Graph = ({
 	onClickHandler,
 	name,
 	yAxisUnit = 'short',
+	forceReRender,
 }: GraphProps): JSX.Element => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const currentTheme = isDarkMode ? 'dark' : 'light';
-
 	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
 	const lineChartRef = useRef<Chart>();
-
 	const getGridColor = useCallback(() => {
 		if (currentTheme === undefined) {
 			return 'rgba(231,233,237,0.1)';
@@ -86,6 +86,9 @@ const Graph = ({
 
 		if (chartRef.current !== null) {
 			const options: ChartOptions = {
+				animation: {
+					duration: animate ? 200 : 0,
+				},
 				responsive: true,
 				maintainAspectRatio: false,
 				interaction: {
@@ -166,7 +169,19 @@ const Graph = ({
 				plugins: [legend(name, data.datasets.length > 3)],
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, getGridColor, onClickHandler]);
+	}, [
+		animate,
+		title,
+		getGridColor,
+		xAxisTimeUnit?.unitName,
+		xAxisTimeUnit?.stepSize,
+		isStacked,
+		type,
+		data,
+		name,
+		yAxisUnit,
+		onClickHandler,
+	]);
 
 	useEffect(() => {
 		buildChart();
@@ -181,6 +196,7 @@ const Graph = ({
 };
 
 interface GraphProps {
+	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];
 	title?: string;
@@ -189,6 +205,7 @@ interface GraphProps {
 	onClickHandler?: graphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
+	forceReRender?: boolean | null | number;
 }
 
 export type graphOnClickHandler = (
