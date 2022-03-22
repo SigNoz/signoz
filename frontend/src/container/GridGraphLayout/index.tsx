@@ -1,12 +1,16 @@
+/* eslint-disable react/jsx-no-useless-fragment */
+/* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react/display-name */
 import { SaveFilled } from '@ant-design/icons';
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import history from 'lib/history';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
@@ -97,14 +101,12 @@ function GridGraph(): JSX.Element {
 			setLayout(() => {
 				const getX = (): number => {
 					if (preLayouts && preLayouts?.length > 0) {
-						const last = preLayouts[preLayouts?.length - 1];
+						const last = preLayouts[(preLayouts?.length || 0) - 1];
 
 						return (last.w + last.x) % 12;
 					}
 					return 0;
 				};
-
-				console.log({ x: getX() });
 
 				return [
 					...preLayouts,

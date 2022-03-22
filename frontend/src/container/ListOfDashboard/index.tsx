@@ -1,12 +1,14 @@
+/* eslint-disable react/no-unstable-nested-components */
 import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { generatePath, useHistory } from 'react-router-dom';
+import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
@@ -19,7 +21,7 @@ import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
 function ListOfAllDashboard(): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
+	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 
@@ -28,8 +30,6 @@ function ListOfAllDashboard(): JSX.Element {
 		error: false,
 		errorMessage: '',
 	});
-
-	const { push } = useHistory();
 
 	const columns: TableColumnProps<Data>[] = [
 		{
@@ -103,7 +103,7 @@ function ListOfAllDashboard(): JSX.Element {
 					...newDashboardState,
 					loading: false,
 				});
-				push(
+				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: newDashboardId,
 					}),
@@ -123,7 +123,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, push]);
+	}, [newDashboardState]);
 
 	const getText = (): string => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
@@ -147,6 +147,7 @@ function ListOfAllDashboard(): JSX.Element {
 				showHeader
 				bordered
 				sticky
+				loading={loading}
 				title={(): JSX.Element => {
 					return (
 						<Row justify="space-between">

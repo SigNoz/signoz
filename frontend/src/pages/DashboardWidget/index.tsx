@@ -5,24 +5,19 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import NewWidget from 'container/NewWidget';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import {
-	generatePath,
-	useHistory,
-	useLocation,
-	useParams,
-} from 'react-router-dom';
+import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetDashboard, GetDashboardProps } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
+import history from 'lib/history';
 
 function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { search } = useLocation();
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
-	const { push } = useHistory();
 	const [selectedGraph, setSelectedGraph] = useState<GRAPH_TYPES>();
 	const { loading, dashboards, error, errorMessage } = useSelector<
 		AppState,
@@ -42,11 +37,11 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 		const graphType = params.get('graphType') as GRAPH_TYPES | null;
 
 		if (graphType === null) {
-			push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+			history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 		} else {
 			setSelectedGraph(graphType);
 		}
-	}, [dashboardId, push, search]);
+	}, [dashboardId, search]);
 
 	const counter = useRef(0);
 

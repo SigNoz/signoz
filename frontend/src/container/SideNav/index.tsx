@@ -31,8 +31,9 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
-	const { pathname } = useLocation();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { pathname } = useLocation();
 
 	const toggleTheme = useCallback(() => {
 		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
@@ -61,7 +62,7 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 
 	useLayoutEffect(() => {
 		dispatch(SideBarCollapse(collapsed));
-	}, [collapsed]);
+	}, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
 		(to: string) => {

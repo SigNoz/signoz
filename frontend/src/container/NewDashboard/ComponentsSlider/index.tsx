@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { notification } from 'antd';
 import { updateDashboard } from 'container/GridGraphLayout/utils';
 import React, { useCallback } from 'react';
@@ -32,7 +33,7 @@ function DashboardGraphSlider(): JSX.Element {
 
 				const getX = (): number => {
 					if (data.layout && data.layout?.length > 0) {
-						const lastIndexX = data.layout[data.layout?.length - 1];
+						const lastIndexX = data.layout[(data.layout?.length || 0) - 1];
 						return (lastIndexX.w + lastIndexX.x) % 12;
 					}
 					return 0;
@@ -46,7 +47,7 @@ function DashboardGraphSlider(): JSX.Element {
 						...(data.layout || []),
 						{
 							h: 2,
-							i: ((data.layout || [])?.length + 1).toString(),
+							i: (((data.layout || [])?.length || 0) + 1).toString(),
 							w: 6,
 							x: getX(),
 							y: 0,

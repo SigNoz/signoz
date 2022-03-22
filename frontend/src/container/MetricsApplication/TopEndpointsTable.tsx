@@ -4,17 +4,17 @@ import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { topEndpointListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import history from 'lib/history';
 
 function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const history = useHistory();
 	const params = useParams<{ servicename: string }>();
 
 	const handleOnClick = (operation: string): void => {
