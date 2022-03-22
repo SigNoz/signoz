@@ -108,8 +108,6 @@ function GridGraph(): JSX.Element {
 					return 0;
 				};
 
-				console.log({ x: getX() });
-
 				return [
 					...preLayouts,
 					{
