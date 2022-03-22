@@ -38,7 +38,8 @@ build-frontend-amd64:
 	@echo "--> Building frontend docker image for amd64"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) --build-arg TARGETPLATFORM="linux/amd64" .
+	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) \
+	--build-arg TARGETPLATFORM="linux/amd64" .
 
 # Step to build and push docker image of frontend(used in push pipeline)
 build-push-frontend:
@@ -46,7 +47,8 @@ build-push-frontend:
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 --tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 \
+	--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Steps to build and push docker image of query service
 .PHONY: build-query-service-amd64  build-push-query-service
@@ -56,7 +58,8 @@ build-query-service-amd64:
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) . --build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS)
+	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
 build-push-query-service:
@@ -64,7 +67,8 @@ build-push-query-service:
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64
+	--build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Steps to build and push docker image of flattener
 .PHONY: build-flattener-amd64  build-push-flattener
@@ -74,7 +78,8 @@ build-flattener-amd64:
 	@echo "--> Building flattener docker image for amd64"
 	@echo "------------------"
 	@cd $(FLATTENER_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .  --build-arg TARGETPLATFORM="linux/amd64"
+	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) \
+	--build-arg TARGETPLATFORM="linux/amd64" .
 
 # Step to build and push docker image of flattener in amd64 (used in push pipeline)
 build-push-flattener:
@@ -82,7 +87,8 @@ build-push-flattener:
 	@echo "--> Building and pushing flattener docker image"
 	@echo "------------------"
 	@cd $(FLATTENER_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64 --tag $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64
+	--tag $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
 	mkdir -p /var/lib/signoz
@@ -93,7 +99,15 @@ dev-setup:
 	@echo "------------------"
 
 run-x86:
-	@sudo docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+	@docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.yaml up -d
 
 run-arm:
-	@sudo docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.arm.yaml up -d
+	@docker-compose -f ./deploy/docker/clickhouse-setup/docker-compose.arm.yaml up -d
+
+clear-standalone-data:
+	@docker run --rm -v "$(PWD)/deploy/docker/clickhouse-setup:/pwd" busybox \
+	sh -c "cd /pwd/data && rm -rf alertmanager/* clickhouse/* signoz/*"
+
+clear-swarm-data:
+	@docker run --rm -v "$(PWD)/deploy/docker-swarm/clickhouse-setup:/pwd" busybox \
+	sh -c "cd /pwd/data && rm -rf alertmanager/* clickhouse/* signoz/*"
