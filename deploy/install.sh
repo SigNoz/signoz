@@ -158,7 +158,9 @@ install_docker() {
         echo
         # yum install docker
         # service docker start
-        $sudo_cmd amazon-linux-extras install docker
+        $sudo_cmd yum install -y amazon-linux-extras
+        $sudo_cmd amazon-linux-extras enable docker
+        $sudo_cmd yum install -y docker
     else
 
         yum_cmd="$sudo_cmd yum --assumeyes --quiet"
@@ -195,16 +197,16 @@ install_docker_compose() {
 
 start_docker() {
     echo -e "🐳 Starting Docker ...\n"
-    if [ $os = "Mac" ]; then
+    if [[ $os == "Mac" ]]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else 
         if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
             echo "Starting docker service"
             $sudo_cmd systemctl start docker.service
         fi
-        if [ -z $sudo_cmd ]; then
+        if [[ -z $sudo_cmd ]]; then
             docker ps > /dev/null && true
-            if [ $? -ne 0 ]; then
+            if [[ $? -ne 0 ]]; then
                 request_sudo
             fi
         fi
@@ -230,7 +232,7 @@ wait_for_containers_start() {
 }
 
 bye() {  # Prints a friendly good bye message and exits the script.
-    if [ "$?" -ne 0 ]; then
+    if [[ "$?" -ne 0 ]]; then
         set +o errexit
 
         echo "🔴 The containers didn't seem to start correctly. Please run the following command to check containers that may have errored out:"
@@ -266,17 +268,17 @@ bye() {  # Prints a friendly good bye message and exits the script.
 
 request_sudo() {
     if hash sudo 2>/dev/null; then
-        sudo_cmd="sudo"
         echo -e "\n\n🙇 We will need sudo access to complete the installation."
-        if ! $sudo_cmd -v && (( $EUID != 0 )); then
-            echo -e "Please enter your sudo password now:"
-            
-            if ! $sudo_cmd -v; then
+        if (( $EUID != 0 )); then
+            sudo_cmd="sudo"
+            echo -e "Please enter your sudo password, if prompt."
+            $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null
+            if [[ $? -ne 0 ]] && ! $sudo_cmd -v; then
                 echo "Need sudo privileges to proceed with the installation."
                 exit 1;
             fi
 
-            echo -e "Thanks! 🙏\n"
+            echo -e "Got it! Thanks!! 🙏\n"
             echo -e "Okay! We will bring up the SigNoz cluster from here 🚀\n"
         fi
 	fi
@@ -291,9 +293,6 @@ sudo_cmd=""
 # Check sudo permissions
 if (( $EUID != 0 )); then
     echo "🟡 Running installer with non-sudo permissions."
-    if ! is_command_present docker; then
-        $sudo_cmd docker ps
-    fi
     echo "   In case of any failure or prompt, please consider running the script with sudo privileges."
     echo ""
 else
@@ -309,7 +308,7 @@ check_os
 
 # Obtain unique installation id
 sysinfo="$(uname -a)"
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
     uuid="$(uuidgen)"
     uuid="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
     sysinfo="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
@@ -324,7 +323,7 @@ elif hash openssl 2>/dev/null; then
     digest_cmd="openssl dgst -sha256"
 fi
 
-if [ -z $digest_cmd ]; then
+if [[ -z $digest_cmd ]]; then
     SIGNOZ_INSTALLATION_ID="$sysinfo"
 else
     SIGNOZ_INSTALLATION_ID=$(echo "$sysinfo" | $digest_cmd | grep -E -o '[a-zA-Z0-9]{64}')
@@ -407,7 +406,7 @@ send_event() {
             ;;
     esac
 
-    if [ "$error" != "" ]; then
+    if [[ "$error" != "" ]]; then
         error='"error": "'"$error"'", '
     fi
 
