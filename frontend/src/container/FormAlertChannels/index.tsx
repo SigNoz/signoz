@@ -1,23 +1,24 @@
 import { Form, FormInstance, Input, Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
+import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	SlackChannel,
 	SlackType,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
-import React from 'react';
-const { Option } = Select;
-const { Title } = Typography;
-import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Store } from 'rc-field-form/lib/interface';
+import React from 'react';
 
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/webhook';
 import { Button } from './styles';
 
-const FormAlertChannels = ({
+const { Option } = Select;
+const { Title } = Typography;
+
+function FormAlertChannels({
 	formInstance,
 	type,
 	setSelectedConfig,
@@ -94,7 +95,7 @@ const FormAlertChannels = ({
 			</Form>
 		</>
 	);
-};
+}
 
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;

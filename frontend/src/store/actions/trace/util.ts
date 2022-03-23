@@ -2,6 +2,7 @@ import { AllTraceFilterEnum } from 'container/Trace/Filters';
 import history from 'lib/history';
 import { PayloadProps as GetFilterPayload } from 'types/api/trace/getFilters';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+
 export * from './parseFilter';
 export interface ParsedUrl<T> {
 	currentValue: T;
@@ -11,7 +12,7 @@ export interface ParsedUrl<T> {
 export function isTraceFilterEnum(
 	value: TraceFilterEnum | string,
 ): value is TraceFilterEnum {
-	return AllTraceFilterEnum.find((enums) => enums === value) ? true : false;
+	return !!AllTraceFilterEnum.find((enums) => enums === value);
 }
 
 export const updateURL = (

@@ -6,25 +6,24 @@ import {
 	// Typography,
 } from 'antd';
 import InputComponent from 'components/Input';
+import TimePreference from 'components/TimePreferenceDropDown';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import React, { useCallback } from 'react';
 
 import { dataTypeCategories } from './dataFormatCategories';
-// import {ca} from '@grafana/data'
-import { timePreferance } from './timeItems';
-import YAxisUnitSelector from './YAxisUnitSelector';
-
-const { TextArea } = Input;
-import TimePreference from 'components/TimePreferenceDropDown';
-
 import {
 	Container,
 	// NullButtonContainer, TextContainer,
 	Title,
 } from './styles';
+// import {ca} from '@grafana/data'
+import { timePreferance } from './timeItems';
+import YAxisUnitSelector from './YAxisUnitSelector';
 
-const RightContainer = ({
+const { TextArea } = Input;
+
+function RightContainer({
 	description,
 	// opacity,
 	// selectedNullZeroValue,
@@ -40,7 +39,7 @@ const RightContainer = ({
 	selectedTime,
 	yAxisUnit,
 	setYAxisUnit,
-}: RightContainerProps): JSX.Element => {
+}: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
 			setFunc(value);
@@ -89,7 +88,7 @@ const RightContainer = ({
 				value={title}
 			/>
 
-			<Title light={'true'}>Description</Title>
+			<Title light="true">Description</Title>
 
 			<TextArea
 				placeholder="Write something describing the  panel"
@@ -141,7 +140,7 @@ const RightContainer = ({
 				))}
 			</NullButtonContainer> */}
 
-			<Title light={'true'}>Panel Time Preference</Title>
+			<Title light="true">Panel Time Preference</Title>
 
 			<TimePreference
 				{...{
@@ -152,7 +151,7 @@ const RightContainer = ({
 			<YAxisUnitSelector defaultValue={yAxisUnit} onSelect={setYAxisUnit} />
 		</Container>
 	);
-};
+}
 
 interface RightContainerProps {
 	title: string;

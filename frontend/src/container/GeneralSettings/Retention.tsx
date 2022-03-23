@@ -12,13 +12,13 @@ import {
 	Typography,
 } from './styles';
 
-const Retention = ({
+function Retention({
 	retentionValue,
 	setRentionValue,
 	selectedRetentionPeroid,
 	setSelectedRetentionPeroid,
 	text,
-}: RetentionProps): JSX.Element => {
+}: RetentionProps): JSX.Element {
 	const options: Option[] = [
 		{
 			key: 'hr',
@@ -58,7 +58,7 @@ const Retention = ({
 		e: React.ChangeEvent<HTMLInputElement>,
 		func: React.Dispatch<React.SetStateAction<string>>,
 	): void => {
-		const value = e.target.value;
+		const { value } = e.target;
 		const integerValue = parseInt(value, 10);
 
 		if (value.length > 0 && integerValue.toString() === value) {
@@ -89,7 +89,7 @@ const Retention = ({
 			</Dropdown>
 		</RetentionContainer>
 	);
-};
+}
 
 interface Option {
 	key: SettingPeroid;

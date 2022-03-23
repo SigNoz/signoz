@@ -6,7 +6,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
-const External = ({ getWidget }: ExternalProps): JSX.Element => {
+function External({ getWidget }: ExternalProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 
 	return (
@@ -14,7 +14,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 			<Row gutter={24}>
 				<Col span={12}>
 					<Card>
-						<GraphTitle>External Call Error Percentage (%)</GraphTitle>
+						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="external_call_error_percentage"
@@ -68,7 +68,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 										legend: '{{http_url}}',
 									},
 								])}
-								yAxisUnit="short"
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
@@ -96,7 +96,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 			</Row>
 		</>
 	);
-};
+}
 
 interface ExternalProps {
 	getWidget: (query: Widgets['query']) => Widgets;

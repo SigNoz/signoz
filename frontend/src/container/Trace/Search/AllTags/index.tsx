@@ -1,18 +1,7 @@
-import { CaretRightFilled } from '@ant-design/icons';
+import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
-import React, { useEffect, useState } from 'react';
-
-import {
-	ButtonContainer,
-	Container,
-	CurrentTagsContainer,
-	ErrorContainer,
-	Wrapper,
-} from './styles';
-import Tags from './Tag';
-const { Text } = Typography;
-import { PlusOutlined } from '@ant-design/icons';
 import { isEqual } from 'lodash-es';
+import React, { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -23,15 +12,25 @@ import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { parseTagsToQuery } from '../util';
+import {
+	ButtonContainer,
+	Container,
+	CurrentTagsContainer,
+	ErrorContainer,
+	Wrapper,
+} from './styles';
+import Tags from './Tag';
+
+const { Text } = Typography;
 
 const { Paragraph } = Typography;
 
-const AllTags = ({
+function AllTags({
 	updateTagIsError,
 	onChangeHandler,
 	updateTagVisiblity,
 	updateFilters,
-}: AllTagsProps): JSX.Element => {
+}: AllTagsProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const [localSelectedTags, setLocalSelectedTags] = useState<
@@ -95,49 +94,47 @@ const AllTags = ({
 	}
 
 	return (
-		<>
-			<Container>
-				<Wrapper>
-					<Typography>Tags</Typography>
+		<Container>
+			<Wrapper>
+				<Typography>Tags</Typography>
 
-					<CurrentTagsContainer>
-						{localSelectedTags.map((tags, index) => (
-							<Tags
-								key={tags.Key.join(',')}
-								tag={tags}
-								index={index}
-								onCloseHandler={(): void => onCloseHandler(index)}
-								setLocalSelectedTags={setLocalSelectedTags}
-							/>
-						))}
-					</CurrentTagsContainer>
+				<CurrentTagsContainer>
+					{localSelectedTags.map((tags, index) => (
+						<Tags
+							key={tags.Key.join(',')}
+							tag={tags}
+							index={index}
+							onCloseHandler={(): void => onCloseHandler(index)}
+							setLocalSelectedTags={setLocalSelectedTags}
+						/>
+					))}
+				</CurrentTagsContainer>
 
-					<Space wrap direction="horizontal">
-						<Button type="primary" onClick={onTagAddHandler} icon={<PlusOutlined />}>
-							Add Tags Filter
-						</Button>
-
-						<Text ellipsis>
-							Results will include spans with ALL the specified tags ( Rows are `anded`
-							)
-						</Text>
-					</Space>
-				</Wrapper>
-
-				<ButtonContainer>
-					<Button onClick={onResetHandler}>Reset</Button>
-					<Button
-						type="primary"
-						onClick={onRunQueryHandler}
-						icon={<CaretRightFilled />}
-					>
-						Run Query
+				<Space wrap direction="horizontal">
+					<Button type="primary" onClick={onTagAddHandler} icon={<PlusOutlined />}>
+						Add Tags Filter
 					</Button>
-				</ButtonContainer>
-			</Container>
-		</>
+
+					<Text ellipsis>
+						Results will include spans with ALL the specified tags ( Rows are `anded`
+						)
+					</Text>
+				</Space>
+			</Wrapper>
+
+			<ButtonContainer>
+				<Button onClick={onResetHandler}>Reset</Button>
+				<Button
+					type="primary"
+					onClick={onRunQueryHandler}
+					icon={<CaretRightFilled />}
+				>
+					Run Query
+				</Button>
+			</ButtonContainer>
+		</Container>
 	);
-};
+}
 
 interface DispatchProps {
 	updateTagIsError: (value: boolean) => void;

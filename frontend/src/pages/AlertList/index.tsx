@@ -3,9 +3,10 @@ import AllAlertRules from 'container/ListAlertRules';
 // import MapAlertChannels from 'container/MapAlertChannels';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import React from 'react';
+
 const { TabPane } = Tabs;
 
-const AllAlertList = (): JSX.Element => {
+function AllAlertList(): JSX.Element {
 	return (
 		<Tabs destroyInactiveTabPane defaultActiveKey="Alert Rules">
 			<TabPane tabKey="Alert Rules" tab="Alert Rules" key="Alert Rules">
@@ -29,6 +30,6 @@ const AllAlertList = (): JSX.Element => {
 			</TabPane> */}
 		</Tabs>
 	);
-};
+}
 
 export default AllAlertList;

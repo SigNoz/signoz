@@ -14,9 +14,9 @@ import {
 	WebhookType,
 } from './config';
 
-const CreateAlertChannels = ({
+function CreateAlertChannels({
 	preType = 'slack',
-}: CreateAlertChannelsProps): JSX.Element => {
+}: CreateAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<
 		Partial<SlackChannel & WebhookChannel>
@@ -155,27 +155,25 @@ const CreateAlertChannels = ({
 	);
 
 	return (
-		<>
-			<FormAlertChannels
-				{...{
-					formInstance,
-					onTypeChangeHandler,
-					setSelectedConfig,
+		<FormAlertChannels
+			{...{
+				formInstance,
+				onTypeChangeHandler,
+				setSelectedConfig,
+				type,
+				onTestHandler,
+				onSaveHandler,
+				savingState,
+				NotificationElement,
+				title: 'New Notification Channels',
+				initialValue: {
 					type,
-					onTestHandler,
-					onSaveHandler,
-					savingState,
-					NotificationElement,
-					title: 'New Notification Channels',
-					initialValue: {
-						type: type,
-						...selectedConfig,
-					},
-				}}
-			/>
-		</>
+					...selectedConfig,
+				},
+			}}
+		/>
 	);
-};
+}
 
 interface CreateAlertChannelsProps {
 	preType?: ChannelType;

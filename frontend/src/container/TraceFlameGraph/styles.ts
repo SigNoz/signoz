@@ -34,5 +34,5 @@ export const TraceFlameGraphContainer = styled.div<{
 }>`
 	position: relative;
 	width: 100%;
-	height: ${({ height }): string | number => (height ? height : 120)}px;
+	height: ${({ height }): string | number => height || 120}px;
 `;

@@ -15,14 +15,12 @@ const routesToSkip = [
 	ROUTES.ALL_CHANNELS,
 ];
 
-const TopNav = (): JSX.Element | null => {
-	const { pathname } = useLocation();
-
+function TopNav(): JSX.Element | null {
 	if (history.location.pathname === ROUTES.SIGN_UP) {
 		return null;
 	}
 
-	const checkRouteExists = (currentPath: string) => {
+	const checkRouteExists = (currentPath: string): boolean => {
 		for (let i = 0; i < routesToSkip.length; ++i) {
 			if (
 				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
@@ -39,13 +37,13 @@ const TopNav = (): JSX.Element | null => {
 				<ShowBreadcrumbs />
 			</Col>
 
-			{!checkRouteExists(pathname) && (
+			{!checkRouteExists(history.location.pathname) && (
 				<Col span={8}>
 					<DateTimeSelector />
 				</Col>
 			)}
 		</Container>
 	);
-};
+}
 
 export default TopNav;

@@ -3,17 +3,23 @@ module.exports = {
 		browser: true,
 		es2021: true,
 		node: true,
+		'jest/globals': true,
 	},
 	extends: [
+		'airbnb',
+		'airbnb-typescript',
 		'eslint:recommended',
 		'plugin:react/recommended',
 		'plugin:@typescript-eslint/recommended',
 		'plugin:@typescript-eslint/eslint-recommended',
 		'plugin:prettier/recommended',
 		'plugin:sonarjs/recommended',
+		'plugin:import/errors',
+		'plugin:import/warnings',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
+		project: './tsconfig.json',
 		ecmaFeatures: {
 			jsx: true,
 		},
@@ -26,10 +32,17 @@ module.exports = {
 		'simple-import-sort',
 		'react-hooks',
 		'prettier',
+		'jest',
 	],
 	settings: {
 		react: {
-			version: 'latest',
+			version: 'detect',
+		},
+		'import/resolver': {
+			node: {
+				paths: ['src'],
+				extensions: ['.js', '.jsx', '.ts', '.tsx'],
+			},
 		},
 	},
 	rules: {
@@ -41,12 +54,13 @@ module.exports = {
 		],
 		'react/prop-types': 'off',
 		'@typescript-eslint/explicit-function-return-type': 'error',
-		'@typescript-eslint/no-var-requires': 0,
-		'react/no-array-index-key': 2,
+		'@typescript-eslint/no-var-requires': 'error',
+		'react/no-array-index-key': 'error',
 		'linebreak-style': [
 			'error',
 			process.platform === 'win32' ? 'windows' : 'unix',
 		],
+		'@typescript-eslint/default-param-last': 'off',
 
 		// simple sort error
 		'simple-import-sort/imports': 'error',
@@ -54,7 +68,29 @@ module.exports = {
 
 		// hooks
 		'react-hooks/rules-of-hooks': 'error',
-		'react-hooks/exhaustive-deps': 'warn',
+		'react-hooks/exhaustive-deps': 'error',
+
+		// airbnb
+		'no-underscore-dangle': 'off',
+		'no-console': 'off',
+		'import/prefer-default-export': 'off',
+		'import/extensions': [
+			'error',
+			'ignorePackages',
+			{
+				js: 'never',
+				jsx: 'never',
+				ts: 'never',
+				tsx: 'never',
+			},
+		],
+
+		// eslint rules need to remove
+		'no-shadow': 'off',
+		'@typescript-eslint/no-shadow': 'off',
+		'global-require': 'off',
+		'@typescript-eslint/no-var-requires': 'off',
+		'import/no-cycle': 'off',
 
 		'prettier/prettier': [
 			'error',
