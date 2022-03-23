@@ -1,12 +1,20 @@
-import { resolveTimeFromInterval } from 'container/TraceDetail/utils';
+import {
+	IIntervalUnit,
+	resolveTimeFromInterval,
+} from 'container/TraceDetail/utils';
 import { isEqual } from 'lodash-es';
 import { toFixed } from 'utils/toFixed';
 
 import { Interval } from './types';
 
+type TMetaDataType = Record<string, never>;
+
 export const getIntervalSpread = ({
 	localTraceMetaData,
 	globalTraceMetadata,
+}: {
+	localTraceMetaData: TMetaDataType;
+	globalTraceMetadata: TMetaDataType;
 }): {
 	baseInterval: number;
 	baseSpread: number;
@@ -43,6 +51,11 @@ export const getIntervals = ({
 	baseSpread,
 	intervalSpreadNormalized,
 	intervalUnit,
+}: {
+	baseInterval: number;
+	baseSpread: number;
+	intervalSpreadNormalized: number;
+	intervalUnit: IIntervalUnit;
 }): Interval[] => {
 	const intervals: Interval[] = [
 		{
