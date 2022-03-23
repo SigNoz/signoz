@@ -495,7 +495,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	fmt.Println("receiver :", string(body))
+
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
