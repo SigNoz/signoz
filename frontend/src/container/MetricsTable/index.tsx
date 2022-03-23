@@ -5,8 +5,8 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { servicesListItem } from 'store/actions/MetricsActions/metricsInterfaces';
 import { AppState } from 'store/reducers';
+import { ServicesList } from 'types/api/metrics/getService';
 import MetricReducer from 'types/reducer/metrics';
 
 import SkipBoardModal from './SkipOnBoardModal';
@@ -46,7 +46,16 @@ function Metrics(): JSX.Element {
 			key: 'serviceName',
 			// eslint-disable-next-line react/display-name
 			render: (text: string): JSX.Element => (
-				<div onClick={(): void => onClickHandler(`${ROUTES.APPLICATION}/${text}`)}>
+				<div
+					role="button"
+					tabIndex={0}
+					onKeyUp={(e): void => {
+						if (e.key === 'Enter' || e.key === 'Space') {
+							onClickHandler(`${ROUTES.APPLICATION}/${text}`);
+						}
+					}}
+					onClick={(): void => onClickHandler(`${ROUTES.APPLICATION}/${text}`)}
+				>
 					<Name>{text}</Name>
 				</div>
 			),
@@ -87,6 +96,6 @@ function Metrics(): JSX.Element {
 	);
 }
 
-type DataProps = servicesListItem;
+type DataProps = ServicesList;
 
 export default Metrics;

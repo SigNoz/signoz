@@ -4,10 +4,10 @@ import React from 'react';
 
 import { flattenedCategories } from './dataFormatCategories';
 
-const findCategoryById = (searchValue) =>
-	find(flattenedCategories, (option) => option.id == searchValue);
-const findCategoryByName = (searchValue) =>
-	find(flattenedCategories, (option) => option.name == searchValue);
+const findCategoryById = (searchValue: string) =>
+	find(flattenedCategories, (option) => option.id === searchValue);
+const findCategoryByName = (searchValue: string) =>
+	find(flattenedCategories, (option) => option.name === searchValue);
 
 function YAxisUnitSelector({ defaultValue, onSelect }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
@@ -26,9 +26,14 @@ function YAxisUnitSelector({ defaultValue, onSelect }): JSX.Element {
 				options={options}
 				defaultValue={findCategoryById(defaultValue)?.name}
 				onSelect={onSelectHandler}
-				filterOption={(inputValue, option): boolean =>
-					option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-				}
+				filterOption={(inputValue, option): boolean => {
+					if (option) {
+						return (
+							option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+						);
+					}
+					return false;
+				}}
 			>
 				<Input size="large" placeholder="Unit" allowClear />
 			</AutoComplete>

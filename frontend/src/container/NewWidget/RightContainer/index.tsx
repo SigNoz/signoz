@@ -1,23 +1,11 @@
-import {
-	// Button,
-	Input,
-	// Slider,
-	// Switch,
-	// Typography,
-} from 'antd';
+import { Input } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import React, { useCallback } from 'react';
 
-import { dataTypeCategories } from './dataFormatCategories';
-import {
-	Container,
-	// NullButtonContainer, TextContainer,
-	Title,
-} from './styles';
-// import {ca} from '@grafana/data'
+import { Container, Title } from './styles';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
@@ -25,14 +13,8 @@ const { TextArea } = Input;
 
 function RightContainer({
 	description,
-	// opacity,
-	// selectedNullZeroValue,
 	setDescription,
-	// setOpacity,
-	// setSelectedNullZeroValue,
-	// setStacked,
 	setTitle,
-	// stacked,
 	title,
 	selectedGraph,
 	setSelectedTime,
@@ -46,21 +28,6 @@ function RightContainer({
 		},
 		[],
 	);
-
-	// const nullValueButtons = [
-	// 	{
-	// 		check: 'zero',
-	// 		name: 'Zero',
-	// 	},
-	// 	{
-	// 		check: 'interpolate',
-	// 		name: 'Interpolate',
-	// 	},
-	// 	{
-	// 		check: 'blank',
-	// 		name: 'Blank',
-	// 	},
-	// ];
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
