@@ -864,8 +864,6 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 	channel_type := getChannelType(receiver)
 	receiverString, _ := json.Marshal(receiver)
 	
-	fmt.Println("receiverString:", string(receiverString))
-
 	// todo: check if the channel name already exists, raise an error if so 
 
 	{

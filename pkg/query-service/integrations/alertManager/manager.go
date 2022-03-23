@@ -2,7 +2,7 @@ package alertManager
 
 // Wrapper to connect and process alert manager functions
 import (
-	"fmt"
+	"fmt" 
 	"encoding/json"
 	"bytes"
 	"net/http"
@@ -34,13 +34,14 @@ type manager struct {
 
 
 func prepareAmChannelApiURL() string {
+	basePath := constants.GetAlertManagerApiPrefix()
 	AmChannelApiPath := constants.AmChannelApiPath
 	
 	if len(AmChannelApiPath) > 0 && rune(AmChannelApiPath[0]) == rune('/') {
 		AmChannelApiPath = AmChannelApiPath[1:]
 	}
 
-	return fmt.Sprintf("%s/%s", constants.GetAlertManagerApiPrefix(), AmChannelApiPath)
+	return fmt.Sprintf("%s%s", basePath, AmChannelApiPath)
 }
 
 func (m *manager) AddRoute(receiver *Receiver) (*model.ApiError) {
