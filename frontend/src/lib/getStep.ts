@@ -23,10 +23,13 @@ const convertToMs = (
 			return timestamp * 1;
 		case 'ns':
 			return timestamp / 1e6;
+		default:
+			return timestamp;
 	}
 };
 
 export const DefaultStepSize = 60;
+export const MaxDataPoints = 200;
 
 /**
  *	Returns relevant step size based on given start and end date.
@@ -34,13 +37,9 @@ export const DefaultStepSize = 60;
 const getStep = ({ start, end, inputFormat = 'ms' }: GetStepInput): number => {
 	const startDate = dayjs(convertToMs(Number(start), inputFormat));
 	const endDate = dayjs(convertToMs(Number(end), inputFormat));
-	const diffDays = Math.abs(endDate.diff(startDate, 'days'));
-
-	if (diffDays > 1) {
-		return DefaultStepSize * diffDays;
-	}
-
-	return DefaultStepSize;
+	const diffSec = Math.abs(endDate.diff(startDate, 's'));
+	console.log({ diffSec: diffSec / MaxDataPoints });
+	return Math.max(Math.floor(diffSec / MaxDataPoints), DefaultStepSize);
 };
 
 export default getStep;
