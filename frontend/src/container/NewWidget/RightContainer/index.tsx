@@ -115,7 +115,11 @@ function RightContainer({
 					setSelectedTime,
 				}}
 			/>
-			<YAxisUnitSelector defaultValue={yAxisUnit} onSelect={setYAxisUnit} />
+			<YAxisUnitSelector
+				defaultValue={yAxisUnit}
+				onSelect={setYAxisUnit}
+				fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+			/>
 		</Container>
 	);
 }

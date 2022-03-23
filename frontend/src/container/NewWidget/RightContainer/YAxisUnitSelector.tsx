@@ -16,9 +16,11 @@ const findCategoryByName = (
 function YAxisUnitSelector({
 	defaultValue,
 	onSelect,
+	fieldLabel,
 }: {
 	defaultValue: string;
 	onSelect: (e: string | undefined) => void;
+	fieldLabel: string;
 }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
 		onSelect(findCategoryByName(selectedValue)?.id);
@@ -29,7 +31,7 @@ function YAxisUnitSelector({
 	return (
 		<Col style={{ marginTop: '1rem' }}>
 			<div style={{ margin: '0.5rem 0' }}>
-				<Typography.Text>Y Axis Unit</Typography.Text>
+				<Typography.Text>{fieldLabel}</Typography.Text>
 			</div>
 			<AutoComplete
 				style={{ width: '100%' }}
