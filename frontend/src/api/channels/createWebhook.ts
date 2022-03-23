@@ -1,4 +1,3 @@
-import api from 'api';
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';

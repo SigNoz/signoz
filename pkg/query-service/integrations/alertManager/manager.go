@@ -11,6 +11,8 @@ import (
 	"go.signoz.io/query-service/model"
 )
 
+const contentType = "application/json"
+
 type Manager interface {
 	AddRoute(receiver *Receiver) *model.ApiError
 	EditRoute(receiver *Receiver) *model.ApiError
@@ -49,7 +51,7 @@ func (m *manager) AddRoute(receiver *Receiver) (*model.ApiError) {
 	receiverString, _ := json.Marshal(receiver)
 
 	amURL := prepareAmChannelApiURL()
-	response, err := http.Post(amURL, "application/json", bytes.NewBuffer(receiverString))
+	response, err := http.Post(amURL, contentType, bytes.NewBuffer(receiverString))
 	
 	if err != nil {
 		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(POST %s)\n", amURL), err)
@@ -75,7 +77,7 @@ func (m *manager) EditRoute(receiver *Receiver) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", contentType)
 
 	client := &http.Client{}
 	response, err := client.Do(req)
@@ -105,7 +107,7 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", contentType)
 
 	client := &http.Client{}
 	response, err := client.Do(req)
