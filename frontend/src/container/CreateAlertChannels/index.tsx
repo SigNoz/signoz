@@ -79,7 +79,7 @@ function CreateAlertChannels({
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
-			if (value == 'slack') {
+			if (value === 'slack') {
 				onSlackHandler();
 			}
 		},
@@ -110,5 +110,9 @@ function CreateAlertChannels({
 interface CreateAlertChannelsProps {
 	preType?: ChannelType;
 }
+
+CreateAlertChannels.defaultProps = {
+	preType: undefined,
+};
 
 export default CreateAlertChannels;

@@ -77,4 +77,12 @@ export interface GridGraphComponentProps {
 	yAxisUnit?: string;
 }
 
+GridGraphComponent.defaultProps = {
+	title: undefined,
+	opacity: undefined,
+	isStacked: undefined,
+	onClickHandler: undefined,
+	yAxisUnit: undefined,
+};
+
 export default GridGraphComponent;

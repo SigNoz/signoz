@@ -65,7 +65,9 @@ function FullView({
 				minTime,
 			});
 
-			const getMinMax = (time: timePreferenceType) => {
+			const getMinMax = (
+				time: timePreferenceType,
+			): { min: string | number; max: string | number } => {
 				if (time === 'GLOBAL_TIME') {
 					const minMax = GetMinMax(globalSelectedTime);
 					return {
@@ -142,7 +144,7 @@ function FullView({
 				loading: false,
 			}));
 		}
-	}, [widget, maxTime, minTime, selectedTime.enum]);
+	}, [widget, maxTime, minTime, selectedTime.enum, globalSelectedTime]);
 
 	useEffect(() => {
 		onFetchDataHandler();
@@ -245,5 +247,12 @@ interface FullViewProps {
 	name: string;
 	yAxisUnit?: string;
 }
+
+FullView.defaultProps = {
+	fullViewOptions: undefined,
+	onClickHandler: undefined,
+	noDataGraph: undefined,
+	yAxisUnit: undefined,
+};
 
 export default FullView;

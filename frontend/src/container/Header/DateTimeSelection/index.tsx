@@ -1,7 +1,7 @@
 import { Button, Select as DefaultSelect } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
-import { LOCAL_STORAGE } from 'constants/localStorage';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
 import getTimeString from 'lib/getTimeString';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -92,7 +92,7 @@ function DateTimeSelection({
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
 
-		const routes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
 		if (routes !== null) {
 			const routesObject = JSON.parse(routes || '{}');
@@ -111,7 +111,7 @@ function DateTimeSelection({
 	);
 
 	const updateLocalStorageForRoutes = (value: Time): void => {
-		const preRoutes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
 			const preRoutesObject = JSON.parse(preRoutes);
 
@@ -121,7 +121,7 @@ function DateTimeSelection({
 			preRoute[location.pathname] = value;
 
 			setLocalStorageKey(
-				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+				LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 				JSON.stringify(preRoute),
 			);
 		}
@@ -199,12 +199,12 @@ function DateTimeSelection({
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
 		const metricsTimeDuration = getLocalStorageKey(
-			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+			LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 		);
 
 		if (metricsTimeDuration === null) {
 			setLocalStorageKey(
-				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+				LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 				JSON.stringify({}),
 			);
 		}

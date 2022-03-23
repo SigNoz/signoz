@@ -1,12 +1,12 @@
 import { Form, FormInstance, Input, Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
+import { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	SlackChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
-import { Store } from 'rc-field-form/lib/interface';
 import React from 'react';
 
 import SlackSettings from './Settings/Slack';
@@ -89,7 +89,6 @@ interface FormAlertChannelsProps {
 	type: ChannelType;
 	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
 	onTypeChangeHandler: (value: ChannelType) => void;
-	onTestHandler: () => void;
 	onSaveHandler: (props: ChannelType) => void;
 	savingState: boolean;
 	NotificationElement: React.ReactElement<
@@ -100,5 +99,9 @@ interface FormAlertChannelsProps {
 	initialValue: Store;
 	nameDisable?: boolean;
 }
+
+FormAlertChannels.defaultProps = {
+	nameDisable: undefined,
+};
 
 export default FormAlertChannels;
