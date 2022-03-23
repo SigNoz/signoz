@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import Graph, { graphOnClickHandler } from 'components/Graph';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
@@ -57,7 +58,11 @@ function GridGraphComponent({
 					<Typography>{title}</Typography>
 				</TitleContainer>
 				<ValueContainer isDashboardPage={isDashboardPage}>
-					<ValueGraph value={value.toString()} />
+					<ValueGraph
+						value={
+							yAxisUnit ? getYAxisFormattedValue(value, yAxisUnit) : value.toString()
+						}
+					/>
 				</ValueContainer>
 			</>
 		);
