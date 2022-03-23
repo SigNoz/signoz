@@ -83,16 +83,16 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
-	//db, err := initialize(options)
+	db, err := initialize(options)
 
-	//if err != nil {
-	//	zap.S().Error(err)
-	//	os.Exit(1)
-	//}
+	if err != nil {
+		zap.S().Error(err)
+		os.Exit(1)
+	}
 	alertManager := am.New("")
 
 	return &ClickHouseReader{
-		db:              localDB,
+		db:              db,
 		localDB:         localDB,
 		alertManager:		 alertManager,
 		operationsTable: options.primary.OperationsTable,
