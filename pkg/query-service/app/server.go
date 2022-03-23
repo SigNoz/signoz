@@ -101,7 +101,6 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	var reader Reader
 
 	storage := os.Getenv("STORAGE")
-	
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
 		reader = druidReader.NewReader(localDB)
