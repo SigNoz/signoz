@@ -3,22 +3,45 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/discovery"
+	sd_config "github.com/prometheus/prometheus/discovery/config"
+	"github.com/prometheus/prometheus/notifier"
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/rules"
+	"github.com/prometheus/prometheus/scrape"
+	"github.com/prometheus/prometheus/storage"
+	"github.com/prometheus/prometheus/storage/remote"
+	"github.com/prometheus/prometheus/util/stats"
+	"github.com/prometheus/prometheus/util/strutil"
+	"github.com/prometheus/tsdb"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jmoiron/sqlx"
 
+	promModel "github.com/prometheus/common/model"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
@@ -51,10 +74,10 @@ type ClickHouseReader struct {
 	indexTable      string
 	errorTable      string
 	spansTable      string
-	// queryEngine     *promql.Engine
-	// remoteStorage *remote.Storage
-	// ruleManager   *rules.Manager
-	// promConfig *config.Config
+	queryEngine     *promql.Engine
+	remoteStorage   *remote.Storage
+	ruleManager     *rules.Manager
+	promConfig      *config.Config
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -79,347 +102,347 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 	}
 }
 
-// func (r *ClickHouseReader) Start() {
-// 	logLevel := promlog.AllowedLevel{}
-// 	logLevel.Set("debug")
-// 	// allowedFormat := promlog.AllowedFormat{}
-// 	// allowedFormat.Set("logfmt")
+func (r *ClickHouseReader) Start() {
+	logLevel := promlog.AllowedLevel{}
+	logLevel.Set("debug")
+	// allowedFormat := promlog.AllowedFormat{}
+	// allowedFormat.Set("logfmt")
 
-// 	// promlogConfig := promlog.Config{
-// 	// 	Level:  &logLevel,
-// 	// 	Format: &allowedFormat,
-// 	// }
+	// promlogConfig := promlog.Config{
+	// 	Level:  &logLevel,
+	// 	Format: &allowedFormat,
+	// }
 
-// 	logger := promlog.New(logLevel)
+	logger := promlog.New(logLevel)
 
-// 	startTime := func() (int64, error) {
-// 		return int64(promModel.Latest), nil
+	startTime := func() (int64, error) {
+		return int64(promModel.Latest), nil
 
-// 	}
+	}
 
-// 	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
+	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
 
-// 	// conf, err := config.LoadFile(*filename)
-// 	// if err != nil {
-// 	// 	zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
-// 	// }
+	// conf, err := config.LoadFile(*filename)
+	// if err != nil {
+	// 	zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
+	// }
 
-// 	// err = remoteStorage.ApplyConfig(conf)
-// 	// if err != nil {
-// 	// 	zap.S().Error("Error in remoteStorage.ApplyConfig: ", err)
-// 	// }
-// 	cfg := struct {
-// 		configFile string
+	// err = remoteStorage.ApplyConfig(conf)
+	// if err != nil {
+	// 	zap.S().Error("Error in remoteStorage.ApplyConfig: ", err)
+	// }
+	cfg := struct {
+		configFile string
 
-// 		localStoragePath    string
-// 		notifier            notifier.Options
-// 		notifierTimeout     promModel.Duration
-// 		forGracePeriod      promModel.Duration
-// 		outageTolerance     promModel.Duration
-// 		resendDelay         promModel.Duration
-// 		tsdb                tsdb.Options
-// 		lookbackDelta       promModel.Duration
-// 		webTimeout          promModel.Duration
-// 		queryTimeout        promModel.Duration
-// 		queryConcurrency    int
-// 		queryMaxSamples     int
-// 		RemoteFlushDeadline promModel.Duration
+		localStoragePath    string
+		notifier            notifier.Options
+		notifierTimeout     promModel.Duration
+		forGracePeriod      promModel.Duration
+		outageTolerance     promModel.Duration
+		resendDelay         promModel.Duration
+		tsdb                tsdb.Options
+		lookbackDelta       promModel.Duration
+		webTimeout          promModel.Duration
+		queryTimeout        promModel.Duration
+		queryConcurrency    int
+		queryMaxSamples     int
+		RemoteFlushDeadline promModel.Duration
 
-// 		prometheusURL string
+		prometheusURL string
 
-// 		logLevel promlog.AllowedLevel
-// 	}{
-// 		notifier: notifier.Options{
-// 			Registerer: prometheus.DefaultRegisterer,
-// 		},
-// 	}
+		logLevel promlog.AllowedLevel
+	}{
+		notifier: notifier.Options{
+			Registerer: prometheus.DefaultRegisterer,
+		},
+	}
 
-// 	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
-// 	flag.Parse()
+	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.Parse()
 
-// 	// fanoutStorage := remoteStorage
-// 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-// 	localStorage := remoteStorage
+	// fanoutStorage := remoteStorage
+	fanoutStorage := storage.NewFanout(logger, remoteStorage)
+	localStorage := remoteStorage
 
-// 	cfg.notifier.QueueCapacity = 10000
-// 	cfg.notifierTimeout = promModel.Duration(time.Duration.Seconds(10))
-// 	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
-// 	// notifier.ApplyConfig(conf)
+	cfg.notifier.QueueCapacity = 10000
+	cfg.notifierTimeout = promModel.Duration(time.Duration.Seconds(10))
+	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
+	// notifier.ApplyConfig(conf)
 
-// 	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
-// 	if err != nil {
-// 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
-// 		os.Exit(2)
-// 	}
+	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
+		os.Exit(2)
+	}
 
-// 	cfg.outageTolerance = promModel.Duration(time.Duration.Hours(1))
-// 	cfg.forGracePeriod = promModel.Duration(time.Duration.Minutes(10))
-// 	cfg.resendDelay = promModel.Duration(time.Duration.Minutes(1))
+	cfg.outageTolerance = promModel.Duration(time.Duration.Hours(1))
+	cfg.forGracePeriod = promModel.Duration(time.Duration.Minutes(10))
+	cfg.resendDelay = promModel.Duration(time.Duration.Minutes(1))
 
-// 	ctxScrape, cancelScrape := context.WithCancel(context.Background())
-// 	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
+	ctxScrape, cancelScrape := context.WithCancel(context.Background())
+	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
 
-// 	ctxNotify, cancelNotify := context.WithCancel(context.Background())
-// 	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
+	ctxNotify, cancelNotify := context.WithCancel(context.Background())
+	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
 
-// 	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
+	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
 
-// 	opts := promql.EngineOpts{
-// 		Logger:        log.With(logger, "component", "query engine"),
-// 		Reg:           nil,
-// 		MaxConcurrent: 20,
-// 		MaxSamples:    50000000,
-// 		Timeout:       time.Duration(2 * time.Minute),
-// 	}
+	opts := promql.EngineOpts{
+		Logger:        log.With(logger, "component", "query engine"),
+		Reg:           nil,
+		MaxConcurrent: 20,
+		MaxSamples:    50000000,
+		Timeout:       time.Duration(2 * time.Minute),
+	}
 
-// 	queryEngine := promql.NewEngine(opts)
+	queryEngine := promql.NewEngine(opts)
 
-// 	ruleManager := rules.NewManager(&rules.ManagerOptions{
-// 		Appendable:      fanoutStorage,
-// 		TSDB:            localStorage,
-// 		QueryFunc:       rules.EngineQueryFunc(queryEngine, fanoutStorage),
-// 		NotifyFunc:      sendAlerts(notifier, ExternalURL.String()),
-// 		Context:         context.Background(),
-// 		ExternalURL:     ExternalURL,
-// 		Registerer:      prometheus.DefaultRegisterer,
-// 		Logger:          log.With(logger, "component", "rule manager"),
-// 		OutageTolerance: time.Duration(cfg.outageTolerance),
-// 		ForGracePeriod:  time.Duration(cfg.forGracePeriod),
-// 		ResendDelay:     time.Duration(cfg.resendDelay),
-// 	})
+	ruleManager := rules.NewManager(&rules.ManagerOptions{
+		Appendable:      fanoutStorage,
+		TSDB:            localStorage,
+		QueryFunc:       rules.EngineQueryFunc(queryEngine, fanoutStorage),
+		NotifyFunc:      sendAlerts(notifier, ExternalURL.String()),
+		Context:         context.Background(),
+		ExternalURL:     ExternalURL,
+		Registerer:      prometheus.DefaultRegisterer,
+		Logger:          log.With(logger, "component", "rule manager"),
+		OutageTolerance: time.Duration(cfg.outageTolerance),
+		ForGracePeriod:  time.Duration(cfg.forGracePeriod),
+		ResendDelay:     time.Duration(cfg.resendDelay),
+	})
 
-// 	reloaders := []func(cfg *config.Config) error{
-// 		remoteStorage.ApplyConfig,
-// 		// The Scrape and notifier managers need to reload before the Discovery manager as
-// 		// they need to read the most updated config when receiving the new targets list.
-// 		notifier.ApplyConfig,
-// 		scrapeManager.ApplyConfig,
-// 		func(cfg *config.Config) error {
-// 			c := make(map[string]sd_config.ServiceDiscoveryConfig)
-// 			for _, v := range cfg.ScrapeConfigs {
-// 				c[v.JobName] = v.ServiceDiscoveryConfig
-// 			}
-// 			return discoveryManagerScrape.ApplyConfig(c)
-// 		},
-// 		func(cfg *config.Config) error {
-// 			c := make(map[string]sd_config.ServiceDiscoveryConfig)
-// 			for _, v := range cfg.AlertingConfig.AlertmanagerConfigs {
-// 				// AlertmanagerConfigs doesn't hold an unique identifier so we use the config hash as the identifier.
-// 				b, err := json.Marshal(v)
-// 				if err != nil {
-// 					return err
-// 				}
-// 				c[fmt.Sprintf("%x", md5.Sum(b))] = v.ServiceDiscoveryConfig
-// 			}
-// 			return discoveryManagerNotify.ApplyConfig(c)
-// 		},
-// 		// func(cfg *config.Config) error {
-// 		// 	// Get all rule files matching the configuration oaths.
-// 		// 	var files []string
-// 		// 	for _, pat := range cfg.RuleFiles {
-// 		// 		fs, err := filepath.Glob(pat)
-// 		// 		if err != nil {
-// 		// 			// The only error can be a bad pattern.
-// 		// 			return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
-// 		// 		}
-// 		// 		files = append(files, fs...)
-// 		// 	}
-// 		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
-// 		// },
+	reloaders := []func(cfg *config.Config) error{
+		remoteStorage.ApplyConfig,
+		// The Scrape and notifier managers need to reload before the Discovery manager as
+		// they need to read the most updated config when receiving the new targets list.
+		notifier.ApplyConfig,
+		scrapeManager.ApplyConfig,
+		func(cfg *config.Config) error {
+			c := make(map[string]sd_config.ServiceDiscoveryConfig)
+			for _, v := range cfg.ScrapeConfigs {
+				c[v.JobName] = v.ServiceDiscoveryConfig
+			}
+			return discoveryManagerScrape.ApplyConfig(c)
+		},
+		func(cfg *config.Config) error {
+			c := make(map[string]sd_config.ServiceDiscoveryConfig)
+			for _, v := range cfg.AlertingConfig.AlertmanagerConfigs {
+				// AlertmanagerConfigs doesn't hold an unique identifier so we use the config hash as the identifier.
+				b, err := json.Marshal(v)
+				if err != nil {
+					return err
+				}
+				c[fmt.Sprintf("%x", md5.Sum(b))] = v.ServiceDiscoveryConfig
+			}
+			return discoveryManagerNotify.ApplyConfig(c)
+		},
+		// func(cfg *config.Config) error {
+		// 	// Get all rule files matching the configuration oaths.
+		// 	var files []string
+		// 	for _, pat := range cfg.RuleFiles {
+		// 		fs, err := filepath.Glob(pat)
+		// 		if err != nil {
+		// 			// The only error can be a bad pattern.
+		// 			return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
+		// 		}
+		// 		files = append(files, fs...)
+		// 	}
+		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
+		// },
 
-// 	}
+	}
 
-// 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
-// 	type closeOnce struct {
-// 		C     chan struct{}
-// 		once  sync.Once
-// 		Close func()
-// 	}
-// 	// Wait until the server is ready to handle reloading.
-// 	reloadReady := &closeOnce{
-// 		C: make(chan struct{}),
-// 	}
-// 	reloadReady.Close = func() {
-// 		reloadReady.once.Do(func() {
-// 			close(reloadReady.C)
-// 		})
-// 	}
+	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
+	type closeOnce struct {
+		C     chan struct{}
+		once  sync.Once
+		Close func()
+	}
+	// Wait until the server is ready to handle reloading.
+	reloadReady := &closeOnce{
+		C: make(chan struct{}),
+	}
+	reloadReady.Close = func() {
+		reloadReady.once.Do(func() {
+			close(reloadReady.C)
+		})
+	}
 
-// 	var g group.Group
-// 	{
-// 		// Scrape discovery manager.
-// 		g.Add(
-// 			func() error {
-// 				err := discoveryManagerScrape.Run()
-// 				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
-// 				return err
-// 			},
-// 			func(err error) {
-// 				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
-// 				cancelScrape()
-// 			},
-// 		)
-// 	}
-// 	{
-// 		// Notify discovery manager.
-// 		g.Add(
-// 			func() error {
-// 				err := discoveryManagerNotify.Run()
-// 				level.Info(logger).Log("msg", "Notify discovery manager stopped")
-// 				return err
-// 			},
-// 			func(err error) {
-// 				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
-// 				cancelNotify()
-// 			},
-// 		)
-// 	}
-// 	{
-// 		// Scrape manager.
-// 		g.Add(
-// 			func() error {
-// 				// When the scrape manager receives a new targets list
-// 				// it needs to read a valid config for each job.
-// 				// It depends on the config being in sync with the discovery manager so
-// 				// we wait until the config is fully loaded.
-// 				<-reloadReady.C
+	var g group.Group
+	{
+		// Scrape discovery manager.
+		g.Add(
+			func() error {
+				err := discoveryManagerScrape.Run()
+				level.Info(logger).Log("msg", "Scrape discovery manager stopped")
+				return err
+			},
+			func(err error) {
+				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
+				cancelScrape()
+			},
+		)
+	}
+	{
+		// Notify discovery manager.
+		g.Add(
+			func() error {
+				err := discoveryManagerNotify.Run()
+				level.Info(logger).Log("msg", "Notify discovery manager stopped")
+				return err
+			},
+			func(err error) {
+				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
+				cancelNotify()
+			},
+		)
+	}
+	{
+		// Scrape manager.
+		g.Add(
+			func() error {
+				// When the scrape manager receives a new targets list
+				// it needs to read a valid config for each job.
+				// It depends on the config being in sync with the discovery manager so
+				// we wait until the config is fully loaded.
+				<-reloadReady.C
 
-// 				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
-// 				level.Info(logger).Log("msg", "Scrape manager stopped")
-// 				return err
-// 			},
-// 			func(err error) {
-// 				// Scrape manager needs to be stopped before closing the local TSDB
-// 				// so that it doesn't try to write samples to a closed storage.
-// 				level.Info(logger).Log("msg", "Stopping scrape manager...")
-// 				scrapeManager.Stop()
-// 			},
-// 		)
-// 	}
-// 	{
-// 		// Initial configuration loading.
-// 		cancel := make(chan struct{})
-// 		g.Add(
-// 			func() error {
-// 				// select {
-// 				// case <-dbOpen:
-// 				// 	break
-// 				// // In case a shutdown is initiated before the dbOpen is released
-// 				// case <-cancel:
-// 				// 	reloadReady.Close()
-// 				// 	return nil
-// 				// }
-// 				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
-// 				if err != nil {
-// 					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
-// 				}
+				err := scrapeManager.Run(discoveryManagerScrape.SyncCh())
+				level.Info(logger).Log("msg", "Scrape manager stopped")
+				return err
+			},
+			func(err error) {
+				// Scrape manager needs to be stopped before closing the local TSDB
+				// so that it doesn't try to write samples to a closed storage.
+				level.Info(logger).Log("msg", "Stopping scrape manager...")
+				scrapeManager.Stop()
+			},
+		)
+	}
+	{
+		// Initial configuration loading.
+		cancel := make(chan struct{})
+		g.Add(
+			func() error {
+				// select {
+				// case <-dbOpen:
+				// 	break
+				// // In case a shutdown is initiated before the dbOpen is released
+				// case <-cancel:
+				// 	reloadReady.Close()
+				// 	return nil
+				// }
+				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
+				if err != nil {
+					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
+				}
 
-// 				reloadReady.Close()
+				reloadReady.Close()
 
-// 				rules, apiErrorObj := r.GetRulesFromDB()
+				rules, apiErrorObj := r.GetRulesFromDB()
 
-// 				if apiErrorObj != nil {
-// 					zap.S().Errorf("Not able to read rules from DB")
-// 				}
-// 				for _, rule := range *rules {
-// 					apiErrorObj = r.LoadRule(rule)
-// 					if apiErrorObj != nil {
-// 						zap.S().Errorf("Not able to load rule with id=%d loaded from DB", rule.Id, rule.Data)
-// 					}
-// 				}
+				if apiErrorObj != nil {
+					zap.S().Errorf("Not able to read rules from DB")
+				}
+				for _, rule := range *rules {
+					apiErrorObj = r.LoadRule(rule)
+					if apiErrorObj != nil {
+						zap.S().Errorf("Not able to load rule with id=%d loaded from DB", rule.Id, rule.Data)
+					}
+				}
 
-// 				channels, apiErrorObj := r.GetChannels()
+				channels, apiErrorObj := r.GetChannels()
 
-// 				if apiErrorObj != nil {
-// 					zap.S().Errorf("Not able to read channels from DB")
-// 				}
-// 				for _, channel := range *channels {
-// 					apiErrorObj = r.LoadChannel(&channel)
-// 					if apiErrorObj != nil {
-// 						zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
-// 					}
-// 				}
+				if apiErrorObj != nil {
+					zap.S().Errorf("Not able to read channels from DB")
+				}
+				for _, channel := range *channels {
+					apiErrorObj = r.LoadChannel(&channel)
+					if apiErrorObj != nil {
+						zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
+					}
+				}
 
-// 				<-cancel
+				<-cancel
 
-// 				return nil
-// 			},
-// 			func(err error) {
-// 				close(cancel)
-// 			},
-// 		)
-// 	}
-// 	{
-// 		// Rule manager.
-// 		// TODO(krasi) refactor ruleManager.Run() to be blocking to avoid using an extra blocking channel.
-// 		cancel := make(chan struct{})
-// 		g.Add(
-// 			func() error {
-// 				<-reloadReady.C
-// 				ruleManager.Run()
-// 				<-cancel
-// 				return nil
-// 			},
-// 			func(err error) {
-// 				ruleManager.Stop()
-// 				close(cancel)
-// 			},
-// 		)
-// 	}
-// 	{
-// 		// Notifier.
+				return nil
+			},
+			func(err error) {
+				close(cancel)
+			},
+		)
+	}
+	{
+		// Rule manager.
+		// TODO(krasi) refactor ruleManager.Run() to be blocking to avoid using an extra blocking channel.
+		cancel := make(chan struct{})
+		g.Add(
+			func() error {
+				<-reloadReady.C
+				ruleManager.Run()
+				<-cancel
+				return nil
+			},
+			func(err error) {
+				ruleManager.Stop()
+				close(cancel)
+			},
+		)
+	}
+	{
+		// Notifier.
 
-// 		// Calling notifier.Stop() before ruleManager.Stop() will cause a panic if the ruleManager isn't running,
-// 		// so keep this interrupt after the ruleManager.Stop().
-// 		g.Add(
-// 			func() error {
-// 				// When the notifier manager receives a new targets list
-// 				// it needs to read a valid config for each job.
-// 				// It depends on the config being in sync with the discovery manager
-// 				// so we wait until the config is fully loaded.
-// 				<-reloadReady.C
+		// Calling notifier.Stop() before ruleManager.Stop() will cause a panic if the ruleManager isn't running,
+		// so keep this interrupt after the ruleManager.Stop().
+		g.Add(
+			func() error {
+				// When the notifier manager receives a new targets list
+				// it needs to read a valid config for each job.
+				// It depends on the config being in sync with the discovery manager
+				// so we wait until the config is fully loaded.
+				<-reloadReady.C
 
-// 				notifier.Run(discoveryManagerNotify.SyncCh())
-// 				level.Info(logger).Log("msg", "Notifier manager stopped")
-// 				return nil
-// 			},
-// 			func(err error) {
-// 				notifier.Stop()
-// 			},
-// 		)
-// 	}
-// 	r.queryEngine = queryEngine
-// 	r.remoteStorage = remoteStorage
-// 	r.ruleManager = ruleManager
+				notifier.Run(discoveryManagerNotify.SyncCh())
+				level.Info(logger).Log("msg", "Notifier manager stopped")
+				return nil
+			},
+			func(err error) {
+				notifier.Stop()
+			},
+		)
+	}
+	r.queryEngine = queryEngine
+	r.remoteStorage = remoteStorage
+	r.ruleManager = ruleManager
 
-// 	if err := g.Run(); err != nil {
-// 		level.Error(logger).Log("err", err)
-// 		os.Exit(1)
-// 	}
+	if err := g.Run(); err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(1)
+	}
 
-// }
+}
 
-// func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
-// 	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
+func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
+	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
 
-// 	conf, err := config.LoadFile(filename)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
-// 	}
+	conf, err := config.LoadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
+	}
 
-// 	failed := false
-// 	for _, rl := range rls {
-// 		if err := rl(conf); err != nil {
-// 			level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
-// 			failed = true
-// 		}
-// 	}
-// 	if failed {
-// 		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
-// 	}
-// 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
-// 	return conf, nil
-// }
+	failed := false
+	for _, rl := range rls {
+		if err := rl(conf); err != nil {
+			level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
+			failed = true
+		}
+	}
+	if failed {
+		return nil, fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
+	}
+	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
+	return conf, nil
+}
 
 func startsOrEndsWithQuote(s string) bool {
 	return strings.HasPrefix(s, "\"") || strings.HasPrefix(s, "'") ||
@@ -460,30 +483,30 @@ func computeExternalURL(u, listenAddr string) (*url.URL, error) {
 }
 
 // sendAlerts implements the rules.NotifyFunc for a Notifier.
-// func sendAlerts(n *notifier.Manager, externalURL string) rules.NotifyFunc {
-// 	return func(ctx context.Context, expr string, alerts ...*rules.Alert) {
-// 		var res []*notifier.Alert
+func sendAlerts(n *notifier.Manager, externalURL string) rules.NotifyFunc {
+	return func(ctx context.Context, expr string, alerts ...*rules.Alert) {
+		var res []*notifier.Alert
 
-// 		for _, alert := range alerts {
-// 			a := &notifier.Alert{
-// 				StartsAt:     alert.FiredAt,
-// 				Labels:       alert.Labels,
-// 				Annotations:  alert.Annotations,
-// 				GeneratorURL: externalURL + strutil.TableLinkForExpression(expr),
-// 			}
-// 			if !alert.ResolvedAt.IsZero() {
-// 				a.EndsAt = alert.ResolvedAt
-// 			} else {
-// 				a.EndsAt = alert.ValidUntil
-// 			}
-// 			res = append(res, a)
-// 		}
+		for _, alert := range alerts {
+			a := &notifier.Alert{
+				StartsAt:     alert.FiredAt,
+				Labels:       alert.Labels,
+				Annotations:  alert.Annotations,
+				GeneratorURL: externalURL + strutil.TableLinkForExpression(expr),
+			}
+			if !alert.ResolvedAt.IsZero() {
+				a.EndsAt = alert.ResolvedAt
+			} else {
+				a.EndsAt = alert.ValidUntil
+			}
+			res = append(res, a)
+		}
 
-// 		if len(alerts) > 0 {
-// 			n.Send(res...)
-// 		}
-// 	}
-// }
+		if len(alerts) > 0 {
+			n.Send(res...)
+		}
+	}
+}
 
 func initialize(options *Options) (clickhouse.Conn, error) {
 
@@ -503,28 +526,28 @@ func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	return cfg.Connector(cfg)
 }
 
-// type byAlertStateAndNameSorter struct {
-// 	alerts []*AlertingRuleWithGroup
-// }
+type byAlertStateAndNameSorter struct {
+	alerts []*AlertingRuleWithGroup
+}
 
-// func (s byAlertStateAndNameSorter) Len() int {
-// 	return len(s.alerts)
-// }
+func (s byAlertStateAndNameSorter) Len() int {
+	return len(s.alerts)
+}
 
-// func (s byAlertStateAndNameSorter) Less(i, j int) bool {
-// 	return s.alerts[i].State() > s.alerts[j].State() ||
-// 		(s.alerts[i].State() == s.alerts[j].State() &&
-// 			s.alerts[i].Name() < s.alerts[j].Name())
-// }
+func (s byAlertStateAndNameSorter) Less(i, j int) bool {
+	return s.alerts[i].State() > s.alerts[j].State() ||
+		(s.alerts[i].State() == s.alerts[j].State() &&
+			s.alerts[i].Name() < s.alerts[j].Name())
+}
 
-// func (s byAlertStateAndNameSorter) Swap(i, j int) {
-// 	s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i]
-// }
+func (s byAlertStateAndNameSorter) Swap(i, j int) {
+	s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i]
+}
 
-// type AlertingRuleWithGroup struct {
-// 	rules.AlertingRule
-// 	Id int
-// }
+type AlertingRuleWithGroup struct {
+	rules.AlertingRule
+	Id int
+}
 
 func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.ApiError) {
 
@@ -564,97 +587,97 @@ func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.A
 	return rule, nil
 }
 
-// func (r *ClickHouseReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
+func (r *ClickHouseReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
 
-// 	groups := r.ruleManager.RuleGroups()
+	groups := r.ruleManager.RuleGroups()
 
-// 	alertingRulesWithGroupObjects := []*AlertingRuleWithGroup{}
+	alertingRulesWithGroupObjects := []*AlertingRuleWithGroup{}
 
-// 	for _, group := range groups {
-// 		groupNameParts := strings.Split(group.Name(), "-groupname")
-// 		if len(groupNameParts) < 2 {
-// 			continue
-// 		}
-// 		id, _ := strconv.Atoi(groupNameParts[0])
-// 		for _, rule := range group.Rules() {
-// 			if alertingRule, ok := rule.(*rules.AlertingRule); ok {
-// 				alertingRulesWithGroupObject := AlertingRuleWithGroup{
-// 					*alertingRule,
-// 					id,
-// 				}
-// 				alertingRulesWithGroupObjects = append(alertingRulesWithGroupObjects, &alertingRulesWithGroupObject)
-// 			}
-// 		}
-// 	}
+	for _, group := range groups {
+		groupNameParts := strings.Split(group.Name(), "-groupname")
+		if len(groupNameParts) < 2 {
+			continue
+		}
+		id, _ := strconv.Atoi(groupNameParts[0])
+		for _, rule := range group.Rules() {
+			if alertingRule, ok := rule.(*rules.AlertingRule); ok {
+				alertingRulesWithGroupObject := AlertingRuleWithGroup{
+					*alertingRule,
+					id,
+				}
+				alertingRulesWithGroupObjects = append(alertingRulesWithGroupObjects, &alertingRulesWithGroupObject)
+			}
+		}
+	}
 
-// 	// alertingRules := r.ruleManager.AlertingRules()
+	// alertingRules := r.ruleManager.AlertingRules()
 
-// 	alertsSorter := byAlertStateAndNameSorter{alerts: alertingRulesWithGroupObjects}
-// 	sort.Sort(alertsSorter)
-// 	alerts := []*model.AlertingRuleResponse{}
+	alertsSorter := byAlertStateAndNameSorter{alerts: alertingRulesWithGroupObjects}
+	sort.Sort(alertsSorter)
+	alerts := []*model.AlertingRuleResponse{}
 
-// 	for _, alertingRule := range alertsSorter.alerts {
+	for _, alertingRule := range alertsSorter.alerts {
 
-// 		alertingRuleResponseObject := &model.AlertingRuleResponse{
-// 			Labels: alertingRule.Labels(),
-// 			// Annotations: alertingRule.Annotations(),
-// 			Name: alertingRule.Name(),
-// 			Id:   alertingRule.Id,
-// 		}
-// 		if len(alertingRule.ActiveAlerts()) == 0 {
-// 			alertingRuleResponseObject.State = rules.StateInactive.String()
-// 		} else {
-// 			alertingRuleResponseObject.State = (*(alertingRule.ActiveAlerts()[0])).State.String()
-// 		}
+		alertingRuleResponseObject := &model.AlertingRuleResponse{
+			Labels: alertingRule.Labels(),
+			// Annotations: alertingRule.Annotations(),
+			Name: alertingRule.Name(),
+			Id:   alertingRule.Id,
+		}
+		if len(alertingRule.ActiveAlerts()) == 0 {
+			alertingRuleResponseObject.State = rules.StateInactive.String()
+		} else {
+			alertingRuleResponseObject.State = (*(alertingRule.ActiveAlerts()[0])).State.String()
+		}
 
-// 		alerts = append(
-// 			alerts,
-// 			alertingRuleResponseObject,
-// 		)
-// 	}
+		alerts = append(
+			alerts,
+			alertingRuleResponseObject,
+		)
+	}
 
-// 	res := &model.AlertDiscovery{Alerts: alerts}
+	res := &model.AlertDiscovery{Alerts: alerts}
 
-// 	return res, nil
-// }
+	return res, nil
+}
 
-// func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError {
+func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError {
 
-// 	groupName := fmt.Sprintf("%d-groupname", rule.Id)
+	groupName := fmt.Sprintf("%d-groupname", rule.Id)
 
-// 	err := r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule.Data, groupName)
+	err := r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule.Data, groupName)
 
-// 	if err != nil {
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
-// func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
+func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
 
-// 	receiver := &model.Receiver{}
-// 	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
-// 		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
-// 	}
+	receiver := &model.Receiver{}
+	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
+		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
 
-// 	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
+	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
 
-// 	if err != nil {
-// 		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
-// 	if response.StatusCode > 299 {
-// 		responseData, _ := ioutil.ReadAll(response.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if response.StatusCode > 299 {
+		responseData, _ := ioutil.ReadAll(response.Body)
 
-// 		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status, string(responseData))
-// 		zap.S().Error(err)
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status, string(responseData))
+		zap.S().Error(err)
 
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.ApiError) {
 
@@ -919,176 +942,183 @@ func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Recei
 
 }
 
-// func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
+func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 
-// 	tx, err := r.localDB.Begin()
-// 	if err != nil {
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	var lastInsertId int64
+	var lastInsertId int64
 
-// 	{
-// 		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
-// 		if err != nil {
-// 			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
-// 			tx.Rollback()
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
-// 		defer stmt.Close()
+	{
+		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
 
-// 		result, err := stmt.Exec(time.Now(), rule)
-// 		if err != nil {
-// 			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
-// 			tx.Rollback() // return an error too, we may want to wrap them
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
-// 		lastInsertId, _ = result.LastInsertId()
+		result, err := stmt.Exec(time.Now(), rule)
+		if err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		lastInsertId, _ = result.LastInsertId()
 
-// 		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
+		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
 
-// 		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
-// 		if err != nil {
-// 			tx.Rollback()
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
-// 	}
-// 	err = tx.Commit()
-// 	if err != nil {
-// 		zap.S().Errorf("Error in commiting transaction for INSERT to rules\n", err)
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
-// 	return nil
-// }
+		if err != nil {
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for INSERT to rules\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
 
-// func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
+func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
 
-// 	idInt, _ := strconv.Atoi(id)
+	idInt, _ := strconv.Atoi(id)
 
-// 	tx, err := r.localDB.Begin()
-// 	if err != nil {
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	{
-// 		stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
-// 		if err != nil {
-// 			zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
-// 			tx.Rollback()
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
-// 		defer stmt.Close()
+	{
+		stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
+		if err != nil {
+			zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
 
-// 		if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
-// 			zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
-// 			tx.Rollback() // return an error too, we may want to wrap them
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
+		if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
 
-// 		groupName := fmt.Sprintf("%d-groupname", idInt)
+		groupName := fmt.Sprintf("%d-groupname", idInt)
 
-// 		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
-// 		if err != nil {
-// 			tx.Rollback()
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
-// 	}
+		if err != nil {
+			tx.Rollback()
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
 
-// 	err = tx.Commit()
-// 	if err != nil {
-// 		zap.S().Errorf("Error in commiting transaction for UPDATE to rules\n", err)
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for UPDATE to rules\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
-// func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
+func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
 
-// 	idInt, _ := strconv.Atoi(id)
+	idInt, _ := strconv.Atoi(id)
 
-// 	tx, err := r.localDB.Begin()
-// 	if err != nil {
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+	tx, err := r.localDB.Begin()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	{
-// 		stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
+	{
+		stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
 
-// 		if err != nil {
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
-// 		defer stmt.Close()
+		if err != nil {
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		defer stmt.Close()
 
-// 		if _, err := stmt.Exec(idInt); err != nil {
-// 			zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
-// 			tx.Rollback() // return an error too, we may want to wrap them
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
+		if _, err := stmt.Exec(idInt); err != nil {
+			zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
+			tx.Rollback() // return an error too, we may want to wrap them
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
 
-// 		groupName := fmt.Sprintf("%d-groupname", idInt)
+		groupName := fmt.Sprintf("%d-groupname", idInt)
 
-// 		rule := "" // dummy rule to pass to function
-// 		// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
-// 		err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
+		rule := "" // dummy rule to pass to function
+		// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
+		err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
-// 		if err != nil {
-// 			tx.Rollback()
-// 			zap.S().Errorf("Error in deleting rule from rulemanager...\n", err)
-// 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 		}
+		if err != nil {
+			tx.Rollback()
+			zap.S().Errorf("Error in deleting rule from rulemanager...\n", err)
+			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
 
-// 	}
+	}
 
-// 	err = tx.Commit()
-// 	if err != nil {
-// 		zap.S().Errorf("Error in commiting transaction for deleting rules\n", err)
-// 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-// 	}
+	err = tx.Commit()
+	if err != nil {
+		zap.S().Errorf("Error in commiting transaction for deleting rules\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
-// func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-// 	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
-// 	if err != nil {
-// 		return nil, nil, &model.ApiError{model.ErrorBadData, err}
-// 	}
+func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
+	if err != nil {
+		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+	}
 
-// 	res := qry.Exec(ctx)
+	res := qry.Exec(ctx)
 
-// 	// Optional stats field in response if parameter "stats" is not empty.
-// 	var qs *stats.QueryStats
-// 	if queryParams.Stats != "" {
-// 		qs = stats.NewQueryStats(qry.Stats())
-// 	}
+	// Optional stats field in response if parameter "stats" is not empty.
+	var qs *stats.QueryStats
+	if queryParams.Stats != "" {
+		qs = stats.NewQueryStats(qry.Stats())
+	}
 
-// 	qry.Close()
-// 	return res, qs, nil
+	qry.Close()
+	return res, qs, nil
 
-// }
+}
 
-// func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
+func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
 
-// 	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
+	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
 
-// 	if err != nil {
-// 		return nil, nil, &model.ApiError{model.ErrorBadData, err}
-// 	}
+	if err != nil {
+		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+	}
 
-// 	res := qry.Exec(ctx)
+	res := qry.Exec(ctx)
 
-// 	// Optional stats field in response if parameter "stats" is not empty.
-// 	var qs *stats.QueryStats
-// 	if query.Stats != "" {
-// 		qs = stats.NewQueryStats(qry.Stats())
-// 	}
+	// Optional stats field in response if parameter "stats" is not empty.
+	var qs *stats.QueryStats
+	if query.Stats != "" {
+		qs = stats.NewQueryStats(qry.Stats())
+	}
 
-// 	qry.Close()
-// 	return res, qs, nil
-// }
+	qry.Close()
+	return res, qs, nil
+}
+
+func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
+
+	services := []string{}
+
+	return &services, nil
+}
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, error) {
 
