@@ -15,7 +15,7 @@ import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
-import { Button } from './styles';
+import { Button, TableContainerCard } from './styles';
 
 function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
@@ -232,9 +232,9 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<Card>
+					<TableContainerCard>
 						<TopEndpointsTable data={topEndPoints} />
-					</Card>
+					</TableContainerCard>
 				</Col>
 			</Row>
 		</>

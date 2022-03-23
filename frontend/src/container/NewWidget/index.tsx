@@ -1,10 +1,11 @@
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useHistory, useLocation, useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { generatePath } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -57,7 +58,6 @@ function NewWidget({
 
 	const { widgets } = selectedDashboard.data;
 
-	const { push } = useHistory();
 	const { search } = useLocation();
 
 	const query = useMemo(() => {
@@ -154,8 +154,8 @@ function NewWidget({
 	};
 
 	const onClickDiscardHandler = useCallback(() => {
-		push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, push]);
+		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId]);
 
 	const getQueryResult = useCallback(() => {
 		if (selectedWidget?.id.length !== 0) {

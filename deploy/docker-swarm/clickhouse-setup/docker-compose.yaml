@@ -29,7 +29,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.7.1
+    image: signoz/query-service:0.7.2
     command: ["-config=/root/config/prometheus.yml"]
     ports:
       - "8080:8080"
@@ -51,7 +51,7 @@ services:
     - clickhouse
 
   frontend:
-    image: signoz/frontend:0.7.1
+    image: signoz/frontend:0.7.2
     depends_on:
       - query-service
     ports:
