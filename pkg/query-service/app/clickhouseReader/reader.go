@@ -82,13 +82,15 @@ type ClickHouseReader struct {
 func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
+	skipCh := constants.GetOrDefaultEnv("SIGNOZ_SKIP_CH_INIT", "N")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 
-	if err != nil {
+	if err != nil && skipCh != "Y" {
 		zap.S().Error(err)
 		os.Exit(1)
 	}
+
 	alertManager := am.New("")
 
 	return &ClickHouseReader{
