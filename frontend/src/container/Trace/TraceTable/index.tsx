@@ -1,10 +1,11 @@
-import { TableProps, Tag } from 'antd';
+import { TableProps, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import React from 'react';
 import { connect, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -34,11 +35,34 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
-	const getTags = (value: string): JSX.Element => {
+	const getLink = (record: TableType): string => {
+		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
+	};
+
+	const getValue = (value: string, record: TableType): JSX.Element => {
+		return (
+			<Link to={getLink(record)}>
+				<Typography>{value}</Typography>
+			</Link>
+		);
+	};
+
+	const getHttpMethodOrStatus = (
+		value: TableType['httpMethod'],
+		record: TableType,
+	): JSX.Element => {
 		if (value.length === 0) {
-			return <div>-</div>;
+			return (
+				<Link to={getLink(record)}>
+					<Typography>-</Typography>
+				</Link>
+			);
 		}
-		return <Tag color="magenta">{value}</Tag>;
+		return (
+			<Link to={getLink(record)}>
+				<Tag color="magenta">{value}</Tag>
+			</Link>
+		);
 	};
 
 	const columns: ColumnsType<TableType> = [
@@ -47,44 +71,52 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			dataIndex: 'timestamp',
 			key: 'timestamp',
 			sorter: true,
-			render: (value: TableType['timestamp']): JSX.Element => {
+			render: (value: TableType['timestamp'], record): JSX.Element => {
 				const day = dayjs(value);
-				return <div>{day.format('YYYY/MM/DD HH:mm:ss')}</div>;
+				return (
+					<Link to={getLink(record)}>
+						<Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>
+					</Link>
+				);
 			},
 		},
 		{
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
+			render: getValue,
 		},
 		{
 			title: 'Operation',
 			dataIndex: 'operation',
 			key: 'operation',
+			render: getValue,
 		},
 		{
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
-			render: (value: TableType['durationNano']): JSX.Element => (
-				<div>
-					{`${dayjs
-						.duration({ milliseconds: value / 1000000 })
-						.asMilliseconds()} ms`}
-				</div>
+			render: (value: TableType['durationNano'], record): JSX.Element => (
+				<Link to={getLink(record)}>
+					<Typography>
+						{`${dayjs
+							.duration({ milliseconds: value / 1000000 })
+							.asMilliseconds()} ms`}
+					</Typography>
+				</Link>
 			),
 		},
 		{
 			title: 'Method',
 			dataIndex: 'httpMethod',
 			key: 'httpMethod',
-			render: (value: TableType['httpMethod']): JSX.Element => getTags(value),
+			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
 			dataIndex: 'httpCode',
 			key: 'httpCode',
-			render: (value: TableType['httpCode']): JSX.Element => getTags(value),
+			render: getHttpMethodOrStatus,
 		},
 	];
 
@@ -115,12 +147,6 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			dataSource={spansAggregate.data}
 			loading={loading || filterLoading}
 			columns={columns}
-			onRow={(record): React.HTMLAttributes<TableType> => ({
-				onClick: (): void => {
-					window.open(`${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`);
-				},
-			})}
-			size="middle"
 			rowKey="timestamp"
 			style={{
 				cursor: 'pointer',
