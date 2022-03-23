@@ -23,13 +23,15 @@ services:
       - '--storage.path=/data'
 
   query-service:
-    image: signoz/query-service:0.7.1
+    image: signoz/query-service:latest
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
+    ports:
+        - "8180:8080"
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - STORAGE=clickhouse
@@ -38,16 +40,6 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-
-  frontend:
-    image: signoz/frontend:0.7.1
-    container_name: frontend
-    depends_on:
-      - query-service
-    ports:
-      - "3301:3301"
-    volumes:
-      - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
     image: signoz/otelcontribcol:0.43.0
