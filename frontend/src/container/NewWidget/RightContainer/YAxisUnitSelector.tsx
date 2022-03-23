@@ -9,7 +9,7 @@ const findCategoryById = (searchValue) =>
 const findCategoryByName = (searchValue) =>
 	find(flattenedCategories, (option) => option.name == searchValue);
 
-function YAxisUnitSelector({ defaultValue, onSelect }): JSX.Element {
+function YAxisUnitSelector({ defaultValue, onSelect, fieldLabel }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
 		onSelect(findCategoryByName(selectedValue)?.id);
 	};
@@ -19,7 +19,7 @@ function YAxisUnitSelector({ defaultValue, onSelect }): JSX.Element {
 	return (
 		<Col style={{ marginTop: '1rem' }}>
 			<div style={{ margin: '0.5rem 0' }}>
-				<Typography.Text>Y Axis Unit</Typography.Text>
+				<Typography.Text>{fieldLabel}</Typography.Text>
 			</div>
 			<AutoComplete
 				style={{ width: '100%' }}
