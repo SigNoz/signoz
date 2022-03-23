@@ -1,4 +1,5 @@
 import { Button } from 'antd';
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
 
 interface Props {
@@ -15,7 +16,7 @@ export const Container = styled.div<Props>`
 
 		cursor: ${({ disabled }): string => (disabled ? 'not-allowed' : '')};
 
-		${({ disabled }) =>
+		${({ disabled }): StyledCSS =>
 			disabled &&
 			css`
 				opacity: 0.5;

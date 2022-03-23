@@ -1,4 +1,5 @@
-import { Layout, Menu, Switch, Typography } from 'antd';
+import { Layout, Switch, Typography } from 'antd';
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
 
 const { Sider: SiderComponent } = Layout;
@@ -37,7 +38,7 @@ interface DarkModeProps {
 
 export const ToggleButton = styled(Switch)<DarkModeProps>`
 	&&& {
-		background: ${({ checked }) => checked === false && 'grey'};
+		background: ${({ checked }): string => (checked === false ? 'grey' : '')};
 	}
 `;
 
@@ -51,11 +52,11 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 	position: fixed;
 	bottom: 48px;
 	background: #262626;
-	width: ${({ collapsed }) => (!collapsed ? '200px' : '80px')};
+	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
 
 	&&& {
 		li {
-			${({ collapsed }) =>
+			${({ collapsed }): StyledCSS =>
 				collapsed &&
 				css`
 					padding-left: 24px;
@@ -63,9 +64,9 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 		}
 
 		svg {
-			margin-left: ${({ collapsed }) => (collapsed ? '0' : '24px')};
+			margin-left: ${({ collapsed }): string => (collapsed ? '0' : '24px')};
 
-			${({ collapsed }) =>
+			${({ collapsed }): StyledCSS =>
 				collapsed &&
 				css`
 					height: 100%;
