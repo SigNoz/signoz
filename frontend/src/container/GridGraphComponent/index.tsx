@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
-import Graph, { graphOnClickHandler } from 'components/Graph';
+import Graph, { GraphOnClickHandler } from 'components/Graph';
 import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
@@ -72,7 +72,7 @@ export interface GridGraphComponentProps {
 	title?: string;
 	opacity?: string;
 	isStacked?: boolean;
-	onClickHandler?: graphOnClickHandler;
+	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
 }

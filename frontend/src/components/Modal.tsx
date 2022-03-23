@@ -28,4 +28,9 @@ interface ModalProps {
 	children: ReactElement;
 }
 
+CustomModal.defaultProps = {
+	closable: undefined,
+	footer: undefined,
+};
+
 export default CustomModal;

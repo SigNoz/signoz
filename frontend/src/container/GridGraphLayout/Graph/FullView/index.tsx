@@ -2,7 +2,7 @@ import { Button, Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
-import { graphOnClickHandler } from 'components/Graph';
+import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
@@ -242,7 +242,7 @@ interface FullViewState {
 interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
-	onClickHandler?: graphOnClickHandler;
+	onClickHandler?: GraphOnClickHandler;
 	noDataGraph?: boolean;
 	name: string;
 	yAxisUnit?: string;
