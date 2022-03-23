@@ -5,6 +5,7 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { servicesListItem } from 'store/actions/MetricsActions/metricsInterfaces';
 import { AppState } from 'store/reducers';
 import MetricReducer from 'types/reducer/metrics';
@@ -46,9 +47,9 @@ function Metrics(): JSX.Element {
 			key: 'serviceName',
 			// eslint-disable-next-line react/display-name
 			render: (text: string): JSX.Element => (
-				<div onClick={(): void => onClickHandler(`${ROUTES.APPLICATION}/${text}`)}>
+				<Link to={`${ROUTES.APPLICATION}/${text}`}>
 					<Name>{text}</Name>
-				</div>
+				</Link>
 			),
 		},
 		{
