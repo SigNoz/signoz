@@ -4,12 +4,22 @@ import React from 'react';
 
 import { flattenedCategories } from './dataFormatCategories';
 
-const findCategoryById = (searchValue: string) =>
+const findCategoryById = (
+	searchValue: string,
+): Record<string, string> | undefined =>
 	find(flattenedCategories, (option) => option.id === searchValue);
-const findCategoryByName = (searchValue: string) =>
+const findCategoryByName = (
+	searchValue: string,
+): Record<string, string> | undefined =>
 	find(flattenedCategories, (option) => option.name === searchValue);
 
-function YAxisUnitSelector({ defaultValue, onSelect }): JSX.Element {
+function YAxisUnitSelector({
+	defaultValue,
+	onSelect,
+}: {
+	defaultValue: string;
+	onSelect: (e: string | undefined) => void;
+}): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
 		onSelect(findCategoryByName(selectedValue)?.id);
 	};
