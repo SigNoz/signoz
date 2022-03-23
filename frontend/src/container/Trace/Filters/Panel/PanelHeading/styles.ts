@@ -13,7 +13,7 @@ export const Container = styled.div<Props>`
 		padding-left: 0.5rem;
 		min-height: 5vh;
 
-		cursor: ${({ disabled }) => disabled && 'not-allowed'};
+		cursor: ${({ disabled }): string => (disabled ? 'not-allowed' : '')};
 
 		${({ disabled }) =>
 			disabled &&

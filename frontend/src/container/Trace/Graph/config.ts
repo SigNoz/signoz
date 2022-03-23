@@ -1,17 +1,17 @@
-import { ChartData, ChartDataset, ChartDatasetProperties } from 'chart.js';
+import { ChartData, ChartDatasetProperties } from 'chart.js';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
 import { keys } from 'lodash-es';
 import { TraceReducer } from 'types/reducer/trace';
 
-function transposeArray(array: number[][], arrayLength: number) {
+function transposeArray(array: number[][], arrayLength: number): number[][] {
 	const newArray: number[][] = [];
-	for (let i = 0; i < array.length; i++) {
+	for (let i = 0; i < array.length; i += 1) {
 		newArray.push([]);
 	}
 
-	for (let i = 0; i < array.length; i++) {
-		for (let j = 0; j < arrayLength; j++) {
+	for (let i = 0; i < array.length; i += 1) {
+		for (let j = 0; j < arrayLength; j += 1) {
 			newArray[j]?.push(array[i][j]);
 		}
 	}

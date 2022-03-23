@@ -25,9 +25,9 @@ export const getSpanTreeMetadata = (
 		if (treeNode.hasError) {
 			treeNode.serviceColour = errorColor;
 		} else treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1);
-		}
+		});
 	};
 	traverse(treeData, 1);
 
