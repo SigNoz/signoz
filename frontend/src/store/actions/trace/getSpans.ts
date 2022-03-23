@@ -1,3 +1,5 @@
+import { notification } from 'antd';
+import getSpans from 'api/trace/getSpans';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -6,9 +8,7 @@ import {
 	UPDATE_TRACE_GRAPH_LOADING,
 	UPDATE_TRACE_GRAPH_SUCCESS,
 } from 'types/actions/trace';
-import getSpans from 'api/trace/getSpans';
 import { Props } from 'types/api/trace/getSpans';
-import { notification } from 'antd';
 
 export const GetSpans = (
 	props: GetSpansProps,
@@ -52,12 +52,12 @@ export const GetSpans = (
 			}
 
 			const response = await getSpans({
-				end: end,
+				end,
 				function: props.function,
 				groupBy: props.groupBy,
 				selectedFilter: props.selectedFilter,
 				selectedTags: props.selectedTags,
-				start: start,
+				start,
 				step: props.step,
 				isFilterExclude: props.isFilterExclude,
 			});

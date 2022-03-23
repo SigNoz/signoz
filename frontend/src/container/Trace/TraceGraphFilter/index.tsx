@@ -1,21 +1,22 @@
+import { SelectProps, Space } from 'antd';
+import { SelectValue } from 'antd/lib/select';
 import React from 'react';
-import { Space, SelectProps } from 'antd';
-import { functions, groupBy } from './config';
 import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
 import AppActions from 'types/actions';
 import {
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
 } from 'types/actions/trace';
-import { Dispatch } from 'redux';
+import { TraceReducer } from 'types/reducer/trace';
+
+import { functions, groupBy } from './config';
 import { SelectComponent } from './styles';
-import { SelectValue } from 'antd/lib/select';
 
 const { Option } = SelectComponent;
 
-const TraceGraphFilter = () => {
+function TraceGraphFilter(): JSX.Element {
 	const { selectedFunction, selectedGroupBy } = useSelector<
 		AppState,
 		TraceReducer
@@ -31,6 +32,7 @@ const TraceGraphFilter = () => {
 				type: UPDATE_SELECTED_FUNCTION,
 				payload: {
 					selectedFunction: selected.key,
+					yAxisUnit: selected.yAxisUnit,
 				},
 			});
 		}
@@ -74,14 +76,16 @@ const TraceGraphFilter = () => {
 				value={groupBy.find((e) => selectedGroupBy === e.key)?.displayValue}
 				onChange={onClickSelectedGroupByHandler}
 			>
-				{groupBy.map((value) => (
-					<Option value={value.key} key={value.key}>
-						{value.displayValue}
-					</Option>
-				))}
+				{groupBy.map(
+					(value): JSX.Element => (
+						<Option value={value.key} key={value.key}>
+							{value.displayValue}
+						</Option>
+					),
+				)}
 			</SelectComponent>
 		</Space>
 	);
-};
+}
 
 export default TraceGraphFilter;

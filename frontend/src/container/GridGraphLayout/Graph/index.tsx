@@ -8,8 +8,7 @@ import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -23,14 +22,15 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import Bar from './Bar';
 import FullView from './FullView';
-import { Modal, FullViewContainer, ErrorContainer } from './styles';
+import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
-const GridCardGraph = ({
+function GridCardGraph({
 	widget,
 	deleteWidget,
 	isDeleted,
 	name,
-}: GridCardGraphProps): JSX.Element => {
+	yAxisUnit,
+}: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
 		errorMessage: '',
@@ -47,7 +47,7 @@ const GridCardGraph = ({
 		(async (): Promise<void> => {
 			try {
 				const getMaxMinTime = GetMaxMinTime({
-					graphType: widget.panelTypes,
+					graphType: widget?.panelTypes,
 					maxTime,
 					minTime,
 				});
@@ -65,7 +65,7 @@ const GridCardGraph = ({
 							const result = await getQueryResult({
 								end,
 								query: query.query,
-								start: start,
+								start,
 								step: '60',
 							});
 
@@ -124,7 +124,7 @@ const GridCardGraph = ({
 		[],
 	);
 
-	const getModals = () => {
+	const getModals = (): JSX.Element => {
 		return (
 			<>
 				<Modal
@@ -149,7 +149,11 @@ const GridCardGraph = ({
 					destroyOnClose
 				>
 					<FullViewContainer>
-						<FullView name={name + 'expanded'} widget={widget} />
+						<FullView
+							name={`${name}expanded`}
+							widget={widget}
+							yAxisUnit={yAxisUnit}
+						/>
 					</FullViewContainer>
 				</Modal>
 			</>
@@ -199,11 +203,12 @@ const GridCardGraph = ({
 					opacity: widget.opacity,
 					title: widget.title,
 					name,
+					yAxisUnit,
 				}}
 			/>
 		</>
 	);
-};
+}
 
 interface GridCardGraphState {
 	loading: boolean;
@@ -222,6 +227,7 @@ interface GridCardGraphProps extends DispatchProps {
 	widget: Widgets;
 	isDeleted: React.MutableRefObject<boolean>;
 	name: string;
+	yAxisUnit: string | undefined;
 }
 
 const mapDispatchToProps = (

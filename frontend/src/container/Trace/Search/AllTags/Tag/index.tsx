@@ -1,22 +1,23 @@
-import React from 'react';
-
+import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
+import { SelectValue } from 'antd/lib/select';
+import React from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { TraceReducer } from 'types/reducer/trace';
+
 import {
 	Container,
 	IconContainer,
 	SelectComponent,
 	ValueSelect,
 } from './styles';
-import { connect, useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { TraceReducer } from 'types/reducer/trace';
-import { CloseOutlined } from '@ant-design/icons';
-import { SelectValue } from 'antd/lib/select';
-import { ThunkDispatch } from 'redux-thunk';
-import AppActions from 'types/actions';
-import { bindActionCreators } from 'redux';
-import { UpdateSelectedTags } from 'store/actions/trace/updateTagsSelected';
 import TagsKey from './TagKey';
+
 const { Option } = Select;
 
 type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
@@ -37,7 +38,7 @@ interface AllMenu {
 	value: string;
 }
 
-const SingleTags = (props: AllTagsProps): JSX.Element => {
+function SingleTags(props: AllTagsProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 	const {
 		Key: selectedKey,
@@ -45,11 +46,11 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 		Values: selectedValues,
 	} = props.tag;
 
-	const onDeleteTagHandler = (index: number) => {
+	const onDeleteTagHandler = (index: number): void => {
 		props.onCloseHandler(index);
 	};
 
-	const onChangeOperatorHandler = (key: SelectValue) => {
+	const onChangeOperatorHandler = (key: SelectValue): void => {
 		props.setLocalSelectedTags([
 			...traces.selectedTags.slice(0, props.index),
 			{
@@ -62,51 +63,49 @@ const SingleTags = (props: AllTagsProps): JSX.Element => {
 	};
 
 	return (
-		<>
-			<Container>
-				<TagsKey
-					index={props.index}
-					tag={props.tag}
-					setLocalSelectedTags={props.setLocalSelectedTags}
-				/>
+		<Container>
+			<TagsKey
+				index={props.index}
+				tag={props.tag}
+				setLocalSelectedTags={props.setLocalSelectedTags}
+			/>
 
-				<SelectComponent
-					onChange={onChangeOperatorHandler}
-					value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
-				>
-					{AllMenu.map((e) => (
-						<Option key={e.value} value={e.key}>
-							{e.value}
-						</Option>
-					))}
-				</SelectComponent>
+			<SelectComponent
+				onChange={onChangeOperatorHandler}
+				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
+			>
+				{AllMenu.map((e) => (
+					<Option key={e.value} value={e.key}>
+						{e.value}
+					</Option>
+				))}
+			</SelectComponent>
 
-				<ValueSelect
-					value={selectedValues}
-					onChange={(value) => {
-						props.setLocalSelectedTags((tags) => [
-							...tags.slice(0, props.index),
-							{
-								Key: selectedKey,
-								Operator: selectedOperator,
-								Values: value as string[],
-							},
-							...tags.slice(props.index + 1, tags.length),
-						]);
-					}}
-					mode="tags"
-				/>
+			<ValueSelect
+				value={selectedValues}
+				onChange={(value): void => {
+					props.setLocalSelectedTags((tags) => [
+						...tags.slice(0, props.index),
+						{
+							Key: selectedKey,
+							Operator: selectedOperator,
+							Values: value as string[],
+						},
+						...tags.slice(props.index + 1, tags.length),
+					]);
+				}}
+				mode="tags"
+			/>
 
-				<IconContainer
-					role={'button'}
-					onClick={() => onDeleteTagHandler(props.index)}
-				>
-					<CloseOutlined />
-				</IconContainer>
-			</Container>
-		</>
+			<IconContainer
+				role="button"
+				onClick={(): void => onDeleteTagHandler(props.index)}
+			>
+				<CloseOutlined />
+			</IconContainer>
+		</Container>
 	);
-};
+}
 
 interface DispatchProps {
 	updateSelectedTags: (props: TraceReducer['selectedTags']) => void;

@@ -2,9 +2,10 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+
 import CheckBoxComponent from '../Common/Checkbox';
 
-const CommonCheckBox = (props: CommonCheckBoxProps): JSX.Element => {
+function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 	const { filter } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
@@ -27,7 +28,7 @@ const CommonCheckBox = (props: CommonCheckBoxProps): JSX.Element => {
 			))}
 		</>
 	);
-};
+}
 
 interface CommonCheckBoxProps {
 	name: TraceFilterEnum;

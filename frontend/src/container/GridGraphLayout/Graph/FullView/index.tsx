@@ -26,13 +26,14 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import EmptyGraph from './EmptyGraph';
 import { NotFoundContainer, TimeContainer } from './styles';
 
-const FullView = ({
+function FullView({
 	widget,
 	fullViewOptions = true,
 	onClickHandler,
 	noDataGraph = false,
 	name,
-}: FullViewProps): JSX.Element => {
+	yAxisUnit,
+}: FullViewProps): JSX.Element {
 	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -82,7 +83,6 @@ const FullView = ({
 			};
 
 			const queryMinMax = getMinMax(selectedTime.enum);
-
 			const response = await Promise.all(
 				widget.query
 					.filter((e) => e.query.length !== 0)
@@ -220,14 +220,15 @@ const FullView = ({
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,
 					title: widget.title,
-					onClickHandler: onClickHandler,
+					onClickHandler,
 					name,
+					yAxisUnit,
 				}}
 			/>
 			{/* </GraphContainer> */}
 		</>
 	);
-};
+}
 
 interface FullViewState {
 	loading: boolean;
@@ -242,6 +243,7 @@ interface FullViewProps {
 	onClickHandler?: graphOnClickHandler;
 	noDataGraph?: boolean;
 	name: string;
+	yAxisUnit?: string;
 }
 
 export default FullView;

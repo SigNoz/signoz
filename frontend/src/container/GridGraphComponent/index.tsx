@@ -8,7 +8,7 @@ import React from 'react';
 
 import { TitleContainer, ValueContainer } from './styles';
 
-const GridGraphComponent = ({
+function GridGraphComponent({
 	GRAPH_TYPES,
 	data,
 	title,
@@ -16,7 +16,8 @@ const GridGraphComponent = ({
 	isStacked,
 	onClickHandler,
 	name,
-}: GridGraphComponentProps): JSX.Element | null => {
+	yAxisUnit,
+}: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
 	const isDashboardPage = location.split('/').length === 3;
@@ -31,8 +32,9 @@ const GridGraphComponent = ({
 					isStacked,
 					opacity,
 					xAxisType: 'time',
-					onClickHandler: onClickHandler,
+					onClickHandler,
 					name,
+					yAxisUnit,
 				}}
 			/>
 		);
@@ -62,7 +64,7 @@ const GridGraphComponent = ({
 	}
 
 	return null;
-};
+}
 
 export interface GridGraphComponentProps {
 	GRAPH_TYPES: GRAPH_TYPES;
@@ -72,6 +74,7 @@ export interface GridGraphComponentProps {
 	isStacked?: boolean;
 	onClickHandler?: graphOnClickHandler;
 	name: string;
+	yAxisUnit?: string;
 }
 
 export default GridGraphComponent;

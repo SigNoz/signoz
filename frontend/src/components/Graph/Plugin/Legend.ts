@@ -1,7 +1,11 @@
-import { Plugin, ChartType, Chart, ChartOptions } from 'chart.js';
+import { Chart, ChartType, Plugin } from 'chart.js';
 import { colors } from 'lib/getRandomColor';
 
-const getOrCreateLegendList = (chart: Chart, id: string, isLonger: boolean) => {
+const getOrCreateLegendList = (
+	chart: Chart,
+	id: string,
+	isLonger: boolean,
+): HTMLUListElement => {
 	const legendContainer = document.getElementById(id);
 	let listContainer = legendContainer?.querySelector('ul');
 
@@ -27,7 +31,7 @@ const getOrCreateLegendList = (chart: Chart, id: string, isLonger: boolean) => {
 export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 	return {
 		id: 'htmlLegend',
-		afterUpdate(chart, args, options: ChartOptions) {
+		afterUpdate(chart): void {
 			const ul = getOrCreateLegendList(chart, id || 'legend', isLonger);
 
 			// Remove old legend items
@@ -46,7 +50,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				li.style.marginLeft = '10px';
 				li.style.marginTop = '5px';
 
-				li.onclick = () => {
+				li.onclick = (): void => {
 					const { type } = chart.config;
 					if (type === 'pie' || type === 'doughnut') {
 						// Pie and doughnut charts only have a single dataset and visibility is per item
@@ -64,7 +68,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				const boxSpan = document.createElement('span');
 				boxSpan.style.background = item.strokeStyle || colors[0];
 				boxSpan.style.borderColor = item?.strokeStyle;
-				boxSpan.style.borderWidth = item.lineWidth + 'px';
+				boxSpan.style.borderWidth = `${item.lineWidth}px`;
 				boxSpan.style.display = 'inline-block';
 				boxSpan.style.minHeight = '20px';
 				boxSpan.style.marginRight = '10px';

@@ -1,7 +1,7 @@
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { TraceReducer } from 'types/reducer/trace';
 import { UPDATE_TAG_MODAL_VISIBLITY } from 'types/actions/trace';
+import { TraceReducer } from 'types/reducer/trace';
 
 export const UpdateTagVisiblity = (
 	isTagModalOpen: TraceReducer['isTagModalOpen'],
@@ -10,7 +10,7 @@ export const UpdateTagVisiblity = (
 		dispatch({
 			type: UPDATE_TAG_MODAL_VISIBLITY,
 			payload: {
-				isTagModalOpen: isTagModalOpen,
+				isTagModalOpen,
 			},
 		});
 	};

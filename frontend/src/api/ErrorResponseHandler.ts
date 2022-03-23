@@ -2,7 +2,7 @@ import { AxiosError } from 'axios';
 import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
-export const ErrorResponseHandler = (error: AxiosError): ErrorResponse => {
+export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 	if (error.response) {
 		// client received an error response (5xx, 4xx)
 		// making the error status code as standard Error Status Code
@@ -54,4 +54,4 @@ export const ErrorResponseHandler = (error: AxiosError): ErrorResponse => {
 		error: error.toString(),
 		message: null,
 	};
-};
+}

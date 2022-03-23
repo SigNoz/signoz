@@ -1,34 +1,46 @@
 import { Menu, Typography } from 'antd';
-import { SlackButton, SlackMenuItemContainer, ToggleButton } from './styles';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import setTheme from 'lib/theme/setTheme';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
+import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
-import setTheme from 'lib/theme/setTheme';
 
 import menus from './menuItems';
-import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
 import Slack from './Slack';
+import {
+	Logo,
+	Sider,
+	SlackButton,
+	SlackMenuItemContainer,
+	ThemeSwitcherWrapper,
+	ToggleButton,
+} from './styles';
 
-const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
-	const [collapsed, setCollapsed] = useState<boolean>(false);
-	const { pathname } = useLocation();
+function SideNav({ toggleDarkMode }: Props): JSX.Element {
+	const dispatch = useDispatch();
+	const [collapsed, setCollapsed] = useState<boolean>(
+		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { pathname } = useLocation();
 
 	const toggleTheme = useCallback(() => {
 		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
 		setTheme(preMode);
 
 		const id: appMode = preMode;
-		const head = document.head;
+		const { head } = document;
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
@@ -48,6 +60,10 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		setCollapsed((collapsed) => !collapsed);
 	}, []);
 
+	useLayoutEffect(() => {
+		dispatch(SideBarCollapse(collapsed));
+	}, [collapsed, dispatch]);
+
 	const onClickHandler = useCallback(
 		(to: string) => {
 			if (pathname !== to) {
@@ -57,7 +73,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		[pathname],
 	);
 
-	const onClickSlackHandler = () => {
+	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 
@@ -71,7 +87,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
-				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
+				<Logo src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -97,7 +113,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 			</Menu>
 		</Sider>
 	);
-};
+}
 
 type appMode = 'darkMode' | 'lightMode';
 

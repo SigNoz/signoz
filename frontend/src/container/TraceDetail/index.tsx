@@ -1,34 +1,45 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Divider, Row, Typography, Space, Button } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
+import { Button, Col } from 'antd';
+import {
+	StyledCol,
+	StyledDiv,
+	StyledDivider,
+	StyledRow,
+	StyledSpace,
+	StyledTypography,
+} from 'components/Styled';
+import * as StyledStyles from 'components/Styled/styles';
 import GanttChart from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
-import { getSortedData } from './utils';
+import history from 'lib/history';
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
-import SelectedSpanDetails from './SelectedSpanDetails';
-import useUrlQuery from 'hooks/useUrlQuery';
-import styles from './TraceGraph.module.css';
-import history from 'lib/history';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import { INTERVAL_UNITS } from './utils';
 
-const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
+import SelectedSpanDetails from './SelectedSpanDetails';
+import * as styles from './styles';
+import { getSortedData, IIntervalUnit, INTERVAL_UNITS } from './utils';
+
+function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(
 		() => spanServiceNameToColorMapping(response[0].events),
 		[response],
 	);
 
 	const urlQuery = useUrlQuery();
-	const [spanId, _setSpanId] = useState<string | null>(urlQuery.get('spanId'));
+	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
 
-	const [intervalUnit, setIntervalUnit] = useState(INTERVAL_UNITS[0]);
-	const [searchSpanString, setSearchSpanString] = useState('');
+	const [intervalUnit, setIntervalUnit] = useState<IIntervalUnit>(
+		INTERVAL_UNITS[0],
+	);
+	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
 
@@ -37,10 +48,11 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 	);
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		return getSpanTreeMetadata(getSortedData(treeData), spanServiceColors);
-	}, [treeData]);
+		const tree = getSortedData(treeData);
+		return getSpanTreeMetadata(tree, spanServiceColors);
+	}, [treeData, spanServiceColors]);
 
-	const [globalTraceMetadata, _setGlobalTraceMetadata] = useState<object>({
+	const [globalTraceMetadata] = useState<Record<string, number>>({
 		...traceMetaData,
 	});
 
@@ -57,10 +69,10 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		return getNodeById(activeSelectedId, treeData);
 	}, [activeSelectedId, treeData]);
 
-	const onSearchHandler = (value: string) => {
-		setSearchSpanString(value);
-		setTreeData(spanToTreeUtil(response[0].events));
-	};
+	// const onSearchHandler = (value: string) => {
+	// 	setSearchSpanString(value);
+	// 	setTreeData(spanToTreeUtil(response[0].events));
+	// };
 	const onFocusSelectedSpanHandler = () => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 		if (treeNode) {
@@ -68,26 +80,26 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 		}
 	};
 
-	const onResetHandler = () => {
+	const onResetHandler = (): void => {
 		setTreeData(spanToTreeUtil(response[0].events));
 	};
 
 	return (
-		<Row style={{ flex: 1 }}>
-			<Col flex={'auto'} style={{ display: 'flex', flexDirection: 'column' }}>
-				<Row className={styles['trace-detail-content-spacing']}>
-					<Col
+		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
+			<StyledCol flex="auto" styledclass={styles.leftContainer}>
+				<StyledRow styledclass={styles.flameAndTimelineContainer}>
+					<StyledCol
+						styledclass={styles.traceMetaDataContainer}
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
-						style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}
 					>
-						<Typography.Title level={5} style={{ margin: 0 }}>
+						<StyledTypography.Title styledclass={[styles.removeMargin]} level={5}>
 							Trace Details
-						</Typography.Title>
-						<Typography.Text style={{ margin: 0 }}>
+						</StyledTypography.Title>
+						<StyledTypography.Text styledclass={[styles.removeMargin]}>
 							{traceMetaData.totalSpans} Span
-						</Typography.Text>
-					</Col>
-					<Col flex={'auto'}>
+						</StyledTypography.Text>
+					</StyledCol>
+					<Col flex="auto">
 						<TraceFlameGraph
 							treeData={tree}
 							traceMetaData={traceMetaData}
@@ -98,9 +110,9 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							intervalUnit={intervalUnit}
 						/>
 					</Col>
-				</Row>
-				<Row style={{ marginTop: '2rem' }}>
-					<Col
+				</StyledRow>
+				<StyledRow styledclass={[styles.traceDateAndTimelineContainer]}>
+					<StyledCol
 						flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}
 						style={{
 							display: 'flex',
@@ -108,25 +120,25 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							justifyContent: 'center',
 						}}
 					>
-						{dayjs(traceMetaData.globalStart / 1e6).format('hh:mm:ssa MM/DD')}
-					</Col>
-					<Col
-						flex="auto"
-						style={{ overflow: 'visible' }}
-						className={styles['trace-detail-content-spacing']}
-					>
+						{tree && dayjs(tree.startTime).format('hh:mm:ss a MM/DD')}
+					</StyledCol>
+					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
 							traceMetaData={traceMetaData}
 							intervalUnit={intervalUnit}
 							setIntervalUnit={setIntervalUnit}
 						/>
-					</Col>
-					<Divider style={{ height: '100%', margin: '0' }} />
-				</Row>
-				<Row
-					className={styles['trace-detail-content-spacing']}
-					style={{ margin: '1.5rem 1rem 0.5rem' }}
+					</StyledCol>
+					<StyledDivider styledclass={[styles.verticalSeparator]} />
+				</StyledRow>
+				<StyledRow
+					styledclass={[
+						styles.traceDetailContentSpacing,
+						StyledStyles.Spacing({
+							margin: '1.5rem 1rem 0.5rem',
+						}),
+					]}
 				>
 					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}>
 						{/* <Search
@@ -136,32 +148,18 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 							style={{ width: 200 }}
 						/> */}
 					</Col>
-					<Col flex={'auto'}>
-						<Space
-							style={{
-								float: 'right',
-							}}
-						>
+					<Col flex="auto">
+						<StyledSpace styledclass={[styles.floatRight]}>
 							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
 								Focus on selected span
 							</Button>
 							<Button type="default" onClick={onResetHandler}>
 								Reset Focus
 							</Button>
-						</Space>
+						</StyledSpace>
 					</Col>
-				</Row>
-				<div
-					className={styles['trace-detail-content-spacing']}
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						position: 'relative',
-						flex: 1,
-						overflowY: 'auto',
-						overflowX: 'hidden',
-					}}
-				>
+				</StyledRow>
+				<StyledDiv styledclass={[styles.ganttChartContainer]}>
 					<GanttChart
 						traceMetaData={traceMetaData}
 						data={tree}
@@ -172,26 +170,17 @@ const TraceDetail = ({ response }: TraceDetailProps): JSX.Element => {
 						spanId={spanId || ''}
 						intervalUnit={intervalUnit}
 					/>
-				</div>
-			</Col>
+				</StyledDiv>
+			</StyledCol>
 			<Col>
-				<Divider style={{ height: '100%', margin: '0' }} type="vertical" />
+				<StyledDivider styledclass={[styles.verticalSeparator]} type="vertical" />
 			</Col>
-			<Col
-				md={5}
-				sm={5}
-				style={{
-					height: '100%',
-					position: 'relative',
-					display: 'flex',
-					flexDirection: 'column',
-				}}
-			>
+			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
 				<SelectedSpanDetails tree={getSelectedNode} />
-			</Col>
-		</Row>
+			</StyledCol>
+		</StyledRow>
 	);
-};
+}
 
 interface TraceDetailProps {
 	response: PayloadProps;

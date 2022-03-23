@@ -1,18 +1,14 @@
 import { Button } from 'antd';
 import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { Dispatch } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
 
 import { Data } from '../index';
 
-const DeleteButton = ({
-	deleteDashboard,
-	id,
-}: DeleteButtonProps): JSX.Element => {
+function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
 	const onClickHandler = useCallback(() => {
 		deleteDashboard({
 			uuid: id,
@@ -24,7 +20,7 @@ const DeleteButton = ({
 			Delete
 		</Button>
 	);
-};
+}
 
 interface DispatchProps {
 	deleteDashboard: ({
@@ -43,7 +39,7 @@ type DeleteButtonProps = Data & DispatchProps;
 const WrapperDeleteButton = connect(null, mapDispatchToProps)(DeleteButton);
 
 // This is to avoid the type collision
-const Wrapper = (props: Data): JSX.Element => {
+function Wrapper(props: Data): JSX.Element {
 	return (
 		<WrapperDeleteButton
 			{...{
@@ -51,6 +47,6 @@ const Wrapper = (props: Data): JSX.Element => {
 			}}
 		/>
 	);
-};
+}
 
 export default Wrapper;

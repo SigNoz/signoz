@@ -6,7 +6,7 @@ export interface IUseThemeModeReturn {
 	isDarkMode: boolean;
 }
 
-const useThemeMode = () => {
+const useThemeMode = (): IUseThemeModeReturn => {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	return { isDarkMode };

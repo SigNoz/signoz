@@ -17,7 +17,7 @@ import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
 import { Button } from './styles';
 
-const Application = ({ getWidget }: DashboardProps): JSX.Element => {
+function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
@@ -71,10 +71,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						selectedTimeStamp.current = time.getTime();
 					}
 				}
-			} else {
-				if (buttonElement && buttonElement.style.display === 'block') {
-					buttonElement.style.display = 'none';
-				}
+			} else if (buttonElement && buttonElement.style.display === 'block') {
+				buttonElement.style.display = 'none';
 			}
 		}
 	};
@@ -109,7 +107,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Application latency in ms</GraphTitle>
+						<GraphTitle>Application latency</GraphTitle>
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -159,6 +157,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										);
 									}),
 								}}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>
@@ -176,7 +175,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Request per sec</GraphTitle>
+						<GraphTitle>Requests</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="request_per_sec"
@@ -191,6 +190,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										legend: 'Request per second',
 									},
 								])}
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
@@ -210,7 +210,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage (%)</GraphTitle>
+						<GraphTitle>Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="error_percentage_%"
@@ -225,6 +225,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										legend: 'Error Percentage (%)',
 									},
 								])}
+								yAxisUnit="%"
 							/>
 						</GraphContainer>
 					</Card>
@@ -238,7 +239,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 			</Row>
 		</>
 	);
-};
+}
 
 interface DashboardProps {
 	getWidget: (query: Widgets['query']) => Widgets;

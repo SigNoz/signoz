@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NotFound = (): JSX.Element => {
+function NotFound(): JSX.Element {
 	return (
 		<svg
 			width="360"
@@ -261,6 +261,6 @@ const NotFound = (): JSX.Element => {
 			</defs>
 		</svg>
 	);
-};
+}
 
 export default NotFound;

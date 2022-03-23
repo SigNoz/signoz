@@ -16,7 +16,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 		serviceName: '',
 	};
 
-	let spanlist = cloneDeep(originalList);
+	const spanlist = cloneDeep(originalList);
 
 	// let spans :spanItem[]= trace.spans;
 
@@ -26,8 +26,8 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 		// Can we now assign different strings as id - Yes
 		// https://stackoverflow.com/questions/15877362/declare-and-initialize-a-dictionary-in-typescript
 
-		//May1
-		//https://stackoverflow.com/questions/13315131/enforcing-the-type-of-the-indexed-members-of-a-typescript-object
+		// May1
+		// https://stackoverflow.com/questions/13315131/enforcing-the-type-of-the-indexed-members-of-a-typescript-object
 
 		const mapped_array: { [id: string]: Span } = {};
 		const originalListArray: { [id: string]: Span } = {};
@@ -36,7 +36,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 			originalListArray[spanlist[i][1]] = originalList[i];
 
 			mapped_array[spanlist[i][1]] = spanlist[i];
-			mapped_array[spanlist[i][1]][10] = []; //initialising the 10th element in the Span data structure which is array
+			mapped_array[spanlist[i][1]][10] = []; // initialising the 10th element in the Span data structure which is array
 			//  of type ITraceTree
 			// console.log('IDs while creating mapped array')
 			// console.log(`SpanID is ${spanlist[i][1]}\n`);
@@ -47,7 +47,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 		for (const id in mapped_array) {
 			const child_span = mapped_array[id];
 
-			//mapping tags to new structure
+			// mapping tags to new structure
 			const tags_temp = [];
 			if (child_span[7] !== null && child_span[8] !== null) {
 				if (
@@ -97,11 +97,11 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 				arr.forEach((obj) => {
 					const arr2 = obj.split('=');
 					if (arr2[0] === 'TraceId') {
-						refItem['traceID'] = arr2[1];
+						refItem.traceID = arr2[1];
 					} else if (arr2[0] === 'SpanId') {
-						refItem['spanID'] = arr2[1];
+						refItem.spanID = arr2[1];
 					} else if (arr2[0] === 'RefType') {
-						refItem['refType'] = arr2[1];
+						refItem.refType = arr2[1];
 					}
 				});
 
@@ -114,7 +114,7 @@ export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 					// console.log(`In SpanTreeUtil: mapped_array[parentID] is ${mapped_array[parentID]}`);
 
 					if (typeof mapped_array[parentID] !== 'undefined') {
-						//checking for undefined [10] issue
+						// checking for undefined [10] issue
 						mapped_array[parentID][10].push(push_object);
 					} else {
 						// console.log(

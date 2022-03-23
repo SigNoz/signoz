@@ -1,7 +1,8 @@
 import Table, { ColumnsType } from 'antd/lib/table';
+import localStorageGet from 'api/browser/localstorage/get';
+import localStorageSet from 'api/browser/localstorage/set';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { servicesListItem } from 'store/actions/MetricsActions/metricsInterfaces';
@@ -10,10 +11,8 @@ import MetricReducer from 'types/reducer/metrics';
 
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
-import localStorageGet from 'api/browser/localstorage/get';
-import localStorageSet from 'api/browser/localstorage/set';
 
-const Metrics = (): JSX.Element => {
+function Metrics(): JSX.Element {
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
 	);
@@ -28,10 +27,15 @@ const Metrics = (): JSX.Element => {
 	};
 
 	const onClickHandler = (to: string): void => {
-		history.push(to);
+		window.open(to, '_blank');
 	};
 
-	if (services.length === 0 && loading === false && !skipOnboarding && error === true) {
+	if (
+		services.length === 0 &&
+		loading === false &&
+		!skipOnboarding &&
+		error === true
+	) {
 		return <SkipBoardModal onContinueClick={onContinueClick} />;
 	}
 
@@ -42,7 +46,7 @@ const Metrics = (): JSX.Element => {
 			key: 'serviceName',
 			// eslint-disable-next-line react/display-name
 			render: (text: string): JSX.Element => (
-				<div onClick={(): void => onClickHandler(ROUTES.APPLICATION + '/' + text)}>
+				<div onClick={(): void => onClickHandler(`${ROUTES.APPLICATION}/${text}`)}>
 					<Name>{text}</Name>
 				</div>
 			),
@@ -81,7 +85,7 @@ const Metrics = (): JSX.Element => {
 			/>
 		</Container>
 	);
-};
+}
 
 type DataProps = servicesListItem;
 
