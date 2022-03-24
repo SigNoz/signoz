@@ -23,6 +23,9 @@ const convertToMs = (
 			return timestamp * 1;
 		case 'ns':
 			return timestamp / 1e6;
+		default: {
+			throw new Error('invalid format');
+		}
 	}
 };
 

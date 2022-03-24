@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
-import Graph, { graphOnClickHandler } from 'components/Graph';
+import Graph, { GraphOnClickHandler } from 'components/Graph';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
@@ -8,7 +9,7 @@ import React from 'react';
 
 import { TitleContainer, ValueContainer } from './styles';
 
-const GridGraphComponent = ({
+function GridGraphComponent({
 	GRAPH_TYPES,
 	data,
 	title,
@@ -17,7 +18,7 @@ const GridGraphComponent = ({
 	onClickHandler,
 	name,
 	yAxisUnit,
-}: GridGraphComponentProps): JSX.Element | null => {
+}: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
 	const isDashboardPage = location.split('/').length === 3;
@@ -32,9 +33,9 @@ const GridGraphComponent = ({
 					isStacked,
 					opacity,
 					xAxisType: 'time',
-					onClickHandler: onClickHandler,
+					onClickHandler,
 					name,
-					yAxisUnit: yAxisUnit,
+					yAxisUnit,
 				}}
 			/>
 		);
@@ -57,14 +58,18 @@ const GridGraphComponent = ({
 					<Typography>{title}</Typography>
 				</TitleContainer>
 				<ValueContainer isDashboardPage={isDashboardPage}>
-					<ValueGraph value={value.toString()} />
+					<ValueGraph
+						value={
+							yAxisUnit ? getYAxisFormattedValue(value, yAxisUnit) : value.toString()
+						}
+					/>
 				</ValueContainer>
 			</>
 		);
 	}
 
 	return null;
-};
+}
 
 export interface GridGraphComponentProps {
 	GRAPH_TYPES: GRAPH_TYPES;
@@ -72,9 +77,17 @@ export interface GridGraphComponentProps {
 	title?: string;
 	opacity?: string;
 	isStacked?: boolean;
-	onClickHandler?: graphOnClickHandler;
+	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
 }
+
+GridGraphComponent.defaultProps = {
+	title: undefined,
+	opacity: undefined,
+	isStacked: undefined,
+	onClickHandler: undefined,
+	yAxisUnit: undefined,
+};
 
 export default GridGraphComponent;

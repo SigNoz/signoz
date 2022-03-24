@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import { Input, Slider } from 'antd';
 import { SliderRangeProps } from 'antd/lib/slider';
 import getFilters from 'api/trace/getFilters';
@@ -28,7 +29,7 @@ const getMs = (value: string): string => {
 	).toFixed(2);
 };
 
-const Duration = (): JSX.Element => {
+function Duration(): JSX.Element {
 	const {
 		filter,
 		selectedFilter,
@@ -66,8 +67,8 @@ const Duration = (): JSX.Element => {
 	useEffect(() => {
 		const duration = getDuration || {};
 
-		const maxDuration = duration['maxDuration'] || '0';
-		const minDuration = duration['minDuration'] || '0';
+		const maxDuration = duration.maxDuration || '0';
+		const minDuration = duration.minDuration || '0';
 
 		if (preLocalMaxDuration.current === undefined) {
 			preLocalMaxDuration.current = parseFloat(maxDuration);
@@ -150,7 +151,7 @@ const Duration = (): JSX.Element => {
 	const onChangeMaxHandler: React.ChangeEventHandler<HTMLInputElement> = (
 		event,
 	) => {
-		const value = event.target.value;
+		const { value } = event.target;
 		const min = parseFloat(preMin);
 		const max = parseFloat(value) * 1000000;
 
@@ -161,7 +162,7 @@ const Duration = (): JSX.Element => {
 	const onChangeMinHandler: React.ChangeEventHandler<HTMLInputElement> = (
 		event,
 	) => {
-		const value = event.target.value;
+		const { value } = event.target;
 		const min = parseFloat(value) * 1000000;
 		const max = parseFloat(preMax);
 		onRangeSliderHandler([min, max]);
@@ -215,6 +216,6 @@ const Duration = (): JSX.Element => {
 			</Container>
 		</div>
 	);
-};
+}
 
 export default Duration;

@@ -15,9 +15,9 @@ import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
-import { Button } from './styles';
+import { Button, TableContainerCard } from './styles';
 
-const Application = ({ getWidget }: DashboardProps): JSX.Element => {
+function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
@@ -34,7 +34,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
+			`${
+				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
@@ -70,10 +71,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						selectedTimeStamp.current = time.getTime();
 					}
 				}
-			} else {
-				if (buttonElement && buttonElement.style.display === 'block') {
-					buttonElement.style.display = 'none';
-				}
+			} else if (buttonElement && buttonElement.style.display === 'block') {
+				buttonElement.style.display = 'none';
 			}
 		}
 	};
@@ -87,7 +86,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
+			`${
+				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
@@ -107,7 +107,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Application latency in ms</GraphTitle>
+						<GraphTitle>Application latency</GraphTitle>
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -175,7 +175,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Request per sec</GraphTitle>
+						<GraphTitle>Requests</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="request_per_sec"
@@ -190,7 +190,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										legend: 'Request per second',
 									},
 								])}
-								yAxisUnit="short"
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
@@ -210,7 +210,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage (%)</GraphTitle>
+						<GraphTitle>Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="error_percentage_%"
@@ -232,14 +232,14 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 				</Col>
 
 				<Col span={12}>
-					<Card>
+					<TableContainerCard>
 						<TopEndpointsTable data={topEndPoints} />
-					</Card>
+					</TableContainerCard>
 				</Col>
 			</Row>
 		</>
 	);
-};
+}
 
 interface DashboardProps {
 	getWidget: (query: Widgets['query']) => Widgets;

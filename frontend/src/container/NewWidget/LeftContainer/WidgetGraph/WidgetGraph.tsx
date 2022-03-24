@@ -4,13 +4,16 @@ import { NewWidgetProps } from 'container/NewWidget';
 import getChartData from 'lib/getChartData';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import { NotFoundContainer } from './styles';
 
-const WidgetGraph = ({ selectedGraph,yAxisUnit }: WidgetGraphProps): JSX.Element => {
+function WidgetGraph({
+	selectedGraph,
+	yAxisUnit,
+}: WidgetGraphProps): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -54,7 +57,7 @@ const WidgetGraph = ({ selectedGraph,yAxisUnit }: WidgetGraphProps): JSX.Element
 			yAxisUnit={yAxisUnit}
 		/>
 	);
-};
+}
 
 type WidgetGraphProps = NewWidgetProps;
 

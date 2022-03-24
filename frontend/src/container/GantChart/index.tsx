@@ -7,7 +7,7 @@ import { CardContainer, CardWrapper, CollapseButton, Wrapper } from './styles';
 import Trace from './Trace';
 import { getSpanPath } from './utils';
 
-const GanttChart = (props: GanttChartProps): JSX.Element => {
+function GanttChart(props: GanttChartProps): JSX.Element {
 	const {
 		data,
 		traceMetaData,
@@ -26,48 +26,47 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, spanId));
-	}, [spanId]);
+	}, [spanId, data]);
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, activeSelectedId));
-	}, [activeSelectedId]);
+	}, [activeSelectedId, data]);
 
-	const handleCollapse = () => {
+	const handleCollapse = (): void => {
 		setIsExpandAll((prev) => !prev);
 	};
 	return (
-		<>
-			<Wrapper>
-				<CardContainer>
-					<CollapseButton
-						onClick={handleCollapse}
-						title={isExpandAll ? 'Collapse All' : 'Expand All'}
-					>
-						{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
-					</CollapseButton>
-					<CardWrapper>
-						<Trace
-							activeHoverId={activeHoverId}
-							activeSpanPath={activeSpanPath}
-							setActiveHoverId={setActiveHoverId}
-							key={data.id}
-							{...{
-								...data,
-								globalSpread,
-								globalStart,
-								setActiveSelectedId,
-								activeSelectedId,
-							}}
-							level={0}
-							isExpandAll={isExpandAll}
-							intervalUnit={intervalUnit}
-						/>
-					</CardWrapper>
-				</CardContainer>
-			</Wrapper>
-		</>
+		<Wrapper>
+			<CardContainer>
+				<CollapseButton
+					onClick={handleCollapse}
+					title={isExpandAll ? 'Collapse All' : 'Expand All'}
+				>
+					{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
+				</CollapseButton>
+				<CardWrapper>
+					<Trace
+						activeHoverId={activeHoverId}
+						activeSpanPath={activeSpanPath}
+						setActiveHoverId={setActiveHoverId}
+						key={data.id}
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						{...{
+							...data,
+							globalSpread,
+							globalStart,
+							setActiveSelectedId,
+							activeSelectedId,
+						}}
+						level={0}
+						isExpandAll={isExpandAll}
+						intervalUnit={intervalUnit}
+					/>
+				</CardWrapper>
+			</CardContainer>
+		</Wrapper>
 	);
-};
+}
 
 export interface ITraceMetaData {
 	globalEnd: number;

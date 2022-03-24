@@ -1,4 +1,4 @@
-import Graph, { graphOnClickHandler } from 'components/Graph';
+import Graph, { GraphOnClickHandler } from 'components/Graph';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import { colors } from 'lib/getRandomColor';
@@ -10,11 +10,11 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-const EmptyGraph = ({
+function EmptyGraph({
 	selectedTime,
 	widget,
 	onClickHandler,
-}: EmptyGraphProps): JSX.Element => {
+}: EmptyGraphProps): JSX.Element {
 	const { minTime, maxTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -47,7 +47,7 @@ const EmptyGraph = ({
 			while (endDate >= startDate) {
 				const newDate = new Date(startDate);
 
-				startDate = startDate + 20000;
+				startDate += 20000;
 
 				dates.push(newDate);
 			}
@@ -62,7 +62,7 @@ const EmptyGraph = ({
 		<Graph
 			{...{
 				type: 'line',
-				onClickHandler: onClickHandler,
+				onClickHandler,
 				data: {
 					datasets: [
 						{
@@ -79,12 +79,12 @@ const EmptyGraph = ({
 			}}
 		/>
 	);
-};
+}
 
 interface EmptyGraphProps {
 	selectedTime: timePreferance;
 	widget: Widgets;
-	onClickHandler: graphOnClickHandler | undefined;
+	onClickHandler: GraphOnClickHandler | undefined;
 }
 
 export default EmptyGraph;

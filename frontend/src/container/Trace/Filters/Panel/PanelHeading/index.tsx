@@ -1,9 +1,20 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Card, Divider, notification, Typography } from 'antd';
+import getFilters from 'api/trace/getFilters';
+import { AxiosError } from 'axios';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
+import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
+import AppActions from 'types/actions';
+import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import {
+	AllPanelHeading,
+	TraceFilterEnum,
+	TraceReducer,
+} from 'types/reducer/trace';
 
 import {
 	ButtonComponent,
@@ -12,18 +23,10 @@ import {
 	IconContainer,
 	TextContainer,
 } from './styles';
+
 const { Text } = Typography;
 
-import getFilters from 'api/trace/getFilters';
-import { AxiosError } from 'axios';
-import { Dispatch } from 'redux';
-import { getFilter, updateURL } from 'store/actions/trace/util';
-import AppActions from 'types/actions';
-import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { AllPanelHeading } from 'types/reducer/trace';
-
-const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
+function PanelHeading(props: PanelHeadingProps): JSX.Element {
 	const {
 		filterLoading,
 		filterToFetchData,
@@ -35,8 +38,10 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		userSelectedFilter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
+	const { name: PanelName, isOpen: IsPanelOpen } = props;
+
 	const isDefaultOpen =
-		filterToFetchData.find((e) => e === props.name) !== undefined;
+		filterToFetchData.find((e) => e === PanelName) !== undefined;
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -46,6 +51,9 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
+	const defaultErrorMessage = 'Something went wrong';
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
 			e.preventDefault();
@@ -56,7 +64,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			const getprepdatedSelectedFilter = new Map(selectedFilter);
 			const getPreUserSelected = new Map(userSelectedFilter);
 
-			updatedFilterData = [props.name];
+			updatedFilterData = [PanelName];
 
 			const response = await getFilters({
 				end: String(global.maxTime),
@@ -69,23 +77,23 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
-				updatedFilterData = [...filterToFetchData, props.name];
+				updatedFilterData = [...filterToFetchData, PanelName];
 
-				if (getPreUserSelected.get(props.name)) {
+				if (getPreUserSelected.get(PanelName)) {
 					getPreUserSelected.forEach((value, key) => {
-						if (key !== props.name) {
+						if (key !== PanelName) {
 							getPreUserSelected.set(key, value);
 						}
 					});
 				} else {
 					getPreUserSelected.set(
-						props.name,
-						Object.keys(updatedFilter.get(props.name) || []),
+						PanelName,
+						Object.keys(updatedFilter.get(PanelName) || []),
 					);
 				}
 
 				filter.forEach((value, key) => {
-					if (key !== props.name) {
+					if (key !== PanelName) {
 						updatedFilter.set(key, value);
 					}
 				});
@@ -116,14 +124,14 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 				);
 			} else {
 				notification.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultErrorMessage,
 				});
 			}
 
 			setIsLoading(false);
 		} catch (error) {
 			notification.error({
-				message: (error as AxiosError).toString() || 'Something went wrong',
+				message: (error as AxiosError).toString() || defaultErrorMessage,
 			});
 		}
 	};
@@ -135,16 +143,16 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 		const preSelectedFilter = new Map(selectedFilter);
 		// removing the filter from filter to fetch the data
 		const preFilterToFetchTheData = [
-			...filterToFetchData.filter((name) => name !== props.name),
+			...filterToFetchData.filter((name) => name !== PanelName),
 		];
 
-		preSelectedFilter.delete(props.name);
+		preSelectedFilter.delete(PanelName);
 
 		dispatch({
 			type: UPDATE_ALL_FILTERS,
 			payload: {
 				current: spansAggregate.currentPage,
-				filter: filter,
+				filter,
 				filterToFetchData: preFilterToFetchTheData,
 				selectedFilter: preSelectedFilter,
 				selectedTags,
@@ -172,12 +180,12 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			const updatedFilter = new Map(selectedFilter);
 			const preUserSelected = new Map(userSelectedFilter);
 
-			updatedFilter.delete(props.name);
-			preUserSelected.delete(props.name);
+			updatedFilter.delete(PanelName);
+			preUserSelected.delete(PanelName);
 
 			const postIsFilterExclude = new Map(isFilterExclude);
 
-			postIsFilterExclude.set(props.name, false);
+			postIsFilterExclude.set(PanelName, false);
 
 			const response = await getFilters({
 				end: String(global.maxTime),
@@ -285,25 +293,25 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 
 	return (
 		<>
-			{props.name !== 'duration' && <Divider plain style={{ margin: 0 }} />}
+			{PanelName !== 'duration' && <Divider plain style={{ margin: 0 }} />}
 
 			<Card bordered={false}>
 				<Container
 					disabled={filterLoading || isLoading}
 					aria-disabled={filterLoading || isLoading}
-					aria-expanded={props.isOpen}
+					aria-expanded={IsPanelOpen}
 				>
 					<TextContainer onClick={isDefaultOpen ? onCloseHandler : onExpandHandler}>
 						<IconContainer>
-							{!props.isOpen ? <RightOutlined /> : <DownOutlined />}
+							{!IsPanelOpen ? <RightOutlined /> : <DownOutlined />}
 						</IconContainer>
 
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>
-							{AllPanelHeading.find((e) => e.key === props.name)?.displayValue || ''}
+							{AllPanelHeading.find((e) => e.key === PanelName)?.displayValue || ''}
 						</Text>
 					</TextContainer>
 
-					{props.name !== 'duration' && (
+					{PanelName !== 'duration' && (
 						<ButtonContainer>
 							{/* <ButtonComponent
 								aria-disabled={isLoading || filterLoading}
@@ -328,7 +336,7 @@ const PanelHeading = (props: PanelHeadingProps): JSX.Element => {
 			</Card>
 		</>
 	);
-};
+}
 
 interface PanelHeadingProps {
 	name: TraceFilterEnum;

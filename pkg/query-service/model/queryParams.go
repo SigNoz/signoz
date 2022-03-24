@@ -208,8 +208,10 @@ type TagFilterParams struct {
 }
 
 type TTLParams struct {
-	Type     string
-	Duration string
+	Type                  string  // It can be one of {traces, metrics}.
+	ColdStorageVolume     string  // Name of the cold storage volume.
+	ToColdStorageDuration float64 // Seconds after which data will be moved to cold storage.
+	DelDuration           float64 // Seconds after which data will be deleted.
 }
 
 type GetTTLParams struct {

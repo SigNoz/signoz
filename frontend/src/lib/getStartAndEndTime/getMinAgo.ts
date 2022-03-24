@@ -1,10 +1,10 @@
-const getMinAgo = ({ minutes }: getMinAgoProps): Date => {
+const getMinAgo = ({ minutes }: GetMinAgoProps): Date => {
 	const currentDate = new Date();
 
 	return new Date(currentDate.getTime() - minutes * 60000);
 };
 
-interface getMinAgoProps {
+interface GetMinAgoProps {
 	minutes: number;
 }
 

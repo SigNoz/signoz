@@ -4,7 +4,7 @@ import TextToolTip from 'components/TextToolTip';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback, useState } from 'react';
 import { connect } from 'react-redux';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteQuery } from 'store/actions';
@@ -22,13 +22,13 @@ import {
 	QueryWrapper,
 } from './styles';
 
-const Query = ({
+function Query({
 	currentIndex,
 	preLegend,
 	preQuery,
 	updateQuery,
 	deleteQuery,
-}: QueryProps): JSX.Element => {
+}: QueryProps): JSX.Element {
 	const [promqlQuery, setPromqlQuery] = useState(preQuery);
 	const [legendFormat, setLegendFormat] = useState(preLegend);
 	const { search } = useLocation();
@@ -54,7 +54,7 @@ const Query = ({
 
 	const onDeleteQueryHandler = (): void => {
 		deleteQuery({
-			widgetId: widgetId,
+			widgetId,
 			currentIndex,
 		});
 	};
@@ -70,7 +70,7 @@ const Query = ({
 							}
 							size="middle"
 							value={promqlQuery}
-							addonBefore={'PromQL Query'}
+							addonBefore="PromQL Query"
 							onBlur={(): void => onBlurHandler()}
 						/>
 					</InputContainer>
@@ -82,7 +82,7 @@ const Query = ({
 							}
 							size="middle"
 							value={legendFormat}
-							addonBefore={'Legend Format'}
+							addonBefore="Legend Format"
 							onBlur={(): void => onBlurHandler()}
 						/>
 					</InputContainer>
@@ -102,7 +102,7 @@ const Query = ({
 			<Divider />
 		</>
 	);
-};
+}
 
 interface DispatchProps {
 	updateQuery: (

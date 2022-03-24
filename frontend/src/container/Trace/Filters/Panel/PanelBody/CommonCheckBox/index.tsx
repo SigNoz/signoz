@@ -5,12 +5,14 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import CheckBoxComponent from '../Common/Checkbox';
 
-const CommonCheckBox = (props: CommonCheckBoxProps): JSX.Element => {
+function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 	const { filter } = useSelector<AppState, TraceReducer>(
 		(state) => state.traces,
 	);
 
-	const status = filter.get(props.name) || {};
+	const { name } = props;
+
+	const status = filter.get(name) || {};
 
 	const statusObj = Object.keys(status);
 
@@ -30,7 +32,7 @@ const CommonCheckBox = (props: CommonCheckBoxProps): JSX.Element => {
 					<CheckBoxComponent
 						key={e}
 						{...{
-							name: props.name,
+							name,
 							keyValue: e,
 							value: status[e],
 						}}
@@ -38,7 +40,7 @@ const CommonCheckBox = (props: CommonCheckBoxProps): JSX.Element => {
 				))}
 		</>
 	);
-};
+}
 
 interface CommonCheckBoxProps {
 	name: TraceFilterEnum;

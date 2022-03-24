@@ -8,7 +8,7 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import CommonCheckBox from './CommonCheckBox';
 import Duration from './Duration';
 
-const PanelBody = (props: PanelBodyProps): JSX.Element => {
+function PanelBody(props: PanelBodyProps): JSX.Element {
 	const { type } = props;
 
 	const { filterLoading } = useSelector<AppState, TraceReducer>(
@@ -28,7 +28,7 @@ const PanelBody = (props: PanelBodyProps): JSX.Element => {
 			{type === 'duration' ? <Duration /> : <CommonCheckBox name={type} />}
 		</Card>
 	);
-};
+}
 
 interface PanelBodyProps {
 	type: TraceFilterEnum;

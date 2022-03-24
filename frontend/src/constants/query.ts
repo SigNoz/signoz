@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum METRICS_PAGE_QUERY_PARAM {
 	interval = 'interval',
 	startTime = 'startTime',

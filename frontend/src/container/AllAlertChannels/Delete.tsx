@@ -4,11 +4,7 @@ import deleteAlert from 'api/channels/delete';
 import React, { useState } from 'react';
 import { Channels } from 'types/api/channels/getAll';
 
-const Delete = ({
-	notifications,
-	setChannels,
-	id,
-}: DeleteProps): JSX.Element => {
+function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
 	const onClickHandler = async (): Promise<void> => {
@@ -50,7 +46,7 @@ const Delete = ({
 			Delete
 		</Button>
 	);
-};
+}
 
 interface DeleteProps {
 	notifications: NotificationInstance;

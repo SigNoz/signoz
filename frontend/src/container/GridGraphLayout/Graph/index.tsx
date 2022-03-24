@@ -8,8 +8,7 @@ import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -25,13 +24,13 @@ import Bar from './Bar';
 import FullView from './FullView';
 import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
-const GridCardGraph = ({
+function GridCardGraph({
 	widget,
 	deleteWidget,
 	isDeleted,
 	name,
-	yAxisUnit
-}: GridCardGraphProps): JSX.Element => {
+	yAxisUnit,
+}: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
 		errorMessage: '',
@@ -48,7 +47,7 @@ const GridCardGraph = ({
 		(async (): Promise<void> => {
 			try {
 				const getMaxMinTime = GetMaxMinTime({
-					graphType: widget.panelTypes,
+					graphType: widget?.panelTypes,
 					maxTime,
 					minTime,
 				});
@@ -66,7 +65,7 @@ const GridCardGraph = ({
 							const result = await getQueryResult({
 								end,
 								query: query.query,
-								start: start,
+								start,
 								step: '60',
 							});
 
@@ -125,7 +124,14 @@ const GridCardGraph = ({
 		[],
 	);
 
-	const getModals = () => {
+	const onDeleteHandler = useCallback(() => {
+		deleteWidget({ widgetId: widget.id });
+		onToggleModal(setDeletModal);
+		// eslint-disable-next-line no-param-reassign
+		isDeleted.current = true;
+	}, [deleteWidget, widget, onToggleModal, isDeleted]);
+
+	const getModals = (): JSX.Element => {
 		return (
 			<>
 				<Modal
@@ -150,18 +156,16 @@ const GridCardGraph = ({
 					destroyOnClose
 				>
 					<FullViewContainer>
-						<FullView name={name + 'expanded'} widget={widget} yAxisUnit={yAxisUnit} />
+						<FullView
+							name={`${name}expanded`}
+							widget={widget}
+							yAxisUnit={yAxisUnit}
+						/>
 					</FullViewContainer>
 				</Modal>
 			</>
 		);
 	};
-
-	const onDeleteHandler = useCallback(() => {
-		deleteWidget({ widgetId: widget.id });
-		onToggleModal(setDeletModal);
-		isDeleted.current = true;
-	}, [deleteWidget, widget, onToggleModal, isDeleted]);
 
 	if (state.error) {
 		return (
@@ -205,7 +209,7 @@ const GridCardGraph = ({
 			/>
 		</>
 	);
-};
+}
 
 interface GridCardGraphState {
 	loading: boolean;

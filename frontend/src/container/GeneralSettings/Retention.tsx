@@ -1,6 +1,5 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Menu } from 'antd';
-import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import { SettingPeroid } from '.';
@@ -12,13 +11,13 @@ import {
 	Typography,
 } from './styles';
 
-const Retention = ({
+function Retention({
 	retentionValue,
 	setRentionValue,
 	selectedRetentionPeroid,
 	setSelectedRetentionPeroid,
 	text,
-}: RetentionProps): JSX.Element => {
+}: RetentionProps): JSX.Element {
 	const options: Option[] = [
 		{
 			key: 'hr',
@@ -35,7 +34,7 @@ const Retention = ({
 	];
 
 	const onClickHandler = (
-		e: MenuInfo,
+		e: { key: string },
 		func: React.Dispatch<React.SetStateAction<SettingPeroid>>,
 	): void => {
 		const selected = e.key as SettingPeroid;
@@ -58,7 +57,7 @@ const Retention = ({
 		e: React.ChangeEvent<HTMLInputElement>,
 		func: React.Dispatch<React.SetStateAction<string>>,
 	): void => {
-		const value = e.target.value;
+		const { value } = e.target;
 		const integerValue = parseInt(value, 10);
 
 		if (value.length > 0 && integerValue.toString() === value) {
@@ -89,7 +88,7 @@ const Retention = ({
 			</Dropdown>
 		</RetentionContainer>
 	);
-};
+}
 
 interface Option {
 	key: SettingPeroid;

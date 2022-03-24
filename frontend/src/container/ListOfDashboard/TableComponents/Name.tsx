@@ -6,11 +6,13 @@ import { generatePath } from 'react-router-dom';
 
 import { Data } from '..';
 
-const Name = (name: Data['name'], data: Data): JSX.Element => {
-	const onClickHandler = () => {
+function Name(name: Data['name'], data: Data): JSX.Element {
+	const onClickHandler = (): void => {
+		const { id: DashboardId } = data;
+
 		history.push(
 			generatePath(ROUTES.DASHBOARD, {
-				dashboardId: data.id,
+				dashboardId: DashboardId,
 			}),
 		);
 	};
@@ -20,6 +22,6 @@ const Name = (name: Data['name'], data: Data): JSX.Element => {
 			{name}
 		</Button>
 	);
-};
+}
 
 export default Name;

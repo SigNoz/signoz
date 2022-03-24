@@ -6,13 +6,15 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-const TagsKey = (props: TagsKeysProps): JSX.Element => {
+function TagsKey(props: TagsKeysProps): JSX.Element {
 	const [selectLoading, setSelectLoading] = useState<boolean>(false);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const [selectedKey, setSelectedKey] = useState<string>(props.tag.Key[0] || '');
+	const { index, setLocalSelectedTags, tag } = props;
+
+	const [selectedKey, setSelectedKey] = useState<string>(tag.Key[0] || '');
 
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
@@ -77,14 +79,14 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 				if (options && options.find((option) => option.value === value)) {
 					setSelectedKey(value);
 
-					props.setLocalSelectedTags((tags) => [
-						...tags.slice(0, props.index),
+					setLocalSelectedTags((tags) => [
+						...tags.slice(0, index),
 						{
 							Key: [value],
-							Operator: props.tag.Operator,
-							Values: props.tag.Values,
+							Operator: tag.Operator,
+							Values: tag.Values,
 						},
-						...tags.slice(props.index + 1, tags.length),
+						...tags.slice(index + 1, tags.length),
 					]);
 				} else {
 					setSelectedKey('');
@@ -94,7 +96,7 @@ const TagsKey = (props: TagsKeysProps): JSX.Element => {
 			<Input disabled={selectLoading} placeholder="Please select" />
 		</AutoComplete>
 	);
-};
+}
 
 interface TagsKeysProps {
 	index: number;

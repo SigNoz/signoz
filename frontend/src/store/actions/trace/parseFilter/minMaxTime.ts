@@ -9,8 +9,8 @@ export const parseMinMaxTime = (query: string): GlobalTime => {
 	const urlMinTime = url.get('maxTime');
 
 	if (urlMaxTime && urlMinTime) {
-		maxTime = parseInt(urlMaxTime);
-		minTime = parseInt(urlMinTime);
+		maxTime = parseInt(urlMaxTime, 10);
+		minTime = parseInt(urlMinTime, 10);
 	}
 
 	return {

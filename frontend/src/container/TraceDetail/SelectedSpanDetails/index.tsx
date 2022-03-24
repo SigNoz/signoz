@@ -16,11 +16,11 @@ import {
 
 const { TabPane } = Tabs;
 
-const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
+function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree } = props;
 	const { isDarkMode } = useThemeMode();
 	if (!tree) {
-		return <></>;
+		return <div />;
 	}
 
 	const { name, tags, serviceName } = tree;
@@ -73,10 +73,14 @@ const SelectedSpanDetails = (props: SelectedSpanDetailsProps): JSX.Element => {
 			</Tabs>
 		</CardContainer>
 	);
-};
+}
 
 interface SelectedSpanDetailsProps {
 	tree?: ITraceTree;
 }
+
+SelectedSpanDetails.defaultProps = {
+	tree: undefined,
+};
 
 export default SelectedSpanDetails;

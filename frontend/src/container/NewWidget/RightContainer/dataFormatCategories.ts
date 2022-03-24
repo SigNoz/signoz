@@ -382,7 +382,6 @@ export const dataTypeCategories = [
 	},
 ];
 
-
 export const flattenedCategories = flattenDeep(
 	dataTypeCategories.map((category) => {
 		return category.formats;

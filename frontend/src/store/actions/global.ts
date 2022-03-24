@@ -13,8 +13,8 @@ export const UpdateTimeInterval = (
 		dispatch({
 			type: 'UPDATE_TIME_INTERVAL',
 			payload: {
-				maxTime: maxTime,
-				minTime: minTime,
+				maxTime,
+				minTime,
 				selectedTime: interval,
 			},
 		});

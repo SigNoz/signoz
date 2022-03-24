@@ -1,4 +1,6 @@
+/* eslint-disable react/no-unstable-nested-components */
 import Color from 'color';
+import { ITraceMetaData } from 'container/GantChart';
 import {
 	IIntervalUnit,
 	resolveTimeFromInterval,
@@ -14,7 +16,7 @@ import {
 	TraceFlameGraphContainer,
 } from './styles';
 
-interface SpanItem {
+interface SpanItemProps {
 	topOffset: number;
 	leftOffset: number;
 	width: number;
@@ -26,7 +28,7 @@ interface SpanItem {
 	selectedSpanId: string;
 }
 
-const SpanItem = ({
+function SpanItem({
 	topOffset = 0, // top offset in px
 	leftOffset = 0, // left offset in %
 	width = 10, // width in %
@@ -36,7 +38,7 @@ const SpanItem = ({
 	onSpanHover,
 	hoveredSpanId,
 	selectedSpanId,
-}: SpanItem): JSX.Element => {
+}: SpanItemProps): JSX.Element {
 	const { serviceColour } = spanData;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	// const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
@@ -70,43 +72,43 @@ const SpanItem = ({
 	}, [isSelected, serviceColour, isDarkMode]);
 
 	return (
-		<>
-			<SpanItemContainer
-				title={tooltipText}
-				onClick={handleClick}
-				onMouseEnter={(): void => {
-					handleHover(true);
-				}}
-				onMouseLeave={(): void => {
-					handleHover(false);
-				}}
-				topOffset={topOffset}
-				leftOffset={leftOffset}
-				width={width}
-				spanColor={spanColor}
-				selected={isSelected}
-				zIdx={isSelected ? 1 : 0}
-			></SpanItemContainer>
-		</>
+		<SpanItemContainer
+			title={tooltipText}
+			onClick={handleClick}
+			onMouseEnter={(): void => {
+				handleHover(true);
+			}}
+			onMouseLeave={(): void => {
+				handleHover(false);
+			}}
+			topOffset={topOffset}
+			leftOffset={leftOffset}
+			width={width}
+			spanColor={spanColor}
+			selected={isSelected}
+			zIdx={isSelected ? 1 : 0}
+		/>
 	);
-};
+}
 
-const TraceFlameGraph = (props: {
+function TraceFlameGraph(props: {
 	treeData: ITraceTree;
 	traceMetaData: ITraceMetaData;
-	onSpanHover: SpanItem['onSpanHover'];
-	onSpanSelect: SpanItem['onSpanSelect'];
+	onSpanHover: SpanItemProps['onSpanHover'];
+	onSpanSelect: SpanItemProps['onSpanSelect'];
 	hoveredSpanId: string;
 	selectedSpanId: string;
 	intervalUnit: IIntervalUnit;
-}): JSX.Element => {
-	if (!props.treeData || props.treeData.id === 'empty' || !props.traceMetaData) {
-		return <></>;
-	}
-	const { intervalUnit } = props;
+}): JSX.Element {
+	const { treeData, traceMetaData, onSpanHover } = props;
 
-	const { globalStart, spread, levels } = props.traceMetaData;
-	const RenderSpanRecursive = ({
+	if (!treeData || treeData.id === 'empty' || !traceMetaData) {
+		return <div />;
+	}
+	const { intervalUnit, onSpanSelect, hoveredSpanId, selectedSpanId } = props;
+
+	const { globalStart, spread, levels } = traceMetaData;
+	function RenderSpanRecursive({
 		level = 0,
 		spanData,
 		parentLeftOffset = 0,
@@ -116,15 +118,15 @@ const TraceFlameGraph = (props: {
 		selectedSpanId,
 	}: {
 		spanData: ITraceTree;
-		level?: number;
-		parentLeftOffset?: number;
-		onSpanHover: SpanItem['onSpanHover'];
-		onSpanSelect: SpanItem['onSpanSelect'];
+		level: number;
+		parentLeftOffset: number;
+		onSpanHover: SpanItemProps['onSpanHover'];
+		onSpanSelect: SpanItemProps['onSpanSelect'];
 		hoveredSpanId: string;
 		selectedSpanId: string;
-	}): JSX.Element => {
+	}): JSX.Element {
 		if (!spanData) {
-			return <></>;
+			return <div />;
 		}
 
 		const leftOffset = ((spanData.startTime - globalStart) * 100) / spread;
@@ -161,20 +163,19 @@ const TraceFlameGraph = (props: {
 				))}
 			</>
 		);
-	};
+	}
+
 	return (
-		<>
-			<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
-				<RenderSpanRecursive
-					spanData={props.treeData}
-					onSpanHover={props.onSpanHover}
-					onSpanSelect={props.onSpanSelect}
-					hoveredSpanId={props.hoveredSpanId}
-					selectedSpanId={props.selectedSpanId}
-				/>
-			</TraceFlameGraphContainer>
-		</>
+		<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
+			<RenderSpanRecursive
+				spanData={treeData}
+				onSpanHover={onSpanHover}
+				onSpanSelect={onSpanSelect}
+				hoveredSpanId={hoveredSpanId}
+				selectedSpanId={selectedSpanId}
+			/>
+		</TraceFlameGraphContainer>
 	);
-};
+}
 
 export default TraceFlameGraph;

@@ -7,13 +7,12 @@ import {
 } from 'container/CreateAlertChannels/config';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
-import { Store } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
-const EditAlertChannels = ({
+function EditAlertChannels({
 	initialValue,
-}: EditAlertChannelsProps): JSX.Element => {
+}: EditAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
 		...initialValue,
@@ -56,7 +55,7 @@ const EditAlertChannels = ({
 			});
 		}
 		setSavingState(false);
-	}, [selectedConfig, notifications, toggleSettingsTab, id]);
+	}, [selectedConfig, notifications, id]);
 
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {
@@ -72,28 +71,28 @@ const EditAlertChannels = ({
 	}, []);
 
 	return (
-		<>
-			<FormAlertChannels
-				{...{
-					formInstance,
-					onTypeChangeHandler,
-					setSelectedConfig,
-					type,
-					onTestHandler,
-					onSaveHandler,
-					savingState,
-					NotificationElement,
-					title: 'Edit Notification Channels',
-					initialValue,
-					nameDisable: true,
-				}}
-			/>
-		</>
+		<FormAlertChannels
+			{...{
+				formInstance,
+				onTypeChangeHandler,
+				setSelectedConfig,
+				type,
+				onTestHandler,
+				onSaveHandler,
+				savingState,
+				NotificationElement,
+				title: 'Edit Notification Channels',
+				initialValue,
+				nameDisable: true,
+			}}
+		/>
 	);
-};
+}
 
 interface EditAlertChannelsProps {
-	initialValue: Store;
+	initialValue: {
+		[x: string]: unknown;
+	};
 }
 
 export default EditAlertChannels;
