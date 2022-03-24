@@ -15,12 +15,14 @@ services:
       retries: 3
 
   alertmanager:
-    image: signoz/alertmanager:0.5.0
+    image: signoz/alertmanager:0.6.0
     volumes:
-      - ./alertmanager.yml:/prometheus/alertmanager.yml
+    # we no longer need the config file as query services delivers 
+    # the required config now 
+    # - ./alertmanager.yml:/prometheus/alertmanager.yml
       - ./data/alertmanager:/data
     command:
-      - '--config.file=/prometheus/alertmanager.yml'
+      - '--queryService.url=http://localhost:8080'
       - '--storage.path=/data'
 
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
