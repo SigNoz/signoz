@@ -6,7 +6,7 @@ import { WebhookChannel } from '../../CreateAlertChannels/config';
 
 const WebhookSettings = ({ setSelectedConfig }: WebhookProps): JSX.Element => (
 	<>
-		<FormItem name="api_url" label="Webhook URL">
+		<FormItem name="api_url" label="Webhook URL" required>
 			<Input
 				onChange={(event): void => {
 					setSelectedConfig((value) => ({

@@ -6,13 +6,16 @@ import {
 	SlackChannel,
 	SlackType,
 	WebhookType,
+	PagerType,
+	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
 import { Store } from 'rc-field-form/lib/interface';
 import React from 'react';
 
 import SlackSettings from './Settings/Slack';
-import WebhookSettings from './Settings/webhook';
+import WebhookSettings from './Settings/Webhook';
+import PagerSettings from './Settings/pager';
 import { Button } from './styles';
 
 const { Option } = Select;
@@ -37,6 +40,9 @@ function FormAlertChannels({
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
 			case WebhookType:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+			case PagerType:
+				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
+
 			default:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
 		}
@@ -48,7 +54,7 @@ function FormAlertChannels({
 			<Title level={3}>{title}</Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<FormItem label="Name" labelAlign="left" name="name">
+				<FormItem label="Name" labelAlign="left" name="name" required>
 					<Input
 						disabled={nameDisable}
 						onChange={(event): void => {
@@ -67,6 +73,9 @@ function FormAlertChannels({
 						</Option>
 						<Option value="webhook" key="webhook">
 							Webhook
+						</Option>
+						<Option value="pagerduty" key="pagerduty">
+							Pagerduty
 						</Option>
 					</Select>
 				</FormItem>
@@ -99,7 +108,9 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
+	setSelectedConfig: React.Dispatch<
+		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onTestHandler: () => void;
 	onSaveHandler: (props: ChannelType) => void;

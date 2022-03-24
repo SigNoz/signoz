@@ -1,6 +1,8 @@
 import { Form, notification } from 'antd';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import createPagerApi from 'api/channels/createPager';
+import { PagerInitialConfig } from './defaults';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
@@ -12,6 +14,8 @@ import {
 	WebhookChannel,
 	SlackType,
 	WebhookType,
+	PagerType,
+	PagerChannel,
 } from './config';
 
 function CreateAlertChannels({
@@ -19,7 +23,7 @@ function CreateAlertChannels({
 }: CreateAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel>
+		Partial<SlackChannel & WebhookChannel & PagerChannel>
 	>({
 		text: ` {{ range .Alerts -}}
      *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
@@ -47,7 +51,12 @@ function CreateAlertChannels({
 
 	const [type, setType] = useState<ChannelType>(preType);
 	const onTypeChangeHandler = useCallback((value: string) => {
+		const currentType = type;
 		setType(value as ChannelType);
+		if (value === PagerType && currentType !== value) {
+			// reset config to pager defaults
+			setSelectedConfig(PagerInitialConfig);
+		}
 	}, []);
 
 	const onTestHandler = useCallback(() => {
@@ -64,6 +73,56 @@ function CreateAlertChannels({
 				send_resolved: true,
 				text: selectedConfig?.text || '',
 				title: selectedConfig?.title || '',
+			});
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: 'Successfully created the channel',
+				});
+				setTimeout(() => {
+					history.replace(ROUTES.SETTINGS);
+				}, 2000);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || 'Error while creating the channel',
+				});
+			}
+			setSavingState(false);
+		} catch (error) {
+			setSavingState(false);
+		}
+	}, [notifications, selectedConfig]);
+
+	const onPagerHandler = useCallback(async () => {
+		try {
+			var inputError = '';
+			if (selectedConfig.name === '') {
+				inputError = 'Name is mandatory for this channel';
+			} else if (selectedConfig.routing_key === '') {
+				inputError = 'routing_key is mandatory for this channel';
+			}
+
+			if (inputError != '') {
+				notifications.error({
+					message: 'Error',
+					description: inputError || 'Error while creating the channel',
+				});
+			}
+
+			setSavingState(true);
+			const response = await createPagerApi({
+				name: selectedConfig?.name || '',
+				send_resolved: true,
+				routing_key: selectedConfig?.routing_key || '',
+				client: selectedConfig?.client || '',
+				client_url: selectedConfig?.client_url || '',
+				description: selectedConfig?.description || '',
+				severity: selectedConfig?.severity || '',
+				component: selectedConfig?.component || '',
+				group: selectedConfig?.group || '',
+				class: selectedConfig?.class || '',
 			});
 
 			if (response.statusCode === 200) {
@@ -143,6 +202,9 @@ function CreateAlertChannels({
 				case WebhookType:
 					onWebhookHandler();
 					break;
+				case PagerType:
+					onPagerHandler();
+					break;
 				default:
 					notifications.error({
 						message: 'Error',
@@ -169,6 +231,7 @@ function CreateAlertChannels({
 				initialValue: {
 					type,
 					...selectedConfig,
+					...PagerInitialConfig,
 				},
 			}}
 		/>
