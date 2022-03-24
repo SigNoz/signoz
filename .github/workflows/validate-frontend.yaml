@@ -1,9 +1,6 @@
 name: validate
 on: pull_request
 
-defaults:
-  run:
-    working-directory: ./frontend
 jobs:
   frontend:
     runs-on: ubuntu-latest
@@ -18,7 +15,10 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           install-command: yarn --frozen-lockfile
+        working-directory: ./frontend
       - name: ESLint
         run: yarn run lint
+        working-directory: ./frontend
       - name: Build - Webpack
         run: yarn run build
+        working-directory: ./frontend
