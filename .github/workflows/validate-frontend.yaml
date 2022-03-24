@@ -15,7 +15,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         with:
           install-command: yarn --frozen-lockfile
-        working-directory: ./frontend
+          working-directory: ./frontend
       - name: ESLint
         run: yarn run lint
         working-directory: ./frontend
