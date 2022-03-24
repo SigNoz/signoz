@@ -121,8 +121,7 @@ type SearchSpansResult struct {
 }
 
 type GetFilterSpansResponseItem struct {
-	Time         time.Time `ch:"timestamp"`
-	Timestamp    string    `json:"timestamp"`
+	Timestamp    time.Time `ch:"timestamp" json:"timestamp"`
 	SpanID       string    `ch:"spanID" json:"spanID"`
 	TraceID      string    `ch:"traceID" json:"traceID"`
 	ServiceName  string    `ch:"serviceName" json:"serviceName"`
