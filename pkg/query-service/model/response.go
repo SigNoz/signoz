@@ -257,7 +257,7 @@ type SetTTLResponseItem struct {
 }
 
 type DBResponseTTL struct {
-	EngineFull string `db:"engine_full"`
+	EngineFull string `ch:"engine_full"`
 }
 
 type GetTTLResponseItem struct {

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -124,6 +125,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 
 	r := NewRouter()
 
+	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
@@ -166,6 +168,16 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func setTimeoutMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+		defer cancel()
+
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }

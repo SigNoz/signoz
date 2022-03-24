@@ -18,6 +18,7 @@ const (
 
 const (
 	defaultDatasource      string        = "tcp://localhost:9000"
+	defaultTraceDB         string        = "signoz_traces"
 	defaultOperationsTable string        = "signoz_operations"
 	defaultIndexTable      string        = "signoz_index_v2"
 	defaultErrorTable      string        = "signoz_error_index"
@@ -43,6 +44,7 @@ type namespaceConfig struct {
 	namespace       string
 	Enabled         bool
 	Datasource      string
+	TraceDB         string
 	OperationsTable string
 	IndexTable      string
 	SpansTable      string
@@ -101,6 +103,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			namespace:       primaryNamespace,
 			Enabled:         true,
 			Datasource:      datasource,
+			TraceDB:         defaultTraceDB,
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			ErrorTable:      defaultErrorTable,
@@ -118,6 +121,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			options.others[namespace] = &namespaceConfig{
 				namespace:       namespace,
 				Datasource:      datasource,
+				TraceDB:         "",
 				OperationsTable: "",
 				IndexTable:      "",
 				ErrorTable:      "",

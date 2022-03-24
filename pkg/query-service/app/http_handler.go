@@ -690,7 +690,7 @@ func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetTopEndpoints(context.Background(), query)
+	result, err := (*aH.reader).GetTopEndpoints(r.Context(), query)
 
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
@@ -707,7 +707,7 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetUsage(context.Background(), query)
+	result, err := (*aH.reader).GetUsage(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -723,7 +723,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceOverview(context.Background(), query)
+	result, err := (*aH.reader).GetServiceOverview(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -739,7 +739,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetServices(context.Background(), query)
+	result, err := (*aH.reader).GetServices(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -760,7 +760,7 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceMapDependencies(context.Background(), query)
+	result, err := (*aH.reader).GetServiceMapDependencies(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -770,7 +770,7 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 
 func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
-	result, err := (*aH.reader).GetServicesList(context.Background())
+	result, err := (*aH.reader).GetServicesList(r.Context())
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -784,7 +784,7 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
 
-	result, err := (*aH.reader).SearchTraces(context.Background(), traceId)
+	result, err := (*aH.reader).SearchTraces(r.Context(), traceId)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -799,7 +799,7 @@ func (aH *APIHandler) getErrors(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrors(context.Background(), query)
+	result, apiErr := (*aH.reader).GetErrors(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -814,7 +814,7 @@ func (aH *APIHandler) getErrorForId(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForId(context.Background(), query)
+	result, apiErr := (*aH.reader).GetErrorForId(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -829,7 +829,7 @@ func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForType(context.Background(), query)
+	result, apiErr := (*aH.reader).GetErrorForType(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -845,7 +845,7 @@ func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetSpanFilters(context.Background(), query)
+	result, apiErr := (*aH.reader).GetSpanFilters(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -861,7 +861,7 @@ func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetFilteredSpans(context.Background(), query)
+	result, apiErr := (*aH.reader).GetFilteredSpans(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -877,7 +877,7 @@ func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetFilteredSpansAggregates(context.Background(), query)
+	result, apiErr := (*aH.reader).GetFilteredSpansAggregates(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -893,7 +893,7 @@ func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTagFilters(context.Background(), query)
+	result, apiErr := (*aH.reader).GetTagFilters(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -909,7 +909,7 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTagValues(context.Background(), query)
+	result, apiErr := (*aH.reader).GetTagValues(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -924,6 +924,7 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Context is not used here as TTL is long duration operation which needs to converted to async
 	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -939,7 +940,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTTL(context.Background(), ttlParams)
+	result, apiErr := (*aH.reader).GetTTL(r.Context(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -949,7 +950,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request) {
 
-	result, apiError := (*aH.relationalDB).FetchUserPreference(context.Background())
+	result, apiError := (*aH.relationalDB).FetchUserPreference(r.Context())
 	if apiError != nil {
 		aH.respondError(w, apiError, "Error from Fetch Dao")
 		return
@@ -964,7 +965,7 @@ func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	apiErr := (*aH.relationalDB).UpdateUserPreferece(context.Background(), userParams)
+	apiErr := (*aH.relationalDB).UpdateUserPreferece(r.Context(), userParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
