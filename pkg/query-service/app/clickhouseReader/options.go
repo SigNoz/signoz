@@ -2,6 +2,7 @@ package clickhouseReader
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -60,19 +61,18 @@ type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
-	db, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{"127.0.0.1:9000"},
-		Auth: clickhouse.Auth{
-			Database: "default",
-			Username: "default",
-			Password: "",
-		},
-		//Debug:           true,
-		DialTimeout:     time.Second,
-		MaxOpenConns:    10,
-		MaxIdleConns:    5,
-		ConnMaxLifetime: time.Hour,
-	})
+	dsnURL, err := url.Parse(cfg.Datasource)
+	options := &clickhouse.Options{
+		Addr: []string{dsnURL.Host},
+	}
+	if dsnURL.Query().Get("username") != "" {
+		auth := clickhouse.Auth{
+			Username: dsnURL.Query().Get("username"),
+			Password: dsnURL.Query().Get("password"),
+		}
+		options.Auth = auth
+	}
+	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
 	}
