@@ -5,9 +5,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/github"
-
 	"go.signoz.io/query-service/app"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"

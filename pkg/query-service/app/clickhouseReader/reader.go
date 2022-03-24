@@ -673,7 +673,7 @@ func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiErr
 	if response.StatusCode > 299 {
 		responseData, _ := ioutil.ReadAll(response.Body)
 
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status, string(responseData))
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s \n Data: %s", response.Status, string(responseData))
 		zap.S().Error(err)
 
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -753,7 +753,7 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to delete alertmanager/v1/receivers\n", response.Status)
+		err := fmt.Errorf("Error in getting 2xx response in API call to delete alertmanager/v1/receivers\n Status: %s", response.Status)
 		zap.S().Error(err)
 		tx.Rollback()
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -879,7 +879,7 @@ func (r *ClickHouseReader) EditChannel(receiver *model.Receiver, id string) (*mo
 	}
 
 	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s", response.Status)
 		zap.S().Error(err)
 		tx.Rollback()
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -929,7 +929,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Recei
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s", response.Status)
 		zap.S().Error(err)
 		tx.Rollback()
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -1080,7 +1080,7 @@ func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
 	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
 	if err != nil {
-		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
 	res := qry.Exec(ctx)
@@ -1101,7 +1101,7 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
 
 	if err != nil {
-		return nil, nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
 	res := qry.Exec(ctx)
@@ -1176,7 +1176,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 	m5xx := make(map[string]uint64)
 
-	for j, _ := range serviceErrorItems {
+	for j := range serviceErrorItems {
 		m5xx[serviceErrorItems[j].ServiceName] = serviceErrorItems[j].NumErrors
 	}
 	///////////////////////////////////////////
@@ -1247,7 +1247,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 
 	m := make(map[int64]int)
 
-	for j, _ := range serviceErrorItems {
+	for j := range serviceErrorItems {
 		m[int64(serviceErrorItems[j].Time.UnixNano())] = int(serviceErrorItems[j].NumErrors)
 	}
 
@@ -1361,7 +1361,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.ServiceName != "" {
@@ -1376,7 +1376,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.HttpCode != "" {
@@ -1391,7 +1391,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.HttpRoute != "" {
@@ -1406,7 +1406,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.HttpUrl != "" {
@@ -1421,7 +1421,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.HttpMethod != "" {
@@ -1436,7 +1436,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.HttpHost != "" {
@@ -1451,7 +1451,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.Operation != "" {
@@ -1466,7 +1466,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				if service.Component != "" {
@@ -1480,7 +1480,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 
 			finalQuery2 := fmt.Sprintf("SELECT COUNT(*) as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.indexTable)
@@ -1489,7 +1489,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err = r.db.Select(ctx, &dBResponse2, finalQuery2, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			traceFilterReponse.Status = map[string]uint64{"ok": dBResponse2[0].NumTotal - dBResponse[0].NumErrors, "error": dBResponse[0].NumErrors}
 		case constants.Duration:
@@ -1499,14 +1499,14 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query", err)}
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
 				traceFilterReponse.Duration["minDuration"] = service.MinDuration
 				traceFilterReponse.Duration["maxDuration"] = service.MaxDuration
 			}
 		default:
-			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("filter type: %s not supported", e)}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("filter type: %s not supported", e)}
 		}
 	}
 
@@ -1616,20 +1616,13 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 				}
 				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
 			}
-		} else if item.Operator == "regex" {
-			if len(item.Values) != 1 {
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Regex tag operator should only have one value")}
-			}
-			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
-			args = append(args, item.Key)
-			args = append(args, item.Values[0])
 		} else if item.Operator == "isnotnull" {
 			for range item.Values {
 				query = query + " AND has(tagsKeys, ?)"
 				args = append(args, item.Key)
 			}
 		} else {
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.Operator)}
 		}
 
 	}
@@ -1645,7 +1638,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	if len(queryParams.Order) != 0 {
@@ -1675,7 +1668,7 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	getFilterSpansResponse := model.GetFilterSpansResponse{
@@ -1745,7 +1738,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 	tagFilters = excludeTags(ctx, tagFilters)
 
@@ -1835,7 +1828,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	cleanedTagValues := []model.TagValues{}
@@ -1889,7 +1882,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	for i, _ := range usageItems {
+	for i := range usageItems {
 		usageItems[i].Timestamp = uint64(usageItems[i].Time.UnixNano())
 	}
 
@@ -1957,10 +1950,10 @@ func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryP
 	serviceMap := make(map[string]*model.ServiceMapDependencyResponseItem)
 
 	spanId2ServiceNameMap := make(map[string]string)
-	for i, _ := range serviceMapDependencyItems {
+	for i := range serviceMapDependencyItems {
 		spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId] = serviceMapDependencyItems[i].ServiceName
 	}
-	for i, _ := range serviceMapDependencyItems {
+	for i := range serviceMapDependencyItems {
 		parent2childServiceName := spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId] + "-" + spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId]
 		if _, ok := serviceMap[parent2childServiceName]; !ok {
 			serviceMap[parent2childServiceName] = &model.ServiceMapDependencyResponseItem{
@@ -2017,7 +2010,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		case "sum":
 			aggregation_query = " sum(durationNano) as value "
 		default:
-			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("Aggregate type: %s not supported", queryParams.AggregationOption)}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("Aggregate type: %s not supported", queryParams.AggregationOption)}
 		}
 	} else if queryParams.Dimension == "calls" {
 		aggregation_query = " count(*) as value "
@@ -2055,7 +2048,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		case constants.Component:
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
 		default:
-			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
 	} else {
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
@@ -2128,20 +2121,13 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 				}
 				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
 			}
-		} else if item.Operator == "regex" {
-			if len(item.Values) != 1 {
-				return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Regex tag operator should only have one value")}
-			}
-			query = query + " AND match(tagsValues[indexOf(tagsKeys, ?)], ?)"
-			args = append(args, item.Key)
-			args = append(args, item.Values[0])
 		} else if item.Operator == "isnotnull" {
 			for range item.Values {
 				query = query + " AND has(tagsKeys, ?)"
 				args = append(args, item.Key)
 			}
 		} else {
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.Operator)}
 		}
 
 	}
@@ -2175,7 +2161,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		case constants.Component:
 			query = query + " GROUP BY time, component as groupBy ORDER BY time"
 		default:
-			return nil, &model.ApiError{model.ErrorBadData, fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
 	} else {
 		query = query + " GROUP BY time ORDER BY time"
@@ -2187,7 +2173,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	GetFilteredSpansAggregatesResponse := model.GetFilteredSpansAggregatesResponse{
@@ -2238,7 +2224,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParam
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
 		}
 
 	case constants.MetricsTTL:
@@ -2250,11 +2236,11 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, ttlParams *model.TTLParam
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. Err=%v", err)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
 		}
 
 	default:
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", ttlParams.Type)}
 	}
 
 	return &model.SetTTLResponseItem{Message: "ttl has been successfully set up"}, nil
@@ -2296,7 +2282,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
 			return nil, nil
@@ -2314,7 +2300,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("error while getting ttl. Err=%v", err)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
 			return nil, nil
@@ -2367,7 +2353,7 @@ func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.Get
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	return &getErrorReponses, nil
@@ -2378,7 +2364,7 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 
 	if queryParams.ErrorID == "" {
 		zap.S().Debug("errorId missing from params")
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("ErrorID missing from params")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("ErrorID missing from params")}
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
@@ -2396,13 +2382,13 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	if len(getErrorWithSpanReponse) > 0 {
 		return &getErrorWithSpanReponse[0], nil
 	} else {
-		return nil, &model.ApiError{model.ErrorNotFound, fmt.Errorf("Error ID not found")}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("Error ID not found")}
 	}
 
 }
@@ -2411,7 +2397,7 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 
 	if queryParams.ErrorType == "" || queryParams.ServiceName == "" {
 		zap.S().Debug("errorType/serviceName missing from params")
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("ErrorType/serviceName missing from params")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("ErrorType/serviceName missing from params")}
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
@@ -2425,13 +2411,13 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{model.ErrorExec, fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
 	if len(getErrorWithSpanReponse) > 0 {
 		return &getErrorWithSpanReponse[0], nil
 	} else {
-		return nil, &model.ApiError{model.ErrorNotFound, fmt.Errorf("Error not found")}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("Error not found")}
 	}
 
 }

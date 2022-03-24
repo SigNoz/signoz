@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.0.12
 	github.com/go-kit/log v0.1.0
-	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -31,17 +30,14 @@ require (
 	cloud.google.com/go v0.88.0 // indirect
 	github.com/Azure/azure-sdk-for-go v5.0.0-beta.0.20161028183111-bd73d950fa44+incompatible // indirect
 	github.com/Azure/go-autorest v10.8.1+incompatible // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/aws/aws-sdk-go v1.27.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/containerd/containerd v1.4.12 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/dhui/dktest v0.3.4 // indirect
-	github.com/docker/docker v20.10.12+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -54,8 +50,6 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.0 // indirect
-	github.com/google/go-github v17.0.0+incompatible // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.2.3-0.20180520015035-48a0ecefe2e4 // indirect
@@ -65,7 +59,6 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/consul v1.1.1-0.20180615161029-bed22a81e9fd // indirect
-	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
@@ -84,13 +77,11 @@ require (
 	github.com/miekg/dns v1.0.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
-	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v0.3.1-0.20170117200651-66bb6560562f // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pascaldekloe/goe v0.1.0 // indirect
 	github.com/paulmach/orb v0.4.0 // indirect

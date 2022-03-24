@@ -7,23 +7,14 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	promModel "github.com/prometheus/common/model"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
-	"go.uber.org/zap"
 )
 
-var allowedDimesions = []string{"calls", "duration"}
-
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
-
-var allowedAggregations = map[string][]string{
-	"calls":    {"count", "rate_per_sec"},
-	"duration": {"avg", "p50", "p95", "p90", "p99", "min", "max", "sum"},
-}
 
 func parseUser(r *http.Request) (*model.User, error) {
 
@@ -98,7 +89,7 @@ func parseInstantQueryMetricsRequest(r *http.Request) (*model.InstantQueryMetric
 		var err error
 		ts, err = parseMetricsTime(t)
 		if err != nil {
-			return nil, &model.ApiError{model.ErrorBadData, err}
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		}
 	} else {
 		ts = time.Now()
@@ -116,32 +107,32 @@ func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *model.Ap
 
 	start, err := parseMetricsTime(r.FormValue("start"))
 	if err != nil {
-		return nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 	end, err := parseMetricsTime(r.FormValue("end"))
 	if err != nil {
-		return nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 	if end.Before(start) {
 		err := errors.New("end timestamp must not be before start time")
-		return nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
 	step, err := parseMetricsDuration(r.FormValue("step"))
 	if err != nil {
-		return nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
 	if step <= 0 {
 		err := errors.New("zero or negative query resolution step widths are not accepted. Try a positive integer")
-		return nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
 	// For safety, limit the number of returned points per timeseries.
 	// This is sufficient for 60s resolution for a week or 1h resolution for a year.
 	if end.Sub(start)/step > 11000 {
 		err := errors.New("exceeded maximum resolution of 11,000 points per timeseries. Try decreasing the query resolution (?step=XX)")
-		return nil, &model.ApiError{model.ErrorBadData, err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
 	queryRangeParams := model.QueryRangeParams{
@@ -258,189 +249,6 @@ func DoesExistInSlice(item string, list []string) bool {
 		}
 	}
 	return false
-}
-
-func parseSearchSpanAggregatesRequest(r *http.Request) (*model.SpanSearchAggregatesParams, error) {
-
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
-	if err != nil {
-		return nil, err
-	}
-
-	startTimeStr := startTime.Format(time.RFC3339Nano)
-	endTimeStr := endTime.Format(time.RFC3339Nano)
-	// fmt.Println(startTimeStr)
-
-	stepStr := r.URL.Query().Get("step")
-	if len(stepStr) == 0 {
-		return nil, errors.New("step param missing in query")
-	}
-
-	stepInt, err := strconv.Atoi(stepStr)
-	if err != nil {
-		return nil, errors.New("step param is not in correct format")
-	}
-
-	granPeriod := fmt.Sprintf("PT%dM", stepInt/60)
-	dimension := r.URL.Query().Get("dimension")
-	if len(dimension) == 0 {
-		return nil, errors.New("dimension param missing in query")
-	} else {
-		if !DoesExistInSlice(dimension, allowedDimesions) {
-			return nil, errors.New(fmt.Sprintf("given dimension: %s is not allowed in query", dimension))
-		}
-	}
-
-	aggregationOption := r.URL.Query().Get("aggregation_option")
-	if len(aggregationOption) == 0 {
-		return nil, errors.New("Aggregation Option missing in query params")
-	} else {
-		if !DoesExistInSlice(aggregationOption, allowedAggregations[dimension]) {
-			return nil, errors.New(fmt.Sprintf("given aggregation option: %s is not allowed with dimension: %s", aggregationOption, dimension))
-		}
-	}
-
-	params := &model.SpanSearchAggregatesParams{
-		Start:             startTime,
-		End:               endTime,
-		Intervals:         fmt.Sprintf("%s/%s", startTimeStr, endTimeStr),
-		GranOrigin:        startTimeStr,
-		GranPeriod:        granPeriod,
-		StepSeconds:       stepInt,
-		Dimension:         dimension,
-		AggregationOption: aggregationOption,
-	}
-
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) != 0 {
-		// return nil, errors.New("serviceName param missing in query")
-		params.ServiceName = serviceName
-	}
-	operationName := r.URL.Query().Get("operation")
-	if len(operationName) != 0 {
-		params.OperationName = operationName
-		// Escaping new line chars to avoid CWE-117
-		operationName = strings.Replace(operationName, "\n", "", -1)
-		operationName = strings.Replace(operationName, "\r", "", -1)
-		zap.S().Debug("Operation Name: ", operationName)
-	}
-
-	kind := r.URL.Query().Get("kind")
-	if len(kind) != 0 {
-		params.Kind = kind
-		// Escaping new line chars to avoid CWE-117
-		kind = strings.Replace(kind, "\n", "", -1)
-		kind = strings.Replace(kind, "\r", "", -1)
-		zap.S().Debug("Kind: ", kind)
-	}
-
-	minDuration, err := parseTimestamp("minDuration", r)
-	if err == nil {
-		params.MinDuration = *minDuration
-	}
-	maxDuration, err := parseTimestamp("maxDuration", r)
-	if err == nil {
-		params.MaxDuration = *maxDuration
-	}
-
-	tags, err := parseTags("tags", r)
-	if err != nil {
-		return nil, err
-	}
-	if len(*tags) != 0 {
-		params.Tags = *tags
-	}
-
-	return params, nil
-}
-
-func parseSpanSearchRequest(r *http.Request) (*model.SpanSearchParams, error) {
-
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTimeMinusBuffer("end", r)
-	if err != nil {
-		return nil, err
-	}
-
-	startTimeStr := startTime.Format(time.RFC3339Nano)
-	endTimeStr := endTime.Format(time.RFC3339Nano)
-	// fmt.Println(startTimeStr)
-	params := &model.SpanSearchParams{
-		Intervals: fmt.Sprintf("%s/%s", startTimeStr, endTimeStr),
-		Start:     startTime,
-		End:       endTime,
-		Limit:     100,
-		Order:     "descending",
-	}
-
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) != 0 {
-		// return nil, errors.New("serviceName param missing in query")
-		params.ServiceName = serviceName
-	}
-	operationName := r.URL.Query().Get("operation")
-	if len(operationName) != 0 {
-		params.OperationName = operationName
-		// Escaping new line chars to avoid CWE-117
-		operationName = strings.Replace(operationName, "\n", "", -1)
-		operationName = strings.Replace(operationName, "\r", "", -1)
-		zap.S().Debug("Operation Name: ", operationName)
-	}
-
-	kind := r.URL.Query().Get("kind")
-	if len(kind) != 0 {
-		params.Kind = kind
-		// Escaping new line chars to avoid CWE-117
-		kind = strings.Replace(kind, "\n", "", -1)
-		kind = strings.Replace(kind, "\r", "", -1)
-		zap.S().Debug("Kind: ", kind)
-	}
-
-	minDuration, err := parseTimestamp("minDuration", r)
-	if err == nil {
-		params.MinDuration = *minDuration
-	}
-	maxDuration, err := parseTimestamp("maxDuration", r)
-	if err == nil {
-		params.MaxDuration = *maxDuration
-	}
-
-	limitStr := r.URL.Query().Get("limit")
-	if len(limitStr) != 0 {
-		limit, err := strconv.ParseInt(limitStr, 10, 64)
-		if err != nil {
-			return nil, errors.New("Limit param is not in correct format")
-		}
-		params.Limit = limit
-	} else {
-		params.Limit = 100
-	}
-
-	offsetStr := r.URL.Query().Get("offset")
-	if len(offsetStr) != 0 {
-		offset, err := strconv.ParseInt(offsetStr, 10, 64)
-		if err != nil {
-			return nil, errors.New("Offset param is not in correct format")
-		}
-		params.Offset = offset
-	}
-
-	tags, err := parseTags("tags", r)
-	if err != nil {
-		return nil, err
-	}
-	if len(*tags) != 0 {
-		params.Tags = *tags
-	}
-
-	return params, nil
 }
 
 func parseSpanFilterRequestBody(r *http.Request) (*model.SpanFilterParams, error) {
@@ -655,96 +463,6 @@ func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 	return params, nil
 }
 
-func fetchArrayValues(param string, r *http.Request) []string {
-	valueStr := r.URL.Query().Get(param)
-	var values []string
-	if len(valueStr) == 0 {
-		return values
-	}
-	err := json.Unmarshal([]byte(valueStr), &values)
-	if err != nil {
-		zap.S().Error("Error in parsing service params", zap.Error(err))
-	}
-	return values
-}
-
-func parseTags(param string, r *http.Request) (*[]model.TagQuery, error) {
-
-	tags := new([]model.TagQuery)
-	tagsStr := r.URL.Query().Get(param)
-
-	if len(tagsStr) == 0 {
-		return tags, nil
-	}
-	err := json.Unmarshal([]byte(tagsStr), tags)
-	if err != nil {
-		zap.S().Error("Error in parsig tags", zap.Error(err))
-		return nil, fmt.Errorf("error in parsing %s ", param)
-	}
-	// zap.S().Info("Tags: ", *tags)
-
-	return tags, nil
-}
-
-func parseTagsV2(param string, r *http.Request) (*[]model.TagQueryV2, error) {
-
-	tags := new([]model.TagQueryV2)
-	tagsStr := r.URL.Query().Get(param)
-
-	if len(tagsStr) == 0 {
-		return tags, nil
-	}
-	err := json.Unmarshal([]byte(tagsStr), tags)
-	if err != nil {
-		zap.S().Error("Error in parsig tags", zap.Error(err))
-		return nil, fmt.Errorf("error in parsing %s ", param)
-	}
-	// zap.S().Info("Tags: ", *tags)
-
-	return tags, nil
-}
-
-func parseApplicationPercentileRequest(r *http.Request) (*model.ApplicationPercentileParams, error) {
-
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
-	if err != nil {
-		return nil, err
-	}
-
-	stepStr := r.URL.Query().Get("step")
-	if len(stepStr) == 0 {
-		return nil, errors.New("step param missing in query")
-	}
-
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) == 0 {
-		return nil, errors.New("serviceName param missing in query")
-	}
-
-	startTimeStr := startTime.Format(time.RFC3339Nano)
-	endTimeStr := endTime.Format(time.RFC3339Nano)
-
-	params := &model.ApplicationPercentileParams{
-		ServiceName: serviceName,
-		GranOrigin:  startTimeStr,
-		Intervals:   fmt.Sprintf("%s/%s", startTimeStr, endTimeStr),
-	}
-
-	stepInt, err := strconv.Atoi(stepStr)
-	if err != nil {
-		return nil, errors.New("step param is not in correct format")
-	}
-
-	params.SetGranPeriod(stepInt)
-
-	return params, nil
-
-}
-
 func parseTimeStr(timeStr string, param string) (*time.Time, error) {
 
 	if len(timeStr) == 0 {
@@ -823,25 +541,6 @@ func parseTimeMinusBuffer(param string, r *http.Request) (*time.Time, error) {
 
 	return &timeFmt, nil
 
-}
-
-func parseTimestamp(param string, r *http.Request) (*string, error) {
-	timeStr := r.URL.Query().Get(param)
-	if len(timeStr) == 0 {
-		return nil, fmt.Errorf("%s param missing in query", param)
-	}
-
-	// timeUnix, err := strconv.ParseInt(timeStr, 10, 64)
-	// if err != nil || len(timeStr) == 0 {
-	// 	return nil, fmt.Errorf("%s param is not in correct timestamp format", param)
-	// }
-
-	return &timeStr, nil
-
-}
-func parseSetRulesRequest(r *http.Request) (string, *model.ApiError) {
-
-	return "", nil
 }
 
 func parseDuration(r *http.Request) (*model.TTLParams, error) {
