@@ -1,1 +1,3 @@
-export { default } from './ServiceMap';
+import ServiceMap from './ServiceMap';
+
+export default ServiceMap;

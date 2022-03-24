@@ -1,4 +1,4 @@
-import Graph, { graphOnClickHandler } from 'components/Graph';
+import Graph, { GraphOnClickHandler } from 'components/Graph';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import { colors } from 'lib/getRandomColor';
@@ -84,7 +84,7 @@ function EmptyGraph({
 interface EmptyGraphProps {
 	selectedTime: timePreferance;
 	widget: Widgets;
-	onClickHandler: graphOnClickHandler | undefined;
+	onClickHandler: GraphOnClickHandler | undefined;
 }
 
 export default EmptyGraph;

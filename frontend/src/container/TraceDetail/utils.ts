@@ -45,11 +45,13 @@ export const getSortedData = (treeData: ITraceTree): undefined | ITraceTree => {
 			return;
 		}
 
+		// need this rule to disable
+		// eslint-disable-next-line no-param-reassign
 		treeNode.children = sortBy(treeNode.children, (e) => e.startTime);
 
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1);
-		}
+		});
 	};
 	traverse(treeData, 1);
 

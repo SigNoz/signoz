@@ -39,6 +39,32 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
 	};
 
+	const getValue = (value: string, record: TableType): JSX.Element => {
+		return (
+			<Link to={getLink(record)}>
+				<Typography>{value}</Typography>
+			</Link>
+		);
+	};
+
+	const getHttpMethodOrStatus = (
+		value: TableType['httpMethod'],
+		record: TableType,
+	): JSX.Element => {
+		if (value.length === 0) {
+			return (
+				<Link to={getLink(record)}>
+					<Typography>-</Typography>
+				</Link>
+			);
+		}
+		return (
+			<Link to={getLink(record)}>
+				<Tag color="magenta">{value}</Tag>
+			</Link>
+		);
+	};
+
 	const columns: ColumnsType<TableType> = [
 		{
 			title: 'Date',
@@ -58,25 +84,13 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
-			render: (value, record): JSX.Element => {
-				return (
-					<Link to={getLink(record)}>
-						<Typography>{value}</Typography>
-					</Link>
-				);
-			},
+			render: getValue,
 		},
 		{
 			title: 'Operation',
 			dataIndex: 'operation',
 			key: 'operation',
-			render: (value, record): JSX.Element => {
-				return (
-					<Link to={getLink(record)}>
-						<Typography>{value}</Typography>
-					</Link>
-				);
-			},
+			render: getValue,
 		},
 		{
 			title: 'Duration',
@@ -96,39 +110,13 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			title: 'Method',
 			dataIndex: 'httpMethod',
 			key: 'httpMethod',
-			render: (value: TableType['httpMethod'], record): JSX.Element => {
-				if (value.length === 0) {
-					return (
-						<Link to={getLink(record)}>
-							<Typography>-</Typography>
-						</Link>
-					);
-				}
-				return (
-					<Link to={getLink(record)}>
-						<Tag color="magenta">{value}</Tag>
-					</Link>
-				);
-			},
+			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
 			dataIndex: 'httpCode',
 			key: 'httpCode',
-			render: (value: TableType['httpMethod'], record): JSX.Element => {
-				if (value.length === 0) {
-					return (
-						<Link to={getLink(record)}>
-							<Typography>-</Typography>
-						</Link>
-					);
-				}
-				return (
-					<Link to={getLink(record)}>
-						<Tag color="magenta">{value}</Tag>
-					</Link>
-				);
-			},
+			render: getHttpMethodOrStatus,
 		},
 	];
 
@@ -137,18 +125,19 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 		_,
 		sort,
 	) => {
-		const { order = 'ascend' } = sort;
-
-		if (props.current && props.pageSize) {
-			getSpansAggregate({
-				maxTime: globalTime.maxTime,
-				minTime: globalTime.minTime,
-				selectedFilter,
-				current: props.current,
-				pageSize: props.pageSize,
-				selectedTags,
-				order: order === 'ascend' ? 'ascending' : 'descending',
-			});
+		if (!Array.isArray(sort)) {
+			const { order = 'ascend' } = sort;
+			if (props.current && props.pageSize) {
+				getSpansAggregate({
+					maxTime: globalTime.maxTime,
+					minTime: globalTime.minTime,
+					selectedFilter,
+					current: props.current,
+					pageSize: props.pageSize,
+					selectedTags,
+					order: order === 'ascend' ? 'ascending' : 'descending',
+				});
+			}
 		}
 	};
 

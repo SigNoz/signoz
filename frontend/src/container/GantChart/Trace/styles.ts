@@ -1,4 +1,8 @@
-import styled, { css } from 'styled-components';
+import styled, {
+	css,
+	DefaultTheme,
+	ThemedCssFunction,
+} from 'styled-components';
 
 interface Props {
 	isOnlyChild: boolean;
@@ -13,9 +17,10 @@ export const Wrapper = styled.ul<Props>`
 	z-index: 1;
 
 	ul {
-		border-left: ${({ isOnlyChild }) => isOnlyChild && 'none'} !important;
+		border-left: ${({ isOnlyChild }): StyledCSS =>
+			isOnlyChild && 'none'} !important;
 
-		${({ isOnlyChild }) =>
+		${({ isOnlyChild }): StyledCSS =>
 			isOnlyChild &&
 			css`
 				&:before {
@@ -37,15 +42,27 @@ export const CardContainer = styled.li`
 	cursor: pointer;
 `;
 
-export const CardComponent = styled.div`
-	border: 1px solid ${({ isDarkMode }) => (isDarkMode ? '#434343' : '#333')};
+interface Props {
+	isDarkMode: boolean;
+}
+
+export type StyledCSS =
+	| ReturnType<ThemedCssFunction<DefaultTheme>>
+	| string
+	| false
+	| undefined;
+
+export const CardComponent = styled.div<Props>`
+	border: 1px solid
+		${({ isDarkMode }): StyledCSS => (isDarkMode ? '#434343' : '#333')};
 	box-sizing: border-box;
 	border-radius: 2px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	padding: 1px 8px;
-	background: ${({ isDarkMode }) => (isDarkMode ? '#1d1d1d' : '#ddd')};
+	background: ${({ isDarkMode }): StyledCSS =>
+		isDarkMode ? '#1d1d1d' : '#ddd'};
 	height: 22px;
 `;
 
@@ -61,13 +78,15 @@ interface HoverCardProps {
 }
 
 export const HoverCard = styled.div<HoverCardProps>`
-	display: ${({ isSelected, isHovered }) =>
+	display: ${({ isSelected, isHovered }): string =>
 		isSelected || isHovered ? 'block' : 'none'};
 	width: 200%;
-	background-color: ${({ isHovered, isDarkMode }) =>
-		isHovered && (isDarkMode ? '#262626' : '#ddd')};
-	background-color: ${({ isSelected, isDarkMode }) =>
-		isSelected && (isDarkMode ? '#4f4f4f' : '#bbb')};
+	background-color: ${({ isHovered, isDarkMode }): string => {
+		if (isHovered) {
+			return isDarkMode ? '#262626' : '#ddd';
+		}
+		return isDarkMode ? '#4f4f4f' : '#bbb';
+	}};
 	position: absolute;
 	top: 0;
 	left: -100%;

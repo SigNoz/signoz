@@ -3,6 +3,7 @@ import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import NewWidget from 'container/NewWidget';
+import history from 'lib/history';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
@@ -12,7 +13,6 @@ import { GetDashboard, GetDashboardProps } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
-import history from 'lib/history';
 
 function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { search } = useLocation();

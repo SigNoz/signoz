@@ -21,6 +21,8 @@ function DeleteAlert({
 		payload: undefined,
 	});
 
+	const defaultErrorMessage = 'Something went wrong';
+
 	const onDeleteHandler = async (id: number): Promise<void> => {
 		try {
 			setDeleteAlertState((state) => ({
@@ -48,11 +50,11 @@ function DeleteAlert({
 					...state,
 					loading: false,
 					error: true,
-					errorMessage: response.error || 'Something went wrong',
+					errorMessage: response.error || defaultErrorMessage,
 				}));
 
 				notifications.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultErrorMessage,
 				});
 			}
 		} catch (error) {
@@ -60,11 +62,11 @@ function DeleteAlert({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: 'Something went wrong',
+				errorMessage: defaultErrorMessage,
 			}));
 
 			notifications.error({
-				message: 'Something went wrong',
+				message: defaultErrorMessage,
 			});
 		}
 	};

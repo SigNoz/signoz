@@ -32,7 +32,6 @@ function ErrorTag({ event }: ErrorTagProps): JSX.Element {
 						key={`${name}${JSON.stringify(attributeMap)}`}
 						defaultActiveKey={[name || attributeMap.event]}
 						expandIconPosition="right"
-						key={name}
 					>
 						<Panel
 							header={name || attributeMap?.event}

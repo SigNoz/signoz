@@ -63,8 +63,17 @@ function Trace({
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
 			selectedTags,
+			order: 'ascending',
 		});
-	}, [selectedTags, selectedFilter, maxTime, minTime]);
+	}, [
+		selectedTags,
+		selectedFilter,
+		maxTime,
+		minTime,
+		getSpansAggregate,
+		spansAggregate.currentPage,
+		spansAggregate.pageSize,
+	]);
 
 	useEffect(() => {
 		getSpans({
@@ -84,28 +93,33 @@ function Trace({
 		selectedTags,
 		maxTime,
 		minTime,
+		isFilterExclude,
+		getSpans,
 	]);
 
 	useEffect(() => {
-		return () => {
+		return (): void => {
 			dispatch({
 				type: RESET_TRACE_FILTER,
 			});
 		};
-	}, []);
+	}, [dispatch]);
 
-	const onClickHandler = useCallback((e) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const onClickHandler = useCallback(
+		(e) => {
+			e.preventDefault();
+			e.stopPropagation();
 
-		history.replace(ROUTES.TRACE);
+			history.replace(ROUTES.TRACE);
 
-		dispatch({
-			type: RESET_TRACE_FILTER,
-		});
+			dispatch({
+				type: RESET_TRACE_FILTER,
+			});
 
-		setIsChanged((state) => !state);
-	}, []);
+			setIsChanged((state) => !state);
+		},
+		[dispatch],
+	);
 
 	return (
 		<>

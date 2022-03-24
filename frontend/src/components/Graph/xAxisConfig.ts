@@ -69,6 +69,37 @@ const TIME_UNITS_CONFIG: IAxisTimeUintConfig[] = [
 ];
 
 /**
+ * Finds the relevant time unit based on the input time stamps (in ms)
+ */
+export const convertTimeRange = (
+	start: number,
+	end: number,
+): IAxisTimeConfig => {
+	const MIN_INTERVALS = 6;
+	const range = end - start;
+	let relevantTimeUnit = TIME_UNITS_CONFIG[1];
+	let stepSize = 1;
+	try {
+		for (let idx = TIME_UNITS_CONFIG.length - 1; idx >= 0; idx -= 1) {
+			const timeUnit = TIME_UNITS_CONFIG[idx];
+			const units = range * timeUnit.multiplier;
+			const steps = units / MIN_INTERVALS;
+			if (steps >= 1) {
+				relevantTimeUnit = timeUnit;
+				stepSize = steps;
+				break;
+			}
+		}
+	} catch (error) {
+		console.error(error);
+	}
+	return {
+		unitName: relevantTimeUnit.unitName,
+		stepSize: Math.floor(stepSize) || 1,
+	};
+};
+
+/**
  * Accepts Chart.js data's data-structure and returns the relevant time unit for the axis based on the range of the data.
  */
 export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
@@ -77,10 +108,18 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 	try {
 		let minTime = Number.POSITIVE_INFINITY;
 		let maxTime = Number.NEGATIVE_INFINITY;
-		data?.labels?.forEach((timeStamp: string | number): void => {
-			if (typeof timeStamp === 'string') timeStamp = Date.parse(timeStamp);
-			minTime = Math.min(timeStamp, minTime);
-			maxTime = Math.max(timeStamp, maxTime);
+		data?.labels?.forEach((timeStamp: unknown): void => {
+			const getTimeStamp = (time: string | number): Date | number | string => {
+				if (typeof timeStamp === 'string') {
+					return Date.parse(timeStamp);
+				}
+
+				return time;
+			};
+			const time = getTimeStamp(timeStamp as string | number);
+
+			minTime = Math.min(parseInt(time.toString(), 10), minTime);
+			maxTime = Math.max(parseInt(time.toString(), 10), maxTime);
 		});
 
 		localTime = {
@@ -112,35 +151,4 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 	}, [globalTime, localTime]);
 
 	return convertTimeRange(minTime, maxTime);
-};
-
-/**
- * Finds the relevant time unit based on the input time stamps (in ms)
- */
-export const convertTimeRange = (
-	start: number,
-	end: number,
-): IAxisTimeConfig => {
-	const MIN_INTERVALS = 6;
-	const range = end - start;
-	let relevantTimeUnit = TIME_UNITS_CONFIG[1];
-	let stepSize = 1;
-	try {
-		for (let idx = TIME_UNITS_CONFIG.length - 1; idx >= 0; idx--) {
-			const timeUnit = TIME_UNITS_CONFIG[idx];
-			const units = range * timeUnit.multiplier;
-			const steps = units / MIN_INTERVALS;
-			if (steps >= 1) {
-				relevantTimeUnit = timeUnit;
-				stepSize = steps;
-				break;
-			}
-		}
-	} catch (error) {
-		console.error(error);
-	}
-	return {
-		unitName: relevantTimeUnit.unitName,
-		stepSize: Math.floor(stepSize) || 1,
-	};
 };

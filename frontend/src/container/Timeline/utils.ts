@@ -1,5 +1,5 @@
 import {
-	INTERVAL_UNITS,
+	IIntervalUnit,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
 import { isEqual } from 'lodash-es';
@@ -7,9 +7,14 @@ import { toFixed } from 'utils/toFixed';
 
 import { Interval } from './types';
 
+type TMetaDataType = Record<string, never>;
+
 export const getIntervalSpread = ({
 	localTraceMetaData,
 	globalTraceMetadata,
+}: {
+	localTraceMetaData: TMetaDataType;
+	globalTraceMetadata: TMetaDataType;
 }): {
 	baseInterval: number;
 	baseSpread: number;
@@ -46,6 +51,11 @@ export const getIntervals = ({
 	baseSpread,
 	intervalSpreadNormalized,
 	intervalUnit,
+}: {
+	baseInterval: number;
+	baseSpread: number;
+	intervalSpreadNormalized: number;
+	intervalUnit: IIntervalUnit;
 }): Interval[] => {
 	const intervals: Interval[] = [
 		{
@@ -60,21 +70,21 @@ export const getIntervals = ({
 	let elapsedIntervals = 0;
 
 	while (tempBaseSpread && intervals.length < 20) {
-		let interval_time;
+		let intervalTime;
 		if (tempBaseSpread <= 1.5 * intervalSpreadNormalized) {
-			interval_time = elapsedIntervals + tempBaseSpread;
+			intervalTime = elapsedIntervals + tempBaseSpread;
 			tempBaseSpread = 0;
 		} else {
-			interval_time = elapsedIntervals + intervalSpreadNormalized;
+			intervalTime = elapsedIntervals + intervalSpreadNormalized;
 			tempBaseSpread -= intervalSpreadNormalized;
 		}
-		elapsedIntervals = interval_time;
+		elapsedIntervals = intervalTime;
 		const interval: Interval = {
 			label: `${toFixed(
-				resolveTimeFromInterval(interval_time + baseInterval, intervalUnit),
+				resolveTimeFromInterval(intervalTime + baseInterval, intervalUnit),
 				2,
 			)}${intervalUnit.name}`,
-			percentage: (interval_time / baseSpread) * 100,
+			percentage: (intervalTime / baseSpread) * 100,
 		};
 		intervals.push(interval);
 	}

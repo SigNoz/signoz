@@ -7,10 +7,12 @@ import { generatePath } from 'react-router-dom';
 import { Data } from '..';
 
 function Name(name: Data['name'], data: Data): JSX.Element {
-	const onClickHandler = () => {
+	const onClickHandler = (): void => {
+		const { id: DashboardId } = data;
+
 		history.push(
 			generatePath(ROUTES.DASHBOARD, {
-				dashboardId: data.id,
+				dashboardId: DashboardId,
 			}),
 		);
 	};

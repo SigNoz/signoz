@@ -6,8 +6,8 @@ import ROUTES from 'constants/routes';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { servicesListItem } from 'store/actions/MetricsActions/metricsInterfaces';
 import { AppState } from 'store/reducers';
+import { ServicesList } from 'types/api/metrics/getService';
 import MetricReducer from 'types/reducer/metrics';
 
 import SkipBoardModal from './SkipOnBoardModal';
@@ -25,10 +25,6 @@ function Metrics(): JSX.Element {
 	const onContinueClick = (): void => {
 		localStorageSet(SKIP_ONBOARDING, 'true');
 		setSkipOnboarding(true);
-	};
-
-	const onClickHandler = (to: string): void => {
-		window.open(to, '_blank');
 	};
 
 	if (
@@ -88,6 +84,6 @@ function Metrics(): JSX.Element {
 	);
 }
 
-type DataProps = servicesListItem;
+type DataProps = ServicesList;
 
 export default Metrics;

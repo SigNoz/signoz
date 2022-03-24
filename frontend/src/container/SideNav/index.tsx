@@ -3,7 +3,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import setTheme from 'lib/theme/setTheme';
+import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -36,10 +36,10 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const { pathname } = useLocation();
 
 	const toggleTheme = useCallback(() => {
-		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
+		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
 		setTheme(preMode);
 
-		const id: appMode = preMode;
+		const id: AppMode = preMode;
 		const { head } = document;
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
@@ -114,8 +114,6 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		</Sider>
 	);
 }
-
-type appMode = 'darkMode' | 'lightMode';
 
 interface DispatchProps {
 	toggleDarkMode: () => void;

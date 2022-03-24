@@ -5,8 +5,7 @@ import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router';
-import { generatePath } from 'react-router-dom';
+import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
@@ -30,7 +29,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
 import RightContainer from './RightContainer';
-import timeItems, { timePreferance } from './RightContainer/timeItems';
+import TimeItems, { timePreferance } from './RightContainer/timeItems';
 import {
 	ButtonContainer,
 	Container,
@@ -91,7 +90,7 @@ function NewWidget({
 
 	const getSelectedTime = useCallback(
 		() =>
-			timeItems.find(
+			TimeItems.find(
 				(e) => e.enum === (selectedWidget?.timePreferance || 'GLOBAL_TIME'),
 			),
 		[selectedWidget],

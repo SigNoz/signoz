@@ -49,7 +49,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
 		const tree = getSortedData(treeData);
-		return getSpanTreeMetadata(tree, spanServiceColors);
+		// Note: Handle undefined
+		/*eslint-disable */
+		return getSpanTreeMetadata(tree as ITraceTree, spanServiceColors);
+		/* eslint-enable */
 	}, [treeData, spanServiceColors]);
 
 	const [globalTraceMetadata] = useState<Record<string, number>>({
@@ -73,7 +76,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	// 	setSearchSpanString(value);
 	// 	setTreeData(spanToTreeUtil(response[0].events));
 	// };
-	const onFocusSelectedSpanHandler = () => {
+	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 		if (treeNode) {
 			setTreeData(treeNode);
