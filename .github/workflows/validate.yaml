@@ -1,4 +1,4 @@
-name: validate
+name: Validate
 on: pull_request
 
 jobs:
@@ -18,6 +18,9 @@ jobs:
           working-directory: ./frontend
       - name: ESLint
         run: yarn run lint
+        working-directory: ./frontend
+      - name: TSC
+        run: yarn tsc
         working-directory: ./frontend
       - name: Build - Webpack
         run: yarn run build
