@@ -1643,10 +1643,10 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	if len(queryParams.Order) != 0 {
 		if queryParams.Order == "descending" {
-			query = query + "  ORDER BY timestamp DESC"
+			query = query + "  ORDER BY durationNano DESC"
 		}
 		if queryParams.Order == "ascending" {
-			query = query + "  ORDER BY timestamp ASC"
+			query = query + "  ORDER BY durationNano ASC"
 		}
 	}
 	if queryParams.Limit > 0 {
