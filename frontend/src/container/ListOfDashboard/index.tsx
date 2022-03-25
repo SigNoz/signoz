@@ -157,7 +157,7 @@ function ListOfAllDashboard(): JSX.Element {
 								<TextToolTip
 									{...{
 										text: `More details on how to create dashboards`,
-										url: 'https://signoz.io/docs/userguide/dashboards',
+										url: 'https://signoz.io/docs/userguide/metrics-dashboard',
 									}}
 								/>
 
