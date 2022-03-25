@@ -173,6 +173,8 @@ function TraceFlameGraph(props: {
 				onSpanSelect={onSpanSelect}
 				hoveredSpanId={hoveredSpanId}
 				selectedSpanId={selectedSpanId}
+				level={0}
+				parentLeftOffset={0}
 			/>
 		</TraceFlameGraphContainer>
 	);

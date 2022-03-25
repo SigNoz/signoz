@@ -1,3 +1,4 @@
+import { ITraceMetaData } from 'container/GantChart';
 import {
 	IIntervalUnit,
 	resolveTimeFromInterval,
@@ -7,14 +8,12 @@ import { toFixed } from 'utils/toFixed';
 
 import { Interval } from './types';
 
-type TMetaDataType = Record<string, never>;
-
 export const getIntervalSpread = ({
 	localTraceMetaData,
 	globalTraceMetadata,
 }: {
-	localTraceMetaData: TMetaDataType;
-	globalTraceMetadata: TMetaDataType;
+	localTraceMetaData: ITraceMetaData;
+	globalTraceMetadata: ITraceMetaData;
 }): {
 	baseInterval: number;
 	baseSpread: number;

@@ -1,4 +1,5 @@
 import { StyledDiv } from 'components/Styled';
+import { ITraceMetaData } from 'container/GantChart';
 import { IIntervalUnit, INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useEffect, useRef, useState } from 'react';
@@ -74,10 +75,9 @@ function Timeline({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<TimelineInterval
-							transform={`translate(${
-								TimelineHSpacing +
+							transform={`translate(${TimelineHSpacing +
 								(interval.percentage * (width - 2 * TimelineHSpacing)) / 100
-							},0)`}
+								},0)`}
 							key={`${interval.label + interval.percentage + index}`}
 						>
 							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
@@ -104,7 +104,7 @@ interface TimelineProps {
 		totalSpans: number;
 		levels: number;
 	};
-	globalTraceMetadata: Record<string, number>;
+	globalTraceMetadata: ITraceMetaData;
 	setIntervalUnit: React.Dispatch<React.SetStateAction<IIntervalUnit>>;
 }
 
