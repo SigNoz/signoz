@@ -357,6 +357,7 @@ const dashboard = (
 
 		case SAVE_SETTING_TO_PANEL_SUCCESS: {
 			const selectedDashboard = action.payload;
+
 			return {
 				...state,
 				dashboards: [
