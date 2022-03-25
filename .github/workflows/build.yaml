@@ -42,6 +42,12 @@ jobs:
         run: cd frontend && yarn install
       - name: Run ESLint
         run: cd frontend && npm run lint
+      - name: TSC
+        run: yarn tsc
+        working-directory: ./frontend
+      - name: Build - Webpack
+        run: yarn run build
+        working-directory: ./frontend
       - name: Build frontend docker image
         shell: bash
         run: |
