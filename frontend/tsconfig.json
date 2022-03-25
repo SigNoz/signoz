@@ -19,7 +19,8 @@
 		"noEmit": true,
 		"baseUrl": "./src",
 		"downlevelIteration": true,
-		"plugins": [{ "name": "typescript-plugin-css-modules" }]
+		"plugins": [{ "name": "typescript-plugin-css-modules" }],
+		"suppressImplicitAnyIndexErrors": true
 	},
 	"exclude": ["node_modules"],
 	"include": ["./src"]

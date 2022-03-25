@@ -9,7 +9,7 @@ import {
 	StyledTypography,
 } from 'components/Styled';
 import * as StyledStyles from 'components/Styled/styles';
-import GanttChart from 'container/GantChart';
+import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
@@ -55,7 +55,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		/* eslint-enable */
 	}, [treeData, spanServiceColors]);
 
-	const [globalTraceMetadata] = useState<Record<string, number>>({
+	const [globalTraceMetadata] = useState<ITraceMetaData>({
 		...traceMetaData,
 	});
 
@@ -129,7 +129,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
 							traceMetaData={traceMetaData}
-							intervalUnit={intervalUnit}
 							setIntervalUnit={setIntervalUnit}
 						/>
 					</StyledCol>
