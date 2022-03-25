@@ -69,6 +69,8 @@ export const getChartDataforGroupBy = (
 	const allGroupBy = Object.keys(items).map((e) => items[e].groupBy);
 
 	keys(allGroupBy).forEach((e: string): void => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		const { length } = keys(allGroupBy[e]);
 
 		if (length >= max) {

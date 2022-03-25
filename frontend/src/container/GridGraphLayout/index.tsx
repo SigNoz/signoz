@@ -154,7 +154,8 @@ function GridGraph(): JSX.Element {
 					});
 				} catch (error) {
 					notification.error({
-						message: error.toString() || 'Something went wrong',
+						message:
+							error instanceof Error ? error.toString() : 'Something went wrong',
 					});
 				}
 			}

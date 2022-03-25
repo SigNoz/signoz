@@ -74,7 +74,12 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 		);
 	}
 
-	return <NewWidget selectedGraph={selectedGraph} />;
+	return (
+		<NewWidget
+			yAxisUnit={selectedWidget.yAxisUnit}
+			selectedGraph={selectedGraph}
+		/>
+	);
 }
 
 export interface DashboardWidgetPageParams {
