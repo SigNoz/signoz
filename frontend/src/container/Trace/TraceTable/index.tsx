@@ -99,7 +99,8 @@ function TraceTable(): JSX.Element {
 					<Typography>
 						{`${dayjs
 							.duration({ milliseconds: value / 1000000 })
-							.asMilliseconds()} ms`}
+							.asMilliseconds()
+							.toFixed(2)} ms`}
 					</Typography>
 				</Link>
 			),
