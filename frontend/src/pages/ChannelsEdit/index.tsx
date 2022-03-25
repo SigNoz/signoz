@@ -38,21 +38,21 @@ function ChannelsEdit(): JSX.Element {
 	let channel: SlackChannel & WebhookChannel = { name: '' };
 
 	if (value && 'slack_configs' in value) {
-		const { slackConfig } = value.slack_configs[0];
+		const slackConfig = value.slack_configs[0];
 		channel = slackConfig;
 		type = SlackType;
 	} else if (value && 'webhook_configs' in value) {
-		const { webhookConfig } = value.webhook_configs[0];
+		const webhookConfig = value.webhook_configs[0];
 		channel = webhookConfig;
 		channel.api_url = webhookConfig.url;
 
 		if ('http_config' in webhookConfig) {
-			channel.username = webhookConfig.http_config?.username;
-			channel.password = webhookConfig.http_config?.password;
+			channel.username = webhookConfig.http_config?.basic_auth?.username;
+			channel.password = webhookConfig.http_config?.basic_auth?.password;
 		}
 		type = WebhookType;
 	}
-
+	console.log('channel:', channel);
 	return (
 		<EditAlertChannels
 			{...{
