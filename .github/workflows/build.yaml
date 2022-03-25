@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - develop
+      - main
       - v*
     paths:
       - "pkg/**"
