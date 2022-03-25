@@ -31,6 +31,8 @@ export const GetSpansAggregate = (
 			return;
 		}
 
+		const order = props.order === 'ascending' ? 'ascend' : 'descend';
+
 		try {
 			// triggering loading
 			dispatch({
@@ -43,7 +45,7 @@ export const GetSpansAggregate = (
 						error: false,
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
-						order: props.order || spansAggregate.order,
+						order,
 					},
 				},
 			});
@@ -56,7 +58,7 @@ export const GetSpansAggregate = (
 				offset: props.current * props.pageSize - props.pageSize,
 				selectedTags: props.selectedTags,
 				isFilterExclude: traces.isFilterExclude,
-				order: props.order,
+				order,
 			});
 
 			if (response.statusCode === 200) {
@@ -70,7 +72,7 @@ export const GetSpansAggregate = (
 							error: false,
 							total: response.payload.totalSpans,
 							pageSize: props.pageSize,
-							order: props.order === 'ascending' ? 'ascend' : 'descend',
+							order,
 						},
 					},
 				});
@@ -83,7 +85,7 @@ export const GetSpansAggregate = (
 					traces.filter,
 					traces.isFilterExclude,
 					traces.userSelectedFilter,
-					props.order === 'ascending' ? 'ascend' : 'descend',
+					order,
 				);
 			} else {
 				notification.error({
@@ -100,7 +102,7 @@ export const GetSpansAggregate = (
 							error: true,
 							total: spansAggregate.total,
 							pageSize: props.pageSize,
-							order: props.order === 'ascending' ? 'ascend' : 'descend',
+							order,
 						},
 					},
 				});
@@ -116,7 +118,7 @@ export const GetSpansAggregate = (
 						error: true,
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
-						order: props.order === 'ascending' ? 'ascend' : 'descend',
+						order,
 					},
 				},
 			});

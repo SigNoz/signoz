@@ -94,8 +94,8 @@ function Trace({
 		selectedTags,
 		maxTime,
 		minTime,
-		isFilterExclude,
 		getSpans,
+		isFilterExclude,
 	]);
 
 	useEffect(() => {
