@@ -3,7 +3,7 @@ import Spinner from 'components/Spinner';
 import EditRulesContainer from 'container/EditRules';
 import useFetch from 'hooks/useFetch';
 import React from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { PayloadProps, Props } from 'types/api/alerts/get';
 
 function EditRules(): JSX.Element {
@@ -13,7 +13,7 @@ function EditRules(): JSX.Element {
 		PayloadProps,
 		Props
 	>(get, {
-		id: parseInt(ruleId),
+		id: parseInt(ruleId, 10),
 	});
 
 	if (error) {

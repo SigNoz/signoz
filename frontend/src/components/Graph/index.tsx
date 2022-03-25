@@ -103,6 +103,21 @@ function Graph({
 					legend: {
 						display: false,
 					},
+					tooltip: {
+						callbacks: {
+							label(context) {
+								let label = context.dataset.label || '';
+
+								if (label) {
+									label += ': ';
+								}
+								if (context.parsed.y !== null) {
+									label += getYAxisFormattedValue(context.parsed.y, yAxisUnit);
+								}
+								return label;
+							},
+						},
+					},
 				},
 				layout: {
 					padding: 0,
@@ -140,8 +155,11 @@ function Graph({
 						},
 						ticks: {
 							// Include a dollar sign in the ticks
-							callback(value, index, ticks) {
-								return getYAxisFormattedValue(value, yAxisUnit);
+							callback(value) {
+								return getYAxisFormattedValue(
+									parseInt(value.toString(), 10),
+									yAxisUnit,
+								);
 							},
 						},
 					},
@@ -201,18 +219,25 @@ interface GraphProps {
 	data: Chart['data'];
 	title?: string;
 	isStacked?: boolean;
-	label?: string[];
-	onClickHandler?: graphOnClickHandler;
+	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
 	forceReRender?: boolean | null | number;
 }
 
-export type graphOnClickHandler = (
+export type GraphOnClickHandler = (
 	event: ChartEvent,
 	elements: ActiveElement[],
 	chart: Chart,
 	data: ChartData,
 ) => void;
 
+Graph.defaultProps = {
+	animate: undefined,
+	title: undefined,
+	isStacked: undefined,
+	onClickHandler: undefined,
+	yAxisUnit: undefined,
+	forceReRender: undefined,
+};
 export default Graph;

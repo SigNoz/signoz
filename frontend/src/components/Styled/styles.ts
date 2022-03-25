@@ -1,6 +1,7 @@
 import { css, FlattenSimpleInterpolation } from 'styled-components';
 
-const cssProprty = (key: string, value): FlattenSimpleInterpolation =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const cssProperty = (key: any, value: any): FlattenSimpleInterpolation =>
 	key &&
 	value &&
 	css`
@@ -15,8 +16,8 @@ export const Flex = ({
 	flexDirection,
 	flex,
 }: IFlexProps): FlattenSimpleInterpolation => css`
-	${cssProprty('flex-direction', flexDirection)}
-	${cssProprty('flex', flex)}
+	${cssProperty('flex-direction', flexDirection)}
+	${cssProperty('flex', flex)}
 `;
 
 interface IDisplayProps {
@@ -25,7 +26,7 @@ interface IDisplayProps {
 export const Display = ({
 	display,
 }: IDisplayProps): FlattenSimpleInterpolation => css`
-	${cssProprty('display', display)}
+	${cssProperty('display', display)}
 `;
 
 interface ISpacingProps {
@@ -36,6 +37,6 @@ export const Spacing = ({
 	margin,
 	padding,
 }: ISpacingProps): FlattenSimpleInterpolation => css`
-	${cssProprty('margin', margin)}
-	${cssProprty('padding', padding)}
+	${cssProperty('margin', margin)}
+	${cssProperty('padding', padding)}
 `;

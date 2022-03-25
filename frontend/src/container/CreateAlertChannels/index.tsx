@@ -182,4 +182,8 @@ interface CreateAlertChannelsProps {
 	preType: ChannelType;
 }
 
+CreateAlertChannels.defaultProps = {
+	preType: undefined,
+};
+
 export default CreateAlertChannels;

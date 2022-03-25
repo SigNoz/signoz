@@ -9,7 +9,7 @@ import {
 	StyledTypography,
 } from 'components/Styled';
 import * as StyledStyles from 'components/Styled/styles';
-import GanttChart from 'container/GantChart';
+import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
@@ -49,10 +49,13 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const { treeData: tree, ...traceMetaData } = useMemo(() => {
 		const tree = getSortedData(treeData);
-		return getSpanTreeMetadata(tree, spanServiceColors);
+		// Note: Handle undefined
+		/*eslint-disable */
+		return getSpanTreeMetadata(tree as ITraceTree, spanServiceColors);
+		/* eslint-enable */
 	}, [treeData, spanServiceColors]);
 
-	const [globalTraceMetadata] = useState<Record<string, number>>({
+	const [globalTraceMetadata] = useState<ITraceMetaData>({
 		...traceMetaData,
 	});
 
@@ -73,7 +76,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	// 	setSearchSpanString(value);
 	// 	setTreeData(spanToTreeUtil(response[0].events));
 	// };
-	const onFocusSelectedSpanHandler = () => {
+	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 		if (treeNode) {
 			setTreeData(treeNode);
@@ -126,7 +129,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						<Timeline
 							globalTraceMetadata={globalTraceMetadata}
 							traceMetaData={traceMetaData}
-							intervalUnit={intervalUnit}
 							setIntervalUnit={setIntervalUnit}
 						/>
 					</StyledCol>

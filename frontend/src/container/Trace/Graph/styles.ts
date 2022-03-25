@@ -1,3 +1,4 @@
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import React from 'react';
 import styled, { css } from 'styled-components';
 
@@ -13,7 +14,7 @@ export const Container = styled.div<Props>`
 	overflow: auto;
 	width: 100% !important;
 
-	${({ center }) =>
+	${({ center }): StyledCSS =>
 		center &&
 		css`
 			display: flex;

@@ -29,7 +29,7 @@ interface CustomSubTextProps {
 
 export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 	&&& {
-		background: ${({ isDarkMode }) => (isDarkMode ? '#444' : '#ddd')};
+		background: ${({ isDarkMode }): string => (isDarkMode ? '#444' : '#ddd')};
 		font-size: 12px;
 		padding: 6px 8px;
 		word-break: break-all;

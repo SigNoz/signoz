@@ -84,6 +84,23 @@ module.exports = {
 				tsx: 'never',
 			},
 		],
+		'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+		'jsx-a11y/label-has-associated-control': [
+			'error',
+			{
+				required: {
+					some: ['nesting', 'id'],
+				},
+			},
+		],
+		'jsx-a11y/label-has-for': [
+			'error',
+			{
+				required: {
+					some: ['nesting', 'id'],
+				},
+			},
+		],
 
 		// eslint rules need to remove
 		'no-shadow': 'off',

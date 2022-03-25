@@ -15,7 +15,7 @@ import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
-import { Button } from './styles';
+import { Button, TableContainerCard } from './styles';
 
 function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
@@ -187,7 +187,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								widget={getWidget([
 									{
 										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[2m]))`,
-										legend: 'Request per second',
+										legend: 'Requests',
 									},
 								])}
 								yAxisUnit="reqps"
@@ -222,7 +222,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								widget={getWidget([
 									{
 										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))) < 1000 OR vector(0)`,
-										legend: 'Error Percentage (%)',
+										legend: 'Error Percentage',
 									},
 								])}
 								yAxisUnit="%"
@@ -232,9 +232,9 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<Card>
+					<TableContainerCard>
 						<TopEndpointsTable data={topEndPoints} />
-					</Card>
+					</TableContainerCard>
 				</Col>
 			</Row>
 		</>

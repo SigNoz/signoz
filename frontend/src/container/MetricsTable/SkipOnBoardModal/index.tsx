@@ -22,6 +22,7 @@ function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 					frameBorder="0"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 					allowFullScreen
+					title="youtube_video"
 				/>
 				<div>
 					<Typography>No instrumentation data.</Typography>

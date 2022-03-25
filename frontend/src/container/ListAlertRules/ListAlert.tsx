@@ -8,7 +8,7 @@ import ROUTES from 'constants/routes';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
-import { generatePath } from 'react-router';
+import { generatePath } from 'react-router-dom';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import DeleteAlert from './DeleteAlert';
