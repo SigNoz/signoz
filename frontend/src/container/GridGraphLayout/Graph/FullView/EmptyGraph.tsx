@@ -60,6 +60,7 @@ function EmptyGraph({
 
 	return (
 		<Graph
+			name=""
 			{...{
 				type: 'line',
 				onClickHandler,

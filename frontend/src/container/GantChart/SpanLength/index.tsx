@@ -33,7 +33,7 @@ function SpanLength(props: SpanLengthProps): JSX.Element {
 				leftOffset={leftOffset}
 				width={width}
 			/>
-			<SpanText leftOffset={leftOffset}>{`${toFixed(
+			<SpanText isDarkMode={isDarkMode} leftOffset={leftOffset}>{`${toFixed(
 				resolveTimeFromInterval(inMsCount, intervalUnit),
 				2,
 			)} ${intervalUnit.name}`}</SpanText>

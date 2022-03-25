@@ -19,11 +19,11 @@ function YAxisUnitSelector({
 	fieldLabel,
 }: {
 	defaultValue: string;
-	onSelect: (e: string | undefined) => void;
+	onSelect: React.Dispatch<React.SetStateAction<string>>;
 	fieldLabel: string;
 }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
-		onSelect(findCategoryByName(selectedValue)?.id);
+		onSelect(findCategoryByName(selectedValue)?.id || '');
 	};
 	const options = flattenedCategories.map((options) => ({
 		value: options.name,

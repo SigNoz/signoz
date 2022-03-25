@@ -42,7 +42,8 @@ export const UpdateDashboardTitleDescriptionTags = ({
 			dispatch({
 				type: 'UPDATE_TITLE_DESCRIPTION_TAGS_ERROR',
 				payload: {
-					errorMessage: error.toString() || 'Something went wrong',
+					errorMessage:
+						error instanceof Error ? error.toString() : 'Something went wrong',
 				},
 			});
 		}
