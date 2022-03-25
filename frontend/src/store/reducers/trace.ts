@@ -9,6 +9,7 @@ import {
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
 	UPDATE_SELECTED_TAGS,
+	UPDATE_SPAN_ORDER,
 	UPDATE_SPANS_AGGREGATE,
 	UPDATE_TAG_MODAL_VISIBILITY,
 	UPDATE_TRACE_FILTER,
@@ -86,7 +87,7 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
-					order: order,
+					order,
 				},
 			};
 		}
@@ -199,6 +200,16 @@ const traceReducer = (
 			return {
 				...state,
 				isFilterExclude: action.payload.isFilterExclude,
+			};
+		}
+
+		case UPDATE_SPAN_ORDER: {
+			return {
+				...state,
+				spansAggregate: {
+					...state.spansAggregate,
+					order: action.payload.order,
+				},
 			};
 		}
 

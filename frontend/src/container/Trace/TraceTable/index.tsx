@@ -4,32 +4,30 @@ import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import React from 'react';
-import { connect, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import {
-	GetSpansAggregate,
-	GetSpansAggregateProps,
-} from 'store/actions/trace/getInitialSpansAggregate';
+import { Dispatch } from 'redux';
+import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { UPDATE_SPAN_ORDER } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
 dayjs.extend(duration);
 
-function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
+function TraceTable(): JSX.Element {
 	const {
 		spansAggregate,
 		selectedFilter,
 		selectedTags,
 		filterLoading,
+		userSelectedFilter,
+		filter,
+		isFilterExclude,
+		filterToFetchData,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { loading, total, order: spansAggregateOrder } = spansAggregate;
 
@@ -79,7 +77,6 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 					</Link>
 				);
 			},
-			sortOrder: spansAggregateOrder === 'ascend' ? 'ascend' : 'descend',
 		},
 		{
 			title: 'Service',
@@ -129,15 +126,25 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 		if (!Array.isArray(sort)) {
 			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				getSpansAggregate({
-					maxTime: globalTime.maxTime,
-					minTime: globalTime.minTime,
-					selectedFilter,
-					current: props.current,
-					pageSize: props.pageSize,
-					selectedTags,
-					order: order === 'ascend' ? 'ascending' : 'descending',
+				const spanOrder = order || spansAggregateOrder;
+
+				dispatch({
+					type: UPDATE_SPAN_ORDER,
+					payload: {
+						order: spanOrder,
+					},
 				});
+
+				updateURL(
+					selectedFilter,
+					filterToFetchData,
+					props.current,
+					selectedTags,
+					filter,
+					isFilterExclude,
+					userSelectedFilter,
+					spanOrder,
+				);
 			}
 		}
 	};
@@ -164,16 +171,4 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 	);
 }
 
-interface DispatchProps {
-	getSpansAggregate: (props: GetSpansAggregateProps) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<AppState, unknown, AppActions>,
-): DispatchProps => ({
-	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
-});
-
-type TraceProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(TraceTable);
+export default TraceTable;

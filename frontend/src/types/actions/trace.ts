@@ -25,6 +25,8 @@ export const UPDATE_FILTER_RESPONSE_SELECTED =
 	'UPDATE_FILTER_RESPONSE_SELECTED';
 export const UPDATE_FILTER_EXCLUDE = 'UPDATE_FILTER_EXCLUDE';
 
+export const UPDATE_SPAN_ORDER = 'UPDATE_SPAN_ORDER';
+
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
 	payload: {
@@ -150,6 +152,13 @@ export interface UpdateSpans {
 	};
 }
 
+export interface UpdateSpanOrder {
+	type: typeof UPDATE_SPAN_ORDER;
+	payload: {
+		order: TraceReducer['spansAggregate']['order'];
+	};
+}
+
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter
@@ -167,4 +176,5 @@ export type TraceActions =
 	| UpdateSpans
 	| ResetTraceFilter
 	| UpdateSelected
-	| UpdateFilterExclude;
+	| UpdateFilterExclude
+	| UpdateSpanOrder;
