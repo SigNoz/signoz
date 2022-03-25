@@ -13,7 +13,9 @@
 		"cypress:run": "cypress run",
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
-		"jest:watch": "jest --watch"
+		"jest:watch": "jest --watch",
+		"postinstall": "yarn husky:configure",
+		"husky:configure": "cd .. && husky install frontend/.husky"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -146,9 +148,9 @@
 		"eslint-plugin-react-hooks": "^4.3.0",
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"eslint-plugin-sonarjs": "^0.12.0",
-		"husky": "4.3.8",
+		"husky": "^7.0.4",
 		"less-plugin-npm-import": "^2.1.0",
-		"lint-staged": "10.5.3",
+		"lint-staged": "^12.3.7",
 		"portfinder-sync": "^0.0.2",
 		"prettier": "2.2.1",
 		"react-hot-loader": "^4.13.0",
@@ -156,5 +158,10 @@
 		"typescript-plugin-css-modules": "^3.4.0",
 		"webpack-bundle-analyzer": "^4.5.0",
 		"webpack-cli": "^4.5.0"
+	},
+	"lint-staged": {
+		"*.(js|jsx|ts|tsx)": [
+			"eslint --fix"
+		]
 	}
 }

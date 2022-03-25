@@ -103,6 +103,21 @@ function Graph({
 					legend: {
 						display: false,
 					},
+					tooltip: {
+						callbacks: {
+							label(context) {
+								let label = context.dataset.label || '';
+
+								if (label) {
+									label += ': ';
+								}
+								if (context.parsed.y !== null) {
+									label += getYAxisFormattedValue(context.parsed.y, yAxisUnit);
+								}
+								return label;
+							},
+						},
+					},
 				},
 				layout: {
 					padding: 0,
