@@ -60,58 +60,58 @@ type GetServiceOverviewParams struct {
 	StepSeconds int
 }
 
-type TagQueryV2 struct {
+type TagQuery struct {
 	Key      string
 	Values   []string
 	Operator string
 }
 
 type GetFilteredSpansParams struct {
-	ServiceName []string     `json:"serviceName"`
-	Operation   []string     `json:"operation"`
-	Kind        string       `json:"kind"`
-	Status      []string     `json:"status"`
-	HttpRoute   []string     `json:"httpRoute"`
-	HttpCode    []string     `json:"httpCode"`
-	HttpUrl     []string     `json:"httpUrl"`
-	HttpHost    []string     `json:"httpHost"`
-	HttpMethod  []string     `json:"httpMethod"`
-	Component   []string     `json:"component"`
-	StartStr    string       `json:"start"`
-	EndStr      string       `json:"end"`
-	MinDuration string       `json:"minDuration"`
-	MaxDuration string       `json:"maxDuration"`
-	Limit       int64        `json:"limit"`
-	Order       string       `json:"order"`
-	Offset      int64        `json:"offset"`
-	Tags        []TagQueryV2 `json:"tags"`
-	Exclude     []string     `json:"exclude"`
+	ServiceName []string   `json:"serviceName"`
+	Operation   []string   `json:"operation"`
+	Kind        string     `json:"kind"`
+	Status      []string   `json:"status"`
+	HttpRoute   []string   `json:"httpRoute"`
+	HttpCode    []string   `json:"httpCode"`
+	HttpUrl     []string   `json:"httpUrl"`
+	HttpHost    []string   `json:"httpHost"`
+	HttpMethod  []string   `json:"httpMethod"`
+	Component   []string   `json:"component"`
+	StartStr    string     `json:"start"`
+	EndStr      string     `json:"end"`
+	MinDuration string     `json:"minDuration"`
+	MaxDuration string     `json:"maxDuration"`
+	Limit       int64      `json:"limit"`
+	Order       string     `json:"order"`
+	Offset      int64      `json:"offset"`
+	Tags        []TagQuery `json:"tags"`
+	Exclude     []string   `json:"exclude"`
 	Start       *time.Time
 	End         *time.Time
 }
 
 type GetFilteredSpanAggregatesParams struct {
-	ServiceName       []string     `json:"serviceName"`
-	Operation         []string     `json:"operation"`
-	Kind              string       `json:"kind"`
-	Status            []string     `json:"status"`
-	HttpRoute         []string     `json:"httpRoute"`
-	HttpCode          []string     `json:"httpCode"`
-	HttpUrl           []string     `json:"httpUrl"`
-	HttpHost          []string     `json:"httpHost"`
-	HttpMethod        []string     `json:"httpMethod"`
-	Component         []string     `json:"component"`
-	MinDuration       string       `json:"minDuration"`
-	MaxDuration       string       `json:"maxDuration"`
-	Tags              []TagQueryV2 `json:"tags"`
-	StartStr          string       `json:"start"`
-	EndStr            string       `json:"end"`
-	StepSeconds       int          `json:"step"`
-	Dimension         string       `json:"dimension"`
-	AggregationOption string       `json:"aggregationOption"`
-	GroupBy           string       `json:"groupBy"`
-	Function          string       `json:"function"`
-	Exclude           []string     `json:"exclude"`
+	ServiceName       []string   `json:"serviceName"`
+	Operation         []string   `json:"operation"`
+	Kind              string     `json:"kind"`
+	Status            []string   `json:"status"`
+	HttpRoute         []string   `json:"httpRoute"`
+	HttpCode          []string   `json:"httpCode"`
+	HttpUrl           []string   `json:"httpUrl"`
+	HttpHost          []string   `json:"httpHost"`
+	HttpMethod        []string   `json:"httpMethod"`
+	Component         []string   `json:"component"`
+	MinDuration       string     `json:"minDuration"`
+	MaxDuration       string     `json:"maxDuration"`
+	Tags              []TagQuery `json:"tags"`
+	StartStr          string     `json:"start"`
+	EndStr            string     `json:"end"`
+	StepSeconds       int        `json:"step"`
+	Dimension         string     `json:"dimension"`
+	AggregationOption string     `json:"aggregationOption"`
+	GroupBy           string     `json:"groupBy"`
+	Function          string     `json:"function"`
+	Exclude           []string   `json:"exclude"`
 	Start             *time.Time
 	End               *time.Time
 }

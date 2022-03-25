@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -59,12 +60,16 @@ const (
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
 	maxProgressiveSteps                   = 4
+	charset                               = "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 var (
-	ErrNoOperationsTable = errors.New("no operations table supplied")
-	ErrNoIndexTable      = errors.New("no index table supplied")
-	ErrStartTimeRequired = errors.New("start time is required for search queries")
+	ErrNoOperationsTable            = errors.New("no operations table supplied")
+	ErrNoIndexTable                 = errors.New("no index table supplied")
+	ErrStartTimeRequired            = errors.New("start time is required for search queries")
+	seededRand           *rand.Rand = rand.New(
+		rand.NewSource(time.Now().UnixNano()))
 )
 
 // SpanWriter for reading spans from ClickHouse
@@ -1267,24 +1272,25 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 
 func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
 	for i, e := range params {
+		filterKey := filter + String(5)
 		if i == 0 && i == len(params)-1 {
 			if _, ok := excludeMap[filter]; ok {
-				*query += fmt.Sprintf(" AND NOT (%s=@%s)", filter, filter)
+				*query += fmt.Sprintf(" AND NOT (%s=@%s)", filter, filterKey)
 			} else {
-				*query += fmt.Sprintf(" AND (%s=@%s)", filter, filter)
+				*query += fmt.Sprintf(" AND (%s=@%s)", filter, filterKey)
 			}
 		} else if i == 0 && i != len(params)-1 {
 			if _, ok := excludeMap[filter]; ok {
-				*query += fmt.Sprintf(" AND NOT (%s=@%s", filter, filter)
+				*query += fmt.Sprintf(" AND NOT (%s=@%s", filter, filterKey)
 			} else {
-				*query += fmt.Sprintf(" AND (%s=@%s", filter, filter)
+				*query += fmt.Sprintf(" AND (%s=@%s", filter, filterKey)
 			}
 		} else if i != 0 && i == len(params)-1 {
-			*query += fmt.Sprintf(" OR %s=@%s)", filter, filter)
+			*query += fmt.Sprintf(" OR %s=@%s)", filter, filterKey)
 		} else {
-			*query += fmt.Sprintf(" OR %s=@%s", filter, filter)
+			*query += fmt.Sprintf(" OR %s=@%s", filter, filterKey)
 		}
-		args = append(args, clickhouse.Named(filter, e))
+		args = append(args, clickhouse.Named(filterKey, e))
 	}
 	return args
 }
@@ -1588,43 +1594,9 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
 
-	for _, item := range queryParams.Tags {
-
-		if item.Operator == "in" {
-			for i, value := range item.Values {
-				if i == 0 && i == len(item.Values)-1 {
-					query += " AND has(tags, ?)"
-				} else if i == 0 && i != len(item.Values)-1 {
-					query += " AND (has(tags, ?)"
-				} else if i != 0 && i == len(item.Values)-1 {
-					query += " OR has(tags, ?))"
-				} else {
-					query += " OR has(tags, ?)"
-				}
-				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
-			}
-		} else if item.Operator == "not in" {
-			for i, value := range item.Values {
-				if i == 0 && i == len(item.Values)-1 {
-					query += " AND NOT has(tags, ?)"
-				} else if i == 0 && i != len(item.Values)-1 {
-					query += " AND NOT (has(tags, ?)"
-				} else if i != 0 && i == len(item.Values)-1 {
-					query += " OR has(tags, ?))"
-				} else {
-					query += " OR has(tags, ?)"
-				}
-				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
-			}
-		} else if item.Operator == "isnotnull" {
-			for range item.Values {
-				query = query + " AND has(tagsKeys, ?)"
-				args = append(args, item.Key)
-			}
-		} else {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.Operator)}
-		}
-
+	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+	if errStatus != nil {
+		return nil, errStatus
 	}
 
 	var totalSpans []model.DBResponseTotal
@@ -1677,6 +1649,60 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 
 	return &getFilterSpansResponse, nil
+}
+
+func StringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func String(length int) string {
+	return StringWithCharset(length, charset)
+}
+
+func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *string, args []interface{}) ([]interface{}, *model.ApiError) {
+
+	for _, item := range tags {
+		if item.Operator == "in" {
+			for i, value := range item.Values {
+				tagKey := "inTagKey" + String(5)
+				tagValue := "inTagValue" + String(5)
+				if i == 0 && i == len(item.Values)-1 {
+					*query += fmt.Sprintf(" AND tagMap[@%s] = @%s", tagKey, tagValue)
+				} else if i == 0 && i != len(item.Values)-1 {
+					*query += fmt.Sprintf(" AND (tagMap[@%s] = @%s", tagKey, tagValue)
+				} else if i != 0 && i == len(item.Values)-1 {
+					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s)", tagKey, tagValue)
+				} else {
+					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s", tagKey, tagValue)
+				}
+				args = append(args, clickhouse.Named(tagKey, item.Key))
+				args = append(args, clickhouse.Named(tagValue, value))
+			}
+		} else if item.Operator == "not in" {
+			for i, value := range item.Values {
+				tagKey := "notinTagKey" + String(5)
+				tagValue := "notinTagValue" + String(5)
+				if i == 0 && i == len(item.Values)-1 {
+					*query += fmt.Sprintf(" AND NOT tagMap[@%s] = @%s", tagKey, tagValue)
+				} else if i == 0 && i != len(item.Values)-1 {
+					*query += fmt.Sprintf(" AND NOT (tagMap[@%s] = @%s", tagKey, tagValue)
+				} else if i != 0 && i == len(item.Values)-1 {
+					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s)", tagKey, tagValue)
+				} else {
+					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s", tagKey, tagValue)
+				}
+				args = append(args, clickhouse.Named(tagKey, item.Key))
+				args = append(args, clickhouse.Named(tagValue, value))
+			}
+		} else {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+		}
+	}
+	return args, nil
 }
 
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
@@ -2093,43 +2119,9 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
 
-	for _, item := range queryParams.Tags {
-
-		if item.Operator == "in" {
-			for i, value := range item.Values {
-				if i == 0 && i == len(item.Values)-1 {
-					query += " AND has(tags, ?)"
-				} else if i == 0 && i != len(item.Values)-1 {
-					query += " AND (has(tags, ?)"
-				} else if i != 0 && i == len(item.Values)-1 {
-					query += " OR has(tags, ?))"
-				} else {
-					query += " OR has(tags, ?)"
-				}
-				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
-			}
-		} else if item.Operator == "not in" {
-			for i, value := range item.Values {
-				if i == 0 && i == len(item.Values)-1 {
-					query += " AND NOT has(tags, ?)"
-				} else if i == 0 && i != len(item.Values)-1 {
-					query += " AND NOT (has(tags, ?)"
-				} else if i != 0 && i == len(item.Values)-1 {
-					query += " OR has(tags, ?))"
-				} else {
-					query += " OR has(tags, ?)"
-				}
-				args = append(args, fmt.Sprintf("%s:%s", item.Key, value))
-			}
-		} else if item.Operator == "isnotnull" {
-			for range item.Values {
-				query = query + " AND has(tagsKeys, ?)"
-				args = append(args, item.Key)
-			}
-		} else {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.Operator)}
-		}
-
+	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+	if errStatus != nil {
+		return nil, errStatus
 	}
 
 	if queryParams.GroupBy != "" {
