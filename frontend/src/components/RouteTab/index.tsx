@@ -10,8 +10,10 @@ function RouteTab({
 	onChangeHandler,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
-	const onChange = (activeRoute: string) => {
-		onChangeHandler && onChangeHandler();
+	const onChange = (activeRoute: string): void => {
+		if (onChangeHandler) {
+			onChangeHandler();
+		}
 
 		const selectedRoute = routes.find((e) => e.name === activeRoute);
 
@@ -25,6 +27,7 @@ function RouteTab({
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={activeKey}
+			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
 		>
 			{routes.map(
@@ -47,5 +50,9 @@ interface RouteTabProps {
 	activeKey: TabsProps['activeKey'];
 	onChangeHandler?: VoidFunction;
 }
+
+RouteTab.defaultProps = {
+	onChangeHandler: undefined,
+};
 
 export default RouteTab;

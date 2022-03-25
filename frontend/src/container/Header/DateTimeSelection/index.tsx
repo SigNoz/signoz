@@ -1,12 +1,12 @@
 import { Button, Select as DefaultSelect } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
-import { LOCAL_STORAGE } from 'constants/localStorage';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
 import getTimeString from 'lib/getTimeString';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
@@ -26,7 +26,7 @@ function DateTimeSelection({
 	updateTimeInterval,
 	globalTimeLoading,
 }: Props): JSX.Element {
-	const [form_dtselector] = Form.useForm();
+	const [formSelector] = Form.useForm();
 
 	const params = new URLSearchParams(location.search);
 	const searchStartTime = params.get('startTime');
@@ -72,10 +72,27 @@ function DateTimeSelection({
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const getInputLabel = (
+		startTime?: Dayjs,
+		endTime?: Dayjs,
+		timeInterval: Time = '15min',
+	): string | Time => {
+		if (startTime && endTime && timeInterval === 'custom') {
+			const format = 'YYYY/MM/DD HH:mm';
+
+			const startString = startTime.format(format);
+			const endString = endTime.format(format);
+
+			return `${startString} - ${endString}`;
+		}
+
+		return timeInterval;
+	};
+
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
 
-		const routes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
 		if (routes !== null) {
 			const routesObject = JSON.parse(routes || '{}');
@@ -94,7 +111,7 @@ function DateTimeSelection({
 	);
 
 	const updateLocalStorageForRoutes = (value: Time): void => {
-		const preRoutes = getLocalStorageKey(LOCAL_STORAGE.METRICS_TIME_IN_DURATION);
+		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
 			const preRoutesObject = JSON.parse(preRoutes);
 
@@ -104,44 +121,10 @@ function DateTimeSelection({
 			preRoute[location.pathname] = value;
 
 			setLocalStorageKey(
-				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+				LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 				JSON.stringify(preRoute),
 			);
 		}
-	};
-
-	const onSelectHandler = (value: Time): void => {
-		if (value !== 'custom') {
-			updateTimeInterval(value);
-			const selectedLabel = getInputLabel(undefined, undefined, value);
-			setSelectedTimeInterval(selectedLabel as Time);
-			updateLocalStorageForRoutes(value);
-		} else {
-			setRefreshButtonHidden(true);
-			setCustomDTPickerVisible(true);
-		}
-	};
-
-	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTimeInterval);
-		onLastRefreshHandler();
-	};
-
-	const getInputLabel = (
-		startTime?: Dayjs,
-		endTime?: Dayjs,
-		timeInterval: Time = '15min',
-	): string | Time => {
-		if (startTime && endTime && timeInterval === 'custom') {
-			const format = 'YYYY/MM/DD HH:mm';
-
-			const startString = startTime.format(format);
-			const endString = endTime.format(format);
-
-			return `${startString} - ${endString}`;
-		}
-
-		return timeInterval;
 	};
 
 	const onLastRefreshHandler = useCallback(() => {
@@ -177,6 +160,23 @@ function DateTimeSelection({
 		return `Last refresh - ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTimeInterval]);
 
+	const onSelectHandler = (value: Time): void => {
+		if (value !== 'custom') {
+			updateTimeInterval(value);
+			const selectedLabel = getInputLabel(undefined, undefined, value);
+			setSelectedTimeInterval(selectedLabel as Time);
+			updateLocalStorageForRoutes(value);
+		} else {
+			setRefreshButtonHidden(true);
+			setCustomDTPickerVisible(true);
+		}
+	};
+
+	const onRefreshHandler = (): void => {
+		onSelectHandler(selectedTimeInterval);
+		onLastRefreshHandler();
+	};
+
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
@@ -199,12 +199,12 @@ function DateTimeSelection({
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
 		const metricsTimeDuration = getLocalStorageKey(
-			LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+			LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 		);
 
 		if (metricsTimeDuration === null) {
 			setLocalStorageKey(
-				LOCAL_STORAGE.METRICS_TIME_IN_DURATION,
+				LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 				JSON.stringify({}),
 			);
 		}
@@ -252,12 +252,12 @@ function DateTimeSelection({
 	return (
 		<Container>
 			<Form
-				form={form_dtselector}
+				form={formSelector}
 				layout="inline"
 				initialValues={{ interval: selectedTime }}
 			>
 				<DefaultSelect
-					onSelect={(value): void => onSelectHandler(value as Time)}
+					onSelect={(value: unknown): void => onSelectHandler(value as Time)}
 					value={getInputLabel(startTime, endTime, selectedTime)}
 					data-testid="dropDown"
 				>

@@ -46,6 +46,7 @@ export const SelectedTraceFilter = (props: {
 			traces.selectedTags,
 			traces.filter,
 			traces.isFilterExclude,
+			traces.userSelectedFilter,
 		);
 	};
 };

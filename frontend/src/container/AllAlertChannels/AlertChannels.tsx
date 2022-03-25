@@ -4,7 +4,7 @@ import { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
-import { generatePath } from 'react-router';
+import { generatePath } from 'react-router-dom';
 import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
 import Delete from './Delete';

@@ -69,8 +69,9 @@ build-push-query-service:
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64
-	--build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker buildx build --file Dockerfile --progress plane --no-cache \
+	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) \
+	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Steps to build and push docker image of flattener
 .PHONY: build-flattener-amd64  build-push-flattener
@@ -89,7 +90,8 @@ build-push-flattener:
 	@echo "--> Building and pushing flattener docker image"
 	@echo "------------------"
 	@cd $(FLATTENER_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/arm64,linux/amd64
+	docker buildx build --file Dockerfile --progress plane \
+	--no-cache --push --platform linux/arm64,linux/amd64 \
 	--tag $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:

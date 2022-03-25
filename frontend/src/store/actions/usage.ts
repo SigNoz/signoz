@@ -4,14 +4,14 @@ import { toUTCEpoch } from 'utils/timeUtils';
 
 import { ActionTypes } from './types';
 
-export interface usageDataItem {
+export interface UsageDataItem {
 	timestamp: number;
 	count: number;
 }
 
-export interface getUsageDataAction {
+export interface GetUsageDataAction {
 	type: ActionTypes.getUsageData;
-	payload: usageDataItem[];
+	payload: UsageDataItem[];
 }
 
 export const getUsageData = (
@@ -21,13 +21,13 @@ export const getUsageData = (
 	service: string,
 ) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const request_string = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
+		const requesString = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
 			maxTime,
 		)}&step=${step}&service=${service || ''}`;
 		// Step can only be multiple of 3600
-		const response = await api.get<usageDataItem[]>(request_string);
+		const response = await api.get<UsageDataItem[]>(requesString);
 
-		dispatch<getUsageDataAction>({
+		dispatch<GetUsageDataAction>({
 			type: ActionTypes.getUsageData,
 			payload: response.data,
 			// PNOTE - response.data in the axios response has the actual API response

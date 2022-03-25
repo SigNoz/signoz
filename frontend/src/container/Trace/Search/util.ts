@@ -20,7 +20,9 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 			isError = true;
 		}
 
-		const splitBy = isNotInPresent ? 'not in' : isInPresent ? 'in' : '';
+		const isPresentSplit = isInPresent ? 'in' : '';
+
+		const splitBy = isNotInPresent ? 'not in' : isPresentSplit;
 
 		if (splitBy.length === 0) {
 			isError = true;

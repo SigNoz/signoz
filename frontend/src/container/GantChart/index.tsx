@@ -26,13 +26,13 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, spanId));
-	}, [spanId]);
+	}, [spanId, data]);
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, activeSelectedId));
-	}, [activeSelectedId]);
+	}, [activeSelectedId, data]);
 
-	const handleCollapse = () => {
+	const handleCollapse = (): void => {
 		setIsExpandAll((prev) => !prev);
 	};
 	return (
@@ -50,6 +50,7 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 						activeSpanPath={activeSpanPath}
 						setActiveHoverId={setActiveHoverId}
 						key={data.id}
+						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...{
 							...data,
 							globalSpread,

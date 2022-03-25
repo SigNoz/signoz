@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { errorColor } from 'lib/getRandomColor';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 /**
@@ -16,7 +17,7 @@ export const getSpanTreeMetadata = (
 		if (!treeNode) {
 			return;
 		}
-		totalSpans++;
+		totalSpans += 1;
 		levels = Math.max(levels, level);
 		const { startTime } = treeNode;
 		const endTime = startTime + treeNode.value / 1e6;
@@ -24,10 +25,11 @@ export const getSpanTreeMetadata = (
 		globalEnd = Math.max(globalEnd, endTime);
 		if (treeNode.hasError) {
 			treeNode.serviceColour = errorColor;
-		} else treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
-		for (const childNode of treeNode.children) {
-			traverse(childNode, level + 1);
 		}
+		treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
+		treeNode.children.forEach((childNode) => {
+			traverse(childNode, level + 1);
+		});
 	};
 	traverse(treeData, 1);
 

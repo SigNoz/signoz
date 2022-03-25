@@ -54,7 +54,7 @@ function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
 					/>
 				</NoTableContainer>
 			) : (
-				<>
+				<div>
 					{selectedFilter.length !== 0 && selectedGroup.length === 0 ? (
 						<NoTableContainer>
 							<NoFilterTable
@@ -71,7 +71,7 @@ function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
 							}}
 						/>
 					)}
-				</>
+				</div>
 			)}
 		</div>
 	);

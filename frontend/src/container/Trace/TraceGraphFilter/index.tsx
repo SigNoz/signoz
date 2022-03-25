@@ -1,5 +1,4 @@
-import { SelectProps, Space } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { Space } from 'antd';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -23,42 +22,43 @@ function TraceGraphFilter(): JSX.Element {
 	>((state) => state.traces);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const onClickSelectedFunctionHandler: SelectProps<SelectValue>['onChange'] = (
-		ev,
-	) => {
-		const selected = functions.find((e) => e.key === ev);
-		if (selected) {
-			dispatch({
-				type: UPDATE_SELECTED_FUNCTION,
-				payload: {
-					selectedFunction: selected.key,
-					yAxisUnit: selected.yAxisUnit,
-				},
-			});
+	const onClickSelectedFunctionHandler = (ev: unknown): void => {
+		if (typeof ev === 'string') {
+			const selected = functions.find((e) => e.key === ev);
+			if (selected) {
+				dispatch({
+					type: UPDATE_SELECTED_FUNCTION,
+					payload: {
+						selectedFunction: selected.key,
+						yAxisUnit: selected.yAxisUnit,
+					},
+				});
+			}
 		}
 	};
 
-	const onClickSelectedGroupByHandler: SelectProps<SelectValue>['onChange'] = (
-		ev,
-	) => {
-		const selected = groupBy.find((e) => e.key === ev);
-		if (selected) {
-			dispatch({
-				type: UPDATE_SELECTED_GROUP_BY,
-				payload: {
-					selectedGroupBy: selected.key,
-				},
-			});
+	const onClickSelectedGroupByHandler = (ev: unknown): void => {
+		if (typeof ev === 'string') {
+			const selected = groupBy.find((e) => e.key === ev);
+			if (selected) {
+				dispatch({
+					type: UPDATE_SELECTED_GROUP_BY,
+					payload: {
+						selectedGroupBy: selected.key,
+					},
+				});
+			}
 		}
 	};
 
 	return (
 		<Space>
-			<label>Function</label>
+			<label htmlFor="selectedFunction">Function</label>
 
 			<SelectComponent
 				dropdownMatchSelectWidth
 				data-testid="selectedFunction"
+				id="selectedFunction"
 				value={functions.find((e) => selectedFunction === e.key)?.displayValue}
 				onChange={onClickSelectedFunctionHandler}
 			>
@@ -69,9 +69,10 @@ function TraceGraphFilter(): JSX.Element {
 				))}
 			</SelectComponent>
 
-			<label>Group By</label>
+			<label htmlFor="selectedGroupBy">Group By</label>
 			<SelectComponent
 				dropdownMatchSelectWidth
+				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
 				value={groupBy.find((e) => selectedGroupBy === e.key)?.displayValue}
 				onChange={onClickSelectedGroupByHandler}

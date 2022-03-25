@@ -1,13 +1,12 @@
+/* eslint-disable  */
+//@ts-nocheck
+
 import Spinner from 'components/Spinner';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import {
-	getDetailedServiceMapItems,
-	getServiceMapItems,
-	serviceMapStore,
-} from 'store/actions';
+import { getDetailedServiceMapItems, getServiceMapItems } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';

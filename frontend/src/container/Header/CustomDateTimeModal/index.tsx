@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-bind */
 import { Modal } from 'antd';
 import DatePicker from 'components/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
@@ -22,10 +23,7 @@ function CustomDateTimeModal({
 	}
 
 	function disabledDate(current: Dayjs): boolean {
-		if (current > dayjs()) {
-			return true;
-		}
-		return false;
+		return current > dayjs();
 	}
 
 	return (
