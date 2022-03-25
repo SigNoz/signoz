@@ -77,21 +77,14 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
-				updatedFilterData = [...filterToFetchData, PanelName];
-
-				if (getPreUserSelected.get(PanelName)) {
-					getPreUserSelected.forEach((value, key) => {
-						if (key !== PanelName) {
-							getPreUserSelected.set(key, value);
-						}
-					});
-				} else {
+				if (!getPreUserSelected.has(PanelName)) {
 					getPreUserSelected.set(
 						PanelName,
 						Object.keys(updatedFilter.get(PanelName) || []),
 					);
 				}
 
+				updatedFilterData = [...filterToFetchData, PanelName];
 				filter.forEach((value, key) => {
 					if (key !== PanelName) {
 						updatedFilter.set(key, value);
@@ -196,13 +189,13 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			});
 
 			if (response.statusCode === 200 && response.payload) {
-				const getUpatedFilter = getFilter(response.payload);
+				const getUpdatedFilter = getFilter(response.payload);
 
 				dispatch({
 					type: UPDATE_ALL_FILTERS,
 					payload: {
 						current: spansAggregate.currentPage,
-						filter: getUpatedFilter,
+						filter: getUpdatedFilter,
 						filterToFetchData,
 						selectedFilter: updatedFilter,
 						selectedTags,
@@ -217,7 +210,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
-					getUpatedFilter,
+					getUpdatedFilter,
 					postIsFilterExclude,
 					preUserSelected,
 					spansAggregate.order,

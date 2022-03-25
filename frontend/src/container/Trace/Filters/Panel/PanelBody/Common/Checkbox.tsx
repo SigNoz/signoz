@@ -93,15 +93,15 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
-				updatedFilter.forEach((value, key) => {
-					if (key !== 'duration' && name !== key) {
-						preUserSelectedMap.set(key, Object.keys(value));
-					}
+				// updatedFilter.forEach((value, key) => {
+				// 	if (key !== 'duration' && name !== key) {
+				// 		preUserSelectedMap.set(key, Object.keys(value));
+				// 	}
 
-					if (key === 'duration') {
-						newSelectedMap.set('duration', [value.maxDuration, value.minDuration]);
-					}
-				});
+				// 	if (key === 'duration') {
+				// 		newSelectedMap.set('duration', [value.maxDuration, value.minDuration]);
+				// 	}
+				// });
 
 				updatedFilter.set(name, {
 					[`${keyValue}`]: '-1',
