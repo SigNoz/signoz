@@ -31,7 +31,7 @@ function FormAlertChannels({
 	initialValue,
 	nameDisable = false,
 }: FormAlertChannelsProps): JSX.Element {
-	const renderSettings = () => {
+	const renderSettings = (): React.ReactElement => {
 		switch (type) {
 			case SlackType:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;

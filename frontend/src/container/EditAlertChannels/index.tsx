@@ -68,9 +68,9 @@ function EditAlertChannels({
 
 	const onWebhookEditHandler = useCallback(async () => {
 		setSavingState(true);
-		const { api_url, name, username, password } = selectedConfig;
+		const { name, username, password } = selectedConfig;
 
-		const showError = (msg: string) => {
+		const showError = (msg: string): void => {
 			notifications.error({
 				message: 'Error',
 				description: msg,
@@ -78,7 +78,7 @@ function EditAlertChannels({
 			setSavingState(false);
 		};
 
-		if (api_url == '') {
+		if (selectedConfig?.api_url === '') {
 			showError('Webhook URL is mandatory');
 			return;
 		}
@@ -89,11 +89,11 @@ function EditAlertChannels({
 		}
 
 		const response = await editWebhookApi({
-			api_url: api_url || '',
+			api_url: selectedConfig?.api_url || '',
 			name: name || '',
 			send_resolved: true,
-			username: username,
-			password: password,
+			username,
+			password,
 			id,
 		});
 

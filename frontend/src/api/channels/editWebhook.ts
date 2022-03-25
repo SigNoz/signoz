@@ -8,22 +8,21 @@ const editWebhook = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-    var http_config = {};
-		
-		if (props.username !== '' && props.password !== '')  {
-			http_config = 		{
+		let httpConfig = {};
+		if (props.username !== '' && props.password !== '') {
+			httpConfig = {
 				basic_auth: {
 					username: props.username,
-					password: props.password,					
+					password: props.password,
 				},
-			}; 
-		} else if (props.username == '' && props.password !== '') {
-			http_config = 		{
+			};
+		} else if (props.username === '' && props.password !== '') {
+			httpConfig = {
 				authorization: {
 					type: 'bearer',
 					credentials: props.password,
 				},
-			}; 
+			};
 		}
 
 		const response = await axios.put(`/channels/${props.id}`, {
@@ -32,12 +31,11 @@ const editWebhook = async (
 				{
 					send_resolved: true,
 					url: props.api_url,
-					http_config: http_config,
+					http_config: httpConfig,
 				},
 			],
 		});
 
-		
 		return {
 			statusCode: 200,
 			error: null,

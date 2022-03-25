@@ -9,8 +9,8 @@ import React, { useCallback, useState } from 'react';
 import {
 	ChannelType,
 	SlackChannel,
-	WebhookChannel,
 	SlackType,
+	WebhookChannel,
 	WebhookType,
 } from './config';
 
@@ -87,13 +87,16 @@ function CreateAlertChannels({
 	}, [notifications, selectedConfig]);
 
 	const onWebhookHandler = useCallback(async () => {
+		// eslint-disable-next-line prefer-const
+		let request: WebhookChannel = {
+			api_url: selectedConfig?.api_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+		};
+
 		try {
 			setSavingState(true);
-			var request: WebhookChannel = {
-				api_url: selectedConfig?.api_url || '',
-				name: selectedConfig?.name || '',
-				send_resolved: true,
-			};
+
 			if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
 				if (selectedConfig?.username !== '') {
 					// if username is not null then password must be passed
@@ -151,7 +154,7 @@ function CreateAlertChannels({
 					setSavingState(false);
 			}
 		},
-		[onSlackHandler, onWebhookHandler],
+		[onSlackHandler, onWebhookHandler, notifications],
 	);
 
 	return (
@@ -176,7 +179,7 @@ function CreateAlertChannels({
 }
 
 interface CreateAlertChannelsProps {
-	preType?: ChannelType;
+	preType: ChannelType;
 }
 
 export default CreateAlertChannels;

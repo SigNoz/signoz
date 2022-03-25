@@ -12,11 +12,9 @@ export interface SlackChannel extends Channel {
 
 export interface WebhookChannel extends Channel {
 	api_url?: string;
-	
-	// basic auth 
+	// basic auth
 	username?: string;
 	password?: string;
-
 }
 
 export type ChannelType = 'slack' | 'email' | 'webhook';
