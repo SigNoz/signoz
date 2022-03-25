@@ -1,7 +1,6 @@
 import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
-import { isEqual } from 'lodash-es';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -47,12 +46,6 @@ function AllTags({
 			},
 		]);
 	};
-
-	useEffect(() => {
-		if (!isEqual(traces.selectedTags, localSelectedTags)) {
-			setLocalSelectedTags(traces.selectedTags);
-		}
-	}, [traces.selectedTags, localSelectedTags]);
 
 	const onCloseHandler = (index: number): void => {
 		setLocalSelectedTags([
