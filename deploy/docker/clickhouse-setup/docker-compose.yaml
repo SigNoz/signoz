@@ -7,6 +7,8 @@ services:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
     restart: on-failure
+    ports:
+      - "9000:9000"
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
