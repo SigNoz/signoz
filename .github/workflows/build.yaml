@@ -45,9 +45,6 @@ jobs:
       - name: TSC
         run: yarn tsc
         working-directory: ./frontend
-      - name: Build - Webpack
-        run: yarn run build
-        working-directory: ./frontend
       - name: Build frontend docker image
         shell: bash
         run: |
