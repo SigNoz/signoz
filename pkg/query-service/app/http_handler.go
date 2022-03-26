@@ -38,12 +38,12 @@ type APIHandler struct {
 	basePath     string
 	apiPrefix    string
 	reader       *Reader
-	relationalDB *interfaces.ModelDao
+	relationalDB interfaces.ModelDao
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB *interfaces.ModelDao) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, relationalDB interfaces.ModelDao) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:       reader,
@@ -1100,7 +1100,7 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request) {
 
-	result, apiError := (*aH.relationalDB).FetchUserPreference(context.Background())
+	result, apiError := aH.relationalDB.FetchUserPreference(context.Background())
 	if apiError != nil {
 		aH.respondError(w, apiError, "Error from Fetch Dao")
 		return
@@ -1115,7 +1115,7 @@ func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	apiErr := (*aH.relationalDB).UpdateUserPreferece(context.Background(), userParams)
+	apiErr := aH.relationalDB.UpdateUserPreferece(context.Background(), userParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

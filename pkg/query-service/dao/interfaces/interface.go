@@ -1,5 +1,6 @@
 package interfaces
 
 type ModelDao interface {
-	UserPreferenceDao
+	Queries
+	Mutations
 }
