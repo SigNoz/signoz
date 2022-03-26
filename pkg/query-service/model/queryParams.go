@@ -11,6 +11,11 @@ type User struct {
 	OrganizationName string `json:"organizationName"`
 }
 
+type RegisterParams struct {
+	Email    string
+	Password string
+}
+
 type InstantQueryMetricsParams struct {
 	Time  time.Time
 	Query string

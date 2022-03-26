@@ -3,24 +3,31 @@ package dao
 import (
 	"fmt"
 
-	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/dao/sqlite"
 )
 
-func FactoryDao(engine string) (*interfaces.ModelDao, error) {
-	var i interfaces.ModelDao
+var db interfaces.ModelDao
+
+func InitDao(engine, path string) error {
 	var err error
 
 	switch engine {
 	case "sqlite":
-		i, err = sqlite.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+		db, err = sqlite.InitDB(path)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	default:
-		return nil, fmt.Errorf("RelationalDB type: %s is not supported in query service", engine)
+		return fmt.Errorf("RelationalDB type: %s is not supported in query service", engine)
 	}
+	return nil
+}
 
-	return &i, nil
+func DB() interfaces.ModelDao {
+	if db == nil {
+		// Should never reach here
+		panic("GetDB called before initialization")
+	}
+	return db
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/telemetry"
 )
@@ -19,7 +20,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	db, err := sqlx.Open("sqlite3", dataSourceName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to Open sqlite3 DB")
 	}
 	db.SetMaxOpenConns(10)
 
@@ -28,7 +29,14 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		uuid TEXT NOT NULL,
 		isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
 		hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
-	);`
+	);
+		CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			uuid TEXT NOT NULL,
+			email TEXT NOT NULL,
+			password TEXT NOT NULL
+		);
+	`
 
 	_, err = db.Exec(table_schema)
 	if err != nil {

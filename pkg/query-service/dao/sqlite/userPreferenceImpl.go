@@ -89,3 +89,21 @@ func (mds *ModelDaoSqlite) CreateDefaultUserPreference(ctx context.Context) (*mo
 	return mds.FetchUserPreference(ctx)
 
 }
+
+func (mds *ModelDaoSqlite) CreateNewUser(ctx context.Context, user *model.RegisterParams) *model.ApiError {
+
+	if mds == nil {
+		panic("why")
+	}
+	uuid := uuid.New().String()
+	_, err := mds.db.ExecContext(ctx, `INSERT INTO users (uuid, email, password) VALUES (?, ?, ?);`,
+		uuid, user.Email, user.Password)
+
+	if err != nil {
+		zap.S().Errorf("Error in preparing statement for INSERT to users\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+
+}
