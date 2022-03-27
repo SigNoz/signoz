@@ -72,6 +72,16 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, email, claims["email"].(string))
+
+	// Try logging in using the refresh token.
+	resp2, err := Login(context.Background(), &LoginRequest{RefreshToken: resp.refrestJwt})
+	require.NoError(t, err)
+
+	// Verify that the claim is correct.
+	claims, err = ParseJWT(resp2.accessJwt)
+	require.NoError(t, err)
+
+	require.Equal(t, email, claims["email"].(string))
 }
 
 func TestMain(m *testing.M) {
