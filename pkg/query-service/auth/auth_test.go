@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 )
 
@@ -65,7 +66,6 @@ func TestLogin(t *testing.T) {
 		Password: password,
 	})
 	require.NoError(t, err)
-	require.NotNil(t, resp)
 
 	// Verify that the claim is correct.
 	claims, err := ParseJWT(resp.accessJwt)
@@ -73,7 +73,7 @@ func TestLogin(t *testing.T) {
 
 	require.Equal(t, email, claims["email"].(string))
 
-	// Try logging in using the refresh token.
+	// Try login using the refresh token.
 	resp2, err := Login(context.Background(), &LoginRequest{RefreshToken: resp.refrestJwt})
 	require.NoError(t, err)
 
@@ -82,6 +82,20 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, email, claims["email"].(string))
+}
+
+func TestRootUser(t *testing.T) {
+	resp, err := Login(context.Background(), &LoginRequest{
+		Email:    constants.RootUserEmail,
+		Password: constants.RootUserPassword,
+	})
+	require.NoError(t, err)
+
+	// Verify that the claim is correct.
+	claims, err := ParseJWT(resp.accessJwt)
+	require.NoError(t, err)
+
+	require.Equal(t, constants.RootUserEmail, claims["email"].(string))
 }
 
 func TestMain(m *testing.M) {

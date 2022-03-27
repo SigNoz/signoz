@@ -5,7 +5,11 @@ import (
 	"strconv"
 )
 
-const HTTPHostPort = "0.0.0.0:8080"
+const (
+	HTTPHostPort     = "0.0.0.0:8080"
+	RootUserEmail    = "root@signoz.io"
+	RootUserPassword = "password"
+)
 
 var DruidClientUrl = os.Getenv("DruidClientUrl")
 var DruidDatasource = os.Getenv("DruidDatasource")
