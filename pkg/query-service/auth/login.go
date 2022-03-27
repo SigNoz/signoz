@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.signoz.io/query-service/dao"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -51,11 +52,19 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 	if err != nil {
 		return nil, err.Err
 	}
-	if user == nil || user.Password != req.Password {
+	if user == nil || !passwordMatch(user.Password, req.Password) {
 		return nil, ErrorInvalidCreds
 	}
 	return &User{
 		ID:       user.Email,
 		Password: req.Password,
 	}, nil
+}
+
+func passwordMatch(hash, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return false
+	}
+	return true
 }

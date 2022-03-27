@@ -7,6 +7,7 @@ import (
 
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // We should be able to invite a user to create an account on SigNoz.
@@ -69,13 +70,25 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 			Typ: model.ErrorUnauthorized,
 		}
 	}
+
+	hash, err := passwordHash(req.Password)
+	if err != nil {
+		return &model.ApiError{
+			Err: err,
+			Typ: model.ErrorUnauthorized,
+		}
+	}
 	return dao.DB().CreateNewUser(ctx, &model.UserParams{
 		Email:    req.Email,
-		Password: passwordHash(req.Password),
+		Password: hash,
 	})
 }
 
 // Generate hash from the password
-func passwordHash(pass string) string {
-	return pass
+func passwordHash(pass string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
 }
