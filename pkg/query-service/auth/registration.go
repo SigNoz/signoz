@@ -69,7 +69,7 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 			Typ: model.ErrorUnauthorized,
 		}
 	}
-	return dao.DB().CreateNewUser(ctx, &model.RegisterParams{
+	return dao.DB().CreateNewUser(ctx, &model.UserParams{
 		Email:    req.Email,
 		Password: passwordHash(req.Password),
 	})

@@ -25,3 +25,8 @@ func (up *UserPreferences) GetId() int {
 func (up *UserPreferences) GetUUID() string {
 	return up.Uuid
 }
+
+type UserParams struct {
+	Email    string `json:"email" db:"email"`
+	Password string `json:"password" db:"password"`
+}
