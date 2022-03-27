@@ -32,7 +32,7 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func generateAccessJwt(userId string, groups []Group) (string, error) {
+func generateAccessJwt(email string, groups []Group) (string, error) {
 
 	getIds := func(groups []Group) []string {
 		if len(groups) == 0 {
@@ -46,7 +46,7 @@ func generateAccessJwt(userId string, groups []Group) (string, error) {
 		return gids
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": userId,
+		"email":  email,
 		"groups": getIds(groups),
 		"exp":    time.Now().Add(JwtExpiry).Unix(),
 	})
@@ -58,10 +58,10 @@ func generateAccessJwt(userId string, groups []Group) (string, error) {
 	return jwtStr, nil
 }
 
-func generateRefreshJwt(userId string) (string, error) {
+func generateRefreshJwt(email string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userid": userId,
-		"exp":    time.Now().Add(JwtRefresh).Unix(),
+		"email": email,
+		"exp":   time.Now().Add(JwtRefresh).Unix(),
 	})
 
 	jwtStr, err := token.SignedString([]byte(JwtSecret))

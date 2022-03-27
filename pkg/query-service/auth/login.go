@@ -1,10 +1,20 @@
 package auth
 
-import "context"
+import (
+	"context"
+	"fmt"
+
+	"go.signoz.io/query-service/dao"
+)
+
+var (
+	ErrorInvalidCreds = fmt.Errorf("Invalid credentials")
+)
 
 type LoginRequest struct {
-	UserID   string
-	Password string
+	Email        string
+	Password     string
+	RefreshToken string
 }
 
 type LoginResponse struct {
@@ -32,10 +42,20 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, request *LoginRequest) (*User, error) {
+func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
+	// TODO: Do refresh token validation.
+	if len(req.RefreshToken) > 0 {
+	}
+
+	user, err := dao.DB().FetchUser(ctx, req.Email)
+	if err != nil {
+		return nil, err.Err
+	}
+	if user == nil || user.Password != req.Password {
+		return nil, ErrorInvalidCreds
+	}
 	return &User{
-		ID:   request.UserID,
-		Password: request.Password,
-		Groups:   nil,
+		ID:       user.Email,
+		Password: req.Password,
 	}, nil
 }
