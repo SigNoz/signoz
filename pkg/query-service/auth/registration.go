@@ -57,9 +57,9 @@ func validateInvite(req *RegisterRequest) error {
 }
 
 type RegisterRequest struct {
-	Email       string
-	Password    string
-	InviteToken string
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	InviteToken string `json: "token"`
 }
 
 func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {

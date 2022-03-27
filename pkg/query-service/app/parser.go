@@ -12,6 +12,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
+	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
@@ -954,4 +955,14 @@ func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
 
 	return &userPreferences, nil
 
+}
+
+func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
+	var req auth.RegisterRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
 }

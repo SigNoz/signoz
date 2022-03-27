@@ -12,6 +12,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
@@ -218,8 +219,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1135,6 +1137,21 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
 
 	aH.writeJSON(w, r, map[string]string{"version": version})
+}
+
+func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseRegisterRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	apiErr := auth.Register(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to register user")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "user registered successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
