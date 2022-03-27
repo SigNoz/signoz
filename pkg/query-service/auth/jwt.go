@@ -32,6 +32,20 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
+func validateToken(tok string) (*User, error) {
+	claims, err := ParseJWT(tok)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now().Unix()
+	if !claims.VerifyExpiresAt(now, true) {
+		return nil, errors.Errorf("Token is expired")
+	}
+	return &User{
+		Email: claims["email"].(string),
+	}, nil
+}
+
 func generateAccessJwt(email string, groups []Group) (string, error) {
 
 	getIds := func(groups []Group) []string {

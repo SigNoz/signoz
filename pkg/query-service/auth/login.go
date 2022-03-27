@@ -30,11 +30,11 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 		return nil, err
 	}
 
-	accessJwt, err := generateAccessJwt(user.ID, user.Groups)
+	accessJwt, err := generateAccessJwt(user.Email, user.Groups)
 	if err != nil {
 		return nil, err
 	}
-	refreshJwt, err := generateRefreshJwt(user.ID)
+	refreshJwt, err := generateRefreshJwt(user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +44,15 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
 func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
-	// TODO: Do refresh token validation.
+
+	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
+		user, err := validateToken(req.RefreshToken)
+		if err != nil {
+			return nil, err
+		}
+
+		return &User{Email: user.Email}, nil
 	}
 
 	user, err := dao.DB().FetchUser(ctx, req.Email)
@@ -56,11 +63,21 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 		return nil, ErrorInvalidCreds
 	}
 	return &User{
-		ID:       user.Email,
+		Email:    user.Email,
 		Password: req.Password,
 	}, nil
 }
 
+// Generate hash from the password.
+func passwordHash(pass string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+// Checks if the given password results in the given hash.
 func passwordMatch(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	if err != nil {
