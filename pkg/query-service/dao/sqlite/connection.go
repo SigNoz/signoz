@@ -7,7 +7,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type ModelDaoSqlite struct {
@@ -45,13 +47,17 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	mds := &ModelDaoSqlite{db: db}
 
-	err = mds.initializeUserPreferences()
-	if err != nil {
+	if err := mds.initializeUserPreferences(); err != nil {
 		return nil, err
 	}
+	if err := mds.initializeRootUser(); err != nil {
+		return nil, err
+	}
+
 	return mds, nil
 
 }
+
 func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 
 	// set anonymous setting as default in case of any failures to fetch UserPreference in below section
@@ -74,5 +80,30 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 	telemetry.GetInstance().SetTelemetryAnonymous(userPreference.GetIsAnonymous())
 	telemetry.GetInstance().SetDistinctId(userPreference.GetUUID())
 
+	return nil
+}
+
+func (mds *ModelDaoSqlite) initializeRootUser() error {
+
+	ctx := context.Background()
+	user, err := mds.FetchUser(ctx, constants.RootUserEmail)
+	if err != nil {
+		return errors.Wrap(err.Err, "Failed to query for root user")
+	}
+
+	if user == nil {
+		hash, err := bcrypt.GenerateFromPassword([]byte(constants.RootUserPassword),
+			bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		cErr := mds.CreateNewUser(context.Background(), &model.UserParams{
+			Email:    constants.RootUserEmail,
+			Password: string(hash),
+		})
+		if cErr != nil {
+			return cErr.Err
+		}
+	}
 	return nil
 }

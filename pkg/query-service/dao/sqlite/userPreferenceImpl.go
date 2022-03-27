@@ -117,9 +117,7 @@ func (mds *ModelDaoSqlite) CreateDefaultUserPreference(ctx context.Context) (*mo
 
 func (mds *ModelDaoSqlite) CreateNewUser(ctx context.Context, user *model.UserParams) *model.ApiError {
 
-	if mds == nil {
-		panic("why")
-	}
+	zap.S().Debug("Creating new user. Email: %s\n", user.Email)
 	uuid := uuid.New().String()
 	_, err := mds.db.ExecContext(ctx, `INSERT INTO users (uuid, email, password) VALUES (?, ?, ?);`,
 		uuid, user.Email, user.Password)
