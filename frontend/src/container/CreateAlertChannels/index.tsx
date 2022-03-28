@@ -1,8 +1,7 @@
 import { Form, notification } from 'antd';
+import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
-import createPagerApi from 'api/channels/createPager';
-import { PagerInitialConfig } from './defaults';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
@@ -10,13 +9,19 @@ import React, { useCallback, useState } from 'react';
 
 import {
 	ChannelType,
+	PagerChannel,
+	PagerType,
 	SlackChannel,
 	SlackType,
 	WebhookChannel,
 	WebhookType,
-	PagerType,
-	PagerChannel,
 } from './config';
+import { PagerInitialConfig } from './defaults';
+import {
+	OnErrorMessage,
+	OnSuccessMessage,
+	UnexpectedError,
+} from './message_constants';
 
 function CreateAlertChannels({
 	preType = 'slack',
@@ -50,22 +55,36 @@ function CreateAlertChannels({
 	const [notifications, NotificationElement] = notification.useNotification();
 
 	const [type, setType] = useState<ChannelType>(preType);
-	const onTypeChangeHandler = useCallback((value: string) => {
-		const currentType = type;
-		setType(value as ChannelType);
-		if (value === PagerType && currentType !== value) {
-			// reset config to pager defaults
-			setSelectedConfig(PagerInitialConfig);
-		}
-	}, []);
+	const onTypeChangeHandler = useCallback(
+		(value: string) => {
+			const currentType = type;
+			setType(value as ChannelType);
+			if (value === PagerType && currentType !== value) {
+				// reset config to pager defaults
+				setSelectedConfig(PagerInitialConfig);
+			}
+		},
+		[type],
+	);
 
 	const onTestHandler = useCallback(() => {
 		console.log('test');
 	}, []);
 
+	const showError = useCallback(
+		(msg: string | undefined | null): void => {
+			notifications.error({
+				message: 'Error',
+				description: msg || OnErrorMessage,
+			});
+		},
+		[notifications],
+	);
+
 	const onSlackHandler = useCallback(async () => {
+		setSavingState(true);
+
 		try {
-			setSavingState(true);
 			const response = await createSlackApi({
 				api_url: selectedConfig?.api_url || '',
 				channel: selectedConfig?.channel || '',
@@ -78,45 +97,36 @@ function CreateAlertChannels({
 			if (response.statusCode === 200) {
 				notifications.success({
 					message: 'Success',
-					description: 'Successfully created the channel',
+					description: OnSuccessMessage,
 				});
 				setTimeout(() => {
 					history.replace(ROUTES.SETTINGS);
 				}, 2000);
 			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || 'Error while creating the channel',
-				});
+				showError(response.error);
 			}
-			setSavingState(false);
 		} catch (error) {
-			notifications.error({
-				message: 'Error',
-				description:
-					'An unexpected error occurred while creating this channel, please try again',
-			});
-			setSavingState(false);
+			showError(UnexpectedError);
 		}
-	}, [notifications, selectedConfig]);
+		setSavingState(false);
+	}, [notifications, selectedConfig, showError]);
 
 	const onPagerHandler = useCallback(async () => {
-		try {
-			var inputError = '';
-			if (selectedConfig.name === '') {
-				inputError = 'Name is mandatory for this channel';
-			} else if (selectedConfig.routing_key === '') {
-				inputError = 'routing_key is mandatory for this channel';
-			}
+		setSavingState(true);
 
-			if (inputError != '') {
-				notifications.error({
-					message: 'Error',
-					description: inputError || 'Error while creating the channel',
-				});
-			}
-
+		if (selectedConfig.name === '') {
+			showError('Name is mandatory for this channel');
 			setSavingState(true);
+			return;
+		}
+
+		if (selectedConfig.routing_key === '') {
+			showError('routing_key is mandatory for this channel');
+			setSavingState(true);
+			return;
+		}
+
+		try {
 			const response = await createPagerApi({
 				name: selectedConfig?.name || '',
 				send_resolved: true,
@@ -133,22 +143,19 @@ function CreateAlertChannels({
 			if (response.statusCode === 200) {
 				notifications.success({
 					message: 'Success',
-					description: 'Successfully created the channel',
+					description: OnSuccessMessage,
 				});
 				setTimeout(() => {
 					history.replace(ROUTES.SETTINGS);
 				}, 2000);
 			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || 'Error while creating the channel',
-				});
+				showError(response.error);
 			}
-			setSavingState(false);
-		} catch (error) {
-			setSavingState(false);
+		} catch (e) {
+			showError(UnexpectedError);
 		}
-	}, [notifications, selectedConfig]);
+		setSavingState(false);
+	}, [notifications, selectedConfig, showError]);
 
 	const onWebhookHandler = useCallback(async () => {
 		// initial api request without auth params
@@ -190,26 +197,19 @@ function CreateAlertChannels({
 			if (response.statusCode === 200) {
 				notifications.success({
 					message: 'Success',
-					description: 'Successfully created the channel',
+					description: OnSuccessMessage,
 				});
 				setTimeout(() => {
 					history.replace(ROUTES.SETTINGS);
 				}, 2000);
 			} else {
-				notifications.error({
-					message: 'Error',
-					description: response.error || 'Error while creating the channel',
-				});
+				showError(response.error);
 			}
 		} catch (error) {
-			notifications.error({
-				message: 'Error',
-				description:
-					'An unexpected error occurred while creating this channel, please try again',
-			});
+			showError(UnexpectedError);
 		}
 		setSavingState(false);
-	}, [notifications, selectedConfig]);
+	}, [notifications, selectedConfig, showError]);
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
@@ -230,7 +230,7 @@ function CreateAlertChannels({
 					});
 			}
 		},
-		[onSlackHandler, onWebhookHandler, notifications],
+		[onSlackHandler, onWebhookHandler, onPagerHandler, notifications],
 	);
 
 	return (
