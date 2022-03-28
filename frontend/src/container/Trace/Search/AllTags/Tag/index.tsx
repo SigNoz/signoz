@@ -3,14 +3,12 @@ import { Select } from 'antd';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import {
-	Container,
-	IconContainer,
-	SelectComponent,
-	ValueSelect,
-} from './styles';
+import { fetchTag, TagValue } from './config';
+import DebounceSelect from './DebounceSelect';
+import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
 
 const { Option } = Select;
@@ -35,6 +33,9 @@ const AllMenu: AllMenuProps[] = [
 
 function SingleTags(props: AllTagsProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
+	const globalReducer = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const { tag, onCloseHandler, setLocalSelectedTags, index } = props;
 	const {
@@ -80,7 +81,15 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				))}
 			</SelectComponent>
 
-			<ValueSelect
+			<DebounceSelect
+				fetchOptions={(): Promise<TagValue[]> =>
+					fetchTag(globalReducer.minTime, globalReducer.maxTime, selectedKey[0])
+				}
+				debounceTimeout={300}
+				mode="tags"
+			/>
+
+			{/* <ValueSelect
 				value={selectedValues}
 				onChange={(value): void => {
 					setLocalSelectedTags((tags) => [
@@ -94,7 +103,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 					]);
 				}}
 				mode="tags"
-			/>
+			/> */}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
 				<CloseOutlined />
