@@ -1,5 +1,6 @@
 import { Button, Card, Form, Typography } from 'antd';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -10,6 +11,7 @@ const { Title } = Typography;
 
 function Version(): JSX.Element {
 	const [form] = Form.useForm();
+	const { t } = useTranslation();
 
 	const onClickUpgradeHandler = useCallback((link: string) => {
 		window.open(link, '_blank');
@@ -22,7 +24,7 @@ function Version(): JSX.Element {
 	return (
 		<Card>
 			<Title ellipsis level={4}>
-				Version
+				{t('version')}
 			</Title>
 
 			<Form
@@ -30,25 +32,25 @@ function Version(): JSX.Element {
 					span: 14,
 				}}
 				labelCol={{
-					span: 5,
+					span: 3,
 				}}
 				layout="horizontal"
 				form={form}
 				labelAlign="left"
 			>
-				<Form.Item label="Your version">
+				<Form.Item label={t('current_version')}>
 					<InputComponent
 						readOnly
 						value={currentVersion}
-						placeholder="Your Version"
+						placeholder={t('current_version')}
 					/>
 				</Form.Item>
 
-				<Form.Item label="Latest version">
+				<Form.Item label={t('latest_version')}>
 					<InputComponent
 						readOnly
 						value={latestVersion}
-						placeholder="Latest version"
+						placeholder={t('latest_version')}
 					/>
 					<Button
 						onClick={(): void =>
@@ -56,7 +58,7 @@ function Version(): JSX.Element {
 						}
 						type="link"
 					>
-						Release Notes
+						{t('release_notes')}
 					</Button>
 				</Form.Item>
 			</Form>
@@ -68,7 +70,7 @@ function Version(): JSX.Element {
 					)
 				}
 			>
-				Read instructions on how to upgrade
+				{t('read_how_to_upgrade')}
 			</Button>
 		</Card>
 	);
