@@ -14,6 +14,19 @@ services:
       timeout: 5s
       retries: 3
 
+  alertmanager:
+    image: signoz/alertmanager:0.6.0
+    volumes:
+    # we no longer need the config file as query services delivers 
+    # the required config now 
+    # - ./alertmanager.yml:/prometheus/alertmanager.yml
+      - ./data/alertmanager:/data
+    depends_on:
+      - query-service
+    command:
+      - '--queryService.url=http://query-service:8080'
+      - '--storage.path=/data'
+
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
@@ -35,17 +48,6 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-
-  alertmanager:
-    image: signoz/alertmanager:0.6.0
-    volumes:
-    # we no longer need the config file as query services delivers 
-    # the required config now 
-    # - ./alertmanager.yml:/prometheus/alertmanager.yml
-      - ./data/alertmanager:/data
-    command:
-      - '--queryService.url=http://query-service:8080'
-      - '--storage.path=/data'
 
   frontend:
     image: signoz/frontend:0.7.3
