@@ -75,9 +75,10 @@ function Timeline({
 				{intervals &&
 					intervals.map((interval, index) => (
 						<TimelineInterval
-							transform={`translate(${TimelineHSpacing +
+							transform={`translate(${
+								TimelineHSpacing +
 								(interval.percentage * (width - 2 * TimelineHSpacing)) / 100
-								},0)`}
+							},0)`}
 							key={`${interval.label + interval.percentage + index}`}
 						>
 							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
