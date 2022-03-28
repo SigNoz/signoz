@@ -31,14 +31,14 @@ function FormAlertChannels({
 	initialValue,
 	nameDisable = false,
 }: FormAlertChannelsProps): JSX.Element {
-	const renderSettings = (): React.ReactElement => {
+	const renderSettings = (): React.ReactElement | null => {
 		switch (type) {
 			case SlackType:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
 			case WebhookType:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
 			default:
-				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
+				return null;
 		}
 	};
 	return (

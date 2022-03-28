@@ -99,9 +99,9 @@ function CreateAlertChannels({
 			send_resolved: true,
 		};
 
-		try {
-			setSavingState(true);
+		setSavingState(true);
 
+		try {
 			if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
 				if (selectedConfig?.username !== '') {
 					// if username is not null then password must be passed
@@ -166,7 +166,6 @@ function CreateAlertChannels({
 						message: 'Error',
 						description: 'channel type selected is invalid',
 					});
-					setSavingState(false);
 			}
 		},
 		[onSlackHandler, onWebhookHandler, notifications],
