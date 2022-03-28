@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	_ "net/http/pprof" // http profiler
 	"os"
 	"os/signal"
 	"syscall"
@@ -33,6 +35,10 @@ func main() {
 
 	logger := loggerMgr.Sugar()
 	version.PrintVersion()
+
+	go func() {
+		logger.Info(http.ListenAndServe(constants.DebugHttpPort, nil))
+	}()
 
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
