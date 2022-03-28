@@ -79,6 +79,7 @@ function Graph({
 		return 'rgba(231,233,237,0.8)';
 	}, [currentTheme]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const buildChart = useCallback(() => {
 		if (lineChartRef.current !== undefined) {
 			lineChartRef.current.destroy();
