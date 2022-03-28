@@ -1,11 +1,18 @@
+import getLatestVersion from 'api/user/getLatestVersion';
+import getVersion from 'api/user/getVersion';
+import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
+import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import React, { ReactNode, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { UPDATE_APP_VERSION } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import { Content, Layout } from './styles';
@@ -16,7 +23,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const [isSignUpPage, setIsSignUpPage] = useState(ROUTES.SIGN_UP === pathname);
 
+	const { payload: versionPayload, loading } = useFetch(getVersion);
+
+	const { payload: latestVersionPayload, loading: latestLoading } = useFetch(
+		getLatestVersion,
+	);
+
 	const { children } = props;
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	useEffect(() => {
 		if (!isLoggedIn) {
@@ -26,6 +41,28 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			setIsSignUpPage(false);
 		}
 	}, [isLoggedIn, isSignUpPage]);
+
+	useEffect(() => {
+		if (!loading && !latestLoading && versionPayload && latestVersionPayload) {
+			dispatch({
+				type: UPDATE_APP_VERSION,
+				payload: {
+					currentVersion: versionPayload.version,
+					latestVersion: latestVersionPayload.name,
+				},
+			});
+		}
+	}, [dispatch, loading, latestLoading, versionPayload, latestVersionPayload]);
+
+	if (loading || latestLoading) {
+		return (
+			<Layout>
+				<Content>
+					<Spinner />
+				</Content>
+			</Layout>
+		);
+	}
 
 	return (
 		<Layout>

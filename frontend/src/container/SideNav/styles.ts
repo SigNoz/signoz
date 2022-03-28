@@ -19,6 +19,7 @@ export const Logo = styled.img<LogoProps>`
 
 interface LogoProps {
 	collapsed: boolean;
+	index: number;
 }
 
 export const Sider = styled(SiderComponent)`
@@ -50,7 +51,7 @@ export const SlackButton = styled(Typography)`
 
 export const SlackMenuItemContainer = styled.div<LogoProps>`
 	position: fixed;
-	bottom: 48px;
+	bottom: ${({ index }): string => `${index * 48 + (index + 16)}px`};
 	background: #262626;
 	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
 
@@ -73,5 +74,32 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 					margin: 0 auto;
 				`}
 		}
+		.ant-menu-title-content {
+			margin: 0;
+		}
+	}
+`;
+
+export const EmptyIcon = styled.div`
+	&&& {
+		width: 28px;
+		height: 28px;
+		margin-left: 1.5rem;
+	}
+`;
+
+export const RedDot = styled.div`
+	width: 12px;
+	height: 12px;
+	background: #d32029;
+	border-radius: 50%;
+
+	margin-left: 1rem;
+	margin-top: 0.5rem;
+`;
+
+export const VersionContainer = styled.div`
+	&&& {
+		display: flex;
 	}
 `;

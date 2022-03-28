@@ -18,12 +18,15 @@ import AppReducer from 'types/reducer/app';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
+	EmptyIcon,
 	Logo,
+	RedDot,
 	Sider,
 	SlackButton,
 	SlackMenuItemContainer,
 	ThemeSwitcherWrapper,
 	ToggleButton,
+	VersionContainer,
 } from './styles';
 
 function SideNav({ toggleDarkMode }: Props): JSX.Element {
@@ -31,7 +34,10 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isDarkMode, currentVersion, latestVersion } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
 
 	const { pathname } = useLocation();
 
@@ -77,6 +83,28 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 
+	const onClickVersionHandler = (): void => {
+		history.push(ROUTES.VERSION);
+	};
+
+	const sidebar = [
+		{
+			onClick: onClickSlackHandler,
+			icon: <Slack />,
+			text: <SlackButton>Support</SlackButton>,
+		},
+		{
+			onClick: onClickVersionHandler,
+			icon: <EmptyIcon />,
+			text: (
+				<VersionContainer>
+					<SlackButton>{currentVersion}</SlackButton>
+					{currentVersion !== latestVersion && <RedDot />}
+				</VersionContainer>
+			),
+		},
+	];
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<ThemeSwitcherWrapper>
@@ -87,7 +115,7 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
-				<Logo src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
+				<Logo index={0} src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -105,11 +133,17 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 						<Typography>{name}</Typography>
 					</Menu.Item>
 				))}
-				<SlackMenuItemContainer collapsed={collapsed}>
-					<Menu.Item onClick={onClickSlackHandler} icon={<Slack />}>
-						<SlackButton>Support</SlackButton>
-					</Menu.Item>
-				</SlackMenuItemContainer>
+				{sidebar.map((props, index) => (
+					<SlackMenuItemContainer
+						index={index + 1}
+						key={`${index + 1}`}
+						collapsed={collapsed}
+					>
+						<Menu.Item onClick={props.onClick} icon={props.icon}>
+							{props.text}
+						</Menu.Item>
+					</SlackMenuItemContainer>
+				))}
 			</Menu>
 		</Sider>
 	);
