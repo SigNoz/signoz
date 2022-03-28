@@ -82,12 +82,17 @@ function CreateAlertChannels({
 			}
 			setSavingState(false);
 		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description:
+					'An unexpected error occurred while creating this channel, please try again',
+			});
 			setSavingState(false);
 		}
 	}, [notifications, selectedConfig]);
 
 	const onWebhookHandler = useCallback(async () => {
-		// eslint-disable-next-line prefer-const
+		// initial api request without auth params
 		let request: WebhookChannel = {
 			api_url: selectedConfig?.api_url || '',
 			name: selectedConfig?.name || '',
@@ -101,18 +106,25 @@ function CreateAlertChannels({
 				if (selectedConfig?.username !== '') {
 					// if username is not null then password must be passed
 					if (selectedConfig?.password !== '') {
-						request.username = selectedConfig.username;
-						request.password = selectedConfig.password;
+						request = {
+							...request,
+							username: selectedConfig.username,
+							password: selectedConfig.password,
+						};
 					} else {
 						notifications.error({
 							message: 'Error',
 							description:
-								'password must be provided with user name, for bearer tokens leave user name empty',
+								'A Password must be provided with user name, for bearer tokens leave user name empty',
 						});
 					}
 				} else if (selectedConfig?.password !== '') {
 					// only password entered, set bearer token
-					request.password = selectedConfig.password;
+					request = {
+						...request,
+						username: selectedConfig.username,
+						password: selectedConfig.password,
+					};
 				}
 			}
 
@@ -131,10 +143,14 @@ function CreateAlertChannels({
 					description: response.error || 'Error while creating the channel',
 				});
 			}
-			setSavingState(false);
 		} catch (error) {
-			setSavingState(false);
+			notifications.error({
+				message: 'Error',
+				description:
+					'An unexpected error occurred while creating this channel, please try again',
+			});
 		}
+		setSavingState(false);
 	}, [notifications, selectedConfig]);
 
 	const onSaveHandler = useCallback(
@@ -181,9 +197,5 @@ function CreateAlertChannels({
 interface CreateAlertChannelsProps {
 	preType: ChannelType;
 }
-
-CreateAlertChannels.defaultProps = {
-	preType: undefined,
-};
 
 export default CreateAlertChannels;

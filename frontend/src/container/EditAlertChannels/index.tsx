@@ -28,7 +28,7 @@ function EditAlertChannels({
 	const { id } = useParams<{ id: string }>();
 
 	const [type, setType] = useState<ChannelType>(
-		initialValue?.type ? initialValue.type : SlackType,
+		initialValue?.type ? (initialValue.type as ChannelType) : SlackType,
 	);
 
 	const onTypeChangeHandler = useCallback((value: string) => {
@@ -74,16 +74,17 @@ function EditAlertChannels({
 				message: 'Error',
 				description: msg,
 			});
-			setSavingState(false);
 		};
 
 		if (selectedConfig?.api_url === '') {
 			showError('Webhook URL is mandatory');
+			setSavingState(false);
 			return;
 		}
 
 		if (username && (!password || password === '')) {
 			showError('Please enter a password');
+			setSavingState(false);
 			return;
 		}
 
