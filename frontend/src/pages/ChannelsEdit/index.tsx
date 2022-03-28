@@ -47,8 +47,13 @@ function ChannelsEdit(): JSX.Element {
 		channel.api_url = webhookConfig.url;
 
 		if ('http_config' in webhookConfig) {
-			channel.username = webhookConfig.http_config?.basic_auth?.username;
-			channel.password = webhookConfig.http_config?.basic_auth?.password;
+			const httpConfig = webhookConfig.http_config;
+			if ('basic_auth' in httpConfig) {
+				channel.username = webhookConfig.http_config?.basic_auth?.username;
+				channel.password = webhookConfig.http_config?.basic_auth?.password;
+			} else if ('authorization' in httpConfig) {
+				channel.password = webhookConfig.http_config?.authorization?.credentials;
+			}
 		}
 		type = WebhookType;
 	}

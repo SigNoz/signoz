@@ -114,15 +114,14 @@ function CreateAlertChannels({
 					} else {
 						notifications.error({
 							message: 'Error',
-							description:
-								'A Password must be provided with user name, for bearer tokens leave user name empty',
+							description: 'A Password must be provided with user name',
 						});
 					}
 				} else if (selectedConfig?.password !== '') {
 					// only password entered, set bearer token
 					request = {
 						...request,
-						username: selectedConfig.username,
+						username: '',
 						password: selectedConfig.password,
 					};
 				}

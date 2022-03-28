@@ -12,7 +12,7 @@ import history from 'lib/history';
 import React from 'react';
 
 import SlackSettings from './Settings/Slack';
-import WebhookSettings from './Settings/webhook';
+import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
 
 const { Option } = Select;
