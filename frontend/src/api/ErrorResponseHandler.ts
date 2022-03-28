@@ -3,13 +3,14 @@ import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
 export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
-	if (error.response) {
+	const { response, request } = error;
+	if (response) {
 		// client received an error response (5xx, 4xx)
 		// making the error status code as standard Error Status Code
-		const statusCode = error.response.status as ErrorStatusCode;
+		const statusCode = response.status as ErrorStatusCode;
 
 		if (statusCode >= 400 && statusCode < 500) {
-			const { data } = error.response;
+			const { data } = response;
 
 			if (statusCode === 404) {
 				return {
@@ -35,7 +36,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 			message: null,
 		};
 	}
-	if (error.request) {
+	if (request) {
 		// client never received a response, or request never left
 		console.error('client never received a response, or request never left');
 
@@ -51,7 +52,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 	return {
 		statusCode: 500,
 		payload: null,
-		error: error.toString(),
+		error: String(error),
 		message: null,
 	};
 }

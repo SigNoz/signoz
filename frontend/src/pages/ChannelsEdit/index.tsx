@@ -3,14 +3,14 @@ import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
 	SlackChannel,
-	WebhookChannel,
 	SlackType,
+	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
 import useFetch from 'hooks/useFetch';
 import React from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { PayloadProps, Props } from 'types/api/channels/get';
 
 function ChannelsEdit(): JSX.Element {
@@ -34,31 +34,36 @@ function ChannelsEdit(): JSX.Element {
 	const { data } = payload;
 
 	const value = JSON.parse(data);
-
-	var type: string = '';
-	var channel: SlackChannel & WebhookChannel = { name: '' };
+	let type = '';
+	let channel: SlackChannel & WebhookChannel = { name: '' };
 
 	if (value && 'slack_configs' in value) {
-		channel = value['slack_configs'][0];
+		const slackConfig = value.slack_configs[0];
+		channel = slackConfig;
 		type = SlackType;
 	} else if (value && 'webhook_configs' in value) {
-		const webhook_config = value['webhook_configs'][0];
-		channel = webhook_config;
-		channel.api_url = webhook_config.url;
+		const webhookConfig = value.webhook_configs[0];
+		channel = webhookConfig;
+		channel.api_url = webhookConfig.url;
 
-		if ('http_config' in webhook_config) {
-			channel.username = webhook_config['http_config'].username;
-			channel.password = webhook_config['http_config'].password;
+		if ('http_config' in webhookConfig) {
+			const httpConfig = webhookConfig.http_config;
+			if ('basic_auth' in httpConfig) {
+				channel.username = webhookConfig.http_config?.basic_auth?.username;
+				channel.password = webhookConfig.http_config?.basic_auth?.password;
+			} else if ('authorization' in httpConfig) {
+				channel.password = webhookConfig.http_config?.authorization?.credentials;
+			}
 		}
 		type = WebhookType;
 	}
-
+	console.log('channel:', channel);
 	return (
 		<EditAlertChannels
 			{...{
 				initialValue: {
 					...channel,
-					type: type,
+					type,
 					name: value.name,
 				},
 			}}

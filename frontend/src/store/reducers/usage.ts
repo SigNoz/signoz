@@ -1,9 +1,10 @@
-import { Action, ActionTypes, usageDataItem } from 'store/actions';
+/* eslint-disable sonarjs/no-small-switch */
+import { Action, ActionTypes, UsageDataItem } from 'store/actions';
 
 export const usageDataReducer = (
-	state: usageDataItem[] = [{ timestamp: 0, count: 0 }],
+	state: UsageDataItem[] = [{ timestamp: 0, count: 0 }],
 	action: Action,
-): usageDataItem[] => {
+): UsageDataItem[] => {
 	switch (action.type) {
 		case ActionTypes.getUsageData:
 			return action.payload;

@@ -11,9 +11,8 @@ import {
 } from 'container/CreateAlertChannels/config';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
-import { Store } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
 function EditAlertChannels({
 	initialValue,
@@ -29,7 +28,7 @@ function EditAlertChannels({
 	const { id } = useParams<{ id: string }>();
 
 	const [type, setType] = useState<ChannelType>(
-		initialValue?.type ? initialValue.type : SlackType,
+		initialValue?.type ? (initialValue.type as ChannelType) : SlackType,
 	);
 
 	const onTypeChangeHandler = useCallback((value: string) => {
@@ -68,32 +67,33 @@ function EditAlertChannels({
 
 	const onWebhookEditHandler = useCallback(async () => {
 		setSavingState(true);
-		const { api_url, name, username, password } = selectedConfig;
+		const { name, username, password } = selectedConfig;
 
-		const showError = (msg: string) => {
+		const showError = (msg: string): void => {
 			notifications.error({
 				message: 'Error',
 				description: msg,
 			});
-			setSavingState(false);
 		};
 
-		if (api_url == '') {
+		if (selectedConfig?.api_url === '') {
 			showError('Webhook URL is mandatory');
+			setSavingState(false);
 			return;
 		}
 
 		if (username && (!password || password === '')) {
 			showError('Please enter a password');
+			setSavingState(false);
 			return;
 		}
 
 		const response = await editWebhookApi({
-			api_url: api_url || '',
+			api_url: selectedConfig?.api_url || '',
 			name: name || '',
 			send_resolved: true,
-			username: username,
-			password: password,
+			username,
+			password,
 			id,
 		});
 
@@ -147,7 +147,9 @@ function EditAlertChannels({
 }
 
 interface EditAlertChannelsProps {
-	initialValue: Store;
+	initialValue: {
+		[x: string]: unknown;
+	};
 }
 
 export default EditAlertChannels;

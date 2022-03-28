@@ -9,6 +9,12 @@ function Editor({ value }: EditorProps): JSX.Element {
 			value={value.current}
 			options={{ fontSize: 16, automaticLayout: true }}
 			height="40vh"
+			onChange={(newValue): void => {
+				if (value.current && newValue) {
+					// eslint-disable-next-line no-param-reassign
+					value.current = newValue;
+				}
+			}}
 		/>
 	);
 }

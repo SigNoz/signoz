@@ -6,11 +6,9 @@ import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import history from 'lib/history';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
@@ -156,7 +154,8 @@ function GridGraph(): JSX.Element {
 					});
 				} catch (error) {
 					notification.error({
-						message: error.toString() || 'Something went wrong',
+						message:
+							error instanceof Error ? error.toString() : 'Something went wrong',
 					});
 				}
 			}

@@ -11,8 +11,8 @@ import React, { useCallback, useState } from 'react';
 import {
 	ChannelType,
 	SlackChannel,
-	WebhookChannel,
 	SlackType,
+	WebhookChannel,
 	WebhookType,
 	PagerType,
 	PagerChannel,
@@ -91,6 +91,11 @@ function CreateAlertChannels({
 			}
 			setSavingState(false);
 		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description:
+					'An unexpected error occurred while creating this channel, please try again',
+			});
 			setSavingState(false);
 		}
 	}, [notifications, selectedConfig]);
@@ -146,29 +151,38 @@ function CreateAlertChannels({
 	}, [notifications, selectedConfig]);
 
 	const onWebhookHandler = useCallback(async () => {
+		// initial api request without auth params
+		let request: WebhookChannel = {
+			api_url: selectedConfig?.api_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+		};
+
+		setSavingState(true);
+
 		try {
-			setSavingState(true);
-			var request: WebhookChannel = {
-				api_url: selectedConfig?.api_url || '',
-				name: selectedConfig?.name || '',
-				send_resolved: true,
-			};
 			if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
 				if (selectedConfig?.username !== '') {
 					// if username is not null then password must be passed
 					if (selectedConfig?.password !== '') {
-						request.username = selectedConfig.username;
-						request.password = selectedConfig.password;
+						request = {
+							...request,
+							username: selectedConfig.username,
+							password: selectedConfig.password,
+						};
 					} else {
 						notifications.error({
 							message: 'Error',
-							description:
-								'password must be provided with user name, for bearer tokens leave user name empty',
+							description: 'A Password must be provided with user name',
 						});
 					}
 				} else if (selectedConfig?.password !== '') {
 					// only password entered, set bearer token
-					request.password = selectedConfig.password;
+					request = {
+						...request,
+						username: '',
+						password: selectedConfig.password,
+					};
 				}
 			}
 
@@ -187,10 +201,14 @@ function CreateAlertChannels({
 					description: response.error || 'Error while creating the channel',
 				});
 			}
-			setSavingState(false);
 		} catch (error) {
-			setSavingState(false);
+			notifications.error({
+				message: 'Error',
+				description:
+					'An unexpected error occurred while creating this channel, please try again',
+			});
 		}
+		setSavingState(false);
 	}, [notifications, selectedConfig]);
 
 	const onSaveHandler = useCallback(
@@ -210,10 +228,9 @@ function CreateAlertChannels({
 						message: 'Error',
 						description: 'channel type selected is invalid',
 					});
-					setSavingState(false);
 			}
 		},
-		[onSlackHandler, onWebhookHandler],
+		[onSlackHandler, onWebhookHandler, notifications],
 	);
 
 	return (
@@ -239,7 +256,7 @@ function CreateAlertChannels({
 }
 
 interface CreateAlertChannelsProps {
-	preType?: ChannelType;
+	preType: ChannelType;
 }
 
 export default CreateAlertChannels;

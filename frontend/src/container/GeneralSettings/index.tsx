@@ -39,6 +39,10 @@ function GeneralSettings(): JSX.Element {
 	const [isDefaultMetrics, setIsDefaultMetrics] = useState<boolean>(false);
 	const [isDefaultTrace, setIsDefaultTrace] = useState<boolean>(false);
 
+	const onModalToggleHandler = (): void => {
+		setModal((modal) => !modal);
+	};
+
 	const onClickSaveHandler = useCallback(() => {
 		onModalToggleHandler();
 	}, []);
@@ -47,10 +51,6 @@ function GeneralSettings(): JSX.Element {
 		PayloadProps,
 		undefined
 	>(getRetentionperoidApi, undefined);
-
-	const onModalToggleHandler = (): void => {
-		setModal((modal) => !modal);
-	};
 
 	const checkMetricTraceDefault = (trace: number, metric: number): void => {
 		if (metric === -1) {
@@ -68,12 +68,15 @@ function GeneralSettings(): JSX.Element {
 
 	useEffect(() => {
 		if (!loading && payload !== undefined) {
-			const { metrics_ttl_duration_hrs, traces_ttl_duration_hrs } = payload;
+			const {
+				metrics_ttl_duration_hrs: metricTllDuration,
+				traces_ttl_duration_hrs: traceTllDuration,
+			} = payload;
 
-			checkMetricTraceDefault(traces_ttl_duration_hrs, metrics_ttl_duration_hrs);
+			checkMetricTraceDefault(traceTllDuration, metricTllDuration);
 
-			const traceValue = getSettingsPeroid(traces_ttl_duration_hrs);
-			const metricsValue = getSettingsPeroid(metrics_ttl_duration_hrs);
+			const traceValue = getSettingsPeroid(traceTllDuration);
+			const metricsValue = getSettingsPeroid(metricTllDuration);
 
 			setRetentionPeroidTrace(traceValue.value.toString());
 			setSelectedTracePeroid(traceValue.peroid);
@@ -171,11 +174,7 @@ function GeneralSettings(): JSX.Element {
 	};
 
 	const isDisabledHandler = (): boolean => {
-		if (retentionPeroidTrace === '' || retentionPeroidMetrics === '') {
-			return true;
-		}
-
-		return false;
+		return !!(retentionPeroidTrace === '' || retentionPeroidMetrics === '');
 	};
 
 	const errorText = getErrorText();

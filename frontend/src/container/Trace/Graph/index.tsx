@@ -43,7 +43,7 @@ function TraceGraph(): JSX.Element {
 	}
 
 	return (
-		<Container ref={ref}>
+		<Container ref={ref as never}>
 			<Graph
 				animate={false}
 				data={ChartData}
