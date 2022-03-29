@@ -21,12 +21,8 @@ export async function fetchTag(
 		return [];
 	}
 
-	console.log(response.payload);
-
-	return [
-		{
-			label: 'asd',
-			value: 'asd',
-		},
-	];
+	return response.payload.map((e) => ({
+		label: e.tagValues,
+		value: e.tagValues,
+	}));
 }

@@ -51,7 +51,7 @@ function DebounceSelect<
 			filterOption={false}
 			onSearch={debounceFetcher}
 			notFoundContent={fetching ? <Spin size="small" /> : null}
-			style={{ minWidth: '170px' }}
+			style={{ width: '170px' }}
 			// as all other props are from SelectProps only
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}

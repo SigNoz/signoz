@@ -83,27 +83,22 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 
 			<DebounceSelect
 				fetchOptions={(): Promise<TagValue[]> =>
-					fetchTag(globalReducer.minTime, globalReducer.maxTime, selectedKey[0])
+					fetchTag(globalReducer.minTime, globalReducer.maxTime, selectedKey[index])
 				}
 				debounceTimeout={300}
-				mode="tags"
-			/>
-
-			{/* <ValueSelect
-				value={selectedValues}
-				onChange={(value): void => {
+				onSelect={(value: Value): void => {
 					setLocalSelectedTags((tags) => [
 						...tags.slice(0, index),
 						{
 							Key: selectedKey,
 							Operator: selectedOperator,
-							Values: value as string[],
+							Values: [...selectedValues, value.value],
 						},
 						...tags.slice(index + 1, tags.length),
 					]);
 				}}
-				mode="tags"
-			/> */}
+				mode="multiple"
+			/>
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
 				<CloseOutlined />
@@ -119,6 +114,12 @@ interface AllTagsProps {
 	setLocalSelectedTags: React.Dispatch<
 		React.SetStateAction<TraceReducer['selectedTags']>
 	>;
+}
+
+interface Value {
+	key: string;
+	label: string;
+	value: string;
 }
 
 export default SingleTags;

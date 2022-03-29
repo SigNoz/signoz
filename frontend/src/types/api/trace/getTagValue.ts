@@ -6,6 +6,8 @@ export interface Props {
 	tagKey: string;
 }
 
-export interface PayloadProps {
-	key: string;
+interface Value {
+	tagValues: string;
 }
+
+export type PayloadProps = Value[];
