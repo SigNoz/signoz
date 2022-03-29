@@ -1,12 +1,11 @@
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
 import React from 'react';
-import { RouteComponentProps, withRouter } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 
 const breadcrumbNameMap = {
 	[ROUTES.APPLICATION]: 'Application',
-	[ROUTES.TRACES]: 'Traces',
+	[ROUTES.TRACE]: 'Traces',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
 	[ROUTES.INSTRUMENTATION]: 'Add instrumentation',
@@ -15,7 +14,9 @@ const breadcrumbNameMap = {
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
-	const pathArray = props.location.pathname.split('/').filter((i) => i);
+	const { location } = props;
+
+	const pathArray = location.pathname.split('/').filter((i) => i);
 
 	const extraBreadcrumbItems = pathArray.map((_, index) => {
 		const url = `/${pathArray.slice(0, index + 1).join('/')}`;

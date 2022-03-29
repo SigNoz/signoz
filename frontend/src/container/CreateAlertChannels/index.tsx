@@ -1,17 +1,26 @@
 import { Form, notification } from 'antd';
 import createSlackApi from 'api/channels/createSlack';
+import createWebhookApi from 'api/channels/createWebhook';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 
-import { ChannelType, SlackChannel } from './config';
+import {
+	ChannelType,
+	SlackChannel,
+	SlackType,
+	WebhookChannel,
+	WebhookType,
+} from './config';
 
 function CreateAlertChannels({
 	preType = 'slack',
 }: CreateAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
-	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
+	const [selectedConfig, setSelectedConfig] = useState<
+		Partial<SlackChannel & WebhookChannel>
+	>({
 		text: ` {{ range .Alerts -}}
      *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
@@ -73,17 +82,93 @@ function CreateAlertChannels({
 			}
 			setSavingState(false);
 		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description:
+					'An unexpected error occurred while creating this channel, please try again',
+			});
 			setSavingState(false);
 		}
 	}, [notifications, selectedConfig]);
 
+	const onWebhookHandler = useCallback(async () => {
+		// initial api request without auth params
+		let request: WebhookChannel = {
+			api_url: selectedConfig?.api_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+		};
+
+		setSavingState(true);
+
+		try {
+			if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
+				if (selectedConfig?.username !== '') {
+					// if username is not null then password must be passed
+					if (selectedConfig?.password !== '') {
+						request = {
+							...request,
+							username: selectedConfig.username,
+							password: selectedConfig.password,
+						};
+					} else {
+						notifications.error({
+							message: 'Error',
+							description: 'A Password must be provided with user name',
+						});
+					}
+				} else if (selectedConfig?.password !== '') {
+					// only password entered, set bearer token
+					request = {
+						...request,
+						username: '',
+						password: selectedConfig.password,
+					};
+				}
+			}
+
+			const response = await createWebhookApi(request);
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: 'Successfully created the channel',
+				});
+				setTimeout(() => {
+					history.replace(ROUTES.SETTINGS);
+				}, 2000);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || 'Error while creating the channel',
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description:
+					'An unexpected error occurred while creating this channel, please try again',
+			});
+		}
+		setSavingState(false);
+	}, [notifications, selectedConfig]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
-			if (value == 'slack') {
-				onSlackHandler();
+			switch (value) {
+				case SlackType:
+					onSlackHandler();
+					break;
+				case WebhookType:
+					onWebhookHandler();
+					break;
+				default:
+					notifications.error({
+						message: 'Error',
+						description: 'channel type selected is invalid',
+					});
 			}
 		},
-		[onSlackHandler],
+		[onSlackHandler, onWebhookHandler, notifications],
 	);
 
 	return (
@@ -108,7 +193,7 @@ function CreateAlertChannels({
 }
 
 interface CreateAlertChannelsProps {
-	preType?: ChannelType;
+	preType: ChannelType;
 }
 
 export default CreateAlertChannels;

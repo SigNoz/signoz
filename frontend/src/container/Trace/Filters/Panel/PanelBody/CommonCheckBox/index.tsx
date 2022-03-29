@@ -10,7 +10,9 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 		(state) => state.traces,
 	);
 
-	const status = filter.get(props.name) || {};
+	const { name } = props;
+
+	const status = filter.get(name) || {};
 
 	const statusObj = Object.keys(status);
 
@@ -20,7 +22,7 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 				<CheckBoxComponent
 					key={e}
 					{...{
-						name: props.name,
+						name,
 						keyValue: e,
 						value: status[e],
 					}}

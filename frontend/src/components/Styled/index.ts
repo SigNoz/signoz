@@ -6,8 +6,8 @@ import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';
 
-const styledClass = (props: IStyledClass): FlattenSimpleInterpolation =>
-	props.styledclass;
+const styledClass = (props: IStyledClass): FlattenSimpleInterpolation | null =>
+	props.styledclass || null;
 
 type TStyledCol = AntD.ColProps & IStyledClass;
 const StyledCol = styled(AntD.Col)<TStyledCol>`

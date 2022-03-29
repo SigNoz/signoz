@@ -2,7 +2,7 @@ import { Col } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React from 'react';
-import { matchPath, useLocation } from 'react-router-dom';
+import { matchPath } from 'react-router-dom';
 
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
@@ -21,7 +21,7 @@ function TopNav(): JSX.Element | null {
 	}
 
 	const checkRouteExists = (currentPath: string): boolean => {
-		for (let i = 0; i < routesToSkip.length; ++i) {
+		for (let i = 0; i < routesToSkip.length; i += 1) {
 			if (
 				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
 			) {

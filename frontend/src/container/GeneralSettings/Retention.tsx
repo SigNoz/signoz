@@ -1,6 +1,5 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Menu } from 'antd';
-import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import { SettingPeroid } from '.';
@@ -35,7 +34,7 @@ function Retention({
 	];
 
 	const onClickHandler = (
-		e: MenuInfo,
+		e: { key: string },
 		func: React.Dispatch<React.SetStateAction<SettingPeroid>>,
 	): void => {
 		const selected = e.key as SettingPeroid;

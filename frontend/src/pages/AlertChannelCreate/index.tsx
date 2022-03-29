@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
 import CreateAlertChannels from 'container/CreateAlertChannels';
@@ -19,7 +20,7 @@ function SettingsPage(): JSX.Element {
 					},
 					{
 						Component: (): JSX.Element => {
-							return <CreateAlertChannels />;
+							return <CreateAlertChannels preType="slack" />;
 						},
 						name: 'Alert Channels',
 						route: ROUTES.ALL_CHANNELS,

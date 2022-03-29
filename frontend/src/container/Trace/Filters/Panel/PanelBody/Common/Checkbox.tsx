@@ -2,10 +2,8 @@ import { Checkbox, notification, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import React, { useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { SelectedTraceFilter } from 'store/actions/trace/selectTraceFilter';
+import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -30,17 +28,18 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const { keyValue, name, value } = props;
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const isUserSelected =
-		(userSelectedFilter.get(props.name) || []).find(
-			(e) => e === props.keyValue,
-		) !== undefined;
+		(userSelectedFilter.get(name) || []).find((e) => e === keyValue) !==
+		undefined;
 
-	const onCheckHandler = async () => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const onCheckHandler = async (): Promise<void> => {
 		try {
 			setIsLoading(true);
 
@@ -48,48 +47,46 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			const preUserSelectedMap = new Map(userSelectedFilter);
 			const preIsFilterExclude = new Map(isFilterExclude);
 
-			const isTopicPresent = preUserSelectedMap.get(props.name);
+			const isTopicPresent = preUserSelectedMap.get(name);
 
 			// append the value
 			if (!isTopicPresent) {
-				preUserSelectedMap.set(props.name, [props.keyValue]);
+				preUserSelectedMap.set(name, [keyValue]);
 			} else {
 				const isValuePresent =
-					isTopicPresent.find((e) => e === props.keyValue) !== undefined;
+					isTopicPresent.find((e) => e === keyValue) !== undefined;
 
 				// check the value if present then remove the value or isChecked
 				if (isValuePresent) {
 					preUserSelectedMap.set(
-						props.name,
-						isTopicPresent.filter((e) => e !== props.keyValue),
+						name,
+						isTopicPresent.filter((e) => e !== keyValue),
 					);
 				} else {
 					// if not present add into the array of string
-					preUserSelectedMap.set(props.name, [...isTopicPresent, props.keyValue]);
+					preUserSelectedMap.set(name, [...isTopicPresent, keyValue]);
 				}
 			}
 
-			if (newSelectedMap.get(props.name)?.find((e) => e === props.keyValue)) {
-				newSelectedMap.set(props.name, [
-					...(newSelectedMap.get(props.name) || []).filter(
-						(e) => e !== props.keyValue,
-					),
+			if (newSelectedMap.get(name)?.find((e) => e === keyValue)) {
+				newSelectedMap.set(name, [
+					...(newSelectedMap.get(name) || []).filter((e) => e !== keyValue),
 				]);
 			} else {
-				newSelectedMap.set(props.name, [
-					...new Set([...(newSelectedMap.get(props.name) || []), props.keyValue]),
+				newSelectedMap.set(name, [
+					...new Set([...(newSelectedMap.get(name) || []), keyValue]),
 				]);
 			}
 
-			if (preIsFilterExclude.get(props.name) !== false) {
-				preIsFilterExclude.set(props.name, true);
+			if (preIsFilterExclude.get(name) !== false) {
+				preIsFilterExclude.set(name, true);
 			}
 
 			const response = await getFilters({
 				other: Object.fromEntries(newSelectedMap),
 				end: String(globalTime.maxTime),
 				start: String(globalTime.minTime),
-				getFilters: filterToFetchData.filter((e) => e !== props.name),
+				getFilters: filterToFetchData.filter((e) => e !== name),
 				isFilterExclude: preIsFilterExclude,
 			});
 
@@ -97,15 +94,15 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				const updatedFilter = getFilter(response.payload);
 
 				updatedFilter.forEach((value, key) => {
-					if (key !== 'duration' && props.name !== key) {
+					if (key !== 'duration' && name !== key) {
 						preUserSelectedMap.set(key, Object.keys(value));
 					}
 				});
 
-				updatedFilter.set(props.name, {
-					[`${props.keyValue}`]: '-1',
-					...(filter.get(props.name) || {}),
-					...(updatedFilter.get(props.name) || {}),
+				updatedFilter.set(name, {
+					[`${keyValue}`]: '-1',
+					...(filter.get(name) || {}),
+					...(updatedFilter.get(name) || {}),
 				});
 
 				dispatch({
@@ -156,12 +153,12 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				onClick={onCheckHandler}
 				checked={isCheckBoxSelected}
 				defaultChecked
-				key={props.keyValue}
+				key={keyValue}
 			>
-				{props.keyValue}
+				{keyValue}
 			</Checkbox>
 			{isCheckBoxSelected ? (
-				<Typography>{props.value}</Typography>
+				<Typography>{value}</Typography>
 			) : (
 				<Typography>-</Typography>
 			)}
@@ -169,23 +166,10 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	);
 }
 
-interface DispatchProps {
-	selectedTraceFilter: (props: {
-		topic: TraceFilterEnum;
-		value: string;
-	}) => void;
-}
-
-interface CheckBoxProps extends DispatchProps {
+interface CheckBoxProps {
 	keyValue: string;
-	value: string;
 	name: TraceFilterEnum;
+	value: string;
 }
 
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	selectedTraceFilter: bindActionCreators(SelectedTraceFilter, dispatch),
-});
-
-export default connect(null, mapDispatchToProps)(CheckBoxComponent);
+export default CheckBoxComponent;
