@@ -102,6 +102,7 @@
 		"@babel/preset-env": "^7.12.17",
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.12.17",
+		"@jest/globals": "^27.5.1",
 		"@testing-library/cypress": "^8.0.0",
 		"@types/color": "^3.0.3",
 		"@types/compression-webpack-plugin": "^9.0.0",
