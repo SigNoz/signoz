@@ -139,7 +139,11 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 						key={`${index + 1}`}
 						collapsed={collapsed}
 					>
-						<Menu.Item onClick={props.onClick} icon={props.icon}>
+						<Menu.Item
+							eventKey={index.toString()}
+							onClick={props.onClick}
+							icon={props.icon}
+						>
 							{props.text}
 						</Menu.Item>
 					</SlackMenuItemContainer>
