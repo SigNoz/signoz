@@ -12,7 +12,7 @@ const getGroups = async (
 		const queryParams = convertObjectIntoParams(props);
 
 		const response = await AxiosAlertManagerInstance.get(
-			`/alerts?${queryParams}`,
+			`/alerts/groups?${queryParams}`,
 		);
 
 		return {
