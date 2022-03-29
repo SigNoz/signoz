@@ -23,6 +23,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@ant-design/colors": "^6.0.0",
 		"@ant-design/icons": "^4.6.2",
 		"@grafana/data": "^8.4.3",
 		"@monaco-editor/react": "^4.3.1",
