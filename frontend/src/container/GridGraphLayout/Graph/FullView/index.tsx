@@ -23,7 +23,6 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import EmptyGraph from './EmptyGraph';
 import { NotFoundContainer, TimeContainer } from './styles';
 
 function FullView({
