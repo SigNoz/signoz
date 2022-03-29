@@ -33,7 +33,7 @@ function TriggeredAlerts(): JSX.Element {
 				setGroupState((state) => ({
 					...state,
 					loading: false,
-					payload: response.payload,
+					payload: response.payload || [],
 				}));
 			} else {
 				setGroupState((state) => ({
@@ -64,6 +64,9 @@ function TriggeredAlerts(): JSX.Element {
 	if (groupState.loading || groupState.payload === undefined) {
 		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
+
+	// commented the reduce() call as we no longer use /alerts/groups
+	// API from alert manager, which returns a group for each receiver
 
 	// const initialAlerts: Alerts[] = [];
 

@@ -20,6 +20,8 @@ function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
 			});
 
 			if (response.statusCode === 200 && response.payload !== null) {
+				// commented reduce() call as we no longer use /alerts/groups
+				// from alertmanager which needed re-grouping on client side
 				// const initialAlerts: Alerts[] = [];
 
 				// const allAlerts: Alerts[] = response.payload.reduce((acc, cur) => {
