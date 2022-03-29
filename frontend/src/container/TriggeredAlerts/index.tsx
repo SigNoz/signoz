@@ -1,9 +1,9 @@
-import getGroupApi from 'api/alerts/getGroup';
+import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
-import { PayloadProps } from 'types/api/alerts/getGroups';
+import { PayloadProps } from 'types/api/alerts/getTriggered';
 
 import TriggerComponent from './TriggeredAlert';
 
@@ -23,7 +23,7 @@ function TriggeredAlerts(): JSX.Element {
 				loading: true,
 			}));
 
-			const response = await getGroupApi({
+			const response = await getTriggeredApi({
 				active: true,
 				inhibited: true,
 				silenced: false,
@@ -33,7 +33,7 @@ function TriggeredAlerts(): JSX.Element {
 				setGroupState((state) => ({
 					...state,
 					loading: false,
-					payload: response.payload || [],
+					payload: response.payload,
 				}));
 			} else {
 				setGroupState((state) => ({
@@ -65,13 +65,13 @@ function TriggeredAlerts(): JSX.Element {
 		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
 
-	const initialAlerts: Alerts[] = [];
+	// const initialAlerts: Alerts[] = [];
 
-	const allAlerts: Alerts[] = groupState.payload.reduce((acc, curr) => {
-		return [...acc, ...curr.alerts];
-	}, initialAlerts);
+	// const allAlerts: Alerts[] = groupState.payload.reduce((acc, curr) => {
+	//	return [...acc, ...curr.alerts];
+	// }, initialAlerts);
 
-	return <TriggerComponent allAlerts={allAlerts} />;
+	return <TriggerComponent allAlerts={groupState.payload} />;
 }
 
 export default TriggeredAlerts;
