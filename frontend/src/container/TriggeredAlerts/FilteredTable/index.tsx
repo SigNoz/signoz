@@ -1,5 +1,5 @@
-import { Dictionary } from 'lodash';
-import groupBy from 'lodash/groupBy';
+import { Dictionary } from 'cypress/types/lodash';
+import groupBy from 'lodash-es/groupBy';
 import React, { useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 

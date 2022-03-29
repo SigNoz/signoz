@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import { Input, Slider } from 'antd';
 import { SliderRangeProps } from 'antd/lib/slider';
 import getFilters from 'api/trace/getFilters';
@@ -18,7 +19,7 @@ import { Container, InputContainer, Text } from './styles';
 
 dayjs.extend(durationPlugin);
 
-const getMs = (value: string) => {
+const getMs = (value: string): string => {
 	return dayjs
 		.duration({
 			milliseconds: parseInt(value, 10) / 1000000,
@@ -42,7 +43,9 @@ function Duration(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const getDuration = () => {
+	const getDuration = ():
+		| { maxDuration: string; minDuration: string }
+		| Record<string, string> => {
 		const selectedDuration = selectedFilter.get('duration');
 
 		if (selectedDuration) {
@@ -65,7 +68,7 @@ function Duration(): JSX.Element {
 
 	const defaultValue = [parseFloat(minDuration), parseFloat(maxDuration)];
 
-	const updatedUrl = async (min: number, max: number) => {
+	const updatedUrl = async (min: number, max: number): Promise<void> => {
 		const preSelectedFilter = new Map(selectedFilter);
 		const preUserSelected = new Map(userSelectedFilter);
 
@@ -114,7 +117,7 @@ function Duration(): JSX.Element {
 		}
 	};
 
-	const onRangeSliderHandler = (number: [number, number]) => {
+	const onRangeSliderHandler = (number: [number, number]): void => {
 		const [min, max] = number;
 
 		setLocalMin(min.toString());
@@ -124,11 +127,10 @@ function Duration(): JSX.Element {
 	const debouncedFunction = useDebouncedFn(
 		(min, max) => {
 			console.log('debounce function');
-			updatedUrl(min, max);
+			updatedUrl(min as number, max as number);
 		},
 		500,
 		undefined,
-		[],
 	);
 
 	const onChangeMaxHandler: React.ChangeEventHandler<HTMLInputElement> = (
@@ -187,21 +189,16 @@ function Duration(): JSX.Element {
 					min={parseFloat((filter.get('duration') || {}).minDuration)}
 					max={parseFloat((filter.get('duration') || {}).maxDuration)}
 					range
-					tipFormatter={(value) => {
+					tipFormatter={(value): JSX.Element => {
 						if (value === undefined) {
-							return '';
+							return <div />;
 						}
 						return <div>{`${getMs(value.toString())}ms`}</div>;
 					}}
-					onChange={([min, max]) => {
+					onChange={([min, max]): void => {
 						onRangeSliderHandler([min, max]);
 					}}
 					onAfterChange={onRangeHandler}
-					// onAfterChange={([min, max]) => {
-					// 	const returnFunction = debounce((min, max) => updatedUrl(min, max));
-
-					// 	returnFunction(min, max);
-					// }}
 					value={[parseFloat(localMin), parseFloat(localMax)]}
 				/>
 			</Container>

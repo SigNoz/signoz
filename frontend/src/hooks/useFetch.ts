@@ -56,7 +56,7 @@ function useFetch<PayloadProps, FunctionParams>(
 				loading: false,
 				success: false,
 				error: true,
-				errorMessage: error,
+				errorMessage: error as string,
 			});
 		}
 		return (): void => {

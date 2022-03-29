@@ -1,6 +1,8 @@
+/* eslint-disable */
+// @ts-nocheck
+
 import { cloneDeep } from 'lodash-es';
 import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
-// PNOTE - should the data be taken from redux or only through props? - Directly as arguments
 
 export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
 	// Initializing tree. What should be returned is trace is empty? We should have better error handling

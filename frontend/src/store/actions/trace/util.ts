@@ -24,7 +24,7 @@ export const updateURL = (
 	isFilterExclude: TraceReducer['isFilterExclude'],
 	userSelectedFilter: TraceReducer['userSelectedFilter'],
 ): void => {
-	const search = new URLSearchParams(location.search);
+	const search = new URLSearchParams(window.location.search);
 	const preResult: { key: string; value: string }[] = [];
 
 	const keyToSkip = [

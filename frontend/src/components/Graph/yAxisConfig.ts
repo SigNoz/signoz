@@ -3,7 +3,6 @@ import { formattedValueToString, getValueFormat } from '@grafana/data';
 export const getYAxisFormattedValue = (
 	value: number,
 	format: string,
-	decimal?: number,
 ): string => {
 	try {
 		return formattedValueToString(

@@ -17,5 +17,10 @@ interface SpinnerProps {
 	tip?: SpinProps['tip'];
 	height?: React.CSSProperties['height'];
 }
+Spinner.defaultProps = {
+	size: undefined,
+	tip: undefined,
+	height: undefined,
+};
 
 export default Spinner;

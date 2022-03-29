@@ -124,6 +124,13 @@ function GridCardGraph({
 		[],
 	);
 
+	const onDeleteHandler = useCallback(() => {
+		deleteWidget({ widgetId: widget.id });
+		onToggleModal(setDeletModal);
+		// eslint-disable-next-line no-param-reassign
+		isDeleted.current = true;
+	}, [deleteWidget, widget, onToggleModal, isDeleted]);
+
 	const getModals = (): JSX.Element => {
 		return (
 			<>
@@ -159,12 +166,6 @@ function GridCardGraph({
 			</>
 		);
 	};
-
-	const onDeleteHandler = useCallback(() => {
-		deleteWidget({ widgetId: widget.id });
-		onToggleModal(setDeletModal);
-		isDeleted.current = true;
-	}, [deleteWidget, widget, onToggleModal, isDeleted]);
 
 	if (state.error) {
 		return (

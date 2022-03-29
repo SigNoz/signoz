@@ -149,10 +149,6 @@ export interface UpdateSpans {
 	};
 }
 
-export interface ResetTraceFilter {
-	type: typeof RESET_TRACE_FILTER;
-}
-
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter

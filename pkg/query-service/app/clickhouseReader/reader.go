@@ -45,6 +45,7 @@ import (
 
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.uber.org/zap"
 )
 
@@ -74,6 +75,7 @@ type ClickHouseReader struct {
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
 	promConfig      *config.Config
+	alertManager		am.Manager
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -88,9 +90,12 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		os.Exit(1)
 	}
 
+	alertManager := am.New("")
+
 	return &ClickHouseReader{
 		db:              db,
 		localDB:         localDB,
+		alertManager:		 alertManager,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		errorTable:      options.primary.ErrorTable,
@@ -651,7 +656,7 @@ func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError
 
 func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {
 
-	receiver := &model.Receiver{}
+	receiver := &am.Receiver{}
 	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
 		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
@@ -723,32 +728,10 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 		}
 	}
 
-	values := map[string]string{"name": channelToDelete.Name}
-	jsonValue, _ := json.Marshal(values)
-
-	req, err := http.NewRequest(http.MethodDelete, constants.GetAlertManagerApiPrefix()+"v1/receivers", bytes.NewBuffer(jsonValue))
-
-	if err != nil {
-		zap.S().Errorf("Error in creating new delete request to alertmanager/v1/receivers\n", err)
+	apiError := r.alertManager.DeleteRoute(channelToDelete.Name)
+	if apiError != nil {
 		tx.Rollback()
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-
-	client := &http.Client{}
-	response, err := client.Do(req)
-
-	if err != nil {
-		zap.S().Errorf("Error in delete API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to delete alertmanager/v1/receivers\n", response.Status)
-		zap.S().Error(err)
-		tx.Rollback()
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return apiError
 	}
 
 	err = tx.Commit()
@@ -780,7 +763,7 @@ func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError)
 
 }
 
-func getChannelType(receiver *model.Receiver) string {
+func getChannelType(receiver *am.Receiver) string {
 
 	if receiver.EmailConfigs != nil {
 		return "email"
@@ -813,7 +796,7 @@ func getChannelType(receiver *model.Receiver) string {
 	return ""
 }
 
-func (r *ClickHouseReader) EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError) {
+func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError) {
 
 	idInt, _ := strconv.Atoi(id)
 
@@ -851,30 +834,10 @@ func (r *ClickHouseReader) EditChannel(receiver *model.Receiver, id string) (*mo
 		}
 	}
 
-	req, err := http.NewRequest(http.MethodPut, constants.GetAlertManagerApiPrefix()+"v1/receivers", bytes.NewBuffer(receiverString))
-
-	if err != nil {
-		zap.S().Errorf("Error in creating new update request to alertmanager/v1/receivers\n", err)
+	apiError := r.alertManager.EditRoute(receiver)
+	if apiError != nil {
 		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-
-	client := &http.Client{}
-	response, err := client.Do(req)
-
-	if err != nil {
-		zap.S().Errorf("Error in update API call to alertmanager/v1/receivers\n", err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
-		zap.S().Error(err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return nil, apiError
 	}
 
 	err = tx.Commit()
@@ -887,7 +850,8 @@ func (r *ClickHouseReader) EditChannel(receiver *model.Receiver, id string) (*mo
 
 }
 
-func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError) {
+
+func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
 
 	tx, err := r.localDB.Begin()
 	if err != nil {
@@ -896,6 +860,8 @@ func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Recei
 
 	channel_type := getChannelType(receiver)
 	receiverString, _ := json.Marshal(receiver)
+	
+	// todo: check if the channel name already exists, raise an error if so 
 
 	{
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
@@ -913,20 +879,12 @@ func (r *ClickHouseReader) CreateChannel(receiver *model.Receiver) (*model.Recei
 		}
 	}
 
-	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer(receiverString))
-
-	if err != nil {
-		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+	apiError := r.alertManager.AddRoute(receiver)
+	if apiError != nil {
 		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return nil, apiError
 	}
-	if response.StatusCode > 299 {
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n", response.Status)
-		zap.S().Error(err)
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
+	
 	err = tx.Commit()
 	if err != nil {
 		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)

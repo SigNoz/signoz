@@ -1,24 +1,33 @@
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
+interface GetTraceMetaData {
+	globalStart: number;
+	globalEnd: number;
+	spread: number;
+	totalSpans: number;
+	levels: number;
+}
+export const getMetaDataFromSpanTree = (
+	treeData: ITraceTree,
+): GetTraceMetaData => {
 	let globalStart = Number.POSITIVE_INFINITY;
 	let globalEnd = Number.NEGATIVE_INFINITY;
 	let totalSpans = 0;
 	let levels = 1;
-	const traverse = (treeNode: ITraceTree, level = 0) => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
-		totalSpans++;
+		totalSpans += 1;
 		levels = Math.max(levels, level);
 		const { startTime } = treeNode;
 		const endTime = startTime + treeNode.value;
 		globalStart = Math.min(globalStart, startTime);
 		globalEnd = Math.max(globalEnd, endTime);
 
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1);
-		}
+		});
 	};
 	traverse(treeData, 1);
 
@@ -34,7 +43,9 @@ export const getMetaDataFromSpanTree = (treeData: ITraceTree) => {
 	};
 };
 
-export function getTopLeftFromBody(elem: HTMLElement) {
+export function getTopLeftFromBody(
+	elem: HTMLElement,
+): { top: number; left: number } {
 	const box = elem.getBoundingClientRect();
 
 	const { body } = document;
@@ -57,18 +68,18 @@ export const getNodeById = (
 	treeData: ITraceTree,
 ): ITraceTree | undefined => {
 	let foundNode: ITraceTree | undefined;
-	const traverse = (treeNode: ITraceTree, level = 0) => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
 
-		if (searchingId == treeNode.id) {
+		if (searchingId === treeNode.id) {
 			foundNode = treeNode;
 		}
 
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1);
-		}
+		});
 	};
 	traverse(treeData, 1);
 
@@ -88,7 +99,7 @@ const getSpanWithoutChildren = (
 		tags: span.tags,
 		time: span.time,
 		value: span.value,
-		error: span.error,
+		event: span.event,
 		hasError: span.hasError,
 	};
 };
@@ -101,10 +112,7 @@ export const isSpanPresentInSearchString = (
 
 	const stringifyTree = JSON.stringify(parsedTree);
 
-	if (stringifyTree.includes(searchedString)) {
-		return true;
-	}
-	return false;
+	return stringifyTree.includes(searchedString);
 };
 
 export const isSpanPresent = (
@@ -117,7 +125,7 @@ export const isSpanPresent = (
 		treeNode: ITraceTree,
 		level = 0,
 		foundNode: ITraceTree[],
-	) => {
+	): void => {
 		if (!treeNode) {
 			return;
 		}
@@ -128,9 +136,9 @@ export const isSpanPresent = (
 			foundNode.push(treeNode);
 		}
 
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1, foundNode);
-		}
+		});
 	};
 	traverse(tree, 1, foundNode);
 
@@ -140,7 +148,7 @@ export const isSpanPresent = (
 export const getSpanPath = (tree: ITraceTree, spanId: string): string[] => {
 	const spanPath: string[] = [];
 
-	const traverse = (treeNode: ITraceTree) => {
+	const traverse = (treeNode: ITraceTree): boolean => {
 		if (!treeNode) {
 			return false;
 		}
@@ -152,9 +160,9 @@ export const getSpanPath = (tree: ITraceTree, spanId: string): string[] => {
 		}
 
 		let foundInChild = false;
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			if (traverse(childNode)) foundInChild = true;
-		}
+		});
 		if (!foundInChild) {
 			spanPath.pop();
 		}

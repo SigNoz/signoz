@@ -1,11 +1,12 @@
+/* eslint-disable react/no-unstable-nested-components */
 import { QuestionCircleFilled } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import React from 'react';
 
-function TextToolTip({ text, url }: TextToolTipProps) {
+function TextToolTip({ text, url }: TextToolTipProps): JSX.Element {
 	return (
 		<Tooltip
-			overlay={() => {
+			overlay={(): JSX.Element => {
 				return (
 					<div>
 						{`${text} `}

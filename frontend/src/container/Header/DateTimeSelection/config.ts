@@ -1,25 +1,25 @@
 import ROUTES from 'constants/routes';
 
-type fiveMin = '5min';
-type fifteenMin = '15min';
-type thrityMin = '30min';
-type oneMin = '1min';
-type sixHour = '6hr';
-type oneHour = '1hr';
-type oneDay = '1day';
-type oneWeek = '1week';
-type custom = 'custom';
+type FiveMin = '5min';
+type FifteenMin = '15min';
+type ThirtyMin = '30min';
+type OneMin = '1min';
+type SixHour = '6hr';
+type OneHour = '1hr';
+type OneDay = '1day';
+type OneWeek = '1week';
+type Custom = 'custom';
 
 export type Time =
-	| fiveMin
-	| fifteenMin
-	| thrityMin
-	| oneMin
-	| sixHour
-	| oneHour
-	| custom
-	| oneWeek
-	| oneDay;
+	| FiveMin
+	| FifteenMin
+	| ThirtyMin
+	| OneMin
+	| SixHour
+	| OneHour
+	| Custom
+	| OneWeek
+	| OneDay;
 
 export const Options: Option[] = [
 	{ value: '5min', label: 'Last 5 min' },

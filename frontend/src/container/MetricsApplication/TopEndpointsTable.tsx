@@ -2,18 +2,19 @@ import { Button, Table, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { topEndpointListItem } from 'store/actions/MetricsActions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import history from 'lib/history';
 
 function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
+	const { data } = props;
 
 	const params = useParams<{ servicename: string }>();
 
@@ -80,7 +81,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 			title: 'Number of Calls',
 			dataIndex: 'numCalls',
 			key: 'numCalls',
-			sorter: (a: topEndpointListItem, b: topEndpointListItem): number =>
+			sorter: (a: TopEndpointListItem, b: TopEndpointListItem): number =>
 				a.numCalls - b.numCalls,
 		},
 	];
@@ -91,7 +92,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 			title={(): string => {
 				return 'Top Endpoints';
 			}}
-			dataSource={props.data}
+			dataSource={data}
 			columns={columns}
 			pagination={false}
 			rowKey="name"
@@ -99,10 +100,18 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 	);
 }
 
-type DataProps = topEndpointListItem;
+interface TopEndpointListItem {
+	p50: number;
+	p95: number;
+	p99: number;
+	numCalls: number;
+	name: string;
+}
+
+type DataProps = TopEndpointListItem;
 
 interface TopEndpointsTableProps {
-	data: topEndpointListItem[];
+	data: TopEndpointListItem[];
 }
 
 export default TopEndpointsTable;

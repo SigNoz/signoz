@@ -40,10 +40,18 @@ const WrapperDeleteButton = connect(null, mapDispatchToProps)(DeleteButton);
 
 // This is to avoid the type collision
 function Wrapper(props: Data): JSX.Element {
+	const { createdBy, description, id, key, lastUpdatedTime, name, tags } = props;
+
 	return (
 		<WrapperDeleteButton
 			{...{
-				...props,
+				createdBy,
+				description,
+				id,
+				key,
+				lastUpdatedTime,
+				name,
+				tags,
 			}}
 		/>
 	);
