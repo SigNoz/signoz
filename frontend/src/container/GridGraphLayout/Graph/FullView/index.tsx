@@ -166,38 +166,6 @@ function FullView({
 		);
 	}
 
-	if (state.loading === false && state.payload.datasets.length === 0) {
-		return (
-			<>
-				{fullViewOptions && (
-					<TimeContainer>
-						<TimePreference
-							{...{
-								selectedTime,
-								setSelectedTime,
-							}}
-						/>
-						<Button onClick={onFetchDataHandler} type="primary">
-							Refresh
-						</Button>
-					</TimeContainer>
-				)}
-
-				{noDataGraph ? (
-					<EmptyGraph
-						onClickHandler={onClickHandler}
-						widget={widget}
-						selectedTime={selectedTime}
-					/>
-				) : (
-					<NotFoundContainer>
-						<Typography>No Data</Typography>
-					</NotFoundContainer>
-				)}
-			</>
-		);
-	}
-
 	return (
 		<>
 			{fullViewOptions && (
