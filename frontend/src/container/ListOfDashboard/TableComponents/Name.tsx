@@ -1,10 +1,10 @@
-import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React from 'react';
 import { generatePath } from 'react-router-dom';
 
 import { Data } from '..';
+import { TableLinkText } from './styles';
 
 function Name(name: Data['name'], data: Data): JSX.Element {
 	const onClickHandler = (): void => {
@@ -17,11 +17,7 @@ function Name(name: Data['name'], data: Data): JSX.Element {
 		);
 	};
 
-	return (
-		<Button onClick={onClickHandler} type="link">
-			{name}
-		</Button>
-	);
+	return <TableLinkText onClick={onClickHandler}>{name}</TableLinkText>;
 }
 
 export default Name;
