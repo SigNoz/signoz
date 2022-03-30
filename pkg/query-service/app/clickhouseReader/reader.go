@@ -45,8 +45,8 @@ import (
 	"github.com/prometheus/prometheus/util/strutil"
 
 	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -76,7 +76,7 @@ type ClickHouseReader struct {
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
 	promConfig      *config.Config
-	alertManager		am.Manager
+	alertManager    am.Manager
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -96,7 +96,7 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 	return &ClickHouseReader{
 		db:              db,
 		localDB:         localDB,
-		alertManager:		 alertManager,
+		alertManager:    alertManager,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		errorTable:      options.primary.ErrorTable,
@@ -851,7 +851,6 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 }
 
-
 func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
 
 	tx, err := r.localDB.Begin()
@@ -861,8 +860,8 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 
 	channel_type := getChannelType(receiver)
 	receiverString, _ := json.Marshal(receiver)
-	
-	// todo: check if the channel name already exists, raise an error if so 
+
+	// todo: check if the channel name already exists, raise an error if so
 
 	{
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
@@ -885,7 +884,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 		tx.Rollback()
 		return nil, apiError
 	}
-	
+
 	err = tx.Commit()
 	if err != nil {
 		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
@@ -2613,7 +2612,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	parseTTL := func(queryResp string) (int, int) {
 
 		zap.S().Debugf("Parsing TTL from: %s", queryResp)
-		deleteTTLExp := regexp.MustCompile(`TTL toDateTime\(timestamp\) \+ toIntervalSecond\(([0-9]*)\)`)
+		deleteTTLExp := regexp.MustCompile(`toIntervalSecond\(([0-9]*)\)`)
 		moveTTLExp := regexp.MustCompile(`toIntervalSecond\(([0-9]*)\) TO VOLUME`)
 
 		var delTTL, moveTTL int = -1, -1
