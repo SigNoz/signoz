@@ -174,7 +174,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
 		defer cancel()
 
 		r = r.WithContext(ctx)
