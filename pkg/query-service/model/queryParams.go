@@ -25,6 +25,36 @@ type QueryRangeParams struct {
 	Stats string
 }
 
+type Query struct {
+	Datasource string `json:"datasource"`
+	Format     string `json:"format"`
+	Expr       string `json:"expr"`
+}
+
+type QueryRangeParamsV2 struct {
+	Start    time.Time
+	End      time.Time
+	Step     time.Duration
+	StartStr string  `json:"start"`
+	EndStr   string  `json:"end"`
+	StepStr  string  `json:"step"`
+	Queries  []Query `json:"queries"`
+}
+
+func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, error) {
+
+	return nil, nil
+}
+
+type metricTags map[string]string
+
+type MetricAutocompleteTagParams struct {
+	MetricName string
+	MetricTags metricTags
+	Match      string
+	TagKey     string
+}
+
 type GetTopEndpointsParams struct {
 	StartTime   string
 	EndTime     string

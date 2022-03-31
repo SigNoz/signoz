@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
-	"go.signoz.io/query-service/model"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
 )
 
 type DruidReader struct {
@@ -200,4 +200,14 @@ func (druid *DruidReader) GetErrorForId(_ context.Context, _ *model.GetErrorPara
 
 func (druid *DruidReader) GetErrorForType(_ context.Context, _ *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support get error API")}
+}
+
+func (druid *DruidReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("not supported")}
+}
+func (druid *DruidReader) GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("not supported")}
+}
+func (druid *DruidReader) GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("not supported")}
 }

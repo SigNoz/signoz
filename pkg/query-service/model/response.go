@@ -30,6 +30,11 @@ const (
 	ErrorNotImplemented ErrorType = "not_implemented"
 )
 
+type QueryDataV2 struct {
+	ResultType promql.ValueType `json:"resultType"`
+	Result     promql.Value     `json:"result"`
+}
+
 type QueryData struct {
 	ResultType promql.ValueType  `json:"resultType"`
 	Result     promql.Value      `json:"result"`

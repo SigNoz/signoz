@@ -51,12 +51,19 @@ import (
 )
 
 const (
-	primaryNamespace     = "clickhouse"
-	archiveNamespace     = "clickhouse-archive"
-	signozTraceTableName = "signoz_index"
-	signozMetricDBName   = "signoz_metrics"
-	signozSampleName     = "samples"
-	signozTSName         = "time_series"
+	primaryNamespace      = "clickhouse"
+	archiveNamespace      = "clickhouse-archive"
+	signozTraceDBName     = "signoz_traces"
+	signozTraceTableName  = "signoz_index_v2"
+	signozMetricDBName    = "signoz_metrics"
+	signozSampleTableName = "samples"
+	signozTSTableName     = "time_series"
+
+	minTimespanForProgressiveSearch       = time.Hour
+	minTimespanForProgressiveSearchMargin = time.Minute
+	maxProgressiveSteps                   = 4
+	charset                               = "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 var (
@@ -2553,7 +2560,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableName = signozMetricDBName + "." + signozSampleName
+		tableName = signozMetricDBName + "." + signozSampleTableName
 		req = fmt.Sprintf(
 			"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
 				"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
@@ -2562,7 +2569,6 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				" + INTERVAL %v SECOND TO VOLUME '%s'",
 				params.ToColdStorageDuration, params.ColdStorageVolume)
 		}
-
 	default:
 		return nil, &model.ApiError{model.ErrorExec,
 			fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v",
@@ -2641,7 +2647,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleTableName)
 
 		err := r.db.QueryRowx(query).StructScan(&dbResp)
 
@@ -2779,5 +2785,118 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 	}
 
 	return &getErrorWithSpanReponse, nil
+
+}
+
+func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError) {
+
+	var query string
+	var err error
+	var tagKeyList []string
+	var rows *sql.Rows
+
+	tagsWhereClause := ""
+
+	for key, val := range params.MetricTags {
+		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+	}
+	// "select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from signoz_metrics.time_series WHERE JSONExtractString(labels,'__name__')='node_udp_queues'))  WHERE distinctTagKeys ILIKE '%host%';"
+	if len(params.Match) != 0 {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=? %s)) WHERE distinctTagKeys ILIKE ?;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+
+		rows, err = r.db.Query(query, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
+
+	} else {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=? %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
+
+		rows, err = r.db.Query(query, params.MetricName)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	defer rows.Close()
+	var tagKey string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		tagKeyList = append(tagKeyList, tagKey)
+	}
+	return &tagKeyList, nil
+}
+
+func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError) {
+
+	var query string
+	var err error
+	var tagValueList []string
+	var rows *sql.Rows
+	tagsWhereClause := ""
+
+	for key, val := range params.MetricTags {
+		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+	}
+
+	if len(params.Match) != 0 {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, ?)) from %s.%s WHERE JSONExtractString(labels,'__name__')=? %s AND JSONExtractString(labels, ?) ILIKE ?;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+
+		rows, err = r.db.Query(query, params.TagKey, params.MetricName, params.TagKey, fmt.Sprintf("%%%s%%", params.Match))
+
+	} else {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, ?)) FROM %s.%s WHERE JSONExtractString(labels,'__name__')=? %s;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		rows, err = r.db.Query(query, params.TagKey, params.MetricName)
+
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	defer rows.Close()
+	var tagValue string
+	for rows.Next() {
+		if err := rows.Scan(&tagValue); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		tagValueList = append(tagValueList, tagValue)
+	}
+
+	return &tagValueList, nil
+}
+
+func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError) {
+
+	var query string
+	var err error
+	var metricNameList []string
+	var rows *sql.Rows
+
+	if len(matchText) != 0 {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE ?;", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(query, fmt.Sprintf("%%%s%%", matchText))
+	} else {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s;", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(query)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	defer rows.Close()
+	var metricName string
+	for rows.Next() {
+		if err := rows.Scan(&metricName); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		metricNameList = append(metricNameList, metricName)
+	}
+
+	return &metricNameList, nil
 
 }

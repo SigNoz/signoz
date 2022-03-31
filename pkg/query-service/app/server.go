@@ -129,6 +129,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterMetricsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
