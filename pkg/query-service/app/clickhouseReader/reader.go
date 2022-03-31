@@ -1503,7 +1503,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		case constants.Duration:
 			finalQuery := fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.durationTable)
 			finalQuery += query
-			finalQuery += " ORDER BY durationNano"
+			finalQuery += " ORDER BY durationNano LIMIT 1"
 			var dBResponse []model.DBResponseTotal
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			if err != nil {
@@ -1512,7 +1512,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			}
 			finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.durationTable)
 			finalQuery += query
-			finalQuery += " ORDER BY durationNano DESC"
+			finalQuery += " ORDER BY durationNano DESC LIMIT 1"
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
 			if err != nil {
