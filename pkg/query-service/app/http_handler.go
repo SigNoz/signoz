@@ -12,6 +12,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/app/parser"
 	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
@@ -161,6 +162,13 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
 	}
 }
+func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
+	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
+	subRouter.HandleFunc("/query_range", aH.queryRangeMetricsV2).Methods(http.MethodPost)
+	subRouter.HandleFunc("/autocomplete/list", aH.metricAutocompleteMetricName).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagKey", aH.metricAutocompleteTagKey).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagValue", aH.metricAutocompleteTagValue).Methods(http.MethodGet)
+}
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
@@ -235,6 +243,74 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.respond(w, alertList)
+}
+
+func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
+	matchText := r.URL.Query().Get("match")
+	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText)
+
+	if apiErrObj != nil {
+		aH.respondError(w, apiErrObj, nil)
+		return
+	}
+	aH.respond(w, metricNameList)
+
+}
+
+func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Request) {
+	metricsAutocompleteTagKeyParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	tagKeyList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
+
+	if apiErrObj != nil {
+		aH.respondError(w, apiErrObj, nil)
+		return
+	}
+	aH.respond(w, tagKeyList)
+}
+
+func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.Request) {
+	metricsAutocompleteTagValueParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
+
+	if len(metricsAutocompleteTagValueParams.TagKey) == 0 {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("tagKey not present in params")}
+		aH.respondError(w, apiErrObj, nil)
+		return
+	}
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	tagValueList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
+
+	if apiErrObj != nil {
+		aH.respondError(w, apiErrObj, nil)
+		return
+	}
+
+	aH.respond(w, tagValueList)
+}
+
+func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
+	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
+
+	fmt.Println(metricsQueryRangeParams)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	response_data := &model.QueryDataV2{
+		ResultType: "matrix",
+		Result:     nil,
+	}
+	aH.respond(w, response_data)
 }
 
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
@@ -525,7 +601,9 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	aH.respond(w, "rule successfully added")
 
 }
+func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
 
+}
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
