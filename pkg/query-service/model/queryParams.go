@@ -82,6 +82,7 @@ type GetFilteredSpansParams struct {
 	MinDuration string     `json:"minDuration"`
 	MaxDuration string     `json:"maxDuration"`
 	Limit       int64      `json:"limit"`
+	OrderParam  string     `json:"orderParam"`
 	Order       string     `json:"order"`
 	Offset      int64      `json:"offset"`
 	Tags        []TagQuery `json:"tags"`

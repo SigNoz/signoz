@@ -47,5 +47,8 @@ const (
 	DBSystem         = "dbSystem"
 	MsgSystem        = "msgSystem"
 	MsgOperation     = "msgOperation"
+	Timestamp        = "timestamp"
+	Descending       = "descending"
+	Ascending        = "ascending"
 	ContextTimeout   = 60 // seconds
 )

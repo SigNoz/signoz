@@ -291,7 +291,7 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 	}
 
 	if postData.Limit == 0 {
-		postData.Limit = 100
+		postData.Limit = 10
 	}
 
 	return postData, nil

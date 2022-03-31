@@ -264,11 +264,6 @@ type GetTTLResponseItem struct {
 	TracesTime  int `json:"traces_ttl_duration_hrs"`
 }
 
-type DBResponseMinMaxDuration struct {
-	MinDuration uint64 `ch:"min(durationNano)"`
-	MaxDuration uint64 `ch:"max(durationNano)"`
-}
-
 type DBResponseServiceName struct {
 	ServiceName string `ch:"serviceName"`
 	Count       uint64 `ch:"count"`
@@ -307,10 +302,6 @@ type DBResponseOperation struct {
 type DBResponseComponent struct {
 	Component string `ch:"component"`
 	Count     uint64 `ch:"count"`
-}
-
-type DBResponseErrors struct {
-	NumErrors uint64 `ch:"numErrors"`
 }
 
 type DBResponseTotal struct {
