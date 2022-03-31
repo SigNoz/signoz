@@ -2618,7 +2618,6 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		var delTTL, moveTTL int = -1, -1
 
 		m := deleteTTLExp.FindStringSubmatch(queryResp)
-		zap.S().Debugf("m: %v", m)
 		if len(m) > 1 {
 			seconds_int, err := strconv.Atoi(m[1])
 			if err != nil {
