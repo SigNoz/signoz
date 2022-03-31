@@ -1627,17 +1627,26 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		if queryParams.OrderParam == constants.Duration {
 			queryTable = fmt.Sprintf("%s.%s", r.traceDB, r.durationTable)
 			if queryParams.Order == constants.Descending {
-				query = query + "  ORDER BY durationNano DESC"
+				query = query + " ORDER BY durationNano DESC"
 			}
 			if queryParams.Order == constants.Ascending {
-				query = query + "  ORDER BY durationNano ASC"
+				query = query + " ORDER BY durationNano ASC"
 			}
 		} else if queryParams.OrderParam == constants.Timestamp {
+			projectionOptQuery := "SET allow_experimental_projection_optimization = 1"
+			err := r.db.Exec(ctx, projectionOptQuery)
+
+			zap.S().Info(projectionOptQuery)
+
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+			}
 			if queryParams.Order == constants.Descending {
-				query = query + "  ORDER BY timestamp DESC"
+				query = query + " ORDER BY timestamp DESC"
 			}
 			if queryParams.Order == constants.Ascending {
-				query = query + "  ORDER BY timestamp ASC"
+				query = query + " ORDER BY timestamp ASC"
 			}
 		}
 	}
