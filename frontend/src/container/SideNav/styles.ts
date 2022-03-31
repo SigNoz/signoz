@@ -54,6 +54,7 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 	bottom: ${({ index }): string => `${index * 48 + (index + 16)}px`};
 	background: #262626;
 	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
+	transition: inherit;
 
 	&&& {
 		li {
@@ -61,11 +62,14 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 				collapsed &&
 				css`
 					padding-left: 24px;
+					padding-top: 6px;
 				`}
 		}
 
 		svg {
 			margin-left: ${({ collapsed }): string => (collapsed ? '0' : '24px')};
+			width: 28px;
+			height: 28px;
 
 			${({ collapsed }): StyledCSS =>
 				collapsed &&
@@ -77,14 +81,6 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 		.ant-menu-title-content {
 			margin: 0;
 		}
-	}
-`;
-
-export const EmptyIcon = styled.div`
-	&&& {
-		width: 28px;
-		height: 28px;
-		margin-left: 1.5rem;
 	}
 `;
 

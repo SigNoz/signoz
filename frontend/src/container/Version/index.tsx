@@ -1,4 +1,5 @@
-import { Button, Card, Form, Typography } from 'antd';
+import { WarningFilled } from '@ant-design/icons';
+import { Button, Card, Form, Space, Typography } from 'antd';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -20,6 +21,8 @@ function Version(): JSX.Element {
 	const { currentVersion, latestVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+
+	const isLatestVersion = currentVersion === latestVersion;
 
 	return (
 		<Card>
@@ -63,15 +66,39 @@ function Version(): JSX.Element {
 				</Form.Item>
 			</Form>
 
-			<Button
-				onClick={(): void =>
-					onClickUpgradeHandler(
-						'https://signoz.io/docs/operate/docker-standalone/#upgrade',
-					)
-				}
-			>
-				{t('read_how_to_upgrade')}
-			</Button>
+			{isLatestVersion && (
+				<div>
+					<Space align="start">
+						<span>✅</span>
+						<Typography.Paragraph italic>
+							{t('latest_version_signoz')}
+						</Typography.Paragraph>
+					</Space>
+				</div>
+			)}
+
+			{!isLatestVersion && (
+				<div>
+					<Space align="start">
+						<span>
+							<WarningFilled style={{ color: '#E87040' }} />
+						</span>
+						<Typography.Paragraph italic>{t('stale_version')}</Typography.Paragraph>
+					</Space>
+				</div>
+			)}
+
+			{!isLatestVersion && (
+				<Button
+					onClick={(): void =>
+						onClickUpgradeHandler(
+							'https://signoz.io/docs/operate/docker-standalone/#upgrade',
+						)
+					}
+				>
+					{t('read_how_to_upgrade')}
+				</Button>
+			)}
 		</Card>
 	);
 }

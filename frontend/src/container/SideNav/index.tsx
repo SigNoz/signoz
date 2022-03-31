@@ -1,3 +1,8 @@
+import {
+	CheckCircleOutlined,
+	CheckCircleTwoTone,
+	WarningOutlined,
+} from '@ant-design/icons';
 import { Menu, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
@@ -18,7 +23,6 @@ import AppReducer from 'types/reducer/app';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
-	EmptyIcon,
 	Logo,
 	RedDot,
 	Sider,
@@ -87,6 +91,8 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
+	const isNotCurrentVersion = currentVersion !== latestVersion;
+
 	const sidebar = [
 		{
 			onClick: onClickSlackHandler,
@@ -95,11 +101,15 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		},
 		{
 			onClick: onClickVersionHandler,
-			icon: <EmptyIcon />,
+			icon: isNotCurrentVersion ? (
+				<WarningOutlined style={{ color: '#E87040' }} />
+			) : (
+				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
+			),
 			text: (
 				<VersionContainer>
 					<SlackButton>{currentVersion}</SlackButton>
-					{currentVersion !== latestVersion && <RedDot />}
+					{isNotCurrentVersion && <RedDot />}
 				</VersionContainer>
 			),
 		},
