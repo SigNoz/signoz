@@ -158,6 +158,20 @@ func TestGetTTL(t *testing.T) {
 	require.Equal(t, 20, resp.TracesTime)
 	require.Equal(t, 15, resp.MetricsMoveTime)
 	require.Equal(t, 50, resp.MetricsTime)
+
+	r, err = setTTL("metrics", "s3", "0s", "0s")
+	require.NoError(t, err)
+	require.Contains(t, string(r), "successfully set up")
+
+	r, err = setTTL("traces", "s3", "0s", "0s")
+	require.NoError(t, err)
+	require.Contains(t, string(r), "successfully set up")
+
+	resp = getTTL(t, "")
+	require.Equal(t, 0, resp.TracesMoveTime)
+	require.Equal(t, 0, resp.TracesTime)
+	require.Equal(t, 0, resp.MetricsMoveTime)
+	require.Equal(t, 0, resp.MetricsTime)
 }
 
 func TestMain(m *testing.M) {
