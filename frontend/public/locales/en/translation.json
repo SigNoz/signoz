@@ -4,5 +4,7 @@
 	"latest_version": "Latest version",
 	"current_version": "Current version",
 	"release_notes": "Release Notes",
-	"read_how_to_upgrade": "Read instructions on how to upgrade"
+	"read_how_to_upgrade": "Read instructions on how to upgrade",
+	"latest_version_signoz": "You are running the latest version of SigNoz.",
+	"stale_version": "You are on an older version and may be loosing on the latest features we have shipped. We recommend to upgrade to the latest version"
 }
