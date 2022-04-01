@@ -1,6 +1,5 @@
 import getLatestVersion from 'api/user/getLatestVersion';
 import getVersion from 'api/user/getVersion';
-import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
