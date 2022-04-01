@@ -12,7 +12,10 @@ import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_APP_VERSION } from 'types/actions/app';
+import {
+	UPDATE_CURRENT_VERSION,
+	UPDATE_LATEST_VERSION,
+} from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import { Content, Layout } from './styles';
@@ -43,26 +46,24 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isLoggedIn, isSignUpPage]);
 
 	useEffect(() => {
-		if (!loading && !latestLoading && versionPayload && latestVersionPayload) {
+		if (!latestLoading && versionPayload) {
 			dispatch({
-				type: UPDATE_APP_VERSION,
+				type: UPDATE_CURRENT_VERSION,
 				payload: {
 					currentVersion: versionPayload.version,
+				},
+			});
+		}
+
+		if (!loading && latestVersionPayload) {
+			dispatch({
+				type: UPDATE_LATEST_VERSION,
+				payload: {
 					latestVersion: latestVersionPayload.name,
 				},
 			});
 		}
 	}, [dispatch, loading, latestLoading, versionPayload, latestVersionPayload]);
-
-	if (loading || latestLoading) {
-		return (
-			<Layout>
-				<Content>
-					<Spinner />
-				</Content>
-			</Layout>
-		);
-	}
 
 	return (
 		<Layout>

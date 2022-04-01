@@ -7,7 +7,8 @@ import {
 	LOGGED_IN,
 	SIDEBAR_COLLAPSE,
 	SWITCH_DARK_MODE,
-	UPDATE_APP_VERSION,
+	UPDATE_CURRENT_VERSION,
+	UPDATE_LATEST_VERSION,
 } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
@@ -45,12 +46,15 @@ const appReducer = (
 			};
 		}
 
-		case UPDATE_APP_VERSION: {
+		case UPDATE_CURRENT_VERSION: {
 			return {
 				...state,
 				currentVersion: action.payload.currentVersion,
-				latestVersion: action.payload.latestVersion,
 			};
+		}
+
+		case UPDATE_LATEST_VERSION: {
+			return { ...state, latestVersion: action.payload.latestVersion };
 		}
 
 		default:
