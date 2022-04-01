@@ -15,7 +15,7 @@ function SettingsPage(): JSX.Element {
 				routes: [
 					{
 						Component: GeneralSettings,
-						name: 'General Settings',
+						name: 'General',
 						route: ROUTES.SETTINGS,
 					},
 					{
@@ -27,7 +27,7 @@ function SettingsPage(): JSX.Element {
 					},
 				],
 				activeKey:
-					pathName === ROUTES.SETTINGS ? 'General Settings' : 'Alert Channels',
+					pathName === ROUTES.SETTINGS ? 'General' : 'Alert Channels',
 			}}
 		/>
 	);

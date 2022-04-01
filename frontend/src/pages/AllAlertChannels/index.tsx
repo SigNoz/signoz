@@ -14,7 +14,7 @@ function AllAlertChannels(): JSX.Element {
 				routes: [
 					{
 						Component: GeneralSettings,
-						name: 'General Settings',
+						name: 'General',
 						route: ROUTES.SETTINGS,
 					},
 					{
@@ -23,8 +23,7 @@ function AllAlertChannels(): JSX.Element {
 						route: ROUTES.ALL_CHANNELS,
 					},
 				],
-				activeKey:
-					pathName === ROUTES.SETTINGS ? 'General Settings' : 'Alert Channels',
+				activeKey: pathName === ROUTES.SETTINGS ? 'General' : 'Alert Channels',
 			}}
 		/>
 	);

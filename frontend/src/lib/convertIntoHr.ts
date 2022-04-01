@@ -1,6 +1,6 @@
-import { SettingPeroid } from 'container/GeneralSettings';
+import { SettingPeriod } from 'container/GeneralSettings';
 
-const converIntoHr = (value: number, peroid: SettingPeroid): number => {
+const converIntoHr = (value: number, peroid: SettingPeriod): number => {
 	if (peroid === 'day') {
 		return value * 24;
 	}

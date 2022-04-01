@@ -1,4 +1,5 @@
-import { Button, Modal, notification, Typography } from 'antd';
+import { Button, Col, Modal, notification, Row, Typography } from 'antd';
+import getDisks from 'api/disks/getDisks';
 import getRetentionperoidApi from 'api/settings/getRetention';
 import setRetentionApi from 'api/settings/setRetention';
 import Spinner from 'components/Spinner';
@@ -12,7 +13,6 @@ import { PayloadProps } from 'types/api/settings/getRetention';
 import Retention from './Retention';
 import {
 	ButtonContainer,
-	Container,
 	ErrorText,
 	ErrorTextContainer,
 	ToolTipContainer,
@@ -22,22 +22,45 @@ function GeneralSettings(): JSX.Element {
 	const [
 		selectedMetricsPeroid,
 		setSelectedMetricsPeroid,
-	] = useState<SettingPeroid>('month');
+	] = useState<SettingPeriod>('month');
 	const [notifications, Element] = notification.useNotification();
-
 	const [retentionPeroidMetrics, setRetentionPeroidMetrics] = useState<string>(
 		'',
 	);
 	const [modal, setModal] = useState<boolean>(false);
 	const [postApiLoading, setPostApiLoading] = useState<boolean>(false);
 
-	const [selectedTracePeroid, setSelectedTracePeroid] = useState<SettingPeroid>(
+	const [selectedTracePeroid, setSelectedTracePeroid] = useState<SettingPeriod>(
 		'hr',
 	);
 
 	const [retentionPeroidTrace, setRetentionPeroidTrace] = useState<string>('');
 	const [isDefaultMetrics, setIsDefaultMetrics] = useState<boolean>(false);
 	const [isDefaultTrace, setIsDefaultTrace] = useState<boolean>(false);
+
+	const [availableDisks, setAvailableDisks] = useState(null);
+
+	useEffect(() => {
+		getDisks().then((resp) => console.log({ disks: resp }))
+	}, [])
+	const currentTTLValues = {
+		metrics_ttl_duration_hrs: 24 * 30 * 10,
+		metrics_move_ttl_duration_hrs: -1,
+		traces_ttl_duration_hrs: -1,
+		traces_move_ttl_duration_hrs: -1,
+	};
+	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] = useState<
+		number | null
+	>(currentTTLValues.metrics_ttl_duration_hrs);
+	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] = useState<
+		number | null
+	>(currentTTLValues.metrics_move_ttl_duration_hrs);
+	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] = useState<
+		number | null
+	>(currentTTLValues.traces_ttl_duration_hrs);
+	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] = useState<
+		number | null
+	>(currentTTLValues.traces_move_ttl_duration_hrs);
 
 	const onModalToggleHandler = (): void => {
 		setModal((modal) => !modal);
@@ -65,6 +88,39 @@ function GeneralSettings(): JSX.Element {
 			setIsDefaultTrace(false);
 		}
 	};
+	// const retentionRenderConfig = () => { };
+	const renderConfig = [
+		{
+			name: 'Metrics',
+			retentionFields: [
+				{
+					name: 'Total Retention Period',
+					value: metricsTotalRetentionPeriod,
+					setValue: setMetricsTotalRetentionPeriod,
+				},
+				{
+					name: `Move to S3\n(should be lower than total retention period)`,
+					value: metricsS3RetentionPeriod,
+					setValue: setMetricsS3RetentionPeriod,
+				},
+			],
+		},
+		{
+			name: 'Traces',
+			retentionFields: [
+				{
+					name: 'Total Retention Period',
+					value: tracesTotalRetentionPeriod,
+					setValue: setTracesTotalRetentionPeriod,
+				},
+				{
+					name: `Move to S3\n(should be lower than total retention period)`,
+					value: tracesS3RetentionPeriod,
+					setValue: setTracesS3RetentionPeriod,
+				},
+			],
+		},
+	];
 
 	useEffect(() => {
 		if (!loading && payload !== undefined) {
@@ -96,7 +152,7 @@ function GeneralSettings(): JSX.Element {
 
 			const retentionMetricsValue =
 				retentionPeroidMetrics === '0' &&
-				(payload?.metrics_ttl_duration_hrs || 0) < 0
+					(payload?.metrics_ttl_duration_hrs || 0) < 0
 					? payload?.metrics_ttl_duration_hrs || 0
 					: parseInt(retentionPeroidMetrics, 10);
 
@@ -180,9 +236,8 @@ function GeneralSettings(): JSX.Element {
 	const errorText = getErrorText();
 
 	return (
-		<Container>
+		<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
 			{Element}
-
 			{errorText ? (
 				<ErrorTextContainer>
 					<ErrorText>{errorText}</ErrorText>
@@ -204,22 +259,30 @@ function GeneralSettings(): JSX.Element {
 					/>
 				</ToolTipContainer>
 			)}
+			<Row justify="space-around">
+				{renderConfig.map((category): JSX.Element | null => {
+					if (
+						Array.isArray(category.retentionFields) &&
+						category.retentionFields.length > 0
+					) {
+						return (
+							<Col flex="48%" style={{ minWidth: 500 }} key={category.name}>
+								<Typography.Title level={3}>{category.name}</Typography.Title>
 
-			<Retention
-				text="Retention Period for Metrics"
-				selectedRetentionPeroid={selectedMetricsPeroid}
-				setRentionValue={setRetentionPeroidMetrics}
-				retentionValue={retentionPeroidMetrics}
-				setSelectedRetentionPeroid={setSelectedMetricsPeroid}
-			/>
-
-			<Retention
-				text="Retention Period for Traces"
-				selectedRetentionPeroid={selectedTracePeroid}
-				setRentionValue={setRetentionPeroidTrace}
-				retentionValue={retentionPeroidTrace}
-				setSelectedRetentionPeroid={setSelectedTracePeroid}
-			/>
+								{category.retentionFields.map((retentionField) => (
+									<Retention
+										key={retentionField.name}
+										text={retentionField.name}
+										retentionValue={retentionField.value}
+										setRetentionValue={retentionField.setValue}
+									/>
+								))}
+							</Col>
+						);
+					}
+					return null;
+				})}
+			</Row>
 
 			<Modal
 				title="Are you sure you want to change the retention period?"
@@ -247,10 +310,10 @@ function GeneralSettings(): JSX.Element {
 					Save
 				</Button>
 			</ButtonContainer>
-		</Container>
+		</Col>
 	);
 }
 
-export type SettingPeroid = 'hr' | 'day' | 'month';
+export type SettingPeriod = 'hr' | 'day' | 'month';
 
 export default GeneralSettings;
