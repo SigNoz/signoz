@@ -29,7 +29,6 @@ function FullView({
 	widget,
 	fullViewOptions = true,
 	onClickHandler,
-	noDataGraph = false,
 	name,
 	yAxisUnit,
 }: FullViewProps): JSX.Element {
@@ -210,7 +209,6 @@ interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: GraphOnClickHandler;
-	noDataGraph?: boolean;
 	name: string;
 	yAxisUnit?: string;
 }
@@ -218,7 +216,6 @@ interface FullViewProps {
 FullView.defaultProps = {
 	fullViewOptions: undefined,
 	onClickHandler: undefined,
-	noDataGraph: undefined,
 	yAxisUnit: undefined,
 };
 
