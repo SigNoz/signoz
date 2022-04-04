@@ -2,15 +2,14 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/channels/createPager';
+import { PayloadProps, Props } from 'types/api/channels/editPager';
 
-const create = async (
+const editPager = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-
-		const response = await axios.post('/channels', {
-			name: props.name,
+		const response = await axios.put(`/channels/${props.id}`, {
+			name: props.name, 
 			pagerduty_configs: [
 				{
 					send_resolved: true,
@@ -40,4 +39,4 @@ const create = async (
 	}
 };
 
-export default create;
+export default editPager;

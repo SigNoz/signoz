@@ -33,7 +33,7 @@ function FormAlertChannels({
 	NotificationElement,
 	title,
 	initialValue,
-	nameDisable = false,
+	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const renderSettings = (): React.ReactElement | null => {
 		switch (type) {
@@ -57,7 +57,7 @@ function FormAlertChannels({
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<FormItem label="Name" labelAlign="left" name="name" required>
 					<Input
-						disabled={nameDisable}
+						disabled={editing}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -68,7 +68,7 @@ function FormAlertChannels({
 				</FormItem>
 
 				<FormItem label="Type" labelAlign="left" name="type">
-					<Select onChange={onTypeChangeHandler} value={type}>
+					<Select onChange={onTypeChangeHandler} value={type} disabled={editing}>
 						<Option value="slack" key="slack">
 							Slack
 						</Option>
@@ -121,11 +121,12 @@ interface FormAlertChannelsProps {
 	>;
 	title: string;
 	initialValue: Store;
-	nameDisable?: boolean;
+	// editing indicates if the form is opened in edit mode
+	editing?: boolean;
 }
 
 FormAlertChannels.defaultProps = {
-	nameDisable: undefined,
+	editing: undefined,
 };
 
 export default FormAlertChannels;

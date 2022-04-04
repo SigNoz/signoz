@@ -21,41 +21,13 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 			</FormItem>
 
 			<FormItem
-				name="client"
-				help="Shows up as event source in Pagerduty"
-				label="Client"
-			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							client: event.target.value,
-						}))
-					}
-				/>
-			</FormItem>
-
-			<FormItem
-				name="client_url"
-				help="Shows up as event source link in Pagerduty"
-				label="Client URL"
-			>
-				<Input
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							client_url: event.target.value,
-						}))
-					}
-				/>
-			</FormItem>
-
-			<FormItem
 				name="description"
 				help="Shows up as description of incident"
 				label="Description"
+				required
 			>
 				<TextArea
+					rows={4}
 					onChange={(event): void =>
 						setSelectedConfig((value) => ({
 							...value,
@@ -66,12 +38,33 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 				/>
 			</FormItem>
 
-			<FormItem name="severity" help="Severity of the incident" label="Severity">
+			<FormItem
+				name="severity"
+				help="Severity of the incident, must be one of: must be one of the following: 'critical', 'warning', 'error' or 'info'"
+				label="Severity"
+			>
 				<Input
 					onChange={(event): void =>
+						// todo: add validation
 						setSelectedConfig((value) => ({
 							...value,
 							severity: event.target.value,
+						}))
+					}
+				/>
+			</FormItem>
+
+			<FormItem
+				name="details"
+				help="Specify a key-value format (must be a valid json)"
+				label="Additional Information"
+			>
+				<TextArea
+					rows={4}
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							details: event.target.value,
 						}))
 					}
 				/>
@@ -109,6 +102,35 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						setSelectedConfig((value) => ({
 							...value,
 							class: event.target.value,
+						}))
+					}
+				/>
+			</FormItem>
+			<FormItem
+				name="client"
+				help="Shows up as event source in Pagerduty"
+				label="Client"
+			>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							client: event.target.value,
+						}))
+					}
+				/>
+			</FormItem>
+
+			<FormItem
+				name="client_url"
+				help="Shows up as event source link in Pagerduty"
+				label="Client URL"
+			>
+				<Input
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							client_url: event.target.value,
 						}))
 					}
 				/>

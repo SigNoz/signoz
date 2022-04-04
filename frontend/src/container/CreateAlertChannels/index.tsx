@@ -13,6 +13,7 @@ import {
 	PagerType,
 	SlackChannel,
 	SlackType,
+	ValidatePagerChannel,
 	WebhookChannel,
 	WebhookType,
 } from './config';
@@ -59,12 +60,17 @@ function CreateAlertChannels({
 		(value: string) => {
 			const currentType = type;
 			setType(value as ChannelType);
+
 			if (value === PagerType && currentType !== value) {
 				// reset config to pager defaults
-				setSelectedConfig(PagerInitialConfig);
+				setSelectedConfig({
+					name: selectedConfig?.name,
+					send_resolved: selectedConfig.send_resolved,
+					...PagerInitialConfig,
+				});
 			}
 		},
-		[type],
+		[type, selectedConfig],
 	);
 
 	const onTestHandler = useCallback(() => {
@@ -113,16 +119,11 @@ function CreateAlertChannels({
 
 	const onPagerHandler = useCallback(async () => {
 		setSavingState(true);
+		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
 
-		if (selectedConfig.name === '') {
-			showError('Name is mandatory for this channel');
-			setSavingState(true);
-			return;
-		}
-
-		if (selectedConfig.routing_key === '') {
-			showError('routing_key is mandatory for this channel');
-			setSavingState(true);
+		if (validationError !== '') {
+			showError(validationError);
+			setSavingState(false);
 			return;
 		}
 
@@ -138,6 +139,8 @@ function CreateAlertChannels({
 				component: selectedConfig?.component || '',
 				group: selectedConfig?.group || '',
 				class: selectedConfig?.class || '',
+				details: selectedConfig.details || '',
+				detailsArray: JSON.parse(selectedConfig.details || '{}'),
 			});
 
 			if (response.statusCode === 200) {

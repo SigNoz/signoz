@@ -1,9 +1,12 @@
 import { Form, notification } from 'antd';
+import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	PagerChannel,
+	PagerType,
 	SlackChannel,
 	SlackType,
 	WebhookChannel,
@@ -19,7 +22,7 @@ function EditAlertChannels({
 }: EditAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel>
+		Partial<SlackChannel & WebhookChannel & PagerChannel>
 	>({
 		...initialValue,
 	});
@@ -112,15 +115,63 @@ function EditAlertChannels({
 		setSavingState(false);
 	}, [selectedConfig, notifications, id]);
 
+	const onPagerEditHandler = useCallback(async () => {
+		if (
+			!selectedConfig ||
+			selectedConfig?.name === '' ||
+			selectedConfig?.routing_key === ''
+		) {
+			notifications.error({
+				message: 'Error',
+				description: 'unexpected inputs while updating the Channels.',
+			});
+			return;
+		}
+
+		setSavingState(true);
+		const response = await editPagerApi({
+			name: selectedConfig.name || '',
+			routing_key: selectedConfig.routing_key,
+			client: selectedConfig.client,
+			client_url: selectedConfig.client_url,
+			description: selectedConfig.description,
+			severity: selectedConfig.severity,
+			component: selectedConfig.component,
+			class: selectedConfig.class,
+			group: selectedConfig.group,
+			details: selectedConfig.details,
+			id,
+		});
+
+		if (response.statusCode === 200) {
+			notifications.success({
+				message: 'Success',
+				description: 'Channels Edited Successfully',
+			});
+
+			setTimeout(() => {
+				history.replace(ROUTES.SETTINGS);
+			}, 2000);
+		} else {
+			notifications.error({
+				message: 'Error',
+				description: response.error || 'error while updating the Channels',
+			});
+		}
+		setSavingState(false);
+	}, [selectedConfig, notifications, id]);
+
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {
 			if (value === SlackType) {
 				onSlackEditHandler();
 			} else if (value === WebhookType) {
 				onWebhookEditHandler();
+			} else if (value === PagerType) {
+				onPagerEditHandler();
 			}
 		},
-		[onSlackEditHandler, onWebhookEditHandler],
+		[onSlackEditHandler, onWebhookEditHandler, onPagerEditHandler],
 	);
 
 	const onTestHandler = useCallback(() => {
@@ -140,7 +191,7 @@ function EditAlertChannels({
 				NotificationElement,
 				title: 'Edit Notification Channels',
 				initialValue,
-				nameDisable: true,
+				editing: true,
 			}}
 		/>
 	);
