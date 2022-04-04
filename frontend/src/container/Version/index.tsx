@@ -18,11 +18,15 @@ function Version(): JSX.Element {
 		window.open(link, '_blank');
 	}, []);
 
-	const { currentVersion, latestVersion } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const {
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		isLatestVersionError,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const isLatestVersion = currentVersion === latestVersion;
+	const isError = isCurrentVersionError || isLatestVersionError;
 
 	return (
 		<Card>
@@ -44,7 +48,7 @@ function Version(): JSX.Element {
 				<Form.Item label={t('current_version')}>
 					<InputComponent
 						readOnly
-						value={currentVersion}
+						value={isCurrentVersionError ? t('n_a').toString() : currentVersion}
 						placeholder={t('current_version')}
 					/>
 				</Form.Item>
@@ -52,7 +56,7 @@ function Version(): JSX.Element {
 				<Form.Item label={t('latest_version')}>
 					<InputComponent
 						readOnly
-						value={latestVersion}
+						value={isLatestVersionError ? t('n_a').toString() : latestVersion}
 						placeholder={t('latest_version')}
 					/>
 					<Button
@@ -66,7 +70,7 @@ function Version(): JSX.Element {
 				</Form.Item>
 			</Form>
 
-			{isLatestVersion && (
+			{!isError && isLatestVersion && (
 				<div>
 					<Space align="start">
 						<span>✅</span>
@@ -77,7 +81,7 @@ function Version(): JSX.Element {
 				</div>
 			)}
 
-			{!isLatestVersion && (
+			{!isError && !isLatestVersion && (
 				<div>
 					<Space align="start">
 						<span>
@@ -88,7 +92,7 @@ function Version(): JSX.Element {
 				</div>
 			)}
 
-			{!isLatestVersion && (
+			{!isError && !isLatestVersion && (
 				<Button
 					onClick={(): void =>
 						onClickUpgradeHandler(

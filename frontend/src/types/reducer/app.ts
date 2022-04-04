@@ -4,4 +4,6 @@ export default interface AppReducer {
 	isSideBarCollapsed: boolean;
 	currentVersion: string;
 	latestVersion: string;
+	isCurrentVersionError: boolean;
+	isLatestVersionError: boolean;
 }

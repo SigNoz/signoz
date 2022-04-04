@@ -1,3 +1,4 @@
+import { notification } from 'antd';
 import getLatestVersion from 'api/user/getLatestVersion';
 import getVersion from 'api/user/getVersion';
 import ROUTES from 'constants/routes';
@@ -5,15 +6,18 @@ import TopNav from 'container/Header';
 import SideNav from 'container/SideNav';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
+	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
+	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
@@ -22,14 +26,19 @@ import { Content, Layout } from './styles';
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { pathname } = useLocation();
+	const { t } = useTranslation();
 
 	const [isSignUpPage, setIsSignUpPage] = useState(ROUTES.SIGN_UP === pathname);
 
-	const { payload: versionPayload, loading } = useFetch(getVersion);
-
-	const { payload: latestVersionPayload, loading: latestLoading } = useFetch(
-		getLatestVersion,
+	const { payload: versionPayload, loading, error: getVersionError } = useFetch(
+		getVersion,
 	);
+
+	const {
+		payload: latestVersionPayload,
+		loading: latestLoading,
+		error: latestError,
+	} = useFetch(getLatestVersion);
 
 	const { children } = props;
 
@@ -44,9 +53,40 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isLoggedIn, isSignUpPage]);
 
+	const latestCurrentCounter = useRef(0);
+	const latestVersionCounter = useRef(0);
+
 	useEffect(() => {
 		if (isLoggedIn && pathname === ROUTES.SIGN_UP) {
 			history.push(ROUTES.APPLICATION);
+		}
+
+		if (!latestLoading && latestError && latestCurrentCounter.current === 0) {
+			latestCurrentCounter.current = 1;
+
+			dispatch({
+				type: UPDATE_LATEST_VERSION_ERROR,
+				payload: {
+					isError: true,
+				},
+			});
+			notification.error({
+				message: t('oops_something_went_wrong_version'),
+			});
+		}
+
+		if (!loading && getVersionError && latestVersionCounter.current === 0) {
+			latestVersionCounter.current = 1;
+
+			dispatch({
+				type: UPDATE_CURRENT_ERROR,
+				payload: {
+					isError: true,
+				},
+			});
+			notification.error({
+				message: t('oops_something_went_wrong_version'),
+			});
 		}
 
 		if (!latestLoading && versionPayload) {
@@ -74,6 +114,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		latestVersionPayload,
 		isLoggedIn,
 		pathname,
+		getVersionError,
+		latestError,
+		t,
 	]);
 
 	return (

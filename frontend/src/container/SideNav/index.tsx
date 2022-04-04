@@ -1,8 +1,4 @@
-import {
-	CheckCircleOutlined,
-	CheckCircleTwoTone,
-	WarningOutlined,
-} from '@ant-design/icons';
+import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { Menu, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
@@ -10,6 +6,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -38,12 +35,16 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
-	const { isDarkMode, currentVersion, latestVersion } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const {
+		isDarkMode,
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		isLatestVersionError,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { pathname } = useLocation();
+	const { t } = useTranslation('');
 
 	const toggleTheme = useCallback(() => {
 		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
@@ -92,6 +93,7 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	};
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
+	const iError = isCurrentVersionError || isLatestVersionError;
 
 	const sidebar = [
 		{
@@ -108,8 +110,12 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 			),
 			text: (
 				<VersionContainer>
-					<SlackButton>{currentVersion}</SlackButton>
-					{isNotCurrentVersion && <RedDot />}
+					{!iError ? (
+						<SlackButton>{currentVersion}</SlackButton>
+					) : (
+						<SlackButton>{t('n_a')}</SlackButton>
+					)}
+					{isNotCurrentVersion && !iError && <RedDot />}
 				</VersionContainer>
 			),
 		},

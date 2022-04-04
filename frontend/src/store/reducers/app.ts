@@ -7,8 +7,10 @@ import {
 	LOGGED_IN,
 	SIDEBAR_COLLAPSE,
 	SWITCH_DARK_MODE,
+	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
+	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
@@ -18,6 +20,8 @@ const InitialValue: InitialValueTypes = {
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
+	isCurrentVersionError: false,
+	isLatestVersionError: false,
 };
 
 const appReducer = (
@@ -55,6 +59,17 @@ const appReducer = (
 
 		case UPDATE_LATEST_VERSION: {
 			return { ...state, latestVersion: action.payload.latestVersion };
+		}
+
+		case UPDATE_CURRENT_ERROR: {
+			return { ...state, isCurrentVersionError: true };
+		}
+
+		case UPDATE_LATEST_VERSION_ERROR: {
+			return {
+				...state,
+				isLatestVersionError: true,
+			};
 		}
 
 		default:
