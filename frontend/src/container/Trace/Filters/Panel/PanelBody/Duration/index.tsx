@@ -101,8 +101,9 @@ function Duration(): JSX.Element {
 			const preFilter = getFilter(response.payload);
 
 			preFilter.forEach((value, key) => {
-				if (key !== 'duration') {
-					preUserSelected.set(key, Object.keys(value));
+				const values = Object.keys(value);
+				if (key !== 'duration' && values.length) {
+					preUserSelected.set(key, values);
 				}
 			});
 
@@ -203,7 +204,7 @@ function Duration(): JSX.Element {
 					range
 					tipFormatter={(value): JSX.Element => {
 						if (value === undefined) {
-							return <></>;
+							return <div />;
 						}
 						return <div>{`${getMs(value?.toString())}ms`}</div>;
 					}}
