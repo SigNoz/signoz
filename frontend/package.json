@@ -155,7 +155,7 @@
 		"portfinder-sync": "^0.0.2",
 		"prettier": "2.2.1",
 		"react-hot-loader": "^4.13.0",
-		"ts-jest": "^27.5.1",
+		"ts-jest": "^27.1.4",
 		"ts-node": "^10.2.1",
 		"typescript-plugin-css-modules": "^3.4.0",
 		"webpack-bundle-analyzer": "^4.5.0",
