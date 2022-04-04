@@ -28,10 +28,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isLoggedIn, isSignUpPage]);
 
 	useEffect(() => {
-		if (isLoggedIn) {
+		if (isLoggedIn && pathname === ROUTES.SIGN_UP) {
 			history.push(ROUTES.APPLICATION);
 		}
-	}, [isLoggedIn]);
+	}, [isLoggedIn, pathname]);
 
 	return (
 		<Layout>
