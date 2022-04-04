@@ -1,4 +1,3 @@
-import { Button } from 'antd';
 import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -7,6 +6,7 @@ import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
 
 import { Data } from '../index';
+import { TableLinkText } from './styles';
 
 function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
 	const onClickHandler = useCallback(() => {
@@ -15,11 +15,7 @@ function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
 		});
 	}, [id, deleteDashboard]);
 
-	return (
-		<Button onClick={onClickHandler} type="link">
-			Delete
-		</Button>
-	);
+	return <TableLinkText onClick={onClickHandler}>Delete</TableLinkText>;
 }
 
 interface DispatchProps {

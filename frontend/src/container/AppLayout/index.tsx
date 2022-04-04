@@ -45,6 +45,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isLoggedIn, isSignUpPage]);
 
 	useEffect(() => {
+		if (isLoggedIn && pathname === ROUTES.SIGN_UP) {
+			history.push(ROUTES.APPLICATION);
+		}
+
 		if (!latestLoading && versionPayload) {
 			dispatch({
 				type: UPDATE_CURRENT_VERSION,
@@ -62,7 +66,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				},
 			});
 		}
-	}, [dispatch, loading, latestLoading, versionPayload, latestVersionPayload]);
+	}, [
+		dispatch,
+		loading,
+		latestLoading,
+		versionPayload,
+		latestVersionPayload,
+		isLoggedIn,
+		pathname,
+	]);
 
 	return (
 		<Layout>

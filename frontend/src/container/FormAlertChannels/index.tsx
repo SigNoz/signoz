@@ -5,11 +5,14 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	SlackChannel,
+	SlackType,
+	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
 import React from 'react';
 
 import SlackSettings from './Settings/Slack';
+import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
 
 const { Option } = Select;
@@ -28,6 +31,16 @@ function FormAlertChannels({
 	initialValue,
 	nameDisable = false,
 }: FormAlertChannelsProps): JSX.Element {
+	const renderSettings = (): React.ReactElement | null => {
+		switch (type) {
+			case SlackType:
+				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
+			case WebhookType:
+				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+			default:
+				return null;
+		}
+	};
 	return (
 		<>
 			{NotificationElement}
@@ -52,14 +65,13 @@ function FormAlertChannels({
 						<Option value="slack" key="slack">
 							Slack
 						</Option>
+						<Option value="webhook" key="webhook">
+							Webhook
+						</Option>
 					</Select>
 				</FormItem>
 
-				<FormItem>
-					{type === 'slack' && (
-						<SlackSettings setSelectedConfig={setSelectedConfig} />
-					)}
-				</FormItem>
+				<FormItem>{renderSettings()}</FormItem>
 
 				<FormItem>
 					<Button

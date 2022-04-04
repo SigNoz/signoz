@@ -30,7 +30,8 @@ function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
-				description: error instanceof Error ? error.toString() : 'Something went wrong',
+				description:
+					error instanceof Error ? error.toString() : 'Something went wrong',
 			});
 			setLoading(false);
 		}
