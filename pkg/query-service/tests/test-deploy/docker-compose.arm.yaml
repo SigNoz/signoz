@@ -5,7 +5,6 @@ services:
     image: altinity/clickhouse-server:21.12.3.32.altinitydev.arm
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
-      - ./data/clickhouse/:/var/lib/clickhouse/
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
@@ -14,13 +13,12 @@ services:
       retries: 3
 
   alertmanager:
-    image: signoz/alertmanager:0.5.0
-    volumes:
-      - ./alertmanager.yml:/prometheus/alertmanager.yml
-      - ./data/alertmanager:/data
+    image: signoz/alertmanager:0.6.0
+    depends_on:
+      - query-service
     command:
-      - '--config.file=/prometheus/alertmanager.yml'
-      - '--storage.path=/data'
+      - --queryService.url=http://query-service:8080
+      - --storage.path=/data
 
   query-service:
     image: signoz/query-service:latest
@@ -29,9 +27,9 @@ services:
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
-      - ./data/signoz/:/var/lib/signoz/
+      - ./data:/var/lib/signoz
     ports:
-        - "8180:8080"
+      - "8180:8080"
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - STORAGE=clickhouse
@@ -72,7 +70,7 @@ services:
         max-file: "3"
     command: ["all"]
     environment:
-    - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
@@ -87,4 +85,4 @@ services:
       QUIET_MODE: "${QUIET_MODE:-false}"
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
-      - ../common/locust-scripts:/locust
+      - ../../../../deploy/docker/common/locust-scripts:/locust

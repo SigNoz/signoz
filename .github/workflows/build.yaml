@@ -2,11 +2,12 @@ name: build-pipeline
 on:
   pull_request:
     branches:
+      - develop
       - main
       - v*
     paths:
-      - 'pkg/**'
-      - 'frontend/**'
+      - "pkg/**"
+      - "frontend/**"
 
 jobs:
   get_filters:
@@ -17,17 +18,17 @@ jobs:
       query-service: ${{ steps.filter.outputs.query-service }}
       flattener: ${{ steps.filter.outputs.flattener }}
     steps:
-    # For pull requests it's not necessary to checkout the code
-    - uses: dorny/paths-filter@v2
-      id: filter
-      with:
-        filters: |
-          frontend:
-            - 'frontend/**'
-          query-service:
-            - 'pkg/query-service/**'
-          flattener:
-            - 'pkg/processors/flattener/**'
+      # For pull requests it's not necessary to checkout the code
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            query-service:
+              - 'pkg/query-service/**'
+            flattener:
+              - 'pkg/processors/flattener/**'
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -39,12 +40,11 @@ jobs:
         uses: actions/checkout@v2
       - name: Install dependencies
         run: cd frontend && yarn install
-      - name: Run Prettier
-        run: cd frontend && npm run prettify
-        continue-on-error: true
       - name: Run ESLint
         run: cd frontend && npm run lint
-        continue-on-error: true
+      - name: TSC
+        run: yarn tsc
+        working-directory: ./frontend
       - name: Build frontend docker image
         shell: bash
         run: |
