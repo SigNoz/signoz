@@ -1,12 +1,13 @@
 /* eslint-disable  */
 //@ts-nocheck
 
+import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { getDetailedServiceMapItems, getServiceMapItems } from 'store/actions';
+import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -31,9 +32,8 @@ const Container = styled.div`
 `;
 
 interface ServiceMapProps extends RouteComponentProps<any> {
-	serviceMap: serviceMapStore;
+	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
-	getServiceMapItems: (time: GlobalTime) => void;
 	getDetailedServiceMapItems: (time: GlobalTime) => void;
 }
 interface graphNode {
@@ -53,27 +53,30 @@ export interface graphDataType {
 function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
-	const {
-		getDetailedServiceMapItems,
-		getServiceMapItems,
-		globalTime,
-		serviceMap,
-	} = props;
+	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
 
 	useEffect(() => {
 		/*
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		getServiceMapItems(globalTime);
 		getDetailedServiceMapItems(globalTime);
-	}, [globalTime, getServiceMapItems, getDetailedServiceMapItems]);
+	}, [globalTime, getDetailedServiceMapItems]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
 	});
-	if (!serviceMap.items.length || !serviceMap.services.length) {
+
+	if (serviceMap.loading) {
 		return <Spinner size="large" tip="Loading..." />;
+	}
+
+	if (!serviceMap.loading && serviceMap.items.length === 0) {
+		return (
+			<Container>
+				<Card>No Service Found</Card>
+			</Container>
+		);
 	}
 
 	const zoomToService = (value: string): void => {
@@ -149,7 +152,6 @@ const mapStateToProps = (
 
 export default withRouter(
 	connect(mapStateToProps, {
-		getServiceMapItems,
 		getDetailedServiceMapItems,
 	})(ServiceMap),
 );
