@@ -15,12 +15,6 @@ export const SelectComponent = styled(Select)`
 	}
 `;
 
-export const ValueSelect = styled(Select)`
-	&&& {
-		width: 100%;
-	}
-`;
-
 export const Container = styled.div`
 	&&& {
 		display: flex;
