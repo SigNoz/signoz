@@ -16,6 +16,7 @@ import (
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.uber.org/zap"
 )
 
@@ -467,7 +468,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &model.Receiver{}
+	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -495,7 +496,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &model.Receiver{}
+	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)

@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -8,6 +8,7 @@ import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
 
 import { Data } from '../index';
+import { TableLinkText } from './styles';
 
 const { confirm } = Modal;
 
@@ -28,9 +29,9 @@ function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
 	};
 
 	return (
-		<Button onClick={openConfirmationDialog} danger>
+		<TableLinkText type="danger" onClick={openConfirmationDialog}>
 			Delete
-		</Button>
+		</TableLinkText>
 	);
 }
 

@@ -27,6 +27,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, [isLoggedIn, isSignUpPage]);
 
+	useEffect(() => {
+		if (isLoggedIn) {
+			history.push(ROUTES.APPLICATION);
+		}
+	}, [isLoggedIn]);
+
 	return (
 		<Layout>
 			{!isSignUpPage && <SideNav />}
