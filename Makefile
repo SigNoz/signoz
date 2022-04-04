@@ -115,11 +115,9 @@ down-arm:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.arm.yaml down -v
 
 clear-standalone-data:
-	@cd $(STANDALONE_DIRECTORY)
-	@docker run --rm -v "data:/pwd" busybox \
+	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
 
 clear-swarm-data:
-	@cd $(SWARM_DIRECTORY)
-	@docker run --rm -v "data:/pwd" busybox \
+	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
