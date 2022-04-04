@@ -14,10 +14,10 @@ import (
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/dao/interfaces"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
-	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.uber.org/zap"
 )
 
@@ -224,6 +224,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1153,8 +1154,6 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("resp is: %+v\n", resp)
-
 	aH.writeJSON(w, r, resp)
 }
 
@@ -1171,6 +1170,22 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, map[string]string{"data": "user registered successfully"})
+}
+
+func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseLoginRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	resp, err := auth.Login(context.Background(), req)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to login user")
+		return
+	}
+
+	aH.writeJSON(w, r, resp)
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

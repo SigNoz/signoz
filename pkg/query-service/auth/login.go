@@ -13,14 +13,14 @@ var (
 )
 
 type LoginRequest struct {
-	Email        string
-	Password     string
-	RefreshToken string
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type LoginResponse struct {
-	accessJwt  string
-	refrestJwt string
+	AccessJwt  string `json:"accessJwt"`
+	RefrestJwt string `json:"refreshJwt"`
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
@@ -39,7 +39,7 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 		return nil, err
 	}
 
-	return &LoginResponse{accessJwt: accessJwt, refrestJwt: refreshJwt}, nil
+	return &LoginResponse{AccessJwt: accessJwt, RefrestJwt: refreshJwt}, nil
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.

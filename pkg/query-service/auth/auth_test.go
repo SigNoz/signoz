@@ -68,17 +68,17 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that the claim is correct.
-	claims, err := ParseJWT(resp.accessJwt)
+	claims, err := ParseJWT(resp.AccessJwt)
 	require.NoError(t, err)
 
 	require.Equal(t, email, claims["email"].(string))
 
 	// Try login using the refresh token.
-	resp2, err := Login(context.Background(), &LoginRequest{RefreshToken: resp.refrestJwt})
+	resp2, err := Login(context.Background(), &LoginRequest{RefreshToken: resp.RefrestJwt})
 	require.NoError(t, err)
 
 	// Verify that the claim is correct.
-	claims, err = ParseJWT(resp2.accessJwt)
+	claims, err = ParseJWT(resp2.AccessJwt)
 	require.NoError(t, err)
 
 	require.Equal(t, email, claims["email"].(string))
@@ -92,7 +92,7 @@ func TestRootUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that the claim is correct.
-	claims, err := ParseJWT(resp.accessJwt)
+	claims, err := ParseJWT(resp.AccessJwt)
 	require.NoError(t, err)
 
 	require.Equal(t, constants.RootUserEmail, claims["email"].(string))
