@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,8 +45,8 @@ import (
 	"github.com/prometheus/prometheus/util/strutil"
 
 	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -75,7 +76,7 @@ type ClickHouseReader struct {
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
 	promConfig      *config.Config
-	alertManager		am.Manager
+	alertManager    am.Manager
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -95,7 +96,7 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 	return &ClickHouseReader{
 		db:              db,
 		localDB:         localDB,
-		alertManager:		 alertManager,
+		alertManager:    alertManager,
 		operationsTable: options.primary.OperationsTable,
 		indexTable:      options.primary.IndexTable,
 		errorTable:      options.primary.ErrorTable,
@@ -850,7 +851,6 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 }
 
-
 func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
 
 	tx, err := r.localDB.Begin()
@@ -860,8 +860,8 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 
 	channel_type := getChannelType(receiver)
 	receiverString, _ := json.Marshal(receiver)
-	
-	// todo: check if the channel name already exists, raise an error if so 
+
+	// todo: check if the channel name already exists, raise an error if so
 
 	{
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
@@ -884,7 +884,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 		tx.Rollback()
 		return nil, apiError
 	}
-	
+
 	err = tx.Commit()
 	if err != nil {
 		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
@@ -2602,7 +2602,6 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 			fmt.Errorf("error while getting disks. Err=%v", err)}
 	}
 
-
 	zap.S().Infof("Got response: %+v\n", diskItems)
 
 	return &diskItems, nil
@@ -2610,29 +2609,33 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 
 func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 
-	parseTTL := func(queryResp string) int {
-		values := strings.Split(queryResp, " ")
-		N := len(values)
-		ttlIdx := -1
+	parseTTL := func(queryResp string) (int, int) {
 
-		for i := 0; i < N; i++ {
-			if strings.Contains(values[i], "toIntervalSecond") {
-				ttlIdx = i
-				break
+		zap.S().Debugf("Parsing TTL from: %s", queryResp)
+		deleteTTLExp := regexp.MustCompile(`toIntervalSecond\(([0-9]*)\)`)
+		moveTTLExp := regexp.MustCompile(`toIntervalSecond\(([0-9]*)\) TO VOLUME`)
+
+		var delTTL, moveTTL int = -1, -1
+
+		m := deleteTTLExp.FindStringSubmatch(queryResp)
+		if len(m) > 1 {
+			seconds_int, err := strconv.Atoi(m[1])
+			if err != nil {
+				return -1, -1
 			}
-		}
-		if ttlIdx == -1 {
-			return ttlIdx
+			delTTL = seconds_int / 3600
 		}
 
-		output := strings.SplitN(values[ttlIdx], "(", 2)
-		timePart := strings.Trim(output[1], ")")
-		seconds_int, err := strconv.Atoi(timePart)
-		if err != nil {
-			return -1
+		m = moveTTLExp.FindStringSubmatch(queryResp)
+		if len(m) > 1 {
+			seconds_int, err := strconv.Atoi(m[1])
+			if err != nil {
+				return -1, -1
+			}
+			moveTTL = seconds_int / 3600
 		}
-		ttl_hrs := seconds_int / 3600
-		return ttl_hrs
+
+		return delTTL, moveTTL
 	}
 
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
@@ -2671,7 +2674,8 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, err
 		}
 
-		return &model.GetTTLResponseItem{TracesTime: parseTTL(dbResp.EngineFull)}, nil
+		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
+		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL}, nil
 
 	case constants.MetricsTTL:
 		dbResp, err := getMetricsTTL()
@@ -2679,7 +2683,9 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, err
 		}
 
-		return &model.GetTTLResponseItem{MetricsTime: parseTTL(dbResp.EngineFull)}, nil
+		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
+		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL}, nil
+
 	}
 	db1, err := getTracesTTL()
 	if err != nil {
@@ -2690,9 +2696,15 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	if err != nil {
 		return nil, err
 	}
+	tracesDelTTL, tracesMoveTTL := parseTTL(db1.EngineFull)
+	metricsDelTTL, metricsMoveTTL := parseTTL(db2.EngineFull)
 
-	return &model.GetTTLResponseItem{TracesTime: parseTTL(db1.EngineFull), MetricsTime: parseTTL(db2.EngineFull)}, nil
-
+	return &model.GetTTLResponseItem{
+		TracesTime:      tracesDelTTL,
+		TracesMoveTime:  tracesMoveTTL,
+		MetricsTime:     metricsDelTTL,
+		MetricsMoveTime: metricsMoveTTL,
+	}, nil
 }
 
 func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {

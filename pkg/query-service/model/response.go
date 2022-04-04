@@ -283,8 +283,10 @@ type DBResponseTTL struct {
 }
 
 type GetTTLResponseItem struct {
-	MetricsTime int `json:"metrics_ttl_duration_hrs"`
-	TracesTime  int `json:"traces_ttl_duration_hrs"`
+	MetricsTime     int `json:"metrics_ttl_duration_hrs,omitempty"`
+	MetricsMoveTime int `json:"metrics_move_ttl_duration_hrs,omitempty"`
+	TracesTime      int `json:"traces_ttl_duration_hrs,omitempty"`
+	TracesMoveTime  int `json:"traces_move_ttl_duration_hrs,omitempty"`
 }
 
 type DBResponseMinMaxDuration struct {

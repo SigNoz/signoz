@@ -914,7 +914,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
 		}
-		if toColdParsed.Seconds() >= durationParsed.Seconds() {
+		if toColdParsed.Seconds() != 0 && toColdParsed.Seconds() >= durationParsed.Seconds() {
 			return nil, fmt.Errorf("Delete TTL should be greater than cold storage move TTL.")
 		}
 	}
