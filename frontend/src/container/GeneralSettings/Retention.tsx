@@ -1,12 +1,10 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Col, Menu, Row, Select } from 'antd';
+import { Col, Row, Select } from 'antd';
 import { find } from 'lodash-es';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { Dropdown, Input, RetentionContainer, Typography } from './styles';
+import { Input, RetentionContainer, Typography } from './styles';
 import {
 	convertHoursValueToRelevantUnit,
-	ITimeUnit,
 	SettingPeriod,
 	TimeUnits,
 } from './utils';
@@ -18,23 +16,21 @@ function Retention({
 	setRetentionValue,
 	text,
 	hide,
-}: RetentionProps): JSX.Element {
+}: RetentionProps): JSX.Element | null {
 	const {
 		value: initialValue,
 		timeUnitValue: initialTimeUnitValue,
-	} = convertHoursValueToRelevantUnit(retentionValue);
+	} = convertHoursValueToRelevantUnit(Number(retentionValue));
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
 	const [selectedValue, setSelectedValue] = useState<number | null>(null);
-
+	const interacted = useRef(false);
 	useEffect(() => {
-		setSelectedValue(initialValue);
+		if (!interacted.current) setSelectedValue(initialValue);
 	}, [initialValue]);
 
-
 	useEffect(() => {
-		setSelectTimeUnit(initialTimeUnitValue);
+		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
 	}, [initialTimeUnitValue]);
-
 
 	const menuItems = TimeUnits.map((option) => (
 		<Option key={option.value} value={option.value}>
@@ -62,6 +58,7 @@ function Retention({
 		e: React.ChangeEvent<HTMLInputElement>,
 		func: React.Dispatch<React.SetStateAction<number | null>>,
 	): void => {
+		interacted.current = true;
 		const { value } = e.target;
 		const integerValue = parseInt(value, 10);
 
@@ -93,7 +90,7 @@ function Retention({
 				<Col flex="150px">
 					<div style={{ display: 'inline-flex' }}>
 						<Input
-							value={selectedValue >= 0 ? selectedValue : ''}
+							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
 							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 							style={{ width: 75 }}
 						/>

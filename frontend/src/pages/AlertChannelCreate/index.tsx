@@ -26,8 +26,7 @@ function SettingsPage(): JSX.Element {
 						route: ROUTES.ALL_CHANNELS,
 					},
 				],
-				activeKey:
-					pathName === ROUTES.SETTINGS ? 'General' : 'Alert Channels',
+				activeKey: pathName === ROUTES.SETTINGS ? 'General' : 'Alert Channels',
 			}}
 		/>
 	);

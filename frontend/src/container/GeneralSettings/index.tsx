@@ -5,8 +5,6 @@ import setRetentionApi from 'api/settings/setRetention';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import useFetch from 'hooks/useFetch';
-import convertIntoHr from 'lib/convertIntoHr';
-import getSettingsPeroid from 'lib/getSettingsPeroid';
 import { find } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IDiskType } from 'types/api/disks/getDisks';
@@ -21,19 +19,12 @@ import {
 } from './styles';
 
 function GeneralSettings(): JSX.Element {
-	const [
-		selectedMetricsPeroid,
-		setSelectedMetricsPeroid,
-	] = useState<SettingPeriod>('month');
 	const [notifications, Element] = notification.useNotification();
 
 	const [modal, setModal] = useState<boolean>(false);
 	const [postApiLoading, setPostApiLoading] = useState<boolean>(false);
 
-	const [isDefaultMetrics, setIsDefaultMetrics] = useState<boolean>(false);
-	const [isDefaultTrace, setIsDefaultTrace] = useState<boolean>(false);
-
-	const [availableDisks, setAvailableDisks] = useState<IDiskType | null>(null);
+	const [availableDisks, setAvailableDisks] = useState<IDiskType[] | null>(null);
 
 	useEffect(() => {
 		getDisks().then((response) => setAvailableDisks(response.payload));
@@ -62,7 +53,6 @@ function GeneralSettings(): JSX.Element {
 			setMetricsS3RetentionPeriod(currentTTLValues.metrics_move_ttl_duration_hrs);
 			setTracesTotalRetentionPeriod(currentTTLValues.traces_ttl_duration_hrs);
 			setTracesS3RetentionPeriod(currentTTLValues.traces_move_ttl_duration_hrs);
-			console.log({ currentTTLValues });
 		}
 	}, [currentTTLValues]);
 
@@ -74,20 +64,6 @@ function GeneralSettings(): JSX.Element {
 		onModalToggleHandler();
 	}, []);
 
-	const checkMetricTraceDefault = (trace: number, metric: number): void => {
-		if (metric === -1) {
-			setIsDefaultMetrics(true);
-		} else {
-			setIsDefaultMetrics(false);
-		}
-
-		if (trace === -1) {
-			setIsDefaultTrace(true);
-		} else {
-			setIsDefaultTrace(false);
-		}
-	};
-	// const retentionRenderConfig = () => { };
 	const s3Enabled = useMemo(
 		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
 		[availableDisks],
@@ -153,15 +129,6 @@ function GeneralSettings(): JSX.Element {
 	const onOkHandler = async (): Promise<void> => {
 		try {
 			setPostApiLoading(true);
-			// const retentionTraceValue =
-			// 	retentionPeroidTrace === '0' && (payload?.traces_ttl_duration_hrs || 0) < 0
-			// 		? payload?.traces_ttl_duration_hrs || 0
-			// 		: parseInt(retentionPeroidTrace, 10);
-			// const retentionMetricsValue =
-			// 	retentionPeroidMetrics === '0' &&
-			// 		(payload?.metrics_ttl_duration_hrs || 0) < 0
-			// 		? payload?.metrics_ttl_duration_hrs || 0
-			// 		: parseInt(retentionPeroidMetrics, 10);
 			const [metricsTTLApiResponse, tracesTTLApiResponse] = await Promise.all([
 				setRetentionApi({
 					type: 'metrics',
@@ -192,8 +159,6 @@ function GeneralSettings(): JSX.Element {
 						placement: 'topRight',
 						description: `Congrats. The retention periods for ${name} has been updated successfully.`,
 					});
-					// checkMetricTraceDefault(retentionTraceValue, retentionMetricsValue);
-					onModalToggleHandler();
 				} else {
 					notifications.error({
 						message: 'Error',
@@ -202,6 +167,7 @@ function GeneralSettings(): JSX.Element {
 					});
 				}
 			});
+			onModalToggleHandler();
 			setPostApiLoading(false);
 		} catch (error) {
 			notifications.error({
@@ -294,32 +260,7 @@ function GeneralSettings(): JSX.Element {
 					/>
 				</ToolTipContainer>
 			)}
-			<Row justify="space-around" style={{ gap: '4%' }}>
-				{/* {renderConfig.map((category): JSX.Element | null => {
-					if (
-						Array.isArray(category.retentionFields) &&
-						category.retentionFields.length > 0
-					) {
-						return (
-							<Col flex="40%" style={{ minWidth: 475 }} key={category.name}>
-								<Typography.Title level={3}>{category.name}</Typography.Title>
-
-								{category.retentionFields.map((retentionField) => (
-									<Retention
-										key={retentionField.name}
-										text={retentionField.name}
-										retentionValue={retentionField.value}
-										setRetentionValue={retentionField.setValue}
-										hide={!!retentionField.hide}
-									/>
-								))}
-							</Col>
-						);
-					}
-					return null;
-				})} */}
-				{renderConfig}
-			</Row>
+			<Row justify="space-around">{renderConfig}</Row>
 
 			<Modal
 				title="Are you sure you want to change the retention period?"
