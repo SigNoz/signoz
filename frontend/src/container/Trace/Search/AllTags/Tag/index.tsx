@@ -3,13 +3,11 @@ import { Select } from 'antd';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { fetchTag, TagValue } from './config';
-import DebounceSelect from './DebounceSelect';
 import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
+import TagValue from './TagValue';
 
 const { Option } = Select;
 
@@ -33,9 +31,6 @@ const AllMenu: AllMenuProps[] = [
 
 function SingleTags(props: AllTagsProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
-	const globalReducer = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const { tag, onCloseHandler, setLocalSelectedTags, index } = props;
 	const {
@@ -69,7 +64,6 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				tag={tag}
 				setLocalSelectedTags={setLocalSelectedTags}
 			/>
-
 			<SelectComponent
 				onChange={onChangeOperatorHandler}
 				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
@@ -81,24 +75,16 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				))}
 			</SelectComponent>
 
-			<DebounceSelect
-				fetchOptions={(): Promise<TagValue[]> =>
-					fetchTag(globalReducer.minTime, globalReducer.maxTime, selectedKey[index])
-				}
-				debounceTimeout={300}
-				onSelect={(value: Value): void => {
-					setLocalSelectedTags((tags) => [
-						...tags.slice(0, index),
-						{
-							Key: selectedKey,
-							Operator: selectedOperator,
-							Values: [...selectedValues, value.value],
-						},
-						...tags.slice(index + 1, tags.length),
-					]);
-				}}
-				mode="multiple"
-			/>
+			{selectedKey[0] ? (
+				<TagValue
+					index={index}
+					tag={tag}
+					setLocalSelectedTags={setLocalSelectedTags}
+					tagKey={selectedKey[0]}
+				/>
+			) : (
+				<SelectComponent />
+			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
 				<CloseOutlined />
@@ -116,7 +102,7 @@ interface AllTagsProps {
 	>;
 }
 
-interface Value {
+export interface Value {
 	key: string;
 	label: string;
 	value: string;
