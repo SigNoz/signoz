@@ -47,6 +47,7 @@ function ChannelsEdit(): JSX.Element {
 		const pagerConfig = value.pagerduty_configs[0];
 		channel = pagerConfig;
 		channel.details = JSON.stringify(pagerConfig.details);
+		channel.detailsArray = { ...pagerConfig.details };
 		type = PagerType;
 	} else if (value && 'webhook_configs' in value) {
 		const webhookConfig = value.webhook_configs[0];

@@ -5,6 +5,9 @@ import React from 'react';
 
 const { Option } = Select;
 
+// LabelFilterForm supports filters or matchers on alert notifications
+// presently un-used but will be introduced to the channel creation at some
+// point
 function LabelFilterForm({ setFilter }: LabelFilterProps): JSX.Element {
 	return (
 		<FormItem name="label_filter" label="Notify When (Optional)">

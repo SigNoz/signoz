@@ -9,7 +9,7 @@ const editPager = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.put(`/channels/${props.id}`, {
-			name: props.name, 
+			name: props.name,
 			pagerduty_configs: [
 				{
 					send_resolved: true,

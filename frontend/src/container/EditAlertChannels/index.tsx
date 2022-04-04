@@ -9,6 +9,7 @@ import {
 	PagerType,
 	SlackChannel,
 	SlackType,
+	ValidatePagerChannel,
 	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
@@ -16,6 +17,8 @@ import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
+
+import { OnErrorMessage, OnSuccessMessage } from './message_constants';
 
 function EditAlertChannels({
 	initialValue,
@@ -53,7 +56,7 @@ function EditAlertChannels({
 		if (response.statusCode === 200) {
 			notifications.success({
 				message: 'Success',
-				description: 'Channels Edited Successfully',
+				description: OnSuccessMessage,
 			});
 
 			setTimeout(() => {
@@ -62,7 +65,7 @@ function EditAlertChannels({
 		} else {
 			notifications.error({
 				message: 'Error',
-				description: response.error || 'error while updating the Channels',
+				description: response.error || OnErrorMessage,
 			});
 		}
 		setSavingState(false);
@@ -103,32 +106,30 @@ function EditAlertChannels({
 		if (response.statusCode === 200) {
 			notifications.success({
 				message: 'Success',
-				description: 'Channels Edited Successfully',
+				description: OnSuccessMessage,
 			});
 
 			setTimeout(() => {
 				history.replace(ROUTES.SETTINGS);
 			}, 2000);
 		} else {
-			showError(response.error || 'error while updating the Channels');
+			showError(response.error || OnErrorMessage);
 		}
 		setSavingState(false);
 	}, [selectedConfig, notifications, id]);
 
 	const onPagerEditHandler = useCallback(async () => {
-		if (
-			!selectedConfig ||
-			selectedConfig?.name === '' ||
-			selectedConfig?.routing_key === ''
-		) {
+		setSavingState(true);
+		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
+
+		if (validationError !== '') {
 			notifications.error({
 				message: 'Error',
-				description: 'unexpected inputs while updating the Channels.',
+				description: validationError,
 			});
+			setSavingState(false);
 			return;
 		}
-
-		setSavingState(true);
 		const response = await editPagerApi({
 			name: selectedConfig.name || '',
 			routing_key: selectedConfig.routing_key,
@@ -140,13 +141,14 @@ function EditAlertChannels({
 			class: selectedConfig.class,
 			group: selectedConfig.group,
 			details: selectedConfig.details,
+			detailsArray: JSON.parse(selectedConfig.details || '{}'),
 			id,
 		});
 
 		if (response.statusCode === 200) {
 			notifications.success({
 				message: 'Success',
-				description: 'Channels Edited Successfully',
+				description: OnSuccessMessage,
 			});
 
 			setTimeout(() => {
@@ -155,7 +157,7 @@ function EditAlertChannels({
 		} else {
 			notifications.error({
 				message: 'Error',
-				description: response.error || 'error while updating the Channels',
+				description: response.error || OnErrorMessage,
 			});
 		}
 		setSavingState(false);

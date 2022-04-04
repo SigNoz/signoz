@@ -8,7 +8,6 @@ const create = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-
 		const response = await axios.post('/channels', {
 			name: props.name,
 			pagerduty_configs: [
