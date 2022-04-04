@@ -221,6 +221,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 }
 
@@ -1137,6 +1138,23 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
 
 	aH.writeJSON(w, r, map[string]string{"version": version})
+}
+
+func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseInviteRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	resp, err := auth.Invite(req)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
+		return
+	}
+
+	fmt.Printf("resp is: %+v\n", resp)
+
+	aH.writeJSON(w, r, resp)
 }
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {

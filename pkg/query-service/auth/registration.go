@@ -21,12 +21,12 @@ const (
 )
 
 type InviteRequest struct {
-	Email string
+	Email string `json:"email"`
 }
 
 type InviteResponse struct {
-	Email       string
-	InviteToken string
+	Email       string `json:"email"`
+	InviteToken string `json:"inviteToken"`
 }
 
 type User struct {

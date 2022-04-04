@@ -957,6 +957,18 @@ func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
 
 }
 
+func parseInviteRequest(r *http.Request) (*auth.InviteRequest, error) {
+	var req auth.InviteRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Parsed invite req is: %+v\n", req)
+
+	return &req, nil
+}
+
 func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 	var req auth.RegisterRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
