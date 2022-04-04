@@ -1,8 +1,8 @@
 export interface Props {
-	metrics_ttl_duration_hrs: number;
-	metrics_move_ttl_duration_hrs: number;
-	traces_ttl_duration_hrs: number;
-	traces_move_ttl_duration_hrs: number;
+	type: 'metrics' | 'traces';
+	totalDuration: string;
+	coldStorage?: 's3' | null;
+	toColdDuration?: string;
 }
 
 export interface PayloadProps {

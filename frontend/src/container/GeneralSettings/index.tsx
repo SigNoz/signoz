@@ -36,26 +36,35 @@ function GeneralSettings(): JSX.Element {
 	const [availableDisks, setAvailableDisks] = useState<IDiskType | null>(null);
 
 	useEffect(() => {
-		getDisks().then((response) => setAvailableDisks(response));
+		getDisks().then((response) => setAvailableDisks(response.payload));
 	}, []);
 
 	const { payload: currentTTLValues, loading, error, errorMessage } = useFetch<
 		PayloadProps,
 		undefined
 	>(getRetentionPeriodApi, undefined);
-
 	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues?.metrics_ttl_duration_hrs);
+	>(null);
 	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues?.metrics_move_ttl_duration_hrs);
+	>(null);
 	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues?.traces_ttl_duration_hrs);
+	>(null);
 	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues?.traces_move_ttl_duration_hrs);
+	>(null);
+
+	useEffect(() => {
+		if (currentTTLValues) {
+			setMetricsTotalRetentionPeriod(currentTTLValues.metrics_ttl_duration_hrs);
+			setMetricsS3RetentionPeriod(currentTTLValues.metrics_move_ttl_duration_hrs);
+			setTracesTotalRetentionPeriod(currentTTLValues.traces_ttl_duration_hrs);
+			setTracesS3RetentionPeriod(currentTTLValues.traces_move_ttl_duration_hrs);
+			console.log({ currentTTLValues });
+		}
+	}, [currentTTLValues]);
 
 	const onModalToggleHandler = (): void => {
 		setModal((modal) => !modal);
@@ -79,52 +88,67 @@ function GeneralSettings(): JSX.Element {
 		}
 	};
 	// const retentionRenderConfig = () => { };
-	const renderConfig = useMemo(() => {
-		const s3Enabled = !!find(
-			availableDisks,
-			(disks: IDiskType) => disks?.type === 's3',
-		);
-		return [
-			{
-				name: 'Metrics',
-				retentionFields: [
-					{
-						name: 'Total Retention Period',
-						value: metricsTotalRetentionPeriod,
-						setValue: setMetricsTotalRetentionPeriod,
-					},
-					{
-						name: `Move to S3\n(should be lower than total retention period)`,
-						value: metricsS3RetentionPeriod,
-						setValue: setMetricsS3RetentionPeriod,
-						hide: !s3Enabled,
-					},
-				],
-			},
-			{
-				name: 'Traces',
-				retentionFields: [
-					{
-						name: 'Total Retention Period',
-						value: tracesTotalRetentionPeriod,
-						setValue: setTracesTotalRetentionPeriod,
-					},
-					{
-						name: `Move to S3\n(should be lower than total retention period)`,
-						value: tracesS3RetentionPeriod,
-						setValue: setTracesS3RetentionPeriod,
-						hide: !s3Enabled,
-					},
-				],
-			},
-		];
-	}, [
-		availableDisks,
-		metricsS3RetentionPeriod,
-		metricsTotalRetentionPeriod,
-		tracesS3RetentionPeriod,
-		tracesTotalRetentionPeriod,
-	]);
+	const s3Enabled = useMemo(
+		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
+		[availableDisks],
+	);
+
+	const renderConfig = [
+		{
+			name: 'Metrics',
+			retentionFields: [
+				{
+					name: 'Total Retention Period',
+					value: metricsTotalRetentionPeriod,
+					setValue: setMetricsTotalRetentionPeriod,
+				},
+				{
+					name: `Move to S3\n(should be lower than total retention period)`,
+					value: metricsS3RetentionPeriod,
+					setValue: setMetricsS3RetentionPeriod,
+					hide: !s3Enabled,
+				},
+			],
+		},
+		{
+			name: 'Traces',
+			retentionFields: [
+				{
+					name: 'Total Retention Period',
+					value: tracesTotalRetentionPeriod,
+					setValue: setTracesTotalRetentionPeriod,
+				},
+				{
+					name: `Move to S3\n(should be lower than total retention period)`,
+					value: tracesS3RetentionPeriod,
+					setValue: setTracesS3RetentionPeriod,
+					hide: !s3Enabled,
+				},
+			],
+		},
+	].map((category): JSX.Element | null => {
+		if (
+			Array.isArray(category.retentionFields) &&
+			category.retentionFields.length > 0
+		) {
+			return (
+				<Col flex="40%" style={{ minWidth: 475 }} key={category.name}>
+					<Typography.Title level={3}>{category.name}</Typography.Title>
+
+					{category.retentionFields.map((retentionField) => (
+						<Retention
+							key={retentionField.name}
+							text={retentionField.name}
+							retentionValue={retentionField.value}
+							setRetentionValue={retentionField.setValue}
+							hide={!!retentionField.hide}
+						/>
+					))}
+				</Col>
+			);
+		}
+		return null;
+	});
 
 	const onOkHandler = async (): Promise<void> => {
 		try {
@@ -138,28 +162,46 @@ function GeneralSettings(): JSX.Element {
 			// 		(payload?.metrics_ttl_duration_hrs || 0) < 0
 			// 		? payload?.metrics_ttl_duration_hrs || 0
 			// 		: parseInt(retentionPeroidMetrics, 10);
-			const apiResponse = await setRetentionApi({
-				metrics_ttl_duration_hrs: metricsTotalRetentionPeriod || -1,
-				metrics_move_ttl_duration_hrs: metricsS3RetentionPeriod || -1,
-				traces_move_ttl_duration_hrs: tracesS3RetentionPeriod || -1,
-				traces_ttl_duration_hrs: tracesTotalRetentionPeriod || -1,
+			const [metricsTTLApiResponse, tracesTTLApiResponse] = await Promise.all([
+				setRetentionApi({
+					type: 'metrics',
+					totalDuration: `${metricsTotalRetentionPeriod || -1}h`,
+					coldStorage: s3Enabled ? 's3' : null,
+					toColdDuration: `${metricsS3RetentionPeriod || -1}h`,
+				}),
+				setRetentionApi({
+					type: 'traces',
+					totalDuration: `${tracesTotalRetentionPeriod || -1}h`,
+					coldStorage: s3Enabled ? 's3' : null,
+					toColdDuration: `${tracesS3RetentionPeriod || -1}h`,
+				}),
+			]);
+			[
+				{
+					apiResponse: metricsTTLApiResponse,
+					name: 'metrics',
+				},
+				{
+					apiResponse: tracesTTLApiResponse,
+					name: 'traces',
+				},
+			].forEach(({ apiResponse, name }) => {
+				if (apiResponse.statusCode === 200) {
+					notifications.success({
+						message: 'Success!',
+						placement: 'topRight',
+						description: `Congrats. The retention periods for ${name} has been updated successfully.`,
+					});
+					// checkMetricTraceDefault(retentionTraceValue, retentionMetricsValue);
+					onModalToggleHandler();
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: `There was an issue in changing the retention period for ${name}. Please try again or reach out to support@signoz.io`,
+						placement: 'topRight',
+					});
+				}
 			});
-			if (apiResponse.statusCode === 200) {
-				notifications.success({
-					message: 'Success!',
-					placement: 'topRight',
-					description: 'Congrats. The retention periods were updated correctly.',
-				});
-				// checkMetricTraceDefault(retentionTraceValue, retentionMetricsValue);
-				onModalToggleHandler();
-			} else {
-				notifications.error({
-					message: 'Error',
-					description:
-						'There was an issue in changing the retention period. Please try again or reach out to support@signoz.io',
-					placement: 'topRight',
-				});
-			}
 			setPostApiLoading(false);
 		} catch (error) {
 			notifications.error({
@@ -169,7 +211,56 @@ function GeneralSettings(): JSX.Element {
 				placement: 'topRight',
 			});
 		}
+		setModal(false);
 	};
+
+	const [isDisabled, errorText] = useMemo(() => {
+		// Various methods to return dynamic error message text.
+		const messages = {
+			compareError: (value: string | number): string =>
+				`Total retention period for ${value} can’t be lower than period after which data is moved to s3`,
+			nullValueError: (value: string | number): string =>
+				`Retention Peroid for ${value} is not set yet. Please set by choosing below`,
+		};
+
+		// Defaults to button not disabled and empty error message text.
+		let isDisabled = false;
+		let errorText = '';
+
+		if (s3Enabled) {
+			if (
+				(metricsTotalRetentionPeriod || metricsS3RetentionPeriod) &&
+				Number(metricsTotalRetentionPeriod) < Number(metricsS3RetentionPeriod)
+			) {
+				isDisabled = true;
+				errorText = messages.compareError('metrics');
+			} else if (
+				(tracesTotalRetentionPeriod || tracesS3RetentionPeriod) &&
+				Number(tracesTotalRetentionPeriod) < Number(tracesS3RetentionPeriod)
+			) {
+				isDisabled = true;
+				errorText = messages.compareError('traces');
+			}
+		}
+
+		if (!metricsTotalRetentionPeriod || !tracesTotalRetentionPeriod) {
+			isDisabled = true;
+			if (!metricsTotalRetentionPeriod && !tracesTotalRetentionPeriod) {
+				errorText = messages.nullValueError('metrics and traces');
+			} else if (!metricsTotalRetentionPeriod) {
+				errorText = messages.nullValueError('metrics');
+			} else if (!tracesTotalRetentionPeriod) {
+				errorText = messages.nullValueError('traces');
+			}
+		}
+		return [isDisabled, errorText];
+	}, [
+		metricsS3RetentionPeriod,
+		metricsTotalRetentionPeriod,
+		s3Enabled,
+		tracesS3RetentionPeriod,
+		tracesTotalRetentionPeriod,
+	]);
 
 	if (error) {
 		return <Typography>{errorMessage}</Typography>;
@@ -178,31 +269,6 @@ function GeneralSettings(): JSX.Element {
 	if (loading || currentTTLValues === undefined) {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
-
-	const getErrorText = (): string => {
-		const getValue = (value: string): string =>
-			`Retention Peroid for ${value} is not set yet. Please set by choosing below`;
-
-		if (!isDefaultMetrics && !isDefaultTrace) {
-			return '';
-		}
-
-		if (isDefaultMetrics && !isDefaultTrace) {
-			return `${getValue('Metrics')}`;
-		}
-
-		if (!isDefaultMetrics && isDefaultTrace) {
-			return `${getValue('Trace')}`;
-		}
-
-		return `${getValue('Trace , Metrics')}`;
-	};
-
-	const isDisabledHandler = (): boolean => {
-		return false;
-	};
-
-	const errorText = getErrorText();
 
 	return (
 		<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
@@ -228,14 +294,14 @@ function GeneralSettings(): JSX.Element {
 					/>
 				</ToolTipContainer>
 			)}
-			<Row justify="space-around">
-				{renderConfig.map((category): JSX.Element | null => {
+			<Row justify="space-around" style={{ gap: '4%' }}>
+				{/* {renderConfig.map((category): JSX.Element | null => {
 					if (
 						Array.isArray(category.retentionFields) &&
 						category.retentionFields.length > 0
 					) {
 						return (
-							<Col flex="48%" style={{ minWidth: 500 }} key={category.name}>
+							<Col flex="40%" style={{ minWidth: 475 }} key={category.name}>
 								<Typography.Title level={3}>{category.name}</Typography.Title>
 
 								{category.retentionFields.map((retentionField) => (
@@ -251,7 +317,8 @@ function GeneralSettings(): JSX.Element {
 						);
 					}
 					return null;
-				})}
+				})} */}
+				{renderConfig}
 			</Row>
 
 			<Modal
@@ -272,11 +339,7 @@ function GeneralSettings(): JSX.Element {
 			</Modal>
 
 			<ButtonContainer>
-				<Button
-					onClick={onClickSaveHandler}
-					disabled={isDisabledHandler()}
-					type="primary"
-				>
+				<Button onClick={onClickSaveHandler} disabled={isDisabled} type="primary">
 					Save
 				</Button>
 			</ButtonContainer>

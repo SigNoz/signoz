@@ -24,9 +24,17 @@ function Retention({
 		timeUnitValue: initialTimeUnitValue,
 	} = convertHoursValueToRelevantUnit(retentionValue);
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
-	const [selectedValue, setSelectedValue] = useState<number | null>(
-		initialValue,
-	);
+	const [selectedValue, setSelectedValue] = useState<number | null>(null);
+
+	useEffect(() => {
+		setSelectedValue(initialValue);
+	}, [initialValue]);
+
+
+	useEffect(() => {
+		setSelectTimeUnit(initialTimeUnitValue);
+	}, [initialTimeUnitValue]);
+
 
 	const menuItems = TimeUnits.map((option) => (
 		<Option key={option.value} value={option.value}>
@@ -44,6 +52,7 @@ function Retention({
 			TimeUnits,
 			(timeUnit) => timeUnit.value === selectedTimeUnit,
 		)?.multiplier;
+		if (!selectedValue) setRetentionValue(null);
 		if (selectedValue && inverseMultiplier) {
 			setRetentionValue(selectedValue * (1 / inverseMultiplier));
 		}
@@ -89,7 +98,7 @@ function Retention({
 							style={{ width: 75 }}
 						/>
 						<Select
-							defaultValue={selectedTimeUnit}
+							value={selectedTimeUnit}
 							onChange={currentSelectedOption}
 							style={{ width: 100 }}
 						>
@@ -103,7 +112,7 @@ function Retention({
 }
 
 interface RetentionProps {
-	retentionValue: number;
+	retentionValue: number | null;
 	text: string;
 	setRetentionValue: React.Dispatch<React.SetStateAction<number | null>>;
 	hide: boolean;
