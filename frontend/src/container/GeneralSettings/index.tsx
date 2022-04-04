@@ -1,13 +1,15 @@
 import { Button, Col, Modal, notification, Row, Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
-import getRetentionperoidApi from 'api/settings/getRetention';
+import getRetentionPeriodApi from 'api/settings/getRetention';
 import setRetentionApi from 'api/settings/setRetention';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import useFetch from 'hooks/useFetch';
 import convertIntoHr from 'lib/convertIntoHr';
 import getSettingsPeroid from 'lib/getSettingsPeroid';
-import React, { useCallback, useEffect, useState } from 'react';
+import { find } from 'lodash-es';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { IDiskType } from 'types/api/disks/getDisks';
 import { PayloadProps } from 'types/api/settings/getRetention';
 
 import Retention from './Retention';
@@ -24,43 +26,36 @@ function GeneralSettings(): JSX.Element {
 		setSelectedMetricsPeroid,
 	] = useState<SettingPeriod>('month');
 	const [notifications, Element] = notification.useNotification();
-	const [retentionPeroidMetrics, setRetentionPeroidMetrics] = useState<string>(
-		'',
-	);
+
 	const [modal, setModal] = useState<boolean>(false);
 	const [postApiLoading, setPostApiLoading] = useState<boolean>(false);
 
-	const [selectedTracePeroid, setSelectedTracePeroid] = useState<SettingPeriod>(
-		'hr',
-	);
-
-	const [retentionPeroidTrace, setRetentionPeroidTrace] = useState<string>('');
 	const [isDefaultMetrics, setIsDefaultMetrics] = useState<boolean>(false);
 	const [isDefaultTrace, setIsDefaultTrace] = useState<boolean>(false);
 
-	const [availableDisks, setAvailableDisks] = useState(null);
+	const [availableDisks, setAvailableDisks] = useState<IDiskType | null>(null);
 
 	useEffect(() => {
-		getDisks().then((resp) => console.log({ disks: resp }))
-	}, [])
-	const currentTTLValues = {
-		metrics_ttl_duration_hrs: 24 * 30 * 10,
-		metrics_move_ttl_duration_hrs: -1,
-		traces_ttl_duration_hrs: -1,
-		traces_move_ttl_duration_hrs: -1,
-	};
+		getDisks().then((response) => setAvailableDisks(response));
+	}, []);
+
+	const { payload: currentTTLValues, loading, error, errorMessage } = useFetch<
+		PayloadProps,
+		undefined
+	>(getRetentionPeriodApi, undefined);
+
 	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues.metrics_ttl_duration_hrs);
+	>(currentTTLValues?.metrics_ttl_duration_hrs);
 	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues.metrics_move_ttl_duration_hrs);
+	>(currentTTLValues?.metrics_move_ttl_duration_hrs);
 	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues.traces_ttl_duration_hrs);
+	>(currentTTLValues?.traces_ttl_duration_hrs);
 	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] = useState<
 		number | null
-	>(currentTTLValues.traces_move_ttl_duration_hrs);
+	>(currentTTLValues?.traces_move_ttl_duration_hrs);
 
 	const onModalToggleHandler = (): void => {
 		setModal((modal) => !modal);
@@ -69,11 +64,6 @@ function GeneralSettings(): JSX.Element {
 	const onClickSaveHandler = useCallback(() => {
 		onModalToggleHandler();
 	}, []);
-
-	const { payload, loading, error, errorMessage } = useFetch<
-		PayloadProps,
-		undefined
-	>(getRetentionperoidApi, undefined);
 
 	const checkMetricTraceDefault = (trace: number, metric: number): void => {
 		if (metric === -1) {
@@ -89,99 +79,78 @@ function GeneralSettings(): JSX.Element {
 		}
 	};
 	// const retentionRenderConfig = () => { };
-	const renderConfig = [
-		{
-			name: 'Metrics',
-			retentionFields: [
-				{
-					name: 'Total Retention Period',
-					value: metricsTotalRetentionPeriod,
-					setValue: setMetricsTotalRetentionPeriod,
-				},
-				{
-					name: `Move to S3\n(should be lower than total retention period)`,
-					value: metricsS3RetentionPeriod,
-					setValue: setMetricsS3RetentionPeriod,
-				},
-			],
-		},
-		{
-			name: 'Traces',
-			retentionFields: [
-				{
-					name: 'Total Retention Period',
-					value: tracesTotalRetentionPeriod,
-					setValue: setTracesTotalRetentionPeriod,
-				},
-				{
-					name: `Move to S3\n(should be lower than total retention period)`,
-					value: tracesS3RetentionPeriod,
-					setValue: setTracesS3RetentionPeriod,
-				},
-			],
-		},
-	];
-
-	useEffect(() => {
-		if (!loading && payload !== undefined) {
-			const {
-				metrics_ttl_duration_hrs: metricTllDuration,
-				traces_ttl_duration_hrs: traceTllDuration,
-			} = payload;
-
-			checkMetricTraceDefault(traceTllDuration, metricTllDuration);
-
-			const traceValue = getSettingsPeroid(traceTllDuration);
-			const metricsValue = getSettingsPeroid(metricTllDuration);
-
-			setRetentionPeroidTrace(traceValue.value.toString());
-			setSelectedTracePeroid(traceValue.peroid);
-
-			setRetentionPeroidMetrics(metricsValue.value.toString());
-			setSelectedMetricsPeroid(metricsValue.peroid);
-		}
-	}, [setSelectedMetricsPeroid, loading, payload]);
+	const renderConfig = useMemo(() => {
+		const s3Enabled = !!find(
+			availableDisks,
+			(disks: IDiskType) => disks?.type === 's3',
+		);
+		return [
+			{
+				name: 'Metrics',
+				retentionFields: [
+					{
+						name: 'Total Retention Period',
+						value: metricsTotalRetentionPeriod,
+						setValue: setMetricsTotalRetentionPeriod,
+					},
+					{
+						name: `Move to S3\n(should be lower than total retention period)`,
+						value: metricsS3RetentionPeriod,
+						setValue: setMetricsS3RetentionPeriod,
+						hide: !s3Enabled,
+					},
+				],
+			},
+			{
+				name: 'Traces',
+				retentionFields: [
+					{
+						name: 'Total Retention Period',
+						value: tracesTotalRetentionPeriod,
+						setValue: setTracesTotalRetentionPeriod,
+					},
+					{
+						name: `Move to S3\n(should be lower than total retention period)`,
+						value: tracesS3RetentionPeriod,
+						setValue: setTracesS3RetentionPeriod,
+						hide: !s3Enabled,
+					},
+				],
+			},
+		];
+	}, [
+		availableDisks,
+		metricsS3RetentionPeriod,
+		metricsTotalRetentionPeriod,
+		tracesS3RetentionPeriod,
+		tracesTotalRetentionPeriod,
+	]);
 
 	const onOkHandler = async (): Promise<void> => {
 		try {
 			setPostApiLoading(true);
-			const retentionTraceValue =
-				retentionPeroidTrace === '0' && (payload?.traces_ttl_duration_hrs || 0) < 0
-					? payload?.traces_ttl_duration_hrs || 0
-					: parseInt(retentionPeroidTrace, 10);
-
-			const retentionMetricsValue =
-				retentionPeroidMetrics === '0' &&
-					(payload?.metrics_ttl_duration_hrs || 0) < 0
-					? payload?.metrics_ttl_duration_hrs || 0
-					: parseInt(retentionPeroidMetrics, 10);
-
-			const [tracesResponse, metricsResponse] = await Promise.all([
-				setRetentionApi({
-					duration: `${convertIntoHr(retentionTraceValue, selectedTracePeroid)}h`,
-					type: 'traces',
-				}),
-				setRetentionApi({
-					duration: `${convertIntoHr(
-						retentionMetricsValue,
-						selectedMetricsPeroid,
-					)}h`,
-					type: 'metrics',
-				}),
-			]);
-
-			if (
-				tracesResponse.statusCode === 200 &&
-				metricsResponse.statusCode === 200
-			) {
+			// const retentionTraceValue =
+			// 	retentionPeroidTrace === '0' && (payload?.traces_ttl_duration_hrs || 0) < 0
+			// 		? payload?.traces_ttl_duration_hrs || 0
+			// 		: parseInt(retentionPeroidTrace, 10);
+			// const retentionMetricsValue =
+			// 	retentionPeroidMetrics === '0' &&
+			// 		(payload?.metrics_ttl_duration_hrs || 0) < 0
+			// 		? payload?.metrics_ttl_duration_hrs || 0
+			// 		: parseInt(retentionPeroidMetrics, 10);
+			const apiResponse = await setRetentionApi({
+				metrics_ttl_duration_hrs: metricsTotalRetentionPeriod || -1,
+				metrics_move_ttl_duration_hrs: metricsS3RetentionPeriod || -1,
+				traces_move_ttl_duration_hrs: tracesS3RetentionPeriod || -1,
+				traces_ttl_duration_hrs: tracesTotalRetentionPeriod || -1,
+			});
+			if (apiResponse.statusCode === 200) {
 				notifications.success({
 					message: 'Success!',
 					placement: 'topRight',
 					description: 'Congrats. The retention periods were updated correctly.',
 				});
-
-				checkMetricTraceDefault(retentionTraceValue, retentionMetricsValue);
-
+				// checkMetricTraceDefault(retentionTraceValue, retentionMetricsValue);
 				onModalToggleHandler();
 			} else {
 				notifications.error({
@@ -206,7 +175,7 @@ function GeneralSettings(): JSX.Element {
 		return <Typography>{errorMessage}</Typography>;
 	}
 
-	if (loading || payload === undefined) {
+	if (loading || currentTTLValues === undefined) {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
 
@@ -230,7 +199,7 @@ function GeneralSettings(): JSX.Element {
 	};
 
 	const isDisabledHandler = (): boolean => {
-		return !!(retentionPeroidTrace === '' || retentionPeroidMetrics === '');
+		return false;
 	};
 
 	const errorText = getErrorText();
@@ -275,6 +244,7 @@ function GeneralSettings(): JSX.Element {
 										text={retentionField.name}
 										retentionValue={retentionField.value}
 										setRetentionValue={retentionField.setValue}
+										hide={!!retentionField.hide}
 									/>
 								))}
 							</Col>

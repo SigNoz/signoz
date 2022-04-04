@@ -17,6 +17,7 @@ function Retention({
 	retentionValue,
 	setRetentionValue,
 	text,
+	hide,
 }: RetentionProps): JSX.Element {
 	const {
 		value: initialValue,
@@ -64,7 +65,9 @@ function Retention({
 			func(null);
 		}
 	};
-
+	if (hide) {
+		return null;
+	}
 	return (
 		<RetentionContainer>
 			<Row justify="space-between">
@@ -103,6 +106,7 @@ interface RetentionProps {
 	retentionValue: number;
 	text: string;
 	setRetentionValue: React.Dispatch<React.SetStateAction<number | null>>;
+	hide: boolean;
 }
 
 export default Retention;

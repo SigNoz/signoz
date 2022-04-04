@@ -8,9 +8,9 @@ const setRetention = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post<PayloadProps>(
-			`/settings/ttl?duration=${props.duration}&type=${props.type}`,
-		);
+		const response = await axios.post<PayloadProps>(`/settings/ttl`, {
+			props,
+		});
 
 		return {
 			statusCode: 200,
