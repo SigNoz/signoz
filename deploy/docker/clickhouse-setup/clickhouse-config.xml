@@ -45,6 +45,33 @@
     </client>
 </openSSL>
 
+<!-- Example config for tiered storage -->
+<!-- <storage_configuration> -->
+<!-- 	<disks> -->
+<!-- 		<default> -->
+<!-- 		</default> -->
+<!--  	    <s3> -->
+<!--  	      <type>s3</type> -->
+<!-- 		  <endpoint>http://172.17.0.1:9100/test/random/</endpoint> -->
+<!--  	      <access_key_id>ash</access_key_id> -->
+<!--  	      <secret_access_key>password</secret_access_key> -->
+<!--  	    </s3> -->
+<!-- 	</disks> -->
+<!-- 	<policies> -->
+<!-- 		<tiered> -->
+<!--     	<volumes> -->
+<!--     	  <default> -->
+<!--     	    <disk>default</disk> -->
+<!--     	  </default> -->
+<!--     	  <s3> -->
+<!--     	    <disk>s3</disk> -->
+<!--     	  </s3> -->
+<!--     	</volumes> -->
+<!--         </tiered> -->
+<!-- 	</policies> -->
+<!-- </storage_configuration> -->
+
+
 <!-- Default root page on http[s] server. For example load UI from https://tabix.io/ when opening http://localhost:8123 -->
     <!--
     <http_server_default_response><![CDATA[<html ng-app="SMI2"><head><base href="http://ui.tabix.io/"></head><body><div ui-view="" class="content-ui"></div><script src="http://loader.tabix.io/master.js"></script></body></html>]]></http_server_default_response>

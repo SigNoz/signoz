@@ -4,31 +4,28 @@ import SideNav from 'container/SideNav';
 import history from 'lib/history';
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-import Feedback from './FeedBack';
-import { Content, Footer, Layout } from './styles';
+import { Content, Layout } from './styles';
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { pathname } = useLocation();
 
-	const [isSignUpPage, setIsSignUpPage] = useState(
-		ROUTES.SIGN_UP === location.pathname,
-	);
+	const [isSignUpPage, setIsSignUpPage] = useState(ROUTES.SIGN_UP === pathname);
+
+	const { children } = props;
 
 	useEffect(() => {
 		if (!isLoggedIn) {
 			setIsSignUpPage(true);
 			history.push(ROUTES.SIGN_UP);
-		} else {
-			if (isSignUpPage) {
-				setIsSignUpPage(false);
-			}
+		} else if (isSignUpPage) {
+			setIsSignUpPage(false);
 		}
 	}, [isLoggedIn, isSignUpPage]);
-
-	const currentYear = new Date().getFullYear();
 
 	return (
 		<Layout>
@@ -38,13 +35,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 					{!isSignUpPage && <TopNav />}
 					{children}
 				</Content>
-				<Footer>{`SigNoz Inc. © ${currentYear}`}</Footer>
 			</Layout>
-
-			<Feedback />
 		</Layout>
 	);
-};
+}
 
 interface AppLayoutProps {
 	children: ReactNode;

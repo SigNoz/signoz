@@ -2,36 +2,42 @@ import { Button, Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
-import { graphOnClickHandler } from 'components/Graph';
+import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
 import {
 	timeItems,
 	timePreferance,
+	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
+import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
+import getStep from 'lib/getStep';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import EmptyGraph from './EmptyGraph';
-import { GraphContainer, NotFoundContainer, TimeContainer } from './styles';
+import { NotFoundContainer, TimeContainer } from './styles';
 
-const FullView = ({
+function FullView({
 	widget,
 	fullViewOptions = true,
 	onClickHandler,
 	noDataGraph = false,
 	name,
-}: FullViewProps): JSX.Element => {
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
-		(state) => state.globalTime,
-	);
+	yAxisUnit,
+}: FullViewProps): JSX.Element {
+	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const [state, setState] = useState<FullViewState>({
 		error: false,
@@ -59,21 +65,39 @@ const FullView = ({
 				minTime,
 			});
 
-			const { end, start } = getStartAndEndTime({
-				type: selectedTime.enum,
-				maxTime: maxMinTime.maxTime,
-				minTime: maxMinTime.minTime,
-			});
+			const getMinMax = (
+				time: timePreferenceType,
+			): { min: string | number; max: string | number } => {
+				if (time === 'GLOBAL_TIME') {
+					const minMax = GetMinMax(globalSelectedTime);
+					return {
+						min: convertToNanoSecondsToSecond(minMax.minTime / 1000),
+						max: convertToNanoSecondsToSecond(minMax.maxTime / 1000),
+					};
+				}
 
+				const minMax = getStartAndEndTime({
+					type: selectedTime.enum,
+					maxTime: maxMinTime.maxTime,
+					minTime: maxMinTime.minTime,
+				});
+				return { min: parseInt(minMax.start, 10), max: parseInt(minMax.end, 10) };
+			};
+
+			const queryMinMax = getMinMax(selectedTime.enum);
 			const response = await Promise.all(
 				widget.query
 					.filter((e) => e.query.length !== 0)
 					.map(async (query) => {
 						const result = await getQueryResult({
-							end,
+							end: queryMinMax.max.toString(),
 							query: query.query,
-							start: start,
-							step: '60',
+							start: queryMinMax.min.toString(),
+							step: `${getStep({
+								start: queryMinMax.min,
+								end: queryMinMax.max,
+								inputFormat: 's',
+							})}`,
 						});
 						return {
 							query: query.query,
@@ -120,7 +144,7 @@ const FullView = ({
 				loading: false,
 			}));
 		}
-	}, [widget, maxTime, minTime, selectedTime.enum]);
+	}, [widget, maxTime, minTime, selectedTime.enum, globalSelectedTime]);
 
 	useEffect(() => {
 		onFetchDataHandler();
@@ -198,14 +222,15 @@ const FullView = ({
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,
 					title: widget.title,
-					onClickHandler: onClickHandler,
+					onClickHandler,
 					name,
+					yAxisUnit,
 				}}
 			/>
 			{/* </GraphContainer> */}
 		</>
 	);
-};
+}
 
 interface FullViewState {
 	loading: boolean;
@@ -217,9 +242,17 @@ interface FullViewState {
 interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
-	onClickHandler?: graphOnClickHandler;
+	onClickHandler?: GraphOnClickHandler;
 	noDataGraph?: boolean;
 	name: string;
+	yAxisUnit?: string;
 }
+
+FullView.defaultProps = {
+	fullViewOptions: undefined,
+	onClickHandler: undefined,
+	noDataGraph: undefined,
+	yAxisUnit: undefined,
+};
 
 export default FullView;

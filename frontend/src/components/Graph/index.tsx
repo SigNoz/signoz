@@ -27,6 +27,11 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { legend } from './Plugin';
+import { LegendsContainer } from './styles';
+import { useXAxisTimeUnit } from './xAxisConfig';
+import { getYAxisFormattedValue } from './yAxisConfig';
+
 Chart.register(
 	LineElement,
 	PointElement,
@@ -44,24 +49,24 @@ Chart.register(
 	BarController,
 	BarElement,
 );
-import { legend } from './Plugin';
-import { LegendsContainer } from './styles';
 
-const Graph = ({
+function Graph({
+	animate = true,
 	data,
 	type,
 	title,
 	isStacked,
 	onClickHandler,
 	name,
-}: GraphProps): JSX.Element => {
+	yAxisUnit = 'short',
+	forceReRender,
+}: GraphProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const currentTheme = isDarkMode ? 'dark' : 'light';
+	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
-	// const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 	const lineChartRef = useRef<Chart>();
-
 	const getGridColor = useCallback(() => {
 		if (currentTheme === undefined) {
 			return 'rgba(231,233,237,0.1)';
@@ -81,6 +86,9 @@ const Graph = ({
 
 		if (chartRef.current !== null) {
 			const options: ChartOptions = {
+				animation: {
+					duration: animate ? 200 : 0,
+				},
 				responsive: true,
 				maintainAspectRatio: false,
 				interaction: {
@@ -89,11 +97,26 @@ const Graph = ({
 				},
 				plugins: {
 					title: {
-						display: title === undefined ? false : true,
+						display: title !== undefined,
 						text: title,
 					},
 					legend: {
 						display: false,
+					},
+					tooltip: {
+						callbacks: {
+							label(context) {
+								let label = context.dataset.label || '';
+
+								if (label) {
+									label += ': ';
+								}
+								if (context.parsed.y !== null) {
+									label += getYAxisFormattedValue(context.parsed.y, yAxisUnit);
+								}
+								return label;
+							},
+						},
 					},
 				},
 				layout: {
@@ -109,7 +132,18 @@ const Graph = ({
 							date: chartjsAdapter,
 						},
 						time: {
-							unit: 'minute',
+							unit: xAxisTimeUnit?.unitName || 'minute',
+							stepSize: xAxisTimeUnit?.stepSize || 1,
+							displayFormats: {
+								millisecond: 'HH:mm:ss',
+								second: 'HH:mm:ss',
+								minute: 'HH:mm',
+								hour: 'MM/dd HH:mm',
+								day: 'MM/dd',
+								week: 'MM/dd',
+								month: 'yy-MM',
+								year: 'yy',
+							},
 						},
 						type: 'time',
 					},
@@ -118,6 +152,15 @@ const Graph = ({
 						grid: {
 							display: true,
 							color: getGridColor(),
+						},
+						ticks: {
+							// Include a dollar sign in the ticks
+							callback(value) {
+								return getYAxisFormattedValue(
+									parseInt(value.toString(), 10),
+									yAxisUnit,
+								);
+							},
 						},
 					},
 					stacked: {
@@ -138,17 +181,29 @@ const Graph = ({
 			};
 
 			lineChartRef.current = new Chart(chartRef.current, {
-				type: type,
-				data: data,
+				type,
+				data,
 				options,
 				plugins: [legend(name, data.datasets.length > 3)],
 			});
 		}
-	}, [chartRef, data, type, title, isStacked, getGridColor, onClickHandler]);
+	}, [
+		animate,
+		title,
+		getGridColor,
+		xAxisTimeUnit?.unitName,
+		xAxisTimeUnit?.stepSize,
+		isStacked,
+		type,
+		data,
+		name,
+		yAxisUnit,
+		onClickHandler,
+	]);
 
 	useEffect(() => {
 		buildChart();
-	}, [buildChart]);
+	}, [buildChart, forceReRender]);
 
 	return (
 		<div style={{ height: '85%' }}>
@@ -156,23 +211,33 @@ const Graph = ({
 			<LegendsContainer id={name} />
 		</div>
 	);
-};
+}
 
 interface GraphProps {
+	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];
 	title?: string;
 	isStacked?: boolean;
-	label?: string[];
-	onClickHandler?: graphOnClickHandler;
+	onClickHandler?: GraphOnClickHandler;
 	name: string;
+	yAxisUnit?: string;
+	forceReRender?: boolean | null | number;
 }
 
-export type graphOnClickHandler = (
+export type GraphOnClickHandler = (
 	event: ChartEvent,
 	elements: ActiveElement[],
 	chart: Chart,
 	data: ChartData,
 ) => void;
 
+Graph.defaultProps = {
+	animate: undefined,
+	title: undefined,
+	isStacked: undefined,
+	onClickHandler: undefined,
+	yAxisUnit: undefined,
+	forceReRender: undefined,
+};
 export default Graph;

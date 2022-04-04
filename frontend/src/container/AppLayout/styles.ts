@@ -12,12 +12,7 @@ export const Layout = styled(LayoutComponent)`
 export const Content = styled(LayoutComponent.Content)`
 	&&& {
 		margin: 0 1rem;
-	}
-`;
-
-export const Footer = styled(LayoutComponent.Footer)`
-	&&& {
-		text-align: center;
-		font-size: 0.7rem;
+		display: flex;
+		flex-direction: column;
 	}
 `;

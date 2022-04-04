@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { RefreshTextContainer, Typography } from './styles';
 
-const RefreshText = ({
-	onLastRefreshHandler,
-}: RefreshTextProps): JSX.Element => {
+function RefreshText({ onLastRefreshHandler }: RefreshTextProps): JSX.Element {
 	const [refreshText, setRefreshText] = useState<string>('');
 
 	// this is to update the refresh text
@@ -25,7 +23,7 @@ const RefreshText = ({
 			<Typography>{refreshText}</Typography>
 		</RefreshTextContainer>
 	);
-};
+}
 
 interface RefreshTextProps {
 	onLastRefreshHandler: () => string;

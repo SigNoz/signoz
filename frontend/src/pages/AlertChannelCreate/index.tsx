@@ -1,21 +1,36 @@
+/* eslint-disable react/no-unstable-nested-components */
+import RouteTab from 'components/RouteTab';
+import ROUTES from 'constants/routes';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import GeneralSettings from 'container/GeneralSettings';
-import SettingsWrapper from 'container/SettingsWrapper';
+import history from 'lib/history';
 import React from 'react';
 
-const SettingsPage = (): JSX.Element => {
-	const AlertChannels = (): JSX.Element => {
-		return <CreateAlertChannels />;
-	};
+function SettingsPage(): JSX.Element {
+	const pathName = history.location.pathname;
 
 	return (
-		<SettingsWrapper
+		<RouteTab
 			{...{
-				AlertChannels,
-				General: GeneralSettings,
+				routes: [
+					{
+						Component: GeneralSettings,
+						name: 'General Settings',
+						route: ROUTES.SETTINGS,
+					},
+					{
+						Component: (): JSX.Element => {
+							return <CreateAlertChannels />;
+						},
+						name: 'Alert Channels',
+						route: ROUTES.ALL_CHANNELS,
+					},
+				],
+				activeKey:
+					pathName === ROUTES.SETTINGS ? 'General Settings' : 'Alert Channels',
 			}}
 		/>
 	);
-};
+}
 
 export default SettingsPage;

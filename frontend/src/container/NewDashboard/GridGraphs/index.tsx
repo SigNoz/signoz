@@ -7,20 +7,18 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 import { GridComponentSliderContainer } from './styles';
 
-const GridGraphs = (): JSX.Element => {
+function GridGraphs(): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 
 	return (
-		<>
-			<GridComponentSliderContainer>
-				{isAddWidget && <ComponentsSlider />}
+		<GridComponentSliderContainer>
+			{isAddWidget && <ComponentsSlider />}
 
-				<GridGraphLayout />
-			</GridComponentSliderContainer>
-		</>
+			<GridGraphLayout />
+		</GridComponentSliderContainer>
 	);
-};
+}
 
 export default GridGraphs;

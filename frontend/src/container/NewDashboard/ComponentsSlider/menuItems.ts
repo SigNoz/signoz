@@ -18,8 +18,12 @@ export type ITEMS = 'TIME_SERIES' | 'VALUE';
 
 interface ItemsProps {
 	name: ITEMS;
-	Icon: () => JSX.Element;
+	Icon: (props: IconProps) => JSX.Element;
 	display: string;
+}
+
+interface IconProps {
+	fillColor: React.CSSProperties['color'];
 }
 
 export default Items;

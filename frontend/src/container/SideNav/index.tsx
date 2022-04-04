@@ -1,31 +1,46 @@
-import { Menu, Switch as ToggleButton, Typography } from 'antd';
+import { Menu, Typography } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import setTheme, { AppMode } from 'lib/theme/setTheme';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
+import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 
 import menus from './menuItems';
-import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
+import Slack from './Slack';
+import {
+	Logo,
+	Sider,
+	SlackButton,
+	SlackMenuItemContainer,
+	ThemeSwitcherWrapper,
+	ToggleButton,
+} from './styles';
 
-const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
-	const [collapsed, setCollapsed] = useState<boolean>(false);
-	const { pathname } = useLocation();
+function SideNav({ toggleDarkMode }: Props): JSX.Element {
+	const dispatch = useDispatch();
+	const [collapsed, setCollapsed] = useState<boolean>(
+		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const toggleTheme = useCallback(() => {
-		const preMode: mode = isDarkMode ? 'lightMode' : 'darkMode';
-		const postMode: mode = isDarkMode ? 'darkMode' : 'lightMode';
+	const { pathname } = useLocation();
 
-		const id: mode = preMode;
-		const head = document.head;
+	const toggleTheme = useCallback(() => {
+		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
+		setTheme(preMode);
+
+		const id: AppMode = preMode;
+		const { head } = document;
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
@@ -36,7 +51,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 
 		link.onload = (): void => {
 			toggleDarkMode();
-			const prevNode = document.getElementById(postMode);
+			const prevNode = document.getElementById('appMode');
 			prevNode?.remove();
 		};
 	}, [toggleDarkMode, isDarkMode]);
@@ -44,6 +59,10 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
 	}, []);
+
+	useLayoutEffect(() => {
+		dispatch(SideBarCollapse(collapsed));
+	}, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
 		(to: string) => {
@@ -54,13 +73,21 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		[pathname],
 	);
 
+	const onClickSlackHandler = (): void => {
+		window.open('https://signoz.io/slack', '_blank');
+	};
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<ThemeSwitcherWrapper>
-				<ToggleButton checked={isDarkMode} onChange={toggleTheme} />
+				<ToggleButton
+					checked={isDarkMode}
+					onChange={toggleTheme}
+					defaultChecked={isDarkMode}
+				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
-				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
+				<Logo src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -70,18 +97,23 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 				mode="inline"
 			>
 				{menus.map(({ to, Icon, name }) => (
-					<Menu.Item key={to} icon={<Icon />}>
-						<div onClick={(): void => onClickHandler(to)}>
-							<Typography>{name}</Typography>
-						</div>
+					<Menu.Item
+						key={to}
+						icon={<Icon />}
+						onClick={(): void => onClickHandler(to)}
+					>
+						<Typography>{name}</Typography>
 					</Menu.Item>
 				))}
+				<SlackMenuItemContainer collapsed={collapsed}>
+					<Menu.Item onClick={onClickSlackHandler} icon={<Slack />}>
+						<SlackButton>Support</SlackButton>
+					</Menu.Item>
+				</SlackMenuItemContainer>
 			</Menu>
 		</Sider>
 	);
-};
-
-type mode = 'darkMode' | 'lightMode';
+}
 
 interface DispatchProps {
 	toggleDarkMode: () => void;

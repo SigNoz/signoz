@@ -1,26 +1,25 @@
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { Dispatch } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+
 import { Data } from '../index';
 
 const { confirm } = Modal;
 
-const DeleteButton = ({
-	deleteDashboard,
-	id,
-}: DeleteButtonProps): JSX.Element => {
-	const openConfirmationDailog = () => {
+function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
+	const openConfirmationDialog = (): void => {
 		confirm({
 			title: 'Do you really want to delete this dashboard?',
 			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
 			onOk() {
-				onDeleteConfirmation();
+				deleteDashboard({
+					uuid: id,
+				});
 			},
 			okText: 'Delete',
 			okButtonProps: { danger: true },
@@ -28,18 +27,12 @@ const DeleteButton = ({
 		});
 	};
 
-	const onDeleteConfirmation = useCallback(() => {
-		deleteDashboard({
-			uuid: id,
-		});
-	}, [id, deleteDashboard]);
-
 	return (
-		<Button onClick={openConfirmationDailog} danger>
+		<Button onClick={openConfirmationDialog} danger>
 			Delete
 		</Button>
 	);
-};
+}
 
 interface DispatchProps {
 	deleteDashboard: ({
@@ -58,14 +51,22 @@ type DeleteButtonProps = Data & DispatchProps;
 const WrapperDeleteButton = connect(null, mapDispatchToProps)(DeleteButton);
 
 // This is to avoid the type collision
-const Wrapper = (props: Data): JSX.Element => {
+function Wrapper(props: Data): JSX.Element {
+	const { createdBy, description, id, key, lastUpdatedTime, name, tags } = props;
+
 	return (
 		<WrapperDeleteButton
 			{...{
-				...props,
+				createdBy,
+				description,
+				id,
+				key,
+				lastUpdatedTime,
+				name,
+				tags,
 			}}
 		/>
 	);
-};
+}
 
 export default Wrapper;

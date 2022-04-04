@@ -1,5 +1,7 @@
+/*eslint-disable*/
+//@ts-nocheck
+
 import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash-es';
-import { serviceMapStore } from 'store/actions';
 
 import { graphDataType } from './ServiceMap';
 
@@ -16,7 +18,7 @@ export const getDimensions = (num, highest) => {
 	};
 };
 
-export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
+export const getGraphData = (serviceMap): graphDataType => {
 	const { items, services } = serviceMap;
 	const highestCallCount = maxBy(items, (e) => e.callCount).callCount;
 	const highestCallRate = maxBy(services, (e) => e.callRate).callRate;
@@ -76,12 +78,14 @@ export const getGraphData = (serviceMap: serviceMapStore): graphDataType => {
 };
 
 export const getZoomPx = (): number => {
-	const width = window.screen.width;
+	const { width } = window.screen;
 	if (width < 1400) {
 		return 190;
-	} else if (width > 1400 && width < 1700) {
+	}
+	if (width > 1400 && width < 1700) {
 		return 380;
-	} else if (width > 1700) {
+	}
+	if (width > 1700) {
 		return 470;
 	}
 	return 190;

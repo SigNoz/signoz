@@ -1,13 +1,12 @@
+/* eslint-disable  */
+//@ts-nocheck
+
 import Spinner from 'components/Spinner';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import {
-	getDetailedServiceMapItems,
-	getServiceMapItems,
-	serviceMapStore,
-} from 'store/actions';
+import { getDetailedServiceMapItems, getServiceMapItems } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -51,7 +50,7 @@ export interface graphDataType {
 	links: graphLink[];
 }
 
-const ServiceMap = (props: ServiceMapProps): JSX.Element => {
+function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
 	const {
@@ -106,9 +105,9 @@ const ServiceMap = (props: ServiceMapProps): JSX.Element => {
 				linkDirectionalParticleSpeed={(d) => d.value}
 				nodeCanvasObject={(node, ctx, globalScale) => {
 					const label = transformLabel(node.id);
-					const fontSize = node.fontSize;
+					const { fontSize } = node;
 					ctx.font = `${fontSize}px Roboto`;
-					const width = node.width;
+					const { width } = node;
 
 					ctx.fillStyle = node.color;
 					ctx.beginPath();
@@ -134,7 +133,7 @@ const ServiceMap = (props: ServiceMapProps): JSX.Element => {
 			/>
 		</Container>
 	);
-};
+}
 
 const mapStateToProps = (
 	state: AppState,
@@ -150,7 +149,7 @@ const mapStateToProps = (
 
 export default withRouter(
 	connect(mapStateToProps, {
-		getServiceMapItems: getServiceMapItems,
-		getDetailedServiceMapItems: getDetailedServiceMapItems,
+		getServiceMapItems,
+		getDetailedServiceMapItems,
 	})(ServiceMap),
 );

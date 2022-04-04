@@ -6,15 +6,17 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
-const External = ({ getWidget }: ExternalProps): JSX.Element => {
+function External({ getWidget }: ExternalProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
+
+	const legend = '{{http_url}}';
 
 	return (
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
 					<Card>
-						<GraphTitle>External Call Error Percentage (%)</GraphTitle>
+						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="external_call_error_percentage"
@@ -22,10 +24,11 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								noDataGraph
 								widget={getWidget([
 									{
-										query: `(sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."}[1m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[1m])) by (http_url)`,
-										legend: '{{http_url}}',
+										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."}[1m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[1m])) by (http_url)) < 1000 OR vector(0)`,
+										legend,
 									},
 								])}
+								yAxisUnit="%"
 							/>
 						</GraphContainer>
 					</Card>
@@ -45,6 +48,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 										legend: 'Average Duration',
 									},
 								])}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>
@@ -63,9 +67,10 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								widget={getWidget([
 									{
 										query: `sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
-										legend: '{{http_url}}',
+										legend,
 									},
 								])}
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
@@ -81,10 +86,11 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m])/rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url)`,
-										legend: '{{http_url}}',
+										query: `(sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"}[5m])) by (http_url))/(sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[5m])) by (http_url))`,
+										legend,
 									},
 								])}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>
@@ -92,7 +98,7 @@ const External = ({ getWidget }: ExternalProps): JSX.Element => {
 			</Row>
 		</>
 	);
-};
+}
 
 interface ExternalProps {
 	getWidget: (query: Widgets['query']) => Widgets;

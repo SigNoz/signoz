@@ -10,7 +10,7 @@ import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create
 
 import { ButtonContainer, Title } from './styles';
 
-const CreateAlert = (): JSX.Element => {
+function CreateAlert(): JSX.Element {
 	const value = useRef<string>(
 		`\n        alert: High RPS\n        expr: sum(rate(signoz_latency_count{span_kind="SPAN_KIND_SERVER"}[2m])) by (service_name) > 100\n        for: 0m\n        labels:\n            severity: warning\n        annotations:\n            summary: High RPS of Applications\n            description: "RPS is > 100\n\t\t\t VALUE = {{ $value }}\n\t\t\t LABELS = {{ $labels }}"\n    `,
 	);
@@ -25,6 +25,9 @@ const CreateAlert = (): JSX.Element => {
 		success: false,
 	});
 	const [notifications, Element] = notification.useNotification();
+
+	const defaultError =
+		'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io';
 
 	const onSaveHandler = useCallback(async () => {
 		try {
@@ -65,24 +68,19 @@ const CreateAlert = (): JSX.Element => {
 				}, 3000);
 			} else {
 				notifications.error({
-					description:
-						response.error ||
-						'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
+					description: response.error || defaultError,
 					message: 'Error',
 				});
 				setNewAlertState((state) => ({
 					...state,
 					loading: false,
 					error: true,
-					errorMessage:
-						response.error ||
-						'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
+					errorMessage: response.error || defaultError,
 				}));
 			}
 		} catch (error) {
 			notifications.error({
-				message:
-					'Oops! Some issue occured in saving the alert please try again or contact support@signoz.io',
+				message: defaultError,
 			});
 		}
 	}, [notifications]);
@@ -106,6 +104,6 @@ const CreateAlert = (): JSX.Element => {
 			</ButtonContainer>
 		</>
 	);
-};
+}
 
 export default CreateAlert;

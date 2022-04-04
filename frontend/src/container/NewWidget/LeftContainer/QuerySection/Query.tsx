@@ -1,9 +1,10 @@
 import { Button, Divider } from 'antd';
 import Input from 'components/Input';
+import TextToolTip from 'components/TextToolTip';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useState } from 'react';
-import { connect } from 'react-redux';
-import { useLocation } from 'react-router';
+import React, { useCallback, useMemo, useState } from 'react';
+import { connect, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteQuery } from 'store/actions';
@@ -11,24 +12,49 @@ import {
 	UpdateQuery,
 	UpdateQueryProps,
 } from 'store/actions/dashboard/updateQuery';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { DeleteQueryProps } from 'types/actions/dashboard';
+import { Widgets } from 'types/api/dashboard/getAll';
+import DashboardReducer from 'types/reducer/dashboards';
 
-import { Container, InputContainer, QueryWrapper } from './styles';
+import {
+	ButtonContainer,
+	Container,
+	InputContainer,
+	QueryWrapper,
+} from './styles';
 
-const Query = ({
+function Query({
 	currentIndex,
 	preLegend,
 	preQuery,
 	updateQuery,
 	deleteQuery,
-}: QueryProps): JSX.Element => {
+}: QueryProps): JSX.Element {
 	const [promqlQuery, setPromqlQuery] = useState(preQuery);
 	const [legendFormat, setLegendFormat] = useState(preLegend);
 	const { search } = useLocation();
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
+	const [selectedDashboards] = dashboards;
+	const { widgets } = selectedDashboards.data;
 
 	const query = new URLSearchParams(search);
 	const widgetId = query.get('widgetId') || '';
+
+	const urlQuery = useMemo(() => {
+		return new URLSearchParams(search);
+	}, [search]);
+
+	const getWidget = useCallback(() => {
+		const widgetId = urlQuery.get('widgetId');
+		return widgets?.find((e) => e.id === widgetId);
+	}, [widgets, urlQuery]);
+
+	const selectedWidget = getWidget() as Widgets;
 
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -43,12 +69,13 @@ const Query = ({
 			legend: legendFormat,
 			query: promqlQuery,
 			widgetId,
+			yAxisUnit: selectedWidget.yAxisUnit,
 		});
 	};
 
 	const onDeleteQueryHandler = (): void => {
 		deleteQuery({
-			widgetId: widgetId,
+			widgetId,
 			currentIndex,
 		});
 	};
@@ -64,7 +91,7 @@ const Query = ({
 							}
 							size="middle"
 							value={promqlQuery}
-							addonBefore={'PromQL Query'}
+							addonBefore="PromQL Query"
 							onBlur={(): void => onBlurHandler()}
 						/>
 					</InputContainer>
@@ -76,19 +103,27 @@ const Query = ({
 							}
 							size="middle"
 							value={legendFormat}
-							addonBefore={'Legend Format'}
+							addonBefore="Legend Format"
 							onBlur={(): void => onBlurHandler()}
 						/>
 					</InputContainer>
 				</QueryWrapper>
 
-				<Button onClick={onDeleteQueryHandler}>Delete</Button>
+				<ButtonContainer>
+					<Button onClick={onDeleteQueryHandler}>Delete</Button>
+					<TextToolTip
+						{...{
+							text: `More details on how to plot metrics graphs`,
+							url: 'https://signoz.io/docs/userguide/prometheus-metrics/',
+						}}
+					/>
+				</ButtonContainer>
 			</Container>
 
 			<Divider />
 		</>
 	);
-};
+}
 
 interface DispatchProps {
 	updateQuery: (

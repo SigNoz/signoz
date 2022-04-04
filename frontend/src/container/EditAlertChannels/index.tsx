@@ -7,20 +7,12 @@ import {
 } from 'container/CreateAlertChannels/config';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
-import { Store } from 'rc-field-form/lib/interface';
 import React, { useCallback, useState } from 'react';
-import { connect } from 'react-redux';
-import { useParams } from 'react-router';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { ToggleSettingsTab } from 'store/actions';
-import AppActions from 'types/actions';
-import { SettingTab } from 'types/reducer/app';
+import { useParams } from 'react-router-dom';
 
-const EditAlertChannels = ({
+function EditAlertChannels({
 	initialValue,
-	toggleSettingsTab,
-}: EditAlertChannelsProps): JSX.Element => {
+}: EditAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<Partial<SlackChannel>>({
 		...initialValue,
@@ -52,7 +44,6 @@ const EditAlertChannels = ({
 				message: 'Success',
 				description: 'Channels Edited Successfully',
 			});
-			toggleSettingsTab('Alert Channels');
 
 			setTimeout(() => {
 				history.replace(ROUTES.SETTINGS);
@@ -64,7 +55,7 @@ const EditAlertChannels = ({
 			});
 		}
 		setSavingState(false);
-	}, [selectedConfig, notifications, toggleSettingsTab, id]);
+	}, [selectedConfig, notifications, id]);
 
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {
@@ -80,38 +71,28 @@ const EditAlertChannels = ({
 	}, []);
 
 	return (
-		<>
-			<FormAlertChannels
-				{...{
-					formInstance,
-					onTypeChangeHandler,
-					setSelectedConfig,
-					type,
-					onTestHandler,
-					onSaveHandler,
-					savingState,
-					NotificationElement,
-					title: 'Edit Notification Channels',
-					initialValue,
-					nameDisable: true,
-				}}
-			/>
-		</>
+		<FormAlertChannels
+			{...{
+				formInstance,
+				onTypeChangeHandler,
+				setSelectedConfig,
+				type,
+				onTestHandler,
+				onSaveHandler,
+				savingState,
+				NotificationElement,
+				title: 'Edit Notification Channels',
+				initialValue,
+				nameDisable: true,
+			}}
+		/>
 	);
-};
-
-interface DispatchProps {
-	toggleSettingsTab: (props: SettingTab) => void;
 }
 
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	toggleSettingsTab: bindActionCreators(ToggleSettingsTab, dispatch),
-});
-
-interface EditAlertChannelsProps extends DispatchProps {
-	initialValue: Store;
+interface EditAlertChannelsProps {
+	initialValue: {
+		[x: string]: unknown;
+	};
 }
 
-export default connect(null, mapDispatchToProps)(EditAlertChannels);
+export default EditAlertChannels;

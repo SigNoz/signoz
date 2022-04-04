@@ -1,17 +1,19 @@
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { IS_LOGGED_IN } from 'constants/auth';
+import getTheme from 'lib/theme/getTheme';
 import {
 	AppAction,
 	LOGGED_IN,
+	SIDEBAR_COLLAPSE,
 	SWITCH_DARK_MODE,
-	TOGGLE_SETTINGS_TABS,
 } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 
 const InitialValue: InitialValueTypes = {
-	isDarkMode: true,
+	isDarkMode: getTheme() === 'darkMode',
 	isLoggedIn: getLocalStorageKey(IS_LOGGED_IN) === 'yes',
-	settingsActiveTab: 'General',
+	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 };
 
 const appReducer = (
@@ -33,10 +35,10 @@ const appReducer = (
 			};
 		}
 
-		case TOGGLE_SETTINGS_TABS: {
+		case SIDEBAR_COLLAPSE: {
 			return {
 				...state,
-				settingsActiveTab: action.payload.activeTab,
+				isSideBarCollapsed: action.payload,
 			};
 		}
 

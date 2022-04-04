@@ -1,16 +1,18 @@
-import { DatePicker, Modal } from 'antd';
-import { Moment } from 'moment';
-import moment from 'moment';
+/* eslint-disable react/jsx-no-bind */
+import { Modal } from 'antd';
+import DatePicker from 'components/DatePicker';
+import dayjs, { Dayjs } from 'dayjs';
 import React, { useState } from 'react';
-export type DateTimeRangeType = [Moment | null, Moment | null] | null;
+
+export type DateTimeRangeType = [Dayjs | null, Dayjs | null] | null;
 
 const { RangePicker } = DatePicker;
 
-const CustomDateTimeModal = ({
+function CustomDateTimeModal({
 	visible,
 	onCreate,
 	onCancel,
-}: CustomDateTimeModalProps): JSX.Element => {
+}: CustomDateTimeModalProps): JSX.Element {
 	const [
 		customDateTimeRange,
 		setCustomDateTimeRange,
@@ -20,12 +22,8 @@ const CustomDateTimeModal = ({
 		setCustomDateTimeRange(date_time);
 	}
 
-	function disabledDate(current: Moment): boolean {
-		if (current > moment()) {
-			return true;
-		} else {
-			return false;
-		}
+	function disabledDate(current: Dayjs): boolean {
+		return current > dayjs();
 	}
 
 	return (
@@ -36,7 +34,7 @@ const CustomDateTimeModal = ({
 			cancelText="Cancel"
 			onCancel={onCancel}
 			style={{ position: 'absolute', top: 60, right: 40 }}
-			onOk={(): void => onCreate(customDateTimeRange ? customDateTimeRange : null)}
+			onOk={(): void => onCreate(customDateTimeRange || null)}
 		>
 			<RangePicker
 				disabledDate={disabledDate}
@@ -45,7 +43,7 @@ const CustomDateTimeModal = ({
 			/>
 		</Modal>
 	);
-};
+}
 
 interface CustomDateTimeModalProps {
 	visible: boolean;

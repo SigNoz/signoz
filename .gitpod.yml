@@ -1,0 +1,36 @@
+# Please adjust to your needs (see https://www.gitpod.io/docs/config-gitpod-file)
+# and commit this file to your remote git repository to share the goodness with others.
+
+
+tasks:
+  - name: Run Script to Comment ut required lines
+    init: |
+      cd ./.scripts
+      sh commentLinesForSetup.sh
+
+  - name: Run Docker Images
+    init: |
+      cd ./deploy
+      sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
+    # command:
+
+  - name: Run Frontend
+    init: |
+      cd ./frontend
+      yarn install
+    command:
+      yarn dev
+
+ports:
+  - port: 3301
+    onOpen: open-browser
+  - port: 8080
+    onOpen: ignore
+  - port: 9000
+    onOpen: ignore
+  - port: 8123
+    onOpen: ignore
+  - port: 8089
+    onOpen: ignore
+  - port: 9093
+    onOpen: ignore

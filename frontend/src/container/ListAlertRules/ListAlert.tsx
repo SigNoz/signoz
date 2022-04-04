@@ -1,20 +1,21 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, notification, Tag, Typography } from 'antd';
+import { notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/alerts/getAll';
+import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
-import { generatePath } from 'react-router';
+import { generatePath } from 'react-router-dom';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import DeleteAlert from './DeleteAlert';
-import { ButtonContainer } from './styles';
+import { Button, ButtonContainer } from './styles';
 import Status from './TableComponents/Status';
 
-const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
+function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
 
 	useInterval(() => {
@@ -61,7 +62,7 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			dataIndex: 'labels',
 			key: 'severity',
 			sorter: (a, b): number =>
-				a.labels['severity'].length - b.labels['severity'].length,
+				a.labels.severity.length - b.labels.severity.length,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
@@ -128,6 +129,13 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			{Element}
 
 			<ButtonContainer>
+				<TextToolTip
+					{...{
+						text: `More details on how to create alerts`,
+						url: 'https://signoz.io/docs/userguide/alerts-management/',
+					}}
+				/>
+
 				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
 					New Alert
 				</Button>
@@ -136,7 +144,7 @@ const ListAlert = ({ allAlertRules }: ListAlertProps): JSX.Element => {
 			<Table rowKey="id" columns={columns} dataSource={data} />
 		</>
 	);
-};
+}
 
 interface ListAlertProps {
 	allAlertRules: Alerts[];
