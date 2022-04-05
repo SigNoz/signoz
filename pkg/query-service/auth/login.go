@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"go.signoz.io/query-service/dao"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -49,7 +50,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 	if len(req.RefreshToken) > 0 {
 		user, err := validateToken(req.RefreshToken)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}
 
 		return &User{Email: user.Email}, nil
@@ -57,7 +58,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 
 	user, err := dao.DB().FetchUser(ctx, req.Email)
 	if err != nil {
-		return nil, err.Err
+		return nil, errors.Wrap(err.Err, "user not found")
 	}
 	if user == nil || !passwordMatch(user.Password, req.Password) {
 		return nil, ErrorInvalidCreds

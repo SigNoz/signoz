@@ -1148,7 +1148,8 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := auth.Invite(req)
+	ctx := auth.AttachToken(context.Background(), r)
+	resp, err := auth.Invite(ctx, req)
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
 		return
@@ -1163,7 +1164,8 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErr := auth.Register(context.Background(), req)
+	ctx := auth.AttachToken(context.Background(), r)
+	apiErr := auth.Register(ctx, req)
 	if apiErr != nil {
 		aH.respondError(w, apiErr, "Failed to register user")
 		return

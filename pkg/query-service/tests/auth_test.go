@@ -79,8 +79,6 @@ func login(email, password, refreshToken string) (*auth.LoginResponse, error) {
 		return nil, errors.Wrap(err, "failed to read body")
 	}
 
-	fmt.Println(string(b))
-
 	loginResp := &auth.LoginResponse{}
 	err = json.Unmarshal(b, loginResp)
 	if err != nil {
@@ -98,7 +96,7 @@ func TestInviteAPI(t *testing.T) {
 }
 
 func TestRegisterAPI(t *testing.T) {
-	email := "abc@signoz.io"
+	email := "abc-register@signoz.io"
 	inv := invite(t, email)
 
 	resp, err := register(email, "password", inv.InviteToken)
@@ -107,7 +105,7 @@ func TestRegisterAPI(t *testing.T) {
 }
 
 func TestLoginAPI(t *testing.T) {
-	email := "abc@signoz.io"
+	email := "abc-login@signoz.io"
 	password := "password123"
 	inv := invite(t, email)
 

@@ -1,10 +1,13 @@
 package auth
 
 import (
+	"context"
+	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -96,4 +99,31 @@ func generateInviteJwt(req *InviteRequest) (string, error) {
 		return "", errors.Errorf("failed to encode jwt: %v", err)
 	}
 	return jwtStr, nil
+}
+
+// AttachToken attached the jwt token from the request header to the context.
+func AttachToken(ctx context.Context, r *http.Request) context.Context {
+	if accessJwt := r.Header.Get("AccessToken"); accessJwt != "" {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			md = metadata.New(nil)
+		}
+
+		md.Append("accessJwt", accessJwt)
+		ctx = metadata.NewIncomingContext(ctx, md)
+	}
+	return ctx
+}
+
+func ExtractJwt(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", errors.New("No JWT metadata token found")
+	}
+	accessJwt := md.Get("accessJwt")
+	if len(accessJwt) == 0 {
+		return "", errors.New("No JWT token found")
+	}
+
+	return accessJwt[0], nil
 }

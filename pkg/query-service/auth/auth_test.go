@@ -11,26 +11,53 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
+	"google.golang.org/grpc/metadata"
 )
 
-func TestInvite(t *testing.T) {
-	resp, err := Invite(&InviteRequest{"ahsan@signoz.io"})
-	require.NoError(t, err)
+func attachToken(ctx context.Context, token string) context.Context {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	}
 
-	claims, err := ParseJWT(resp.InviteToken)
+	md.Append("accessJwt", token)
+	return metadata.NewIncomingContext(ctx, md)
+}
+
+func invite(email string) (*InviteResponse, error) {
+	ctx := context.Background()
+	resp, err := Login(ctx, &LoginRequest{
+		Email:    constants.RootUserEmail,
+		Password: constants.RootUserPassword,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = attachToken(ctx, resp.AccessJwt)
+
+	return Invite(ctx, &InviteRequest{email})
+}
+
+func TestInvite(t *testing.T) {
+	inv, err := invite("ahsan@signoz.io")
+	require.NoError(t, err)
+	require.NotNil(t, inv.InviteToken)
+
+	claims, err := ParseJWT(inv.InviteToken)
 	require.NoError(t, err)
 
 	require.Equal(t, "ahsan@signoz.io", claims["email"].(string))
 }
 
 func register(t *testing.T, email, password string) {
-	resp, err := Invite(&InviteRequest{email})
+	inv, err := invite(email)
 	require.NoError(t, err)
 
 	req := &RegisterRequest{
 		email,
 		password,
-		resp.InviteToken,
+		inv.InviteToken,
 	}
 	regErr := Register(context.Background(), req)
 	require.Nil(t, regErr)
