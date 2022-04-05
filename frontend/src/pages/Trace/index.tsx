@@ -5,6 +5,7 @@ import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
@@ -84,7 +85,7 @@ function Trace({
 			selectedFilter,
 			selectedTags,
 			start: minTime,
-			step: 60,
+			step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 			isFilterExclude,
 		});
 	}, [
