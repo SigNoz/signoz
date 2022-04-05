@@ -5,7 +5,7 @@ export interface Props {
 	end: GlobalTime['maxTime'];
 }
 
-interface Exception {
+export interface Exception {
 	exceptionType: string;
 	exceptionMessage: string;
 	exceptionCount: number;

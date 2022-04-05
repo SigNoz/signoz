@@ -9,13 +9,18 @@ const getAll = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/errors?${createQueryParams}`);
+		const response = await axios.get(
+			`/errors?${createQueryParams({
+				start: props.start.toString(),
+				end: props.end.toString(),
+			})}`,
+		);
 
 		return {
 			statusCode: 200,
 			error: null,
 			message: response.data.message,
-			payload: response.data.data,
+			payload: response.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);
