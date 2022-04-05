@@ -4,6 +4,7 @@ import { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,
+	AllErrors,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
@@ -112,6 +113,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.ALL_CHANNELS,
 		exact: true,
 		component: AllAlertChannels,
+	},
+	{
+		path: ROUTES.ALL_ERROR,
+		exact: true,
+		component: AllErrors,
 	},
 ];
 
