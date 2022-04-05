@@ -7,6 +7,7 @@ import TextToolTip from 'components/TextToolTip';
 import useFetch from 'hooks/useFetch';
 import { find } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IDiskType } from 'types/api/disks/getDisks';
 import { PayloadProps } from 'types/api/settings/getRetention';
 
@@ -19,8 +20,8 @@ import {
 } from './styles';
 
 function GeneralSettings(): JSX.Element {
+	const { t } = useTranslation();
 	const [notifications, Element] = notification.useNotification();
-
 	const [modal, setModal] = useState<boolean>(false);
 	const [postApiLoading, setPostApiLoading] = useState<boolean>(false);
 
@@ -82,12 +83,12 @@ function GeneralSettings(): JSX.Element {
 			name: 'Metrics',
 			retentionFields: [
 				{
-					name: 'Total Retention Period',
+					name: t('settings.total_retention_period'),
 					value: metricsTotalRetentionPeriod,
 					setValue: setMetricsTotalRetentionPeriod,
 				},
 				{
-					name: `Move to S3\n(should be lower than total retention period)`,
+					name: t('settings.move_to_s3'),
 					value: metricsS3RetentionPeriod,
 					setValue: setMetricsS3RetentionPeriod,
 					hide: !s3Enabled,
@@ -98,12 +99,12 @@ function GeneralSettings(): JSX.Element {
 			name: 'Traces',
 			retentionFields: [
 				{
-					name: 'Total Retention Period',
+					name: t('settings.total_retention_period'),
 					value: tracesTotalRetentionPeriod,
 					setValue: setTracesTotalRetentionPeriod,
 				},
 				{
-					name: `Move to S3\n(should be lower than total retention period)`,
+					name: t('settings.move_to_s3'),
 					value: tracesS3RetentionPeriod,
 					setValue: setTracesS3RetentionPeriod,
 					hide: !s3Enabled,
@@ -165,12 +166,13 @@ function GeneralSettings(): JSX.Element {
 					notifications.success({
 						message: 'Success!',
 						placement: 'topRight',
-						description: `Congrats. The retention periods for ${name} has been updated successfully.`,
+
+						description: t('settings.retention_success_message', { name }),
 					});
 				} else {
 					notifications.error({
 						message: 'Error',
-						description: `There was an issue in changing the retention period for ${name}. Please try again or reach out to support@signoz.io`,
+						description: t('settings.retention_error_message', { name }),
 						placement: 'topRight',
 					});
 				}
@@ -180,8 +182,7 @@ function GeneralSettings(): JSX.Element {
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
-				description:
-					'There was an issue in changing the retention period. Please try again or reach out to support@signoz.io',
+				description: t('settings.retention_failed_message'),
 				placement: 'topRight',
 			});
 		}
@@ -191,10 +192,10 @@ function GeneralSettings(): JSX.Element {
 	const [isDisabled, errorText] = useMemo(() => {
 		// Various methods to return dynamic error message text.
 		const messages = {
-			compareError: (value: string | number): string =>
-				`Total retention period for ${value} can’t be lower than period after which data is moved to s3`,
-			nullValueError: (value: string | number): string =>
-				`Retention Peroid for ${value} is not set yet. Please set by choosing below`,
+			compareError: (name: string | number): string =>
+				t('settings.retention_comparison_error', { name }),
+			nullValueError: (name: string | number): string =>
+				t('settings.retention_null_value_error', { name }),
 		};
 
 		// Defaults to button not disabled and empty error message text.
@@ -232,6 +233,7 @@ function GeneralSettings(): JSX.Element {
 		metricsS3RetentionPeriod,
 		metricsTotalRetentionPeriod,
 		s3Enabled,
+		t,
 		tracesS3RetentionPeriod,
 		tracesTotalRetentionPeriod,
 	]);
@@ -271,7 +273,7 @@ function GeneralSettings(): JSX.Element {
 			<Row justify="space-around">{renderConfig}</Row>
 
 			<Modal
-				title="Are you sure you want to change the retention period?"
+				title={t('settings.retention_confirmation')}
 				focusTriggerAfterClose
 				forceRender
 				destroyOnClose
@@ -282,9 +284,7 @@ function GeneralSettings(): JSX.Element {
 				visible={modal}
 				confirmLoading={postApiLoading}
 			>
-				<Typography>
-					This will change the amount of storage needed for saving metrics & traces.
-				</Typography>
+				<Typography>{t('settings.retention_confirmation_description')}</Typography>
 			</Modal>
 
 			<ButtonContainer>
