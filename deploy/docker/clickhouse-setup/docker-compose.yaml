@@ -62,7 +62,9 @@ services:
   frontend:
     image: signoz/frontend:0.7.5
     container_name: frontend
+    restart: on-failure
     depends_on:
+      - alertmanager
       - query-service
     ports:
       - "3301:3301"
