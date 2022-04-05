@@ -1,27 +1,26 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
+import { Col } from 'antd';
+import { StyledCol, StyledRow } from 'components/Styled';
+import { IIntervalUnit } from 'container/TraceDetail/utils';
+import useThemeMode from 'hooks/useThemeMode';
+import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
+import React, { useEffect, useRef, useState } from 'react';
+import { ITraceTree } from 'types/api/trace/getTraceItem';
 
+import { ITraceMetaData } from '..';
+import SpanLength from '../SpanLength';
+import SpanName from '../SpanName';
+import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
 import {
 	CardComponent,
 	CardContainer,
 	CaretContainer,
-	Wrapper,
 	HoverCard,
+	styles,
+	Wrapper,
 } from './styles';
-import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import SpanLength from '../SpanLength';
-import SpanName from '../SpanName';
-import { getMetaDataFromSpanTree, getTopLeftFromBody } from '../utils';
-import { ITraceMetaData } from '..';
-import { Col, Row } from 'antd';
-import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import {
-	IIntervalUnit,
-	resolveTimeFromInterval,
-} from 'container/TraceDetail/utils';
-import useThemeMode from 'hooks/useThemeMode';
-import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-const Trace = (props: TraceProps): JSX.Element => {
+function Trace(props: TraceProps): JSX.Element {
 	const {
 		name,
 		activeHoverId,
@@ -39,6 +38,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		activeSpanPath,
 		isExpandAll,
 		intervalUnit,
+		children,
 	} = props;
 
 	const { isDarkMode } = useThemeMode();
@@ -53,7 +53,7 @@ const Trace = (props: TraceProps): JSX.Element => {
 		} else if (!isOpen) {
 			setOpen(activeSpanPath[level] === id);
 		}
-	}, [activeSpanPath, isOpen]);
+	}, [activeSpanPath, isOpen, id, level]);
 
 	useEffect(() => {
 		if (isExpandAll) {
@@ -61,9 +61,9 @@ const Trace = (props: TraceProps): JSX.Element => {
 		} else {
 			setOpen(activeSpanPath[level] === id);
 		}
-	}, [isExpandAll]);
+	}, [isExpandAll, activeSpanPath, id, level]);
 
-	const isOnlyChild = props.children.length === 1;
+	const isOnlyChild = children.length === 1;
 	const [top, setTop] = useState<number>(0);
 
 	const ref = useRef<HTMLUListElement>(null);
@@ -76,27 +76,27 @@ const Trace = (props: TraceProps): JSX.Element => {
 				inline: 'nearest',
 			});
 		}
-	}, [activeSelectedId]);
+	}, [activeSelectedId, id]);
 
-	const onMouseEnterHandler = () => {
-		setActiveHoverId(props.id);
+	const onMouseEnterHandler = (): void => {
+		setActiveHoverId(id);
 		if (ref.current) {
 			const { top } = getTopLeftFromBody(ref.current);
 			setTop(top);
 		}
 	};
 
-	const onMouseLeaveHandler = () => {
+	const onMouseLeaveHandler = (): void => {
 		setActiveHoverId('');
 	};
 
-	const onClick = () => {
+	const onClick = (): void => {
 		setActiveSelectedId(id);
 	};
 
-	const onClickTreeExpansion = (
-		event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-	) => {
+	const onClickTreeExpansion: React.MouseEventHandler<HTMLDivElement> = (
+		event,
+	): void => {
 		event.stopPropagation();
 		setOpen((state) => {
 			localTreeExpandInteraction.current = !isOpen;
@@ -108,77 +108,80 @@ const Trace = (props: TraceProps): JSX.Element => {
 	const inMsCount = value;
 	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
 	const width = (value * 1e2) / (globalSpread * 1e6);
-	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 16;
+	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 48;
 
 	return (
-		<>
-			<Wrapper
-				onMouseEnter={onMouseEnterHandler}
-				onMouseLeave={onMouseLeaveHandler}
-				isOnlyChild={isOnlyChild}
-				ref={ref}
-			>
-				<HoverCard
-					top={top}
-					isHovered={activeHoverId === id}
-					isSelected={activeSelectedId === id}
-					isDarkMode={isDarkMode}
-				/>
+		<Wrapper
+			onMouseEnter={onMouseEnterHandler}
+			onMouseLeave={onMouseLeaveHandler}
+			isOnlyChild={isOnlyChild}
+			ref={ref}
+			isDarkMode={isDarkMode}
+		>
+			<HoverCard
+				top={top}
+				isHovered={activeHoverId === id}
+				isSelected={activeSelectedId === id}
+				isDarkMode={isDarkMode}
+			/>
 
-				<CardContainer onClick={onClick}>
-					<Col flex={`${panelWidth}px`} style={{ overflow: 'hidden' }}>
-						<Row style={{ flexWrap: 'nowrap' }}>
-							<Col>
-								{totalSpans !== 1 && (
-									<CardComponent isDarkMode={isDarkMode} onClick={onClickTreeExpansion}>
-										{totalSpans}
-										<CaretContainer>
-											{isOpen ? <CaretDownFilled /> : <CaretRightFilled />}
-										</CaretContainer>
-									</CardComponent>
-								)}
-							</Col>
-							<Col>
-								<SpanName name={name} serviceName={serviceName} />
-							</Col>
-						</Row>
-					</Col>
-					<Col flex={'1'}>
-						<SpanLength
-							leftOffset={nodeLeftOffset.toString()}
-							width={width.toString()}
-							bgColor={serviceColour}
-							id={id}
-							inMsCount={inMsCount / 1e6}
+			<CardContainer onClick={onClick}>
+				<StyledCol flex={`${panelWidth}px`} styledclass={[styles.overFlowHidden]}>
+					<StyledRow styledclass={[styles.flexNoWrap]}>
+						<Col>
+							{totalSpans !== 1 && (
+								<CardComponent
+									isOnlyChild={isOnlyChild}
+									isDarkMode={isDarkMode}
+									onClick={onClickTreeExpansion}
+								>
+									{totalSpans}
+									<CaretContainer>
+										{isOpen ? <CaretDownFilled /> : <CaretRightFilled />}
+									</CaretContainer>
+								</CardComponent>
+							)}
+						</Col>
+						<Col>
+							<SpanName name={name} serviceName={serviceName} />
+						</Col>
+					</StyledRow>
+				</StyledCol>
+				<Col flex="1">
+					<SpanLength
+						leftOffset={nodeLeftOffset.toString()}
+						width={width.toString()}
+						bgColor={serviceColour}
+						inMsCount={inMsCount / 1e6}
+						intervalUnit={intervalUnit}
+					/>
+				</Col>
+			</CardContainer>
+
+			{isOpen && (
+				<>
+					{children.map((child) => (
+						<Trace
+							key={child.id}
+							activeHoverId={activeHoverId}
+							setActiveHoverId={setActiveHoverId}
+							// eslint-disable-next-line react/jsx-props-no-spreading
+							{...child}
+							globalSpread={globalSpread}
+							globalStart={globalStart}
+							setActiveSelectedId={setActiveSelectedId}
+							activeSelectedId={activeSelectedId}
+							level={level + 1}
+							activeSpanPath={activeSpanPath}
+							isExpandAll={isExpandAll}
 							intervalUnit={intervalUnit}
 						/>
-					</Col>
-				</CardContainer>
-
-				{isOpen && (
-					<>
-						{props.children.map((child) => (
-							<Trace
-								key={child.id}
-								activeHoverId={props.activeHoverId}
-								setActiveHoverId={props.setActiveHoverId}
-								{...child}
-								globalSpread={globalSpread}
-								globalStart={globalStart}
-								setActiveSelectedId={setActiveSelectedId}
-								activeSelectedId={activeSelectedId}
-								level={level + 1}
-								activeSpanPath={activeSpanPath}
-								isExpandAll={isExpandAll}
-								intervalUnit={intervalUnit}
-							/>
-						))}
-					</>
-				)}
-			</Wrapper>
-		</>
+					))}
+				</>
+			)}
+		</Wrapper>
 	);
-};
+}
 
 interface ITraceGlobal {
 	globalSpread: ITraceMetaData['spread'];

@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Props, PayloadProps } from 'types/api/trace/getTraceItem';
+import { PayloadProps, Props } from 'types/api/trace/getTraceItem';
 
 const getTraceItem = async (
 	props: Props,

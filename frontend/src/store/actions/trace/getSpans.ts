@@ -1,3 +1,5 @@
+import { notification } from 'antd';
+import getSpans from 'api/trace/getSpans';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -6,9 +8,7 @@ import {
 	UPDATE_TRACE_GRAPH_LOADING,
 	UPDATE_TRACE_GRAPH_SUCCESS,
 } from 'types/actions/trace';
-import getSpans from 'api/trace/getSpans';
 import { Props } from 'types/api/trace/getSpans';
-import { notification } from 'antd';
 
 export const GetSpans = (
 	props: GetSpansProps,
@@ -16,6 +16,8 @@ export const GetSpans = (
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
+	const defaultMessage = 'Something went wrong';
+
 	return async (dispatch, getState): Promise<void> => {
 		try {
 			const { traces, globalTime } = getState();
@@ -52,12 +54,12 @@ export const GetSpans = (
 			}
 
 			const response = await getSpans({
-				end: end,
+				end,
 				function: props.function,
 				groupBy: props.groupBy,
 				selectedFilter: props.selectedFilter,
 				selectedTags: props.selectedTags,
-				start: start,
+				start,
 				step: props.step,
 				isFilterExclude: props.isFilterExclude,
 			});
@@ -71,13 +73,13 @@ export const GetSpans = (
 				});
 			} else {
 				notification.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultMessage,
 				});
 				dispatch({
 					type: UPDATE_TRACE_GRAPH_ERROR,
 					payload: {
 						error: true,
-						errorMessage: response.error || 'Something went wrong',
+						errorMessage: response.error || defaultMessage,
 					},
 				});
 			}
@@ -86,7 +88,7 @@ export const GetSpans = (
 				type: UPDATE_TRACE_GRAPH_ERROR,
 				payload: {
 					error: true,
-					errorMessage: (error as Error)?.toString() || 'Something went wrong',
+					errorMessage: (error as Error)?.toString() || defaultMessage,
 				},
 			});
 		}

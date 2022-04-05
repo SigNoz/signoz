@@ -1,6 +1,5 @@
 import TimeSeries from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
-import { TimeSeriesProps as IconProps } from 'assets/Dashboard/TimeSeries';
 
 const Items: ItemsProps[] = [
 	{
@@ -21,6 +20,10 @@ interface ItemsProps {
 	name: ITEMS;
 	Icon: (props: IconProps) => JSX.Element;
 	display: string;
+}
+
+interface IconProps {
+	fillColor: React.CSSProperties['color'];
 }
 
 export default Items;

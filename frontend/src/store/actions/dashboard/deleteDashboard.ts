@@ -9,14 +9,14 @@ export const DeleteDashboard = ({
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const response = await deleteDashboardApi({
-				uuid: uuid,
+				uuid,
 			});
 
 			if (response.statusCode === 200) {
 				dispatch({
 					type: 'DELETE_DASHBOARD_SUCCESS',
 					payload: {
-						uuid: uuid,
+						uuid,
 					},
 				});
 			} else {
@@ -31,7 +31,8 @@ export const DeleteDashboard = ({
 			dispatch({
 				type: 'DELETE_DASHBOARD_ERROR',
 				payload: {
-					errorMessage: error.toString() || 'Something went wrong',
+					errorMessage:
+						error instanceof Error ? error.toString() : 'Something went wrong',
 				},
 			});
 		}

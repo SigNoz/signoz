@@ -1,20 +1,26 @@
-import { isEqual } from 'lodash-es';
-import { toFixed } from 'utils/toFixed';
+import { ITraceMetaData } from 'container/GantChart';
 import {
-	INTERVAL_UNITS,
+	IIntervalUnit,
 	resolveTimeFromInterval,
 } from 'container/TraceDetail/utils';
+import { isEqual } from 'lodash-es';
+import { toFixed } from 'utils/toFixed';
+
+import { Interval } from './types';
 
 export const getIntervalSpread = ({
 	localTraceMetaData,
 	globalTraceMetadata,
-}) => {
-	const {
-		globalStart: localStart,
-		globalEnd: localEnd,
-		spread: localSpread,
-	} = localTraceMetaData;
-	const { globalStart, globalEnd, globalSpread } = globalTraceMetadata;
+}: {
+	localTraceMetaData: ITraceMetaData;
+	globalTraceMetadata: ITraceMetaData;
+}): {
+	baseInterval: number;
+	baseSpread: number;
+	intervalSpreadNormalized: number;
+} => {
+	const { globalStart: localStart, spread: localSpread } = localTraceMetaData;
+	const { globalStart } = globalTraceMetadata;
 
 	let baseInterval = 0;
 
@@ -24,15 +30,14 @@ export const getIntervalSpread = ({
 
 	const MIN_INTERVALS = 5;
 	const baseSpread = localSpread;
-	let intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
+	const intervalSpread = (baseSpread / MIN_INTERVALS) * 1.0;
 	const integerPartString = intervalSpread.toString().split('.')[0];
 	const integerPartLength = integerPartString.length;
 	const intervalSpreadNormalized =
 		intervalSpread < 1.0
 			? intervalSpread
-			: Math.floor(
-					Number(integerPartString) / Math.pow(10, integerPartLength - 1),
-			  ) * Math.pow(10, integerPartLength - 1);
+			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
+			  10 ** (integerPartLength - 1);
 	return {
 		baseInterval,
 		baseSpread,
@@ -45,7 +50,12 @@ export const getIntervals = ({
 	baseSpread,
 	intervalSpreadNormalized,
 	intervalUnit,
-}) => {
+}: {
+	baseInterval: number;
+	baseSpread: number;
+	intervalSpreadNormalized: number;
+	intervalUnit: IIntervalUnit;
+}): Interval[] => {
 	const intervals: Interval[] = [
 		{
 			label: `${toFixed(resolveTimeFromInterval(baseInterval, intervalUnit), 2)}${
@@ -59,22 +69,21 @@ export const getIntervals = ({
 	let elapsedIntervals = 0;
 
 	while (tempBaseSpread && intervals.length < 20) {
-		let interval_time;
+		let intervalTime;
 		if (tempBaseSpread <= 1.5 * intervalSpreadNormalized) {
-			interval_time = elapsedIntervals + tempBaseSpread;
+			intervalTime = elapsedIntervals + tempBaseSpread;
 			tempBaseSpread = 0;
 		} else {
-			interval_time = elapsedIntervals + intervalSpreadNormalized;
+			intervalTime = elapsedIntervals + intervalSpreadNormalized;
 			tempBaseSpread -= intervalSpreadNormalized;
 		}
-		elapsedIntervals = interval_time;
-
+		elapsedIntervals = intervalTime;
 		const interval: Interval = {
 			label: `${toFixed(
-				resolveTimeFromInterval(interval_time + baseInterval, intervalUnit),
+				resolveTimeFromInterval(intervalTime + baseInterval, intervalUnit),
 				2,
 			)}${intervalUnit.name}`,
-			percentage: (interval_time / baseSpread) * 100,
+			percentage: (intervalTime / baseSpread) * 100,
 		};
 		intervals.push(interval);
 	}

@@ -1,41 +1,42 @@
-import React from 'react';
+import { expect } from '@jest/globals';
 import { render } from '@testing-library/react';
 import TraceFlameGraph from 'container/TraceFlameGraph';
-import { Provider } from 'react-redux';
-import store from 'store';
-import '@testing-library/jest-dom';
-import '@testing-library/jest-dom/extend-expect';
-import 'jest-styled-components';
+import React, { useState } from 'react';
 
-it('loads and displays greeting', async () => {
+test('loads and displays greeting', () => {
+	const onSpanHover = useState('');
+
 	const { asFragment } = render(
-		<Provider store={store}>
-			<TraceFlameGraph
-				{...{
-					hoveredSpanId: '',
-					intervalUnit: { multiplier: 0, name: 'm' },
-					onSpanHover: () => {},
-					onSpanSelect: () => {},
-					selectedSpanId: '',
-					traceMetaData: [],
-					treeData: {
-						children: [],
-						id: '',
-						name: '',
-						serviceColour: '',
-						serviceName: '',
-						startTime: 0,
-						tags: [],
-						time: 0,
-						value: 0,
-						event: [],
-						hasError: false,
-						parent: undefined,
-					},
-					key: '',
-				}}
-			/>
-		</Provider>,
+		<TraceFlameGraph
+			{...{
+				hoveredSpanId: '',
+				intervalUnit: { multiplier: 0, name: 'm' },
+				onSpanHover: onSpanHover[1],
+				onSpanSelect: (): void => {},
+				selectedSpanId: '',
+				traceMetaData: {
+					globalEnd: 0,
+					globalStart: 0,
+					levels: 0,
+					spread: 0,
+					totalSpans: 0,
+				},
+				treeData: {
+					children: [],
+					id: '',
+					name: '',
+					serviceColour: '',
+					serviceName: '',
+					startTime: 0,
+					tags: [],
+					time: 0,
+					value: 0,
+					event: [],
+					hasError: false,
+					parent: undefined,
+				},
+			}}
+		/>,
 	);
 	expect(asFragment()).toMatchSnapshot();
 });

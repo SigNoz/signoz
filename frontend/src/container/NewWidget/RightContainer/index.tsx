@@ -1,62 +1,33 @@
-import {
-	// Button,
-	Input,
-	// Slider,
-	// Switch,
-	// Typography,
-} from 'antd';
+import { Input } from 'antd';
 import InputComponent from 'components/Input';
+import TimePreference from 'components/TimePreferenceDropDown';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import React, { useCallback } from 'react';
 
+import { Container, Title } from './styles';
 import { timePreferance } from './timeItems';
+import YAxisUnitSelector from './YAxisUnitSelector';
 
 const { TextArea } = Input;
-import TimePreference from 'components/TimePreferenceDropDown';
 
-import {
-	Container,
-	// NullButtonContainer, TextContainer,
-	Title,
-} from './styles';
-
-const RightContainer = ({
+function RightContainer({
 	description,
-	// opacity,
-	// selectedNullZeroValue,
 	setDescription,
-	// setOpacity,
-	// setSelectedNullZeroValue,
-	// setStacked,
 	setTitle,
-	// stacked,
 	title,
 	selectedGraph,
 	setSelectedTime,
 	selectedTime,
-}: RightContainerProps): JSX.Element => {
+	yAxisUnit,
+	setYAxisUnit,
+}: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
 	);
-
-	// const nullValueButtons = [
-	// 	{
-	// 		check: 'zero',
-	// 		name: 'Zero',
-	// 	},
-	// 	{
-	// 		check: 'interpolate',
-	// 		name: 'Interpolate',
-	// 	},
-	// 	{
-	// 		check: 'blank',
-	// 		name: 'Blank',
-	// 	},
-	// ];
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
@@ -84,7 +55,7 @@ const RightContainer = ({
 				value={title}
 			/>
 
-			<Title light={'true'}>Description</Title>
+			<Title light="true">Description</Title>
 
 			<TextArea
 				placeholder="Write something describing the  panel"
@@ -136,7 +107,7 @@ const RightContainer = ({
 				))}
 			</NullButtonContainer> */}
 
-			<Title light={'true'}>Panel Time Preference</Title>
+			<Title light="true">Panel Time Preference</Title>
 
 			<TimePreference
 				{...{
@@ -144,9 +115,14 @@ const RightContainer = ({
 					setSelectedTime,
 				}}
 			/>
+			<YAxisUnitSelector
+				defaultValue={yAxisUnit}
+				onSelect={setYAxisUnit}
+				fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+			/>
 		</Container>
 	);
-};
+}
 
 interface RightContainerProps {
 	title: string;
@@ -162,6 +138,8 @@ interface RightContainerProps {
 	selectedGraph: GRAPH_TYPES;
 	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
+	yAxisUnit: string;
+	setYAxisUnit: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default RightContainer;

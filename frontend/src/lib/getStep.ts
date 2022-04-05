@@ -12,7 +12,10 @@ interface GetStepInput {
 /**
  * Converts given timestamp to ms.
  */
-const convertToMs = (timestamp: number, inputFormat: DateInputFormatType) => {
+const convertToMs = (
+	timestamp: number,
+	inputFormat: DateInputFormatType,
+): number => {
 	switch (inputFormat) {
 		case 's':
 			return timestamp * 1e3;
@@ -20,6 +23,9 @@ const convertToMs = (timestamp: number, inputFormat: DateInputFormatType) => {
 			return timestamp * 1;
 		case 'ns':
 			return timestamp / 1e6;
+		default: {
+			throw new Error('invalid format');
+		}
 	}
 };
 

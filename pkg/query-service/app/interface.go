@@ -6,14 +6,15 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	"go.signoz.io/query-service/model"
+	am "go.signoz.io/query-service/integrations/alertManager"
 )
 
 type Reader interface {
 	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
 	GetChannels() (*[]model.ChannelItem, *model.ApiError)
 	DeleteChannel(id string) *model.ApiError
-	CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError)
-	EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError)
+	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
+	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
 
 	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
 	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
@@ -37,6 +38,10 @@ type Reader interface {
 	GetServicesList(ctx context.Context) (*[]string, error)
 	GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
 	GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
+
+	// GetDisks returns a list of disks configured in the underlying DB. It is supported by
+	// clickhouse only.
+	GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError)
 	GetSpanFilters(ctx context.Context, query *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError)
 	GetTagFilters(ctx context.Context, query *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError)
 	GetTagValues(ctx context.Context, query *model.TagFilterParams) (*[]model.TagValues, *model.ApiError)

@@ -16,14 +16,14 @@ export const SpanItemContainer = styled.div<{
 	zIdx: number;
 }>`
 	position: absolute;
-	top: ${(props) => props.topOffset}px;
-	left: ${(props) => props.leftOffset}%;
-	width: ${(props) => props.width}%;
+	top: ${(props): string | number => props.topOffset}px;
+	left: ${(props): string | number => props.leftOffset}%;
+	width: ${(props): string | number => props.width}%;
 	height: ${SPAN_HEIGHT}px;
 	margin: ${SPAN_V_PADDING}px 0;
-	background-color: ${({ spanColor }) => spanColor};
+	background-color: ${({ spanColor }): string | number => spanColor};
 	border-radius: ${SPAN_HEIGHT / 2}px;
-	z-index: ${(props) => props.zIdx};
+	z-index: ${(props): string | number => props.zIdx};
 `;
 
 /**
@@ -34,5 +34,5 @@ export const TraceFlameGraphContainer = styled.div<{
 }>`
 	position: relative;
 	width: 100%;
-	height: ${({ height }) => (height ? height : 120)}px;
+	height: ${({ height }): string | number => height || 120}px;
 `;

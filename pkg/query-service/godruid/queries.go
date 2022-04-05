@@ -62,7 +62,7 @@ type QueryScan struct {
 	Limit        int64                  `json:"limit,omitempty"`
 	Offset       int64                  `json:"offset,omitempty"`
 	BatchSize    int64                  `json:"batchSize,omitempty"`
-	Order        string                 `json:"order",omitempty`
+	Order        string                 `json:"order,omitempty"`
 	ResultFormat string                 `json:"resultFormat"`
 	Context      map[string]interface{} `json:"context,omitempty"`
 
@@ -189,7 +189,7 @@ type TimeBoundaryItem struct {
 
 type TimeBoundary struct {
 	MinTime string `json:"minTime"`
-	MaxTime string `json:"minTime"`
+	MaxTime string `json:"maxTime"`
 }
 
 func (q *QueryTimeBoundary) setup() { q.QueryType = "timeBoundary" }

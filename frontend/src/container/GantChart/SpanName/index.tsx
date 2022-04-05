@@ -1,10 +1,11 @@
 import React from 'react';
-import { Service, Span, SpanWrapper, Container } from './styles';
 
-const SpanNameComponent = ({
+import { Container, Service, Span, SpanWrapper } from './styles';
+
+function SpanNameComponent({
 	name,
 	serviceName,
-}: SpanNameComponent): JSX.Element => {
+}: SpanNameComponentProps): JSX.Element {
 	return (
 		<Container title={`${name} ${serviceName}`}>
 			<SpanWrapper>
@@ -13,9 +14,9 @@ const SpanNameComponent = ({
 			</SpanWrapper>
 		</Container>
 	);
-};
+}
 
-interface SpanNameComponent {
+interface SpanNameComponentProps {
 	name: string;
 	serviceName: string;
 }

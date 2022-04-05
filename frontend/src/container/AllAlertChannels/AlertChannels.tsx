@@ -4,12 +4,12 @@ import { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
-import { generatePath } from 'react-router';
+import { generatePath } from 'react-router-dom';
 import { Channels, PayloadProps } from 'types/api/channels/getAll';
 
 import Delete from './Delete';
 
-const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
+function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const [notifications, Element] = notification.useNotification();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
 
@@ -55,7 +55,7 @@ const AlertChannels = ({ allChannels }: AlertChannelsProps): JSX.Element => {
 			<Table rowKey="id" dataSource={channels} columns={columns} />
 		</>
 	);
-};
+}
 
 interface AlertChannelsProps {
 	allChannels: PayloadProps;

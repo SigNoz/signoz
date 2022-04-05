@@ -1,33 +1,34 @@
-import getGroupApi from 'api/alerts/getGroup';
+import getTriggeredApi from 'api/alerts/getTriggered';
 import useInterval from 'hooks/useInterval';
 import React, { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
 
-import { Value } from './Filter';
-import Filter from './Filter';
+import Filter, { Value } from './Filter';
 import FilteredTable from './FilteredTable';
 import NoFilterTable from './NoFilterTable';
 import { NoTableContainer } from './styles';
 
-const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
+function TriggeredAlerts({ allAlerts }: TriggeredAlertsProps): JSX.Element {
 	const [allInitialAlerts, setInitialAlerts] = useState(allAlerts || []);
 
 	useInterval(() => {
 		(async (): Promise<void> => {
-			const response = await getGroupApi({
+			const response = await getTriggeredApi({
 				active: true,
 				inhibited: true,
 				silenced: false,
 			});
 
 			if (response.statusCode === 200 && response.payload !== null) {
-				const initialAlerts: Alerts[] = [];
+				// commented reduce() call as we no longer use /alerts/groups
+				// from alertmanager which needed re-grouping on client side
+				// const initialAlerts: Alerts[] = [];
 
-				const allAlerts: Alerts[] = response.payload.reduce((acc, cur) => {
-					return [...acc, ...cur.alerts];
-				}, initialAlerts);
+				// const allAlerts: Alerts[] = response.payload.reduce((acc, cur) => {
+				//	return [...acc, ...cur.alerts];
+				// }, initialAlerts);
 
-				setInitialAlerts(allAlerts);
+				setInitialAlerts(response.payload);
 			}
 		})();
 	}, 30000);
@@ -55,7 +56,7 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 					/>
 				</NoTableContainer>
 			) : (
-				<>
+				<div>
 					{selectedFilter.length !== 0 && selectedGroup.length === 0 ? (
 						<NoTableContainer>
 							<NoFilterTable
@@ -72,11 +73,11 @@ const TriggeredAlerts = ({ allAlerts }: TriggeredAlertsProps): JSX.Element => {
 							}}
 						/>
 					)}
-				</>
+				</div>
 			)}
 		</div>
 	);
-};
+}
 
 interface TriggeredAlertsProps {
 	allAlerts: Alerts[];

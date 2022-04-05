@@ -1,8 +1,8 @@
 /**
  * string is present on the span or not
  */
-import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 import { sortBy } from 'lodash-es';
+import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
 export const filterSpansByString = (
 	searchString: string,
@@ -35,21 +35,23 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 export const resolveTimeFromInterval = (
 	intervalTime: number,
 	intervalUnit: IIntervalUnit,
-) => {
+): number => {
 	return intervalTime * intervalUnit.multiplier;
 };
 
-export const getSortedData = (treeData: ITraceTree) => {
-	const traverse = (treeNode: ITraceTree, level: number = 0) => {
+export const getSortedData = (treeData: ITraceTree): undefined | ITraceTree => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
 
+		// need this rule to disable
+		// eslint-disable-next-line no-param-reassign
 		treeNode.children = sortBy(treeNode.children, (e) => e.startTime);
 
-		for (const childNode of treeNode.children) {
+		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1);
-		}
+		});
 	};
 	traverse(treeData, 1);
 

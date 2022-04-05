@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import Trace from './Trace';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
-import { Wrapper, CardWrapper, CardContainer, CollapseButton } from './styles';
-import { getSpanPath } from './utils';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
+import React, { useEffect, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-const GanttChart = (props: GanttChartProps): JSX.Element => {
+import { CardContainer, CardWrapper, CollapseButton, Wrapper } from './styles';
+import Trace from './Trace';
+import { getSpanPath } from './utils';
+
+function GanttChart(props: GanttChartProps): JSX.Element {
 	const {
 		data,
 		traceMetaData,
@@ -25,49 +26,47 @@ const GanttChart = (props: GanttChartProps): JSX.Element => {
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, spanId));
-	}, [spanId]);
+	}, [spanId, data]);
 
 	useEffect(() => {
 		setActiveSpanPath(getSpanPath(data, activeSelectedId));
-	}, [activeSelectedId]);
+	}, [activeSelectedId, data]);
 
-	const handleCollapse = () => {
+	const handleCollapse = (): void => {
 		setIsExpandAll((prev) => !prev);
 	};
 	return (
-		<>
-			<Wrapper>
-				<CardContainer>
-					<CollapseButton
-						onClick={handleCollapse}
-						style={{ fontSize: '1.2rem' }}
-						title={isExpandAll ? 'Collapse All' : 'Expand All'}
-					>
-						{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
-					</CollapseButton>
-					<CardWrapper>
-						<Trace
-							activeHoverId={activeHoverId}
-							activeSpanPath={activeSpanPath}
-							setActiveHoverId={setActiveHoverId}
-							key={data.id}
-							{...{
-								...data,
-								globalSpread,
-								globalStart,
-								setActiveSelectedId,
-								activeSelectedId,
-							}}
-							level={0}
-							isExpandAll={isExpandAll}
-							intervalUnit={intervalUnit}
-						/>
-					</CardWrapper>
-				</CardContainer>
-			</Wrapper>
-		</>
+		<Wrapper>
+			<CardContainer>
+				<CollapseButton
+					onClick={handleCollapse}
+					title={isExpandAll ? 'Collapse All' : 'Expand All'}
+				>
+					{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
+				</CollapseButton>
+				<CardWrapper>
+					<Trace
+						activeHoverId={activeHoverId}
+						activeSpanPath={activeSpanPath}
+						setActiveHoverId={setActiveHoverId}
+						key={data.id}
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						{...{
+							...data,
+							globalSpread,
+							globalStart,
+							setActiveSelectedId,
+							activeSelectedId,
+						}}
+						level={0}
+						isExpandAll={isExpandAll}
+						intervalUnit={intervalUnit}
+					/>
+				</CardWrapper>
+			</CardContainer>
+		</Wrapper>
 	);
-};
+}
 
 export interface ITraceMetaData {
 	globalEnd: number;

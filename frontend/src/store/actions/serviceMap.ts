@@ -4,12 +4,13 @@ import { GlobalTime } from 'types/actions/globalTime';
 
 import { ActionTypes } from './types';
 
-export interface serviceMapStore {
-	items: servicesMapItem[];
-	services: servicesItem[];
+export interface ServiceMapStore {
+	items: ServicesMapItem[];
+	services: ServicesItem[];
+	loading: boolean;
 }
 
-export interface servicesItem {
+export interface ServicesItem {
 	serviceName: string;
 	p99: number;
 	avgDuration: number;
@@ -21,59 +22,55 @@ export interface servicesItem {
 	fourXXRate: number;
 }
 
-export interface servicesMapItem {
+export interface ServicesMapItem {
 	parent: string;
 	child: string;
 	callCount: number;
 }
 
-export interface serviceMapItemAction {
+export interface ServiceMapItemAction {
 	type: ActionTypes.getServiceMapItems;
-	payload: servicesMapItem[];
+	payload: ServicesMapItem[];
 }
 
-export interface servicesAction {
+export interface ServicesAction {
 	type: ActionTypes.getServices;
-	payload: servicesItem[];
+	payload: ServicesItem[];
 }
 
-export const getServiceMapItems = (globalTime: GlobalTime) => {
-	return async (dispatch: Dispatch): Promise<void> => {
-		dispatch<serviceMapItemAction>({
-			type: ActionTypes.getServiceMapItems,
-			payload: [],
-		});
-
-		const request_string =
-			'/serviceMapDependencies?start=' +
-			globalTime.minTime +
-			'&end=' +
-			globalTime.maxTime;
-
-		const response = await api.get<servicesMapItem[]>(request_string);
-
-		dispatch<serviceMapItemAction>({
-			type: ActionTypes.getServiceMapItems,
-			payload: response.data,
-		});
+export interface ServiceMapLoading {
+	type: ActionTypes.serviceMapLoading;
+	payload: {
+		loading: ServiceMapStore['loading'];
 	};
-};
+}
 
 export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		dispatch<servicesAction>({
-			type: ActionTypes.getServices,
-			payload: [],
-		});
+		const requestString = `/services?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
 
-		const request_string =
-			'/services?start=' + globalTime.minTime + '&end=' + globalTime.maxTime;
+		const serviceMapDependencies = `/serviceMapDependencies?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
 
-		const response = await api.get<servicesItem[]>(request_string);
+		const [serviceMapDependenciesResponse, response] = await Promise.all([
+			api.get<ServicesMapItem[]>(serviceMapDependencies),
+			api.get<ServicesItem[]>(requestString),
+		]);
 
-		dispatch<servicesAction>({
+		dispatch<ServicesAction>({
 			type: ActionTypes.getServices,
 			payload: response.data,
+		});
+
+		dispatch<ServiceMapItemAction>({
+			type: ActionTypes.getServiceMapItems,
+			payload: serviceMapDependenciesResponse.data,
+		});
+
+		dispatch<ServiceMapLoading>({
+			type: ActionTypes.serviceMapLoading,
+			payload: {
+				loading: false,
+			},
 		});
 	};
 };

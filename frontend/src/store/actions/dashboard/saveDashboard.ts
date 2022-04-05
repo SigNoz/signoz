@@ -18,6 +18,7 @@ export const SaveDashboard = ({
 	title,
 	widgetId,
 	dashboardId,
+	yAxisUnit,
 }: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
@@ -31,7 +32,7 @@ export const SaveDashboard = ({
 				throw new Error('Dashboard Not Found');
 			}
 
-			const data = selectedDashboard.data;
+			const { data } = selectedDashboard;
 
 			const updatedTitle = title;
 			const updatedDescription = description;
@@ -39,6 +40,7 @@ export const SaveDashboard = ({
 			const updatednullZeroValues = nullZeroValues;
 			const updatedopacity = opacity;
 			const updatedtimePreferance = timePreferance;
+			const updatedYAxisUnit = yAxisUnit;
 
 			const selectedWidgetIndex = data.widgets?.findIndex(
 				(e) => e.id === widgetId,
@@ -55,6 +57,7 @@ export const SaveDashboard = ({
 			];
 
 			const response = await updateDashboardApi({
+				...selectedDashboard.data,
 				uuid,
 				// this is the data for the dashboard
 				title: selectedDashboard.data.title,
@@ -73,6 +76,7 @@ export const SaveDashboard = ({
 						opacity: updatedopacity,
 						title: updatedTitle,
 						timePreferance: updatedtimePreferance,
+						yAxisUnit: updatedYAxisUnit,
 						queryData: {
 							...selectedWidget.queryData,
 							data: [
@@ -122,4 +126,5 @@ export interface SaveDashboardProps {
 	nullZeroValues: Widgets['nullZeroValues'];
 	widgetId: Widgets['id'];
 	dashboardId: string;
+	yAxisUnit: Widgets['yAxisUnit'];
 }

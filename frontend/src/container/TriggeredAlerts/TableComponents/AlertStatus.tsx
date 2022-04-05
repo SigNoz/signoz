@@ -1,7 +1,7 @@
 import { Tag } from 'antd';
 import React from 'react';
 
-const Severity = ({ severity }: SeverityProps): JSX.Element => {
+function Severity({ severity }: SeverityProps): JSX.Element {
 	switch (severity) {
 		case 'unprocessed': {
 			return <Tag color="green">UnProcessed</Tag>;
@@ -19,7 +19,7 @@ const Severity = ({ severity }: SeverityProps): JSX.Element => {
 			return <Tag color="default">Unknown Status</Tag>;
 		}
 	}
-};
+}
 
 interface SeverityProps {
 	severity: string;

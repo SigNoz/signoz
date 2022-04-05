@@ -15,9 +15,9 @@ import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
-import { Button } from './styles';
+import { Button, TableContainerCard } from './styles';
 
-const Application = ({ getWidget }: DashboardProps): JSX.Element => {
+function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
 
@@ -71,10 +71,8 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						selectedTimeStamp.current = time.getTime();
 					}
 				}
-			} else {
-				if (buttonElement && buttonElement.style.display === 'block') {
-					buttonElement.style.display = 'none';
-				}
+			} else if (buttonElement && buttonElement.style.display === 'block') {
+				buttonElement.style.display = 'none';
 			}
 		}
 	};
@@ -109,7 +107,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Application latency in ms</GraphTitle>
+						<GraphTitle>Application latency</GraphTitle>
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -159,6 +157,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 										);
 									}),
 								}}
+								yAxisUnit="ms"
 							/>
 						</GraphContainer>
 					</Card>
@@ -176,7 +175,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Request per sec</GraphTitle>
+						<GraphTitle>Requests</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="request_per_sec"
@@ -188,9 +187,10 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								widget={getWidget([
 									{
 										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[2m]))`,
-										legend: 'Request per second',
+										legend: 'Requests',
 									},
 								])}
+								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
 					</Card>
@@ -210,7 +210,7 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage (%)</GraphTitle>
+						<GraphTitle>Error Percentage</GraphTitle>
 						<GraphContainer>
 							<FullView
 								name="error_percentage_%"
@@ -222,23 +222,24 @@ const Application = ({ getWidget }: DashboardProps): JSX.Element => {
 								widget={getWidget([
 									{
 										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."}[1m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"}[1m]))) < 1000 OR vector(0)`,
-										legend: 'Error Percentage (%)',
+										legend: 'Error Percentage',
 									},
 								])}
+								yAxisUnit="%"
 							/>
 						</GraphContainer>
 					</Card>
 				</Col>
 
 				<Col span={12}>
-					<Card>
+					<TableContainerCard>
 						<TopEndpointsTable data={topEndPoints} />
-					</Card>
+					</TableContainerCard>
 				</Col>
 			</Row>
 		</>
 	);
-};
+}
 
 interface DashboardProps {
 	getWidget: (query: Widgets['query']) => Widgets;

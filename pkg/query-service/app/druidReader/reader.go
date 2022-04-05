@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/query-service/druidQuery"
 	"go.signoz.io/query-service/godruid"
 	"go.signoz.io/query-service/model"
+	am "go.signoz.io/query-service/integrations/alertManager"
 )
 
 type DruidReader struct {
@@ -65,12 +66,12 @@ func (druid *DruidReader) GetChannel(id string) (*model.ChannelItem, *model.ApiE
 func (druid *DruidReader) GetChannels() (*[]model.ChannelItem, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 }
-func (druid *DruidReader) CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError) {
+func (druid *DruidReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
 
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 
 }
-func (druid *DruidReader) EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError) {
+func (druid *DruidReader) EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError) {
 
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("Druid does not support notification channel for alerts")}
 
@@ -159,6 +160,10 @@ func (druid *DruidReader) SearchSpansAggregate(ctx context.Context, queryParams 
 
 func (druid *DruidReader) SetTTL(_ context.Context, _ *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support setting ttl configuration")}
+}
+
+func (druid *DruidReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError) {
+	return nil, &model.ApiError{model.ErrorNotImplemented, fmt.Errorf("druid does not support getting disk list")}
 }
 
 func (druid *DruidReader) GetTTL(_ context.Context, _ *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
