@@ -57,7 +57,7 @@ func authenticateRootUser(ctx context.Context) error {
 		return err
 	}
 
-	user, err := validateToken(token)
+	user, err := validateUser(token)
 	if err != nil {
 		return errors.Wrap(err, "unable to parse JWT token")
 	}

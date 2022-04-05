@@ -15,9 +15,11 @@ import (
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/druidReader"
+	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
+	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
@@ -173,9 +175,14 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		fmt.Println("path is: ", path)
+		if err := auth.IsAuthorized(r); err != nil {
+			writeHttpResponse(w, &model.ApiError{
+				Typ: model.ErrorUnauthorized,
+				Err: fmt.Errorf("Unauthorized operation"),
+			})
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }

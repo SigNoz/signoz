@@ -48,7 +48,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
-		user, err := validateToken(req.RefreshToken)
+		user, err := validateUser(req.RefreshToken)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}

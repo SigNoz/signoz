@@ -145,7 +145,7 @@ func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError
 	}
 }
 
-func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
+func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status: statusSuccess,
@@ -162,6 +162,10 @@ func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 	if n, err := w.Write(b); err != nil {
 		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
 	}
+}
+
+func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
+	writeHttpResponse(w, data)
 }
 
 // RegisterRoutes registers routes for this handler on the given router

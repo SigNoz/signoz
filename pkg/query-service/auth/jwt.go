@@ -35,7 +35,7 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func validateToken(tok string) (*User, error) {
+func validateUser(tok string) (*User, error) {
 	claims, err := ParseJWT(tok)
 	if err != nil {
 		return nil, err
