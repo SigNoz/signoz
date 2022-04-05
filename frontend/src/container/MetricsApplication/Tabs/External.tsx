@@ -21,7 +21,6 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_error_percentage"
 								fullViewOptions={false}
-								noDataGraph
 								widget={getWidget([
 									{
 										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."}[1m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"}[1m])) by (http_url)) < 1000 OR vector(0)`,
@@ -40,7 +39,6 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 						<GraphContainer>
 							<FullView
 								name="external_call_duration"
-								noDataGraph
 								fullViewOptions={false}
 								widget={getWidget([
 									{
@@ -62,7 +60,6 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 						<GraphContainer>
 							<FullView
 								name="external_call_rps_by_address"
-								noDataGraph
 								fullViewOptions={false}
 								widget={getWidget([
 									{
@@ -81,7 +78,6 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>
 							<FullView
-								noDataGraph
 								name="external_call_duration_by_address"
 								fullViewOptions={false}
 								widget={getWidget([
