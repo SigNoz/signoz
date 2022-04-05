@@ -15,16 +15,17 @@ services:
       retries: 3
 
   alertmanager:
-    image: signoz/alertmanager:0.5.0
+    image: signoz/alertmanager:0.6.0
     volumes:
-      - ./alertmanager.yml:/prometheus/alertmanager.yml
       - ./data/alertmanager:/data
+    depends_on:
+      - query-service
     command:
-      - '--config.file=/prometheus/alertmanager.yml'
-      - '--storage.path=/data'
+      - --queryService.url=http://query-service:8080
+      - --storage.path=/data
 
   query-service:
-    image: signoz/query-service:0.7.3
+    image: signoz/query-service:0.7.4
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     volumes:
@@ -44,7 +45,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: signoz/frontend:0.7.3
+    image: signoz/frontend:0.7.4
     container_name: frontend
     depends_on:
       - query-service
@@ -66,7 +67,7 @@ services:
       # - "14268:14268"   # Jaeger receiver
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zpages extension
-      # - "55680:55680"   # OTLP gRPC legacy port
+      # - "55680:55680"   # OTLP gRPC legacy receiver
       # - "55681:55681"   # OTLP HTTP legacy receiver
     mem_limit: 2000m
     restart: on-failure
@@ -93,7 +94,7 @@ services:
         max-file: "3"
     command: ["all"]
     environment:
-    - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
