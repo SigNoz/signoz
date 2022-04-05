@@ -44,23 +44,28 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			name TEXT NOT NULL
 		);
 		CREATE TABLE IF NOT EXISTS group_users (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			groupId INTEGER NOT NULL,
+			groupName TEXT NOT NULL,
 			userId INTEGER NOT NULL
 		);
 		CREATE TABLE IF NOT EXISTS group_rules (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			groupId INTEGER NOT NULL,
+			groupName TEXT NOT NULL,
 			ruleId INTEGER NOT NULL
 		);
-		CREATE TABLE IF NOT EXISTS rules (
+		CREATE TABLE IF NOT EXISTS rbac_rules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			api TEXT NOT NULL,
 			permission INTEGER NOT NULL
 		);
 	`
 
+	fmt.Println("setting schema...")
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating user_preferences table: ", err.Error())
+		return nil, fmt.Errorf("Error in creating tables: ", err.Error())
 	}
 
 	mds := &ModelDaoSqlite{db: db}
@@ -71,9 +76,11 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	if err := mds.initializeRootUser(); err != nil {
 		return nil, err
 	}
+	if err := mds.initializeRBAC(); err != nil {
+		return nil, err
+	}
 
 	return mds, nil
-
 }
 
 func (mds *ModelDaoSqlite) initializeUserPreferences() error {
@@ -115,7 +122,7 @@ func (mds *ModelDaoSqlite) initializeRootUser() error {
 		if err != nil {
 			return err
 		}
-		cErr := mds.CreateNewUser(context.Background(), &model.UserParams{
+		cErr := mds.CreateNewUser(ctx, &model.UserParams{
 			Email:    constants.RootUserEmail,
 			Password: string(hash),
 		})
@@ -127,24 +134,15 @@ func (mds *ModelDaoSqlite) initializeRootUser() error {
 }
 
 func (mds *ModelDaoSqlite) initializeRBAC() error {
-
 	ctx := context.Background()
-	user, err := mds.FetchUser(ctx, constants.RootUserEmail)
+	group, err := mds.FetchGroup(ctx, constants.RootGroup)
 	if err != nil {
-		return errors.Wrap(err.Err, "Failed to query for root user")
+		return errors.Wrap(err.Err, "Failed to query for root group")
 	}
 
-	if user == nil {
-		hash, err := bcrypt.GenerateFromPassword([]byte(constants.RootUserPassword),
-			bcrypt.DefaultCost)
-		if err != nil {
-			return err
-		}
-		cErr := mds.CreateNewUser(context.Background(), &model.UserParams{
-			Email:    constants.RootUserEmail,
-			Password: string(hash),
-		})
-		if cErr != nil {
+	// Create the root group if it is not present.
+	if group == nil {
+		if cErr := mds.CreateNewGroup(ctx, &model.Group{Name: constants.RootGroup}); cErr != nil {
 			return cErr.Err
 		}
 	}

@@ -55,10 +55,10 @@ func (mds *ModelDaoSqlite) CreateNewGroup(ctx context.Context, group *model.Grou
 	return nil
 }
 
-func (mds *ModelDaoSqlite) FetchGroupUsers(ctx context.Context, id int) (*[]model.GroupUser, *model.ApiError) {
+func (mds *ModelDaoSqlite) FetchGroupUsers(ctx context.Context, name string) (*[]model.GroupUser, *model.ApiError) {
 
 	groupUsers := []model.GroupUser{}
-	query := fmt.Sprintf(`SELECT id, userId FROM group_users WHERE id="%d";`, id)
+	query := fmt.Sprintf(`SELECT groupId, name, userId FROM group_users WHERE name="%s";`, name)
 
 	err := mds.db.Select(&groupUsers, query)
 
@@ -70,9 +70,16 @@ func (mds *ModelDaoSqlite) FetchGroupUsers(ctx context.Context, id int) (*[]mode
 	return &groupUsers, nil
 }
 
-func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context, userId, groupId int32) *model.ApiError {
-	zap.S().Debug("Adding user: %d to group: %d\n", userId, groupId)
-	_, err := mds.db.ExecContext(ctx, `INSERT INTO group_users (id, userId) VALUES (?, ?);`, groupId, userId)
+func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context, userId int, group string) *model.ApiError {
+	zap.S().Debugf("Adding user: %d to group: %s\n", userId, group)
+
+	g, apiErr := mds.FetchGroup(ctx, group)
+	if apiErr != nil {
+		zap.S().Errorf("Error in fetching groupId", apiErr.Err)
+		return apiErr
+	}
+
+	_, err := mds.db.ExecContext(ctx, `INSERT INTO group_users (groupId, name, userId) VALUES (?, ?, ?);`, g.Id, g.Name, userId)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for INSERT user to group\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -81,10 +88,10 @@ func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context, userId, groupId i
 	return nil
 }
 
-func (mds *ModelDaoSqlite) FetchGroupRules(ctx context.Context, id int) (*[]model.GroupRule, *model.ApiError) {
+func (mds *ModelDaoSqlite) FetchGroupRules(ctx context.Context, name string) (*[]model.GroupRule, *model.ApiError) {
 
 	groupRules := []model.GroupRule{}
-	query := fmt.Sprintf(`SELECT id, ruleId FROM group_rules WHERE id="%d";`, id)
+	query := fmt.Sprintf(`SELECT groupId, ruleId FROM group_rules WHERE name="%s";`, name)
 
 	err := mds.db.Select(&groupRules, query)
 
@@ -96,9 +103,16 @@ func (mds *ModelDaoSqlite) FetchGroupRules(ctx context.Context, id int) (*[]mode
 	return &groupRules, nil
 }
 
-func (mds *ModelDaoSqlite) AddRuleToGroup(ctx context.Context, ruleId, groupId int32) *model.ApiError {
-	zap.S().Debug("Adding user: %d to group: %d\n", userId, groupId)
-	_, err := mds.db.ExecContext(ctx, `INSERT INTO group_rules (id, ruleId) VALUES (?, ?);`, groupId, ruleId)
+func (mds *ModelDaoSqlite) AddRuleToGroup(ctx context.Context, ruleId int, group string) *model.ApiError {
+	zap.S().Debugf("Adding rule: %d to group: %s\n", ruleId, group)
+
+	g, apiErr := mds.FetchGroup(ctx, group)
+	if apiErr != nil {
+		zap.S().Errorf("Error in fetching groupId", apiErr.Err)
+		return apiErr
+	}
+
+	_, err := mds.db.ExecContext(ctx, `INSERT INTO group_rules (groupId, name, ruleId) VALUES (?, ?,?);`, g.Id, g.Name, ruleId)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for INSERT rule to group\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -110,7 +124,7 @@ func (mds *ModelDaoSqlite) AddRuleToGroup(ctx context.Context, ruleId, groupId i
 func (mds *ModelDaoSqlite) FetchRule(ctx context.Context, id int) (*model.RBACRule, *model.ApiError) {
 
 	rules := []model.RBACRule{}
-	query := fmt.Sprintf(`SELECT id, api, permission FROM rules WHERE id="%d";`, id)
+	query := fmt.Sprintf(`SELECT id, api, permission FROM rbac_rules WHERE id="%d";`, id)
 
 	err := mds.db.Select(&rules, query)
 
@@ -131,12 +145,18 @@ func (mds *ModelDaoSqlite) FetchRule(ctx context.Context, id int) (*model.RBACRu
 	return &rules[0], nil
 }
 
-func (mds *ModelDaoSqlite) AddRule(ctx context.Context, rule *model.RBACRule) *model.ApiError {
+func (mds *ModelDaoSqlite) AddRule(ctx context.Context, rule *model.RBACRule) (int64, *model.ApiError) {
 	zap.S().Debug("Adding rule: %+v\n", rule)
-	_, err := mds.db.ExecContext(ctx, `INSERT INTO rules (api, permission) VALUES (?, ?);`, rule.Api, rule.Permission)
+	res, err := mds.db.ExecContext(ctx, `INSERT INTO rbac_rules (api, permission) VALUES (?, ?);`, rule.Api, rule.Permission)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for INSERT rule\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return -1, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	return nil
+	id, err := res.LastInsertId()
+	if err != nil {
+		zap.S().Errorf("Error in getting id for the rule\n", err)
+		return -1, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return id, nil
 }

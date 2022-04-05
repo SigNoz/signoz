@@ -3,6 +3,7 @@ package dao
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/dao/sqlite"
 )
@@ -16,7 +17,7 @@ func InitDao(engine, path string) error {
 	case "sqlite":
 		db, err = sqlite.InitDB(path)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to initialize DB")
 		}
 	default:
 		return fmt.Errorf("RelationalDB type: %s is not supported in query service", engine)

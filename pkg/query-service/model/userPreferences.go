@@ -32,22 +32,24 @@ type UserParams struct {
 }
 
 type Group struct {
-	Id   int32  `json:"id" db:"id"`
+	Id   int    `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
 }
 
 type GroupUser struct {
-	Id     int32  `json:"id" db:"id"`
-	UserId string `json:"userId" db:"userId"`
+	GroupId   int    `json:"groupId,omitempty" db:"groupId"`
+	GroupName string `json:"groupName" db:"groupName"`
+	UserId    int    `json:"userId" db:"userId"`
 }
 
 type GroupRule struct {
-	Id     int32  `json:"id" db:"id"`
-	RuleId string `json:"ruleId" db:"ruleId"`
+	GroupId   int    `json:"groupId,omitempty" db:"groupId"`
+	GroupName string `json:"groupName" db:"groupName"`
+	RuleId    int    `json:"ruleId" db:"ruleId"`
 }
 
 type RBACRule struct {
-	Id         int32  `json:"id" db:"id"`
+	Id         int64  `json:"id" db:"id"`
 	Api        string `json:"api" db:"api"`
-	Permission int32  `json:"permission" db:"permission"`
+	Permission int    `json:"permission" db:"permission"`
 }

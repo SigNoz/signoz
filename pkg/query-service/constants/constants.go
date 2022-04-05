@@ -9,6 +9,7 @@ const (
 	HTTPHostPort     = "0.0.0.0:8080"
 	RootUserEmail    = "root@signoz.io"
 	RootUserPassword = "password"
+	RootGroup        = "GUARDIAN"
 )
 
 var DruidClientUrl = os.Getenv("DruidClientUrl")
@@ -34,7 +35,7 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
-// Alert manager channel subpath 
+// Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
@@ -50,7 +51,6 @@ const (
 	OperationDB      = "name"
 	OperationRequest = "operation"
 )
-
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

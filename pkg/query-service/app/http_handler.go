@@ -225,6 +225,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/auth/group", aH.createGroup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/auth/rule", aH.createRBACRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/auth/assignRule", aH.assignRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/auth/assignUser", aH.assignUser).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1188,6 +1193,70 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
+	req, err := parseCreateGroupRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	err = auth.CreateGroup(context.Background(), req.Name)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to create group")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "group created successfully"})
+}
+
+func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
+	req, err := parseCreateRBACRuleRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	id, err := auth.CreateRule(context.Background(), req)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to create rule")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": fmt.Sprintf("ruleId=%d created successfully", id)})
+}
+
+func (aH *APIHandler) assignRule(w http.ResponseWriter, r *http.Request) {
+	req, err := parseAssignRuleRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	err = auth.AddRuleToGroup(context.Background(), req)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to assign rule")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
+}
+
+func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseAssignUserRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	err = auth.AddUserToGroup(context.Background(), req)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to assign user to group")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "user assigned successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

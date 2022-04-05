@@ -983,3 +983,43 @@ func parseLoginRequest(r *http.Request) (*auth.LoginRequest, error) {
 
 	return &req, nil
 }
+
+func parseCreateGroupRequest(r *http.Request) (*model.Group, error) {
+	var req model.Group
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseCreateRBACRuleRequest(r *http.Request) (*model.RBACRule, error) {
+	var req model.RBACRule
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseAssignRuleRequest(r *http.Request) (*model.GroupRule, error) {
+	var req model.GroupRule
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseAssignUserRequest(r *http.Request) (*model.GroupUser, error) {
+	var req model.GroupUser
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
