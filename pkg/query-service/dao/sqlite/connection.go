@@ -26,17 +26,35 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	}
 	db.SetMaxOpenConns(10)
 
-	table_schema := `CREATE TABLE IF NOT EXISTS user_preferences (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		uuid TEXT NOT NULL,
-		isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
-		hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
-	);
+	table_schema := `
+		CREATE TABLE IF NOT EXISTS user_preferences (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			uuid TEXT NOT NULL,
+			isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
+			hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
+		);
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			uuid TEXT NOT NULL,
 			email TEXT NOT NULL,
 			password TEXT NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS groups (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS group_users (
+			id INTEGER PRIMARY KEY,
+			userId INTEGER NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS group_rules (
+			id INTEGER PRIMARY KEY,
+			ruleId INTEGER NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS rules (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			api TEXT NOT NULL,
+			permission INTEGER NOT NULL
 		);
 	`
 
@@ -84,6 +102,31 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 }
 
 func (mds *ModelDaoSqlite) initializeRootUser() error {
+
+	ctx := context.Background()
+	user, err := mds.FetchUser(ctx, constants.RootUserEmail)
+	if err != nil {
+		return errors.Wrap(err.Err, "Failed to query for root user")
+	}
+
+	if user == nil {
+		hash, err := bcrypt.GenerateFromPassword([]byte(constants.RootUserPassword),
+			bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		cErr := mds.CreateNewUser(context.Background(), &model.UserParams{
+			Email:    constants.RootUserEmail,
+			Password: string(hash),
+		})
+		if cErr != nil {
+			return cErr.Err
+		}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) initializeRBAC() error {
 
 	ctx := context.Background()
 	user, err := mds.FetchUser(ctx, constants.RootUserEmail)

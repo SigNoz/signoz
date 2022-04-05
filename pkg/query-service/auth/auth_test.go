@@ -39,17 +39,6 @@ func invite(email string) (*InviteResponse, error) {
 	return Invite(ctx, &InviteRequest{email})
 }
 
-func TestInvite(t *testing.T) {
-	inv, err := invite("ahsan@signoz.io")
-	require.NoError(t, err)
-	require.NotNil(t, inv.InviteToken)
-
-	claims, err := ParseJWT(inv.InviteToken)
-	require.NoError(t, err)
-
-	require.Equal(t, "ahsan@signoz.io", claims["email"].(string))
-}
-
 func register(t *testing.T, email, password string) {
 	inv, err := invite(email)
 	require.NoError(t, err)
@@ -61,6 +50,17 @@ func register(t *testing.T, email, password string) {
 	}
 	regErr := Register(context.Background(), req)
 	require.Nil(t, regErr)
+}
+
+func TestInvite(t *testing.T) {
+	inv, err := invite("ahsan@signoz.io")
+	require.NoError(t, err)
+	require.NotNil(t, inv.InviteToken)
+
+	claims, err := ParseJWT(inv.InviteToken)
+	require.NoError(t, err)
+
+	require.Equal(t, "ahsan@signoz.io", claims["email"].(string))
 }
 
 func TestRegister(t *testing.T) {

@@ -124,6 +124,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 
 	r := NewRouter()
 
+	r.Use(authMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
@@ -166,6 +167,15 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		fmt.Println("path is: ", path)
 		next.ServeHTTP(w, r)
 	})
 }

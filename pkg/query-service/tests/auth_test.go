@@ -88,14 +88,14 @@ func login(email, password, refreshToken string) (*auth.LoginResponse, error) {
 	return loginResp, nil
 }
 
-func TestInviteAPI(t *testing.T) {
+func TestAuthInviteAPI(t *testing.T) {
 	email := "abc@signoz.io"
 	resp := invite(t, email)
 	require.Equal(t, email, resp.Email)
 	require.NotNil(t, resp.InviteToken)
 }
 
-func TestRegisterAPI(t *testing.T) {
+func TestAuthRegisterAPI(t *testing.T) {
 	email := "abc-register@signoz.io"
 	inv := invite(t, email)
 
@@ -104,7 +104,7 @@ func TestRegisterAPI(t *testing.T) {
 	require.Contains(t, resp, "user registered successfully")
 }
 
-func TestLoginAPI(t *testing.T) {
+func TestAuthLoginAPI(t *testing.T) {
 	email := "abc-login@signoz.io"
 	password := "password123"
 	inv := invite(t, email)

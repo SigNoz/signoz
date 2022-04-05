@@ -1,12 +1,21 @@
 package auth
 
+type Permission int32
+
+const (
+	ReadPermission = iota
+	WritePermission
+)
+
 type Rule struct {
-	Service string
-	Perm    uint32
+	RuleId string
+	Api    string
+	Perm   Permission
 }
 
 type Group struct {
-	GroupID string
-	Users   []User
-	Rules   []Rule
+	GroupID   string
+	GroupName string
+	Users     []User
+	Rules     []Rule
 }

@@ -30,3 +30,24 @@ type UserParams struct {
 	Email    string `json:"email" db:"email"`
 	Password string `json:"password" db:"password"`
 }
+
+type Group struct {
+	Id   int32  `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
+type GroupUser struct {
+	Id     int32  `json:"id" db:"id"`
+	UserId string `json:"userId" db:"userId"`
+}
+
+type GroupRule struct {
+	Id     int32  `json:"id" db:"id"`
+	RuleId string `json:"ruleId" db:"ruleId"`
+}
+
+type RBACRule struct {
+	Id         int32  `json:"id" db:"id"`
+	Api        string `json:"api" db:"api"`
+	Permission int32  `json:"permission" db:"permission"`
+}
