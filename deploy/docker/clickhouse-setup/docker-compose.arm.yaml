@@ -10,6 +10,10 @@ services:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
     restart: on-failure
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
