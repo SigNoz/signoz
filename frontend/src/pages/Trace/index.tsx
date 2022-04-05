@@ -63,7 +63,7 @@ function Trace({
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
 			selectedTags,
-			order: 'ascending',
+			order: spansAggregate.order === 'ascend' ? 'ascending' : 'descending',
 		});
 	}, [
 		selectedTags,
@@ -73,6 +73,7 @@ function Trace({
 		getSpansAggregate,
 		spansAggregate.currentPage,
 		spansAggregate.pageSize,
+		spansAggregate.order,
 	]);
 
 	useEffect(() => {
@@ -93,8 +94,8 @@ function Trace({
 		selectedTags,
 		maxTime,
 		minTime,
-		isFilterExclude,
 		getSpans,
+		isFilterExclude,
 	]);
 
 	useEffect(() => {
