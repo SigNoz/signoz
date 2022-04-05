@@ -205,13 +205,13 @@ function GeneralSettings(): JSX.Element {
 		if (s3Enabled) {
 			if (
 				(metricsTotalRetentionPeriod || metricsS3RetentionPeriod) &&
-				Number(metricsTotalRetentionPeriod) < Number(metricsS3RetentionPeriod)
+				Number(metricsTotalRetentionPeriod) <= Number(metricsS3RetentionPeriod)
 			) {
 				isDisabled = true;
 				errorText = messages.compareError('metrics');
 			} else if (
 				(tracesTotalRetentionPeriod || tracesS3RetentionPeriod) &&
-				Number(tracesTotalRetentionPeriod) < Number(tracesS3RetentionPeriod)
+				Number(tracesTotalRetentionPeriod) <= Number(tracesS3RetentionPeriod)
 			) {
 				isDisabled = true;
 				errorText = messages.compareError('traces');
