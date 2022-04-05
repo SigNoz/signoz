@@ -2,7 +2,12 @@ import { Col, Row, Select } from 'antd';
 import { find } from 'lodash-es';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Input, RetentionContainer, Typography } from './styles';
+import {
+	Input,
+	RetentionContainer,
+	RetentionFieldInputContainer,
+	RetentionFieldLabel,
+} from './styles';
 import {
 	convertHoursValueToRelevantUnit,
 	SettingPeriod,
@@ -22,7 +27,9 @@ function Retention({
 		timeUnitValue: initialTimeUnitValue,
 	} = convertHoursValueToRelevantUnit(Number(retentionValue));
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
-	const [selectedValue, setSelectedValue] = useState<number | null>(null);
+	const [selectedValue, setSelectedValue] = useState<number | null>(
+		initialValue,
+	);
 	const interacted = useRef(false);
 	useEffect(() => {
 		if (!interacted.current) setSelectedValue(initialValue);
@@ -78,17 +85,10 @@ function Retention({
 		<RetentionContainer>
 			<Row justify="space-between">
 				<Col flex={1} style={{ display: 'flex' }}>
-					<Typography
-						style={{
-							verticalAlign: 'middle',
-							whiteSpace: 'pre-wrap',
-						}}
-					>
-						{text}
-					</Typography>
+					<RetentionFieldLabel>{text}</RetentionFieldLabel>
 				</Col>
 				<Col flex="150px">
-					<div style={{ display: 'inline-flex' }}>
+					<RetentionFieldInputContainer>
 						<Input
 							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
 							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
@@ -101,7 +101,7 @@ function Retention({
 						>
 							{menuItems}
 						</Select>
-					</div>
+					</RetentionFieldInputContainer>
 				</Col>
 			</Row>
 		</RetentionContainer>

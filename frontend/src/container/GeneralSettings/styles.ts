@@ -80,3 +80,12 @@ export const ErrorText = styled(TypographyComponent)`
 		font-style: italic;
 	}
 `;
+
+export const RetentionFieldLabel = styled(TypographyComponent)`
+	vertical-align: middle;
+	white-space: pre-wrap;
+`;
+
+export const RetentionFieldInputContainer = styled.div`
+	display: inline-flex;
+`;
