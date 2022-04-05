@@ -40,7 +40,6 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 		currentVersion,
 		latestVersion,
 		isCurrentVersionError,
-		isLatestVersionError,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { pathname } = useLocation();
@@ -93,7 +92,6 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 	};
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
-	const iError = isCurrentVersionError || isLatestVersionError;
 
 	const sidebar = [
 		{
@@ -110,12 +108,12 @@ function SideNav({ toggleDarkMode }: Props): JSX.Element {
 			),
 			text: (
 				<VersionContainer>
-					{!iError ? (
+					{!isCurrentVersionError ? (
 						<SlackButton>{currentVersion}</SlackButton>
 					) : (
 						<SlackButton>{t('n_a')}</SlackButton>
 					)}
-					{isNotCurrentVersion && !iError && <RedDot />}
+					{isNotCurrentVersion && <RedDot />}
 				</VersionContainer>
 			),
 		},
