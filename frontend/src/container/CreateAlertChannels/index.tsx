@@ -21,26 +21,16 @@ function CreateAlertChannels({
 	const [selectedConfig, setSelectedConfig] = useState<
 		Partial<SlackChannel & WebhookChannel>
 	>({
-		text: ` {{ range .Alerts -}}
-     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
+		text: `{{ range .Alerts -}}
+     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
+     *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
        {{ end }}
      {{ end }}`,
-		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
-     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
-       {{" "}}(
-       {{- with .CommonLabels.Remove .GroupLabels.Names }}
-         {{- range $index, $label := .SortedPairs -}}
-           {{ if $index }}, {{ end }}
-           {{- $label.Name }}="{{ $label.Value -}}"
-         {{- end }}
-       {{- end -}}
-       )
-     {{- end }}`,
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [notifications, NotificationElement] = notification.useNotification();
