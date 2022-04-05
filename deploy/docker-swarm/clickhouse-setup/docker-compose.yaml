@@ -24,7 +24,7 @@ services:
       retries: 3
 
   alertmanager:
-    image: signoz/alertmanager:0.6.0
+    image: signoz/alertmanager:0.6.1
     volumes:
       - ./data/alertmanager:/data
     command:
@@ -37,7 +37,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.7.4
+    image: signoz/query-service:0.7.5
     command: ["-config=/root/config/prometheus.yml"]
     ports:
       - "8080:8080"
@@ -64,7 +64,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.7.4
+    image: signoz/frontend:0.7.5
     depends_on:
       - query-service
     ports:
