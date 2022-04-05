@@ -179,7 +179,6 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						<GraphContainer>
 							<FullView
 								name="request_per_sec"
-								noDataGraph
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
 									onClickhandler(event, element, chart, data, 'Request');
@@ -214,7 +213,6 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						<GraphContainer>
 							<FullView
 								name="error_percentage_%"
-								noDataGraph
 								fullViewOptions={false}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');

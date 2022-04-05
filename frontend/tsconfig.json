@@ -23,5 +23,11 @@
 		"types": ["@testing-library/jest-dom", "jest"]
 	},
 	"exclude": ["node_modules"],
-	"include": ["./src", "./.eslintrc.js", "./cypress/**"]
+	"include": [
+		"./src",
+		"./babel.config.js",
+		"./jest.config.ts",
+		"./.eslintrc.js",
+		"./jest.setup.ts"
+	]
 }

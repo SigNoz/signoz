@@ -1,13 +1,19 @@
-import React from 'react';
-import { CardComponent } from './styles';
-import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
-import 'jest-styled-components';
+
+import { expect } from '@jest/globals';
+import { render } from '@testing-library/react';
+import React from 'react';
+
+import { CardComponent } from './styles';
 
 describe('Trace Styles', () => {
 	it('Card Container in Card Component(Dark Mode)', async () => {
-		const container = render(<CardComponent isDarkMode>Container</CardComponent>);
+		const container = render(
+			<CardComponent isOnlyChild isDarkMode>
+				Container
+			</CardComponent>,
+		);
 
 		const wrapper = await container.findByText('Container');
 
@@ -16,7 +22,9 @@ describe('Trace Styles', () => {
 
 	it('Card Container in Card Component(Light Mode)', async () => {
 		const container = render(
-			<CardComponent isDarkMode={false}>Container</CardComponent>,
+			<CardComponent isOnlyChild isDarkMode={false}>
+				Container
+			</CardComponent>,
 		);
 
 		const wrapper = await container.findByText('Container');

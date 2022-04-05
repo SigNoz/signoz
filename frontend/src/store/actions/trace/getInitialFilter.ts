@@ -18,6 +18,7 @@ import {
 	parseIsSkippedSelection,
 	parseQueryIntoCurrent,
 	parseQueryIntoFilter,
+	parseQueryIntoOrder,
 	parseQueryIntoSelectedTags,
 	parseSelectedFilter,
 } from './util';
@@ -64,6 +65,11 @@ export const GetInitialTraceFilter = (
 			const parsedQueryCurrent = parseQueryIntoCurrent(
 				query,
 				traces.spansAggregate.currentPage,
+			);
+
+			const parsedQueryOrder = parseQueryIntoOrder(
+				query,
+				traces.spansAggregate.order,
 			);
 
 			const isSelectionSkipped = parseIsSkippedSelection(query);
@@ -148,6 +154,7 @@ export const GetInitialTraceFilter = (
 						selectedTags: parsedSelectedTags.currentValue,
 						userSelected: getUserSelected.currentValue,
 						isFilterExclude: getIsFilterExcluded.currentValue,
+						order: parsedQueryOrder.currentValue,
 					},
 				});
 			} else {
