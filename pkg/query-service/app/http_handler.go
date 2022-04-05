@@ -229,7 +229,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
+	// can have /users api for admin for user management.
 
+	// crud apis
 	router.HandleFunc("/api/v1/auth/group", aH.createGroup).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/auth/rule", aH.createRBACRule).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/auth/assignRule", aH.assignRule).Methods(http.MethodPost)

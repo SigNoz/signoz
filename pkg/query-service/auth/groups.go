@@ -26,9 +26,11 @@ type Group struct {
 }
 
 var ApiClass = map[string]string{
+	// Dashboard APIs
 	"/api/v1/dashboards":        AuthDashboardAPIs,
 	"/api/v1/dashboards/{uuid}": AuthDashboardAPIs,
 
+	// Channel APIs
 	"/api/v1/channels":      AuthChannelAPIs,
 	"/api/v1/channels/{id}": AuthChannelAPIs,
 }
