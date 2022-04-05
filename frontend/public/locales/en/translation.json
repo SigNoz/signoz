@@ -1,3 +1,18 @@
 {
-	"monitor_signup": "Monitor your applications. Find what is causing issues."
+	"monitor_signup": "Monitor your applications. Find what is causing issues.",
+	"routes": {
+		"general": "General",
+		"alert_channels": "Alert Channels"
+	},
+	"settings": {
+		"total_retention_period": "Total Retention Period",
+		"move_to_s3": "Move to S3\n(should be lower than total retention period)",
+		"retention_success_message": "Congrats. The retention periods for {{name}} has been updated successfully.",
+		"retention_error_message": "There was an issue in changing the retention period for {{name}}. Please try again or reach out to support@signoz.io",
+		"retention_failed_message": "There was an issue in changing the retention period. Please try again or reach out to support@signoz.io",
+		"retention_comparison_error": "Total retention period for {{name}} can’t be lower or equal to the period after which data is moved to s3.",
+		"retention_null_value_error": "Retention Period for {{name}} is not set yet. Please set by choosing below",
+		"retention_confirmation": "Are you sure you want to change the retention period?",
+		"retention_confirmation_description": "This will change the amount of storage needed for saving metrics & traces."
+	}
 }
