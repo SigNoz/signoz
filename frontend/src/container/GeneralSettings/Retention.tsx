@@ -1,108 +1,118 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Menu } from 'antd';
-import React from 'react';
+import { Col, Row, Select } from 'antd';
+import { find } from 'lodash-es';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { SettingPeroid } from '.';
 import {
-	Dropdown,
 	Input,
 	RetentionContainer,
-	TextContainer,
-	Typography,
+	RetentionFieldInputContainer,
+	RetentionFieldLabel,
 } from './styles';
+import {
+	convertHoursValueToRelevantUnit,
+	SettingPeriod,
+	TimeUnits,
+} from './utils';
+
+const { Option } = Select;
 
 function Retention({
 	retentionValue,
-	setRentionValue,
-	selectedRetentionPeroid,
-	setSelectedRetentionPeroid,
+	setRetentionValue,
 	text,
-}: RetentionProps): JSX.Element {
-	const options: Option[] = [
-		{
-			key: 'hr',
-			value: 'Hrs',
-		},
-		{
-			key: 'day',
-			value: 'Days',
-		},
-		{
-			key: 'month',
-			value: 'Months',
-		},
-	];
-
-	const onClickHandler = (
-		e: { key: string },
-		func: React.Dispatch<React.SetStateAction<SettingPeroid>>,
-	): void => {
-		const selected = e.key as SettingPeroid;
-		func(selected);
-	};
-
-	const menu = (
-		<Menu onClick={(e): void => onClickHandler(e, setSelectedRetentionPeroid)}>
-			{options.map((option) => (
-				<Menu.Item key={option.key}>{option.value}</Menu.Item>
-			))}
-		</Menu>
+	hide,
+}: RetentionProps): JSX.Element | null {
+	const {
+		value: initialValue,
+		timeUnitValue: initialTimeUnitValue,
+	} = convertHoursValueToRelevantUnit(Number(retentionValue));
+	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
+	const [selectedValue, setSelectedValue] = useState<number | null>(
+		initialValue,
 	);
+	const interacted = useRef(false);
+	useEffect(() => {
+		if (!interacted.current) setSelectedValue(initialValue);
+	}, [initialValue]);
 
-	const currentSelectedOption = (option: SettingPeroid): string | undefined => {
-		return options.find((e) => e.key === option)?.value;
+	useEffect(() => {
+		if (!interacted.current) setSelectTimeUnit(initialTimeUnitValue);
+	}, [initialTimeUnitValue]);
+
+	const menuItems = TimeUnits.map((option) => (
+		<Option key={option.value} value={option.value}>
+			{option.key}
+		</Option>
+	));
+
+	const currentSelectedOption = (option: SettingPeriod): void => {
+		const selectedValue = find(TimeUnits, (e) => e.value === option)?.value;
+		if (selectedValue) setSelectTimeUnit(selectedValue);
 	};
+
+	useEffect(() => {
+		const inverseMultiplier = find(
+			TimeUnits,
+			(timeUnit) => timeUnit.value === selectedTimeUnit,
+		)?.multiplier;
+		if (!selectedValue) setRetentionValue(null);
+		if (selectedValue && inverseMultiplier) {
+			setRetentionValue(selectedValue * (1 / inverseMultiplier));
+		}
+	}, [selectedTimeUnit, selectedValue, setRetentionValue]);
 
 	const onChangeHandler = (
 		e: React.ChangeEvent<HTMLInputElement>,
-		func: React.Dispatch<React.SetStateAction<string>>,
+		func: React.Dispatch<React.SetStateAction<number | null>>,
 	): void => {
+		interacted.current = true;
 		const { value } = e.target;
 		const integerValue = parseInt(value, 10);
 
 		if (value.length > 0 && integerValue.toString() === value) {
-			const parsedValue = Math.abs(integerValue).toString();
+			const parsedValue = Math.abs(integerValue);
 			func(parsedValue);
 		}
 
 		if (value.length === 0) {
-			func('');
+			func(null);
 		}
 	};
-
+	if (hide) {
+		return null;
+	}
 	return (
 		<RetentionContainer>
-			<TextContainer>
-				<Typography>{text}</Typography>
-			</TextContainer>
-
-			<Input
-				value={retentionValue}
-				onChange={(e): void => onChangeHandler(e, setRentionValue)}
-			/>
-
-			<Dropdown overlay={menu}>
-				<Button>
-					{currentSelectedOption(selectedRetentionPeroid)} <DownOutlined />
-				</Button>
-			</Dropdown>
+			<Row justify="space-between">
+				<Col flex={1} style={{ display: 'flex' }}>
+					<RetentionFieldLabel>{text}</RetentionFieldLabel>
+				</Col>
+				<Col flex="150px">
+					<RetentionFieldInputContainer>
+						<Input
+							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
+							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
+							style={{ width: 75 }}
+						/>
+						<Select
+							value={selectedTimeUnit}
+							onChange={currentSelectedOption}
+							style={{ width: 100 }}
+						>
+							{menuItems}
+						</Select>
+					</RetentionFieldInputContainer>
+				</Col>
+			</Row>
 		</RetentionContainer>
 	);
 }
 
-interface Option {
-	key: SettingPeroid;
-	value: string;
-}
-
 interface RetentionProps {
-	retentionValue: string;
+	retentionValue: number | null;
 	text: string;
-	setRentionValue: React.Dispatch<React.SetStateAction<string>>;
-	selectedRetentionPeroid: SettingPeroid;
-	setSelectedRetentionPeroid: React.Dispatch<
-		React.SetStateAction<SettingPeroid>
-	>;
+	setRetentionValue: React.Dispatch<React.SetStateAction<number | null>>;
+	hide: boolean;
 }
 
 export default Retention;
