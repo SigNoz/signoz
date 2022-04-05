@@ -1,5 +1,9 @@
 {
 	"monitor_signup": "Monitor your applications. Find what is causing issues.",
+	"routes": {
+		"general": "General",
+		"alert_channels": "Alert Channels"
+	},
 	"settings": {
 		"total_retention_period": "Total Retention Period",
 		"move_to_s3": "Move to S3\n(should be lower than total retention period)",
