@@ -2,10 +2,10 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { IDiskType } from 'types/api/disks/getDisks';
+import { PayloadProps } from 'types/api/disks/getDisks';
 
 const getDisks = async (): Promise<
-	SuccessResponse<IDiskType[]> | ErrorResponse
+	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
 		const response = await axios.get(`/disks`);
