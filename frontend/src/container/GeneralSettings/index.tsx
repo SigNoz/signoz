@@ -50,9 +50,17 @@ function GeneralSettings(): JSX.Element {
 	useEffect(() => {
 		if (currentTTLValues) {
 			setMetricsTotalRetentionPeriod(currentTTLValues.metrics_ttl_duration_hrs);
-			setMetricsS3RetentionPeriod(currentTTLValues.metrics_move_ttl_duration_hrs);
+			setMetricsS3RetentionPeriod(
+				currentTTLValues.metrics_move_ttl_duration_hrs
+					? currentTTLValues.metrics_move_ttl_duration_hrs
+					: null,
+			);
 			setTracesTotalRetentionPeriod(currentTTLValues.traces_ttl_duration_hrs);
-			setTracesS3RetentionPeriod(currentTTLValues.traces_move_ttl_duration_hrs);
+			setTracesS3RetentionPeriod(
+				currentTTLValues.traces_move_ttl_duration_hrs
+					? currentTTLValues.traces_move_ttl_duration_hrs
+					: null,
+			);
 		}
 	}, [currentTTLValues]);
 
