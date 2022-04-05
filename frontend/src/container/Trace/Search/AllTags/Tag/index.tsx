@@ -5,13 +5,9 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 
-import {
-	Container,
-	IconContainer,
-	SelectComponent,
-	ValueSelect,
-} from './styles';
+import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
+import TagValue from './TagValue';
 
 const { Option } = Select;
 
@@ -68,7 +64,6 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				tag={tag}
 				setLocalSelectedTags={setLocalSelectedTags}
 			/>
-
 			<SelectComponent
 				onChange={onChangeOperatorHandler}
 				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
@@ -80,21 +75,16 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				))}
 			</SelectComponent>
 
-			<ValueSelect
-				value={selectedValues}
-				onChange={(value): void => {
-					setLocalSelectedTags((tags) => [
-						...tags.slice(0, index),
-						{
-							Key: selectedKey,
-							Operator: selectedOperator,
-							Values: value as string[],
-						},
-						...tags.slice(index + 1, tags.length),
-					]);
-				}}
-				mode="tags"
-			/>
+			{selectedKey[0] ? (
+				<TagValue
+					index={index}
+					tag={tag}
+					setLocalSelectedTags={setLocalSelectedTags}
+					tagKey={selectedKey[0]}
+				/>
+			) : (
+				<SelectComponent />
+			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
 				<CloseOutlined />
@@ -110,6 +100,12 @@ interface AllTagsProps {
 	setLocalSelectedTags: React.Dispatch<
 		React.SetStateAction<TraceReducer['selectedTags']>
 	>;
+}
+
+export interface Value {
+	key: string;
+	label: string;
+	value: string;
 }
 
 export default SingleTags;
