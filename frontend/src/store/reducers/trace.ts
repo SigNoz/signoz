@@ -9,8 +9,9 @@ import {
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
 	UPDATE_SELECTED_TAGS,
-	UPDATE_SPANS_AGGREEGATE,
-	UPDATE_TAG_MODAL_VISIBLITY,
+	UPDATE_SPAN_ORDER,
+	UPDATE_SPANS_AGGREGATE,
+	UPDATE_TAG_MODAL_VISIBILITY,
 	UPDATE_TRACE_FILTER,
 	UPDATE_TRACE_FILTER_LOADING,
 	UPDATE_TRACE_GRAPH_ERROR,
@@ -37,6 +38,7 @@ const initialValue: TraceReducer = {
 		error: false,
 		total: 0,
 		pageSize: 10,
+		order: 'ascend',
 	},
 	selectedGroupBy: '',
 	selectedFunction: 'count',
@@ -71,6 +73,7 @@ const traceReducer = (
 				selectedTags,
 				userSelected,
 				isFilterExclude,
+				order,
 			} = payload;
 
 			return {
@@ -84,6 +87,7 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
+					order,
 				},
 			};
 		}
@@ -115,14 +119,14 @@ const traceReducer = (
 			};
 		}
 
-		case UPDATE_SPANS_AGGREEGATE: {
+		case UPDATE_SPANS_AGGREGATE: {
 			return {
 				...state,
 				spansAggregate: action.payload.spansAggregate,
 			};
 		}
 
-		case UPDATE_TAG_MODAL_VISIBLITY: {
+		case UPDATE_TAG_MODAL_VISIBILITY: {
 			return {
 				...state,
 				isTagModalOpen: action.payload.isTagModalOpen,
@@ -196,6 +200,16 @@ const traceReducer = (
 			return {
 				...state,
 				isFilterExclude: action.payload.isFilterExclude,
+			};
+		}
+
+		case UPDATE_SPAN_ORDER: {
+			return {
+				...state,
+				spansAggregate: {
+					...state.spansAggregate,
+					order: action.payload.order,
+				},
 			};
 		}
 

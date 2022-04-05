@@ -22,5 +22,5 @@
 		"plugins": [{ "name": "typescript-plugin-css-modules" }]
 	},
 	"exclude": ["node_modules"],
-	"include": ["./src"]
+	"include": ["./src", "./babel.config.js", "./jest.config.ts"]
 }

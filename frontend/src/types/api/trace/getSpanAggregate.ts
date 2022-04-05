@@ -7,7 +7,7 @@ export interface Props {
 	limit: number;
 	offset: number;
 	selectedTags: TraceReducer['selectedTags'];
-	order?: 'descending' | 'ascending';
+	order?: TraceReducer['spansAggregate']['order'];
 	isFilterExclude: TraceReducer['isFilterExclude'];
 }
 

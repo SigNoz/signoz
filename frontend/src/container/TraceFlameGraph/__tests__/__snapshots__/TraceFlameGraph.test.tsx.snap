@@ -1,3 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`loads and displays greeting 1`] = `<DocumentFragment />`;
+exports[`loads and displays greeting 1`] = `
+<DocumentFragment>
+  <div
+    class="sc-gsDKAQ jFDWPs"
+    height="0"
+  >
+    <div
+      class="sc-bdvvtL fyFVjh"
+      title="
+0 m"
+      width="Infinity"
+    />
+  </div>
+</DocumentFragment>
+`;

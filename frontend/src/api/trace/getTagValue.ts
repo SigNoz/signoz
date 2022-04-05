@@ -2,19 +2,17 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/settings/setRetention';
+import { PayloadProps, Props } from 'types/api/trace/getTagValue';
 
-const setRetention = async (
+const getTagValue = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post<PayloadProps>(
-			`/settings/ttl?duration=${props.totalDuration}&type=${props.type}${
-				props.coldStorage
-					? `&coldStorage=${props.coldStorage};toColdDuration=${props.toColdDuration}`
-					: ''
-			}`,
-		);
+		const response = await axios.post<PayloadProps>(`/getTagValues`, {
+			start: props.start.toString(),
+			end: props.end.toString(),
+			tagKey: props.tagKey,
+		});
 
 		return {
 			statusCode: 200,
@@ -27,4 +25,4 @@ const setRetention = async (
 	}
 };
 
-export default setRetention;
+export default getTagValue;

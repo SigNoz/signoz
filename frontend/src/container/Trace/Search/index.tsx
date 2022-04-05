@@ -6,7 +6,7 @@ import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
-import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
+import { UpdateTagVisibility } from 'store/actions/trace/updateTagPanelVisiblity';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -18,7 +18,7 @@ import { Container, SearchComponent } from './styles';
 import { parseQueryToTags, parseTagsToQuery } from './util';
 
 function Search({
-	updateTagVisiblity,
+	updateTagVisibility,
 	updateTagIsError,
 }: SearchProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
@@ -66,7 +66,7 @@ function Search({
 			!(e.ariaSelected === 'true') &&
 			traces.isTagModalOpen
 		) {
-			updateTagVisiblity(false);
+			updateTagVisibility(false);
 		}
 	});
 
@@ -75,7 +75,7 @@ function Search({
 	};
 
 	const setIsTagsModalHandler = (value: boolean): void => {
-		updateTagVisiblity(value);
+		updateTagVisibility(value);
 	};
 
 	const onFocusHandler: React.FocusEventHandler<HTMLInputElement> = (e) => {
@@ -96,6 +96,7 @@ function Search({
 				selectedFilter: traces.selectedFilter,
 				userSelected: traces.userSelectedFilter,
 				isFilterExclude: traces.isFilterExclude,
+				order: traces.spansAggregate.order,
 			},
 		});
 
@@ -107,6 +108,7 @@ function Search({
 			traces.filter,
 			traces.isFilterExclude,
 			traces.userSelectedFilter,
+			traces.spansAggregate.order,
 		);
 	};
 
@@ -124,7 +126,7 @@ function Search({
 					enterButton={<CaretRightFilled />}
 					onSearch={(string): void => {
 						if (string.length === 0) {
-							updateTagVisiblity(false);
+							updateTagVisibility(false);
 							updateFilters([]);
 							return;
 						}
@@ -135,7 +137,7 @@ function Search({
 							updateTagIsError(true);
 						} else {
 							updateTagIsError(false);
-							updateTagVisiblity(false);
+							updateTagVisibility(false);
 							updateFilters(payload);
 						}
 					}}
@@ -150,14 +152,14 @@ function Search({
 }
 
 interface DispatchProps {
-	updateTagVisiblity: (value: boolean) => void;
+	updateTagVisibility: (value: boolean) => void;
 	updateTagIsError: (value: boolean) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
+	updateTagVisibility: bindActionCreators(UpdateTagVisibility, dispatch),
 	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
 });
 
