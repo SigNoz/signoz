@@ -2,31 +2,33 @@ import { Typography } from 'antd';
 import getTraceItem from 'api/trace/getTraceItem';
 import Spinner from 'components/Spinner';
 import TraceDetailContainer from 'container/TraceDetail';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
+import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
 
 function TraceDetail(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
+	const {
+		data: traceDetailResponse,
+		error,
+		isLoading,
+		isLoadingError,
+	} = useQuery(`getTraceItem/${id}`, () => getTraceItem({ id }));
 
-	const traceDetailResponse = useFetch(getTraceItem, {
-		id,
-	});
-
-	if (traceDetailResponse.error) {
+	if (traceDetailResponse?.error || error || isLoadingError) {
 		return (
 			<Typography>
-				{traceDetailResponse.errorMessage || 'Something went wrong'}
+				{traceDetailResponse?.error || 'Something went wrong'}
 			</Typography>
 		);
 	}
 
-	if (traceDetailResponse.loading || traceDetailResponse.payload === undefined) {
+	if (isLoading || !traceDetailResponse?.payload) {
 		return <Spinner tip="Loading.." />;
 	}
 
-	return <TraceDetailContainer response={traceDetailResponse.payload} />;
+	return <TraceDetailContainer response={traceDetailResponse?.payload} />;
 }
 
 export default TraceDetail;
