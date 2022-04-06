@@ -36,7 +36,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&userSelectedFilter={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
 
@@ -88,7 +88,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
 		);
 	};
 

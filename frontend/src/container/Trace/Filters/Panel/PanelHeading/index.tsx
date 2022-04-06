@@ -53,6 +53,8 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 
 	const defaultErrorMessage = 'Something went wrong';
 
+	console.log({ selectedFilter });
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
@@ -60,17 +62,19 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			e.stopPropagation();
 
 			setIsLoading(true);
-			let updatedFilterData: TraceReducer['filterToFetchData'] = [];
-			const getprepdatedSelectedFilter = new Map(selectedFilter);
+			let updatedFilterData: TraceReducer['filterToFetchData'] = [
+				...filterToFetchData,
+				PanelName,
+			];
 			const getPreUserSelected = new Map(userSelectedFilter);
 
-			updatedFilterData = [PanelName];
+			// updatedFilterData = [PanelName];
 
 			const response = await getFilters({
 				end: String(global.maxTime),
 				start: String(global.minTime),
 				getFilters: updatedFilterData,
-				other: Object.fromEntries(getprepdatedSelectedFilter),
+				other: Object.fromEntries(selectedFilter),
 				isFilterExclude,
 			});
 
@@ -97,7 +101,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						current: spansAggregate.currentPage,
 						filter: updatedFilter,
 						filterToFetchData: updatedFilterData,
-						selectedFilter: getprepdatedSelectedFilter,
+						selectedFilter,
 						selectedTags,
 						userSelected: getPreUserSelected,
 						isFilterExclude,
@@ -106,7 +110,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				});
 
 				updateURL(
-					getprepdatedSelectedFilter,
+					selectedFilter,
 					updatedFilterData,
 					spansAggregate.currentPage,
 					selectedTags,
@@ -138,7 +142,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			...filterToFetchData.filter((name) => name !== PanelName),
 		];
 
-		preSelectedFilter.delete(PanelName);
+		// preSelectedFilter.delete(PanelName);
 
 		dispatch({
 			type: UPDATE_ALL_FILTERS,
