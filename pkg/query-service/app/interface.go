@@ -5,8 +5,8 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
-	"go.signoz.io/query-service/model"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
 )
 
 type Reader interface {
@@ -58,4 +58,5 @@ type Reader interface {
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
+	RemoveTTL(ctx context.Context, ttlParams *model.RemoveTTLParams) (*model.RemoveTTLResponseItem, *model.ApiError)
 }

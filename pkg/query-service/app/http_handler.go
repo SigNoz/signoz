@@ -12,11 +12,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao/interfaces"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
-	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.uber.org/zap"
 )
 
@@ -205,6 +206,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ttl", aH.removeTTL).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/userPreferences", aH.setUserPreferences).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/userPreferences", aH.getUserPreferences).Methods(http.MethodGet)
@@ -1083,6 +1085,47 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := (*aH.reader).GetTTL(context.Background(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) removeTTL(w http.ResponseWriter, r *http.Request) {
+	ttlParams, err := parseRemoveTTL(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	existingTTL, apiErr := (*aH.reader).GetTTL(context.Background(), &model.GetTTLParams{GetAllTTL: true})
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	if ttlParams.Type == constants.TraceTTL && existingTTL.TracesTime == -1 &&
+		aH.handleError(w, fmt.Errorf("traces doesn't have any TTL set, cannot remove"), http.StatusBadRequest) {
+		return
+	}
+
+	if ttlParams.Type == constants.MetricsTTL && existingTTL.MetricsTime == -1 &&
+		aH.handleError(w, fmt.Errorf("metrics doesn't have any TTL set, cannot remove"), http.StatusBadRequest) {
+		return
+	}
+
+	if ttlParams.RemoveAllTTL {
+		if existingTTL.TracesTime == -1 && existingTTL.MetricsTime != -1 {
+			ttlParams.Type = constants.MetricsTTL
+			ttlParams.RemoveAllTTL = false
+		} else if existingTTL.TracesTime != -1 && existingTTL.MetricsTime == -1 {
+			ttlParams.Type = constants.TraceTTL
+			ttlParams.RemoveAllTTL = false
+		} else if aH.handleError(w, fmt.Errorf("no TTL set, cannot remove"), http.StatusBadRequest) {
+			return
+		}
+	}
+
+	result, apiErr := (*aH.reader).RemoveTTL(context.Background(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

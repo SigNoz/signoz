@@ -229,3 +229,8 @@ type GetErrorParams struct {
 	ErrorID     string
 	ServiceName string
 }
+
+type RemoveTTLParams struct {
+	Type         string
+	RemoveAllTTL bool
+}
