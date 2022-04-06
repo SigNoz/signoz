@@ -3,16 +3,33 @@ import getTraceItem from 'api/trace/getTraceItem';
 import Spinner from 'components/Spinner';
 import TraceDetailContainer from 'container/TraceDetail';
 import useFetch from 'hooks/useFetch';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import {
+	PayloadProps,
+	Props as TraceDetailProps,
+} from 'types/api/trace/getTraceItem';
 
 function TraceDetail(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
+	const [traceDetailResponse, setTraceDetailResponse] = useState<
+		SuccessResponse<PayloadProps> | ErrorResponse
+	>();
+	useEffect(() => {
+		getTraceItem({ id }).then((resp) => setTraceDetailResponse(resp));
+	}, [id]);
+	// const traceDetailResponse = useFetch(getTraceItem, {
+	// 	id,
+	// });
 
-	const traceDetailResponse = useFetch(getTraceItem, {
-		id,
-	});
+	if (
+		!traceDetailResponse ||
+		traceDetailResponse.loading ||
+		traceDetailResponse.payload === undefined
+	) {
+		return <Spinner tip="Loading.." />;
+	}
 
 	if (traceDetailResponse.error) {
 		return (
@@ -20,10 +37,6 @@ function TraceDetail(): JSX.Element {
 				{traceDetailResponse.errorMessage || 'Something went wrong'}
 			</Typography>
 		);
-	}
-
-	if (traceDetailResponse.loading || traceDetailResponse.payload === undefined) {
-		return <Spinner tip="Loading.." />;
 	}
 
 	return <TraceDetailContainer response={traceDetailResponse.payload} />;
