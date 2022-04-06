@@ -32,6 +32,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 
 	return (
 		<SelectComponent
+			value={selectedValues[0]}
 			onSelect={(value: unknown): void => {
 				if (typeof value === 'string') {
 					setLocalSelectedTags((tags) => [
