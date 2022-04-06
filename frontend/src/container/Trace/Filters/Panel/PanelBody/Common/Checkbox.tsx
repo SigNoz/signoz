@@ -130,7 +130,6 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
-					updatedFilter,
 					preIsFilterExclude,
 					preUserSelectedMap,
 					spansAggregate.order,

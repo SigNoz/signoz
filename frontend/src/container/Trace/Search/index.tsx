@@ -105,7 +105,6 @@ function Search({
 			traces.filterToFetchData,
 			traces.spansAggregate.currentPage,
 			selectedTags,
-			traces.filter,
 			traces.isFilterExclude,
 			traces.userSelectedFilter,
 			traces.spansAggregate.order,

@@ -33,7 +33,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 		history.push(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&isSelectedFilterSkipped=true&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=[]&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
 
