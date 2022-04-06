@@ -113,41 +113,39 @@ function Search({
 	};
 
 	return (
-		<Space direction="vertical" style={{ width: '100%' }}>
-			<Container ref={tagRef}>
-				<SearchComponent
-					onChange={(event): void => onChangeHandler(event.target.value)}
-					value={value}
-					allowClear
-					disabled={traces.filterLoading}
-					onFocus={onFocusHandler}
-					placeholder="Click to filter by tags"
-					type="search"
-					enterButton={<CaretRightFilled />}
-					onSearch={(string): void => {
-						if (string.length === 0) {
-							updateTagVisibility(false);
-							updateFilters([]);
-							return;
-						}
+		<Container ref={tagRef}>
+			<SearchComponent
+				onChange={(event): void => onChangeHandler(event.target.value)}
+				value={value}
+				allowClear
+				disabled={traces.filterLoading}
+				onFocus={onFocusHandler}
+				placeholder="Click to filter by tags"
+				type="search"
+				enterButton={<CaretRightFilled />}
+				onSearch={(string): void => {
+					if (string.length === 0) {
+						updateTagVisibility(false);
+						updateFilters([]);
+						return;
+					}
 
-						const { isError, payload } = parseQueryToTags(string);
+					const { isError, payload } = parseQueryToTags(string);
 
-						if (isError) {
-							updateTagIsError(true);
-						} else {
-							updateTagIsError(false);
-							updateTagVisibility(false);
-							updateFilters(payload);
-						}
-					}}
-				/>
+					if (isError) {
+						updateTagIsError(true);
+					} else {
+						updateTagIsError(false);
+						updateTagVisibility(false);
+						updateFilters(payload);
+					}
+				}}
+			/>
 
-				{traces.isTagModalOpen && (
-					<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
-				)}
-			</Container>
-		</Space>
+			{traces.isTagModalOpen && (
+				<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
+			)}
+		</Container>
 	);
 }
 

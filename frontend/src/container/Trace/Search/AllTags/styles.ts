@@ -6,7 +6,7 @@ export const Container = styled(Card)`
 	min-height: 20vh;
 	width: 100%;
 	z-index: 2;
-	position: absolute;
+	position: absolute !important;
 
 	.ant-card-body {
 		padding-bottom: 0;
