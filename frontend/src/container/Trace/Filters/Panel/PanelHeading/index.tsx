@@ -138,7 +138,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			...filterToFetchData.filter((name) => name !== PanelName),
 		];
 
-		preSelectedFilter.delete(PanelName);
+		// preSelectedFilter.delete(PanelName);
 
 		dispatch({
 			type: UPDATE_ALL_FILTERS,
