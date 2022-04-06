@@ -4,13 +4,7 @@ import './ReactI18';
 import AppRoutes from 'AppRoutes';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {
-	QueryClient,
-	QueryClientProvider,
-	useMutation,
-	useQuery,
-	useQueryClient,
-} from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import reportWebVitals from 'reportWebVitals';
 import store from 'store';
