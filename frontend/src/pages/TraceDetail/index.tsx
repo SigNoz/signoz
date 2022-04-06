@@ -9,14 +9,15 @@ import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
 
 function TraceDetail(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
-	const {
-		data: traceDetailResponse,
-		error,
-		isLoading,
-		isLoadingError,
-	} = useQuery(`getTraceItem/${id}`, () => getTraceItem({ id }));
+	const { data: traceDetailResponse, error, isLoading, isError } = useQuery(
+		`getTraceItem/${id}`,
+		() => getTraceItem({ id }),
+		{
+			cacheTime: 3000,
+		},
+	);
 
-	if (traceDetailResponse?.error || error || isLoadingError) {
+	if (traceDetailResponse?.error || error || isError) {
 		return (
 			<Typography>
 				{traceDetailResponse?.error || 'Something went wrong'}
@@ -24,11 +25,11 @@ function TraceDetail(): JSX.Element {
 		);
 	}
 
-	if (isLoading || !traceDetailResponse?.payload) {
+	if (isLoading || !(traceDetailResponse && traceDetailResponse.payload)) {
 		return <Spinner tip="Loading.." />;
 	}
 
-	return <TraceDetailContainer response={traceDetailResponse?.payload} />;
+	return <TraceDetailContainer response={traceDetailResponse.payload} />;
 }
 
 export default TraceDetail;
