@@ -1,5 +1,4 @@
 import { CaretRightFilled } from '@ant-design/icons';
-import { Space } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';

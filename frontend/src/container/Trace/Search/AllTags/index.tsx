@@ -116,14 +116,16 @@ function AllTags({
 			</Wrapper>
 
 			<ButtonContainer>
-				<Button onClick={onResetHandler}>Reset</Button>
-				<Button
-					type="primary"
-					onClick={onRunQueryHandler}
-					icon={<CaretRightFilled />}
-				>
-					Run Query
-				</Button>
+				<Space align="start">
+					<Button onClick={onResetHandler}>Reset</Button>
+					<Button
+						type="primary"
+						onClick={onRunQueryHandler}
+						icon={<CaretRightFilled />}
+					>
+						Run Query
+					</Button>
+				</Space>
 			</ButtonContainer>
 		</Container>
 	);
