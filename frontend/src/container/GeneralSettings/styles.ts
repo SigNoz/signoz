@@ -56,6 +56,7 @@ export const ErrorTextContainer = styled.div`
 		margin-bottom: 2rem;
 		display: flex;
 		align-items: center;
+		gap: 1rem;
 
 		> article {
 			margin-right: 1rem;
