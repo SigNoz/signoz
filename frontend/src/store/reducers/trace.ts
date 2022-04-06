@@ -11,6 +11,7 @@ import {
 	UPDATE_SELECTED_TAGS,
 	UPDATE_SPAN_ORDER,
 	UPDATE_SPANS_AGGREGATE,
+	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
 	UPDATE_TAG_MODAL_VISIBILITY,
 	UPDATE_TRACE_FILTER,
 	UPDATE_TRACE_FILTER_LOADING,
@@ -209,6 +210,16 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					order: action.payload.order,
+				},
+			};
+		}
+
+		case UPDATE_SPANS_AGGREGATE_PAGE_NUMBER: {
+			return {
+				...state,
+				spansAggregate: {
+					...state.spansAggregate,
+					currentPage: action.payload.currentPage,
 				},
 			};
 		}

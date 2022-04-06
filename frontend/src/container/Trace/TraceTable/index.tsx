@@ -10,7 +10,10 @@ import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_SPAN_ORDER } from 'types/actions/trace';
+import {
+	UPDATE_SPAN_ORDER,
+	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+} from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
 dayjs.extend(duration);
@@ -133,6 +136,13 @@ function TraceTable(): JSX.Element {
 					type: UPDATE_SPAN_ORDER,
 					payload: {
 						order: spanOrder,
+					},
+				});
+
+				dispatch({
+					type: UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+					payload: {
+						currentPage: props.current,
 					},
 				});
 

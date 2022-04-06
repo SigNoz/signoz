@@ -26,6 +26,8 @@ export const UPDATE_FILTER_RESPONSE_SELECTED =
 export const UPDATE_FILTER_EXCLUDE = 'UPDATE_FILTER_EXCLUDE';
 
 export const UPDATE_SPAN_ORDER = 'UPDATE_SPAN_ORDER';
+export const UPDATE_SPANS_AGGREGATE_PAGE_NUMBER =
+	'UPDATE_SPANS_AGGREGATE_PAGE_NUMBER';
 
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
@@ -152,6 +154,13 @@ export interface UpdateSpans {
 	};
 }
 
+export interface UpdateSpansAggregatePageNumber {
+	type: typeof UPDATE_SPANS_AGGREGATE_PAGE_NUMBER;
+	payload: {
+		currentPage: TraceReducer['spansAggregate']['currentPage'];
+	};
+}
+
 export interface UpdateSpanOrder {
 	type: typeof UPDATE_SPAN_ORDER;
 	payload: {
@@ -177,4 +186,5 @@ export type TraceActions =
 	| ResetTraceFilter
 	| UpdateSelected
 	| UpdateFilterExclude
-	| UpdateSpanOrder;
+	| UpdateSpanOrder
+	| UpdateSpansAggregatePageNumber;
