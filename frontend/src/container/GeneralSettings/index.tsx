@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Button, Col, Modal, notification, Row, Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
@@ -12,12 +13,7 @@ import { IDiskType } from 'types/api/disks/getDisks';
 import { PayloadProps } from 'types/api/settings/getRetention';
 
 import Retention from './Retention';
-import {
-	ButtonContainer,
-	ErrorText,
-	ErrorTextContainer,
-	ToolTipContainer,
-} from './styles';
+import { ButtonContainer, ErrorText, ErrorTextContainer } from './styles';
 
 function GeneralSettings(): JSX.Element {
 	const { t } = useTranslation();
@@ -31,10 +27,17 @@ function GeneralSettings(): JSX.Element {
 		getDisks().then((response) => setAvailableDisks(response.payload));
 	}, []);
 
-	const { payload: currentTTLValues, loading, error, errorMessage } = useFetch<
+	const { payload, loading, error, errorMessage } = useFetch<
 		PayloadProps,
 		undefined
 	>(getRetentionPeriodApi, undefined);
+
+	const [currentTTLValues, setCurrentTTLValues] = useState(payload);
+
+	useEffect(() => {
+		setCurrentTTLValues(payload);
+	}, [payload]);
+
 	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] = useState<
 		number | null
 	>(null);
@@ -63,6 +66,7 @@ function GeneralSettings(): JSX.Element {
 					: null,
 			);
 		}
+		console.log({ changed: currentTTLValues });
 	}, [currentTTLValues]);
 
 	const onModalToggleHandler = (): void => {
@@ -138,43 +142,65 @@ function GeneralSettings(): JSX.Element {
 	const onOkHandler = async (): Promise<void> => {
 		try {
 			setPostApiLoading(true);
-			const [metricsTTLApiResponse, tracesTTLApiResponse] = await Promise.all([
-				setRetentionApi({
-					type: 'metrics',
-					totalDuration: `${metricsTotalRetentionPeriod || -1}h`,
-					coldStorage: s3Enabled ? 's3' : null,
-					toColdDuration: `${metricsS3RetentionPeriod || -1}h`,
-				}),
-				setRetentionApi({
-					type: 'traces',
-					totalDuration: `${tracesTotalRetentionPeriod || -1}h`,
-					coldStorage: s3Enabled ? 's3' : null,
-					toColdDuration: `${tracesS3RetentionPeriod || -1}h`,
-				}),
-			]);
-			[
-				{
-					apiResponse: metricsTTLApiResponse,
-					name: 'metrics',
-				},
-				{
-					apiResponse: tracesTTLApiResponse,
-					name: 'traces',
-				},
-			].forEach(({ apiResponse, name }) => {
-				if (apiResponse.statusCode === 200) {
-					notifications.success({
-						message: 'Success!',
-						placement: 'topRight',
+			const apiCalls = [];
 
-						description: t('settings.retention_success_message', { name }),
-					});
-				} else {
-					notifications.error({
-						message: 'Error',
-						description: t('settings.retention_error_message', { name }),
-						placement: 'topRight',
-					});
+			if (
+				!(
+					currentTTLValues?.metrics_move_ttl_duration_hrs ===
+						metricsS3RetentionPeriod &&
+					currentTTLValues.metrics_ttl_duration_hrs === metricsTotalRetentionPeriod
+				)
+			) {
+				apiCalls.push(() =>
+					setRetentionApi({
+						type: 'metrics',
+						totalDuration: `${metricsTotalRetentionPeriod || -1}h`,
+						coldStorage: s3Enabled ? 's3' : null,
+						toColdDuration: `${metricsS3RetentionPeriod || -1}h`,
+					}),
+				);
+			} else {
+				apiCalls.push(() => Promise.resolve(null));
+			}
+
+			if (
+				!(
+					currentTTLValues?.traces_move_ttl_duration_hrs ===
+						tracesS3RetentionPeriod &&
+					currentTTLValues.traces_ttl_duration_hrs === tracesTotalRetentionPeriod
+				)
+			) {
+				apiCalls.push(() =>
+					setRetentionApi({
+						type: 'traces',
+						totalDuration: `${tracesTotalRetentionPeriod || -1}h`,
+						coldStorage: s3Enabled ? 's3' : null,
+						toColdDuration: `${tracesS3RetentionPeriod || -1}h`,
+					}),
+				);
+			} else {
+				apiCalls.push(() => Promise.resolve(null));
+			}
+			const apiCallSequence = ['metrics', 'traces'];
+			const apiResponses = await Promise.all(apiCalls.map((api) => api()));
+
+			apiResponses.forEach((apiResponse, idx) => {
+				const name = apiCallSequence[idx];
+				if (apiResponse) {
+					if (apiResponse.statusCode === 200) {
+						notifications.success({
+							message: 'Success!',
+							placement: 'topRight',
+
+							description: t('settings.retention_success_message', { name }),
+						});
+					} else {
+						notifications.error({
+							message: 'Error',
+							description: t('settings.retention_error_message', { name }),
+							placement: 'topRight',
+						});
+					}
 				}
 			});
 			onModalToggleHandler();
@@ -186,10 +212,18 @@ function GeneralSettings(): JSX.Element {
 				placement: 'topRight',
 			});
 		}
+		// Updates the currentTTL Values in order to avoid pushing the same values.
+		setCurrentTTLValues({
+			metrics_ttl_duration_hrs: metricsTotalRetentionPeriod || -1,
+			metrics_move_ttl_duration_hrs: metricsS3RetentionPeriod || -1,
+			traces_ttl_duration_hrs: tracesTotalRetentionPeriod || -1,
+			traces_move_ttl_duration_hrs: tracesS3RetentionPeriod || -1,
+		});
+
 		setModal(false);
 	};
 
-	const [isDisabled, errorText] = useMemo(() => {
+	const [isDisabled, errorText] = useMemo((): [boolean, string] => {
 		// Various methods to return dynamic error message text.
 		const messages = {
 			compareError: (name: string | number): string =>
@@ -228,8 +262,18 @@ function GeneralSettings(): JSX.Element {
 				errorText = messages.nullValueError('traces');
 			}
 		}
+		if (
+			currentTTLValues?.metrics_ttl_duration_hrs === metricsTotalRetentionPeriod &&
+			currentTTLValues.metrics_move_ttl_duration_hrs ===
+				metricsS3RetentionPeriod &&
+			currentTTLValues.traces_ttl_duration_hrs === tracesTotalRetentionPeriod &&
+			currentTTLValues.traces_move_ttl_duration_hrs === tracesS3RetentionPeriod
+		) {
+			isDisabled = true;
+		}
 		return [isDisabled, errorText];
 	}, [
+		currentTTLValues,
 		metricsS3RetentionPeriod,
 		metricsTotalRetentionPeriod,
 		s3Enabled,
@@ -249,27 +293,16 @@ function GeneralSettings(): JSX.Element {
 	return (
 		<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
 			{Element}
-			{errorText ? (
-				<ErrorTextContainer>
-					<ErrorText>{errorText}</ErrorText>
+			<ErrorTextContainer>
+				<TextToolTip
+					{...{
+						text: `More details on how to set retention period`,
+						url: 'https://signoz.io/docs/userguide/retention-period/',
+					}}
+				/>
+				{errorText && <ErrorText>{errorText}</ErrorText>}
+			</ErrorTextContainer>
 
-					<TextToolTip
-						{...{
-							text: `More details on how to set retention period`,
-							url: 'https://signoz.io/docs/userguide/retention-period/',
-						}}
-					/>
-				</ErrorTextContainer>
-			) : (
-				<ToolTipContainer>
-					<TextToolTip
-						{...{
-							text: `More details on how to set retention period`,
-							url: 'https://signoz.io/docs/userguide/retention-period/',
-						}}
-					/>
-				</ToolTipContainer>
-			)}
 			<Row justify="space-around">{renderConfig}</Row>
 
 			<Modal
