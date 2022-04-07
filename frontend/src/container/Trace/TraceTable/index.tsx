@@ -25,7 +25,6 @@ function TraceTable(): JSX.Element {
 		selectedTags,
 		filterLoading,
 		userSelectedFilter,
-		filter,
 		isFilterExclude,
 		filterToFetchData,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
