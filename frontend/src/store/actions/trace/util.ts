@@ -20,7 +20,6 @@ export const updateURL = (
 	filterToFetchData: TraceReducer['filterToFetchData'],
 	spanAggregateCurrentPage: TraceReducer['spansAggregate']['currentPage'],
 	selectedTags: TraceReducer['selectedTags'],
-	filter: TraceReducer['filter'],
 	isFilterExclude: TraceReducer['isFilterExclude'],
 	userSelectedFilter: TraceReducer['userSelectedFilter'],
 	spanAggregateOrder: TraceReducer['spansAggregate']['order'],
@@ -55,7 +54,7 @@ export const updateURL = (
 			filterToFetchData,
 		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&selectedTags=${JSON.stringify(
 			selectedTags,
-		)}&filter=${JSON.stringify(Object.fromEntries(filter))}&${preResult
+		)}&${preResult
 			.map((e) => `${e.key}=${e.value}`)
 			.join('&')}&isFilterExclude=${JSON.stringify(
 			Object.fromEntries(isFilterExclude),

@@ -3,14 +3,17 @@ import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import history from 'lib/history';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_SPAN_ORDER } from 'types/actions/trace';
+import {
+	UPDATE_SPAN_ORDER,
+	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+} from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
 dayjs.extend(duration);
@@ -37,30 +40,17 @@ function TraceTable(): JSX.Element {
 		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
 	};
 
-	const getValue = (value: string, record: TableType): JSX.Element => {
-		return (
-			<Link to={getLink(record)}>
-				<Typography>{value}</Typography>
-			</Link>
-		);
+	const getValue = (value: string): JSX.Element => {
+		return <Typography>{value}</Typography>;
 	};
 
 	const getHttpMethodOrStatus = (
 		value: TableType['httpMethod'],
-		record: TableType,
 	): JSX.Element => {
 		if (value.length === 0) {
-			return (
-				<Link to={getLink(record)}>
-					<Typography>-</Typography>
-				</Link>
-			);
+			return <Typography>-</Typography>;
 		}
-		return (
-			<Link to={getLink(record)}>
-				<Tag color="magenta">{value}</Tag>
-			</Link>
-		);
+		return <Tag color="magenta">{value}</Tag>;
 	};
 
 	const columns: ColumnsType<TableType> = [
@@ -69,13 +59,9 @@ function TraceTable(): JSX.Element {
 			dataIndex: 'timestamp',
 			key: 'timestamp',
 			sorter: true,
-			render: (value: TableType['timestamp'], record): JSX.Element => {
+			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
-				return (
-					<Link to={getLink(record)}>
-						<Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>
-					</Link>
-				);
+				return <Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>;
 			},
 		},
 		{
@@ -94,15 +80,13 @@ function TraceTable(): JSX.Element {
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
-			render: (value: TableType['durationNano'], record): JSX.Element => (
-				<Link to={getLink(record)}>
-					<Typography>
-						{`${dayjs
-							.duration({ milliseconds: value / 1000000 })
-							.asMilliseconds()
-							.toFixed(2)} ms`}
-					</Typography>
-				</Link>
+			render: (value: TableType['durationNano']): JSX.Element => (
+				<Typography>
+					{`${dayjs
+						.duration({ milliseconds: value / 1000000 })
+						.asMilliseconds()
+						.toFixed(2)} ms`}
+				</Typography>
 			),
 		},
 		{
@@ -136,12 +120,18 @@ function TraceTable(): JSX.Element {
 					},
 				});
 
+				dispatch({
+					type: UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+					payload: {
+						currentPage: props.current,
+					},
+				});
+
 				updateURL(
 					selectedFilter,
 					filterToFetchData,
 					props.current,
 					selectedTags,
-					filter,
 					isFilterExclude,
 					userSelectedFilter,
 					spanOrder,
@@ -160,6 +150,13 @@ function TraceTable(): JSX.Element {
 			style={{
 				cursor: 'pointer',
 			}}
+			onRow={(record): React.HTMLAttributes<TableType> => ({
+				onClick: (event): void => {
+					event.preventDefault();
+					event.stopPropagation();
+					history.push(getLink(record));
+				},
+			})}
 			pagination={{
 				current: spansAggregate.currentPage,
 				pageSize: spansAggregate.pageSize,
