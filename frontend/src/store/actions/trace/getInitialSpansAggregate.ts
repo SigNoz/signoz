@@ -82,7 +82,6 @@ export const GetSpansAggregate = (
 					traces.filterToFetchData,
 					props.current,
 					traces.selectedTags,
-					traces.filter,
 					traces.isFilterExclude,
 					traces.userSelectedFilter,
 					order,

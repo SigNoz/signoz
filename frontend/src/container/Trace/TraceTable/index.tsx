@@ -151,7 +151,6 @@ function TraceTable(): JSX.Element {
 					filterToFetchData,
 					props.current,
 					selectedTags,
-					filter,
 					isFilterExclude,
 					userSelectedFilter,
 					spanOrder,

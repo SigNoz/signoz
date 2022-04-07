@@ -110,7 +110,6 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					updatedFilterData,
 					spansAggregate.currentPage,
 					selectedTags,
-					updatedFilter,
 					isFilterExclude,
 					getPreUserSelected,
 					spansAggregate.order,
@@ -139,7 +138,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			...filterToFetchData.filter((name) => name !== PanelName),
 		];
 
-		preSelectedFilter.delete(PanelName);
+		// preSelectedFilter.delete(PanelName);
 
 		dispatch({
 			type: UPDATE_ALL_FILTERS,
@@ -160,7 +159,6 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			preFilterToFetchTheData,
 			spansAggregate.currentPage,
 			selectedTags,
-			filter,
 			isFilterExclude,
 			userSelectedFilter,
 			spansAggregate.order,
@@ -210,7 +208,6 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
-					getUpdatedFilter,
 					postIsFilterExclude,
 					preUserSelected,
 					spansAggregate.order,
