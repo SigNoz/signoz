@@ -18,16 +18,26 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 
 	return (
 		<>
-			{statusObj.map((e) => (
-				<CheckBoxComponent
-					key={e}
-					{...{
-						name,
-						keyValue: e,
-						value: status[e],
-					}}
-				/>
-			))}
+			{statusObj
+				.sort((a, b) => {
+					const countA = +status[a];
+					const countB = +status[b];
+
+					if (countA === countB) {
+						return a.length - b.length;
+					}
+					return countA - countB;
+				})
+				.map((e) => (
+					<CheckBoxComponent
+						key={e}
+						{...{
+							name,
+							keyValue: e,
+							value: status[e],
+						}}
+					/>
+				))}
 		</>
 	);
 }

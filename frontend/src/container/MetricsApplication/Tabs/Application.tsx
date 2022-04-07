@@ -36,7 +36,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["ok","error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=[]&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
 
@@ -88,7 +88,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&userSelectedFilter={"status":["error"],"serviceName":["${servicename}"]}&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=[]&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
 
@@ -179,7 +179,6 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						<GraphContainer>
 							<FullView
 								name="request_per_sec"
-								noDataGraph
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
 									onClickhandler(event, element, chart, data, 'Request');
@@ -214,7 +213,6 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						<GraphContainer>
 							<FullView
 								name="error_percentage_%"
-								noDataGraph
 								fullViewOptions={false}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');

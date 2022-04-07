@@ -1,4 +1,6 @@
-import React, { useCallback } from 'react';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Modal } from 'antd';
+import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -8,14 +10,29 @@ import AppActions from 'types/actions';
 import { Data } from '../index';
 import { TableLinkText } from './styles';
 
-function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
-	const onClickHandler = useCallback(() => {
-		deleteDashboard({
-			uuid: id,
-		});
-	}, [id, deleteDashboard]);
+const { confirm } = Modal;
 
-	return <TableLinkText onClick={onClickHandler}>Delete</TableLinkText>;
+function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
+	const openConfirmationDialog = (): void => {
+		confirm({
+			title: 'Do you really want to delete this dashboard?',
+			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
+			onOk() {
+				deleteDashboard({
+					uuid: id,
+				});
+			},
+			okText: 'Delete',
+			okButtonProps: { danger: true },
+			centered: true,
+		});
+	};
+
+	return (
+		<TableLinkText type="danger" onClick={openConfirmationDialog}>
+			Delete
+		</TableLinkText>
+	);
 }
 
 interface DispatchProps {

@@ -18,11 +18,11 @@ export function isTraceFilterEnum(
 export const updateURL = (
 	selectedFilter: TraceReducer['selectedFilter'],
 	filterToFetchData: TraceReducer['filterToFetchData'],
-	current: TraceReducer['spansAggregate']['total'],
+	spanAggregateCurrentPage: TraceReducer['spansAggregate']['currentPage'],
 	selectedTags: TraceReducer['selectedTags'],
-	filter: TraceReducer['filter'],
 	isFilterExclude: TraceReducer['isFilterExclude'],
 	userSelectedFilter: TraceReducer['userSelectedFilter'],
+	spanAggregateOrder: TraceReducer['spansAggregate']['order'],
 ): void => {
 	const search = new URLSearchParams(window.location.search);
 	const preResult: { key: string; value: string }[] = [];
@@ -30,11 +30,12 @@ export const updateURL = (
 	const keyToSkip = [
 		'selected',
 		'filterToFetchData',
-		'current',
 		'selectedTags',
 		'filter',
 		'isFilterExclude',
 		'userSelectedFilter',
+		'spanAggregateCurrentPage',
+		'spanAggregateOrder',
 	];
 
 	search.forEach((value, key) => {
@@ -51,15 +52,15 @@ export const updateURL = (
 			Object.fromEntries(selectedFilter),
 		)}&filterToFetchData=${JSON.stringify(
 			filterToFetchData,
-		)}&current=${current}&selectedTags=${JSON.stringify(
+		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&selectedTags=${JSON.stringify(
 			selectedTags,
-		)}&filter=${JSON.stringify(Object.fromEntries(filter))}&${preResult
+		)}&${preResult
 			.map((e) => `${e.key}=${e.value}`)
 			.join('&')}&isFilterExclude=${JSON.stringify(
 			Object.fromEntries(isFilterExclude),
 		)}&userSelectedFilter=${JSON.stringify(
 			Object.fromEntries(userSelectedFilter),
-		)}`,
+		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&spanAggregateOrder=${spanAggregateOrder}`,
 	);
 };
 

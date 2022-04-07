@@ -18,12 +18,14 @@ function CreateAlertChannels({
 	preType = 'slack',
 }: CreateAlertChannelsProps): JSX.Element {
 	const [formInstance] = Form.useForm();
+
 	const [selectedConfig, setSelectedConfig] = useState<
 		Partial<SlackChannel & WebhookChannel>
 	>({
-		text: ` {{ range .Alerts -}}
-     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
+		text: `{{ range .Alerts -}}
+     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
+     *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
 
      *Details:*
