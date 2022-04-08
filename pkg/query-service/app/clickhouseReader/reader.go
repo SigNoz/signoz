@@ -737,7 +737,7 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for DELETE command to notification_channels\n", err)
+		zap.S().Errorf("Error in committing transaction for DELETE command to notification_channels\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -843,7 +843,7 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
+		zap.S().Errorf("Error in committing transaction for INSERT to notification_channels\n", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -887,7 +887,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for INSERT to notification_channels\n", err)
+		zap.S().Errorf("Error in committing transaction for INSERT to notification_channels\n", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -932,7 +932,7 @@ func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 	}
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for INSERT to rules\n", err)
+		zap.S().Errorf("Error in committing transaction for INSERT to rules\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -974,7 +974,7 @@ func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for UPDATE to rules\n", err)
+		zap.S().Errorf("Error in committing transaction for UPDATE to rules\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -1020,7 +1020,7 @@ func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for deleting rules\n", err)
+		zap.S().Errorf("Error in committing transaction for deleting rules\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
