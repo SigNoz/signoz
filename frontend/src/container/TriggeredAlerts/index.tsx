@@ -2,7 +2,6 @@ import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
 import { PayloadProps } from 'types/api/alerts/getTriggered';
 
 import TriggerComponent from './TriggeredAlert';

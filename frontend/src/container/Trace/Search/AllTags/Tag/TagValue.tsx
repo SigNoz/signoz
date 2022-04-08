@@ -1,5 +1,4 @@
 import { Select } from 'antd';
-import { DefaultOptionType } from 'antd/lib/select';
 import getTagValue from 'api/trace/getTagValue';
 import useFetch from 'hooks/useFetch';
 import React from 'react';
@@ -9,7 +8,6 @@ import { PayloadProps, Props } from 'types/api/trace/getTagValue';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { Value } from '.';
 import { SelectComponent } from './styles';
 
 function TagValue(props: TagValueProps): JSX.Element {
