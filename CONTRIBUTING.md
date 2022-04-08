@@ -18,10 +18,10 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 ### Contribute to Frontend with Docker installation of SigNoz
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz`
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml`
+- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L62`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
-    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml`
+    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 
     ```docker
     ports:
