@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 )
 
@@ -13,29 +12,28 @@ func TestCreateGroup(t *testing.T) {
 	ctx := context.Background()
 	groupName := "dev"
 
-	require.NoError(t, CreateGroup(ctx, groupName))
-
-	g, err := GetGroup(ctx, constants.RootGroup)
+	g, err := CreateGroup(ctx, groupName)
 	require.NoError(t, err)
-	require.Equal(t, constants.RootGroup, g.Name)
-	require.Equal(t, 1, g.Id)
 
-	g, err = GetGroup(ctx, groupName)
+	g2, err := GetGroup(ctx, g.Id)
 	require.NoError(t, err)
-	require.Equal(t, groupName, g.Name)
-	require.Equal(t, 2, g.Id)
+	require.Equal(t, g.Name, g2.Name)
+
+	// Creating another group with same name should fail.
+	g, err = CreateGroup(ctx, groupName)
+	require.Contains(t, err.Error(), "UNIQUE constraint failed: groups.name")
 }
 
 func TestAddRule(t *testing.T) {
 	ctx := context.Background()
 
-	id, err := CreateRule(ctx, &model.RBACRule{Api: "dashboard", Permission: ReadPermission})
+	rule, err := CreateRule(ctx, &model.RBACRule{ApiClass: "dashboard", Permission: ReadPermission})
 	require.NoError(t, err)
 
-	rule, err := GetRule(ctx, int(id))
+	readRule, err := GetRule(ctx, rule.Id)
 	require.NoError(t, err)
 
-	require.Equal(t, id, rule.Id)
-	require.Equal(t, "dashboard", rule.Api)
-	require.Equal(t, ReadPermission, rule.Permission)
+	require.Equal(t, rule.Id, readRule.Id)
+	require.Equal(t, "dashboard", readRule.ApiClass)
+	require.Equal(t, ReadPermission, readRule.Permission)
 }

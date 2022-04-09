@@ -1,29 +1,30 @@
 package model
 
-type UserParams struct {
-	Email    string `json:"email" db:"email"`
-	Password string `json:"password" db:"password"`
+type User struct {
+	Id               string `json:"id" db:"id"`
+	Name             string `json:"name" db:"name"`
+	OrganizationName string `json:"org_name" db:"org_name"`
+	Email            string `json:"email" db:"email"`
+	Password         string `json:"password" db:"password"`
 }
 
 type Group struct {
-	Id   int    `json:"id" db:"id"`
+	Id   string `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
 }
 
+type RBACRule struct {
+	Id         string `json:"id" db:"id"`
+	ApiClass   string `json:"api_class" db:"api_class"`
+	Permission int    `json:"permission" db:"permission"`
+}
+
 type GroupUser struct {
-	GroupId   int    `json:"groupId,omitempty" db:"groupId"`
-	GroupName string `json:"groupName" db:"groupName"`
-	UserId    int    `json:"userId" db:"userId"`
+	GroupId string `json:"group_id,omitempty" db:"group_id"`
+	UserId  string `json:"user_id" db:"user_id"`
 }
 
 type GroupRule struct {
-	GroupId   int    `json:"groupId,omitempty" db:"groupId"`
-	GroupName string `json:"groupName" db:"groupName"`
-	RuleId    int    `json:"ruleId" db:"ruleId"`
-}
-
-type RBACRule struct {
-	Id         int64  `json:"id" db:"id"`
-	Api        string `json:"api" db:"api"`
-	Permission int    `json:"permission" db:"permission"`
+	GroupId string `json:"group_id,omitempty" db:"group_id"`
+	RuleId  int    `json:"rule_id" db:"rule_id"`
 }

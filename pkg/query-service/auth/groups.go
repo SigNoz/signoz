@@ -35,31 +35,40 @@ var ApiClass = map[string]string{
 	"/api/v1/channels/{id}": AuthChannelAPIs,
 }
 
-func CreateGroup(ctx context.Context, name string) error {
-	if apiErr := dao.DB().CreateNewGroup(ctx, &model.Group{Name: name}); apiErr != nil {
-		return apiErr.Err
+func CreateGroup(ctx context.Context, name string) (*model.Group, error) {
+	g, apiErr := dao.DB().CreateGroup(ctx, &model.Group{Name: name})
+	if apiErr != nil {
+		return nil, apiErr.Err
 	}
-	return nil
+	return g, nil
 }
 
-func GetGroup(ctx context.Context, name string) (*model.Group, error) {
-	group, apiErr := dao.DB().FetchGroup(ctx, name)
+func GetGroup(ctx context.Context, id string) (*model.Group, error) {
+	group, apiErr := dao.DB().GetGroup(ctx, id)
 	if apiErr != nil {
 		return nil, apiErr.Err
 	}
 	return group, nil
 }
 
-func GroupUsers(ctx context.Context, name string) (*[]model.GroupUser, error) {
-	users, apiErr := dao.DB().FetchGroupUsers(ctx, name)
+func GetGroups(ctx context.Context) ([]model.Group, error) {
+	groups, apiErr := dao.DB().GetGroups(ctx)
+	if apiErr != nil {
+		return nil, apiErr.Err
+	}
+	return groups, nil
+}
+
+func GroupUsers(ctx context.Context, id string) ([]model.GroupUser, error) {
+	users, apiErr := dao.DB().GetGroupUsers(ctx, id)
 	if apiErr != nil {
 		return nil, apiErr.Err
 	}
 	return users, nil
 }
 
-func GroupRules(ctx context.Context, name string) (*[]model.GroupRule, error) {
-	rules, apiErr := dao.DB().FetchGroupRules(ctx, name)
+func GroupRules(ctx context.Context, id string) ([]model.GroupRule, error) {
+	rules, apiErr := dao.DB().GetGroupRules(ctx, id)
 	if apiErr != nil {
 		return nil, apiErr.Err
 	}
@@ -67,23 +76,23 @@ func GroupRules(ctx context.Context, name string) (*[]model.GroupRule, error) {
 }
 
 func AddUserToGroup(ctx context.Context, req *model.GroupUser) error {
-	apiErr := dao.DB().AddUserToGroup(ctx, req.UserId, req.GroupName)
+	apiErr := dao.DB().AddUserToGroup(ctx, req)
 	if apiErr != nil {
 		return apiErr.Err
 	}
 	return nil
 }
 
-func CreateRule(ctx context.Context, rule *model.RBACRule) (int64, error) {
-	id, apiErr := dao.DB().AddRule(ctx, rule)
+func CreateRule(ctx context.Context, rule *model.RBACRule) (*model.RBACRule, error) {
+	rule, apiErr := dao.DB().CreateRule(ctx, rule)
 	if apiErr != nil {
-		return -1, apiErr.Err
+		return nil, apiErr.Err
 	}
-	return id, nil
+	return rule, nil
 }
 
-func GetRule(ctx context.Context, id int) (*model.RBACRule, error) {
-	rule, apiErr := dao.DB().FetchRule(ctx, id)
+func GetRule(ctx context.Context, id string) (*model.RBACRule, error) {
+	rule, apiErr := dao.DB().GetRule(ctx, id)
 	if apiErr != nil {
 		return nil, apiErr.Err
 	}
@@ -91,7 +100,7 @@ func GetRule(ctx context.Context, id int) (*model.RBACRule, error) {
 }
 
 func AddRuleToGroup(ctx context.Context, req *model.GroupRule) error {
-	apiErr := dao.DB().AddRuleToGroup(ctx, req.RuleId, req.GroupName)
+	apiErr := dao.DB().AddRuleToGroup(ctx, req)
 	if apiErr != nil {
 		return apiErr.Err
 	}

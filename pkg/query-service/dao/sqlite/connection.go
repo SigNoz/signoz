@@ -9,6 +9,7 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,30 +35,33 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
 		);
 		CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			uuid TEXT NOT NULL,
-			email TEXT NOT NULL,
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			org_name TEXT,
+			email TEXT NOT NULL UNIQUE,
 			password TEXT NOT NULL
 		);
 		CREATE TABLE IF NOT EXISTS groups (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL UNIQUE
 		);
 		CREATE TABLE IF NOT EXISTS group_users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			groupId INTEGER NOT NULL,
-			groupName TEXT NOT NULL,
-			userId INTEGER NOT NULL
+			group_id TEXT NOT NULL,
+			user_id TEXT NOT NULL,
+			FOREIGN KEY(group_id) REFERENCES groups(id),
+			FOREIGN KEY(user_id) REFERENCES users(id),
+			PRIMARY KEY (group_id, user_id)
 		);
 		CREATE TABLE IF NOT EXISTS group_rules (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			groupId INTEGER NOT NULL,
-			groupName TEXT NOT NULL,
-			ruleId INTEGER NOT NULL
+			group_id TEXT NOT NULL,
+			rule_id TEXT NOT NULL,
+			FOREIGN KEY(group_id) REFERENCES groups(id),
+			FOREIGN KEY(rule_id) REFERENCES rbac_rules(id),
+			PRIMARY KEY (group_id, rule_id)
 		);
 		CREATE TABLE IF NOT EXISTS rbac_rules (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			api TEXT NOT NULL,
+			id TEXT PRIMARY KEY,
+			api_class TEXT NOT NULL,
 			permission INTEGER NOT NULL
 		);
 	`
@@ -65,7 +69,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	fmt.Println("setting schema...")
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating tables: ", err.Error())
+		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
 	}
 
 	mds := &ModelDaoSqlite{db: db}
@@ -122,27 +126,29 @@ func (mds *ModelDaoSqlite) initializeRootUser() error {
 		if err != nil {
 			return err
 		}
-		cErr := mds.CreateNewUser(ctx, &model.UserParams{
+		_, cErr := mds.CreateUser(ctx, &model.User{
 			Email:    constants.RootUserEmail,
 			Password: string(hash),
 		})
 		if cErr != nil {
 			return cErr.Err
 		}
+		zap.S().Infof("Initialized admin user, email: %s, password: %s\n",
+			constants.RootUserEmail, constants.RootUserPassword)
 	}
 	return nil
 }
 
 func (mds *ModelDaoSqlite) initializeRBAC() error {
 	ctx := context.Background()
-	group, err := mds.FetchGroup(ctx, constants.RootGroup)
+	group, err := mds.GetGroup(ctx, constants.RootGroup)
 	if err != nil {
 		return errors.Wrap(err.Err, "Failed to query for root group")
 	}
 
 	// Create the root group if it is not present.
 	if group == nil {
-		if cErr := mds.CreateNewGroup(ctx, &model.Group{Name: constants.RootGroup}); cErr != nil {
+		if _, cErr := mds.CreateGroup(ctx, &model.Group{Name: constants.RootGroup}); cErr != nil {
 			return cErr.Err
 		}
 	}

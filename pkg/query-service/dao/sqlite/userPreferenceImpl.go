@@ -36,9 +36,9 @@ func (mds *ModelDaoSqlite) FetchUserPreference(ctx context.Context) (*model.User
 
 }
 
-func (mds *ModelDaoSqlite) FetchUser(ctx context.Context, email string) (*model.UserParams, *model.ApiError) {
+func (mds *ModelDaoSqlite) FetchUser(ctx context.Context, email string) (*model.User, *model.ApiError) {
 
-	userParams := []model.UserParams{}
+	userParams := []model.User{}
 	query := fmt.Sprintf(`SELECT email, password FROM users WHERE email="%s";`, email)
 
 	err := mds.db.Select(&userParams, query)
@@ -112,21 +112,5 @@ func (mds *ModelDaoSqlite) CreateDefaultUserPreference(ctx context.Context) (*mo
 	}
 
 	return mds.FetchUserPreference(ctx)
-
-}
-
-func (mds *ModelDaoSqlite) CreateNewUser(ctx context.Context, user *model.UserParams) *model.ApiError {
-
-	zap.S().Debug("Creating new user. Email: %s\n", user.Email)
-	uuid := uuid.New().String()
-	_, err := mds.db.ExecContext(ctx, `INSERT INTO users (uuid, email, password) VALUES (?, ?, ?);`,
-		uuid, user.Email, user.Password)
-
-	if err != nil {
-		zap.S().Errorf("Error in preparing statement for INSERT to users\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return nil
 
 }

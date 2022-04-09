@@ -56,7 +56,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 		return &User{Email: user.Email}, nil
 	}
 
-	user, err := dao.DB().FetchUser(ctx, req.Email)
+	user, err := dao.DB().GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "user not found")
 	}

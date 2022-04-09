@@ -68,7 +68,7 @@ func TestRegister(t *testing.T) {
 	password := "password123"
 
 	register(t, email, password)
-	user, getErr := dao.DB().FetchUser(context.Background(), email)
+	user, getErr := dao.DB().GetUserByEmail(context.Background(), email)
 	require.Nil(t, getErr)
 
 	require.Equal(t, email, user.Email)

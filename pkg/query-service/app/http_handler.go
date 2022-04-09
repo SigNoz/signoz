@@ -226,16 +226,31 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
 
+	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
-	// can have /users api for admin for user management.
 
-	// crud apis
-	router.HandleFunc("/api/v1/auth/group", aH.createGroup).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/auth/rule", aH.createRBACRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/auth/assignRule", aH.assignRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/auth/assignUser", aH.assignUser).Methods(http.MethodPost)
+	// There is no create user API because user creation happen via registr API.
+	router.HandleFunc("/api/v1/user", aH.listUsers).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", aH.getUser).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", aH.updateUser).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", aH.deleteUser).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/rbac/group", aH.createGroup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/group", aH.listGroups).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/group/{id}", aH.getGroup).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/group/{id}", aH.deleteGroup).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/rbac/rule", aH.createRBACRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/rule", aH.listRBACRules).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/rbac/assignRule", aH.assignRBACRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/unassignRule", aH.unassignRBACRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/assignUser", aH.assignUser).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/unassignUser", aH.unassignUser).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1201,6 +1216,11 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, resp)
 }
 
+func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request)  {}
+func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request)    {}
+func (aH *APIHandler) updateUser(w http.ResponseWriter, r *http.Request) {}
+func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {}
+
 func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateGroupRequest(r)
 	fmt.Printf("parsed req: %+v\n", req)
@@ -1216,6 +1236,10 @@ func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 
 	aH.writeJSON(w, r, map[string]string{"data": "group created successfully"})
 }
+
+func (aH *APIHandler) listGroups(w http.ResponseWriter, r *http.Request)  {}
+func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request)    {}
+func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {}
 
 func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateRBACRuleRequest(r)
@@ -1233,7 +1257,11 @@ func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, map[string]string{"data": fmt.Sprintf("ruleId=%d created successfully", id)})
 }
 
-func (aH *APIHandler) assignRule(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) listRBACRules(w http.ResponseWriter, r *http.Request)  {}
+func (aH *APIHandler) getRBACRule(w http.ResponseWriter, r *http.Request)    {}
+func (aH *APIHandler) deleteRBACRule(w http.ResponseWriter, r *http.Request) {}
+
+func (aH *APIHandler) assignRBACRule(w http.ResponseWriter, r *http.Request) {
 	req, err := parseAssignRuleRequest(r)
 	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
@@ -1248,6 +1276,8 @@ func (aH *APIHandler) assignRule(w http.ResponseWriter, r *http.Request) {
 
 	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
 }
+
+func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {}
 
 func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseAssignUserRequest(r)
@@ -1264,6 +1294,8 @@ func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
 
 	aH.writeJSON(w, r, map[string]string{"data": "user assigned successfully"})
 }
+
+func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {}
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
 // 	// vars := mux.Vars(r)
