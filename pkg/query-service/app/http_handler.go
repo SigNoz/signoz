@@ -249,8 +249,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
 
+	router.HandleFunc("/api/v1/rbac/groupRule/{id}", aH.getGroupRules).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/groupRule", aH.assignRBACRule).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rbac/groupRule", aH.unassignRBACRule).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/rbac/groupUser/{id}", aH.getGroupUsers).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/groupUser", aH.assignUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rbac/groupUser", aH.unassignUser).Methods(http.MethodDelete)
 }
@@ -1257,15 +1260,32 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to update user")
+	ctx := context.Background()
+	old, apiErr := dao.DB().GetUser(ctx, id)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to update user")
+		return
 	}
 
+	if len(update.Name) > 0 {
+		old.Name = update.Name
+	}
+	if len(update.OrganizationName) > 0 {
+		old.Name = update.OrganizationName
+	}
+	if len(update.Email) > 0 {
+		old.Email = update.Email
+	}
+	if len(update.Password) > 0 {
+		hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
+		if err != nil {
+			aH.respondError(w, &model.ApiError{Err: err}, "Failed to update user")
+		}
+		old.Password = string(hash)
+	}
 	update.Id = id
-	update.Password = string(hash)
 
-	_, apiErr := dao.DB().EditUser(context.Background(), update)
+	_, apiErr = dao.DB().EditUser(ctx, old)
 	if apiErr != nil {
 		aH.respondError(w, apiErr, "Failed to update user")
 		return
@@ -1310,21 +1330,21 @@ func (aH *APIHandler) listGroups(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	user, err := dao.DB().GetGroup(context.Background(), id)
+	group, err := dao.DB().GetGroup(context.Background(), id)
 	if err != nil {
 		aH.respondError(w, err, "Failed to get group")
 		return
 	}
-	aH.writeJSON(w, r, user)
+	aH.writeJSON(w, r, group)
 }
 func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	err := dao.DB().DeleteGroup(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get user")
+		aH.respondError(w, err, "Failed to query group")
 		return
 	}
-	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
+	aH.writeJSON(w, r, map[string]string{"data": "group deleted successfully"})
 }
 
 func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
@@ -1365,10 +1385,20 @@ func (aH *APIHandler) deleteRBACRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	err := dao.DB().DeleteRule(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get user")
+		aH.respondError(w, err, "Failed to query rule")
 		return
 	}
-	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
+	aH.writeJSON(w, r, map[string]string{"data": "rule deleted successfully"})
+}
+
+func (aH *APIHandler) getGroupRules(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	rules, err := dao.DB().GetGroupRules(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get group rules")
+		return
+	}
+	aH.writeJSON(w, r, rules)
 }
 
 func (aH *APIHandler) assignRBACRule(w http.ResponseWriter, r *http.Request) {
@@ -1400,7 +1430,17 @@ func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
+	aH.writeJSON(w, r, map[string]string{"data": "rule removed successfully"})
+}
+
+func (aH *APIHandler) getGroupUsers(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	users, err := dao.DB().GetGroupUsers(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get users")
+		return
+	}
+	aH.writeJSON(w, r, users)
 }
 
 func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
@@ -1432,7 +1472,7 @@ func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
+	aH.writeJSON(w, r, map[string]string{"data": "rule removed successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/dao"
+	"go.signoz.io/query-service/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,7 +32,7 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 		return nil, err
 	}
 
-	accessJwt, err := generateAccessJwt(user.Email, user.Groups)
+	accessJwt, err := generateAccessJwt(user)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
+func authenticateLogin(ctx context.Context, req *LoginRequest) (*model.User, error) {
 
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
@@ -53,7 +54,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}
 
-		return &User{Email: user.Email}, nil
+		return &model.User{Email: user.Email}, nil
 	}
 
 	user, err := dao.DB().GetUserByEmail(ctx, req.Email)
@@ -63,10 +64,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*User, error) {
 	if user == nil || !passwordMatch(user.Password, req.Password) {
 		return nil, ErrorInvalidCreds
 	}
-	return &User{
-		Email:    user.Email,
-		Password: req.Password,
-	}, nil
+	return user, nil
 }
 
 // Generate hash from the password.

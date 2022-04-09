@@ -7,6 +7,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"go.signoz.io/query-service/model"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -35,7 +36,7 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func validateUser(tok string) (*User, error) {
+func validateUser(tok string) (*model.User, error) {
 	claims, err := ParseJWT(tok)
 	if err != nil {
 		return nil, err
@@ -44,28 +45,17 @@ func validateUser(tok string) (*User, error) {
 	if !claims.VerifyExpiresAt(now, true) {
 		return nil, errors.Errorf("Token is expired")
 	}
-	return &User{
+	return &model.User{
 		Email: claims["email"].(string),
 	}, nil
 }
 
-func generateAccessJwt(email string, groups []Group) (string, error) {
+func generateAccessJwt(user *model.User) (string, error) {
 
-	getIds := func(groups []Group) []string {
-		if len(groups) == 0 {
-			return nil
-		}
-
-		gids := make([]string, 0, len(groups))
-		for _, g := range groups {
-			gids = append(gids, g.GroupID)
-		}
-		return gids
-	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":  email,
-		"groups": getIds(groups),
-		"exp":    time.Now().Add(JwtExpiry).Unix(),
+		"id":    user.Id,
+		"email": user.Email,
+		"exp":   time.Now().Add(JwtExpiry).Unix(),
 	})
 
 	jwtStr, err := token.SignedString([]byte(JwtSecret))

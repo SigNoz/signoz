@@ -28,6 +28,8 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	db.SetMaxOpenConns(10)
 
 	table_schema := `
+		PRAGMA foreign_keys = ON;
+
 		CREATE TABLE IF NOT EXISTS user_preferences (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			uuid TEXT NOT NULL,
@@ -141,7 +143,7 @@ func (mds *ModelDaoSqlite) initializeRootUser() error {
 
 func (mds *ModelDaoSqlite) initializeRBAC() error {
 	ctx := context.Background()
-	group, err := mds.GetGroup(ctx, constants.RootGroup)
+	group, err := mds.GetGroupByName(ctx, constants.RootGroup)
 	if err != nil {
 		return errors.Wrap(err.Err, "Failed to query for root group")
 	}

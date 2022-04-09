@@ -14,6 +14,7 @@ type Queries interface {
 	GetUsers(ctx context.Context) ([]model.User, *model.ApiError)
 
 	GetGroup(ctx context.Context, id string) (*model.Group, *model.ApiError)
+	GetGroupByName(ctx context.Context, name string) (*model.Group, *model.ApiError)
 	GetGroups(ctx context.Context) ([]model.Group, *model.ApiError)
 
 	GetRule(ctx context.Context, id string) (*model.RBACRule, *model.ApiError)

@@ -100,11 +100,11 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.A
 func (mds *ModelDaoSqlite) CreateGroup(ctx context.Context, group *model.Group) (*model.Group, *model.ApiError) {
 
 	group.Id = uuid.NewString()
-	zap.S().Debug("Creating new group.  %+v\n", group)
+	zap.S().Debugf("Creating new group.  %+v\n", group)
 	_, err := mds.db.ExecContext(ctx, `INSERT INTO groups (id, name) VALUES (?, ?);`,
 		group.Id, group.Name)
 	if err != nil {
-		zap.S().Errorf("Error while creating a new group\n", err)
+		zap.S().Errorf("Error while creating a new group, Err: %v\n", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -126,6 +126,28 @@ func (mds *ModelDaoSqlite) GetGroup(ctx context.Context, id string) (*model.Grou
 
 	groups := []model.Group{}
 	err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE id=?`, id)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(groups) > 1 {
+		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("more than 1 row in groups found"))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(groups) == 0 {
+		return nil, nil
+	}
+
+	return &groups[0], nil
+}
+
+func (mds *ModelDaoSqlite) GetGroupByName(ctx context.Context, name string) (*model.Group, *model.ApiError) {
+
+	groups := []model.Group{}
+	err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE name=?`, name)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)

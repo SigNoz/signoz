@@ -958,10 +958,12 @@ func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
 }
 
 func parseInviteRequest(r *http.Request) (*auth.InviteRequest, error) {
-	email := r.URL.Query().Get("email")
-
-	// TODO: Add email validation
-	return &auth.InviteRequest{Email: email}, nil
+	var req auth.InviteRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return &req, nil
 }
 
 func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {

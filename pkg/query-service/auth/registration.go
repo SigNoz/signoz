@@ -31,13 +31,6 @@ type InviteResponse struct {
 	InviteToken string `json:"inviteToken"`
 }
 
-type User struct {
-	ID       string
-	Email    string
-	Password string
-	Groups   []Group
-}
-
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *InviteRequest) (*InviteResponse, error) {
 	if err := authenticateRootUser(ctx); err != nil {
@@ -80,9 +73,11 @@ func validateInvite(req *RegisterRequest) error {
 }
 
 type RegisterRequest struct {
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	InviteToken string `json: "token"`
+	Name             string `json:"name"`
+	OrganizationName string `json:"orgName"`
+	Email            string `json:"email"`
+	Password         string `json:"password"`
+	InviteToken      string `json:"token"`
 }
 
 func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
@@ -101,8 +96,10 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 		}
 	}
 	_, apiErr := dao.DB().CreateUser(ctx, &model.User{
-		Email:    req.Email,
-		Password: hash,
+		Name:             req.Name,
+		OrganizationName: req.OrganizationName,
+		Email:            req.Email,
+		Password:         hash,
 	})
 
 	return apiErr
