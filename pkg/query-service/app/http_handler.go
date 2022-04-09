@@ -13,12 +13,14 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/auth"
+	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/dao/interfaces"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type status string
@@ -234,7 +236,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	// There is no create user API because user creation happen via registr API.
 	router.HandleFunc("/api/v1/user", aH.listUsers).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", aH.getUser).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", aH.updateUser).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", aH.editUser).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", aH.deleteUser).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/rbac/group", aH.createGroup).Methods(http.MethodPost)
@@ -247,10 +249,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/rbac/assignRule", aH.assignRBACRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/unassignRule", aH.unassignRBACRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/assignUser", aH.assignUser).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/unassignUser", aH.unassignUser).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/groupRule", aH.assignRBACRule).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/groupRule", aH.unassignRBACRule).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rbac/groupUser", aH.assignUser).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rbac/groupUser", aH.unassignUser).Methods(http.MethodDelete)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1216,10 +1218,70 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, resp)
 }
 
-func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request)  {}
-func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request)    {}
-func (aH *APIHandler) updateUser(w http.ResponseWriter, r *http.Request) {}
-func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {}
+func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := dao.DB().GetUsers(context.Background())
+	if err != nil {
+		aH.respondError(w, err, "Failed to get users list")
+		return
+	}
+	aH.writeJSON(w, r, users)
+}
+
+func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	user, err := dao.DB().GetUser(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get user")
+		return
+	}
+	// No need to send password hash for the user object.
+	user.Password = ""
+	aH.writeJSON(w, r, user)
+}
+
+func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting req body of editUser API\n", err)
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	update := &model.User{}
+	if err := json.Unmarshal(body, update); err != nil {
+		zap.S().Errorf("Error in parsing req body of editUser API\n", err)
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to update user")
+	}
+
+	update.Id = id
+	update.Password = string(hash)
+
+	_, apiErr := dao.DB().EditUser(context.Background(), update)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to update user")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user updated successfully"})
+}
+
+func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	err := dao.DB().DeleteUser(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get user")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
+}
 
 func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateGroupRequest(r)
@@ -1228,18 +1290,42 @@ func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = auth.CreateGroup(context.Background(), req.Name)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to create group")
+	g, apiErr := dao.DB().CreateGroup(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to create group")
 		return
 	}
 
-	aH.writeJSON(w, r, map[string]string{"data": "group created successfully"})
+	aH.writeJSON(w, r, g)
 }
 
-func (aH *APIHandler) listGroups(w http.ResponseWriter, r *http.Request)  {}
-func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request)    {}
-func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {}
+func (aH *APIHandler) listGroups(w http.ResponseWriter, r *http.Request) {
+	groups, err := dao.DB().GetGroups(context.Background())
+	if err != nil {
+		aH.respondError(w, err, "Failed to get groups list")
+		return
+	}
+	aH.writeJSON(w, r, groups)
+}
+
+func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	user, err := dao.DB().GetGroup(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get group")
+		return
+	}
+	aH.writeJSON(w, r, user)
+}
+func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	err := dao.DB().DeleteGroup(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get user")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
+}
 
 func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateRBACRuleRequest(r)
@@ -1248,54 +1334,106 @@ func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := auth.CreateRule(context.Background(), req)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to create rule")
+	rule, apiErr := dao.DB().CreateRule(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to create rule")
 		return
 	}
 
-	aH.writeJSON(w, r, map[string]string{"data": fmt.Sprintf("ruleId=%d created successfully", id)})
+	aH.writeJSON(w, r, rule)
 }
 
-func (aH *APIHandler) listRBACRules(w http.ResponseWriter, r *http.Request)  {}
-func (aH *APIHandler) getRBACRule(w http.ResponseWriter, r *http.Request)    {}
-func (aH *APIHandler) deleteRBACRule(w http.ResponseWriter, r *http.Request) {}
+func (aH *APIHandler) listRBACRules(w http.ResponseWriter, r *http.Request) {
+	rules, err := dao.DB().GetRules(context.Background())
+	if err != nil {
+		aH.respondError(w, err, "Failed to get rules list")
+		return
+	}
+	aH.writeJSON(w, r, rules)
+}
+
+func (aH *APIHandler) getRBACRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	user, err := dao.DB().GetRule(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get rule")
+		return
+	}
+	aH.writeJSON(w, r, user)
+}
+func (aH *APIHandler) deleteRBACRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	err := dao.DB().DeleteRule(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get user")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
+}
 
 func (aH *APIHandler) assignRBACRule(w http.ResponseWriter, r *http.Request) {
-	req, err := parseAssignRuleRequest(r)
+	req, err := parseGroupRuleRequest(r)
 	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	err = auth.AddRuleToGroup(context.Background(), req)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to assign rule")
+	apiErr := dao.DB().AddRuleToGroup(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to assign rule")
 		return
 	}
 
 	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
 }
 
-func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {}
-
-func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseAssignUserRequest(r)
+func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {
+	req, err := parseGroupRuleRequest(r)
 	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	err = auth.AddUserToGroup(context.Background(), req)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to assign user to group")
+	apiErr := dao.DB().DeleteRuleFromGroup(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to assign rule")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
+}
+
+func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseGroupUserRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	apiErr := dao.DB().AddUserToGroup(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to assign user to group")
 		return
 	}
 
 	aH.writeJSON(w, r, map[string]string{"data": "user assigned successfully"})
 }
 
-func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {}
+func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseGroupUserRequest(r)
+	fmt.Printf("parsed req: %+v\n", req)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	apiErr := dao.DB().DeleteUserFromGroup(context.Background(), req)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to assign rule")
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
+}
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
 // 	// vars := mux.Vars(r)

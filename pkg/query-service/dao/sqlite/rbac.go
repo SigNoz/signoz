@@ -88,7 +88,7 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*m
 
 func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.ApiError) {
 	users := []model.User{}
-	err := mds.db.Select(&users, "SELECT * FROM users")
+	err := mds.db.Select(&users, "SELECT id,name,org_name,email FROM users")
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
@@ -218,7 +218,7 @@ func (mds *ModelDaoSqlite) GetRule(ctx context.Context, id string) (*model.RBACR
 	return &rules[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetRules(ctx context.Context, id int) ([]model.RBACRule, *model.ApiError) {
+func (mds *ModelDaoSqlite) GetRules(ctx context.Context) ([]model.RBACRule, *model.ApiError) {
 
 	rules := []model.RBACRule{}
 	err := mds.db.Select(&rules, "SELECT * from rbac_rules")

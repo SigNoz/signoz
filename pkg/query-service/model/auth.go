@@ -3,9 +3,9 @@ package model
 type User struct {
 	Id               string `json:"id" db:"id"`
 	Name             string `json:"name" db:"name"`
-	OrganizationName string `json:"org_name" db:"org_name"`
+	OrganizationName string `json:"org_name,omitempty" db:"org_name"`
 	Email            string `json:"email" db:"email"`
-	Password         string `json:"password" db:"password"`
+	Password         string `json:"password,omitempty" db:"password"`
 }
 
 type Group struct {

@@ -17,7 +17,7 @@ type Queries interface {
 	GetGroups(ctx context.Context) ([]model.Group, *model.ApiError)
 
 	GetRule(ctx context.Context, id string) (*model.RBACRule, *model.ApiError)
-	GetRules(ctx context.Context, id int) ([]model.RBACRule, *model.ApiError)
+	GetRules(ctx context.Context) ([]model.RBACRule, *model.ApiError)
 	GetGroupRules(ctx context.Context, id string) ([]model.GroupRule, *model.ApiError)
 	GetGroupUsers(ctx context.Context, id string) ([]model.GroupUser, *model.ApiError)
 }

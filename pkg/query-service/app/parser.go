@@ -1004,7 +1004,7 @@ func parseCreateRBACRuleRequest(r *http.Request) (*model.RBACRule, error) {
 	return &req, nil
 }
 
-func parseAssignRuleRequest(r *http.Request) (*model.GroupRule, error) {
+func parseGroupRuleRequest(r *http.Request) (*model.GroupRule, error) {
 	var req model.GroupRule
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -1014,7 +1014,7 @@ func parseAssignRuleRequest(r *http.Request) (*model.GroupRule, error) {
 	return &req, nil
 }
 
-func parseAssignUserRequest(r *http.Request) (*model.GroupUser, error) {
+func parseGroupUserRequest(r *http.Request) (*model.GroupUser, error) {
 	var req model.GroupUser
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
