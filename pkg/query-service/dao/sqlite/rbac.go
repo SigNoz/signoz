@@ -174,7 +174,7 @@ func (mds *ModelDaoSqlite) CreateRule(ctx context.Context, rule *model.RBACRule)
 func (mds *ModelDaoSqlite) EditRule(ctx context.Context, update *model.RBACRule) (*model.RBACRule, *model.ApiError) {
 	zap.S().Debug("Updating rule: %+v\n", update)
 
-	_, err := mds.db.ExecContext(ctx, `UPDATE users SET api_class=?,permission=? WHERE id=?;`,
+	_, err := mds.db.ExecContext(ctx, `UPDATE rbac_rules SET api_class=?,permission=? WHERE id=?;`,
 		update.ApiClass, update.Permission, update.Id)
 
 	if err != nil {
@@ -244,6 +244,19 @@ func (mds *ModelDaoSqlite) AddRuleToGroup(ctx context.Context, gr *model.GroupRu
 	return nil
 }
 
+func (mds *ModelDaoSqlite) DeleteRuleFromGroup(ctx context.Context, gr *model.GroupRule) *model.ApiError {
+	zap.S().Debugf("Deleting user from group: %+v\n", gr)
+
+	_, err := mds.db.ExecContext(ctx,
+		`DELETE from group_rules WHERE (group_id,  rule_id) = (?, ?);`, gr.GroupId, gr.RuleId)
+	if err != nil {
+		zap.S().Errorf("Error in preparing statement for INSERT rule to group\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
 func (mds *ModelDaoSqlite) GetGroupRules(ctx context.Context, id string) ([]model.GroupRule, *model.ApiError) {
 
 	groupRules := []model.GroupRule{}
@@ -270,9 +283,22 @@ func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context, gu *model.GroupUs
 	return nil
 }
 
+func (mds *ModelDaoSqlite) DeleteUserFromGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError {
+	zap.S().Debugf("Adding user to group: %+v\n", gu)
+
+	_, err := mds.db.ExecContext(ctx, `DELETE FROM group_users WHERE (group_id, user_id) = (?, ?);`,
+		gu.GroupId, gu.UserId)
+	if err != nil {
+		zap.S().Errorf("Error in preparing statement for INSERT user to group\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
 func (mds *ModelDaoSqlite) GetGroupUsers(ctx context.Context, id string) ([]model.GroupUser, *model.ApiError) {
 	groupUsers := []model.GroupUser{}
-	err := mds.db.Select(&groupUsers, `SELECT * FROM group_users WHERE id=?;`, id)
+	err := mds.db.Select(&groupUsers, `SELECT * FROM group_users WHERE group_id=?;`, id)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)

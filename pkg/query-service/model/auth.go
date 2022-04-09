@@ -26,5 +26,5 @@ type GroupUser struct {
 
 type GroupRule struct {
 	GroupId string `json:"group_id,omitempty" db:"group_id"`
-	RuleId  int    `json:"rule_id" db:"rule_id"`
+	RuleId  string `json:"rule_id" db:"rule_id"`
 }

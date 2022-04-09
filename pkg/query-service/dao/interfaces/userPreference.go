@@ -37,5 +37,7 @@ type Mutations interface {
 	DeleteRule(ctx context.Context, id string) *model.ApiError
 
 	AddRuleToGroup(ctx context.Context, gr *model.GroupRule) *model.ApiError
+	DeleteRuleFromGroup(ctx context.Context, gr *model.GroupRule) *model.ApiError
 	AddUserToGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError
+	DeleteUserFromGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError
 }
