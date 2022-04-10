@@ -89,3 +89,7 @@ export const AllAlertChannels = Loadable(
 export const AllErrors = Loadable(
 	/* webpackChunkName: "All Errors" */ () => import('pages/AllErrors'),
 );
+
+export const ErrorDetails = Loadable(
+	() => import(/* webpackChunkName: "Error Details" */ 'pages/ErrorDetails'),
+);

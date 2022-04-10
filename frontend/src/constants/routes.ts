@@ -18,7 +18,7 @@ const ROUTES = {
 	CHANNELS_NEW: '/setting/channels/new',
 	CHANNELS_EDIT: '/setting/channels/edit/:id',
 	ALL_ERROR: '/errors',
-	ERROR_DETAIL: '/error/:serviceName/:errorType',
+	ERROR_DETAIL: '/errors/:serviceName/:errorType',
 };
 
 export default ROUTES;

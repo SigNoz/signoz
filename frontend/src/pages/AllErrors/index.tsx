@@ -64,8 +64,19 @@ function AllErrors(): JSX.Element {
 		},
 	];
 
+	const data = [
+		{
+			firstSeen: 'asd',
+			serviceName: 'asdasdasd',
+			lastSeen: 'asdasdas',
+			exceptionCount: 2,
+			exceptionMessage: '22',
+			exceptionType: '222',
+		},
+	];
+
 	return (
-		<Table dataSource={payload} columns={columns} loading={loading || false} />
+		<Table dataSource={data} columns={columns} loading={loading || false} />
 	);
 }
 

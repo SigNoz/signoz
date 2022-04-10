@@ -10,6 +10,7 @@ import {
 	DashboardPage,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
+	ErrorDetails,
 	InstrumentationPage,
 	ListAllALertsPage,
 	NewDashboardPage,
@@ -118,6 +119,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.ALL_ERROR,
 		exact: true,
 		component: AllErrors,
+	},
+	{
+		path: ROUTES.ERROR_DETAIL,
+		exact: true,
+		component: ErrorDetails,
 	},
 ];
 
