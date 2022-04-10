@@ -44,6 +44,15 @@ func main() {
 		// DruidClientUrl: constants.DruidClientUrl,
 	}
 
+	// Read the jwt secret key
+	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
+
+	if len(auth.JwtSecret) == 0 {
+		zap.S().Warn("No JWT secret key is specified.")
+	} else {
+		zap.S().Info("No JWT secret key set successfully.")
+	}
+
 	server, err := app.NewServer(serverOptions)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))

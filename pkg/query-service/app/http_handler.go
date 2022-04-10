@@ -233,7 +233,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
 
-	// There is no create user API because user creation happen via registr API.
 	router.HandleFunc("/api/v1/user", aH.listUsers).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", aH.getUser).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", aH.editUser).Methods(http.MethodPut)

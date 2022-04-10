@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	JwtSecret  = "sometestsecret"
-	JwtExpiry  = 10 * time.Minute
+	JwtSecret  string
+	JwtExpiry  = 15 * time.Minute
 	JwtRefresh = 1 * time.Hour
 )
 
