@@ -79,9 +79,6 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	if err := mds.initializeUserPreferences(); err != nil {
 		return nil, err
 	}
-	if err := mds.initializeRootUser(); err != nil {
-		return nil, err
-	}
 	if err := mds.initializeRBAC(); err != nil {
 		return nil, err
 	}
@@ -114,21 +111,24 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 	return nil
 }
 
-func (mds *ModelDaoSqlite) initializeRootUser() error {
-
+func (mds *ModelDaoSqlite) initializeRBAC() error {
 	ctx := context.Background()
-	user, err := mds.FetchUser(ctx, constants.RootUserEmail)
+	user, err := mds.GetUserByEmail(ctx, constants.RootUserEmail)
 	if err != nil {
 		return errors.Wrap(err.Err, "Failed to query for root user")
 	}
 
+	var cErr *model.ApiError
+
+	// Create root user if it is not present.
 	if user == nil {
+		zap.S().Debugf("Root user is not found, creating one")
 		hash, err := bcrypt.GenerateFromPassword([]byte(constants.RootUserPassword),
 			bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
-		_, cErr := mds.CreateUser(ctx, &model.User{
+		user, cErr = mds.CreateUser(ctx, &model.User{
 			Email:    constants.RootUserEmail,
 			Password: string(hash),
 		})
@@ -138,21 +138,39 @@ func (mds *ModelDaoSqlite) initializeRootUser() error {
 		zap.S().Infof("Initialized admin user, email: %s, password: %s\n",
 			constants.RootUserEmail, constants.RootUserPassword)
 	}
-	return nil
-}
+	zap.S().Debugf("Root user: %+v", user)
 
-func (mds *ModelDaoSqlite) initializeRBAC() error {
-	ctx := context.Background()
+	// Create guardian group if it is not present.
 	group, err := mds.GetGroupByName(ctx, constants.RootGroup)
 	if err != nil {
 		return errors.Wrap(err.Err, "Failed to query for root group")
 	}
 
-	// Create the root group if it is not present.
 	if group == nil {
-		if _, cErr := mds.CreateGroup(ctx, &model.Group{Name: constants.RootGroup}); cErr != nil {
+		zap.S().Debugf("Guardian group is not found, creating one")
+		group, cErr = mds.CreateGroup(ctx, &model.Group{Name: constants.RootGroup})
+		if cErr != nil {
 			return cErr.Err
 		}
 	}
+
+	users, err := mds.GetGroupUsers(ctx, group.Id)
+	if err != nil {
+		return errors.Wrap(err.Err, "Failed to query for root group users")
+	}
+	zap.S().Debugf("Guardian group users: %+v", users)
+
+	// If user is already added in the guardian group, we can return.
+	for _, u := range users {
+		if u.UserId == user.Id {
+			return nil
+		}
+	}
+
+	err = mds.AddUserToGroup(ctx, &model.GroupUser{GroupId: group.Id, UserId: user.Id})
+	if err != nil {
+		return errors.Wrap(err.Err, "Failed add root user to guardian group")
+	}
+
 	return nil
 }

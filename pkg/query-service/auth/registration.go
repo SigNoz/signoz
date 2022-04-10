@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
 )
@@ -33,32 +31,11 @@ type InviteResponse struct {
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *InviteRequest) (*InviteResponse, error) {
-	if err := authenticateRootUser(ctx); err != nil {
-		return nil, err
-	}
-
 	token, err := generateInviteJwt(req)
 	if err != nil {
 		return nil, err
 	}
 	return &InviteResponse{req.Email, token}, nil
-}
-
-func authenticateRootUser(ctx context.Context) error {
-	token, err := ExtractJwt(ctx)
-	if err != nil {
-		return err
-	}
-
-	user, err := validateUser(token)
-	if err != nil {
-		return errors.Wrap(err, "unable to parse JWT token")
-	}
-
-	if user.Email != constants.RootUserEmail {
-		return errors.New("Failed to authenticate root user")
-	}
-	return nil
 }
 
 func validateInvite(req *RegisterRequest) error {

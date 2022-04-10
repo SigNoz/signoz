@@ -36,31 +36,6 @@ func (mds *ModelDaoSqlite) FetchUserPreference(ctx context.Context) (*model.User
 
 }
 
-func (mds *ModelDaoSqlite) FetchUser(ctx context.Context, email string) (*model.User, *model.ApiError) {
-
-	userParams := []model.User{}
-	query := fmt.Sprintf(`SELECT email, password FROM users WHERE email="%s";`, email)
-
-	err := mds.db.Select(&userParams, query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if len(userParams) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("more than 1 row in users found"))
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if len(userParams) == 0 {
-		return nil, nil
-	}
-
-	return &userParams[0], nil
-
-}
-
 func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferences *model.UserPreferences) *model.ApiError {
 
 	tx, err := mds.db.Begin()

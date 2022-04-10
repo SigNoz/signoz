@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/github"
 
 	"go.signoz.io/query-service/app"
+	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"
 
@@ -49,6 +51,10 @@ func main() {
 
 	if err := server.Start(); err != nil {
 		logger.Fatal("Could not start servers", zap.Error(err))
+	}
+
+	if err := auth.InitAuthCache(context.Background()); err != nil {
+		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
 	signalsChannel := make(chan os.Signal, 1)

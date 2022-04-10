@@ -46,6 +46,7 @@ func validateUser(tok string) (*model.User, error) {
 		return nil, errors.Errorf("Token is expired")
 	}
 	return &model.User{
+		Id:    claims["id"].(string),
 		Email: claims["email"].(string),
 	}, nil
 }

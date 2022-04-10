@@ -249,13 +249,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/rbac/groupRule/{id}", aH.getGroupRules).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/groupRule", aH.assignRBACRule).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rbac/groupRule", aH.unassignRBACRule).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rbac/groupRule/{id}", aH.getGroupRules).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/rbac/groupUser/{id}", aH.getGroupUsers).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/groupUser", aH.assignUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rbac/groupUser", aH.unassignUser).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rbac/groupUser/{id}", aH.getGroupUsers).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1207,7 +1207,6 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseLoginRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1232,18 +1231,32 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+
+	if !(auth.IsGuardian(r) || auth.IsSelfAccess(r, id)) {
+		zap.S().Debugf("User is not a guardian or self")
+		aH.respond(w, "Unauthorized")
+		return
+	}
+
 	user, err := dao.DB().GetUser(context.Background(), id)
 	if err != nil {
 		aH.respondError(w, err, "Failed to get user")
 		return
 	}
 	// No need to send password hash for the user object.
-	user.Password = ""
+	if user != nil {
+		user.Password = ""
+	}
 	aH.writeJSON(w, r, user)
 }
 
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+
+	if !(auth.IsGuardian(r) || auth.IsSelfAccess(r, id)) {
+		aH.respond(w, "Unauthorized")
+		return
+	}
 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
@@ -1271,7 +1284,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		old.Name = update.Name
 	}
 	if len(update.OrganizationName) > 0 {
-		old.Name = update.OrganizationName
+		old.OrganizationName = update.OrganizationName
 	}
 	if len(update.Email) > 0 {
 		old.Email = update.Email
@@ -1295,6 +1308,12 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+
+	if !(auth.IsGuardian(r) || auth.IsSelfAccess(r, id)) {
+		aH.respond(w, "Unauthorized")
+		return
+	}
+
 	err := dao.DB().DeleteUser(context.Background(), id)
 	if err != nil {
 		aH.respondError(w, err, "Failed to get user")
@@ -1349,8 +1368,14 @@ func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateRBACRuleRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	if !auth.IsValidAPIClass(req.ApiClass) {
+		aH.respondError(w, &model.ApiError{
+			Err: fmt.Errorf("Unknown API class, must be one of %s\n", auth.ValidAPIClasses()),
+		}, "Failed to create rule")
 		return
 	}
 
