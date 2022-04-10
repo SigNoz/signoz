@@ -1,11 +1,12 @@
 import MEditor from '@monaco-editor/react';
 import React from 'react';
 
-function Editor({ value }: EditorProps): JSX.Element {
+function Editor({ value, language }: EditorProps): JSX.Element {
 	return (
 		<MEditor
 			theme="vs-dark"
 			defaultLanguage="yaml"
+			language={language}
 			value={value.current}
 			options={{ fontSize: 16, automaticLayout: true }}
 			height="40vh"
@@ -21,6 +22,11 @@ function Editor({ value }: EditorProps): JSX.Element {
 
 interface EditorProps {
 	value: React.MutableRefObject<string>;
+	language?: string;
 }
+
+Editor.defaultProps = {
+	language: undefined,
+};
 
 export default Editor;
