@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/mouse-events-have-key-events */
 import { Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
@@ -20,7 +21,7 @@ import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import Bar from './Bar';
+import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
@@ -37,6 +38,7 @@ function GridCardGraph({
 		error: false,
 		payload: undefined,
 	});
+	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
@@ -171,10 +173,12 @@ function GridCardGraph({
 		return (
 			<>
 				{getModals()}
-				<Bar
-					onViewFullScreenHandler={(): void => onToggleModal(setModal)}
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
 					widget={widget}
-					onDeleteHandler={(): void => onToggleModal(setDeletModal)}
+					onView={(): void => onToggleModal(setModal)}
+					onDelete={(): void => onToggleModal(setDeletModal)}
 				/>
 
 				<ErrorContainer>{state.errorMessage}</ErrorContainer>
@@ -185,13 +189,21 @@ function GridCardGraph({
 	if (state.loading === true || state.payload === undefined) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
-
 	return (
-		<>
-			<Bar
-				onViewFullScreenHandler={(): void => onToggleModal(setModal)}
+		<span
+			onMouseOver={(): void => {
+				setHovered(true);
+			}}
+			onMouseOut={(): void => {
+				setHovered(false);
+			}}
+		>
+			<WidgetHeader
+				parentHover={hovered}
+				title={widget.title}
 				widget={widget}
-				onDeleteHandler={(): void => onToggleModal(setDeletModal)}
+				onView={(): void => onToggleModal(setModal)}
+				onDelete={(): void => onToggleModal(setDeletModal)}
 			/>
 
 			{getModals()}
@@ -202,12 +214,11 @@ function GridCardGraph({
 					data: state.payload,
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,
-					title: widget.title,
 					name,
 					yAxisUnit,
 				}}
 			/>
-		</>
+		</span>
 	);
 }
 
