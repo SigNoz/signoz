@@ -2,6 +2,7 @@ import { Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
 import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
 import React from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -23,6 +24,12 @@ function AllErrors(): JSX.Element {
 			}),
 	});
 
+	const getDateValue = (value: string): JSX.Element => {
+		return (
+			<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
+		);
+	};
+
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
@@ -38,6 +45,7 @@ function AllErrors(): JSX.Element {
 					{value}
 				</Link>
 			),
+			sorter: (a, b): number => a.exceptionType.length - b.exceptionType.length,
 		},
 		{
 			title: 'Error Message',
@@ -57,21 +65,29 @@ function AllErrors(): JSX.Element {
 			title: 'Count',
 			dataIndex: 'exceptionCount',
 			key: 'exceptionCount',
+			sorter: (a, b): number => a.exceptionCount - b.exceptionCount,
 		},
 		{
 			title: 'Last Seen',
 			dataIndex: 'lastSeen',
 			key: 'lastSeen',
+			render: getDateValue,
+			sorter: (a, b): number =>
+				dayjs(a.lastSeen).isBefore(dayjs(b.lastSeen)) === true ? 1 : 0,
 		},
 		{
 			title: 'First Seen',
 			dataIndex: 'firstSeen',
 			key: 'firstSeen',
+			render: getDateValue,
+			sorter: (a, b): number =>
+				dayjs(a.firstSeen).isBefore(dayjs(b.firstSeen)) === true ? 1 : 0,
 		},
 		{
 			title: 'Application',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
+			sorter: (a, b): number => a.serviceName.length - b.serviceName.length,
 		},
 	];
 
