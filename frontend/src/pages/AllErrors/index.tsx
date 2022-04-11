@@ -2,12 +2,12 @@ import { Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
 import ROUTES from 'constants/routes';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
+import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Exception, PayloadProps, Props } from 'types/api/errors/getAll';
+import { Exception } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 function AllErrors(): JSX.Element {
@@ -15,9 +15,12 @@ function AllErrors(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const { loading, payload } = useFetch<PayloadProps, Props>(getAll, {
-		end: maxTime,
-		start: minTime,
+	const { isLoading, data } = useQuery(['getAllError', [maxTime, minTime]], {
+		queryFn: () =>
+			getAll({
+				end: maxTime,
+				start: minTime,
+			}),
 	});
 
 	const columns: ColumnsType<Exception> = [
@@ -75,9 +78,9 @@ function AllErrors(): JSX.Element {
 	return (
 		<Table
 			tableLayout="fixed"
-			dataSource={payload}
+			dataSource={data?.payload as Exception[]}
 			columns={columns}
-			loading={loading || false}
+			loading={isLoading || false}
 		/>
 	);
 }
