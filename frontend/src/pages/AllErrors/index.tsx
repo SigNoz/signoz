@@ -1,4 +1,4 @@
-import { Table } from 'antd';
+import { Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
 import ROUTES from 'constants/routes';
@@ -16,8 +16,8 @@ function AllErrors(): JSX.Element {
 	);
 
 	const { loading, payload } = useFetch<PayloadProps, Props>(getAll, {
-		end: 1819433647000000000,
-		start: 1619430047000000000,
+		end: maxTime,
+		start: minTime,
 	});
 
 	const columns: ColumnsType<Exception> = [
@@ -40,7 +40,15 @@ function AllErrors(): JSX.Element {
 			title: 'Error Message',
 			dataIndex: 'exceptionMessage',
 			key: 'exceptionMessage',
-			ellipsis: true,
+			render: (value): JSX.Element => (
+				<Typography.Paragraph
+					ellipsis={{
+						rows: 2,
+					}}
+				>
+					{value}
+				</Typography.Paragraph>
+			),
 		},
 		{
 			title: 'Count',
@@ -64,19 +72,13 @@ function AllErrors(): JSX.Element {
 		},
 	];
 
-	const data = [
-		{
-			firstSeen: 'asd',
-			serviceName: 'asdasdasd',
-			lastSeen: 'asdasdas',
-			exceptionCount: 2,
-			exceptionMessage: '22',
-			exceptionType: '222',
-		},
-	];
-
 	return (
-		<Table dataSource={data} columns={columns} loading={loading || false} />
+		<Table
+			tableLayout="fixed"
+			dataSource={payload}
+			columns={columns}
+			loading={loading || false}
+		/>
 	);
 }
 
