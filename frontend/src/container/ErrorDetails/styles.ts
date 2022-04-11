@@ -20,3 +20,7 @@ export const EventContainer = styled.div`
 	display: flex;
 	justify-content: space-between;
 `;
+
+export const EditorContainer = styled.div`
+	margin-top: 1.5rem;
+`;

@@ -1,0 +1,7 @@
+{
+	"see_trace_graph": "See what happened before and after this error in a trace graph",
+	"see_error_in_trace_graph": "See the error in trace graph",
+	"stack_trace": "Stacktrace",
+	"older": "Older",
+	"newer": "Newer"
+}
