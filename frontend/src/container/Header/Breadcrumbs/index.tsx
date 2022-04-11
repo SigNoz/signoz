@@ -12,6 +12,7 @@ const breadcrumbNameMap = {
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
 	[ROUTES.ALL_ERROR]: 'Errors',
+	[ROUTES.VERSION]: 'Status',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

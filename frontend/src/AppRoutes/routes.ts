@@ -19,6 +19,7 @@ import {
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
+	StatusPage,
 	TraceDetail,
 	TraceFilter,
 	UsageExplorerPage,
@@ -124,6 +125,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.ERROR_DETAIL,
 		exact: true,
 		component: ErrorDetails,
+	},
+	{
+		path: ROUTES.VERSION,
+		exact: true,
+		component: StatusPage,
 	},
 ];
 

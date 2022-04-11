@@ -126,7 +126,6 @@ function Duration(): JSX.Element {
 				filterToFetchData,
 				spansAggregate.currentPage,
 				selectedTags,
-				preFilter,
 				isFilterExclude,
 				userSelectedFilter,
 				spansAggregate.order,

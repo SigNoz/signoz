@@ -1,11 +1,8 @@
 <?xml version="1.0"?>
 <yandex>
     <logger>
-        <level>trace</level>
-        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
-        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
-        <size>1000M</size>
-        <count>10</count>
+        <level>information</level>
+        <console>1</console>
     </logger>
 
     <http_port>8123</http_port>
