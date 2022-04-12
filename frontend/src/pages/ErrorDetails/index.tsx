@@ -40,6 +40,7 @@ function ErrorDetails(): JSX.Element {
 					start: minTime,
 				}),
 			enabled: errorId === null,
+			cacheTime: 5000,
 		},
 	);
 
@@ -62,6 +63,7 @@ function ErrorDetails(): JSX.Element {
 					start: minTime,
 				}),
 			enabled: errorId !== null || status === 'success',
+			cacheTime: 5000,
 		},
 	);
 
