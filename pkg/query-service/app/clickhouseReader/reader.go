@@ -1553,7 +1553,7 @@ func getStatusFilters(query string, statusParams []string, excludeMap map[string
 
 func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError) {
 
-	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, gRPCCode, gRPCMethod, httpMethod FROM %s WHERE timestamp >= ? AND timestamp <= ?", r.indexTable)
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
@@ -1688,6 +1688,19 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	baseQuery += query
 	err = r.db.Select(&getFilterSpansResponseItems, baseQuery, args...)
+	// Fill status and method
+	for i, e := range getFilterSpansResponseItems {
+		if e.HttpCode == "" {
+			getFilterSpansResponseItems[i].StatusCode = e.GRPCode
+		} else {
+			getFilterSpansResponseItems[i].StatusCode = e.HttpCode
+		}
+		if e.HttpMethod == "" {
+			getFilterSpansResponseItems[i].Method = e.GRPMethod
+		} else {
+			getFilterSpansResponseItems[i].Method = e.HttpMethod
+		}
+	}
 
 	zap.S().Info(baseQuery)
 
