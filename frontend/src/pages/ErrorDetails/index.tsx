@@ -8,7 +8,6 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 import { PayloadProps } from 'types/api/errors/getById';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -18,7 +17,9 @@ function ErrorDetails(): JSX.Element {
 		(state) => state.globalTime,
 	);
 	const { search } = useLocation();
-	const errorId = new URLSearchParams(search);
+	const params = new URLSearchParams(search);
+
+	const errorId = params.get('errorId');
 
 	const { data, status } = useQuery(
 		[
@@ -28,7 +29,7 @@ function ErrorDetails(): JSX.Element {
 			serviceName,
 			maxTime,
 			minTime,
-			errorId.get('errorId'),
+			errorId,
 		],
 		{
 			queryFn: () =>
@@ -38,6 +39,7 @@ function ErrorDetails(): JSX.Element {
 					serviceName,
 					start: minTime,
 				}),
+			enabled: errorId === null,
 		},
 	);
 
@@ -50,16 +52,16 @@ function ErrorDetails(): JSX.Element {
 			maxTime,
 			minTime,
 			'errorId',
-			errorId.get('errorId'),
+			errorId,
 		],
 		{
 			queryFn: () =>
 				getById({
 					end: maxTime,
-					errorId: data?.payload?.errorId || '',
+					errorId: errorId || data?.payload?.errorId || '',
 					start: minTime,
 				}),
-			enabled: status === 'success',
+			enabled: errorId !== null || status === 'success',
 		},
 	);
 
@@ -72,10 +74,7 @@ function ErrorDetails(): JSX.Element {
 	}
 
 	return (
-		<ErrorDetailsContainer
-			errorDetails={data?.payload as GetByErrorTypeAndServicePayload}
-			idPayload={errorIdPayload?.payload as PayloadProps}
-		/>
+		<ErrorDetailsContainer idPayload={errorIdPayload?.payload as PayloadProps} />
 	);
 }
 

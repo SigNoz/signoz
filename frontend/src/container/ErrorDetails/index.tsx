@@ -1,31 +1,27 @@
 import { Button, Divider, notification, Space, Table, Typography } from 'antd';
-import getById from 'api/errors/getById';
 import Editor from 'components/Editor';
-import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import history from 'lib/history';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { generatePath, useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
+import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 import { PayloadProps } from 'types/api/errors/getById';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
-	const { errorDetails, idPayload } = props;
-	const stackTraceValue = useRef(errorDetails.excepionStacktrace);
+	const { idPayload } = props;
 	const [isLoading, setLoading] = useState<boolean>(false);
 	const { t } = useTranslation(['errorDetails', 'common']);
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
+	const queryErrorId = params.get('errorId');
+
+	const errorDetail = idPayload;
+
+	const stackTraceValue = useRef(errorDetail.excepionStacktrace);
 
 	const columns = useMemo(
 		() => [
@@ -60,25 +56,15 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		try {
 			setLoading(true);
 
-			const response = await getById({
-				end: maxTime,
-				start: minTime,
-				errorId: id,
-			});
-
-			if (response.statusCode === 200) {
-				const { payload } = response;
-				const path = generatePath(ROUTES.ERROR_DETAIL, {
-					serviceName: payload.serviceName,
-					errorType: payload.exceptionType,
-				});
-
-				history.push(`${path}?errorId=${payload.errorId}`);
-			} else {
+			if (id.length === 0) {
 				notification.error({
-					message: t('something_went_wrong'),
+					message: 'Error Id cannot be empty',
 				});
+				setLoading(false);
+				return;
 			}
+
+			history.push(`${history.location.pathname}?errorId=${id}`);
 
 			setLoading(false);
 		} catch (error) {
@@ -89,28 +75,28 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		}
 	};
 
-	const timeStamp = dayjs(errorDetails.timestamp);
+	const timeStamp = dayjs(errorDetail.timestamp);
 
-	const data: { key: string; value: string }[] = Object.keys(errorDetails)
+	const data: { key: string; value: string }[] = Object.keys(errorDetail)
 		.filter((e) => !keyToExclude.includes(e))
 		.map((key) => ({
 			key,
-			value: errorDetails[key as keyof GetByErrorTypeAndServicePayload],
+			value: errorDetail[key as keyof GetByErrorTypeAndServicePayload],
 		}));
 
 	const onClickTraceHandler = (): void => {
-		history.push(`/trace/${errorDetails.traceID}?spanId=${errorDetails.spanID}`);
+		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
 	};
 
 	return (
 		<>
-			<Typography>{errorDetails.exceptionType}</Typography>
-			<Typography>{errorDetails.exceptionMessage}</Typography>
+			<Typography>{errorDetail.exceptionType}</Typography>
+			<Typography>{errorDetail.exceptionMessage}</Typography>
 			<Divider />
 
 			<EventContainer>
 				<div>
-					<Typography>Event {errorDetails.errorId}</Typography>
+					<Typography>Event {errorDetail.errorId}</Typography>
 					<Typography>{timeStamp.format('MMM DD YYYY hh:mm:ss A')}</Typography>
 				</div>
 				<div>
@@ -119,11 +105,11 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 						<Button
 							loading={isLoading}
 							disabled={
-								idPayload.olderErrorId.length === 0 ||
-								params.get('errorId') === idPayload.olderErrorId
+								errorDetail.olderErrorId.length === 0 ||
+								queryErrorId === errorDetail.olderErrorId
 							}
 							onClick={(): Promise<void> =>
-								onClickErrorIdHandler(idPayload.olderErrorId)
+								onClickErrorIdHandler(errorDetail.olderErrorId)
 							}
 						>
 							{t('older')}
@@ -131,11 +117,11 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 						<Button
 							loading={isLoading}
 							disabled={
-								idPayload.newerErrorId.length === 0 ||
-								params.get('errorId') === idPayload.newerErrorId
+								errorDetail.newerErrorId.length === 0 ||
+								queryErrorId === errorDetail.newerErrorId
 							}
 							onClick={(): Promise<void> =>
-								onClickErrorIdHandler(idPayload.newerErrorId)
+								onClickErrorIdHandler(errorDetail.newerErrorId)
 							}
 						>
 							{t('newer')}
@@ -165,7 +151,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 }
 
 interface ErrorDetailsProps {
-	errorDetails: GetByErrorTypeAndServicePayload;
 	idPayload: PayloadProps;
 }
 

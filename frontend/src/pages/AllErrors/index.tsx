@@ -1,6 +1,6 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
-import AllErrorsContainer from 'container/AllErros';
+import AllErrorsContainer from 'container/AllError';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
