@@ -214,6 +214,7 @@ function GridCardGraph({
 					data: state.payload,
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,
+					title: ' ', // empty title to accommodate absolutely positioned widget header
 					name,
 					yAxisUnit,
 				}}
