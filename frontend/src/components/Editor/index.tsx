@@ -1,11 +1,10 @@
 import MEditor from '@monaco-editor/react';
 import React from 'react';
 
-function Editor({ value, language }: EditorProps): JSX.Element {
+function Editor({ value, language = 'yaml' }: EditorProps): JSX.Element {
 	return (
 		<MEditor
 			theme="vs-dark"
-			defaultLanguage="yaml"
 			language={language}
 			value={value.current}
 			options={{ fontSize: 16, automaticLayout: true }}
