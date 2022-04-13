@@ -7,6 +7,7 @@ import { Card, Col, Row, Space, Tag, Typography } from 'antd';
 import AddTags from 'container/NewDashboard/DescriptionOfDashboard/AddTags';
 import NameOfTheDashboard from 'container/NewDashboard/DescriptionOfDashboard/NameOfTheDashboard';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -43,6 +44,8 @@ function DescriptionOfDashboard({
 		description || '',
 	);
 	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
+
+	const { t } = useTranslation('common');
 
 	const onClickEditHandler = useCallback(() => {
 		if (isEditMode) {
@@ -113,13 +116,13 @@ function DescriptionOfDashboard({
 				<Col>
 					<Space direction="vertical">
 						<Button onClick={onToggleHandler} icon={<ShareAltOutlined />}>
-							Share
+							{t('share')}
 						</Button>
 						<Button
 							icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
 							onClick={onClickEditHandler}
 						>
-							{isEditMode ? 'Save' : 'Edit'}
+							{isEditMode ? t('save') : t('edit')}
 						</Button>
 					</Space>
 				</Col>
