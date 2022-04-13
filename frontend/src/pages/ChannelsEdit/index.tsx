@@ -8,32 +8,33 @@ import {
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
-import { PayloadProps, Props } from 'types/api/channels/get';
 
 function ChannelsEdit(): JSX.Element {
 	const { id } = useParams<Params>();
+	const { t } = useTranslation();
 
-	const { errorMessage, payload, error, loading } = useFetch<
-		PayloadProps,
-		Props
-	>(get, {
-		id,
+	const { isLoading, isError, data } = useQuery(['getChannel', id], {
+		queryFn: () =>
+			get({
+				id,
+			}),
 	});
 
-	if (error) {
-		return <Typography>{errorMessage}</Typography>;
+	if (isError) {
+		return <Typography>{data?.error || t('something_went_wrong')}</Typography>;
 	}
 
-	if (loading || payload === undefined) {
+	if (isLoading || !data?.payload) {
 		return <Spinner tip="Loading Channels..." />;
 	}
 
-	const { data } = payload;
+	const { data: ChannelData } = data.payload;
 
-	const value = JSON.parse(data);
+	const value = JSON.parse(ChannelData);
 	let type = '';
 	let channel: SlackChannel & WebhookChannel = { name: '' };
 
@@ -57,7 +58,7 @@ function ChannelsEdit(): JSX.Element {
 		}
 		type = WebhookType;
 	}
-	console.log('channel:', channel);
+
 	return (
 		<EditAlertChannels
 			{...{
