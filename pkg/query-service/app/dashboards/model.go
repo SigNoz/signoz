@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/query-service/model"
@@ -109,8 +110,7 @@ func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError)
 	dash.CreatedAt = time.Now()
 	dash.UpdatedAt = time.Now()
 	dash.UpdateSlug()
-	// dash.Uuid = uuid.New().String()
-	dash.Uuid = dash.Data["uuid"].(string)
+	dash.Uuid = uuid.New().String()
 
 	map_data, err := json.Marshal(dash.Data)
 	if err != nil {
