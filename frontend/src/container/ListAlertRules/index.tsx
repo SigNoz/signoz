@@ -1,29 +1,29 @@
 import getAll from 'api/alerts/getAll';
 import Spinner from 'components/Spinner';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
-import { PayloadProps } from 'types/api/alerts/getAll';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 
 import ListAlert from './ListAlert';
 
 function ListAlertRules(): JSX.Element {
-	const { loading, payload, error, errorMessage } = useFetch<
-		PayloadProps,
-		undefined
-	>(getAll);
+	const { t } = useTranslation('common');
+	const { data, isError, isLoading } = useQuery('allAlerts', {
+		queryFn: getAll,
+	});
 
-	if (error) {
-		return <div>{errorMessage}</div>;
+	if (isError) {
+		return <div>{data?.error || t('something_went_wrong')}</div>;
 	}
 
-	if (loading || payload === undefined) {
+	if (isLoading || !data?.payload) {
 		return <Spinner height="75vh" tip="Loading Rules..." />;
 	}
 
 	return (
 		<ListAlert
 			{...{
-				allAlertRules: payload,
+				allAlertRules: data.payload,
 			}}
 		/>
 	);
