@@ -1,10 +1,9 @@
 import { Select } from 'antd';
 import getTagValue from 'api/trace/getTagValue';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
+import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { PayloadProps, Props } from 'types/api/trace/getTagValue';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -22,11 +21,17 @@ function TagValue(props: TagValueProps): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const valueSuggestion = useFetch<PayloadProps, Props>(getTagValue, {
-		end: globalReducer.maxTime,
-		start: globalReducer.minTime,
-		tagKey,
-	});
+	const { isLoading, data } = useQuery(
+		['tagKey', globalReducer.minTime, globalReducer.maxTime, tagKey],
+		{
+			queryFn: () =>
+				getTagValue({
+					end: globalReducer.maxTime,
+					start: globalReducer.minTime,
+					tagKey,
+				}),
+		},
+	);
 
 	return (
 		<SelectComponent
@@ -44,10 +49,11 @@ function TagValue(props: TagValueProps): JSX.Element {
 					]);
 				}
 			}}
-			loading={valueSuggestion.loading || false}
+			loading={isLoading || false}
 		>
-			{valueSuggestion.payload &&
-				valueSuggestion.payload.map((suggestion) => (
+			{data &&
+				data.payload &&
+				data.payload.map((suggestion) => (
 					<Select.Option key={suggestion.tagValues} value={suggestion.tagValues}>
 						{suggestion.tagValues}
 					</Select.Option>
