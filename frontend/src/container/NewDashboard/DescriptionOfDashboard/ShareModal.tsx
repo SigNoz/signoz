@@ -1,6 +1,6 @@
 import { Button, Modal, notification, Typography } from 'antd';
 import Editor from 'components/Editor';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
@@ -11,13 +11,15 @@ function ShareModal({
 	onToggleHandler,
 	selectedData,
 }: ShareModalProps): JSX.Element {
-	const jsonValue = useRef<string>(JSON.stringify(selectedData, null, 2));
+	const [jsonValue, setJSONValue] = useState<string>(
+		JSON.stringify(selectedData, null, 2),
+	);
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
 
 	const onClickCopyClipBoardHandler = useCallback(async () => {
 		try {
-			await navigator.clipboard.writeText(jsonValue.current);
+			await navigator.clipboard.writeText(jsonValue);
 			notification.success({
 				message: t('success', {
 					ns: 'common',
@@ -30,7 +32,7 @@ function ShareModal({
 				}),
 			});
 		}
-	}, [t]);
+	}, [jsonValue, t]);
 
 	const GetFooterComponent = useMemo(() => {
 		if (!isViewJSON) {
@@ -81,7 +83,7 @@ function ShareModal({
 			{!isViewJSON ? (
 				<Typography>{t('export_dashboard')}</Typography>
 			) : (
-				<Editor value={jsonValue} />
+				<Editor onChange={(value): void => setJSONValue(value)} value={jsonValue} />
 			)}
 		</Modal>
 	);
