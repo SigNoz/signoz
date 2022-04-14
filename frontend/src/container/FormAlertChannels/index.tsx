@@ -23,9 +23,10 @@ function FormAlertChannels({
 	type,
 	setSelectedConfig,
 	onTypeChangeHandler,
-	// onTestHandler,
+	onTestHandler,
 	onSaveHandler,
 	savingState,
+	testingState,
 	NotificationElement,
 	title,
 	initialValue,
@@ -82,7 +83,13 @@ function FormAlertChannels({
 					>
 						Save
 					</Button>
-					{/* <Button onClick={onTestHandler}>Test</Button> */}
+					<Button
+						disabled={testingState}
+						loading={testingState}
+						onClick={(): void => onTestHandler(type)}
+					>
+						Test
+					</Button>
 					<Button
 						onClick={(): void => {
 							history.replace(ROUTES.SETTINGS);
@@ -102,6 +109,8 @@ interface FormAlertChannelsProps {
 	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;
+	onTestHandler: (props: ChannelType) => void;
+	testingState: boolean;
 	savingState: boolean;
 	NotificationElement: React.ReactElement<
 		unknown,

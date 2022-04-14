@@ -1,6 +1,7 @@
 import { Form, notification } from 'antd';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import testWebhookApi from 'api/channels/testWebhook';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
@@ -45,15 +46,12 @@ function CreateAlertChannels({
      {{- end }}`,
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
+	const [testingState, setTestingState] = useState<boolean>(false);
 	const [notifications, NotificationElement] = notification.useNotification();
 
 	const [type, setType] = useState<ChannelType>(preType);
 	const onTypeChangeHandler = useCallback((value: string) => {
 		setType(value as ChannelType);
-	}, []);
-
-	const onTestHandler = useCallback(() => {
-		console.log('test');
 	}, []);
 
 	const onSlackHandler = useCallback(async () => {
@@ -93,7 +91,7 @@ function CreateAlertChannels({
 		}
 	}, [notifications, selectedConfig]);
 
-	const onWebhookHandler = useCallback(async () => {
+	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
 		let request: WebhookChannel = {
 			api_url: selectedConfig?.api_url || '',
@@ -101,34 +99,37 @@ function CreateAlertChannels({
 			send_resolved: true,
 		};
 
-		setSavingState(true);
-
-		try {
-			if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
-				if (selectedConfig?.username !== '') {
-					// if username is not null then password must be passed
-					if (selectedConfig?.password !== '') {
-						request = {
-							...request,
-							username: selectedConfig.username,
-							password: selectedConfig.password,
-						};
-					} else {
-						notifications.error({
-							message: 'Error',
-							description: 'A Password must be provided with user name',
-						});
-					}
-				} else if (selectedConfig?.password !== '') {
-					// only password entered, set bearer token
+		if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
+			if (selectedConfig?.username !== '') {
+				// if username is not null then password must be passed
+				if (selectedConfig?.password !== '') {
 					request = {
 						...request,
-						username: '',
+						username: selectedConfig.username,
 						password: selectedConfig.password,
 					};
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: 'A Password must be provided with user name',
+					});
 				}
+			} else if (selectedConfig?.password !== '') {
+				// only password entered, set bearer token
+				request = {
+					...request,
+					username: '',
+					password: selectedConfig.password,
+				};
 			}
+		}
+		return request;
+	}, [notifications, selectedConfig]);
 
+	const onWebhookHandler = useCallback(async () => {
+		setSavingState(true);
+		try {
+			const request = prepareWebhookRequest();
 			const response = await createWebhookApi(request);
 			if (response.statusCode === 200) {
 				notifications.success({
@@ -152,8 +153,7 @@ function CreateAlertChannels({
 			});
 		}
 		setSavingState(false);
-	}, [notifications, selectedConfig]);
-
+	}, [prepareWebhookRequest, notifications]);
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			switch (value) {
@@ -173,6 +173,59 @@ function CreateAlertChannels({
 		[onSlackHandler, onWebhookHandler, notifications],
 	);
 
+	const performChannelTest = useCallback(
+		async (channelType: ChannelType) => {
+			setTestingState(true);
+			try {
+				let request;
+				let response;
+				switch (channelType) {
+					case WebhookType:
+						request = prepareWebhookRequest();
+						response = await testWebhookApi(request);
+						break;
+					case SlackType:
+						return;
+					default:
+						notifications.error({
+							message: 'Error',
+							description: 'Please select a valid channel type',
+						});
+						setTestingState(false);
+						return;
+				}
+
+				if (response.statusCode === 200) {
+					notifications.success({
+						message: 'Success',
+						description: 'An alert has been sent to this channel',
+					});
+				} else {
+					notifications.error({
+						message: 'Error',
+						description:
+							'Failed to send a test message to this channel, please confirm that the parameters are set correctly',
+					});
+				}
+			} catch (error) {
+				notifications.error({
+					message: 'Error',
+					description:
+						'An unexpected error occurred while sending a message to this channel, please try again',
+				});
+			}
+			setTestingState(false);
+		},
+		[prepareWebhookRequest, notifications],
+	);
+
+	const onTestHandler = useCallback(
+		async (value: ChannelType) => {
+			performChannelTest(value);
+		},
+		[performChannelTest],
+	);
+
 	return (
 		<FormAlertChannels
 			{...{
@@ -183,6 +236,7 @@ function CreateAlertChannels({
 				onTestHandler,
 				onSaveHandler,
 				savingState,
+				testingState,
 				NotificationElement,
 				title: 'New Notification Channels',
 				initialValue: {
