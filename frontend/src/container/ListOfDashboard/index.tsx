@@ -3,6 +3,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import SearchFilter from 'components/SearchFilter';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -139,6 +140,7 @@ function ListOfAllDashboard(): JSX.Element {
 
 	return (
 		<TableContainer>
+			<SearchFilter />
 			<Table
 				pagination={{
 					pageSize: 9,
