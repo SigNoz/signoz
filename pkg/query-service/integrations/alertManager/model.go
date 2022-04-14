@@ -1,5 +1,7 @@
 package alertManager
 
+import "time"
+
 // Receiver configuration provides configuration on how to contact a receiver.
 type Receiver struct {
 	// A unique identifier for this receiver.
@@ -19,4 +21,13 @@ type Receiver struct {
 type ReceiverResponse struct {
 	Status string   `json:"status"`
 	Data   Receiver `json:"data"`
+}
+
+type LabelSet map[string]string
+
+type PostableAlert struct {
+	Labels      LabelSet  `json:"labels"`
+	Annotations LabelSet  `json:"annotations,omitempty"`
+	EndsAt      time.Time `json:"endsAt,omitempty"`
+	StartsAt    time.Time `json:"startsAt,omitempty"`
 }
