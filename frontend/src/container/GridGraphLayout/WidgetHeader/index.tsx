@@ -73,7 +73,7 @@ function WidgetHeader({
 				</MenuItemContainer>
 			</Menu.Item>
 			<Menu.Divider />
-			<Menu.Item key={keyMethodMapping.delete.key}>
+			<Menu.Item key={keyMethodMapping.delete.key} danger>
 				<MenuItemContainer>
 					<span>Delete</span> <DeleteOutlined />
 				</MenuItemContainer>
