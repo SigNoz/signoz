@@ -9,7 +9,7 @@ function TextToIcon(text) {
 }
 const OptionsSchemas = {
 	categories: {
-
+		mode: null,
 		options: [
 			{
 				name: 'Tag',
@@ -23,18 +23,21 @@ const OptionsSchemas = {
 				name: 'Tag3',
 				icon: <TagOutlined />,
 			},
-		]
+		],
 	},
-	operation: [
-		{
-			name: 'Equal',
-			icon: TextToIcon('='),
-		},
-		{
-			name: 'Not Equal',
-			icon: TextToIcon('!='),
-		},
-	],
+	operation: {
+		mode: 'tags',
+		options: [
+			{
+				name: 'Equal',
+				icon: TextToIcon('='),
+			},
+			{
+				name: 'Not Equal',
+				icon: TextToIcon('!='),
+			},
+		],
+	},
 };
 const children = [];
 OptionsSchemas.categories.options.forEach((optionItem) => {
@@ -50,12 +53,17 @@ function SearchFilter(): JSX.Element {
 		console.log(`selected ${value}`);
 	}
 	return (
-		<div style={{ width: '100%' }}>
+		<div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+			<div>
+				Selected Items
+			</div>
 			<Select
-				mode="tags"
-				style={{ width: '100%' }}
-				placeholder="Please select"
+				// mode="tags"
+				mode={null}
+				style={{ flex: 1 }}
 				onChange={handleChange}
+				bordered={false}
+				suffixIcon={null}
 			>
 				{children}
 			</Select>
