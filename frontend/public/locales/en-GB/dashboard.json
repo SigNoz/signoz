@@ -11,5 +11,6 @@
 	"load_json": "Load JSON",
 	"import_dashboard_by_pasting": "Import dashboard by pasting JSON or importing JSON file",
 	"error_loading_json": "Error loading json file",
-	"empty_json_not_allowed": "Empty JSON is not allowed"
+	"empty_json_not_allowed": "Empty JSON is not allowed",
+	"new_dashboard_title": "Sample Title"
 }

@@ -99,14 +99,18 @@ function ListOfAllDashboard(): JSX.Element {
 				loading: true,
 			});
 			const response = await createDashboard({
-				title: 'Sample Title',
+				title: t('new_dashboard_title', {
+					ns: 'dashboard',
+				}),
 			});
 
 			if (response.statusCode === 200) {
-				setNewDashboardState({
-					...newDashboardState,
-					loading: false,
-				});
+				// setNewDashboardState({
+				// 	...newDashboardState,
+				// 	loading: false,
+				// });
+
+				console.log({ response });
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: 'randomid',
@@ -181,7 +185,6 @@ function ListOfAllDashboard(): JSX.Element {
 					/>
 					<Dropdown trigger={['click']} overlay={menu}>
 						<NewDashboardButton
-							// onClick={onNewDashboardHandler}
 							icon={<PlusOutlined />}
 							type="primary"
 							loading={newDashboardState.loading}

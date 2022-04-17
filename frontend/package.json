@@ -82,7 +82,6 @@
 		"ts-node": "^10.2.1",
 		"tsconfig-paths-webpack-plugin": "^3.5.1",
 		"typescript": "^4.0.5",
-		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
 		"webpack": "^5.23.0",
 		"webpack-dev-server": "^4.3.1"

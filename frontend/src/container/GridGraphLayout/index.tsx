@@ -1,6 +1,4 @@
-/* eslint-disable react/jsx-no-useless-fragment */
 /* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react/display-name */
 import { SaveFilled } from '@ant-design/icons';
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
@@ -11,7 +9,6 @@ import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
-import { v4 } from 'uuid';
 
 import AddWidget from './AddWidget';
 import Graph from './Graph';
@@ -85,7 +82,7 @@ function GridGraph(): JSX.Element {
 							/>
 						);
 					}
-					return <></>;
+					return <div />;
 				},
 			}));
 	}, [widgets, data.layout]);
