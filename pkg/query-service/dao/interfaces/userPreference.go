@@ -9,6 +9,9 @@ import (
 type Queries interface {
 	FetchUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError)
 
+	GetInviteFromEmail(ctx context.Context, email string) (*model.Invitation, *model.ApiError)
+	GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError)
+
 	GetUser(ctx context.Context, id string) (*model.User, *model.ApiError)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, *model.ApiError)
 	GetUsers(ctx context.Context) ([]model.User, *model.ApiError)
@@ -25,6 +28,9 @@ type Queries interface {
 
 type Mutations interface {
 	UpdateUserPreferece(ctx context.Context, userPreferences *model.UserPreferences) *model.ApiError
+
+	CreateInviteEntry(ctx context.Context, req *model.Invitation) *model.ApiError
+	DeleteInvitation(ctx context.Context, email string) *model.ApiError
 
 	CreateUser(ctx context.Context, user *model.User) (*model.User, *model.ApiError)
 	EditUser(ctx context.Context, update *model.User) (*model.User, *model.ApiError)

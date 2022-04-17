@@ -9,6 +9,58 @@ import (
 	"go.uber.org/zap"
 )
 
+func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context, req *model.Invitation) *model.ApiError {
+	zap.S().Debug("Creating new invite entry. Red: %+v\n", req)
+
+	_, err := mds.db.ExecContext(ctx,
+		`INSERT INTO invites (email, token, role, created_at) VALUES (?, ?, ?, ?);`,
+		req.Email, req.Token, req.Role, req.CreatedAt)
+	if err != nil {
+		zap.S().Errorf("Error while inserting new invitation to the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *model.ApiError {
+	_, err := mds.db.ExecContext(ctx, `DELETE from invites where email=?;`, email)
+	if err != nil {
+		zap.S().Errorf("Error while deleting invite from the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string) (*model.Invitation, *model.ApiError) {
+	invites := []model.Invitation{}
+	err := mds.db.Select(&invites, `SELECT email,token,created_at,role FROM invites WHERE email=?;`, email)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if len(invites) > 1 {
+		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("multiple invites found with same id"))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(invites) == 0 {
+		return nil, nil
+	}
+	return &invites[0], nil
+}
+
+func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError) {
+	invites := []model.Invitation{}
+	err := mds.db.Select(&invites, "SELECT email,token,created_at,role FROM invites")
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return invites, nil
+}
+
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context, user *model.User) (*model.User, *model.ApiError) {
 	zap.S().Debug("Creating new user. Email: %s\n", user.Email)
 

@@ -36,6 +36,13 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
 			hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
 		);
+		CREATE TABLE IF NOT EXISTS invites (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			email TEXT NOT NULL UNIQUE,
+			token TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			role TEXT NOT NULL
+		);
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,

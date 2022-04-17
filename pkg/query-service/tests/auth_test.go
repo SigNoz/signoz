@@ -10,9 +10,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/query-service/auth"
+	"go.signoz.io/query-service/model"
 )
 
-func invite(t *testing.T, email string) *auth.InviteResponse {
+func invite(t *testing.T, email string) *model.InviteResponse {
 	q := endpoint + fmt.Sprintf("/api/v1/invite?email=%s", email)
 	resp, err := client.Get(q)
 	require.NoError(t, err)
@@ -21,7 +22,7 @@ func invite(t *testing.T, email string) *auth.InviteResponse {
 	b, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	var inviteResp auth.InviteResponse
+	var inviteResp model.InviteResponse
 	err = json.Unmarshal(b, &inviteResp)
 	require.NoError(t, err)
 

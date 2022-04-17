@@ -2,50 +2,63 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
 )
 
-// We should be able to invite a user to create an account on SigNoz.
-// The invitation is generic i.e. It is always for non-root user. If a user wants admin access
-// then an admin can add him to admin group after registration.
-
-// Invitation claim will contain emailID, and while registration user will be able to create
-// an account with this email only.
-
 const (
-	inviteValidity = 24 * time.Hour
+	inviteTokenSize = 16
 )
 
-type InviteRequest struct {
-	Email string `json:"email"`
-}
-
-type InviteResponse struct {
-	Email       string `json:"email"`
-	InviteToken string `json:"inviteToken"`
-}
-
 // The root user should be able to invite people to create account on SigNoz cluster.
-func Invite(ctx context.Context, req *InviteRequest) (*InviteResponse, error) {
-	token, err := generateInviteJwt(req)
+func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
+	token, err := randomHex(inviteTokenSize)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to generate invite token")
 	}
-	return &InviteResponse{req.Email, token}, nil
+
+	if err := validateInviteRequest(req); err != nil {
+		return nil, errors.Wrap(err, "invalid invite request")
+	}
+
+	inv := &model.Invitation{
+		Email:     req.Email,
+		Token:     token,
+		CreatedAt: int(time.Now().Unix()),
+		Role:      req.Role,
+	}
+
+	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
+		return nil, errors.Wrap(err.Err, "failed to write to DB")
+	}
+
+	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
 }
 
-func validateInvite(req *RegisterRequest) error {
-	claims, err := ParseJWT(req.InviteToken)
+func RevokeInvite(ctx context.Context, email string) error {
+	if !isValidEmail(email) {
+		return ErrorInvalidInviteToken
+	}
+
+	if err := dao.DB().DeleteInvitation(ctx, email); err != nil {
+		return errors.Wrap(err.Err, "failed to write to DB")
+	}
+	return nil
+}
+
+func validateInvite(ctx context.Context, req *RegisterRequest) error {
+	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
-		return err
+		return errors.Wrap(err.Err, "Failed to read from DB")
 	}
-	if claims["email"] != req.Email {
-		return fmt.Errorf("Invalid invite token")
+
+	if invitation == nil || invitation.Token != req.InviteToken {
+		return ErrorInvalidInviteToken
 	}
+
 	return nil
 }
 
@@ -58,7 +71,7 @@ type RegisterRequest struct {
 }
 
 func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
-	if err := validateInvite(req); err != nil {
+	if err := validateInvite(ctx, req); err != nil {
 		return &model.ApiError{
 			Err: err,
 			Typ: model.ErrorUnauthorized,

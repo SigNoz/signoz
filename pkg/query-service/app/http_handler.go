@@ -229,7 +229,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite", aH.listInvites).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{email}", aH.revokeInvite).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
 
@@ -1186,6 +1189,26 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
+	email := mux.Vars(r)["email"]
+
+	ctx := auth.AttachToken(context.Background(), r)
+	if err := auth.RevokeInvite(ctx, email); err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to revoke invite")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "invite revoked successfully"})
+}
+
+func (aH *APIHandler) listInvites(w http.ResponseWriter, r *http.Request) {
+	groups, err := dao.DB().GetInvites(context.Background())
+	if err != nil {
+		aH.respondError(w, err, "Failed to get invites list")
+		return
+	}
+	aH.writeJSON(w, r, groups)
 }
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {

@@ -22,6 +22,10 @@ const (
 	DashboardAPIs = "DASHBOARD_APIS"
 	ChannelAPIs   = "CHANNEL_APIS"
 	AuthAPIs      = "AUTH_APIS"
+
+	ROLE_VIEWER = "ROLE_VIEWER"
+	ROLE_EDITOR = "ROLE_EDITOR"
+	ROLE_ADMIN  = "ROLE_ADMIN"
 )
 
 type Group struct {

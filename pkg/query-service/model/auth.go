@@ -1,5 +1,22 @@
 package model
 
+type InviteRequest struct {
+	Email string `json:"email"`
+	Role  string `json:role"`
+}
+
+type InviteResponse struct {
+	Email       string `json:"email"`
+	InviteToken string `json:"inviteToken"`
+}
+
+type Invitation struct {
+	Email     string `json:"email" db:"email"`
+	Token     string `json:"token" db:"token"`
+	CreatedAt int    `json:"createdAt" db:"created_at"`
+	Role      string `json:"role" db:"role"`
+}
+
 type User struct {
 	Id               string `json:"id" db:"id"`
 	Name             string `json:"name" db:"name"`

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
 	"google.golang.org/grpc/metadata"
@@ -70,19 +70,6 @@ func generateRefreshJwt(email string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": email,
 		"exp":   time.Now().Add(JwtRefresh).Unix(),
-	})
-
-	jwtStr, err := token.SignedString([]byte(JwtSecret))
-	if err != nil {
-		return "", errors.Errorf("failed to encode jwt: %v", err)
-	}
-	return jwtStr, nil
-}
-
-func generateInviteJwt(req *InviteRequest) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": req.Email,
-		"exp":   time.Now().Add(inviteValidity).Unix(),
 	})
 
 	jwtStr, err := token.SignedString([]byte(JwtSecret))

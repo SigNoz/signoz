@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
+	"go.signoz.io/query-service/model"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -24,7 +25,7 @@ func attachToken(ctx context.Context, token string) context.Context {
 	return metadata.NewIncomingContext(ctx, md)
 }
 
-func invite(email string) (*InviteResponse, error) {
+func invite(email string) (*model.InviteResponse, error) {
 	ctx := context.Background()
 	resp, err := Login(ctx, &LoginRequest{
 		Email:    constants.RootUserEmail,
@@ -36,7 +37,10 @@ func invite(email string) (*InviteResponse, error) {
 
 	ctx = attachToken(ctx, resp.AccessJwt)
 
-	return Invite(ctx, &InviteRequest{email})
+	return Invite(ctx, &model.InviteRequest{
+		Email: email,
+		Role:  ROLE_EDITOR,
+	})
 }
 
 func register(t *testing.T, email, password string) {
@@ -44,9 +48,9 @@ func register(t *testing.T, email, password string) {
 	require.NoError(t, err)
 
 	req := &RegisterRequest{
-		email,
-		password,
-		inv.InviteToken,
+		Email:       email,
+		Password:    password,
+		InviteToken: inv.InviteToken,
 	}
 	regErr := Register(context.Background(), req)
 	require.Nil(t, regErr)

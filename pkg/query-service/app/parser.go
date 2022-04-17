@@ -957,8 +957,8 @@ func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
 
 }
 
-func parseInviteRequest(r *http.Request) (*auth.InviteRequest, error) {
-	var req auth.InviteRequest
+func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
+	var req model.InviteRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err
