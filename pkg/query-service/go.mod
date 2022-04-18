@@ -27,6 +27,11 @@ require (
 )
 
 require (
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+)
+
+require (
 	cloud.google.com/go v0.88.0 // indirect
 	github.com/Azure/azure-sdk-for-go v5.0.0-beta.0.20161028183111-bd73d950fa44+incompatible // indirect
 	github.com/Azure/go-autorest v10.8.1+incompatible // indirect
@@ -97,6 +102,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/stretchr/testify v1.7.1
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel v1.4.1 // indirect
