@@ -13,10 +13,10 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/dao/interfaces"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
-	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.uber.org/zap"
 )
 
@@ -337,12 +337,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if postData["uuid"] != uuid {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
-		return
-	}
-
-	dashboard, apiError := dashboards.UpdateDashboard(&postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, &postData)
 
 	if apiError != nil {
 		aH.respondError(w, apiError, nil)

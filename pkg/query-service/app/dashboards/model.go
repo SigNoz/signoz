@@ -182,9 +182,7 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 	return &dashboard, nil
 }
 
-func UpdateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError) {
-
-	uuid := (*data)["uuid"].(string)
+func UpdateDashboard(uuid string, data *map[string]interface{}) (*Dashboard, *model.ApiError) {
 
 	map_data, err := json.Marshal(data)
 	if err != nil {
@@ -224,12 +222,7 @@ func (d *Dashboard) UpdateSlug() {
 
 func IsPostDataSane(data *map[string]interface{}) error {
 
-	val, ok := (*data)["uuid"]
-	if !ok || val == nil {
-		return fmt.Errorf("uuid not found in post data")
-	}
-
-	val, ok = (*data)["title"]
+	val, ok := (*data)["title"]
 	if !ok || val == nil {
 		return fmt.Errorf("title not found in post data")
 	}
