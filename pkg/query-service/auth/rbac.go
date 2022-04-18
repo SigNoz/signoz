@@ -11,22 +11,12 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
+	"go.uber.org/zap"
 )
 
 type Permission int32
 
-const (
-	ReadPermission = iota
-	WritePermission
-
-	DashboardAPIs = "DASHBOARD_APIS"
-	ChannelAPIs   = "CHANNEL_APIS"
-	AuthAPIs      = "AUTH_APIS"
-
-	ROLE_VIEWER = "ROLE_VIEWER"
-	ROLE_EDITOR = "ROLE_EDITOR"
-	ROLE_ADMIN  = "ROLE_ADMIN"
-)
+const ()
 
 type Group struct {
 	GroupID   string
@@ -35,26 +25,15 @@ type Group struct {
 	Rules     []*model.RBACRule
 }
 
+// ApiClass is used to classify various APIs of similar type into a class so that auth rules
+// can be applied on the whole API class.
 var ApiClass = map[string]string{
-	// Dashboard APIs
-	"/api/v1/dashboards":        DashboardAPIs,
-	"/api/v1/dashboards/{uuid}": DashboardAPIs,
+	// Admin APIs
+	"/api/v1/invite": constants.AdminAPI,
+	"/api/v1/user":   constants.AdminAPI,
 
-	// Channel APIs
-	"/api/v1/channels":      ChannelAPIs,
-	"/api/v1/channels/{id}": ChannelAPIs,
-
-	// Auth APIs
-	"/api/v1/invite":              AuthAPIs,
-	"/api/v1/user":                AuthAPIs,
-	"/api/v1/rbac/group":          AuthAPIs,
-	"/api/v1/rbac/group/{id}":     AuthAPIs,
-	"/api/v1/rbac/rule":           AuthAPIs,
-	"/api/v1/rbac/rule/{id}":      AuthAPIs,
-	"/api/v1/rbac/groupRule":      AuthAPIs,
-	"/api/v1/rbac/groupRule/{id}": AuthAPIs,
-	"/api/v1/rbac/groupUser":      AuthAPIs,
-	"/api/v1/rbac/groupUser/{id}": AuthAPIs,
+	"/api/v1/register": constants.UnprotectedAPI,
+	"/api/v1/login":    constants.UnprotectedAPI,
 }
 
 type AuthCache struct {
@@ -66,7 +45,9 @@ type AuthCache struct {
 	UserGroups map[string]map[string]struct{}
 	Rules      map[string]*model.RBACRule
 
-	GuardianGroupId string
+	AdminGroupId  string
+	EditorGroupId string
+	ViewerGroupId string
 }
 
 var AuthCacheObj AuthCache
@@ -108,12 +89,24 @@ func InitAuthCache(ctx context.Context) error {
 		}
 	}
 
-	guardian, err := dao.DB().GetGroupByName(ctx, constants.RootGroup)
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed to get guardian group")
+	setGroupId := func(groupName string, dest *string) error {
+		group, err := dao.DB().GetGroupByName(ctx, groupName)
+		if err != nil {
+			return errors.Wrapf(err.Err, "failed to get group %s", groupName)
+		}
+		*dest = group.Id
+		return nil
 	}
-	AuthCacheObj.GuardianGroupId = guardian.Id
 
+	if err := setGroupId(constants.AdminGroup, &AuthCacheObj.AdminGroupId); err != nil {
+		return err
+	}
+	if err := setGroupId(constants.EditorGroup, &AuthCacheObj.EditorGroupId); err != nil {
+		return err
+	}
+	if err := setGroupId(constants.ViewerGroup, &AuthCacheObj.ViewerGroupId); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -186,26 +179,60 @@ func (ac *AuthCache) HighestPermission(user, apiClass string) int {
 	return permission
 }
 
-func (ac *AuthCache) IsGuardian(userId string) bool {
+func (ac *AuthCache) BelongsToAdminGroup(userId string) bool {
 	ac.RLock()
 	defer ac.RUnlock()
 
 	for gid := range ac.UserGroups[userId] {
-		if gid == ac.GuardianGroupId {
+		if gid == ac.AdminGroupId {
 			return true
 		}
 	}
 	return false
 }
 
+func (ac *AuthCache) BelongsToEditorGroup(userId string) bool {
+	ac.RLock()
+	defer ac.RUnlock()
+
+	for gid := range ac.UserGroups[userId] {
+		if gid == ac.EditorGroupId {
+			return true
+		}
+	}
+	return false
+}
+
+func (ac *AuthCache) BelongsToViewerGroup(userId string) bool {
+	ac.RLock()
+	defer ac.RUnlock()
+
+	for gid := range ac.UserGroups[userId] {
+		if gid == ac.ViewerGroupId {
+			return true
+		}
+	}
+	return false
+}
+
+// GetApiClass returns the API class for the given API path. Right now, all the non-admin APIs
+// are classified as one class. This can be later extended to various classes as required.
+func GetApiClass(apiPath string) string {
+	apiClass, ok := ApiClass[apiPath]
+	if !ok {
+		return constants.NonAdminAPI
+	}
+	return apiClass
+}
+
 func IsAuthorized(r *http.Request) error {
 	route := mux.CurrentRoute(r)
 	path, _ := route.GetPathTemplate()
-	apiClass, ok := ApiClass[path]
-	if !ok {
-		// It's an unprotected API currently, allow the requests
+	apiClass := GetApiClass(path)
+	if apiClass == constants.UnprotectedAPI {
 		return nil
 	}
+
 	accessJwt := r.Header.Get("AccessToken")
 	if len(accessJwt) == 0 {
 		return fmt.Errorf("Access token is not found")
@@ -217,7 +244,7 @@ func IsAuthorized(r *http.Request) error {
 	}
 
 	// Guardian is permitted for all the APIs.
-	if AuthCacheObj.IsGuardian(user.Id) {
+	if AuthCacheObj.BelongsToAdminGroup(user.Id) {
 		return nil
 	}
 
@@ -225,21 +252,22 @@ func IsAuthorized(r *http.Request) error {
 
 	switch r.Method {
 	case "GET":
-		if perm >= ReadPermission {
+		if perm >= constants.ReadPermission {
 			return nil
 		}
 	case "POST", "PUT", "DELETE":
-		if perm >= WritePermission {
+		if perm >= constants.WritePermission {
 			return nil
 		}
 	default:
+		zap.S().Debugf("Received unauthorized request on api: %v by user: %v", path, user.Email)
 		return errors.New("Unauthorized, user doesn't have required access")
 	}
 
 	return nil
 }
 
-func IsGuardian(r *http.Request) bool {
+func IsAdmin(r *http.Request) bool {
 	accessJwt := r.Header.Get("AccessToken")
 	if len(accessJwt) == 0 {
 		return false
@@ -249,7 +277,7 @@ func IsGuardian(r *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	return AuthCacheObj.IsGuardian(user.Id)
+	return AuthCacheObj.BelongsToAdminGroup(user.Id)
 }
 
 func IsSelfAccess(r *http.Request, id string) bool {
@@ -276,8 +304,6 @@ func IsValidAPIClass(class string) bool {
 
 func ValidAPIClasses() []string {
 	return []string{
-		AuthAPIs,
-		DashboardAPIs,
-		ChannelAPIs,
+		constants.AdminAPI,
 	}
 }

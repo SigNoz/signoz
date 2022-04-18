@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -10,7 +11,6 @@ import (
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type ModelDaoSqlite struct {
@@ -48,7 +48,9 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			name TEXT NOT NULL,
 			org_name TEXT,
 			email TEXT NOT NULL UNIQUE,
-			password TEXT NOT NULL
+			password TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			profile_picture_url TEXT
 		);
 		CREATE TABLE IF NOT EXISTS groups (
 			id TEXT PRIMARY KEY,
@@ -71,11 +73,11 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		CREATE TABLE IF NOT EXISTS rbac_rules (
 			id TEXT PRIMARY KEY,
 			api_class TEXT NOT NULL,
-			permission INTEGER NOT NULL
+			permission INTEGER NOT NULL,
+			UNIQUE(api_class, permission) ON CONFLICT ROLLBACK
 		);
 	`
 
-	fmt.Println("setting schema...")
 	_, err = db.Exec(table_schema)
 	if err != nil {
 		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
@@ -83,22 +85,22 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	mds := &ModelDaoSqlite{db: db}
 
-	if err := mds.initializeUserPreferences(); err != nil {
+	ctx := context.Background()
+	if err := mds.initializeUserPreferences(ctx); err != nil {
 		return nil, err
 	}
-	if err := mds.initializeRBAC(); err != nil {
+	if err := mds.initializeRBAC(ctx); err != nil {
 		return nil, err
 	}
 
 	return mds, nil
 }
 
-func (mds *ModelDaoSqlite) initializeUserPreferences() error {
+func (mds *ModelDaoSqlite) initializeUserPreferences(ctx context.Context) error {
 
 	// set anonymous setting as default in case of any failures to fetch UserPreference in below section
 	telemetry.GetInstance().SetTelemetryAnonymous(constants.DEFAULT_TELEMETRY_ANONYMOUS)
 
-	ctx := context.Background()
 	userPreference, apiError := mds.FetchUserPreference(ctx)
 
 	if apiError != nil {
@@ -118,66 +120,65 @@ func (mds *ModelDaoSqlite) initializeUserPreferences() error {
 	return nil
 }
 
-func (mds *ModelDaoSqlite) initializeRBAC() error {
-	ctx := context.Background()
-	user, err := mds.GetUserByEmail(ctx, constants.RootUserEmail)
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed to query for root user")
-	}
-
-	var cErr *model.ApiError
-
-	// Create root user if it is not present.
-	if user == nil {
-		zap.S().Debugf("Root user is not found, creating one")
-		hash, err := bcrypt.GenerateFromPassword([]byte(constants.RootUserPassword),
-			bcrypt.DefaultCost)
+// initializeRBAC create the ADMIN, EDITOR and VIEWER groups if they are not present. It also
+// created the rules required for the groups and assign the rules to the corresponding groups.
+func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
+	f := func(groupName, apiClass string, permission int) error {
+		group, err := mds.createGroupIfNotPresent(ctx, groupName)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "Failed to create group")
 		}
-		user, cErr = mds.CreateUser(ctx, &model.User{
-			Email:    constants.RootUserEmail,
-			Password: string(hash),
+		rule, apiErr := mds.CreateRule(ctx, &model.RBACRule{
+			ApiClass:   apiClass,
+			Permission: permission,
 		})
-		if cErr != nil {
-			return cErr.Err
+		if apiErr != nil {
+			// TODO(Ahsan): This is not the best way to handle the case of already existing rule.
+			if strings.Contains(apiErr.Err.Error(), "FOREIGN KEY constraint failed") {
+				return nil
+			}
+			return errors.Wrap(apiErr.Err, "Failed to create rule")
 		}
-		zap.S().Infof("Initialized admin user, email: %s, password: %s\n",
-			constants.RootUserEmail, constants.RootUserPassword)
-	}
-	zap.S().Debugf("Root user: %+v", user)
-
-	// Create guardian group if it is not present.
-	group, err := mds.GetGroupByName(ctx, constants.RootGroup)
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed to query for root group")
-	}
-
-	if group == nil {
-		zap.S().Debugf("Guardian group is not found, creating one")
-		group, cErr = mds.CreateGroup(ctx, &model.Group{Name: constants.RootGroup})
-		if cErr != nil {
-			return cErr.Err
+		if apiErr = mds.AddRuleToGroup(ctx, &model.GroupRule{
+			GroupId: group.Id,
+			RuleId:  rule.Id,
+		}); apiErr != nil {
+			return errors.Wrap(apiErr.Err, "Failed to add rule to group")
 		}
+		return nil
 	}
 
-	users, err := mds.GetGroupUsers(ctx, group.Id)
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed to query for root group users")
+	if err := f(constants.AdminGroup, constants.AdminAPI,
+		constants.WritePermission); err != nil {
+		return err
 	}
-	zap.S().Debugf("Guardian group users: %+v", users)
-
-	// If user is already added in the guardian group, we can return.
-	for _, u := range users {
-		if u.UserId == user.Id {
-			return nil
-		}
+	if err := f(constants.EditorGroup, constants.NonAdminAPI,
+		constants.WritePermission); err != nil {
+		return err
 	}
-
-	err = mds.AddUserToGroup(ctx, &model.GroupUser{GroupId: group.Id, UserId: user.Id})
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed add root user to guardian group")
+	if err := f(constants.ViewerGroup, constants.NonAdminAPI,
+		constants.ReadPermission); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
+	name string) (*model.Group, error) {
+
+	group, err := mds.GetGroupByName(ctx, name)
+	if err != nil {
+		return nil, errors.Wrap(err.Err, "Failed to query for root group")
+	}
+	if group != nil {
+		return group, nil
+	}
+
+	zap.S().Debugf("%s is not found, creating it", name)
+	group, cErr := mds.CreateGroup(ctx, &model.Group{Name: name})
+	if cErr != nil {
+		return nil, cErr.Err
+	}
+	return group, nil
 }

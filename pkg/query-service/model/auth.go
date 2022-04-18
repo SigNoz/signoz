@@ -13,7 +13,7 @@ type InviteResponse struct {
 type Invitation struct {
 	Email     string `json:"email" db:"email"`
 	Token     string `json:"token" db:"token"`
-	CreatedAt int    `json:"createdAt" db:"created_at"`
+	CreatedAt int64  `json:"createdAt" db:"created_at"`
 	Role      string `json:"role" db:"role"`
 }
 
@@ -23,6 +23,12 @@ type User struct {
 	OrganizationName string `json:"orgName,omitempty" db:"org_name"`
 	Email            string `json:"email" db:"email"`
 	Password         string `json:"password,omitempty" db:"password"`
+	CreatedAt        int64  `json:"createdAt" db:"created_at"`
+
+	// Methods to operate on ProfilePictureURL are not written. It is added in the table
+	// fof it's introduction in future.
+	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
+	Role               string `json:"role" db:"role"`
 }
 
 type Group struct {

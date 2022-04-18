@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
 )
@@ -27,7 +28,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	inv := &model.Invitation{
 		Email:     req.Email,
 		Token:     token,
-		CreatedAt: int(time.Now().Unix()),
+		CreatedAt: time.Now().Unix(),
 		Role:      req.Role,
 	}
 
@@ -49,17 +50,17 @@ func RevokeInvite(ctx context.Context, email string) error {
 	return nil
 }
 
-func validateInvite(ctx context.Context, req *RegisterRequest) error {
+func validateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitation, error) {
 	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
-		return errors.Wrap(err.Err, "Failed to read from DB")
+		return nil, errors.Wrap(err.Err, "Failed to read from DB")
 	}
 
 	if invitation == nil || invitation.Token != req.InviteToken {
-		return ErrorInvalidInviteToken
+		return nil, ErrorInvalidInviteToken
 	}
 
-	return nil
+	return invitation, nil
 }
 
 type RegisterRequest struct {
@@ -70,11 +71,47 @@ type RegisterRequest struct {
 	InviteToken      string `json:"token"`
 }
 
+// Register registers a new user. For the first register request, it doesn't need an invite token
+// and also the first registration is an enforced ADMIN registration. Every subsequent request will
+// need an invite token to go through.
 func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
-	if err := validateInvite(ctx, req); err != nil {
-		return &model.ApiError{
-			Err: err,
-			Typ: model.ErrorUnauthorized,
+
+	// TODO(Ahsan): We should optimize it, shouldn't make an extra DB call everytime to know if
+	// this is the first register request.
+	users, apiErr := dao.DB().GetUsers(ctx)
+	if apiErr != nil {
+		return apiErr
+	}
+
+	user := &model.User{
+		Name:             req.Name,
+		OrganizationName: req.OrganizationName,
+		Email:            req.Email,
+		CreatedAt:        time.Now().Unix(),
+	}
+
+	var group string
+	if len(users) == 0 {
+		group = constants.AdminGroup
+	}
+
+	if len(users) > 0 {
+		inv, err := validateInvite(ctx, req)
+		if err != nil {
+			return &model.ApiError{
+				Err: err,
+				Typ: model.ErrorUnauthorized,
+			}
+		}
+		switch inv.Role {
+		case constants.ROLE_ADMIN:
+			group = constants.AdminGroup
+		case constants.ROLE_EDITOR:
+			group = constants.EditorGroup
+		case constants.ROLE_VIEWER:
+			group = constants.ViewerGroup
+		default:
+			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("Unknown role")}
 		}
 	}
 
@@ -85,12 +122,8 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 			Typ: model.ErrorUnauthorized,
 		}
 	}
-	_, apiErr := dao.DB().CreateUser(ctx, &model.User{
-		Name:             req.Name,
-		OrganizationName: req.OrganizationName,
-		Email:            req.Email,
-		Password:         hash,
-	})
+	user.Password = hash
+	_, apiErr = dao.DB().CreateUserWithRole(ctx, user, group)
 
 	return apiErr
 }

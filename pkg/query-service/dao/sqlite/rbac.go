@@ -5,12 +5,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
 func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context, req *model.Invitation) *model.ApiError {
-	zap.S().Debug("Creating new invite entry. Red: %+v\n", req)
+	zap.S().Debugf("Creating new invite entry. Red: %+v\n", req)
 
 	_, err := mds.db.ExecContext(ctx,
 		`INSERT INTO invites (email, token, role, created_at) VALUES (?, ?, ?, ?);`,
@@ -36,11 +37,11 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string)
 	err := mds.db.Select(&invites, `SELECT email,token,created_at,role FROM invites WHERE email=?;`, email)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if len(invites) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("multiple invites found with same id"))
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple invites found with same id"))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -55,19 +56,22 @@ func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.Invitation, 
 	err := mds.db.Select(&invites, "SELECT email,token,created_at,role FROM invites")
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return invites, nil
 }
 
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context, user *model.User) (*model.User, *model.ApiError) {
-	zap.S().Debug("Creating new user. Email: %s\n", user.Email)
+	zap.S().Debugf("Creating new user. Email: %s\n", user.Email)
 
 	user.Id = uuid.NewString()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_name, email, password) VALUES (?, ?, ?, ?, ?);`,
-		user.Id, user.Name, user.OrganizationName, user.Email, user.Password)
+		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url, role)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+		user.Id, user.Name, user.OrganizationName, user.Email, user.Password, user.CreatedAt,
+		user.ProfilePirctureURL, user.Role,
+	)
 
 	if err != nil {
 		zap.S().Errorf("Error while inserting new user to the DB\n", err)
@@ -76,8 +80,56 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context, user *model.User) (*m
 	return user, nil
 }
 
+func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.User,
+	role string) (*model.User, *model.ApiError) {
+	zap.S().Debugf("Creating new user with role. Email: %s, Role: %s\n", user.Email, role)
+
+	group, apiErr := mds.GetGroupByName(ctx, role)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	if group == nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal,
+			Err: errors.New("Group not found for the specified role")}
+	}
+
+	// 1. Create the user entry in the users table
+	// 2. Assign the user to the group.
+	// A transaction is required because otherwise it is possible that assinging the user to a group
+	// fails and we still end up adding the entry for the user in the users table.
+	tx, err := mds.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	user.Id = uuid.NewString()
+	_, err = tx.ExecContext(ctx,
+		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url, role)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+		user.Id, user.Name, user.OrganizationName, user.Email, user.Password, user.CreatedAt,
+		user.ProfilePirctureURL, user.Role,
+	)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	_, err = tx.ExecContext(ctx, `INSERT INTO group_users (group_id, user_id) VALUES (?, ?);`,
+		group.Id, user.Id)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return user, nil
+}
+
 func (mds *ModelDaoSqlite) EditUser(ctx context.Context, update *model.User) (*model.User, *model.ApiError) {
-	zap.S().Debug("Updating user. Email: %s\n", update.Email)
+	zap.S().Debugf("Updating user. Email: %s\n", update.Email)
 
 	_, err := mds.db.ExecContext(ctx,
 		`UPDATE users SET name=?,org_name=?,email=?,password=? WHERE id=?;`, update.Name,
@@ -90,7 +142,7 @@ func (mds *ModelDaoSqlite) EditUser(ctx context.Context, update *model.User) (*m
 }
 
 func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.ApiError {
-	zap.S().Debug("Updating user. Id: %s\n", id)
+	zap.S().Debugf("Updating user. Id: %s\n", id)
 
 	_, err := mds.db.ExecContext(ctx, `DELETE from users where id=?;`, id)
 	if err != nil {
@@ -105,11 +157,11 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context, id string) (*model.User,
 	err := mds.db.Select(&users, `SELECT * FROM users WHERE id=?;`, id)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if len(users) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("multiple user found with same id"))
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple user found with same id"))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -124,11 +176,11 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*m
 	err := mds.db.Select(&users, `SELECT * FROM users WHERE email=?;`, email)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if len(users) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("multiple user found with same id"))
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple user found with same id"))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -143,7 +195,7 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.A
 	err := mds.db.Select(&users, "SELECT id,name,org_name,email FROM users")
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return users, nil
@@ -164,7 +216,7 @@ func (mds *ModelDaoSqlite) CreateGroup(ctx context.Context, group *model.Group) 
 }
 
 func (mds *ModelDaoSqlite) DeleteGroup(ctx context.Context, id string) *model.ApiError {
-	zap.S().Debug("Deleting group Id: %s\n", id)
+	zap.S().Debugf("Deleting group Id: %s\n", id)
 
 	_, err := mds.db.ExecContext(ctx, `DELETE from groups where id=?;`, id)
 	if err != nil {
@@ -180,12 +232,12 @@ func (mds *ModelDaoSqlite) GetGroup(ctx context.Context, id string) (*model.Grou
 	err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE id=?`, id)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if len(groups) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("more than 1 row in groups found"))
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("more than 1 row in groups found"))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -202,12 +254,12 @@ func (mds *ModelDaoSqlite) GetGroupByName(ctx context.Context, name string) (*mo
 	err := mds.db.Select(&groups, `SELECT id, name FROM groups WHERE name=?`, name)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if len(groups) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("more than 1 row in groups found"))
+		zap.S().Debugf("Error in processing sql query, more than 1 row in groups found")
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -224,7 +276,7 @@ func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]model.Group, *model
 	err := mds.db.Select(&groups, "SELECT * FROM groups")
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -233,20 +285,20 @@ func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]model.Group, *model
 
 func (mds *ModelDaoSqlite) CreateRule(ctx context.Context, rule *model.RBACRule) (*model.RBACRule, *model.ApiError) {
 	rule.Id = uuid.NewString()
-	zap.S().Debug("Creating rule: %+v\n", rule)
+	zap.S().Debugf("Creating rule: %+v\n", rule)
 
 	_, err := mds.db.ExecContext(ctx,
 		`INSERT INTO rbac_rules (id, api_class, permission) VALUES (?, ?, ?);`,
 		rule.Id, rule.ApiClass, rule.Permission)
 	if err != nil {
-		zap.S().Errorf("Error in preparing statement for INSERT rule, Err: %s\n", err)
+		zap.S().Errorf("Error while creating rule, Err: %s\n", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return rule, nil
 }
 
 func (mds *ModelDaoSqlite) EditRule(ctx context.Context, update *model.RBACRule) (*model.RBACRule, *model.ApiError) {
-	zap.S().Debug("Updating rule: %+v\n", update)
+	zap.S().Debugf("Updating rule: %+v\n", update)
 
 	_, err := mds.db.ExecContext(ctx, `UPDATE rbac_rules SET api_class=?,permission=? WHERE id=?;`,
 		update.ApiClass, update.Permission, update.Id)
@@ -260,7 +312,7 @@ func (mds *ModelDaoSqlite) EditRule(ctx context.Context, update *model.RBACRule)
 }
 
 func (mds *ModelDaoSqlite) DeleteRule(ctx context.Context, id string) *model.ApiError {
-	zap.S().Debug("Deleting rule [Id: %s]\n", id)
+	zap.S().Debugf("Deleting rule [Id: %s]\n", id)
 
 	_, err := mds.db.ExecContext(ctx, `DELETE from rbac_rules where id=?;`, id)
 	if err != nil {
@@ -276,12 +328,12 @@ func (mds *ModelDaoSqlite) GetRule(ctx context.Context, id string) (*model.RBACR
 	err := mds.db.Select(&rules, "SELECT * FROM rbac_rules WHERE id=?", id)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if len(rules) > 1 {
-		zap.S().Debug("Error in processing sql query: ", fmt.Errorf("more than 1 row in rules found"))
+		zap.S().Debugf("Error in processing sql query: more than 1 row in rules found")
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -298,7 +350,7 @@ func (mds *ModelDaoSqlite) GetRules(ctx context.Context) ([]model.RBACRule, *mod
 	err := mds.db.Select(&rules, "SELECT * from rbac_rules")
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -337,7 +389,7 @@ func (mds *ModelDaoSqlite) GetGroupRules(ctx context.Context, id string) ([]mode
 	err := mds.db.Select(&groupRules, "SELECT * FROM group_rules WHERE group_id=?", id)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -375,7 +427,7 @@ func (mds *ModelDaoSqlite) GetGroupUsers(ctx context.Context, id string) ([]mode
 	err := mds.db.Select(&groupUsers, `SELECT * FROM group_users WHERE group_id=?;`, id)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 

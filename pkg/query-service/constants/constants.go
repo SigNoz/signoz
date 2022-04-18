@@ -7,10 +7,6 @@ import (
 
 const (
 	HTTPHostPort = "0.0.0.0:8080"
-
-	RootUserEmail    = "root@signoz.io"
-	RootUserPassword = "password"
-	RootGroup        = "GUARDIAN"
 )
 
 var DruidClientUrl = os.Getenv("DruidClientUrl")

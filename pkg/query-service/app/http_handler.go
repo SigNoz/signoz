@@ -241,23 +241,29 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/user/{id}", aH.editUser).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", aH.deleteUser).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/rbac/group", aH.createGroup).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/group", aH.listGroups).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/group/{id}", aH.getGroup).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/group/{id}", aH.deleteGroup).Methods(http.MethodDelete)
+	// router.HandleFunc("/api/v1/rbac/role/{id}", aH.getRole).Methods(http.MethodDelete)
+	// router.HandleFunc("/api/v1/rbac/role/{id}", aH.editRole).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/rbac/rule", aH.createRBACRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/rule", aH.listRBACRules).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
+	// We are not exposing any group or rule related APIs right now. They will be exposed later
+	// when we'll have more fine-grained RBAC based on various APIs classes and services.
 
-	router.HandleFunc("/api/v1/rbac/groupRule", aH.assignRBACRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/groupRule", aH.unassignRBACRule).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rbac/groupRule/{id}", aH.getGroupRules).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rbac/group", aH.createGroup).Methods(http.MethodPost)
+	// router.HandleFunc("/api/v1/rbac/group", aH.listGroups).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rbac/group/{id}", aH.getGroup).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rbac/group/{id}", aH.deleteGroup).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/rbac/groupUser", aH.assignUser).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rbac/groupUser", aH.unassignUser).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rbac/groupUser/{id}", aH.getGroupUsers).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rbac/rule", aH.createRBACRule).Methods(http.MethodPost)
+	// router.HandleFunc("/api/v1/rbac/rule", aH.listRBACRules).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
+
+	// router.HandleFunc("/api/v1/rbac/groupRule", aH.assignRBACRule).Methods(http.MethodPost)
+	// router.HandleFunc("/api/v1/rbac/groupRule", aH.unassignRBACRule).Methods(http.MethodDelete)
+	// router.HandleFunc("/api/v1/rbac/groupRule/{id}", aH.getGroupRules).Methods(http.MethodGet)
+
+	// router.HandleFunc("/api/v1/rbac/groupUser", aH.assignUser).Methods(http.MethodPost)
+	// router.HandleFunc("/api/v1/rbac/groupUser", aH.unassignUser).Methods(http.MethodDelete)
+	// router.HandleFunc("/api/v1/rbac/groupUser/{id}", aH.getGroupUsers).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1254,8 +1260,8 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !(auth.IsGuardian(r) || auth.IsSelfAccess(r, id)) {
-		zap.S().Debugf("User is not a guardian or self")
+	if !(auth.IsAdmin(r) || auth.IsSelfAccess(r, id)) {
+		zap.S().Debugf("User is not an admin or self")
 		aH.respond(w, "Unauthorized")
 		return
 	}
@@ -1275,7 +1281,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !(auth.IsGuardian(r) || auth.IsSelfAccess(r, id)) {
+	if !(auth.IsAdmin(r) || auth.IsSelfAccess(r, id)) {
 		aH.respond(w, "Unauthorized")
 		return
 	}
@@ -1331,7 +1337,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !(auth.IsGuardian(r) || auth.IsSelfAccess(r, id)) {
+	if !(auth.IsAdmin(r) || auth.IsSelfAccess(r, id)) {
 		aH.respond(w, "Unauthorized")
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/pkg/errors"
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 )
 
@@ -26,7 +27,7 @@ func randomHex(sz int) (string, error) {
 
 func isValidRole(role string) bool {
 	switch role {
-	case ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN:
+	case constants.ROLE_VIEWER, constants.ROLE_EDITOR, constants.ROLE_ADMIN:
 		return true
 	default:
 		return false
