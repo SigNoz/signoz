@@ -1,6 +1,7 @@
 import { Form, notification } from 'antd';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
@@ -54,17 +55,21 @@ function CreateAlertChannels({
 		setType(value as ChannelType);
 	}, []);
 
+	const prepareSlackRequest = useCallback(() => {
+		return {
+			api_url: selectedConfig?.api_url || '',
+			channel: selectedConfig?.channel || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+			text: selectedConfig?.text || '',
+			title: selectedConfig?.title || '',
+		};
+	}, [selectedConfig]);
+
 	const onSlackHandler = useCallback(async () => {
 		try {
 			setSavingState(true);
-			const response = await createSlackApi({
-				api_url: selectedConfig?.api_url || '',
-				channel: selectedConfig?.channel || '',
-				name: selectedConfig?.name || '',
-				send_resolved: true,
-				text: selectedConfig?.text || '',
-				title: selectedConfig?.title || '',
-			});
+			const response = await createSlackApi(prepareSlackRequest());
 
 			if (response.statusCode === 200) {
 				notifications.success({
@@ -89,7 +94,7 @@ function CreateAlertChannels({
 			});
 			setSavingState(false);
 		}
-	}, [notifications, selectedConfig]);
+	}, [prepareSlackRequest, notifications]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
@@ -185,11 +190,13 @@ function CreateAlertChannels({
 						response = await testWebhookApi(request);
 						break;
 					case SlackType:
-						return;
+						request = prepareSlackRequest();
+						response = await testSlackApi(request);
+						break;
 					default:
 						notifications.error({
 							message: 'Error',
-							description: 'Please select a valid channel type',
+							description: 'Sorry, this channel type does not support test yet',
 						});
 						setTestingState(false);
 						return;
@@ -216,7 +223,7 @@ function CreateAlertChannels({
 			}
 			setTestingState(false);
 		},
-		[prepareWebhookRequest, notifications],
+		[prepareWebhookRequest, prepareSlackRequest, notifications],
 	);
 
 	const onTestHandler = useCallback(
