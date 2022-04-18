@@ -9,6 +9,7 @@ import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
+import { v4 } from 'uuid';
 
 import AddWidget from './AddWidget';
 import Graph from './Graph';
@@ -169,13 +170,15 @@ function GridGraph(): JSX.Element {
 		}));
 
 		const response = await updateDashboardApi({
-			title: data.title,
+			data: {
+				title: data.title,
+				description: data.description,
+				name: data.name,
+				tags: data.tags,
+				widgets: data.widgets,
+				layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
+			},
 			uuid: selectedDashboard.uuid,
-			description: data.description,
-			name: data.name,
-			tags: data.tags,
-			widgets: data.widgets,
-			layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
 		});
 		if (response.statusCode === 200) {
 			setSaveLayoutState((state) => ({

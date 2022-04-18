@@ -105,15 +105,9 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				// setNewDashboardState({
-				// 	...newDashboardState,
-				// 	loading: false,
-				// });
-
-				console.log({ response });
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: 'randomid',
+						dashboardId: response.payload.uuid,
 					}),
 				);
 			} else {
@@ -131,7 +125,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState]);
+	}, [newDashboardState, t]);
 
 	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {

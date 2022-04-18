@@ -11,8 +11,11 @@ import {
 } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import Editor from 'components/Editor';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
 
 import { EditorContainer, FooterContainer } from './styles';
 
@@ -63,11 +66,13 @@ function ImportJSON({
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
+				setTimeout(() => {
+					history.push(
+						generatePath(ROUTES.DASHBOARD, {
+							dashboardId: response.payload.uuid,
+						}),
+					);
+				}, 10);
 			} else {
 				setIsCreateDashboardError(true);
 				notification.error({
