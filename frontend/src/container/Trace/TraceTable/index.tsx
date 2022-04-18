@@ -44,7 +44,7 @@ function TraceTable(): JSX.Element {
 	};
 
 	const getHttpMethodOrStatus = (
-		value: TableType['httpMethod'],
+		value: TableType['statusCode'],
 	): JSX.Element => {
 		if (value.length === 0) {
 			return <Typography>-</Typography>;
@@ -90,14 +90,14 @@ function TraceTable(): JSX.Element {
 		},
 		{
 			title: 'Method',
-			dataIndex: 'httpMethod',
-			key: 'httpMethod',
+			dataIndex: 'method',
+			key: 'method',
 			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
-			dataIndex: 'httpCode',
-			key: 'httpCode',
+			dataIndex: 'statusCode',
+			key: 'statusCode',
 			render: getHttpMethodOrStatus,
 		},
 	];
