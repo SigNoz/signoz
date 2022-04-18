@@ -16,6 +16,7 @@ import history from 'lib/history';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
+import { DashboardData } from 'types/api/dashboard/getAll';
 
 import { EditorContainer, FooterContainer } from './styles';
 
@@ -61,8 +62,25 @@ function ImportJSON({
 	const onClickLoadJsonHandler = async (): Promise<void> => {
 		try {
 			setDashboardCreating(true);
+			const dashboardData = JSON.parse(editorValue) as DashboardData;
+
+			// removing the queryData
+			const parsedWidgets: DashboardData = {
+				...dashboardData,
+				widgets: dashboardData.widgets?.map((e) => ({
+					...e,
+					queryData: {
+						...e.queryData,
+						data: e.queryData.data.map((queryData) => ({
+							...queryData,
+							queryData: [],
+						})),
+					},
+				})),
+			};
+
 			const response = await createDashboard({
-				...JSON.parse(editorValue),
+				...parsedWidgets,
 			});
 
 			if (response.statusCode === 200) {
