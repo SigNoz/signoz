@@ -7,6 +7,7 @@ import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
 	ChannelType,
@@ -19,6 +20,9 @@ import {
 function CreateAlertChannels({
 	preType = 'slack',
 }: CreateAlertChannelsProps): JSX.Element {
+	// init namespace for translations
+	const { t } = useTranslation('channels');
+
 	const [formInstance] = Form.useForm();
 
 	const [selectedConfig, setSelectedConfig] = useState<
@@ -74,7 +78,7 @@ function CreateAlertChannels({
 			if (response.statusCode === 200) {
 				notifications.success({
 					message: 'Success',
-					description: 'Successfully created the channel',
+					description: t('channel_creation_done'),
 				});
 				setTimeout(() => {
 					history.replace(ROUTES.SETTINGS);
@@ -82,19 +86,18 @@ function CreateAlertChannels({
 			} else {
 				notifications.error({
 					message: 'Error',
-					description: response.error || 'Error while creating the channel',
+					description: response.error || t('channel_creation_failed'),
 				});
 			}
 			setSavingState(false);
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
-				description:
-					'An unexpected error occurred while creating this channel, please try again',
+				description: t('channel_creation_failed'),
 			});
 			setSavingState(false);
 		}
-	}, [prepareSlackRequest, notifications]);
+	}, [prepareSlackRequest, t, notifications]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		// initial api request without auth params
@@ -116,7 +119,7 @@ function CreateAlertChannels({
 				} else {
 					notifications.error({
 						message: 'Error',
-						description: 'A Password must be provided with user name',
+						description: t('username_no_password'),
 					});
 				}
 			} else if (selectedConfig?.password !== '') {
@@ -129,7 +132,7 @@ function CreateAlertChannels({
 			}
 		}
 		return request;
-	}, [notifications, selectedConfig]);
+	}, [notifications, t, selectedConfig]);
 
 	const onWebhookHandler = useCallback(async () => {
 		setSavingState(true);
@@ -139,7 +142,7 @@ function CreateAlertChannels({
 			if (response.statusCode === 200) {
 				notifications.success({
 					message: 'Success',
-					description: 'Successfully created the channel',
+					description: t('channel_creation_done'),
 				});
 				setTimeout(() => {
 					history.replace(ROUTES.SETTINGS);
@@ -147,18 +150,17 @@ function CreateAlertChannels({
 			} else {
 				notifications.error({
 					message: 'Error',
-					description: response.error || 'Error while creating the channel',
+					description: response.error || t('channel_creation_failed'),
 				});
 			}
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
-				description:
-					'An unexpected error occurred while creating this channel, please try again',
+				description: t('channel_creation_failed'),
 			});
 		}
 		setSavingState(false);
-	}, [prepareWebhookRequest, notifications]);
+	}, [prepareWebhookRequest, t, notifications]);
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			switch (value) {
@@ -171,11 +173,11 @@ function CreateAlertChannels({
 				default:
 					notifications.error({
 						message: 'Error',
-						description: 'channel type selected is invalid',
+						description: t('selected_channel_invalid'),
 					});
 			}
 		},
-		[onSlackHandler, onWebhookHandler, notifications],
+		[onSlackHandler, t, onWebhookHandler, notifications],
 	);
 
 	const performChannelTest = useCallback(
@@ -196,7 +198,7 @@ function CreateAlertChannels({
 					default:
 						notifications.error({
 							message: 'Error',
-							description: 'Sorry, this channel type does not support test yet',
+							description: t('test_unsupported'),
 						});
 						setTestingState(false);
 						return;
@@ -205,25 +207,23 @@ function CreateAlertChannels({
 				if (response.statusCode === 200) {
 					notifications.success({
 						message: 'Success',
-						description: 'An alert has been sent to this channel',
+						description: t('channel_test_done'),
 					});
 				} else {
 					notifications.error({
 						message: 'Error',
-						description:
-							'Failed to send a test message to this channel, please confirm that the parameters are set correctly',
+						description: t('channel_test_failed'),
 					});
 				}
 			} catch (error) {
 				notifications.error({
 					message: 'Error',
-					description:
-						'An unexpected error occurred while sending a message to this channel, please try again',
+					description: t('channel_test_unexpected'),
 				});
 			}
 			setTestingState(false);
 		},
-		[prepareWebhookRequest, prepareSlackRequest, notifications],
+		[prepareWebhookRequest, t, prepareSlackRequest, notifications],
 	);
 
 	const onTestHandler = useCallback(
@@ -245,7 +245,7 @@ function CreateAlertChannels({
 				savingState,
 				testingState,
 				NotificationElement,
-				title: 'New Notification Channels',
+				title: t('page_title_create'),
 				initialValue: {
 					type,
 					...selectedConfig,

@@ -14,11 +14,15 @@ import {
 import FormAlertChannels from 'container/FormAlertChannels';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
 function EditAlertChannels({
 	initialValue,
 }: EditAlertChannelsProps): JSX.Element {
+	// init namespace for translations
+	const { t } = useTranslation('channels');
+
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<
 		Partial<SlackChannel & WebhookChannel>
@@ -56,7 +60,7 @@ function EditAlertChannels({
 		if (selectedConfig?.api_url === '') {
 			notifications.error({
 				message: 'Error',
-				description: 'Webhook URL is mandatory',
+				description: t('webhook_url_required'),
 			});
 			setSavingState(false);
 			return;
@@ -67,7 +71,7 @@ function EditAlertChannels({
 		if (response.statusCode === 200) {
 			notifications.success({
 				message: 'Success',
-				description: 'Channels Edited Successfully',
+				description: t('channel_edit_done'),
 			});
 
 			setTimeout(() => {
@@ -76,11 +80,11 @@ function EditAlertChannels({
 		} else {
 			notifications.error({
 				message: 'Error',
-				description: response.error || 'error while updating the Channels',
+				description: response.error || t('channel_edit_failed'),
 			});
 		}
 		setSavingState(false);
-	}, [prepareSlackRequest, notifications, selectedConfig]);
+	}, [prepareSlackRequest, t, notifications, selectedConfig]);
 
 	const prepareWebhookRequest = useCallback(() => {
 		const { name, username, password } = selectedConfig;
@@ -106,13 +110,13 @@ function EditAlertChannels({
 		};
 
 		if (selectedConfig?.api_url === '') {
-			showError('Webhook URL is mandatory');
+			showError(t('webhook_url_required'));
 			setSavingState(false);
 			return;
 		}
 
 		if (username && (!password || password === '')) {
-			showError('Please enter a password');
+			showError(t('username_no_password'));
 			setSavingState(false);
 			return;
 		}
@@ -122,17 +126,17 @@ function EditAlertChannels({
 		if (response.statusCode === 200) {
 			notifications.success({
 				message: 'Success',
-				description: 'Channels Edited Successfully',
+				description: t('channel_edit_done'),
 			});
 
 			setTimeout(() => {
 				history.replace(ROUTES.SETTINGS);
 			}, 2000);
 		} else {
-			showError(response.error || 'error while updating the Channels');
+			showError(response.error || t('channel_edit_failed'));
 		}
 		setSavingState(false);
-	}, [prepareWebhookRequest, notifications, selectedConfig]);
+	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {
@@ -163,7 +167,7 @@ function EditAlertChannels({
 					default:
 						notifications.error({
 							message: 'Error',
-							description: 'Sorry, this channel type does not support test yet',
+							description: t('test_unsupported'),
 						});
 						setTestingState(false);
 						return;
@@ -172,25 +176,23 @@ function EditAlertChannels({
 				if (response.statusCode === 200) {
 					notifications.success({
 						message: 'Success',
-						description: 'An alert has been sent to this channel',
+						description: t('channel_test_done'),
 					});
 				} else {
 					notifications.error({
 						message: 'Error',
-						description:
-							'Failed to send a test message to this channel, please confirm that the parameters are set correctly',
+						description: t('channel_test_failed'),
 					});
 				}
 			} catch (error) {
 				notifications.error({
 					message: 'Error',
-					description:
-						'An unexpected error occurred while sending a message to this channel, please try again',
+					description: t('channel_test_failed'),
 				});
 			}
 			setTestingState(false);
 		},
-		[prepareWebhookRequest, prepareSlackRequest, notifications],
+		[prepareWebhookRequest, t, prepareSlackRequest, notifications],
 	);
 
 	const onTestHandler = useCallback(
@@ -212,7 +214,7 @@ function EditAlertChannels({
 				testingState,
 				savingState,
 				NotificationElement,
-				title: 'Edit Notification Channels',
+				title: t('page_title_edit'),
 				initialValue,
 				nameDisable: true,
 			}}
