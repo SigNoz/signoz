@@ -13,8 +13,10 @@ export const UpdateDashboardTitleDescriptionTags = ({
 			const { data } = dashboard;
 
 			const response = await update({
-				...dashboard.data,
-				title: dashboard.data.title,
+				data: {
+					...dashboard.data,
+					title: dashboard.data.title,
+				},
 				uuid: dashboard.uuid,
 			});
 

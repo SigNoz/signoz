@@ -148,6 +148,7 @@ function GridGraph(): JSX.Element {
 								w: e.i === '__dropping-elem__' ? 6 : e.w,
 								h: e.i === '__dropping-elem__' ? 2 : e.h,
 							}))
+							// removing add widgets layout config
 							.filter((e) => e.maxW === undefined),
 					});
 				} catch (error) {

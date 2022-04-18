@@ -38,7 +38,7 @@ function DashboardGraphSlider(): JSX.Element {
 
 				await updateDashboard({
 					data,
-					generateWidgetId,
+					generateWidgetId: selectedDashboard.uuid,
 					graphType: name,
 					layout: [
 						...(data.layout || []),
