@@ -699,6 +699,8 @@ func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.Api
 
 	err := r.localDB.Get(&channel, query)
 
+	zap.S().Info(query)
+
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -785,7 +787,7 @@ func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError)
 
 	err := r.localDB.Select(&channels, query)
 
-	// zap.S().Info(query)
+	zap.S().Info(query)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
@@ -1367,6 +1369,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY serviceName"
 			var dBResponse []model.DBResponseServiceName
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1382,6 +1386,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpCode"
 			var dBResponse []model.DBResponseHttpCode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1397,6 +1403,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpRoute"
 			var dBResponse []model.DBResponseHttpRoute
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1412,6 +1420,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpUrl"
 			var dBResponse []model.DBResponseHttpUrl
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1427,6 +1437,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpMethod"
 			var dBResponse []model.DBResponseHttpMethod
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1442,6 +1454,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpHost"
 			var dBResponse []model.DBResponseHttpHost
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1457,6 +1471,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY name"
 			var dBResponse []model.DBResponseOperation
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1472,6 +1488,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY component"
 			var dBResponse []model.DBResponseComponent
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1486,6 +1504,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			var dBResponse []model.DBResponseTotal
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1495,6 +1515,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery2 += query
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery2, args...)
+			zap.S().Info(finalQuery2)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1506,6 +1528,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " ORDER BY durationNano LIMIT 1"
 			var dBResponse []model.DBResponseTotal
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1515,6 +1539,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " ORDER BY durationNano DESC LIMIT 1"
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1608,20 +1634,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	if errStatus != nil {
 		return nil, errStatus
 	}
-
-	// var totalSpans []model.DBResponseTotal
-
-	// totalSpansQuery := fmt.Sprintf(`SELECT count() as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.traceDB, r.indexTable)
-
-	// totalSpansQuery += query
-	// err := r.db.Select(ctx, &totalSpans, totalSpansQuery, args...)
-
-	// zap.S().Info(totalSpansQuery)
-
-	// if err != nil {
-	// 	zap.S().Debug("Error in processing sql query: ", err)
-	// 	return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
-	// }
 
 	if len(queryParams.OrderParam) != 0 {
 		if queryParams.OrderParam == constants.Duration {
