@@ -2,28 +2,35 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
-import getAll from 'api/alerts/getAll';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
 import { generatePath } from 'react-router-dom';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Alerts } from 'types/api/alerts/getAll';
 
 import DeleteAlert from './DeleteAlert';
 import { Button, ButtonContainer } from './styles';
 import Status from './TableComponents/Status';
 
-function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
+function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
+	const { t } = useTranslation('common');
 
 	useInterval(() => {
 		(async (): Promise<void> => {
-			const { payload, statusCode } = await getAll();
-
-			if (statusCode === 200 && payload !== null) {
-				setData(payload);
+			const { data: refetchData, status } = await refetch();
+			if (status === 'success') {
+				setData(refetchData?.payload || []);
+			}
+			if (status === 'error') {
+				notification.error({
+					message: t('something_went_wrong'),
+				});
 			}
 		})();
 	}, 30000);
@@ -148,6 +155,7 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 
 interface ListAlertProps {
 	allAlertRules: Alerts[];
+	refetch: UseQueryResult<ErrorResponse | SuccessResponse<Alerts[]>>['refetch'];
 }
 
 export default ListAlert;
