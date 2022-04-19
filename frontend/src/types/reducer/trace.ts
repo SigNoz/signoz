@@ -40,8 +40,8 @@ interface SpansAggregateData {
 	serviceName: string;
 	operation: string;
 	durationNano: number;
-	httpCode: string;
-	httpMethod: string;
+	statusCode: string;
+	method: string;
 }
 
 export interface Tags {

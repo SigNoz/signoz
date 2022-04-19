@@ -341,12 +341,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if postData["uuid"] != uuid {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
-		return
-	}
-
-	dashboard, apiError := dashboards.UpdateDashboard(&postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, &postData)
 
 	if apiError != nil {
 		aH.respondError(w, apiError, nil)

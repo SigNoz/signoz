@@ -1,30 +1,31 @@
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
 import EditRulesContainer from 'container/EditRules';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
-import { PayloadProps, Props } from 'types/api/alerts/get';
 
 function EditRules(): JSX.Element {
 	const { ruleId } = useParams<EditRulesParam>();
+	const { t } = useTranslation('common');
 
-	const { loading, error, payload, errorMessage } = useFetch<
-		PayloadProps,
-		Props
-	>(get, {
-		id: parseInt(ruleId, 10),
+	const { isLoading, data, isError } = useQuery(['ruleId', ruleId], {
+		queryFn: () =>
+			get({
+				id: parseInt(ruleId, 10),
+			}),
 	});
 
-	if (error) {
-		return <div>{errorMessage}</div>;
+	if (isError) {
+		return <div>{data?.error || t('something_went_wrong')}</div>;
 	}
 
-	if (loading || payload === undefined) {
+	if (isLoading || !data?.payload) {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
-	return <EditRulesContainer ruleId={ruleId} initialData={payload.data} />;
+	return <EditRulesContainer ruleId={ruleId} initialData={data.payload.data} />;
 }
 
 interface EditRulesParam {

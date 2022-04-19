@@ -1,0 +1,20 @@
+# This workflow will inspect a pull request to ensure there is a linked issue or a
+# valid issue is mentioned in the body. If neither is present it fails the check and adds
+# a comment alerting users of this missing requirement.
+name: VerifyIssue
+
+on:
+  pull_request:
+    types: [edited, synchronize, opened, reopened]
+  check_run:
+
+jobs:
+  verify_linked_issue:
+    runs-on: ubuntu-latest
+    name: Ensure Pull Request has a linked issue.
+    steps:
+      - name: Verify Linked Issue
+        uses: hattan/verify-linked-issue-action@v1.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
