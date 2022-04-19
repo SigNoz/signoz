@@ -1,4 +1,5 @@
 import { TraceReducer } from 'types/reducer/trace';
+
 import { ParsedUrl } from '../util';
 
 export const parseQueryIntoSelectedTags = (
@@ -19,7 +20,7 @@ export const parseQueryIntoSelectedTags = (
 				selectedTags = parsedQuerySelectedTags;
 			}
 		} catch (error) {
-			//error while parsing
+			// error while parsing
 		}
 	}
 

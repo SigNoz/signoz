@@ -1,38 +1,56 @@
-import { TableProps, Tag } from 'antd';
+import { TableProps, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import React from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import {
-	GetSpansAggregate,
-	GetSpansAggregateProps,
-} from 'store/actions/trace/getInitialSpansAggregate';
+import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
+import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import {
+	UPDATE_SPAN_ORDER,
+	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+} from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+
 dayjs.extend(duration);
 
-const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
+function TraceTable(): JSX.Element {
 	const {
 		spansAggregate,
 		selectedFilter,
 		selectedTags,
 		filterLoading,
+		userSelectedFilter,
+		isFilterExclude,
+		filterToFetchData,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const { loading, total } = spansAggregate;
+	const { loading, total, order: spansAggregateOrder } = spansAggregate;
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
+
+	const getLink = (record: TableType): string => {
+		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
+	};
+
+	const getValue = (value: string): JSX.Element => {
+		return <Typography>{value}</Typography>;
+	};
+
+	const getHttpMethodOrStatus = (
+		value: TableType['httpMethod'],
+	): JSX.Element => {
+		if (value.length === 0) {
+			return <Typography>-</Typography>;
+		}
+		return <Tag color="magenta">{value}</Tag>;
+	};
 
 	const columns: ColumnsType<TableType> = [
 		{
@@ -42,52 +60,45 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			sorter: true,
 			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
-				return <div>{day.format('DD/MM/YYYY hh:mm:ss A')}</div>;
+				return <Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>;
 			},
 		},
 		{
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
+			render: getValue,
 		},
 		{
 			title: 'Operation',
 			dataIndex: 'operation',
 			key: 'operation',
+			render: getValue,
 		},
 		{
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
 			render: (value: TableType['durationNano']): JSX.Element => (
-				<div>
+				<Typography>
 					{`${dayjs
 						.duration({ milliseconds: value / 1000000 })
-						.asMilliseconds()} ms`}
-				</div>
+						.asMilliseconds()
+						.toFixed(2)} ms`}
+				</Typography>
 			),
 		},
 		{
 			title: 'Method',
 			dataIndex: 'httpMethod',
 			key: 'httpMethod',
-			render: (value: TableType['httpMethod']): JSX.Element => {
-				if (value.length === 0) {
-					return <div>-</div>;
-				}
-				return <Tag color="magenta">{value}</Tag>;
-			},
+			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
 			dataIndex: 'httpCode',
 			key: 'httpCode',
-			render: (value: TableType['httpCode']): JSX.Element => {
-				if (value.length === 0) {
-					return <div>-</div>;
-				}
-				return <Tag color="magenta">{value}</Tag>;
-			},
+			render: getHttpMethodOrStatus,
 		},
 	];
 
@@ -96,18 +107,35 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 		_,
 		sort,
 	) => {
-		const { order = 'ascend' } = sort;
+		if (!Array.isArray(sort)) {
+			const { order = spansAggregateOrder } = sort;
+			if (props.current && props.pageSize) {
+				const spanOrder = order || spansAggregateOrder;
 
-		if (props.current && props.pageSize) {
-			getSpansAggregate({
-				maxTime: globalTime.maxTime,
-				minTime: globalTime.minTime,
-				selectedFilter,
-				current: props.current,
-				pageSize: props.pageSize,
-				selectedTags,
-				order: order === 'ascend' ? 'ascending' : 'descending',
-			});
+				dispatch({
+					type: UPDATE_SPAN_ORDER,
+					payload: {
+						order: spanOrder,
+					},
+				});
+
+				dispatch({
+					type: UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+					payload: {
+						currentPage: props.current,
+					},
+				});
+
+				updateURL(
+					selectedFilter,
+					filterToFetchData,
+					props.current,
+					selectedTags,
+					isFilterExclude,
+					userSelectedFilter,
+					spanOrder,
+				);
+			}
 		}
 	};
 
@@ -117,40 +145,27 @@ const TraceTable = ({ getSpansAggregate }: TraceProps): JSX.Element => {
 			dataSource={spansAggregate.data}
 			loading={loading || filterLoading}
 			columns={columns}
-			onRow={(record) => ({
-				onClick: (): void => {
-					history.push({
-						pathname: ROUTES.TRACE + '/' + record.traceID,
-						search: '?' + 'spanId=' + record.spanID,
-					});
-				},
-			})}
-			size="middle"
-			rowKey={'timestamp'}
+			rowKey={(record): string => `${record.traceID}-${record.spanID}`}
 			style={{
 				cursor: 'pointer',
 			}}
+			onRow={(record): React.HTMLAttributes<TableType> => ({
+				onClick: (event): void => {
+					event.preventDefault();
+					event.stopPropagation();
+					history.push(getLink(record));
+				},
+			})}
 			pagination={{
 				current: spansAggregate.currentPage,
 				pageSize: spansAggregate.pageSize,
 				responsive: true,
 				position: ['bottomLeft'],
-				total: total,
+				total,
 			}}
+			sortDirections={['ascend', 'descend']}
 		/>
 	);
-};
-
-interface DispatchProps {
-	getSpansAggregate: (props: GetSpansAggregateProps) => void;
 }
 
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
-});
-
-type TraceProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(TraceTable);
+export default TraceTable;

@@ -18,19 +18,19 @@ import DashboardReducer from 'types/reducer/dashboards';
 import Description from './Description';
 import { Button, Container } from './styles';
 
-const DescriptionOfDashboard = ({
+function DescriptionOfDashboard({
 	updateDashboardTitleDescriptionTags,
 	toggleEditMode,
-}: DescriptionOfDashboardProps): JSX.Element => {
+}: DescriptionOfDashboardProps): JSX.Element {
 	const { dashboards, isEditMode } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 
 	const [selectedDashboard] = dashboards;
 	const selectedData = selectedDashboard.data;
-	const title = selectedData.title;
-	const tags = selectedData.tags;
-	const description = selectedData.description;
+	const { title } = selectedData;
+	const { tags } = selectedData;
+	const { description } = selectedData;
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
@@ -67,46 +67,42 @@ const DescriptionOfDashboard = ({
 	]);
 
 	return (
-		<>
-			<Card>
-				<Row align="top" justify="space-between">
-					{!isEditMode ? (
-						<>
-							<Col>
-								<Typography>{title}</Typography>
-								<Container>
-									{tags?.map((e) => (
-										<Tag key={e}>{e}</Tag>
-									))}
-								</Container>
-								<Container>
-									<Typography>{description}</Typography>
-								</Container>
-							</Col>
-						</>
-					) : (
-						<Col lg={8}>
-							<NameOfTheDashboard name={updatedTitle} setName={setUpdatedTitle} />
-							<AddTags tags={updatedTags} setTags={setUpdatedTags} />
-							<Description
-								description={updatedDescription}
-								setDescription={setUpdtatedDescription}
-							/>
-						</Col>
-					)}
+		<Card>
+			<Row align="top" justify="space-between">
+				{!isEditMode ? (
 					<Col>
-						<Button
-							icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
-							onClick={onClickEditHandler}
-						>
-							{isEditMode ? 'Save' : 'Edit'}
-						</Button>
+						<Typography>{title}</Typography>
+						<Container>
+							{tags?.map((e) => (
+								<Tag key={e}>{e}</Tag>
+							))}
+						</Container>
+						<Container>
+							<Typography>{description}</Typography>
+						</Container>
 					</Col>
-				</Row>
-			</Card>
-		</>
+				) : (
+					<Col lg={8}>
+						<NameOfTheDashboard name={updatedTitle} setName={setUpdatedTitle} />
+						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
+						<Description
+							description={updatedDescription}
+							setDescription={setUpdtatedDescription}
+						/>
+					</Col>
+				)}
+				<Col>
+					<Button
+						icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
+						onClick={onClickEditHandler}
+					>
+						{isEditMode ? 'Save' : 'Edit'}
+					</Button>
+				</Col>
+			</Row>
+		</Card>
 	);
-};
+}
 
 interface DispatchProps {
 	updateDashboardTitleDescriptionTags: (

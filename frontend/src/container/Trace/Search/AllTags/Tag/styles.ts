@@ -1,5 +1,5 @@
+import { Select, Space } from 'antd';
 import styled from 'styled-components';
-import { Button, Select, Space } from 'antd';
 
 export const SpaceComponent = styled(Space)`
 	&&& {
@@ -12,12 +12,6 @@ export const SelectComponent = styled(Select)`
 		min-width: 170px;
 		margin-right: 21.91px;
 		margin-left: 21.92px;
-	}
-`;
-
-export const ValueSelect = styled(Select)`
-	&&& {
-		width: 100%;
 	}
 `;
 

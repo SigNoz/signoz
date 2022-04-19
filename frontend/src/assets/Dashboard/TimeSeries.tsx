@@ -1,7 +1,7 @@
 import React from 'react';
 
-const TimeSeries = (props: TimeSeriesProps): JSX.Element => (
-	<React.Fragment>
+function TimeSeries(): JSX.Element {
+	return (
 		<svg
 			width="81"
 			height="46"
@@ -31,12 +31,7 @@ const TimeSeries = (props: TimeSeriesProps): JSX.Element => (
 				/>
 			</defs>
 		</svg>
-	</React.Fragment>
-);
-
-export interface TimeSeriesProps{
-	fillColor: React.CSSProperties['color'];
+	);
 }
-
 
 export default TimeSeries;

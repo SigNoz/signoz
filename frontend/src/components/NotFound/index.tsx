@@ -4,7 +4,7 @@ import React from 'react';
 
 import { Button, Container, Text, TextContainer } from './styles';
 
-const NotFound = (): JSX.Element => {
+function NotFound(): JSX.Element {
 	return (
 		<Container>
 			<NotFoundImage />
@@ -19,6 +19,6 @@ const NotFound = (): JSX.Element => {
 			</Button>
 		</Container>
 	);
-};
+}
 
 export default NotFound;

@@ -16,7 +16,7 @@ export const GetDashboard = ({
 			});
 
 			const response = await getDashboard({
-				uuid: uuid,
+				uuid,
 			});
 
 			if (response.statusCode === 200) {
@@ -64,7 +64,8 @@ export const GetDashboard = ({
 			dispatch({
 				type: 'GET_DASHBOARD_ERROR',
 				payload: {
-					errorMessage: error.toString() || 'Something went wrong',
+					errorMessage:
+						error instanceof Error ? error.toString() : 'Something went wrong',
 				},
 			});
 		}

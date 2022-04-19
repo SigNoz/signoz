@@ -1,30 +1,39 @@
-import { Button } from 'antd';
-import React, { useCallback } from 'react';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Modal } from 'antd';
+import React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { Dispatch } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
 
 import { Data } from '../index';
+import { TableLinkText } from './styles';
 
-const DeleteButton = ({
-	deleteDashboard,
-	id,
-}: DeleteButtonProps): JSX.Element => {
-	const onClickHandler = useCallback(() => {
-		deleteDashboard({
-			uuid: id,
+const { confirm } = Modal;
+
+function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
+	const openConfirmationDialog = (): void => {
+		confirm({
+			title: 'Do you really want to delete this dashboard?',
+			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
+			onOk() {
+				deleteDashboard({
+					uuid: id,
+				});
+			},
+			okText: 'Delete',
+			okButtonProps: { danger: true },
+			centered: true,
 		});
-	}, [id, deleteDashboard]);
+	};
 
 	return (
-		<Button onClick={onClickHandler} type="link">
+		<TableLinkText type="danger" onClick={openConfirmationDialog}>
 			Delete
-		</Button>
+		</TableLinkText>
 	);
-};
+}
 
 interface DispatchProps {
 	deleteDashboard: ({
@@ -43,14 +52,22 @@ type DeleteButtonProps = Data & DispatchProps;
 const WrapperDeleteButton = connect(null, mapDispatchToProps)(DeleteButton);
 
 // This is to avoid the type collision
-const Wrapper = (props: Data): JSX.Element => {
+function Wrapper(props: Data): JSX.Element {
+	const { createdBy, description, id, key, lastUpdatedTime, name, tags } = props;
+
 	return (
 		<WrapperDeleteButton
 			{...{
-				...props,
+				createdBy,
+				description,
+				id,
+				key,
+				lastUpdatedTime,
+				name,
+				tags,
 			}}
 		/>
 	);
-};
+}
 
 export default Wrapper;

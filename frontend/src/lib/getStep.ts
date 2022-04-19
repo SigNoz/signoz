@@ -12,7 +12,10 @@ interface GetStepInput {
 /**
  * Converts given timestamp to ms.
  */
-const convertToMs = (timestamp: number, inputFormat: DateInputFormatType) => {
+const convertToMs = (
+	timestamp: number,
+	inputFormat: DateInputFormatType,
+): number => {
 	switch (inputFormat) {
 		case 's':
 			return timestamp * 1e3;
@@ -20,10 +23,14 @@ const convertToMs = (timestamp: number, inputFormat: DateInputFormatType) => {
 			return timestamp * 1;
 		case 'ns':
 			return timestamp / 1e6;
+		default: {
+			throw new Error('invalid format');
+		}
 	}
 };
 
 export const DefaultStepSize = 60;
+export const MaxDataPoints = 200;
 
 /**
  *	Returns relevant step size based on given start and end date.
@@ -31,13 +38,9 @@ export const DefaultStepSize = 60;
 const getStep = ({ start, end, inputFormat = 'ms' }: GetStepInput): number => {
 	const startDate = dayjs(convertToMs(Number(start), inputFormat));
 	const endDate = dayjs(convertToMs(Number(end), inputFormat));
-	const diffDays = Math.abs(endDate.diff(startDate, 'days'));
+	const diffSec = Math.abs(endDate.diff(startDate, 's'));
 
-	if (diffDays > 1) {
-		return DefaultStepSize * diffDays;
-	}
-
-	return DefaultStepSize;
+	return Math.max(Math.floor(diffSec / MaxDataPoints), DefaultStepSize);
 };
 
 export default getStep;

@@ -85,3 +85,7 @@ export const EditAlertChannelsAlerts = Loadable(
 export const AllAlertChannels = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/AllAlertChannels'),
 );
+
+export const StatusPage = Loadable(
+	() => import(/* webpackChunkName: "All Status" */ 'pages/Status'),
+);

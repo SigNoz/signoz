@@ -1,6 +1,7 @@
 interface Dropdown {
 	key: string;
 	displayValue: string;
+	yAxisUnit?: string;
 }
 
 export const groupBy: Dropdown[] = [
@@ -60,32 +61,42 @@ export const groupBy: Dropdown[] = [
 ];
 
 export const functions: Dropdown[] = [
-	{ displayValue: 'Count', key: 'count' },
-	{ displayValue: 'Rate per sec', key: 'ratePerSec' },
-	{ displayValue: 'Sum(duration in ns)', key: 'sum' },
-	{ displayValue: 'Avg(duration in ns)', key: 'avg' },
+	{ displayValue: 'Count', key: 'count', yAxisUnit: 'short' },
 	{
-		displayValue: 'Max(duration in ns)',
+		displayValue: 'Rate per sec',
+		key: 'ratePerSec',
+		yAxisUnit: 'reqps',
+	},
+	{ displayValue: 'Sum (duration)', key: 'sum', yAxisUnit: 'ns' },
+	{ displayValue: 'Avg (duration)', key: 'avg', yAxisUnit: 'ns' },
+	{
+		displayValue: 'Max (duration)',
 		key: 'max',
+		yAxisUnit: 'ns',
 	},
 	{
-		displayValue: 'Min(duration in ns)',
+		displayValue: 'Min (duration)',
 		key: 'min',
+		yAxisUnit: 'ns',
 	},
 	{
-		displayValue: '50th percentile(duration in ns)',
+		displayValue: '50th percentile (duration)',
 		key: 'p50',
+		yAxisUnit: 'ns',
 	},
 	{
-		displayValue: '90th percentile(duration in ns)',
+		displayValue: '90th percentile (duration)',
 		key: 'p90',
+		yAxisUnit: 'ns',
 	},
 	{
-		displayValue: '95th percentile(duration in ns)',
+		displayValue: '95th percentile (duration)',
 		key: 'p95',
+		yAxisUnit: 'ns',
 	},
 	{
-		displayValue: '99th percentile(duration in ns)',
+		displayValue: '99th percentile (duration)',
 		key: 'p99',
+		yAxisUnit: 'ns',
 	},
 ];

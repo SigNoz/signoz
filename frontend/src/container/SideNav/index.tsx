@@ -1,34 +1,56 @@
+import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { Menu, Typography } from 'antd';
-import { SlackButton, SlackMenuItemContainer, ToggleButton } from './styles';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import setTheme, { AppMode } from 'lib/theme/setTheme';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { NavLink, useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
+import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
-import setTheme from 'lib/theme/setTheme';
 
 import menus from './menuItems';
-import { Logo, Sider, ThemeSwitcherWrapper } from './styles';
 import Slack from './Slack';
+import {
+	Logo,
+	RedDot,
+	Sider,
+	SlackButton,
+	SlackMenuItemContainer,
+	ThemeSwitcherWrapper,
+	ToggleButton,
+	VersionContainer,
+} from './styles';
 
-const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
-	const [collapsed, setCollapsed] = useState<boolean>(false);
+function SideNav({ toggleDarkMode }: Props): JSX.Element {
+	const dispatch = useDispatch();
+	const [collapsed, setCollapsed] = useState<boolean>(
+		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	);
+	const {
+		isDarkMode,
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const { pathname } = useLocation();
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { t } = useTranslation('');
 
 	const toggleTheme = useCallback(() => {
-		const preMode: appMode = isDarkMode ? 'lightMode' : 'darkMode';
+		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
 		setTheme(preMode);
 
-		const id: appMode = preMode;
-		const head = document.head;
+		const id: AppMode = preMode;
+		const { head } = document;
 		const link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
@@ -48,6 +70,10 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		setCollapsed((collapsed) => !collapsed);
 	}, []);
 
+	useLayoutEffect(() => {
+		dispatch(SideBarCollapse(collapsed));
+	}, [collapsed, dispatch]);
+
 	const onClickHandler = useCallback(
 		(to: string) => {
 			if (pathname !== to) {
@@ -57,9 +83,41 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 		[pathname],
 	);
 
-	const onClickSlackHandler = () => {
+	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
+
+	const onClickVersionHandler = (): void => {
+		history.push(ROUTES.VERSION);
+	};
+
+	const isNotCurrentVersion = currentVersion !== latestVersion;
+
+	const sidebar = [
+		{
+			onClick: onClickSlackHandler,
+			icon: <Slack />,
+			text: <SlackButton>Support</SlackButton>,
+		},
+		{
+			onClick: onClickVersionHandler,
+			icon: isNotCurrentVersion ? (
+				<WarningOutlined style={{ color: '#E87040' }} />
+			) : (
+				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
+			),
+			text: (
+				<VersionContainer>
+					{!isCurrentVersionError ? (
+						<SlackButton>{currentVersion}</SlackButton>
+					) : (
+						<SlackButton>{t('n_a')}</SlackButton>
+					)}
+					{isNotCurrentVersion && <RedDot />}
+				</VersionContainer>
+			),
+		},
+	];
 
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
@@ -71,7 +129,7 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 				/>
 			</ThemeSwitcherWrapper>
 			<NavLink to={ROUTES.APPLICATION}>
-				<Logo src={'/signoz.svg'} alt="SigNoz" collapsed={collapsed} />
+				<Logo index={0} src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
 			</NavLink>
 
 			<Menu
@@ -89,17 +147,25 @@ const SideNav = ({ toggleDarkMode }: Props): JSX.Element => {
 						<Typography>{name}</Typography>
 					</Menu.Item>
 				))}
-				<SlackMenuItemContainer collapsed={collapsed}>
-					<Menu.Item onClick={onClickSlackHandler} icon={<Slack />}>
-						<SlackButton>Support</SlackButton>
-					</Menu.Item>
-				</SlackMenuItemContainer>
+				{sidebar.map((props, index) => (
+					<SlackMenuItemContainer
+						index={index + 1}
+						key={`${index + 1}`}
+						collapsed={collapsed}
+					>
+						<Menu.Item
+							eventKey={index.toString()}
+							onClick={props.onClick}
+							icon={props.icon}
+						>
+							{props.text}
+						</Menu.Item>
+					</SlackMenuItemContainer>
+				))}
 			</Menu>
 		</Sider>
 	);
-};
-
-type appMode = 'darkMode' | 'lightMode';
+}
 
 interface DispatchProps {
 	toggleDarkMode: () => void;

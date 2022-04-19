@@ -2,7 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { CreateQuery, CreateQueryProps } from 'store/actions';
@@ -14,16 +14,13 @@ import DashboardReducer from 'types/reducer/dashboards';
 import Query from './Query';
 import { QueryButton } from './styles';
 
-const QuerySection = ({
-	selectedTime,
-	createQuery,
-}: QueryProps): JSX.Element => {
+function QuerySection({ selectedTime, createQuery }: QueryProps): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
-	const widgets = selectedDashboards.data.widgets;
+	const { widgets } = selectedDashboards.data;
 
 	const urlQuery = useMemo(() => {
 		return new URLSearchParams(search);
@@ -63,7 +60,7 @@ const QuerySection = ({
 			</QueryButton>
 		</>
 	);
-};
+}
 
 interface DispatchProps {
 	createQuery: ({

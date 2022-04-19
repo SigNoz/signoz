@@ -1,43 +1,60 @@
-import useFetch from 'hooks/useFetch';
-import React from 'react';
-import SignUpComponent from './SignUp';
-import getVersion from 'api/user/getVersion';
-import { PayloadProps as VersionPayload } from 'types/api/user/getVersion';
-import { PayloadProps as UserPrefPayload } from 'types/api/user/getUserPreference';
-
-import Spinner from 'components/Spinner';
 import { Typography } from 'antd';
-import getPreference from 'api/user/getPreference';
+import getUserPreference from 'api/user/getPreference';
+import getUserVersion from 'api/user/getVersion';
+import Spinner from 'components/Spinner';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
-const SignUp = () => {
-	const versionResponse = useFetch<VersionPayload, undefined>(getVersion);
+import SignUpComponent from './SignUp';
 
-	const userPrefResponse = useFetch<UserPrefPayload, undefined>(getPreference);
+function SignUp(): JSX.Element {
+	const { t } = useTranslation('common');
+	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	if (versionResponse.error || userPrefResponse.error) {
+	const [versionResponse, userPrefResponse] = useQueries([
+		{
+			queryFn: getUserVersion,
+			queryKey: 'getUserVersion',
+			enabled: !isLoggedIn,
+		},
+		{
+			queryFn: getUserPreference,
+			queryKey: 'getUserPreference',
+			enabled: !isLoggedIn,
+		},
+	]);
+
+	if (
+		versionResponse.status === 'error' ||
+		userPrefResponse.status === 'error'
+	) {
 		return (
 			<Typography>
-				{versionResponse.errorMessage ||
-					userPrefResponse.errorMessage ||
-					'Somehthing went wrong'}
+				{versionResponse.data?.error ||
+					userPrefResponse.data?.error ||
+					t('something_went_wrong')}
 			</Typography>
 		);
 	}
 
 	if (
-		versionResponse.loading ||
-		versionResponse.payload === undefined ||
-		userPrefResponse.loading ||
-		userPrefResponse.payload === undefined
+		versionResponse.status === 'loading' ||
+		userPrefResponse.status === 'loading' ||
+		!(versionResponse.data && versionResponse.data.payload) ||
+		!(userPrefResponse.data && userPrefResponse.data.payload)
 	) {
-		return <Spinner tip="Loading.." />;
+		return <Spinner tip="Loading..." />;
 	}
 
-	const version = versionResponse.payload.version;
+	const { version } = versionResponse.data.payload;
 
-	const userpref = userPrefResponse.payload;
+	const userpref = userPrefResponse.data.payload;
 
 	return <SignUpComponent userpref={userpref} version={version} />;
-};
+}
 
 export default SignUp;

@@ -1,10 +1,14 @@
+/* eslint-disable */
+//@ts-nocheck
+
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import React, { useState } from 'react';
-import { servicesItem } from 'store/actions';
-import styled from 'styled-components';
-const { Option } = Select;
 import { cloneDeep } from 'lodash-es';
+import React, { useState } from 'react';
+import { ServicesItem } from 'store/actions';
+import styled from 'styled-components';
+
+const { Option } = Select;
 
 const Container = styled.div`
 	margin-top: 12px;
@@ -24,7 +28,7 @@ const Container = styled.div`
 `;
 
 interface SelectServiceProps {
-	services: servicesItem[];
+	services: ServicesItem[];
 	zoomToService: (arg0: string) => void;
 	zoomToDefault: () => void;
 }
@@ -33,13 +37,13 @@ const defaultOption = {
 	serviceName: 'Default',
 };
 
-const SelectService = (props: SelectServiceProps): JSX.Element => {
+function SelectService(props: SelectServiceProps): JSX.Element {
 	const [selectedVal, setSelectedVal] = useState<string>(
 		defaultOption.serviceName,
 	);
-	const { zoomToService, zoomToDefault } = props;
-	const services = cloneDeep(props.services);
-	services.unshift(defaultOption);
+	const { zoomToService, zoomToDefault, services } = props;
+	const service = cloneDeep(services);
+	service.unshift(defaultOption);
 
 	const handleSelect = (value: string): void => {
 		if (value === defaultOption.serviceName) {
@@ -57,7 +61,7 @@ const SelectService = (props: SelectServiceProps): JSX.Element => {
 				onChange={handleSelect}
 				value={selectedVal}
 			>
-				{services.map(({ serviceName }) => (
+				{service.map(({ serviceName }) => (
 					<Option key={serviceName} value={serviceName}>
 						{serviceName}
 					</Option>
@@ -75,6 +79,6 @@ const SelectService = (props: SelectServiceProps): JSX.Element => {
 			</div>
 		</Container>
 	);
-};
+}
 
 export default SelectService;

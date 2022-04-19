@@ -1,3 +1,4 @@
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import MetricTable from 'container/MetricsTable';
@@ -10,9 +11,8 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 
-const Metrics = ({ getService }: MetricsProps): JSX.Element => {
+function Metrics({ getService }: MetricsProps): JSX.Element {
 	const { minTime, maxTime, loading, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -54,7 +54,7 @@ const Metrics = ({ getService }: MetricsProps): JSX.Element => {
 	}
 
 	return <MetricTable />;
-};
+}
 
 interface DispatchProps {
 	getService: (

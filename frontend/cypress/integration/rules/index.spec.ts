@@ -4,6 +4,8 @@ import ROUTES from 'constants/routes';
 
 import defaultRules from '../../fixtures/defaultRules.json';
 
+const defaultRuleRoutes = `**/rules/**`;
+
 describe('Alerts', () => {
 	beforeEach(() => {
 		window.localStorage.setItem('isLoggedIn', 'yes');
@@ -21,7 +23,7 @@ describe('Alerts', () => {
 
 	it('Edit Rules Page Failure', async () => {
 		cy
-			.intercept('**/rules/**', {
+			.intercept(defaultRuleRoutes, {
 				statusCode: 500,
 			})
 			.as('Get Rules Error');
@@ -49,7 +51,7 @@ describe('Alerts', () => {
 		const text = 'this is the sample value';
 
 		cy
-			.intercept('**/rules/**', {
+			.intercept(defaultRuleRoutes, {
 				statusCode: 200,
 				body: {
 					data: {
@@ -103,7 +105,7 @@ describe('Alerts', () => {
 
 	it('Rules are Deleted', async () => {
 		cy
-			.intercept('**/rules/**', {
+			.intercept(defaultRuleRoutes, {
 				body: {
 					data: 'Deleted',
 					message: 'Success',

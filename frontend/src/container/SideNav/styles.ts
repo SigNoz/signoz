@@ -1,5 +1,7 @@
-import { Layout, Menu, Switch, Typography } from 'antd';
+import { Layout, Switch, Typography } from 'antd';
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
+
 const { Sider: SiderComponent } = Layout;
 
 export const ThemeSwitcherWrapper = styled.div`
@@ -17,6 +19,7 @@ export const Logo = styled.img<LogoProps>`
 
 interface LogoProps {
 	collapsed: boolean;
+	index: number;
 }
 
 export const Sider = styled(SiderComponent)`
@@ -36,7 +39,7 @@ interface DarkModeProps {
 
 export const ToggleButton = styled(Switch)<DarkModeProps>`
 	&&& {
-		background: ${({ checked }) => checked === false && 'grey'};
+		background: ${({ checked }): string => (checked === false ? 'grey' : '')};
 	}
 `;
 
@@ -48,28 +51,51 @@ export const SlackButton = styled(Typography)`
 
 export const SlackMenuItemContainer = styled.div<LogoProps>`
 	position: fixed;
-	bottom: 48px;
+	bottom: ${({ index }): string => `${index * 48 + (index + 16)}px`};
 	background: #262626;
-	width: ${({ collapsed }) => (!collapsed ? '200px' : '80px')};
+	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
+	transition: inherit;
 
 	&&& {
 		li {
-			${({ collapsed }) =>
+			${({ collapsed }): StyledCSS =>
 				collapsed &&
 				css`
 					padding-left: 24px;
+					padding-top: 6px;
 				`}
 		}
 
 		svg {
-			margin-left: ${({ collapsed }) => (collapsed ? '0' : '24px')};
+			margin-left: ${({ collapsed }): string => (collapsed ? '0' : '24px')};
+			width: 28px;
+			height: 28px;
 
-			${({ collapsed }) =>
+			${({ collapsed }): StyledCSS =>
 				collapsed &&
 				css`
 					height: 100%;
 					margin: 0 auto;
 				`}
 		}
+		.ant-menu-title-content {
+			margin: 0;
+		}
+	}
+`;
+
+export const RedDot = styled.div`
+	width: 12px;
+	height: 12px;
+	background: #d32029;
+	border-radius: 50%;
+
+	margin-left: 1rem;
+	margin-top: 0.5rem;
+`;
+
+export const VersionContainer = styled.div`
+	&&& {
+		display: flex;
 	}
 `;

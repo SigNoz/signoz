@@ -17,6 +17,7 @@ const ROUTES = {
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/setting/channels/new',
 	CHANNELS_EDIT: '/setting/channels/edit/:id',
+	VERSION: '/status',
 };
 
 export default ROUTES;

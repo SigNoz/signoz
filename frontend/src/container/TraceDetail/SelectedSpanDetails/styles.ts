@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+
 const { Text, Title, Paragraph } = Typography;
 
 export const CustomTitle = styled(Title)`
@@ -28,7 +29,7 @@ interface CustomSubTextProps {
 
 export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 	&&& {
-		background: ${({ isDarkMode }) => (isDarkMode ? '#444' : '#ddd')};
+		background: ${({ isDarkMode }): string => (isDarkMode ? '#444' : '#ddd')};
 		font-size: 12px;
 		padding: 6px 8px;
 		word-break: break-all;
@@ -44,3 +45,24 @@ export const CardContainer = styled.div`
 	flex: 1;
 	overflow-y: auto;
 `;
+
+const removeMargin = css`
+	margin: 0;
+`;
+const removePadding = css`
+	padding: 0;
+`;
+
+const selectedSpanDetailsContainer = css`
+	margin-left: 0.5rem;
+`;
+
+const spanEventsTabsContainer = css`
+	margin-top: 1rem;
+`;
+export const styles = {
+	removeMargin,
+	removePadding,
+	selectedSpanDetailsContainer,
+	spanEventsTabsContainer,
+};
