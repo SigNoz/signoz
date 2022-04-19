@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -228,4 +229,76 @@ type GetErrorParams struct {
 	ErrorType   string
 	ErrorID     string
 	ServiceName string
+}
+
+type FilterItem struct {
+	Key       string      `json:"key"`
+	Value     interface{} `json:"value"`
+	Operation string      `json:"op"`
+}
+
+type FilterSet struct {
+	Operation string       `json:"op,omitempty"`
+	Items     []FilterItem `json:"items"`
+}
+
+func formattedValue(v interface{}) string {
+	switch x := v.(type) {
+	case int:
+		return fmt.Sprintf("%d", x)
+	case float32, float64:
+		return fmt.Sprintf("%f", x)
+	case string:
+		return fmt.Sprintf("'%s'", x)
+	case bool:
+		return fmt.Sprintf("%v", x)
+	case []interface{}:
+		switch x[0].(type) {
+		case string:
+			str := "["
+			for idx, sVal := range x {
+				str += fmt.Sprintf("'%s'", sVal)
+				if idx != len(x)-1 {
+					str += ","
+				}
+			}
+			str += "]"
+			return str
+		case int, float32, float64, bool:
+			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
+		}
+		return ""
+	default:
+		return ""
+	}
+}
+
+func (fs *FilterSet) BuildMetricsFilterQuery() (string, error) {
+	queryString := ""
+	for idx, item := range fs.Items {
+		fmtVal := formattedValue(item.Value)
+		switch op := strings.ToLower(item.Operation); op {
+		case "eq":
+			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') = %s", item.Key, fmtVal)
+		case "neq":
+			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') != %s", item.Key, fmtVal)
+		case "in":
+			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') IN %s", item.Key, fmtVal)
+		case "nin":
+			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') NOT IN %s", item.Key, fmtVal)
+		case "like":
+			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') LIKE %s", item.Key, fmtVal)
+		default:
+			return "", fmt.Errorf("unsupported operation")
+		}
+		if idx != len(fs.Items)-1 {
+			queryString += " " + fs.Operation + " "
+		}
+	}
+	return queryString, nil
+}
+
+func (fs *FilterSet) BuildTracesFilterQuery() (string, error) {
+	// TODO
+	return "", nil
 }
