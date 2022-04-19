@@ -581,9 +581,9 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	return &model.TTLParams{
 		Type:                  typeTTL,
-		DelDuration:           durationParsed.Seconds(),
+		DelDuration:           int64(durationParsed.Seconds()),
 		ColdStorageVolume:     coldStorage,
-		ToColdStorageDuration: toColdParsed.Seconds(),
+		ToColdStorageDuration: int64(toColdParsed.Seconds()),
 	}, nil
 }
 

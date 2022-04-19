@@ -54,7 +54,9 @@ const (
 	primaryNamespace      = "clickhouse"
 	archiveNamespace      = "clickhouse-archive"
 	signozTraceDBName     = "signoz_traces"
-	signozDurationMVTable = "durationSortMV"
+	signozDurationMVTable = "durationSort"
+	signozSpansTable      = "signoz_spans"
+	signozErrorIndexTable = "signoz_error_index"
 	signozTraceTableName  = "signoz_index_v2"
 	signozMetricDBName    = "signoz_metrics"
 	signozSampleName      = "samples"
@@ -2209,13 +2211,25 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	var req, tableName string
 	switch params.Type {
 	case constants.TraceTTL:
-		tableName = signozTraceDBName + "." + signozTraceTableName
-		req = fmt.Sprintf(
-			"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
-			tableName, params.DelDuration)
-		if len(params.ColdStorageVolume) > 0 {
-			req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
-				params.ToColdStorageDuration, params.ColdStorageVolume)
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		for _, tableName := range tableNameArray {
+			req = fmt.Sprintf(
+				"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
+				tableName, params.DelDuration)
+			if len(params.ColdStorageVolume) > 0 {
+				req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
+					params.ToColdStorageDuration, params.ColdStorageVolume)
+			}
+			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
+			if err != nil {
+				return nil, err
+			}
+
+			zap.S().Debugf("Executing TTL request: %s\n", req)
+			if err := r.db.Exec(ctx, req); err != nil {
+				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
+			}
 		}
 
 	case constants.MetricsTTL:
@@ -2228,30 +2242,34 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				" + INTERVAL %v SECOND TO VOLUME '%s'",
 				params.ToColdStorageDuration, params.ColdStorageVolume)
 		}
+		zap.S().Debugf("Executing TTL request: %s\n", req)
+		if err := r.db.Exec(ctx, req); err != nil {
+			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
+		}
 
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v",
 			params.Type)}
 	}
 
+	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string, coldStorageVolume string) *model.ApiError {
+
 	// Set the storage policy for the required table. If it is already set, then setting it again
 	// will not a problem.
-	if len(params.ColdStorageVolume) > 0 {
+	if len(coldStorageVolume) > 0 {
 		policyReq := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='tiered'", tableName)
 
 		zap.S().Debugf("Executing Storage policy request: %s\n", policyReq)
 		if err := r.db.Exec(ctx, policyReq); err != nil {
 			zap.S().Error(fmt.Errorf("error while setting storage policy. Err=%v", err))
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting storage policy. Err=%v", err)}
+			return &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting storage policy. Err=%v", err)}
 		}
 	}
-
-	zap.S().Debugf("Executing TTL request: %s\n", req)
-	if err := r.db.Exec(ctx, req); err != nil {
-		zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
-	}
-	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+	return nil
 }
 
 // GetDisks returns a list of disks {name, type} configured in clickhouse DB.
@@ -2303,7 +2321,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozSampleName, signozMetricDBName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2321,7 +2339,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozTraceTableName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozTraceTableName, signozTraceDBName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
