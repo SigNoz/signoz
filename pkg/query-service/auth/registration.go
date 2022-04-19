@@ -103,16 +103,7 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 				Typ: model.ErrorUnauthorized,
 			}
 		}
-		switch inv.Role {
-		case constants.ROLE_ADMIN:
-			group = constants.AdminGroup
-		case constants.ROLE_EDITOR:
-			group = constants.EditorGroup
-		case constants.ROLE_VIEWER:
-			group = constants.ViewerGroup
-		default:
-			return &model.ApiError{Typ: model.ErrorInternal, Err: errors.New("Unknown role")}
-		}
+		group = inv.Role
 	}
 
 	hash, err := passwordHash(req.Password)

@@ -29,8 +29,9 @@ type Group struct {
 // can be applied on the whole API class.
 var ApiClass = map[string]string{
 	// Admin APIs
-	"/api/v1/invite": constants.AdminAPI,
-	"/api/v1/user":   constants.AdminAPI,
+	"/api/v1/invite":         constants.AdminAPI,
+	"/api/v1/user":           constants.AdminAPI,
+	"/api/v1/rbac/role/{id}": constants.AdminAPI,
 
 	"/api/v1/register": constants.UnprotectedAPI,
 	"/api/v1/login":    constants.UnprotectedAPI,
@@ -255,16 +256,14 @@ func IsAuthorized(r *http.Request) error {
 		if perm >= constants.ReadPermission {
 			return nil
 		}
-	case "POST", "PUT", "DELETE":
+	case "POST", "PUT", "DELETE", "PATCH":
 		if perm >= constants.WritePermission {
 			return nil
 		}
-	default:
-		zap.S().Debugf("Received unauthorized request on api: %v by user: %v", path, user.Email)
-		return errors.New("Unauthorized, user doesn't have required access")
 	}
 
-	return nil
+	zap.S().Debugf("Received unauthorized request on api: %v by user: %v", path, user.Email)
+	return errors.New("Unauthorized, user doesn't have the required access")
 }
 
 func IsAdmin(r *http.Request) bool {

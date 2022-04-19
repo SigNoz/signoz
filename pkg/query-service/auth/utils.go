@@ -27,7 +27,7 @@ func randomHex(sz int) (string, error) {
 
 func isValidRole(role string) bool {
 	switch role {
-	case constants.ROLE_VIEWER, constants.ROLE_EDITOR, constants.ROLE_ADMIN:
+	case constants.AdminGroup, constants.EditorGroup, constants.ViewerGroup:
 		return true
 	default:
 		return false

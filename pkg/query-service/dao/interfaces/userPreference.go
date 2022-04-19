@@ -12,6 +12,8 @@ type Queries interface {
 	GetInviteFromEmail(ctx context.Context, email string) (*model.Invitation, *model.ApiError)
 	GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError)
 
+	GetUserGroup(ctx context.Context, id string) (*model.GroupUser, *model.ApiError)
+
 	GetUser(ctx context.Context, id string) (*model.User, *model.ApiError)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, *model.ApiError)
 	GetUsers(ctx context.Context) ([]model.User, *model.ApiError)

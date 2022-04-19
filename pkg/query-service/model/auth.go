@@ -28,7 +28,6 @@ type User struct {
 	// Methods to operate on ProfilePictureURL are not written. It is added in the table
 	// fof it's introduction in future.
 	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
-	Role               string `json:"role" db:"role"`
 }
 
 type Group struct {
@@ -50,4 +49,9 @@ type GroupUser struct {
 type GroupRule struct {
 	GroupId string `json:"group_id,omitempty" db:"group_id"`
 	RuleId  string `json:"rule_id" db:"rule_id"`
+}
+
+type UserRole struct {
+	UserId    string `json:"user_id"`
+	GroupName string `json:"group_name"`
 }

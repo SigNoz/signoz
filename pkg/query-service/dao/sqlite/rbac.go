@@ -67,10 +67,10 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context, user *model.User) (*m
 
 	user.Id = uuid.NewString()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url, role)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url)
+		 VALUES (?, ?, ?, ?, ?, ?, ?);`,
 		user.Id, user.Name, user.OrganizationName, user.Email, user.Password, user.CreatedAt,
-		user.ProfilePirctureURL, user.Role,
+		user.ProfilePirctureURL,
 	)
 
 	if err != nil {
@@ -91,7 +91,7 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 
 	if group == nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal,
-			Err: errors.New("Group not found for the specified role")}
+			Err: errors.Errorf("Group not found for the specified role: %v", role)}
 	}
 
 	// 1. Create the user entry in the users table
@@ -105,10 +105,10 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 
 	user.Id = uuid.NewString()
 	_, err = tx.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url, role)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url)
+		 VALUES (?, ?, ?, ?, ?, ?, ?);`,
 		user.Id, user.Name, user.OrganizationName, user.Email, user.Password, user.CreatedAt,
-		user.ProfilePirctureURL, user.Role,
+		user.ProfilePirctureURL,
 	)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -409,8 +409,27 @@ func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context, gu *model.GroupUs
 	return nil
 }
 
+func (mds *ModelDaoSqlite) GetUserGroup(ctx context.Context, id string) (*model.GroupUser, *model.ApiError) {
+	groupUsers := []model.GroupUser{}
+	err := mds.db.Select(&groupUsers, `SELECT user_id,group_id FROM group_users WHERE user_id=?;`, id)
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if len(groupUsers) > 1 {
+		zap.S().Debugf("Error in processing sql query: more than 1 row in rules found")
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(groupUsers) == 0 {
+		return nil, nil
+	}
+
+	return &groupUsers[0], nil
+}
+
 func (mds *ModelDaoSqlite) DeleteUserFromGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError {
-	zap.S().Debugf("Adding user to group: %+v\n", gu)
+	zap.S().Debugf("Deleting user from group: %+v\n", gu)
 
 	_, err := mds.db.ExecContext(ctx, `DELETE FROM group_users WHERE (group_id, user_id) = (?, ?);`,
 		gu.GroupId, gu.UserId)

@@ -235,8 +235,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/invite/{email}", aH.revokeInvite).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
-
-	// TODO(Ahsan): Set refresh token in cookie with http only flag
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/user", aH.listUsers).Methods(http.MethodGet)
@@ -244,8 +242,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/user/{id}", aH.editUser).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", aH.deleteUser).Methods(http.MethodDelete)
 
-	// router.HandleFunc("/api/v1/rbac/role/{id}", aH.getRole).Methods(http.MethodDelete)
-	// router.HandleFunc("/api/v1/rbac/role/{id}", aH.editRole).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rbac/role/{id}", aH.getRole).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/role/{id}", aH.editRole).Methods(http.MethodPut)
 
 	// We are not exposing any group or rule related APIs right now. They will be exposed later
 	// when we'll have more fine-grained RBAC based on various APIs classes and services.
@@ -1359,6 +1357,53 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
 }
 
+func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	gu, err := dao.DB().GetUserGroup(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get user's group")
+		return
+	}
+	group, err := dao.DB().GetGroup(context.Background(), gu.GroupId)
+	if err != nil {
+		aH.respondError(w, err, "Failed to get group")
+		return
+	}
+
+	aH.writeJSON(w, r, &model.UserRole{UserId: id, GroupName: group.Name})
+}
+
+func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	req, err := parseUserRoleRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	ctx := context.Background()
+	g, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+
+	if g == nil {
+		aH.respondError(w, apiErr, "Specified group is not valid")
+		return
+	}
+
+	apiErr = dao.DB().AddUserToGroup(context.Background(), &model.GroupUser{
+		UserId:  id,
+		GroupId: g.Id,
+	})
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to add user to group")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
+}
+
 func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateGroupRequest(r)
 	fmt.Printf("parsed req: %+v\n", req)
@@ -1393,6 +1438,7 @@ func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request) {
 	}
 	aH.writeJSON(w, r, group)
 }
+
 func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	err := dao.DB().DeleteGroup(context.Background(), id)

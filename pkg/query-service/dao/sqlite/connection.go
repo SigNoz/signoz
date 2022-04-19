@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -57,23 +56,23 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			name TEXT NOT NULL UNIQUE
 		);
 		CREATE TABLE IF NOT EXISTS group_users (
-			user_id TEXT NOT NULL PRIMARY KEY,
+			user_id TEXT NOT NULL PRIMARY KEY ON CONFLICT REPLACE,
 			group_id TEXT NOT NULL,
-			FOREIGN KEY(group_id) REFERENCES groups(id),
-			FOREIGN KEY(user_id) REFERENCES users(id)
+			FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
 		CREATE TABLE IF NOT EXISTS group_rules (
 			group_id TEXT NOT NULL,
 			rule_id TEXT NOT NULL,
-			FOREIGN KEY(group_id) REFERENCES groups(id),
-			FOREIGN KEY(rule_id) REFERENCES rbac_rules(id),
+			FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
+			FOREIGN KEY(rule_id) REFERENCES rbac_rules(id) ON DELETE CASCADE,
 			PRIMARY KEY (group_id, rule_id)
 		);
 		CREATE TABLE IF NOT EXISTS rbac_rules (
 			id TEXT PRIMARY KEY,
 			api_class TEXT NOT NULL,
 			permission INTEGER NOT NULL,
-			UNIQUE(api_class, permission) ON CONFLICT ROLLBACK
+			UNIQUE(api_class, permission) ON CONFLICT REPLACE
 		);
 	`
 
@@ -132,10 +131,6 @@ func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
 			Permission: permission,
 		})
 		if apiErr != nil {
-			// TODO(Ahsan): This is not the best way to handle the case of already existing rule.
-			if strings.Contains(apiErr.Err.Error(), "FOREIGN KEY constraint failed") {
-				return nil
-			}
 			return errors.Wrap(apiErr.Err, "Failed to create rule")
 		}
 		if apiErr = mds.AddRuleToGroup(ctx, &model.GroupRule{
