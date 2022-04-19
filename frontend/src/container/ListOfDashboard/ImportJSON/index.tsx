@@ -38,7 +38,9 @@ function ImportJSON({
 		const { fileList } = info;
 		const reader = new FileReader();
 
-		if (fileList[0].originFileObj) {
+		const lastFile = fileList[fileList.length - 1];
+
+		if (lastFile.originFileObj) {
 			reader.onload = async (event): Promise<void> => {
 				if (event.target) {
 					const target = event.target.result;
@@ -55,7 +57,7 @@ function ImportJSON({
 					}
 				}
 			};
-			reader.readAsText(fileList[0].originFileObj);
+			reader.readAsText(lastFile.originFileObj);
 		}
 	};
 
@@ -121,6 +123,7 @@ function ImportJSON({
 			visible={isImportJSONModalVisible}
 			centered
 			maskClosable
+			destroyOnClose
 			onCancel={onModalHandler}
 			title={
 				<>
