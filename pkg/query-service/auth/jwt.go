@@ -51,34 +51,6 @@ func validateUser(tok string) (*model.User, error) {
 	}, nil
 }
 
-func generateAccessJwt(user *model.User) (string, error) {
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"email": user.Email,
-		"exp":   time.Now().Add(JwtExpiry).Unix(),
-	})
-
-	jwtStr, err := token.SignedString([]byte(JwtSecret))
-	if err != nil {
-		return "", errors.Errorf("failed to encode jwt: %v", err)
-	}
-	return jwtStr, nil
-}
-
-func generateRefreshJwt(email string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(JwtRefresh).Unix(),
-	})
-
-	jwtStr, err := token.SignedString([]byte(JwtSecret))
-	if err != nil {
-		return "", errors.Errorf("failed to encode jwt: %v", err)
-	}
-	return jwtStr, nil
-}
-
 // AttachToken attached the jwt token from the request header to the context.
 func AttachToken(ctx context.Context, r *http.Request) context.Context {
 	if accessJwt := r.Header.Get("AccessToken"); accessJwt != "" {

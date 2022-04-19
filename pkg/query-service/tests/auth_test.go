@@ -118,7 +118,7 @@ func TestAuthLoginAPI(t *testing.T) {
 	loginResp, err := login(email, password, "")
 	require.NoError(t, err)
 
-	loginResp2, err := login("", "", loginResp.RefrestJwt)
+	loginResp2, err := login("", "", loginResp.RefreshJwt)
 	require.NoError(t, err)
 
 	require.NotNil(t, loginResp2.AccessJwt)

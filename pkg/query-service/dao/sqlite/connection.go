@@ -57,11 +57,10 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			name TEXT NOT NULL UNIQUE
 		);
 		CREATE TABLE IF NOT EXISTS group_users (
+			user_id TEXT NOT NULL PRIMARY KEY,
 			group_id TEXT NOT NULL,
-			user_id TEXT NOT NULL,
 			FOREIGN KEY(group_id) REFERENCES groups(id),
-			FOREIGN KEY(user_id) REFERENCES users(id),
-			PRIMARY KEY (group_id, user_id)
+			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
 		CREATE TABLE IF NOT EXISTS group_rules (
 			group_id TEXT NOT NULL,

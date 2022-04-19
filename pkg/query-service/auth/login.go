@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
@@ -21,8 +23,10 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	AccessJwt  string `json:"accessJwt"`
-	RefrestJwt string `json:"refreshJwt"`
+	AccessJwt        string `json:"accessJwt"`
+	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
+	RefreshJwt       string `json:"refreshJwt"`
+	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
@@ -32,16 +36,37 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 		return nil, err
 	}
 
-	accessJwt, err := generateAccessJwt(user)
+	accessJwtExpiry := time.Now().Add(JwtExpiry).Unix()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    user.Id,
+		"email": user.Email,
+		"exp":   accessJwtExpiry,
+	})
+
+	accessJwt, err := token.SignedString([]byte(JwtSecret))
 	if err != nil {
-		return nil, err
-	}
-	refreshJwt, err := generateRefreshJwt(user.Email)
-	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("failed to encode jwt: %v", err)
 	}
 
-	return &LoginResponse{AccessJwt: accessJwt, RefrestJwt: refreshJwt}, nil
+	refreshJwtExpiry := time.Now().Add(JwtRefresh).Unix()
+	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    user.Id,
+		"email": user.Email,
+		"exp":   refreshJwtExpiry,
+	})
+
+	refreshJwt, err := token.SignedString([]byte(JwtSecret))
+	if err != nil {
+		return nil, errors.Errorf("failed to encode jwt: %v", err)
+	}
+
+	return &LoginResponse{
+		AccessJwt:        accessJwt,
+		AccessJwtExpiry:  accessJwtExpiry,
+		RefreshJwt:       refreshJwt,
+		RefreshJwtExpiry: refreshJwtExpiry,
+	}, nil
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.

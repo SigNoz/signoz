@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
@@ -234,6 +235,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/invite/{email}", aH.revokeInvite).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
+
+	// TODO(Ahsan): Set refresh token in cookie with http only flag
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/user", aH.listUsers).Methods(http.MethodGet)
@@ -1240,10 +1243,16 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := auth.Login(context.Background(), req)
-	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to login user")
+	if aH.handleError(w, err, http.StatusUnauthorized) {
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh-token",
+		Value:    resp.RefreshJwt,
+		Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
+		HttpOnly: true,
+	})
 
 	aH.writeJSON(w, r, resp)
 }
