@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/mouse-events-have-key-events */
 import { Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
@@ -189,12 +188,19 @@ function GridCardGraph({
 	if (state.loading === true || state.payload === undefined) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
+
 	return (
 		<span
 			onMouseOver={(): void => {
 				setHovered(true);
 			}}
+			onFocus={(): void => {
+				setHovered(true);
+			}}
 			onMouseOut={(): void => {
+				setHovered(false);
+			}}
+			onBlur={(): void => {
 				setHovered(false);
 			}}
 		>
