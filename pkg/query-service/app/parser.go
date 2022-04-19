@@ -595,3 +595,12 @@ func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
 	return &userPreferences, nil
 
 }
+
+func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
+	var filterSet model.FilterSet
+	err := json.NewDecoder(r.Body).Decode(&filterSet)
+	if err != nil {
+		return nil, err
+	}
+	return &filterSet, nil
+}
