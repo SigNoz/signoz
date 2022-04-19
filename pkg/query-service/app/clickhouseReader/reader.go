@@ -2438,7 +2438,7 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
 	// TODO: Optimize this query further
-	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s.%s WHERE serviceName = @serviceName AND exceptionType = @errorType window w as (ORDER BY timestamp rows between unbounded preceding and unbounded following))", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s.%s WHERE serviceName = @serviceName AND exceptionType = @errorType window w as (ORDER BY timestamp DESC rows between unbounded preceding and unbounded following))", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("serviceName", queryParams.ServiceName), clickhouse.Named("errorType", queryParams.ErrorType)}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)

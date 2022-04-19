@@ -12,6 +12,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-sqlite3 v1.14.8
+	github.com/minio/minio-go/v6 v6.0.57
 	github.com/oklog/oklog v0.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v0.9.0-pre1.0.20181001174001-0a8115f42e03
@@ -27,7 +28,11 @@ require (
 )
 
 require (
+	github.com/klauspost/cpuid v1.2.3 // indirect
+	github.com/minio/md5-simd v1.1.0 // indirect
+	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
