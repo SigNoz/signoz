@@ -124,6 +124,7 @@ function ImportJSON({
 			centered
 			maskClosable
 			destroyOnClose
+			width="70vw"
 			onCancel={onModalHandler}
 			title={
 				<>

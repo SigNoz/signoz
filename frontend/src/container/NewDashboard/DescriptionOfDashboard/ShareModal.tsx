@@ -71,6 +71,7 @@ function ShareModal({
 				onToggleHandler();
 				setIsViewJSON(false);
 			}}
+			width="70vw"
 			centered
 			title={t('share', {
 				ns: 'common',
