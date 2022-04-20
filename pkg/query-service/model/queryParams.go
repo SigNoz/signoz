@@ -26,20 +26,134 @@ type QueryRangeParams struct {
 	Stats string
 }
 
-type Query struct {
-	Datasource string `json:"datasource"`
-	Format     string `json:"format"`
-	Expr       string `json:"expr"`
+type MetricSpaceAggregation struct {
+	GroupingTags []string `json:"groupingTags,omitempty"`
+	Aggregator   string   `json:"aggregator,omitempty"`
 }
 
+type MetricTimeAggregation struct {
+	Aggregator string `json:"aggregator,omitempty"`
+	Interval   int    `json:"interval,omitempty"`
+}
+
+type MetricTagFilter struct {
+	TagKey    string `json:"tagKey,omitempty"`
+	Operation string `json:"operation,omitempty"`
+	TagValue  string `json:"tagValue,omitempty"`
+}
+
+type MetricTagFilters struct {
+	Left  *MetricTagFilters `json:"left,omitempty"`
+	Right *MetricTagFilters `json:"right,omitempty"`
+	MetricTagFilter
+}
+
+type MetricQuery struct {
+	MetricName       string                  `json:"metricName"`
+	TagFilters       *MetricTagFilters       `json:"tagFilters,omitempty"`
+	SpaceAggregation *MetricSpaceAggregation `json:"spaceAggregation,omitempty"`
+	TimeAggregation  *MetricTimeAggregation  `json:"timeAggregation,omitempty"`
+}
+
+type CompositeMetricQuery struct {
+	BuildMetricQueries []*MetricQuery `json:"buildMetricQueries"`
+	Formulas           []string       `json:"formulas,omitempty"`
+	RawQuery           string         `json:"rawQuery,omitempty"`
+}
+
+func (m *MetricTagFilters) BuildQuery() (string, error) {
+	if m.Left == nil && m.Right == nil {
+		switch op := strings.ToLower(m.Operation); op {
+		case "eq":
+			return fmt.Sprintf("JSONExtractString(labels,'%s') = '%s'", m.TagKey, m.TagValue), nil
+		case "neq":
+			return fmt.Sprintf("JSONExtractString(labels,'%s') != '%s'", m.TagKey, m.TagValue), nil
+		case "in":
+			return fmt.Sprintf("JSONExtractString(labels,'%s') IN '%s'", m.TagKey, m.TagValue), nil
+		case "nin":
+			return fmt.Sprintf("JSONExtractString(labels,'%s') NOT IN '%s'", m.TagKey, m.TagValue), nil
+		case "like":
+			return fmt.Sprintf("JSONExtractString(labels,'%s') LIKE '%s'", m.TagKey, m.TagValue), nil
+		default:
+			return "", fmt.Errorf("unsupported operation")
+		}
+	}
+	leftStatement, err := m.Left.BuildQuery()
+	if err != nil {
+		return "", err
+	}
+	rightStatement, err := m.Right.BuildQuery()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("(%s) %s (%s)", leftStatement, m.Operation, rightStatement), nil
+}
+
+//select fingerprint, time_series.labels, time, runningDifference(max_value)/300 as rate from (
+//	select fingerprint, toStartOfInterval(toDateTime(intDiv(samples_name.timestamp_ms, 1000)), INTERVAL 5 MINUTE) as time, max(value) as max_value from samples_name where metric_name='signoz_latency_count' and fingerprint in (
+//		select fingerprint from time_series where JSONExtractString(labels,'service_name')='frontend'
+//		) group by (fingerprint, time) order by (fingerprint, time)
+//	) as new_samples INNER JOIN time_series using fingerprint;
+
+// TIME QUERY
+
+// SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 1 hour) as t, sum(value) as time_agg_value
+// FROM samples
+// INNER JOIN time_series using fingerprint
+// WHERE JSONExtractString(labels, '__name__') = 'otelcol_receiver_accepted_metric_points'
+// GROUP BY t, fingerprint
+// ORDER BY t
+
+// //
+// SELECT * FROM(
+// 	SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 1 hour) as t, sum(value) as time_agg_value
+// 	FROM samples
+// 	INNER JOIN time_series using fingerprint
+// 	WHERE JSONExtractString(labels, '__name__') = 'otelcol_receiver_accepted_metric_points'
+// 	GROUP BY t, fingerprint
+// 	ORDER BY t) as new_table
+// INNER JOIN time_series using fingerprint
+
+// func (mq *MetricQuery) BuildQuery() (string, error) {
+// 	filterSubQuery, err := mq.TagFilters.BuildQuery()
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	nameQuery := fmt.Sprintf("JSONExtractString(labels, '__name__') = '%s'", m.TagValue)
+
+// 	timeQuery := fmt.Sprintf("toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d MINUTE) as time, %s(value)", mq.TimeAggregation.Interval, mq.TimeAggregation.Aggregator)
+
+// 	spaceQuerySubQuery := ""
+// 	for _, groupTag := range mq.SpaceAggregation.GroupingTags {
+// 		spaceQuerySubQuery += fmt.Sprintf("JSONExtractString(labels, '%s') as %s,", groupTag, groupTag)
+// 	}
+// 	spaceQuerySubQuery += fmt.Sprintf("%s(value)", mq.SpaceAggregation.Aggregator)
+
+// 	return "", nil
+// }
+
+// func (c *CompositeMetricQuery) GetQuery() (string, error) {
+// 	return "", nil
+// 	if c.RawQuery != "" {
+// 		return c.RawQuery, nil
+// 	}
+// 	var queries []string
+// 	for _, metricQuery := range c.BuildMetricQueries {
+// 		q, err := metricQuery.BuildQuery()
+// 		if err != nil {
+// 			return "", err
+// 		}
+// 		queries = append(queries, q)
+// 	}
+// }
+
 type QueryRangeParamsV2 struct {
-	Start    time.Time
-	End      time.Time
-	Step     time.Duration
-	StartStr string  `json:"start"`
-	EndStr   string  `json:"end"`
-	StepStr  string  `json:"step"`
-	Queries  []Query `json:"queries"`
+	Start                time.Time
+	End                  time.Time
+	Step                 time.Duration
+	Query                string
+	Stats                string
+	CompositeMetricQuery *CompositeMetricQuery
 }
 
 func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, error) {
@@ -47,6 +161,7 @@ func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, err
 	return nil, nil
 }
 
+// Metric auto complete types
 type metricTags map[string]string
 
 type MetricAutocompleteTagParams struct {
