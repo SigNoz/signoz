@@ -1115,10 +1115,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@braintree/sanitize-url@5.0.2":
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-5.0.2.tgz#b23080fa35520e993a8a37a0f5bca26aa4650a48"
-  integrity sha512-NBEJlHWrhQucLhZGHtSxM2loSaNUMajC7KOYJLyfcdW/6goVoff2HoYI3bz8YCDN0wKGbxtUL0gx2dvHpvnWlw==
+"@braintree/sanitize-url@6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-6.0.0.tgz#fe364f025ba74f6de6c837a84ef44bdb1d61e68f"
+  integrity sha512-mgmE7XBYY/21erpzhexk4Cj1cyTQ9LzvnTxtzM17BJ7ERMNE6W72mQRo0I1Ud8eFJ+RVVIcBNhLFZ3GX4XFz5w==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -1219,20 +1219,20 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@grafana/data@^8.4.3":
-  version "8.4.4"
-  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-8.4.4.tgz#4d741c903bd66f97cdc1d39ce0a73c36c97bfc0b"
-  integrity sha512-Lub1BaMTHsrHvGMpLK/a72YbB70amUaBPREB8a/pbPa68MogsXywBXAqVfSq6iW9HNWSy0xY0v6rIyRwR6nLnA==
+"@grafana/data@^8.4.7":
+  version "8.4.7"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-8.4.7.tgz#50ec81d8ce93ecff04b13fbc4f358f28b302cb97"
+  integrity sha512-NS2sLY7J5GruE2UOQX+BX5r4YnrtGP/9fpWnUBWZeZ0fPDH5TNwVaunu/EbP5wqEyPJFL+qn1fZutZR2hhaN2Q==
   dependencies:
-    "@braintree/sanitize-url" "5.0.2"
-    "@grafana/schema" "8.4.4"
+    "@braintree/sanitize-url" "6.0.0"
+    "@grafana/schema" "8.4.7"
     "@types/d3-interpolate" "^1.4.0"
     d3-interpolate "1.4.0"
     date-fns "2.28.0"
     eventemitter3 "4.0.7"
     lodash "4.17.21"
     marked "4.0.10"
-    moment "2.29.1"
+    moment "2.29.2"
     moment-timezone "0.5.34"
     ol "6.12.0"
     papaparse "5.3.1"
@@ -1244,10 +1244,10 @@
     uplot "1.6.19"
     xss "1.0.10"
 
-"@grafana/schema@8.4.4":
-  version "8.4.4"
-  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-8.4.4.tgz#4b2ddbd58114ad1d795f73bb9c24b3d6147d160d"
-  integrity sha512-honchh5iTznxpF8MnB8rX96jR4+3bqO2kH6HwePQD2UgGfT4igW3uWlXLxSG3EDmBVc7mgb2ycxG95TQRw7gKg==
+"@grafana/schema@8.4.7":
+  version "8.4.7"
+  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-8.4.7.tgz#ec2f937959c893cf7a2626b4ce5d4deaa3cfbc87"
+  integrity sha512-Ba01SX8hmOXLg8hYAWL8KKnFB8L/ToyDL6e1lit6PB6EuPEklqW6yhAUrA74zu9CZ4+nwR5HGh90OLdMi24lhw==
   dependencies:
     tslib "2.3.1"
 
@@ -8774,7 +8774,12 @@ moment-timezone@0.5.34:
   dependencies:
     moment ">= 2.9.0"
 
-moment@2.29.1, "moment@>= 2.9.0", moment@>=2.13.0, moment@^2.24.0, moment@^2.25.3:
+moment@2.29.2:
+  version "2.29.2"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.2.tgz#00910c60b20843bcba52d37d58c628b47b1f20e4"
+  integrity sha512-UgzG4rvxYpN15jgCmVJwac49h9ly9NurikMWGPdVxm8GZD6XjkKPxDTjQQ43gtGgnV3X0cAyWDdP2Wexoquifg==
+
+"moment@>= 2.9.0", moment@>=2.13.0, moment@^2.24.0, moment@^2.25.3:
   version "2.29.1"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.1.tgz#b2be769fa31940be9eeea6469c075e35006fa3d3"
   integrity sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==
