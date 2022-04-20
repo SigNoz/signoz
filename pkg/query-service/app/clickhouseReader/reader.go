@@ -1634,9 +1634,23 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
 
-	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, httpMethod FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, gRPCCode, gRPCMethod, httpMethod FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
 	baseQuery += query
 	err := r.db.Select(ctx, &getFilterSpansResponseItems, baseQuery, args...)
+
+	// Fill status and method
+	for i, e := range getFilterSpansResponseItems {
+		if e.HttpCode == "" {
+			getFilterSpansResponseItems[i].StatusCode = e.GRPCode
+		} else {
+			getFilterSpansResponseItems[i].StatusCode = e.HttpCode
+		}
+		if e.HttpMethod == "" {
+			getFilterSpansResponseItems[i].Method = e.GRPMethod
+		} else {
+			getFilterSpansResponseItems[i].Method = e.HttpMethod
+		}
+	}
 
 	zap.S().Info(baseQuery)
 
