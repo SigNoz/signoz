@@ -10,6 +10,7 @@ type Queries interface {
 	FetchUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError)
 
 	GetInviteFromEmail(ctx context.Context, email string) (*model.Invitation, *model.ApiError)
+	GetInviteFromToken(ctx context.Context, token string) (*model.Invitation, *model.ApiError)
 	GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError)
 
 	GetUserGroup(ctx context.Context, id string) (*model.GroupUser, *model.ApiError)

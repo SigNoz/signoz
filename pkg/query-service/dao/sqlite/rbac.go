@@ -51,6 +51,25 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string)
 	return &invites[0], nil
 }
 
+func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string) (*model.Invitation, *model.ApiError) {
+	invites := []model.Invitation{}
+	err := mds.db.Select(&invites, `SELECT email,token,created_at,role FROM invites WHERE token=?;`, token)
+
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if len(invites) > 1 {
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple invites found with same id"))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(invites) == 0 {
+		return nil, nil
+	}
+	return &invites[0], nil
+}
+
 func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError) {
 	invites := []model.Invitation{}
 	err := mds.db.Select(&invites, "SELECT email,token,created_at,role FROM invites")

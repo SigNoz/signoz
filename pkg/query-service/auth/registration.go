@@ -50,6 +50,15 @@ func RevokeInvite(ctx context.Context, email string) error {
 	return nil
 }
 
+func GetInvite(ctx context.Context, token string) (*model.Invitation, error) {
+
+	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
+	}
+	return inv, nil
+}
+
 func validateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitation, error) {
 	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {

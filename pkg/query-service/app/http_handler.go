@@ -231,6 +231,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", aH.listInvites).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{token}", aH.getInvite).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/invite/{email}", aH.revokeInvite).Methods(http.MethodDelete)
 
@@ -1190,6 +1191,19 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 
 	ctx := auth.AttachToken(context.Background(), r)
 	resp, err := auth.Invite(ctx, req)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
+		return
+	}
+
+	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
+	token := mux.Vars(r)["token"]
+
+	ctx := auth.AttachToken(context.Background(), r)
+	resp, err := auth.GetInvite(ctx, token)
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
 		return

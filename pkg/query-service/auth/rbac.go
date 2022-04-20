@@ -30,6 +30,7 @@ type Group struct {
 var ApiClass = map[string]string{
 	// Admin APIs
 	"/api/v1/invite":         constants.AdminAPI,
+	"/api/v1/invite/{token}": constants.AdminAPI,
 	"/api/v1/user":           constants.AdminAPI,
 	"/api/v1/rbac/role/{id}": constants.AdminAPI,
 
