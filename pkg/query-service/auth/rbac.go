@@ -35,7 +35,8 @@ var ApiClass = map[string]string{
 	"/api/v1/org/{id}":                   constants.AdminAPI,
 	"/api/v1/getResetPasswordToken/{id}": constants.AdminAPI,
 
-	"/api/v1/user/{id}": constants.SelfAccessibleAPI,
+	"/api/v1/user/{id}":           constants.SelfAccessibleAPI,
+	"/api/v1/changePassword/{id}": constants.SelfAccessibleAPI,
 
 	"/api/v1/register":       constants.UnprotectedAPI,
 	"/api/v1/login":          constants.UnprotectedAPI,
@@ -303,8 +304,10 @@ func IsSelfAccessRequest(r *http.Request) bool {
 
 	user, err := validateUser(accessJwt)
 	if err != nil {
+		zap.S().Debugf("Failed to verify self access, err: %v", err)
 		return false
 	}
+	zap.S().Debugf("Self access verification, userID: %s, id: %s\n", user.Id, id)
 	return user.Id == id
 }
 

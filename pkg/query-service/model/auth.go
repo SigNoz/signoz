@@ -24,6 +24,12 @@ type ResetPasswordRequest struct {
 	Token    string `json:"token"`
 }
 
+type ChangePasswordRequest struct {
+	UserId      string `json:"userId"`
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 type ResetPasswordEntry struct {
 	UserId string `json:"userId" db:"user_id"`
 	Token  string `json:"token" db:"token"`

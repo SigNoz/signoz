@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 
 	"go.signoz.io/query-service/auth"
@@ -1052,6 +1053,18 @@ func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, er
 	if err != nil {
 		return nil, err
 	}
+
+	return &req, nil
+}
+
+func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, error) {
+	id := mux.Vars(r)["id"]
+	var req model.ChangePasswordRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	req.UserId = id
 
 	return &req, nil
 }

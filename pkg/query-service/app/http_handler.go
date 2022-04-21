@@ -256,6 +256,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", aH.getResetPasswordToken).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", aH.resetPassword).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/changePassword/{id}", aH.changePassword).Methods(http.MethodPost)
+
 	// We are not exposing any group or rule related APIs right now. They will be exposed later
 	// when we'll have more fine-grained RBAC based on various APIs classes and services.
 
@@ -1655,6 +1657,21 @@ func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "password reset successfully"})
+}
+
+func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
+	req, err := parseChangePasswordRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	if err := auth.ChangePassword(context.Background(), req); err != nil {
+		if aH.handleError(w, err, http.StatusInternalServerError) {
+			return
+		}
+
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "password changed successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

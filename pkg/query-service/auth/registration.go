@@ -118,6 +118,29 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 	return nil
 }
 
+func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) error {
+
+	user, apiErr := dao.DB().GetUser(ctx, req.UserId)
+	if apiErr != nil {
+		return errors.Wrap(apiErr.Err, "failed to query user from the DB")
+	}
+
+	if user == nil || !passwordMatch(user.Password, req.OldPassword) {
+		return ErrorInvalidCreds
+	}
+
+	hash, err := passwordHash(req.NewPassword)
+	if err != nil {
+		return errors.Wrap(err, "Failed to generate password hash")
+	}
+
+	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.Id); apiErr != nil {
+		return apiErr.Err
+	}
+
+	return nil
+}
+
 type RegisterRequest struct {
 	Name        string `json:"name"`
 	OrgName     string `json:"orgName"`
