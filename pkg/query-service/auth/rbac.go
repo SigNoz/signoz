@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -30,12 +29,14 @@ type Group struct {
 var ApiClass = map[string]string{
 	// Admin APIs
 	"/api/v1/invite":         constants.AdminAPI,
-	"/api/v1/invite/{token}": constants.AdminAPI,
 	"/api/v1/user":           constants.AdminAPI,
 	"/api/v1/rbac/role/{id}": constants.AdminAPI,
 
-	"/api/v1/register": constants.UnprotectedAPI,
-	"/api/v1/login":    constants.UnprotectedAPI,
+	"/api/v1/user/{id}": constants.SelfAccessibleAPI,
+
+	"/api/v1/register":       constants.UnprotectedAPI,
+	"/api/v1/login":          constants.UnprotectedAPI,
+	"/api/v1/invite/{token}": constants.UnprotectedAPI,
 }
 
 type AuthCache struct {
@@ -116,6 +117,7 @@ func (ac *AuthCache) AddGroupUser(gr *model.GroupUser) {
 	ac.Lock()
 	defer ac.Unlock()
 
+	zap.S().Debugf("[AuthCache] Adding GroupUser %+v\n", gr)
 	if _, ok := ac.UserGroups[gr.UserId]; !ok {
 		ac.UserGroups[gr.UserId] = make(map[string]struct{})
 	}
@@ -235,9 +237,9 @@ func IsAuthorized(r *http.Request) error {
 		return nil
 	}
 
-	accessJwt := r.Header.Get("AccessToken")
-	if len(accessJwt) == 0 {
-		return fmt.Errorf("Access token is not found")
+	accessJwt, err := ExtractJwtFromRequest(r)
+	if err != nil {
+		return errors.Wrap(err, "Failed to extract access token")
 	}
 
 	user, err := validateUser(accessJwt)
@@ -247,6 +249,12 @@ func IsAuthorized(r *http.Request) error {
 
 	// Guardian is permitted for all the APIs.
 	if AuthCacheObj.BelongsToAdminGroup(user.Id) {
+		return nil
+	}
+
+	if apiClass == constants.SelfAccessibleAPI && IsSelfAccessRequest(r) {
+		zap.S().Debugf("Granting access for api: %v to user: %v because of self access",
+			path, user.Email)
 		return nil
 	}
 
@@ -263,13 +271,15 @@ func IsAuthorized(r *http.Request) error {
 		}
 	}
 
-	zap.S().Debugf("Received unauthorized request on api: %v by user: %v", path, user.Email)
+	zap.S().Debugf("Received unauthorized request on api: %v, apiClass: %v by user: %v",
+		path, apiClass, user.Email)
 	return errors.New("Unauthorized, user doesn't have the required access")
 }
 
 func IsAdmin(r *http.Request) bool {
-	accessJwt := r.Header.Get("AccessToken")
-	if len(accessJwt) == 0 {
+	accessJwt, err := ExtractJwtFromRequest(r)
+	if err != nil {
+		zap.S().Debugf("Failed to verify admin access, err: %v", err)
 		return false
 	}
 
@@ -280,9 +290,11 @@ func IsAdmin(r *http.Request) bool {
 	return AuthCacheObj.BelongsToAdminGroup(user.Id)
 }
 
-func IsSelfAccess(r *http.Request, id string) bool {
-	accessJwt := r.Header.Get("AccessToken")
-	if len(accessJwt) == 0 {
+func IsSelfAccessRequest(r *http.Request) bool {
+	id := mux.Vars(r)["id"]
+	accessJwt, err := ExtractJwtFromRequest(r)
+	if err != nil {
+		zap.S().Debugf("Failed to verify self access, err: %v", err)
 		return false
 	}
 

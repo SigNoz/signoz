@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -51,21 +53,27 @@ func validateUser(tok string) (*model.User, error) {
 	}, nil
 }
 
-// AttachToken attached the jwt token from the request header to the context.
-func AttachToken(ctx context.Context, r *http.Request) context.Context {
-	if accessJwt := r.Header.Get("AccessToken"); accessJwt != "" {
+// AttachJwtToContext attached the jwt token from the request header to the context.
+func AttachJwtToContext(ctx context.Context, r *http.Request) context.Context {
+	token, err := ExtractJwtFromRequest(r)
+	if err != nil {
+		zap.S().Debugf("Error while getting token from header, %v", err)
+		return ctx
+	}
+
+	if len(token) > 0 {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
 		}
 
-		md.Append("accessJwt", accessJwt)
+		md.Append("accessJwt", token)
 		ctx = metadata.NewIncomingContext(ctx, md)
 	}
 	return ctx
 }
 
-func ExtractJwt(ctx context.Context) (string, error) {
+func ExtractJwtFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", errors.New("No JWT metadata token found")
@@ -76,4 +84,8 @@ func ExtractJwt(ctx context.Context) (string, error) {
 	}
 
 	return accessJwt[0], nil
+}
+
+func ExtractJwtFromRequest(r *http.Request) (string, error) {
+	return jwtmiddleware.FromAuthHeader(r)
 }

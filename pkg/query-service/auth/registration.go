@@ -123,7 +123,20 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 		}
 	}
 	user.Password = hash
-	_, apiErr = dao.DB().CreateUserWithRole(ctx, user, group)
+	userCreated, apiErr := dao.DB().CreateUserWithRole(ctx, user, group)
+	if apiErr != nil {
+		return apiErr
+	}
 
-	return apiErr
+	userGroup, apiErr := dao.DB().GetGroupByName(ctx, group)
+	if apiErr != nil {
+		return apiErr
+	}
+
+	AuthCacheObj.AddGroupUser(&model.GroupUser{
+		UserId:  userCreated.Id,
+		GroupId: userGroup.Id,
+	})
+
+	return dao.DB().DeleteInvitation(ctx, user.Email)
 }

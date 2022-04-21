@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -1189,7 +1190,7 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachToken(context.Background(), r)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
 	resp, err := auth.Invite(ctx, req)
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
@@ -1202,7 +1203,7 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 
-	ctx := auth.AttachToken(context.Background(), r)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
 	resp, err := auth.GetInvite(ctx, token)
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
@@ -1215,7 +1216,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 	email := mux.Vars(r)["email"]
 
-	ctx := auth.AttachToken(context.Background(), r)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
 	if err := auth.RevokeInvite(ctx, email); err != nil {
 		aH.respondError(w, &model.ApiError{Err: err}, "Failed to revoke invite")
 		return
@@ -1238,7 +1239,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachToken(context.Background(), r)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
 	apiErr := auth.Register(ctx, req)
 	if apiErr != nil {
 		aH.respondError(w, apiErr, "Failed to register user")
@@ -1281,12 +1282,6 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !(auth.IsAdmin(r) || auth.IsSelfAccess(r, id)) {
-		zap.S().Debugf("User is not an admin or self")
-		aH.respond(w, "Unauthorized")
-		return
-	}
-
 	user, err := dao.DB().GetUser(context.Background(), id)
 	if err != nil {
 		aH.respondError(w, err, "Failed to get user")
@@ -1301,11 +1296,6 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-
-	if !(auth.IsAdmin(r) || auth.IsSelfAccess(r, id)) {
-		aH.respond(w, "Unauthorized")
-		return
-	}
 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
@@ -1358,8 +1348,11 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !(auth.IsAdmin(r) || auth.IsSelfAccess(r, id)) {
-		aH.respond(w, "Unauthorized")
+	if !auth.IsAdmin(r) {
+		aH.respondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: errors.New("Unauthorized"),
+		}, "Failed to get user")
 		return
 	}
 
