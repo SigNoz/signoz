@@ -31,6 +31,7 @@
 		"@testing-library/react": "^11.1.0",
 		"@testing-library/user-event": "^12.1.10",
 		"@welldone-software/why-did-you-render": "^6.2.1",
+		"@xstate/react": "^3.0.0",
 		"antd": "4.19.2",
 		"axios": "^0.21.0",
 		"babel-eslint": "^10.1.0",
@@ -85,7 +86,8 @@
 		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
 		"webpack": "^5.23.0",
-		"webpack-dev-server": "^4.3.1"
+		"webpack-dev-server": "^4.3.1",
+		"xstate": "^4.31.0"
 	},
 	"browserslist": {
 		"production": [

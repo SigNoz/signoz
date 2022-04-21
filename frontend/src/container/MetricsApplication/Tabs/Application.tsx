@@ -34,8 +34,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${
-				ROUTES.TRACE
+			`${ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=[]&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
@@ -86,8 +85,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${
-				ROUTES.TRACE
+			`${ROUTES.TRACE
 			}?${urlParams.toString()}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=[]&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
