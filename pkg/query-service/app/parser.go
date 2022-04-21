@@ -1035,3 +1035,23 @@ func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
 
 	return &req, nil
 }
+
+func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
+	var req model.Organization
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, error) {
+	var req model.ResetPasswordRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}

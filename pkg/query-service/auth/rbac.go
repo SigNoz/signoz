@@ -28,9 +28,12 @@ type Group struct {
 // can be applied on the whole API class.
 var ApiClass = map[string]string{
 	// Admin APIs
-	"/api/v1/invite":         constants.AdminAPI,
-	"/api/v1/user":           constants.AdminAPI,
-	"/api/v1/rbac/role/{id}": constants.AdminAPI,
+	"/api/v1/invite":                     constants.AdminAPI,
+	"/api/v1/user":                       constants.AdminAPI,
+	"/api/v1/rbac/role/{id}":             constants.AdminAPI,
+	"/api/v1/org":                        constants.AdminAPI,
+	"/api/v1/org/{id}":                   constants.AdminAPI,
+	"/api/v1/getResetPasswordToken/{id}": constants.AdminAPI,
 
 	"/api/v1/user/{id}": constants.SelfAccessibleAPI,
 

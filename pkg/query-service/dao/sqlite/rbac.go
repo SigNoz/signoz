@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -14,8 +15,8 @@ func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context, req *model.Inv
 	zap.S().Debugf("Creating new invite entry. Red: %+v\n", req)
 
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO invites (email, token, role, created_at) VALUES (?, ?, ?, ?);`,
-		req.Email, req.Token, req.Role, req.CreatedAt)
+		`INSERT INTO invites (email, name, token, role, created_at) VALUES (?, ?, ?, ?, ?);`,
+		req.Email, req.Name, req.Token, req.Role, req.CreatedAt)
 	if err != nil {
 		zap.S().Errorf("Error while inserting new invitation to the DB\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -34,7 +35,7 @@ func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *
 
 func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string) (*model.Invitation, *model.ApiError) {
 	invites := []model.Invitation{}
-	err := mds.db.Select(&invites, `SELECT email,token,created_at,role FROM invites WHERE email=?;`, email)
+	err := mds.db.Select(&invites, `SELECT email,name,token,created_at,role FROM invites WHERE email=?;`, email)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -53,7 +54,7 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string)
 
 func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string) (*model.Invitation, *model.ApiError) {
 	invites := []model.Invitation{}
-	err := mds.db.Select(&invites, `SELECT email,token,created_at,role FROM invites WHERE token=?;`, token)
+	err := mds.db.Select(&invites, `SELECT email,name,token,created_at,role FROM invites WHERE token=?;`, token)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -81,14 +82,102 @@ func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.Invitation, 
 	return invites, nil
 }
 
+func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context, org *model.Organization) (*model.Organization, *model.ApiError) {
+	zap.S().Debugf("Creating new organization. Name: %s\n", org.Name)
+
+	org.Id = uuid.NewString()
+	org.CreatedAt = time.Now().Unix()
+	_, err := mds.db.ExecContext(ctx, `INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?);`,
+		org.Id, org.Name, org.CreatedAt)
+
+	if err != nil {
+		zap.S().Errorf("Error while inserting org entry to the DB\n", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return org, nil
+}
+
+func (mds *ModelDaoSqlite) GetOrg(ctx context.Context, id string) (*model.Organization, *model.ApiError) {
+	orgs := []model.Organization{}
+	err := mds.db.Select(&orgs, `SELECT * FROM organizations WHERE id=?;`, id)
+
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if len(orgs) > 1 {
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple organizations found with same id"))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(orgs) == 0 {
+		return nil, nil
+	}
+	return &orgs[0], nil
+}
+
+func (mds *ModelDaoSqlite) GetOrgByName(ctx context.Context, name string) (*model.Organization, *model.ApiError) {
+	orgs := []model.Organization{}
+	err := mds.db.Select(&orgs, `SELECT * FROM organizations WHERE name=?;`, name)
+
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if len(orgs) > 1 {
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple organizations found with same id"))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(orgs) == 0 {
+		return nil, nil
+	}
+	return &orgs[0], nil
+}
+
+func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]model.Organization, *model.ApiError) {
+	orgs := []model.Organization{}
+	err := mds.db.Select(&orgs, `SELECT * FROM organizations`)
+
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return orgs, nil
+}
+
+func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *model.Organization) *model.ApiError {
+	zap.S().Debugf("Updating org [id=%s]: %s\n", org.Id)
+
+	_, err := mds.db.ExecContext(ctx,
+		`UPDATE organizations SET name=?,has_opted_updates=?,is_anonymous=? WHERE id=?;`,
+		org.Name, org.HasOptedUpdates, org.IsAnonymous, org.Id)
+	if err != nil {
+		zap.S().Errorf("Error while updating user entry in the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiError {
+	zap.S().Debugf("Deleting org [id=%s]: %s\n", id)
+
+	_, err := mds.db.ExecContext(ctx, `DELETE from organizations where id=?;`, id)
+	if err != nil {
+		zap.S().Errorf("Error while deleting org from the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context, user *model.User) (*model.User, *model.ApiError) {
 	zap.S().Debugf("Creating new user. Email: %s\n", user.Email)
 
 	user.Id = uuid.NewString()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url)
+		`INSERT INTO users (id, name, org_id, email, password, created_at, profile_picture_url)
 		 VALUES (?, ?, ?, ?, ?, ?, ?);`,
-		user.Id, user.Name, user.OrganizationName, user.Email, user.Password, user.CreatedAt,
+		user.Id, user.Name, user.OrgId, user.Email, user.Password, user.CreatedAt,
 		user.ProfilePirctureURL,
 	)
 
@@ -124,9 +213,9 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 
 	user.Id = uuid.NewString()
 	_, err = tx.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_name, email, password, created_at, profile_picture_url)
+		`INSERT INTO users (id, name, org_id, email, password, created_at, profile_picture_url)
 		 VALUES (?, ?, ?, ?, ?, ?, ?);`,
-		user.Id, user.Name, user.OrganizationName, user.Email, user.Password, user.CreatedAt,
+		user.Id, user.Name, user.OrgId, user.Email, user.Password, user.CreatedAt,
 		user.ProfilePirctureURL,
 	)
 	if err != nil {
@@ -151,13 +240,25 @@ func (mds *ModelDaoSqlite) EditUser(ctx context.Context, update *model.User) (*m
 	zap.S().Debugf("Updating user. Email: %s\n", update.Email)
 
 	_, err := mds.db.ExecContext(ctx,
-		`UPDATE users SET name=?,org_name=?,email=?,password=? WHERE id=?;`, update.Name,
-		update.OrganizationName, update.Email, update.Password, update.Id)
+		`UPDATE users SET name=?,org_id=?,email=? WHERE id=?;`, update.Name,
+		update.OrgId, update.Email, update.Id)
 	if err != nil {
 		zap.S().Errorf("Error while updating user entry in the DB\n", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return update, nil
+}
+
+func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash, userId string) *model.ApiError {
+	zap.S().Debugf("Updating user password. [Id=%s]\n", userId)
+
+	_, err := mds.db.ExecContext(ctx,
+		`UPDATE users SET password=? WHERE id=?;`, passwordHash, userId)
+	if err != nil {
+		zap.S().Errorf("Error while updating user's password entry in the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
 }
 
 func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.ApiError {
@@ -211,7 +312,7 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*m
 
 func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.ApiError) {
 	users := []model.User{}
-	err := mds.db.Select(&users, "SELECT id,name,org_name,email FROM users")
+	err := mds.db.Select(&users, "SELECT id,name,org_id,email FROM users")
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -470,4 +571,44 @@ func (mds *ModelDaoSqlite) GetGroupUsers(ctx context.Context, id string) ([]mode
 	}
 
 	return groupUsers, nil
+}
+
+func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context, req *model.ResetPasswordEntry) *model.ApiError {
+	zap.S().Debugf("Creating reset password entry. %+v\n", req)
+
+	_, err := mds.db.ExecContext(ctx,
+		`INSERT INTO reset_password_request (user_id, token) VALUES (?, ?);`, req.UserId, req.Token)
+	if err != nil {
+		zap.S().Errorf("Error while inserting new reset password entry to the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError {
+	_, err := mds.db.ExecContext(ctx, `DELETE from reset_password_request where token=?;`, token)
+	if err != nil {
+		zap.S().Errorf("Error while deleting reset password entry from the DB\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError) {
+	entries := []model.ResetPasswordEntry{}
+	err := mds.db.Select(&entries, `SELECT user_id,token FROM reset_password_request WHERE token=?;`, token)
+
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	if len(entries) > 1 {
+		zap.S().Debugf("Error in processing sql query: %v", fmt.Errorf("multiple entries found with same id"))
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	if len(entries) == 0 {
+		return nil, nil
+	}
+	return &entries[0], nil
 }

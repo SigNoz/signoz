@@ -35,8 +35,16 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
 			hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
 		);
+		CREATE TABLE IF NOT EXISTS organizations (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
+			has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
+		);
 		CREATE TABLE IF NOT EXISTS invites (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
 			email TEXT NOT NULL UNIQUE,
 			token TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
@@ -45,11 +53,12 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
-			org_name TEXT,
+			org_id TEXT NOT NULL,
 			email TEXT NOT NULL UNIQUE,
 			password TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
-			profile_picture_url TEXT
+			profile_picture_url TEXT,
+			FOREIGN KEY(org_id) REFERENCES organizations(id)
 		);
 		CREATE TABLE IF NOT EXISTS groups (
 			id TEXT PRIMARY KEY,
@@ -74,6 +83,13 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			permission INTEGER NOT NULL,
 			UNIQUE(api_class, permission) ON CONFLICT REPLACE
 		);
+		CREATE TABLE IF NOT EXISTS reset_password_request (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id TEXT NOT NULL,
+			token TEXT NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id)
+		);
+
 	`
 
 	_, err = db.Exec(table_schema)

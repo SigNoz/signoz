@@ -27,6 +27,14 @@ type Queries interface {
 	GetRules(ctx context.Context) ([]model.RBACRule, *model.ApiError)
 	GetGroupRules(ctx context.Context, id string) ([]model.GroupRule, *model.ApiError)
 	GetGroupUsers(ctx context.Context, id string) ([]model.GroupUser, *model.ApiError)
+
+	GetOrgs(ctx context.Context) ([]model.Organization, *model.ApiError)
+	GetOrgByName(ctx context.Context, name string) (*model.Organization, *model.ApiError)
+	GetOrg(ctx context.Context, id string) (*model.Organization, *model.ApiError)
+
+	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
+
+	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
 }
 
 type Mutations interface {
@@ -51,4 +59,11 @@ type Mutations interface {
 	DeleteRuleFromGroup(ctx context.Context, gr *model.GroupRule) *model.ApiError
 	AddUserToGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError
 	DeleteUserFromGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError
+
+	CreateOrg(ctx context.Context, org *model.Organization) (*model.Organization, *model.ApiError)
+	EditOrg(ctx context.Context, org *model.Organization) *model.ApiError
+	DeleteOrg(ctx context.Context, id string) *model.ApiError
+
+	CreateResetPasswordEntry(ctx context.Context, req *model.ResetPasswordEntry) *model.ApiError
+	DeleteResetPasswordEntry(ctx context.Context, token string) *model.ApiError
 }

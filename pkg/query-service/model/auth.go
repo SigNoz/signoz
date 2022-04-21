@@ -1,8 +1,9 @@
 package model
 
 type InviteRequest struct {
+	Name  string `json:"name"`
 	Email string `json:"email"`
-	Role  string `json:role"`
+	Role  string `json:"role"`
 }
 
 type InviteResponse struct {
@@ -12,18 +13,37 @@ type InviteResponse struct {
 
 type Invitation struct {
 	Email     string `json:"email" db:"email"`
+	Name      string `json:"name" db:"name"`
 	Token     string `json:"token" db:"token"`
 	CreatedAt int64  `json:"createdAt" db:"created_at"`
 	Role      string `json:"role" db:"role"`
 }
 
+type ResetPasswordRequest struct {
+	Password string `json:"password"`
+	Token    string `json:"token"`
+}
+
+type ResetPasswordEntry struct {
+	UserId string `json:"userId" db:"user_id"`
+	Token  string `json:"token" db:"token"`
+}
+
+type Organization struct {
+	Id              string `json:"id" db:"id"`
+	Name            string `json:"name" db:"name"`
+	CreatedAt       int64  `json:"createdAt" db:"created_at"`
+	IsAnonymous     bool   `json:"isAnonymous" db:"is_anonymous"`
+	HasOptedUpdates bool   `json:"hasOptedUpdates" db:"has_opted_updates"`
+}
+
 type User struct {
-	Id               string `json:"id" db:"id"`
-	Name             string `json:"name" db:"name"`
-	OrganizationName string `json:"orgName,omitempty" db:"org_name"`
-	Email            string `json:"email" db:"email"`
-	Password         string `json:"password,omitempty" db:"password"`
-	CreatedAt        int64  `json:"createdAt" db:"created_at"`
+	Id        string `json:"id" db:"id"`
+	Name      string `json:"name" db:"name"`
+	OrgId     string `json:"orgId,omitempty" db:"org_id"`
+	Email     string `json:"email" db:"email"`
+	Password  string `json:"password,omitempty" db:"password"`
+	CreatedAt int64  `json:"createdAt" db:"created_at"`
 
 	// Methods to operate on ProfilePictureURL are not written. It is added in the table
 	// fof it's introduction in future.

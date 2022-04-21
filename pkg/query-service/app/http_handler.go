@@ -247,6 +247,15 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rbac/role/{id}", aH.getRole).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/role/{id}", aH.editRole).Methods(http.MethodPut)
 
+	router.HandleFunc("/api/v1/org", aH.getOrgs).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", aH.getOrg).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", aH.editOrg).Methods(http.MethodPut)
+	// router.HandleFunc("/api/v1/org", aH.listUsers).Methods(http.MethodPost)
+	// router.HandleFunc("/api/v1/org/{id}", aH.listUsers).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", aH.getResetPasswordToken).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/resetPassword", aH.resetPassword).Methods(http.MethodPost)
+
 	// We are not exposing any group or rule related APIs right now. They will be exposed later
 	// when we'll have more fine-grained RBAC based on various APIs classes and services.
 
@@ -734,7 +743,7 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"name":             user.Name,
 		"email":            user.Email,
-		"organizationName": user.OrganizationName,
+		"organizationName": user.OrgId,
 	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
 
@@ -1322,8 +1331,8 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	if len(update.OrganizationName) > 0 {
-		old.OrganizationName = update.OrganizationName
+	if len(update.OrgId) > 0 {
+		old.OrgId = update.OrgId
 	}
 	if len(update.Email) > 0 {
 		old.Email = update.Email
@@ -1534,7 +1543,6 @@ func (aH *APIHandler) assignRBACRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {
 	req, err := parseGroupRuleRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1560,7 +1568,6 @@ func (aH *APIHandler) getGroupUsers(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseGroupUserRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1576,7 +1583,6 @@ func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseGroupUserRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1588,6 +1594,67 @@ func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, map[string]string{"data": "rule removed successfully"})
+}
+
+func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
+	orgs, apiErr := dao.DB().GetOrgs(context.Background())
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		return
+	}
+	aH.writeJSON(w, r, orgs)
+}
+
+func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	org, apiErr := dao.DB().GetOrg(context.Background(), id)
+	if apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		return
+	}
+	aH.writeJSON(w, r, org)
+}
+
+func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	req, err := parseEditOrgRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	req.Id = id
+
+	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
+		aH.respondError(w, apiErr, "Failed to update org in the DB")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
+}
+
+func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	resp, err := auth.CreateResetPasswordToken(context.Background(), id)
+	if err != nil {
+		aH.respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: err}, "Failed to create reset token entry in the DB")
+		return
+	}
+	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
+	req, err := parseResetPasswordRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	if err := auth.ResetPassword(context.Background(), req); err != nil {
+		if aH.handleError(w, err, http.StatusInternalServerError) {
+			return
+		}
+
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "password reset successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {
