@@ -1,5 +1,6 @@
 const ROUTES = {
 	SIGN_UP: '/signup',
+	LOGIN: '/login',
 	SERVICE_METRICS: '/application/:servicename',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
