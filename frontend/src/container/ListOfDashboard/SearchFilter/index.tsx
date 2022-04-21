@@ -1,52 +1,26 @@
-import {
-	CloseCircleFilled,
-	CloseCircleOutlined,
-	CloseOutlined,
-	EditFilled,
-	TagOutlined,
-} from '@ant-design/icons';
+import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
-import { Button, Select, Tag } from 'antd';
-import {
-	filter,
-	findIndex,
-	flattenDeep,
-	map,
-	remove,
-	uniq,
-	uniqWith,
-} from 'lodash-es';
+import { Button, Select } from 'antd';
+import history from 'lib/history';
+import { filter, flattenDeep, map, uniqWith } from 'lodash-es';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuidv4 } from 'uuid';
-import { createMachine } from 'xstate';
 
 import { DashboardSearchAndFilter } from './Dashboard.machine';
 import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
+import { IQueryStructure } from './types';
+import {
+	convertQueriesToURLQuery,
+	convertURLQueryStringToQuery,
+	executeSearchQueries,
+} from './utils';
 
-type TSearchAndFilterState =
-	| 'attribute_selection'
-	| 'operator_selection'
-	| 'value_selection';
-type TSearchAndFilterStateObject = {
-	NEXT: TSearchAndFilterState;
-};
-const StateSequence: TSearchAndFilterState[] = [
-	'attribute_selection',
-	'operator_selection',
-	'value_selection',
-];
-
-const { Option } = Select;
-
-function TextToIcon(text) {
-	return <span>{text}</span>;
-}
 const OptionsSchemas = {
 	attribute: {
-		mode: null,
+		mode: undefined,
 		options: [
 			{
 				name: 'Title',
@@ -60,7 +34,7 @@ const OptionsSchemas = {
 		],
 	},
 	operator: {
-		mode: null,
+		mode: undefined,
 		options: [
 			{
 				value: '=',
@@ -72,56 +46,10 @@ const OptionsSchemas = {
 			},
 		],
 	},
-	value: {
-		options: [
-			// {
-			// 	name: 'X',
-			// },
-			// {
-			// 	name: 'Y',
-			// },
-		],
-	},
 };
 
-const resolveOperator = (result, operator): boolean => {
-	if (operator === '!=') {
-		return !result;
-	}
-	if (operator === '=') {
-		return !!result;
-	}
-};
-const executeSearchQueries = (queries = [], searchData = []) => {
-	if (!searchData.length || !queries.length) {
-		return searchData;
-	}
-	console.log('exec Query cont', queries, searchData);
-	queries.forEach(({ category, operator, value }) => {
-		category = `${category}`.toLowerCase();
-		value = flattenDeep([value]);
-		searchData = searchData.filter(({ data: searchPayload }) => {
-			const searchSpace = flattenDeep([searchPayload[category]]).filter(Boolean);
-			if (!searchSpace || !searchSpace.length)
-				return resolveOperator(false, operator);
-			try {
-				for (const searchSpaceItem of searchSpace) {
-					for (const queryValue of value) {
-						if (searchSpaceItem.match(queryValue)) {
-							return resolveOperator(true, operator);
-						}
-					}
-				}
-			} catch (error) {
-				console.error(error);
-			}
-			return resolveOperator(false, operator);
-		});
-	});
-	return searchData;
-};
-
-function QueryChip({ category, operator, value, id, onRemove }) {
+function QueryChip({ queryData, onRemove }): JSX.Element {
+	const { category, operator, value, id } = queryData;
 	return (
 		<QueryChipContainer>
 			<QueryChipItem>{category}</QueryChipItem>
@@ -176,14 +104,30 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [category, setCategory] = useState('');
 	const [optionsData, setOptionsData] = useState(OptionsSchemas.attribute);
-	const selectRef = useRef();
-	const [selectedValues, setSelectedValues] = useState([]);
-	const [staging, setStaging] = useState([]);
-	const [queries, setQueries] = useState([]);
+	const selectRef: React.Ref<any> = useRef();
+	const [selectedValues, setSelectedValues] = useState<string[]>([]);
+	const [staging, setStaging] = useState<string[][]>([]);
+	const [queries, setQueries] = useState<IQueryStructure[] | unknown[]>([]);
 
+	useEffect(() => {
+		const searchQueryString = new URLSearchParams(history.location.search).get(
+			'search',
+		);
+		if (searchQueryString)
+			setQueries(convertURLQueryStringToQuery(searchQueryString) || []);
+	}, []);
 	useEffect(() => {
 		filterDashboards(executeSearchQueries(queries, searchData));
 	}, [queries, searchData]);
+
+	useEffect(() => {
+		if (Array.isArray(queries) && queries.length > 0) {
+			history.push({
+				pathname: history.location.pathname,
+				search: `?search=${convertQueriesToURLQuery(queries)}`,
+			});
+		}
+	}, [queries]);
 
 	const [state, send] = useMachine(DashboardSearchAndFilter, {
 		actions: {
@@ -216,34 +160,18 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 			},
 		},
 	});
-	const nextState = () => {
-		send('NEXT');
-		// validateStaging();
-		// const newSelectedCategory = stateTransition(StateSequence, selectedCategory);
-		// if (!newSelectedCategory) return;
 
-		// switch (newSelectedCategory as TSearchAndFilterState) {
-		// 	case 'attribute_selection':
-		// 		setOptionsData(OptionsSchemas.attribute);
-		// 		break;
-		// 	case 'operator_selection':
-		// 		setOptionsData(OptionsSchemas.operator);
-		// 		break;
-		// 	case 'value_selection':
-		// 		setOptionsData(OptionsSchemas.value);
-		// 		break;
-		// 	default:
-		// 		setOptionsData(null);
-		// }
-		// setSelectedCategory(newSelectedCategory);
+	const nextState = (): void => {
+		send('NEXT');
 	};
-	const removeQueryById = (queryId) => {
+
+	const removeQueryById = (queryId: string): void => {
 		setQueries((queries) => {
 			return filter(queries, ({ id }) => id !== queryId);
 		});
 	};
 
-	const handleChange = (value) => {
+	const handleChange = (value: never | string[]): void => {
 		if (!value) {
 			return;
 		}
@@ -259,22 +187,32 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 		nextState();
 		setSelectedValues([]);
 	};
-	const handleFocus = () => {
+	const handleFocus = (): void => {
 		if (state.value === 'Idle') {
 			send('NEXT');
 			selectRef.current?.focus();
 		}
 	};
 
-	const handleBlur = () => {
+	const handleBlur = (): void => {
 		send('onBlur');
-		selectRef.current.blur();
+		selectRef?.current?.blur();
 	};
 
-	const optionsChildren = map(optionsData?.options, (optionItem) => {
-		const { name, value } = optionItem;
-		return { label: name, value: value || name };
-	});
+	const clearQueries = (): void => {
+		setQueries([]);
+		history.push({
+			pathname: history.location.pathname,
+			search: ``,
+		});
+	};
+	const optionsChildren = map(
+		optionsData.options,
+		(optionItem: { name: string; value?: string }) => {
+			const { name, value } = optionItem;
+			return { label: name, value: value || name };
+		},
+	).filter(Boolean);
 
 	return (
 		<SearchContainer isDarkMode={isDarkMode}>
@@ -286,10 +224,10 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 				}}
 			>
 				{map(queries, (query) => (
-					<QueryChip key={query.id} {...query} onRemove={removeQueryById} />
+					<QueryChip key={query.id} queryData={query} onRemove={removeQueryById} />
 				))}
 				{map(staging, (value) => (
-					<QueryChipItem key={value}>{value}</QueryChipItem>
+					<QueryChipItem key={JSON.stringify(value)}>{value}</QueryChipItem>
 				))}
 			</div>
 			{optionsData && (
@@ -307,14 +245,14 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 					onChange={handleChange}
 					bordered={false}
 					suffixIcon={null}
-					// autoClearSearchValue
 					value={selectedValues}
 					options={optionsChildren}
 					onFocus={handleFocus}
 					onBlur={handleBlur}
-
-				// open={selectOpen}
 				/>
+			)}
+			{queries && queries.length > 0 && (
+				<Button icon={<CloseCircleFilled />} type="text" onClick={clearQueries} />
 			)}
 		</SearchContainer>
 	);

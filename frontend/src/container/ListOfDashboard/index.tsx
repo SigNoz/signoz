@@ -3,7 +3,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Card, Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
-import SearchFilter from 'components/SearchFilter';
+import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
