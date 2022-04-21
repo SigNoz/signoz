@@ -31,30 +31,27 @@ func parseUser(r *http.Request) (*model.User, error) {
 }
 
 func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
+	var postData *model.GetTopEndpointsParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
 
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) == 0 {
+	postData.Start, err = parseTimeStr(postData.StartTime, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	if len(postData.ServiceName) == 0 {
 		return nil, errors.New("serviceName param missing in query")
 	}
 
-	getTopEndpointsParams := model.GetTopEndpointsParams{
-		StartTime:   startTime.Format(time.RFC3339Nano),
-		EndTime:     endTime.Format(time.RFC3339Nano),
-		ServiceName: serviceName,
-		Start:       startTime,
-		End:         endTime,
-	}
-
-	return &getTopEndpointsParams, nil
-
+	return postData, nil
 }
 
 func parseMetricsTime(s string) (time.Time, error) {
@@ -183,63 +180,47 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 }
 
 func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewParams, error) {
-	startTime, err := parseTime("start", r)
+
+	var postData *model.GetServiceOverviewParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
-	endTime, err := parseTime("end", r)
+
+	postData.Start, err = parseTimeStr(postData.StartTime, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
 	if err != nil {
 		return nil, err
 	}
 
-	stepStr := r.URL.Query().Get("step")
-	if len(stepStr) == 0 {
-		return nil, errors.New("step param missing in query")
-	}
-	stepInt, err := strconv.Atoi(stepStr)
-	if err != nil {
-		return nil, errors.New("step param is not in correct format")
-	}
-
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) == 0 {
-		return nil, errors.New("serviceName param missing in query")
-	}
-
-	getServiceOverviewParams := model.GetServiceOverviewParams{
-		Start:       startTime,
-		StartTime:   startTime.Format(time.RFC3339Nano),
-		End:         endTime,
-		EndTime:     endTime.Format(time.RFC3339Nano),
-		ServiceName: serviceName,
-		Period:      fmt.Sprintf("PT%dM", stepInt/60),
-		StepSeconds: stepInt,
-	}
-
-	return &getServiceOverviewParams, nil
-
+	postData.Period = fmt.Sprintf("PT%dM", postData.StepSeconds/60)
+	return postData, nil
 }
 
 func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) {
 
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
+	var postData *model.GetServicesParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
 
-	getServicesParams := model.GetServicesParams{
-		Start:     startTime,
-		StartTime: startTime.Format(time.RFC3339Nano),
-		End:       endTime,
-		EndTime:   endTime.Format(time.RFC3339Nano),
-		Period:    int(endTime.Unix() - startTime.Unix()),
+	postData.Start, err = parseTimeStr(postData.StartTime, "start")
+	if err != nil {
+		return nil, err
 	}
-	return &getServicesParams, nil
+	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
+	if err != nil {
+		return nil, err
+	}
 
+	postData.Period = int(postData.End.Unix() - postData.Start.Unix())
+	return postData, nil
 }
 
 func DoesExistInSlice(item string, list []string) bool {
