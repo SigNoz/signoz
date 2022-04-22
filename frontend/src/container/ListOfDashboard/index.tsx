@@ -3,18 +3,18 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Card, Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
-import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
+import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
-import { generateSearchData } from './dashboardSearchAndFilter';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
@@ -27,7 +27,7 @@ function ListOfAllDashboard(): JSX.Element {
 		(state) => state.dashboards,
 	);
 
-	const [filteredDashboards, setFilteredDashboards] = useState(null);
+	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
 	useEffect(() => {
 		setFilteredDashboards(dashboards);
@@ -146,7 +146,6 @@ function ListOfAllDashboard(): JSX.Element {
 
 	return (
 		<Card>
-
 			<Row justify="space-between">
 				<Typography>Dashboard List</Typography>
 
@@ -186,7 +185,6 @@ function ListOfAllDashboard(): JSX.Element {
 					bordered
 					sticky
 					loading={loading}
-
 					columns={columns}
 					dataSource={data}
 					showSorterTooltip

@@ -1,17 +1,19 @@
 import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
+import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
 import { filter, flattenDeep, map, uniqWith } from 'lodash-es';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DashboardSearchAndFilter } from './Dashboard.machine';
 import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
-import { IQueryStructure } from './types';
+import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
 import {
 	convertQueriesToURLQuery,
 	convertURLQueryStringToQuery,
@@ -48,20 +50,29 @@ const OptionsSchemas = {
 	},
 };
 
-function QueryChip({ queryData, onRemove }): JSX.Element {
+function QueryChip({
+	queryData,
+	onRemove,
+}: {
+	queryData: IQueryStructure;
+	onRemove: (id: string) => void;
+}): JSX.Element {
 	const { category, operator, value, id } = queryData;
 	return (
 		<QueryChipContainer>
 			<QueryChipItem>{category}</QueryChipItem>
 			<QueryChipItem>{operator}</QueryChipItem>
-			<QueryChipItem closable onClose={() => onRemove(id)}>
+			<QueryChipItem closable onClose={(): void => onRemove(id)}>
 				{Array.isArray(value) ? value.join(', ') : null}
 			</QueryChipItem>
 		</QueryChipContainer>
 	);
 }
 
-function OptionsValueResolution(category, searchData) {
+function OptionsValueResolution(
+	category: TCategory,
+	searchData: Dashboard[],
+): Record<string, unknown> | IOptionsData {
 	const OptionsValueSchema = {
 		title: {
 			mode: 'tags',
@@ -76,12 +87,12 @@ function OptionsValueResolution(category, searchData) {
 				map(searchData, (searchItem) =>
 					searchItem.data.description
 						? {
-							name: searchItem.data.description,
-							value: searchItem.data.description,
-						}
+								name: searchItem.data.description,
+								value: searchItem.data.description,
+						  }
 						: null,
 				).filter(Boolean),
-				(prev, next) => prev.name === next.name,
+				(prev, next) => prev?.name === next?.name,
 			),
 		},
 		tags: {
@@ -98,16 +109,27 @@ function OptionsValueResolution(category, searchData) {
 		},
 	};
 
-	return OptionsValueSchema[category] || { mode: null, options: [] };
+	return (
+		OptionsValueSchema[category] ||
+		({ mode: undefined, options: [] } as IOptionsData)
+	);
 }
-function SearchFilter({ searchData, filterDashboards }): JSX.Element {
+function SearchFilter({
+	searchData,
+	filterDashboards,
+}: {
+	searchData: Dashboard[];
+	filterDashboards: (filteredDashboards: Dashboard[]) => void;
+}): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [category, setCategory] = useState('');
-	const [optionsData, setOptionsData] = useState(OptionsSchemas.attribute);
-	const selectRef: React.Ref<any> = useRef();
+	const [category, setCategory] = useState<TCategory>();
+	const [optionsData, setOptionsData] = useState<IOptionsData>(
+		OptionsSchemas.attribute,
+	);
+	const selectRef = useRef() as React.MutableRefObject<RefSelectProps>;
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
-	const [staging, setStaging] = useState<string[][]>([]);
-	const [queries, setQueries] = useState<IQueryStructure[] | unknown[]>([]);
+	const [staging, setStaging] = useState<string[] | string[][] | unknown[]>([]);
+	const [queries, setQueries] = useState<IQueryStructure[]>([]);
 
 	useEffect(() => {
 		const searchQueryString = new URLSearchParams(history.location.search).get(
@@ -118,16 +140,27 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 	}, []);
 	useEffect(() => {
 		filterDashboards(executeSearchQueries(queries, searchData));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [queries, searchData]);
+
+	const updateURLWithQuery = useCallback(
+		(inputQueries?: IQueryStructure[]): void => {
+			history.push({
+				pathname: history.location.pathname,
+				search:
+					inputQueries || queries
+						? `?search=${convertQueriesToURLQuery(inputQueries || queries)}`
+						: '',
+			});
+		},
+		[queries],
+	);
 
 	useEffect(() => {
 		if (Array.isArray(queries) && queries.length > 0) {
-			history.push({
-				pathname: history.location.pathname,
-				search: `?search=${convertQueriesToURLQuery(queries)}`,
-			});
+			updateURLWithQuery();
 		}
-	}, [queries]);
+	}, [queries, updateURLWithQuery]);
 
 	const [state, send] = useMachine(DashboardSearchAndFilter, {
 		actions: {
@@ -138,7 +171,9 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 				setOptionsData(OptionsSchemas.operator);
 			},
 			onSelectValue: () => {
-				setOptionsData(OptionsValueResolution(category, searchData));
+				setOptionsData(
+					OptionsValueResolution(category as TCategory, searchData) as IOptionsData,
+				);
 			},
 			onBlurPurge: () => {
 				setSelectedValues([]);
@@ -152,8 +187,8 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 					...queries,
 					{
 						id: uuidv4(),
-						category: staging[0],
-						operator: staging[1],
+						category: staging[0] as string,
+						operator: staging[1] as TOperator,
 						value: selectedValues,
 					},
 				]);
@@ -167,7 +202,9 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 
 	const removeQueryById = (queryId: string): void => {
 		setQueries((queries) => {
-			return filter(queries, ({ id }) => id !== queryId);
+			const updatedQueries = filter(queries, ({ id }) => id !== queryId);
+			updateURLWithQuery(updatedQueries);
+			return updatedQueries;
 		});
 	};
 
@@ -182,7 +219,7 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 		setStaging([...staging, value]);
 
 		if (state.value === 'Category') {
-			setCategory(`${value}`.toLowerCase());
+			setCategory(`${value}`.toLowerCase() as TCategory);
 		}
 		nextState();
 		setSelectedValues([]);
@@ -206,13 +243,6 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 			search: ``,
 		});
 	};
-	const optionsChildren = map(
-		optionsData.options,
-		(optionItem: { name: string; value?: string }) => {
-			const { name, value } = optionItem;
-			return { label: name, value: value || name };
-		},
-	).filter(Boolean);
 
 	return (
 		<SearchContainer isDarkMode={isDarkMode}>
@@ -227,7 +257,9 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 					<QueryChip key={query.id} queryData={query} onRemove={removeQueryById} />
 				))}
 				{map(staging, (value) => (
-					<QueryChipItem key={JSON.stringify(value)}>{value}</QueryChipItem>
+					<QueryChipItem key={JSON.stringify(value)}>
+						{value as string}
+					</QueryChipItem>
 				))}
 			</div>
 			{optionsData && (
@@ -240,16 +272,30 @@ function SearchFilter({ searchData, filterDashboards }): JSX.Element {
 					}
 					size="small"
 					ref={selectRef}
-					mode={optionsData.mode}
+					mode={optionsData.mode as 'tags' | 'multiple'}
 					style={{ flex: 1 }}
 					onChange={handleChange}
 					bordered={false}
 					suffixIcon={null}
 					value={selectedValues}
-					options={optionsChildren}
 					onFocus={handleFocus}
 					onBlur={handleBlur}
-				/>
+				>
+					{optionsData.options &&
+						Array.isArray(optionsData.options) &&
+						optionsData.options.map(
+							(optionItem): JSX.Element => {
+								return (
+									<Select.Option
+										key={(optionItem.value as string) || (optionItem.name as string)}
+										value={optionItem.value || optionItem.name}
+									>
+										{optionItem.name}
+									</Select.Option>
+								);
+							},
+						)}
+				</Select>
 			)}
 			{queries && queries.length > 0 && (
 				<Button icon={<CloseCircleFilled />} type="text" onClick={clearQueries} />

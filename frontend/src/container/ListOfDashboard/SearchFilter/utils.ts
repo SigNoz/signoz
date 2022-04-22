@@ -5,7 +5,7 @@ import { decode, encode } from 'js-base64';
 import { flattenDeep } from 'lodash-es';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-import { IQueryStructure, TOperator } from './types';
+import { IQueryStructure, TCategory, TOperator } from './types';
 
 export const convertQueriesToURLQuery = (
 	queries: IQueryStructure[],
@@ -23,7 +23,10 @@ export const convertURLQueryStringToQuery = (
 	return JSON.parse(decode(queryString));
 };
 
-export const resolveOperator = (result: any, operator: TOperator): boolean => {
+export const resolveOperator = (
+	result: unknown,
+	operator: TOperator,
+): boolean => {
 	if (operator === '!=') {
 		return !result;
 	}
@@ -42,24 +45,26 @@ export const executeSearchQueries = (
 
 	queries.forEach((query: IQueryStructure) => {
 		const { operator } = query;
-		let { category, value } = query;
-		category = `${category}`.toLowerCase();
+		let { value } = query;
+		const categoryLowercase: TCategory = `${query.category}`.toLowerCase() as
+			| 'title'
+			| 'description';
 		value = flattenDeep([value]);
 
 		searchData = searchData.filter(({ data: searchPayload }: Dashboard) => {
-			const searchSpace =
-				typeof category === 'string'
-					? flattenDeep([searchPayload[category]]).filter(Boolean)
-					: null;
-			if (!searchSpace || !searchSpace.length)
-				return resolveOperator(false, operator);
 			try {
+				const searchSpace =
+					flattenDeep([searchPayload[categoryLowercase]]).filter(Boolean) || null;
+				if (!searchSpace || !searchSpace.length)
+					return resolveOperator(false, operator);
+
 				for (const searchSpaceItem of searchSpace) {
-					for (const queryValue of value) {
-						if (searchSpaceItem.match(queryValue)) {
-							return resolveOperator(true, operator);
+					if (searchSpaceItem)
+						for (const queryValue of value) {
+							if (searchSpaceItem.match(queryValue)) {
+								return resolveOperator(true, operator);
+							}
 						}
-					}
 				}
 			} catch (error) {
 				console.error(error);
