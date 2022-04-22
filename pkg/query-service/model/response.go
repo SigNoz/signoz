@@ -115,8 +115,12 @@ type GetFilterSpansResponseItem struct {
 	ServiceName  string `db:"serviceName" json:"serviceName"`
 	Operation    string `db:"name" json:"operation"`
 	DurationNano int64  `db:"durationNano" json:"durationNano"`
-	HttpCode     string `db:"httpCode" json:"httpCode"`
-	HttpMethod   string `db:"httpMethod" json:"httpMethod"`
+	HttpCode     string `db:"httpCode"`
+	HttpMethod   string `db:"httpMethod"`
+	GRPCode      string `db:"gRPCCode"`
+	GRPMethod    string `db:"gRPCMethod"`
+	StatusCode   string `json:"statusCode"`
+	Method       string `json:"method"`
 }
 
 type GetFilterSpansResponse struct {

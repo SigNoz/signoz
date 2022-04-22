@@ -68,7 +68,7 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in commiting transaction for INSERT to user_preferences\n", err)
+		zap.S().Errorf("Error in committing transaction for INSERT to user_preferences\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	telemetry.GetInstance().SetTelemetryAnonymous(userPreferences.GetIsAnonymous())
