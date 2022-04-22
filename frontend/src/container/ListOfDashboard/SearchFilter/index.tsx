@@ -3,7 +3,7 @@ import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
-import { filter, flattenDeep, map, uniqWith } from 'lodash-es';
+import { filter, map } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -12,108 +12,17 @@ import AppReducer from 'types/reducer/app';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DashboardSearchAndFilter } from './Dashboard.machine';
-import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
+import QueryChip from './QueryChip';
+import { QueryChipItem, SearchContainer } from './styles';
 import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
 import {
 	convertQueriesToURLQuery,
 	convertURLQueryStringToQuery,
 	executeSearchQueries,
+	OptionsSchemas,
+	OptionsValueResolution,
 } from './utils';
 
-const OptionsSchemas = {
-	attribute: {
-		mode: undefined,
-		options: [
-			{
-				name: 'Title',
-			},
-			{
-				name: 'Description',
-			},
-			{
-				name: 'Tags',
-			},
-		],
-	},
-	operator: {
-		mode: undefined,
-		options: [
-			{
-				value: '=',
-				name: 'Equal',
-			},
-			{
-				name: 'Not Equal',
-				value: '!=',
-			},
-		],
-	},
-};
-
-function QueryChip({
-	queryData,
-	onRemove,
-}: {
-	queryData: IQueryStructure;
-	onRemove: (id: string) => void;
-}): JSX.Element {
-	const { category, operator, value, id } = queryData;
-	return (
-		<QueryChipContainer>
-			<QueryChipItem>{category}</QueryChipItem>
-			<QueryChipItem>{operator}</QueryChipItem>
-			<QueryChipItem closable onClose={(): void => onRemove(id)}>
-				{Array.isArray(value) ? value.join(', ') : null}
-			</QueryChipItem>
-		</QueryChipContainer>
-	);
-}
-
-function OptionsValueResolution(
-	category: TCategory,
-	searchData: Dashboard[],
-): Record<string, unknown> | IOptionsData {
-	const OptionsValueSchema = {
-		title: {
-			mode: 'tags',
-			options: uniqWith(
-				map(searchData, (searchItem) => ({ name: searchItem.data.title })),
-				(prev, next) => prev.name === next.name,
-			),
-		},
-		description: {
-			mode: 'tags',
-			options: uniqWith(
-				map(searchData, (searchItem) =>
-					searchItem.data.description
-						? {
-								name: searchItem.data.description,
-								value: searchItem.data.description,
-						  }
-						: null,
-				).filter(Boolean),
-				(prev, next) => prev?.name === next?.name,
-			),
-		},
-		tags: {
-			mode: 'tags',
-			options: uniqWith(
-				map(
-					flattenDeep(
-						map(searchData, (searchItem) => searchItem.data.tags).filter(Boolean),
-					),
-					(tag) => ({ name: tag }),
-				),
-				(prev, next) => prev.name === next.name,
-			),
-		},
-	};
-
-	return (
-		OptionsValueSchema[category] ||
-		({ mode: undefined, options: [] } as IOptionsData)
-	);
-}
 function SearchFilter({
 	searchData,
 	filterDashboards,

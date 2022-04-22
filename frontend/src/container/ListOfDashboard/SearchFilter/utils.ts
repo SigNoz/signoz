@@ -2,10 +2,10 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { decode, encode } from 'js-base64';
-import { flattenDeep } from 'lodash-es';
+import { flattenDeep, map, uniqWith } from 'lodash-es';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-import { IQueryStructure, TCategory, TOperator } from './types';
+import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
 
 export const convertQueriesToURLQuery = (
 	queries: IQueryStructure[],
@@ -74,3 +74,79 @@ export const executeSearchQueries = (
 	});
 	return searchData;
 };
+
+export const OptionsSchemas = {
+	attribute: {
+		mode: undefined,
+		options: [
+			{
+				name: 'Title',
+			},
+			{
+				name: 'Description',
+			},
+			{
+				name: 'Tags',
+			},
+		],
+	},
+	operator: {
+		mode: undefined,
+		options: [
+			{
+				value: '=',
+				name: 'Equal',
+			},
+			{
+				name: 'Not Equal',
+				value: '!=',
+			},
+		],
+	},
+};
+
+export function OptionsValueResolution(
+	category: TCategory,
+	searchData: Dashboard[],
+): Record<string, unknown> | IOptionsData {
+	const OptionsValueSchema = {
+		title: {
+			mode: 'tags',
+			options: uniqWith(
+				map(searchData, (searchItem) => ({ name: searchItem.data.title })),
+				(prev, next) => prev.name === next.name,
+			),
+		},
+		description: {
+			mode: 'tags',
+			options: uniqWith(
+				map(searchData, (searchItem) =>
+					searchItem.data.description
+						? {
+								name: searchItem.data.description,
+								value: searchItem.data.description,
+						  }
+						: null,
+				).filter(Boolean),
+				(prev, next) => prev?.name === next?.name,
+			),
+		},
+		tags: {
+			mode: 'tags',
+			options: uniqWith(
+				map(
+					flattenDeep(
+						map(searchData, (searchItem) => searchItem.data.tags).filter(Boolean),
+					),
+					(tag) => ({ name: tag }),
+				),
+				(prev, next) => prev.name === next.name,
+			),
+		},
+	};
+
+	return (
+		OptionsValueSchema[category] ||
+		({ mode: undefined, options: [] } as IOptionsData)
+	);
+}
