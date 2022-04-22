@@ -188,10 +188,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/feedback", aH.submitFeedback).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
@@ -688,9 +688,9 @@ func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetTopEndpoints(r.Context(), query)
+	result, apiErr := (*aH.reader).GetTopEndpoints(r.Context(), query)
 
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -721,8 +721,8 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceOverview(r.Context(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, apiErr := (*aH.reader).GetServiceOverview(r.Context(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -737,8 +737,8 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetServices(r.Context(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, apiErr := (*aH.reader).GetServices(r.Context(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 

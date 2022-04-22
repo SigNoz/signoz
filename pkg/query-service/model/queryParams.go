@@ -25,11 +25,12 @@ type QueryRangeParams struct {
 }
 
 type GetTopEndpointsParams struct {
-	StartTime   string
-	EndTime     string
-	ServiceName string
+	StartTime   string `json:"start"`
+	EndTime     string `json:"end"`
+	ServiceName string `json:"service"`
 	Start       *time.Time
 	End         *time.Time
+	Tags        []TagQuery `json:"tags"`
 }
 
 type GetUsageParams struct {
@@ -43,21 +44,23 @@ type GetUsageParams struct {
 }
 
 type GetServicesParams struct {
-	StartTime string
-	EndTime   string
+	StartTime string `json:"start"`
+	EndTime   string `json:"end"`
 	Period    int
 	Start     *time.Time
 	End       *time.Time
+	Tags      []TagQuery `json:"tags"`
 }
 
 type GetServiceOverviewParams struct {
-	StartTime   string
-	EndTime     string
+	StartTime   string `json:"start"`
+	EndTime     string `json:"end"`
+	Period      string
 	Start       *time.Time
 	End         *time.Time
-	ServiceName string
-	Period      string
-	StepSeconds int
+	Tags        []TagQuery `json:"tags"`
+	ServiceName string     `json:"service"`
+	StepSeconds int        `json:"step"`
 }
 
 type TagQuery struct {
