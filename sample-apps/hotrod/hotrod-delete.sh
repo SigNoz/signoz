@@ -16,5 +16,5 @@ fi
 if [ $? -ne 0 ]; then
     echo "❌ Failed to delete HotROD sample application"
 else
-    echo "✅ Succesfully deleted HotROD sample application"
+    echo "✅ Successfully deleted HotROD sample application"
 fi
