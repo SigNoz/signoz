@@ -41,6 +41,7 @@ import (
 	"github.com/prometheus/tsdb"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
@@ -61,6 +62,8 @@ const (
 	signozMetricDBName    = "signoz_metrics"
 	signozSampleName      = "samples"
 	signozTSName          = "time_series"
+	signozSampleTableName = "samples"
+	signozTSTableName     = "time_series"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -2366,7 +2369,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozSampleName, signozMetricDBName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleTableName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2518,5 +2521,118 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 	} else {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("Error not found")}
 	}
+
+}
+
+func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError) {
+
+	var query string
+	var err error
+	var tagKeyList []string
+	var rows driver.Rows
+
+	tagsWhereClause := ""
+
+	for key, val := range params.MetricTags {
+		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+	}
+	// "select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from signoz_metrics.time_series WHERE JSONExtractString(labels,'__name__')='node_udp_queues'))  WHERE distinctTagKeys ILIKE '%host%';"
+	if len(params.Match) != 0 {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+
+		rows, err = r.db.Query(ctx, query, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
+
+	} else {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
+
+		rows, err = r.db.Query(ctx, query, params.MetricName)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	defer rows.Close()
+	var tagKey string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		tagKeyList = append(tagKeyList, tagKey)
+	}
+	return &tagKeyList, nil
+}
+
+func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError) {
+
+	var query string
+	var err error
+	var tagValueList []string
+	var rows driver.Rows
+	tagsWhereClause := ""
+
+	for key, val := range params.MetricTags {
+		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+	}
+
+	if len(params.Match) != 0 {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s AND JSONExtractString(labels, $1) ILIKE $3;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+
+		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
+
+	} else {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) FROM %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName)
+
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	defer rows.Close()
+	var tagValue string
+	for rows.Next() {
+		if err := rows.Scan(&tagValue); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		tagValueList = append(tagValueList, tagValue)
+	}
+
+	return &tagValueList, nil
+}
+
+func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError) {
+
+	var query string
+	var err error
+	var metricNameList []string
+	var rows driver.Rows
+
+	if len(matchText) != 0 {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE $1;", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
+	} else {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s;", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	defer rows.Close()
+	var metricName string
+	for rows.Next() {
+		if err := rows.Scan(&metricName); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		metricNameList = append(metricNameList, metricName)
+	}
+
+	return &metricNameList, nil
 
 }
