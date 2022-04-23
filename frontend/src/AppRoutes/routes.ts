@@ -4,14 +4,17 @@ import { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,
+	AllErrors,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
+	ErrorDetails,
 	InstrumentationPage,
 	ListAllALertsPage,
 	NewDashboardPage,
+	OrganizationSettings,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -115,9 +118,24 @@ const routes: AppRoutes[] = [
 		component: AllAlertChannels,
 	},
 	{
+		path: ROUTES.ALL_ERROR,
+		exact: true,
+		component: AllErrors,
+	},
+	{
+		path: ROUTES.ERROR_DETAIL,
+		exact: true,
+		component: ErrorDetails,
+	},
+	{
 		path: ROUTES.VERSION,
 		exact: true,
 		component: StatusPage,
+	},
+	{
+		path: ROUTES.ORG_SETTINGS,
+		exact: true,
+		component: OrganizationSettings,
 	},
 ];
 

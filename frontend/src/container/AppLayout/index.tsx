@@ -2,8 +2,9 @@ import { notification } from 'antd';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import ROUTES from 'constants/routes';
-import TopNav from 'container/Header';
+import Header from 'container/Header';
 import SideNav from 'container/SideNav';
+import TopNav from 'container/TopNav';
 import history from 'lib/history';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +22,7 @@ import {
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
-import { Content, Layout } from './styles';
+import { ChildrenContainer, Layout } from './styles';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -155,13 +156,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	return (
 		<Layout>
-			{!isSignUpPage && <SideNav />}
-			<Layout>
-				<Content>
-					{!isSignUpPage && <TopNav />}
+			<SideNav />
+			<Layout.Content>
+				<Header />
+				<ChildrenContainer>
+					<TopNav />
 					{children}
-				</Content>
-			</Layout>
+				</ChildrenContainer>
+			</Layout.Content>
 		</Layout>
 	);
 }

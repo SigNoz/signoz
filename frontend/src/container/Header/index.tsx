@@ -1,49 +1,152 @@
-import { Col } from 'antd';
-import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import React from 'react';
-import { matchPath } from 'react-router-dom';
+import {
+	CaretDownFilled,
+	CaretUpFilled,
+	LogoutOutlined,
+	PlusSquareOutlined,
+} from '@ant-design/icons';
+import {
+	Avatar,
+	Divider,
+	Dropdown,
+	Layout,
+	Menu,
+	Space,
+	Typography,
+} from 'antd';
+import setTheme, { AppMode } from 'lib/theme/setTheme';
+import React, { useCallback, useState } from 'react';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { ToggleDarkMode } from 'store/actions';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import AppReducer from 'types/reducer/app';
 
-import ShowBreadcrumbs from './Breadcrumbs';
-import DateTimeSelector from './DateTimeSelection';
-import { Container } from './styles';
+import {
+	AvatarContainer,
+	Container,
+	InviteMembersContainer,
+	LogoutContainer,
+	ManageAccountLink,
+	MenuContainer,
+	OrganizationContainer,
+	OrganizationWrapper,
+	ThemeSwitcherWrapper,
+	ToggleButton,
+	Wrapper,
+} from './styles';
 
-const routesToSkip = [
-	ROUTES.SETTINGS,
-	ROUTES.LIST_ALL_ALERT,
-	ROUTES.TRACE_DETAIL,
-	ROUTES.ALL_CHANNELS,
-];
+function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
 
-function TopNav(): JSX.Element | null {
-	if (history.location.pathname === ROUTES.SIGN_UP) {
-		return null;
-	}
+	const onToggleThemeHandler = useCallback(() => {
+		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
+		setTheme(preMode);
 
-	const checkRouteExists = (currentPath: string): boolean => {
-		for (let i = 0; i < routesToSkip.length; i += 1) {
-			if (
-				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
-			) {
-				return true;
-			}
-		}
-		return false;
+		const id: AppMode = preMode;
+		const { head } = document;
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = !isDarkMode ? '/css/antd.dark.min.css' : '/css/antd.min.css';
+		link.media = 'all';
+		link.id = id;
+		head.appendChild(link);
+
+		link.onload = (): void => {
+			toggleDarkMode();
+			const prevNode = document.getElementById('appMode');
+			prevNode?.remove();
+		};
+	}, [toggleDarkMode, isDarkMode]);
+
+	const onArrowClickHandler: VoidFunction = () => {
+		setIsUserDropDownOpen((state) => !state);
 	};
 
-	return (
-		<Container>
-			<Col span={16}>
-				<ShowBreadcrumbs />
-			</Col>
+	const menu = (
+		<MenuContainer>
+			<Menu.ItemGroup>
+				<Typography>SIGNED IN AS</Typography>
+				<Wrapper>
+					<AvatarContainer>
+						<Avatar shape="circle" size="large">
+							asd
+						</Avatar>
+						<div>
+							<Typography>Pranay</Typography>
+							<Typography>pranay.iitm@gmail.com</Typography>
+						</div>
+					</AvatarContainer>
+					<ManageAccountLink>Manage Account</ManageAccountLink>
+				</Wrapper>
+				<Divider />
+				<div>
+					<Typography>CURRENT ORGANIZATION</Typography>
 
-			{!checkRouteExists(history.location.pathname) && (
-				<Col span={8}>
-					<DateTimeSelector />
-				</Col>
-			)}
-		</Container>
+					<OrganizationContainer>
+						<OrganizationWrapper>
+							<Avatar shape="square" size="large">
+								S
+							</Avatar>
+							<Typography>SigNoz</Typography>
+						</OrganizationWrapper>
+						<Typography.Link>Settings</Typography.Link>
+					</OrganizationContainer>
+					<InviteMembersContainer>
+						<PlusSquareOutlined />
+						<Typography.Link>Invite Members</Typography.Link>
+					</InviteMembersContainer>
+				</div>
+				<Divider />
+				<LogoutContainer>
+					<LogoutOutlined />
+					<Typography>Logout</Typography>
+				</LogoutContainer>
+			</Menu.ItemGroup>
+		</MenuContainer>
+	);
+
+	return (
+		<Layout.Header>
+			<Container>
+				<Space align="end">
+					<ThemeSwitcherWrapper>
+						<ToggleButton
+							checked={isDarkMode}
+							onChange={onToggleThemeHandler}
+							defaultChecked={isDarkMode}
+						/>
+					</ThemeSwitcherWrapper>
+
+					<Dropdown
+						onVisibleChange={onArrowClickHandler}
+						trigger={['click']}
+						overlay={menu}
+					>
+						<Space>
+							<Avatar shape="circle">asd</Avatar>
+							{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+						</Space>
+					</Dropdown>
+				</Space>
+			</Container>
+		</Layout.Header>
 	);
 }
 
-export default TopNav;
+interface DispatchProps {
+	toggleDarkMode: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	toggleDarkMode: bindActionCreators(ToggleDarkMode, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(HeaderContainer);

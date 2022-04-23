@@ -1,15 +1,17 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { PlusOutlined } from '@ant-design/icons';
-import { Row, Table, TableColumnProps, Typography } from 'antd';
+import { Card, Row, Table, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
+import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
@@ -25,6 +27,11 @@ function ListOfAllDashboard(): JSX.Element {
 		(state) => state.dashboards,
 	);
 
+	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
+
+	useEffect(() => {
+		setFilteredDashboards(dashboards);
+	}, [dashboards]);
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
 		error: false,
@@ -76,7 +83,7 @@ function ListOfAllDashboard(): JSX.Element {
 		},
 	];
 
-	const data: Data[] = dashboards.map((e) => ({
+	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
 		createdBy: e.created_at,
 		description: e.data.description || '',
 		id: e.uuid,
@@ -138,47 +145,52 @@ function ListOfAllDashboard(): JSX.Element {
 	};
 
 	return (
-		<TableContainer>
-			<Table
-				pagination={{
-					pageSize: 9,
-					defaultPageSize: 9,
-				}}
-				showHeader
-				bordered
-				sticky
-				loading={loading}
-				title={(): JSX.Element => {
-					return (
-						<Row justify="space-between">
-							<Typography>Dashboard List</Typography>
+		<Card>
+			<Row justify="space-between">
+				<Typography>Dashboard List</Typography>
 
-							<ButtonContainer>
-								<TextToolTip
-									{...{
-										text: `More details on how to create dashboards`,
-										url: 'https://signoz.io/docs/userguide/dashboards',
-									}}
-								/>
+				<ButtonContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to create dashboards`,
+							url: 'https://signoz.io/docs/userguide/dashboards',
+						}}
+					/>
 
-								<NewDashboardButton
-									onClick={onNewDashboardHandler}
-									icon={<PlusOutlined />}
-									type="primary"
-									loading={newDashboardState.loading}
-									danger={newDashboardState.error}
-								>
-									{getText()}
-								</NewDashboardButton>
-							</ButtonContainer>
-						</Row>
-					);
-				}}
-				columns={columns}
-				dataSource={data}
-				showSorterTooltip
-			/>
-		</TableContainer>
+					<NewDashboardButton
+						onClick={onNewDashboardHandler}
+						icon={<PlusOutlined />}
+						type="primary"
+						loading={newDashboardState.loading}
+						danger={newDashboardState.error}
+					>
+						{getText()}
+					</NewDashboardButton>
+				</ButtonContainer>
+			</Row>
+			{!loading && (
+				<SearchFilter
+					searchData={dashboards}
+					filterDashboards={setFilteredDashboards}
+				/>
+			)}
+
+			<TableContainer>
+				<Table
+					pagination={{
+						pageSize: 9,
+						defaultPageSize: 9,
+					}}
+					showHeader
+					bordered
+					sticky
+					loading={loading}
+					columns={columns}
+					dataSource={data}
+					showSorterTooltip
+				/>
+			</TableContainer>
+		</Card>
 	);
 }
 

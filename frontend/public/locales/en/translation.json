@@ -11,7 +11,8 @@
 	"n_a": "N/A",
 	"routes": {
 		"general": "General",
-		"alert_channels": "Alert Channels"
+		"alert_channels": "Alert Channels",
+		"all_errors": "All Errors"
 	},
 	"settings": {
 		"total_retention_period": "Total Retention Period",

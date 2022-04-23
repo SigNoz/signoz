@@ -1,4 +1,4 @@
-import { Time } from 'container/Header/DateTimeSelection/config';
+import { Time } from 'container/TopNav/DateTimeSelection/config';
 import GetMinMax from 'lib/getMinMax';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';

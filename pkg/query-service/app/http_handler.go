@@ -39,6 +39,7 @@ type APIHandler struct {
 	basePath     string
 	apiPrefix    string
 	reader       *Reader
+	alertManager am.Manager
 	relationalDB *interfaces.ModelDao
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
@@ -46,9 +47,11 @@ type APIHandler struct {
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(reader *Reader, relationalDB *interfaces.ModelDao) (*APIHandler, error) {
 
+	alertManager := am.New("")
 	aH := &APIHandler{
 		reader:       reader,
 		relationalDB: relationalDB,
+		alertManager: alertManager,
 	}
 	aH.ready = aH.testReady
 
@@ -172,6 +175,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/channels/{id}", aH.editChannel).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/channels/{id}", aH.deleteChannel).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/channels", aH.createChannel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/testChannel", aH.testChannel).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", aH.getRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
@@ -449,6 +453,33 @@ func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.respond(w, channels)
+}
+
+// testChannels sends test alert to all registered channels
+func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	receiver := &am.Receiver{}
+	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
+		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	// send alert
+	apiErrorObj := aH.alertManager.TestReceiver(receiver)
+	if apiErrorObj != nil {
+		aH.respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, "test alert sent")
 }
 
 func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
