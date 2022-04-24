@@ -52,9 +52,9 @@ function SignUp(): JSX.Element {
 
 	const { version } = versionResponse.data.payload;
 
-	const userpref = userPrefResponse.data.payload;
+	const userPref = userPrefResponse.data.payload;
 
-	return <SignUpComponent userpref={userpref} version={version} />;
+	return <SignUpComponent userPref={userPref} version={version} />;
 }
 
 export default SignUp;

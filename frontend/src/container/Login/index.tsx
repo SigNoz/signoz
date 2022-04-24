@@ -1,5 +1,14 @@
-import { Button, Input, Typography } from 'antd';
+import { Button, Input, notification, Typography } from 'antd';
+import setLocalStorage from 'api/browser/localstorage/set';
+import loginApi from 'api/user/login';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { Dispatch } from 'redux';
+import AppActions from 'types/actions';
+import { UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN } from 'types/actions/app';
 
 import {
 	ButtonContainer,
@@ -12,6 +21,7 @@ import {
 const { Title } = Typography;
 
 function Login(): JSX.Element {
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 
@@ -22,9 +32,43 @@ function Login(): JSX.Element {
 		setFunc(value);
 	};
 
+	const onSubmitHandler: React.FormEventHandler<HTMLFormElement> = async (
+		event,
+	) => {
+		try {
+			event.preventDefault();
+			event.persist();
+			const response = await loginApi({
+				email,
+				password,
+			});
+			if (response.statusCode === 200) {
+				notification.success({
+					message: 'Successfully Login',
+				});
+				dispatch({
+					type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+					payload: {
+						...response.payload,
+					},
+				});
+				setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+				history.push(ROUTES.APPLICATION);
+			} else {
+				notification.error({
+					message: response.error || 'Something went wrong',
+				});
+			}
+		} catch (error) {
+			notification.error({
+				message: 'Something went wrong',
+			});
+		}
+	};
+
 	return (
 		<FormWrapper>
-			<FormContainer>
+			<FormContainer onSubmit={onSubmitHandler}>
 				<Title level={4}>Login to SigNoz</Title>
 				<ParentContainer>
 					<Label htmlFor="signupEmail">Email</Label>

@@ -11,6 +11,7 @@ import {
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
+	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 } from 'types/actions/app';
 import InitialValueTypes from 'types/reducer/app';
 
@@ -22,6 +23,7 @@ const InitialValue: InitialValueTypes = {
 	latestVersion: '',
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
+	user: null,
 };
 
 const appReducer = (
@@ -69,6 +71,13 @@ const appReducer = (
 			return {
 				...state,
 				isLatestVersionError: true,
+			};
+		}
+
+		case UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN: {
+			return {
+				...state,
+				user: action.payload,
 			};
 		}
 

@@ -149,7 +149,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			<Layout.Content>
 				{isLoggedIn && <Header />}
 				<ChildrenContainer>
-					<TopNav />
+					{isLoggedIn && <TopNav />}
 					{children}
 				</ChildrenContainer>
 			</Layout.Content>

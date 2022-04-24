@@ -1,43 +1,36 @@
 import { Button, Input, notification, Space, Switch, Typography } from 'antd';
-// import setLocalStorageKey from 'api/browser/localstorage/set';
 import setPreference from 'api/user/setPreference';
-import signupApi from 'api/user/signup';
+import signUpApi from 'api/user/signup';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
-// import { IS_LOGGED_IN } from 'constants/auth';
-// import ROUTES from 'constants/routes';
-// import history from 'lib/history';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
-// import { useDispatch } from 'react-redux';
-// import { Dispatch } from 'redux';
-// import AppActions from 'types/actions';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
 
 const { Title } = Typography;
 
-function Signup({ version, userpref }: SignupProps): JSX.Element {
+function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
-	const [organizationName, setOrganisationName] = useState<string>('');
+	const [organizationName, setOrganizationName] = useState<string>('');
 	const [hasOptedUpdates, setHasOptedUpdates] = useState<boolean>(
-		userpref.hasOptedUpdates,
+		userPref.hasOptedUpdates,
 	);
-	const [isAnonymous, setisAnonymous] = useState<boolean>(userpref.isAnonymous);
+	const [isAnonymous, setIsAnonymous] = useState<boolean>(userPref.isAnonymous);
 	const [password, setPassword] = useState<string>('');
 	const [confirmPassword, setConfirmPassword] = useState<string>('');
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
 
-	// const dispatch = useDispatch<Dispatch<AppActions>>();
-
 	useEffect(() => {
-		setisAnonymous(userpref.isAnonymous);
-		setHasOptedUpdates(userpref.hasOptedUpdates);
-	}, [userpref]);
+		setIsAnonymous(userPref.isAnonymous);
+		setHasOptedUpdates(userPref.hasOptedUpdates);
+	}, [userPref]);
 
 	const setState = (
 		value: string,
@@ -60,29 +53,25 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 				});
 
 				if (userPreferenceResponse.statusCode === 200) {
-					const response = await signupApi({
+					const response = await signUpApi({
 						email,
 						name: firstName,
 						orgName: organizationName,
 						password,
 					});
 
-					console.log(response);
+					if (response.statusCode === 200) {
+						notification.success({
+							message: 'Successfully register',
+						});
+						history.push(ROUTES.LOGIN);
+					} else {
+						setLoading(false);
 
-					// if (response.statusCode === 200) {
-					// 	setLocalStorageKey(IS_LOGGED_IN, 'yes');
-					// 	dispatch({
-					// 		type: 'LOGGED_IN',
-					// 	});
-
-					// 	history.push(ROUTES.APPLICATION);
-					// } else {
-					// 	setLoading(false);
-
-					// 	notification.error({
-					// 		message: defaultError,
-					// 	});
-					// }
+						notification.error({
+							message: defaultError,
+						});
+					}
 				} else {
 					setLoading(false);
 
@@ -144,7 +133,7 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 							placeholder="Netflix"
 							value={organizationName}
 							onChange={(e): void => {
-								setState(e.target.value, setOrganisationName);
+								setState(e.target.value, setOrganizationName);
 							}}
 							required
 							id="organizationName"
@@ -204,7 +193,7 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 					<MarginTop marginTop="0.5rem">
 						<Space>
 							<Switch
-								onChange={(value): void => onSwitchHandler(value, setisAnonymous)}
+								onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
 								checked={isAnonymous}
 							/>
 							<Typography>
@@ -238,9 +227,9 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 	);
 }
 
-interface SignupProps {
+interface SignUpProps {
 	version: string;
-	userpref: PayloadProps;
+	userPref: PayloadProps;
 }
 
-export default Signup;
+export default SignUp;

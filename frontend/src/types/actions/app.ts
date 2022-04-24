@@ -1,4 +1,4 @@
-import AppReducer from 'types/reducer/app';
+import AppReducer, { User } from 'types/reducer/app';
 
 export const SWITCH_DARK_MODE = 'SWITCH_DARK_MODE';
 export const LOGGED_IN = 'LOGGED_IN';
@@ -9,6 +9,8 @@ export const UPDATE_LATEST_VERSION = 'UPDATE_LATEST_VERSION';
 
 export const UPDATE_CURRENT_ERROR = 'UPDATE_CURRENT_ERROR';
 export const UPDATE_LATEST_VERSION_ERROR = 'UPDATE_LATEST_VERSION_ERROR';
+export const UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN =
+	'UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -44,10 +46,21 @@ export interface UpdateVersionError {
 	};
 }
 
+export interface UpdateAccessRenewToken {
+	type: typeof UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN;
+	payload: {
+		accessJwt: User['accessJwt'];
+		accessJwtExpiry: User['accessJwtExpiry'];
+		refreshJwt: User['refreshJwt'];
+		refreshJwtExpiry: User['refreshJwtExpiry'];
+	};
+}
+
 export type AppAction =
 	| SwitchDarkMode
 	| LoggedInUser
 	| SideBarCollapse
 	| UpdateAppVersion
 	| UpdateLatestVersion
-	| UpdateVersionError;
+	| UpdateVersionError
+	| UpdateAccessRenewToken;
