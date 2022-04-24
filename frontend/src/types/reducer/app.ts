@@ -14,4 +14,6 @@ export default interface AppReducer {
 	isCurrentVersionError: boolean;
 	isLatestVersionError: boolean;
 	user: null | User;
+	isUserFetching: boolean;
+	isUserFetchingError: boolean;
 }

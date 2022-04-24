@@ -11,6 +11,7 @@ export const UPDATE_CURRENT_ERROR = 'UPDATE_CURRENT_ERROR';
 export const UPDATE_LATEST_VERSION_ERROR = 'UPDATE_LATEST_VERSION_ERROR';
 export const UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN =
 	'UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN';
+export const UPDATE_USER_IS_FETCH = 'UPDATE_USER_IS_FETCH';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -56,6 +57,13 @@ export interface UpdateAccessRenewToken {
 	};
 }
 
+export interface UpdateUserIsFetched {
+	type: typeof UPDATE_USER_IS_FETCH;
+	payload: {
+		isUserFetching: AppReducer['isUserFetching'];
+	};
+}
+
 export type AppAction =
 	| SwitchDarkMode
 	| LoggedInUser
@@ -63,4 +71,5 @@ export type AppAction =
 	| UpdateAppVersion
 	| UpdateLatestVersion
 	| UpdateVersionError
-	| UpdateAccessRenewToken;
+	| UpdateAccessRenewToken
+	| UpdateUserIsFetched;

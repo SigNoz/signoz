@@ -109,3 +109,7 @@ export const MySettings = Loadable(
 export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
 );
+
+export const UnAuthorized = Loadable(
+	() => import(/* webpackChunkName: "UnAuthorized" */ 'pages/UnAuthorized'),
+);

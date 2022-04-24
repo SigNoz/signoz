@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
+import { ROLES } from 'types/roles';
 
 import {
 	AllAlertChannels,
@@ -25,6 +26,7 @@ import {
 	StatusPage,
 	TraceDetail,
 	TraceFilter,
+	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
 
@@ -38,6 +40,8 @@ const routes: AppRoutes[] = [
 		component: ServicesTablePage,
 		path: ROUTES.APPLICATION,
 		exact: true,
+		isPrivate: false,
+		permission: ['ADMIN', 'EDITOR', 'VIEWER'],
 	},
 	{
 		path: ROUTES.SERVICE_METRICS,
@@ -149,13 +153,20 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: Login,
 	},
+	{
+		path: ROUTES.UN_AUTHORIZED,
+		exact: true,
+		component: UnAuthorized,
+	},
 ];
 
-interface AppRoutes {
+export interface AppRoutes {
 	component: RouteProps['component'];
 	path: RouteProps['path'];
 	exact: RouteProps['exact'];
 	isPrivate?: boolean;
+	permission?: ROLES[];
+	redirectIfNotLoggedIn?: boolean;
 }
 
 export default routes;
