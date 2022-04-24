@@ -1,40 +1,23 @@
-import {
-	Button,
-	Card,
-	Input,
-	notification,
-	Space,
-	Switch,
-	Typography,
-} from 'antd';
-import setLocalStorageKey from 'api/browser/localstorage/set';
+import { Button, Input, notification, Space, Switch, Typography } from 'antd';
+// import setLocalStorageKey from 'api/browser/localstorage/set';
 import setPreference from 'api/user/setPreference';
-import signup from 'api/user/signup';
-import { IS_LOGGED_IN } from 'constants/auth';
-import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import signupApi from 'api/user/signup';
+import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
+// import { IS_LOGGED_IN } from 'constants/auth';
+// import ROUTES from 'constants/routes';
+// import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
+// import { useDispatch } from 'react-redux';
+// import { Dispatch } from 'redux';
+// import AppActions from 'types/actions';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
-import {
-	ButtonContainer,
-	Container,
-	FormWrapper,
-	Label,
-	LeftContainer,
-	Logo,
-	MarginTop,
-} from './styles';
+import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
 
 const { Title } = Typography;
 
 function Signup({ version, userpref }: SignupProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
-	const { t } = useTranslation();
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
@@ -43,8 +26,13 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 		userpref.hasOptedUpdates,
 	);
 	const [isAnonymous, setisAnonymous] = useState<boolean>(userpref.isAnonymous);
+	const [password, setPassword] = useState<string>('');
+	const [confirmPassword, setConfirmPassword] = useState<string>('');
+	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
+		false,
+	);
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	// const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	useEffect(() => {
 		setisAnonymous(userpref.isAnonymous);
@@ -66,32 +54,35 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 				e.preventDefault();
 				setLoading(true);
 
-				const userPrefernceResponse = await setPreference({
+				const userPreferenceResponse = await setPreference({
 					isAnonymous,
 					hasOptedUpdates,
 				});
 
-				if (userPrefernceResponse.statusCode === 200) {
-					const response = await signup({
+				if (userPreferenceResponse.statusCode === 200) {
+					const response = await signupApi({
 						email,
 						name: firstName,
-						organizationName,
+						orgName: organizationName,
+						password,
 					});
 
-					if (response.statusCode === 200) {
-						setLocalStorageKey(IS_LOGGED_IN, 'yes');
-						dispatch({
-							type: 'LOGGED_IN',
-						});
+					console.log(response);
 
-						history.push(ROUTES.APPLICATION);
-					} else {
-						setLoading(false);
+					// if (response.statusCode === 200) {
+					// 	setLocalStorageKey(IS_LOGGED_IN, 'yes');
+					// 	dispatch({
+					// 		type: 'LOGGED_IN',
+					// 	});
 
-						notification.error({
-							message: defaultError,
-						});
-					}
+					// 	history.push(ROUTES.APPLICATION);
+					// } else {
+					// 	setLoading(false);
+
+					// 	notification.error({
+					// 		message: defaultError,
+					// 	});
+					// }
 				} else {
 					setLoading(false);
 
@@ -108,8 +99,6 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 		})();
 	};
 
-	console.log(userpref);
-
 	const onSwitchHandler = (
 		value: boolean,
 		setFunction: React.Dispatch<React.SetStateAction<boolean>>,
@@ -118,21 +107,7 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 	};
 
 	return (
-		<Container>
-			<LeftContainer direction="vertical">
-				<Space align="center">
-					<Logo src="signoz-signup.svg" alt="logo" />
-					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
-				</Space>
-				<Typography>{t('monitor_signup')}</Typography>
-				<Card
-					style={{ width: 'max-content' }}
-					bodyStyle={{ padding: '1px 8px', width: '100%' }}
-				>
-					SigNoz {version}
-				</Card>
-			</LeftContainer>
-
+		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
 				<form onSubmit={handleSubmit}>
 					<Title level={4}>Create your account</Title>
@@ -175,6 +150,46 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 							id="organizationName"
 						/>
 					</div>
+					<div>
+						<Label htmlFor="Password">Password</Label>
+						<Input.Password
+							value={password}
+							onChange={(e): void => {
+								setState(e.target.value, setPassword);
+							}}
+							required
+							id="currentPassword"
+						/>
+					</div>
+					<div>
+						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
+						<Input.Password
+							value={confirmPassword}
+							onChange={(e): void => {
+								const updateValue = e.target.value;
+								setState(updateValue, setConfirmPassword);
+								if (password !== updateValue) {
+									setConfirmPasswordError(true);
+								} else {
+									setConfirmPasswordError(false);
+								}
+							}}
+							required
+							id="UpdatePassword"
+						/>
+
+						{confirmPasswordError && (
+							<Typography.Paragraph
+								italic
+								style={{
+									color: '#D89614',
+									marginTop: '0.50rem',
+								}}
+							>
+								Passwords don’t match. Please try again
+							</Typography.Paragraph>
+						)}
+					</div>
 
 					<MarginTop marginTop="2.4375rem">
 						<Space>
@@ -204,14 +219,22 @@ function Signup({ version, userpref }: SignupProps): JSX.Element {
 							htmlType="submit"
 							data-attr="signup"
 							loading={loading}
-							disabled={loading || !email || !organizationName || !firstName}
+							disabled={
+								loading ||
+								!email ||
+								!organizationName ||
+								!firstName ||
+								!password ||
+								!confirmPassword ||
+								confirmPasswordError
+							}
 						>
 							Get Started
 						</Button>
 					</ButtonContainer>
 				</form>
 			</FormWrapper>
-		</Container>
+		</WelcomeLeftContainer>
 	);
 }
 

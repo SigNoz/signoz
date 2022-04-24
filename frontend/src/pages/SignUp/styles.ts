@@ -1,18 +1,6 @@
-import { Card, Space } from 'antd';
+import { Card } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-
-export const Container = styled.div`
-	&&& {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		min-height: 100vh;
-
-		max-width: 1024px;
-		margin: 0 auto;
-	}
-`;
 
 export const FormWrapper = styled(Card)`
 	display: flex;
@@ -29,10 +17,6 @@ export const Label = styled.label`
 	line-height: 24px;
 `;
 
-export const LeftContainer = styled(Space)`
-	flex: 1;
-`;
-
 export const ButtonContainer = styled.div`
 	margin-top: 1.8125rem;
 	display: flex;
@@ -46,8 +30,4 @@ interface Props {
 
 export const MarginTop = styled.div<Props>`
 	margin-top: ${({ marginTop = 0 }): number | string => marginTop};
-`;
-
-export const Logo = styled.img`
-	width: 60px;
 `;

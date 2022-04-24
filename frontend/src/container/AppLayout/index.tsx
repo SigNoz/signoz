@@ -6,7 +6,7 @@ import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import history from 'lib/history';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,8 +28,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { pathname } = useLocation();
 	const { t } = useTranslation();
-
-	const [isSignUpPage, setIsSignUpPage] = useState(ROUTES.SIGN_UP === pathname);
 
 	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
 		{
@@ -57,15 +55,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { children } = props;
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
-
-	useEffect(() => {
-		if (!isLoggedIn) {
-			setIsSignUpPage(true);
-			history.push(ROUTES.SIGN_UP);
-		} else if (isSignUpPage) {
-			setIsSignUpPage(false);
-		}
-	}, [isLoggedIn, isSignUpPage]);
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
@@ -156,9 +145,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	return (
 		<Layout>
-			<SideNav />
+			{isLoggedIn && <SideNav />}
 			<Layout.Content>
-				<Header />
+				{isLoggedIn && <Header />}
 				<ChildrenContainer>
 					<TopNav />
 					{children}
