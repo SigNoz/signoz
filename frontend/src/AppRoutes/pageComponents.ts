@@ -99,9 +99,13 @@ export const StatusPage = Loadable(
 );
 
 export const OrganizationSettings = Loadable(
-	() => import(/* webpackChunkName: "All Status" */ 'pages/Settings'),
+	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
 );
 
 export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All Status" */ 'pages/MySettings'),
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+);
+
+export const Login = Loadable(
+	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
 );

@@ -13,6 +13,7 @@ import {
 	ErrorDetails,
 	InstrumentationPage,
 	ListAllALertsPage,
+	Login,
 	MySettings,
 	NewDashboardPage,
 	OrganizationSettings,
@@ -142,6 +143,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.MY_SETTINGS,
 		exact: true,
 		component: MySettings,
+	},
+	{
+		path: ROUTES.LOGIN,
+		exact: true,
+		component: Login,
 	},
 ];
 
