@@ -21,7 +21,7 @@ const ROUTES = {
 	ALL_ERROR: '/errors',
 	ERROR_DETAIL: '/errors/:serviceName/:errorType',
 	VERSION: '/status',
-	MY_SETTINGS: '/settings/my-settings',
+	MY_SETTINGS: '/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
 };
 

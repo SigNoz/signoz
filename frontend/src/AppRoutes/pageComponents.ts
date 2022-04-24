@@ -101,3 +101,7 @@ export const StatusPage = Loadable(
 export const OrganizationSettings = Loadable(
 	() => import(/* webpackChunkName: "All Status" */ 'pages/Settings'),
 );
+
+export const MySettings = Loadable(
+	() => import(/* webpackChunkName: "All Status" */ 'pages/MySettings'),
+);

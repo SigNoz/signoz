@@ -2,7 +2,6 @@ import {
 	CaretDownFilled,
 	CaretUpFilled,
 	LogoutOutlined,
-	PlusSquareOutlined,
 } from '@ant-design/icons';
 import {
 	Avatar,
@@ -23,18 +22,14 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 
+import CurrentOrganiztion from './CurrentOrganization';
+import SignedInAS from './SignedInAs';
 import {
-	AvatarContainer,
 	Container,
-	InviteMembersContainer,
 	LogoutContainer,
-	ManageAccountLink,
 	MenuContainer,
-	OrganizationContainer,
-	OrganizationWrapper,
 	ThemeSwitcherWrapper,
 	ToggleButton,
-	Wrapper,
 } from './styles';
 
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
@@ -69,37 +64,9 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const menu = (
 		<MenuContainer>
 			<Menu.ItemGroup>
-				<Typography>SIGNED IN AS</Typography>
-				<Wrapper>
-					<AvatarContainer>
-						<Avatar shape="circle" size="large">
-							asd
-						</Avatar>
-						<div>
-							<Typography>Pranay</Typography>
-							<Typography>pranay.iitm@gmail.com</Typography>
-						</div>
-					</AvatarContainer>
-					<ManageAccountLink>Manage Account</ManageAccountLink>
-				</Wrapper>
+				<SignedInAS />
 				<Divider />
-				<div>
-					<Typography>CURRENT ORGANIZATION</Typography>
-
-					<OrganizationContainer>
-						<OrganizationWrapper>
-							<Avatar shape="square" size="large">
-								S
-							</Avatar>
-							<Typography>SigNoz</Typography>
-						</OrganizationWrapper>
-						<Typography.Link>Settings</Typography.Link>
-					</OrganizationContainer>
-					<InviteMembersContainer>
-						<PlusSquareOutlined />
-						<Typography.Link>Invite Members</Typography.Link>
-					</InviteMembersContainer>
-				</div>
+				<CurrentOrganiztion />
 				<Divider />
 				<LogoutContainer>
 					<LogoutOutlined />
