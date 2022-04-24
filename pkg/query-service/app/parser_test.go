@@ -2,9 +2,10 @@ package app
 
 import (
 	"bytes"
-	"github.com/smartystreets/assertions/should"
 	"net/http"
 	"testing"
+
+	"github.com/smartystreets/assertions/should"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -19,8 +20,8 @@ func TestParseFilterSingleFilter(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		query, _ := res.BuildMetricsFilterQuery()
-		So(query, ShouldEqual, "JSONExtractString(labels,'namespace') = 'a'")
+		query, _ := res.BuildMetricsFilterQuery("table")
+		So(query, ShouldEqual, "JSONExtractString(table.labels,'namespace') = 'a'")
 	})
 }
 
@@ -35,9 +36,9 @@ func TestParseFilterMultipleFilter(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		query, _ := res.BuildMetricsFilterQuery()
-		So(query, should.ContainSubstring, "JSONExtractString(labels,'host') IN ['host-1','host-2']")
-		So(query, should.ContainSubstring, "JSONExtractString(labels,'namespace') = 'a'")
+		query, _ := res.BuildMetricsFilterQuery("table")
+		So(query, should.ContainSubstring, "JSONExtractString(table.labels,'host') IN ['host-1','host-2']")
+		So(query, should.ContainSubstring, "JSONExtractString(table.labels,'namespace') = 'a'")
 	})
 }
 
@@ -51,7 +52,7 @@ func TestParseFilterNotSupportedOp(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		_, err := res.BuildMetricsFilterQuery()
+		_, err := res.BuildMetricsFilterQuery("table")
 		So(err, should.BeError, "unsupported operation")
 	})
 }

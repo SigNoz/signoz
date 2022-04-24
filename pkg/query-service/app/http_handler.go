@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -298,19 +299,34 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 
 func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
-
-	fmt.Println(metricsQueryRangeParams)
+	fmt.Println("handler", metricsQueryRangeParams)
 
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
 		aH.respondError(w, apiErrorObj, nil)
 		return
 	}
-	response_data := &model.QueryDataV2{
-		ResultType: "matrix",
-		Result:     nil,
+	query, err := metricsQueryRangeParams.BuildQuery("time_series")
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+
 	}
-	aH.respond(w, response_data)
+	results, err := (*aH.reader).GetMetricResult(r.Context(), query)
+	modifiedRes := make([]model.MetricResult, 0)
+	for _, r := range *results {
+		if math.IsNaN(r.Result) || math.IsInf(r.Result, 0) {
+			continue
+		}
+		modifiedRes = append(modifiedRes, model.MetricResult{r.Fingerprint, r.Timestamp, r.Result})
+	}
+	fmt.Println("here", modifiedRes)
+
+	if err != nil {
+		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+
+	}
+
+	aH.respond(w, modifiedRes)
 }
 
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {

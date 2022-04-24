@@ -17,7 +17,7 @@ func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *m
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	return nil, nil
+	return postData, nil
 }
 
 func ParseMetricAutocompleteTagParams(r *http.Request) (*model.MetricAutocompleteTagParams, *model.ApiError) {

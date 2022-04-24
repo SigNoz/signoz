@@ -2527,3 +2527,18 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 	return &metricNameList, nil
 
 }
+
+func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) (*[]model.MetricResult, error) {
+
+	metricResults := []model.MetricResult{}
+
+	err := r.db.Select(ctx, &metricResults, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+	return &metricResults, nil
+}

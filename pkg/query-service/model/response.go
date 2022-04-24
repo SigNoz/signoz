@@ -356,3 +356,9 @@ type ErrorWithSpan struct {
 	NewerErrorID       string    `json:"newerErrorId" ch:"newerErrorId"`
 	OlderErrorID       string    `json:"olderErrorId" ch:"olderErrorId"`
 }
+
+type MetricResult struct {
+	Fingerprint uint64    `json:"fingerprint" ch:"fingerprint"`
+	Timestamp   time.Time `json:"ts" ch:"ts"`
+	Result      float64   `json:"res" ch:"res"`
+}

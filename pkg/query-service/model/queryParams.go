@@ -26,34 +26,96 @@ type QueryRangeParams struct {
 	Stats string
 }
 
-type MetricSpaceAggregation struct {
-	GroupingTags []string `json:"groupingTags,omitempty"`
-	Aggregator   string   `json:"aggregator,omitempty"`
-}
-
-type MetricTimeAggregation struct {
-	Aggregator string `json:"aggregator,omitempty"`
-	Interval   int    `json:"interval,omitempty"`
-}
-
-type MetricTagFilter struct {
-	TagKey    string `json:"tagKey,omitempty"`
-	Operation string `json:"operation,omitempty"`
-	TagValue  string `json:"tagValue,omitempty"`
-}
-
-type MetricTagFilters struct {
-	Left  *MetricTagFilters `json:"left,omitempty"`
-	Right *MetricTagFilters `json:"right,omitempty"`
-	MetricTagFilter
-}
-
 type MetricQuery struct {
-	MetricName       string                  `json:"metricName"`
-	TagFilters       *MetricTagFilters       `json:"tagFilters,omitempty"`
-	SpaceAggregation *MetricSpaceAggregation `json:"spaceAggregation,omitempty"`
-	TimeAggregation  *MetricTimeAggregation  `json:"timeAggregation,omitempty"`
+	MetricName        string     `json:"metricName"`
+	TagFilters        *FilterSet `json:"tagFilters,omitempty"`
+	GroupingTags      []string   `json:"groupBy,omitempty"`
+	AggregateOperator string     `json:"aggregateOperator,omitempty"`
 }
+
+// SELECT
+//     *,
+//     runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
+// FROM samples
+// INNER JOIN
+// (
+//     SELECT
+//         fingerprint,
+//         labels
+//     FROM time_series
+//     WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
+// ) AS new_time_series USING (fingerprint)
+// ORDER BY timestamp_ms
+
+// SELECT
+//     *,
+//     runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
+// FROM samples
+// WHERE fingerprint IN
+// (
+//     SELECT
+//         fingerprint
+//     FROM time_series
+//     WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
+// )
+// ORDER BY timestamp_ms
+
+// SELECT *
+// FROM (
+// 	SELECT
+// 		*,
+// 		runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
+// 	FROM samples
+// 	WHERE fingerprint IN
+// 	(
+// 		SELECT
+// 			fingerprint
+// 		FROM time_series
+// 		WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
+// 	)
+// 	ORDER BY timestamp_ms
+// ) AS new_samples
+// INNER JOIN time_series USING fingerprint
+
+// SELECT
+//     *,
+//     runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
+// FROM samples
+// WHERE fingerprint IN (
+//     SELECT fingerprint
+//     FROM time_series
+//     WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count'
+// )
+// ORDER BY timestamp_ms ASC
+
+// SELECT a.rate/b.rate
+// FROM (
+// 	SELECT
+// 		*,
+// 		runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
+// 	FROM samples
+// 	WHERE fingerprint IN
+// 	(
+// 		SELECT
+// 			fingerprint
+// 		FROM time_series
+// 		WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
+// 	)
+// 	ORDER BY timestamp_ms
+// ) AS a INNER JOIN (
+// 	SELECT
+// 		*,
+// 		runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
+// 	FROM samples
+// 	WHERE fingerprint IN
+// 	(
+// 		SELECT
+// 			fingerprint
+// 		FROM time_series
+// 		WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
+// 	)
+// 	ORDER BY timestamp_ms
+// ) AS b USING fingerprint
 
 type CompositeMetricQuery struct {
 	BuildMetricQueries []*MetricQuery `json:"buildMetricQueries"`
@@ -61,99 +123,63 @@ type CompositeMetricQuery struct {
 	RawQuery           string         `json:"rawQuery,omitempty"`
 }
 
-func (m *MetricTagFilters) BuildQuery() (string, error) {
-	if m.Left == nil && m.Right == nil {
-		switch op := strings.ToLower(m.Operation); op {
-		case "eq":
-			return fmt.Sprintf("JSONExtractString(labels,'%s') = '%s'", m.TagKey, m.TagValue), nil
-		case "neq":
-			return fmt.Sprintf("JSONExtractString(labels,'%s') != '%s'", m.TagKey, m.TagValue), nil
-		case "in":
-			return fmt.Sprintf("JSONExtractString(labels,'%s') IN '%s'", m.TagKey, m.TagValue), nil
-		case "nin":
-			return fmt.Sprintf("JSONExtractString(labels,'%s') NOT IN '%s'", m.TagKey, m.TagValue), nil
-		case "like":
-			return fmt.Sprintf("JSONExtractString(labels,'%s') LIKE '%s'", m.TagKey, m.TagValue), nil
-		default:
-			return "", fmt.Errorf("unsupported operation")
-		}
-	}
-	leftStatement, err := m.Left.BuildQuery()
-	if err != nil {
-		return "", err
-	}
-	rightStatement, err := m.Right.BuildQuery()
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("(%s) %s (%s)", leftStatement, m.Operation, rightStatement), nil
+type QueryRangeParamsV2 struct {
+	Start                time.Time             `json:"start,omitempty"`
+	End                  time.Time             `json:"end,omitempty"`
+	Step                 string                `json:"step,omitempty"`
+	Query                string                `json:"query,omitempty"` // legacy
+	Stats                string                `json:"stats,omitempty"` // legacy
+	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery,omitempty"`
 }
 
-//select fingerprint, time_series.labels, time, runningDifference(max_value)/300 as rate from (
-//	select fingerprint, toStartOfInterval(toDateTime(intDiv(samples_name.timestamp_ms, 1000)), INTERVAL 5 MINUTE) as time, max(value) as max_value from samples_name where metric_name='signoz_latency_count' and fingerprint in (
-//		select fingerprint from time_series where JSONExtractString(labels,'service_name')='frontend'
-//		) group by (fingerprint, time) order by (fingerprint, time)
-//	) as new_samples INNER JOIN time_series using fingerprint;
+func (qp *QueryRangeParamsV2) BuildQuery(tableName string) (string, error) {
+	fmt.Println(qp)
 
-// TIME QUERY
+	// if qp.CompositeMetricQuery.RawQuery != "" {
+	// 	return qp.CompositeMetricQuery.RawQuery, nil
+	// }
 
-// SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 1 hour) as t, sum(value) as time_agg_value
-// FROM samples
-// INNER JOIN time_series using fingerprint
-// WHERE JSONExtractString(labels, '__name__') = 'otelcol_receiver_accepted_metric_points'
-// GROUP BY t, fingerprint
-// ORDER BY t
+	for _, mq := range qp.CompositeMetricQuery.BuildMetricQueries {
+		nameFilter := fmt.Sprintf("JSONExtractString(%s.labels,'__name__') = '%s'", tableName, mq.MetricName)
+		tagsFilter, err := mq.TagFilters.BuildMetricsFilterQuery(tableName)
+		if err != nil {
+			return "", err
+		}
+		timeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start.UnixMilli(), qp.End.UnixMilli())
+		filter := fmt.Sprintf("%s AND %s AND %s", nameFilter, tagsFilter, timeFilter)
+		groupByFilter := ""
+		for _, tag := range mq.GroupingTags {
+			groupByFilter += fmt.Sprintf(", JSONExtractString(%s.labels,'%s')", tableName, tag)
+		}
+		switch mq.AggregateOperator {
+		case "rate":
+			queryString :=
+				"SELECT fingerprint, " +
+					fmt.Sprintf(" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, avg(rate) as res from (", qp.Step) +
+					" SELECT *, runningDifference(value)/runningDifference(timestamp_ms/1000) as rate" +
+					" FROM signoz_metrics.samples" +
+					" INNER JOIN signoz_metrics.time_series USING fingerprint" +
+					" WHERE " + filter +
+					" ORDER BY timestamp_ms)" +
+					" GROUP BY fingerprint, ts" + groupByFilter +
+					" ORDER BY ts"
+			return queryString, nil
 
-// //
-// SELECT * FROM(
-// 	SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 1 hour) as t, sum(value) as time_agg_value
-// 	FROM samples
-// 	INNER JOIN time_series using fingerprint
-// 	WHERE JSONExtractString(labels, '__name__') = 'otelcol_receiver_accepted_metric_points'
-// 	GROUP BY t, fingerprint
-// 	ORDER BY t) as new_table
-// INNER JOIN time_series using fingerprint
-
-// func (mq *MetricQuery) BuildQuery() (string, error) {
-// 	filterSubQuery, err := mq.TagFilters.BuildQuery()
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	nameQuery := fmt.Sprintf("JSONExtractString(labels, '__name__') = '%s'", m.TagValue)
-
-// 	timeQuery := fmt.Sprintf("toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d MINUTE) as time, %s(value)", mq.TimeAggregation.Interval, mq.TimeAggregation.Aggregator)
-
-// 	spaceQuerySubQuery := ""
-// 	for _, groupTag := range mq.SpaceAggregation.GroupingTags {
-// 		spaceQuerySubQuery += fmt.Sprintf("JSONExtractString(labels, '%s') as %s,", groupTag, groupTag)
-// 	}
-// 	spaceQuerySubQuery += fmt.Sprintf("%s(value)", mq.SpaceAggregation.Aggregator)
-
-// 	return "", nil
-// }
-
-// func (c *CompositeMetricQuery) GetQuery() (string, error) {
-// 	return "", nil
-// 	if c.RawQuery != "" {
-// 		return c.RawQuery, nil
-// 	}
-// 	var queries []string
-// 	for _, metricQuery := range c.BuildMetricQueries {
-// 		q, err := metricQuery.BuildQuery()
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		queries = append(queries, q)
-// 	}
-// }
-
-type QueryRangeParamsV2 struct {
-	Start                time.Time
-	End                  time.Time
-	Step                 time.Duration
-	Query                string
-	Stats                string
-	CompositeMetricQuery *CompositeMetricQuery
+		case "sum_rate":
+			queryString :=
+				"SELECT fingerprint, " +
+					" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, sum(rate) as res from (" +
+					" SELECT *, runningDifference(value)/runningDifference(timestamp_ms/1000) as rate" +
+					" FROM signoz_metrics.samples" +
+					" INNER JOIN signoz_metrics.time_series USING fingerprint" +
+					" WHERE " + filter +
+					" ORDER BY timestamp_ms)" +
+					" GROUP BY fingerprint, ts" + groupByFilter +
+					" ORDER BY ts"
+			return queryString, nil
+		}
+	}
+	return "", nil
 }
 
 func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, error) {
@@ -366,21 +392,21 @@ func formattedValue(v interface{}) string {
 	}
 }
 
-func (fs *FilterSet) BuildMetricsFilterQuery() (string, error) {
+func (fs *FilterSet) BuildMetricsFilterQuery(tableName string) (string, error) {
 	queryString := ""
 	for idx, item := range fs.Items {
 		fmtVal := formattedValue(item.Value)
 		switch op := strings.ToLower(item.Operation); op {
 		case "eq":
-			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') = %s", item.Key, fmtVal)
+			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') = %s", tableName, item.Key, fmtVal)
 		case "neq":
-			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') != %s", item.Key, fmtVal)
+			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') != %s", tableName, item.Key, fmtVal)
 		case "in":
-			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') IN %s", item.Key, fmtVal)
+			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') IN %s", tableName, item.Key, fmtVal)
 		case "nin":
-			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') NOT IN %s", item.Key, fmtVal)
+			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') NOT IN %s", tableName, item.Key, fmtVal)
 		case "like":
-			queryString += fmt.Sprintf("JSONExtractString(labels,'%s') LIKE %s", item.Key, fmtVal)
+			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') LIKE %s", tableName, item.Key, fmtVal)
 		default:
 			return "", fmt.Errorf("unsupported operation")
 		}

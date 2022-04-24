@@ -604,13 +604,3 @@ func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
 	}
 	return &filterSet, nil
 }
-
-func parseMetricTagFilters(r *http.Request) (*model.MetricTagFilters, error) {
-	filterString := r.URL.Query().Get("tagFilters")
-	var filters model.MetricTagFilters
-	err := json.Unmarshal([]byte(filterString), filters)
-	if err != nil {
-		return nil, err
-	}
-	return &filters, nil
-}
