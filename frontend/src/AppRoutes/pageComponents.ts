@@ -94,6 +94,14 @@ export const ErrorDetails = Loadable(
 	() => import(/* webpackChunkName: "Error Details" */ 'pages/ErrorDetails'),
 );
 
+export const AllErrors = Loadable(
+	/* webpackChunkName: "All Errors" */ () => import('pages/AllErrors'),
+);
+
+export const ErrorDetails = Loadable(
+	() => import(/* webpackChunkName: "Error Details" */ 'pages/ErrorDetails'),
+);
+
 export const StatusPage = Loadable(
 	() => import(/* webpackChunkName: "All Status" */ 'pages/Status'),
 );
