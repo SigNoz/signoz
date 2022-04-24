@@ -1266,6 +1266,18 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	c, err := r.Cookie("refresh-token")
+	if err != nil {
+		if err != http.ErrNoCookie {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	if c != nil {
+		req.RefreshToken = c.Value
+	}
+
 	resp, err := auth.Login(context.Background(), req)
 	if aH.handleError(w, err, http.StatusUnauthorized) {
 		return
