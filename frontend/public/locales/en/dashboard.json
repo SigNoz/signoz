@@ -1,0 +1,16 @@
+{
+	"create_dashboard": "Create Dashboard",
+	"import_json": "Import JSON",
+	"copy_to_clipboard": "Copy To ClipBoard",
+	"download_json": "Download JSON",
+	"view_json": "View JSON",
+	"export_dashboard": "Export this dashboard.",
+	"upload_json_file": "Upload JSON file",
+	"paste_json_below": "Paste JSON below",
+	"error_upload_json": "Invalid JSON",
+	"load_json": "Load JSON",
+	"import_dashboard_by_pasting": "Import dashboard by pasting JSON or importing JSON file",
+	"error_loading_json": "Error loading JSON file",
+	"empty_json_not_allowed": "Empty JSON is not allowed",
+	"new_dashboard_title": "Sample Title"
+}

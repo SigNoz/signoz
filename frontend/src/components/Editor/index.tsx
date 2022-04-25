@@ -1,18 +1,21 @@
 import MEditor from '@monaco-editor/react';
 import React from 'react';
 
-function Editor({ value, readOnly = false }: EditorProps): JSX.Element {
+function Editor({
+	value,
+	language = 'yaml',
+	onChange,
+}: EditorProps): JSX.Element {
 	return (
 		<MEditor
 			theme="vs-dark"
-			defaultLanguage="yaml"
-			value={value.current}
-			options={{ fontSize: 16, automaticLayout: true, readOnly }}
+			language={language}
+			value={value}
+			options={{ fontSize: 16, automaticLayout: true }}
 			height="40vh"
 			onChange={(newValue): void => {
-				if (value.current && newValue) {
-					// eslint-disable-next-line no-param-reassign
-					value.current = newValue;
+				if (newValue) {
+					onChange(newValue);
 				}
 			}}
 		/>
@@ -20,12 +23,13 @@ function Editor({ value, readOnly = false }: EditorProps): JSX.Element {
 }
 
 interface EditorProps {
-	value: React.MutableRefObject<string>;
-	readOnly?: boolean;
+	value: string;
+	language?: string;
+	onChange: (value: string) => void;
 }
 
 Editor.defaultProps = {
-	readOnly: false,
+	language: undefined,
 };
 
 export default Editor;

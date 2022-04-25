@@ -1,8 +1,13 @@
-import { EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Card, Col, Row, Tag, Typography } from 'antd';
+import {
+	EditOutlined,
+	SaveOutlined,
+	ShareAltOutlined,
+} from '@ant-design/icons';
+import { Card, Col, Row, Space, Tag, Typography } from 'antd';
 import AddTags from 'container/NewDashboard/DescriptionOfDashboard/AddTags';
 import NameOfTheDashboard from 'container/NewDashboard/DescriptionOfDashboard/NameOfTheDashboard';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -16,6 +21,7 @@ import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import Description from './Description';
+import ShareModal from './ShareModal';
 import { Button, Container } from './styles';
 
 function DescriptionOfDashboard({
@@ -34,9 +40,12 @@ function DescriptionOfDashboard({
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
-	const [updatedDescription, setUpdtatedDescription] = useState(
+	const [updatedDescription, setUpdatedDescription] = useState(
 		description || '',
 	);
+	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
+
+	const { t } = useTranslation('common');
 
 	const onClickEditHandler = useCallback(() => {
 		if (isEditMode) {
@@ -66,6 +75,10 @@ function DescriptionOfDashboard({
 		updateDashboardTitleDescriptionTags,
 	]);
 
+	const onToggleHandler = (): void => {
+		isIsJSONModalVisible((state) => !state);
+	};
+
 	return (
 		<Card>
 			<Row align="top" justify="space-between">
@@ -87,17 +100,31 @@ function DescriptionOfDashboard({
 						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
 						<Description
 							description={updatedDescription}
-							setDescription={setUpdtatedDescription}
+							setDescription={setUpdatedDescription}
 						/>
 					</Col>
 				)}
+
+				<ShareModal
+					{...{
+						isJSONModalVisible,
+						onToggleHandler,
+						selectedData,
+					}}
+				/>
+
 				<Col>
-					<Button
-						icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
-						onClick={onClickEditHandler}
-					>
-						{isEditMode ? 'Save' : 'Edit'}
-					</Button>
+					<Space direction="vertical">
+						<Button onClick={onToggleHandler} icon={<ShareAltOutlined />}>
+							{t('share')}
+						</Button>
+						<Button
+							icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
+							onClick={onClickEditHandler}
+						>
+							{isEditMode ? t('save') : t('edit')}
+						</Button>
+					</Space>
 				</Col>
 			</Row>
 		</Card>
