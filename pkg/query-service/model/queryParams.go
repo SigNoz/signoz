@@ -124,62 +124,66 @@ type CompositeMetricQuery struct {
 }
 
 type QueryRangeParamsV2 struct {
-	Start                time.Time             `json:"start,omitempty"`
-	End                  time.Time             `json:"end,omitempty"`
+	Start                int64                 `json:"start,omitempty"`
+	End                  int64                 `json:"end,omitempty"`
 	Step                 string                `json:"step,omitempty"`
 	Query                string                `json:"query,omitempty"` // legacy
 	Stats                string                `json:"stats,omitempty"` // legacy
 	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery,omitempty"`
 }
 
-func (qp *QueryRangeParamsV2) BuildQuery(tableName string) (string, error) {
-	fmt.Println(qp)
+func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 
-	// if qp.CompositeMetricQuery.RawQuery != "" {
-	// 	return qp.CompositeMetricQuery.RawQuery, nil
-	// }
+	if qp.CompositeMetricQuery.RawQuery != "" {
+		return []string{qp.CompositeMetricQuery.RawQuery}, nil
+	}
 
+	var queries []string
 	for _, mq := range qp.CompositeMetricQuery.BuildMetricQueries {
 		nameFilter := fmt.Sprintf("JSONExtractString(%s.labels,'__name__') = '%s'", tableName, mq.MetricName)
+
 		tagsFilter, err := mq.TagFilters.BuildMetricsFilterQuery(tableName)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		timeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start.UnixMilli(), qp.End.UnixMilli())
-		filter := fmt.Sprintf("%s AND %s AND %s", nameFilter, tagsFilter, timeFilter)
-		groupByFilter := ""
+		timeSeriesTableTimeFilter := fmt.Sprintf("date >= fromUnixTimestamp64Milli(toInt64(%d)) AND date <= fromUnixTimestamp64Milli(toInt64(%d))", qp.Start, qp.End)
+
+		timeSeriesTableFilterQuery := fmt.Sprintf("%s AND %s AND %s", nameFilter, tagsFilter, timeSeriesTableTimeFilter)
+
+		filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM signoz_metrics.time_series WHERE %s", timeSeriesTableFilterQuery)
+
+		samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
+		intermediateResult := `
+			SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, runningDifference(max(value))/runningDifference(timestamp_ms/1000) as res
+			FROM signoz_metrics.samples
+			INNER JOIN
+			(
+				%s
+			) as filtered_time_series
+			USING fingerprint
+			WHERE %s
+			GROUP BY %s
+			ORDER BY timestamp_ms
+		`
+		groupByFilter := "fingerprint, timestamp_ms"
 		for _, tag := range mq.GroupingTags {
 			groupByFilter += fmt.Sprintf(", JSONExtractString(%s.labels,'%s')", tableName, tag)
 		}
 		switch mq.AggregateOperator {
-		case "rate":
-			queryString :=
-				"SELECT fingerprint, " +
-					fmt.Sprintf(" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, avg(rate) as res from (", qp.Step) +
-					" SELECT *, runningDifference(value)/runningDifference(timestamp_ms/1000) as rate" +
-					" FROM signoz_metrics.samples" +
-					" INNER JOIN signoz_metrics.time_series USING fingerprint" +
-					" WHERE " + filter +
-					" ORDER BY timestamp_ms)" +
-					" GROUP BY fingerprint, ts" + groupByFilter +
-					" ORDER BY ts"
-			return queryString, nil
-
-		case "sum_rate":
-			queryString :=
-				"SELECT fingerprint, " +
-					" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, sum(rate) as res from (" +
-					" SELECT *, runningDifference(value)/runningDifference(timestamp_ms/1000) as rate" +
-					" FROM signoz_metrics.samples" +
-					" INNER JOIN signoz_metrics.time_series USING fingerprint" +
-					" WHERE " + filter +
-					" ORDER BY timestamp_ms)" +
-					" GROUP BY fingerprint, ts" + groupByFilter +
-					" ORDER BY ts"
-			return queryString, nil
+		case "rate", "sum_rate":
+			query := fmt.Sprintf(intermediateResult, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
+			if mq.AggregateOperator == "sum_rate" {
+				new_query := `
+				SELECT ts, sum(res) as res
+				FROM %s
+				GROUP BY ts
+				`
+				query = fmt.Sprintf(new_query, query)
+			}
+			queries = append(queries, query)
 		}
 	}
-	return "", nil
+	return queries, nil
 }
 
 func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, error) {
