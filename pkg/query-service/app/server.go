@@ -133,7 +133,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	apiHandler.RegisterRoutes(r)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "DELETE", "POST", "PUT"},
 	})
