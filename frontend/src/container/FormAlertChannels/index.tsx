@@ -4,14 +4,18 @@ import { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	PagerChannel,
+	PagerType,
 	SlackChannel,
 	SlackType,
+	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
@@ -31,7 +35,7 @@ function FormAlertChannels({
 	NotificationElement,
 	title,
 	initialValue,
-	nameDisable = false,
+	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
@@ -41,6 +45,9 @@ function FormAlertChannels({
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
 			case WebhookType:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+			case PagerType:
+				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
+
 			default:
 				return null;
 		}
@@ -54,7 +61,7 @@ function FormAlertChannels({
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<FormItem label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
-						disabled={nameDisable}
+						disabled={editing}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -71,6 +78,9 @@ function FormAlertChannels({
 						</Option>
 						<Option value="webhook" key="webhook">
 							Webhook
+						</Option>
+						<Option value="pagerduty" key="pagerduty">
+							Pagerduty
 						</Option>
 					</Select>
 				</FormItem>
@@ -109,7 +119,9 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
+	setSelectedConfig: React.Dispatch<
+		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;
 	onTestHandler: (props: ChannelType) => void;
@@ -121,11 +133,12 @@ interface FormAlertChannelsProps {
 	>;
 	title: string;
 	initialValue: Store;
-	nameDisable?: boolean;
+	// editing indicates if the form is opened in edit mode
+	editing?: boolean;
 }
 
 FormAlertChannels.defaultProps = {
-	nameDisable: undefined,
+	editing: undefined,
 };
 
 export default FormAlertChannels;
