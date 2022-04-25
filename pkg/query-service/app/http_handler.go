@@ -110,7 +110,7 @@ type response struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
+func respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status:    statusError,
@@ -138,6 +138,8 @@ func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError
 		code = http.StatusNotFound
 	case model.ErrorNotImplemented:
 		code = http.StatusNotImplemented
+	case model.ErrorUnauthorized:
+		code = http.StatusUnauthorized
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -299,7 +301,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	alertList, apiErrorObj := (*aH.reader).GetRule(id)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, alertList)
@@ -308,7 +310,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
 	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, alertList)
@@ -319,7 +321,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	allDashboards, err := dashboards.GetDashboards()
 
 	if err != nil {
-		aH.respondError(w, err, nil)
+		respondError(w, err, nil)
 		return
 	}
 	tagsFromReq, ok := r.URL.Query()["tags"]
@@ -370,7 +372,7 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	err := dashboards.DeleteDashboard(uuid)
 
 	if err != nil {
-		aH.respondError(w, err, nil)
+		respondError(w, err, nil)
 		return
 	}
 
@@ -385,24 +387,24 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
 	if postData["uuid"] != uuid {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
 		return
 	}
 
 	dashboard, apiError := dashboards.UpdateDashboard(&postData)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -417,7 +419,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard, apiError := dashboards.GetDashboard(uuid)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -430,19 +432,19 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
 
 	dash, apiErr := dashboards.CreateDashboard(&postData)
 
 	if apiErr != nil {
-		aH.respondError(w, apiErr, nil)
+		respondError(w, apiErr, nil)
 		return
 	}
 
@@ -456,7 +458,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	apiErrorObj := (*aH.reader).DeleteRule(id)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -469,14 +471,14 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]string
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
 	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -488,7 +490,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	channel, apiErrorObj := (*aH.reader).GetChannel(id)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, channel)
@@ -498,7 +500,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	apiErrorObj := (*aH.reader).DeleteChannel(id)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, "notification channel successfully deleted")
@@ -507,7 +509,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 	channels, apiErrorObj := (*aH.reader).GetChannels()
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, channels)
@@ -521,21 +523,21 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	_, apiErrorObj := (*aH.reader).EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -549,21 +551,21 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	_, apiErrorObj := (*aH.reader).CreateChannel(receiver)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -579,14 +581,14 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&postData)
 
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -599,7 +601,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	query, apiErrorObj := parseQueryRangeRequest(r)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -620,7 +622,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -631,11 +633,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -653,7 +655,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -674,7 +676,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -685,11 +687,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			aH.respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			aH.respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		aH.respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -707,18 +709,18 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
 	message, ok := postData["message"]
 	if !ok {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
 		return
 	}
 	messageStr := fmt.Sprintf("%s", message)
 	if len(messageStr) == 0 {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
 		return
 	}
 
@@ -1160,7 +1162,7 @@ func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request)
 
 	result, apiError := aH.relationalDB.FetchUserPreference(context.Background())
 	if apiError != nil {
-		aH.respondError(w, apiError, "Error from Fetch Dao")
+		respondError(w, apiError, "Error from Fetch Dao")
 		return
 	}
 
@@ -1204,7 +1206,7 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 	resp, err := auth.Invite(ctx, req)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
+		respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
 		return
 	}
 
@@ -1217,7 +1219,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 	resp, err := auth.GetInvite(ctx, token)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
+		respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
 		return
 	}
 
@@ -1229,7 +1231,7 @@ func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 	if err := auth.RevokeInvite(ctx, email); err != nil {
-		aH.respondError(w, &model.ApiError{Err: err}, "Failed to revoke invite")
+		respondError(w, &model.ApiError{Err: err}, "Failed to revoke invite")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "invite revoked successfully"})
@@ -1238,7 +1240,7 @@ func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listInvites(w http.ResponseWriter, r *http.Request) {
 	groups, err := dao.DB().GetInvites(context.Background())
 	if err != nil {
-		aH.respondError(w, err, "Failed to get invites list")
+		respondError(w, err, "Failed to get invites list")
 		return
 	}
 	aH.writeJSON(w, r, groups)
@@ -1253,7 +1255,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 	apiErr := auth.Register(ctx, req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to register user")
+		respondError(w, apiErr, "Failed to register user")
 		return
 	}
 
@@ -1296,7 +1298,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.DB().GetUsers(context.Background())
 	if err != nil {
-		aH.respondError(w, err, "Failed to get users list")
+		respondError(w, err, "Failed to get users list")
 		return
 	}
 	aH.writeJSON(w, r, users)
@@ -1307,7 +1309,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := dao.DB().GetUser(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get user")
+		respondError(w, err, "Failed to get user")
 		return
 	}
 	// No need to send password hash for the user object.
@@ -1324,21 +1326,21 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of editUser API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	update := &model.User{}
 	if err := json.Unmarshal(body, update); err != nil {
 		zap.S().Errorf("Error in parsing req body of editUser API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	ctx := context.Background()
 	old, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to update user")
+		respondError(w, apiErr, "Failed to update user")
 		return
 	}
 
@@ -1354,7 +1356,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Password) > 0 {
 		hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
 		if err != nil {
-			aH.respondError(w, &model.ApiError{Err: err}, "Failed to update user")
+			respondError(w, &model.ApiError{Err: err}, "Failed to update user")
 		}
 		old.Password = string(hash)
 	}
@@ -1362,7 +1364,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 
 	_, apiErr = dao.DB().EditUser(ctx, old)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to update user")
+		respondError(w, apiErr, "Failed to update user")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "user updated successfully"})
@@ -1372,7 +1374,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	if !auth.IsAdmin(r) {
-		aH.respondError(w, &model.ApiError{
+		respondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
 			Err: errors.New("Unauthorized"),
 		}, "Failed to get user")
@@ -1381,7 +1383,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 	err := dao.DB().DeleteUser(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get user")
+		respondError(w, err, "Failed to get user")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
@@ -1392,12 +1394,12 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 
 	gu, err := dao.DB().GetUserGroup(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get user's group")
+		respondError(w, err, "Failed to get user's group")
 		return
 	}
 	group, err := dao.DB().GetGroup(context.Background(), gu.GroupId)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get group")
+		respondError(w, err, "Failed to get group")
 		return
 	}
 
@@ -1414,12 +1416,12 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	g, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to get user's group")
+		respondError(w, apiErr, "Failed to get user's group")
 		return
 	}
 
 	if g == nil {
-		aH.respondError(w, apiErr, "Specified group is not valid")
+		respondError(w, apiErr, "Specified group is not valid")
 		return
 	}
 
@@ -1428,7 +1430,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		GroupId: g.Id,
 	})
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to add user to group")
+		respondError(w, apiErr, "Failed to add user to group")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
@@ -1443,7 +1445,7 @@ func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 
 	g, apiErr := dao.DB().CreateGroup(context.Background(), req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to create group")
+		respondError(w, apiErr, "Failed to create group")
 		return
 	}
 
@@ -1453,7 +1455,7 @@ func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listGroups(w http.ResponseWriter, r *http.Request) {
 	groups, err := dao.DB().GetGroups(context.Background())
 	if err != nil {
-		aH.respondError(w, err, "Failed to get groups list")
+		respondError(w, err, "Failed to get groups list")
 		return
 	}
 	aH.writeJSON(w, r, groups)
@@ -1463,7 +1465,7 @@ func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	group, err := dao.DB().GetGroup(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get group")
+		respondError(w, err, "Failed to get group")
 		return
 	}
 	aH.writeJSON(w, r, group)
@@ -1473,7 +1475,7 @@ func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	err := dao.DB().DeleteGroup(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to query group")
+		respondError(w, err, "Failed to query group")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "group deleted successfully"})
@@ -1486,7 +1488,7 @@ func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !auth.IsValidAPIClass(req.ApiClass) {
-		aH.respondError(w, &model.ApiError{
+		respondError(w, &model.ApiError{
 			Err: fmt.Errorf("Unknown API class, must be one of %s\n", auth.ValidAPIClasses()),
 		}, "Failed to create rule")
 		return
@@ -1494,7 +1496,7 @@ func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 
 	rule, apiErr := dao.DB().CreateRule(context.Background(), req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to create rule")
+		respondError(w, apiErr, "Failed to create rule")
 		return
 	}
 
@@ -1504,7 +1506,7 @@ func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listRBACRules(w http.ResponseWriter, r *http.Request) {
 	rules, err := dao.DB().GetRules(context.Background())
 	if err != nil {
-		aH.respondError(w, err, "Failed to get rules list")
+		respondError(w, err, "Failed to get rules list")
 		return
 	}
 	aH.writeJSON(w, r, rules)
@@ -1514,7 +1516,7 @@ func (aH *APIHandler) getRBACRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	user, err := dao.DB().GetRule(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get rule")
+		respondError(w, err, "Failed to get rule")
 		return
 	}
 	aH.writeJSON(w, r, user)
@@ -1523,7 +1525,7 @@ func (aH *APIHandler) deleteRBACRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	err := dao.DB().DeleteRule(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to query rule")
+		respondError(w, err, "Failed to query rule")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "rule deleted successfully"})
@@ -1533,7 +1535,7 @@ func (aH *APIHandler) getGroupRules(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	rules, err := dao.DB().GetGroupRules(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get group rules")
+		respondError(w, err, "Failed to get group rules")
 		return
 	}
 	aH.writeJSON(w, r, rules)
@@ -1548,7 +1550,7 @@ func (aH *APIHandler) assignRBACRule(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := dao.DB().AddRuleToGroup(context.Background(), req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to assign rule")
+		respondError(w, apiErr, "Failed to assign rule")
 		return
 	}
 
@@ -1563,7 +1565,7 @@ func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := dao.DB().DeleteRuleFromGroup(context.Background(), req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to assign rule")
+		respondError(w, apiErr, "Failed to assign rule")
 		return
 	}
 
@@ -1574,7 +1576,7 @@ func (aH *APIHandler) getGroupUsers(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	users, err := dao.DB().GetGroupUsers(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, err, "Failed to get users")
+		respondError(w, err, "Failed to get users")
 		return
 	}
 	aH.writeJSON(w, r, users)
@@ -1588,7 +1590,7 @@ func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := dao.DB().AddUserToGroup(context.Background(), req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to assign user to group")
+		respondError(w, apiErr, "Failed to assign user to group")
 		return
 	}
 
@@ -1603,7 +1605,7 @@ func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := dao.DB().DeleteUserFromGroup(context.Background(), req)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to assign rule")
+		respondError(w, apiErr, "Failed to assign rule")
 		return
 	}
 
@@ -1613,7 +1615,7 @@ func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
 	orgs, apiErr := dao.DB().GetOrgs(context.Background())
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		respondError(w, apiErr, "Failed to fetch orgs from the DB")
 		return
 	}
 	aH.writeJSON(w, r, orgs)
@@ -1623,7 +1625,7 @@ func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	org, apiErr := dao.DB().GetOrg(context.Background(), id)
 	if apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		respondError(w, apiErr, "Failed to fetch orgs from the DB")
 		return
 	}
 	aH.writeJSON(w, r, org)
@@ -1638,7 +1640,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 	req.Id = id
 
 	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
-		aH.respondError(w, apiErr, "Failed to update org in the DB")
+		respondError(w, apiErr, "Failed to update org in the DB")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
@@ -1648,7 +1650,7 @@ func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Reque
 	id := mux.Vars(r)["id"]
 	resp, err := auth.CreateResetPasswordToken(context.Background(), id)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{
+		respondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: err}, "Failed to create reset token entry in the DB")
 		return

@@ -176,10 +176,10 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := auth.IsAuthorized(r); err != nil {
-			writeHttpResponse(w, &model.ApiError{
+			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
 				Err: fmt.Errorf("Unauthorized operation"),
-			})
+			}, nil)
 			return
 		}
 
