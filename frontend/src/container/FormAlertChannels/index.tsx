@@ -72,7 +72,7 @@ function FormAlertChannels({
 				</FormItem>
 
 				<FormItem label={t('field_channel_type')} labelAlign="left" name="type">
-					<Select onChange={onTypeChangeHandler} value={type}>
+					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
 						<Option value="slack" key="slack">
 							Slack
 						</Option>
