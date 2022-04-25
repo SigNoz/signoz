@@ -47,7 +47,6 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 			>
 				<Input
 					onChange={(event): void =>
-						// todo: add validation
 						setSelectedConfig((value) => ({
 							...value,
 							severity: event.target.value,
