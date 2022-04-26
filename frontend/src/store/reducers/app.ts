@@ -12,6 +12,7 @@ import {
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
+	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
@@ -26,6 +27,9 @@ const getInitialUser = (): User | null => {
 			accessJwt: response.accessJwt,
 			refreshJwt: response.refreshJwt,
 			userId: '',
+			email: '',
+			name: '',
+			profilePictureURL: '',
 		};
 	}
 	return null;
@@ -99,6 +103,9 @@ const appReducer = (
 				...state,
 				user: {
 					userId: '',
+					email: '',
+					name: '',
+					profilePictureURL: '',
 					...action.payload,
 				},
 			};
@@ -115,6 +122,17 @@ const appReducer = (
 			return {
 				...state,
 				...action.payload,
+			};
+		}
+
+		case UPDATE_USER: {
+			const user = state.user || ({} as User);
+			return {
+				...state,
+				user: {
+					...user,
+					...action.payload,
+				},
 			};
 		}
 

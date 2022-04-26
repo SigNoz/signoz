@@ -38,7 +38,9 @@ import {
 } from './styles';
 
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isDarkMode, user } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -132,7 +134,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 						overlay={menu}
 					>
 						<Space>
-							<Avatar shape="circle">asd</Avatar>
+							<Avatar shape="circle">{user?.name[0]}</Avatar>
 							{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 						</Space>
 					</Dropdown>

@@ -4,6 +4,7 @@ import deleteLocalStorageKey from 'api/browser/localstorage/remove';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getUserOrganization from 'api/user/getOrganization';
 import getRolesApi from 'api/user/getRoles';
+import getUserApi from 'api/user/getUser';
 import loginApi from 'api/user/login';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -19,6 +20,7 @@ import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
 import {
 	LOGGED_IN,
+	UPDATE_USER,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
@@ -64,6 +66,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		history.push(ROUTES.LOGIN);
 	}, [dispatch]);
 
+	const isLoggedInLocalStorage = getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN);
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		(async (): Promise<void> => {
@@ -85,21 +89,25 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 							if (response.statusCode === 200) {
 								// get all resource and put it over redux
-								const [rolesResponse, userOrgResponse] = await Promise.all([
+								const [
+									rolesResponse,
+									userOrgResponse,
+									getUserResponse,
+								] = await Promise.all([
 									getRolesApi({
 										userId: response.payload.userId,
 									}),
 									getUserOrganization(),
+									getUserApi({
+										userId: response.payload.userId,
+									}),
 								]);
 
 								if (
 									rolesResponse.statusCode === 200 &&
-									userOrgResponse.statusCode === 200
+									userOrgResponse.statusCode === 200 &&
+									getUserResponse.statusCode === 200
 								) {
-									const isLoggedInLocalStorage = getLocalStorageApi(
-										LOCALSTORAGE.IS_LOGGED_IN,
-									);
-
 									dispatch({
 										type: LOGGED_IN,
 										payload: {
@@ -113,6 +121,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 										payload: {
 											org: userOrgResponse.payload,
 											role: rolesResponse.payload.group_name,
+										},
+									});
+
+									dispatch({
+										type: UPDATE_USER,
+										payload: {
+											...getUserResponse.payload,
+											userId: response.payload.userId,
 										},
 									});
 
@@ -181,7 +197,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		// need to run over mount only and once
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedIn]);
+	}, [isLoggedInLocalStorage]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;

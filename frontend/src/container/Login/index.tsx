@@ -68,6 +68,7 @@ function Login(): JSX.Element {
 					LOCALSTORAGE.REFRESH_AUTH_TOKEN,
 					response.payload.refreshJwt,
 				);
+				setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notification.error({
