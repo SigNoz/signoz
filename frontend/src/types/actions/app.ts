@@ -1,4 +1,6 @@
+import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
 import AppReducer, { User } from 'types/reducer/app';
+import { ROLES } from 'types/roles';
 
 export const SWITCH_DARK_MODE = 'SWITCH_DARK_MODE';
 export const LOGGED_IN = 'LOGGED_IN';
@@ -12,6 +14,7 @@ export const UPDATE_LATEST_VERSION_ERROR = 'UPDATE_LATEST_VERSION_ERROR';
 export const UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN =
 	'UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN';
 export const UPDATE_USER_IS_FETCH = 'UPDATE_USER_IS_FETCH';
+export const UPDATE_USER_ORG_ROLE = 'UPDATE_USER_ORG_ROLE';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -19,6 +22,9 @@ export interface SwitchDarkMode {
 
 export interface LoggedInUser {
 	type: typeof LOGGED_IN;
+	payload: {
+		isLoggedIn: boolean;
+	};
 }
 
 export interface SideBarCollapse {
@@ -47,13 +53,19 @@ export interface UpdateVersionError {
 	};
 }
 
+export interface UpdateUserOrgRole {
+	type: typeof UPDATE_USER_ORG_ROLE;
+	payload: {
+		role: ROLES;
+		org: OrgPayload;
+	};
+}
+
 export interface UpdateAccessRenewToken {
 	type: typeof UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN;
 	payload: {
 		accessJwt: User['accessJwt'];
-		accessJwtExpiry: User['accessJwtExpiry'];
 		refreshJwt: User['refreshJwt'];
-		refreshJwtExpiry: User['refreshJwtExpiry'];
 	};
 }
 
@@ -72,4 +84,5 @@ export type AppAction =
 	| UpdateLatestVersion
 	| UpdateVersionError
 	| UpdateAccessRenewToken
-	| UpdateUserIsFetched;
+	| UpdateUserIsFetched
+	| UpdateUserOrgRole;

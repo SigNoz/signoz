@@ -1,8 +1,10 @@
+import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
+import { ROLES } from 'types/roles';
+
 export interface User {
 	accessJwt: string;
-	accessJwtExpiry: number;
 	refreshJwt: string;
-	refreshJwtExpiry: number;
+	userId: string;
 }
 
 export default interface AppReducer {
@@ -16,4 +18,6 @@ export default interface AppReducer {
 	user: null | User;
 	isUserFetching: boolean;
 	isUserFetchingError: boolean;
+	role: ROLES | null;
+	org: OrgPayload | null;
 }

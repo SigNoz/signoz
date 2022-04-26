@@ -9,6 +9,8 @@ const getTagFilters = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
+		const api = axios();
+
 		const duration =
 			omitBy(props.other, (_, key) => !key.startsWith('duration')) || [];
 
@@ -16,7 +18,7 @@ const getTagFilters = async (
 			key.startsWith('duration'),
 		);
 
-		const response = await axios.post<PayloadProps>(`/getTagFilters`, {
+		const response = await api.post<PayloadProps>(`/getTagFilters`, {
 			start: String(props.start),
 			end: String(props.end),
 			...nonDuration,

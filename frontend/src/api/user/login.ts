@@ -8,7 +8,9 @@ const login = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/login`, {
+		const api = axios();
+
+		const response = await api.post(`/login`, {
 			...props,
 		});
 

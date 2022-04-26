@@ -25,6 +25,8 @@ const ROUTES = {
 	ORG_SETTINGS: '/settings/org-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
+	NOT_FOUND: '/not-found',
+	HOME_PAGE: '/',
 };
 
 export default ROUTES;

@@ -139,8 +139,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserLatestVersionResponse.isSuccess,
 	]);
 
-	console.log({ isLoggedIn });
-
 	return (
 		<Layout>
 			{isLoggedIn && <SideNav />}

@@ -9,6 +9,8 @@ const getSpans = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
+		const api = axios();
+
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
 			Key: e.Key[0],
 			Operator: e.Operator,
@@ -29,7 +31,7 @@ const getSpans = async (
 
 		const nonDuration = omitBy(other, (_, key) => key.startsWith('duration'));
 
-		const response = await axios.post<PayloadProps>(
+		const response = await api.post<PayloadProps>(
 			`/getFilteredSpans/aggregates`,
 			{
 				start: String(props.start),

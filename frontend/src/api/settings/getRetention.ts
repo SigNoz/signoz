@@ -8,7 +8,9 @@ const getRetention = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const response = await axios.get<PayloadProps>(`/settings/ttl`);
+		const api = axios();
+
+		const response = await api.get<PayloadProps>(`/settings/ttl`);
 
 		return {
 			statusCode: 200,

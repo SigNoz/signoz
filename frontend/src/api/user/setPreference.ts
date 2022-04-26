@@ -8,7 +8,9 @@ const setPreference = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/userPreferences`, {
+		const api = axios();
+
+		const response = await api.post(`/userPreferences`, {
 			...props,
 		});
 

@@ -1,4 +1,4 @@
-export type ADMIN = 'ADMIN';
+export type ADMIN = 'ADMIN_GROUP';
 export type VIEWER = 'VIEWER';
 export type EDITOR = 'EDITOR';
 

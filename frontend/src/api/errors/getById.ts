@@ -9,7 +9,9 @@ const getById = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
+		const api = axios();
+
+		const response = await api.get(
 			`/errorWithId?${createQueryParams({
 				start: props.start.toString(),
 				end: props.end.toString(),

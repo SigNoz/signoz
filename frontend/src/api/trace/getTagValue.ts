@@ -8,7 +8,9 @@ const getTagValue = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post<PayloadProps>(`/getTagValues`, {
+		const api = axios();
+
+		const response = await api.post<PayloadProps>(`/getTagValues`, {
 			start: props.start.toString(),
 			end: props.end.toString(),
 			tagKey: props.tagKey,

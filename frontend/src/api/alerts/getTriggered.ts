@@ -9,11 +9,11 @@ const getTriggered = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
+		const api = AxiosAlertManagerInstance();
+
 		const queryParams = convertObjectIntoParams(props);
 
-		const response = await AxiosAlertManagerInstance.get(
-			`/alerts?${queryParams}`,
-		);
+		const response = await api.get(`/alerts?${queryParams}`);
 
 		return {
 			statusCode: 200,

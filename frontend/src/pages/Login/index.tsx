@@ -2,7 +2,9 @@ import { Typography } from 'antd';
 import getUserVersion from 'api/user/getVersion';
 import Spinner from 'components/Spinner';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
+import ROUTES from 'constants/routes';
 import LoginContainer from 'container/Login';
+import useLoggedInNavigate from 'hooks/useIfNotLoggedInNavigate';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -13,6 +15,8 @@ import AppReducer from 'types/reducer/app';
 function Login(): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { t } = useTranslation();
+
+	useLoggedInNavigate(ROUTES.APPLICATION);
 
 	const versionResult = useQuery({
 		queryFn: getUserVersion,

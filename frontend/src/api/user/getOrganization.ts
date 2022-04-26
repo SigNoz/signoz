@@ -2,25 +2,25 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/dashboard/getAll';
+import { PayloadProps } from 'types/api/user/getOrganization';
 
-const getAll = async (): Promise<
+const getOrganization = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
 		const api = axios();
 
-		const response = await api.get('/dashboards');
+		const response = await api.get(`/org`);
 
 		return {
 			statusCode: 200,
 			error: null,
-			message: response.data.message,
-			payload: response.data.data,
+			message: response.data.status,
+			payload: response.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);
 	}
 };
 
-export default getAll;
+export default getOrganization;

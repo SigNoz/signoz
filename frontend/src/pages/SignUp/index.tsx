@@ -2,6 +2,8 @@ import { Typography } from 'antd';
 import getUserPreference from 'api/user/getPreference';
 import getUserVersion from 'api/user/getVersion';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
+import useLoggedInNavigate from 'hooks/useIfNotLoggedInNavigate';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -14,6 +16,8 @@ import SignUpComponent from './SignUp';
 function SignUp(): JSX.Element {
 	const { t } = useTranslation('common');
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	useLoggedInNavigate(ROUTES.APPLICATION);
 
 	const [versionResponse, userPrefResponse] = useQueries([
 		{
@@ -30,7 +34,11 @@ function SignUp(): JSX.Element {
 
 	if (
 		versionResponse.status === 'error' ||
-		userPrefResponse.status === 'error'
+		userPrefResponse.status === 'error' ||
+		(versionResponse.status === 'success' &&
+			versionResponse.data?.statusCode !== 200) ||
+		(userPrefResponse.status === 'success' &&
+			userPrefResponse.data?.statusCode !== 200)
 	) {
 		return (
 			<Typography>

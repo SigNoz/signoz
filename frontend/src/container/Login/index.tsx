@@ -52,7 +52,12 @@ function Login(): JSX.Element {
 						...response.payload,
 					},
 				});
-				setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+				// setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+				setLocalStorage(LOCALSTORAGE.AUTH_TOKEN, response.payload.accessJwt);
+				setLocalStorage(
+					LOCALSTORAGE.REFRESH_AUTH_TOKEN,
+					response.payload.refreshJwt,
+				);
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notification.error({

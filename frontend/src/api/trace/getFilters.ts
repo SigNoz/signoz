@@ -9,6 +9,8 @@ const getFilters = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
+		const api = axios();
+
 		const duration =
 			omitBy(props.other, (_, key) => !key.startsWith('duration')) || [];
 
@@ -24,7 +26,7 @@ const getFilters = async (
 			}
 		});
 
-		const response = await axios.post<PayloadProps>(`/getSpanFilters`, {
+		const response = await api.post<PayloadProps>(`/getSpanFilters`, {
 			start: props.start,
 			end: props.end,
 			getFilters: props.getFilters,

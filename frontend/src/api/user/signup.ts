@@ -8,7 +8,9 @@ const signup = async (
 	props: Props,
 ): Promise<SuccessResponse<string> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/register`, {
+		const api = axios();
+
+		const response = await api.post(`/register`, {
 			...props,
 		});
 
