@@ -1374,7 +1374,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if !auth.IsAdmin(r) {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
-			Err: errors.New("Unauthorized"),
+			Err: errors.New("Only admin can delete user"),
 		}, "Failed to get user")
 		return
 	}
@@ -1406,6 +1406,14 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+
+	if !auth.IsAdmin(r) {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: errors.New("Only admin can edit roles"),
+		}, "Failed to edit user")
+		return
+	}
 	req, err := parseUserRoleRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return

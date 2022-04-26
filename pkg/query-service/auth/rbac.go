@@ -30,12 +30,12 @@ var ApiClass = map[string]string{
 	// Admin APIs
 	"/api/v1/invite":                     constants.AdminAPI,
 	"/api/v1/user":                       constants.AdminAPI,
-	"/api/v1/rbac/role/{id}":             constants.AdminAPI,
 	"/api/v1/org":                        constants.AdminAPI,
 	"/api/v1/org/{id}":                   constants.AdminAPI,
 	"/api/v1/getResetPasswordToken/{id}": constants.AdminAPI,
 
 	"/api/v1/user/{id}":           constants.SelfAccessibleAPI,
+	"/api/v1/rbac/role/{id}":      constants.SelfAccessibleAPI,
 	"/api/v1/changePassword/{id}": constants.SelfAccessibleAPI,
 
 	"/api/v1/register":        constants.UnprotectedAPI,
