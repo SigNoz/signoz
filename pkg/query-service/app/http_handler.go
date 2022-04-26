@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
@@ -1268,29 +1267,29 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := r.Cookie("refresh-token")
-	if err != nil {
-		if err != http.ErrNoCookie {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	}
+	// c, err := r.Cookie("refresh-token")
+	// if err != nil {
+	// 	if err != http.ErrNoCookie {
+	// 		w.WriteHeader(http.StatusBadRequest)
+	// 		return
+	// 	}
+	// }
 
-	if c != nil {
-		req.RefreshToken = c.Value
-	}
+	// if c != nil {
+	// 	req.RefreshToken = c.Value
+	// }
 
 	resp, err := auth.Login(context.Background(), req)
 	if aH.handleError(w, err, http.StatusUnauthorized) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh-token",
-		Value:    resp.RefreshJwt,
-		Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
-		HttpOnly: true,
-	})
+	// http.SetCookie(w, &http.Cookie{
+	// 	Name:     "refresh-token",
+	// 	Value:    resp.RefreshJwt,
+	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
+	// 	HttpOnly: true,
+	// })
 
 	aH.writeJSON(w, r, resp)
 }
