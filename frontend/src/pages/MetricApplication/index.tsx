@@ -4,6 +4,7 @@ import MetricsApplicationContainer from 'container/MetricsApplication';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import history from 'lib/history'
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {

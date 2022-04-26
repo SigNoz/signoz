@@ -1,6 +1,7 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
+import ResourceAttributesFilter from 'container/MetricsApplication/ResourceAttributesFilter';
 import MetricTable from 'container/MetricsTable';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -53,7 +54,12 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		return <Spinner tip="Loading..." />;
 	}
 
-	return <MetricTable />;
+	return (
+		<>
+			<ResourceAttributesFilter />
+			<MetricTable />
+		</>
+	);
 }
 
 interface DispatchProps {

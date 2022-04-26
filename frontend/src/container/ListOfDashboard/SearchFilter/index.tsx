@@ -189,6 +189,7 @@ function SearchFilter({
 					value={selectedValues}
 					onFocus={handleFocus}
 					onBlur={handleBlur}
+					showSearch
 				>
 					{optionsData.options &&
 						Array.isArray(optionsData.options) &&
