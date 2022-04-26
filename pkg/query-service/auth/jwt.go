@@ -15,8 +15,8 @@ import (
 
 var (
 	JwtSecret  string
-	JwtExpiry  = 15 * time.Minute
-	JwtRefresh = 1 * time.Hour
+	JwtExpiry  = 30 * time.Minute
+	JwtRefresh = 12 * time.Hour
 )
 
 func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
