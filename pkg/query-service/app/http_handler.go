@@ -21,7 +21,6 @@ import (
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type status string
@@ -1346,19 +1345,19 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	if len(update.OrgId) > 0 {
-		old.OrgId = update.OrgId
-	}
-	if len(update.Email) > 0 {
-		old.Email = update.Email
-	}
-	if len(update.Password) > 0 {
-		hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
-		if err != nil {
-			respondError(w, &model.ApiError{Err: err}, "Failed to update user")
-		}
-		old.Password = string(hash)
-	}
+	// if len(update.OrgId) > 0 {
+	// 	old.OrgId = update.OrgId
+	// }
+	// if len(update.Email) > 0 {
+	// 	old.Email = update.Email
+	// }
+	// if len(update.Password) > 0 {
+	// 	hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
+	// 	if err != nil {
+	// 		respondError(w, &model.ApiError{Err: err}, "Failed to update user")
+	// 	}
+	// 	old.Password = string(hash)
+	// }
 	update.Id = id
 
 	_, apiErr = dao.DB().EditUser(ctx, old)
