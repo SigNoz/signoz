@@ -38,10 +38,11 @@ var ApiClass = map[string]string{
 	"/api/v1/user/{id}":           constants.SelfAccessibleAPI,
 	"/api/v1/changePassword/{id}": constants.SelfAccessibleAPI,
 
-	"/api/v1/register":       constants.UnprotectedAPI,
-	"/api/v1/login":          constants.UnprotectedAPI,
-	"/api/v1/invite/{token}": constants.UnprotectedAPI,
-	"/api/v1/version":        constants.UnprotectedAPI,
+	"/api/v1/register":        constants.UnprotectedAPI,
+	"/api/v1/login":           constants.UnprotectedAPI,
+	"/api/v1/invite/{token}":  constants.UnprotectedAPI,
+	"/api/v1/version":         constants.UnprotectedAPI,
+	"/api/v1/userPreferences": constants.UnprotectedAPI,
 }
 
 type AuthCache struct {

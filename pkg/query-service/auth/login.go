@@ -81,7 +81,7 @@ func authenticateLogin(ctx context.Context, req *LoginRequest) (*model.User, err
 			return nil, errors.Wrap(err, "failed to validate refresh token")
 		}
 
-		return &model.User{Email: user.Email}, nil
+		return user, nil
 	}
 
 	user, err := dao.DB().GetUserByEmail(ctx, req.Email)
