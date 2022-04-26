@@ -27,6 +27,7 @@ type LoginResponse struct {
 	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
 	RefreshJwt       string `json:"refreshJwt"`
 	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
+	UserId           string `json:"userId"`
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
@@ -66,6 +67,7 @@ func Login(ctx context.Context, request *LoginRequest) (*LoginResponse, error) {
 		AccessJwtExpiry:  accessJwtExpiry,
 		RefreshJwt:       refreshJwt,
 		RefreshJwtExpiry: refreshJwtExpiry,
+		UserId:           user.Id,
 	}, nil
 }
 
