@@ -1,20 +1,28 @@
-/* eslint-disable react/no-unstable-nested-components */
 import { PlusOutlined } from '@ant-design/icons';
-import { Card, Row, Table, TableColumnProps, Typography } from 'antd';
+import {
+	Card,
+	Dropdown,
+	Menu,
+	Row,
+	Table,
+	TableColumnProps,
+	Typography,
+} from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
-import { v4 } from 'uuid';
 
+import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
@@ -26,6 +34,12 @@ function ListOfAllDashboard(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const { t } = useTranslation('dashboard');
+	const [
+		isImportJSONModalVisible,
+		setIsImportJSONModalVisible,
+	] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
@@ -95,24 +109,20 @@ function ListOfAllDashboard(): JSX.Element {
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
-			const newDashboardId = v4();
 			setNewDashboardState({
 				...newDashboardState,
 				loading: true,
 			});
 			const response = await createDashboard({
-				uuid: newDashboardId,
-				title: 'Sample Title',
+				title: t('new_dashboard_title', {
+					ns: 'dashboard',
+				}),
 			});
 
 			if (response.statusCode === 200) {
-				setNewDashboardState({
-					...newDashboardState,
-					loading: false,
-				});
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: newDashboardId,
+						dashboardId: response.payload.uuid,
 					}),
 				);
 			} else {
@@ -130,9 +140,9 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState]);
+	}, [newDashboardState, t]);
 
-	const getText = (): string => {
+	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
 			return 'New Dashboard';
 		}
@@ -142,10 +152,36 @@ function ListOfAllDashboard(): JSX.Element {
 		}
 
 		return newDashboardState.errorMessage;
+	}, [
+		newDashboardState.error,
+		newDashboardState.errorMessage,
+		newDashboardState.loading,
+	]);
+
+	const onModalHandler = (): void => {
+		setIsImportJSONModalVisible((state) => !state);
 	};
 
-	return (
-		<Card>
+	const menu = useMemo(
+		() => (
+			<Menu>
+				<Menu.Item
+					onClick={onNewDashboardHandler}
+					disabled={loading}
+					key={t('create_dashboard').toString()}
+				>
+					{t('create_dashboard')}
+				</Menu.Item>
+				<Menu.Item onClick={onModalHandler} key={t('import_json').toString()}>
+					{t('import_json')}
+				</Menu.Item>
+			</Menu>
+		),
+		[loading, onNewDashboardHandler, t],
+	);
+
+	const GetHeader = useMemo(
+		() => (
 			<Row justify="space-between">
 				<Typography>Dashboard List</Typography>
 
@@ -156,18 +192,26 @@ function ListOfAllDashboard(): JSX.Element {
 							url: 'https://signoz.io/docs/userguide/dashboards',
 						}}
 					/>
-
-					<NewDashboardButton
-						onClick={onNewDashboardHandler}
-						icon={<PlusOutlined />}
-						type="primary"
-						loading={newDashboardState.loading}
-						danger={newDashboardState.error}
-					>
-						{getText()}
-					</NewDashboardButton>
+					<Dropdown trigger={['click']} overlay={menu}>
+						<NewDashboardButton
+							icon={<PlusOutlined />}
+							type="primary"
+							loading={newDashboardState.loading}
+							danger={newDashboardState.error}
+						>
+							{getText()}
+						</NewDashboardButton>
+					</Dropdown>
 				</ButtonContainer>
 			</Row>
+		),
+		[getText, menu, newDashboardState.error, newDashboardState.loading],
+	);
+
+	return (
+		<Card>
+			{GetHeader}
+
 			{!loading && (
 				<SearchFilter
 					searchData={dashboards}
@@ -176,6 +220,10 @@ function ListOfAllDashboard(): JSX.Element {
 			)}
 
 			<TableContainer>
+				<ImportJSON
+					isImportJSONModalVisible={isImportJSONModalVisible}
+					onModalHandler={onModalHandler}
+				/>
 				<Table
 					pagination={{
 						pageSize: 9,

@@ -11,7 +11,7 @@ const update = async (
 		const api = axios();
 
 		const response = await api.put(`/dashboards/${props.uuid}`, {
-			...props,
+			...props.data,
 		});
 
 		return {
