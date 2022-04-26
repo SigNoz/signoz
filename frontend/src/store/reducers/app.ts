@@ -12,11 +12,13 @@ import {
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
+	UPDATE_ORG_NAME,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
+import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
 import InitialValueTypes, { User } from 'types/reducer/app';
 
 const getInitialUser = (): User | null => {
@@ -133,6 +135,26 @@ const appReducer = (
 					...user,
 					...action.payload,
 				},
+			};
+		}
+
+		case UPDATE_ORG_NAME: {
+			const stateOrg = state.org || ({} as OrgPayload);
+			const { index, name: updatedName } = action.payload;
+			const current = stateOrg[index];
+
+			const updatedOrg: OrgPayload = [
+				...stateOrg.slice(0, index),
+				{
+					...current,
+					name: updatedName,
+				},
+				...stateOrg.slice(index + 1, stateOrg.length),
+			];
+
+			return {
+				...state,
+				org: updatedOrg,
 			};
 		}
 

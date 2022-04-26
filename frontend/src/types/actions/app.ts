@@ -16,6 +16,7 @@ export const UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN =
 export const UPDATE_USER_IS_FETCH = 'UPDATE_USER_IS_FETCH';
 export const UPDATE_USER_ORG_ROLE = 'UPDATE_USER_ORG_ROLE';
 export const UPDATE_USER = 'UPDATE_USER';
+export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -87,6 +88,14 @@ export interface UpdateUserIsFetched {
 	};
 }
 
+export interface UpdateOrgName {
+	type: typeof UPDATE_ORG_NAME;
+	payload: {
+		name: string;
+		index: number;
+	};
+}
+
 export type AppAction =
 	| SwitchDarkMode
 	| LoggedInUser
@@ -97,4 +106,5 @@ export type AppAction =
 	| UpdateAccessRenewToken
 	| UpdateUserIsFetched
 	| UpdateUserOrgRole
-	| UpdateName;
+	| UpdateName
+	| UpdateOrgName;
