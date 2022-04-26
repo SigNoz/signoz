@@ -178,7 +178,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		if err := auth.IsAuthorized(r); err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: fmt.Errorf("Unauthorized operation"),
+				Err: err,
 			}, nil)
 			return
 		}

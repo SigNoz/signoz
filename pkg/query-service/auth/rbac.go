@@ -51,8 +51,8 @@ type AuthCache struct {
 	// A map from groupId -> Set of Rules (Set abstracted by map[key]->struct{})
 	GroupRules map[string]map[string]struct{}
 
-	UserGroups map[string]map[string]struct{}
-	Rules      map[string]*model.RBACRule
+	UserGroup map[string]string
+	Rules     map[string]*model.RBACRule
 
 	AdminGroupId  string
 	EditorGroupId string
@@ -63,9 +63,8 @@ var AuthCacheObj AuthCache
 
 // InitAuthCache reads the DB and initialize the auth cache.
 func InitAuthCache(ctx context.Context) error {
-
 	AuthCacheObj.GroupRules = make(map[string]map[string]struct{})
-	AuthCacheObj.UserGroups = make(map[string]map[string]struct{})
+	AuthCacheObj.UserGroup = make(map[string]string)
 	AuthCacheObj.Rules = make(map[string]*model.RBACRule)
 
 	rules, err := dao.DB().GetRules(ctx)
@@ -73,6 +72,7 @@ func InitAuthCache(ctx context.Context) error {
 		return errors.Wrap(err.Err, "Failed to query for rules")
 	}
 	for _, rule := range rules {
+		rule := rule
 		AuthCacheObj.AddRule(&rule)
 	}
 
@@ -116,18 +116,17 @@ func InitAuthCache(ctx context.Context) error {
 	if err := setGroupId(constants.ViewerGroup, &AuthCacheObj.ViewerGroupId); err != nil {
 		return err
 	}
+
 	return nil
 }
 
+// Add user group updates the previous group if any as a user can only belong to a single group.
 func (ac *AuthCache) AddGroupUser(gr *model.GroupUser) {
 	ac.Lock()
 	defer ac.Unlock()
 
 	zap.S().Debugf("[AuthCache] Adding GroupUser %+v\n", gr)
-	if _, ok := ac.UserGroups[gr.UserId]; !ok {
-		ac.UserGroups[gr.UserId] = make(map[string]struct{})
-	}
-	ac.UserGroups[gr.UserId][gr.GroupId] = struct{}{}
+	ac.UserGroup[gr.UserId] = gr.GroupId
 }
 
 func (ac *AuthCache) AddGroupRule(gr *model.GroupRule) {
@@ -151,10 +150,7 @@ func (ac *AuthCache) RemoveGroupUser(gu *model.GroupUser) {
 	ac.Lock()
 	defer ac.Unlock()
 
-	if _, ok := ac.UserGroups[gu.UserId]; !ok {
-		ac.UserGroups[gu.UserId] = make(map[string]struct{})
-	}
-	delete(ac.UserGroups[gu.UserId], gu.GroupId)
+	delete(ac.UserGroup, gu.UserId)
 }
 
 func (ac *AuthCache) RemoveGroupRule(gr *model.GroupRule) {
@@ -179,11 +175,10 @@ func (ac *AuthCache) HighestPermission(user, apiClass string) int {
 	defer ac.RUnlock()
 
 	permission := -1
-	for g := range ac.UserGroups[user] {
-		for ruleId := range ac.GroupRules[g] {
-			if ac.Rules[ruleId].ApiClass == apiClass && ac.Rules[ruleId].Permission > permission {
-				permission = ac.Rules[ruleId].Permission
-			}
+	userGroupId := ac.UserGroup[user]
+	for ruleId := range ac.GroupRules[userGroupId] {
+		if ac.Rules[ruleId].ApiClass == apiClass && ac.Rules[ruleId].Permission > permission {
+			permission = ac.Rules[ruleId].Permission
 		}
 	}
 	return permission
@@ -193,36 +188,21 @@ func (ac *AuthCache) BelongsToAdminGroup(userId string) bool {
 	ac.RLock()
 	defer ac.RUnlock()
 
-	for gid := range ac.UserGroups[userId] {
-		if gid == ac.AdminGroupId {
-			return true
-		}
-	}
-	return false
+	return ac.UserGroup[userId] == ac.AdminGroupId
 }
 
 func (ac *AuthCache) BelongsToEditorGroup(userId string) bool {
 	ac.RLock()
 	defer ac.RUnlock()
 
-	for gid := range ac.UserGroups[userId] {
-		if gid == ac.EditorGroupId {
-			return true
-		}
-	}
-	return false
+	return ac.UserGroup[userId] == ac.EditorGroupId
 }
 
 func (ac *AuthCache) BelongsToViewerGroup(userId string) bool {
 	ac.RLock()
 	defer ac.RUnlock()
 
-	for gid := range ac.UserGroups[userId] {
-		if gid == ac.ViewerGroupId {
-			return true
-		}
-	}
-	return false
+	return ac.UserGroup[userId] == ac.ViewerGroupId
 }
 
 // GetApiClass returns the API class for the given API path. Right now, all the non-admin APIs
@@ -255,6 +235,8 @@ func IsAuthorized(r *http.Request) error {
 
 	// Guardian is permitted for all the APIs.
 	if AuthCacheObj.BelongsToAdminGroup(user.Id) {
+		zap.S().Debugf("Granting access for api: %v to user: %v because of admin access",
+			path, user.Email)
 		return nil
 	}
 
@@ -277,8 +259,8 @@ func IsAuthorized(r *http.Request) error {
 		}
 	}
 
-	zap.S().Debugf("Received unauthorized request on api: %v, apiClass: %v by user: %v",
-		path, apiClass, user.Email)
+	zap.S().Debugf("Received unauthorized request on api: %v, apiClass: %v by user: %v perm: %d",
+		path, apiClass, user.Email, perm)
 	return errors.New("Unauthorized, user doesn't have the required access")
 }
 

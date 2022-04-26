@@ -35,6 +35,7 @@ type Queries interface {
 	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
 
 	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
+	UpdateUserGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError
 }
 
 type Mutations interface {

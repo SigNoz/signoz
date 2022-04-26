@@ -1431,7 +1431,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErr = dao.DB().AddUserToGroup(context.Background(), &model.GroupUser{
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), &model.GroupUser{
 		UserId:  id,
 		GroupId: g.Id,
 	})
@@ -1439,12 +1439,14 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		respondError(w, apiErr, "Failed to add user to group")
 		return
 	}
+
+	auth.AuthCacheObj.AddGroupUser(&model.GroupUser{UserId: id, GroupId: g.Id})
+
 	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
 }
 
 func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
 	req, err := parseCreateGroupRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}

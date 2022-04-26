@@ -529,6 +529,19 @@ func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context, gu *model.GroupUs
 	return nil
 }
 
+func (mds *ModelDaoSqlite) UpdateUserGroup(ctx context.Context, gu *model.GroupUser) *model.ApiError {
+	zap.S().Debugf("Updating user's group: %+v\n", gu)
+
+	_, err := mds.db.ExecContext(ctx, `UPDATE group_users SET group_id=? WHERE user_id=?;`,
+		gu.GroupId, gu.UserId)
+	if err != nil {
+		zap.S().Errorf("Error while updating user group\n", err)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	return nil
+}
+
 func (mds *ModelDaoSqlite) GetUserGroup(ctx context.Context, id string) (*model.GroupUser, *model.ApiError) {
 	groupUsers := []model.GroupUser{}
 	err := mds.db.Select(&groupUsers, `SELECT user_id,group_id FROM group_users WHERE user_id=?;`, id)
