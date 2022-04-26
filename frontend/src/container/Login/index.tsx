@@ -8,7 +8,10 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN } from 'types/actions/app';
+import {
+	LOGGED_IN,
+	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+} from 'types/actions/app';
 
 import {
 	ButtonContainer,
@@ -52,6 +55,13 @@ function Login(): JSX.Element {
 						...response.payload,
 					},
 				});
+				dispatch({
+					type: LOGGED_IN,
+					payload: {
+						isLoggedIn: true,
+					},
+				});
+
 				// setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 				setLocalStorage(LOCALSTORAGE.AUTH_TOKEN, response.payload.accessJwt);
 				setLocalStorage(

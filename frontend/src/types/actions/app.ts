@@ -56,8 +56,8 @@ export interface UpdateVersionError {
 export interface UpdateUserOrgRole {
 	type: typeof UPDATE_USER_ORG_ROLE;
 	payload: {
-		role: ROLES;
-		org: OrgPayload;
+		role: ROLES | null;
+		org: OrgPayload | null;
 	};
 }
 

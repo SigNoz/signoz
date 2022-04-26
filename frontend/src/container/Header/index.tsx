@@ -12,17 +12,22 @@ import {
 	Space,
 	Typography,
 } from 'antd';
+import remove from 'api/browser/localstorage/remove';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { LOGGED_IN, UPDATE_USER_ORG_ROLE } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
-import CurrentOrganiztion from './CurrentOrganization';
+import CurrentOrganization from './CurrentOrganization';
 import SignedInAS from './SignedInAs';
 import {
 	Container,
@@ -35,6 +40,7 @@ import {
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const onToggleThemeHandler = useCallback(() => {
 		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
@@ -61,16 +67,48 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 		setIsUserDropDownOpen((state) => !state);
 	};
 
+	const onClickLogoutHandler = (): void => {
+		remove(LOCALSTORAGE.AUTH_TOKEN);
+		remove(LOCALSTORAGE.IS_LOGGED_IN);
+		remove(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
+		dispatch({
+			type: LOGGED_IN,
+			payload: {
+				isLoggedIn: false,
+			},
+		});
+		dispatch({
+			type: UPDATE_USER_ORG_ROLE,
+			payload: {
+				org: null,
+				role: null,
+			},
+		});
+
+		history.push(ROUTES.LOGIN);
+	};
+
 	const menu = (
 		<MenuContainer>
 			<Menu.ItemGroup>
 				<SignedInAS />
 				<Divider />
-				<CurrentOrganiztion />
+				<CurrentOrganization />
 				<Divider />
 				<LogoutContainer>
 					<LogoutOutlined />
-					<Typography>Logout</Typography>
+					<div
+						tabIndex={0}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' || e.key === 'Space') {
+								onClickLogoutHandler();
+							}
+						}}
+						role="button"
+						onClick={onClickLogoutHandler}
+					>
+						<Typography>Logout</Typography>
+					</div>
 				</LogoutContainer>
 			</Menu.ItemGroup>
 		</MenuContainer>

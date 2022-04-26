@@ -99,6 +99,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									const isLoggedInLocalStorage = getLocalStorageApi(
 										LOCALSTORAGE.IS_LOGGED_IN,
 									);
+
+									dispatch({
+										type: LOGGED_IN,
+										payload: {
+											isLoggedIn: true,
+										},
+									});
+
 									// user details are successfully fetched
 									dispatch({
 										type: UPDATE_USER_ORG_ROLE,
@@ -111,13 +119,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									if (isLoggedInLocalStorage === null) {
 										setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 									}
-
-									dispatch({
-										type: LOGGED_IN,
-										payload: {
-											isLoggedIn: true,
-										},
-									});
 
 									dispatch({
 										type: UPDATE_USER_IS_FETCH,
@@ -180,7 +181,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		// need to run over mount only and once
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [isLoggedIn]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
