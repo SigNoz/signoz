@@ -11,12 +11,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context, req *model.Invitation) *model.ApiError {
+func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context, req *model.InvitationObject) *model.ApiError {
 	zap.S().Debugf("Creating new invite entry. Red: %+v\n", req)
 
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO invites (email, name, token, role, created_at) VALUES (?, ?, ?, ?, ?);`,
-		req.Email, req.Name, req.Token, req.Role, req.CreatedAt)
+		`INSERT INTO invites (email, name, token, role, created_at, org_id) VALUES (?, ?, ?, ?, ?, ?);`,
+		req.Email, req.Name, req.Token, req.Role, req.CreatedAt, req.OrgId)
 	if err != nil {
 		zap.S().Errorf("Error while inserting new invitation to the DB\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -33,9 +33,9 @@ func (mds *ModelDaoSqlite) DeleteInvitation(ctx context.Context, email string) *
 	return nil
 }
 
-func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string) (*model.Invitation, *model.ApiError) {
-	invites := []model.Invitation{}
-	err := mds.db.Select(&invites, `SELECT email,name,token,created_at,role FROM invites WHERE email=?;`, email)
+func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string) (*model.InvitationObject, *model.ApiError) {
+	invites := []model.InvitationObject{}
+	err := mds.db.Select(&invites, `SELECT email,name,token,created_at,role,org_id FROM invites WHERE email=?;`, email)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -52,9 +52,9 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string)
 	return &invites[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string) (*model.Invitation, *model.ApiError) {
-	invites := []model.Invitation{}
-	err := mds.db.Select(&invites, `SELECT email,name,token,created_at,role FROM invites WHERE token=?;`, token)
+func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string) (*model.InvitationObject, *model.ApiError) {
+	invites := []model.InvitationObject{}
+	err := mds.db.Select(&invites, `SELECT email,name,token,created_at,role,org_id FROM invites WHERE token=?;`, token)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -71,9 +71,9 @@ func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string)
 	return &invites[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError) {
-	invites := []model.Invitation{}
-	err := mds.db.Select(&invites, "SELECT name,email,token,created_at,role  FROM invites")
+func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.InvitationObject, *model.ApiError) {
+	invites := []model.InvitationObject{}
+	err := mds.db.Select(&invites, "SELECT name,email,token,created_at,role,org_id  FROM invites")
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)

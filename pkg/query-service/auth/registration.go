@@ -35,12 +35,27 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	inv := &model.Invitation{
+	jwtAdmin, err := ExtractJwtFromContext(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to extract admin jwt token")
+	}
+
+	adminUser, err := validateUser(jwtAdmin)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to validate admin jwt token")
+	}
+
+	au, apiErr := dao.DB().GetUser(ctx, adminUser.Id)
+	if apiErr != nil {
+		return nil, errors.Wrap(err, "failed to validate admin jwt token")
+	}
+	inv := &model.InvitationObject{
 		Name:      req.Name,
 		Email:     req.Email,
 		Token:     token,
 		CreatedAt: time.Now().Unix(),
 		Role:      req.Role,
+		OrgId:     au.OrgId,
 	}
 
 	zap.S().Debugf("Creating invite: %+v\n", inv)
@@ -63,16 +78,28 @@ func RevokeInvite(ctx context.Context, email string) error {
 	return nil
 }
 
-func GetInvite(ctx context.Context, token string) (*model.Invitation, error) {
+func GetInvite(ctx context.Context, token string) (*model.InvitationResponse, error) {
 
 	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
 	}
-	return inv, nil
+
+	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
+	}
+	return &model.InvitationResponse{
+		Name:         inv.Name,
+		Email:        inv.Email,
+		Token:        inv.Token,
+		CreatedAt:    inv.CreatedAt,
+		Role:         inv.Role,
+		Organization: org.Name,
+	}, nil
 }
 
-func validateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitation, error) {
+func validateInvite(ctx context.Context, req *RegisterRequest) (*model.InvitationObject, error) {
 	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")

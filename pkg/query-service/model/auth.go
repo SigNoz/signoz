@@ -11,12 +11,22 @@ type InviteResponse struct {
 	InviteToken string `json:"inviteToken"`
 }
 
-type Invitation struct {
+type InvitationObject struct {
 	Email     string `json:"email" db:"email"`
 	Name      string `json:"name" db:"name"`
 	Token     string `json:"token" db:"token"`
 	CreatedAt int64  `json:"createdAt" db:"created_at"`
 	Role      string `json:"role" db:"role"`
+	OrgId     string `json:"orgId" db:"org_id"`
+}
+
+type InvitationResponse struct {
+	Email        string `json:"email" db:"email"`
+	Name         string `json:"name" db:"name"`
+	Token        string `json:"token" db:"token"`
+	CreatedAt    int64  `json:"createdAt" db:"created_at"`
+	Role         string `json:"role" db:"role"`
+	Organization string `json:"organization" db:"organization"`
 }
 
 type ResetPasswordRequest struct {
