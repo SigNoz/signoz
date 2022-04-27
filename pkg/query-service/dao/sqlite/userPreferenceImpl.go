@@ -45,6 +45,7 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 
 	userPreferencesFound, apiError := mds.FetchUserPreference(ctx)
 	if apiError != nil {
+		tx.Rollback()
 		return apiError
 	}
 
