@@ -15,7 +15,7 @@ const useLoggedInNavigate = (navigateTo: string): void => {
 	useEffect(() => {
 		if (isLoggedIn && navigateTo !== pathname) {
 			notification.success({
-				message: t('already_logged_in', {
+				message: t('logged_in', {
 					ns: 'common',
 				}),
 			});

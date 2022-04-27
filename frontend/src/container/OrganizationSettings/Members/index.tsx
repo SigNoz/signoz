@@ -1,13 +1,24 @@
 import { Button, Modal, Space, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
-import React, { useState } from 'react';
+import getOrgUser from 'api/user/getOrgUser';
+import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
 import EditMembersDetails from '../EditMembersDetails';
 
-function UserFunction({ id }: DataType): JSX.Element {
-	console.log(id);
+function UserFunction({
+	setDataSource,
+	accessLevel,
+	name,
+	email,
+	id,
+}: UserFunctionProps): JSX.Element {
 	const [isModalVisible, setIsModalVisible] = useState(false);
 	const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
@@ -18,12 +29,31 @@ function UserFunction({ id }: DataType): JSX.Element {
 		func(value);
 	};
 
-	const [emailAddress, setEmailAddress] = useState('');
-	const [name, setName] = useState('');
-	const [role, setRole] = useState<ROLES>('EDITOR');
+	const [emailAddress, setEmailAddress] = useState(email);
+	const [updatedName, setUpdatedName] = useState(name);
+	const [role, setRole] = useState<ROLES>(accessLevel);
 
 	const onUpdateDetailsHandler = (): void => {
-		console.log('update');
+		setDataSource((data) => {
+			const index = data.findIndex((e) => e.id === id);
+			if (index !== -1) {
+				const current = data[index];
+
+				const updatedData: DataType[] = [
+					...data.slice(0, index),
+					{
+						...current,
+						name: updatedName,
+						accessLevel: role,
+						email: emailAddress,
+					},
+					...data.slice(index + 1, data.length),
+				];
+
+				return updatedData;
+			}
+			return data;
+		});
 	};
 
 	return (
@@ -66,10 +96,10 @@ function UserFunction({ id }: DataType): JSX.Element {
 				<EditMembersDetails
 					{...{
 						emailAddress,
-						name,
+						name: updatedName,
 						role,
 						setEmailAddress,
-						setName,
+						setName: setUpdatedName,
 						setRole,
 					}}
 				/>
@@ -88,15 +118,29 @@ function UserFunction({ id }: DataType): JSX.Element {
 }
 
 function Members(): JSX.Element {
-	const dataSource: DataType[] = [
-		{
-			id: '1',
-			name: 'Pranay Prateek',
-			email: 'pranay@signoz.io',
-			accessLevel: 'ADMIN',
-			joinedOn: 'March 12, 2021',
-		},
-	];
+	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { status, data } = useQuery({
+		queryFn: () =>
+			getOrgUser({
+				orgId: (org || [])[0].id,
+			}),
+		queryKey: 'getOrgUser',
+	});
+
+	const [dataSource, setDataSource] = useState<DataType[]>([]);
+
+	useEffect(() => {
+		if (status === 'success' && data?.payload && Array.isArray(data.payload)) {
+			const updatedData: DataType[] = data?.payload?.map((e) => ({
+				accessLevel: e.role,
+				email: e.email,
+				id: String(e.createdAt),
+				joinedOn: String(e.createdAt),
+				name: e.name,
+			}));
+			setDataSource(updatedData);
+		}
+	}, [data?.payload, status]);
 
 	const columns: ColumnsType<DataType> = [
 		{
@@ -118,6 +162,14 @@ function Members(): JSX.Element {
 			title: 'Joined On',
 			dataIndex: 'joinedOn',
 			key: 'joinedOn',
+			render: (_, record): JSX.Element => {
+				const { joinedOn } = record;
+				return (
+					<Typography>
+						{dayjs.unix(Number(joinedOn)).format('MMMM DD,YYYY')}
+					</Typography>
+				);
+			},
 		},
 		{
 			title: 'Action',
@@ -130,6 +182,7 @@ function Members(): JSX.Element {
 						joinedOn: record.joinedOn,
 						name: record.name,
 						id: record.id,
+						setDataSource,
 					}}
 				/>
 			),
@@ -144,6 +197,7 @@ function Members(): JSX.Element {
 				dataSource={dataSource}
 				columns={columns}
 				pagination={false}
+				loading={status === 'loading'}
 			/>
 		</Space>
 	);
@@ -155,6 +209,10 @@ interface DataType {
 	email: string;
 	accessLevel: ROLES;
 	joinedOn: string;
+}
+
+interface UserFunctionProps extends DataType {
+	setDataSource: React.Dispatch<React.SetStateAction<DataType[]>>;
 }
 
 export default Members;

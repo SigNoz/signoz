@@ -42,6 +42,7 @@ function PendingInvitesContainer(): JSX.Element {
 
 	const getPendingInvitesResponse = useQuery({
 		queryFn: () => getPendingInvites(),
+		queryKey: 'getPendingInvites',
 	});
 
 	const toggleModal = (value: boolean): void => {
@@ -58,8 +59,8 @@ function PendingInvitesContainer(): JSX.Element {
 
 	const [dataSource, setDataSource] = useState<DataProps[]>([]);
 
-	const getParsedInviteData = useCallback((payload: PayloadProps) => {
-		return payload.map((data) => ({
+	const getParsedInviteData = useCallback((payload: PayloadProps = []) => {
+		return payload?.map((data) => ({
 			key: data.createdAt,
 			name: data.name,
 			email: data.email,
@@ -71,9 +72,11 @@ function PendingInvitesContainer(): JSX.Element {
 	useEffect(() => {
 		if (
 			getPendingInvitesResponse.status === 'success' &&
-			getPendingInvitesResponse.data.payload
+			getPendingInvitesResponse?.data?.payload
 		) {
-			const data = getParsedInviteData(getPendingInvitesResponse.data.payload);
+			const data = getParsedInviteData(
+				getPendingInvitesResponse?.data?.payload || [],
+			);
 			setDataSource(data);
 		}
 	}, [
@@ -190,7 +193,7 @@ function PendingInvitesContainer(): JSX.Element {
 
 			const { data, status } = await getPendingInvitesResponse.refetch();
 			if (status === 'success' && data.payload) {
-				setDataSource(getParsedInviteData(data.payload));
+				setDataSource(getParsedInviteData(data?.payload || []));
 			}
 			setIsInvitingMembers(false);
 			toggleModal(false);

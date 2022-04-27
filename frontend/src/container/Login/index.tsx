@@ -46,9 +46,6 @@ function Login(): JSX.Element {
 				password,
 			});
 			if (response.statusCode === 200) {
-				notification.success({
-					message: 'Successfully Login',
-				});
 				dispatch({
 					type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 					payload: {
