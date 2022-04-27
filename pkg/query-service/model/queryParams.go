@@ -56,7 +56,15 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 
 	var queries []string
 	for _, mq := range qp.CompositeMetricQuery.BuildMetricQueries {
-		nameFilter := fmt.Sprintf("JSONExtractString(%s.labels,'__name__') = '%s'", tableName, mq.MetricName)
+
+		nameFilterItem := FilterItem{Key: "__name__", Value: mq.MetricName, Operation: "EQ"}
+		if mq.TagFilters == nil {
+			mq.TagFilters = &FilterSet{Operation: "AND", Items: []FilterItem{
+				nameFilterItem,
+			}}
+		} else {
+			mq.TagFilters.Items = append(mq.TagFilters.Items, nameFilterItem)
+		}
 
 		tagsFilter, err := mq.TagFilters.BuildMetricsFilterQuery(tableName)
 		if err != nil {
@@ -64,7 +72,7 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 		}
 		timeSeriesTableTimeFilter := fmt.Sprintf("date >= fromUnixTimestamp64Milli(toInt64(%d)) AND date <= fromUnixTimestamp64Milli(toInt64(%d))", qp.Start, qp.End)
 
-		timeSeriesTableFilterQuery := fmt.Sprintf("%s AND %s AND %s", nameFilter, tagsFilter, timeSeriesTableTimeFilter)
+		timeSeriesTableFilterQuery := fmt.Sprintf("%s AND %s", tagsFilter, timeSeriesTableTimeFilter)
 
 		filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM signoz_metrics.time_series WHERE %s", timeSeriesTableFilterQuery)
 
@@ -103,6 +111,8 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 				query = fmt.Sprintf(new_query, groupTags, query, groupTags)
 			}
 			queries = append(queries, query)
+		default:
+			return nil, fmt.Errorf("unsupported aggregator operator")
 		}
 	}
 	return queries, nil
