@@ -1,4 +1,4 @@
-interface Organization {
+export interface Organization {
 	createdAt: number;
 	hasOptedUpdates: boolean;
 	id: string;

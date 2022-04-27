@@ -1,12 +1,15 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Select, Space, Typography } from 'antd';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { InviteTeamMembersProps } from '../PendingInvitesContainer/index';
 import { SelectDrawer, TitleWrapper } from './styles';
 
+const { Option } = Select;
+
 function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
-	const { Option } = Select;
+	const { t } = useTranslation('organizationsettings');
 
 	const onAddHandler = (): void => {
 		setAllMembers((state) => [
@@ -14,7 +17,7 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 			{
 				email: '',
 				name: '',
-				role: 'VIEWER',
+				role: 'VIEWER_GROUP',
 			},
 		]);
 	};
@@ -38,30 +41,29 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 	return (
 		<>
 			<TitleWrapper>
-				<Typography>Email address</Typography>
-				<Typography>Name (optional)</Typography>
-				<Typography>Role</Typography>
+				<Typography>{t('email_address')}</Typography>
+				<Typography>{t('name_optional')}</Typography>
+				<Typography>{t('role')}</Typography>
 			</TitleWrapper>
 			<Form>
 				<Space direction="vertical" align="center" size="middle">
 					{allMembers.map((e, index) => (
 						<Space key={Number(index)} direction="horizontal">
 							<Input
-								placeholder="john@signoz.io"
+								placeholder={t('email_placeholder')}
 								value={e.email}
 								onChange={(event): void => {
 									onChangeHandler(event.target.value, index, 'email');
 								}}
-								key={`email-${index.toString()}`}
 								required
 							/>
 							<Input
-								placeholder="john@signoz.io"
+								placeholder={t('email_placeholder')}
 								value={e.name}
 								onChange={(event): void => {
 									onChangeHandler(event.target.value, index, 'name');
 								}}
-								key={`name-${index.toString()}`}
+								required
 							/>
 							<SelectDrawer
 								value={e.role}
@@ -71,14 +73,14 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 									}
 								}}
 							>
-								<Option value="ADMIN">ADMIN</Option>
-								<Option value="VIEWER">VIEWER</Option>
-								<Option value="EDITOR">EDITOR</Option>
+								<Option value="ADMIN_GROUP">ADMIN</Option>
+								<Option value="VIEWER_GROUP">VIEWER</Option>
+								<Option value="EDITOR_GROUP">EDITOR</Option>
 							</SelectDrawer>
 						</Space>
 					))}
 					<Button onClick={onAddHandler} icon={<PlusOutlined />} type="default">
-						Add another team member
+						{t('add_another_team_member')}
 					</Button>
 				</Space>
 			</Form>
