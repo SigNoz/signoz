@@ -22,6 +22,15 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "failed to generate invite token")
 	}
 
+	user, apiErr := dao.DB().GetUserByEmail(ctx, req.Email)
+	if apiErr != nil {
+		return nil, errors.Wrap(apiErr.Err, "Failed to check already existing user")
+	}
+
+	if user != nil {
+		return nil, errors.New("User already exists with the same email")
+	}
+
 	if err := validateInviteRequest(req); err != nil {
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
