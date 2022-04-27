@@ -305,55 +305,79 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		aH.respondError(w, apiErrorObj, nil)
 		return
 	}
+
+	// build queries
 	queries, err := metricsQueryRangeParams.BuildQuery("time_series")
-	formulaBaseQuery := ""
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 	}
+
+	var formulaSubQuery string
 	var results []*[]model.MetricResult
+	// read the result for individual metric queries and build query for formula
 	for idx, query := range queries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
 			aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		}
-		results = append(results, result)
-		formulaBaseQuery += fmt.Sprintf("(%s)  as %c ", query, 97+idx)
+		// query may have group by and can result in multiple metric series
+		results = append(results, result...)
+
+		formulaSubQuery += fmt.Sprintf("(%s) as %c ", query, 97+idx)
 		if idx < len(queries)-1 {
-			formulaBaseQuery += "INNER JOIN"
+			formulaSubQuery += "INNER JOIN"
 		} else if len(queries) > 1 {
-			formulaBaseQuery += "USING (fingerprint, ts)"
+			formulaSubQuery += "USING (ts)"
 		}
 	}
 
+	// prepare formula queries
 	var formulaQueries []string
-	for _, f := range metricsQueryRangeParams.CompositeMetricQuery.Formulas {
-		f = fmt.Sprintf("SELECT fingerprint, ts, %s as res FROM ", f) + formulaBaseQuery
-		formulaQueries = append(formulaQueries, f)
+	for _, formula := range metricsQueryRangeParams.CompositeMetricQuery.Formulas {
+		formulaQuery := fmt.Sprintf("SELECT ts, %s as res FROM ", formula) + formulaSubQuery
+		formulaQueries = append(formulaQueries, formulaQuery)
 	}
+
+	// each formula creates a new series
 	for _, query := range formulaQueries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
 			aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		}
-		results = append(results, result)
+		results = append(results, result...)
 	}
 
-	modifiedRes := make([]model.MetricResult, 0)
+	type DataResult struct {
+		Metrc map[string]string `json:"metric"`
+		Value [][]interface{}   `json:"values"`
+	}
+
+	var apiResults []DataResult
 	for _, result := range results {
-		for _, r := range (*result)[:100] {
+		dr := DataResult{Metrc: make(map[string]string)}
+		for _, r := range *result {
 			if math.IsNaN(r.Result) || math.IsInf(r.Result, 0) {
 				continue
 			}
-			modifiedRes = append(modifiedRes, model.MetricResult{r.Fingerprint, r.Timestamp, r.Result})
+
+			var value []interface{}
+			value = append(value, r.Timestamp.Unix())
+			value = append(value, fmt.Sprintf("%f", r.Result))
+			dr.Value = append(dr.Value, value)
 		}
+		apiResults = append(apiResults, dr)
 	}
 
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-
 	}
 
-	aH.respond(w, modifiedRes)
+	type ResponseFormat struct {
+		ResultType string       `json:"resultType"`
+		Result     []DataResult `json:"result"`
+	}
+	resp := ResponseFormat{ResultType: "matrix", Result: apiResults}
+	aH.respond(w, resp)
 }
 
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {

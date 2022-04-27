@@ -33,90 +33,6 @@ type MetricQuery struct {
 	AggregateOperator string     `json:"aggregateOperator,omitempty"`
 }
 
-// SELECT
-//     *,
-//     runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
-// FROM samples
-// INNER JOIN
-// (
-//     SELECT
-//         fingerprint,
-//         labels
-//     FROM time_series
-//     WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
-// ) AS new_time_series USING (fingerprint)
-// ORDER BY timestamp_ms
-
-// SELECT
-//     *,
-//     runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
-// FROM samples
-// WHERE fingerprint IN
-// (
-//     SELECT
-//         fingerprint
-//     FROM time_series
-//     WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
-// )
-// ORDER BY timestamp_ms
-
-// SELECT *
-// FROM (
-// 	SELECT
-// 		*,
-// 		runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
-// 	FROM samples
-// 	WHERE fingerprint IN
-// 	(
-// 		SELECT
-// 			fingerprint
-// 		FROM time_series
-// 		WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
-// 	)
-// 	ORDER BY timestamp_ms
-// ) AS new_samples
-// INNER JOIN time_series USING fingerprint
-
-// SELECT
-//     *,
-//     runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
-// FROM samples
-// WHERE fingerprint IN (
-//     SELECT fingerprint
-//     FROM time_series
-//     WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count'
-// )
-// ORDER BY timestamp_ms ASC
-
-// SELECT a.rate/b.rate
-// FROM (
-// 	SELECT
-// 		*,
-// 		runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
-// 	FROM samples
-// 	WHERE fingerprint IN
-// 	(
-// 		SELECT
-// 			fingerprint
-// 		FROM time_series
-// 		WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
-// 	)
-// 	ORDER BY timestamp_ms
-// ) AS a INNER JOIN (
-// 	SELECT
-// 		*,
-// 		runningDifference(value) / runningDifference(timestamp_ms / 1000) AS rate
-// 	FROM samples
-// 	WHERE fingerprint IN
-// 	(
-// 		SELECT
-// 			fingerprint
-// 		FROM time_series
-// 		WHERE JSONExtractString(labels, '__name__') = 'signoz_latency_count' AND date >= fromUnixTimestamp64Milli(toInt64(1649262421955)) AND date <= fromUnixTimestamp64Milli(toInt64(1649867221955))
-// 	)
-// 	ORDER BY timestamp_ms
-// ) AS b USING fingerprint
-
 type CompositeMetricQuery struct {
 	BuildMetricQueries []*MetricQuery `json:"buildMetricQueries"`
 	Formulas           []string       `json:"formulas,omitempty"`
@@ -154,7 +70,8 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 
 		samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
 		intermediateResult := `
-			SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, runningDifference(max(value))/runningDifference(timestamp_ms/1000) as res
+		SELECT fingerprint, %s ts, runningDifference(value)/runningDifference(ts) as res FROM(
+			SELECT fingerprint, %s toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, max(value) as value
 			FROM signoz_metrics.samples
 			INNER JOIN
 			(
@@ -163,22 +80,27 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 			USING fingerprint
 			WHERE %s
 			GROUP BY %s
-			ORDER BY timestamp_ms
-		`
-		groupByFilter := "fingerprint, timestamp_ms"
+			ORDER BY fingerprint, ts
+		)`
+		groupByFilter := "fingerprint, ts"
 		for _, tag := range mq.GroupingTags {
-			groupByFilter += fmt.Sprintf(", JSONExtractString(%s.labels,'%s')", tableName, tag)
+			groupByFilter += fmt.Sprintf(", JSONExtractString(labels,'%s') as %s", tag, tag)
+		}
+		groupTags := strings.Join(mq.GroupingTags, ",")
+		if len(mq.GroupingTags) != 0 {
+			groupTags += ","
 		}
 		switch mq.AggregateOperator {
 		case "rate", "sum_rate":
-			query := fmt.Sprintf(intermediateResult, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
+			query := fmt.Sprintf(intermediateResult, groupTags, groupTags, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
 			if mq.AggregateOperator == "sum_rate" {
 				new_query := `
-				SELECT ts, sum(res) as res
-				FROM %s
-				GROUP BY ts
+				SELECT ts, %s sum(res) as res
+				FROM (%s)
+				GROUP BY (ts, %s)
+				ORDER BY ts
 				`
-				query = fmt.Sprintf(new_query, query)
+				query = fmt.Sprintf(new_query, groupTags, query, groupTags)
 			}
 			queries = append(queries, query)
 		}

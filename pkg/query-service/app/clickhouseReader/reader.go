@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -2528,17 +2529,54 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 }
 
-func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) (*[]model.MetricResult, error) {
+func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*[]model.MetricResult, error) {
 
-	metricResults := []model.MetricResult{}
+	rows, err := r.db.Query(ctx, query)
 
-	err := r.db.Select(ctx, &metricResults, query)
+	var (
+		columnTypes = rows.ColumnTypes()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+	resultMap := make(map[string][]model.MetricResult)
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		var result model.MetricResult
+		var groupBy []string
+		for _, v := range vars {
+			switch v := v.(type) {
+			case *string:
+				groupBy = append(groupBy, *v)
+			case *time.Time:
+				result.Timestamp = *v
+			case *float64:
+				result.Result = *v
+			}
+		}
+		sort.Strings(groupBy)
+		key := strings.Join(groupBy, "")
+		if _, found := resultMap[key]; !found {
+			resultMap[key] = make([]model.MetricResult, 0)
+		}
+		resultMap[key] = append(resultMap[key], result)
+	}
 
 	zap.S().Info(query)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
+		return nil, fmt.Errorf("error in processing sql query")
 	}
-	return &metricResults, nil
+
+	var result []*[]model.MetricResult
+	for _, v := range resultMap {
+		result = append(result, &v)
+	}
+	return result, nil
 }
