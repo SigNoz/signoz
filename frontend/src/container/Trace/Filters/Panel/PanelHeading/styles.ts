@@ -1,4 +1,5 @@
 import { Button } from 'antd';
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
 
 interface Props {
@@ -13,9 +14,9 @@ export const Container = styled.div<Props>`
 		padding-left: 0.5rem;
 		min-height: 5vh;
 
-		cursor: ${({ disabled }) => disabled && 'not-allowed'};
+		cursor: ${({ disabled }): string => (disabled ? 'not-allowed' : '')};
 
-		${({ disabled }) =>
+		${({ disabled }): StyledCSS =>
 			disabled &&
 			css`
 				opacity: 0.5;
@@ -29,7 +30,7 @@ export const IconContainer = styled.div`
 	}
 `;
 
-export const TextCotainer = styled.div`
+export const TextContainer = styled.div`
 	&&& {
 		display: flex;
 		cursor: pointer;

@@ -1,10 +1,10 @@
 import Input from 'components/Input';
 import React, { useCallback } from 'react';
 
-const NameOfTheDashboard = ({
+function NameOfTheDashboard({
 	setName,
 	name,
-}: NameOfTheDashboardProps): JSX.Element => {
+}: NameOfTheDashboardProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			setName(e.target.value);
@@ -20,7 +20,7 @@ const NameOfTheDashboard = ({
 			onChangeHandler={onChangeHandler}
 		/>
 	);
-};
+}
 
 interface NameOfTheDashboardProps {
 	name: string;

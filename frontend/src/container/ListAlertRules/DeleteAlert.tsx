@@ -6,11 +6,11 @@ import React, { useState } from 'react';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import { Alerts } from 'types/api/alerts/getAll';
 
-const DeleteAlert = ({
+function DeleteAlert({
 	id,
 	setData,
 	notifications,
-}: DeleteAlertProps): JSX.Element => {
+}: DeleteAlertProps): JSX.Element {
 	const [deleteAlertState, setDeleteAlertState] = useState<
 		State<DeleteAlertPayloadProps>
 	>({
@@ -20,6 +20,8 @@ const DeleteAlert = ({
 		success: false,
 		payload: undefined,
 	});
+
+	const defaultErrorMessage = 'Something went wrong';
 
 	const onDeleteHandler = async (id: number): Promise<void> => {
 		try {
@@ -48,11 +50,11 @@ const DeleteAlert = ({
 					...state,
 					loading: false,
 					error: true,
-					errorMessage: response.error || 'Something went wrong',
+					errorMessage: response.error || defaultErrorMessage,
 				}));
 
 				notifications.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || defaultErrorMessage,
 				});
 			}
 		} catch (error) {
@@ -60,28 +62,26 @@ const DeleteAlert = ({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: 'Something went wrong',
+				errorMessage: defaultErrorMessage,
 			}));
 
 			notifications.error({
-				message: 'Something went wrong',
+				message: defaultErrorMessage,
 			});
 		}
 	};
 
 	return (
-		<>
-			<Button
-				disabled={deleteAlertState.loading || false}
-				loading={deleteAlertState.loading || false}
-				onClick={(): Promise<void> => onDeleteHandler(id)}
-				type="link"
-			>
-				Delete
-			</Button>
-		</>
+		<Button
+			disabled={deleteAlertState.loading || false}
+			loading={deleteAlertState.loading || false}
+			onClick={(): Promise<void> => onDeleteHandler(id)}
+			type="link"
+		>
+			Delete
+		</Button>
 	);
-};
+}
 
 interface DeleteAlertProps {
 	id: Alerts['id'];

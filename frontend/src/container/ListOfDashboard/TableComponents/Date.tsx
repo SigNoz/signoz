@@ -5,9 +5,7 @@ import React from 'react';
 
 import { Data } from '..';
 
-const DateComponent = (
-	lastUpdatedTime: Data['lastUpdatedTime'],
-): JSX.Element => {
+function DateComponent(lastUpdatedTime: Data['lastUpdatedTime']): JSX.Element {
 	const time = new Date(lastUpdatedTime);
 
 	const date = getFormattedDate(time);
@@ -15,6 +13,6 @@ const DateComponent = (
 	const timeString = `${date} ${convertDateToAmAndPm(time)}`;
 
 	return <Typography>{timeString}</Typography>;
-};
+}
 
 export default DateComponent;

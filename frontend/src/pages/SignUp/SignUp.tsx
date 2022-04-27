@@ -1,20 +1,23 @@
 import {
 	Button,
+	Card,
 	Input,
 	notification,
-	Typography,
-	Switch,
 	Space,
-	Card,
+	Switch,
+	Typography,
 } from 'antd';
+import setLocalStorageKey from 'api/browser/localstorage/set';
+import setPreference from 'api/user/setPreference';
 import signup from 'api/user/signup';
+import { IS_LOGGED_IN } from 'constants/auth';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
-import setLocalStorageKey from 'api/browser/localstorage/set';
-
+import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-const { Title } = Typography;
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
 import {
@@ -26,13 +29,12 @@ import {
 	Logo,
 	MarginTop,
 } from './styles';
-import { IS_LOGGED_IN } from 'constants/auth';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import setPreference from 'api/user/setPreference';
 
-const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
+const { Title } = Typography;
+
+function Signup({ version, userpref }: SignupProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
+	const { t } = useTranslation();
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
@@ -47,14 +49,16 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	useEffect(() => {
 		setisAnonymous(userpref.isAnonymous);
 		setHasOptedUpdates(userpref.hasOptedUpdates);
-	}, []);
+	}, [userpref]);
 
 	const setState = (
 		value: string,
 		setFunction: React.Dispatch<React.SetStateAction<string>>,
-	) => {
+	): void => {
 		setFunction(value);
 	};
+
+	const defaultError = 'Something went wrong';
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
 		(async (): Promise<void> => {
@@ -69,7 +73,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 
 				if (userPrefernceResponse.statusCode === 200) {
 					const response = await signup({
-						email: email,
+						email,
 						name: firstName,
 						organizationName,
 					});
@@ -85,19 +89,19 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 						setLoading(false);
 
 						notification.error({
-							message: 'Something went wrong',
+							message: defaultError,
 						});
 					}
 				} else {
 					setLoading(false);
 
 					notification.error({
-						message: 'Something went wrong',
+						message: defaultError,
 					});
 				}
 			} catch (error) {
 				notification.error({
-					message: 'Something went wrong',
+					message: defaultError,
 				});
 				setLoading(false);
 			}
@@ -109,7 +113,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 	const onSwitchHandler = (
 		value: boolean,
 		setFunction: React.Dispatch<React.SetStateAction<boolean>>,
-	) => {
+	): void => {
 		setFunction(value);
 	};
 
@@ -117,12 +121,10 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 		<Container>
 			<LeftContainer direction="vertical">
 				<Space align="center">
-					<Logo src={'signoz-signup.svg'} alt="logo" />
+					<Logo src="signoz-signup.svg" alt="logo" />
 					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
 				</Space>
-				<Typography>
-					Monitor your applications. Find what is causing issues.
-				</Typography>
+				<Typography>{t('monitor_signup')}</Typography>
 				<Card
 					style={{ width: 'max-content' }}
 					bodyStyle={{ padding: '1px 8px', width: '100%' }}
@@ -174,20 +176,20 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 						/>
 					</div>
 
-					<MarginTop marginTop={'2.4375rem'}>
+					<MarginTop marginTop="2.4375rem">
 						<Space>
 							<Switch
-								onChange={(value) => onSwitchHandler(value, setHasOptedUpdates)}
+								onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
 								checked={hasOptedUpdates}
 							/>
 							<Typography>Keep me updated on new SigNoz features</Typography>
 						</Space>
 					</MarginTop>
 
-					<MarginTop marginTop={'0.5rem'}>
+					<MarginTop marginTop="0.5rem">
 						<Space>
 							<Switch
-								onChange={(value) => onSwitchHandler(value, setisAnonymous)}
+								onChange={(value): void => onSwitchHandler(value, setisAnonymous)}
 								checked={isAnonymous}
 							/>
 							<Typography>
@@ -211,7 +213,7 @@ const Signup = ({ version, userpref }: SignupProps): JSX.Element => {
 			</FormWrapper>
 		</Container>
 	);
-};
+}
 
 interface SignupProps {
 	version: string;

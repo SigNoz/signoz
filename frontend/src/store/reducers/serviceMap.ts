@@ -1,14 +1,15 @@
-import { Action, ActionTypes, serviceMapStore } from 'store/actions';
+import { Action, ActionTypes, ServiceMapStore } from 'store/actions';
 
-const initialState: serviceMapStore = {
+const initialState: ServiceMapStore = {
 	items: [],
 	services: [],
+	loading: true,
 };
 
 export const ServiceMapReducer = (
 	state = initialState,
 	action: Action,
-): serviceMapStore => {
+): ServiceMapStore => {
 	switch (action.type) {
 		case ActionTypes.getServiceMapItems:
 			return {
@@ -20,6 +21,12 @@ export const ServiceMapReducer = (
 				...state,
 				services: action.payload,
 			};
+		case ActionTypes.serviceMapLoading: {
+			return {
+				...state,
+				loading: action.payload.loading,
+			};
+		}
 		default:
 			return state;
 	}

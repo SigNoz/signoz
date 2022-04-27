@@ -1,6 +1,8 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 
-const getTheme = (): appMode => {
+import { AppMode } from './setTheme';
+
+const getTheme = (): AppMode => {
 	const userTheme = getLocalStorageKey('theme');
 	if (userTheme === null || userTheme === 'darkMode') {
 		return 'darkMode';
@@ -8,7 +10,5 @@ const getTheme = (): appMode => {
 
 	return 'lightMode';
 };
-
-type appMode = 'darkMode' | 'lightMode';
 
 export default getTheme;

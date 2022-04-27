@@ -17,8 +17,9 @@ import {
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
-	TraceFilter,
+	StatusPage,
 	TraceDetail,
+	TraceFilter,
 	UsageExplorerPage,
 } from './pageComponents';
 
@@ -112,6 +113,11 @@ const routes: AppRoutes[] = [
 		path: ROUTES.ALL_CHANNELS,
 		exact: true,
 		component: AllAlertChannels,
+	},
+	{
+		path: ROUTES.VERSION,
+		exact: true,
+		component: StatusPage,
 	},
 ];
 

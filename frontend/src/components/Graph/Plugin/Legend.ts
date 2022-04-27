@@ -1,7 +1,12 @@
-import { Plugin, ChartType, Chart, ChartOptions } from 'chart.js';
+import { Chart, ChartType, Plugin } from 'chart.js';
 import { colors } from 'lib/getRandomColor';
+import { get } from 'lodash-es';
 
-const getOrCreateLegendList = (chart: Chart, id: string, isLonger: boolean) => {
+const getOrCreateLegendList = (
+	chart: Chart,
+	id: string,
+	isLonger: boolean,
+): HTMLUListElement => {
 	const legendContainer = document.getElementById(id);
 	let listContainer = legendContainer?.querySelector('ul');
 
@@ -27,7 +32,7 @@ const getOrCreateLegendList = (chart: Chart, id: string, isLonger: boolean) => {
 export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 	return {
 		id: 'htmlLegend',
-		afterUpdate(chart, args, options: ChartOptions) {
+		afterUpdate(chart): void {
 			const ul = getOrCreateLegendList(chart, id || 'legend', isLonger);
 
 			// Remove old legend items
@@ -36,9 +41,20 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 			}
 
 			// Reuse the built-in legendItems generator
-			const items = chart?.options?.plugins?.legend?.labels?.generateLabels(chart);
+			const items = get(chart, [
+				'options',
+				'plugins',
+				'legend',
+				'labels',
+				'generateLabels',
+			])
+				? get(chart, ['options', 'plugins', 'legend', 'labels', 'generateLabels'])(
+						chart,
+				  )
+				: null;
 
-			items?.forEach((item, index) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			items?.forEach((item: Record<any, any>, index: number) => {
 				const li = document.createElement('li');
 				li.style.alignItems = 'center';
 				li.style.cursor = 'pointer';
@@ -46,7 +62,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				li.style.marginLeft = '10px';
 				li.style.marginTop = '5px';
 
-				li.onclick = () => {
+				li.onclick = (): void => {
 					const { type } = chart.config;
 					if (type === 'pie' || type === 'doughnut') {
 						// Pie and doughnut charts only have a single dataset and visibility is per item
@@ -62,9 +78,9 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 
 				// Color box
 				const boxSpan = document.createElement('span');
-				boxSpan.style.background = item.strokeStyle || colors[0];
-				boxSpan.style.borderColor = item?.strokeStyle;
-				boxSpan.style.borderWidth = item.lineWidth + 'px';
+				boxSpan.style.background = `${item.strokeStyle}` || `${colors[0]}`;
+				boxSpan.style.borderColor = `${item?.strokeStyle}`;
+				boxSpan.style.borderWidth = `${item.lineWidth}px`;
 				boxSpan.style.display = 'inline-block';
 				boxSpan.style.minHeight = '20px';
 				boxSpan.style.marginRight = '10px';

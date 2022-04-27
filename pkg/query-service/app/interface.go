@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 )
 
@@ -12,8 +13,8 @@ type Reader interface {
 	GetChannel(id string) (*model.ChannelItem, *model.ApiError)
 	GetChannels() (*[]model.ChannelItem, *model.ApiError)
 	DeleteChannel(id string) *model.ApiError
-	CreateChannel(receiver *model.Receiver) (*model.Receiver, *model.ApiError)
-	EditChannel(receiver *model.Receiver, id string) (*model.Receiver, *model.ApiError)
+	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
+	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
 
 	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
 	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
@@ -23,14 +24,18 @@ type Reader interface {
 
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
-	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, error)
-	GetServices(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceItem, error)
+	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, *model.ApiError)
+	GetServices(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError)
 	// GetApplicationPercentiles(ctx context.Context, query *model.ApplicationPercentileParams) ([]godruid.Timeseries, error)
-	GetTopEndpoints(ctx context.Context, query *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, error)
+	GetTopEndpoints(ctx context.Context, query *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, *model.ApiError)
 	GetUsage(ctx context.Context, query *model.GetUsageParams) (*[]model.UsageItem, error)
 	GetServicesList(ctx context.Context) (*[]string, error)
 	GetServiceMapDependencies(ctx context.Context, query *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error)
 	GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError)
+
+	// GetDisks returns a list of disks configured in the underlying DB. It is supported by
+	// clickhouse only.
+	GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError)
 	GetSpanFilters(ctx context.Context, query *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError)
 	GetTagFilters(ctx context.Context, query *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError)
 	GetTagValues(ctx context.Context, query *model.TagFilterParams) (*[]model.TagValues, *model.ApiError)

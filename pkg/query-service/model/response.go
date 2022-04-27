@@ -55,27 +55,6 @@ type ChannelItem struct {
 	Data      string    `json:"data" db:"data"`
 }
 
-// Receiver configuration provides configuration on how to contact a receiver.
-type Receiver struct {
-	// A unique identifier for this receiver.
-	Name string `yaml:"name" json:"name"`
-
-	EmailConfigs     interface{} `yaml:"email_configs,omitempty" json:"email_configs,omitempty"`
-	PagerdutyConfigs interface{} `yaml:"pagerduty_configs,omitempty" json:"pagerduty_configs,omitempty"`
-	SlackConfigs     interface{} `yaml:"slack_configs,omitempty" json:"slack_configs,omitempty"`
-	WebhookConfigs   interface{} `yaml:"webhook_configs,omitempty" json:"webhook_configs,omitempty"`
-	OpsGenieConfigs  interface{} `yaml:"opsgenie_configs,omitempty" json:"opsgenie_configs,omitempty"`
-	WechatConfigs    interface{} `yaml:"wechat_configs,omitempty" json:"wechat_configs,omitempty"`
-	PushoverConfigs  interface{} `yaml:"pushover_configs,omitempty" json:"pushover_configs,omitempty"`
-	VictorOpsConfigs interface{} `yaml:"victorops_configs,omitempty" json:"victorops_configs,omitempty"`
-	SNSConfigs       interface{} `yaml:"sns_configs,omitempty" json:"sns_configs,omitempty"`
-}
-
-type ReceiverResponse struct {
-	Status string   `json:"status"`
-	Data   Receiver `json:"data"`
-}
-
 // AlertDiscovery has info for all active alerts.
 type AlertDiscovery struct {
 	Alerts []*AlertingRuleResponse `json:"rules"`
@@ -132,8 +111,12 @@ type GetFilterSpansResponseItem struct {
 	ServiceName  string    `ch:"serviceName" json:"serviceName"`
 	Operation    string    `ch:"name" json:"operation"`
 	DurationNano uint64    `ch:"durationNano" json:"durationNano"`
-	HttpCode     string    `ch:"httpCode" json:"httpCode"`
-	HttpMethod   string    `ch:"httpMethod" json:"httpMethod"`
+	HttpCode     string    `ch:"httpCode"`
+	HttpMethod   string    `ch:"httpMethod"`
+	GRPCode      string    `ch:"gRPCCode"`
+	GRPMethod    string    `ch:"gRPCMethod"`
+	StatusCode   string    `json:"statusCode"`
+	Method       string    `json:"method"`
 }
 
 type GetFilterSpansResponse struct {
@@ -260,18 +243,20 @@ type SetTTLResponseItem struct {
 	Message string `json:"message"`
 }
 
+type DiskItem struct {
+	Name string `json:"name,omitempty" db:"name,omitempty"`
+	Type string `json:"type,omitempty" db:"type,omitempty"`
+}
+
 type DBResponseTTL struct {
 	EngineFull string `ch:"engine_full"`
 }
 
 type GetTTLResponseItem struct {
-	MetricsTime int `json:"metrics_ttl_duration_hrs"`
-	TracesTime  int `json:"traces_ttl_duration_hrs"`
-}
-
-type DBResponseMinMaxDuration struct {
-	MinDuration uint64 `ch:"min(durationNano)"`
-	MaxDuration uint64 `ch:"max(durationNano)"`
+	MetricsTime     int `json:"metrics_ttl_duration_hrs,omitempty"`
+	MetricsMoveTime int `json:"metrics_move_ttl_duration_hrs,omitempty"`
+	TracesTime      int `json:"traces_ttl_duration_hrs,omitempty"`
+	TracesMoveTime  int `json:"traces_move_ttl_duration_hrs,omitempty"`
 }
 
 type DBResponseServiceName struct {
@@ -312,10 +297,6 @@ type DBResponseOperation struct {
 type DBResponseComponent struct {
 	Component string `ch:"component"`
 	Count     uint64 `ch:"count"`
-}
-
-type DBResponseErrors struct {
-	NumErrors uint64 `ch:"numErrors"`
 }
 
 type DBResponseTotal struct {

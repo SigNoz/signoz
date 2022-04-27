@@ -1,33 +1,35 @@
-import { Button, Modal, Collapse } from 'antd';
+import { Collapse, Modal } from 'antd';
+import { StyledButton } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
-import React, { useRef, useState } from 'react';
+import { keys, map } from 'lodash-es';
+import React, { useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
-import { CustomSubText, CustomSubTitle } from './styles';
+
+import { CustomSubText, CustomSubTitle, styles } from './styles';
 // import Editor from 'components/Editor';
 
 const { Panel } = Collapse;
 
-const ErrorTag = ({ event }: ErrorTagProps) => {
+function ErrorTag({ event }: ErrorTagProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState(false);
 	const { isDarkMode } = useThemeMode();
-	// const useTextRef = useRef('');
 
 	const [text, setText] = useState({
 		text: '',
 		subText: '',
 	});
 
-	const onToggleHandler = (state: boolean) => {
+	const onToggleHandler = (state: boolean): void => {
 		setIsOpen(state);
 	};
 
 	return (
 		<>
-			{event?.map(({ attributeMap, name }) => {
-				const attributes = Object.keys(attributeMap);
-
+			{map(event, ({ attributeMap, name }) => {
+				const attributes = keys(attributeMap);
 				return (
 					<Collapse
+						key={`${name}${JSON.stringify(attributeMap)}`}
 						defaultActiveKey={[name || attributeMap.event]}
 						expandIconPosition="right"
 					>
@@ -35,7 +37,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 							header={name || attributeMap?.event}
 							key={name || attributeMap.event}
 						>
-							{attributes.map((event) => {
+							{map(attributes, (event) => {
 								const value = attributeMap[event];
 								const isEllipsed = value.length > 24;
 
@@ -46,24 +48,21 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 											{value}
 											<br />
 											{isEllipsed && (
-												<Button
-													style={{ padding: 0, margin: 0 }}
-													onClick={() => {
+												<StyledButton
+													styledclass={[styles.removeMargin, styles.removePadding]}
+													onClick={(): void => {
 														onToggleHandler(true);
 														setText({
 															subText: value,
 															text: event,
 														});
-														// useTextRef.current = value;
 													}}
 													type="link"
 												>
 													View full log event message
-												</Button>
+												</StyledButton>
 											)}
 										</CustomSubText>
-
-
 									</>
 								);
 							})}
@@ -72,7 +71,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 				);
 			})}
 			<Modal
-				onCancel={() => onToggleHandler(false)}
+				onCancel={(): void => onToggleHandler(false)}
 				title="Log Message"
 				visible={isOpen}
 				destroyOnClose
@@ -85,7 +84,7 @@ const ErrorTag = ({ event }: ErrorTagProps) => {
 			</Modal>
 		</>
 	);
-};
+}
 
 interface ErrorTagProps {
 	event: ITraceTree['event'];

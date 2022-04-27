@@ -28,7 +28,10 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
-const RELATIONAL_DATASOURCE_PATH = "./signoz.db"
+// Alert manager channel subpath
+var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
+
+var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
 	ServiceName      = "serviceName"
@@ -47,4 +50,16 @@ const (
 	DBSystem         = "dbSystem"
 	MsgSystem        = "msgSystem"
 	MsgOperation     = "msgOperation"
+	Timestamp        = "timestamp"
+	Descending       = "descending"
+	Ascending        = "ascending"
+	ContextTimeout   = 60 // seconds
 )
+
+func GetOrDefaultEnv(key string, fallback string) string {
+	v := os.Getenv(key)
+	if len(v) == 0 {
+		return fallback
+	}
+	return v
+}

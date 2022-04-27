@@ -1,16 +1,17 @@
-import { ChartData, ChartDataset, ChartDatasetProperties } from 'chart.js';
-import { TraceReducer } from 'types/reducer/trace';
+import { ChartData, ChartDatasetProperties } from 'chart.js';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
+import { keys } from 'lodash-es';
+import { TraceReducer } from 'types/reducer/trace';
 
-function transposeArray(array: number[][], arrayLength: number) {
-	let newArray: number[][] = [];
-	for (let i = 0; i < array.length; i++) {
+function transposeArray(array: number[][], arrayLength: number): number[][] {
+	const newArray: number[][] = [];
+	for (let i = 0; i < array.length; i += 1) {
 		newArray.push([]);
 	}
 
-	for (let i = 0; i < array.length; i++) {
-		for (let j = 0; j < arrayLength; j++) {
+	for (let i = 0; i < array.length; i += 1) {
+		for (let j = 0; j < arrayLength; j += 1) {
 			newArray[j]?.push(array[i][j]);
 		}
 	}
@@ -27,7 +28,6 @@ export const getChartData = (
 		data: [],
 		type: 'line',
 	};
-
 	const chartLabels: ChartData<'line'>['labels'] = [];
 
 	Object.keys(allDataPoints).forEach((timestamp) => {
@@ -57,7 +57,7 @@ export const getChartData = (
 export const getChartDataforGroupBy = (
 	props: TraceReducer['spansGraph']['payload'],
 ): ChartData => {
-	const items = props.items;
+	const { items } = props;
 
 	const chartData: ChartData = {
 		datasets: [],
@@ -68,8 +68,10 @@ export const getChartDataforGroupBy = (
 
 	const allGroupBy = Object.keys(items).map((e) => items[e].groupBy);
 
-	Object.keys(allGroupBy).map((e) => {
-		const length = Object.keys(allGroupBy[e]).length;
+	keys(allGroupBy).forEach((e: string): void => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const { length } = keys(allGroupBy[e]);
 
 		if (length >= max) {
 			max = length;
@@ -91,7 +93,7 @@ export const getChartDataforGroupBy = (
 
 		chartData.labels?.push(date);
 
-		const groupBy = spanData.groupBy;
+		const { groupBy } = spanData;
 		const preData: number[] = [];
 
 		if (groupBy) {

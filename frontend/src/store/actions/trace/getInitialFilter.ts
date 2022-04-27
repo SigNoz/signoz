@@ -1,25 +1,27 @@
+import { notification } from 'antd';
+import getFiltersApi from 'api/trace/getFilters';
+import xor from 'lodash-es/xor';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import getFiltersApi from 'api/trace/getFilters';
-import {
-	parseSelectedFilter,
-	parseFilterToFetchData,
-	parseQueryIntoCurrent,
-	parseQueryIntoSelectedTags,
-	isTraceFilterEnum,
-	parseQueryIntoFilter,
-	parseIsSkippedSelection,
-	parseFilterExclude,
-} from './util';
 import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_TRACE_FILTER_LOADING,
 } from 'types/actions/trace';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
-import { notification } from 'antd';
-import xor from 'lodash-es/xor';
+
+import {
+	isTraceFilterEnum,
+	parseFilterExclude,
+	parseFilterToFetchData,
+	parseIsSkippedSelection,
+	parseQueryIntoCurrent,
+	parseQueryIntoFilter,
+	parseQueryIntoOrder,
+	parseQueryIntoSelectedTags,
+	parseSelectedFilter,
+} from './util';
 
 export const GetInitialTraceFilter = (
 	minTime: GlobalReducer['minTime'],
@@ -28,9 +30,10 @@ export const GetInitialTraceFilter = (
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
 ) => void) => {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	return async (dispatch, getState): Promise<void> => {
 		try {
-			const query = location.search;
+			const query = window.location.search;
 
 			const { traces, globalTime } = getState();
 
@@ -64,6 +67,11 @@ export const GetInitialTraceFilter = (
 				traces.spansAggregate.currentPage,
 			);
 
+			const parsedQueryOrder = parseQueryIntoOrder(
+				query,
+				traces.spansAggregate.order,
+			);
+
 			const isSelectionSkipped = parseIsSkippedSelection(query);
 
 			const parsedSelectedTags = parseQueryIntoSelectedTags(
@@ -89,7 +97,7 @@ export const GetInitialTraceFilter = (
 				isFilterExclude: getIsFilterExcluded.currentValue,
 			});
 
-			let preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
+			const preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
 				getSelectedFilter.currentValue,
 			);
 
@@ -99,12 +107,12 @@ export const GetInitialTraceFilter = (
 						? traces.filterToFetchData
 						: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
 
-				Object.keys(response.payload).map((key) => {
+				Object.keys(response.payload).forEach((key) => {
 					const value = response.payload[key];
 					Object.keys(value)
 						// remove maxDuration and minDuration filter from initial selection logic
 						.filter((e) => !['maxDuration', 'minDuration'].includes(e))
-						.map((preKey) => {
+						.forEach((preKey) => {
 							if (isTraceFilterEnum(key) && diff.find((v) => v === key)) {
 								// const preValue = preSelectedFilter?.get(key) || [];
 								const preValue = getUserSelected.currentValue?.get(key) || [];
@@ -146,6 +154,7 @@ export const GetInitialTraceFilter = (
 						selectedTags: parsedSelectedTags.currentValue,
 						userSelected: getUserSelected.currentValue,
 						isFilterExclude: getIsFilterExcluded.currentValue,
+						order: parsedQueryOrder.currentValue,
 					},
 				});
 			} else {

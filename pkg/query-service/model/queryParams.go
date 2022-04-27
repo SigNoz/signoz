@@ -124,11 +124,12 @@ type MetricAutocompleteTagParams struct {
 }
 
 type GetTopEndpointsParams struct {
-	StartTime   string
-	EndTime     string
-	ServiceName string
+	StartTime   string `json:"start"`
+	EndTime     string `json:"end"`
+	ServiceName string `json:"service"`
 	Start       *time.Time
 	End         *time.Time
+	Tags        []TagQuery `json:"tags"`
 }
 
 type GetUsageParams struct {
@@ -142,21 +143,23 @@ type GetUsageParams struct {
 }
 
 type GetServicesParams struct {
-	StartTime string
-	EndTime   string
+	StartTime string `json:"start"`
+	EndTime   string `json:"end"`
 	Period    int
 	Start     *time.Time
 	End       *time.Time
+	Tags      []TagQuery `json:"tags"`
 }
 
 type GetServiceOverviewParams struct {
-	StartTime   string
-	EndTime     string
+	StartTime   string `json:"start"`
+	EndTime     string `json:"end"`
+	Period      string
 	Start       *time.Time
 	End         *time.Time
-	ServiceName string
-	Period      string
-	StepSeconds int
+	Tags        []TagQuery `json:"tags"`
+	ServiceName string     `json:"service"`
+	StepSeconds int        `json:"step"`
 }
 
 type TagQuery struct {
@@ -181,6 +184,7 @@ type GetFilteredSpansParams struct {
 	MinDuration string     `json:"minDuration"`
 	MaxDuration string     `json:"maxDuration"`
 	Limit       int64      `json:"limit"`
+	OrderParam  string     `json:"orderParam"`
 	Order       string     `json:"order"`
 	Offset      int64      `json:"offset"`
 	Tags        []TagQuery `json:"tags"`
@@ -256,8 +260,10 @@ type TagFilterParams struct {
 }
 
 type TTLParams struct {
-	Type     string
-	Duration string
+	Type                  string // It can be one of {traces, metrics}.
+	ColdStorageVolume     string // Name of the cold storage volume.
+	ToColdStorageDuration int64  // Seconds after which data will be moved to cold storage.
+	DelDuration           int64  // Seconds after which data will be deleted.
 }
 
 type GetTTLParams struct {

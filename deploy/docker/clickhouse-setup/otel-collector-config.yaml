@@ -27,14 +27,18 @@ processors:
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 10000
   # memory_limiter:
-  #   # Same as --mem-ballast-size-mib CLI argument
-  #   ballast_size_mib: 683
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
   #   # 25% of limit up to 2G
   #   spike_limit_mib: 512
   #   check_interval: 5s
+  #
+  #   # 50% of the maximum memory
+  #   limit_percentage: 50
+  #   # 20% of max memory usage spike expected
+  #   spike_limit_percentage: 20
   # queued_retry:
   #   num_workers: 4
   #   queue_size: 100

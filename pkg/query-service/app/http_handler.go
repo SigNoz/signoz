@@ -15,6 +15,7 @@ import (
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/parser"
 	"go.signoz.io/query-service/dao/interfaces"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
@@ -196,10 +197,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/feedback", aH.submitFeedback).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
@@ -219,6 +220,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -469,12 +472,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if postData["uuid"] != uuid {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
-		return
-	}
-
-	dashboard, apiError := dashboards.UpdateDashboard(&postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, &postData)
 
 	if apiError != nil {
 		aH.respondError(w, apiError, nil)
@@ -600,7 +598,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &model.Receiver{}
+	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -628,7 +626,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiver := &model.Receiver{}
+	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -835,9 +833,9 @@ func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetTopEndpoints(r.Context(), query)
+	result, apiErr := (*aH.reader).GetTopEndpoints(r.Context(), query)
 
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -868,8 +866,8 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceOverview(r.Context(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, apiErr := (*aH.reader).GetServiceOverview(r.Context(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -884,8 +882,8 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetServices(r.Context(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, apiErr := (*aH.reader).GetServices(r.Context(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1064,7 +1062,7 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
-	ttlParams, err := parseDuration(r)
+	ttlParams, err := parseTTLParams(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1086,6 +1084,15 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, apiErr := (*aH.reader).GetTTL(r.Context(), ttlParams)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
+	result, apiErr := (*aH.reader).GetDisks(context.Background())
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

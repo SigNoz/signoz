@@ -23,6 +23,7 @@ const (
 	defaultOperationsTable string        = "signoz_operations"
 	defaultIndexTable      string        = "signoz_index_v2"
 	defaultErrorTable      string        = "signoz_error_index"
+	defaulDurationTable    string        = "durationSortMV"
 	defaultSpansTable      string        = "signoz_spans"
 	defaultWriteBatchDelay time.Duration = 5 * time.Second
 	defaultWriteBatchSize  int           = 10000
@@ -48,6 +49,7 @@ type namespaceConfig struct {
 	TraceDB         string
 	OperationsTable string
 	IndexTable      string
+	DurationTable   string
 	SpansTable      string
 	ErrorTable      string
 	WriteBatchDelay time.Duration
@@ -107,6 +109,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			ErrorTable:      defaultErrorTable,
+			DurationTable:   defaulDurationTable,
 			SpansTable:      defaultSpansTable,
 			WriteBatchDelay: defaultWriteBatchDelay,
 			WriteBatchSize:  defaultWriteBatchSize,

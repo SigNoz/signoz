@@ -18,10 +18,10 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 ### Contribute to Frontend with Docker installation of SigNoz
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz`
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L59`
+- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L62`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
-    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L36`
+    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 
     ```docker
     ports:
@@ -55,9 +55,9 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 - git clone https://github.com/SigNoz/signoz.git
 - run `cd signoz` to move to signoz directory
 - run `sudo make dev-setup` to configure local setup to run query-service
-- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L45`
-- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L28`
-- add below configuration to clickhouse section at `docker/clickhouse-setup/docker-compose.yaml#L6`
+- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml`
+- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml`
+- add below configuration to clickhouse section at `docker/clickhouse-setup/docker-compose.yaml`
 ```docker
     expose:
       - 9000
@@ -86,13 +86,13 @@ ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse go run main.go
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
 ---
-Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
+<!-- Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
 
 Click the button below. A workspace with all required environments will be created.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/SigNoz/signoz)
 
-> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/signoz`
+> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/signoz` -->
 
 # Contribute to SigNoz Helm Chart
 

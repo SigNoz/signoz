@@ -5,11 +5,12 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
+import getStep from 'lib/getStep';
 import { Dispatch } from 'redux';
+import store from 'store';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import store from 'store';
 
 export const GetQueryResults = (
 	props: GetQueryResultsProps,
@@ -44,8 +45,8 @@ export const GetQueryResults = (
 						const result = await getQueryResult({
 							end,
 							query: encodeURIComponent(query.query),
-							start: start,
-							step: '60',
+							start,
+							step: `${getStep({ start, end, inputFormat: 'ms' })}`,
 						});
 						return {
 							query: query.query,

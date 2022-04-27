@@ -31,30 +31,27 @@ func parseUser(r *http.Request) (*model.User, error) {
 }
 
 func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
+	var postData *model.GetTopEndpointsParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
 
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) == 0 {
+	postData.Start, err = parseTimeStr(postData.StartTime, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
+	if err != nil {
+		return nil, err
+	}
+
+	if len(postData.ServiceName) == 0 {
 		return nil, errors.New("serviceName param missing in query")
 	}
 
-	getTopEndpointsParams := model.GetTopEndpointsParams{
-		StartTime:   startTime.Format(time.RFC3339Nano),
-		EndTime:     endTime.Format(time.RFC3339Nano),
-		ServiceName: serviceName,
-		Start:       startTime,
-		End:         endTime,
-	}
-
-	return &getTopEndpointsParams, nil
-
+	return postData, nil
 }
 
 func parseMetricsTime(s string) (time.Time, error) {
@@ -183,63 +180,47 @@ func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 }
 
 func parseGetServiceOverviewRequest(r *http.Request) (*model.GetServiceOverviewParams, error) {
-	startTime, err := parseTime("start", r)
+
+	var postData *model.GetServiceOverviewParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
-	endTime, err := parseTime("end", r)
+
+	postData.Start, err = parseTimeStr(postData.StartTime, "start")
+	if err != nil {
+		return nil, err
+	}
+	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
 	if err != nil {
 		return nil, err
 	}
 
-	stepStr := r.URL.Query().Get("step")
-	if len(stepStr) == 0 {
-		return nil, errors.New("step param missing in query")
-	}
-	stepInt, err := strconv.Atoi(stepStr)
-	if err != nil {
-		return nil, errors.New("step param is not in correct format")
-	}
-
-	serviceName := r.URL.Query().Get("service")
-	if len(serviceName) == 0 {
-		return nil, errors.New("serviceName param missing in query")
-	}
-
-	getServiceOverviewParams := model.GetServiceOverviewParams{
-		Start:       startTime,
-		StartTime:   startTime.Format(time.RFC3339Nano),
-		End:         endTime,
-		EndTime:     endTime.Format(time.RFC3339Nano),
-		ServiceName: serviceName,
-		Period:      fmt.Sprintf("PT%dM", stepInt/60),
-		StepSeconds: stepInt,
-	}
-
-	return &getServiceOverviewParams, nil
-
+	postData.Period = fmt.Sprintf("PT%dM", postData.StepSeconds/60)
+	return postData, nil
 }
 
 func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) {
 
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTime("end", r)
+	var postData *model.GetServicesParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
 
-	getServicesParams := model.GetServicesParams{
-		Start:     startTime,
-		StartTime: startTime.Format(time.RFC3339Nano),
-		End:       endTime,
-		EndTime:   endTime.Format(time.RFC3339Nano),
-		Period:    int(endTime.Unix() - startTime.Unix()),
+	postData.Start, err = parseTimeStr(postData.StartTime, "start")
+	if err != nil {
+		return nil, err
 	}
-	return &getServicesParams, nil
+	postData.End, err = parseTimeMinusBufferStr(postData.EndTime, "end")
+	if err != nil {
+		return nil, err
+	}
 
+	postData.Period = int(postData.End.Unix() - postData.Start.Unix())
+	return postData, nil
 }
 
 func DoesExistInSlice(item string, list []string) bool {
@@ -291,7 +272,7 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 	}
 
 	if postData.Limit == 0 {
-		postData.Limit = 100
+		postData.Limit = 10
 	}
 
 	return postData, nil
@@ -543,20 +524,16 @@ func parseTimeMinusBuffer(param string, r *http.Request) (*time.Time, error) {
 
 }
 
-func parseDuration(r *http.Request) (*model.TTLParams, error) {
+func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	// make sure either of the query params are present
 	typeTTL := r.URL.Query().Get("type")
-	duration := r.URL.Query().Get("duration")
+	delDuration := r.URL.Query().Get("duration")
+	coldStorage := r.URL.Query().Get("coldStorage")
+	toColdDuration := r.URL.Query().Get("toColdDuration")
 
-	if len(typeTTL) == 0 || len(duration) == 0 {
+	if len(typeTTL) == 0 || len(delDuration) == 0 {
 		return nil, fmt.Errorf("type and duration param cannot be empty from the query")
-	}
-
-	// Validate the duration as a valid time.Duration
-	_, err := time.ParseDuration(duration)
-	if err != nil {
-		return nil, fmt.Errorf("duration parameter is not a valid time.Duration value. Err=%v", err)
 	}
 
 	// Validate the type parameter
@@ -564,7 +541,31 @@ func parseDuration(r *http.Request) (*model.TTLParams, error) {
 		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
 	}
 
-	return &model.TTLParams{Duration: duration, Type: typeTTL}, nil
+	// Validate the TTL duration.
+	durationParsed, err := time.ParseDuration(delDuration)
+	if err != nil {
+		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
+	}
+
+	var toColdParsed time.Duration
+
+	// If some cold storage is provided, validate the cold storage move TTL.
+	if len(coldStorage) > 0 {
+		toColdParsed, err = time.ParseDuration(toColdDuration)
+		if err != nil {
+			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
+		}
+		if toColdParsed.Seconds() != 0 && toColdParsed.Seconds() >= durationParsed.Seconds() {
+			return nil, fmt.Errorf("Delete TTL should be greater than cold storage move TTL.")
+		}
+	}
+
+	return &model.TTLParams{
+		Type:                  typeTTL,
+		DelDuration:           int64(durationParsed.Seconds()),
+		ColdStorageVolume:     coldStorage,
+		ToColdStorageDuration: int64(toColdParsed.Seconds()),
+	}, nil
 }
 
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {

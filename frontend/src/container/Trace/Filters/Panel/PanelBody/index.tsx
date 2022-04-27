@@ -1,14 +1,14 @@
-import React from 'react';
-import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 import { Card } from 'antd';
-
-import Duration from './Duration';
-import CommonCheckBox from './CommonCheckBox';
+import Spinner from 'components/Spinner';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import Spinner from 'components/Spinner';
+import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
-const PanelBody = (props: PanelBodyProps): JSX.Element => {
+import CommonCheckBox from './CommonCheckBox';
+import Duration from './Duration';
+
+function PanelBody(props: PanelBodyProps): JSX.Element {
 	const { type } = props;
 
 	const { filterLoading } = useSelector<AppState, TraceReducer>(
@@ -28,7 +28,7 @@ const PanelBody = (props: PanelBodyProps): JSX.Element => {
 			{type === 'duration' ? <Duration /> : <CommonCheckBox name={type} />}
 		</Card>
 	);
-};
+}
 
 interface PanelBodyProps {
 	type: TraceFilterEnum;
