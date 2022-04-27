@@ -2,48 +2,33 @@ import {
 	getResourceAttributesTagKeys,
 	getResourceAttributesTagValues,
 } from 'api/metrics/getResourceAttributes';
-import { convertMetricKeyToTrace } from 'lib/resourceAttributesQueryToPromQL';
+import { OperatorConversions } from 'constants/resourceAttributes';
+import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import { v4 as uuid } from 'uuid';
 
 import { IOption, IResourceAttributeQuery } from './types';
 
-export const OperatorSchema: IOption[] = [
-	{
-		label: 'Not IN',
-		value: '!~',
-	},
-	{
-		label: 'IN',
-		value: '=~',
-	},
-	{
-		label: 'Equal',
-		value: '=',
-	},
-	{
-		label: 'Not Equal',
-		value: '!=',
-	},
-];
+export const OperatorSchema: IOption[] = OperatorConversions.map(
+	(operator) => ({
+		label: operator.label,
+		value: operator.label,
+	}),
+);
 
-let TagKeysCache: IOption[];
 export const GetTagKeys = async (): Promise<IOption[]> => {
-	if (TagKeysCache) {
-		return new Promise((resolve) => {
-			resolve(TagKeysCache);
-		});
-	}
+	// if (TagKeysCache) {
+	// 	return new Promise((resolve) => {
+	// 		resolve(TagKeysCache);
+	// 	});
+	// }
 	const { payload } = await getResourceAttributesTagKeys();
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	const TagKeysOptions = payload.data.map((tagKey: string) => ({
+	return payload.data.map((tagKey: string) => ({
 		label: convertMetricKeyToTrace(tagKey),
-		value: convertMetricKeyToTrace(tagKey),
+		value: tagKey,
 	}));
-
-	TagKeysCache = TagKeysOptions;
-	return TagKeysOptions;
 };
 
 export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
@@ -52,7 +37,7 @@ export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	return payload.data.map((tagValue: string) => ({
+	return payload.data.filter(Boolean).map((tagValue: string) => ({
 		label: tagValue,
 		value: tagValue,
 	}));

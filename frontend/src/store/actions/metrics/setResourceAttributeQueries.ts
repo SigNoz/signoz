@@ -1,7 +1,7 @@
 import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
 import { decode, encode } from 'js-base64';
 import history from 'lib/history';
-import { resourceAttributesQueryToPromQL } from 'lib/resourceAttributesQueryToPromQL';
+import { resourceAttributesQueryToPromQL } from 'lib/resourceAttributes';
 import { SET_RESOURCE_ATTRIBUTE_QUERIES } from 'types/actions/metrics';
 
 export function GetResourceAttributeQueriesFromURL():

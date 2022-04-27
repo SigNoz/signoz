@@ -3,6 +3,7 @@ export interface Props {
 	start: number;
 	end: number;
 	step: number;
+	selectedTags: string;
 }
 
 export interface DBOverView {

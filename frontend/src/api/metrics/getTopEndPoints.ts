@@ -9,7 +9,7 @@ const getTopEndPoints = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			`/service/top_endpoints?&start=${props.start}&end=${props.end}&service=${props.service}`,
+			`/service/top_endpoints?&start=${props.start}&end=${props.end}&service=${props.service}&selectedTags=${props.selectedTags}`,
 		);
 
 		return {

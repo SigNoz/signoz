@@ -1,6 +1,7 @@
 export interface Props {
 	start: number;
 	end: number;
+	selectedTags: string;
 }
 
 export interface ServicesList {

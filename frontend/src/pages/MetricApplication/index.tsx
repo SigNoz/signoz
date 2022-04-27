@@ -1,10 +1,11 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
+import history from 'lib/history';
+import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import history from 'lib/history'
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -31,19 +32,35 @@ function MetricsApplication({
 
 	const { servicename } = useParams<ServiceProps>();
 
+	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
+	);
+
+	const selectedTags: string = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+	);
+
 	useEffect(() => {
 		if (servicename !== undefined) {
 			getInitialData({
 				serviceName: servicename,
 				maxTime,
 				minTime,
+				selectedTags,
 			});
 		}
 
 		return (): void => {
-			resetInitialData();
+			// resetInitialData();
 		};
-	}, [servicename, getInitialData, resetInitialData, maxTime, minTime]);
+	}, [
+		servicename,
+		getInitialData,
+		resetInitialData,
+		maxTime,
+		minTime,
+		selectedTags,
+	]);
 
 	if (metricsApplicationLoading) {
 		return <Spinner tip="Loading..." />;

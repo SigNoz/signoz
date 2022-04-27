@@ -32,6 +32,7 @@ export const GetService = (
 			const response = await getService({
 				end: maxTime,
 				start: minTime,
+				selectedTags: props.selectedTags,
 			});
 
 			if (response.statusCode === 200) {
@@ -61,4 +62,5 @@ export const GetService = (
 export type GetServiceProps = {
 	minTime: GlobalReducer['minTime'];
 	maxTime: GlobalReducer['maxTime'];
+	selectedTags: string;
 };

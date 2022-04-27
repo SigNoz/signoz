@@ -1,4 +1,5 @@
 import { Tag } from 'antd';
+import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import React from 'react';
 
 import { QueryChipContainer, QueryChipItem } from './styles';
@@ -17,7 +18,7 @@ export default function QueryChip({
 }: IQueryChipProps): JSX.Element {
 	return (
 		<QueryChipContainer>
-			<QueryChipItem>{queryData.tagKey}</QueryChipItem>
+			<QueryChipItem>{convertMetricKeyToTrace(queryData.tagKey)}</QueryChipItem>
 			<QueryChipItem>{queryData.operator}</QueryChipItem>
 			<QueryChipItem
 				closable={!disabled}

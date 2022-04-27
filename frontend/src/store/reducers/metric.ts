@@ -1,4 +1,4 @@
-import { resourceAttributesQueryToPromQL } from 'lib/resourceAttributesQueryToPromQL';
+import { resourceAttributesQueryToPromQL } from 'lib/resourceAttributes';
 import { GetResourceAttributeQueriesFromURL } from 'store/actions/metrics/setResourceAttributeQueries';
 import {
 	GET_INITIAL_APPLICATION_ERROR,
@@ -80,8 +80,8 @@ const metrics = (
 		case RESET_INITIAL_APPLICATION_DATA: {
 			return {
 				...InitialValue,
-				...state.resourceAttributeQueries,
-				resourceAttributeQueries: state.resourceAttributeQueries,
+				// ...state.resourceAttributeQueries,
+				// resourceAttributeQueries: state.resourceAttributeQueries,
 			};
 		}
 

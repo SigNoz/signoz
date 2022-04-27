@@ -64,11 +64,13 @@ export const GetInitialData = (
 					service: props.serviceName,
 					start: minTime,
 					step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
+					selectedTags: props.selectedTags,
 				}),
 				getTopEndPoints({
 					end: maxTime,
 					service: props.serviceName,
 					start: minTime,
+					selectedTags: props.selectedTags,
 				}),
 			]);
 
@@ -121,4 +123,5 @@ export interface GetInitialDataProps {
 	serviceName: Props['service'];
 	maxTime: GlobalReducer['maxTime'];
 	minTime: GlobalReducer['minTime'];
+	selectedTags: string;
 }

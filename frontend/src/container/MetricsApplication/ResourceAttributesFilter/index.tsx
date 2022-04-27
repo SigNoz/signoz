@@ -2,10 +2,11 @@ import { useMachine } from '@xstate/react';
 import { Select, Spin } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { convertTraceKeyToMetric } from 'lib/resourceAttributesQueryToPromQL';
+import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import { map } from 'lodash-es';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { SetResourceAttributeQueries } from 'store/actions/metrics/setResourceAttributeQueries';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -18,6 +19,7 @@ import { IOption, IResourceAttributeQuery } from './types';
 import { createQuery, GetTagKeys, GetTagValues, OperatorSchema } from './utils';
 
 function ResourceAttributesFilter(): JSX.Element {
+	const dispatch = useDispatch();
 	const [disabled, setDisabled] = useState(
 		!(history.location.pathname === ROUTES.APPLICATION),
 	);
@@ -25,15 +27,20 @@ function ResourceAttributesFilter(): JSX.Element {
 	useEffect(() => {
 		const unListen = history.listen(({ pathname }) => {
 			setDisabled(!(pathname === ROUTES.APPLICATION));
+			if (!pathname.startsWith(ROUTES.APPLICATION)) {
+				dispatch(ResetInitialData());
+			}
 		});
 		return (): void => {
+			if (!history.location.pathname.startsWith(ROUTES.APPLICATION)) {
+				dispatch(ResetInitialData());
+			}
 			unListen();
 		};
-	}, []);
+	}, [dispatch]);
 
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const dispatch = useDispatch();
-	const resourceAttributesQueries = useSelector(
+	const resourceAttributesQueries = useSelector<AppState>(
 		(state) => state.metrics.resourceAttributeQueries,
 	);
 	const [loading, setLoading] = useState(true);
@@ -47,6 +54,10 @@ function ResourceAttributesFilter(): JSX.Element {
 		mode: undefined,
 		options: [],
 	});
+
+	const dispatchQueries = (updatedQueries: IResourceAttributeQuery[]): void => {
+		dispatch(SetResourceAttributeQueries(updatedQueries));
+	};
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
@@ -64,7 +75,7 @@ function ResourceAttributesFilter(): JSX.Element {
 			onSelectTagValue: () => {
 				setLoading(true);
 				if (staging[0])
-					GetTagValues(convertTraceKeyToMetric(staging[0]))
+					GetTagValues(staging[0])
 						.then((tagValuesOptions) =>
 							setOptionsData({ options: tagValuesOptions, mode: 'multiple' }),
 						)
@@ -83,7 +94,7 @@ function ResourceAttributesFilter(): JSX.Element {
 
 				const generatedQuery = createQuery([...staging, selectedValues]);
 				if (generatedQuery) {
-					dispatch(SetResourceAttributeQueries([...queries, generatedQuery]));
+					dispatchQueries([...queries, generatedQuery]);
 				}
 			},
 		},
@@ -99,7 +110,7 @@ function ResourceAttributesFilter(): JSX.Element {
 		}
 	};
 
-	const handleBlur = () => {
+	const handleBlur = (): void => {
 		send('onBlur');
 	};
 	const handleChange = (value: never): void => {
@@ -114,12 +125,12 @@ function ResourceAttributesFilter(): JSX.Element {
 	};
 
 	const handleClose = (id: string): void => {
-		dispatch(
-			SetResourceAttributeQueries(
-				queries.filter((queryData) => queryData.id !== id),
-			),
-		);
+		dispatchQueries(queries.filter((queryData) => queryData.id !== id));
 	};
+	const placeholder =
+		queries.length || staging.length || selectedValues.length
+			? ''
+			: 'Search and Filter based on resource attributes.';
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={disabled}>
 			<div
@@ -142,11 +153,16 @@ function ResourceAttributesFilter(): JSX.Element {
 						);
 					},
 				)}
-				{map(staging, (item) => {
-					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
+				{map(staging, (item, idx) => {
+					return (
+						<QueryChipItem key={uuid()}>
+							{idx === 0 ? convertMetricKeyToTrace(item) : item}
+						</QueryChipItem>
+					);
 				})}
 			</div>
 			<Select
+				placeholder={placeholder}
 				disabled={disabled}
 				onChange={handleChange}
 				bordered={false}

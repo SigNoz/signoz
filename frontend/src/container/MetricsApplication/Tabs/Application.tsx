@@ -6,7 +6,10 @@ import FullView from 'container/GridGraphLayout/Graph/FullView';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
-import { resourceAttributesQueryToPromQL } from 'lib/resourceAttributesQueryToPromQL';
+import {
+	convertRawQueriesToTraceSelectedTags,
+	resourceAttributesQueryToPromQL,
+} from 'lib/resourceAttributes';
 import React, { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -25,8 +28,13 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 	const {
 		topEndPoints,
 		serviceOverview,
-		resourceAttributePromQLQuery
+		resourceAttributePromQLQuery,
+		resourceAttributeQueries,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+
+	const selectedTraceTags: string = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+	);
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp;
@@ -37,8 +45,9 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=[]&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
 
@@ -88,11 +97,11 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
-			}?${urlParams.toString()}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=[]&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
-
 
 	return (
 		<>

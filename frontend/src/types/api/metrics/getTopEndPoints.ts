@@ -10,6 +10,7 @@ export interface Props {
 	service: string;
 	start: number;
 	end: number;
+	selectedTags: string;
 }
 
 export type PayloadProps = TopEndPoints[];

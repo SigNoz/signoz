@@ -50,7 +50,7 @@ export interface Tags {
 	Values: string[];
 }
 
-type OperatorValues = 'not in' | 'in';
+export type OperatorValues = 'not in' | 'in';
 
 export type TraceFilterEnum =
 	| 'component'

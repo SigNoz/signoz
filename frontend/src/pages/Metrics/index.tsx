@@ -3,6 +3,7 @@ import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ResourceAttributesFilter from 'container/MetricsApplication/ResourceAttributesFilter';
 import MetricTable from 'container/MetricsTable';
+import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -18,8 +19,13 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const { services } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
+	const { services, resourceAttributeQueries } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
+
+	const selectedTags: string = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
 	);
 
 	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';
@@ -29,9 +35,10 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 			getService({
 				maxTime,
 				minTime,
+				selectedTags,
 			});
 		}
-	}, [getService, loading, maxTime, minTime]);
+	}, [getService, loading, maxTime, minTime, selectedTags]);
 
 	useEffect(() => {
 		let timeInterval: NodeJS.Timeout;
@@ -41,6 +48,7 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 				getService({
 					maxTime,
 					minTime,
+					selectedTags,
 				});
 			}, 50000);
 		}
@@ -48,7 +56,16 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		return (): void => {
 			clearInterval(timeInterval);
 		};
-	}, [getService, isSkipped, loading, maxTime, minTime, services, selectedTime]);
+	}, [
+		getService,
+		isSkipped,
+		loading,
+		maxTime,
+		minTime,
+		services,
+		selectedTime,
+		selectedTags,
+	]);
 
 	if (loading) {
 		return <Spinner tip="Loading..." />;
