@@ -1259,7 +1259,6 @@ func (aH *APIHandler) listInvites(w http.ResponseWriter, r *http.Request) {
 			Organization: org.Name,
 		})
 	}
-
 	aH.writeJSON(w, r, resp)
 }
 
