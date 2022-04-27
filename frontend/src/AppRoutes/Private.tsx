@@ -35,7 +35,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		(async (): Promise<void> => {
 			try {
 				if (currentRoute) {
-					const { isPrivate, redirectIfNotLoggedIn } = currentRoute;
+					const { isPrivate } = currentRoute;
 
 					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
@@ -63,10 +63,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							}
 						}
 					} else {
-						if (history.location.pathname !== ROUTES.LOGIN && redirectIfNotLoggedIn) {
-							history.push(ROUTES.LOGIN);
-						}
-
 						// no need to fetch the user and make user fetching false
 						dispatch({
 							type: UPDATE_USER_IS_FETCH,
@@ -74,12 +70,23 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 								isUserFetching: false,
 							},
 						});
+
+						if (history.location.pathname !== ROUTES.LOGIN) {
+							history.push(ROUTES.LOGIN);
+						}
 					}
 				} else if (history.location.pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
 					if (isLoggedIn) {
 						history.push(ROUTES.APPLICATION);
 					} else {
+						dispatch({
+							type: UPDATE_USER_IS_FETCH,
+							payload: {
+								isUserFetching: false,
+							},
+						});
+
 						history.push(ROUTES.LOGIN);
 					}
 				} else {
@@ -93,7 +100,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		})();
 		// need to run over mount only
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [dispatch]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
