@@ -191,12 +191,14 @@ function PendingInvitesContainer(): JSX.Element {
 				},
 			);
 
-			const { data, status } = await getPendingInvitesResponse.refetch();
-			if (status === 'success' && data.payload) {
-				setDataSource(getParsedInviteData(data?.payload || []));
-			}
-			setIsInvitingMembers(false);
-			toggleModal(false);
+			setTimeout(async () => {
+				const { data, status } = await getPendingInvitesResponse.refetch();
+				if (status === 'success' && data.payload) {
+					setDataSource(getParsedInviteData(data?.payload || []));
+				}
+				setIsInvitingMembers(false);
+				toggleModal(false);
+			}, 0);
 		} catch (error) {
 			notification.error({
 				message: t('something_went_wrong', {

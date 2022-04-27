@@ -1,17 +1,9 @@
 import { Button, Input, notification, Typography } from 'antd';
-import setLocalStorage from 'api/browser/localstorage/set';
 import loginApi from 'api/user/login';
-import { LOCALSTORAGE } from 'constants/localStorage';
+import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
-import {
-	LOGGED_IN,
-	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
-} from 'types/actions/app';
 
 import {
 	ButtonContainer,
@@ -24,7 +16,6 @@ import {
 const { Title } = Typography;
 
 function Login(): JSX.Element {
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 
@@ -46,26 +37,7 @@ function Login(): JSX.Element {
 				password,
 			});
 			if (response.statusCode === 200) {
-				dispatch({
-					type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
-					payload: {
-						...response.payload,
-					},
-				});
-				dispatch({
-					type: LOGGED_IN,
-					payload: {
-						isLoggedIn: true,
-					},
-				});
-
-				// setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
-				setLocalStorage(LOCALSTORAGE.AUTH_TOKEN, response.payload.accessJwt);
-				setLocalStorage(
-					LOCALSTORAGE.REFRESH_AUTH_TOKEN,
-					response.payload.refreshJwt,
-				);
-				setLocalStorage(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+				await afterLogin(response.payload.userId);
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notification.error({

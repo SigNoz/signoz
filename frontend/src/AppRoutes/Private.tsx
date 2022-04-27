@@ -1,35 +1,23 @@
 import { notification } from 'antd';
-import getLocalStorageApi from 'api/browser/localstorage/get';
-import deleteLocalStorageKey from 'api/browser/localstorage/remove';
-import setLocalStorageApi from 'api/browser/localstorage/set';
-import getUserOrganization from 'api/user/getOrganization';
-import getRolesApi from 'api/user/getRoles';
-import getUserApi from 'api/user/getUser';
 import loginApi from 'api/user/login';
 import Spinner from 'components/Spinner';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Redirect, useLocation } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
-import {
-	LOGGED_IN,
-	UPDATE_USER,
-	UPDATE_USER_IS_FETCH,
-	UPDATE_USER_ORG_ROLE,
-} from 'types/actions/app';
+import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import routes from './routes';
+import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
-	const { pathname } = useLocation();
 	const mapRoutes = useMemo(() => new Map(routes.map((e) => [e.path, e])), []);
 	const {
 		// user,
@@ -39,34 +27,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 	const { t } = useTranslation(['common']);
 
-	const currentRoute = mapRoutes.get(pathname);
+	const currentRoute = mapRoutes.get(history.location.pathname);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
-
-	const somethingGoesWrongDeleteTokenAndNavigationToLogin = useCallback(() => {
-		// localstorage token is missing
-		deleteLocalStorageKey(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
-		deleteLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN);
-		deleteLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN);
-
-		dispatch({
-			type: UPDATE_USER_IS_FETCH,
-			payload: {
-				isUserFetching: false,
-			},
-		});
-
-		dispatch({
-			type: LOGGED_IN,
-			payload: {
-				isLoggedIn: false,
-			},
-		});
-
-		// navigate to login
-		history.push(ROUTES.LOGIN);
-	}, [dispatch]);
-
-	const isLoggedInLocalStorage = getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -78,8 +40,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
-						// localstorage token is present
-						if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
+						if (
+							!isLoggedIn &&
+							localStorageUserAuthToken &&
+							localStorageUserAuthToken.refreshJwt
+						) {
+							// localstorage token is present
 							const { refreshJwt } = localStorageUserAuthToken;
 
 							// renew web access token
@@ -89,84 +55,15 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 							if (response.statusCode === 200) {
 								// get all resource and put it over redux
-								const [
-									rolesResponse,
-									userOrgResponse,
-									getUserResponse,
-								] = await Promise.all([
-									getRolesApi({
-										userId: response.payload.userId,
-									}),
-									getUserOrganization(),
-									getUserApi({
-										userId: response.payload.userId,
-									}),
-								]);
-
-								if (
-									rolesResponse.statusCode === 200 &&
-									userOrgResponse.statusCode === 200 &&
-									getUserResponse.statusCode === 200
-								) {
-									dispatch({
-										type: LOGGED_IN,
-										payload: {
-											isLoggedIn: true,
-										},
-									});
-
-									// user details are successfully fetched
-									dispatch({
-										type: UPDATE_USER_ORG_ROLE,
-										payload: {
-											org: userOrgResponse.payload,
-											role: rolesResponse.payload.group_name,
-										},
-									});
-
-									dispatch({
-										type: UPDATE_USER,
-										payload: {
-											...getUserResponse.payload,
-											userId: response.payload.userId,
-										},
-									});
-
-									if (isLoggedInLocalStorage === null) {
-										setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
-									}
-
-									dispatch({
-										type: UPDATE_USER_IS_FETCH,
-										payload: {
-											isUserFetching: false,
-										},
-									});
-
-									// user org and roles are successfully fetched update the store and proceed further
-								} else {
-									notification.error({
-										message:
-											rolesResponse.error ||
-											userOrgResponse.error ||
-											t('something_went_wrong'),
-									});
-									// fetching the response makes some error re routing to login
-									somethingGoesWrongDeleteTokenAndNavigationToLogin();
-								}
+								await afterLogin(response.payload.userId);
 							} else {
 								notification.error({
 									message: response.error || t('something_went_wrong'),
 								});
-								// fetching the response from the user auth token
-								somethingGoesWrongDeleteTokenAndNavigationToLogin();
 							}
-						} else {
-							// token is not present
-							somethingGoesWrongDeleteTokenAndNavigationToLogin();
 						}
 					} else {
-						if (pathname !== ROUTES.LOGIN && redirectIfNotLoggedIn) {
+						if (history.location.pathname !== ROUTES.LOGIN && redirectIfNotLoggedIn) {
 							history.push(ROUTES.LOGIN);
 						}
 
@@ -178,7 +75,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							},
 						});
 					}
-				} else if (pathname === ROUTES.HOME_PAGE) {
+				} else if (history.location.pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
 					if (isLoggedIn) {
 						history.push(ROUTES.APPLICATION);
@@ -194,10 +91,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(ROUTES.SOMETHING_WENT_WRONG);
 			}
 		})();
-
-		// need to run over mount only and once
+		// need to run over mount only
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInLocalStorage]);
+	}, []);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;

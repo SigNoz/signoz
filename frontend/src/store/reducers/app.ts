@@ -1,6 +1,5 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import getTheme from 'lib/theme/getTheme';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import {
@@ -39,7 +38,7 @@ const getInitialUser = (): User | null => {
 
 const InitialValue: InitialValueTypes = {
 	isDarkMode: getTheme() === 'darkMode',
-	isLoggedIn: getLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
+	isLoggedIn: false,
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
