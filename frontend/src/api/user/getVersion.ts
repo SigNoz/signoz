@@ -8,9 +8,7 @@ const getVersion = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/version`);
+		const response = await axios.get(`/version`);
 
 		return {
 			statusCode: 200,

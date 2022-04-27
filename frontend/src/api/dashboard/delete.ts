@@ -8,9 +8,7 @@ const deleteDashboard = async (
 	props: Props,
 ): Promise<SuccessResponse<undefined> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.delete(`/dashboards/${props.uuid}`);
+		const response = await axios.delete(`/dashboards/${props.uuid}`);
 
 		return {
 			statusCode: 200,

@@ -8,9 +8,7 @@ const getQuery = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.get(
+		const response = await axios.get(
 			`/query_range?query=${props.query}&start=${props.start}&end=${props.end}&step=${props.step}`,
 		);
 

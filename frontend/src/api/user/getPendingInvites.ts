@@ -8,9 +8,7 @@ const getPendingInvites = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/invite`);
+		const response = await axios.get(`/invite`);
 
 		return {
 			statusCode: 200,

@@ -8,9 +8,7 @@ const getService = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.get(
+		const response = await axios.get(
 			`/services?&start=${props.start}&end=${props.end}`,
 		);
 

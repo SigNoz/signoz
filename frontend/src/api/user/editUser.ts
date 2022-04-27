@@ -8,9 +8,7 @@ const editUser = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.put(`/user/${props.userId}`, {
+		const response = await axios.put(`/user/${props.userId}`, {
 			Name: props.name,
 		});
 

@@ -8,9 +8,7 @@ const getResetPasswordToken = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/getResetPasswordToken/${props.userId}`);
+		const response = await axios.get(`/getResetPasswordToken/${props.userId}`);
 
 		return {
 			statusCode: 200,

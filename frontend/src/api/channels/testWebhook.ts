@@ -9,7 +9,6 @@ const testWebhook = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		let httpConfig = {};
-		const api = axios();
 
 		if (props.username !== '' && props.password !== '') {
 			httpConfig = {
@@ -27,7 +26,7 @@ const testWebhook = async (
 			};
 		}
 
-		const response = await api.post('/testChannel', {
+		const response = await axios.post('/testChannel', {
 			name: props.name,
 			webhook_configs: [
 				{

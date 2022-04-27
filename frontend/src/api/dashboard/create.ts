@@ -8,9 +8,7 @@ const create = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.post('/dashboards', {
+		const response = await axios.post('/dashboards', {
 			...props,
 		});
 

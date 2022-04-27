@@ -8,9 +8,7 @@ const getInviteDetails = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/invite/${props.inviteId}`);
+		const response = await axios.get(`/invite/${props.inviteId}`);
 
 		return {
 			statusCode: 200,

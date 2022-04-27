@@ -8,9 +8,7 @@ const sendInvite = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.post(`/invite`, {
+		const response = await axios.post(`/invite`, {
 			...props,
 		});
 

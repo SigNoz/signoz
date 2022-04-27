@@ -8,9 +8,7 @@ const editOrg = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.put(`/org/${props.orgId}`, {
+		const response = await axios.put(`/org/${props.orgId}`, {
 			name: props.name,
 			isAnonymous: props.isAnonymous,
 		});

@@ -11,9 +11,9 @@ const getGroups = async (
 	try {
 		const queryParams = convertObjectIntoParams(props);
 
-		const api = AxiosAlertManagerInstance();
-
-		const response = await api.get(`/alerts/groups?${queryParams}`);
+		const response = await AxiosAlertManagerInstance.get(
+			`/alerts/groups?${queryParams}`,
+		);
 
 		return {
 			statusCode: 200,

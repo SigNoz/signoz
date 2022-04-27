@@ -15,30 +15,24 @@ const handleLogoutInterceptor = (instance: AxiosInstance): void => {
 	});
 };
 
-export default (): AxiosInstance => {
-	const instance = axios.create({
-		baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
-		headers: {
-			Authorization: `bearer ${store.getState().app.user?.accessJwt || ''}`,
-		},
-	});
+const instance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
+	headers: {
+		Authorization: `bearer ${store.getState().app.user?.accessJwt || ''}`,
+	},
+});
 
-	handleLogoutInterceptor(instance);
+handleLogoutInterceptor(instance);
 
-	return instance;
-};
+export default instance;
 
-export const AxiosAlertManagerInstance = (): AxiosInstance => {
-	const instance = axios.create({
-		baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
-		headers: {
-			Authorization: `bearer ${store.getState().app.user?.accessJwt || ''}`,
-		},
-	});
+export const AxiosAlertManagerInstance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
+	headers: {
+		Authorization: `bearer ${store.getState().app.user?.accessJwt || ''}`,
+	},
+});
 
-	handleLogoutInterceptor(instance);
-
-	return instance;
-};
+handleLogoutInterceptor(AxiosAlertManagerInstance);
 
 export { apiV1 };

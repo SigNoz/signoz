@@ -8,9 +8,7 @@ const getOrganization = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/org`);
+		const response = await axios.get(`/org`);
 
 		return {
 			statusCode: 200,

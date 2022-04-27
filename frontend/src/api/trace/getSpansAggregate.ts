@@ -10,8 +10,6 @@ const getSpanAggregate = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
 		const preProps = {
 			start: String(props.start),
 			end: String(props.end),
@@ -40,7 +38,7 @@ const getSpanAggregate = async (
 
 		const nonDuration = omitBy(other, (_, key) => key.startsWith('duration'));
 
-		const response = await api.post<PayloadProps>(`/getFilteredSpans`, {
+		const response = await axios.post<PayloadProps>(`/getFilteredSpans`, {
 			...preProps,
 			tags: updatedSelectedTags,
 			...nonDuration,

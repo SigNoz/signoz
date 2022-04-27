@@ -41,7 +41,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
 						if (
-							!isLoggedIn &&
+							isLoggedIn &&
 							localStorageUserAuthToken &&
 							localStorageUserAuthToken.refreshJwt
 						) {
@@ -61,6 +61,15 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									message: response.error || t('something_went_wrong'),
 								});
 							}
+						} else {
+							// user is not logged in
+							dispatch({
+								type: UPDATE_USER_IS_FETCH,
+								payload: {
+									isUserFetching: false,
+								},
+							});
+							history.push(ROUTES.LOGIN);
 						}
 					} else {
 						// no need to fetch the user and make user fetching false

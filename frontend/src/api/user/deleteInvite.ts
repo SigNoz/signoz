@@ -8,9 +8,7 @@ const deleteInvite = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.delete(`/invite/${props.email}`);
+		const response = await axios.delete(`/invite/${props.email}`);
 
 		return {
 			statusCode: 200,

@@ -8,9 +8,7 @@ const deleteChannel = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.delete(`/channels/${props.id}`);
+		const response = await axios.delete(`/channels/${props.id}`);
 
 		return {
 			statusCode: 200,

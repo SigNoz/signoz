@@ -8,8 +8,6 @@ const editWebhook = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
 		let httpConfig = {};
 		if (props.username !== '' && props.password !== '') {
 			httpConfig = {
@@ -27,7 +25,7 @@ const editWebhook = async (
 			};
 		}
 
-		const response = await api.put(`/channels/${props.id}`, {
+		const response = await axios.put(`/channels/${props.id}`, {
 			name: props.name,
 			webhook_configs: [
 				{
