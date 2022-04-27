@@ -1,10 +1,12 @@
 import { Button, Input, notification, Space, Switch, Typography } from 'antd';
+import getInviteDetails from 'api/user/getInviteDetails';
 import setPreference from 'api/user/setPreference';
 import signUpApi from 'api/user/signup';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
@@ -29,11 +31,32 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 	);
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
+	const token = params.get('token');
+
+	const getInviteDetailsResponse = useQuery({
+		queryFn: () =>
+			getInviteDetails({
+				inviteId: token || '',
+			}),
+		queryKey: 'getInviteDetails',
+		enabled: token !== null,
+	});
 
 	useEffect(() => {
 		setIsAnonymous(userPref.isAnonymous);
 		setHasOptedUpdates(userPref.hasOptedUpdates);
 	}, [userPref]);
+
+	useEffect(() => {
+		if (
+			getInviteDetailsResponse.status === 'success' &&
+			getInviteDetailsResponse.data.payload
+		) {
+			const responseDetails = getInviteDetailsResponse.data.payload;
+			setFirstName(responseDetails.name);
+			setEmail(responseDetails.email);
+		}
+	}, [getInviteDetailsResponse?.data?.payload, getInviteDetailsResponse.status]);
 
 	const setState = (
 		value: string,
