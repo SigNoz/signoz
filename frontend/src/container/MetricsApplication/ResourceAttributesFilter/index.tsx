@@ -19,7 +19,7 @@ import { QueryChipItem, SearchContainer } from './styles';
 import { IOption, IResourceAttributeQuery } from './types';
 import { createQuery, GetTagKeys, GetTagValues, OperatorSchema } from './utils';
 
-function ResourceAttributesFilter(): JSX.Element {
+function ResourceAttributesFilter(): JSX.Element | null {
 	const dispatch = useDispatch();
 	const [disabled, setDisabled] = useState(
 		!(history.location.pathname === ROUTES.APPLICATION),
@@ -125,10 +125,22 @@ function ResourceAttributesFilter(): JSX.Element {
 	const handleClose = (id: string): void => {
 		dispatchQueries(queries.filter((queryData) => queryData.id !== id));
 	};
-	const placeholder =
-		queries.length || staging.length || selectedValues.length
-			? ''
-			: 'Search and Filter based on resource attributes.';
+	const disabledAndEmpty = !!(
+		!queries.length &&
+		!staging.length &&
+		!selectedValues.length &&
+		disabled
+	);
+	const disabledOrEmpty = !!(
+		queries.length ||
+		staging.length ||
+		selectedValues.length ||
+		disabled
+	);
+
+	if (disabledAndEmpty) {
+		return null;
+	}
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={disabled}>
 			<div
@@ -161,7 +173,9 @@ function ResourceAttributesFilter(): JSX.Element {
 			</div>
 			{!disabled && (
 				<Select
-					placeholder={placeholder}
+					placeholder={
+						disabledOrEmpty ? '' : 'Search and Filter based on resource attributes.'
+					}
 					disabled={disabled}
 					onChange={handleChange}
 					bordered={false}
