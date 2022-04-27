@@ -321,6 +321,17 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.A
 	return users, nil
 }
 
+func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]model.User, *model.ApiError) {
+	users := []model.User{}
+	err := mds.db.Select(&users, "SELECT id,name,org_id,email FROM users where org_id=?", orgId)
+
+	if err != nil {
+		zap.S().Debugf("Error in processing sql query: %v", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return users, nil
+}
+
 func (mds *ModelDaoSqlite) CreateGroup(ctx context.Context, group *model.Group) (*model.Group, *model.ApiError) {
 
 	group.Id = uuid.NewString()

@@ -250,6 +250,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/org", aH.getOrgs).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/{id}", aH.getOrg).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/{id}", aH.editOrg).Methods(http.MethodPut)
+
+	router.HandleFunc("/api/v1/orgUsers/{id}", aH.getOrgUsers).Methods(http.MethodGet)
 	// router.HandleFunc("/api/v1/org", aH.listUsers).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/org/{id}", aH.listUsers).Methods(http.MethodDelete)
 
@@ -1652,6 +1654,16 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
+}
+
+func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	orgs, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		return
+	}
+	aH.writeJSON(w, r, orgs)
 }
 
 func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Request) {
