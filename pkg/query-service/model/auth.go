@@ -56,6 +56,11 @@ type User struct {
 	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
 }
 
+type UserWithRole struct {
+	User
+	Role string `json:"role"`
+}
+
 type Group struct {
 	Id   string `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`

@@ -73,7 +73,7 @@ func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string)
 
 func (mds *ModelDaoSqlite) GetInvites(ctx context.Context) ([]model.Invitation, *model.ApiError) {
 	invites := []model.Invitation{}
-	err := mds.db.Select(&invites, "SELECT email,token,created_at,role FROM invites")
+	err := mds.db.Select(&invites, "SELECT name,email,token,created_at,role  FROM invites")
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -316,9 +316,10 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*m
 	return &users[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.ApiError) {
-	users := []model.User{}
-	err := mds.db.Select(&users, "SELECT id,name,org_id,email FROM users")
+func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserWithRole, *model.ApiError) {
+	users := []model.UserWithRole{}
+	query := `select u.id,u.name,u.org_id,u.email,g.name as role from users u, groups g, group_users gu where u.id=gu.user_id and g.id=gu.group_id;`
+	err := mds.db.Select(&users, query)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -327,9 +328,11 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.User, *model.A
 	return users, nil
 }
 
-func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]model.User, *model.ApiError) {
-	users := []model.User{}
-	err := mds.db.Select(&users, "SELECT id,name,org_id,email FROM users where org_id=?", orgId)
+func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserWithRole, *model.ApiError) {
+	users := []model.UserWithRole{}
+
+	query := `select u.id,u.name,u.org_id,u.email,g.name as role from users u, groups g, group_users gu where u.id=gu.user_id and g.id=gu.group_id and u.org_id=?;`
+	err := mds.db.Select(&users, query, orgId)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
