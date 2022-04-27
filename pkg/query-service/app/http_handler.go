@@ -1238,12 +1238,29 @@ func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listInvites(w http.ResponseWriter, r *http.Request) {
-	groups, err := dao.DB().GetInvites(context.Background())
+	invites, err := dao.DB().GetInvites(context.Background())
 	if err != nil {
 		respondError(w, err, "Failed to get invites list")
 		return
 	}
-	aH.writeJSON(w, r, groups)
+	var resp []*model.InvitationResponse
+	for _, inv := range invites {
+
+		org, apiErr := dao.DB().GetOrg(context.Background(), inv.OrgId)
+		if apiErr != nil {
+			respondError(w, apiErr, "Failed to get org details for invite list")
+		}
+		resp = append(resp, &model.InvitationResponse{
+			Name:         inv.Name,
+			Email:        inv.Email,
+			Token:        inv.Token,
+			CreatedAt:    inv.CreatedAt,
+			Role:         inv.Role,
+			Organization: org.Name,
+		})
+	}
+
+	aH.writeJSON(w, r, invites)
 }
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {

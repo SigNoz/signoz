@@ -48,7 +48,9 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			email TEXT NOT NULL UNIQUE,
 			token TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
-			role TEXT NOT NULL
+			role TEXT NOT NULL,
+			org_id TEXT NOT NULL,
+			FOREIGN KEY(org_id) REFERENCES organizations(id)
 		);
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
