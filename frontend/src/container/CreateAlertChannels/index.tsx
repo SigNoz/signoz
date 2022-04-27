@@ -93,7 +93,6 @@ function CreateAlertChannels({
 		setSavingState(true);
 
 		try {
-			setSavingState(true);
 			const response = await createSlackApi(prepareSlackRequest());
 
 			if (response.statusCode === 200) {
@@ -115,8 +114,8 @@ function CreateAlertChannels({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			setSavingState(false);
 		}
+		setSavingState(false);
 	}, [prepareSlackRequest, t, notifications]);
 
 	const prepareWebhookRequest = useCallback(() => {
