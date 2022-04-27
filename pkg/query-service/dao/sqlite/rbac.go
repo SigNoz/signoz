@@ -210,6 +210,13 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}()
 
 	user.Id = uuid.NewString()
 	_, err = tx.ExecContext(ctx,
@@ -228,7 +235,6 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	err = tx.Commit()
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
