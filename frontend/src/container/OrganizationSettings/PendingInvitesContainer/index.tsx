@@ -52,7 +52,7 @@ function PendingInvitesContainer(): JSX.Element {
 		{
 			email: '',
 			name: '',
-			role: 'VIEWER_GROUP',
+			role: 'VIEWER',
 		},
 	]);
 

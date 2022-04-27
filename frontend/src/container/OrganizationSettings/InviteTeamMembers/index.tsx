@@ -17,7 +17,7 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 			{
 				email: '',
 				name: '',
-				role: 'VIEWER_GROUP',
+				role: 'VIEWER',
 			},
 		]);
 	};
@@ -73,9 +73,9 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 									}
 								}}
 							>
-								<Option value="ADMIN_GROUP">ADMIN</Option>
-								<Option value="VIEWER_GROUP">VIEWER</Option>
-								<Option value="EDITOR_GROUP">EDITOR</Option>
+								<Option value="ADMIN">ADMIN</Option>
+								<Option value="VIEWER">VIEWER</Option>
+								<Option value="EDITOR">EDITOR</Option>
 							</SelectDrawer>
 						</Space>
 					))}
