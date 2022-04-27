@@ -1,9 +1,9 @@
 package constants
 
 const (
-	AdminGroup  = "ADMIN_GROUP"
-	EditorGroup = "EDITOR_GROUP"
-	ViewerGroup = "VIEWER_GROUP"
+	AdminGroup  = "ADMIN"
+	EditorGroup = "EDITOR"
+	ViewerGroup = "VIEWER"
 
 	ReadPermission  = int(1)
 	WritePermission = int(2)
