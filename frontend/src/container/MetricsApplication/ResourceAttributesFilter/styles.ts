@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 export const SearchContainer = styled.div<{
 	isDarkMode: boolean;
+	disabled: boolean;
 }>`
 	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
 	width: 100%;
@@ -13,6 +14,7 @@ export const SearchContainer = styled.div<{
 	padding: 0.2rem;
 	margin: 1rem 0;
 	border: 1px solid #ccc5;
+	${({ disabled }): string => (disabled ? `cursor: not-allowed;` : '')}
 `;
 export const QueryChipContainer = styled.span`
 	display: flex;

@@ -1,8 +1,8 @@
 import { Tabs } from 'antd';
 import React from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
-import ResourceAttributesFilter from './ResourceAttributesFilter';
 
+import ResourceAttributesFilter from './ResourceAttributesFilter';
 import Application from './Tabs/Application';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';

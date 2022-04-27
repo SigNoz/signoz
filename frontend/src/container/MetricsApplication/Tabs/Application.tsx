@@ -6,11 +6,8 @@ import FullView from 'container/GridGraphLayout/Graph/FullView';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
-import {
-	convertRawQueriesToTraceSelectedTags,
-	resourceAttributesQueryToPromQL,
-} from 'lib/resourceAttributes';
-import React, { useMemo, useRef } from 'react';
+import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
+import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';

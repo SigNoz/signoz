@@ -1,7 +1,6 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
-import history from 'lib/history';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import React, { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -12,16 +11,12 @@ import {
 	GetInitialData,
 	GetInitialDataProps,
 } from 'store/actions/metrics/getInitialData';
-import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-function MetricsApplication({
-	getInitialData,
-	resetInitialData,
-}: MetricsProps): JSX.Element {
+function MetricsApplication({ getInitialData }: MetricsProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -49,18 +44,7 @@ function MetricsApplication({
 				selectedTags,
 			});
 		}
-
-		return (): void => {
-			// resetInitialData();
-		};
-	}, [
-		servicename,
-		getInitialData,
-		resetInitialData,
-		maxTime,
-		minTime,
-		selectedTags,
-	]);
+	}, [servicename, getInitialData, maxTime, minTime, selectedTags]);
 
 	if (metricsApplicationLoading) {
 		return <Spinner tip="Loading..." />;
@@ -75,7 +59,6 @@ function MetricsApplication({
 
 interface DispatchProps {
 	getInitialData: (props: GetInitialDataProps) => void;
-	resetInitialData: () => void;
 }
 
 interface ServiceProps {
@@ -86,7 +69,6 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getInitialData: bindActionCreators(GetInitialData, dispatch),
-	resetInitialData: bindActionCreators(ResetInitialData, dispatch),
 });
 
 type MetricsProps = DispatchProps;

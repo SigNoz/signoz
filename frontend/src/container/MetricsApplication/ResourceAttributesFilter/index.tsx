@@ -10,6 +10,7 @@ import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { SetResourceAttributeQueries } from 'store/actions/metrics/setResourceAttributeQueries';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import MetricReducer from 'types/reducer/metrics';
 import { v4 as uuid } from 'uuid';
 
 import QueryChip from './QueryChip';
@@ -27,12 +28,9 @@ function ResourceAttributesFilter(): JSX.Element {
 	useEffect(() => {
 		const unListen = history.listen(({ pathname }) => {
 			setDisabled(!(pathname === ROUTES.APPLICATION));
-			if (!pathname.startsWith(ROUTES.APPLICATION)) {
-				dispatch(ResetInitialData());
-			}
 		});
 		return (): void => {
-			if (!history.location.pathname.startsWith(ROUTES.APPLICATION)) {
+			if (!history.location.pathname.startsWith(`${ROUTES.APPLICATION}/`)) {
 				dispatch(ResetInitialData());
 			}
 			unListen();
@@ -40,8 +38,8 @@ function ResourceAttributesFilter(): JSX.Element {
 	}, [dispatch]);
 
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const resourceAttributesQueries = useSelector<AppState>(
-		(state) => state.metrics.resourceAttributeQueries,
+	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
 	);
 	const [loading, setLoading] = useState(true);
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
@@ -101,8 +99,8 @@ function ResourceAttributesFilter(): JSX.Element {
 	});
 
 	useEffect(() => {
-		setQueries(resourceAttributesQueries);
-	}, [resourceAttributesQueries]);
+		setQueries(resourceAttributeQueries);
+	}, [resourceAttributeQueries]);
 
 	const handleFocus = (): void => {
 		if (state.value === 'Idle') {
@@ -135,7 +133,7 @@ function ResourceAttributesFilter(): JSX.Element {
 		<SearchContainer isDarkMode={isDarkMode} disabled={disabled}>
 			<div
 				style={{
-					maxWidth: '70%',
+					maxWidth: disabled ? '100%' : '70%',
 					display: 'flex',
 					overflowX: 'auto',
 				}}
@@ -161,26 +159,28 @@ function ResourceAttributesFilter(): JSX.Element {
 					);
 				})}
 			</div>
-			<Select
-				placeholder={placeholder}
-				disabled={disabled}
-				onChange={handleChange}
-				bordered={false}
-				value={selectedValues}
-				style={{ flex: 1 }}
-				options={optionsData.options}
-				mode={optionsData?.mode}
-				showArrow={false}
-				onFocus={handleFocus}
-				onBlur={handleBlur}
-				notFoundContent={
-					loading ? (
-						<span>
-							<Spin size="small" /> Loading...{' '}
-						</span>
-					) : null
-				}
-			/>
+			{!disabled && (
+				<Select
+					placeholder={placeholder}
+					disabled={disabled}
+					onChange={handleChange}
+					bordered={false}
+					value={selectedValues as never}
+					style={{ flex: 1 }}
+					options={optionsData.options}
+					mode={optionsData?.mode}
+					showArrow={false}
+					onFocus={handleFocus}
+					onBlur={handleBlur}
+					notFoundContent={
+						loading ? (
+							<span>
+								<Spin size="small" /> Loading...{' '}
+							</span>
+						) : null
+					}
+				/>
+			)}
 		</SearchContainer>
 	);
 }

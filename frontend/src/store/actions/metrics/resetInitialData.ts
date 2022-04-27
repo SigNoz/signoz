@@ -7,7 +7,6 @@ export const ResetInitialData = (): ((
 	getState: () => AppState,
 ) => void) => {
 	return (dispatch): void => {
-		console.log("RESET DISPATCH")
 		dispatch({
 			type: 'RESET_INITIAL_APPLICATION_DATA',
 		});

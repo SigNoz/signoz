@@ -1,5 +1,4 @@
 import { OperatorConversions } from 'constants/resourceAttributes';
-import { IQueryStructure } from 'container/ListOfDashboard/SearchFilter/types';
 import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
 import { OperatorValues, Tags } from 'types/reducer/trace';
 

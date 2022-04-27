@@ -1,4 +1,3 @@
-import { Tag } from 'antd';
 import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import React from 'react';
 
