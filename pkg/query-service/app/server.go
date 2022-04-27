@@ -136,6 +136,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		AllowedOrigins: []string{"*"},
 		// AllowCredentials: true,
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	})
 
 	handler := c.Handler(r)
