@@ -5,6 +5,7 @@ import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PayloadProps } from 'types/api/user/getUserPreference';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
@@ -26,6 +27,8 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
+	const { search } = useLocation();
+	const params = new URLSearchParams(search);
 
 	useEffect(() => {
 		setIsAnonymous(userPref.isAnonymous);
@@ -58,6 +61,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 						name: firstName,
 						orgName: organizationName,
 						password,
+						token: params.get('token') || undefined,
 					});
 
 					if (response.statusCode === 200) {

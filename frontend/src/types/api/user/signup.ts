@@ -3,4 +3,5 @@ export interface Props {
 	orgName: string;
 	email: string;
 	password: string;
+	token?: string;
 }
