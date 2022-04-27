@@ -977,8 +977,8 @@ func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 	return &req, nil
 }
 
-func parseLoginRequest(r *http.Request) (*auth.LoginRequest, error) {
-	var req auth.LoginRequest
+func parseLoginRequest(r *http.Request) (*model.LoginRequest, error) {
+	var req model.LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err

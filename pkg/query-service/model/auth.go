@@ -20,6 +20,20 @@ type InvitationResponse struct {
 	Organization string `json:"organization" db:"organization"`
 }
 
+type LoginRequest struct {
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+type LoginResponse struct {
+	AccessJwt        string `json:"accessJwt"`
+	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
+	RefreshJwt       string `json:"refreshJwt"`
+	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
+	UserId           string `json:"userId"`
+}
+
 type ChangePasswordRequest struct {
 	UserId      string `json:"userId"`
 	OldPassword string `json:"oldPassword"`
