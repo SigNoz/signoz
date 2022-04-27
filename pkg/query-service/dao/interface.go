@@ -1,10 +1,15 @@
-package interfaces
+package dao
 
 import (
 	"context"
 
 	"go.signoz.io/query-service/model"
 )
+
+type ModelDao interface {
+	Queries
+	Mutations
+}
 
 type Queries interface {
 	FetchUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError)

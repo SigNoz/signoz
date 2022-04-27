@@ -92,7 +92,6 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			token TEXT NOT NULL,
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
-
 	`
 
 	_, err = db.Exec(table_schema)
@@ -131,8 +130,8 @@ func (mds *ModelDaoSqlite) initializeUserPreferences(ctx context.Context) error 
 	}
 
 	// set telemetry fields from userPreferences
-	telemetry.GetInstance().SetTelemetryAnonymous(userPreference.GetIsAnonymous())
-	telemetry.GetInstance().SetDistinctId(userPreference.GetUUID())
+	telemetry.GetInstance().SetTelemetryAnonymous(userPreference.IsAnonymous)
+	telemetry.GetInstance().SetDistinctId(userPreference.Uuid)
 
 	return nil
 }

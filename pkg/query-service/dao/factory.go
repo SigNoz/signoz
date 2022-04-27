@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/dao/interfaces"
 	"go.signoz.io/query-service/dao/sqlite"
 )
 
-var db interfaces.ModelDao
+var db ModelDao
 
 func InitDao(engine, path string) error {
 	var err error
@@ -25,7 +24,7 @@ func InitDao(engine, path string) error {
 	return nil
 }
 
-func DB() interfaces.ModelDao {
+func DB() ModelDao {
 	if db == nil {
 		// Should never reach here
 		panic("GetDB called before initialization")

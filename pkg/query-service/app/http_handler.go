@@ -15,7 +15,6 @@ import (
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/dao"
-	"go.signoz.io/query-service/dao/interfaces"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
@@ -42,12 +41,12 @@ type APIHandler struct {
 	basePath     string
 	apiPrefix    string
 	reader       *Reader
-	relationalDB interfaces.ModelDao
+	relationalDB dao.ModelDao
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB interfaces.ModelDao) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
 
 	aH := &APIHandler{
 		reader:       reader,

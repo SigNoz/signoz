@@ -58,21 +58,21 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	query_result, err := stmt.Exec(userPreferences.GetIsAnonymous(), userPreferences.GetHasOptedUpdate(), userPreferencesFound.GetId())
+	query_result, err := stmt.Exec(userPreferences.IsAnonymous, userPreferences.HasOptedUpdates, userPreferencesFound.Id)
 	if err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for INSERT to user_preferences\n", err)
 		tx.Rollback() // return an error too, we may want to wrap them
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	zap.S().Debug(query_result.RowsAffected())
-	zap.S().Debug(userPreferences.GetIsAnonymous(), userPreferences.GetHasOptedUpdate(), userPreferencesFound.GetId())
+	zap.S().Debug(userPreferences.IsAnonymous, userPreferences.HasOptedUpdates, userPreferencesFound.Id)
 
 	err = tx.Commit()
 	if err != nil {
 		zap.S().Errorf("Error in commiting transaction for INSERT to user_preferences\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	telemetry.GetInstance().SetTelemetryAnonymous(userPreferences.GetIsAnonymous())
+	telemetry.GetInstance().SetTelemetryAnonymous(userPreferences.IsAnonymous)
 
 	return nil
 }
