@@ -37,7 +37,11 @@ function Login(): JSX.Element {
 				password,
 			});
 			if (response.statusCode === 200) {
-				await afterLogin(response.payload.userId);
+				await afterLogin(
+					response.payload.userId,
+					response.payload.accessJwt,
+					response.payload.refreshJwt,
+				);
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notification.error({

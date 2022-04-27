@@ -1,9 +1,16 @@
+import getLocalStorageApi from 'api/browser/localstorage/get';
 import axios, { AxiosInstance } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import store from 'store';
 
 import apiV1, { apiV2 } from './apiV1';
 import { Logout } from './utils';
+
+const token =
+	store.getState().app.user?.accessJwt ||
+	getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
+	'';
 
 const handleLogoutInterceptor = (instance: AxiosInstance): void => {
 	instance.interceptors.response.use((value) => {
@@ -18,7 +25,7 @@ const handleLogoutInterceptor = (instance: AxiosInstance): void => {
 const instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 	headers: {
-		Authorization: `bearer ${store.getState().app.user?.accessJwt || ''}`,
+		Authorization: `bearer ${token}`,
 	},
 });
 
@@ -29,7 +36,7 @@ export default instance;
 export const AxiosAlertManagerInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
 	headers: {
-		Authorization: `bearer ${store.getState().app.user?.accessJwt || ''}`,
+		Authorization: `bearer ${token}`,
 	},
 });
 

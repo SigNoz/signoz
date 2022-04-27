@@ -14,14 +14,22 @@ import {
 	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
 
-const afterLogin = async (userId: string): Promise<void> => {
+const afterLogin = async (
+	userId: string,
+	authToken: string,
+	refreshToken: string,
+): Promise<void> => {
+	setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, authToken);
+	setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, refreshToken);
 	const [rolesResponse, userOrgResponse, getUserResponse] = await Promise.all([
 		getRolesApi({
 			userId,
+			token: authToken,
 		}),
-		getUserOrganization(),
+		getUserOrganization(authToken),
 		getUserApi({
 			userId,
+			token: authToken,
 		}),
 	]);
 

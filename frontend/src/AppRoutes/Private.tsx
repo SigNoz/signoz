@@ -40,11 +40,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
-						if (
-							isLoggedIn &&
-							localStorageUserAuthToken &&
-							localStorageUserAuthToken.refreshJwt
-						) {
+						if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
 							// localstorage token is present
 							const { refreshJwt } = localStorageUserAuthToken;
 
@@ -55,7 +51,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 							if (response.statusCode === 200) {
 								// get all resource and put it over redux
-								await afterLogin(response.payload.userId);
+								await afterLogin(
+									response.payload.userId,
+									response.payload.accessJwt,
+									response.payload.refreshJwt,
+								);
 							} else {
 								notification.error({
 									message: response.error || t('something_went_wrong'),

@@ -4,11 +4,15 @@ import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getOrganization';
 
-const getOrganization = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
+const getOrganization = async (
+	token?: string,
+): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/org`);
+		const response = await axios.get(`/org`, {
+			headers: {
+				Authorization: `bearer ${token}`,
+			},
+		});
 
 		return {
 			statusCode: 200,
