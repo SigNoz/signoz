@@ -198,7 +198,7 @@ function PendingInvitesContainer(): JSX.Element {
 				}
 				setIsInvitingMembers(false);
 				toggleModal(false);
-			}, 0);
+			}, 2000);
 		} catch (error) {
 			notification.error({
 				message: t('something_went_wrong', {

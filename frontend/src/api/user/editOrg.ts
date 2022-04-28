@@ -13,6 +13,7 @@ const editOrg = async (
 		const response = await api.put(`/org/${props.orgId}`, {
 			name: props.name,
 			isAnonymous: props.isAnonymous,
+			hasOptedUpdates: props.hasOptedUpdates,
 		});
 
 		return {

@@ -1,14 +1,18 @@
 import { Button, Input, notification, Space, Switch, Typography } from 'antd';
+import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
-import setPreference from 'api/user/setPreference';
+import loginApi from 'api/user/login';
 import signUpApi from 'api/user/signup';
+import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { PayloadProps } from 'types/api/user/getUserPreference';
+import { SuccessResponse } from 'types/api';
+import { PayloadProps } from 'types/api/user/getUser';
+import { PayloadProps as GetUserPreferencePayload } from 'types/api/user/getUserPreference';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
 
@@ -69,6 +73,70 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 	};
 
 	const defaultError = 'Something went wrong';
+	const isPreferenceVisible = token === null;
+
+	const comonHandler = async (
+		callback: (e: SuccessResponse<PayloadProps>) => Promise<void> | VoidFunction,
+	): Promise<void> => {
+		try {
+			const response = await signUpApi({
+				email,
+				name: firstName,
+				orgName: organizationName,
+				password,
+				token: params.get('token') || undefined,
+			});
+
+			if (response.statusCode === 200) {
+				const loginResponse = await loginApi({
+					email,
+					password,
+				});
+
+				if (loginResponse.statusCode === 200) {
+					const { payload } = loginResponse;
+					const userResponse = await afterLogin(
+						payload.userId,
+						payload.accessJwt,
+						payload.refreshJwt,
+					);
+					if (userResponse) {
+						callback(userResponse);
+					}
+				} else {
+					notification.error({
+						message: loginResponse.error || defaultError,
+					});
+				}
+			} else {
+				notification.error({
+					message: defaultError,
+				});
+			}
+		} catch (error) {
+			notification.error({
+				message: defaultError,
+			});
+		}
+	};
+
+	const onAdminAfterLogin = async (
+		userResponse: SuccessResponse<PayloadProps>,
+	): Promise<void> => {
+		const editResponse = await editOrg({
+			isAnonymous,
+			name: organizationName,
+			hasOptedUpdates,
+			orgId: userResponse.payload.orgId,
+		});
+		if (editResponse.statusCode === 200) {
+			history.push(ROUTES.APPLICATION);
+		} else {
+			notification.error({
+				message: editResponse.error || defaultError,
+			});
+		}
+	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
 		(async (): Promise<void> => {
@@ -76,39 +144,17 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 				e.preventDefault();
 				setLoading(true);
 
-				const userPreferenceResponse = await setPreference({
-					isAnonymous,
-					hasOptedUpdates,
-				});
-
-				if (userPreferenceResponse.statusCode === 200) {
-					const response = await signUpApi({
-						email,
-						name: firstName,
-						orgName: organizationName,
-						password,
-						token: params.get('token') || undefined,
-					});
-
-					if (response.statusCode === 200) {
-						notification.success({
-							message: 'Successfully register',
-						});
-						history.push(ROUTES.LOGIN);
-					} else {
-						setLoading(false);
-
-						notification.error({
-							message: defaultError,
-						});
-					}
+				if (isPreferenceVisible) {
+					await comonHandler(onAdminAfterLogin);
 				} else {
-					setLoading(false);
-
-					notification.error({
-						message: defaultError,
-					});
+					await comonHandler(
+						async (): Promise<void> => {
+							history.push(ROUTES.APPLICATION);
+						},
+					);
 				}
+
+				setLoading(false);
 			} catch (error) {
 				notification.error({
 					message: defaultError,
@@ -213,27 +259,31 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 						)}
 					</div>
 
-					<MarginTop marginTop="2.4375rem">
-						<Space>
-							<Switch
-								onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
-								checked={hasOptedUpdates}
-							/>
-							<Typography>Keep me updated on new SigNoz features</Typography>
-						</Space>
-					</MarginTop>
+					{isPreferenceVisible && (
+						<>
+							<MarginTop marginTop="2.4375rem">
+								<Space>
+									<Switch
+										onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
+										checked={hasOptedUpdates}
+									/>
+									<Typography>Keep me updated on new SigNoz features</Typography>
+								</Space>
+							</MarginTop>
 
-					<MarginTop marginTop="0.5rem">
-						<Space>
-							<Switch
-								onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
-								checked={isAnonymous}
-							/>
-							<Typography>
-								Anonymise my usage date. We collect data to measure product usage
-							</Typography>
-						</Space>
-					</MarginTop>
+							<MarginTop marginTop="0.5rem">
+								<Space>
+									<Switch
+										onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
+										checked={isAnonymous}
+									/>
+									<Typography>
+										Anonymise my usage date. We collect data to measure product usage
+									</Typography>
+								</Space>
+							</MarginTop>
+						</>
+					)}
 
 					<ButtonContainer>
 						<Button
@@ -262,7 +312,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 
 interface SignUpProps {
 	version: string;
-	userPref: PayloadProps;
+	userPref: GetUserPreferencePayload;
 }
 
 export default SignUp;

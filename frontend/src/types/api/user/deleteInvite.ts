@@ -1,7 +1,7 @@
 import { User } from 'types/reducer/app';
 
 export interface Props {
-	userId: User['userId'];
+	email: User['email'];
 }
 
 export interface PayloadProps {

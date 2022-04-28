@@ -10,7 +10,7 @@ const deleteInvite = async (
 	try {
 		const api = axios();
 
-		const response = await api.delete(`/invite/${props.userId}`);
+		const response = await api.delete(`/invite/${props.email}`);
 
 		return {
 			statusCode: 200,

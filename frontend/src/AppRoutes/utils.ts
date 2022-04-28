@@ -14,12 +14,14 @@ import {
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_IS_FETCH,
 } from 'types/actions/app';
+import { SuccessResponse } from 'types/api';
+import { PayloadProps } from 'types/api/user/getUser';
 
 const afterLogin = async (
 	userId: string,
 	authToken: string,
 	refreshToken: string,
-): Promise<void> => {
+): Promise<SuccessResponse<PayloadProps> | undefined> => {
 	setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, authToken);
 	setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, refreshToken);
 
@@ -74,19 +76,22 @@ const afterLogin = async (
 			},
 		});
 
-		// user org and roles are successfully fetched update the store and proceed further
-	} else {
-		store.dispatch({
-			type: UPDATE_USER_IS_FETCH,
-			payload: {
-				isUserFetching: false,
-			},
-		});
-		notification.error({
-			message: getUserResponse.error || t('something_went_wrong'),
-		});
-		history.push(ROUTES.SOMETHING_WENT_WRONG);
+		return getUserResponse;
 	}
+
+	store.dispatch({
+		type: UPDATE_USER_IS_FETCH,
+		payload: {
+			isUserFetching: false,
+		},
+	});
+
+	notification.error({
+		message: getUserResponse.error || t('something_went_wrong'),
+	});
+
+	history.push(ROUTES.SOMETHING_WENT_WRONG);
+	return undefined;
 };
 
 export default afterLogin;

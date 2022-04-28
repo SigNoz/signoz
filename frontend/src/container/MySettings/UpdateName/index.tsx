@@ -12,14 +12,16 @@ import AppReducer from 'types/reducer/app';
 import { NameInput } from '../styles';
 
 function UpdateName(): JSX.Element {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user, role, org } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const { t } = useTranslation();
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [changedName, setChangedName] = useState<string>(user?.name || '');
 	const [loading, setLoading] = useState<boolean>(false);
 
-	if (!user) {
+	if (!user || !org) {
 		return <div />;
 	}
 
@@ -42,6 +44,9 @@ function UpdateName(): JSX.Element {
 					payload: {
 						...user,
 						name: changedName,
+						ROLE: role || 'ADMIN',
+						orgId: org[0].id,
+						orgName: org[0].name,
 					},
 				});
 			} else {
