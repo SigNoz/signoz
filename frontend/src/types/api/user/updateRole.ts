@@ -1,7 +1,8 @@
-import { User } from 'types/reducer/app';
+import { ROLES } from 'types/roles';
 
 export interface Props {
-	userId: User['userId'];
+	group_name: ROLES;
+	userId: string;
 }
 
 export interface PayloadProps {

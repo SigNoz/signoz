@@ -1,8 +1,12 @@
-import { Button, Modal, Space, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
+import deleteUser from 'api/user/deleteUser';
+import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
+import updateRole from 'api/user/updateRole';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -32,6 +36,8 @@ function UserFunction({
 	const [emailAddress, setEmailAddress] = useState(email);
 	const [updatedName, setUpdatedName] = useState(name);
 	const [role, setRole] = useState<ROLES>(accessLevel);
+	const { t } = useTranslation(['common']);
+	const [isDeleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
 	const onUpdateDetailsHandler = (): void => {
 		setDataSource((data) => {
@@ -54,6 +60,92 @@ function UserFunction({
 			}
 			return data;
 		});
+	};
+
+	const onDelete = (): void => {
+		setDataSource((source) => {
+			const index = source.findIndex((e) => e.id === id);
+
+			if (index !== -1) {
+				const updatedData: DataType[] = [
+					...source.slice(0, index),
+					...source.slice(index + 1, source.length),
+				];
+
+				return updatedData;
+			}
+			return source;
+		});
+	};
+
+	const onDeleteHandler = async (): Promise<void> => {
+		try {
+			setIsDeleteLoading(true);
+			const response = await deleteUser({
+				userId: id,
+			});
+
+			if (response.statusCode === 200) {
+				onDelete();
+				notification.success({
+					message: t('success', {
+						ns: 'common',
+					}),
+				});
+				setIsDeleteModalVisible(false);
+			} else {
+				notification.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+			}
+			setIsDeleteLoading(false);
+		} catch (error) {
+			setIsDeleteLoading(false);
+
+			notification.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+		}
+	};
+
+	const onInviteMemberHandler = async (): Promise<void> => {
+		const [editUserResponse, updateRoleResponse] = await Promise.all([
+			editUserApi({
+				userId: id,
+				name: updatedName,
+			}),
+			updateRole({
+				group_name: role,
+				userId: id,
+			}),
+		]);
+
+		if (
+			editUserResponse.statusCode === 200 &&
+			updateRoleResponse.statusCode === 200
+		) {
+			onUpdateDetailsHandler();
+			notification.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+		} else {
+			notification.error({
+				message:
+					editUserResponse.error ||
+					updateRoleResponse.error ||
+					t('something_went_wrong', {
+						ns: 'common',
+					}),
+			});
+		}
 	};
 
 	return (
@@ -86,7 +178,7 @@ function UserFunction({
 					</Button>,
 					<Button
 						key="Invite_team_members"
-						onClick={onUpdateDetailsHandler}
+						onClick={onInviteMemberHandler}
 						type="primary"
 					>
 						Update Details
@@ -107,11 +199,12 @@ function UserFunction({
 			<Modal
 				title="Edit member details"
 				visible={isDeleteModalVisible}
-				onOk={(): void => onModalToggleHandler(setIsDeleteModalVisible, false)}
+				onOk={onDeleteHandler}
 				onCancel={(): void => onModalToggleHandler(setIsDeleteModalVisible, false)}
 				centered
+				confirmLoading={isDeleteLoading}
 			>
-				<DeleteMembersDetails />
+				<DeleteMembersDetails name={name} />
 			</Modal>
 		</>
 	);
@@ -134,7 +227,7 @@ function Members(): JSX.Element {
 			const updatedData: DataType[] = data?.payload?.map((e) => ({
 				accessLevel: e.role,
 				email: e.email,
-				id: String(e.createdAt),
+				id: String(e.id),
 				joinedOn: String(e.createdAt),
 				name: e.name,
 			}));

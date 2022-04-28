@@ -12,6 +12,7 @@ interface OrgMembers {
 	name: string;
 	role: ROLES;
 	token: string;
+	id: string;
 }
 
 export type PayloadProps = OrgMembers[];

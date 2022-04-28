@@ -3,7 +3,9 @@ import { ExclamationCircleTwoTone } from '@ant-design/icons';
 import { Space, Typography } from 'antd';
 import React from 'react';
 
-function DeleteMembersDetails(): JSX.Element {
+function DeleteMembersDetails({
+	name,
+}: DeleteMembersDetailsProps): JSX.Element {
 	return (
 		<div>
 			<Space direction="horizontal" size="middle" align="start">
@@ -14,7 +16,7 @@ function DeleteMembersDetails(): JSX.Element {
 					}}
 				/>
 				<Space direction="vertical">
-					<Typography>Are you sure you want to delete Member Name</Typography>
+					<Typography>Are you sure you want to delete {name}</Typography>
 					<Typography>
 						This will remove all access from dashboards and other features in SigNoz
 					</Typography>
@@ -22,6 +24,10 @@ function DeleteMembersDetails(): JSX.Element {
 			</Space>
 		</div>
 	);
+}
+
+interface DeleteMembersDetailsProps {
+	name: string;
 }
 
 export default DeleteMembersDetails;
