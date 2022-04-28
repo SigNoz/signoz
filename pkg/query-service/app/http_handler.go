@@ -1700,6 +1700,7 @@ func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := auth.ResetPassword(context.Background(), req); err != nil {
+		zap.S().Debugf("resetPassword failed, err: %v\n", err)
 		if aH.handleError(w, err, http.StatusInternalServerError) {
 			return
 		}

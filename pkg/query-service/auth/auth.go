@@ -197,10 +197,13 @@ type RegisterRequest struct {
 // need an invite token to go through.
 func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 
+	zap.S().Debugf("Got a register request for email: %v\n", req.Email)
+
 	// TODO(Ahsan): We should optimize it, shouldn't make an extra DB call everytime to know if
 	// this is the first register request.
 	users, apiErr := dao.DB().GetUsers(ctx)
 	if apiErr != nil {
+		zap.S().Debugf("GetUser failed, err: %v\n", apiErr.Err)
 		return apiErr
 	}
 
@@ -213,6 +216,7 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 	if len(users) == 0 {
 		org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{Name: req.OrgName})
 		if apiErr != nil {
+			zap.S().Debugf("CreateOrg failed, err: %v\n", apiErr.Err)
 			return apiErr
 		}
 		group = constants.AdminGroup
@@ -226,6 +230,7 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 		}
 		org, apiErr := dao.DB().GetOrgByName(ctx, req.OrgName)
 		if apiErr != nil {
+			zap.S().Debugf("GetOrgByName failed, err: %v\n", apiErr.Err)
 			return apiErr
 		}
 
@@ -249,11 +254,13 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 	user.Password = hash
 	userCreated, apiErr := dao.DB().CreateUserWithRole(ctx, user, group)
 	if apiErr != nil {
+		zap.S().Debugf("CreateUserWithRole failed, err: %v\n", apiErr.Err)
 		return apiErr
 	}
 
 	userGroup, apiErr := dao.DB().GetGroupByName(ctx, group)
 	if apiErr != nil {
+		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
 		return apiErr
 	}
 

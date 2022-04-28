@@ -194,6 +194,7 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 
 	group, apiErr := mds.GetGroupByName(ctx, role)
 	if apiErr != nil {
+		zap.S().Debugf("Failed to get group by name. Err: %v.", apiErr.Err)
 		return nil, apiErr
 	}
 
@@ -210,13 +211,6 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-			return
-		}
-		err = tx.Commit()
-	}()
 
 	user.Id = uuid.NewString()
 	_, err = tx.ExecContext(ctx,
@@ -226,16 +220,20 @@ func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.U
 		user.ProfilePirctureURL,
 	)
 	if err != nil {
+		zap.S().Debugf("Failed to insert user. Err: %v. Rolling back", err)
+		tx.Rollback()
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	_, err = tx.ExecContext(ctx, `INSERT INTO group_users (group_id, user_id) VALUES (?, ?);`,
 		group.Id, user.Id)
 	if err != nil {
+		zap.S().Debugf("Failed to insert user to group. Err: %v. Rolling back", err)
+		tx.Rollback()
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
