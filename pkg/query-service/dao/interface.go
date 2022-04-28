@@ -20,8 +20,8 @@ type Queries interface {
 
 	GetUserGroup(ctx context.Context, id string) (*model.GroupUser, *model.ApiError)
 
-	GetUser(ctx context.Context, id string) (*model.User, *model.ApiError)
-	GetUserByEmail(ctx context.Context, email string) (*model.User, *model.ApiError)
+	GetUser(ctx context.Context, id string) (*model.UserResponse, *model.ApiError)
+	GetUserByEmail(ctx context.Context, email string) (*model.UserResponse, *model.ApiError)
 	GetUsers(ctx context.Context) ([]model.UserResponse, *model.ApiError)
 
 	GetGroup(ctx context.Context, id string) (*model.Group, *model.ApiError)

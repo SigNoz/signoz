@@ -288,9 +288,27 @@ func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.Api
 	return nil
 }
 
-func (mds *ModelDaoSqlite) GetUser(ctx context.Context, id string) (*model.User, *model.ApiError) {
-	users := []model.User{}
-	err := mds.db.Select(&users, `SELECT * FROM users WHERE id=?;`, id)
+func (mds *ModelDaoSqlite) GetUser(ctx context.Context, id string) (*model.UserResponse, *model.ApiError) {
+	users := []model.UserResponse{}
+
+	query := `select
+				u.id,
+				u.name,
+				u.org_id,
+				u.email,
+				u.password,
+				u.created_at,
+				u.profile_picture_url,
+				g.name as role,
+				o.name as organization
+			from users u, groups g, group_users gu, organizations o
+			where
+				u.id=gu.user_id and
+				g.id=gu.group_id and
+				o.id = u.org_id and
+				u.id=?;`
+
+	err := mds.db.Select(&users, query, id)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -307,9 +325,25 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context, id string) (*model.User,
 	return &users[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*model.User, *model.ApiError) {
-	users := []model.User{}
-	err := mds.db.Select(&users, `SELECT * FROM users WHERE email=?;`, email)
+func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*model.UserResponse, *model.ApiError) {
+	users := []model.UserResponse{}
+	query := `select
+				u.id,
+				u.name,
+				u.org_id,
+				u.email,
+				u.password,
+				u.created_at,
+				u.profile_picture_url,
+				g.name as role,
+				o.name as organization
+			from users u, groups g, group_users gu, organizations o
+			where
+				u.id=gu.user_id and
+				g.id=gu.group_id and
+				o.id = u.org_id and
+				u.email=?;`
+	err := mds.db.Select(&users, query, email)
 
 	if err != nil {
 		zap.S().Debugf("Error in processing sql query: %v", err)
@@ -328,7 +362,23 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*m
 
 func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserResponse, *model.ApiError) {
 	users := []model.UserResponse{}
-	query := `select u.id,u.name,u.org_id,u.email,u.created_at,g.name as role from users u, groups g, group_users gu where u.id=gu.user_id and g.id=gu.group_id;`
+
+	query := `select
+				u.id,
+				u.name,
+				u.org_id,
+				u.email,
+				u.password,
+				u.created_at,
+				u.profile_picture_url,
+				g.name as role,
+				o.name as organization
+			from users u, groups g, group_users gu, organizations o
+			where
+				u.id=gu.user_id and
+				g.id=gu.group_id and
+				o.id = u.org_id`
+
 	err := mds.db.Select(&users, query)
 
 	if err != nil {
@@ -341,7 +391,22 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserResponse, 
 func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserResponse, *model.ApiError) {
 	users := []model.UserResponse{}
 
-	query := `select u.id,u.name,u.org_id,u.email,u.created_at,g.name as role from users u, groups g, group_users gu where u.id=gu.user_id and g.id=gu.group_id and u.org_id=?;`
+	query := `select
+				u.id,
+				u.name,
+				u.org_id,
+				u.email,
+				u.password,
+				u.created_at,
+				u.profile_picture_url,
+				g.name as role,
+				o.name as organization
+			from users u, groups g, group_users gu, organizations o
+			where
+				u.id=gu.user_id and
+				g.id=gu.group_id and
+				o.id = u.org_id and
+				u.ord_id=?;`
 	err := mds.db.Select(&users, query, orgId)
 
 	if err != nil {

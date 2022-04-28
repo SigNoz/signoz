@@ -1333,16 +1333,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		user.Password = ""
 	}
 
-	userOrg, err := dao.DB().GetOrg(ctx, user.OrgId)
-	if err != nil {
-		respondError(w, err, "Failed to get user's org information")
-		return
-	}
-
-	aH.writeJSON(w, r, &model.UserResponse{
-		User:         *user,
-		Organization: userOrg.Name,
-	})
+	aH.writeJSON(w, r, user)
 }
 
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
@@ -1386,9 +1377,16 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	// 	}
 	// 	old.Password = string(hash)
 	// }
-	update.Id = id
 
-	_, apiErr = dao.DB().EditUser(ctx, old)
+	_, apiErr = dao.DB().EditUser(ctx, &model.User{
+		Id:                 old.Id,
+		Name:               old.Name,
+		OrgId:              old.OrgId,
+		Email:              old.Email,
+		Password:           old.Password,
+		CreatedAt:          old.CreatedAt,
+		ProfilePirctureURL: old.ProfilePirctureURL,
+	})
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to update user")
 		return

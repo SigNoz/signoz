@@ -314,7 +314,7 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.User, error) {
+func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserResponse, error) {
 
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {
