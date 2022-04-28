@@ -1267,8 +1267,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-	apiErr := auth.Register(ctx, req)
+	apiErr := auth.Register(context.Background(), req)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to register user")
 		return

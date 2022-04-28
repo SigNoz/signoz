@@ -92,6 +92,10 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponse, er
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
 	}
 
+	if inv == nil {
+		return nil, errors.Wrap(apiErr.Err, "user is not invited")
+	}
+
 	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")

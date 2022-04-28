@@ -12,6 +12,7 @@ import (
 
 func (mds *ModelDaoSqlite) FetchUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError) {
 
+	zap.S().Debugf("Fetching user preference")
 	userPreferences := []model.UserPreferences{}
 	query := fmt.Sprintf("SELECT id, uuid, isAnonymous, hasOptedUpdates FROM user_preferences;")
 
@@ -38,6 +39,7 @@ func (mds *ModelDaoSqlite) FetchUserPreference(ctx context.Context) (*model.User
 
 func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferences *model.UserPreferences) *model.ApiError {
 
+	zap.S().Debugf("Updating user preference")
 	tx, err := mds.db.Begin()
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -73,6 +75,7 @@ func (mds *ModelDaoSqlite) UpdateUserPreferece(ctx context.Context, userPreferen
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	telemetry.GetInstance().SetTelemetryAnonymous(userPreferences.IsAnonymous)
+	zap.S().Debugf("Updated user preference successfully")
 
 	return nil
 }
