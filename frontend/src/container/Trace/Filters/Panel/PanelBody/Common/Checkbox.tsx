@@ -93,11 +93,15 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
-				updatedFilter.forEach((value, key) => {
-					if (key !== 'duration' && name !== key) {
-						preUserSelectedMap.set(key, Object.keys(value));
-					}
-				});
+				// updatedFilter.forEach((value, key) => {
+				// 	if (key !== 'duration' && name !== key) {
+				// 		preUserSelectedMap.set(key, Object.keys(value));
+				// 	}
+
+				// 	if (key === 'duration') {
+				// 		newSelectedMap.set('duration', [value.maxDuration, value.minDuration]);
+				// 	}
+				// });
 
 				updatedFilter.set(name, {
 					[`${keyValue}`]: '-1',
@@ -115,6 +119,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 						selectedFilter: newSelectedMap,
 						userSelected: preUserSelectedMap,
 						isFilterExclude: preIsFilterExclude,
+						order: spansAggregate.order,
 					},
 				});
 
@@ -125,9 +130,9 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
-					updatedFilter,
 					preIsFilterExclude,
 					preUserSelectedMap,
+					spansAggregate.order,
 				);
 			} else {
 				setIsLoading(false);

@@ -23,14 +23,12 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import EmptyGraph from './EmptyGraph';
 import { NotFoundContainer, TimeContainer } from './styles';
 
 function FullView({
 	widget,
 	fullViewOptions = true,
 	onClickHandler,
-	noDataGraph = false,
 	name,
 	yAxisUnit,
 }: FullViewProps): JSX.Element {
@@ -118,16 +116,11 @@ function FullView({
 				}));
 			} else {
 				const chartDataSet = getChartData({
-					queryData: {
-						data: response.map((e) => ({
-							query: e.query,
-							legend: e.legend,
-							queryData: e.queryData.payload?.result || [],
-						})),
-						error: false,
-						errorMessage: '',
-						loading: false,
-					},
+					queryData: response.map((e) => ({
+						query: e.query,
+						legend: e.legend,
+						queryData: e.queryData.payload?.result || [],
+					})),
 				});
 
 				setState((state) => ({
@@ -163,38 +156,6 @@ function FullView({
 			<div>
 				<Spinner height="80vh" size="large" tip="Loading..." />
 			</div>
-		);
-	}
-
-	if (state.loading === false && state.payload.datasets.length === 0) {
-		return (
-			<>
-				{fullViewOptions && (
-					<TimeContainer>
-						<TimePreference
-							{...{
-								selectedTime,
-								setSelectedTime,
-							}}
-						/>
-						<Button onClick={onFetchDataHandler} type="primary">
-							Refresh
-						</Button>
-					</TimeContainer>
-				)}
-
-				{noDataGraph ? (
-					<EmptyGraph
-						onClickHandler={onClickHandler}
-						widget={widget}
-						selectedTime={selectedTime}
-					/>
-				) : (
-					<NotFoundContainer>
-						<Typography>No Data</Typography>
-					</NotFoundContainer>
-				)}
-			</>
 		);
 	}
 
@@ -243,7 +204,6 @@ interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: GraphOnClickHandler;
-	noDataGraph?: boolean;
 	name: string;
 	yAxisUnit?: string;
 }
@@ -251,7 +211,6 @@ interface FullViewProps {
 FullView.defaultProps = {
 	fullViewOptions: undefined,
 	onClickHandler: undefined,
-	noDataGraph: undefined,
 	yAxisUnit: undefined,
 };
 

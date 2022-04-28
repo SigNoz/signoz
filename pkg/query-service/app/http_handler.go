@@ -43,15 +43,18 @@ type APIHandler struct {
 	apiPrefix    string
 	reader       *Reader
 	relationalDB dao.ModelDao
+	alertManager am.Manager
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
 
+	alertManager := am.New("")
 	aH := &APIHandler{
 		reader:       reader,
 		relationalDB: relationalDB,
+		alertManager: alertManager,
 	}
 	aH.ready = aH.testReady
 
@@ -181,6 +184,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/channels/{id}", aH.editChannel).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/channels/{id}", aH.deleteChannel).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/channels", aH.createChannel).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/testChannel", aH.testChannel).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", aH.getRule).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
@@ -390,13 +394,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if postData["uuid"] != uuid {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("uuid in request param and uuid in request body do not match")}, "Error reading request body")
-		return
-	}
-
-	dashboard, apiError := dashboards.UpdateDashboard(&postData)
-
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, &postData)
 	if apiError != nil {
 		respondError(w, apiError, nil)
 		return
@@ -507,6 +505,33 @@ func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.respond(w, channels)
+}
+
+// testChannels sends test alert to all registered channels
+func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	receiver := &am.Receiver{}
+	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
+		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	// send alert
+	apiErrorObj := aH.alertManager.TestReceiver(receiver)
+	if apiErrorObj != nil {
+		respondError(w, apiErrorObj, nil)
+		return
+	}
+	aH.respond(w, "test alert sent")
 }
 
 func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {

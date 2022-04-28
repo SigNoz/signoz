@@ -5,14 +5,14 @@ import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
 import { State } from 'hooks/useFetch';
 import history from 'lib/history';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { PayloadProps } from 'types/api/alerts/get';
 import { PayloadProps as PutPayloadProps } from 'types/api/alerts/put';
 
 import { ButtonContainer } from './styles';
 
 function EditRules({ initialData, ruleId }: EditRulesProps): JSX.Element {
-	const value = useRef<string>(initialData);
+	const [value, setEditorValue] = useState<string>(initialData);
 	const [notifications, Element] = notification.useNotification();
 	const [editButtonState, setEditButtonState] = useState<State<PutPayloadProps>>(
 		{
@@ -31,7 +31,7 @@ function EditRules({ initialData, ruleId }: EditRulesProps): JSX.Element {
 				loading: true,
 			}));
 			const response = await put({
-				data: value.current,
+				data: value,
 				id: parseInt(ruleId, 10),
 			});
 
@@ -72,13 +72,13 @@ function EditRules({ initialData, ruleId }: EditRulesProps): JSX.Element {
 					'Oops! Some issue occured in editing the alert please try again or contact support@signoz.io',
 			});
 		}
-	}, [ruleId, notifications]);
+	}, [value, ruleId, notifications]);
 
 	return (
 		<>
 			{Element}
 
-			<Editor value={value} />
+			<Editor onChange={(value): void => setEditorValue(value)} value={value} />
 
 			<ButtonContainer>
 				<Button

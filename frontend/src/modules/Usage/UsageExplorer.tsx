@@ -84,7 +84,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 		if (selectedTime && selectedInterval) {
 			const maxTime = new Date().getTime() * 1000000;
 			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
-
+			
 			getUsageData(minTime, maxTime, selectedInterval.value, selectedService);
 		}
 	}, [selectedTime, selectedInterval, selectedService, getUsageData]);

@@ -11,6 +11,8 @@ const breadcrumbNameMap = {
 	[ROUTES.INSTRUMENTATION]: 'Add instrumentation',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
+	[ROUTES.ALL_ERROR]: 'Errors',
+	[ROUTES.VERSION]: 'Status',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

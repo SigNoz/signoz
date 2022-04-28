@@ -5,7 +5,7 @@ import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
-import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
+import { UpdateTagVisibility } from 'store/actions/trace/updateTagPanelVisiblity';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TraceReducer } from 'types/reducer/trace';
@@ -27,7 +27,7 @@ const { Paragraph } = Typography;
 function AllTags({
 	updateTagIsError,
 	onChangeHandler,
-	updateTagVisiblity,
+	updateTagVisibility,
 	updateFilters,
 }: AllTagsProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
@@ -63,7 +63,7 @@ function AllTags({
 			onChangeHandler(parsedQuery.payload);
 			updateFilters(localSelectedTags);
 			updateTagIsError(false);
-			updateTagVisiblity(false);
+			updateTagVisibility(false);
 		}
 	};
 
@@ -75,7 +75,7 @@ function AllTags({
 		return (
 			<ErrorContainer>
 				<Paragraph style={{ color: '#E89A3C' }}>
-					Unrecognised query format. Please reset your query by clicking `X` in the
+					Unrecognized query format. Please reset your query by clicking `X` in the
 					search bar above.
 				</Paragraph>
 
@@ -116,14 +116,16 @@ function AllTags({
 			</Wrapper>
 
 			<ButtonContainer>
-				<Button onClick={onResetHandler}>Reset</Button>
-				<Button
-					type="primary"
-					onClick={onRunQueryHandler}
-					icon={<CaretRightFilled />}
-				>
-					Run Query
-				</Button>
+				<Space align="start">
+					<Button onClick={onResetHandler}>Reset</Button>
+					<Button
+						type="primary"
+						onClick={onRunQueryHandler}
+						icon={<CaretRightFilled />}
+					>
+						Run Query
+					</Button>
+				</Space>
 			</ButtonContainer>
 		</Container>
 	);
@@ -131,14 +133,14 @@ function AllTags({
 
 interface DispatchProps {
 	updateTagIsError: (value: boolean) => void;
-	updateTagVisiblity: (value: boolean) => void;
+	updateTagVisibility: (value: boolean) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
-	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
+	updateTagVisibility: bindActionCreators(UpdateTagVisibility, dispatch),
 });
 
 interface AllTagsProps extends DispatchProps {

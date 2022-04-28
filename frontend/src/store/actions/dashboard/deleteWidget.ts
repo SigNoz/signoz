@@ -17,12 +17,14 @@ export const DeleteWidget = ({
 			const updatedWidgets = widgets.filter((e) => e.id !== widgetId);
 
 			const response = await updateDashboardApi({
-				title: selectedDashboard.data.title,
+				data: {
+					title: selectedDashboard.data.title,
+					description: selectedDashboard.data.description,
+					name: selectedDashboard.data.name,
+					tags: selectedDashboard.data.tags,
+					widgets: updatedWidgets,
+				},
 				uuid: selectedDashboard.uuid,
-				description: selectedDashboard.data.description,
-				name: selectedDashboard.data.name,
-				tags: selectedDashboard.data.tags,
-				widgets: updatedWidgets,
 			});
 
 			if (response.statusCode === 200) {

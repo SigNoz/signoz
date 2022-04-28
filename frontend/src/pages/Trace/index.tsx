@@ -5,6 +5,7 @@ import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
@@ -63,7 +64,7 @@ function Trace({
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
 			selectedTags,
-			order: 'ascending',
+			order: spansAggregate.order === 'ascend' ? 'ascending' : 'descending',
 		});
 	}, [
 		selectedTags,
@@ -73,6 +74,7 @@ function Trace({
 		getSpansAggregate,
 		spansAggregate.currentPage,
 		spansAggregate.pageSize,
+		spansAggregate.order,
 	]);
 
 	useEffect(() => {
@@ -83,7 +85,7 @@ function Trace({
 			selectedFilter,
 			selectedTags,
 			start: minTime,
-			step: 60,
+			step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 			isFilterExclude,
 		});
 	}, [
@@ -93,8 +95,8 @@ function Trace({
 		selectedTags,
 		maxTime,
 		minTime,
-		isFilterExclude,
 		getSpans,
+		isFilterExclude,
 	]);
 
 	useEffect(() => {

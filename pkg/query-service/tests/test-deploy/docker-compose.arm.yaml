@@ -5,6 +5,11 @@ services:
     image: altinity/clickhouse-server:21.12.3.32.altinitydev.arm
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+    restart: on-failure
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
@@ -16,6 +21,7 @@ services:
     image: signoz/alertmanager:0.6.0
     depends_on:
       - query-service
+    restart: on-failure
     command:
       - --queryService.url=http://query-service:8080
       - --storage.path=/data
@@ -35,6 +41,11 @@ services:
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     depends_on:
       clickhouse:
         condition: service_healthy
