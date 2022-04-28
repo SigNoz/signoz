@@ -19,12 +19,10 @@ import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const mapRoutes = useMemo(() => new Map(routes.map((e) => [e.path, e])), []);
-	const {
-		// user,
-		isUserFetching,
-		isUserFetchingError,
-		isLoggedIn,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isUserFetching, isUserFetchingError, isLoggedIn } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
 	const { t } = useTranslation(['common']);
 
 	const currentRoute = mapRoutes.get(history.location.pathname);
@@ -116,7 +114,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		})();
 		// need to run over mount only
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dispatch]);
+	}, [dispatch, currentRoute]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;

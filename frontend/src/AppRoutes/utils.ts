@@ -23,8 +23,6 @@ const afterLogin = async (
 	authToken: string,
 	refreshToken: string,
 ): Promise<void> => {
-	setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, authToken);
-	setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, refreshToken);
 	store.dispatch<AppActions>({
 		type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 		payload: {
@@ -32,6 +30,9 @@ const afterLogin = async (
 			refreshJwt: refreshToken,
 		},
 	});
+
+	setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, authToken);
+	setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, refreshToken);
 
 	const [rolesResponse, userOrgResponse, getUserResponse] = await Promise.all([
 		getRolesApi({
