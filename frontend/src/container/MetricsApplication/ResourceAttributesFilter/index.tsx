@@ -56,30 +56,35 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	const dispatchQueries = (updatedQueries: IResourceAttributeQuery[]): void => {
 		dispatch(SetResourceAttributeQueries(updatedQueries));
 	};
-
+	const handleLoading = (isLoading: boolean): void => {
+		setLoading(isLoading);
+		if (isLoading) {
+			setOptionsData({ mode: undefined, options: [] });
+		}
+	};
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
 			onSelectTagKey: () => {
-				setLoading(true);
+				handleLoading(true);
 				GetTagKeys()
 					.then((tagKeys) => setOptionsData({ options: tagKeys, mode: undefined }))
 					.finally(() => {
-						setLoading(false);
+						handleLoading(false);
 					});
 			},
 			onSelectOperator: () => {
 				setOptionsData({ options: OperatorSchema, mode: undefined });
 			},
 			onSelectTagValue: () => {
-				setLoading(true);
-				if (staging[0])
-					GetTagValues(staging[0])
-						.then((tagValuesOptions) =>
-							setOptionsData({ options: tagValuesOptions, mode: 'multiple' }),
-						)
-						.finally(() => {
-							setLoading(false);
-						});
+				handleLoading(true);
+
+				GetTagValues(staging[0])
+					.then((tagValuesOptions) =>
+						setOptionsData({ options: tagValuesOptions, mode: 'multiple' }),
+					)
+					.finally(() => {
+						handleLoading(false);
+					});
 			},
 			onBlurPurge: () => {
 				setSelectedValues([]);
