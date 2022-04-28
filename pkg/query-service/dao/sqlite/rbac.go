@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
@@ -271,23 +270,6 @@ func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash,
 
 func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.ApiError {
 	zap.S().Debugf("Deleting user. Id: %s\n", id)
-
-	userGroup, apiErr := mds.GetUserGroup(ctx, id)
-	if apiErr != nil {
-		return apiErr
-	}
-	adminGroup, apiErr := mds.GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return apiErr
-	}
-	adminUsers, apiErr := mds.GetGroupUsers(ctx, adminGroup.Id)
-	if apiErr != nil {
-		return apiErr
-	}
-
-	if userGroup.GroupId == adminGroup.Id && len(adminUsers) == 1 {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("cannot delete the last admin")}
-	}
 
 	result, err := mds.db.ExecContext(ctx, `DELETE from users where id=?;`, id)
 	if err != nil {

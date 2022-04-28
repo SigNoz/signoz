@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/auth"
+	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
@@ -1395,6 +1396,30 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := context.Background()
+	userGroup, apiErr := dao.DB().GetUserGroup(ctx, id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get admin group")
+		return
+	}
+	adminUsers, apiErr := dao.DB().GetGroupUsers(ctx, adminGroup.Id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get admin group users")
+		return
+	}
+
+	if userGroup.GroupId == adminGroup.Id && len(adminUsers) == 1 {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("cannot delete the last admin")}, "Failed to delete last admin user")
+		return
+	}
+
 	err := dao.DB().DeleteUser(context.Background(), id)
 	if err != nil {
 		respondError(w, err, "Failed to get user")
@@ -1445,6 +1470,28 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	if g == nil {
 		respondError(w, apiErr, "Specified group is not valid")
 		return
+	}
+
+	userGroup, apiErr := dao.DB().GetUserGroup(ctx, id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch user group")
+		return
+	}
+
+	if userGroup.GroupId == auth.AuthCacheObj.AdminGroupId {
+		adminUsers, apiErr := dao.DB().GetGroupUsers(ctx, auth.AuthCacheObj.AdminGroupId)
+		if apiErr != nil {
+			respondError(w, apiErr, "Failed to fetch adminUsers")
+			return
+		}
+
+		if len(adminUsers) == 1 {
+			respondError(w, &model.ApiError{
+				Err: errors.New("Cannot demote the last admin"),
+				Typ: model.ErrorInternal,
+			}, "Cannot demote the last admin")
+			return
+		}
 	}
 
 	apiErr = dao.DB().UpdateUserGroup(context.Background(), &model.GroupUser{
