@@ -406,7 +406,7 @@ func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]m
 				u.id=gu.user_id and
 				g.id=gu.group_id and
 				o.id = u.org_id and
-				u.ord_id=?;`
+				u.org_id=?;`
 	err := mds.db.Select(&users, query, orgId)
 
 	if err != nil {
