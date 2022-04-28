@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -146,16 +147,18 @@ func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]model.Organization, *
 	return orgs, nil
 }
 
-func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *model.Organization) *model.ApiError {
-	zap.S().Debugf("Updating org [id=%s]: %s\n", org.Id)
+func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, update *model.Organization) *model.ApiError {
+	zap.S().Debugf("Updating org [id=%s]: %s\n", update.Id)
 
 	_, err := mds.db.ExecContext(ctx,
 		`UPDATE organizations SET name=?,has_opted_updates=?,is_anonymous=? WHERE id=?;`,
-		org.Name, org.HasOptedUpdates, org.IsAnonymous, org.Id)
+		update.Name, update.HasOptedUpdates, update.IsAnonymous, update.Id)
 	if err != nil {
 		zap.S().Errorf("Error while updating user entry in the DB\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+
+	telemetry.GetInstance().SetTelemetryAnonymous(update.IsAnonymous)
 	return nil
 }
 
@@ -266,13 +269,22 @@ func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash,
 }
 
 func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.ApiError {
-	zap.S().Debugf("Updating user. Id: %s\n", id)
+	zap.S().Debugf("Deleting user. Id: %s\n", id)
 
-	_, err := mds.db.ExecContext(ctx, `DELETE from users where id=?;`, id)
+	result, err := mds.db.ExecContext(ctx, `DELETE from users where id=?;`, id)
 	if err != nil {
 		zap.S().Errorf("Error while deleting user from the DB\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+	if affectedRows == 0 {
+		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with id: %s", id)}
+	}
+
 	return nil
 }
 
