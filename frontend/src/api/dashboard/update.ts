@@ -8,7 +8,9 @@ const update = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.put(`/dashboards/${props.uuid}`, {
+		const api = axios();
+
+		const response = await api.put(`/dashboards/${props.uuid}`, {
 			...props.data,
 		});
 

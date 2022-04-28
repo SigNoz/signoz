@@ -8,7 +8,8 @@ const create = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/rules', {
+		const api = axios();
+		const response = await api.post('/rules', {
 			data: props.query,
 		});
 

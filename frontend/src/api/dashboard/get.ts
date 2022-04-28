@@ -8,7 +8,9 @@ const get = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/dashboards/${props.uuid}`);
+		const api = axios();
+
+		const response = await api.get(`/dashboards/${props.uuid}`);
 
 		return {
 			statusCode: 200,

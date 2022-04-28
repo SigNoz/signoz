@@ -8,7 +8,9 @@ const getOrganization = async (
 	token?: string,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/org`, {
+		const api = axios();
+
+		const response = await api.get(`/org`, {
 			headers: {
 				Authorization: `bearer ${token}`,
 			},

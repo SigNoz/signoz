@@ -8,7 +8,9 @@ const editSlack = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.put(`/channels/${props.id}`, {
+		const api = axios();
+
+		const response = await api.put(`/channels/${props.id}`, {
 			name: props.name,
 			slack_configs: [
 				{

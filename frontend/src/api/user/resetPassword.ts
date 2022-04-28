@@ -8,7 +8,9 @@ const resetPassword = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/resetPassword`, {
+		const api = axios();
+
+		const response = await api.post(`/resetPassword`, {
 			...props,
 		});
 

@@ -8,7 +8,9 @@ const deleteUser = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.delete(`/user/${props.userId}`);
+		const api = axios();
+
+		const response = await api.delete(`/user/${props.userId}`);
 
 		return {
 			statusCode: 200,

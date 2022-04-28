@@ -8,7 +8,9 @@ const getExternalError = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
+		const api = axios();
+
+		const response = await api.get(
 			`/service/externalErrors?&start=${props.start}&end=${props.end}&service=${props.service}&step=${props.step}`,
 		);
 

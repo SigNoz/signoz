@@ -8,7 +8,9 @@ const getPreference = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const response = await axios.get(`/userPreferences`);
+		const api = axios();
+
+		const response = await api.get(`/userPreferences`);
 
 		return {
 			statusCode: 200,

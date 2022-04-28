@@ -8,7 +8,9 @@ const getTraceItem = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.request<PayloadProps>({
+		const api = axios();
+
+		const response = await api.request<PayloadProps>({
 			url: `/traces/${props.id}`,
 			method: 'get',
 		});

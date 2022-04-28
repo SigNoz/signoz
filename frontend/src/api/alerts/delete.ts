@@ -8,7 +8,9 @@ const deleteAlerts = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.delete(`/rules/${props.id}`);
+		const api = axios();
+
+		const response = await api.delete(`/rules/${props.id}`);
 
 		return {
 			statusCode: 200,
