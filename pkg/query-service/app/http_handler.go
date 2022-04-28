@@ -215,8 +215,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/userPreferences", aH.setUserPreferences).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/userPreferences", aH.getUserPreferences).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/version", aH.getVersion).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", aH.getSpanFilters).Methods(http.MethodPost)
@@ -1158,38 +1156,6 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request) {
-
-	result, apiError := aH.relationalDB.FetchUserPreference(context.Background())
-	if apiError != nil {
-		respondError(w, apiError, "Error from Fetch Dao")
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-}
-
-func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request) {
-	userParams, err := parseUserPreferences(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	apiErr := aH.relationalDB.UpdateUserPreferece(context.Background(), userParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
-		return
-	}
-
-	data := map[string]interface{}{
-		"hasOptedUpdates": userParams.HasOptedUpdates,
-		"isAnonymous":     userParams.IsAnonymous,
-	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_PREFERENCES, data)
-
-	aH.writeJSON(w, r, map[string]string{"data": "user preferences set successfully"})
-
-}
-
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 
 	version := version.GetVersion()
@@ -1723,6 +1689,13 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		respondError(w, apiErr, "Failed to update org in the DB")
 		return
 	}
+
+	data := map[string]interface{}{
+		"hasOptedUpdates": req.HasOptedUpdates,
+		"isAnonymous":     req.IsAnonymous,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_PREFERENCES, data)
+
 	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
 

@@ -12,8 +12,6 @@ type ModelDao interface {
 }
 
 type Queries interface {
-	FetchUserPreference(ctx context.Context) (*model.UserPreferences, *model.ApiError)
-
 	GetInviteFromEmail(ctx context.Context, email string) (*model.InvitationObject, *model.ApiError)
 	GetInviteFromToken(ctx context.Context, token string) (*model.InvitationObject, *model.ApiError)
 	GetInvites(ctx context.Context) ([]model.InvitationObject, *model.ApiError)
@@ -42,8 +40,6 @@ type Queries interface {
 }
 
 type Mutations interface {
-	UpdateUserPreferece(ctx context.Context, userPreferences *model.UserPreferences) *model.ApiError
-
 	CreateInviteEntry(ctx context.Context, req *model.InvitationObject) *model.ApiError
 	DeleteInvitation(ctx context.Context, email string) *model.ApiError
 

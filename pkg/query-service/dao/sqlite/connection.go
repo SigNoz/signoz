@@ -29,12 +29,6 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	table_schema := `
 		PRAGMA foreign_keys = ON;
 
-		CREATE TABLE IF NOT EXISTS user_preferences (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			uuid TEXT NOT NULL,
-			isAnonymous INTEGER NOT NULL DEFAULT 0 CHECK(isAnonymous IN (0,1)),
-			hasOptedUpdates INTEGER NOT NULL DEFAULT 1 CHECK(hasOptedUpdates IN (0,1))
-		);
 		CREATE TABLE IF NOT EXISTS organizations (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
@@ -102,7 +96,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	mds := &ModelDaoSqlite{db: db}
 
 	ctx := context.Background()
-	if err := mds.initializeUserPreferences(ctx); err != nil {
+	if err := mds.initializeOrgPreferences(ctx); err != nil {
 		return nil, err
 	}
 	if err := mds.initializeRBAC(ctx); err != nil {
@@ -112,31 +106,38 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	return mds, nil
 }
 
-func (mds *ModelDaoSqlite) initializeUserPreferences(ctx context.Context) error {
+// initializeOrgPreferences initializes in-memory telemetry settings. It is planned to have
+// multiple orgs in the system. In case of multiple orgs, there will be separate instance
+// of in-memory telemetry for each of the org, having their own settings. As of now, we only
+// have one org so this method relies on the settings of this org to initialize the telemetry etc.
+// TODO(Ahsan): Make it multi-tenant when we move to a system with multiple orgs.
+func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 
 	// set anonymous setting as default in case of any failures to fetch UserPreference in below section
 	telemetry.GetInstance().SetTelemetryAnonymous(constants.DEFAULT_TELEMETRY_ANONYMOUS)
 
-	userPreference, apiError := mds.FetchUserPreference(ctx)
+	orgs, apiError := mds.GetOrgs(ctx)
+	if apiError != nil {
+		return apiError.Err
+	}
 
-	if apiError != nil {
-		return apiError.Err
+	if len(orgs) > 1 {
+		return errors.Errorf("Found %d organizations, expected one or none.", len(orgs))
 	}
-	if userPreference == nil {
-		userPreference, apiError = mds.CreateDefaultUserPreference(ctx)
-	}
-	if apiError != nil {
-		return apiError.Err
+
+	var org model.Organization
+	if len(orgs) == 1 {
+		org = orgs[0]
 	}
 
 	// set telemetry fields from userPreferences
-	telemetry.GetInstance().SetTelemetryAnonymous(userPreference.IsAnonymous)
-	telemetry.GetInstance().SetDistinctId(userPreference.Uuid)
+	telemetry.GetInstance().SetTelemetryAnonymous(org.IsAnonymous)
+	telemetry.GetInstance().SetDistinctId(org.Id)
 
 	return nil
 }
 
-// initializeRBAC create the ADMIN, EDITOR and VIEWER groups if they are not present. It also
+// initializeRBAC creates the ADMIN, EDITOR and VIEWER groups if they are not present. It also
 // created the rules required for the groups and assign the rules to the corresponding groups.
 func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
 	f := func(groupName, apiClass string, permission int) error {
