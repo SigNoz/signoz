@@ -11,7 +11,7 @@ type InviteResponse struct {
 	InviteToken string `json:"inviteToken"`
 }
 
-type InvitationResponse struct {
+type InvitationResponseObject struct {
 	Email        string `json:"email" db:"email"`
 	Name         string `json:"name" db:"name"`
 	Token        string `json:"token" db:"token"`

@@ -229,10 +229,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", aH.listInvites).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{token}", aH.getInvite).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite", aH.inviteUser).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", aH.getInvite).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite/{email}", aH.revokeInvite).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/invite", aH.listPendingInvites).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", aH.loginUser).Methods(http.MethodPost)
@@ -248,14 +248,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/org", aH.getOrgs).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/{id}", aH.getOrg).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/{id}", aH.editOrg).Methods(http.MethodPut)
-
 	router.HandleFunc("/api/v1/orgUsers/{id}", aH.getOrgUsers).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/org", aH.listUsers).Methods(http.MethodPost)
-	// router.HandleFunc("/api/v1/org/{id}", aH.listUsers).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", aH.getResetPasswordToken).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", aH.resetPassword).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/changePassword/{id}", aH.changePassword).Methods(http.MethodPost)
 
 	// We are not exposing any group or rule related APIs right now. They will be exposed later
@@ -1163,6 +1159,7 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, map[string]string{"version": version})
 }
 
+// inviteUser is used to invite a user. It is used by an admin api.
 func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseInviteRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
@@ -1172,51 +1169,57 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 	resp, err := auth.Invite(ctx, req)
 	if err != nil {
-		respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
 	}
-
 	aH.writeJSON(w, r, resp)
 }
 
+// getInvite returns the invite object details for the given invite token. We do not need to
+// protect this API because invite token itself is meant to be private.
 func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	token := mux.Vars(r)["token"]
 
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-	resp, err := auth.GetInvite(ctx, token)
+	resp, err := auth.GetInvite(context.Background(), token)
 	if err != nil {
-		respondError(w, &model.ApiError{Err: err}, "Failed to invite user")
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
 	}
-
 	aH.writeJSON(w, r, resp)
 }
 
+// revokeInvite is used to revoke an invite.
 func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 	email := mux.Vars(r)["email"]
 
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 	if err := auth.RevokeInvite(ctx, email); err != nil {
-		respondError(w, &model.ApiError{Err: err}, "Failed to revoke invite")
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "invite revoked successfully"})
 }
 
-func (aH *APIHandler) listInvites(w http.ResponseWriter, r *http.Request) {
-	invites, err := dao.DB().GetInvites(context.Background())
+// listPendingInvites is used to list the pending invites.
+func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request) {
+
+	ctx := context.Background()
+	invites, err := dao.DB().GetInvites(ctx)
 	if err != nil {
-		respondError(w, err, "Failed to get invites list")
+		respondError(w, err, nil)
 		return
 	}
-	var resp []*model.InvitationResponse
+
+	// TODO(Ahsan): Querying org name based on orgId for each invite is not a good idea. Either
+	// we should include org name field in the invite table, or do a join query.
+	var resp []*model.InvitationResponseObject
 	for _, inv := range invites {
 
-		org, apiErr := dao.DB().GetOrg(context.Background(), inv.OrgId)
+		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
 		if apiErr != nil {
-			respondError(w, apiErr, "Failed to get org details for invite list")
+			respondError(w, apiErr, nil)
 		}
-		resp = append(resp, &model.InvitationResponse{
+		resp = append(resp, &model.InvitationResponseObject{
 			Name:         inv.Name,
 			Email:        inv.Email,
 			Token:        inv.Token,
@@ -1236,7 +1239,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := auth.Register(context.Background(), req)
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to register user")
+		respondError(w, apiErr, nil)
 		return
 	}
 
@@ -1279,7 +1282,8 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.DB().GetUsers(context.Background())
 	if err != nil {
-		respondError(w, err, "Failed to get users list")
+		zap.S().Debugf("[listUsers] Failed to query list of users, err: %v", err)
+		respondError(w, err, nil)
 		return
 	}
 	aH.writeJSON(w, r, users)
@@ -1291,6 +1295,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	user, err := dao.DB().GetUser(ctx, id)
 	if err != nil {
+		zap.S().Debugf("[getUser] Failed to query user, err: %v", err)
 		respondError(w, err, "Failed to get user")
 		return
 	}
@@ -1302,47 +1307,30 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, user)
 }
 
+// editUser only changes the user's Name and ProfilePictureURL. It is intentionally designed
+// to not support update of orgId, Password, createdAt for the sucurity reasons.
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		zap.S().Errorf("Error in getting req body of editUser API\n", err)
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	update := &model.User{}
-	if err := json.Unmarshal(body, update); err != nil {
-		zap.S().Errorf("Error in parsing req body of editUser API\n", err)
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+	update, err := parseUserRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	ctx := context.Background()
 	old, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to update user")
+		zap.S().Debugf("[editUser] Failed to query user, err: %v", err)
+		respondError(w, apiErr, nil)
 		return
 	}
 
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	// if len(update.OrgId) > 0 {
-	// 	old.OrgId = update.OrgId
-	// }
-	// if len(update.Email) > 0 {
-	// 	old.Email = update.Email
-	// }
-	// if len(update.Password) > 0 {
-	// 	hash, err := bcrypt.GenerateFromPassword([]byte(update.Password), bcrypt.DefaultCost)
-	// 	if err != nil {
-	// 		respondError(w, &model.ApiError{Err: err}, "Failed to update user")
-	// 	}
-	// 	old.Password = string(hash)
-	// }
+	if len(update.ProfilePirctureURL) > 0 {
+		old.ProfilePirctureURL = update.ProfilePirctureURL
+	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &model.User{
 		Id:                 old.Id,
@@ -1354,7 +1342,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		ProfilePirctureURL: old.ProfilePirctureURL,
 	})
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to update user")
+		respondError(w, apiErr, nil)
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "user updated successfully"})
@@ -1371,6 +1359,9 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Query for the user's group, and the admin's group. If the user belongs to the admin group
+	// and is the last user then don't let the deletion happen. Otherwise, the system will become
+	// admin less and hence inaccessible.
 	ctx := context.Background()
 	userGroup, apiErr := dao.DB().GetUserGroup(ctx, id)
 	if apiErr != nil {
@@ -1391,13 +1382,13 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if userGroup.GroupId == adminGroup.Id && len(adminUsers) == 1 {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: fmt.Errorf("cannot delete the last admin")}, "Failed to delete last admin user")
+			Err: errors.New("cannot delete the last admin user")}, nil)
 		return
 	}
 
-	err := dao.DB().DeleteUser(context.Background(), id)
+	err := dao.DB().DeleteUser(ctx, id)
 	if err != nil {
-		respondError(w, err, "Failed to get user")
+		respondError(w, err, "Failed to delete user")
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
@@ -1443,7 +1434,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if g == nil {
-		respondError(w, apiErr, "Specified group is not valid")
+		respondError(w, apiErr, "Specified group is not present")
 		return
 	}
 
@@ -1453,6 +1444,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Make sure that the request is not demoting the last admin user.
 	if userGroup.GroupId == auth.AuthCacheObj.AdminGroupId {
 		adminUsers, apiErr := dao.DB().GetGroupUsers(ctx, auth.AuthCacheObj.AdminGroupId)
 		if apiErr != nil {
@@ -1463,8 +1455,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		if len(adminUsers) == 1 {
 			respondError(w, &model.ApiError{
 				Err: errors.New("Cannot demote the last admin"),
-				Typ: model.ErrorInternal,
-			}, "Cannot demote the last admin")
+				Typ: model.ErrorInternal}, nil)
 			return
 		}
 	}
@@ -1479,7 +1470,6 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	auth.AuthCacheObj.AddGroupUser(&model.GroupUser{UserId: id, GroupId: g.Id})
-
 	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
 }
 
@@ -1671,7 +1661,7 @@ func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	org, apiErr := dao.DB().GetOrg(context.Background(), id)
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		respondError(w, apiErr, "Failed to fetch org from the DB")
 		return
 	}
 	aH.writeJSON(w, r, org)
@@ -1683,8 +1673,8 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	req.Id = id
 
+	req.Id = id
 	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
 		respondError(w, apiErr, "Failed to update org in the DB")
 		return
@@ -1703,7 +1693,7 @@ func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	orgs, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		respondError(w, apiErr, "Failed to fetch org users from the DB")
 		return
 	}
 	aH.writeJSON(w, r, orgs)

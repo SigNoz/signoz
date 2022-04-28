@@ -1,12 +1,5 @@
 package model
 
-type UserPreferences struct {
-	Id              int    `json:"id" db:"id"`
-	Uuid            string `json:"uuid" db:"uuid"`
-	IsAnonymous     bool   `json:"isAnonymous" db:"isAnonymous"`
-	HasOptedUpdates bool   `json:"hasOptedUpdates" db:"hasOptedUpdates"`
-}
-
 type Organization struct {
 	Id              string `json:"id" db:"id"`
 	Name            string `json:"name" db:"name"`

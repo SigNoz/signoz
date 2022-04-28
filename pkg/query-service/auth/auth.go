@@ -24,6 +24,8 @@ var (
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
+	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)
+
 	token, err := randomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate invite token")
@@ -54,7 +56,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 
 	au, apiErr := dao.DB().GetUser(ctx, adminUser.Id)
 	if apiErr != nil {
-		return nil, errors.Wrap(err, "failed to validate admin jwt token")
+		return nil, errors.Wrap(err, "failed to query admin user from the DB")
 	}
 	inv := &model.InvitationObject{
 		Name:      req.Name,
@@ -65,8 +67,6 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		OrgId:     au.OrgId,
 	}
 
-	zap.S().Debugf("Creating invite: %+v\n", inv)
-
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
 		return nil, errors.Wrap(err.Err, "failed to write to DB")
 	}
@@ -74,7 +74,10 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
 }
 
+// RevokeInvite is used to revoke the invitation for the given email.
 func RevokeInvite(ctx context.Context, email string) error {
+	zap.S().Debugf("RevokeInvite method invoked for email: %s\n", email)
+
 	if !isValidEmail(email) {
 		return ErrorInvalidInviteToken
 	}
@@ -85,7 +88,9 @@ func RevokeInvite(ctx context.Context, email string) error {
 	return nil
 }
 
-func GetInvite(ctx context.Context, token string) (*model.InvitationResponse, error) {
+// GetInvite returns an invitation object for the given token.
+func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObject, error) {
+	zap.S().Debugf("GetInvite method invoked for token: %s\n", token)
 
 	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
 	if apiErr != nil {
@@ -96,11 +101,13 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponse, er
 		return nil, errors.Wrap(apiErr.Err, "user is not invited")
 	}
 
+	// TODO(Ahsan): This is not the best way to add org name in the invite response. We should
+	// either include org name in the invite table or do a join query.
 	org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
 	if apiErr != nil {
 		return nil, errors.Wrap(apiErr.Err, "failed to query the DB")
 	}
-	return &model.InvitationResponse{
+	return &model.InvitationResponseObject{
 		Name:         inv.Name,
 		Email:        inv.Email,
 		Token:        inv.Token,
@@ -274,8 +281,11 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
 func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginResponse, error) {
+	zap.S().Debugf("Login method called for user: %s\n", request.Email)
+
 	user, err := authenticateLogin(ctx, request)
 	if err != nil {
+		zap.S().Debugf("Failed to authenticate login request, %v", err)
 		return nil, err
 	}
 

@@ -946,16 +946,13 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
 }
 
-func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
-
-	var userPreferences model.UserPreferences
-	err := json.NewDecoder(r.Body).Decode(&userPreferences)
+func parseUserRequest(r *http.Request) (*model.User, error) {
+	var req model.User
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err
 	}
-
-	return &userPreferences, nil
-
+	return &req, nil
 }
 
 func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
