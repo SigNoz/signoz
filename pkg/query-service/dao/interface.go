@@ -22,7 +22,7 @@ type Queries interface {
 
 	GetUser(ctx context.Context, id string) (*model.User, *model.ApiError)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, *model.ApiError)
-	GetUsers(ctx context.Context) ([]model.UserWithRole, *model.ApiError)
+	GetUsers(ctx context.Context) ([]model.UserResponse, *model.ApiError)
 
 	GetGroup(ctx context.Context, id string) (*model.Group, *model.ApiError)
 	GetGroupByName(ctx context.Context, name string) (*model.Group, *model.ApiError)
@@ -38,7 +38,7 @@ type Queries interface {
 	GetOrg(ctx context.Context, id string) (*model.Organization, *model.ApiError)
 
 	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
-	GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserWithRole, *model.ApiError)
+	GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserResponse, *model.ApiError)
 }
 
 type Mutations interface {

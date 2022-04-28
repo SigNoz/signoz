@@ -326,8 +326,8 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context, email string) (*m
 	return &users[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserWithRole, *model.ApiError) {
-	users := []model.UserWithRole{}
+func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserResponse, *model.ApiError) {
+	users := []model.UserResponse{}
 	query := `select u.id,u.name,u.org_id,u.email,u.created_at,g.name as role from users u, groups g, group_users gu where u.id=gu.user_id and g.id=gu.group_id;`
 	err := mds.db.Select(&users, query)
 
@@ -338,8 +338,8 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserWithRole, 
 	return users, nil
 }
 
-func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserWithRole, *model.ApiError) {
-	users := []model.UserWithRole{}
+func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserResponse, *model.ApiError) {
+	users := []model.UserResponse{}
 
 	query := `select u.id,u.name,u.org_id,u.email,u.created_at,g.name as role from users u, groups g, group_users gu where u.id=gu.user_id and g.id=gu.group_id and u.org_id=?;`
 	err := mds.db.Select(&users, query, orgId)

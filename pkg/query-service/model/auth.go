@@ -45,11 +45,6 @@ type ResetPasswordEntry struct {
 	Token  string `json:"token" db:"token"`
 }
 
-type UserWithRole struct {
-	User
-	Role string `json:"role"`
-}
-
 type UserRole struct {
 	UserId    string `json:"user_id"`
 	GroupName string `json:"group_name"`

@@ -1322,7 +1322,8 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	user, err := dao.DB().GetUser(context.Background(), id)
+	ctx := context.Background()
+	user, err := dao.DB().GetUser(ctx, id)
 	if err != nil {
 		respondError(w, err, "Failed to get user")
 		return
@@ -1331,7 +1332,17 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	if user != nil {
 		user.Password = ""
 	}
-	aH.writeJSON(w, r, user)
+
+	userOrg, err := dao.DB().GetOrg(ctx, user.OrgId)
+	if err != nil {
+		respondError(w, err, "Failed to get user's org information")
+		return
+	}
+
+	aH.writeJSON(w, r, &model.UserResponse{
+		User:         *user,
+		Organization: userOrg.Name,
+	})
 }
 
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
