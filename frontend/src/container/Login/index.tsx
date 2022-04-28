@@ -16,6 +16,7 @@ import {
 const { Title } = Typography;
 
 function Login(): JSX.Element {
+	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
 
@@ -32,6 +33,8 @@ function Login(): JSX.Element {
 		try {
 			event.preventDefault();
 			event.persist();
+			setIsLoading(true);
+
 			const response = await loginApi({
 				email,
 				password,
@@ -48,7 +51,9 @@ function Login(): JSX.Element {
 					message: response.error || 'Something went wrong',
 				});
 			}
+			setIsLoading(false);
 		} catch (error) {
+			setIsLoading(false);
 			notification.error({
 				message: 'Something went wrong',
 			});
@@ -66,9 +71,10 @@ function Login(): JSX.Element {
 						type="email"
 						autoFocus
 						required
-						id="signupEmail"
+						id="loginEmail"
 						onChange={(event): void => onChangeHandler(setEmail, event.target.value)}
 						value={email}
+						disabled={isLoading}
 					/>
 				</ParentContainer>
 				<ParentContainer>
@@ -79,11 +85,18 @@ function Login(): JSX.Element {
 						onChange={(event): void =>
 							onChangeHandler(setPassword, event.target.value)
 						}
+						disabled={isLoading}
 						value={password}
 					/>
 				</ParentContainer>
 				<ButtonContainer>
-					<Button type="primary" htmlType="submit" data-attr="signup">
+					<Button
+						disabled={isLoading}
+						loading={isLoading}
+						type="primary"
+						htmlType="submit"
+						data-attr="signup"
+					>
 						Get Started
 					</Button>
 				</ButtonContainer>
