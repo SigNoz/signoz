@@ -24,7 +24,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to Open sqlite3 DB")
 	}
-	db.SetMaxOpenConns(1)
+	db.SetMaxOpenConns(10)
 
 	table_schema := `
 		PRAGMA foreign_keys = ON;
