@@ -971,6 +971,10 @@ func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 		return nil, err
 	}
 
+	if err := auth.ValidatePassword(req.Password); err != nil {
+		return nil, err
+	}
+
 	return &req, nil
 }
 
@@ -1050,6 +1054,9 @@ func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, er
 	if err != nil {
 		return nil, err
 	}
+	if err := auth.ValidatePassword(req.Password); err != nil {
+		return nil, err
+	}
 
 	return &req, nil
 }
@@ -1062,6 +1069,9 @@ func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, 
 		return nil, err
 	}
 	req.UserId = id
+	if err := auth.ValidatePassword(req.NewPassword); err != nil {
+		return nil, err
+	}
 
 	return &req, nil
 }

@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	opaqueTokenSize = 16
+	opaqueTokenSize       = 16
+	minimumPasswordLength = 8
 )
 
 var (
