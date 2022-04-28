@@ -1,4 +1,7 @@
-import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
+import {
+	Organization,
+	PayloadProps as OrgPayload,
+} from 'types/api/user/getOrganization';
 import AppReducer, { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
@@ -78,6 +81,9 @@ export interface UpdateUser {
 		name: User['name'];
 		profilePictureURL: User['profilePictureURL'];
 		userId: User['userId'];
+		orgName: Organization['name'];
+		ROLE: ROLES;
+		orgId: Organization['id'];
 	};
 }
 

@@ -17,7 +17,10 @@ import {
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
-import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
+import {
+	Organization,
+	PayloadProps as OrgPayload,
+} from 'types/api/user/getOrganization';
 import InitialValueTypes, { User } from 'types/reducer/app';
 
 const getInitialUser = (): User | null => {
@@ -128,12 +131,41 @@ const appReducer = (
 
 		case UPDATE_USER: {
 			const user = state.user || ({} as User);
+			const org = state.org || ([] as Organization[]);
+			const {
+				email,
+				name,
+				profilePictureURL,
+				userId,
+				ROLE,
+				orgId,
+				orgName,
+			} = action.payload;
+			const orgIndex = org.findIndex((e) => e.id === orgId);
+
+			const updatedOrg: OrgPayload = [
+				...org.slice(0, orgIndex),
+				{
+					createdAt: 0,
+					hasOptedUpdates: false,
+					id: orgId,
+					isAnonymous: false,
+					name: orgName,
+				},
+				...org.slice(orgIndex + 1, org.length),
+			];
+
 			return {
 				...state,
 				user: {
 					...user,
-					...action.payload,
+					email,
+					name,
+					profilePictureURL,
+					userId,
 				},
+				org: [...updatedOrg],
+				role: ROLE,
 			};
 		}
 

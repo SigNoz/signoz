@@ -1,8 +1,6 @@
 import { notification } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getUserOrganization from 'api/user/getOrganization';
-import getRolesApi from 'api/user/getRoles';
 import getUserApi from 'api/user/getUser';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -15,7 +13,6 @@ import {
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_IS_FETCH,
-	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
 
 const afterLogin = async (
@@ -34,23 +31,14 @@ const afterLogin = async (
 		},
 	});
 
-	const [rolesResponse, userOrgResponse, getUserResponse] = await Promise.all([
-		getRolesApi({
-			userId,
-			token: authToken,
-		}),
-		getUserOrganization(authToken),
+	const [getUserResponse] = await Promise.all([
 		getUserApi({
 			userId,
 			token: authToken,
 		}),
 	]);
 
-	if (
-		rolesResponse.statusCode === 200 &&
-		userOrgResponse.statusCode === 200 &&
-		getUserResponse.statusCode === 200
-	) {
+	if (getUserResponse.statusCode === 200) {
 		store.dispatch<AppActions>({
 			type: LOGGED_IN,
 			payload: {
@@ -58,20 +46,18 @@ const afterLogin = async (
 			},
 		});
 
-		// user details are successfully fetched
-		store.dispatch<AppActions>({
-			type: UPDATE_USER_ORG_ROLE,
-			payload: {
-				org: userOrgResponse.payload,
-				role: rolesResponse.payload.group_name,
-			},
-		});
+		const { payload } = getUserResponse;
 
 		store.dispatch<AppActions>({
 			type: UPDATE_USER,
 			payload: {
-				...getUserResponse.payload,
-				userId,
+				ROLE: payload.role,
+				email: payload.email,
+				name: payload.name,
+				orgName: payload.organization,
+				profilePictureURL: payload.profilePictureURL,
+				userId: payload.id,
+				orgId: payload.orgId,
 			},
 		});
 
@@ -97,8 +83,7 @@ const afterLogin = async (
 			},
 		});
 		notification.error({
-			message:
-				rolesResponse.error || userOrgResponse.error || t('something_went_wrong'),
+			message: getUserResponse.error || t('something_went_wrong'),
 		});
 		history.push(ROUTES.SOMETHING_WENT_WRONG);
 	}
