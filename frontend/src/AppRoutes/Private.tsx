@@ -80,9 +80,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							},
 						});
 
-						if (history.location.pathname !== ROUTES.LOGIN) {
-							history.push(ROUTES.LOGIN);
-						}
+						// if (history.location.pathname !== ROUTES.LOGIN) {
+						// 	history.push(ROUTES.LOGIN);
+						// }
 					}
 				} else if (history.location.pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
@@ -99,6 +99,13 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 						history.push(ROUTES.LOGIN);
 					}
 				} else {
+					dispatch({
+						type: UPDATE_USER_IS_FETCH,
+						payload: {
+							isUserFetching: false,
+						},
+					});
+
 					// if route is not listed in the allRoutes
 					history.push(ROUTES.NOT_FOUND);
 				}

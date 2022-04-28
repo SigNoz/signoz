@@ -27,6 +27,7 @@ const ROUTES = {
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
 	HOME_PAGE: '/',
+	PASSWORD_RESET: '/password-reset',
 };
 
 export default ROUTES;

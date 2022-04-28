@@ -18,6 +18,7 @@ import {
 	MySettings,
 	NewDashboardPage,
 	OrganizationSettings,
+	PasswordReset,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -175,11 +176,17 @@ const routes: AppRoutes[] = [
 		path: ROUTES.LOGIN,
 		exact: true,
 		component: Login,
+		isPrivate: false,
 	},
 	{
 		path: ROUTES.UN_AUTHORIZED,
 		exact: true,
 		component: UnAuthorized,
+	},
+	{
+		path: ROUTES.PASSWORD_RESET,
+		exact: true,
+		component: PasswordReset,
 	},
 ];
 

@@ -17,8 +17,9 @@ const handleLogoutInterceptor = (instance: AxiosInstance): void => {
 		if (value.status === 401) {
 			// token is expired
 			Logout();
+			return Promise.reject(value);
 		}
-		return value;
+		return Promise.resolve(value);
 	});
 };
 
@@ -31,8 +32,6 @@ const instance = axios.create({
 
 handleLogoutInterceptor(instance);
 
-export default instance;
-
 export const AxiosAlertManagerInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
 	headers: {
@@ -43,3 +42,4 @@ export const AxiosAlertManagerInstance = axios.create({
 handleLogoutInterceptor(AxiosAlertManagerInstance);
 
 export { apiV1 };
+export default instance;

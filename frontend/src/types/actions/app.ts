@@ -71,7 +71,7 @@ export interface UpdateAccessRenewToken {
 	};
 }
 
-export interface UpdateName {
+export interface UpdateUser {
 	type: typeof UPDATE_USER;
 	payload: {
 		email: User['email'];
@@ -106,5 +106,5 @@ export type AppAction =
 	| UpdateAccessRenewToken
 	| UpdateUserIsFetched
 	| UpdateUserOrgRole
-	| UpdateName
+	| UpdateUser
 	| UpdateOrgName;

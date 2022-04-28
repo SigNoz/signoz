@@ -32,6 +32,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
+	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>
@@ -55,6 +56,8 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 			const responseDetails = getInviteDetailsResponse.data.payload;
 			setFirstName(responseDetails.name);
 			setEmail(responseDetails.email);
+			setOrganizationName(responseDetails.organization);
+			setIsDetailsDisable(true);
 		}
 	}, [getInviteDetailsResponse?.data?.payload, getInviteDetailsResponse.status]);
 
@@ -139,6 +142,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 							}}
 							required
 							id="signupEmail"
+							disabled={isDetailsDisable}
 						/>
 					</div>
 
@@ -152,6 +156,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 							}}
 							required
 							id="signupFirstName"
+							disabled={isDetailsDisable}
 						/>
 					</div>
 					<div>
@@ -164,6 +169,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 							}}
 							required
 							id="organizationName"
+							disabled={isDetailsDisable}
 						/>
 					</div>
 					<div>

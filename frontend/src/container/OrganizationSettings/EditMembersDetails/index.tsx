@@ -1,9 +1,8 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, notification, Select, Space, Tooltip } from 'antd';
 import getResetPasswordToken from 'api/user/getResetPasswordToken';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -23,32 +22,13 @@ function EditMembersDetails({
 }: EditMembersDetailsProps): JSX.Element {
 	const [passwordLink, setPasswordLink] = useState<string>('');
 
-	console.log({ role });
 	const { t } = useTranslation(['common']);
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
-
-	const getResetPasswordTokenResponse = useQuery({
-		queryFn: () =>
-			getResetPasswordToken({
-				userId: user?.userId || '',
-			}),
-		queryKey: 'getResetPasswordToken',
-	});
+	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const getPasswordLink = (token: string): string => {
-		return `${token}`;
+		return `${window.location.origin}/${token}`;
 	};
-
-	useEffect(() => {
-		if (
-			getResetPasswordTokenResponse.status === 'success' &&
-			getResetPasswordTokenResponse.data
-		) {
-			setPasswordLink(
-				getPasswordLink(getResetPasswordTokenResponse.data.payload?.token || ''),
-			);
-		}
-	}, [getResetPasswordTokenResponse.data, getResetPasswordTokenResponse.status]);
 
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -76,8 +56,26 @@ function EditMembersDetails({
 
 	const onGeneratePasswordHandler = async (): Promise<void> => {
 		try {
-			console.log('onGeneratePasswordHandler');
+			setIsLoading(true);
+			const response = await getResetPasswordToken({
+				userId: user?.userId || '',
+			});
+
+			if (response.statusCode === 200) {
+				setPasswordLink(getPasswordLink(response.payload.token));
+			} else {
+				notification.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+			}
+			setIsLoading(false);
 		} catch (error) {
+			setIsLoading(false);
+
 			notification.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
@@ -85,8 +83,6 @@ function EditMembersDetails({
 			});
 		}
 	};
-
-	const isLoading = getResetPasswordTokenResponse.status === 'loading';
 
 	return (
 		<Space direction="vertical" size="large">

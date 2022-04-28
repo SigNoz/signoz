@@ -113,3 +113,7 @@ export const Login = Loadable(
 export const UnAuthorized = Loadable(
 	() => import(/* webpackChunkName: "UnAuthorized" */ 'pages/UnAuthorized'),
 );
+
+export const PasswordReset = Loadable(
+	() => import(/* webpackChunkName: "ResetPassword" */ 'pages/ResetPassword'),
+);
