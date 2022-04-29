@@ -15,11 +15,9 @@ import (
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/druidReader"
-	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
-	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
@@ -126,7 +124,6 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 
 	r := NewRouter()
 
-	r.Use(authMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
@@ -170,16 +167,6 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
-
-func authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := auth.IsAuthorized(r); err != nil {
-			respondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: err}, nil)
-			return
-		}
 		next.ServeHTTP(w, r)
 	})
 }

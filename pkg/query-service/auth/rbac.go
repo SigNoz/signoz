@@ -218,6 +218,24 @@ func GetApiClass(apiPath string) string {
 	return apiClass
 }
 
+func IsValidAPIClass(class string) bool {
+	for _, c := range ValidAPIClasses() {
+		if class == c {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidAPIClasses() []string {
+	return []string{
+		constants.AdminAPI,
+		constants.NonAdminAPI,
+		constants.SelfAccessibleAPI,
+		constants.UnprotectedAPI,
+	}
+}
+
 func IsAuthorized(r *http.Request) error {
 	route := mux.CurrentRoute(r)
 	path, _ := route.GetPathTemplate()
@@ -298,22 +316,33 @@ func IsSelfAccessRequest(r *http.Request) bool {
 	return user.Id == id
 }
 
-func IsValidAPIClass(class string) bool {
-	for _, c := range ValidAPIClasses() {
-		if class == c {
-			return true
-		}
+func IsViewer(r *http.Request) bool {
+	accessJwt, err := ExtractJwtFromRequest(r)
+	if err != nil {
+		zap.S().Debugf("Failed to verify viewer access, err: %v", err)
+		return false
 	}
-	return false
+
+	user, err := validateUser(accessJwt)
+	if err != nil {
+		return false
+	}
+
+	return AuthCacheObj.BelongsToViewerGroup(user.Id)
 }
 
-func ValidAPIClasses() []string {
-	return []string{
-		constants.AdminAPI,
-		constants.NonAdminAPI,
-		constants.SelfAccessibleAPI,
-		constants.UnprotectedAPI,
+func IsEditor(r *http.Request) bool {
+	accessJwt, err := ExtractJwtFromRequest(r)
+	if err != nil {
+		zap.S().Debugf("Failed to verify editor access, err: %v", err)
+		return false
 	}
+
+	user, err := validateUser(accessJwt)
+	if err != nil {
+		return false
+	}
+	return AuthCacheObj.BelongsToEditorGroup(user.Id)
 }
 
 func ValidatePassword(password string) error {

@@ -56,10 +56,10 @@ func register(email, password, token string) (string, error) {
 	return string(b), nil
 }
 
-func login(email, password, refreshToken string) (*auth.LoginResponse, error) {
+func login(email, password, refreshToken string) (*model.LoginResponse, error) {
 	q := endpoint + fmt.Sprintf("/api/v1/login")
 
-	req := auth.LoginRequest{
+	req := model.LoginRequest{
 		Email:        email,
 		Password:     password,
 		RefreshToken: refreshToken,
@@ -80,7 +80,7 @@ func login(email, password, refreshToken string) (*auth.LoginResponse, error) {
 		return nil, errors.Wrap(err, "failed to read body")
 	}
 
-	loginResp := &auth.LoginResponse{}
+	loginResp := &model.LoginResponse{}
 	err = json.Unmarshal(b, loginResp)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal")
