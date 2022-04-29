@@ -129,7 +129,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		})();
 		// need to run over mount only
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dispatch, currentRoute, isLoggedIn]);
+	}, [dispatch, currentRoute]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
