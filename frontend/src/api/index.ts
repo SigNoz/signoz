@@ -8,14 +8,17 @@ import apiV1, { apiV2 } from './apiV1';
 import { Logout } from './utils';
 
 const handleLogoutInterceptor = (instance: AxiosInstance): void => {
-	instance.interceptors.response.use((value) => {
-		if (value.status === 401) {
-			// token is expired
-			Logout();
+	instance.interceptors.response.use(
+		(value) => value,
+		(value) => {
+			if (value.status === 401) {
+				// token is expired
+				Logout();
+				return Promise.reject(value);
+			}
 			return Promise.reject(value);
-		}
-		return Promise.resolve(value);
-	});
+		},
+	);
 };
 
 const instance = (): AxiosInstance => {
