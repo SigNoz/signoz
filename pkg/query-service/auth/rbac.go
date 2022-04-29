@@ -15,10 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type Permission int32
-
-const ()
-
 type Group struct {
 	GroupID   string
 	GroupName string
