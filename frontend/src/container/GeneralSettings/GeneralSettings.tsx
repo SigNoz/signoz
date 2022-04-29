@@ -1,14 +1,18 @@
 import { Button, Col, Modal, notification, Row, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
+import useComponentPermission from 'hooks/useComponentPermission';
 import find from 'lodash-es/find';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
 } from 'types/api/disks/getDisks';
 import { PayloadProps as GetRetentionPayload } from 'types/api/settings/getRetention';
+import AppReducer from 'types/reducer/app';
 
 import Retention from './Retention';
 import { ButtonContainer, ErrorText, ErrorTextContainer } from './styles';
@@ -26,6 +30,12 @@ function GeneralSettings({
 	const [availableDisks] = useState<IDiskType[]>(getAvailableDiskPayload);
 
 	const [currentTTLValues, setCurrentTTLValues] = useState(ttlValuesPayload);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [setRetentionPermission] = useComponentPermission(
+		['set_retention_period'],
+		role,
+	);
 
 	const [
 		metricsTotalRetentionPeriod,
@@ -306,11 +316,13 @@ function GeneralSettings({
 				<Typography>{t('settings.retention_confirmation_description')}</Typography>
 			</Modal>
 
-			<ButtonContainer>
-				<Button onClick={onClickSaveHandler} disabled={isDisabled} type="primary">
-					Save
-				</Button>
-			</ButtonContainer>
+			{setRetentionPermission && (
+				<ButtonContainer>
+					<Button onClick={onClickSaveHandler} disabled={isDisabled} type="primary">
+						Save
+					</Button>
+				</ButtonContainer>
+			)}
 		</Col>
 	);
 }
