@@ -26,28 +26,6 @@ type Group struct {
 	Rules     []*model.RBACRule
 }
 
-// ApiClass is used to classify various APIs of similar type into a class so that auth rules
-// can be applied on the whole API class.
-var ApiClass = map[string]string{
-	// Admin APIs
-	"/api/v1/invite":                     constants.AdminAPI,
-	"/api/v1/user":                       constants.AdminAPI,
-	"/api/v1/org":                        constants.AdminAPI,
-	"/api/v1/org/{id}":                   constants.AdminAPI,
-	"/api/v1/getResetPasswordToken/{id}": constants.AdminAPI,
-	"/api/v1/orgUsers/{id}":              constants.AdminAPI,
-
-	"/api/v1/user/{id}":           constants.SelfAccessibleAPI,
-	"/api/v1/rbac/role/{id}":      constants.SelfAccessibleAPI,
-	"/api/v1/changePassword/{id}": constants.SelfAccessibleAPI,
-
-	"/api/v1/register":        constants.UnprotectedAPI,
-	"/api/v1/login":           constants.UnprotectedAPI,
-	"/api/v1/invite/{token}":  constants.UnprotectedAPI,
-	"/api/v1/version":         constants.UnprotectedAPI,
-	"/api/v1/userPreferences": constants.UnprotectedAPI,
-}
-
 type AuthCache struct {
 	sync.RWMutex
 
@@ -128,7 +106,6 @@ func (ac *AuthCache) AddGroupUser(gr *model.GroupUser) {
 	ac.Lock()
 	defer ac.Unlock()
 
-	zap.S().Debugf("[AuthCache] Adding GroupUser %+v\n", gr)
 	ac.UserGroup[gr.UserId] = gr.GroupId
 }
 
@@ -208,16 +185,6 @@ func (ac *AuthCache) BelongsToViewerGroup(userId string) bool {
 	return ac.UserGroup[userId] == ac.ViewerGroupId
 }
 
-// GetApiClass returns the API class for the given API path. Right now, all the non-admin APIs
-// are classified as one class. This can be later extended to various classes as required.
-func GetApiClass(apiPath string) string {
-	apiClass, ok := ApiClass[apiPath]
-	if !ok {
-		return constants.NonAdminAPI
-	}
-	return apiClass
-}
-
 func IsValidAPIClass(class string) bool {
 	for _, c := range ValidAPIClasses() {
 		if class == c {
@@ -234,55 +201,6 @@ func ValidAPIClasses() []string {
 		constants.SelfAccessibleAPI,
 		constants.UnprotectedAPI,
 	}
-}
-
-func IsAuthorized(r *http.Request) error {
-	route := mux.CurrentRoute(r)
-	path, _ := route.GetPathTemplate()
-	apiClass := GetApiClass(path)
-	if apiClass == constants.UnprotectedAPI {
-		return nil
-	}
-
-	accessJwt, err := ExtractJwtFromRequest(r)
-	if err != nil {
-		return errors.Wrap(err, "Failed to extract access token")
-	}
-
-	user, err := validateUser(accessJwt)
-	if err != nil {
-		return err
-	}
-
-	// Guardian is permitted for all the APIs.
-	if AuthCacheObj.BelongsToAdminGroup(user.Id) {
-		zap.S().Debugf("Granting access for api: %v to user: %v because of admin access",
-			path, user.Email)
-		return nil
-	}
-
-	if apiClass == constants.SelfAccessibleAPI && IsSelfAccessRequest(r) {
-		zap.S().Debugf("Granting access for api: %v to user: %v because of self access",
-			path, user.Email)
-		return nil
-	}
-
-	perm := AuthCacheObj.HighestPermission(user.Id, apiClass)
-
-	switch r.Method {
-	case "GET":
-		if perm >= constants.ReadPermission {
-			return nil
-		}
-	case "POST", "PUT", "DELETE", "PATCH":
-		if perm >= constants.WritePermission {
-			return nil
-		}
-	}
-
-	zap.S().Debugf("Received unauthorized request on api: %v, apiClass: %v by user: %v perm: %d",
-		path, apiClass, user.Email, perm)
-	return errors.New("Unauthorized, user doesn't have the required access")
 }
 
 func IsAdmin(r *http.Request) bool {
