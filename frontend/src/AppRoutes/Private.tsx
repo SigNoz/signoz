@@ -6,26 +6,39 @@ import history from 'lib/history';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Redirect } from 'react-router-dom';
+import { matchPath, Redirect } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import AppActions from 'types/actions';
 import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { routePermission } from 'utils/permission';
 
 import routes from './routes';
 import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
-	const mapRoutes = useMemo(() => new Map(routes.map((e) => [e.path, e])), []);
+	const mapRoutes = useMemo(
+		() =>
+			new Map(
+				routes.map((e) => {
+					const currentPath = matchPath(history.location.pathname, {
+						path: e.path,
+					});
+					return [currentPath === null ? null : 'current', e];
+				}),
+			),
+		[],
+	);
 	const { isUserFetching, isUserFetchingError, isLoggedIn } = useSelector<
 		AppState,
 		AppReducer
 	>((state) => state.app);
+
 	const { t } = useTranslation(['common']);
 
-	const currentRoute = mapRoutes.get(history.location.pathname);
+	const currentRoute = mapRoutes.get('current');
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -33,9 +46,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		(async (): Promise<void> => {
 			try {
 				if (currentRoute) {
-					const { isPrivate } = currentRoute;
+					const { isPrivate, key } = currentRoute;
 
-					if (isPrivate && !isLoggedIn) {
+					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
 						if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
@@ -48,12 +61,21 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							});
 
 							if (response.statusCode === 200) {
+								const route = routePermission[key];
+
 								// get all resource and put it over redux
-								await afterLogin(
+								const userResponse = await afterLogin(
 									response.payload.userId,
 									response.payload.accessJwt,
 									response.payload.refreshJwt,
 								);
+
+								if (
+									userResponse &&
+									route.find((e) => e === userResponse.payload.role) === undefined
+								) {
+									history.push(ROUTES.UN_AUTHORIZED);
+								}
 							} else {
 								notification.error({
 									message: response.error || t('something_went_wrong'),
@@ -77,10 +99,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 								isUserFetching: false,
 							},
 						});
-
-						// if (history.location.pathname !== ROUTES.LOGIN) {
-						// 	history.push(ROUTES.LOGIN);
-						// }
 					}
 				} else if (history.location.pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
@@ -103,9 +121,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							isUserFetching: false,
 						},
 					});
-
-					// if route is not listed in the allRoutes
-					history.push(ROUTES.NOT_FOUND);
 				}
 			} catch (error) {
 				// something went wrong
