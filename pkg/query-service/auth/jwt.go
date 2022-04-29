@@ -15,7 +15,7 @@ import (
 
 var (
 	JwtSecret  string
-	JwtExpiry  = 30 * time.Minute
+	JwtExpiry  = 5 * time.Minute
 	JwtRefresh = 12 * time.Hour
 )
 
