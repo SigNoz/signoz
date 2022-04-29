@@ -1,5 +1,7 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import axios, { AxiosInstance } from 'axios';
+import loginApi from 'api/user/login';
+import afterLogin from 'AppRoutes/utils';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import store from 'store';
@@ -7,18 +9,39 @@ import store from 'store';
 import apiV1, { apiV2 } from './apiV1';
 import { Logout } from './utils';
 
-const handleLogoutInterceptor = (instance: AxiosInstance): void => {
-	instance.interceptors.response.use(
-		(value) => value,
-		(value) => {
-			if (value.status === 401) {
-				// token is expired
+const interceptorsResponse = (
+	value: AxiosResponse<any>,
+): Promise<AxiosResponse<any>> => Promise.resolve(value);
+
+const interceptorRejected = async (
+	value: AxiosResponse<any>,
+): Promise<AxiosResponse<any>> => {
+	if (axios.isAxiosError(value) && value.response) {
+		const { response } = value;
+		console.log(response);
+		// reject the refresh token error
+		if (response.status === 401 && response.config.url !== '/login') {
+			const response = await loginApi({
+				refreshToken: store.getState().app.user?.accessJwt,
+			});
+
+			if (response.statusCode === 200) {
+				await afterLogin(
+					response.payload.userId,
+					response.payload.accessJwt,
+					response.payload.refreshJwt,
+				);
+			} else {
 				Logout();
-				return Promise.reject(value);
 			}
-			return Promise.reject(value);
-		},
-	);
+		}
+
+		// when refresh token is expired
+		if (response.status === 401 && response.config.url === '/login') {
+			Logout();
+		}
+	}
+	return Promise.reject(value);
 };
 
 const instance = (): AxiosInstance => {
@@ -34,7 +57,7 @@ const instance = (): AxiosInstance => {
 		},
 	});
 
-	handleLogoutInterceptor(instance);
+	instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 
 	return instance;
 };
@@ -52,7 +75,7 @@ export const AxiosAlertManagerInstance = (): AxiosInstance => {
 		},
 	});
 
-	handleLogoutInterceptor(instance);
+	instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 
 	return instance;
 };

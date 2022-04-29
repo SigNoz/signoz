@@ -35,7 +35,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				if (currentRoute) {
 					const { isPrivate } = currentRoute;
 
-					if (isPrivate) {
+					if (isPrivate && !isLoggedIn) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
 						if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
@@ -114,7 +114,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		})();
 		// need to run over mount only
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dispatch, currentRoute]);
+	}, [dispatch, currentRoute, isLoggedIn]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
