@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
 import afterLogin from 'AppRoutes/utils';
