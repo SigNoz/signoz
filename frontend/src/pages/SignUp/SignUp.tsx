@@ -12,25 +12,25 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
-import { PayloadProps as GetUserPreferencePayload } from 'types/api/user/getUserPreference';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
 
 const { Title } = Typography;
 
-function SignUp({ version, userPref }: SignUpProps): JSX.Element {
+function SignUp({ version }: SignUpProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [organizationName, setOrganizationName] = useState<string>('');
-	const [hasOptedUpdates, setHasOptedUpdates] = useState<boolean>(
-		userPref.hasOptedUpdates,
-	);
-	const [isAnonymous, setIsAnonymous] = useState<boolean>(userPref.isAnonymous);
+	const [hasOptedUpdates, setHasOptedUpdates] = useState<boolean>(true);
+	const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
 	const [password, setPassword] = useState<string>('');
 	const [confirmPassword, setConfirmPassword] = useState<string>('');
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
+		false,
+	);
+	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
 		false,
 	);
 	const { search } = useLocation();
@@ -46,11 +46,6 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 		queryKey: 'getInviteDetails',
 		enabled: token !== null,
 	});
-
-	useEffect(() => {
-		setIsAnonymous(userPref.isAnonymous);
-		setHasOptedUpdates(userPref.hasOptedUpdates);
-	}, [userPref]);
 
 	useEffect(() => {
 		if (
@@ -75,7 +70,7 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 	const defaultError = 'Something went wrong';
 	const isPreferenceVisible = token === null;
 
-	const comonHandler = async (
+	const commonHandler = async (
 		callback: (e: SuccessResponse<PayloadProps>) => Promise<void> | VoidFunction,
 	): Promise<void> => {
 		try {
@@ -138,16 +133,36 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 		}
 	};
 
+	/**
+	 * @function
+	 * @description to check whether password is valid or not
+	 * stackoverflow.com/a/69807687
+	 * @returns Boolean
+	 */
+	const isPasswordValid = (value: string): boolean => {
+		// eslint-disable-next-line prefer-regex-literals
+		const pattern = new RegExp(
+			'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$',
+		);
+		return pattern.test(value);
+	};
+
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
 		(async (): Promise<void> => {
 			try {
 				e.preventDefault();
 				setLoading(true);
 
+				if (!isPasswordValid(password)) {
+					setIsPasswordPolicyError(true);
+					setLoading(false);
+					return;
+				}
+
 				if (isPreferenceVisible) {
-					await comonHandler(onAdminAfterLogin);
+					await commonHandler(onAdminAfterLogin);
 				} else {
-					await comonHandler(
+					await commonHandler(
 						async (): Promise<void> => {
 							history.push(ROUTES.APPLICATION);
 						},
@@ -241,6 +256,11 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 								} else {
 									setConfirmPasswordError(false);
 								}
+								if (!isPasswordValid(updateValue)) {
+									setIsPasswordPolicyError(true);
+								} else {
+									setIsPasswordPolicyError(false);
+								}
 							}}
 							required
 							id="UpdatePassword"
@@ -255,6 +275,18 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 								}}
 							>
 								Passwords don’t match. Please try again
+							</Typography.Paragraph>
+						)}
+						{isPasswordPolicyError && (
+							<Typography.Paragraph
+								italic
+								style={{
+									color: '#D89614',
+									marginTop: '0.50rem',
+								}}
+							>
+								Password must have min 8 char with one lower case and one upper and one
+								special char
 							</Typography.Paragraph>
 						)}
 					</div>
@@ -312,7 +344,6 @@ function SignUp({ version, userPref }: SignUpProps): JSX.Element {
 
 interface SignUpProps {
 	version: string;
-	userPref: GetUserPreferencePayload;
 }
 
 export default SignUp;

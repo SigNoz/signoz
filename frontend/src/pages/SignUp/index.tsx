@@ -1,5 +1,4 @@
 import { Typography } from 'antd';
-import getUserPreference from 'api/user/getPreference';
 import getUserVersion from 'api/user/getVersion';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
@@ -19,50 +18,36 @@ function SignUp(): JSX.Element {
 
 	useLoggedInNavigate(ROUTES.APPLICATION);
 
-	const [versionResponse, userPrefResponse] = useQueries([
+	const [versionResponse] = useQueries([
 		{
 			queryFn: getUserVersion,
 			queryKey: 'getUserVersion',
-			enabled: !isLoggedIn,
-		},
-		{
-			queryFn: getUserPreference,
-			queryKey: 'getUserPreference',
 			enabled: !isLoggedIn,
 		},
 	]);
 
 	if (
 		versionResponse.status === 'error' ||
-		userPrefResponse.status === 'error' ||
 		(versionResponse.status === 'success' &&
-			versionResponse.data?.statusCode !== 200) ||
-		(userPrefResponse.status === 'success' &&
-			userPrefResponse.data?.statusCode !== 200)
+			versionResponse.data?.statusCode !== 200)
 	) {
 		return (
 			<Typography>
-				{versionResponse.data?.error ||
-					userPrefResponse.data?.error ||
-					t('something_went_wrong')}
+				{versionResponse.data?.error || t('something_went_wrong')}
 			</Typography>
 		);
 	}
 
 	if (
 		versionResponse.status === 'loading' ||
-		userPrefResponse.status === 'loading' ||
-		!(versionResponse.data && versionResponse.data.payload) ||
-		!(userPrefResponse.data && userPrefResponse.data.payload)
+		!(versionResponse.data && versionResponse.data.payload)
 	) {
 		return <Spinner tip="Loading..." />;
 	}
 
 	const { version } = versionResponse.data.payload;
 
-	const userPref = userPrefResponse.data.payload;
-
-	return <SignUpComponent userPref={userPref} version={version} />;
+	return <SignUpComponent version={version} />;
 }
 
 export default SignUp;
