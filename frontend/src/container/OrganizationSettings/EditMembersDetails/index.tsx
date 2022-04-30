@@ -1,6 +1,7 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, notification, Select, Space, Tooltip } from 'antd';
 import getResetPasswordToken from 'api/user/getResetPasswordToken';
+import ROUTES from 'constants/routes';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -27,7 +28,7 @@ function EditMembersDetails({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const getPasswordLink = (token: string): string => {
-		return `${window.location.origin}/${token}`;
+		return `${window.location.origin}/${ROUTES.PASSWORD_RESET}?token=${token}`;
 	};
 
 	const onChangeHandler = useCallback(

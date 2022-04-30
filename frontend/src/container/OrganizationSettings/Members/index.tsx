@@ -38,6 +38,7 @@ function UserFunction({
 	const [role, setRole] = useState<ROLES>(accessLevel);
 	const { t } = useTranslation(['common']);
 	const [isDeleteLoading, setIsDeleteLoading] = useState<boolean>(false);
+	const [isUpdateLoading, setIsUpdateLoading] = useState<boolean>(false);
 
 	const onUpdateDetailsHandler = (): void => {
 		setDataSource((data) => {
@@ -115,36 +116,47 @@ function UserFunction({
 	};
 
 	const onInviteMemberHandler = async (): Promise<void> => {
-		const [editUserResponse, updateRoleResponse] = await Promise.all([
-			editUserApi({
-				userId: id,
-				name: updatedName,
-			}),
-			updateRole({
-				group_name: role,
-				userId: id,
-			}),
-		]);
+		try {
+			setIsUpdateLoading(true);
+			const [editUserResponse, updateRoleResponse] = await Promise.all([
+				editUserApi({
+					userId: id,
+					name: updatedName,
+				}),
+				updateRole({
+					group_name: role,
+					userId: id,
+				}),
+			]);
 
-		if (
-			editUserResponse.statusCode === 200 &&
-			updateRoleResponse.statusCode === 200
-		) {
-			onUpdateDetailsHandler();
-			notification.success({
-				message: t('success', {
+			if (
+				editUserResponse.statusCode === 200 &&
+				updateRoleResponse.statusCode === 200
+			) {
+				onUpdateDetailsHandler();
+				notification.success({
+					message: t('success', {
+						ns: 'common',
+					}),
+				});
+			} else {
+				notification.error({
+					message:
+						editUserResponse.error ||
+						updateRoleResponse.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+			}
+			setIsUpdateLoading(false);
+		} catch (error) {
+			notification.error({
+				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
 			});
-		} else {
-			notification.error({
-				message:
-					editUserResponse.error ||
-					updateRoleResponse.error ||
-					t('something_went_wrong', {
-						ns: 'common',
-					}),
-			});
+			setIsUpdateLoading(false);
 		}
 	};
 
@@ -180,6 +192,8 @@ function UserFunction({
 						key="Invite_team_members"
 						onClick={onInviteMemberHandler}
 						type="primary"
+						disabled={isUpdateLoading}
+						loading={isUpdateLoading}
 					>
 						Update Details
 					</Button>,
