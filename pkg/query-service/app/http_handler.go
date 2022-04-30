@@ -398,7 +398,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		filteredDashboards = append(filteredDashboards, dash)
 	}
 
-	aH.respond(w, &filteredDashboards)
+	aH.respond(w, filteredDashboards)
 
 }
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
@@ -431,7 +431,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, &postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData)
 	if apiError != nil {
 		respondError(w, apiError, nil)
 		return
@@ -470,7 +470,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(&postData)
+	dash, apiErr := dashboards.CreateDashboard(postData)
 
 	if apiErr != nil {
 		respondError(w, apiErr, nil)
