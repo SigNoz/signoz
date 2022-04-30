@@ -361,13 +361,13 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
-		aH.respond(w, &allDashboards)
+		aH.respond(w, allDashboards)
 		return
 	}
 
 	tags2Dash := make(map[string][]int)
-	for i := 0; i < len(*allDashboards); i++ {
-		tags, ok := (*allDashboards)[i].Data["tags"].([]interface{})
+	for i := 0; i < len(allDashboards); i++ {
+		tags, ok := (allDashboards)[i].Data["tags"].([]interface{})
 		if !ok {
 			continue
 		}
@@ -383,7 +383,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	inter := make([]int, len(*allDashboards))
+	inter := make([]int, len(allDashboards))
 	for i := range inter {
 		inter[i] = i
 	}
@@ -394,7 +394,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	filteredDashboards := []dashboards.Dashboard{}
 	for _, val := range inter {
-		dash := (*allDashboards)[val]
+		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
 	}
 

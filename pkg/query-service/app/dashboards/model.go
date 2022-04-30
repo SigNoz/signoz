@@ -135,7 +135,7 @@ func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError)
 	return dash, nil
 }
 
-func GetDashboards() (*[]Dashboard, *model.ApiError) {
+func GetDashboards() ([]Dashboard, *model.ApiError) {
 
 	dashboards := []Dashboard{}
 	query := fmt.Sprintf("SELECT * FROM dashboards;")
@@ -145,7 +145,7 @@ func GetDashboards() (*[]Dashboard, *model.ApiError) {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	return &dashboards, nil
+	return dashboards, nil
 }
 
 func DeleteDashboard(uuid string) *model.ApiError {
