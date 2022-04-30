@@ -249,8 +249,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
@@ -460,26 +460,12 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 	var postData map[string]interface{}
 
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
 
-	fmt.Println("body is: ", string(body))
-
-	err = json.Unmarshal(body, &postData)
-	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
-		return
-	}
-
-	// err := json.NewDecoder(r.Body).Decode(&postData)
-	// if err != nil {
-	// 	respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
-	// 	return
-	// }
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
