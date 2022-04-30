@@ -280,15 +280,15 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagFilters", EditAccess(aH.getTagFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans", EditAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", EditAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans", ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/getTagValues", EditAccess(aH.getTagValues)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagValues", ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/errors", ViewAccess(aH.getErrors)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", ViewAccess(aH.getErrorForId)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", ViewAccess(aH.getErrorForType)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/disks", ViewAccess(aH.getDisks)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/disks", AdminAccess(aH.getDisks)).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
@@ -315,27 +315,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", SelfAccess(aH.changePassword)).Methods(http.MethodPost)
-
-	// We are not exposing any group or rule related APIs right now. They will be exposed later
-	// when we'll have more fine-grained RBAC based on various APIs classes and services.
-
-	// router.HandleFunc("/api/v1/rbac/group", aH.createGroup).Methods(http.MethodPost)
-	// router.HandleFunc("/api/v1/rbac/group", aH.listGroups).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/rbac/group/{id}", aH.getGroup).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/rbac/group/{id}", aH.deleteGroup).Methods(http.MethodDelete)
-
-	// router.HandleFunc("/api/v1/rbac/rule", aH.createRBACRule).Methods(http.MethodPost)
-	// router.HandleFunc("/api/v1/rbac/rule", aH.listRBACRules).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/rbac/rule/{id}", aH.getRBACRule).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/rbac/rule/{id}", aH.deleteRBACRule).Methods(http.MethodDelete)
-
-	// router.HandleFunc("/api/v1/rbac/groupRule", aH.assignRBACRule).Methods(http.MethodPost)
-	// router.HandleFunc("/api/v1/rbac/groupRule", aH.unassignRBACRule).Methods(http.MethodDelete)
-	// router.HandleFunc("/api/v1/rbac/groupRule/{id}", aH.getGroupRules).Methods(http.MethodGet)
-
-	// router.HandleFunc("/api/v1/rbac/groupUser", aH.assignUser).Methods(http.MethodPost)
-	// router.HandleFunc("/api/v1/rbac/groupUser", aH.unassignUser).Methods(http.MethodDelete)
-	// router.HandleFunc("/api/v1/rbac/groupUser/{id}", aH.getGroupUsers).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
