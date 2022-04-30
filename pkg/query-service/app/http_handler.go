@@ -459,11 +459,27 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 	var postData map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
+
+	fmt.Println("body is: ", string(body))
+
+	err = json.Unmarshal(body, &postData)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		return
+	}
+
+	// err := json.NewDecoder(r.Body).Decode(&postData)
+	// if err != nil {
+	// 	respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+	// 	return
+	// }
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
