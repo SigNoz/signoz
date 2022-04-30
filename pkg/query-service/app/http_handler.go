@@ -1446,7 +1446,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	// and is the last user then don't let the deletion happen. Otherwise, the system will become
 	// admin less and hence inaccessible.
 	ctx := context.Background()
-	userGroup, apiErr := dao.DB().GetUserGroup(ctx, id)
+	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to get user's group")
 		return
@@ -1456,13 +1456,13 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, apiErr, "Failed to get admin group")
 		return
 	}
-	adminUsers, apiErr := dao.DB().GetGroupUsers(ctx, adminGroup.Id)
+	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.Id)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to get admin group users")
 		return
 	}
 
-	if userGroup.GroupId == adminGroup.Id && len(adminUsers) == 1 {
+	if user.GroupId == adminGroup.Id && len(adminUsers) == 1 {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("cannot delete the last admin user")}, nil)
@@ -1480,19 +1480,19 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	gu, err := dao.DB().GetUserGroup(context.Background(), id)
+	user, err := dao.DB().GetUser(context.Background(), id)
 	if err != nil {
 		respondError(w, err, "Failed to get user's group")
 		return
 	}
-	if gu == nil {
+	if user == nil {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("No user group found"),
+			Err: errors.New("No user found"),
 		}, nil)
 		return
 	}
-	group, err := dao.DB().GetGroup(context.Background(), gu.GroupId)
+	group, err := dao.DB().GetGroup(context.Background(), user.GroupId)
 	if err != nil {
 		respondError(w, err, "Failed to get group")
 		return
@@ -1517,26 +1517,26 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	g, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
+	newGroup, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to get user's group")
 		return
 	}
 
-	if g == nil {
+	if newGroup == nil {
 		respondError(w, apiErr, "Specified group is not present")
 		return
 	}
 
-	userGroup, apiErr := dao.DB().GetUserGroup(ctx, id)
+	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to fetch user group")
 		return
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if userGroup.GroupId == auth.AuthCacheObj.AdminGroupId {
-		adminUsers, apiErr := dao.DB().GetGroupUsers(ctx, auth.AuthCacheObj.AdminGroupId)
+	if user.GroupId == auth.AuthCacheObj.AdminGroupId {
+		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
 		if apiErr != nil {
 			respondError(w, apiErr, "Failed to fetch adminUsers")
 			return
@@ -1550,16 +1550,11 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	apiErr = dao.DB().UpdateUserGroup(context.Background(), &model.GroupUser{
-		UserId:  id,
-		GroupId: g.Id,
-	})
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.Id)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to add user to group")
 		return
 	}
-
-	auth.AuthCacheObj.AddGroupUser(&model.GroupUser{UserId: id, GroupId: g.Id})
 	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
 }
 
@@ -1605,137 +1600,6 @@ func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.writeJSON(w, r, map[string]string{"data": "group deleted successfully"})
-}
-
-func (aH *APIHandler) createRBACRule(w http.ResponseWriter, r *http.Request) {
-	req, err := parseCreateRBACRuleRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	if !auth.IsValidAPIClass(req.ApiClass) {
-		respondError(w, &model.ApiError{
-			Err: fmt.Errorf("Unknown API class, must be one of %s\n", auth.ValidAPIClasses()),
-		}, "Failed to create rule")
-		return
-	}
-
-	rule, apiErr := dao.DB().CreateRule(context.Background(), req)
-	if apiErr != nil {
-		respondError(w, apiErr, "Failed to create rule")
-		return
-	}
-
-	aH.writeJSON(w, r, rule)
-}
-
-func (aH *APIHandler) listRBACRules(w http.ResponseWriter, r *http.Request) {
-	rules, err := dao.DB().GetRules(context.Background())
-	if err != nil {
-		respondError(w, err, "Failed to get rules list")
-		return
-	}
-	aH.writeJSON(w, r, rules)
-}
-
-func (aH *APIHandler) getRBACRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	user, err := dao.DB().GetRule(context.Background(), id)
-	if err != nil {
-		respondError(w, err, "Failed to get rule")
-		return
-	}
-	aH.writeJSON(w, r, user)
-}
-func (aH *APIHandler) deleteRBACRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	err := dao.DB().DeleteRule(context.Background(), id)
-	if err != nil {
-		respondError(w, err, "Failed to query rule")
-		return
-	}
-	aH.writeJSON(w, r, map[string]string{"data": "rule deleted successfully"})
-}
-
-func (aH *APIHandler) getGroupRules(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	rules, err := dao.DB().GetGroupRules(context.Background(), id)
-	if err != nil {
-		respondError(w, err, "Failed to get group rules")
-		return
-	}
-	aH.writeJSON(w, r, rules)
-}
-
-func (aH *APIHandler) assignRBACRule(w http.ResponseWriter, r *http.Request) {
-	req, err := parseGroupRuleRequest(r)
-	fmt.Printf("parsed req: %+v\n", req)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	apiErr := dao.DB().AddRuleToGroup(context.Background(), req)
-	if apiErr != nil {
-		respondError(w, apiErr, "Failed to assign rule")
-		return
-	}
-
-	aH.writeJSON(w, r, map[string]string{"data": "rule assigned successfully"})
-}
-
-func (aH *APIHandler) unassignRBACRule(w http.ResponseWriter, r *http.Request) {
-	req, err := parseGroupRuleRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	apiErr := dao.DB().DeleteRuleFromGroup(context.Background(), req)
-	if apiErr != nil {
-		respondError(w, apiErr, "Failed to assign rule")
-		return
-	}
-
-	aH.writeJSON(w, r, map[string]string{"data": "rule removed successfully"})
-}
-
-func (aH *APIHandler) getGroupUsers(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	users, err := dao.DB().GetGroupUsers(context.Background(), id)
-	if err != nil {
-		respondError(w, err, "Failed to get users")
-		return
-	}
-	aH.writeJSON(w, r, users)
-}
-
-func (aH *APIHandler) assignUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseGroupUserRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	apiErr := dao.DB().AddUserToGroup(context.Background(), req)
-	if apiErr != nil {
-		respondError(w, apiErr, "Failed to assign user to group")
-		return
-	}
-
-	aH.writeJSON(w, r, map[string]string{"data": "user assigned successfully"})
-}
-
-func (aH *APIHandler) unassignUser(w http.ResponseWriter, r *http.Request) {
-	req, err := parseGroupUserRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	apiErr := dao.DB().DeleteUserFromGroup(context.Background(), req)
-	if apiErr != nil {
-		respondError(w, apiErr, "Failed to assign rule")
-		return
-	}
-
-	aH.writeJSON(w, r, map[string]string{"data": "rule removed successfully"})
 }
 
 func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {

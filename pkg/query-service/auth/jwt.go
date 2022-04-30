@@ -38,7 +38,7 @@ func ParseJWT(jwtStr string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func validateUser(tok string) (*model.UserResponse, error) {
+func validateUser(tok string) (*model.UserPayload, error) {
 	claims, err := ParseJWT(tok)
 	if err != nil {
 		return nil, err
@@ -47,10 +47,11 @@ func validateUser(tok string) (*model.UserResponse, error) {
 	if !claims.VerifyExpiresAt(now, true) {
 		return nil, errors.Errorf("Token is expired")
 	}
-	return &model.UserResponse{
+	return &model.UserPayload{
 		User: model.User{
-			Id:    claims["id"].(string),
-			Email: claims["email"].(string),
+			Id:      claims["id"].(string),
+			GroupId: claims["gid"].(string),
+			Email:   claims["email"].(string),
 		},
 	}, nil
 }

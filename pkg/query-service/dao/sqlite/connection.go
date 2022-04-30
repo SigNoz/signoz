@@ -29,13 +29,6 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	table_schema := `
 		PRAGMA foreign_keys = ON;
 
-		CREATE TABLE IF NOT EXISTS organizations (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
-			has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
-		);
 		CREATE TABLE IF NOT EXISTS invites (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
@@ -46,39 +39,28 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			org_id TEXT NOT NULL,
 			FOREIGN KEY(org_id) REFERENCES organizations(id)
 		);
+		CREATE TABLE IF NOT EXISTS organizations (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
+			has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
+		);
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
-			org_id TEXT NOT NULL,
 			email TEXT NOT NULL UNIQUE,
 			password TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
 			profile_picture_url TEXT,
+			group_id TEXT NOT NULL,
+			org_id TEXT NOT NULL,
+			FOREIGN KEY(group_id) REFERENCES groups(id),
 			FOREIGN KEY(org_id) REFERENCES organizations(id)
 		);
 		CREATE TABLE IF NOT EXISTS groups (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL UNIQUE
-		);
-		CREATE TABLE IF NOT EXISTS group_users (
-			group_id TEXT NOT NULL,
-			user_id TEXT NOT NULL,
-			FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
-			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-			PRIMARY KEY (group_id, user_id)
-		);
-		CREATE TABLE IF NOT EXISTS group_rules (
-			group_id TEXT NOT NULL,
-			rule_id TEXT NOT NULL,
-			FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
-			FOREIGN KEY(rule_id) REFERENCES rbac_rules(id) ON DELETE CASCADE,
-			PRIMARY KEY (group_id, rule_id)
-		);
-		CREATE TABLE IF NOT EXISTS rbac_rules (
-			id TEXT PRIMARY KEY,
-			api_class TEXT NOT NULL,
-			permission INTEGER NOT NULL,
-			UNIQUE(api_class, permission) ON CONFLICT REPLACE
 		);
 		CREATE TABLE IF NOT EXISTS reset_password_request (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,40 +119,20 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	return nil
 }
 
-// initializeRBAC creates the ADMIN, EDITOR and VIEWER groups if they are not present. It also
-// created the rules required for the groups and assign the rules to the corresponding groups.
+// initializeRBAC creates the ADMIN, EDITOR and VIEWER groups if they are not present.
 func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
-	f := func(groupName, apiClass string, permission int) error {
-		group, err := mds.createGroupIfNotPresent(ctx, groupName)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create group")
-		}
-		rule, apiErr := mds.CreateRule(ctx, &model.RBACRule{
-			ApiClass:   apiClass,
-			Permission: permission,
-		})
-		if apiErr != nil {
-			return errors.Wrap(apiErr.Err, "Failed to create rule")
-		}
-		if apiErr = mds.AddRuleToGroup(ctx, &model.GroupRule{
-			GroupId: group.Id,
-			RuleId:  rule.Id,
-		}); apiErr != nil {
-			return errors.Wrap(apiErr.Err, "Failed to add rule to group")
-		}
-		return nil
+	f := func(groupName string) error {
+		_, err := mds.createGroupIfNotPresent(ctx, groupName)
+		return errors.Wrap(err, "Failed to create group")
 	}
 
-	if err := f(constants.AdminGroup, constants.AdminAPI,
-		constants.WritePermission); err != nil {
+	if err := f(constants.AdminGroup); err != nil {
 		return err
 	}
-	if err := f(constants.EditorGroup, constants.NonAdminAPI,
-		constants.WritePermission); err != nil {
+	if err := f(constants.EditorGroup); err != nil {
 		return err
 	}
-	if err := f(constants.ViewerGroup, constants.NonAdminAPI,
-		constants.ReadPermission); err != nil {
+	if err := f(constants.ViewerGroup); err != nil {
 		return err
 	}
 

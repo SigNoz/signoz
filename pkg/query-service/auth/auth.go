@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
@@ -99,7 +100,7 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 	}
 
 	if inv == nil {
-		return nil, errors.Wrap(apiErr.Err, "user is not invited")
+		return nil, errors.New("user is not invited")
 	}
 
 	// TODO(Ahsan): This is not the best way to add org name in the invite response. We should
@@ -219,7 +220,7 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 		return apiErr
 	}
 
-	var group, orgId string
+	var groupName, orgId string
 
 	// If there are no user, then this first user is granted Admin role. Also, an org is created
 	// based on the request. Any other user can't use any other org name, if they do then
@@ -231,7 +232,7 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 			zap.S().Debugf("CreateOrg failed, err: %v\n", apiErr.Err)
 			return apiErr
 		}
-		group = constants.AdminGroup
+		groupName = constants.AdminGroup
 		orgId = org.Id
 	}
 
@@ -246,37 +247,41 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 			return apiErr
 		}
 
-		group = inv.Role
+		groupName = inv.Role
 		if org != nil {
 			orgId = org.Id
 		}
 	}
 
-	user := &model.User{
-		Name:      req.Name,
-		OrgId:     orgId,
-		Email:     req.Email,
-		CreatedAt: time.Now().Unix(),
+	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
+	if apiErr != nil {
+		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
+		return apiErr
 	}
 
 	hash, err := passwordHash(req.Password)
 	if err != nil {
 		return &model.ApiError{Err: err, Typ: model.ErrorUnauthorized}
 	}
-	user.Password = hash
-	userCreated, apiErr := dao.DB().CreateUserWithRole(ctx, user, group)
+
+	user := &model.User{
+		Id:                 uuid.NewString(),
+		Name:               req.Name,
+		Email:              req.Email,
+		Password:           hash,
+		CreatedAt:          time.Now().Unix(),
+		ProfilePirctureURL: "", // Currently unused
+		GroupId:            group.Id,
+		OrgId:              orgId,
+	}
+
+	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
+	_, apiErr = dao.DB().CreateUser(ctx, user)
 	if apiErr != nil {
-		zap.S().Debugf("CreateUserWithRole failed, err: %v\n", apiErr.Err)
+		zap.S().Debugf("CreateUser failed, err: %v\n", apiErr.Err)
 		return apiErr
 	}
 
-	userGroup, apiErr := dao.DB().GetGroupByName(ctx, group)
-	if apiErr != nil {
-		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
-		return apiErr
-	}
-
-	AuthCacheObj.AddGroupUser(&model.GroupUser{UserId: userCreated.Id, GroupId: userGroup.Id})
 	return dao.DB().DeleteInvitation(ctx, user.Email)
 }
 
@@ -294,6 +299,7 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.Id,
+		"gid":   user.GroupId,
 		"email": user.Email,
 		"exp":   accessJwtExpiry,
 	})
@@ -306,6 +312,7 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 	refreshJwtExpiry := time.Now().Add(JwtRefresh).Unix()
 	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.Id,
+		"gid":   user.GroupId,
 		"email": user.Email,
 		"exp":   refreshJwtExpiry,
 	})
@@ -325,7 +332,7 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 }
 
 // authenticateLogin is responsible for querying the DB and validating the credentials.
-func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserResponse, error) {
+func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.UserPayload, error) {
 
 	// If refresh token is valid, then simply authorize the login request.
 	if len(req.RefreshToken) > 0 {

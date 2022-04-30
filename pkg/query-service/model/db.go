@@ -9,6 +9,7 @@ type Organization struct {
 }
 
 type InvitationObject struct {
+	Id        string `json:"id" db:"id"`
 	Email     string `json:"email" db:"email"`
 	Name      string `json:"name" db:"name"`
 	Token     string `json:"token" db:"token"`
@@ -18,19 +19,17 @@ type InvitationObject struct {
 }
 
 type User struct {
-	Id        string `json:"id" db:"id"`
-	Name      string `json:"name" db:"name"`
-	OrgId     string `json:"orgId,omitempty" db:"org_id"`
-	Email     string `json:"email" db:"email"`
-	Password  string `json:"password,omitempty" db:"password"`
-	CreatedAt int64  `json:"createdAt" db:"created_at"`
-
-	// Methods to operate on ProfilePictureURL are not written. It is added in the table
-	// fof it's introduction in future.
+	Id                 string `json:"id" db:"id"`
+	Name               string `json:"name" db:"name"`
+	Email              string `json:"email" db:"email"`
+	Password           string `json:"password,omitempty" db:"password"`
+	CreatedAt          int64  `json:"createdAt" db:"created_at"`
 	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
+	OrgId              string `json:"orgId,omitempty" db:"org_id"`
+	GroupId            string `json:"groupId,omitempty" db:"group_id"`
 }
 
-type UserResponse struct {
+type UserPayload struct {
 	User
 	Role         string `json:"role"`
 	Organization string `json:"organization"`
@@ -39,22 +38,6 @@ type UserResponse struct {
 type Group struct {
 	Id   string `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
-}
-
-type GroupUser struct {
-	GroupId string `json:"group_id,omitempty" db:"group_id"`
-	UserId  string `json:"user_id" db:"user_id"`
-}
-
-type GroupRule struct {
-	GroupId string `json:"group_id,omitempty" db:"group_id"`
-	RuleId  string `json:"rule_id" db:"rule_id"`
-}
-
-type RBACRule struct {
-	Id         string `json:"id" db:"id"`
-	ApiClass   string `json:"api_class" db:"api_class"`
-	Permission int    `json:"permission" db:"permission"`
 }
 
 type ResetPasswordRequest struct {

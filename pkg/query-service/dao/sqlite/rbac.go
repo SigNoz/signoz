@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
-	"go.uber.org/zap"
 )
 
 func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,
@@ -38,7 +37,7 @@ func (mds *ModelDaoSqlite) GetInviteFromEmail(ctx context.Context, email string,
 
 	invites := []model.InvitationObject{}
 	err := mds.db.Select(&invites,
-		`SELECT email,name,token,created_at,role,org_id FROM invites WHERE email=?;`, email)
+		`SELECT * FROM invites WHERE email=?;`, email)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -60,7 +59,7 @@ func (mds *ModelDaoSqlite) GetInviteFromToken(ctx context.Context, token string,
 
 	invites := []model.InvitationObject{}
 	err := mds.db.Select(&invites,
-		`SELECT email,name,token,created_at,role,org_id FROM invites WHERE token=?;`, token)
+		`SELECT * FROM invites WHERE token=?;`, token)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -79,7 +78,7 @@ func (mds *ModelDaoSqlite) GetInvites(ctx context.Context,
 ) ([]model.InvitationObject, *model.ApiError) {
 
 	invites := []model.InvitationObject{}
-	err := mds.db.Select(&invites, "SELECT name,email,token,created_at,role,org_id  FROM invites")
+	err := mds.db.Select(&invites, "SELECT * FROM invites")
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -149,7 +148,6 @@ func (mds *ModelDaoSqlite) GetOrgs(ctx context.Context) ([]model.Organization, *
 	err := mds.db.Select(&orgs, `SELECT * FROM organizations`)
 
 	if err != nil {
-		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return orgs, nil
@@ -169,11 +167,9 @@ func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *model.Organization)
 }
 
 func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiError {
-	zap.S().Debugf("Deleting org [id=%s]: %s\n", id)
 
 	_, err := mds.db.ExecContext(ctx, `DELETE from organizations where id=?;`, id)
 	if err != nil {
-		zap.S().Errorf("Error while deleting org from the DB\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -182,68 +178,16 @@ func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiE
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 	user *model.User) (*model.User, *model.ApiError) {
 
-	user.Id = uuid.NewString()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_id, email, password, created_at, profile_picture_url)
-		 VALUES (?, ?, ?, ?, ?, ?, ?);`,
-		user.Id, user.Name, user.OrgId, user.Email, user.Password, user.CreatedAt,
-		user.ProfilePirctureURL,
+		`INSERT INTO users (id, name, email, password, created_at, profile_picture_url, group_id, org_id)
+		 VALUES (?, ?, ?, ?, ?, ?, ?,?);`,
+		user.Id, user.Name, user.Email, user.Password, user.CreatedAt,
+		user.ProfilePirctureURL, user.GroupId, user.OrgId,
 	)
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	return user, nil
-}
-
-func (mds *ModelDaoSqlite) CreateUserWithRole(ctx context.Context, user *model.User,
-	role string) (*model.User, *model.ApiError) {
-
-	group, apiErr := mds.GetGroupByName(ctx, role)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	if group == nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal,
-			Err: errors.Errorf("Group not found for the specified role: %v", role)}
-	}
-
-	// 1. Create the user entry in the users table
-	// 2. Assign the user to the group.
-	// A transaction is required because otherwise it is possible that assinging the user to a group
-	// fails and we still end up adding the entry for the user in the users table.
-	tx, err := mds.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	user.Id = uuid.NewString()
-	_, err = tx.ExecContext(ctx,
-		`INSERT INTO users (id, name, org_id, email, password, created_at, profile_picture_url)
-		 VALUES (?, ?, ?, ?, ?, ?, ?);`,
-		user.Id, user.Name, user.OrgId, user.Email, user.Password, user.CreatedAt,
-		user.ProfilePirctureURL)
-
-	if err != nil {
-		tx.Rollback()
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.Wrap(err, "Failed to insert user entry"),
-		}
-	}
-
-	_, err = tx.ExecContext(ctx, `INSERT INTO group_users (group_id, user_id) VALUES (?, ?);`,
-		group.Id, user.Id)
-	if err != nil {
-		tx.Rollback()
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
 	return user, nil
 }
 
@@ -264,6 +208,15 @@ func (mds *ModelDaoSqlite) UpdateUserPassword(ctx context.Context, passwordHash,
 
 	q := `UPDATE users SET password=? WHERE id=?;`
 	if _, err := mds.db.ExecContext(ctx, q, passwordHash, userId); err != nil {
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (mds *ModelDaoSqlite) UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError {
+
+	q := `UPDATE users SET group_id=? WHERE id=?;`
+	if _, err := mds.db.ExecContext(ctx, q, groupId, userId); err != nil {
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -291,23 +244,23 @@ func (mds *ModelDaoSqlite) DeleteUser(ctx context.Context, id string) *model.Api
 }
 
 func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
-	id string) (*model.UserResponse, *model.ApiError) {
+	id string) (*model.UserPayload, *model.ApiError) {
 
-	users := []model.UserResponse{}
+	users := []model.UserPayload{}
 	query := `select
 				u.id,
 				u.name,
-				u.org_id,
 				u.email,
 				u.password,
 				u.created_at,
 				u.profile_picture_url,
+				u.org_id,
+				u.group_id,
 				g.name as role,
 				o.name as organization
-			from users u, groups g, group_users gu, organizations o
+			from users u, groups g, organizations o
 			where
-				u.id=gu.user_id and
-				g.id=gu.group_id and
+				g.id=u.group_id and
 				o.id = u.org_id and
 				u.id=?;`
 
@@ -328,23 +281,23 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 }
 
 func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
-	email string) (*model.UserResponse, *model.ApiError) {
+	email string) (*model.UserPayload, *model.ApiError) {
 
-	users := []model.UserResponse{}
+	users := []model.UserPayload{}
 	query := `select
 				u.id,
 				u.name,
-				u.org_id,
 				u.email,
 				u.password,
 				u.created_at,
 				u.profile_picture_url,
+				u.org_id,
+				u.group_id,
 				g.name as role,
 				o.name as organization
-			from users u, groups g, group_users gu, organizations o
+			from users u, groups g, organizations o
 			where
-				u.id=gu.user_id and
-				g.id=gu.group_id and
+				g.id=u.group_id and
 				o.id = u.org_id and
 				u.email=?;`
 
@@ -364,56 +317,82 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 	return &users[0], nil
 }
 
-func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserResponse, *model.ApiError) {
-	users := []model.UserResponse{}
+func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserPayload, *model.ApiError) {
+	users := []model.UserPayload{}
 
 	query := `select
 				u.id,
 				u.name,
-				u.org_id,
 				u.email,
 				u.password,
 				u.created_at,
 				u.profile_picture_url,
+				u.org_id,
+				u.group_id,
 				g.name as role,
 				o.name as organization
-			from users u, groups g, group_users gu, organizations o
+			from users u, groups g, organizations o
 			where
-				u.id=gu.user_id and
-				g.id=gu.group_id and
+				g.id = u.group_id and
 				o.id = u.org_id`
 
 	err := mds.db.Select(&users, query)
 
 	if err != nil {
-		zap.S().Debugf("Error in processing sql query: %v", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return users, nil
 }
 
 func (mds *ModelDaoSqlite) GetUsersByOrg(ctx context.Context,
-	orgId string) ([]model.UserResponse, *model.ApiError) {
+	orgId string) ([]model.UserPayload, *model.ApiError) {
 
-	users := []model.UserResponse{}
+	users := []model.UserPayload{}
 	query := `select
 				u.id,
 				u.name,
-				u.org_id,
 				u.email,
 				u.password,
 				u.created_at,
 				u.profile_picture_url,
+				u.org_id,
+				u.group_id,
 				g.name as role,
 				o.name as organization
-			from users u, groups g, group_users gu, organizations o
+			from users u, groups g, organizations o
 			where
-				u.id=gu.user_id and
-				g.id=gu.group_id and
-				o.id = u.org_id and
+				u.group_id = g.id and
+				u.org_id = o.id and
 				u.org_id=?;`
 
 	if err := mds.db.Select(&users, query, orgId); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	return users, nil
+}
+
+func (mds *ModelDaoSqlite) GetUsersByGroup(ctx context.Context,
+	groupId string) ([]model.UserPayload, *model.ApiError) {
+
+	users := []model.UserPayload{}
+	query := `select
+				u.id,
+				u.name,
+				u.email,
+				u.password,
+				u.created_at,
+				u.profile_picture_url,
+				u.org_id,
+				u.group_id,
+				g.name as role,
+				o.name as organization
+			from users u, groups g, organizations o
+			where
+				u.group_id = g.id and
+				o.id = u.org_id and
+				u.group_id=?;`
+
+	if err := mds.db.Select(&users, query, groupId); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return users, nil
@@ -491,170 +470,6 @@ func (mds *ModelDaoSqlite) GetGroups(ctx context.Context) ([]model.Group, *model
 	}
 
 	return groups, nil
-}
-
-func (mds *ModelDaoSqlite) CreateRule(ctx context.Context,
-	rule *model.RBACRule) (*model.RBACRule, *model.ApiError) {
-
-	rule.Id = uuid.NewString()
-	q := `INSERT INTO rbac_rules (id, api_class, permission) VALUES (?, ?, ?);`
-
-	if _, err := mds.db.ExecContext(ctx, q, rule.Id, rule.ApiClass, rule.Permission); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return rule, nil
-}
-
-func (mds *ModelDaoSqlite) EditRule(ctx context.Context,
-	rule *model.RBACRule) (*model.RBACRule, *model.ApiError) {
-
-	q := `UPDATE rbac_rules SET api_class=?,permission=? WHERE id=?;`
-
-	if _, err := mds.db.ExecContext(ctx, q, rule.ApiClass, rule.Permission, rule.Id); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return rule, nil
-}
-
-func (mds *ModelDaoSqlite) DeleteRule(ctx context.Context, id string) *model.ApiError {
-
-	q := `DELETE from rbac_rules where id=?;`
-	if _, err := mds.db.ExecContext(ctx, q, id); err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) GetRule(ctx context.Context,
-	id string) (*model.RBACRule, *model.ApiError) {
-
-	rules := []model.RBACRule{}
-	if err := mds.db.Select(&rules, "SELECT * FROM rbac_rules WHERE id=?", id); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if len(rules) > 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("Found multiple rule with same ID."),
-		}
-	}
-
-	if len(rules) == 0 {
-		return nil, nil
-	}
-	return &rules[0], nil
-}
-
-func (mds *ModelDaoSqlite) GetRules(ctx context.Context) ([]model.RBACRule, *model.ApiError) {
-
-	rules := []model.RBACRule{}
-	err := mds.db.Select(&rules, "SELECT * from rbac_rules")
-
-	if err != nil {
-		zap.S().Debugf("Error in processing sql query: %v", err)
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return rules, nil
-}
-
-func (mds *ModelDaoSqlite) AddRuleToGroup(ctx context.Context,
-	gr *model.GroupRule) *model.ApiError {
-
-	q := `INSERT INTO group_rules (group_id,rule_id) VALUES (?, ?);`
-	if _, err := mds.db.ExecContext(ctx, q, gr.GroupId, gr.RuleId); err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) DeleteRuleFromGroup(ctx context.Context,
-	gr *model.GroupRule) *model.ApiError {
-
-	q := `DELETE from group_rules WHERE (group_id,rule_id) = (?, ?);`
-	if _, err := mds.db.ExecContext(ctx, q, gr.GroupId, gr.RuleId); err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) GetGroupRules(ctx context.Context,
-	id string) ([]model.GroupRule, *model.ApiError) {
-
-	groupRules := []model.GroupRule{}
-
-	q := "SELECT * FROM group_rules WHERE group_id=?"
-	if err := mds.db.Select(&groupRules, q, id); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return groupRules, nil
-}
-
-func (mds *ModelDaoSqlite) AddUserToGroup(ctx context.Context,
-	gu *model.GroupUser) *model.ApiError {
-
-	q := `INSERT INTO group_users (group_id, user_id) VALUES (?, ?);`
-	if _, err := mds.db.ExecContext(ctx, q, gu.GroupId, gu.UserId); err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) UpdateUserGroup(ctx context.Context,
-	gu *model.GroupUser) *model.ApiError {
-
-	q := `UPDATE group_users SET group_id=? WHERE user_id=?;`
-	if _, err := mds.db.ExecContext(ctx, q, gu.GroupId, gu.UserId); err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) GetUserGroup(ctx context.Context,
-	id string) (*model.GroupUser, *model.ApiError) {
-
-	groupUsers := []model.GroupUser{}
-	q := `SELECT user_id,group_id FROM group_users WHERE user_id=?;`
-
-	if err := mds.db.Select(&groupUsers, q, id); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	if len(groupUsers) > 1 {
-		return nil, &model.ApiError{
-			Typ: model.ErrorInternal,
-			Err: errors.New("User is associated to multiple groups."),
-		}
-	}
-
-	if len(groupUsers) == 0 {
-		return nil, nil
-	}
-
-	return &groupUsers[0], nil
-}
-
-func (mds *ModelDaoSqlite) DeleteUserFromGroup(ctx context.Context,
-	gu *model.GroupUser) *model.ApiError {
-
-	q := `DELETE FROM group_users WHERE (group_id, user_id) = (?, ?);`
-	if _, err := mds.db.ExecContext(ctx, q, gu.GroupId, gu.UserId); err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (mds *ModelDaoSqlite) GetGroupUsers(ctx context.Context,
-	id string) ([]model.GroupUser, *model.ApiError) {
-
-	groupUsers := []model.GroupUser{}
-	q := `SELECT * FROM group_users WHERE group_id=?;`
-
-	if err := mds.db.Select(&groupUsers, q, id); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return groupUsers, nil
 }
 
 func (mds *ModelDaoSqlite) CreateResetPasswordEntry(ctx context.Context,

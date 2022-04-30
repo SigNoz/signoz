@@ -5,32 +5,20 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
-	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
 type Group struct {
 	GroupID   string
 	GroupName string
-	Users     []*model.GroupUser
-	Rules     []*model.RBACRule
 }
 
 type AuthCache struct {
-	sync.RWMutex
-
-	// A map from groupId -> Set of Rules (Set abstracted by map[key]->struct{})
-	GroupRules map[string]map[string]struct{}
-
-	UserGroup map[string]string
-	Rules     map[string]*model.RBACRule
-
 	AdminGroupId  string
 	EditorGroupId string
 	ViewerGroupId string
@@ -40,40 +28,6 @@ var AuthCacheObj AuthCache
 
 // InitAuthCache reads the DB and initialize the auth cache.
 func InitAuthCache(ctx context.Context) error {
-	AuthCacheObj.GroupRules = make(map[string]map[string]struct{})
-	AuthCacheObj.UserGroup = make(map[string]string)
-	AuthCacheObj.Rules = make(map[string]*model.RBACRule)
-
-	rules, err := dao.DB().GetRules(ctx)
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed to query for rules")
-	}
-	for _, rule := range rules {
-		rule := rule
-		AuthCacheObj.AddRule(&rule)
-	}
-
-	groups, err := dao.DB().GetGroups(ctx)
-	if err != nil {
-		return errors.Wrap(err.Err, "Failed to query for groups")
-	}
-	for _, group := range groups {
-		gr, err := dao.DB().GetGroupRules(ctx, group.Id)
-		if err != nil {
-			return errors.Wrap(err.Err, "Failed to query for group rules")
-		}
-		for _, r := range gr {
-			AuthCacheObj.AddGroupRule(&r)
-		}
-
-		gu, err := dao.DB().GetGroupUsers(ctx, group.Id)
-		if err != nil {
-			return errors.Wrap(err.Err, "Failed to query for group users")
-		}
-		for _, u := range gu {
-			AuthCacheObj.AddGroupUser(&u)
-		}
-	}
 
 	setGroupId := func(groupName string, dest *string) error {
 		group, err := dao.DB().GetGroupByName(ctx, groupName)
@@ -97,108 +51,6 @@ func InitAuthCache(ctx context.Context) error {
 	return nil
 }
 
-// Add user group updates the previous group if any as a user can only belong to a single group.
-func (ac *AuthCache) AddGroupUser(gr *model.GroupUser) {
-	ac.Lock()
-	defer ac.Unlock()
-
-	ac.UserGroup[gr.UserId] = gr.GroupId
-}
-
-func (ac *AuthCache) AddGroupRule(gr *model.GroupRule) {
-	ac.Lock()
-	defer ac.Unlock()
-
-	if _, ok := ac.GroupRules[gr.GroupId]; !ok {
-		ac.GroupRules[gr.GroupId] = make(map[string]struct{})
-	}
-	ac.GroupRules[gr.GroupId][gr.RuleId] = struct{}{}
-}
-
-func (ac *AuthCache) AddRule(r *model.RBACRule) {
-	ac.Lock()
-	defer ac.Unlock()
-
-	ac.Rules[r.Id] = r
-}
-
-func (ac *AuthCache) RemoveGroupUser(gu *model.GroupUser) {
-	ac.Lock()
-	defer ac.Unlock()
-
-	delete(ac.UserGroup, gu.UserId)
-}
-
-func (ac *AuthCache) RemoveGroupRule(gr *model.GroupRule) {
-	ac.Lock()
-	defer ac.Unlock()
-
-	if _, ok := ac.GroupRules[gr.GroupId]; !ok {
-		ac.GroupRules[gr.GroupId] = make(map[string]struct{})
-	}
-	delete(ac.GroupRules[gr.GroupId], gr.RuleId)
-}
-
-func (ac *AuthCache) RemoveRule(r *model.RBACRule) {
-	ac.Lock()
-	defer ac.Unlock()
-
-	delete(ac.Rules, r.Id)
-}
-
-func (ac *AuthCache) HighestPermission(user, apiClass string) int {
-	ac.RLock()
-	defer ac.RUnlock()
-
-	permission := -1
-	userGroupId := ac.UserGroup[user]
-	for ruleId := range ac.GroupRules[userGroupId] {
-		if ac.Rules[ruleId].ApiClass == apiClass && ac.Rules[ruleId].Permission > permission {
-			permission = ac.Rules[ruleId].Permission
-		}
-	}
-	return permission
-}
-
-func (ac *AuthCache) BelongsToAdminGroup(userId string) bool {
-	ac.RLock()
-	defer ac.RUnlock()
-
-	return ac.UserGroup[userId] == ac.AdminGroupId
-}
-
-func (ac *AuthCache) BelongsToEditorGroup(userId string) bool {
-	ac.RLock()
-	defer ac.RUnlock()
-
-	return ac.UserGroup[userId] == ac.EditorGroupId
-}
-
-func (ac *AuthCache) BelongsToViewerGroup(userId string) bool {
-	ac.RLock()
-	defer ac.RUnlock()
-
-	return ac.UserGroup[userId] == ac.ViewerGroupId
-}
-
-func IsValidAPIClass(class string) bool {
-	for _, c := range ValidAPIClasses() {
-		if class == c {
-			return true
-		}
-	}
-	return false
-}
-
-func ValidAPIClasses() []string {
-	return []string{
-		constants.AdminAPI,
-		constants.NonAdminAPI,
-		constants.SelfAccessibleAPI,
-		constants.UnprotectedAPI,
-	}
-}
-
 func IsAdmin(r *http.Request) bool {
 	accessJwt, err := ExtractJwtFromRequest(r)
 	if err != nil {
@@ -210,7 +62,7 @@ func IsAdmin(r *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	return AuthCacheObj.BelongsToAdminGroup(user.Id)
+	return user.GroupId == AuthCacheObj.AdminGroupId
 }
 
 func IsSelfAccessRequest(r *http.Request) bool {
@@ -242,7 +94,7 @@ func IsViewer(r *http.Request) bool {
 		return false
 	}
 
-	return AuthCacheObj.BelongsToViewerGroup(user.Id)
+	return user.GroupId == AuthCacheObj.ViewerGroupId
 }
 
 func IsEditor(r *http.Request) bool {
@@ -256,7 +108,7 @@ func IsEditor(r *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	return AuthCacheObj.BelongsToEditorGroup(user.Id)
+	return user.GroupId == AuthCacheObj.EditorGroupId
 }
 
 func ValidatePassword(password string) error {
