@@ -310,15 +310,14 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	// build queries
-	queries, err := metricsQueryRangeParams.BuildQuery("time_series")
+	queries, formulaQueries, err := metricsQueryRangeParams.BuildQuery("time_series")
 	if err != nil {
 		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 	}
 
-	var formulaSubQuery string
 	var results []*[]model.MetricResult
 	// read the result for individual metric queries and build query for formula
-	for idx, query := range queries {
+	for _, query := range queries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
 			aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -326,19 +325,6 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		// query may have group by and can result in multiple metric series
 		results = append(results, result...)
 
-		formulaSubQuery += fmt.Sprintf("(%s) as %c ", query, 97+idx)
-		if idx < len(queries)-1 {
-			formulaSubQuery += "INNER JOIN"
-		} else if len(queries) > 1 {
-			formulaSubQuery += "USING (ts)"
-		}
-	}
-
-	// prepare formula queries
-	var formulaQueries []string
-	for _, formula := range metricsQueryRangeParams.CompositeMetricQuery.Formulas {
-		formulaQuery := fmt.Sprintf("SELECT ts, %s as res FROM ", formula) + formulaSubQuery
-		formulaQueries = append(formulaQueries, formulaQuery)
 	}
 
 	// each formula creates a new series

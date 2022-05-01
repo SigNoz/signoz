@@ -31,6 +31,7 @@ type MetricQuery struct {
 	TagFilters        *FilterSet `json:"tagFilters,omitempty"`
 	GroupingTags      []string   `json:"groupBy,omitempty"`
 	AggregateOperator string     `json:"aggregateOperator,omitempty"`
+	Percentile        float64    `json:"percentile,omitempty"`
 }
 
 type CompositeMetricQuery struct {
@@ -48,10 +49,10 @@ type QueryRangeParamsV2 struct {
 	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery,omitempty"`
 }
 
-func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
+func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, []string, error) {
 
 	if qp.CompositeMetricQuery.RawQuery != "" {
-		return []string{qp.CompositeMetricQuery.RawQuery}, nil
+		return []string{qp.CompositeMetricQuery.RawQuery}, []string{}, nil
 	}
 
 	var queries []string
@@ -68,18 +69,14 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 
 		tagsFilter, err := mq.TagFilters.BuildMetricsFilterQuery(tableName)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		timeSeriesTableTimeFilter := fmt.Sprintf("date >= fromUnixTimestamp64Milli(toInt64(%d)) AND date <= fromUnixTimestamp64Milli(toInt64(%d))", qp.Start, qp.End)
 
-		timeSeriesTableFilterQuery := fmt.Sprintf("%s AND %s", tagsFilter, timeSeriesTableTimeFilter)
-
-		filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM signoz_metrics.time_series WHERE %s", timeSeriesTableFilterQuery)
+		filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM signoz_metrics.time_series WHERE %s", tagsFilter)
 
 		samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
 		intermediateResult := `
-		SELECT fingerprint, %s ts, runningDifference(value)/runningDifference(ts) as res FROM(
-			SELECT fingerprint, %s toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, max(value) as value
+			SELECT fingerprint, %s toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, max(value) as res
 			FROM signoz_metrics.samples
 			INNER JOIN
 			(
@@ -88,8 +85,7 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 			USING fingerprint
 			WHERE %s
 			GROUP BY %s
-			ORDER BY fingerprint, ts
-		)`
+			ORDER BY fingerprint, ts`
 		groupByFilter := "fingerprint, ts"
 		for _, tag := range mq.GroupingTags {
 			groupByFilter += fmt.Sprintf(", JSONExtractString(labels,'%s') as %s", tag, tag)
@@ -99,9 +95,13 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 			groupTags += ","
 		}
 		switch mq.AggregateOperator {
-		case "rate", "sum_rate":
-			query := fmt.Sprintf(intermediateResult, groupTags, groupTags, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
-			if mq.AggregateOperator == "sum_rate" {
+		case "rate", "sum_rate", "avg_rate":
+
+			query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
+			if mq.AggregateOperator == "rate" {
+				new_query := `SELECT fingerprint, %s ts, runningDifference(res)/runningDifference(ts) as res FROM(%s)`
+				query = fmt.Sprintf(new_query, groupTags, query)
+			} else if mq.AggregateOperator == "sum_rate" {
 				new_query := `
 				SELECT ts, %s sum(res) as res
 				FROM (%s)
@@ -109,13 +109,55 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, error) {
 				ORDER BY ts
 				`
 				query = fmt.Sprintf(new_query, groupTags, query, groupTags)
+			} else if mq.AggregateOperator == "avg_rate" {
+				new_query := `
+				SELECT ts, %s avg(res) as res
+				FROM (%s)
+				GROUP BY (ts, %s)
+				ORDER BY ts
+				`
+				query = fmt.Sprintf(new_query, groupTags, query, groupTags)
 			}
 			queries = append(queries, query)
+		case "quantile":
+			query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
+			new_query := `
+			SELECT ts, quantile(%v)(res) as res
+			FROM (%s)
+			GROUP BY (ts, %s)
+			ORDER BY ts
+			`
+			query = fmt.Sprintf(new_query, mq.Percentile, query, groupTags)
+			queries = append(queries, query)
 		default:
-			return nil, fmt.Errorf("unsupported aggregator operator")
+			query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
+			queries = append(queries, query)
 		}
 	}
-	return queries, nil
+
+	var formulaSubQuery string
+	for idx, query := range queries {
+		mq := qp.CompositeMetricQuery.BuildMetricQueries[idx]
+		groupTags := strings.Join(mq.GroupingTags, ",")
+		formulaSubQuery += fmt.Sprintf("(%s) as %c ", query, 97+idx)
+		if idx < len(queries)-1 {
+			formulaSubQuery += "INNER JOIN"
+		} else if len(queries) > 1 {
+			if len(mq.GroupingTags) != 0 {
+				groupTags = "," + groupTags
+			}
+			formulaSubQuery += fmt.Sprintf("USING (ts %s)", groupTags)
+		}
+	}
+	// prepare formula queries
+	var formulaQueries []string
+	for _, formula := range qp.CompositeMetricQuery.Formulas {
+		formulaQuery := fmt.Sprintf("SELECT ts, %s as res FROM ", formula) + formulaSubQuery
+		formulaQueries = append(formulaQueries, formulaQuery)
+	}
+	fmt.Println(queries, formulaQueries)
+
+	return queries, formulaQueries, nil
 }
 
 func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, error) {
