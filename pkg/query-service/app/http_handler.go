@@ -275,7 +275,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/usage", AdminAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 
@@ -288,7 +288,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errors", ViewAccess(aH.getErrors)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", ViewAccess(aH.getErrorForId)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", ViewAccess(aH.getErrorForType)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/disks", AdminAccess(aH.getDisks)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/disks", ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
 	router.HandleFunc("/api/v1/invite", AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
