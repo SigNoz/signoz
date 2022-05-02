@@ -25,7 +25,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [addNewAlert] = useComponentPermission(['add_new_alert'], role);
+	const [addNewAlert, action] = useComponentPermission(
+		['add_new_alert', 'action'],
+		role,
+	);
 
 	useInterval(() => {
 		(async (): Promise<void> => {
@@ -118,7 +121,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				);
 			},
 		},
-		{
+	];
+
+	if (action) {
+		columns.push({
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
@@ -130,12 +136,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						<Button onClick={(): void => onEditHandler(id.toString())} type="link">
 							Edit
 						</Button>
-						{/* <Button type="link">Pause</Button> */}
 					</>
 				);
 			},
-		},
-	];
+		});
+	}
 
 	return (
 		<>

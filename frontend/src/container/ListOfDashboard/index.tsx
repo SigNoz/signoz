@@ -13,6 +13,7 @@ import { AxiosError } from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
+import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +21,7 @@ import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import ImportJSON from './ImportJSON';
@@ -34,6 +36,9 @@ function ListOfAllDashboard(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [action] = useComponentPermission(['action'], role);
 
 	const { t } = useTranslation('dashboard');
 	const [
@@ -89,13 +94,16 @@ function ListOfAllDashboard(): JSX.Element {
 			},
 			render: DateComponent,
 		},
-		{
+	];
+
+	if (action) {
+		columns.push({
 			title: 'Action',
 			dataIndex: '',
 			key: 'x',
 			render: DeleteButton,
-		},
-	];
+		});
+	}
 
 	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
 		createdBy: e.created_at,
