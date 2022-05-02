@@ -8,8 +8,9 @@ import ListAlert from './ListAlert';
 
 function ListAlertRules(): JSX.Element {
 	const { t } = useTranslation('common');
-	const { data, isError, isLoading } = useQuery('allAlerts', {
+	const { data, isError, isLoading, refetch } = useQuery('allAlerts', {
 		queryFn: getAll,
+		cacheTime: 0,
 	});
 
 	if (isError) {
@@ -24,6 +25,7 @@ function ListAlertRules(): JSX.Element {
 		<ListAlert
 			{...{
 				allAlertRules: data.payload,
+				refetch,
 			}}
 		/>
 	);

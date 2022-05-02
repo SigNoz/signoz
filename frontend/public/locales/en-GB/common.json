@@ -1,3 +1,8 @@
 {
-	"something_went_wrong": "Something went wrong"
+	"something_went_wrong": "Something went wrong",
+	"success": "Success",
+	"cancel": "Cancel",
+	"share": "Share",
+	"save": "Save",
+	"edit": "Edit"
 }
