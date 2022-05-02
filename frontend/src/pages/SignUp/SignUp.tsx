@@ -14,6 +14,7 @@ import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
+import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 const { Title } = Typography;
 
@@ -131,20 +132,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				message: editResponse.error || defaultError,
 			});
 		}
-	};
-
-	/**
-	 * @function
-	 * @description to check whether password is valid or not
-	 * stackoverflow.com/a/69807687
-	 * @returns Boolean
-	 */
-	const isPasswordValid = (value: string): boolean => {
-		// eslint-disable-next-line prefer-regex-literals
-		const pattern = new RegExp(
-			'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$',
-		);
-		return pattern.test(value);
 	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
@@ -285,8 +272,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 									marginTop: '0.50rem',
 								}}
 							>
-								Password must have min 8 char with one lower case and one upper and one
-								special char
+								{isPasswordNotValidMessage}
 							</Typography.Paragraph>
 						)}
 					</div>

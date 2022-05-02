@@ -1,5 +1,6 @@
 import { Button, notification, Space, Typography } from 'antd';
 import changeMyPassword from 'api/user/changeMyPassword';
+import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -14,6 +15,9 @@ function PasswordContainer(): JSX.Element {
 	const { t } = useTranslation(['routes', 'settings', 'common']);
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
+		false,
+	);
 
 	const defaultPlaceHolder = t('input_password', {
 		ns: 'settings',
@@ -26,6 +30,13 @@ function PasswordContainer(): JSX.Element {
 	const onChangePasswordClickHandler = async (): Promise<void> => {
 		try {
 			setIsLoading(true);
+
+			if (!isPasswordValid(currentPassword)) {
+				setIsPasswordPolicyError(true);
+				setIsLoading(false);
+				return;
+			}
+
 			const { statusCode, error } = await changeMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
@@ -91,13 +102,36 @@ function PasswordContainer(): JSX.Element {
 					disabled={isLoading}
 					placeholder={defaultPlaceHolder}
 					onChange={(event): void => {
-						setUpdatePassword(event.target.value);
+						const updatedValue = event.target.value;
+						setUpdatePassword(updatedValue);
+						if (!isPasswordValid(updatedValue)) {
+							setIsPasswordPolicyError(true);
+						} else {
+							setIsPasswordPolicyError(false);
+						}
 					}}
 					value={updatePassword}
 				/>
 			</Space>
+			<Space>
+				{isPasswordPolicyError && (
+					<Typography.Paragraph
+						style={{
+							color: '#D89614',
+							marginTop: '0.50rem',
+						}}
+					>
+						{isPasswordNotValidMessage}
+					</Typography.Paragraph>
+				)}
+			</Space>
 			<Button
-				disabled={isLoading}
+				disabled={
+					isLoading ||
+					currentPassword.length === 0 ||
+					updatePassword.length === 0 ||
+					isPasswordPolicyError
+				}
 				loading={isLoading}
 				onClick={onChangePasswordClickHandler}
 				type="primary"
