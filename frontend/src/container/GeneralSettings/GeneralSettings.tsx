@@ -76,8 +76,14 @@ function GeneralSettings({
 	};
 
 	const onClickSaveHandler = useCallback(() => {
+		if (!setRetentionPermission) {
+			notification.error({
+				message: `Sorry you don't have permission to make these changes`,
+			});
+			return;
+		}
 		onModalToggleHandler();
-	}, []);
+	}, [setRetentionPermission]);
 
 	const s3Enabled = useMemo(
 		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
@@ -316,13 +322,11 @@ function GeneralSettings({
 				<Typography>{t('settings.retention_confirmation_description')}</Typography>
 			</Modal>
 
-			{setRetentionPermission && (
-				<ButtonContainer>
-					<Button onClick={onClickSaveHandler} disabled={isDisabled} type="primary">
-						Save
-					</Button>
-				</ButtonContainer>
-			)}
+			<ButtonContainer>
+				<Button onClick={onClickSaveHandler} disabled={isDisabled} type="primary">
+					Save
+				</Button>
+			</ButtonContainer>
 		</Col>
 	);
 }

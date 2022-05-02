@@ -12,4 +12,4 @@ export const isPasswordValid = (value: string): boolean => {
 	return pattern.test(value);
 };
 
-export const isPasswordNotValidMessage = `Password must have min 8 char with one lower case and one upper and one special char`;
+export const isPasswordNotValidMessage = `Password must a have minimum of 8 characters with at least one lower case, one upper case and one special character`;
