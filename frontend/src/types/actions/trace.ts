@@ -28,6 +28,8 @@ export const UPDATE_FILTER_EXCLUDE = 'UPDATE_FILTER_EXCLUDE';
 export const UPDATE_SPAN_ORDER = 'UPDATE_SPAN_ORDER';
 export const UPDATE_SPANS_AGGREGATE_PAGE_NUMBER =
 	'UPDATE_SPANS_AGGREGATE_PAGE_NUMBER';
+export const UPDATE_SPANS_AGGREGATE_PAGE_SIZE =
+	'UPDATE_SPANS_AGGREGATE_PAGE_SIZE';
 
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
@@ -75,6 +77,7 @@ export interface UpdateAllFilters {
 		userSelected: TraceReducer['userSelectedFilter'];
 		isFilterExclude: TraceReducer['isFilterExclude'];
 		order: TraceReducer['spansAggregate']['order'];
+		pageSize: TraceReducer['spansAggregate']['pageSize'];
 	};
 }
 
@@ -168,6 +171,13 @@ export interface UpdateSpanOrder {
 	};
 }
 
+export interface UpdateSpanSize {
+	type: typeof UPDATE_SPANS_AGGREGATE_PAGE_SIZE;
+	payload: {
+		pageSize: TraceReducer['spansAggregate']['pageSize'];
+	};
+}
+
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter
@@ -187,4 +197,5 @@ export type TraceActions =
 	| UpdateSelected
 	| UpdateFilterExclude
 	| UpdateSpanOrder
-	| UpdateSpansAggregatePageNumber;
+	| UpdateSpansAggregatePageNumber
+	| UpdateSpanSize;

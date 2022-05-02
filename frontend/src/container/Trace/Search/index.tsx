@@ -96,6 +96,7 @@ function Search({
 				userSelected: traces.userSelectedFilter,
 				isFilterExclude: traces.isFilterExclude,
 				order: traces.spansAggregate.order,
+				pageSize: traces.spansAggregate.pageSize,
 			},
 		});
 
@@ -107,6 +108,7 @@ function Search({
 			traces.isFilterExclude,
 			traces.userSelectedFilter,
 			traces.spansAggregate.order,
+			traces.spansAggregate.pageSize,
 		);
 	};
 
