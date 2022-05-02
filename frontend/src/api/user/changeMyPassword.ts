@@ -8,9 +8,7 @@ const changeMyPassword = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.post(`/changePassword/${props.userId}`, {
+		const response = await axios.post(`/changePassword/${props.userId}`, {
 			...props,
 		});
 

@@ -8,9 +8,7 @@ const getAll = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const api = axios();
-
-		const response = await api.get('/rules');
+		const response = await axios.get('/rules');
 
 		return {
 			statusCode: 200,

@@ -2,15 +2,13 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/deleteInvite';
+import { PayloadProps, Props } from 'types/api/user/deleteUser';
 
 const deleteUser = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.delete(`/user/${props.userId}`);
+		const response = await axios.delete(`/user/${props.userId}`);
 
 		return {
 			statusCode: 200,

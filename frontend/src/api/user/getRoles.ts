@@ -8,9 +8,7 @@ const getRoles = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/rbac/role/${props.userId}`, {
+		const response = await axios.get(`/rbac/role/${props.userId}`, {
 			headers: {
 				Authorization: `bearer ${props.token}`,
 			},

@@ -1,8 +1,9 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
 import afterLogin from 'AppRoutes/utils';
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import store from 'store';
@@ -13,6 +14,19 @@ import { Logout } from './utils';
 const interceptorsResponse = (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => Promise.resolve(value);
+
+const interceptorsRequestResponse = (
+	value: AxiosRequestConfig,
+): AxiosRequestConfig => {
+	const token =
+		store.getState().app.user?.accessJwt ||
+		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
+		'';
+
+	value.headers.Authorization = token ? `Bearer ${token}` : '';
+
+	return value;
+};
 
 const interceptorRejected = async (
 	value: AxiosResponse<any>,
@@ -45,41 +59,22 @@ const interceptorRejected = async (
 	return Promise.reject(value);
 };
 
-const instance = (): AxiosInstance => {
-	const token =
-		store.getState().app.user?.accessJwt ||
-		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
-		'';
+const instance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
+});
 
-	const instance = axios.create({
-		baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
-		headers: {
-			Authorization: `bearer ${token}`,
-		},
-	});
+instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
+instance.interceptors.request.use(interceptorsRequestResponse);
 
-	instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
+export const AxiosAlertManagerInstance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
+});
 
-	return instance;
-};
-
-export const AxiosAlertManagerInstance = (): AxiosInstance => {
-	const token =
-		store.getState().app.user?.accessJwt ||
-		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
-		'';
-
-	const instance = axios.create({
-		baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
-		headers: {
-			Authorization: `bearer ${token}`,
-		},
-	});
-
-	instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
-
-	return instance;
-};
+AxiosAlertManagerInstance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejected,
+);
+AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestResponse);
 
 export { apiV1 };
 export default instance;

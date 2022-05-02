@@ -8,9 +8,7 @@ const updateRole = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.put(`/rbac/role/${props.userId}`, {
+		const response = await axios.put(`/rbac/role/${props.userId}`, {
 			group_name: props.group_name,
 		});
 

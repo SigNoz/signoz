@@ -8,9 +8,7 @@ const put = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.put(`/rules/${props.id}`, {
+		const response = await axios.put(`/rules/${props.id}`, {
 			data: props.data,
 		});
 

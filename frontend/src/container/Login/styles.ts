@@ -17,13 +17,6 @@ export const Label = styled.label`
 	line-height: 24px;
 `;
 
-export const ButtonContainer = styled.div`
-	margin-top: 1.8125rem;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-`;
-
 export const FormContainer = styled.form`
 	display: flex;
 	flex-direction: column;

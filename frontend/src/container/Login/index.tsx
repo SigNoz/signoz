@@ -1,17 +1,11 @@
-import { Button, Input, notification, Typography } from 'antd';
+import { Button, Input, notification, Space, Typography } from 'antd';
 import loginApi from 'api/user/login';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
 
-import {
-	ButtonContainer,
-	FormContainer,
-	FormWrapper,
-	Label,
-	ParentContainer,
-} from './styles';
+import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
 const { Title } = Typography;
 
@@ -89,7 +83,12 @@ function Login(): JSX.Element {
 						value={password}
 					/>
 				</ParentContainer>
-				<ButtonContainer>
+				<Space
+					style={{ marginTop: '1.3125rem' }}
+					align="start"
+					direction="vertical"
+					size={20}
+				>
 					<Button
 						disabled={isLoading}
 						loading={isLoading}
@@ -97,9 +96,25 @@ function Login(): JSX.Element {
 						htmlType="submit"
 						data-attr="signup"
 					>
-						Get Started
+						Login
 					</Button>
-				</ButtonContainer>
+					<Typography.Link
+						onClick={(): void => {
+							history.push(ROUTES.SIGN_UP);
+						}}
+						style={{ fontWeight: 700 }}
+					>
+						Create an account
+					</Typography.Link>
+
+					<Space direction="vertical" size={7}>
+						<Typography style={{ color: '#ACACAC' }}>Forgot Password?</Typography>
+
+						<Typography style={{ color: '#ACACAC' }}>
+							Ask your admin to reset password and send a new invite link
+						</Typography>
+					</Space>
+				</Space>
 			</FormContainer>
 		</FormWrapper>
 	);

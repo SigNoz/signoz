@@ -8,9 +8,7 @@ const getOrgUser = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/orgUsers/${props.orgId}`);
+		const response = await axios.get(`/orgUsers/${props.orgId}`);
 
 		return {
 			statusCode: 200,

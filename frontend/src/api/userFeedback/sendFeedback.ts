@@ -2,9 +2,7 @@ import axios from 'api';
 import { Props } from 'types/api/userFeedback/sendResponse';
 
 const sendFeedback = async (props: Props): Promise<number> => {
-	const api = axios();
-
-	const response = await api.post(
+	const response = await axios.post(
 		'/feedback',
 		{
 			email: props.email,

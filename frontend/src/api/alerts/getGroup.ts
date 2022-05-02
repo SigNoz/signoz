@@ -9,11 +9,11 @@ const getGroups = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const api = AxiosAlertManagerInstance();
-
 		const queryParams = convertObjectIntoParams(props);
 
-		const response = await api.get(`/alerts/groups?${queryParams}`);
+		const response = await AxiosAlertManagerInstance.get(
+			`/alerts/groups?${queryParams}`,
+		);
 
 		return {
 			statusCode: 200,

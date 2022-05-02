@@ -8,9 +8,7 @@ const getDisks = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const api = axios();
-
-		const response = await api.get(`/disks`);
+		const response = await axios.get(`/disks`);
 
 		return {
 			statusCode: 200,
