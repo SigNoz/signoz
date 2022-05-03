@@ -13,6 +13,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
+import { Tags } from 'types/reducer/trace';
 
 function Metrics({ getService }: MetricsProps): JSX.Element {
 	const { minTime, maxTime, loading, selectedTime } = useSelector<
@@ -25,7 +26,9 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 	>((state) => state.metrics);
 
 	const selectedTags = useMemo(
-		() => convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		() =>
+			(convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) as Tags[]) ||
+			[],
 		[resourceAttributeQueries],
 	);
 	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';

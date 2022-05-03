@@ -15,6 +15,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
+import { Tags } from 'types/reducer/trace';
 
 function MetricsApplication({ getInitialData }: MetricsProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -32,7 +33,9 @@ function MetricsApplication({ getInitialData }: MetricsProps): JSX.Element {
 	);
 
 	const selectedTags = useMemo(
-		() => convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		() =>
+			(convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) as Tags[]) ||
+			[],
 		[resourceAttributeQueries],
 	);
 

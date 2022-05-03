@@ -1,5 +1,6 @@
+import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
-import { Select, Spin } from 'antd';
+import { Button, Select, Spin } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
@@ -130,6 +131,13 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	const handleClose = (id: string): void => {
 		dispatchQueries(queries.filter((queryData) => queryData.id !== id));
 	};
+
+	const handleClearAll = (): void => {
+		send('RESET');
+		dispatchQueries([]);
+		setStaging([]);
+		setSelectedValues([]);
+	};
 	const disabledAndEmpty = !!(
 		!queries.length &&
 		!staging.length &&
@@ -203,6 +211,10 @@ function ResourceAttributesFilter(): JSX.Element | null {
 					}
 				/>
 			)}
+
+			{(queries.length || staging.length || selectedValues.length) && !disabled ? (
+				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
+			) : null}
 		</SearchContainer>
 	);
 }

@@ -1,7 +1,7 @@
 import { createMachine } from 'xstate';
 
 export const ResourceAttributesFilterMachine =
-	/** @xstate-layout N4IgpgJg5mDOIC5QBECGsAWAjA9qgThAAQDKYBAxhkQIIB2xAYgJYA2ALmPgHQAqqUANJgAngGIAcgFEAGr0SgADjljN2zHHQUgAHogAcAFgAM3AOz6ATAEYAzJdsA2Y4cOWAnABoQIxAFpDR2tuQ319AFYTcKdbFycAX3jvNExcAmIySmp6JjZOHn4hUTFNACFWAFd8bWVVdU1tPQQzY1MXY2tDdzNHM3dHd0NvXwR7biMTa313S0i+63DE5PRsPEJScnwqWgYiFg4ubgB5RS5Udhx8SVl5JBBatQ0tO6brBfDuSxdrdw6w6Icw38gWCoQijksZj6hlsZjsSxAKVW6Q2WR2uQOPBOZwuVzKlWqdwe9WeoFexgG3FsYUsX1+EPCPSBCGsQXG1mMRn01j6LiCjgRSLS60yW2yu32+T4AgAaqhKmASnRylUaipHg0XohrB4PmZYZ13G8Zm9LMzLEZuDN9LZGfoKe4nNZBSthRlNtscns8ocAJIQViK6RyNV1J6NRCRfTcXq2KYcxwGoLMgJ9K3-Jw2xOsxJJEB0HAQODaIVrd1or2Sw6FYQjJTqkkR5qtK0DIyQ2LhWZmnz+BZmKlwqatWzddxGl2pMuosXo72Y46nfDnS6hjWk3TakfcDpxRP6fVdHsjPz9wc64y0qyOqaLPOllGiz0Sn0FWXyipgNeNrUs2KWGMdX7I8WksRwUzPA1aUMLtnEcGCzEnZERQ9cUMSlf1A2-cNfxhaNDB5ONul6cJjGiCDGXPYdjFHPoJ3vV1pyfND53ybDNTJRACMMEJCJ+HozFI8jewQPxwi7dMIltHUCKMXN4iAA */
+	/** @xstate-layout N4IgpgJg5mDOIC5QBECGsAWAjA9qgThAAQDKYBAxhkQIIB2xAYgJYA2ALmPgHQAqqUANJgAngGIAcgFEAGr0SgADjljN2zHHQUgAHogAcAFgAM3AOz6ATAEYAzJdsA2Y4cOWAnABoQIxAFpDR2tuQ319AFYTcKdbFycAX3jvNExcAmIySmp6JjZOHn4hUTFNACFWAFd8bWVVdU1tPQQzY1MXY2tDdzNHM3dHd0NvXwR7biMTa313S0i+63DE5PRsPEJScnwqWgYiFg4uPgFhcQAlKRIpeSQQWrUNLRumx3Czbg8TR0sbS31jfUcw38fW47gBHmm4XCVms3SWIBSq3SGyyO1yBx4AHlFFxUOwcPhJLJrkoVPcGk9ENYFuF3i5YR0wtEHECEAEgiEmV8zH1DLYzHZ4Yi0utMltsrt9vluNjcfjCWVKtUbnd6o9QE1rMYBtxbGFvsZ3NrZj1WdYOfotUZLX0XEFHEKViKMpttjk9nlDrL8HiCWJzpcSbcyWrGoh3NCQj0zK53P1ph1WeFLLqnJZ2s5vmZLA6kginWsXaj3VLDoUAGqoSpgEp0cpVGohh5hhDWDy0sz8zruakzamWVm-Qyg362V5-AZOayO1KFlHitEejFHKCV6v+i5XRt1ZuU1s52zjNOOaZfdOWIY+RDZ0Hc6ZmKEXqyLPPCudit2Sz08ACSEFYNbSHI27kuquiIOEjiONwjJgrM3RWJYZisgEIJgnYPTmuEdi2OaiR5nQOAQHA2hvsiH4Sui0qFCcIGhnuLSmP0YJuJ2xjJsmKELG8XZTK0tjdHG06vgW5GupRS7St6vrKqSO4UhqVL8TBWp8o4eqdl0A5Xmy3G6gK56-B4uERDOSKiuJi6lgUAhrhUYB0buimtrEKZBDYrxaS0OZca8+ltheybOI4hivGZzrzp+VGHH+AGOQp4EIHy+ghNYnawtG4TsbYvk8QKfHGAJfQ9uF76WSW37xWBTSGJ0qXpd0vRZdEKGPqC2YeO2-zfO4+HxEAA */
 	createMachine({
 		tsTypes: {} as import('./ResourceAttributesFilter.Machine.typegen').Typegen0,
 		initial: 'Idle',
@@ -16,6 +16,9 @@ export const ResourceAttributesFilterMachine =
 						actions: 'onBlurPurge',
 						target: 'Idle',
 					},
+					RESET: {
+						target: 'Idle',
+					},
 				},
 			},
 			Operator: {
@@ -28,12 +31,18 @@ export const ResourceAttributesFilterMachine =
 						actions: 'onBlurPurge',
 						target: 'Idle',
 					},
+					RESET: {
+						target: 'Idle',
+					},
 				},
 			},
 			TagValue: {
 				on: {
 					onBlur: {
 						actions: ['onValidateQuery', 'onBlurPurge'],
+						target: 'Idle',
+					},
+					RESET: {
 						target: 'Idle',
 					},
 				},

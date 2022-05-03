@@ -30,7 +30,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
 	);
 
 	const onTracePopupClick = (timestamp: number): void => {
