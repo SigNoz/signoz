@@ -19,7 +19,7 @@ const { Paragraph } = Typography;
 
 function AlertChannels(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const addNewChannelPermission = useComponentPermission(
+	const [addNewChannelPermission] = useComponentPermission(
 		['add_new_channel'],
 		role,
 	);
