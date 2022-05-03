@@ -1,21 +1,8 @@
-import { Layout, Switch, Typography } from 'antd';
+import { Layout, Typography } from 'antd';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
 
 const { Sider: SiderComponent } = Layout;
-
-export const ThemeSwitcherWrapper = styled.div`
-	display: flex;
-	justify-content: center;
-	margin-top: 24px;
-	margin-bottom: 16px;
-`;
-
-export const Logo = styled.img<LogoProps>`
-	width: 100px;
-	margin: 9% 5% 5% 10%;
-	display: ${({ collapsed }): string => (!collapsed ? 'block' : 'none')};
-`;
 
 interface LogoProps {
 	collapsed: boolean;
@@ -29,17 +16,6 @@ export const Sider = styled(SiderComponent)`
 	}
 	.ant-layout-sider-trigger {
 		background-color: #1f1f1f;
-	}
-`;
-
-interface DarkModeProps {
-	checked?: boolean;
-	defaultChecked?: boolean;
-}
-
-export const ToggleButton = styled(Switch)<DarkModeProps>`
-	&&& {
-		background: ${({ checked }): string => (checked === false ? 'grey' : '')};
 	}
 `;
 

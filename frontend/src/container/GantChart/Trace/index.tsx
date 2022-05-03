@@ -153,7 +153,6 @@ function Trace(props: TraceProps): JSX.Element {
 						width={width.toString()}
 						bgColor={serviceColour}
 						inMsCount={inMsCount / 1e6}
-						intervalUnit={intervalUnit}
 					/>
 				</Col>
 			</CardContainer>

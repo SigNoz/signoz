@@ -6,7 +6,6 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
-import { v4 } from 'uuid';
 
 import menuItems, { ITEMS } from './menuItems';
 import { Card, Container, Text } from './styles';
@@ -29,8 +28,6 @@ function DashboardGraphSlider(): JSX.Element {
 	const onClickHandler = useCallback(
 		async (name: ITEMS) => {
 			try {
-				const generateWidgetId = v4();
-
 				const getX = (): number => {
 					if (data.layout && data.layout?.length > 0) {
 						const lastIndexX = data.layout[(data.layout?.length || 0) - 1];
@@ -41,7 +38,7 @@ function DashboardGraphSlider(): JSX.Element {
 
 				await updateDashboard({
 					data,
-					generateWidgetId,
+					generateWidgetId: selectedDashboard.uuid,
 					graphType: name,
 					layout: [
 						...(data.layout || []),

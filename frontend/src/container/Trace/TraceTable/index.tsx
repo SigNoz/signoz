@@ -13,6 +13,7 @@ import AppActions from 'types/actions';
 import {
 	UPDATE_SPAN_ORDER,
 	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -120,6 +121,13 @@ function TraceTable(): JSX.Element {
 				});
 
 				dispatch({
+					type: UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
+					payload: {
+						pageSize: props.pageSize,
+					},
+				});
+
+				dispatch({
 					type: UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
 					payload: {
 						currentPage: props.current,
@@ -134,6 +142,7 @@ function TraceTable(): JSX.Element {
 					isFilterExclude,
 					userSelectedFilter,
 					spanOrder,
+					props.pageSize,
 				);
 			}
 		}

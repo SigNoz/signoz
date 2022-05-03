@@ -43,7 +43,7 @@ function WidgetGraph({
 	}
 
 	const chartDataSet = getChartData({
-		queryData,
+		queryData: queryData.data,
 	});
 
 	return (

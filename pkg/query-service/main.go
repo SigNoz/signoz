@@ -1,14 +1,13 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/github"
-
 	"go.signoz.io/query-service/app"
+	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"
 
@@ -42,6 +41,15 @@ func main() {
 		// DruidClientUrl: constants.DruidClientUrl,
 	}
 
+	// Read the jwt secret key
+	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
+
+	if len(auth.JwtSecret) == 0 {
+		zap.S().Warn("No JWT secret key is specified.")
+	} else {
+		zap.S().Info("No JWT secret key set successfully.")
+	}
+
 	server, err := app.NewServer(serverOptions)
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
@@ -49,6 +57,10 @@ func main() {
 
 	if err := server.Start(); err != nil {
 		logger.Fatal("Could not start servers", zap.Error(err))
+	}
+
+	if err := auth.InitAuthCache(context.Background()); err != nil {
+		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
 	signalsChannel := make(chan os.Signal, 1)

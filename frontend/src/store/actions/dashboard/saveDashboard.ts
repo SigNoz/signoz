@@ -57,38 +57,40 @@ export const SaveDashboard = ({
 			];
 
 			const response = await updateDashboardApi({
-				...selectedDashboard.data,
-				uuid,
-				// this is the data for the dashboard
-				title: selectedDashboard.data.title,
-				description: selectedDashboard.data.description,
-				tags: selectedDashboard.data.tags,
-				name: selectedDashboard.data.name,
-				// as we are updated the widget only
-				widgets: [
-					...preWidget,
-					{
-						...selectedWidget,
-						description: updatedDescription,
-						id: widgetId,
-						isStacked: updatedisStacked,
-						nullZeroValues: updatednullZeroValues,
-						opacity: updatedopacity,
-						title: updatedTitle,
-						timePreferance: updatedtimePreferance,
-						yAxisUnit: updatedYAxisUnit,
-						queryData: {
-							...selectedWidget.queryData,
-							data: [
-								...selectedWidget.queryData.data.map((e) => ({
-									...e,
-									queryData: [],
-								})),
-							],
+				data: {
+					...selectedDashboard.data,
+					// this is the data for the dashboard
+					title: selectedDashboard.data.title,
+					description: selectedDashboard.data.description,
+					tags: selectedDashboard.data.tags,
+					name: selectedDashboard.data.name,
+					// as we are updated the widget only
+					widgets: [
+						...preWidget,
+						{
+							...selectedWidget,
+							description: updatedDescription,
+							id: widgetId,
+							isStacked: updatedisStacked,
+							nullZeroValues: updatednullZeroValues,
+							opacity: updatedopacity,
+							title: updatedTitle,
+							timePreferance: updatedtimePreferance,
+							yAxisUnit: updatedYAxisUnit,
+							queryData: {
+								...selectedWidget.queryData,
+								data: [
+									...selectedWidget.queryData.data.map((e) => ({
+										...e,
+										queryData: [],
+									})),
+								],
+							},
 						},
-					},
-					...afterWidget,
-				],
+						...afterWidget,
+					],
+				},
+				uuid,
 			});
 
 			if (response.statusCode === 200) {
