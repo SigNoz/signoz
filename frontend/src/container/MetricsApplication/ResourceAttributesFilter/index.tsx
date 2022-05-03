@@ -146,6 +146,7 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	if (disabledAndEmpty) {
 		return null;
 	}
+
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={disabled}>
 			<div
@@ -196,7 +197,9 @@ function ResourceAttributesFilter(): JSX.Element | null {
 							<span>
 								<Spin size="small" /> Loading...{' '}
 							</span>
-						) : null
+						) : (
+							<span>No data available for {state.value}</span>
+						)
 					}
 				/>
 			)}
