@@ -22,8 +22,7 @@ var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max
 func parseUser(r *http.Request) (*model.User, error) {
 
 	var user model.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		return nil, err
 	}
 	if len(user.Email) == 0 {
@@ -590,8 +589,7 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 
 func parseUserRequest(r *http.Request) (*model.User, error) {
 	var req model.User
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 	return &req, nil
@@ -599,8 +597,7 @@ func parseUserRequest(r *http.Request) (*model.User, error) {
 
 func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	var req model.InviteRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 	return &req, nil
@@ -608,8 +605,7 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 
 func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 	var req auth.RegisterRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 
@@ -622,18 +618,7 @@ func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 
 func parseLoginRequest(r *http.Request) (*model.LoginRequest, error) {
 	var req model.LoginRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &req, nil
-}
-
-func parseCreateGroupRequest(r *http.Request) (*model.Group, error) {
-	var req model.Group
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 
@@ -642,8 +627,7 @@ func parseCreateGroupRequest(r *http.Request) (*model.Group, error) {
 
 func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
 	var req model.UserRole
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 
@@ -652,8 +636,7 @@ func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
 
 func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
 	var req model.Organization
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 
@@ -662,8 +645,7 @@ func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
 
 func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, error) {
 	var req model.ResetPasswordRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 	if err := auth.ValidatePassword(req.Password); err != nil {
@@ -676,8 +658,7 @@ func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, er
 func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, error) {
 	id := mux.Vars(r)["id"]
 	var req model.ChangePasswordRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 	req.UserId = id

@@ -1288,6 +1288,10 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err, nil)
 		return
 	}
+	// mask the password hash
+	for _, u := range users {
+		u.Password = ""
+	}
 	aH.writeJSON(w, r, users)
 }
 
@@ -1470,50 +1474,6 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
 }
 
-func (aH *APIHandler) createGroup(w http.ResponseWriter, r *http.Request) {
-	req, err := parseCreateGroupRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	g, apiErr := dao.DB().CreateGroup(context.Background(), req)
-	if apiErr != nil {
-		respondError(w, apiErr, "Failed to create group")
-		return
-	}
-
-	aH.writeJSON(w, r, g)
-}
-
-func (aH *APIHandler) listGroups(w http.ResponseWriter, r *http.Request) {
-	groups, err := dao.DB().GetGroups(context.Background())
-	if err != nil {
-		respondError(w, err, "Failed to get groups list")
-		return
-	}
-	aH.writeJSON(w, r, groups)
-}
-
-func (aH *APIHandler) getGroup(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	group, err := dao.DB().GetGroup(context.Background(), id)
-	if err != nil {
-		respondError(w, err, "Failed to get group")
-		return
-	}
-	aH.writeJSON(w, r, group)
-}
-
-func (aH *APIHandler) deleteGroup(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	err := dao.DB().DeleteGroup(context.Background(), id)
-	if err != nil {
-		respondError(w, err, "Failed to query group")
-		return
-	}
-	aH.writeJSON(w, r, map[string]string{"data": "group deleted successfully"})
-}
-
 func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
 	orgs, apiErr := dao.DB().GetOrgs(context.Background())
 	if apiErr != nil {
@@ -1557,12 +1517,16 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	orgs, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
+	users, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to fetch org users from the DB")
 		return
 	}
-	aH.writeJSON(w, r, orgs)
+	// mask the password hash
+	for _, u := range users {
+		u.Password = ""
+	}
+	aH.writeJSON(w, r, users)
 }
 
 func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Request) {
