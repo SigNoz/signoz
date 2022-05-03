@@ -14,7 +14,7 @@ const Login = ({ email, name }: LoginProps): void => {
 		expect(inputValue).to.be.equals(email);
 	});
 
-	const firstNameInput = cy.findByPlaceholderText('Mike');
+	const firstNameInput = cy.findByPlaceholderText('Your Name');
 	firstNameInput.then((firstNameInput) => {
 		const element = firstNameInput[0];
 		// element is present

@@ -72,7 +72,7 @@ function UpdateName(): JSX.Element {
 			<Space direction="vertical" size="middle">
 				<Typography>Name</Typography>
 				<NameInput
-					placeholder="Mike Tyson"
+					placeholder="Your Name"
 					onChange={(event): void => {
 						setChangedName(event.target.value);
 					}}
