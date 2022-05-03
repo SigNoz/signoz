@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 const Login = ({ email, name }: LoginProps): void => {
-	const emailInput = cy.findByPlaceholderText('mike@netflix.com');
+	const emailInput = cy.findByPlaceholderText('name@yourcompany.com');
 
 	emailInput.then((emailInput) => {
 		const element = emailInput[0];

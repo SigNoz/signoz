@@ -181,7 +181,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					<div>
 						<Label htmlFor="signupEmail">Email</Label>
 						<Input
-							placeholder="mike@netflix.com"
+							placeholder="name@yourcompany.com"
 							type="email"
 							autoFocus
 							value={email}

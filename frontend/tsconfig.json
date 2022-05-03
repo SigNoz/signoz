@@ -29,6 +29,7 @@
 		"./.eslintrc.js",
 		"./__mocks__",
 		"./conf/default.conf",
-		"./public"
+		"./public",
+		"./cypress"
 	]
 }
