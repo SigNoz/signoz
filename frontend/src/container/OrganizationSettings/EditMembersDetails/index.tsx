@@ -2,9 +2,10 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, notification, Select, Space, Tooltip } from 'antd';
 import getResetPasswordToken from 'api/user/getResetPasswordToken';
 import ROUTES from 'constants/routes';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
@@ -26,6 +27,7 @@ function EditMembersDetails({
 	const { t } = useTranslation(['common']);
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [state, copyToClipboard] = useCopyToClipboard();
 
 	const getPasswordLink = (token: string): string => {
 		return `${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
@@ -38,22 +40,23 @@ function EditMembersDetails({
 		[],
 	);
 
-	const onPasswordChangeHandler = useCallback((event) => {
-		setPasswordLink(event.target.value);
-	}, []);
-
-	const onPasswordCopiedHandler = async (): Promise<void> => {
-		try {
-			await navigator.clipboard.writeText(passwordLink);
-			notification.success({
-				message: t('success'),
-			});
-		} catch (error) {
+	useEffect(() => {
+		if (state.error) {
 			notification.error({
 				message: t('something_went_wrong'),
 			});
 		}
-	};
+
+		if (state.value) {
+			notification.success({
+				message: t('success'),
+			});
+		}
+	}, [state.error, state.value, t]);
+
+	const onPasswordChangeHandler = useCallback((event) => {
+		setPasswordLink(event.target.value);
+	}, []);
 
 	const onGeneratePasswordHandler = async (): Promise<void> => {
 		try {
@@ -143,7 +146,10 @@ function EditMembersDetails({
 						disabled={isLoading}
 					/>
 					<Tooltip title="COPY LINK">
-						<Button icon={<CopyOutlined />} onClick={onPasswordCopiedHandler} />
+						<Button
+							icon={<CopyOutlined />}
+							onClick={(): void => copyToClipboard(passwordLink)}
+						/>
 					</Tooltip>
 				</InputGroup>
 			)}
