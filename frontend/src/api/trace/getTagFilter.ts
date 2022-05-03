@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 import { omitBy } from 'lodash-es';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/trace/getTagFilters';
+import { TraceFilterEnum } from 'types/reducer/trace';
 
 const getTagFilters = async (
 	props: Props,
@@ -11,6 +12,14 @@ const getTagFilters = async (
 	try {
 		const duration =
 			omitBy(props.other, (_, key) => !key.startsWith('duration')) || [];
+
+		const exclude: TraceFilterEnum[] = [];
+
+		props.isFilterExclude.forEach((value, key) => {
+			if (value) {
+				exclude.push(key);
+			}
+		});
 
 		const nonDuration = omitBy(props.other, (_, key) =>
 			key.startsWith('duration'),
@@ -22,6 +31,7 @@ const getTagFilters = async (
 			...nonDuration,
 			maxDuration: String((duration.duration || [])[0] || ''),
 			minDuration: String((duration.duration || [])[1] || ''),
+			exclude,
 		});
 
 		return {

@@ -27,6 +27,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 				start: globalTime.minTime,
 				end: globalTime.maxTime,
 				other: Object.fromEntries(traces.selectedFilter),
+				isFilterExclude: traces.isFilterExclude,
 			});
 
 			if (response.statusCode === 200) {
