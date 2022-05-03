@@ -6,13 +6,6 @@ export const Container = styled.div`
 	justify-content: flex-end;
 `;
 
-export const ThemeSwitcherWrapper = styled.div`
-	display: flex;
-	justify-content: center;
-	margin-top: 24px;
-	margin-bottom: 16px;
-`;
-
 export const AvatarContainer = styled.div`
 	display: flex;
 	gap: 1rem;
@@ -67,5 +60,8 @@ export interface DarkModeProps {
 export const ToggleButton = styled(Switch)<DarkModeProps>`
 	&&& {
 		background: ${({ checked }): string => (checked === false ? 'grey' : '')};
+	}
+	.ant-switch-inner {
+		font-size: 1rem !important;
 	}
 `;

@@ -33,7 +33,6 @@ import {
 	Container,
 	LogoutContainer,
 	MenuContainer,
-	ThemeSwitcherWrapper,
 	ToggleButton,
 } from './styles';
 
@@ -119,16 +118,14 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	return (
 		<Layout.Header>
 			<Container>
-				<Space align="end">
-					<ThemeSwitcherWrapper>
-						<ToggleButton
-							checked={isDarkMode}
-							onChange={onToggleThemeHandler}
-							defaultChecked={isDarkMode}
-							checkedChildren="Dark"
-							unCheckedChildren="Light"
-						/>
-					</ThemeSwitcherWrapper>
+				<Space align="center">
+					<ToggleButton
+						checked={isDarkMode}
+						onChange={onToggleThemeHandler}
+						defaultChecked={isDarkMode}
+						checkedChildren="🌜"
+						unCheckedChildren="🌞"
+					/>
 
 					<Dropdown
 						onVisibleChange={onArrowClickHandler}
