@@ -180,6 +180,7 @@ function UserFunction({
 				onOk={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				onCancel={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				centered
+				destroyOnClose
 				footer={[
 					<Button
 						key="back"

@@ -29,6 +29,14 @@ function EditMembersDetails({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [state, copyToClipboard] = useCopyToClipboard();
 
+	useEffect(() => {
+		return (): void => {
+			setName('');
+			setRole('VIEWER');
+			setEmailAddress('');
+		};
+	}, [setEmailAddress, setName, setRole]);
+
 	const getPasswordLink = (token: string): string => {
 		return `${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
 	};
