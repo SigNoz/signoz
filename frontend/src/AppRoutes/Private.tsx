@@ -33,7 +33,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			),
 		[],
 	);
-	const { isUserFetching, isUserFetchingError, isLoggedIn } = useSelector<
+	const { isUserFetching, isUserFetchingError } = useSelector<
 		AppState,
 		AppReducer
 	>((state) => state.app);
@@ -43,17 +43,21 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const currentRoute = mapRoutes.get('current');
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
+	const isLoggedIn = getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN);
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				console.log('asdasd');
+
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
 					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
-						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN)) {
+						if (isLoggedIn) {
 							if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
 								// localstorage token is present
 								const { refreshJwt } = localStorageUserAuthToken;
@@ -94,6 +98,15 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 								});
 								history.push(ROUTES.LOGIN);
 							}
+						} else {
+							dispatch({
+								type: UPDATE_USER_IS_FETCH,
+								payload: {
+									isUserFetching: false,
+								},
+							});
+
+							history.push(ROUTES.LOGIN);
 						}
 					} else {
 						// no need to fetch the user and make user fetching false
@@ -125,6 +138,9 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							isUserFetching: false,
 						},
 					});
+					if (!isLoggedIn) {
+						history.push(ROUTES.LOGIN);
+					}
 				}
 			} catch (error) {
 				// something went wrong
@@ -133,7 +149,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		})();
 		// need to run over mount only
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dispatch, currentRoute]);
+	}, [dispatch, currentRoute, isLoggedIn]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;

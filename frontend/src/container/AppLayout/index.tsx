@@ -137,14 +137,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserLatestVersionResponse.isSuccess,
 	]);
 
+	const isToDisplayLayout = isLoggedIn;
+
 	return (
 		<Layout>
-			{isLoggedIn && <Header />}
+			{isToDisplayLayout && <Header />}
 			<Layout>
-				{isLoggedIn && <SideNav />}
+				{isToDisplayLayout && <SideNav />}
 				<Layout.Content>
 					<ChildrenContainer>
-						{isLoggedIn && <TopNav />}
+						{isToDisplayLayout && <TopNav />}
 						{children}
 					</ChildrenContainer>
 				</Layout.Content>
