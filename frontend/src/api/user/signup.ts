@@ -6,9 +6,9 @@ import { Props } from 'types/api/user/signup';
 
 const signup = async (
 	props: Props,
-): Promise<SuccessResponse<undefined> | ErrorResponse> => {
+): Promise<SuccessResponse<string> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/user`, {
+		const response = await axios.post(`/register`, {
 			...props,
 		});
 

@@ -2,14 +2,16 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/user/setUserPreference';
+import { PayloadProps, Props } from 'types/api/user/getUserRole';
 
-const setPreference = async (
+const getRoles = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/userPreferences`, {
-			...props,
+		const response = await axios.get(`/rbac/role/${props.userId}`, {
+			headers: {
+				Authorization: `bearer ${props.token}`,
+			},
 		});
 
 		return {
@@ -23,4 +25,4 @@ const setPreference = async (
 	}
 };
 
-export default setPreference;
+export default getRoles;
