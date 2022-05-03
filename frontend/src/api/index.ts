@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import getLocalStorageApi from 'api/browser/localstorage/get';
@@ -31,32 +32,54 @@ const interceptorsRequestResponse = (
 const interceptorRejected = async (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => {
-	if (axios.isAxiosError(value) && value.response) {
-		const { response } = value;
-		console.log(response);
-		// reject the refresh token error
-		if (response.status === 401 && response.config.url !== '/login') {
-			const response = await loginApi({
-				refreshToken: store.getState().app.user?.accessJwt,
-			});
+	try {
+		if (axios.isAxiosError(value) && value.response) {
+			const { response } = value;
+			console.log(response);
+			// reject the refresh token error
+			if (response.status === 401 && response.config.url !== '/login') {
+				const response = await loginApi({
+					refreshToken: store.getState().app.user?.refreshJwt,
+				});
 
-			if (response.statusCode === 200) {
-				await afterLogin(
-					response.payload.userId,
-					response.payload.accessJwt,
-					response.payload.refreshJwt,
-				);
-			} else {
+				if (response.statusCode === 200) {
+					await afterLogin(
+						response.payload.userId,
+						response.payload.accessJwt,
+						response.payload.refreshJwt,
+					);
+
+					const reResponse = await axios(
+						`${value.config.baseURL}${value.config.url?.substring(1)}`,
+						{
+							method: value.config.method,
+							headers: {
+								...value.config.headers,
+								Authorization: `Bearer ${response.payload.accessJwt}`,
+							},
+							data: {
+								...JSON.parse(value.config.data || '{}'),
+							},
+						},
+					);
+
+					if (reResponse.status === 200) {
+						return await Promise.resolve(reResponse);
+					}
+					return await Promise.reject(reResponse);
+				}
+				Logout();
+			}
+
+			// when refresh token is expired
+			if (response.status === 401 && response.config.url === '/login') {
 				Logout();
 			}
 		}
-
-		// when refresh token is expired
-		if (response.status === 401 && response.config.url === '/login') {
-			Logout();
-		}
+		return await Promise.reject(value);
+	} catch (error) {
+		return Promise.reject(value);
 	}
-	return Promise.reject(value);
 };
 
 const instance = axios.create({
