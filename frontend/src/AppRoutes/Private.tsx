@@ -65,6 +65,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				const isLocalStorageLoggedIn =
+					getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
@@ -98,19 +100,15 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 										history.push(ROUTES.UN_AUTHORIZED);
 									}
 								} else {
+									history.push(ROUTES.SOMETHING_WENT_WRONG);
+
 									notification.error({
 										message: response.error || t('something_went_wrong'),
 									});
 								}
 							} else {
 								// user does have localstorage values
-								dispatch({
-									type: UPDATE_USER_IS_FETCH,
-									payload: {
-										isUserFetching: false,
-									},
-								});
-								history.push(ROUTES.LOGIN);
+								navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 							}
 						} else {
 							navigateToLoginIfNotLoggedIn();
@@ -133,9 +131,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					}
 				} else {
 					// not found
-					navigateToLoginIfNotLoggedIn(
-						getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
-					);
+					navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 				}
 			} catch (error) {
 				// something went wrong
