@@ -233,11 +233,12 @@ type SpanAggregatesResponseItem struct {
 	GroupBy   map[string]float32 `json:"groupBy,omitempty"`
 }
 type SpanAggregatesDBResponseItem struct {
-	Timestamp  int64     `ch:"timestamp" `
-	Time       time.Time `ch:"time"`
-	Value      uint64    `ch:"value"`
-	FloatValue float32   `ch:"floatValue"`
-	GroupBy    string    `ch:"groupBy"`
+	Timestamp    int64     `ch:"timestamp" `
+	Time         time.Time `ch:"time"`
+	Value        uint64    `ch:"value"`
+	FloatValue   float32   `ch:"floatValue"`
+	Float64Value float64   `ch:"float64Value"`
+	GroupBy      string    `ch:"groupBy"`
 }
 
 type SetTTLResponseItem struct {
