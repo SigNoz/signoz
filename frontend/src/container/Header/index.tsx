@@ -129,7 +129,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					to={ROUTES.APPLICATION}
 				>
 					<img src="/signoz.svg" alt="SigNoz" />
-					<Typography.Title style={{ margin: 0 }} level={4}>
+					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
 						SigNoz
 					</Typography.Title>
 				</NavLink>
@@ -150,7 +150,19 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					>
 						<Space>
 							<Avatar shape="circle">{user?.name[0]}</Avatar>
-							{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+							{!isUserDropDownOpen ? (
+								<CaretDownFilled
+									style={{
+										color: '#DBDBDB',
+									}}
+								/>
+							) : (
+								<CaretUpFilled
+									style={{
+										color: '#DBDBDB',
+									}}
+								/>
+							)}
 						</Space>
 					</Dropdown>
 				</Space>
