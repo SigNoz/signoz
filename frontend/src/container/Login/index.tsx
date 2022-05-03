@@ -61,7 +61,7 @@ function Login(): JSX.Element {
 				<ParentContainer>
 					<Label htmlFor="signupEmail">Email</Label>
 					<Input
-						placeholder="mike@netflix.com"
+						placeholder="name@yourcompany.com"
 						type="email"
 						autoFocus
 						required

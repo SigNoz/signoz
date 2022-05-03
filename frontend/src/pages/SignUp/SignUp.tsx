@@ -186,7 +186,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					<div>
 						<Label htmlFor="signupEmail">Email</Label>
 						<Input
-							placeholder="mike@netflix.com"
+							placeholder="name@yourcompany.com"
 							type="email"
 							autoFocus
 							value={email}
@@ -198,6 +198,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							disabled={isDetailsDisable}
 						/>
 					</div>
+
 
 					{isNameVisible && (
 						<div>
@@ -215,10 +216,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						</div>
 					)}
 
+
 					<div>
 						<Label htmlFor="organizationName">Organization Name</Label>
 						<Input
-							placeholder="Netflix"
+							placeholder="Your Company"
 							value={organizationName}
 							onChange={(e): void => {
 								setState(e.target.value, setOrganizationName);
