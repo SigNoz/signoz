@@ -23,6 +23,7 @@ import {
 	ServicesTablePage,
 	SettingsPage,
 	SignupPage,
+	SomethingWentWrong,
 	StatusPage,
 	TraceDetail,
 	TraceFilter,
@@ -211,6 +212,14 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: PasswordReset,
 		key: 'PASSWORD_RESET',
+		isPrivate: false,
+	},
+	{
+		path: ROUTES.SOMETHING_WENT_WRONG,
+		exact: true,
+		component: SomethingWentWrong,
+		key: 'SOMETHING_WENT_WRONG',
+		isPrivate: false,
 	},
 ];
 
@@ -218,7 +227,7 @@ export interface AppRoutes {
 	component: RouteProps['component'];
 	path: RouteProps['path'];
 	exact: RouteProps['exact'];
-	isPrivate?: boolean;
+	isPrivate: boolean;
 	key: keyof typeof ROUTES;
 }
 
