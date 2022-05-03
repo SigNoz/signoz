@@ -65,6 +65,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				const isLocalStorageLoggedIn =
+					getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
@@ -106,7 +108,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 								}
 							} else {
 								// user does have localstorage values
-								navigateToLoginIfNotLoggedIn();
+								navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 							}
 						} else {
 							navigateToLoginIfNotLoggedIn();
@@ -129,9 +131,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					}
 				} else {
 					// not found
-					navigateToLoginIfNotLoggedIn(
-						getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
-					);
+					navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 				}
 			} catch (error) {
 				// something went wrong
