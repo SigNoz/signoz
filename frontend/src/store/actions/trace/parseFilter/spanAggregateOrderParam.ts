@@ -2,15 +2,15 @@ import { TraceReducer } from 'types/reducer/trace';
 
 import { ParsedUrl } from '../util';
 
-export const parseQueryIntoOrder = (
+export const parseAggregateOrderParams = (
 	query: string,
-	stateCurrent: TraceReducer['spansAggregate']['order'],
-): ParsedUrl<TraceReducer['spansAggregate']['order']> => {
+	stateCurrent: TraceReducer['spansAggregate']['orderParam'],
+): ParsedUrl<TraceReducer['spansAggregate']['orderParam']> => {
 	const url = new URLSearchParams(query);
 
 	let current = '';
 
-	const selected = url.get('spanAggregateOrder');
+	const selected = url.get('spanAggregateOrderParam');
 
 	if (selected) {
 		try {

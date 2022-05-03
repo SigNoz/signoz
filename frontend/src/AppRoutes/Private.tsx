@@ -65,58 +65,60 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				const isLocalStorageLoggedIn =
+					getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
 					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
-						if (!isLoggedInState) {
-							if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
-								// localstorage token is present
-								const { refreshJwt } = localStorageUserAuthToken;
+						if (
+							localStorageUserAuthToken &&
+							localStorageUserAuthToken.refreshJwt &&
+							isUserFetching
+						) {
+							// localstorage token is present
+							const { refreshJwt } = localStorageUserAuthToken;
 
-								// renew web access token
-								const response = await loginApi({
-									refreshToken: refreshJwt,
-								});
+							// renew web access token
+							const response = await loginApi({
+								refreshToken: refreshJwt,
+							});
 
-								if (response.statusCode === 200) {
-									const route = routePermission[key];
+							if (response.statusCode === 200) {
+								const route = routePermission[key];
 
-									// get all resource and put it over redux
-									const userResponse = await afterLogin(
-										response.payload.userId,
-										response.payload.accessJwt,
-										response.payload.refreshJwt,
-									);
+								// get all resource and put it over redux
+								const userResponse = await afterLogin(
+									response.payload.userId,
+									response.payload.accessJwt,
+									response.payload.refreshJwt,
+								);
 
-									if (
-										userResponse &&
-										route.find((e) => e === userResponse.payload.role) === undefined
-									) {
-										history.push(ROUTES.UN_AUTHORIZED);
-									}
-								} else {
-									notification.error({
-										message: response.error || t('something_went_wrong'),
-									});
+								if (
+									userResponse &&
+									route.find((e) => e === userResponse.payload.role) === undefined
+								) {
+									history.push(ROUTES.UN_AUTHORIZED);
 								}
 							} else {
-								// user does have localstorage values
-								dispatch({
-									type: UPDATE_USER_IS_FETCH,
-									payload: {
-										isUserFetching: false,
-									},
+								history.push(ROUTES.SOMETHING_WENT_WRONG);
+
+								notification.error({
+									message: response.error || t('something_went_wrong'),
 								});
-								history.push(ROUTES.LOGIN);
 							}
 						} else {
-							navigateToLoginIfNotLoggedIn();
+							// user does have localstorage values
+							navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 						}
 					} else {
 						// no need to fetch the user and make user fetching false
+
+						if (getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true') {
+							history.push(ROUTES.APPLICATION);
+						}
 						dispatch({
 							type: UPDATE_USER_IS_FETCH,
 							payload: {
@@ -133,9 +135,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 					}
 				} else {
 					// not found
-					navigateToLoginIfNotLoggedIn(
-						getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
-					);
+					navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
 				}
 			} catch (error) {
 				// something went wrong

@@ -225,6 +225,7 @@ function PendingInvitesContainer(): JSX.Element {
 				visible={isInviteTeamMemberModalOpen}
 				onCancel={(): void => toggleModal(false)}
 				centered
+				destroyOnClose
 				footer={[
 					<Button key="back" onClick={(): void => toggleModal(false)} type="default">
 						{t('cancel', {

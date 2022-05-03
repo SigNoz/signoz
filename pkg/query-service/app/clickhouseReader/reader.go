@@ -2069,19 +2069,19 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	if queryParams.Dimension == "duration" {
 		switch queryParams.AggregationOption {
 		case "p50":
-			aggregation_query = " quantile(0.50)(durationNano) as value "
+			aggregation_query = " quantile(0.50)(durationNano) as float64Value "
 		case "p95":
-			aggregation_query = " quantile(0.95)(durationNano) as value "
+			aggregation_query = " quantile(0.95)(durationNano) as float64Value "
 		case "p90":
-			aggregation_query = " quantile(0.90)(durationNano) as value "
+			aggregation_query = " quantile(0.90)(durationNano) as float64Value "
 		case "p99":
-			aggregation_query = " quantile(0.99)(durationNano) as value "
+			aggregation_query = " quantile(0.99)(durationNano) as float64Value "
 		case "max":
 			aggregation_query = " max(durationNano) as value "
 		case "min":
 			aggregation_query = " min(durationNano) as value "
 		case "avg":
-			aggregation_query = " avg(durationNano) as value "
+			aggregation_query = " avg(durationNano) as float64Value "
 		case "sum":
 			aggregation_query = " sum(durationNano) as value "
 		default:
@@ -2222,7 +2222,9 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 
 	for i := range SpanAggregatesDBResponseItems {
-
+		if SpanAggregatesDBResponseItems[i].Value == 0 {
+			SpanAggregatesDBResponseItems[i].Value = uint64(SpanAggregatesDBResponseItems[i].Float64Value)
+		}
 		SpanAggregatesDBResponseItems[i].Timestamp = int64(SpanAggregatesDBResponseItems[i].Time.UnixNano())
 		SpanAggregatesDBResponseItems[i].FloatValue = float32(SpanAggregatesDBResponseItems[i].Value)
 		if queryParams.AggregationOption == "rate_per_sec" {

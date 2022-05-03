@@ -11,4 +11,7 @@ export const Layout = styled(LayoutComponent)`
 
 export const ChildrenContainer = styled.div`
 	margin: 0 1rem;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 `;

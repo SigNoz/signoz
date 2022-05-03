@@ -2,7 +2,6 @@ import { Typography } from 'antd';
 import getUserVersion from 'api/user/getVersion';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
-import useLoggedInNavigate from 'hooks/useIfNotLoggedInNavigate';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';

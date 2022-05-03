@@ -13,6 +13,7 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import {
 	isTraceFilterEnum,
+	parseAggregateOrderParams,
 	parseFilterExclude,
 	parseFilterToFetchData,
 	parseIsSkippedSelection,
@@ -83,6 +84,11 @@ export const GetInitialTraceFilter = (
 			const parsedSelectedTags = parseQueryIntoSelectedTags(
 				query,
 				traces.selectedTags,
+			);
+
+			const parsedOrderParams = parseAggregateOrderParams(
+				query,
+				traces.spansAggregate.orderParam,
 			);
 
 			const parsedFilter = parseQueryIntoFilter(query, traces.filter);
@@ -162,6 +168,7 @@ export const GetInitialTraceFilter = (
 						isFilterExclude: getIsFilterExcluded.currentValue,
 						order: parsedQueryOrder.currentValue,
 						pageSize: parsedPageSize.currentValue,
+						orderParam: parsedOrderParams.currentValue,
 					},
 				});
 			} else {

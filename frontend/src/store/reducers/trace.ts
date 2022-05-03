@@ -10,6 +10,7 @@ import {
 	UPDATE_SELECTED_GROUP_BY,
 	UPDATE_SELECTED_TAGS,
 	UPDATE_SPAN_ORDER,
+	UPDATE_SPAN_ORDER_PARAMS,
 	UPDATE_SPANS_AGGREGATE,
 	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
@@ -40,7 +41,8 @@ const initialValue: TraceReducer = {
 		error: false,
 		total: 0,
 		pageSize: 10,
-		order: 'ascend',
+		order: '',
+		orderParam: '',
 	},
 	selectedGroupBy: '',
 	selectedFunction: 'count',
@@ -77,6 +79,7 @@ const traceReducer = (
 				isFilterExclude,
 				order,
 				pageSize,
+				orderParam,
 			} = payload;
 
 			return {
@@ -92,6 +95,7 @@ const traceReducer = (
 					currentPage: current,
 					pageSize,
 					order,
+					orderParam,
 				},
 			};
 		}
@@ -233,6 +237,16 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					pageSize: action.payload.pageSize,
+				},
+			};
+		}
+
+		case UPDATE_SPAN_ORDER_PARAMS: {
+			return {
+				...state,
+				spansAggregate: {
+					...state.spansAggregate,
+					orderParam: action.payload.orderParam,
 				},
 			};
 		}

@@ -47,13 +47,17 @@ export interface ServiceMapLoading {
 
 export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		const requestString = `/services?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
+		const start = `${globalTime.minTime}`;
+		const end = `${globalTime.maxTime}`;
 
-		const serviceMapDependencies = `/serviceMapDependencies?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
-
+		const serviceMapPayload = {
+			start,
+			end,
+			tags: [],
+		};
 		const [serviceMapDependenciesResponse, response] = await Promise.all([
-			api.get<ServicesMapItem[]>(serviceMapDependencies),
-			api.get<ServicesItem[]>(requestString),
+			api.post<ServicesMapItem[]>(`/serviceMapDependencies`, serviceMapPayload),
+			api.post<ServicesItem[]>(`/services`, serviceMapPayload),
 		]);
 
 		dispatch<ServicesAction>({
