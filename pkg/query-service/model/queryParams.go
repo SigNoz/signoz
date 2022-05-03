@@ -98,10 +98,9 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, []string, 
 		case "rate", "sum_rate", "avg_rate":
 
 			query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, filterSubQuery, samplesTableTimeFilter, groupByFilter)
-			if mq.AggregateOperator == "rate" {
-				new_query := `SELECT fingerprint, %s ts, runningDifference(res)/runningDifference(ts) as res FROM(%s)`
-				query = fmt.Sprintf(new_query, groupTags, query)
-			} else if mq.AggregateOperator == "sum_rate" {
+			new_query := `SELECT fingerprint, %s ts, runningDifference(res)/runningDifference(ts) as res FROM(%s)`
+			query = fmt.Sprintf(new_query, groupTags, query)
+			if mq.AggregateOperator == "sum_rate" {
 				new_query := `
 				SELECT ts, %s sum(res) as res
 				FROM (%s)
