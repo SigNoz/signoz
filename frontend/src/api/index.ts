@@ -8,7 +8,7 @@ import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import store from 'store';
 
-import apiV1, { apiV2 } from './apiV1';
+import apiV1, { apiAlertManager, apiV2 } from './apiV1';
 import { Logout } from './utils';
 
 const interceptorsResponse = (
@@ -67,6 +67,10 @@ instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 instance.interceptors.request.use(interceptorsRequestResponse);
 
 export const AxiosAlertManagerInstance = axios.create({
+	baseURL: `${ENVIRONMENT.baseURL}${apiAlertManager}`,
+});
+
+export const ApiV2Instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
 });
 

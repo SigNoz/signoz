@@ -5,6 +5,7 @@ import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
 
 export const GetService = (
 	props: GetServiceProps,
@@ -32,6 +33,7 @@ export const GetService = (
 			const response = await getService({
 				end: maxTime,
 				start: minTime,
+				selectedTags: props.selectedTags,
 			});
 
 			if (response.statusCode === 200) {
@@ -61,4 +63,5 @@ export const GetService = (
 export type GetServiceProps = {
 	minTime: GlobalReducer['minTime'];
 	maxTime: GlobalReducer['maxTime'];
+	selectedTags: Tags[];
 };
