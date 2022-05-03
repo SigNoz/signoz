@@ -12,6 +12,7 @@ import {
 	UPDATE_SPAN_ORDER,
 	UPDATE_SPANS_AGGREGATE,
 	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 	UPDATE_TAG_MODAL_VISIBILITY,
 	UPDATE_TRACE_FILTER,
 	UPDATE_TRACE_FILTER_LOADING,
@@ -75,6 +76,7 @@ const traceReducer = (
 				userSelected,
 				isFilterExclude,
 				order,
+				pageSize,
 			} = payload;
 
 			return {
@@ -88,6 +90,7 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: current,
+					pageSize,
 					order,
 				},
 			};
@@ -220,6 +223,16 @@ const traceReducer = (
 				spansAggregate: {
 					...state.spansAggregate,
 					currentPage: action.payload.currentPage,
+				},
+			};
+		}
+
+		case UPDATE_SPANS_AGGREGATE_PAGE_SIZE: {
+			return {
+				...state,
+				spansAggregate: {
+					...state.spansAggregate,
+					pageSize: action.payload.pageSize,
 				},
 			};
 		}

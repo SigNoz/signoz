@@ -85,6 +85,7 @@ export const GetSpansAggregate = (
 					traces.isFilterExclude,
 					traces.userSelectedFilter,
 					order,
+					traces.spansAggregate.pageSize,
 				);
 			} else {
 				notification.error({
