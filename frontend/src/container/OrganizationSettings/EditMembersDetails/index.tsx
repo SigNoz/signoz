@@ -28,7 +28,7 @@ function EditMembersDetails({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const getPasswordLink = (token: string): string => {
-		return `${window.location.origin}/${ROUTES.PASSWORD_RESET}?token=${token}`;
+		return `${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
 	};
 
 	const onChangeHandler = useCallback(
