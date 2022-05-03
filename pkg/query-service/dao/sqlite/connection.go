@@ -32,7 +32,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating user_preferences table: ", err.Error())
+		return nil, fmt.Errorf("Error in creating user_preferences table: %s", err.Error())
 	}
 
 	mds := &ModelDaoSqlite{db: db}

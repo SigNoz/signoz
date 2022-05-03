@@ -7,8 +7,6 @@ import (
 
 const HTTPHostPort = "0.0.0.0:8080"
 
-var DruidClientUrl = os.Getenv("DruidClientUrl")
-var DruidDatasource = os.Getenv("DruidDatasource")
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsTelemetryEnabled() bool {
@@ -45,6 +43,17 @@ const (
 	Component        = "component"
 	OperationDB      = "name"
 	OperationRequest = "operation"
+	Status           = "status"
+	Duration         = "duration"
+	DBName           = "dbName"
+	DBOperation      = "dbOperation"
+	DBSystem         = "dbSystem"
+	MsgSystem        = "msgSystem"
+	MsgOperation     = "msgOperation"
+	Timestamp        = "timestamp"
+	Descending       = "descending"
+	Ascending        = "ascending"
+	ContextTimeout   = 60 // seconds
 )
 
 

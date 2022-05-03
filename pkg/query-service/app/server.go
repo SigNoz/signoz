@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
-	"go.signoz.io/query-service/app/druidReader"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
@@ -103,7 +103,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
-		reader = druidReader.NewReader(localDB)
+		// reader = druidReader.NewReader(localDB)
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB)
@@ -125,10 +125,12 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 
 	r := NewRouter()
 
+	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterMetricsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -167,6 +169,16 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func setTimeoutMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+		defer cancel()
+
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }
