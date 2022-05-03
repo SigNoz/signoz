@@ -5,13 +5,13 @@ import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
 import { State } from 'hooks/useFetch';
 import history from 'lib/history';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create';
 
 import { ButtonContainer, Title } from './styles';
 
 function CreateAlert(): JSX.Element {
-	const value = useRef<string>(
+	const [value, setEditorValue] = useState<string>(
 		`\n        alert: High RPS\n        expr: sum(rate(signoz_latency_count{span_kind="SPAN_KIND_SERVER"}[2m])) by (service_name) > 100\n        for: 0m\n        labels:\n            severity: warning\n        annotations:\n            summary: High RPS of Applications\n            description: "RPS is > 100\n\t\t\t VALUE = {{ $value }}\n\t\t\t LABELS = {{ $labels }}"\n    `,
 	);
 
@@ -36,7 +36,7 @@ function CreateAlert(): JSX.Element {
 				loading: true,
 			}));
 
-			if (value.current.length === 0) {
+			if (value.length === 0) {
 				setNewAlertState((state) => ({
 					...state,
 					loading: false,
@@ -49,7 +49,7 @@ function CreateAlert(): JSX.Element {
 			}
 
 			const response = await createAlertsApi({
-				query: value.current,
+				query: value,
 			});
 
 			if (response.statusCode === 200) {
@@ -83,14 +83,14 @@ function CreateAlert(): JSX.Element {
 				message: defaultError,
 			});
 		}
-	}, [notifications]);
+	}, [notifications, value]);
 
 	return (
 		<>
 			{Element}
 
 			<Title>Create New Alert</Title>
-			<Editor value={value} />
+			<Editor onChange={(value): void => setEditorValue(value)} value={value} />
 
 			<ButtonContainer>
 				<Button

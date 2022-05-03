@@ -1,8 +1,9 @@
-import { Dashboard } from './getAll';
+import { Dashboard, DashboardData } from './getAll';
 
-export type Props = {
-	uuid: Dashboard['uuid'];
-	title: Dashboard['data']['title'];
-};
+export type Props =
+	| {
+			title: Dashboard['data']['title'];
+	  }
+	| DashboardData;
 
 export type PayloadProps = Dashboard;

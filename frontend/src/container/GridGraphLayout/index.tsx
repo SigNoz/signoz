@@ -1,6 +1,4 @@
-/* eslint-disable react/jsx-no-useless-fragment */
 /* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react/display-name */
 import { SaveFilled } from '@ant-design/icons';
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
@@ -85,7 +83,7 @@ function GridGraph(): JSX.Element {
 							/>
 						);
 					}
-					return <></>;
+					return <div />;
 				},
 			}));
 	}, [widgets, data.layout]);
@@ -150,6 +148,7 @@ function GridGraph(): JSX.Element {
 								w: e.i === '__dropping-elem__' ? 6 : e.w,
 								h: e.i === '__dropping-elem__' ? 2 : e.h,
 							}))
+							// removing add widgets layout config
 							.filter((e) => e.maxW === undefined),
 					});
 				} catch (error) {
@@ -172,13 +171,15 @@ function GridGraph(): JSX.Element {
 		}));
 
 		const response = await updateDashboardApi({
-			title: data.title,
+			data: {
+				title: data.title,
+				description: data.description,
+				name: data.name,
+				tags: data.tags,
+				widgets: data.widgets,
+				layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
+			},
 			uuid: selectedDashboard.uuid,
-			description: data.description,
-			name: data.name,
-			tags: data.tags,
-			widgets: data.widgets,
-			layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
 		});
 		if (response.statusCode === 200) {
 			setSaveLayoutState((state) => ({
