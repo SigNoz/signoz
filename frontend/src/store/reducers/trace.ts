@@ -41,7 +41,7 @@ const initialValue: TraceReducer = {
 		error: false,
 		total: 0,
 		pageSize: 10,
-		order: 'ascend',
+		order: '',
 		orderParam: '',
 	},
 	selectedGroupBy: '',
