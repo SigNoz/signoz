@@ -6,6 +6,7 @@ import {
 import { Card, Col, Row, Space, Tag, Typography } from 'antd';
 import AddTags from 'container/NewDashboard/DescriptionOfDashboard/AddTags';
 import NameOfTheDashboard from 'container/NewDashboard/DescriptionOfDashboard/NameOfTheDashboard';
+import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
@@ -18,6 +19,7 @@ import {
 } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import Description from './Description';
@@ -46,6 +48,8 @@ function DescriptionOfDashboard({
 	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
 
 	const { t } = useTranslation('common');
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 
 	const onClickEditHandler = useCallback(() => {
 		if (isEditMode) {
@@ -118,12 +122,14 @@ function DescriptionOfDashboard({
 						<Button onClick={onToggleHandler} icon={<ShareAltOutlined />}>
 							{t('share')}
 						</Button>
-						<Button
-							icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
-							onClick={onClickEditHandler}
-						>
-							{isEditMode ? t('save') : t('edit')}
-						</Button>
+						{editDashboard && (
+							<Button
+								icon={!isEditMode ? <EditOutlined /> : <SaveOutlined />}
+								onClick={onClickEditHandler}
+							>
+								{isEditMode ? t('save') : t('edit')}
+							</Button>
+						)}
 					</Space>
 				</Col>
 			</Row>

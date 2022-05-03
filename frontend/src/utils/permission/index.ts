@@ -10,7 +10,9 @@ export type ComponentTypes =
 	| 'add_new_alert'
 	| 'add_new_channel'
 	| 'set_retention_period'
-	| 'action';
+	| 'action'
+	| 'save_layout'
+	| 'edit_dashboard';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -22,6 +24,8 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	add_new_channel: ['ADMIN'],
 	set_retention_period: ['ADMIN'],
 	action: ['ADMIN', 'EDITOR'],
+	save_layout: ['ADMIN', 'EDITOR'],
+	edit_dashboard: ['ADMIN', 'EDITOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {

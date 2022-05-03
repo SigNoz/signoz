@@ -4,10 +4,12 @@ import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import useComponentPermission from 'hooks/useComponentPermission';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
@@ -42,6 +44,9 @@ function GridGraph(): JSX.Element {
 
 	const isMounted = useRef(true);
 	const isDeleted = useRef(false);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [saveLayout] = useComponentPermission(['save_layout'], role);
 
 	const getPreLayouts: () => LayoutProps[] = useCallback(() => {
 		if (widgets === undefined) {
@@ -213,16 +218,18 @@ function GridGraph(): JSX.Element {
 
 	return (
 		<>
-			<ButtonContainer>
-				<Button
-					loading={saveLayoutState.loading}
-					onClick={onLayoutSaveHandler}
-					icon={<SaveFilled />}
-					danger={saveLayoutState.error}
-				>
-					Save Layout
-				</Button>
-			</ButtonContainer>
+			{saveLayout && (
+				<ButtonContainer>
+					<Button
+						loading={saveLayoutState.loading}
+						onClick={onLayoutSaveHandler}
+						icon={<SaveFilled />}
+						danger={saveLayoutState.error}
+					>
+						Save Layout
+					</Button>
+				</ButtonContainer>
+			)}
 
 			<ReactGridLayout
 				isResizable
