@@ -13,6 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/app/parser"
 	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
@@ -170,6 +171,13 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
 	}
 }
+func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
+	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
+	subRouter.HandleFunc("/query_range", aH.queryRangeMetricsV2).Methods(http.MethodPost)
+	subRouter.HandleFunc("/autocomplete/list", aH.metricAutocompleteMetricName).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagKey", aH.metricAutocompleteTagKey).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagValue", aH.metricAutocompleteTagValue).Methods(http.MethodGet)
+}
 
 func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
@@ -259,18 +267,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/dbOverview", ViewAccess(aH.getServiceDBOverview)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/externalAvgDuration", ViewAccess(aH.GetServiceExternalAvgDuration)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/externalErrors", ViewAccess(aH.getServiceExternalErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/external", ViewAccess(aH.getServiceExternal)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/{service}/operations", ViewAccess(aH.getOperations)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/spans", ViewAccess(aH.searchSpans)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/spans/aggregates", ViewAccess(aH.searchSpansAggregates)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/tags", ViewAccess(aH.searchTags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", AdminAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodGet)
@@ -288,6 +288,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/errors", ViewAccess(aH.getErrors)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", ViewAccess(aH.getErrorForId)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", ViewAccess(aH.getErrorForType)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/disks", ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
@@ -340,6 +341,74 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.respond(w, alertList)
+}
+
+func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
+	matchText := r.URL.Query().Get("match")
+	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText)
+
+	if apiErrObj != nil {
+		respondError(w, apiErrObj, nil)
+		return
+	}
+	aH.respond(w, metricNameList)
+
+}
+
+func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Request) {
+	metricsAutocompleteTagKeyParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
+	if apiErrorObj != nil {
+		respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	tagKeyList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
+
+	if apiErrObj != nil {
+		respondError(w, apiErrObj, nil)
+		return
+	}
+	aH.respond(w, tagKeyList)
+}
+
+func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.Request) {
+	metricsAutocompleteTagValueParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
+
+	if len(metricsAutocompleteTagValueParams.TagKey) == 0 {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("tagKey not present in params")}
+		respondError(w, apiErrObj, nil)
+		return
+	}
+	if apiErrorObj != nil {
+		respondError(w, apiErrorObj, nil)
+		return
+	}
+
+	tagValueList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
+
+	if apiErrObj != nil {
+		respondError(w, apiErrObj, nil)
+		return
+	}
+
+	aH.respond(w, tagValueList)
+}
+
+func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
+	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
+
+	fmt.Println(metricsQueryRangeParams)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		respondError(w, apiErrorObj, nil)
+		return
+	}
+	response_data := &model.QueryDataV2{
+		ResultType: "matrix",
+		Result:     nil,
+	}
+	aH.respond(w, response_data)
 }
 
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
@@ -653,7 +722,9 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	aH.respond(w, "rule successfully added")
 
 }
+func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
 
+}
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
@@ -811,52 +882,6 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getOperations(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-	serviceName := vars["service"]
-
-	var err error
-	if len(serviceName) == 0 {
-		err = fmt.Errorf("service param not found")
-	}
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetOperations(context.Background(), serviceName)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
-
-	result, err := (*aH.reader).GetServicesList(context.Background())
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) searchTags(w http.ResponseWriter, r *http.Request) {
-
-	serviceName := r.URL.Query().Get("service")
-
-	result, err := (*aH.reader).GetTags(context.Background(), serviceName)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
 func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetTopEndpointsRequest(r)
@@ -864,9 +889,9 @@ func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetTopEndpoints(context.Background(), query)
+	result, apiErr := (*aH.reader).GetTopEndpoints(r.Context(), query)
 
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -881,72 +906,7 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetUsage(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceDBOverview(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceDBOverview(context.Background(), query)
-
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceExternal(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceExternal(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) GetServiceExternalAvgDuration(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceExternalAvgDuration(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-
-}
-
-func (aH *APIHandler) getServiceExternalErrors(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseGetServiceExternalRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).GetServiceExternalErrors(context.Background(), query)
+	result, err := (*aH.reader).GetUsage(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -962,8 +922,8 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceOverview(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, apiErr := (*aH.reader).GetServiceOverview(r.Context(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -978,8 +938,8 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetServices(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, apiErr := (*aH.reader).GetServices(r.Context(), query)
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -999,7 +959,7 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceMapDependencies(context.Background(), query)
+	result, err := (*aH.reader).GetServiceMapDependencies(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1007,12 +967,23 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 	aH.writeJSON(w, r, result)
 }
 
+func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
+
+	result, err := (*aH.reader).GetServicesList(r.Context())
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+
+}
+
 func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
 
-	result, err := (*aH.reader).SearchTraces(context.Background(), traceId)
+	result, err := (*aH.reader).SearchTraces(r.Context(), traceId)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1027,7 +998,7 @@ func (aH *APIHandler) getErrors(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrors(context.Background(), query)
+	result, apiErr := (*aH.reader).GetErrors(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1042,7 +1013,7 @@ func (aH *APIHandler) getErrorForId(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForId(context.Background(), query)
+	result, apiErr := (*aH.reader).GetErrorForId(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1057,45 +1028,13 @@ func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForType(context.Background(), query)
+	result, apiErr := (*aH.reader).GetErrorForType(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
 	aH.writeJSON(w, r, result)
 
-}
-
-func (aH *APIHandler) searchSpansAggregates(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseSearchSpanAggregatesRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	result, err := (*aH.reader).SearchSpansAggregate(context.Background(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
-}
-
-func (aH *APIHandler) searchSpans(w http.ResponseWriter, r *http.Request) {
-
-	query, err := parseSpanSearchRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	// result, err := druidQuery.SearchSpans(aH.client, query)
-	result, err := (*aH.reader).SearchSpans(context.Background(), query)
-
-	if aH.handleError(w, err, http.StatusBadRequest) {
-		return
-	}
-
-	aH.writeJSON(w, r, result)
 }
 
 func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
@@ -1105,7 +1044,7 @@ func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetSpanFilters(context.Background(), query)
+	result, apiErr := (*aH.reader).GetSpanFilters(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1121,7 +1060,7 @@ func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetFilteredSpans(context.Background(), query)
+	result, apiErr := (*aH.reader).GetFilteredSpans(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1137,7 +1076,7 @@ func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetFilteredSpansAggregates(context.Background(), query)
+	result, apiErr := (*aH.reader).GetFilteredSpansAggregates(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1153,7 +1092,7 @@ func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTagFilters(context.Background(), query)
+	result, apiErr := (*aH.reader).GetTagFilters(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1169,7 +1108,7 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTagValues(context.Background(), query)
+	result, apiErr := (*aH.reader).GetTagValues(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1184,6 +1123,7 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Context is not used here as TTL is long duration operation which needs to converted to async
 	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1199,7 +1139,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTTL(context.Background(), ttlParams)
+	result, apiErr := (*aH.reader).GetTTL(r.Context(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1217,9 +1157,7 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-
 	version := version.GetVersion()
-
 	aH.writeJSON(w, r, map[string]string{"version": version})
 }
 

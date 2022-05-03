@@ -2,7 +2,7 @@ import { Button, Divider, notification, Space, Table, Typography } from 'antd';
 import Editor from 'components/Editor';
 import dayjs from 'dayjs';
 import history from 'lib/history';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
@@ -21,7 +21,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	const errorDetail = idPayload;
 
-	const stackTraceValue = useRef(errorDetail.excepionStacktrace);
+	const [stackTraceValue] = useState(errorDetail.excepionStacktrace);
 
 	const columns = useMemo(
 		() => [
@@ -126,7 +126,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 						>
 							{t('newer')}
 						</Button>
-						{/* <Button icon={<RightOutlined />} /> */}
 					</Space>
 				</div>
 			</EventContainer>
@@ -139,7 +138,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</DashedContainer>
 
 			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<Editor value={stackTraceValue} readOnly />
+			<Editor onChange={(): void => {}} value={stackTraceValue} readOnly />
 
 			<EditorContainer>
 				<Space direction="vertical">
