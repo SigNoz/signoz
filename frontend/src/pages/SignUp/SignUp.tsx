@@ -303,6 +303,17 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						</>
 					)}
 
+					<Typography.Paragraph
+						italic
+						style={{
+							color: '#D89614',
+							marginTop: '0.50rem',
+						}}
+					>
+						This will create an admin account. If you are not an admin, please ask
+						your admin for an invite link
+					</Typography.Paragraph>
+
 					<ButtonContainer>
 						<Button
 							type="primary"
