@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Select, Space, Typography } from 'antd';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InviteTeamMembersProps } from '../PendingInvitesContainer/index';
@@ -10,6 +10,18 @@ const { Option } = Select;
 
 function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 	const { t } = useTranslation('organizationsettings');
+
+	useEffect(() => {
+		return (): void => {
+			setAllMembers([
+				{
+					email: '',
+					name: '',
+					role: 'VIEWER',
+				},
+			]);
+		};
+	}, [setAllMembers]);
 
 	const onAddHandler = (): void => {
 		setAllMembers((state) => [
