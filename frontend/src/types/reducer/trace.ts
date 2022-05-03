@@ -21,6 +21,7 @@ export interface TraceReducer {
 		total: number;
 		pageSize: number;
 		order: string;
+		orderParam: string;
 	};
 	selectedGroupBy: string;
 	selectedFunction: string;

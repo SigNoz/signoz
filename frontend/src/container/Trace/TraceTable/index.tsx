@@ -12,6 +12,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
 	UPDATE_SPAN_ORDER,
+	UPDATE_SPAN_ORDER_PARAMS,
 	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
@@ -80,6 +81,7 @@ function TraceTable(): JSX.Element {
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
+			sorter: true,
 			render: (value: TableType['durationNano']): JSX.Element => (
 				<Typography>
 					{`${dayjs
@@ -103,6 +105,16 @@ function TraceTable(): JSX.Element {
 		},
 	];
 
+	const getSortKey = (key: string): string => {
+		if (key === 'durationNano') {
+			return 'durationNano';
+		}
+		if (key === 'timestamp') {
+			return 'timestamp';
+		}
+		return '';
+	};
+
 	const onChangeHandler: TableProps<TableType>['onChange'] = (
 		props,
 		_,
@@ -111,12 +123,22 @@ function TraceTable(): JSX.Element {
 		if (!Array.isArray(sort)) {
 			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				const spanOrder = order || spansAggregateOrder;
+				const spanOrder = order === 'ascend' ? 'ascending' : 'descending';
+				const orderParam = getSortKey(sort.field as string);
+
+				console.log({ spanOrder });
 
 				dispatch({
 					type: UPDATE_SPAN_ORDER,
 					payload: {
 						order: spanOrder,
+					},
+				});
+
+				dispatch({
+					type: UPDATE_SPAN_ORDER_PARAMS,
+					payload: {
+						orderParam,
 					},
 				});
 
@@ -143,6 +165,7 @@ function TraceTable(): JSX.Element {
 					userSelectedFilter,
 					spanOrder,
 					props.pageSize,
+					orderParam,
 				);
 			}
 		}
@@ -172,7 +195,6 @@ function TraceTable(): JSX.Element {
 				position: ['bottomLeft'],
 				total,
 			}}
-			sortDirections={['ascend', 'descend']}
 		/>
 	);
 }
