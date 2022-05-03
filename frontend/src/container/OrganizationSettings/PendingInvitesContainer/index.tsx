@@ -4,10 +4,12 @@ import Table, { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
+import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { PayloadProps } from 'types/api/user/getPendingInvites';
 import { ROLES } from 'types/roles';
@@ -59,6 +61,8 @@ function PendingInvitesContainer(): JSX.Element {
 
 	const [dataSource, setDataSource] = useState<DataProps[]>([]);
 
+	const { hash } = useLocation();
+
 	const getParsedInviteData = useCallback((payload: PayloadProps = []) => {
 		return payload?.map((data) => ({
 			key: data.createdAt,
@@ -68,6 +72,12 @@ function PendingInvitesContainer(): JSX.Element {
 			inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
 		}));
 	}, []);
+
+	useEffect(() => {
+		if (hash === INVITE_MEMBERS_HASH) {
+			toggleModal(true);
+		}
+	}, [hash]);
 
 	useEffect(() => {
 		if (
@@ -222,7 +232,7 @@ function PendingInvitesContainer(): JSX.Element {
 						})}
 					</Button>,
 					<Button
-						key="Invite_team_members"
+						key={t('invite_team_members').toString()}
 						onClick={onInviteClickHandler}
 						type="primary"
 						disabled={isInvitingMembers}

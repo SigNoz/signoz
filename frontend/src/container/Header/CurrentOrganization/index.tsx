@@ -1,5 +1,6 @@
 import { PlusSquareOutlined } from '@ant-design/icons';
 import { Avatar, Typography } from 'antd';
+import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -14,7 +15,9 @@ import {
 	OrganizationWrapper,
 } from '../styles';
 
-function CurrentOrganization(): JSX.Element {
+function CurrentOrganization({
+	onToggle,
+}: CurrentOrganizationProps): JSX.Element {
 	const { org, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentOrgSettings, inviteMembers] = useComponentPermission(
 		['current_org_settings', 'invite_members'],
@@ -43,6 +46,7 @@ function CurrentOrganization(): JSX.Element {
 				{currentOrgSettings && (
 					<Typography.Link
 						onClick={(): void => {
+							onToggle();
 							history.push(ROUTES.ORG_SETTINGS);
 						}}
 					>
@@ -54,11 +58,22 @@ function CurrentOrganization(): JSX.Element {
 			{inviteMembers && (
 				<InviteMembersContainer>
 					<PlusSquareOutlined />
-					<Typography.Link>Invite Members</Typography.Link>
+					<Typography.Link
+						onClick={(): void => {
+							onToggle();
+							history.push(`${ROUTES.ORG_SETTINGS}${INVITE_MEMBERS_HASH}`);
+						}}
+					>
+						Invite Members
+					</Typography.Link>
 				</InviteMembersContainer>
 			)}
 		</>
 	);
+}
+
+interface CurrentOrganizationProps {
+	onToggle: VoidFunction;
 }
 
 export default CurrentOrganization;

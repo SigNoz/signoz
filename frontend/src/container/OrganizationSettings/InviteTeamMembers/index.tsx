@@ -58,7 +58,7 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 								required
 							/>
 							<Input
-								placeholder={t('email_placeholder')}
+								placeholder={t('name_placeholder')}
 								value={e.name}
 								onChange={(event): void => {
 									onChangeHandler(event.target.value, index, 'name');

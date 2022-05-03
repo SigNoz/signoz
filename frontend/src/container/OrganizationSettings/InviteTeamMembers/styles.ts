@@ -7,8 +7,9 @@ export const SelectDrawer = styled(Select)`
 
 export const TitleWrapper = styled.div`
 	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-around;
 	margin-bottom: 1rem;
+
+	> article {
+		min-width: 11rem;
+	}
 `;

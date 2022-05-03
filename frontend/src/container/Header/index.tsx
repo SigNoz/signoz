@@ -95,7 +95,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 			<Menu.ItemGroup>
 				<SignedInAS />
 				<Divider />
-				<CurrentOrganization />
+				<CurrentOrganization onToggle={onArrowClickHandler} />
 				<Divider />
 				<LogoutContainer>
 					<LogoutOutlined />
@@ -125,6 +125,8 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 							checked={isDarkMode}
 							onChange={onToggleThemeHandler}
 							defaultChecked={isDarkMode}
+							checkedChildren="Dark"
+							unCheckedChildren="Light"
 						/>
 					</ThemeSwitcherWrapper>
 
@@ -132,6 +134,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 						onVisibleChange={onArrowClickHandler}
 						trigger={['click']}
 						overlay={menu}
+						visible={isUserDropDownOpen}
 					>
 						<Space>
 							<Avatar shape="circle">{user?.name[0]}</Avatar>
