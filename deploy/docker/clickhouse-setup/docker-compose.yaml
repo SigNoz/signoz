@@ -36,7 +36,7 @@ services:
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:ahsan-auth
+    image: signoz/query-service:0.7.5
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     volumes:
