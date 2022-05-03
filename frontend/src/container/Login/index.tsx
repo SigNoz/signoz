@@ -107,13 +107,10 @@ function Login(): JSX.Element {
 						Create an account
 					</Typography.Link>
 
-					<Space direction="vertical" size={7}>
-						<Typography style={{ color: '#ACACAC' }}>Forgot Password?</Typography>
-
-						<Typography style={{ color: '#ACACAC' }}>
-							Ask your admin to reset password and send a new invite link
-						</Typography>
-					</Space>
+					<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
+						If you have forgotten you password, ask your admin to reset password and
+						send you a new invite link
+					</Typography.Paragraph>
 				</Space>
 			</FormContainer>
 		</FormWrapper>

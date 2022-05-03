@@ -103,6 +103,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						isFilterExclude,
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
+						orderParam: spansAggregate.orderParam,
 					},
 				});
 
@@ -115,6 +116,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					getPreUserSelected,
 					spansAggregate.order,
 					spansAggregate.pageSize,
+					spansAggregate.orderParam,
 				);
 			} else {
 				notification.error({
@@ -154,6 +156,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				isFilterExclude,
 				order: spansAggregate.order,
 				pageSize: spansAggregate.pageSize,
+				orderParam: spansAggregate.orderParam,
 			},
 		});
 
@@ -166,6 +169,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			userSelectedFilter,
 			spansAggregate.order,
 			spansAggregate.pageSize,
+			spansAggregate.orderParam,
 		);
 	};
 
@@ -205,6 +209,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						isFilterExclude: postIsFilterExclude,
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
+						orderParam: spansAggregate.orderParam,
 					},
 				});
 
@@ -217,6 +222,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					preUserSelected,
 					spansAggregate.order,
 					spansAggregate.pageSize,
+					spansAggregate.orderParam,
 				);
 			} else {
 				notification.error({
