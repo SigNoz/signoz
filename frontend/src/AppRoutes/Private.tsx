@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { notification } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
@@ -8,7 +9,7 @@ import history from 'lib/history';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { matchPath, Redirect } from 'react-router-dom';
+import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
@@ -21,43 +22,56 @@ import routes from './routes';
 import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
+	const { pathname } = useLocation();
+
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
 				routes.map((e) => {
-					const currentPath = matchPath(history.location.pathname, {
+					const currentPath = matchPath(pathname, {
 						path: e.path,
 					});
 					return [currentPath === null ? null : 'current', e];
 				}),
 			),
-		[],
+		[pathname],
 	);
-	const { isUserFetching, isUserFetchingError } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const {
+		isUserFetching,
+		isUserFetchingError,
+		isLoggedIn: isLoggedInState,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { t } = useTranslation(['common']);
 
-	const currentRoute = mapRoutes.get('current');
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const isLoggedIn = getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN);
+	const currentRoute = mapRoutes.get('current');
+
+	const navigateToLoginIfNotLoggedIn = (isLoggedIn = isLoggedInState): void => {
+		dispatch({
+			type: UPDATE_USER_IS_FETCH,
+			payload: {
+				isUserFetching: false,
+			},
+		});
+
+		if (!isLoggedIn) {
+			history.push(ROUTES.LOGIN);
+		}
+	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				console.log('asdasd');
-
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
 					if (isPrivate) {
 						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
-						if (isLoggedIn) {
+						if (!isLoggedInState) {
 							if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
 								// localstorage token is present
 								const { refreshJwt } = localStorageUserAuthToken;
@@ -89,7 +103,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									});
 								}
 							} else {
-								// user is not logged in
+								// user does have localstorage values
 								dispatch({
 									type: UPDATE_USER_IS_FETCH,
 									payload: {
@@ -99,14 +113,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 								history.push(ROUTES.LOGIN);
 							}
 						} else {
-							dispatch({
-								type: UPDATE_USER_IS_FETCH,
-								payload: {
-									isUserFetching: false,
-								},
-							});
-
-							history.push(ROUTES.LOGIN);
+							navigateToLoginIfNotLoggedIn();
 						}
 					} else {
 						// no need to fetch the user and make user fetching false
@@ -117,39 +124,25 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							},
 						});
 					}
-				} else if (history.location.pathname === ROUTES.HOME_PAGE) {
+				} else if (pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
-					if (isLoggedIn) {
+					if (isLoggedInState) {
 						history.push(ROUTES.APPLICATION);
 					} else {
-						dispatch({
-							type: UPDATE_USER_IS_FETCH,
-							payload: {
-								isUserFetching: false,
-							},
-						});
-
-						history.push(ROUTES.LOGIN);
+						navigateToLoginIfNotLoggedIn();
 					}
 				} else {
-					dispatch({
-						type: UPDATE_USER_IS_FETCH,
-						payload: {
-							isUserFetching: false,
-						},
-					});
-					if (!isLoggedIn) {
-						history.push(ROUTES.LOGIN);
-					}
+					// not found
+					navigateToLoginIfNotLoggedIn(
+						getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
+					);
 				}
 			} catch (error) {
 				// something went wrong
 				history.push(ROUTES.SOMETHING_WENT_WRONG);
 			}
 		})();
-		// need to run over mount only
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dispatch, currentRoute, isLoggedIn]);
+	}, [dispatch, isLoggedInState, currentRoute]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;
