@@ -305,7 +305,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/user/{id}", AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/rbac/role/{id}", SelfAccess(aH.getRole)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/role/{id}", SelfAccess(aH.editRole)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rbac/role/{id}", AdminAccess(aH.editRole)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/org", AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/org/{id}", AdminAccess(aH.getOrg)).Methods(http.MethodGet)
@@ -1485,13 +1485,6 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !auth.IsAdmin(r) {
-		respondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: errors.New("Only admin can edit roles"),
-		}, "Failed to edit user")
-		return
-	}
 	req, err := parseUserRoleRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
