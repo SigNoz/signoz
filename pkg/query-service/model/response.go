@@ -245,8 +245,8 @@ type SetTTLResponseItem struct {
 }
 
 type DiskItem struct {
-	Name string `json:"name,omitempty" db:"name,omitempty"`
-	Type string `json:"type,omitempty" db:"type,omitempty"`
+	Name string `json:"name,omitempty" ch:"name"`
+	Type string `json:"type,omitempty" ch:"type"`
 }
 
 type DBResponseTTL struct {
