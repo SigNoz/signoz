@@ -8,7 +8,7 @@ export const parseQueryIntoOrder = (
 ): ParsedUrl<TraceReducer['spansAggregate']['order']> => {
 	const url = new URLSearchParams(query);
 
-	let current = 'ascend';
+	let current = '';
 
 	const selected = url.get('spanAggregateOrder');
 
