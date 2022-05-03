@@ -1,4 +1,4 @@
-import { Time } from 'container/Header/DateTimeSelection/config';
+import { Time } from 'container/TopNav/DateTimeSelection/config';
 
 export const UPDATE_TIME_INTERVAL = 'UPDATE_TIME_INTERVAL';
 export const GLOBAL_TIME_LOADING_START = 'GLOBAL_TIME_LOADING_START';

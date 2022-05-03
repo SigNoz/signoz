@@ -133,6 +133,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 					preIsFilterExclude,
 					preUserSelectedMap,
 					spansAggregate.order,
+					spansAggregate.pageSize,
 				);
 			} else {
 				setIsLoading(false);

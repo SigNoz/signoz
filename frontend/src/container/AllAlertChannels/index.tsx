@@ -4,16 +4,25 @@ import getAll from 'api/channels/getAll';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
-import AlertChannlesComponent from './AlertChannels';
+import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer } from './styles';
 
 const { Paragraph } = Typography;
 
 function AlertChannels(): JSX.Element {
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewChannelPermission] = useComponentPermission(
+		['add_new_channel'],
+		role,
+	);
 	const onToggleHandler = useCallback(() => {
 		history.push(ROUTES.CHANNELS_NEW);
 	}, []);
@@ -41,13 +50,15 @@ function AlertChannels(): JSX.Element {
 						url="https://signoz.io/docs/userguide/alerts-management/#setting-notification-channel"
 					/>
 
-					<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
-						New Alert Channel
-					</Button>
+					{addNewChannelPermission && (
+						<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
+							New Alert Channel
+						</Button>
+					)}
 				</div>
 			</ButtonContainer>
 
-			<AlertChannlesComponent allChannels={payload} />
+			<AlertChannelsComponent allChannels={payload} />
 		</>
 	);
 }

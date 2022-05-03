@@ -13,6 +13,7 @@ import { AxiosError } from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
+import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +21,7 @@ import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import ImportJSON from './ImportJSON';
@@ -33,6 +35,12 @@ import Tags from './TableComponents/Tags';
 function ListOfAllDashboard(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
+	);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [action, createNewDashboard] = useComponentPermission(
+		['action', 'create_new_dashboards'],
+		role,
 	);
 
 	const { t } = useTranslation('dashboard');
@@ -89,13 +97,16 @@ function ListOfAllDashboard(): JSX.Element {
 			},
 			render: DateComponent,
 		},
-		{
+	];
+
+	if (action) {
+		columns.push({
 			title: 'Action',
 			dataIndex: '',
 			key: 'x',
 			render: DeleteButton,
-		},
-	];
+		});
+	}
 
 	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
 		createdBy: e.created_at,
@@ -165,19 +176,21 @@ function ListOfAllDashboard(): JSX.Element {
 	const menu = useMemo(
 		() => (
 			<Menu>
-				<Menu.Item
-					onClick={onNewDashboardHandler}
-					disabled={loading}
-					key={t('create_dashboard').toString()}
-				>
-					{t('create_dashboard')}
-				</Menu.Item>
+				{createNewDashboard && (
+					<Menu.Item
+						onClick={onNewDashboardHandler}
+						disabled={loading}
+						key={t('create_dashboard').toString()}
+					>
+						{t('create_dashboard')}
+					</Menu.Item>
+				)}
 				<Menu.Item onClick={onModalHandler} key={t('import_json').toString()}>
 					{t('import_json')}
 				</Menu.Item>
 			</Menu>
 		),
-		[loading, onNewDashboardHandler, t],
+		[createNewDashboard, loading, onNewDashboardHandler, t],
 	);
 
 	const GetHeader = useMemo(

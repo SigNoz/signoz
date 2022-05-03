@@ -25,7 +25,7 @@ const menus: SidebarMenu[] = [
 	{
 		Icon: DashboardFilled,
 		to: ROUTES.ALL_DASHBOARD,
-		name: 'Dashboard',
+		name: 'Dashboards',
 	},
 	{
 		Icon: AlertOutlined,
