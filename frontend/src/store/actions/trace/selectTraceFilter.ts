@@ -48,6 +48,7 @@ export const SelectedTraceFilter = (props: {
 			traces.userSelectedFilter,
 			traces.spansAggregate.order,
 			traces.spansAggregate.pageSize,
+			traces.spansAggregate.orderParam,
 		);
 	};
 };

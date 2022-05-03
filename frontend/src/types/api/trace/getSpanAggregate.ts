@@ -9,6 +9,7 @@ export interface Props {
 	selectedTags: TraceReducer['selectedTags'];
 	order?: TraceReducer['spansAggregate']['order'];
 	isFilterExclude: TraceReducer['isFilterExclude'];
+	orderParam: TraceReducer['spansAggregate']['orderParam'];
 }
 
 export type PayloadProps = {

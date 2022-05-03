@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 const Login = ({ email, name }: LoginProps): void => {
-	const emailInput = cy.findByPlaceholderText('mike@netflix.com');
+	const emailInput = cy.findByPlaceholderText('name@yourcompany.com');
 
 	emailInput.then((emailInput) => {
 		const element = emailInput[0];
@@ -13,7 +14,7 @@ const Login = ({ email, name }: LoginProps): void => {
 		expect(inputValue).to.be.equals(email);
 	});
 
-	const firstNameInput = cy.findByPlaceholderText('Mike');
+	const firstNameInput = cy.findByPlaceholderText('Your Name');
 	firstNameInput.then((firstNameInput) => {
 		const element = firstNameInput[0];
 		// element is present
