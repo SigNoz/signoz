@@ -1,6 +1,8 @@
 import { Form, notification } from 'antd';
+import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import ROUTES from 'constants/routes';
@@ -11,11 +13,15 @@ import { useTranslation } from 'react-i18next';
 
 import {
 	ChannelType,
+	PagerChannel,
+	PagerType,
 	SlackChannel,
 	SlackType,
+	ValidatePagerChannel,
 	WebhookChannel,
 	WebhookType,
 } from './config';
+import { PagerInitialConfig } from './defaults';
 
 function CreateAlertChannels({
 	preType = 'slack',
@@ -26,7 +32,7 @@ function CreateAlertChannels({
 	const [formInstance] = Form.useForm();
 
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel>
+		Partial<SlackChannel & WebhookChannel & PagerChannel>
 	>({
 		text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
@@ -55,9 +61,22 @@ function CreateAlertChannels({
 	const [notifications, NotificationElement] = notification.useNotification();
 
 	const [type, setType] = useState<ChannelType>(preType);
-	const onTypeChangeHandler = useCallback((value: string) => {
-		setType(value as ChannelType);
-	}, []);
+	const onTypeChangeHandler = useCallback(
+		(value: string) => {
+			const currentType = type;
+			setType(value as ChannelType);
+
+			if (value === PagerType && currentType !== value) {
+				// reset config to pager defaults
+				setSelectedConfig({
+					name: selectedConfig?.name,
+					send_resolved: selectedConfig.send_resolved,
+					...PagerInitialConfig,
+				});
+			}
+		},
+		[type, selectedConfig],
+	);
 
 	const prepareSlackRequest = useCallback(() => {
 		return {
@@ -71,8 +90,9 @@ function CreateAlertChannels({
 	}, [selectedConfig]);
 
 	const onSlackHandler = useCallback(async () => {
+		setSavingState(true);
+
 		try {
-			setSavingState(true);
 			const response = await createSlackApi(prepareSlackRequest());
 
 			if (response.statusCode === 200) {
@@ -89,14 +109,13 @@ function CreateAlertChannels({
 					description: response.error || t('channel_creation_failed'),
 				});
 			}
-			setSavingState(false);
 		} catch (error) {
 			notifications.error({
 				message: 'Error',
 				description: t('channel_creation_failed'),
 			});
-			setSavingState(false);
 		}
+		setSavingState(false);
 	}, [prepareSlackRequest, t, notifications]);
 
 	const prepareWebhookRequest = useCallback(() => {
@@ -161,6 +180,65 @@ function CreateAlertChannels({
 		}
 		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications]);
+
+	const preparePagerRequest = useCallback(() => {
+		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return null;
+		}
+
+		return {
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+			routing_key: selectedConfig?.routing_key || '',
+			client: selectedConfig?.client || '',
+			client_url: selectedConfig?.client_url || '',
+			description: selectedConfig?.description || '',
+			severity: selectedConfig?.severity || '',
+			component: selectedConfig?.component || '',
+			group: selectedConfig?.group || '',
+			class: selectedConfig?.class || '',
+			details: selectedConfig.details || '',
+			detailsArray: JSON.parse(selectedConfig.details || '{}'),
+		};
+	}, [selectedConfig, notifications]);
+
+	const onPagerHandler = useCallback(async () => {
+		setSavingState(true);
+		const request = preparePagerRequest();
+
+		if (request) {
+			try {
+				const response = await createPagerApi(request);
+
+				if (response.statusCode === 200) {
+					notifications.success({
+						message: 'Success',
+						description: t('channel_creation_done'),
+					});
+					setTimeout(() => {
+						history.replace(ROUTES.SETTINGS);
+					}, 2000);
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: response.error || t('channel_creation_failed'),
+					});
+				}
+			} catch (e) {
+				notifications.error({
+					message: 'Error',
+					description: t('channel_creation_failed'),
+				});
+			}
+		}
+		setSavingState(false);
+	}, [t, notifications, preparePagerRequest]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			switch (value) {
@@ -170,6 +248,9 @@ function CreateAlertChannels({
 				case WebhookType:
 					onWebhookHandler();
 					break;
+				case PagerType:
+					onPagerHandler();
+					break;
 				default:
 					notifications.error({
 						message: 'Error',
@@ -177,7 +258,7 @@ function CreateAlertChannels({
 					});
 			}
 		},
-		[onSlackHandler, t, onWebhookHandler, notifications],
+		[onSlackHandler, t, onPagerHandler, onWebhookHandler, notifications],
 	);
 
 	const performChannelTest = useCallback(
@@ -195,6 +276,10 @@ function CreateAlertChannels({
 						request = prepareSlackRequest();
 						response = await testSlackApi(request);
 						break;
+					case PagerType:
+						request = preparePagerRequest();
+						if (request) response = await testPagerApi(request);
+						break;
 					default:
 						notifications.error({
 							message: 'Error',
@@ -204,7 +289,7 @@ function CreateAlertChannels({
 						return;
 				}
 
-				if (response.statusCode === 200) {
+				if (response && response.statusCode === 200) {
 					notifications.success({
 						message: 'Success',
 						description: t('channel_test_done'),
@@ -223,7 +308,13 @@ function CreateAlertChannels({
 			}
 			setTestingState(false);
 		},
-		[prepareWebhookRequest, t, prepareSlackRequest, notifications],
+		[
+			prepareWebhookRequest,
+			t,
+			preparePagerRequest,
+			prepareSlackRequest,
+			notifications,
+		],
 	);
 
 	const onTestHandler = useCallback(
@@ -249,6 +340,7 @@ function CreateAlertChannels({
 				initialValue: {
 					type,
 					...selectedConfig,
+					...PagerInitialConfig,
 				},
 			}}
 		/>
