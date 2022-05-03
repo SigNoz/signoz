@@ -1,3 +1,4 @@
+import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
 import { DBOverView } from 'types/api/metrics/getDBOverview';
 import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
 import { ExternalError } from 'types/api/metrics/getExternalError';
@@ -18,6 +19,8 @@ interface MetricReducer {
 	externalAverageDuration: ExternalAverageDuration[];
 	externalError: ExternalError[];
 	serviceOverview: ServiceOverview[];
+	resourceAttributeQueries: IResourceAttributeQuery[];
+	resourceAttributePromQLQuery: string;
 }
 
 export default MetricReducer;

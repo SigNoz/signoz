@@ -44,7 +44,7 @@ services:
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
     environment:
-      - ClickHouseUrl=tcp://clickhouse:9000
+      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
@@ -72,7 +72,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:trace-optimized-v1
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -93,7 +93,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:trace-optimized-v1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
@@ -102,28 +102,28 @@ services:
       clickhouse:
         condition: service_healthy
 
-  hotrod:
-    image: jaegertracing/example-hotrod:1.30
-    container_name: hotrod
-    logging:
-      options:
-        max-size: 50m
-        max-file: "3"
-    command: ["all"]
-    environment:
-      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+  # hotrod:
+  #   image: jaegertracing/example-hotrod:1.30
+  #   container_name: hotrod
+  #   logging:
+  #     options:
+  #       max-size: 50m
+  #       max-file: "3"
+  #   command: ["all"]
+  #   environment:
+  #     - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
-  load-hotrod:
-    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
-    container_name: load-hotrod
-    hostname: load-hotrod
-    environment:
-      ATTACKED_HOST: http://hotrod:8080
-      LOCUST_MODE: standalone
-      NO_PROXY: standalone
-      TASK_DELAY_FROM: 5
-      TASK_DELAY_TO: 30
-      QUIET_MODE: "${QUIET_MODE:-false}"
-      LOCUST_OPTS: "--headless -u 10 -r 1"
-    volumes:
-      - ../common/locust-scripts:/locust
+  # load-hotrod:
+  #   image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+  #   container_name: load-hotrod
+  #   hostname: load-hotrod
+  #   environment:
+  #     ATTACKED_HOST: http://hotrod:8080
+  #     LOCUST_MODE: standalone
+  #     NO_PROXY: standalone
+  #     TASK_DELAY_FROM: 5
+  #     TASK_DELAY_TO: 30
+  #     QUIET_MODE: "${QUIET_MODE:-false}"
+  #     LOCUST_OPTS: "--headless -u 10 -r 1"
+  #   volumes:
+  #     - ../common/locust-scripts:/locust

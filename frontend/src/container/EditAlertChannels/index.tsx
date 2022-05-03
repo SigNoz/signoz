@@ -1,13 +1,18 @@
 import { Form, notification } from 'antd';
+import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
+import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	PagerChannel,
+	PagerType,
 	SlackChannel,
 	SlackType,
+	ValidatePagerChannel,
 	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
@@ -25,7 +30,7 @@ function EditAlertChannels({
 
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel>
+		Partial<SlackChannel & WebhookChannel & PagerChannel>
 	>({
 		...initialValue,
 	});
@@ -138,15 +143,66 @@ function EditAlertChannels({
 		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
+	const preparePagerRequest = useCallback(() => {
+		return {
+			name: selectedConfig.name || '',
+			routing_key: selectedConfig.routing_key,
+			client: selectedConfig.client,
+			client_url: selectedConfig.client_url,
+			description: selectedConfig.description,
+			severity: selectedConfig.severity,
+			component: selectedConfig.component,
+			class: selectedConfig.class,
+			group: selectedConfig.group,
+			details: selectedConfig.details,
+			detailsArray: JSON.parse(selectedConfig.details || '{}'),
+			id,
+		};
+	}, [id, selectedConfig]);
+
+	const onPagerEditHandler = useCallback(async () => {
+		setSavingState(true);
+		const validationError = ValidatePagerChannel(selectedConfig as PagerChannel);
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			setSavingState(false);
+			return;
+		}
+		const response = await editPagerApi(preparePagerRequest());
+
+		if (response.statusCode === 200) {
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+
+			setTimeout(() => {
+				history.replace(ROUTES.SETTINGS);
+			}, 2000);
+		} else {
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_edit_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [preparePagerRequest, notifications, selectedConfig, t]);
+
 	const onSaveHandler = useCallback(
 		(value: ChannelType) => {
 			if (value === SlackType) {
 				onSlackEditHandler();
 			} else if (value === WebhookType) {
 				onWebhookEditHandler();
+			} else if (value === PagerType) {
+				onPagerEditHandler();
 			}
 		},
-		[onSlackEditHandler, onWebhookEditHandler],
+		[onSlackEditHandler, onWebhookEditHandler, onPagerEditHandler],
 	);
 
 	const performChannelTest = useCallback(
@@ -164,6 +220,10 @@ function EditAlertChannels({
 						request = prepareSlackRequest();
 						response = await testSlackApi(request);
 						break;
+					case PagerType:
+						request = preparePagerRequest();
+						if (request) response = await testPagerApi(request);
+						break;
 					default:
 						notifications.error({
 							message: 'Error',
@@ -173,7 +233,7 @@ function EditAlertChannels({
 						return;
 				}
 
-				if (response.statusCode === 200) {
+				if (response && response.statusCode === 200) {
 					notifications.success({
 						message: 'Success',
 						description: t('channel_test_done'),
@@ -192,7 +252,13 @@ function EditAlertChannels({
 			}
 			setTestingState(false);
 		},
-		[prepareWebhookRequest, t, prepareSlackRequest, notifications],
+		[
+			t,
+			prepareWebhookRequest,
+			preparePagerRequest,
+			prepareSlackRequest,
+			notifications,
+		],
 	);
 
 	const onTestHandler = useCallback(
@@ -216,7 +282,7 @@ function EditAlertChannels({
 				NotificationElement,
 				title: t('page_title_edit'),
 				initialValue,
-				nameDisable: true,
+				editing: true,
 			}}
 		/>
 	);

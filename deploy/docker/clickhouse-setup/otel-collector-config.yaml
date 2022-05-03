@@ -48,7 +48,7 @@ extensions:
   zpages: {}
 exporters:
   clickhouse:
-    datasource: tcp://clickhouse:9000
+    datasource: tcp://clickhouse:9000/?database=signoz_traces
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:

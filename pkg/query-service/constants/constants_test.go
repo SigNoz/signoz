@@ -1,9 +1,10 @@
 package constants
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"os"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGetAlertManagerApiPrefix(t *testing.T) {

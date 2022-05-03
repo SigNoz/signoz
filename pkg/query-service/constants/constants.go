@@ -5,10 +5,10 @@ import (
 	"strconv"
 )
 
-const HTTPHostPort = "0.0.0.0:8080"
+const (
+	HTTPHostPort = "0.0.0.0:8080"
+)
 
-var DruidClientUrl = os.Getenv("DruidClientUrl")
-var DruidDatasource = os.Getenv("DruidDatasource")
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsTelemetryEnabled() bool {
@@ -30,7 +30,7 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
-// Alert manager channel subpath 
+// Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
@@ -45,8 +45,18 @@ const (
 	Component        = "component"
 	OperationDB      = "name"
 	OperationRequest = "operation"
+	Status           = "status"
+	Duration         = "duration"
+	DBName           = "dbName"
+	DBOperation      = "dbOperation"
+	DBSystem         = "dbSystem"
+	MsgSystem        = "msgSystem"
+	MsgOperation     = "msgOperation"
+	Timestamp        = "timestamp"
+	Descending       = "descending"
+	Ascending        = "ascending"
+	ContextTimeout   = 60 // seconds
 )
-
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

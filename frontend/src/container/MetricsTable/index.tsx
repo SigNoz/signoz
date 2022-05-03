@@ -5,7 +5,7 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import MetricReducer from 'types/reducer/metrics';
@@ -14,6 +14,7 @@ import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
 
 function Metrics(): JSX.Element {
+	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
 	);
@@ -41,9 +42,8 @@ function Metrics(): JSX.Element {
 			title: 'Application',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
-			// eslint-disable-next-line react/display-name
 			render: (text: string): JSX.Element => (
-				<Link to={`${ROUTES.APPLICATION}/${text}`}>
+				<Link to={`${ROUTES.APPLICATION}/${text}${search}`}>
 					<Name>{text}</Name>
 				</Link>
 			),
