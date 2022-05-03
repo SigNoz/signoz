@@ -173,6 +173,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setFunction(value);
 	};
 
+	const getIsNameVisible = (): boolean =>
+		!(firstName.length === 0 && !isPreferenceVisible);
+
+	const isNameVisible = getIsNameVisible();
+
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
@@ -194,19 +199,22 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						/>
 					</div>
 
-					<div>
-						<Label htmlFor="signupFirstName">First Name</Label>
-						<Input
-							placeholder="Mike"
-							value={firstName}
-							onChange={(e): void => {
-								setState(e.target.value, setFirstName);
-							}}
-							required
-							id="signupFirstName"
-							disabled={isDetailsDisable}
-						/>
-					</div>
+					{isNameVisible && (
+						<div>
+							<Label htmlFor="signupFirstName">First Name</Label>
+							<Input
+								placeholder="Mike"
+								value={firstName}
+								onChange={(e): void => {
+									setState(e.target.value, setFirstName);
+								}}
+								required
+								id="signupFirstName"
+								disabled={isDetailsDisable}
+							/>
+						</div>
+					)}
+
 					<div>
 						<Label htmlFor="organizationName">Organization Name</Label>
 						<Input
