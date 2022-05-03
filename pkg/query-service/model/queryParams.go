@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-type User struct {
-	Name             string `json:"name"`
-	Email            string `json:"email"`
-	OrganizationName string `json:"organizationName"`
-}
-
 type InstantQueryMetricsParams struct {
 	Time  time.Time
 	Query string

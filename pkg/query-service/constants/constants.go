@@ -5,7 +5,9 @@ import (
 	"strconv"
 )
 
-const HTTPHostPort = "0.0.0.0:8080"
+const (
+	HTTPHostPort = "0.0.0.0:8080"
+)
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
@@ -28,7 +30,7 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
-// Alert manager channel subpath 
+// Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
@@ -55,7 +57,6 @@ const (
 	Ascending        = "ascending"
 	ContextTimeout   = 60 // seconds
 )
-
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

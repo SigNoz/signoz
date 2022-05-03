@@ -9,7 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
+
+	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 )
@@ -19,8 +22,7 @@ var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max
 func parseUser(r *http.Request) (*model.User, error) {
 
 	var user model.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		return nil, err
 	}
 	if len(user.Email) == 0 {
@@ -585,14 +587,84 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
 }
 
-func parseUserPreferences(r *http.Request) (*model.UserPreferences, error) {
+func parseUserRequest(r *http.Request) (*model.User, error) {
+	var req model.User
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
 
-	var userPreferences model.UserPreferences
-	err := json.NewDecoder(r.Body).Decode(&userPreferences)
-	if err != nil {
+func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
+	var req model.InviteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
+
+func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
+	var req auth.RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
 
-	return &userPreferences, nil
+	if err := auth.ValidatePassword(req.Password); err != nil {
+		return nil, err
+	}
 
+	return &req, nil
+}
+
+func parseLoginRequest(r *http.Request) (*model.LoginRequest, error) {
+	var req model.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseUserRoleRequest(r *http.Request) (*model.UserRole, error) {
+	var req model.UserRole
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseEditOrgRequest(r *http.Request) (*model.Organization, error) {
+	var req model.Organization
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseResetPasswordRequest(r *http.Request) (*model.ResetPasswordRequest, error) {
+	var req model.ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	if err := auth.ValidatePassword(req.Password); err != nil {
+		return nil, err
+	}
+
+	return &req, nil
+}
+
+func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, error) {
+	id := mux.Vars(r)["id"]
+	var req model.ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	req.UserId = id
+	if err := auth.ValidatePassword(req.NewPassword); err != nil {
+		return nil, err
+	}
+
+	return &req, nil
 }

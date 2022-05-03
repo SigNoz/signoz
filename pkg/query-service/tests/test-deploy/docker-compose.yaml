@@ -16,6 +16,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    ports:
+        - "9000:9000"
+        - "8123:8123"
 
   alertmanager:
     image: signoz/alertmanager:0.6.0

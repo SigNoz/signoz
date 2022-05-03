@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +14,9 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
 	"go.signoz.io/query-service/app/parser"
-	"go.signoz.io/query-service/dao/interfaces"
+	"go.signoz.io/query-service/auth"
+	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/dao"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
@@ -40,13 +43,13 @@ type APIHandler struct {
 	basePath     string
 	apiPrefix    string
 	reader       *Reader
+	relationalDB dao.ModelDao
 	alertManager am.Manager
-	relationalDB *interfaces.ModelDao
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB *interfaces.ModelDao) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
 
 	alertManager := am.New("")
 	aH := &APIHandler{
@@ -109,7 +112,7 @@ type response struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
+func respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status:    statusError,
@@ -137,6 +140,8 @@ func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError
 		code = http.StatusNotFound
 	case model.ErrorNotImplemented:
 		code = http.StatusNotImplemented
+	case model.ErrorUnauthorized:
+		code = http.StatusUnauthorized
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -148,7 +153,7 @@ func (aH *APIHandler) respondError(w http.ResponseWriter, apiErr *model.ApiError
 	}
 }
 
-func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
+func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status: statusSuccess,
@@ -174,57 +179,143 @@ func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 	subRouter.HandleFunc("/autocomplete/tagValue", aH.metricAutocompleteTagValue).Methods(http.MethodGet)
 }
 
+func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {
+	writeHttpResponse(w, data)
+}
+
+func OpenAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		f(w, r)
+	}
+}
+
+func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !(auth.IsViewer(r) || auth.IsEditor(r) || auth.IsAdmin(r)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorUnauthorized,
+				Err: errors.New("API accessible only to the admins"),
+			}, nil)
+			return
+		}
+		f(w, r)
+	}
+}
+
+func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !(auth.IsEditor(r) || auth.IsAdmin(r)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorUnauthorized,
+				Err: errors.New("API accessible only to the editors"),
+			}, nil)
+			return
+		}
+		f(w, r)
+	}
+}
+
+func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !(auth.IsSelfAccessRequest(r) || auth.IsAdmin(r)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorUnauthorized,
+				Err: errors.New("API accessible only for self userId"),
+			}, nil)
+			return
+		}
+		f(w, r)
+	}
+}
+
+func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !auth.IsAdmin(r) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorUnauthorized,
+				Err: errors.New("API accessible only to the admins"),
+			}, nil)
+			return
+		}
+		f(w, r)
+	}
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/query_range", aH.queryRangeMetrics).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/query", aH.queryMetrics).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", aH.getChannel).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", aH.editChannel).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", aH.deleteChannel).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", aH.createChannel).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", aH.testChannel).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules", aH.listRulesFromProm).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/{id}", aH.getRule).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", aH.createRule).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", aH.editRule).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", aH.deleteRule).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query", ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", ViewAccess(aH.getChannel)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", EditAccess(aH.editChannel)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/channels/{id}", EditAccess(aH.deleteChannel)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/channels", EditAccess(aH.createChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/testChannel", EditAccess(aH.testChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules", ViewAccess(aH.listRulesFromProm)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/{id}", ViewAccess(aH.getRule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", EditAccess(aH.createRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/dashboards", aH.getDashboards).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", aH.createDashboards).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.getDashboard).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.updateDashboard).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.deleteDashboard).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/user", aH.user).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/user", ViewAccess(aH.user)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/feedback", aH.submitFeedback).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services", aH.getServices).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", aH.getServiceOverview).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_endpoints", aH.getTopEndpoints).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", aH.searchTraces).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/usage", aH.getUsage).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/serviceMapDependencies", aH.serviceMapDependencies).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/settings/ttl", aH.setTTL).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ttl", aH.getTTL).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/services/list", ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/usage", AdminAccess(aH.getUsage)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/userPreferences", aH.setUserPreferences).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/userPreferences", aH.getUserPreferences).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/version", aH.getVersion).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getSpanFilters", aH.getSpanFilters).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagFilters", aH.getTagFilters).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans", aH.getFilteredSpans).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.getFilteredSpanAggregates).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans", ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/getTagValues", aH.getTagValues).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/errors", aH.getErrors).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorWithId", aH.getErrorForId).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorWithType", aH.getErrorForType).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/getTagValues", ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/errors", ViewAccess(aH.getErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorWithId", ViewAccess(aH.getErrorForId)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorWithType", ViewAccess(aH.getErrorForType)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/disks", aH.getDisks).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/disks", ViewAccess(aH.getDisks)).Methods(http.MethodGet)
+
+	// === Authentication APIs ===
+	router.HandleFunc("/api/v1/invite", AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", OpenAccess(aH.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{email}", AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/invite", AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/register", OpenAccess(aH.registerUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/user", AdminAccess(aH.listUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.getUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.editUser)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/rbac/role/{id}", SelfAccess(aH.getRole)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/role/{id}", AdminAccess(aH.editRole)).Methods(http.MethodPut)
+
+	router.HandleFunc("/api/v1/org", AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", AdminAccess(aH.getOrg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", AdminAccess(aH.editOrg)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/orgUsers/{id}", AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/resetPassword", OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/changePassword/{id}", SelfAccess(aH.changePassword)).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -246,7 +337,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	alertList, apiErrorObj := (*aH.reader).GetRule(id)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, alertList)
@@ -257,7 +348,7 @@ func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *htt
 	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText)
 
 	if apiErrObj != nil {
-		aH.respondError(w, apiErrObj, nil)
+		respondError(w, apiErrObj, nil)
 		return
 	}
 	aH.respond(w, metricNameList)
@@ -267,14 +358,14 @@ func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *htt
 func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Request) {
 	metricsAutocompleteTagKeyParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
 	tagKeyList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
 
 	if apiErrObj != nil {
-		aH.respondError(w, apiErrObj, nil)
+		respondError(w, apiErrObj, nil)
 		return
 	}
 	aH.respond(w, tagKeyList)
@@ -285,18 +376,18 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 
 	if len(metricsAutocompleteTagValueParams.TagKey) == 0 {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("tagKey not present in params")}
-		aH.respondError(w, apiErrObj, nil)
+		respondError(w, apiErrObj, nil)
 		return
 	}
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
 	tagValueList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
 
 	if apiErrObj != nil {
-		aH.respondError(w, apiErrObj, nil)
+		respondError(w, apiErrObj, nil)
 		return
 	}
 
@@ -310,7 +401,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	response_data := &model.QueryDataV2{
@@ -323,7 +414,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
 	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, alertList)
@@ -334,18 +425,18 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	allDashboards, err := dashboards.GetDashboards()
 
 	if err != nil {
-		aH.respondError(w, err, nil)
+		respondError(w, err, nil)
 		return
 	}
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
-		aH.respond(w, &allDashboards)
+		aH.respond(w, allDashboards)
 		return
 	}
 
 	tags2Dash := make(map[string][]int)
-	for i := 0; i < len(*allDashboards); i++ {
-		tags, ok := (*allDashboards)[i].Data["tags"].([]interface{})
+	for i := 0; i < len(allDashboards); i++ {
+		tags, ok := (allDashboards)[i].Data["tags"].([]interface{})
 		if !ok {
 			continue
 		}
@@ -361,7 +452,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	inter := make([]int, len(*allDashboards))
+	inter := make([]int, len(allDashboards))
 	for i := range inter {
 		inter[i] = i
 	}
@@ -372,11 +463,11 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	filteredDashboards := []dashboards.Dashboard{}
 	for _, val := range inter {
-		dash := (*allDashboards)[val]
+		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
 	}
 
-	aH.respond(w, &filteredDashboards)
+	aH.respond(w, filteredDashboards)
 
 }
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
@@ -385,7 +476,7 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	err := dashboards.DeleteDashboard(uuid)
 
 	if err != nil {
-		aH.respondError(w, err, nil)
+		respondError(w, err, nil)
 		return
 	}
 
@@ -400,19 +491,18 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, &postData)
-
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData)
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -427,7 +517,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard, apiError := dashboards.GetDashboard(uuid)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -438,21 +528,23 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 	var postData map[string]interface{}
+
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
+
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(&postData)
+	dash, apiErr := dashboards.CreateDashboard(postData)
 
 	if apiErr != nil {
-		aH.respondError(w, apiErr, nil)
+		respondError(w, apiErr, nil)
 		return
 	}
 
@@ -466,7 +558,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	apiErrorObj := (*aH.reader).DeleteRule(id)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -479,14 +571,14 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]string
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
 	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -498,7 +590,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	channel, apiErrorObj := (*aH.reader).GetChannel(id)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, channel)
@@ -508,7 +600,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	apiErrorObj := (*aH.reader).DeleteChannel(id)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, "notification channel successfully deleted")
@@ -517,7 +609,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 	channels, apiErrorObj := (*aH.reader).GetChannels()
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, channels)
@@ -530,21 +622,21 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	// send alert
 	apiErrorObj := aH.alertManager.TestReceiver(receiver)
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 	aH.respond(w, "test alert sent")
@@ -558,21 +650,21 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	_, apiErrorObj := (*aH.reader).EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -586,21 +678,21 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	_, apiErrorObj := (*aH.reader).CreateChannel(receiver)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -616,14 +708,14 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&postData)
 
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -638,7 +730,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	query, apiErrorObj := parseQueryRangeRequest(r)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -659,7 +751,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -670,11 +762,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			aH.respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			aH.respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -692,7 +784,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
 
 	if apiErrorObj != nil {
-		aH.respondError(w, apiErrorObj, nil)
+		respondError(w, apiErrorObj, nil)
 		return
 	}
 
@@ -713,7 +805,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
 
 	if apiError != nil {
-		aH.respondError(w, apiError, nil)
+		respondError(w, apiError, nil)
 		return
 	}
 
@@ -724,11 +816,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			aH.respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			aH.respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -746,18 +838,18 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
 		return
 	}
 
 	message, ok := postData["message"]
 	if !ok {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
 		return
 	}
 	messageStr := fmt.Sprintf("%s", message)
 	if len(messageStr) == 0 {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
 		return
 	}
 
@@ -784,7 +876,7 @@ func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"name":             user.Name,
 		"email":            user.Email,
-		"organizationName": user.OrganizationName,
+		"organizationName": user.OrgId,
 	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
 
@@ -1064,43 +1156,420 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) getUserPreferences(w http.ResponseWriter, r *http.Request) {
-
-	result, apiError := (*aH.relationalDB).FetchUserPreference(r.Context())
-	if apiError != nil {
-		aH.respondError(w, apiError, "Error from Fetch Dao")
-		return
-	}
-
-	aH.writeJSON(w, r, result)
+func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
+	version := version.GetVersion()
+	aH.writeJSON(w, r, map[string]string{"version": version})
 }
 
-func (aH *APIHandler) setUserPreferences(w http.ResponseWriter, r *http.Request) {
-	userParams, err := parseUserPreferences(r)
+// inviteUser is used to invite a user. It is used by an admin api.
+func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseInviteRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	apiErr := (*aH.relationalDB).UpdateUserPreferece(r.Context(), userParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+	resp, err := auth.Invite(ctx, req)
+	if err != nil {
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+	aH.writeJSON(w, r, resp)
+}
+
+// getInvite returns the invite object details for the given invite token. We do not need to
+// protect this API because invite token itself is meant to be private.
+func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
+	token := mux.Vars(r)["token"]
+
+	resp, err := auth.GetInvite(context.Background(), token)
+	if err != nil {
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+	aH.writeJSON(w, r, resp)
+}
+
+// revokeInvite is used to revoke an invite.
+func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
+	email := mux.Vars(r)["email"]
+
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+	if err := auth.RevokeInvite(ctx, email); err != nil {
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "invite revoked successfully"})
+}
+
+// listPendingInvites is used to list the pending invites.
+func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request) {
+
+	ctx := context.Background()
+	invites, err := dao.DB().GetInvites(ctx)
+	if err != nil {
+		respondError(w, err, nil)
+		return
+	}
+
+	// TODO(Ahsan): Querying org name based on orgId for each invite is not a good idea. Either
+	// we should include org name field in the invite table, or do a join query.
+	var resp []*model.InvitationResponseObject
+	for _, inv := range invites {
+
+		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
+		if apiErr != nil {
+			respondError(w, apiErr, nil)
+		}
+		resp = append(resp, &model.InvitationResponseObject{
+			Name:         inv.Name,
+			Email:        inv.Email,
+			Token:        inv.Token,
+			CreatedAt:    inv.CreatedAt,
+			Role:         inv.Role,
+			Organization: org.Name,
+		})
+	}
+	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseRegisterRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	apiErr := auth.Register(context.Background(), req)
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.writeJSON(w, r, map[string]string{"data": "user registered successfully"})
+}
+
+func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
+	req, err := parseLoginRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	// c, err := r.Cookie("refresh-token")
+	// if err != nil {
+	// 	if err != http.ErrNoCookie {
+	// 		w.WriteHeader(http.StatusBadRequest)
+	// 		return
+	// 	}
+	// }
+
+	// if c != nil {
+	// 	req.RefreshToken = c.Value
+	// }
+
+	resp, err := auth.Login(context.Background(), req)
+	if aH.handleError(w, err, http.StatusUnauthorized) {
+		return
+	}
+
+	// http.SetCookie(w, &http.Cookie{
+	// 	Name:     "refresh-token",
+	// 	Value:    resp.RefreshJwt,
+	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
+	// 	HttpOnly: true,
+	// })
+
+	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := dao.DB().GetUsers(context.Background())
+	if err != nil {
+		zap.S().Debugf("[listUsers] Failed to query list of users, err: %v", err)
+		respondError(w, err, nil)
+		return
+	}
+	// mask the password hash
+	for _, u := range users {
+		u.Password = ""
+	}
+	aH.writeJSON(w, r, users)
+}
+
+func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	ctx := context.Background()
+	user, err := dao.DB().GetUser(ctx, id)
+	if err != nil {
+		zap.S().Debugf("[getUser] Failed to query user, err: %v", err)
+		respondError(w, err, "Failed to get user")
+		return
+	}
+	// No need to send password hash for the user object.
+	if user != nil {
+		user.Password = ""
+	}
+
+	aH.writeJSON(w, r, user)
+}
+
+// editUser only changes the user's Name and ProfilePictureURL. It is intentionally designed
+// to not support update of orgId, Password, createdAt for the sucurity reasons.
+func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	update, err := parseUserRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	ctx := context.Background()
+	old, apiErr := dao.DB().GetUser(ctx, id)
+	if apiErr != nil {
+		zap.S().Debugf("[editUser] Failed to query user, err: %v", err)
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	if len(update.Name) > 0 {
+		old.Name = update.Name
+	}
+	if len(update.ProfilePirctureURL) > 0 {
+		old.ProfilePirctureURL = update.ProfilePirctureURL
+	}
+
+	_, apiErr = dao.DB().EditUser(ctx, &model.User{
+		Id:                 old.Id,
+		Name:               old.Name,
+		OrgId:              old.OrgId,
+		Email:              old.Email,
+		Password:           old.Password,
+		CreatedAt:          old.CreatedAt,
+		ProfilePirctureURL: old.ProfilePirctureURL,
+	})
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user updated successfully"})
+}
+
+func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	if !auth.IsAdmin(r) {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: errors.New("Only admin can delete user"),
+		}, "Failed to get user")
+		return
+	}
+
+	// Query for the user's group, and the admin's group. If the user belongs to the admin group
+	// and is the last user then don't let the deletion happen. Otherwise, the system will become
+	// admin less and hence inaccessible.
+	ctx := context.Background()
+	user, apiErr := dao.DB().GetUser(ctx, id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get admin group")
+		return
+	}
+	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.Id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get admin group users")
+		return
+	}
+
+	if user.GroupId == adminGroup.Id && len(adminUsers) == 1 {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: errors.New("cannot delete the last admin user")}, nil)
+		return
+	}
+
+	err := dao.DB().DeleteUser(ctx, id)
+	if err != nil {
+		respondError(w, err, "Failed to delete user")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user deleted successfully"})
+}
+
+func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	user, err := dao.DB().GetUser(context.Background(), id)
+	if err != nil {
+		respondError(w, err, "Failed to get user's group")
+		return
+	}
+	if user == nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorNotFound,
+			Err: errors.New("No user found"),
+		}, nil)
+		return
+	}
+	group, err := dao.DB().GetGroup(context.Background(), user.GroupId)
+	if err != nil {
+		respondError(w, err, "Failed to get group")
+		return
+	}
+
+	aH.writeJSON(w, r, &model.UserRole{UserId: id, GroupName: group.Name})
+}
+
+func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	req, err := parseUserRoleRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	ctx := context.Background()
+	newGroup, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to get user's group")
+		return
+	}
+
+	if newGroup == nil {
+		respondError(w, apiErr, "Specified group is not present")
+		return
+	}
+
+	user, apiErr := dao.DB().GetUser(ctx, id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch user group")
+		return
+	}
+
+	// Make sure that the request is not demoting the last admin user.
+	if user.GroupId == auth.AuthCacheObj.AdminGroupId {
+		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
+		if apiErr != nil {
+			respondError(w, apiErr, "Failed to fetch adminUsers")
+			return
+		}
+
+		if len(adminUsers) == 1 {
+			respondError(w, &model.ApiError{
+				Err: errors.New("Cannot demote the last admin"),
+				Typ: model.ErrorInternal}, nil)
+			return
+		}
+	}
+
+	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.Id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to add user to group")
+		return
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "user group updated successfully"})
+}
+
+func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
+	orgs, apiErr := dao.DB().GetOrgs(context.Background())
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch orgs from the DB")
+		return
+	}
+	aH.writeJSON(w, r, orgs)
+}
+
+func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	org, apiErr := dao.DB().GetOrg(context.Background(), id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch org from the DB")
+		return
+	}
+	aH.writeJSON(w, r, org)
+}
+
+func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	req, err := parseEditOrgRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	req.Id = id
+	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
+		respondError(w, apiErr, "Failed to update org in the DB")
 		return
 	}
 
 	data := map[string]interface{}{
-		"hasOptedUpdates": userParams.HasOptedUpdates,
-		"isAnonymous":     userParams.IsAnonymous,
+		"hasOptedUpdates": req.HasOptedUpdates,
+		"isAnonymous":     req.IsAnonymous,
 	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_PREFERENCES, data)
 
-	aH.writeJSON(w, r, map[string]string{"data": "user preferences set successfully"})
-
+	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
 
-func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	users, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch org users from the DB")
+		return
+	}
+	// mask the password hash
+	for _, u := range users {
+		u.Password = ""
+	}
+	aH.writeJSON(w, r, users)
+}
 
-	version := version.GetVersion()
+func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	resp, err := auth.CreateResetPasswordToken(context.Background(), id)
+	if err != nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: err}, "Failed to create reset token entry in the DB")
+		return
+	}
+	aH.writeJSON(w, r, resp)
+}
 
-	aH.writeJSON(w, r, map[string]string{"version": version})
+func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
+	req, err := parseResetPasswordRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	if err := auth.ResetPassword(context.Background(), req); err != nil {
+		zap.S().Debugf("resetPassword failed, err: %v\n", err)
+		if aH.handleError(w, err, http.StatusInternalServerError) {
+			return
+		}
+
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "password reset successfully"})
+}
+
+func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
+	req, err := parseChangePasswordRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	if err := auth.ChangePassword(context.Background(), req); err != nil {
+		if aH.handleError(w, err, http.StatusInternalServerError) {
+			return
+		}
+
+	}
+	aH.writeJSON(w, r, map[string]string{"data": "password changed successfully"})
 }
 
 // func (aH *APIHandler) getApplicationPercentiles(w http.ResponseWriter, r *http.Request) {

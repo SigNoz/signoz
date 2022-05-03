@@ -103,9 +103,9 @@ func (c *Data) Scan(src interface{}) error {
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError) {
+func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) {
 	dash := &Dashboard{
-		Data: *data,
+		Data: data,
 	}
 	dash.CreatedAt = time.Now()
 	dash.UpdatedAt = time.Now()
@@ -135,7 +135,7 @@ func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError)
 	return dash, nil
 }
 
-func GetDashboards() (*[]Dashboard, *model.ApiError) {
+func GetDashboards() ([]Dashboard, *model.ApiError) {
 
 	dashboards := []Dashboard{}
 	query := fmt.Sprintf("SELECT * FROM dashboards;")
@@ -145,7 +145,7 @@ func GetDashboards() (*[]Dashboard, *model.ApiError) {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	return &dashboards, nil
+	return dashboards, nil
 }
 
 func DeleteDashboard(uuid string) *model.ApiError {
@@ -182,7 +182,7 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 	return &dashboard, nil
 }
 
-func UpdateDashboard(uuid string, data *map[string]interface{}) (*Dashboard, *model.ApiError) {
+func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *model.ApiError) {
 
 	map_data, err := json.Marshal(data)
 	if err != nil {
@@ -196,7 +196,7 @@ func UpdateDashboard(uuid string, data *map[string]interface{}) (*Dashboard, *mo
 	}
 
 	dashboard.UpdatedAt = time.Now()
-	dashboard.Data = *data
+	dashboard.Data = data
 
 	// db.Prepare("Insert into dashboards where")
 	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, data=$2 WHERE uuid=$3 ", dashboard.UpdatedAt, map_data, dashboard.Uuid)

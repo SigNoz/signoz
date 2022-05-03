@@ -27,6 +27,7 @@ const (
 	ErrorUnavailable    ErrorType = "unavailable"
 	ErrorNotFound       ErrorType = "not_found"
 	ErrorNotImplemented ErrorType = "not_implemented"
+	ErrorUnauthorized   ErrorType = "unauthorized"
 )
 
 type QueryDataV2 struct {

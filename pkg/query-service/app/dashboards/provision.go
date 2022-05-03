@@ -42,7 +42,7 @@ func readCurrentDir(dir string) error {
 			continue
 		}
 
-		_, apiErr = CreateDashboard(&data)
+		_, apiErr = CreateDashboard(data)
 		if apiErr != nil {
 			zap.S().Errorf("Creating Dashboards: Error in file: %s\t%s", filename, apiErr.Err)
 			continue
