@@ -38,7 +38,10 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [action] = useComponentPermission(['action'], role);
+	const [action, createNewDashboard] = useComponentPermission(
+		['action', 'create_new_dashboards'],
+		role,
+	);
 
 	const { t } = useTranslation('dashboard');
 	const [
@@ -173,19 +176,21 @@ function ListOfAllDashboard(): JSX.Element {
 	const menu = useMemo(
 		() => (
 			<Menu>
-				<Menu.Item
-					onClick={onNewDashboardHandler}
-					disabled={loading}
-					key={t('create_dashboard').toString()}
-				>
-					{t('create_dashboard')}
-				</Menu.Item>
+				{createNewDashboard && (
+					<Menu.Item
+						onClick={onNewDashboardHandler}
+						disabled={loading}
+						key={t('create_dashboard').toString()}
+					>
+						{t('create_dashboard')}
+					</Menu.Item>
+				)}
 				<Menu.Item onClick={onModalHandler} key={t('import_json').toString()}>
 					{t('import_json')}
 				</Menu.Item>
 			</Menu>
 		),
-		[loading, onNewDashboardHandler, t],
+		[createNewDashboard, loading, onNewDashboardHandler, t],
 	);
 
 	const GetHeader = useMemo(
