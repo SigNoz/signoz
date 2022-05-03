@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
+import omit from 'lodash-es/omit';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -29,11 +30,15 @@ function TraceTable(): JSX.Element {
 		userSelectedFilter,
 		isFilterExclude,
 		filterToFetchData,
+		filter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
+
+	const statusFilter = filter.get('status');
+	const selectedStatusFilter = selectedFilter.get('status');
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const { loading, total, order: spansAggregateOrder } = spansAggregate;
+	const { loading, order: spansAggregateOrder } = spansAggregate;
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
@@ -171,6 +176,12 @@ function TraceTable(): JSX.Element {
 		}
 	};
 
+	const totalObject = omit(statusFilter, [...(selectedStatusFilter || [])]);
+	const totalCount = Object.values(totalObject).reduce(
+		(a, b) => parseInt(String(a), 10) + parseInt(String(b), 10),
+		0,
+	) as number;
+
 	return (
 		<Table
 			onChange={onChangeHandler}
@@ -193,7 +204,7 @@ function TraceTable(): JSX.Element {
 				pageSize: spansAggregate.pageSize,
 				responsive: true,
 				position: ['bottomLeft'],
-				total,
+				total: totalCount,
 			}}
 		/>
 	);
