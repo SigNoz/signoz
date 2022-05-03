@@ -38,7 +38,7 @@ import {
 } from './styles';
 
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
-	const { isDarkMode, user } = useSelector<AppState, AppReducer>(
+	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
@@ -128,7 +128,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
 					to={ROUTES.APPLICATION}
 				>
-					<img src="/signoz.svg" alt="SigNoz" />
+					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
 					<Typography.Title style={{ margin: 0 }} level={4}>
 						SigNoz
 					</Typography.Title>
