@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -31,8 +31,9 @@ function MetricsApplication({ getInitialData }: MetricsProps): JSX.Element {
 		(state) => state.metrics,
 	);
 
-	const selectedTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+	const selectedTags = useMemo(
+		() => convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		[resourceAttributeQueries],
 	);
 
 	useEffect(() => {

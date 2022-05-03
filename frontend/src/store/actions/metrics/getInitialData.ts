@@ -12,6 +12,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/metrics/getDBOverview';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
 
 export const GetInitialData = (
 	props: GetInitialDataProps,
@@ -123,5 +124,5 @@ export interface GetInitialDataProps {
 	serviceName: Props['service'];
 	maxTime: GlobalReducer['maxTime'];
 	minTime: GlobalReducer['minTime'];
-	selectedTags: string;
+	selectedTags: Tags[];
 }

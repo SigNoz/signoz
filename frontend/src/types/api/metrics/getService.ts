@@ -1,7 +1,9 @@
+import { Tags } from 'types/reducer/trace';
+
 export interface Props {
 	start: number;
 	end: number;
-	selectedTags: string;
+	selectedTags: Tags[];
 }
 
 export interface ServicesList {

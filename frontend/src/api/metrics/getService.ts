@@ -9,8 +9,8 @@ const getService = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post(`/services`, {
-			start: props.start,
-			end: props.end,
+			start: `${props.start}`,
+			end: `${props.end}`,
 			tags: props.selectedTags,
 		});
 

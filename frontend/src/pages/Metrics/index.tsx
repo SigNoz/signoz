@@ -4,7 +4,7 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ResourceAttributesFilter from 'container/MetricsApplication/ResourceAttributesFilter';
 import MetricTable from 'container/MetricsTable';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -24,10 +24,10 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		MetricReducer
 	>((state) => state.metrics);
 
-	const selectedTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+	const selectedTags = useMemo(
+		() => convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		[resourceAttributeQueries],
 	);
-
 	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';
 
 	useEffect(() => {

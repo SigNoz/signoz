@@ -1,3 +1,5 @@
+import { Tags } from 'types/reducer/trace';
+
 export interface TopEndPoints {
 	name: string;
 	numCalls: number;
@@ -10,7 +12,7 @@ export interface Props {
 	service: string;
 	start: number;
 	end: number;
-	selectedTags: string;
+	selectedTags: Tags[];
 }
 
 export type PayloadProps = TopEndPoints[];
