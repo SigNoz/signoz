@@ -4,12 +4,6 @@ import styled, { css } from 'styled-components';
 
 const { Sider: SiderComponent } = Layout;
 
-export const Logo = styled.img<LogoProps>`
-	width: 100px;
-	margin: 9% 5% 5% 10%;
-	display: ${({ collapsed }): string => (!collapsed ? 'block' : 'none')};
-`;
-
 interface LogoProps {
 	collapsed: boolean;
 	index: number;

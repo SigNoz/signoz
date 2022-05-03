@@ -19,6 +19,7 @@ import history from 'lib/history';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
+import { NavLink } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
@@ -116,8 +117,22 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	);
 
 	return (
-		<Layout.Header>
+		<Layout.Header
+			style={{
+				paddingLeft: '1.125rem',
+				paddingRight: '1.125rem',
+			}}
+		>
 			<Container>
+				<NavLink
+					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+					to={ROUTES.APPLICATION}
+				>
+					<img src="/signoz.svg" alt="SigNoz" />
+					<Typography.Title style={{ margin: 0 }} level={4}>
+						SigNoz
+					</Typography.Title>
+				</NavLink>
 				<Space align="center">
 					<ToggleButton
 						checked={isDarkMode}

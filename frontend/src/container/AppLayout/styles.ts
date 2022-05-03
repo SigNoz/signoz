@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 export const Layout = styled(LayoutComponent)`
 	&&& {
-		min-height: 100vh;
+		min-height: 91vh;
 		display: flex;
 		position: relative;
 	}

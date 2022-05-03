@@ -7,7 +7,7 @@ import history from 'lib/history';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -15,7 +15,6 @@ import AppReducer from 'types/reducer/app';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
-	Logo,
 	RedDot,
 	Sider,
 	SlackButton,
@@ -35,27 +34,6 @@ function SideNav(): JSX.Element {
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation('');
-
-	// const toggleTheme = useCallback(() => {
-	// 	const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
-	// 	setTheme(preMode);
-
-	// 	const id: AppMode = preMode;
-	// 	const { head } = document;
-	// 	const link = document.createElement('link');
-	// 	link.rel = 'stylesheet';
-	// 	link.type = 'text/css';
-	// 	link.href = !isDarkMode ? '/css/antd.dark.min.css' : '/css/antd.min.css';
-	// 	link.media = 'all';
-	// 	link.id = id;
-	// 	head.appendChild(link);
-
-	// 	link.onload = (): void => {
-	// 		toggleDarkMode();
-	// 		const prevNode = document.getElementById('appMode');
-	// 		prevNode?.remove();
-	// 	};
-	// }, [toggleDarkMode, isDarkMode]);
 
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
@@ -112,17 +90,6 @@ function SideNav(): JSX.Element {
 
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
-			{/* <ThemeSwitcherWrapper>
-				<ToggleButton
-					checked={isDarkMode}
-					onChange={toggleTheme}
-					defaultChecked={isDarkMode}
-				/>
-			</ThemeSwitcherWrapper> */}
-			<NavLink to={ROUTES.APPLICATION}>
-				<Logo index={0} src="/signoz.svg" alt="SigNoz" collapsed={collapsed} />
-			</NavLink>
-
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}

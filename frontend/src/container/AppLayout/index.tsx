@@ -1,11 +1,9 @@
 import { notification } from 'antd';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
-// import ROUTES from 'constants/routes';
 import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
-// import history from 'lib/history';
 import React, { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -141,14 +139,16 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	return (
 		<Layout>
-			{isLoggedIn && <SideNav />}
-			<Layout.Content>
-				{isLoggedIn && <Header />}
-				<ChildrenContainer>
-					{isLoggedIn && <TopNav />}
-					{children}
-				</ChildrenContainer>
-			</Layout.Content>
+			{isLoggedIn && <Header />}
+			<Layout>
+				{isLoggedIn && <SideNav />}
+				<Layout.Content>
+					<ChildrenContainer>
+						{isLoggedIn && <TopNav />}
+						{children}
+					</ChildrenContainer>
+				</Layout.Content>
+			</Layout>
 		</Layout>
 	);
 }
