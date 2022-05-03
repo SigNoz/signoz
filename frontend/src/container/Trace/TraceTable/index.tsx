@@ -107,7 +107,7 @@ function TraceTable(): JSX.Element {
 
 	const getSortKey = (key: string): string => {
 		if (key === 'durationNano') {
-			return 'duration';
+			return 'durationNano';
 		}
 		if (key === 'timestamp') {
 			return 'timestamp';
@@ -195,7 +195,6 @@ function TraceTable(): JSX.Element {
 				position: ['bottomLeft'],
 				total,
 			}}
-			sortDirections={['ascend', 'descend']}
 		/>
 	);
 }
