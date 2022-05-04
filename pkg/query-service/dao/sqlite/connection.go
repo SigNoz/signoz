@@ -113,7 +113,6 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	}
 
 	// set telemetry fields from userPreferences
-	telemetry.GetInstance().SetTelemetryAnonymous(org.IsAnonymous)
 	telemetry.GetInstance().SetDistinctId(org.Id)
 
 	return nil
