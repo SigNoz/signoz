@@ -58,6 +58,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 						ns: 'common',
 					}),
 				});
+				history.push(ROUTES.LOGIN);
 			} else {
 				notification.error({
 					message:
