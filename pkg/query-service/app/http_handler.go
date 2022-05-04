@@ -205,7 +205,7 @@ func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is not accessible to the viewers."),
+				Err: errors.New("API is accessible to viewers/editors/admins."),
 			}, nil)
 			return
 		}
@@ -226,7 +226,7 @@ func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is not accessible to the editors."),
+				Err: errors.New("API is accessible to editors/admins."),
 			}, nil)
 			return
 		}
@@ -248,7 +248,7 @@ func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API accessible only for self userId or admins."),
+				Err: errors.New("API is accessible for self access or to the admins."),
 			}, nil)
 			return
 		}
@@ -269,7 +269,7 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !auth.IsAdmin(user) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API accessible only to the admins"),
+				Err: errors.New("API is accessible to admins only"),
 			}, nil)
 			return
 		}
