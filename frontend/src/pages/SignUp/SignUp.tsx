@@ -203,7 +203,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						<div>
 							<Label htmlFor="signupFirstName">First Name</Label>
 							<Input
-								placeholder="Mike"
+								placeholder="Your Name"
 								value={firstName}
 								onChange={(e): void => {
 									setState(e.target.value, setFirstName);
