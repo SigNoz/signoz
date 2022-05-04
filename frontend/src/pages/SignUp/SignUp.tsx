@@ -106,7 +106,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 			} else {
 				notification.error({
-					message: defaultError,
+					message: response.error || defaultError,
 				});
 			}
 		} catch (error) {
