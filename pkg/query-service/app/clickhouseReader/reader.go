@@ -1509,7 +1509,15 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
-			traceFilterReponse.Status = map[string]uint64{"ok": dBResponse2[0].NumTotal, "error": dBResponse[0].NumTotal}
+			if len(dBResponse) > 0 && len(dBResponse2) > 0 {
+				traceFilterReponse.Status = map[string]uint64{"ok": dBResponse2[0].NumTotal, "error": dBResponse[0].NumTotal}
+			} else if len(dBResponse) > 0 {
+				traceFilterReponse.Status = map[string]uint64{"ok": 0, "error": dBResponse[0].NumTotal}
+			} else if len(dBResponse2) > 0 {
+				traceFilterReponse.Status = map[string]uint64{"ok": dBResponse2[0].NumTotal, "error": 0}
+			} else {
+				traceFilterReponse.Status = map[string]uint64{"ok": 0, "error": 0}
+			}
 		case constants.Duration:
 			finalQuery := fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.durationTable)
 			finalQuery += query
@@ -1533,8 +1541,12 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
-			traceFilterReponse.Duration["minDuration"] = dBResponse[0].NumTotal
-			traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
+			if len(dBResponse) > 0 {
+				traceFilterReponse.Duration["minDuration"] = dBResponse[0].NumTotal
+			}
+			if len(dBResponse2) > 0 {
+				traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
+			}
 		default:
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("filter type: %s not supported", e)}
 		}
