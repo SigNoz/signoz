@@ -112,7 +112,7 @@ function TraceTable(): JSX.Element {
 
 	const getSortKey = (key: string): string => {
 		if (key === 'durationNano') {
-			return 'durationNano';
+			return 'duration';
 		}
 		if (key === 'timestamp') {
 			return 'timestamp';
