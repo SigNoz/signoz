@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
-	"go.uber.org/zap"
+	"go.signoz.io/query-service/model"
 )
 
 type Group struct {
@@ -51,65 +50,24 @@ func InitAuthCache(ctx context.Context) error {
 	return nil
 }
 
-func IsAdmin(r *http.Request) bool {
+func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
 	accessJwt, err := ExtractJwtFromRequest(r)
 	if err != nil {
-		zap.S().Debugf("Failed to verify admin access, err: %v", err)
-		return false
+		return nil, err
 	}
 
 	user, err := validateUser(accessJwt)
 	if err != nil {
-		return false
+		return nil, err
 	}
-	return user.GroupId == AuthCacheObj.AdminGroupId
+	return user, nil
 }
 
-func IsSelfAccessRequest(r *http.Request) bool {
-	id := mux.Vars(r)["id"]
-	accessJwt, err := ExtractJwtFromRequest(r)
-	if err != nil {
-		zap.S().Debugf("Failed to verify self access, err: %v", err)
-		return false
-	}
+func IsSelfAccessRequest(user *model.UserPayload, id string) bool { return user.Id == id }
 
-	user, err := validateUser(accessJwt)
-	if err != nil {
-		zap.S().Debugf("Failed to verify self access, err: %v", err)
-		return false
-	}
-	zap.S().Debugf("Self access verification, userID: %s, id: %s\n", user.Id, id)
-	return user.Id == id
-}
-
-func IsViewer(r *http.Request) bool {
-	accessJwt, err := ExtractJwtFromRequest(r)
-	if err != nil {
-		zap.S().Debugf("Failed to verify viewer access, err: %v", err)
-		return false
-	}
-
-	user, err := validateUser(accessJwt)
-	if err != nil {
-		return false
-	}
-
-	return user.GroupId == AuthCacheObj.ViewerGroupId
-}
-
-func IsEditor(r *http.Request) bool {
-	accessJwt, err := ExtractJwtFromRequest(r)
-	if err != nil {
-		zap.S().Debugf("Failed to verify editor access, err: %v", err)
-		return false
-	}
-
-	user, err := validateUser(accessJwt)
-	if err != nil {
-		return false
-	}
-	return user.GroupId == AuthCacheObj.EditorGroupId
-}
+func IsViewer(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.ViewerGroupId }
+func IsEditor(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.EditorGroupId }
+func IsAdmin(user *model.UserPayload) bool  { return user.GroupId == AuthCacheObj.AdminGroupId }
 
 func ValidatePassword(password string) error {
 	if len(password) < minimumPasswordLength {

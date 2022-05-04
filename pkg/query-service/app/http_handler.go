@@ -142,6 +142,8 @@ func respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{
 		code = http.StatusNotImplemented
 	case model.ErrorUnauthorized:
 		code = http.StatusUnauthorized
+	case model.ErrorForbidden:
+		code = http.StatusForbidden
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -191,10 +193,19 @@ func OpenAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !(auth.IsViewer(r) || auth.IsEditor(r) || auth.IsAdmin(r)) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the admins"),
+				Err: err,
+			}, nil)
+			return
+		}
+
+		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is not accessible to the viewers."),
 			}, nil)
 			return
 		}
@@ -204,10 +215,18 @@ func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !(auth.IsEditor(r) || auth.IsAdmin(r)) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the editors"),
+				Err: err,
+			}, nil)
+			return
+		}
+		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is not accessible to the editors."),
 			}, nil)
 			return
 		}
@@ -217,10 +236,19 @@ func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !(auth.IsSelfAccessRequest(r) || auth.IsAdmin(r)) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only for self userId"),
+				Err: err,
+			}, nil)
+			return
+		}
+		id := mux.Vars(r)["id"]
+		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API accessible only for self userId or admins."),
 			}, nil)
 			return
 		}
@@ -230,9 +258,17 @@ func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.IsAdmin(r) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
+				Err: err,
+			}, nil)
+			return
+		}
+		if !auth.IsAdmin(user) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
 				Err: errors.New("API accessible only to the admins"),
 			}, nil)
 			return
@@ -1163,7 +1199,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := auth.GetInvite(context.Background(), token)
 	if err != nil {
-		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
 		return
 	}
 	aH.writeJSON(w, r, resp)
@@ -1268,8 +1304,8 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// mask the password hash
-	for _, u := range users {
-		u.Password = ""
+	for i := range users {
+		users[i].Password = ""
 	}
 	aH.writeJSON(w, r, users)
 }
@@ -1284,11 +1320,16 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err, "Failed to get user")
 		return
 	}
-	// No need to send password hash for the user object.
-	if user != nil {
-		user.Password = ""
+	if user == nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: errors.New("User not found"),
+		}, nil)
+		return
 	}
 
+	// No need to send password hash for the user object.
+	user.Password = ""
 	aH.writeJSON(w, r, user)
 }
 
@@ -1336,14 +1377,6 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !auth.IsAdmin(r) {
-		respondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: errors.New("Only admin can delete user"),
-		}, "Failed to get user")
-		return
-	}
-
 	// Query for the user's group, and the admin's group. If the user belongs to the admin group
 	// and is the last user then don't let the deletion happen. Otherwise, the system will become
 	// admin less and hence inaccessible.
@@ -1353,6 +1386,15 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, apiErr, "Failed to get user's group")
 		return
 	}
+
+	if user == nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorNotFound,
+			Err: errors.New("User not found"),
+		}, nil)
+		return
+	}
+
 	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to get admin group")
@@ -1504,8 +1546,8 @@ func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// mask the password hash
-	for _, u := range users {
-		u.Password = ""
+	for i := range users {
+		users[i].Password = ""
 	}
 	aH.writeJSON(w, r, users)
 }
