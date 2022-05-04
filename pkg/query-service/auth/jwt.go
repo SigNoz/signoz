@@ -45,7 +45,7 @@ func validateUser(tok string) (*model.UserPayload, error) {
 	}
 	now := time.Now().Unix()
 	if !claims.VerifyExpiresAt(now, true) {
-		return nil, errors.Errorf("Token is expired")
+		return nil, model.ErrorTokenExpired
 	}
 	return &model.UserPayload{
 		User: model.User{
