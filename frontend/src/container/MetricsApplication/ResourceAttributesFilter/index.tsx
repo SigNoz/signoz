@@ -206,7 +206,10 @@ function ResourceAttributesFilter(): JSX.Element | null {
 								<Spin size="small" /> Loading...{' '}
 							</span>
 						) : (
-							<span>No data available for {state.value}</span>
+							<span>
+								No resource attributes available to filter. Please refer docs to send
+								attributes.
+							</span>
 						)
 					}
 				/>
