@@ -199,7 +199,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						/>
 					</div>
 
-
 					{isNameVisible && (
 						<div>
 							<Label htmlFor="signupFirstName">First Name</Label>
@@ -215,7 +214,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							/>
 						</div>
 					)}
-
 
 					<div>
 						<Label htmlFor="organizationName">Organization Name</Label>
@@ -334,7 +332,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								loading ||
 								!email ||
 								!organizationName ||
-								!firstName ||
 								!password ||
 								!confirmPassword ||
 								confirmPasswordError
