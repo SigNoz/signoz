@@ -6,7 +6,7 @@ export const getYAxisFormattedValue = (
 ): string => {
 	try {
 		return formattedValueToString(
-			getValueFormat(format)(value, undefined, undefined, undefined),
+			getValueFormat(format)(value, 1, undefined, undefined),
 		);
 	} catch (error) {
 		console.error(error);
