@@ -14,7 +14,10 @@ export type ComponentTypes =
 	| 'save_layout'
 	| 'edit_dashboard'
 	| 'delete_widget'
+	| 'new_dashboard'
+	| 'new_alert_action';
 	| 'edit_widget';
+
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -29,7 +32,10 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	save_layout: ['ADMIN', 'EDITOR'],
 	edit_dashboard: ['ADMIN', 'EDITOR'],
 	delete_widget: ['ADMIN', 'EDITOR'],
+	new_dashboard: ['ADMIN', 'EDITOR'],
+	new_alert_action: ['ADMIN'],
 	edit_widget: ['ADMIN', 'EDITOR'],
+
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
