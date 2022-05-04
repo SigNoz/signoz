@@ -160,10 +160,7 @@ function Graph({
 						ticks: {
 							// Include a dollar sign in the ticks
 							callback(value) {
-								return getYAxisFormattedValue(
-									parseInt(value.toString(), 10),
-									yAxisUnit,
-								);
+								return getYAxisFormattedValue(parseFloat(value.toString()), yAxisUnit);
 							},
 						},
 					},
