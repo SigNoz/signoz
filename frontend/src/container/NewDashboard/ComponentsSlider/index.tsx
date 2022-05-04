@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
+import { v4 as uuid } from 'uuid';
 
 import menuItems, { ITEMS } from './menuItems';
 import { Card, Container, Text } from './styles';
@@ -38,7 +39,7 @@ function DashboardGraphSlider(): JSX.Element {
 
 				await updateDashboard({
 					data,
-					generateWidgetId: selectedDashboard.uuid,
+					generateWidgetId: uuid(),
 					graphType: name,
 					layout: [
 						...(data.layout || []),
