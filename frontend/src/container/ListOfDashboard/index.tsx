@@ -38,8 +38,8 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [action, createNewDashboard] = useComponentPermission(
-		['action', 'create_new_dashboards'],
+	const [action, createNewDashboard, newDashboard] = useComponentPermission(
+		['action', 'create_new_dashboards', 'new_dashboard'],
 		role,
 	);
 
@@ -205,20 +205,28 @@ function ListOfAllDashboard(): JSX.Element {
 							url: 'https://signoz.io/docs/userguide/dashboards',
 						}}
 					/>
-					<Dropdown trigger={['click']} overlay={menu}>
-						<NewDashboardButton
-							icon={<PlusOutlined />}
-							type="primary"
-							loading={newDashboardState.loading}
-							danger={newDashboardState.error}
-						>
-							{getText()}
-						</NewDashboardButton>
-					</Dropdown>
+					{newDashboard && (
+						<Dropdown trigger={['click']} overlay={menu}>
+							<NewDashboardButton
+								icon={<PlusOutlined />}
+								type="primary"
+								loading={newDashboardState.loading}
+								danger={newDashboardState.error}
+							>
+								{getText()}
+							</NewDashboardButton>
+						</Dropdown>
+					)}
 				</ButtonContainer>
 			</Row>
 		),
-		[getText, menu, newDashboardState.error, newDashboardState.loading],
+		[
+			getText,
+			menu,
+			newDashboard,
+			newDashboardState.error,
+			newDashboardState.loading,
+		],
 	);
 
 	return (
