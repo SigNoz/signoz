@@ -35,7 +35,6 @@ const interceptorRejected = async (
 	try {
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
-			console.log(response);
 			// reject the refresh token error
 			if (response.status === 401 && response.config.url !== '/login') {
 				const response = await loginApi({
@@ -43,32 +42,37 @@ const interceptorRejected = async (
 				});
 
 				if (response.statusCode === 200) {
-					await afterLogin(
+					const user = await afterLogin(
 						response.payload.userId,
 						response.payload.accessJwt,
 						response.payload.refreshJwt,
 					);
 
-					const reResponse = await axios(
-						`${value.config.baseURL}${value.config.url?.substring(1)}`,
-						{
-							method: value.config.method,
-							headers: {
-								...value.config.headers,
-								Authorization: `Bearer ${response.payload.accessJwt}`,
+					if (user) {
+						const reResponse = await axios(
+							`${value.config.baseURL}${value.config.url?.substring(1)}`,
+							{
+								method: value.config.method,
+								headers: {
+									...value.config.headers,
+									Authorization: `Bearer ${response.payload.accessJwt}`,
+								},
+								data: {
+									...JSON.parse(value.config.data || '{}'),
+								},
 							},
-							data: {
-								...JSON.parse(value.config.data || '{}'),
-							},
-						},
-					);
+						);
 
-					if (reResponse.status === 200) {
-						return await Promise.resolve(reResponse);
+						if (reResponse.status === 200) {
+							return await Promise.resolve(reResponse);
+						}
+						Logout();
+
+						return await Promise.reject(reResponse);
 					}
 					Logout();
 
-					return await Promise.reject(reResponse);
+					return await Promise.reject(value);
 				}
 				Logout();
 			}
@@ -80,7 +84,7 @@ const interceptorRejected = async (
 		}
 		return await Promise.reject(value);
 	} catch (error) {
-		return Promise.reject(value);
+		return await Promise.reject(error);
 	}
 };
 
