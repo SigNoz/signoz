@@ -3,16 +3,15 @@ import styled from 'styled-components';
 
 export const Layout = styled(LayoutComponent)`
 	&&& {
-		min-height: 100vh;
+		min-height: 91vh;
 		display: flex;
 		position: relative;
 	}
 `;
 
-export const Content = styled(LayoutComponent.Content)`
-	&&& {
-		margin: 0 1rem;
-		display: flex;
-		flex-direction: column;
-	}
+export const ChildrenContainer = styled.div`
+	margin: 0 1rem;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 `;

@@ -64,7 +64,8 @@ function Trace({
 			current: spansAggregate.currentPage,
 			pageSize: spansAggregate.pageSize,
 			selectedTags,
-			order: spansAggregate.order === 'ascend' ? 'ascending' : 'descending',
+			order: spansAggregate.order,
+			orderParam: spansAggregate.orderParam,
 		});
 	}, [
 		selectedTags,
@@ -75,6 +76,7 @@ function Trace({
 		spansAggregate.currentPage,
 		spansAggregate.pageSize,
 		spansAggregate.order,
+		spansAggregate.orderParam,
 	]);
 
 	useEffect(() => {

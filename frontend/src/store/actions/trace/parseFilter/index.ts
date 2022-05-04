@@ -6,4 +6,6 @@ export * from './selectedFilter';
 export * from './selectedTags';
 export * from './skippedSelected';
 export * from './spanAggregateCurrentPage';
+export * from './spanAggregateCurrentPageSize';
 export * from './spanAggregateOrder';
+export * from './spanAggregateOrderParam';

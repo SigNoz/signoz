@@ -1,11 +1,10 @@
 import { notification } from 'antd';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
-import ROUTES from 'constants/routes';
-import TopNav from 'container/Header';
+import Header from 'container/Header';
 import SideNav from 'container/SideNav';
-import history from 'lib/history';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import TopNav from 'container/TopNav';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,14 +20,12 @@ import {
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
-import { Content, Layout } from './styles';
+import { ChildrenContainer, Layout } from './styles';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { pathname } = useLocation();
 	const { t } = useTranslation();
-
-	const [isSignUpPage, setIsSignUpPage] = useState(ROUTES.SIGN_UP === pathname);
 
 	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
 		{
@@ -57,23 +54,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	useEffect(() => {
-		if (!isLoggedIn) {
-			setIsSignUpPage(true);
-			history.push(ROUTES.SIGN_UP);
-		} else if (isSignUpPage) {
-			setIsSignUpPage(false);
-		}
-	}, [isLoggedIn, isSignUpPage]);
-
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
 
 	useEffect(() => {
-		if (isLoggedIn && pathname === ROUTES.SIGN_UP) {
-			history.push(ROUTES.APPLICATION);
-		}
-
 		if (
 			getUserLatestVersionResponse.isFetched &&
 			getUserLatestVersionResponse.isError &&
@@ -153,14 +137,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserLatestVersionResponse.isSuccess,
 	]);
 
+	const isToDisplayLayout = isLoggedIn;
+
 	return (
 		<Layout>
-			{!isSignUpPage && <SideNav />}
+			{isToDisplayLayout && <Header />}
 			<Layout>
-				<Content>
-					{!isSignUpPage && <TopNav />}
-					{children}
-				</Content>
+				{isToDisplayLayout && <SideNav />}
+				<Layout.Content>
+					<ChildrenContainer>
+						{isToDisplayLayout && <TopNav />}
+						{children}
+					</ChildrenContainer>
+				</Layout.Content>
 			</Layout>
 		</Layout>
 	);

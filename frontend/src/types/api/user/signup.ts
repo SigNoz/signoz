@@ -1,5 +1,7 @@
 export interface Props {
-	email: string;
 	name: string;
-	organizationName: string;
+	orgName: string;
+	email: string;
+	password: string;
+	token?: string;
 }

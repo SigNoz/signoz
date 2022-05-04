@@ -21,10 +21,15 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				};
 			}
 
+			const { errors, error } = data;
+
+			const errorMessage =
+				Array.isArray(errors) && errors.length >= 1 ? errors[0].msg : error;
+
 			return {
 				statusCode,
 				payload: null,
-				error: data.error,
+				error: errorMessage,
 				message: null,
 			};
 		}

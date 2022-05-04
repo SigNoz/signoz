@@ -1,8 +1,10 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
+import ResourceAttributesFilter from 'container/MetricsApplication/ResourceAttributesFilter';
 import MetricTable from 'container/MetricsTable';
-import React, { useEffect } from 'react';
+import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
+import React, { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -11,16 +13,24 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
+import { Tags } from 'types/reducer/trace';
 
 function Metrics({ getService }: MetricsProps): JSX.Element {
 	const { minTime, maxTime, loading, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const { services } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { services, resourceAttributeQueries } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
 
+	const selectedTags = useMemo(
+		() =>
+			(convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) as Tags[]) ||
+			[],
+		[resourceAttributeQueries],
+	);
 	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';
 
 	useEffect(() => {
@@ -28,9 +38,10 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 			getService({
 				maxTime,
 				minTime,
+				selectedTags,
 			});
 		}
-	}, [getService, loading, maxTime, minTime]);
+	}, [getService, loading, maxTime, minTime, selectedTags]);
 
 	useEffect(() => {
 		let timeInterval: NodeJS.Timeout;
@@ -40,6 +51,7 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 				getService({
 					maxTime,
 					minTime,
+					selectedTags,
 				});
 			}, 50000);
 		}
@@ -47,13 +59,27 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		return (): void => {
 			clearInterval(timeInterval);
 		};
-	}, [getService, isSkipped, loading, maxTime, minTime, services, selectedTime]);
+	}, [
+		getService,
+		isSkipped,
+		loading,
+		maxTime,
+		minTime,
+		services,
+		selectedTime,
+		selectedTags,
+	]);
 
 	if (loading) {
 		return <Spinner tip="Loading..." />;
 	}
 
-	return <MetricTable />;
+	return (
+		<>
+			<ResourceAttributesFilter />
+			<MetricTable />
+		</>
+	);
 }
 
 interface DispatchProps {

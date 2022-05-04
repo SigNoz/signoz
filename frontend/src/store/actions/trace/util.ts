@@ -23,6 +23,8 @@ export const updateURL = (
 	isFilterExclude: TraceReducer['isFilterExclude'],
 	userSelectedFilter: TraceReducer['userSelectedFilter'],
 	spanAggregateOrder: TraceReducer['spansAggregate']['order'],
+	spanAggregateCurrentPageSize: TraceReducer['spansAggregate']['pageSize'],
+	spanAggregateOrderParam: TraceReducer['spansAggregate']['orderParam'],
 ): void => {
 	const search = new URLSearchParams(window.location.search);
 	const preResult: { key: string; value: string }[] = [];
@@ -36,6 +38,8 @@ export const updateURL = (
 		'userSelectedFilter',
 		'spanAggregateCurrentPage',
 		'spanAggregateOrder',
+		'spanAggregateCurrentPageSize',
+		'spanAggregateOrderParam',
 	];
 
 	search.forEach((value, key) => {
@@ -60,7 +64,7 @@ export const updateURL = (
 			Object.fromEntries(isFilterExclude),
 		)}&userSelectedFilter=${JSON.stringify(
 			Object.fromEntries(userSelectedFilter),
-		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&spanAggregateOrder=${spanAggregateOrder}`,
+		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&spanAggregateOrder=${spanAggregateOrder}&spanAggregateCurrentPageSize=${spanAggregateCurrentPageSize}&spanAggregateOrderParam=${spanAggregateOrderParam}`,
 	);
 };
 

@@ -1,4 +1,4 @@
-import { Time } from 'container/Header/DateTimeSelection/config';
+import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import getMinAgo from './getStartAndEndTime/getMinAgo';

@@ -69,6 +69,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// 	return nil, err
 	// }
 
+	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
 	s := &Server{
 		// logger: logger,
 		// querySvc:           querySvc,
@@ -113,12 +117,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	relationalDB, err := dao.FactoryDao("sqlite")
-	if err != nil {
-		return nil, err
-	}
-
-	apiHandler, err := NewAPIHandler(&reader, relationalDB)
+	apiHandler, err := NewAPIHandler(&reader, dao.DB())
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +135,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		AllowedOrigins: []string{"*"},
 		// AllowCredentials: true,
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	})
 
 	handler := c.Handler(r)

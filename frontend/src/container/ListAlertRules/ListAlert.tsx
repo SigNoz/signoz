@@ -4,14 +4,18 @@ import { notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Alerts } from 'types/api/alerts/getAll';
+import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
 import { Button, ButtonContainer } from './styles';
@@ -20,6 +24,11 @@ import Status from './TableComponents/Status';
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewAlert, action] = useComponentPermission(
+		['add_new_alert', 'action'],
+		role,
+	);
 
 	useInterval(() => {
 		(async (): Promise<void> => {
@@ -112,7 +121,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				);
 			},
 		},
-		{
+	];
+
+	if (action) {
+		columns.push({
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
@@ -124,12 +136,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						<Button onClick={(): void => onEditHandler(id.toString())} type="link">
 							Edit
 						</Button>
-						{/* <Button type="link">Pause</Button> */}
 					</>
 				);
 			},
-		},
-	];
+		});
+	}
 
 	return (
 		<>
@@ -143,9 +154,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					}}
 				/>
 
-				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-					New Alert
-				</Button>
+				{addNewAlert && (
+					<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
+						New Alert
+					</Button>
+				)}
 			</ButtonContainer>
 
 			<Table rowKey="id" columns={columns} dataSource={data} />

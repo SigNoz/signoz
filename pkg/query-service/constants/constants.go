@@ -5,7 +5,9 @@ import (
 	"strconv"
 )
 
-const HTTPHostPort = "0.0.0.0:8080"
+const (
+	HTTPHostPort = "0.0.0.0:8080"
+)
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
