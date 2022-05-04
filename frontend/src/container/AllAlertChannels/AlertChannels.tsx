@@ -17,7 +17,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const [notifications, Element] = notification.useNotification();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [action] = useComponentPermission(['action'], role);
+	const [action] = useComponentPermission(['new_alert_action'], role);
 
 	const onClickEditHandler = useCallback((id: string) => {
 		history.replace(
