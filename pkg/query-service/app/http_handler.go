@@ -263,8 +263,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/user", ViewAccess(aH.user)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
@@ -860,25 +858,6 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"message": message,
 	}
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data)
-
-}
-
-func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
-
-	user, err := parseUser(r)
-	if err != nil {
-		if aH.handleError(w, err, http.StatusBadRequest) {
-			return
-		}
-	}
-
-	telemetry.GetInstance().IdentifyUser(user)
-	data := map[string]interface{}{
-		"name":             user.Name,
-		"email":            user.Email,
-		"organizationName": user.OrgId,
-	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
 
 }
 
@@ -1507,10 +1486,12 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"hasOptedUpdates": req.HasOptedUpdates,
-		"isAnonymous":     req.IsAnonymous,
+		"hasOptedUpdates":  req.HasOptedUpdates,
+		"isAnonymous":      req.IsAnonymous,
+		"organizationName": req.Name,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_PREFERENCES, data)
+
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data)
 
 	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
