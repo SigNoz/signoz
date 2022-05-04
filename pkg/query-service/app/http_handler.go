@@ -407,7 +407,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	// build queries
 	queries, formulaQueries, err := metricsQueryRangeParams.BuildQuery("time_series")
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 	}
 
 	var results []*[]model.MetricResult
@@ -415,7 +415,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	for _, query := range queries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
-			aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		}
 		// query may have group by and can result in multiple metric series
 		results = append(results, result...)
@@ -426,7 +426,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	for _, query := range formulaQueries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
-			aH.respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		}
 		results = append(results, result...)
 	}
@@ -453,7 +453,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	if err != nil {
-		aH.respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 	}
 
 	type ResponseFormat struct {
