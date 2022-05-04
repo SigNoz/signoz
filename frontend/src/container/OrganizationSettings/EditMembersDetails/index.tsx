@@ -4,10 +4,7 @@ import getResetPasswordToken from 'api/user/getResetPasswordToken';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
 import { InputGroup, SelectDrawer, Title } from './styles';
@@ -21,11 +18,11 @@ function EditMembersDetails({
 	setEmailAddress,
 	setName,
 	setRole,
+	id,
 }: EditMembersDetailsProps): JSX.Element {
 	const [passwordLink, setPasswordLink] = useState<string>('');
 
 	const { t } = useTranslation(['common']);
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [state, copyToClipboard] = useCopyToClipboard();
 
@@ -62,7 +59,7 @@ function EditMembersDetails({
 		try {
 			setIsLoading(true);
 			const response = await getResetPasswordToken({
-				userId: user?.userId || '',
+				userId: id || '',
 			});
 
 			if (response.statusCode === 200) {
@@ -164,6 +161,7 @@ interface EditMembersDetailsProps {
 	setEmailAddress: React.Dispatch<React.SetStateAction<string>>;
 	setName: React.Dispatch<React.SetStateAction<string>>;
 	setRole: React.Dispatch<React.SetStateAction<ROLES>>;
+	id: string;
 }
 
 export default EditMembersDetails;
