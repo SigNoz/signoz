@@ -66,6 +66,8 @@ const interceptorRejected = async (
 					if (reResponse.status === 200) {
 						return await Promise.resolve(reResponse);
 					}
+					Logout();
+
 					return await Promise.reject(reResponse);
 				}
 				Logout();
