@@ -194,7 +194,7 @@ func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsViewer(r) || auth.IsEditor(r) || auth.IsAdmin(r)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the admins"),
+				Err: errors.New("API is not accessible to the viewers."),
 			}, nil)
 			return
 		}
@@ -207,7 +207,7 @@ func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsEditor(r) || auth.IsAdmin(r)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the editors"),
+				Err: errors.New("API is not accessible to the editors."),
 			}, nil)
 			return
 		}
@@ -220,7 +220,7 @@ func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsSelfAccessRequest(r) || auth.IsAdmin(r)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only for self userId"),
+				Err: errors.New("API accessible only for self userId or admins."),
 			}, nil)
 			return
 		}
@@ -1305,11 +1305,16 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err, "Failed to get user")
 		return
 	}
-	// No need to send password hash for the user object.
-	if user != nil {
-		user.Password = ""
+	if user == nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: errors.New("User not found"),
+		}, nil)
+		return
 	}
 
+	// No need to send password hash for the user object.
+	user.Password = ""
 	aH.writeJSON(w, r, user)
 }
 
