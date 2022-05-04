@@ -106,7 +106,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 			} else {
 				notification.error({
-					message: defaultError,
+					message: response.error || defaultError,
 				});
 			}
 		} catch (error) {
@@ -203,7 +203,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						<div>
 							<Label htmlFor="signupFirstName">First Name</Label>
 							<Input
-								placeholder="Mike"
+								placeholder="Your Name"
 								value={firstName}
 								onChange={(e): void => {
 									setState(e.target.value, setFirstName);

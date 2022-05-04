@@ -65,7 +65,10 @@ function WidgetHeader({
 	};
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [deleteWidget] = useComponentPermission(['delete_widget'], role);
+	const [deleteWidget, editWidget] = useComponentPermission(
+		['delete_widget', 'edit_widget'],
+		role,
+	);
 
 	const menu = (
 		<Menu onClick={onMenuItemSelectHandler}>
@@ -74,11 +77,14 @@ function WidgetHeader({
 					<span>View</span> <FullscreenOutlined />
 				</MenuItemContainer>
 			</Menu.Item>
-			<Menu.Item key={keyMethodMapping.edit.key}>
-				<MenuItemContainer>
-					<span>Edit</span> <EditFilled />
-				</MenuItemContainer>
-			</Menu.Item>
+
+			{editWidget && (
+				<Menu.Item key={keyMethodMapping.edit.key}>
+					<MenuItemContainer>
+						<span>Edit</span> <EditFilled />
+					</MenuItemContainer>
+				</Menu.Item>
+			)}
 
 			{deleteWidget && (
 				<>
