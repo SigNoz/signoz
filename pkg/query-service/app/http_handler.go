@@ -1220,7 +1220,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := auth.GetInvite(context.Background(), token)
 	if err != nil {
-		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
 		return
 	}
 	aH.writeJSON(w, r, resp)
