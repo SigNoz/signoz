@@ -2532,7 +2532,7 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 	if len(getErrorWithSpanReponse) > 0 {
 		return &getErrorWithSpanReponse[0], nil
 	} else {
-		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("Error not found")}
+		return nil, &model.ApiError{Typ: model.ErrorUnavailable, Err: fmt.Errorf("Error/Exception not found")}
 	}
 
 }

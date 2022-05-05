@@ -321,7 +321,7 @@ type SpanFiltersResponse struct {
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
 	ExceptionMsg   string    `json:"exceptionMessage" ch:"exceptionMessage"`
-	ExceptionCount int64     `json:"exceptionCount" ch:"exceptionCount"`
+	ExceptionCount uint64    `json:"exceptionCount" ch:"exceptionCount"`
 	LastSeen       time.Time `json:"lastSeen" ch:"lastSeen"`
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
