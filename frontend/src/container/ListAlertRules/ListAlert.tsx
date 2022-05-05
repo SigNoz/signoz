@@ -71,7 +71,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Alert Name',
 			dataIndex: 'name',
 			key: 'name',
-			sorter: (a, b): number => a.name.length - b.name.length,
+			sorter: (a, b): number => a.name.charCodeAt(0) - b.name.charCodeAt(0),
 		},
 		{
 			title: 'Severity',
@@ -92,14 +92,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			sorter: (a, b): number => {
-				const alength = Object.keys(a.labels).filter((e) => e !== 'severity')
-					.length;
-				const blength = Object.keys(b.labels).filter((e) => e !== 'severity')
-					.length;
-
-				return blength - alength;
-			},
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
