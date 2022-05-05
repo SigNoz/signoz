@@ -30,8 +30,6 @@ export const getYAxisFormattedValue = (
 					break;
 				}
 			}
-			// decimalPrecision = idx + 2;
-			// break;
 		}
 
 		return formattedValueToString(
