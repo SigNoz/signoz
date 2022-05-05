@@ -18,6 +18,7 @@ const routesToSkip = [
 	ROUTES.VERSION,
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
+	ROUTES.ERROR_DETAIL,
 ];
 
 function TopNav(): JSX.Element | null {
