@@ -328,15 +328,15 @@ type Error struct {
 }
 
 type ErrorWithSpan struct {
-	ErrorID            string    `json:"errorId" ch:"errorID"`
-	ExceptionType      string    `json:"exceptionType" ch:"exceptionType"`
-	ExcepionStacktrace string    `json:"excepionStacktrace" ch:"excepionStacktrace"`
-	ExceptionEscaped   string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
-	ExceptionMsg       string    `json:"exceptionMessage" ch:"exceptionMessage"`
-	Timestamp          time.Time `json:"timestamp" ch:"timestamp"`
-	SpanID             string    `json:"spanID" ch:"spanID"`
-	TraceID            string    `json:"traceID" ch:"traceID"`
-	ServiceName        string    `json:"serviceName" ch:"serviceName"`
-	NewerErrorID       string    `json:"newerErrorId" ch:"newerErrorId"`
-	OlderErrorID       string    `json:"olderErrorId" ch:"olderErrorId"`
+	ErrorID             string    `json:"errorId" ch:"errorID"`
+	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
+	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
+	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
+	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
+	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
+	SpanID              string    `json:"spanID" ch:"spanID"`
+	TraceID             string    `json:"traceID" ch:"traceID"`
+	ServiceName         string    `json:"serviceName" ch:"serviceName"`
+	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
+	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }
