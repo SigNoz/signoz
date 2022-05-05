@@ -25,7 +25,12 @@ import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { LOGGED_IN, UPDATE_USER_ORG_ROLE } from 'types/actions/app';
+import {
+	LOGGED_IN,
+	UPDATE_USER,
+	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+	UPDATE_USER_ORG_ROLE,
+} from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import CurrentOrganization from './CurrentOrganization';
@@ -86,6 +91,25 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 				role: null,
 			},
 		});
+		dispatch({
+			type: UPDATE_USER,
+			payload: {
+				ROLE: 'VIEWER',
+				email: '',
+				name: '',
+				orgId: '',
+				orgName: '',
+				profilePictureURL: '',
+				userId: '',
+			},
+		});
+		dispatch({
+			type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+			payload: {
+				accessJwt: '',
+				refreshJwt: '',
+			},
+		});
 
 		history.push(ROUTES.LOGIN);
 	};
@@ -109,7 +133,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 						role="button"
 						onClick={onClickLogoutHandler}
 					>
-						<Typography>Logout</Typography>
+						<Typography.Link>Logout</Typography.Link>
 					</div>
 				</LogoutContainer>
 			</Menu.ItemGroup>
@@ -128,10 +152,8 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
 					to={ROUTES.APPLICATION}
 				>
-
 					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
-					<Typography.Title style={{ margin: 0 , color: '#DBDBDB'}} level={4}>
-
+					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
 						SigNoz
 					</Typography.Title>
 				</NavLink>

@@ -5,9 +5,13 @@ import {
 	FullscreenOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Menu, Typography } from 'antd';
+import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 
 import {
 	ArrowContainer,
@@ -59,6 +63,12 @@ function WidgetHeader({
 	const onMenuItemSelectHandler = ({ key }: { key: TWidgetOptions }): void => {
 		keyMethodMapping[key]?.method();
 	};
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [deleteWidget, editWidget] = useComponentPermission(
+		['delete_widget', 'edit_widget'],
+		role,
+	);
 
 	const menu = (
 		<Menu onClick={onMenuItemSelectHandler}>
@@ -67,17 +77,25 @@ function WidgetHeader({
 					<span>View</span> <FullscreenOutlined />
 				</MenuItemContainer>
 			</Menu.Item>
-			<Menu.Item key={keyMethodMapping.edit.key}>
-				<MenuItemContainer>
-					<span>Edit</span> <EditFilled />
-				</MenuItemContainer>
-			</Menu.Item>
-			<Menu.Divider />
-			<Menu.Item key={keyMethodMapping.delete.key} danger>
-				<MenuItemContainer>
-					<span>Delete</span> <DeleteOutlined />
-				</MenuItemContainer>
-			</Menu.Item>
+
+			{editWidget && (
+				<Menu.Item key={keyMethodMapping.edit.key}>
+					<MenuItemContainer>
+						<span>Edit</span> <EditFilled />
+					</MenuItemContainer>
+				</Menu.Item>
+			)}
+
+			{deleteWidget && (
+				<>
+					<Menu.Divider />
+					<Menu.Item key={keyMethodMapping.delete.key} danger>
+						<MenuItemContainer>
+							<span>Delete</span> <DeleteOutlined />
+						</MenuItemContainer>
+					</Menu.Item>
+				</>
+			)}
 		</Menu>
 	);
 

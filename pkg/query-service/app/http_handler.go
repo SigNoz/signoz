@@ -143,6 +143,8 @@ func respondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{
 		code = http.StatusNotImplemented
 	case model.ErrorUnauthorized:
 		code = http.StatusUnauthorized
+	case model.ErrorForbidden:
+		code = http.StatusForbidden
 	default:
 		code = http.StatusInternalServerError
 	}
@@ -192,10 +194,19 @@ func OpenAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !(auth.IsViewer(r) || auth.IsEditor(r) || auth.IsAdmin(r)) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the admins"),
+				Err: err,
+			}, nil)
+			return
+		}
+
+		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is accessible to viewers/editors/admins."),
 			}, nil)
 			return
 		}
@@ -205,10 +216,18 @@ func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !(auth.IsEditor(r) || auth.IsAdmin(r)) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the editors"),
+				Err: err,
+			}, nil)
+			return
+		}
+		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is accessible to editors/admins."),
 			}, nil)
 			return
 		}
@@ -218,10 +237,19 @@ func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !(auth.IsSelfAccessRequest(r) || auth.IsAdmin(r)) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only for self userId"),
+				Err: err,
+			}, nil)
+			return
+		}
+		id := mux.Vars(r)["id"]
+		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is accessible for self access or to the admins."),
 			}, nil)
 			return
 		}
@@ -231,10 +259,18 @@ func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 
 func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !auth.IsAdmin(r) {
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
-				Err: errors.New("API accessible only to the admins"),
+				Err: err,
+			}, nil)
+			return
+		}
+		if !auth.IsAdmin(user) {
+			respondError(w, &model.ApiError{
+				Typ: model.ErrorForbidden,
+				Err: errors.New("API is accessible to admins only"),
 			}, nil)
 			return
 		}
@@ -248,8 +284,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query", ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", ViewAccess(aH.getChannel)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", EditAccess(aH.editChannel)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", EditAccess(aH.deleteChannel)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.editChannel)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/channels", EditAccess(aH.createChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", EditAccess(aH.testChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules", ViewAccess(aH.listRulesFromProm)).Methods(http.MethodGet)
@@ -264,12 +300,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/user", ViewAccess(aH.user)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
@@ -916,25 +950,6 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) user(w http.ResponseWriter, r *http.Request) {
-
-	user, err := parseUser(r)
-	if err != nil {
-		if aH.handleError(w, err, http.StatusBadRequest) {
-			return
-		}
-	}
-
-	telemetry.GetInstance().IdentifyUser(user)
-	data := map[string]interface{}{
-		"name":             user.Name,
-		"email":            user.Email,
-		"organizationName": user.OrgId,
-	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
-
-}
-
 func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetTopEndpointsRequest(r)
@@ -1237,7 +1252,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := auth.GetInvite(context.Background(), token)
 	if err != nil {
-		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		respondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
 		return
 	}
 	aH.writeJSON(w, r, resp)
@@ -1342,8 +1357,8 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// mask the password hash
-	for _, u := range users {
-		u.Password = ""
+	for i := range users {
+		users[i].Password = ""
 	}
 	aH.writeJSON(w, r, users)
 }
@@ -1358,11 +1373,16 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err, "Failed to get user")
 		return
 	}
-	// No need to send password hash for the user object.
-	if user != nil {
-		user.Password = ""
+	if user == nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: errors.New("User not found"),
+		}, nil)
+		return
 	}
 
+	// No need to send password hash for the user object.
+	user.Password = ""
 	aH.writeJSON(w, r, user)
 }
 
@@ -1410,14 +1430,6 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	if !auth.IsAdmin(r) {
-		respondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: errors.New("Only admin can delete user"),
-		}, "Failed to get user")
-		return
-	}
-
 	// Query for the user's group, and the admin's group. If the user belongs to the admin group
 	// and is the last user then don't let the deletion happen. Otherwise, the system will become
 	// admin less and hence inaccessible.
@@ -1427,6 +1439,15 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, apiErr, "Failed to get user's group")
 		return
 	}
+
+	if user == nil {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorNotFound,
+			Err: errors.New("User not found"),
+		}, nil)
+		return
+	}
+
 	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to get admin group")
@@ -1560,10 +1581,12 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"hasOptedUpdates": req.HasOptedUpdates,
-		"isAnonymous":     req.IsAnonymous,
+		"hasOptedUpdates":  req.HasOptedUpdates,
+		"isAnonymous":      req.IsAnonymous,
+		"organizationName": req.Name,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_PREFERENCES, data)
+
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data)
 
 	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -1576,8 +1599,8 @@ func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// mask the password hash
-	for _, u := range users {
-		u.Password = ""
+	for i := range users {
+		users[i].Password = ""
 	}
 	aH.writeJSON(w, r, users)
 }

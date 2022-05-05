@@ -125,7 +125,11 @@ func validateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")
 	}
 
-	if invitation == nil || invitation.Token != req.InviteToken {
+	if invitation == nil {
+		return nil, ErrorAskAdmin
+	}
+
+	if invitation.Token != req.InviteToken {
 		return nil, ErrorInvalidInviteToken
 	}
 

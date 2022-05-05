@@ -15,6 +15,7 @@ var (
 	ErrorInvalidRole  = errors.New("Invalid role")
 
 	ErrorInvalidInviteToken = errors.New("Invalid invite token")
+	ErrorAskAdmin           = errors.New("You are not allowed to create an account. Please ask your admin to send an invite link")
 )
 
 func randomHex(sz int) (string, error) {

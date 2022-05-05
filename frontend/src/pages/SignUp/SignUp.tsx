@@ -106,7 +106,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				}
 			} else {
 				notification.error({
-					message: defaultError,
+					message: response.error || defaultError,
 				});
 			}
 		} catch (error) {
@@ -199,12 +199,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						/>
 					</div>
 
-
 					{isNameVisible && (
 						<div>
 							<Label htmlFor="signupFirstName">First Name</Label>
 							<Input
-								placeholder="Mike"
+								placeholder="Your Name"
 								value={firstName}
 								onChange={(e): void => {
 									setState(e.target.value, setFirstName);
@@ -215,7 +214,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							/>
 						</div>
 					)}
-
 
 					<div>
 						<Label htmlFor="organizationName">Organization Name</Label>
@@ -313,16 +311,18 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						</>
 					)}
 
-					<Typography.Paragraph
-						italic
-						style={{
-							color: '#D89614',
-							marginTop: '0.50rem',
-						}}
-					>
-						This will create an admin account. If you are not an admin, please ask
-						your admin for an invite link
-					</Typography.Paragraph>
+					{isPreferenceVisible && (
+						<Typography.Paragraph
+							italic
+							style={{
+								color: '#D89614',
+								marginTop: '0.50rem',
+							}}
+						>
+							This will create an admin account. If you are not an admin, please ask
+							your admin for an invite link
+						</Typography.Paragraph>
+					)}
 
 					<ButtonContainer>
 						<Button
@@ -334,7 +334,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								loading ||
 								!email ||
 								!organizationName ||
-								!firstName ||
 								!password ||
 								!confirmPassword ||
 								confirmPasswordError

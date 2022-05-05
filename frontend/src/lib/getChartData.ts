@@ -19,7 +19,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 				const [first = 0, second = ''] = e || [];
 				return {
 					first: new Date(parseInt(convertIntoEpoc(first * 1000), 10)), // converting in ms
-					second: Number(parseFloat(second).toFixed(2)),
+					second: Number(parseFloat(second)),
 				};
 			});
 

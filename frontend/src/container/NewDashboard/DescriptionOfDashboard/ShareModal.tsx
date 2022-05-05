@@ -1,7 +1,8 @@
 import { Button, Modal, notification, Typography } from 'antd';
 import Editor from 'components/Editor';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCopyToClipboard } from 'react-use';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
 import { downloadObjectAsJson } from './util';
@@ -16,23 +17,25 @@ function ShareModal({
 	);
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
+	const [state, setCopy] = useCopyToClipboard();
 
-	const onClickCopyClipBoardHandler = useCallback(async () => {
-		try {
-			await navigator.clipboard.writeText(jsonValue);
-			notification.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
-		} catch (error) {
+	useEffect(() => {
+		if (state.error) {
 			notification.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
 			});
 		}
-	}, [jsonValue, t]);
+
+		if (state.value) {
+			notification.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+		}
+	}, [state.error, state.value, t]);
 
 	const GetFooterComponent = useMemo(() => {
 		if (!isViewJSON) {
@@ -58,11 +61,11 @@ function ShareModal({
 			);
 		}
 		return (
-			<Button onClick={onClickCopyClipBoardHandler} type="primary">
+			<Button onClick={(): void => setCopy(jsonValue)} type="primary">
 				{t('copy_to_clipboard')}
 			</Button>
 		);
-	}, [isViewJSON, onClickCopyClipBoardHandler, selectedData, t]);
+	}, [isViewJSON, jsonValue, selectedData, setCopy, t]);
 
 	return (
 		<Modal

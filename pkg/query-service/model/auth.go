@@ -1,5 +1,11 @@
 package model
 
+import "github.com/pkg/errors"
+
+var (
+	ErrorTokenExpired = errors.New("Token is expired")
+)
+
 type InviteRequest struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`

@@ -40,7 +40,7 @@ const afterLogin = async (
 		}),
 	]);
 
-	if (getUserResponse.statusCode === 200) {
+	if (getUserResponse.statusCode === 200 && getUserResponse.payload) {
 		store.dispatch<AppActions>({
 			type: LOGGED_IN,
 			payload: {

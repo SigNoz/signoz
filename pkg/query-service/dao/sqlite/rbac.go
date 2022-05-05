@@ -188,6 +188,14 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
+
+	data := map[string]interface{}{
+		"name":  user.Name,
+		"email": user.Email,
+	}
+	telemetry.GetInstance().IdentifyUser(user)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
+
 	return user, nil
 }
 
