@@ -1,7 +1,7 @@
 import { Button, notification, Space, Typography } from 'antd';
 import changeMyPassword from 'api/user/changeMyPassword';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -22,6 +22,14 @@ function PasswordContainer(): JSX.Element {
 	const defaultPlaceHolder = t('input_password', {
 		ns: 'settings',
 	});
+
+	useEffect(() => {
+		if (currentPassword && !isPasswordValid(currentPassword)) {
+			setIsPasswordPolicyError(true);
+		} else {
+			setIsPasswordPolicyError(false);
+		}
+	}, [currentPassword]);
 
 	if (!user) {
 		return <div />;
@@ -104,11 +112,6 @@ function PasswordContainer(): JSX.Element {
 					onChange={(event): void => {
 						const updatedValue = event.target.value;
 						setUpdatePassword(updatedValue);
-						if (!isPasswordValid(updatedValue)) {
-							setIsPasswordPolicyError(true);
-						} else {
-							setIsPasswordPolicyError(false);
-						}
 					}}
 					value={updatePassword}
 				/>
@@ -130,7 +133,8 @@ function PasswordContainer(): JSX.Element {
 					isLoading ||
 					currentPassword.length === 0 ||
 					updatePassword.length === 0 ||
-					isPasswordPolicyError
+					isPasswordPolicyError ||
+					currentPassword !== updatePassword
 				}
 				loading={isLoading}
 				onClick={onChangePasswordClickHandler}
