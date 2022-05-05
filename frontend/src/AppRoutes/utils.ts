@@ -1,11 +1,8 @@
-import { notification } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getUserApi from 'api/user/getUser';
+import { Logout } from 'api/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import ROUTES from 'constants/routes';
-import { t } from 'i18next';
-import history from 'lib/history';
 import store from 'store';
 import AppActions from 'types/actions';
 import {
@@ -86,11 +83,8 @@ const afterLogin = async (
 		},
 	});
 
-	notification.error({
-		message: getUserResponse.error || t('something_went_wrong'),
-	});
+	Logout();
 
-	history.push(ROUTES.SOMETHING_WENT_WRONG);
 	return undefined;
 };
 
