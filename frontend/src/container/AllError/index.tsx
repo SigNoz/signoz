@@ -53,7 +53,8 @@ function AllErrors(): JSX.Element {
 					{value}
 				</Link>
 			),
-			sorter: (a, b): number => a.exceptionType.length - b.exceptionType.length,
+			sorter: (a, b): number =>
+				a.exceptionType.charCodeAt(0) - b.exceptionType.charCodeAt(0),
 		},
 		{
 			title: 'Error Message',
@@ -81,7 +82,7 @@ function AllErrors(): JSX.Element {
 			key: 'lastSeen',
 			render: getDateValue,
 			sorter: (a, b): number =>
-				dayjs(a.lastSeen).isBefore(dayjs(b.lastSeen)) === true ? 1 : 0,
+				dayjs(b.lastSeen).isBefore(dayjs(a.lastSeen)) === true ? 1 : 0,
 		},
 		{
 			title: 'First Seen',
@@ -89,13 +90,14 @@ function AllErrors(): JSX.Element {
 			key: 'firstSeen',
 			render: getDateValue,
 			sorter: (a, b): number =>
-				dayjs(a.firstSeen).isBefore(dayjs(b.firstSeen)) === true ? 1 : 0,
+				dayjs(b.firstSeen).isBefore(dayjs(a.firstSeen)) === true ? 1 : 0,
 		},
 		{
 			title: 'Application',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
-			sorter: (a, b): number => a.serviceName.length - b.serviceName.length,
+			sorter: (a, b): number =>
+				a.serviceName.charCodeAt(0) - b.serviceName.charCodeAt(0),
 		},
 	];
 
