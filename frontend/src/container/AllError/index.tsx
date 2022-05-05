@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import React from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
-import { generatePath, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Exception } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -37,10 +37,7 @@ function AllErrors(): JSX.Element {
 			key: 'exceptionType',
 			render: (value, record): JSX.Element => (
 				<Link
-					to={generatePath(ROUTES.ERROR_DETAIL, {
-						serviceName: record.serviceName,
-						errorType: record.exceptionType,
-					})}
+					to={`${ROUTES.ERROR_DETAIL}?serviceName=${record.serviceName}&errorType=${record.exceptionType}`}
 				>
 					{value}
 				</Link>

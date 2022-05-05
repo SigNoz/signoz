@@ -10,7 +10,7 @@ export interface Props {
 export interface PayloadProps {
 	errorId: string;
 	exceptionType: string;
-	excepionStacktrace: string;
+	exceptionStacktrace: string;
 	exceptionEscaped: string;
 	exceptionMessage: string;
 	timestamp: string;

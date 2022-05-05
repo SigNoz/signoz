@@ -19,7 +19,7 @@ const ROUTES = {
 	CHANNELS_NEW: '/setting/channels/new',
 	CHANNELS_EDIT: '/setting/channels/edit/:id',
 	ALL_ERROR: '/errors',
-	ERROR_DETAIL: '/errors/:serviceName/:errorType',
+	ERROR_DETAIL: '/error-detail',
 	VERSION: '/status',
 	MY_SETTINGS: '/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
