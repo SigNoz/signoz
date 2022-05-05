@@ -1,9 +1,10 @@
-import { Table, Typography } from 'antd';
+import { notification, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, Link } from 'react-router-dom';
@@ -16,6 +17,8 @@ function AllErrors(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	const { t } = useTranslation(['common']);
+
 	const { isLoading, data } = useQuery(['getAllError', [maxTime, minTime]], {
 		queryFn: () =>
 			getAll({
@@ -23,6 +26,14 @@ function AllErrors(): JSX.Element {
 				start: minTime,
 			}),
 	});
+
+	useEffect(() => {
+		if (data?.error) {
+			notification.error({
+				message: data.error || t('something_went_wrong'),
+			});
+		}
+	}, [data?.error, data?.payload, t]);
 
 	const getDateValue = (value: string): JSX.Element => {
 		return (
