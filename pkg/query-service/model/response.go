@@ -330,7 +330,7 @@ type Error struct {
 type ErrorWithSpan struct {
 	ErrorID             string    `json:"errorId" ch:"errorID"`
 	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
-	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
+	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"excepionStacktrace"`
 	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
 	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
 	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
