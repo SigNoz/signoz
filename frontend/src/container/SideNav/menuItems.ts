@@ -35,7 +35,7 @@ const menus: SidebarMenu[] = [
 	{
 		Icon: BugOutlined,
 		to: ROUTES.ALL_ERROR,
-		name: 'Errors',
+		name: 'Exceptions',
 	},
 	{
 		to: ROUTES.SERVICE_MAP,
