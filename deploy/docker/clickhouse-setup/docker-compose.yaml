@@ -36,7 +36,7 @@ services:
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:develop
+    image: signoz/query-service:0.8.0
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     volumes:
@@ -60,7 +60,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: signoz/frontend:develop
+    image: signoz/frontend:0.8.0
     container_name: frontend
     restart: on-failure
     depends_on:

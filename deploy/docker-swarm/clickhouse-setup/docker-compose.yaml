@@ -24,7 +24,7 @@ services:
       retries: 3
 
   alertmanager:
-    image: signoz/alertmanager:0.6.1
+    image: signoz/alertmanager:0.23.0-0.1
     volumes:
       - ./data/alertmanager:/data
     command:
@@ -37,7 +37,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.7.5
+    image: signoz/query-service:0.8.0
     command: ["-config=/root/config/prometheus.yml"]
     ports:
       - "8080:8080"
@@ -46,7 +46,7 @@ services:
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
     environment:
-      - ClickHouseUrl=tcp://clickhouse:9000
+      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
@@ -64,7 +64,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.7.5
+    image: signoz/frontend:0.8.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -77,7 +77,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:0.43.0-0.1
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -103,7 +103,7 @@ services:
       - clickhouse
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:0.43.0-0.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
