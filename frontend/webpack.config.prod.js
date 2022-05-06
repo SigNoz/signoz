@@ -14,7 +14,7 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
 const Critters = require('critters-webpack-plugin');
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs', filename:'index.[contenthash].html'  }),
 	new CompressionPlugin({
 		exclude: /.map$/,
 	}),

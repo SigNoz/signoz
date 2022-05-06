@@ -13,7 +13,7 @@ dotenv.config();
 console.log(resolve(__dirname, './src/'));
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({ template: 'src/index.html.ejs', filename:'index.[contenthash].html' }),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
