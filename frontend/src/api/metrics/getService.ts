@@ -8,9 +8,11 @@ const getService = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
-			`/services?&start=${props.start}&end=${props.end}`,
-		);
+		const response = await axios.post(`/services`, {
+			start: `${props.start}`,
+			end: `${props.end}`,
+			tags: props.selectedTags,
+		});
 
 		return {
 			statusCode: 200,

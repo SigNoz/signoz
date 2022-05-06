@@ -110,7 +110,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							selectedSpanId={activeSelectedId}
 							onSpanHover={setActiveHoverId}
 							onSpanSelect={setActiveSelectedId}
-							intervalUnit={intervalUnit}
 						/>
 					</Col>
 				</StyledRow>

@@ -120,6 +120,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 						userSelected: preUserSelectedMap,
 						isFilterExclude: preIsFilterExclude,
 						order: spansAggregate.order,
+						orderParam: spansAggregate.orderParam,
+						pageSize: spansAggregate.pageSize,
 					},
 				});
 
@@ -133,6 +135,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 					preIsFilterExclude,
 					preUserSelectedMap,
 					spansAggregate.order,
+					spansAggregate.pageSize,
+					spansAggregate.orderParam,
 				);
 			} else {
 				setIsLoading(false);

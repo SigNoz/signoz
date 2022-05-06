@@ -118,6 +118,8 @@ function Duration(): JSX.Element {
 					userSelected: preUserSelected,
 					isFilterExclude,
 					order: spansAggregate.order,
+					pageSize: spansAggregate.pageSize,
+					orderParam: spansAggregate.orderParam,
 				},
 			});
 
@@ -129,6 +131,8 @@ function Duration(): JSX.Element {
 				isFilterExclude,
 				userSelectedFilter,
 				spansAggregate.order,
+				spansAggregate.pageSize,
+				spansAggregate.orderParam,
 			);
 		}
 	};

@@ -1,4 +1,4 @@
-import { Time } from 'container/Header/DateTimeSelection/config';
+import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { GlobalTime } from 'types/actions/globalTime';
 
 export interface GlobalReducer {

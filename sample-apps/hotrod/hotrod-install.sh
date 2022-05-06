@@ -48,5 +48,5 @@ kubectl apply --namespace="${HOTROD_NAMESPACE}" -f <( \
 if [ $? -ne 0 ]; then
     echo "❌ Failed to deploy HotROD sample application"
 else
-    echo "✅ Succesfully deployed HotROD sample application"
+    echo "✅ Successfully deployed HotROD sample application"
 fi

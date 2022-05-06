@@ -1,40 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title data-react-helmet="true">Open source Observability platform | SigNoz</title>
-    <meta data-react-helmet="true" property="og:title" content="Open source Observability platform | SigNoz">
-    <meta data-react-helmet="true" name="description" content="SigNoz is an opensource observability platform to help you find issues in your deployed applications &amp; solve them quickly.  It provides an integrated UI for metrics and traces with deep filtering and aggregation to pin down specific issues very quickly.  Built on Kafka and Druid, it is designed to handle enterprise scale.">
-    <meta data-react-helmet="true" property="og:description" content="SigNoz is an opensource observability platform to help you find issues in your deployed applications &amp; solve them quickly.  It provides an integrated UI for metrics and traces with deep filtering and aggregation to pin down specific issues very quickly.  Built on Kafka and Druid, it is designed to handle enterprise scale.">
-    <meta data-react-helmet="true" property="og:image" content="https://signoz.io/img/HeroShot-3.jpg">
-    <meta data-react-helmet="true" name="twitter:image" content="https://signoz.io/img/HeroShot-3.jpg">
-    <meta data-react-helmet="true" name="twitter:image:alt" content="Image for Open source Observability platform | SigNoz">
-    <meta data-react-helmet="true" name="twitter:card" content="summary_large_image">
-    <meta data-react-helmet="true" name="docusaurus_locale" content="en">
-    <meta data-react-helmet="true" name="docusaurus_tag" content="default">
-    <link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			http-equiv="Cache-Control"
+			content="no-cache, no-store, must-revalidate, max-age: 0"
+		/>
+		<meta http-equiv="Pragma" content="no-cache" />
+		<meta http-equiv="Expires" content="0" />
 
-    <link id='appMode' rel='stylesheet' type='text/css' href='/css/antd.dark.min.css' />
-</head>
-<body>
-<noscript>You need to enable JavaScript to run this app.</noscript>
-<div id="root"></div>
+		<title data-react-helmet="true">
+			Open source Observability platform | SigNoz
+		</title>
+		<meta
+			data-react-helmet="true"
+			property="og:title"
+			content="Open source Observability platform | SigNoz"
+		/>
+		<meta
+			data-react-helmet="true"
+			name="description"
+			content="SigNoz is an opensource observability platform to help you find issues in your deployed applications &amp; solve them quickly.  It provides an integrated UI for metrics and traces with deep filtering and aggregation to pin down specific issues very quickly.  Built on Kafka and Druid, it is designed to handle enterprise scale."
+		/>
+		<meta
+			data-react-helmet="true"
+			property="og:description"
+			content="SigNoz is an opensource observability platform to help you find issues in your deployed applications &amp; solve them quickly.  It provides an integrated UI for metrics and traces with deep filtering and aggregation to pin down specific issues very quickly.  Built on Kafka and Druid, it is designed to handle enterprise scale."
+		/>
+		<meta
+			data-react-helmet="true"
+			property="og:image"
+			content="https://signoz.io/img/HeroShot-3.jpg"
+		/>
+		<meta
+			data-react-helmet="true"
+			name="twitter:image"
+			content="https://signoz.io/img/HeroShot-3.jpg"
+		/>
+		<meta
+			data-react-helmet="true"
+			name="twitter:image:alt"
+			content="Image for Open source Observability platform | SigNoz"
+		/>
+		<meta
+			data-react-helmet="true"
+			name="twitter:card"
+			content="summary_large_image"
+		/>
+		<meta data-react-helmet="true" name="docusaurus_locale" content="en" />
+		<meta data-react-helmet="true" name="docusaurus_tag" content="default" />
+		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
 
-<script>
-    const themeNode = document.getElementById('appMode');
-    let userTheme;
+		<link
+			id="appMode"
+			rel="stylesheet"
+			type="text/css"
+			href="/css/antd.dark.min.css"
+		/>
+	</head>
+	<body>
+		<noscript>You need to enable JavaScript to run this app.</noscript>
+		<div id="root"></div>
 
-    try {
-		userTheme = localStorage.getItem('theme');
-	} catch (e) {
-		userTheme = '';
-	}
+		<script>
+			const themeNode = document.getElementById('appMode');
+			let userTheme;
 
-    if(userTheme === 'lightMode'){
-        themeNode.setAttribute('href','/css/antd.min.css');
-    } else {
-        themeNode.setAttribute('href', '/css/antd.dark.min.css');
-    }
-</script>
-</body>
+			try {
+				userTheme = localStorage.getItem('theme');
+			} catch (e) {
+				userTheme = '';
+			}
+
+			if (userTheme === 'lightMode') {
+				themeNode.setAttribute('href', '/css/antd.min.css');
+			} else {
+				themeNode.setAttribute('href', '/css/antd.dark.min.css');
+			}
+		</script>
+	</body>
 </html>

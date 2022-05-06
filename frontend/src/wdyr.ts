@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable global-require */
 /// <reference types="@welldone-software/why-did-you-render" />
 // ^ https://github.com/welldone-software/why-did-you-render/issues/161
 import React from 'react';

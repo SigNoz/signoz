@@ -21,6 +21,7 @@ export interface TraceReducer {
 		total: number;
 		pageSize: number;
 		order: string;
+		orderParam: string;
 	};
 	selectedGroupBy: string;
 	selectedFunction: string;
@@ -40,8 +41,8 @@ interface SpansAggregateData {
 	serviceName: string;
 	operation: string;
 	durationNano: number;
-	httpCode: string;
-	httpMethod: string;
+	statusCode: string;
+	method: string;
 }
 
 export interface Tags {
@@ -50,7 +51,12 @@ export interface Tags {
 	Values: string[];
 }
 
-type OperatorValues = 'not in' | 'in';
+export interface TagsAPI {
+	Key: string;
+	Operator: OperatorValues;
+	Values: string[];
+}
+export type OperatorValues = 'not in' | 'in';
 
 export type TraceFilterEnum =
 	| 'component'

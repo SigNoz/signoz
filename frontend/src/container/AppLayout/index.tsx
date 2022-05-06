@@ -1,13 +1,12 @@
 import { notification } from 'antd';
-import getLatestVersion from 'api/user/getLatestVersion';
-import getVersion from 'api/user/getVersion';
-import ROUTES from 'constants/routes';
-import TopNav from 'container/Header';
+import getUserLatestVersion from 'api/user/getLatestVersion';
+import getUserVersion from 'api/user/getVersion';
+import Header from 'container/Header';
 import SideNav from 'container/SideNav';
-import useFetch from 'hooks/useFetch';
-import history from 'lib/history';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import TopNav from 'container/TopNav';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -21,47 +20,49 @@ import {
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
-import { Content, Layout } from './styles';
+import { ChildrenContainer, Layout } from './styles';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { pathname } = useLocation();
 	const { t } = useTranslation();
 
-	const [isSignUpPage, setIsSignUpPage] = useState(ROUTES.SIGN_UP === pathname);
+	const [getUserVersionResponse, getUserLatestVersionResponse] = useQueries([
+		{
+			queryFn: getUserVersion,
+			queryKey: 'getUserVersion',
+			enabled: isLoggedIn,
+		},
+		{
+			queryFn: getUserLatestVersion,
+			queryKey: 'getUserLatestVersion',
+			enabled: isLoggedIn,
+		},
+	]);
 
-	const { payload: versionPayload, loading, error: getVersionError } = useFetch(
-		getVersion,
-	);
+	useEffect(() => {
+		if (getUserLatestVersionResponse.status === 'idle' && isLoggedIn) {
+			getUserLatestVersionResponse.refetch();
+		}
 
-	const {
-		payload: latestVersionPayload,
-		loading: latestLoading,
-		error: latestError,
-	} = useFetch(getLatestVersion);
+		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
+			getUserVersionResponse.refetch();
+		}
+	}, [getUserLatestVersionResponse, getUserVersionResponse, isLoggedIn]);
 
 	const { children } = props;
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	useEffect(() => {
-		if (!isLoggedIn) {
-			setIsSignUpPage(true);
-			history.push(ROUTES.SIGN_UP);
-		} else if (isSignUpPage) {
-			setIsSignUpPage(false);
-		}
-	}, [isLoggedIn, isSignUpPage]);
-
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
 
 	useEffect(() => {
-		if (isLoggedIn && pathname === ROUTES.SIGN_UP) {
-			history.push(ROUTES.APPLICATION);
-		}
-
-		if (!latestLoading && latestError && latestCurrentCounter.current === 0) {
+		if (
+			getUserLatestVersionResponse.isFetched &&
+			getUserLatestVersionResponse.isError &&
+			latestCurrentCounter.current === 0
+		) {
 			latestCurrentCounter.current = 1;
 
 			dispatch({
@@ -75,7 +76,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			});
 		}
 
-		if (!loading && getVersionError && latestVersionCounter.current === 0) {
+		if (
+			getUserVersionResponse.isFetched &&
+			getUserVersionResponse.isError &&
+			latestVersionCounter.current === 0
+		) {
 			latestVersionCounter.current = 1;
 
 			dispatch({
@@ -89,44 +94,62 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			});
 		}
 
-		if (!latestLoading && versionPayload) {
+		if (
+			getUserVersionResponse.isFetched &&
+			getUserLatestVersionResponse.isSuccess &&
+			getUserVersionResponse.data &&
+			getUserVersionResponse.data.payload
+		) {
 			dispatch({
 				type: UPDATE_CURRENT_VERSION,
 				payload: {
-					currentVersion: versionPayload.version,
+					currentVersion: getUserVersionResponse.data.payload.version,
 				},
 			});
 		}
 
-		if (!loading && latestVersionPayload) {
+		if (
+			getUserLatestVersionResponse.isFetched &&
+			getUserLatestVersionResponse.isSuccess &&
+			getUserLatestVersionResponse.data &&
+			getUserLatestVersionResponse.data.payload
+		) {
 			dispatch({
 				type: UPDATE_LATEST_VERSION,
 				payload: {
-					latestVersion: latestVersionPayload.name,
+					latestVersion: getUserLatestVersionResponse.data.payload.name,
 				},
 			});
 		}
 	}, [
 		dispatch,
-		loading,
-		latestLoading,
-		versionPayload,
-		latestVersionPayload,
 		isLoggedIn,
 		pathname,
-		getVersionError,
-		latestError,
 		t,
+		getUserLatestVersionResponse.isLoading,
+		getUserLatestVersionResponse.isError,
+		getUserLatestVersionResponse.data,
+		getUserVersionResponse.isLoading,
+		getUserVersionResponse.isError,
+		getUserVersionResponse.data,
+		getUserLatestVersionResponse.isFetched,
+		getUserVersionResponse.isFetched,
+		getUserLatestVersionResponse.isSuccess,
 	]);
+
+	const isToDisplayLayout = isLoggedIn;
 
 	return (
 		<Layout>
-			{!isSignUpPage && <SideNav />}
+			{isToDisplayLayout && <Header />}
 			<Layout>
-				<Content>
-					{!isSignUpPage && <TopNav />}
-					{children}
-				</Content>
+				{isToDisplayLayout && <SideNav />}
+				<Layout.Content>
+					<ChildrenContainer>
+						{isToDisplayLayout && <TopNav />}
+						{children}
+					</ChildrenContainer>
+				</Layout.Content>
 			</Layout>
 		</Layout>
 	);

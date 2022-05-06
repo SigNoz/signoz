@@ -27,6 +27,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 				start: globalTime.minTime,
 				end: globalTime.maxTime,
 				other: Object.fromEntries(traces.selectedFilter),
+				isFilterExclude: traces.isFilterExclude,
 			});
 
 			if (response.statusCode === 200) {
@@ -62,11 +63,11 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 	const counter = useRef(0);
 
 	useEffect(() => {
-		if (counter.current === 0) {
+		if (counter.current === 0 && selectedKey.length === 0) {
 			counter.current = 1;
 			onSearchHandler();
 		}
-	}, [onSearchHandler]);
+	}, [onSearchHandler, selectedKey.length]);
 
 	return (
 		<AutoComplete

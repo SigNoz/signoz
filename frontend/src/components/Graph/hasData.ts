@@ -6,7 +6,7 @@ export const hasData = (data: ChartData): boolean => {
 	let hasData = false;
 	try {
 		for (const dataset of datasets) {
-			if (dataset.data.length > 0 && dataset.data.some((item) => item !== 0)) {
+			if (dataset.data.length > 0) {
 				hasData = true;
 				break;
 			}

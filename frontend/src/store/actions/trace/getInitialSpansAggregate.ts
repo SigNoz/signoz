@@ -31,7 +31,7 @@ export const GetSpansAggregate = (
 			return;
 		}
 
-		const order = props.order === 'ascending' ? 'ascend' : 'descend';
+		const { order = '' } = props;
 
 		try {
 			// triggering loading
@@ -46,6 +46,7 @@ export const GetSpansAggregate = (
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
 						order,
+						orderParam: spansAggregate.orderParam,
 					},
 				},
 			});
@@ -59,6 +60,7 @@ export const GetSpansAggregate = (
 				selectedTags: props.selectedTags,
 				isFilterExclude: traces.isFilterExclude,
 				order,
+				orderParam: props.orderParam,
 			});
 
 			if (response.statusCode === 200) {
@@ -73,6 +75,7 @@ export const GetSpansAggregate = (
 							total: response.payload.totalSpans,
 							pageSize: props.pageSize,
 							order,
+							orderParam: spansAggregate.orderParam,
 						},
 					},
 				});
@@ -85,6 +88,8 @@ export const GetSpansAggregate = (
 					traces.isFilterExclude,
 					traces.userSelectedFilter,
 					order,
+					traces.spansAggregate.pageSize,
+					spansAggregate.orderParam,
 				);
 			} else {
 				notification.error({
@@ -102,6 +107,7 @@ export const GetSpansAggregate = (
 							total: spansAggregate.total,
 							pageSize: props.pageSize,
 							order,
+							orderParam: spansAggregate.orderParam,
 						},
 					},
 				});
@@ -118,6 +124,7 @@ export const GetSpansAggregate = (
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
 						order,
+						orderParam: spansAggregate.orderParam,
 					},
 				},
 			});
@@ -133,4 +140,5 @@ export interface GetSpansAggregateProps {
 	pageSize: TraceReducer['spansAggregate']['pageSize'];
 	selectedTags: TraceReducer['selectedTags'];
 	order: GetSpanAggregateProps['order'];
+	orderParam: GetSpanAggregateProps['orderParam'];
 }

@@ -22,5 +22,14 @@
 		"plugins": [{ "name": "typescript-plugin-css-modules" }]
 	},
 	"exclude": ["node_modules"],
-	"include": ["./src", "./babel.config.js", "./jest.config.ts"]
+	"include": [
+		"./src",
+		"./babel.config.js",
+		"./jest.config.ts",
+		"./.eslintrc.js",
+		"./__mocks__",
+		"./conf/default.conf",
+		"./public",
+		"./cypress"
+	]
 }

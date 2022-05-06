@@ -32,7 +32,7 @@ import { legend } from './Plugin';
 import { emptyGraph } from './Plugin/EmptyGraph';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
-import { getYAxisFormattedValue } from './yAxisConfig';
+import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
 
 Chart.register(
 	LineElement,
@@ -115,7 +115,7 @@ function Graph({
 									label += ': ';
 								}
 								if (context.parsed.y !== null) {
-									label += getYAxisFormattedValue(context.parsed.y, yAxisUnit);
+									label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
 								}
 								return label;
 							},
@@ -160,10 +160,7 @@ function Graph({
 						ticks: {
 							// Include a dollar sign in the ticks
 							callback(value) {
-								return getYAxisFormattedValue(
-									parseInt(value.toString(), 10),
-									yAxisUnit,
-								);
+								return getYAxisFormattedValue(value.toString(), yAxisUnit);
 							},
 						},
 					},

@@ -116,16 +116,11 @@ function FullView({
 				}));
 			} else {
 				const chartDataSet = getChartData({
-					queryData: {
-						data: response.map((e) => ({
-							query: e.query,
-							legend: e.legend,
-							queryData: e.queryData.payload?.result || [],
-						})),
-						error: false,
-						errorMessage: '',
-						loading: false,
-					},
+					queryData: response.map((e) => ({
+						query: e.query,
+						legend: e.legend,
+						queryData: e.queryData.payload?.result || [],
+					})),
 				});
 
 				setState((state) => ({
