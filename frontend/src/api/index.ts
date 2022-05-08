@@ -89,18 +89,18 @@ const interceptorRejected = async (
 };
 
 const instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
+	baseURL: `${ENVIRONMENT.baseURL}/${ENVIRONMENT.baseConstant}${apiV1}`,
 });
 
 instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 instance.interceptors.request.use(interceptorsRequestResponse);
 
 export const AxiosAlertManagerInstance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${apiAlertManager}`,
+	baseURL: `${ENVIRONMENT.baseURL}/${ENVIRONMENT.baseConstant}${apiAlertManager}`,
 });
 
 export const ApiV2Instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
+	baseURL: `${ENVIRONMENT.baseURL}/${ENVIRONMENT.baseConstant}${apiV2}`,
 });
 
 AxiosAlertManagerInstance.interceptors.response.use(
