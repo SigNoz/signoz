@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check ENV
-        env: DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: echo $DOCKERHUB_USERNAME
       - name: Checkout Codebase
         uses: actions/checkout@v2
@@ -28,4 +29,3 @@ jobs:
         run: node pr-comment.js
         env:
           GITHUB_ACCESS_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-
