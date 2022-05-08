@@ -2,7 +2,7 @@ on:
   pull_request:
 
 env:
-  GITHUB_ACCESS_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+  GITHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_USERNAME }}
   PR_NUMBER: ${{ github.event.number }}
 jobs:
   comment_on_pr:
