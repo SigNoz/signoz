@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check ENV
-        run: echo $GITHUB_ACCESS_TOKEN
+        env: DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: echo $DOCKERHUB_USERNAME
       - name: Checkout Codebase
         uses: actions/checkout@v2
         with:
