@@ -9,6 +9,8 @@ jobs:
     name: PR comment
     runs-on: ubuntu-latest
     steps:
+      - name: Check ENV
+        run: echo $GITHUB_ACCESS_TOKEN
       - name: Checkout Codebase
         uses: actions/checkout@v2
         with:
