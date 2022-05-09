@@ -1,12 +1,13 @@
 import { Collapse, Modal } from 'antd';
+import Editor from 'components/Editor';
 import { StyledButton } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
-import { keys, map } from 'lodash-es';
+import keys from 'lodash-es/keys';
+import map from 'lodash-es/map';
 import React, { useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { CustomSubText, CustomSubTitle, styles } from './styles';
-// import Editor from 'components/Editor';
 
 const { Panel } = Collapse;
 
@@ -70,17 +71,24 @@ function ErrorTag({ event }: ErrorTagProps): JSX.Element {
 					</Collapse>
 				);
 			})}
+
 			<Modal
 				onCancel={(): void => onToggleHandler(false)}
 				title="Log Message"
 				visible={isOpen}
 				destroyOnClose
 				footer={[]}
+				width="70vw"
 			>
 				<CustomSubTitle>{text.text}</CustomSubTitle>
-				<CustomSubText ellipsis={false} isDarkMode={isDarkMode}>
-					{text.subText}
-				</CustomSubText>
+
+				{text.text === 'exception.stacktrace' ? (
+					<Editor onChange={(): void => {}} readOnly value={text.subText} />
+				) : (
+					<CustomSubText ellipsis={false} isDarkMode={isDarkMode}>
+						{text.subText}
+					</CustomSubText>
+				)}
 			</Modal>
 		</>
 	);

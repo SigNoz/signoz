@@ -1,12 +1,13 @@
-import { Table, Typography } from 'antd';
+import { notification, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
-import { generatePath, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Exception } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -16,6 +17,8 @@ function AllErrors(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	const { t } = useTranslation(['common']);
+
 	const { isLoading, data } = useQuery(['getAllError', [maxTime, minTime]], {
 		queryFn: () =>
 			getAll({
@@ -23,6 +26,14 @@ function AllErrors(): JSX.Element {
 				start: minTime,
 			}),
 	});
+
+	useEffect(() => {
+		if (data?.error) {
+			notification.error({
+				message: data.error || t('something_went_wrong'),
+			});
+		}
+	}, [data?.error, data?.payload, t]);
 
 	const getDateValue = (value: string): JSX.Element => {
 		return (
@@ -37,15 +48,13 @@ function AllErrors(): JSX.Element {
 			key: 'exceptionType',
 			render: (value, record): JSX.Element => (
 				<Link
-					to={generatePath(ROUTES.ERROR_DETAIL, {
-						serviceName: record.serviceName,
-						errorType: record.exceptionType,
-					})}
+					to={`${ROUTES.ERROR_DETAIL}?serviceName=${record.serviceName}&errorType=${record.exceptionType}`}
 				>
 					{value}
 				</Link>
 			),
-			sorter: (a, b): number => a.exceptionType.length - b.exceptionType.length,
+			sorter: (a, b): number =>
+				a.exceptionType.charCodeAt(0) - b.exceptionType.charCodeAt(0),
 		},
 		{
 			title: 'Error Message',
@@ -73,7 +82,7 @@ function AllErrors(): JSX.Element {
 			key: 'lastSeen',
 			render: getDateValue,
 			sorter: (a, b): number =>
-				dayjs(a.lastSeen).isBefore(dayjs(b.lastSeen)) === true ? 1 : 0,
+				dayjs(b.lastSeen).isBefore(dayjs(a.lastSeen)) === true ? 1 : 0,
 		},
 		{
 			title: 'First Seen',
@@ -81,13 +90,14 @@ function AllErrors(): JSX.Element {
 			key: 'firstSeen',
 			render: getDateValue,
 			sorter: (a, b): number =>
-				dayjs(a.firstSeen).isBefore(dayjs(b.firstSeen)) === true ? 1 : 0,
+				dayjs(b.firstSeen).isBefore(dayjs(a.firstSeen)) === true ? 1 : 0,
 		},
 		{
 			title: 'Application',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
-			sorter: (a, b): number => a.serviceName.length - b.serviceName.length,
+			sorter: (a, b): number =>
+				a.serviceName.charCodeAt(0) - b.serviceName.charCodeAt(0),
 		},
 	];
 

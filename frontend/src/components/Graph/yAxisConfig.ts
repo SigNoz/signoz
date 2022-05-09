@@ -18,13 +18,20 @@ export const getYAxisFormattedValue = (
 		} else {
 			const decimalDigits = decimalSplitted[1].split('');
 			decimalPrecision = decimalDigits.length;
+			let nonZeroCtr = 0;
 			for (let idx = 0; idx < decimalDigits.length; idx += 1) {
 				if (decimalDigits[idx] !== '0') {
-					decimalPrecision = idx + 1;
+					nonZeroCtr += 1;
+					if (nonZeroCtr >= 2) {
+						decimalPrecision = idx + 1;
+					}
+				} else if (nonZeroCtr) {
+					decimalPrecision = idx;
 					break;
 				}
 			}
 		}
+
 		return formattedValueToString(
 			getValueFormat(format)(
 				parseFloat(value),

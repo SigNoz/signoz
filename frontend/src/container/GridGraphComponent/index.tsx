@@ -60,7 +60,9 @@ function GridGraphComponent({
 				<ValueContainer isDashboardPage={isDashboardPage}>
 					<ValueGraph
 						value={
-							yAxisUnit ? getYAxisFormattedValue(value, yAxisUnit) : value.toString()
+							yAxisUnit
+								? getYAxisFormattedValue(String(value), yAxisUnit)
+								: value.toString()
 						}
 					/>
 				</ValueContainer>

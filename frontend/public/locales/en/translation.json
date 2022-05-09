@@ -12,7 +12,7 @@
 	"routes": {
 		"general": "General",
 		"alert_channels": "Alert Channels",
-		"all_errors": "All Errors"
+		"all_errors": "All Exceptions"
 	},
 	"settings": {
 		"total_retention_period": "Total Retention Period",

@@ -178,6 +178,20 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const isNameVisible = getIsNameVisible();
 
+	useEffect(() => {
+		if (!isPasswordValid(password) && password.length) {
+			setIsPasswordPolicyError(true);
+		} else {
+			setIsPasswordPolicyError(false);
+		}
+
+		if (password !== confirmPassword) {
+			setConfirmPasswordError(true);
+		} else {
+			setConfirmPasswordError(false);
+		}
+	}, [password, confirmPassword]);
+
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
@@ -246,16 +260,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							onChange={(e): void => {
 								const updateValue = e.target.value;
 								setState(updateValue, setConfirmPassword);
-								if (password !== updateValue) {
-									setConfirmPasswordError(true);
-								} else {
-									setConfirmPasswordError(false);
-								}
-								if (!isPasswordValid(updateValue)) {
-									setIsPasswordPolicyError(true);
-								} else {
-									setIsPasswordPolicyError(false);
-								}
 							}}
 							required
 							id="UpdatePassword"

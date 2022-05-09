@@ -3,19 +3,17 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import store from 'store';
-import { LOGGED_IN, UPDATE_USER_IS_FETCH } from 'types/actions/app';
+import {
+	LOGGED_IN,
+	UPDATE_USER,
+	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+	UPDATE_USER_ORG_ROLE,
+} from 'types/actions/app';
 
 export const Logout = (): void => {
-	deleteLocalStorageKey(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
 	deleteLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN);
 	deleteLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN);
-
-	store.dispatch({
-		type: UPDATE_USER_IS_FETCH,
-		payload: {
-			isUserFetching: false,
-		},
-	});
+	deleteLocalStorageKey(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
 
 	store.dispatch({
 		type: LOGGED_IN,
@@ -24,6 +22,34 @@ export const Logout = (): void => {
 		},
 	});
 
-	// navigate to login
+	store.dispatch({
+		type: UPDATE_USER_ORG_ROLE,
+		payload: {
+			org: null,
+			role: null,
+		},
+	});
+
+	store.dispatch({
+		type: UPDATE_USER,
+		payload: {
+			ROLE: 'VIEWER',
+			email: '',
+			name: '',
+			orgId: '',
+			orgName: '',
+			profilePictureURL: '',
+			userId: '',
+		},
+	});
+
+	store.dispatch({
+		type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+		payload: {
+			accessJwt: '',
+			refreshJwt: '',
+		},
+	});
+
 	history.push(ROUTES.LOGIN);
 };

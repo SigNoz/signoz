@@ -18,10 +18,12 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const queryErrorId = params.get('errorId');
+	const serviceName = params.get('serviceName');
+	const errorType = params.get('errorType');
 
 	const errorDetail = idPayload;
 
-	const [stackTraceValue] = useState(errorDetail.excepionStacktrace);
+	const [stackTraceValue] = useState(errorDetail.exceptionStacktrace);
 
 	const columns = useMemo(
 		() => [
@@ -41,7 +43,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	const keyToExclude = useMemo(
 		() => [
-			'excepionStacktrace',
+			'exceptionStacktrace',
 			'exceptionType',
 			'errorId',
 			'timestamp',
@@ -64,9 +66,11 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				return;
 			}
 
-			history.push(`${history.location.pathname}?errorId=${id}`);
-
 			setLoading(false);
+
+			history.push(
+				`${history.location.pathname}?errorId=${id}&serviceName=${serviceName}&errorType=${errorType}`,
+			);
 		} catch (error) {
 			notification.error({
 				message: t('something_went_wrong'),
@@ -101,7 +105,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				</div>
 				<div>
 					<Space align="end" direction="horizontal">
-						{/* <Button icon={<LeftOutlined />} /> */}
 						<Button
 							loading={isLoading}
 							disabled={
