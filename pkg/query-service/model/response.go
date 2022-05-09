@@ -341,8 +341,13 @@ type ErrorWithSpan struct {
 	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }
 
+type GroupLabel struct {
+	LabelKey   string `json:"labelKey"`
+	LabelValue string `json:"labelValue"`
+}
+
 type MetricResult struct {
-	Fingerprint uint64    `json:"fingerprint" ch:"fingerprint"`
-	Timestamp   time.Time `json:"ts" ch:"ts"`
-	Result      float64   `json:"res" ch:"res"`
+	GroupLabels []GroupLabel `json:"groupLabels,omitempty"`
+	Timestamp   time.Time    `json:"ts" ch:"ts"`
+	Result      float64      `json:"res" ch:"res"`
 }

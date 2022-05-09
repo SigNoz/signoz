@@ -482,6 +482,9 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			value = append(value, r.Timestamp.Unix())
 			value = append(value, fmt.Sprintf("%f", r.Result))
 			dr.Value = append(dr.Value, value)
+			for _, labelItem := range r.GroupLabels {
+				dr.Metrc[labelItem.LabelKey] = labelItem.LabelValue
+			}
 		}
 		apiResults = append(apiResults, dr)
 	}

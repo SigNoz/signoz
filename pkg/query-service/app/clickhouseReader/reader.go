@@ -2657,6 +2657,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	var (
 		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
 		vars        = make([]interface{}, len(columnTypes))
 	)
 	for i := range columnTypes {
@@ -2671,10 +2672,13 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		}
 		var result model.MetricResult
 		var groupBy []string
-		for _, v := range vars {
+		var groupLabels []model.GroupLabel
+		for idx, v := range vars {
+			colName := columnNames[idx]
 			switch v := v.(type) {
 			case *string:
 				groupBy = append(groupBy, *v)
+				groupLabels = append(groupLabels, model.GroupLabel{LabelKey: colName, LabelValue: *v})
 			case *time.Time:
 				result.Timestamp = *v
 			case *float64:
@@ -2683,6 +2687,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
+		result.GroupLabels = groupLabels
 		if _, found := resultMap[key]; !found {
 			resultMap[key] = make([]model.MetricResult, 0)
 		}
