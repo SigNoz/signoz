@@ -69,6 +69,13 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, []string, 
 		filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM signoz_metrics.time_series WHERE %s", tagsFilter)
 
 		samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
+		if qp.Start == qp.End {
+			samplesTableTimeFilter = fmt.Sprintf("timestamp_ms <= %d", qp.Start)
+		}
+		intermediateOrderBy := "fingerprint, ts"
+		if qp.Start == qp.End {
+			intermediateOrderBy = "fingerprint, ts DESC LIMIT 1"
+		}
 		intermediateResult := `
 			SELECT fingerprint, %s toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %s) as ts, max(value) as res
 			FROM signoz_metrics.samples
@@ -79,7 +86,7 @@ func (qp *QueryRangeParamsV2) BuildQuery(tableName string) ([]string, []string, 
 			USING fingerprint
 			WHERE %s
 			GROUP BY %s
-			ORDER BY fingerprint, ts`
+			ORDER BY ` + intermediateOrderBy
 		groupByFilter := "fingerprint, ts"
 		for _, tag := range mq.GroupingTags {
 			groupByFilter += fmt.Sprintf(", JSONExtractString(labels,'%s') as %s", tag, tag)
