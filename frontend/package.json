@@ -15,7 +15,7 @@
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
 		"postinstall": "yarn husky:configure",
-		"husky:configure": "cd .. && husky install frontend/.husky"
+		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -109,6 +109,8 @@
 		"@babel/preset-env": "^7.12.17",
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.12.17",
+		"@commitlint/cli": "^16.2.4",
+		"@commitlint/config-conventional": "^16.2.4",
 		"@jest/globals": "^27.5.1",
 		"@testing-library/cypress": "^8.0.0",
 		"@testing-library/react-hooks": "^7.0.2",
