@@ -1,6 +1,7 @@
+import { notification } from 'antd';
 import getAll from 'api/alerts/getAll';
 import Spinner from 'components/Spinner';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 
@@ -13,6 +14,14 @@ function ListAlertRules(): JSX.Element {
 		cacheTime: 0,
 	});
 
+	useEffect(() => {
+		if (status === 'error' || (status === 'success' && data.statusCode !== 200)) {
+			notification.error({
+				message: data?.error || t('something_went_wrong'),
+			});
+		}
+	}, [data?.error, data?.statusCode, status, t]);
+
 	// api failed to load the data
 	if (isError) {
 		return <div>{data?.error || t('something_went_wrong')}</div>;
@@ -20,7 +29,14 @@ function ListAlertRules(): JSX.Element {
 
 	// api is successful but error is present
 	if (status === 'success' && data.statusCode !== 200) {
-		return <div>{data?.error || t('something_went_wrong')}</div>;
+		return (
+			<ListAlert
+				{...{
+					allAlertRules: [],
+					refetch,
+				}}
+			/>
+		);
 	}
 
 	// in case of loading
