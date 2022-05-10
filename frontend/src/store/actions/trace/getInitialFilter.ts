@@ -7,6 +7,7 @@ import AppActions from 'types/actions';
 import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_TRACE_FILTER_LOADING,
+	UPDATE_TRACE_GRAPH_LOADING,
 } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
@@ -183,12 +184,24 @@ export const GetInitialTraceFilter = (
 					filterLoading: false,
 				},
 			});
+			dispatch({
+				type: UPDATE_TRACE_GRAPH_LOADING,
+				payload: {
+					loading: false,
+				},
+			});
 		} catch (error) {
 			console.log(error);
 			dispatch({
 				type: UPDATE_TRACE_FILTER_LOADING,
 				payload: {
 					filterLoading: false,
+				},
+			});
+			dispatch({
+				type: UPDATE_TRACE_GRAPH_LOADING,
+				payload: {
+					loading: false,
 				},
 			});
 		}
