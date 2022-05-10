@@ -16,6 +16,7 @@ module.exports = {
 		'plugin:sonarjs/recommended',
 		'plugin:import/errors',
 		'plugin:import/warnings',
+		'plugin:testing-library/react',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -33,6 +34,7 @@ module.exports = {
 		'react-hooks',
 		'prettier',
 		'jest',
+		'testing-library',
 	],
 	settings: {
 		react: {
@@ -102,6 +104,12 @@ module.exports = {
 			},
 		],
 		'@typescript-eslint/no-unused-vars': 'error',
+
+		// testing library
+		'testing-library/await-async-query': 'error',
+		'testing-library/no-await-sync-query': 'error',
+		'testing-library/no-debugging-utils': 'warn',
+		'testing-library/no-dom-import': 'off',
 
 		// eslint rules need to remove
 		'no-shadow': 'off',
