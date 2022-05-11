@@ -57,6 +57,11 @@ const (
 	Ascending        = "ascending"
 	ContextTimeout   = 60 // seconds
 )
+const (
+	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
+	SIGNOZ_SAMPLES_TABLENAME    = "samples"
+	SIGNOZ_TIMESERIES_TABLENAME = "time_series"
+)
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)

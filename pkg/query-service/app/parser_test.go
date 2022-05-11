@@ -8,6 +8,7 @@ import (
 	"github.com/smartystreets/assertions/should"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"go.signoz.io/query-service/app/metrics"
 )
 
 func TestParseFilterSingleFilter(t *testing.T) {
@@ -20,8 +21,8 @@ func TestParseFilterSingleFilter(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		query, _ := res.BuildMetricsFilterQuery("table")
-		So(query, ShouldEqual, "JSONExtractString(table.labels,'namespace') = 'a'")
+		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, "table")
+		So(query, ShouldEqual, "SELECT fingerprint, labels FROM signoz_metrics.time_series WHERE JSONExtractString(table.labels,'namespace') = 'a'")
 	})
 }
 
@@ -36,7 +37,7 @@ func TestParseFilterMultipleFilter(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		query, _ := res.BuildMetricsFilterQuery("table")
+		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, "table")
 		So(query, should.ContainSubstring, "JSONExtractString(table.labels,'host') IN ['host-1','host-2']")
 		So(query, should.ContainSubstring, "JSONExtractString(table.labels,'namespace') = 'a'")
 	})
@@ -52,7 +53,7 @@ func TestParseFilterNotSupportedOp(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		_, err := res.BuildMetricsFilterQuery("table")
+		_, err := metrics.BuildMetricsTimeSeriesFilterQuery(res, "table")
 		So(err, should.BeError, "unsupported operation")
 	})
 }

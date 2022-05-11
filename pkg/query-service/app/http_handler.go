@@ -14,6 +14,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/app/metrics"
 	"go.signoz.io/query-service/app/parser"
 	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
@@ -439,14 +440,15 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	// build queries
-	queries, formulaQueries, err := metricsQueryRangeParams.BuildQuery("time_series")
-	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+	chQuries := metrics.BuildQueries(metricsQueryRangeParams, "time_series")
+	fmt.Println(chQuries)
+	if chQuries.Err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: chQuries.Err}, nil)
 	}
 
 	var results []*[]model.MetricResult
 	// read the result for individual metric queries and build query for formula
-	for _, query := range queries {
+	for _, query := range chQuries.Queries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -457,7 +459,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	// each formula creates a new series
-	for _, query := range formulaQueries {
+	for _, query := range chQuries.FormulaQueries {
 		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
 		if err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -487,10 +489,6 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			}
 		}
 		apiResults = append(apiResults, dr)
-	}
-
-	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 	}
 
 	type ResponseFormat struct {
