@@ -19,7 +19,7 @@ const (
 	TELEMETRY_EVENT_INPRODUCT_FEEDBACK = "InProduct Feeback Submitted"
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
 	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
-	TELEMETRY_EVENT_USER_PREFERENCES   = "User Preferences"
+	TELEMETRY_EVENT_ORG_SETTINGS       = "Org Settings"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"

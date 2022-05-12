@@ -1,7 +1,4 @@
-import {
-	IIntervalUnit,
-	resolveTimeFromInterval,
-} from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React from 'react';
 import { toFixed } from 'utils/toFixed';
@@ -13,12 +10,12 @@ interface SpanLengthProps {
 	leftOffset: string;
 	bgColor: string;
 	inMsCount: number;
-	intervalUnit: IIntervalUnit;
 }
 
 function SpanLength(props: SpanLengthProps): JSX.Element {
-	const { width, leftOffset, bgColor, intervalUnit, inMsCount } = props;
+	const { width, leftOffset, bgColor, inMsCount } = props;
 	const { isDarkMode } = useThemeMode();
+	const { time, timeUnitName } = convertTimeToRelevantUnit(inMsCount);
 	return (
 		<SpanWrapper>
 			<SpanLine
@@ -34,9 +31,9 @@ function SpanLength(props: SpanLengthProps): JSX.Element {
 				width={width}
 			/>
 			<SpanText isDarkMode={isDarkMode} leftOffset={leftOffset}>{`${toFixed(
-				resolveTimeFromInterval(inMsCount, intervalUnit),
+				time,
 				2,
-			)} ${intervalUnit.name}`}</SpanText>
+			)} ${timeUnitName}`}</SpanText>
 		</SpanWrapper>
 	);
 }

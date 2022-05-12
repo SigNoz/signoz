@@ -5,7 +5,7 @@ import getFilters from 'api/trace/getFilters';
 import dayjs from 'dayjs';
 import durationPlugin from 'dayjs/plugin/duration';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -20,11 +20,13 @@ import { Container, InputContainer, Text } from './styles';
 dayjs.extend(durationPlugin);
 
 const getMs = (value: string): string => {
-	return dayjs
-		.duration({
-			milliseconds: parseInt(value, 10) / 1000000,
-		})
-		.format('SSS');
+	return parseFloat(
+		dayjs
+			.duration({
+				milliseconds: parseInt(value, 10) / 1000000,
+			})
+			.format('SSS'),
+	).toFixed(2);
 };
 
 function Duration(): JSX.Element {
@@ -43,9 +45,10 @@ function Duration(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const getDuration = ():
-		| { maxDuration: string; minDuration: string }
-		| Record<string, string> => {
+	const preLocalMaxDuration = useRef<number>();
+	const preLocalMinDuration = useRef<number>();
+
+	const getDuration = useMemo(() => {
 		const selectedDuration = selectedFilter.get('duration');
 
 		if (selectedDuration) {
@@ -56,17 +59,29 @@ function Duration(): JSX.Element {
 		}
 
 		return filter.get('duration') || {};
-	};
+	}, [selectedFilter, filter]);
 
-	const duration = getDuration();
+	const [preMax, setPreMax] = useState<string>('');
+	const [preMin, setPreMin] = useState<string>('');
 
-	const maxDuration = duration.maxDuration || '0';
-	const minDuration = duration.minDuration || '0';
+	useEffect(() => {
+		const duration = getDuration || {};
 
-	const [localMax, setLocalMax] = useState<string>(maxDuration);
-	const [localMin, setLocalMin] = useState<string>(minDuration);
+		const maxDuration = duration.maxDuration || '0';
+		const minDuration = duration.minDuration || '0';
 
-	const defaultValue = [parseFloat(minDuration), parseFloat(maxDuration)];
+		if (preLocalMaxDuration.current === undefined) {
+			preLocalMaxDuration.current = parseFloat(maxDuration);
+		}
+		if (preLocalMinDuration.current === undefined) {
+			preLocalMinDuration.current = parseFloat(minDuration);
+		}
+
+		setPreMax(maxDuration);
+		setPreMin(minDuration);
+	}, [getDuration]);
+
+	const defaultValue = [parseFloat(preMin), parseFloat(preMax)];
 
 	const updatedUrl = async (min: number, max: number): Promise<void> => {
 		const preSelectedFilter = new Map(selectedFilter);
@@ -74,7 +89,6 @@ function Duration(): JSX.Element {
 
 		preSelectedFilter.set('duration', [String(max), String(min)]);
 
-		console.log('on the update Url');
 		const response = await getFilters({
 			end: String(globalTime.maxTime),
 			getFilters: filterToFetchData,
@@ -87,8 +101,9 @@ function Duration(): JSX.Element {
 			const preFilter = getFilter(response.payload);
 
 			preFilter.forEach((value, key) => {
-				if (key !== 'duration') {
-					preUserSelected.set(key, Object.keys(value));
+				const values = Object.keys(value);
+				if (key !== 'duration' && values.length) {
+					preUserSelected.set(key, values);
 				}
 			});
 
@@ -102,6 +117,9 @@ function Duration(): JSX.Element {
 					selectedTags,
 					userSelected: preUserSelected,
 					isFilterExclude,
+					order: spansAggregate.order,
+					pageSize: spansAggregate.pageSize,
+					orderParam: spansAggregate.orderParam,
 				},
 			});
 
@@ -110,9 +128,11 @@ function Duration(): JSX.Element {
 				filterToFetchData,
 				spansAggregate.currentPage,
 				selectedTags,
-				preFilter,
 				isFilterExclude,
 				userSelectedFilter,
+				spansAggregate.order,
+				spansAggregate.pageSize,
+				spansAggregate.orderParam,
 			);
 		}
 	};
@@ -120,13 +140,12 @@ function Duration(): JSX.Element {
 	const onRangeSliderHandler = (number: [number, number]): void => {
 		const [min, max] = number;
 
-		setLocalMin(min.toString());
-		setLocalMax(max.toString());
+		setPreMin(min.toString());
+		setPreMax(max.toString());
 	};
 
 	const debouncedFunction = useDebouncedFn(
 		(min, max) => {
-			console.log('debounce function');
 			updatedUrl(min as number, max as number);
 		},
 		500,
@@ -137,10 +156,8 @@ function Duration(): JSX.Element {
 		event,
 	) => {
 		const { value } = event.target;
-		const min = parseFloat(localMin);
+		const min = parseFloat(preMin);
 		const max = parseFloat(value) * 1000000;
-
-		console.log('on change in max');
 
 		onRangeSliderHandler([min, max]);
 		debouncedFunction(min, max);
@@ -151,9 +168,8 @@ function Duration(): JSX.Element {
 	) => {
 		const { value } = event.target;
 		const min = parseFloat(value) * 1000000;
-		const max = parseFloat(localMax);
+		const max = parseFloat(preMax);
 		onRangeSliderHandler([min, max]);
-		console.log('on change in min');
 		debouncedFunction(min, max);
 	};
 
@@ -170,7 +186,7 @@ function Duration(): JSX.Element {
 				<Input
 					addonAfter="ms"
 					onChange={onChangeMinHandler}
-					value={getMs(localMin)}
+					value={getMs(preMin)}
 				/>
 
 				<InputContainer>
@@ -179,27 +195,27 @@ function Duration(): JSX.Element {
 				<Input
 					addonAfter="ms"
 					onChange={onChangeMaxHandler}
-					value={getMs(localMax)}
+					value={getMs(preMax)}
 				/>
 			</Container>
 
 			<Container>
 				<Slider
 					defaultValue={[defaultValue[0], defaultValue[1]]}
-					min={parseFloat((filter.get('duration') || {}).minDuration)}
-					max={parseFloat((filter.get('duration') || {}).maxDuration)}
+					min={parseFloat((preLocalMinDuration.current || 0).toString())}
+					max={parseFloat((preLocalMaxDuration.current || 0).toString())}
 					range
 					tipFormatter={(value): JSX.Element => {
 						if (value === undefined) {
 							return <div />;
 						}
-						return <div>{`${getMs(value.toString())}ms`}</div>;
+						return <div>{`${getMs(value?.toString())}ms`}</div>;
 					}}
 					onChange={([min, max]): void => {
 						onRangeSliderHandler([min, max]);
 					}}
 					onAfterChange={onRangeHandler}
-					value={[parseFloat(localMin), parseFloat(localMax)]}
+					value={[parseFloat(preMin), parseFloat(preMax)]}
 				/>
 			</Container>
 		</div>

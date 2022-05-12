@@ -11,5 +11,5 @@ export const Button = styled(ButtonComponent)`
 	}
 `;
 export const TableContainerCard = styled(Card)`
-	overflow-x: scroll;
+	overflow-x: auto;
 `;

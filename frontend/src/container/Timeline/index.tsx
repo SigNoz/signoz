@@ -37,11 +37,10 @@ function Timeline({
 		});
 
 		let intervalUnit = INTERVAL_UNITS[0];
-		for (let idx = 0; idx < INTERVAL_UNITS.length; idx += 1) {
+		for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {
 			const standardInterval = INTERVAL_UNITS[idx];
-			if (baseSpread * standardInterval.multiplier < 1) {
-				const index = idx;
-				if (index > 1) intervalUnit = INTERVAL_UNITS[index - 1];
+			if (baseSpread * standardInterval.multiplier >= 1) {
+				intervalUnit = INTERVAL_UNITS[idx];
 				break;
 			}
 		}

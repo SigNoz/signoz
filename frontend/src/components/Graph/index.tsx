@@ -27,10 +27,12 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { hasData } from './hasData';
 import { legend } from './Plugin';
+import { emptyGraph } from './Plugin/EmptyGraph';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
-import { getYAxisFormattedValue } from './yAxisConfig';
+import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
 
 Chart.register(
 	LineElement,
@@ -113,7 +115,7 @@ function Graph({
 									label += ': ';
 								}
 								if (context.parsed.y !== null) {
-									label += getYAxisFormattedValue(context.parsed.y, yAxisUnit);
+									label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
 								}
 								return label;
 							},
@@ -128,6 +130,7 @@ function Graph({
 						grid: {
 							display: true,
 							color: getGridColor(),
+							drawTicks: true,
 						},
 						adapters: {
 							date: chartjsAdapter,
@@ -157,10 +160,7 @@ function Graph({
 						ticks: {
 							// Include a dollar sign in the ticks
 							callback(value) {
-								return getYAxisFormattedValue(
-									parseInt(value.toString(), 10),
-									yAxisUnit,
-								);
+								return getYAxisFormattedValue(value.toString(), yAxisUnit);
 							},
 						},
 					},
@@ -180,12 +180,18 @@ function Graph({
 					}
 				},
 			};
-
+			const chartHasData = hasData(data);
+			const chartPlugins = [];
+			if (chartHasData) {
+				chartPlugins.push(legend(name, data.datasets.length > 3));
+			} else {
+				chartPlugins.push(emptyGraph);
+			}
 			lineChartRef.current = new Chart(chartRef.current, {
 				type,
 				data,
 				options,
-				plugins: [legend(name, data.datasets.length > 3)],
+				plugins: chartPlugins,
 			});
 		}
 	}, [

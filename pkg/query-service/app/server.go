@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/query-service/app/clickhouseReader"
 	"go.signoz.io/query-service/app/dashboards"
-	"go.signoz.io/query-service/app/druidReader"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
@@ -69,6 +69,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// 	return nil, err
 	// }
 
+	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		return nil, err
+	}
+
 	s := &Server{
 		// logger: logger,
 		// querySvc:           querySvc,
@@ -103,7 +107,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
-		reader = druidReader.NewReader(localDB)
+		// reader = druidReader.NewReader(localDB)
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB)
@@ -113,27 +117,25 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	relationalDB, err := dao.FactoryDao("sqlite")
-	if err != nil {
-		return nil, err
-	}
-
-	apiHandler, err := NewAPIHandler(&reader, relationalDB)
+	apiHandler, err := NewAPIHandler(&reader, dao.DB())
 	if err != nil {
 		return nil, err
 	}
 
 	r := NewRouter()
 
+	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterMetricsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		// AllowCredentials: true,
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	})
 
 	handler := c.Handler(r)
@@ -167,6 +169,16 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
 
+		next.ServeHTTP(w, r)
+	})
+}
+
+func setTimeoutMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+		defer cancel()
+
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
 }

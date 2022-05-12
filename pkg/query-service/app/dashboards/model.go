@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/query-service/model"
@@ -35,7 +36,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating dashboard table: %v", err)
+		return nil, fmt.Errorf("Error in creating dashboard table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
@@ -47,7 +48,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating rules table: %v", err)
+		return nil, fmt.Errorf("Error in creating rules table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
@@ -62,7 +63,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating notification_channles table: %v", err)
+		return nil, fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
 	}
 
 	return db, nil
@@ -102,15 +103,14 @@ func (c *Data) Scan(src interface{}) error {
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError) {
+func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) {
 	dash := &Dashboard{
-		Data: *data,
+		Data: data,
 	}
 	dash.CreatedAt = time.Now()
 	dash.UpdatedAt = time.Now()
 	dash.UpdateSlug()
-	// dash.Uuid = uuid.New().String()
-	dash.Uuid = dash.Data["uuid"].(string)
+	dash.Uuid = uuid.New().String()
 
 	map_data, err := json.Marshal(dash.Data)
 	if err != nil {
@@ -135,7 +135,7 @@ func CreateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError)
 	return dash, nil
 }
 
-func GetDashboards() (*[]Dashboard, *model.ApiError) {
+func GetDashboards() ([]Dashboard, *model.ApiError) {
 
 	dashboards := []Dashboard{}
 	query := fmt.Sprintf("SELECT * FROM dashboards;")
@@ -145,7 +145,7 @@ func GetDashboards() (*[]Dashboard, *model.ApiError) {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	return &dashboards, nil
+	return dashboards, nil
 }
 
 func DeleteDashboard(uuid string) *model.ApiError {
@@ -182,9 +182,7 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 	return &dashboard, nil
 }
 
-func UpdateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError) {
-
-	uuid := (*data)["uuid"].(string)
+func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *model.ApiError) {
 
 	map_data, err := json.Marshal(data)
 	if err != nil {
@@ -198,7 +196,7 @@ func UpdateDashboard(data *map[string]interface{}) (*Dashboard, *model.ApiError)
 	}
 
 	dashboard.UpdatedAt = time.Now()
-	dashboard.Data = *data
+	dashboard.Data = data
 
 	// db.Prepare("Insert into dashboards where")
 	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, data=$2 WHERE uuid=$3 ", dashboard.UpdatedAt, map_data, dashboard.Uuid)
@@ -224,12 +222,7 @@ func (d *Dashboard) UpdateSlug() {
 
 func IsPostDataSane(data *map[string]interface{}) error {
 
-	val, ok := (*data)["uuid"]
-	if !ok || val == nil {
-		return fmt.Errorf("uuid not found in post data")
-	}
-
-	val, ok = (*data)["title"]
+	val, ok := (*data)["title"]
 	if !ok || val == nil {
 		return fmt.Errorf("title not found in post data")
 	}

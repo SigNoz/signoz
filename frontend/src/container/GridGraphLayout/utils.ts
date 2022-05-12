@@ -13,37 +13,39 @@ export const updateDashboard = async ({
 	selectedDashboard,
 }: UpdateDashboardProps): Promise<void> => {
 	const response = await updateDashboardApi({
-		title: data.title,
-		uuid: selectedDashboard.uuid,
-		description: data.description,
-		name: data.name,
-		tags: data.tags,
-		widgets: [
-			...(data.widgets || []),
-			{
-				description: '',
-				id: generateWidgetId,
-				isStacked: false,
-				nullZeroValues: '',
-				opacity: '',
-				panelTypes: graphType,
-				query: [
-					{
-						query: '',
-						legend: '',
+		data: {
+			title: data.title,
+			description: data.description,
+			name: data.name,
+			tags: data.tags,
+			widgets: [
+				...(data.widgets || []),
+				{
+					description: '',
+					id: generateWidgetId,
+					isStacked: false,
+					nullZeroValues: '',
+					opacity: '',
+					panelTypes: graphType,
+					query: [
+						{
+							query: '',
+							legend: '',
+						},
+					],
+					queryData: {
+						data: [],
+						error: false,
+						errorMessage: '',
+						loading: false,
 					},
-				],
-				queryData: {
-					data: [],
-					error: false,
-					errorMessage: '',
-					loading: false,
+					timePreferance: 'GLOBAL_TIME',
+					title: '',
 				},
-				timePreferance: 'GLOBAL_TIME',
-				title: '',
-			},
-		],
-		layout,
+			],
+			layout,
+		},
+		uuid: selectedDashboard.uuid,
 	});
 
 	if (response.statusCode === 200) {

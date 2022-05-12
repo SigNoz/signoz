@@ -2,28 +2,44 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { notification, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
-import getAll from 'api/alerts/getAll';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
+import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
+import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Alerts } from 'types/api/alerts/getAll';
+import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
 import { Button, ButtonContainer } from './styles';
 import Status from './TableComponents/Status';
 
-function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
+function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
+	const { t } = useTranslation('common');
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewAlert, action] = useComponentPermission(
+		['add_new_alert', 'action'],
+		role,
+	);
 
 	useInterval(() => {
 		(async (): Promise<void> => {
-			const { payload, statusCode } = await getAll();
-
-			if (statusCode === 200 && payload !== null) {
-				setData(payload);
+			const { data: refetchData, status } = await refetch();
+			if (status === 'success') {
+				setData(refetchData?.payload || []);
+			}
+			if (status === 'error') {
+				notification.error({
+					message: t('something_went_wrong'),
+				});
 			}
 		})();
 	}, 30000);
@@ -55,7 +71,7 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 			title: 'Alert Name',
 			dataIndex: 'name',
 			key: 'name',
-			sorter: (a, b): number => a.name.length - b.name.length,
+			sorter: (a, b): number => a.name.charCodeAt(0) - b.name.charCodeAt(0),
 		},
 		{
 			title: 'Severity',
@@ -76,14 +92,6 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			sorter: (a, b): number => {
-				const alength = Object.keys(a.labels).filter((e) => e !== 'severity')
-					.length;
-				const blength = Object.keys(b.labels).filter((e) => e !== 'severity')
-					.length;
-
-				return blength - alength;
-			},
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -105,7 +113,10 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 				);
 			},
 		},
-		{
+	];
+
+	if (action) {
+		columns.push({
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
@@ -117,12 +128,11 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 						<Button onClick={(): void => onEditHandler(id.toString())} type="link">
 							Edit
 						</Button>
-						{/* <Button type="link">Pause</Button> */}
 					</>
 				);
 			},
-		},
-	];
+		});
+	}
 
 	return (
 		<>
@@ -136,9 +146,11 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 					}}
 				/>
 
-				<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-					New Alert
-				</Button>
+				{addNewAlert && (
+					<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
+						New Alert
+					</Button>
+				)}
 			</ButtonContainer>
 
 			<Table rowKey="id" columns={columns} dataSource={data} />
@@ -148,6 +160,7 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 
 interface ListAlertProps {
 	allAlertRules: Alerts[];
+	refetch: UseQueryResult<ErrorResponse | SuccessResponse<Alerts[]>>['refetch'];
 }
 
 export default ListAlert;

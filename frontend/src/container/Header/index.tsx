@@ -1,49 +1,165 @@
-import { Col } from 'antd';
+import {
+	CaretDownFilled,
+	CaretUpFilled,
+	LogoutOutlined,
+} from '@ant-design/icons';
+import {
+	Avatar,
+	Divider,
+	Dropdown,
+	Layout,
+	Menu,
+	Space,
+	Typography,
+} from 'antd';
+import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import React from 'react';
-import { matchPath } from 'react-router-dom';
+import setTheme, { AppMode } from 'lib/theme/setTheme';
+import React, { useCallback, useState } from 'react';
+import { connect, useSelector } from 'react-redux';
+import { NavLink } from 'react-router-dom';
+import { bindActionCreators } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { ToggleDarkMode } from 'store/actions';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import AppReducer from 'types/reducer/app';
 
-import ShowBreadcrumbs from './Breadcrumbs';
-import DateTimeSelector from './DateTimeSelection';
-import { Container } from './styles';
+import CurrentOrganization from './CurrentOrganization';
+import SignedInAS from './SignedInAs';
+import {
+	Container,
+	LogoutContainer,
+	MenuContainer,
+	ToggleButton,
+} from './styles';
 
-const routesToSkip = [
-	ROUTES.SETTINGS,
-	ROUTES.LIST_ALL_ALERT,
-	ROUTES.TRACE_DETAIL,
-	ROUTES.ALL_CHANNELS,
-];
+function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
+	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
 
-function TopNav(): JSX.Element | null {
-	if (history.location.pathname === ROUTES.SIGN_UP) {
-		return null;
-	}
+	const onToggleThemeHandler = useCallback(() => {
+		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
+		setTheme(preMode);
 
-	const checkRouteExists = (currentPath: string): boolean => {
-		for (let i = 0; i < routesToSkip.length; i += 1) {
-			if (
-				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
-			) {
-				return true;
-			}
-		}
-		return false;
+		const id: AppMode = preMode;
+		const { head } = document;
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = !isDarkMode ? '/css/antd.dark.min.css' : '/css/antd.min.css';
+		link.media = 'all';
+		link.id = id;
+		head.appendChild(link);
+
+		link.onload = (): void => {
+			toggleDarkMode();
+			const prevNode = document.getElementById('appMode');
+			prevNode?.remove();
+		};
+	}, [toggleDarkMode, isDarkMode]);
+
+	const onArrowClickHandler: VoidFunction = () => {
+		setIsUserDropDownOpen((state) => !state);
 	};
 
-	return (
-		<Container>
-			<Col span={16}>
-				<ShowBreadcrumbs />
-			</Col>
+	const onClickLogoutHandler = (): void => {
+		Logout();
+	};
 
-			{!checkRouteExists(history.location.pathname) && (
-				<Col span={8}>
-					<DateTimeSelector />
-				</Col>
-			)}
-		</Container>
+	const menu = (
+		<MenuContainer>
+			<Menu.ItemGroup>
+				<SignedInAS />
+				<Divider />
+				<CurrentOrganization onToggle={onArrowClickHandler} />
+				<Divider />
+				<LogoutContainer>
+					<LogoutOutlined />
+					<div
+						tabIndex={0}
+						onKeyDown={(e): void => {
+							if (e.key === 'Enter' || e.key === 'Space') {
+								onClickLogoutHandler();
+							}
+						}}
+						role="button"
+						onClick={onClickLogoutHandler}
+					>
+						<Typography.Link>Logout</Typography.Link>
+					</div>
+				</LogoutContainer>
+			</Menu.ItemGroup>
+		</MenuContainer>
+	);
+
+	return (
+		<Layout.Header
+			style={{
+				paddingLeft: '1.125rem',
+				paddingRight: '1.125rem',
+			}}
+		>
+			<Container>
+				<NavLink
+					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+					to={ROUTES.APPLICATION}
+				>
+					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
+					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
+						SigNoz
+					</Typography.Title>
+				</NavLink>
+				<Space align="center">
+					<ToggleButton
+						checked={isDarkMode}
+						onChange={onToggleThemeHandler}
+						defaultChecked={isDarkMode}
+						checkedChildren="🌜"
+						unCheckedChildren="🌞"
+					/>
+
+					<Dropdown
+						onVisibleChange={onArrowClickHandler}
+						trigger={['click']}
+						overlay={menu}
+						visible={isUserDropDownOpen}
+					>
+						<Space>
+							<Avatar shape="circle">{user?.name[0]}</Avatar>
+							{!isUserDropDownOpen ? (
+								<CaretDownFilled
+									style={{
+										color: '#DBDBDB',
+									}}
+								/>
+							) : (
+								<CaretUpFilled
+									style={{
+										color: '#DBDBDB',
+									}}
+								/>
+							)}
+						</Space>
+					</Dropdown>
+				</Space>
+			</Container>
+		</Layout.Header>
 	);
 }
 
-export default TopNav;
+interface DispatchProps {
+	toggleDarkMode: () => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	toggleDarkMode: bindActionCreators(ToggleDarkMode, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(HeaderContainer);

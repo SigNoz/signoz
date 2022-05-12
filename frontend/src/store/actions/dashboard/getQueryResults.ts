@@ -5,6 +5,7 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
+import getStep from 'lib/getStep';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -45,7 +46,7 @@ export const GetQueryResults = (
 							end,
 							query: encodeURIComponent(query.query),
 							start,
-							step: '60',
+							step: `${getStep({ start, end, inputFormat: 'ms' })}`,
 						});
 						return {
 							query: query.query,

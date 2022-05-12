@@ -13,8 +13,9 @@ export const filterSpansByString = (
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
+type TTimeUnitName = 'ms' | 's' | 'm';
 export interface IIntervalUnit {
-	name: 'ms' | 's' | 'm';
+	name: TTimeUnitName;
 	multiplier: number;
 }
 export const INTERVAL_UNITS: IIntervalUnit[] = [
@@ -37,6 +38,28 @@ export const resolveTimeFromInterval = (
 	intervalUnit: IIntervalUnit,
 ): number => {
 	return intervalTime * intervalUnit.multiplier;
+};
+
+export const convertTimeToRelevantUnit = (
+	intervalTime: number,
+): { time: number; timeUnitName: TTimeUnitName } => {
+	let relevantTime = {
+		time: intervalTime,
+		timeUnitName: INTERVAL_UNITS[0].name,
+	};
+
+	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {
+		const intervalUnit = INTERVAL_UNITS[idx];
+		const convertedTimeForInterval = intervalTime * intervalUnit.multiplier;
+		if (convertedTimeForInterval >= 1) {
+			relevantTime = {
+				time: convertedTimeForInterval,
+				timeUnitName: intervalUnit.name,
+			};
+			break;
+		}
+	}
+	return relevantTime;
 };
 
 export const getSortedData = (treeData: ITraceTree): undefined | ITraceTree => {

@@ -83,5 +83,44 @@ export const EditAlertChannelsAlerts = Loadable(
 );
 
 export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/AllAlertChannels'),
+	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+);
+
+export const AllErrors = Loadable(
+	/* webpackChunkName: "All Exceptions" */ () => import('pages/AllErrors'),
+);
+
+export const ErrorDetails = Loadable(
+	() => import(/* webpackChunkName: "Error Details" */ 'pages/ErrorDetails'),
+);
+
+export const StatusPage = Loadable(
+	() => import(/* webpackChunkName: "All Status" */ 'pages/Status'),
+);
+
+export const OrganizationSettings = Loadable(
+	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+);
+
+export const MySettings = Loadable(
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
+);
+
+export const Login = Loadable(
+	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
+);
+
+export const UnAuthorized = Loadable(
+	() => import(/* webpackChunkName: "UnAuthorized" */ 'pages/UnAuthorized'),
+);
+
+export const PasswordReset = Loadable(
+	() => import(/* webpackChunkName: "ResetPassword" */ 'pages/ResetPassword'),
+);
+
+export const SomethingWentWrong = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
+		),
 );

@@ -6,7 +6,7 @@ import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
 const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
-	const response = queryData.data.map(({ query, queryData, legend }) => {
+	const response = queryData.map(({ query, queryData, legend }) => {
 		return queryData.map((e) => {
 			const { values = [], metric } = e || {};
 			const labelNames = getLabelName(
@@ -19,7 +19,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 				const [first = 0, second = ''] = e || [];
 				return {
 					first: new Date(parseInt(convertIntoEpoc(first * 1000), 10)), // converting in ms
-					second: Number(parseFloat(second).toFixed(2)),
+					second: Number(parseFloat(second)),
 				};
 			});
 
@@ -59,7 +59,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 };
 
 interface GetChartDataProps {
-	queryData: Widgets['queryData'];
+	queryData: Widgets['queryData']['data'];
 }
 
 export default getChartData;

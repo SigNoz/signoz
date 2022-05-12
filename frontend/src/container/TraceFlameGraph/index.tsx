@@ -1,14 +1,9 @@
 /* eslint-disable react/no-unstable-nested-components */
 import Color from 'color';
 import { ITraceMetaData } from 'container/GantChart';
-import {
-	IIntervalUnit,
-	resolveTimeFromInterval,
-} from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
-import { toFixed } from 'utils/toFixed';
 
 import {
 	SpanItemContainer,
@@ -98,14 +93,13 @@ function TraceFlameGraph(props: {
 	onSpanSelect: SpanItemProps['onSpanSelect'];
 	hoveredSpanId: string;
 	selectedSpanId: string;
-	intervalUnit: IIntervalUnit;
 }): JSX.Element {
 	const { treeData, traceMetaData, onSpanHover } = props;
 
 	if (!treeData || treeData.id === 'empty' || !traceMetaData) {
 		return <div />;
 	}
-	const { intervalUnit, onSpanSelect, hoveredSpanId, selectedSpanId } = props;
+	const { onSpanSelect, hoveredSpanId, selectedSpanId } = props;
 
 	const { globalStart, spread, levels } = traceMetaData;
 	function RenderSpanRecursive({
@@ -131,10 +125,7 @@ function TraceFlameGraph(props: {
 
 		const leftOffset = ((spanData.startTime - globalStart) * 100) / spread;
 		const width = ((spanData.value / 1e6) * 100) / spread;
-		const toolTipText = `${spanData.name}\n${toFixed(
-			resolveTimeFromInterval(spanData.value / 1e6, intervalUnit),
-			2,
-		)} ${intervalUnit.name}`;
+		const toolTipText = `${spanData.name}`;
 
 		return (
 			<>

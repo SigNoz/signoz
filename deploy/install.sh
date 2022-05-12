@@ -247,7 +247,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
-        if [[ email == "" ]]; then
+        if [[ $email == "" ]]; then
             echo -e "\n📨 Please share your email to receive support with the installation"
             read -rp 'Email: ' email
 

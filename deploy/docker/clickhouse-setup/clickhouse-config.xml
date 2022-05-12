@@ -1,11 +1,8 @@
 <?xml version="1.0"?>
 <yandex>
     <logger>
-        <level>trace</level>
-        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
-        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
-        <size>1000M</size>
-        <count>10</count>
+        <level>information</level>
+        <console>1</console>
     </logger>
 
     <http_port>8123</http_port>
@@ -46,30 +43,31 @@
 </openSSL>
 
 <!-- Example config for tiered storage -->
-<!-- <storage_configuration> -->
-<!-- 	<disks> -->
-<!-- 		<default> -->
-<!-- 		</default> -->
-<!--  	    <s3> -->
-<!--  	      <type>s3</type> -->
-<!-- 		  <endpoint>http://172.17.0.1:9100/test/random/</endpoint> -->
-<!--  	      <access_key_id>ash</access_key_id> -->
-<!--  	      <secret_access_key>password</secret_access_key> -->
-<!--  	    </s3> -->
-<!-- 	</disks> -->
-<!-- 	<policies> -->
-<!-- 		<tiered> -->
-<!--     	<volumes> -->
-<!--     	  <default> -->
-<!--     	    <disk>default</disk> -->
-<!--     	  </default> -->
-<!--     	  <s3> -->
-<!--     	    <disk>s3</disk> -->
-<!--     	  </s3> -->
-<!--     	</volumes> -->
-<!--         </tiered> -->
-<!-- 	</policies> -->
-<!-- </storage_configuration> -->
+<!-- <storage_configuration>
+    <disks>
+        <default>
+            <keep_free_space_bytes>10485760</keep_free_space_bytes>
+        </default>
+        <s3>
+            <type>s3</type>
+            <endpoint>https://BUCKET-NAME.s3.amazonaws.com/data/</endpoint>
+            <access_key_id>ACCESS-KEY-ID</access_key_id>
+            <secret_access_key>SECRET-ACCESS-KEY</secret_access_key>
+        </s3>
+   </disks>
+   <policies>
+       <tiered>
+           <volumes>
+                <default>
+                    <disk>default</disk>
+                </default>
+                <s3>
+                    <disk>s3</disk>
+                </s3>
+            </volumes>
+        </tiered>
+    </policies>
+</storage_configuration> -->
 
 
 <!-- Default root page on http[s] server. For example load UI from https://tabix.io/ when opening http://localhost:8123 -->

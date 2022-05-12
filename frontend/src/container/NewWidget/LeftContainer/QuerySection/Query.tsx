@@ -114,7 +114,7 @@ function Query({
 					<TextToolTip
 						{...{
 							text: `More details on how to plot metrics graphs`,
-							url: 'https://signoz.io/docs/userguide/prometheus-metrics/',
+							url: 'https://signoz.io/docs/userguide/send-metrics/#related-videos',
 						}}
 					/>
 				</ButtonContainer>
