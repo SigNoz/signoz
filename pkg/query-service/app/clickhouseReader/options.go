@@ -1,9 +1,11 @@
 package clickhouseReader
 
 import (
+	"context"
+	"net/url"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/ClickHouse/clickhouse-go/v2"
 )
 
 type Encoding string
@@ -16,13 +18,16 @@ const (
 )
 
 const (
-	defaultDatasource        string        = "tcp://localhost:9000"
-	defaultOperationsTable   string        = "signoz_operations"
-	defaultIndexTable        string        = "signoz_index"
-	defaultErrorTable        string        = "signoz_error_index"
-	defaultWriteBatchDelay   time.Duration = 5 * time.Second
-	defaultWriteBatchSize    int           = 10000
-	defaultEncoding          Encoding      = EncodingJSON
+	defaultDatasource      string        = "tcp://localhost:9000"
+	defaultTraceDB         string        = "signoz_traces"
+	defaultOperationsTable string        = "signoz_operations"
+	defaultIndexTable      string        = "signoz_index_v2"
+	defaultErrorTable      string        = "signoz_error_index"
+	defaulDurationTable    string        = "durationSortMV"
+	defaultSpansTable      string        = "signoz_spans"
+	defaultWriteBatchDelay time.Duration = 5 * time.Second
+	defaultWriteBatchSize  int           = 10000
+	defaultEncoding        Encoding      = EncodingJSON
 )
 
 const (
@@ -41,8 +46,10 @@ type namespaceConfig struct {
 	namespace       string
 	Enabled         bool
 	Datasource      string
+	TraceDB         string
 	OperationsTable string
 	IndexTable      string
+	DurationTable   string
 	SpansTable      string
 	ErrorTable      string
 	WriteBatchDelay time.Duration
@@ -52,15 +59,27 @@ type namespaceConfig struct {
 }
 
 // Connecto defines how to connect to the database
-type Connector func(cfg *namespaceConfig) (*sqlx.DB, error)
+type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
-func defaultConnector(cfg *namespaceConfig) (*sqlx.DB, error) {
-	db, err := sqlx.Open("clickhouse", cfg.Datasource)
+func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
+	ctx := context.Background()
+	dsnURL, err := url.Parse(cfg.Datasource)
+	options := &clickhouse.Options{
+		Addr: []string{dsnURL.Host},
+	}
+	if dsnURL.Query().Get("username") != "" {
+		auth := clickhouse.Auth{
+			Username: dsnURL.Query().Get("username"),
+			Password: dsnURL.Query().Get("password"),
+		}
+		options.Auth = auth
+	}
+	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := db.Ping(); err != nil {
+	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 
@@ -86,9 +105,12 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			namespace:       primaryNamespace,
 			Enabled:         true,
 			Datasource:      datasource,
+			TraceDB:         defaultTraceDB,
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			ErrorTable:      defaultErrorTable,
+			DurationTable:   defaulDurationTable,
+			SpansTable:      defaultSpansTable,
 			WriteBatchDelay: defaultWriteBatchDelay,
 			WriteBatchSize:  defaultWriteBatchSize,
 			Encoding:        defaultEncoding,
@@ -102,6 +124,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			options.others[namespace] = &namespaceConfig{
 				namespace:       namespace,
 				Datasource:      datasource,
+				TraceDB:         "",
 				OperationsTable: "",
 				IndexTable:      "",
 				ErrorTable:      "",

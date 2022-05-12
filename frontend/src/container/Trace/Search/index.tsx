@@ -1,12 +1,11 @@
 import { CaretRightFilled } from '@ant-design/icons';
-import { Space } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';
-import { UpdateTagVisiblity } from 'store/actions/trace/updateTagPanelVisiblity';
+import { UpdateTagVisibility } from 'store/actions/trace/updateTagPanelVisiblity';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -18,7 +17,7 @@ import { Container, SearchComponent } from './styles';
 import { parseQueryToTags, parseTagsToQuery } from './util';
 
 function Search({
-	updateTagVisiblity,
+	updateTagVisibility,
 	updateTagIsError,
 }: SearchProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
@@ -66,7 +65,7 @@ function Search({
 			!(e.ariaSelected === 'true') &&
 			traces.isTagModalOpen
 		) {
-			updateTagVisiblity(false);
+			updateTagVisibility(false);
 		}
 	});
 
@@ -75,7 +74,7 @@ function Search({
 	};
 
 	const setIsTagsModalHandler = (value: boolean): void => {
-		updateTagVisiblity(value);
+		updateTagVisibility(value);
 	};
 
 	const onFocusHandler: React.FocusEventHandler<HTMLInputElement> = (e) => {
@@ -96,6 +95,9 @@ function Search({
 				selectedFilter: traces.selectedFilter,
 				userSelected: traces.userSelectedFilter,
 				isFilterExclude: traces.isFilterExclude,
+				order: traces.spansAggregate.order,
+				pageSize: traces.spansAggregate.pageSize,
+				orderParam: traces.spansAggregate.orderParam,
 			},
 		});
 
@@ -104,60 +106,60 @@ function Search({
 			traces.filterToFetchData,
 			traces.spansAggregate.currentPage,
 			selectedTags,
-			traces.filter,
 			traces.isFilterExclude,
 			traces.userSelectedFilter,
+			traces.spansAggregate.order,
+			traces.spansAggregate.pageSize,
+			traces.spansAggregate.orderParam,
 		);
 	};
 
 	return (
-		<Space direction="vertical" style={{ width: '100%' }}>
-			<Container ref={tagRef}>
-				<SearchComponent
-					onChange={(event): void => onChangeHandler(event.target.value)}
-					value={value}
-					allowClear
-					disabled={traces.filterLoading}
-					onFocus={onFocusHandler}
-					placeholder="Click to filter by tags"
-					type="search"
-					enterButton={<CaretRightFilled />}
-					onSearch={(string): void => {
-						if (string.length === 0) {
-							updateTagVisiblity(false);
-							updateFilters([]);
-							return;
-						}
+		<Container ref={tagRef}>
+			<SearchComponent
+				onChange={(event): void => onChangeHandler(event.target.value)}
+				value={value}
+				allowClear
+				disabled={traces.filterLoading}
+				onFocus={onFocusHandler}
+				placeholder="Click to filter by tags"
+				type="search"
+				enterButton={<CaretRightFilled />}
+				onSearch={(string): void => {
+					if (string.length === 0) {
+						updateTagVisibility(false);
+						updateFilters([]);
+						return;
+					}
 
-						const { isError, payload } = parseQueryToTags(string);
+					const { isError, payload } = parseQueryToTags(string);
 
-						if (isError) {
-							updateTagIsError(true);
-						} else {
-							updateTagIsError(false);
-							updateTagVisiblity(false);
-							updateFilters(payload);
-						}
-					}}
-				/>
+					if (isError) {
+						updateTagIsError(true);
+					} else {
+						updateTagIsError(false);
+						updateTagVisibility(false);
+						updateFilters(payload);
+					}
+				}}
+			/>
 
-				{traces.isTagModalOpen && (
-					<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
-				)}
-			</Container>
-		</Space>
+			{traces.isTagModalOpen && (
+				<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
+			)}
+		</Container>
 	);
 }
 
 interface DispatchProps {
-	updateTagVisiblity: (value: boolean) => void;
+	updateTagVisibility: (value: boolean) => void;
 	updateTagIsError: (value: boolean) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	updateTagVisiblity: bindActionCreators(UpdateTagVisiblity, dispatch),
+	updateTagVisibility: bindActionCreators(UpdateTagVisibility, dispatch),
 	updateTagIsError: bindActionCreators(UpdateTagIsError, dispatch),
 });
 

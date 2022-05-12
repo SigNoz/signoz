@@ -7,6 +7,7 @@ import { ActionTypes } from './types';
 export interface ServiceMapStore {
 	items: ServicesMapItem[];
 	services: ServicesItem[];
+	loading: boolean;
 }
 
 export interface ServicesItem {
@@ -37,38 +38,43 @@ export interface ServicesAction {
 	payload: ServicesItem[];
 }
 
-export const getServiceMapItems = (globalTime: GlobalTime) => {
-	return async (dispatch: Dispatch): Promise<void> => {
-		dispatch<ServiceMapItemAction>({
-			type: ActionTypes.getServiceMapItems,
-			payload: [],
-		});
-
-		const requestString = `/serviceMapDependencies?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
-
-		const response = await api.get<ServicesMapItem[]>(requestString);
-
-		dispatch<ServiceMapItemAction>({
-			type: ActionTypes.getServiceMapItems,
-			payload: response.data,
-		});
+export interface ServiceMapLoading {
+	type: ActionTypes.serviceMapLoading;
+	payload: {
+		loading: ServiceMapStore['loading'];
 	};
-};
+}
 
 export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 	return async (dispatch: Dispatch): Promise<void> => {
-		dispatch<ServicesAction>({
-			type: ActionTypes.getServices,
-			payload: [],
-		});
+		const start = `${globalTime.minTime}`;
+		const end = `${globalTime.maxTime}`;
 
-		const requestString = `/services?start=${globalTime.minTime}&end=${globalTime.maxTime}`;
-
-		const response = await api.get<ServicesItem[]>(requestString);
+		const serviceMapPayload = {
+			start,
+			end,
+			tags: [],
+		};
+		const [serviceMapDependenciesResponse, response] = await Promise.all([
+			api.post<ServicesMapItem[]>(`/serviceMapDependencies`, serviceMapPayload),
+			api.post<ServicesItem[]>(`/services`, serviceMapPayload),
+		]);
 
 		dispatch<ServicesAction>({
 			type: ActionTypes.getServices,
 			payload: response.data,
+		});
+
+		dispatch<ServiceMapItemAction>({
+			type: ActionTypes.getServiceMapItems,
+			payload: serviceMapDependenciesResponse.data,
+		});
+
+		dispatch<ServiceMapLoading>({
+			type: ActionTypes.serviceMapLoading,
+			payload: {
+				loading: false,
+			},
 		});
 	};
 };

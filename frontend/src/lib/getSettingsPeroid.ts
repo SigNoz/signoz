@@ -1,4 +1,4 @@
-import { SettingPeroid } from 'container/GeneralSettings';
+import { SettingPeriod } from 'container/GeneralSettings';
 
 const getSettingsPeroid = (hr: number): PayloadProps => {
 	if (hr <= 0) {
@@ -30,7 +30,7 @@ const getSettingsPeroid = (hr: number): PayloadProps => {
 
 interface PayloadProps {
 	value: number;
-	peroid: SettingPeroid;
+	peroid: SettingPeriod;
 }
 
 export default getSettingsPeroid;

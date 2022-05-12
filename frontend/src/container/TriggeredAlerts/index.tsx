@@ -1,9 +1,8 @@
-import getGroupApi from 'api/alerts/getGroup';
+import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
-import { PayloadProps } from 'types/api/alerts/getGroups';
+import { PayloadProps } from 'types/api/alerts/getTriggered';
 
 import TriggerComponent from './TriggeredAlert';
 
@@ -23,7 +22,7 @@ function TriggeredAlerts(): JSX.Element {
 				loading: true,
 			}));
 
-			const response = await getGroupApi({
+			const response = await getTriggeredApi({
 				active: true,
 				inhibited: true,
 				silenced: false,
@@ -65,13 +64,16 @@ function TriggeredAlerts(): JSX.Element {
 		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
 
-	const initialAlerts: Alerts[] = [];
+	// commented the reduce() call as we no longer use /alerts/groups
+	// API from alert manager, which returns a group for each receiver
 
-	const allAlerts: Alerts[] = groupState.payload.reduce((acc, curr) => {
-		return [...acc, ...curr.alerts];
-	}, initialAlerts);
+	// const initialAlerts: Alerts[] = [];
 
-	return <TriggerComponent allAlerts={allAlerts} />;
+	// const allAlerts: Alerts[] = groupState.payload.reduce((acc, curr) => {
+	//	return [...acc, ...curr.alerts];
+	// }, initialAlerts);
+
+	return <TriggerComponent allAlerts={groupState.payload} />;
 }
 
 export default TriggeredAlerts;

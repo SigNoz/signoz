@@ -5,48 +5,58 @@ services:
     image: yandex/clickhouse-server:21.12.3.32
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+    restart: on-failure
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
       interval: 30s
       timeout: 5s
       retries: 3
+    ports:
+        - "9000:9000"
+        - "8123:8123"
 
   alertmanager:
-    image: signoz/alertmanager:0.5.0
-    volumes:
-      - ./alertmanager.yml:/prometheus/alertmanager.yml
+    image: signoz/alertmanager:0.23.0-0.1
+    depends_on:
+      - query-service
+    restart: on-failure
     command:
-      - '--config.file=/prometheus/alertmanager.yml'
-      - '--storage.path=/data'
+      - --queryService.url=http://query-service:8080
+      - --storage.path=/data
 
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
-
   query-service:
     image: signoz/query-service:latest
+    container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
+      - ./data:/var/lib/signoz
+    ports:
+      - "8180:8080"
     environment:
-      - ClickHouseUrl=tcp://clickhouse:9000
+      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     depends_on:
       clickhouse:
         condition: service_healthy
-    ports:
-        - "8180:8080"
-    volumes:
-      - type: bind
-        source: ./data
-        target: /var/lib/signoz
-        read_only: false
 
   otel-collector:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:0.43.0-0.1
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -59,7 +69,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:0.43.0-0.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

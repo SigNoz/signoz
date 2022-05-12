@@ -1,15 +1,14 @@
 package model
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ApiError struct {
@@ -28,7 +27,14 @@ const (
 	ErrorUnavailable    ErrorType = "unavailable"
 	ErrorNotFound       ErrorType = "not_found"
 	ErrorNotImplemented ErrorType = "not_implemented"
+	ErrorUnauthorized   ErrorType = "unauthorized"
+	ErrorForbidden      ErrorType = "forbidden"
 )
+
+type QueryDataV2 struct {
+	ResultType promql.ValueType `json:"resultType"`
+	Result     promql.Value     `json:"result"`
+}
 
 type QueryData struct {
 	ResultType promql.ValueType  `json:"resultType"`
@@ -68,39 +74,31 @@ type AlertingRuleResponse struct {
 }
 
 type ServiceItem struct {
-	ServiceName  string  `json:"serviceName" db:"serviceName"`
-	Percentile99 float32 `json:"p99" db:"p99"`
-	AvgDuration  float32 `json:"avgDuration" db:"avgDuration"`
-	NumCalls     int     `json:"numCalls" db:"numCalls"`
-	CallRate     float32 `json:"callRate" db:"callRate"`
-	NumErrors    int     `json:"numErrors" db:"numErrors"`
-	ErrorRate    float32 `json:"errorRate" db:"errorRate"`
-	Num4XX       int     `json:"num4XX" db:"num4xx"`
-	FourXXRate   float32 `json:"fourXXRate" db:"fourXXRate"`
+	ServiceName  string  `json:"serviceName" ch:"serviceName"`
+	Percentile99 float64 `json:"p99" ch:"p99"`
+	AvgDuration  float64 `json:"avgDuration" ch:"avgDuration"`
+	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
+	CallRate     float64 `json:"callRate" ch:"callRate"`
+	NumErrors    uint64  `json:"numErrors" ch:"numErrors"`
+	ErrorRate    float64 `json:"errorRate" ch:"errorRate"`
+	Num4XX       uint64  `json:"num4XX" ch:"num4xx"`
+	FourXXRate   float64 `json:"fourXXRate" ch:"fourXXRate"`
 }
-
-type ServiceListErrorItem struct {
-	ServiceName string `json:"serviceName"`
-	NumErrors   int    `json:"numErrors"`
-	Num4xx      int    `json:"num4xx"`
-}
-
 type ServiceErrorItem struct {
-	Time      string `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp int64  `json:"timestamp" db:"timestamp"`
-	NumErrors int    `json:"numErrors" db:"numErrors"`
+	Time      time.Time `json:"time" ch:"time"`
+	Timestamp int64     `json:"timestamp" ch:"timestamp"`
+	NumErrors uint64    `json:"numErrors" ch:"numErrors"`
 }
-
 type ServiceOverviewItem struct {
-	Time         string  `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp    int64   `json:"timestamp" db:"timestamp"`
-	Percentile50 float32 `json:"p50" db:"p50"`
-	Percentile95 float32 `json:"p95" db:"p95"`
-	Percentile99 float32 `json:"p99" db:"p99"`
-	NumCalls     int     `json:"numCalls" db:"numCalls"`
-	CallRate     float32 `json:"callRate" db:"callRate"`
-	NumErrors    int     `json:"numErrors" db:"numErrors"`
-	ErrorRate    float32 `json:"errorRate" db:"errorRate"`
+	Time         time.Time `json:"time" ch:"time"`
+	Timestamp    int64     `json:"timestamp" ch:"timestamp"`
+	Percentile50 float64   `json:"p50" ch:"p50"`
+	Percentile95 float64   `json:"p95" ch:"p95"`
+	Percentile99 float64   `json:"p99" ch:"p99"`
+	NumCalls     uint64    `json:"numCalls" ch:"numCalls"`
+	CallRate     float64   `json:"callRate" ch:"callRate"`
+	NumErrors    uint64    `json:"numErrors" ch:"numErrors"`
+	ErrorRate    float64   `json:"errorRate" ch:"errorRate"`
 }
 
 type SearchSpansResult struct {
@@ -109,56 +107,50 @@ type SearchSpansResult struct {
 }
 
 type GetFilterSpansResponseItem struct {
-	Timestamp    string `db:"timestamp" json:"timestamp"`
-	SpanID       string `db:"spanID" json:"spanID"`
-	TraceID      string `db:"traceID" json:"traceID"`
-	ServiceName  string `db:"serviceName" json:"serviceName"`
-	Operation    string `db:"name" json:"operation"`
-	DurationNano int64  `db:"durationNano" json:"durationNano"`
-	HttpCode     string `db:"httpCode" json:"httpCode"`
-	HttpMethod   string `db:"httpMethod" json:"httpMethod"`
+	Timestamp    time.Time `ch:"timestamp" json:"timestamp"`
+	SpanID       string    `ch:"spanID" json:"spanID"`
+	TraceID      string    `ch:"traceID" json:"traceID"`
+	ServiceName  string    `ch:"serviceName" json:"serviceName"`
+	Operation    string    `ch:"name" json:"operation"`
+	DurationNano uint64    `ch:"durationNano" json:"durationNano"`
+	HttpCode     string    `ch:"httpCode"`
+	HttpMethod   string    `ch:"httpMethod"`
+	GRPCode      string    `ch:"gRPCCode"`
+	GRPMethod    string    `ch:"gRPCMethod"`
+	StatusCode   string    `json:"statusCode"`
+	Method       string    `json:"method"`
 }
 
 type GetFilterSpansResponse struct {
 	Spans      []GetFilterSpansResponseItem `json:"spans"`
-	TotalSpans int                          `json:"totalSpans"`
+	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type TraceResult struct {
-	Data   []interface{} `json:"data" db:"data"`
-	Total  int           `json:"total" db:"total"`
-	Limit  int           `json:"limit" db:"limit"`
-	Offset int           `json:"offset" db:"offset"`
+type SearchSpanDBReponseItem struct {
+	Timestamp time.Time `ch:"timestamp"`
+	TraceID   string    `ch:"traceID"`
+	Model     string    `ch:"model"`
 }
-type TraceResultItem struct {
-	TraceID string
-	Spans   []TraceResultSpan
-}
-type TraceResultSpan struct {
-	Timestamp    string   `db:"timestamp"`
-	SpanID       string   `db:"spanID"`
-	TraceID      string   `db:"traceID"`
-	ServiceName  string   `db:"serviceName"`
-	Name         string   `db:"name"`
-	Kind         int32    `db:"kind"`
-	DurationNano int64    `db:"durationNano"`
-	TagsKeys     []string `db:"tagsKeys"`
-	TagsValues   []string `db:"tagsValues"`
+
+type Event struct {
+	Name         string                 `json:"name,omitempty"`
+	TimeUnixNano uint64                 `json:"timeUnixNano,omitempty"`
+	AttributeMap map[string]interface{} `json:"attributeMap,omitempty"`
+	IsError      bool                   `json:"isError,omitempty"`
 }
 
 type SearchSpanReponseItem struct {
-	Timestamp    string   `db:"timestamp"`
-	SpanID       string   `db:"spanID"`
-	TraceID      string   `db:"traceID"`
-	ServiceName  string   `db:"serviceName"`
-	Name         string   `db:"name"`
-	Kind         int32    `db:"kind"`
-	References   string   `db:"references,omitempty"`
-	DurationNano int64    `db:"durationNano"`
-	TagsKeys     []string `db:"tagsKeys"`
-	TagsValues   []string `db:"tagsValues"`
-	Events       []string `db:"events"`
-	HasError     int32    `db:"hasError"`
+	TimeUnixNano uint64            `json:"timestamp"`
+	SpanID       string            `json:"spanID"`
+	TraceID      string            `json:"traceID"`
+	ServiceName  string            `json:"serviceName"`
+	Name         string            `json:"name"`
+	Kind         int32             `json:"kind"`
+	References   []OtelSpanRef     `json:"references,omitempty"`
+	DurationNano int64             `json:"durationNano"`
+	TagMap       map[string]string `json:"tagMap"`
+	Events       []string          `json:"event"`
+	HasError     bool              `json:"hasError"`
 }
 
 type OtelSpanRef struct {
@@ -176,82 +168,61 @@ func (ref *OtelSpanRef) toString() string {
 
 func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
-	timeObj, _ := time.Parse(time.RFC3339Nano, item.Timestamp)
 	references := []OtelSpanRef{}
-	json.Unmarshal([]byte(item.References), &references)
+	jsonbody, _ := json.Marshal(item.References)
+	json.Unmarshal(jsonbody, &references)
 
 	referencesStringArray := []string{}
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
 
-	returnArray := []interface{}{int64(timeObj.UnixNano() / 1000000), item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), item.TagsKeys, item.TagsValues, referencesStringArray, item.Events, item.HasError}
+	if item.Events == nil {
+		item.Events = []string{}
+	}
+	keys := make([]string, 0, len(item.TagMap))
+	values := make([]string, 0, len(item.TagMap))
+
+	for k, v := range item.TagMap {
+		keys = append(keys, k)
+		values = append(values, v)
+	}
+	returnArray := []interface{}{item.TimeUnixNano, item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), keys, values, referencesStringArray, item.Events, item.HasError}
 
 	return returnArray
 }
 
-type ServiceExternalItem struct {
-	Time            string  `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp       int64   `json:"timestamp,omitempty" db:"timestamp,omitempty"`
-	ExternalHttpUrl string  `json:"externalHttpUrl,omitempty" db:"externalHttpUrl,omitempty"`
-	AvgDuration     float32 `json:"avgDuration,omitempty" db:"avgDuration,omitempty"`
-	NumCalls        int     `json:"numCalls,omitempty" db:"numCalls,omitempty"`
-	CallRate        float32 `json:"callRate,omitempty" db:"callRate,omitempty"`
-	NumErrors       int     `json:"numErrors" db:"numErrors"`
-	ErrorRate       float32 `json:"errorRate" db:"errorRate"`
-}
-
-type ServiceDBOverviewItem struct {
-	Time        string  `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp   int64   `json:"timestamp,omitempty" db:"timestamp,omitempty"`
-	DBSystem    string  `json:"dbSystem,omitempty" db:"dbSystem,omitempty"`
-	AvgDuration float32 `json:"avgDuration,omitempty" db:"avgDuration,omitempty"`
-	NumCalls    int     `json:"numCalls,omitempty" db:"numCalls,omitempty"`
-	CallRate    float32 `json:"callRate,omitempty" db:"callRate,omitempty"`
-}
-
 type ServiceMapDependencyItem struct {
-	SpanId       string `json:"spanId,omitempty" db:"spanID,omitempty"`
-	ParentSpanId string `json:"parentSpanId,omitempty" db:"parentSpanID,omitempty"`
-	ServiceName  string `json:"serviceName,omitempty" db:"serviceName,omitempty"`
+	SpanId       string `json:"spanId,omitempty" ch:"spanID"`
+	ParentSpanId string `json:"parentSpanId,omitempty" ch:"parentSpanID"`
+	ServiceName  string `json:"serviceName,omitempty" ch:"serviceName"`
 }
 
 type UsageItem struct {
-	Time      string `json:"time,omitempty" db:"time,omitempty"`
-	Timestamp int64  `json:"timestamp" db:"timestamp"`
-	Count     int64  `json:"count" db:"count"`
+	Time      time.Time `json:"time,omitempty" ch:"time"`
+	Timestamp uint64    `json:"timestamp" ch:"timestamp"`
+	Count     uint64    `json:"count" ch:"count"`
 }
 
 type TopEndpointsItem struct {
-	Percentile50 float32 `json:"p50" db:"p50"`
-	Percentile95 float32 `json:"p95" db:"p95"`
-	Percentile99 float32 `json:"p99" db:"p99"`
-	NumCalls     int     `json:"numCalls" db:"numCalls"`
-	Name         string  `json:"name" db:"name"`
-}
-
-type TagItem struct {
-	TagKeys  string `json:"tagKeys" db:"tagKeys"`
-	TagCount int    `json:"tagCount" db:"tagCount"`
+	Percentile50 float64 `json:"p50" ch:"p50"`
+	Percentile95 float64 `json:"p95" ch:"p95"`
+	Percentile99 float64 `json:"p99" ch:"p99"`
+	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
+	Name         string  `json:"name" ch:"name"`
 }
 
 type TagFilters struct {
-	TagKeys string `json:"tagKeys" db:"tagKeys"`
+	TagKeys string `json:"tagKeys" ch:"tagKeys"`
 }
 
 type TagValues struct {
-	TagValues string `json:"tagValues" db:"tagValues"`
+	TagValues string `json:"tagValues" ch:"tagValues"`
 }
 type ServiceMapDependencyResponseItem struct {
-	Parent    string `json:"parent,omitempty" db:"parent,omitempty"`
-	Child     string `json:"child,omitempty" db:"child,omitempty"`
-	CallCount int    `json:"callCount,omitempty" db:"callCount,omitempty"`
-}
-
-type SpanSearchAggregatesResponseItem struct {
-	Timestamp int64   `json:"timestamp,omitempty" db:"timestamp" `
-	Time      string  `json:"time,omitempty" db:"time"`
-	Value     float32 `json:"value,omitempty" db:"value"`
+	Parent    string `json:"parent,omitempty" ch:"parent"`
+	Child     string `json:"child,omitempty" ch:"child"`
+	CallCount int    `json:"callCount,omitempty" ch:"callCount"`
 }
 
 type GetFilteredSpansAggregatesResponse struct {
@@ -263,10 +234,12 @@ type SpanAggregatesResponseItem struct {
 	GroupBy   map[string]float32 `json:"groupBy,omitempty"`
 }
 type SpanAggregatesDBResponseItem struct {
-	Timestamp int64          `json:"timestamp,omitempty" db:"timestamp" `
-	Time      string         `json:"time,omitempty" db:"time"`
-	Value     float32        `json:"value,omitempty" db:"value"`
-	GroupBy   sql.NullString `json:"groupBy,omitempty" db:"groupBy"`
+	Timestamp    int64     `ch:"timestamp" `
+	Time         time.Time `ch:"time"`
+	Value        uint64    `ch:"value"`
+	FloatValue   float32   `ch:"floatValue"`
+	Float64Value float64   `ch:"float64Value"`
+	GroupBy      string    `ch:"groupBy"`
 }
 
 type SetTTLResponseItem struct {
@@ -274,103 +247,96 @@ type SetTTLResponseItem struct {
 }
 
 type DiskItem struct {
-	Name string `json:"name,omitempty" db:"name,omitempty"`
-	Type string `json:"type,omitempty" db:"type,omitempty"`
+	Name string `json:"name,omitempty" ch:"name"`
+	Type string `json:"type,omitempty" ch:"type"`
 }
 
 type DBResponseTTL struct {
-	EngineFull string `db:"engine_full"`
+	EngineFull string `ch:"engine_full"`
 }
 
 type GetTTLResponseItem struct {
-	MetricsTime int `json:"metrics_ttl_duration_hrs"`
-	TracesTime  int `json:"traces_ttl_duration_hrs"`
-}
-
-type DBResponseMinMaxDuration struct {
-	MinDuration int `db:"min(durationNano)"`
-	MaxDuration int `db:"max(durationNano)"`
+	MetricsTime     int `json:"metrics_ttl_duration_hrs,omitempty"`
+	MetricsMoveTime int `json:"metrics_move_ttl_duration_hrs,omitempty"`
+	TracesTime      int `json:"traces_ttl_duration_hrs,omitempty"`
+	TracesMoveTime  int `json:"traces_move_ttl_duration_hrs,omitempty"`
 }
 
 type DBResponseServiceName struct {
-	ServiceName string `db:"serviceName"`
-	Count       int    `db:"count"`
+	ServiceName string `ch:"serviceName"`
+	Count       uint64 `ch:"count"`
 }
 
 type DBResponseHttpCode struct {
-	HttpCode string `db:"httpCode"`
-	Count    int    `db:"count"`
+	HttpCode string `ch:"httpCode"`
+	Count    uint64 `ch:"count"`
 }
 
 type DBResponseHttpRoute struct {
-	HttpRoute string `db:"httpRoute"`
-	Count     int    `db:"count"`
+	HttpRoute string `ch:"httpRoute"`
+	Count     uint64 `ch:"count"`
 }
 
 type DBResponseHttpUrl struct {
-	HttpUrl string `db:"httpUrl"`
-	Count   int    `db:"count"`
+	HttpUrl string `ch:"httpUrl"`
+	Count   uint64 `ch:"count"`
 }
 
 type DBResponseHttpMethod struct {
-	HttpMethod string `db:"httpMethod"`
-	Count      int    `db:"count"`
+	HttpMethod string `ch:"httpMethod"`
+	Count      uint64 `ch:"count"`
 }
 
 type DBResponseHttpHost struct {
-	HttpHost string `db:"httpHost"`
-	Count    int    `db:"count"`
+	HttpHost string `ch:"httpHost"`
+	Count    uint64 `ch:"count"`
 }
 
 type DBResponseOperation struct {
-	Operation string `db:"name"`
-	Count     int    `db:"count"`
+	Operation string `ch:"name"`
+	Count     uint64 `ch:"count"`
 }
 
 type DBResponseComponent struct {
-	Component sql.NullString `db:"component"`
-	Count     int            `db:"count"`
-}
-
-type DBResponseErrors struct {
-	NumErrors int `db:"numErrors"`
+	Component string `ch:"component"`
+	Count     uint64 `ch:"count"`
 }
 
 type DBResponseTotal struct {
-	NumTotal int `db:"numTotal"`
+	NumTotal uint64 `ch:"numTotal"`
 }
 
 type SpanFiltersResponse struct {
-	ServiceName map[string]int `json:"serviceName"`
-	Status      map[string]int `json:"status"`
-	Duration    map[string]int `json:"duration"`
-	Operation   map[string]int `json:"operation"`
-	HttpCode    map[string]int `json:"httpCode"`
-	HttpUrl     map[string]int `json:"httpUrl"`
-	HttpMethod  map[string]int `json:"httpMethod"`
-	HttpRoute   map[string]int `json:"httpRoute"`
-	HttpHost    map[string]int `json:"httpHost"`
-	Component   map[string]int `json:"component"`
+	ServiceName map[string]uint64 `json:"serviceName"`
+	Status      map[string]uint64 `json:"status"`
+	Duration    map[string]uint64 `json:"duration"`
+	Operation   map[string]uint64 `json:"operation"`
+	HttpCode    map[string]uint64 `json:"httpCode"`
+	HttpUrl     map[string]uint64 `json:"httpUrl"`
+	HttpMethod  map[string]uint64 `json:"httpMethod"`
+	HttpRoute   map[string]uint64 `json:"httpRoute"`
+	HttpHost    map[string]uint64 `json:"httpHost"`
+	Component   map[string]uint64 `json:"component"`
 }
 type Error struct {
-	ExceptionType  string    `json:"exceptionType" db:"exceptionType"`
-	ExceptionMsg   string    `json:"exceptionMessage" db:"exceptionMessage"`
-	ExceptionCount int64     `json:"exceptionCount" db:"exceptionCount"`
-	LastSeen       time.Time `json:"lastSeen" db:"lastSeen"`
-	FirstSeen      time.Time `json:"firstSeen" db:"firstSeen"`
-	ServiceName    string    `json:"serviceName" db:"serviceName"`
+	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
+	ExceptionMsg   string    `json:"exceptionMessage" ch:"exceptionMessage"`
+	ExceptionCount uint64    `json:"exceptionCount" ch:"exceptionCount"`
+	LastSeen       time.Time `json:"lastSeen" ch:"lastSeen"`
+	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
+	ServiceName    string    `json:"serviceName" ch:"serviceName"`
 }
 
 type ErrorWithSpan struct {
-	ErrorID            string    `json:"errorId" db:"errorID"`
-	ExceptionType      string    `json:"exceptionType" db:"exceptionType"`
-	ExcepionStacktrace string    `json:"excepionStacktrace" db:"excepionStacktrace"`
-	ExceptionEscaped   string    `json:"exceptionEscaped" db:"exceptionEscaped"`
-	ExceptionMsg       string    `json:"exceptionMessage" db:"exceptionMessage"`
-	Timestamp          time.Time `json:"timestamp" db:"timestamp"`
-	SpanID             string    `json:"spanID" db:"spanID"`
-	TraceID            string    `json:"traceID" db:"traceID"`
-	ServiceName        string    `json:"serviceName" db:"serviceName"`
-	NewerErrorID       string    `json:"newerErrorId" db:"newerErrorId"`
-	OlderErrorID       string    `json:"olderErrorId" db:"olderErrorId"`
+	ErrorID             string    `json:"errorId" ch:"errorID"`
+	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
+	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
+	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
+	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
+	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
+	SpanID              string    `json:"spanID" ch:"spanID"`
+	TraceID             string    `json:"traceID" ch:"traceID"`
+	ServiceName         string    `json:"serviceName" ch:"serviceName"`
+	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
+	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }

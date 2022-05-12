@@ -18,10 +18,10 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://git
 ### Contribute to Frontend with Docker installation of SigNoz
 
 - `git clone https://github.com/SigNoz/signoz.git && cd signoz`
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L59`
+- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L62`
 - run `cd deploy` to move to deploy directory
 - Install signoz locally without the frontend
-    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L36`
+    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
 
     ```docker
     ports:
@@ -55,9 +55,9 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
 - git clone https://github.com/SigNoz/signoz.git
 - run `cd signoz` to move to signoz directory
 - run `sudo make dev-setup` to configure local setup to run query-service
-- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml#L45`
-- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml#L28`
-- add below configuration to clickhouse section at `docker/clickhouse-setup/docker-compose.yaml#L6`
+- comment out frontend service section at `docker/clickhouse-setup/docker-compose.yaml`
+- comment out query-service section at `docker/clickhouse-setup/docker-compose.yaml`
+- add below configuration to clickhouse section at `docker/clickhouse-setup/docker-compose.yaml`
 ```docker
     expose:
       - 9000
@@ -106,28 +106,39 @@ Need to update [https://github.com/SigNoz/charts](https://github.com/SigNoz/char
   - [k3d](https://k3d.io/#installation)
   - [minikube](https://minikube.sigs.k8s.io/docs/start/)
 - create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster
-- run `helm install -n platform --create-namespace my-release charts/signoz` to install SigNoz chart
-- run `kubectl -n platform port-forward svc/my-release-frontend 3301:3301` to make SigNoz UI available at [localhost:3301](http://localhost:3301)
+- run `make dev-install` to install SigNoz chart with `my-release` release name in `platform` namespace.
+- run `kubectl -n platform port-forward svc/my-release-signoz-frontend 3301:3301` to make SigNoz UI available at [localhost:3301](http://localhost:3301)
+
+**To install HotROD sample app:**
+
+```bash
+curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-install.sh \
+  | HELM_RELEASE=my-release SIGNOZ_NAMESPACE=platform bash
+```
 
 **To load data with HotROD sample app:**
 
-```sh
-kubectl create ns sample-application
-
-kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
-
+```bash
 kubectl -n sample-application run strzal --image=djbingham/curl \
---restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
-'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+  --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
+  'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
 ```
 
 **To stop the load generation:**
 
-```sh
+```bash
 kubectl -n sample-application run strzal --image=djbingham/curl \
- --restart='OnFailure' -i --tty --rm --command -- curl \
- http://locust-master:8089/stop
+  --restart='OnFailure' -i --tty --rm --command -- curl \
+  http://locust-master:8089/stop
 ```
+
+**To delete HotROD sample app:**
+
+```bash
+curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-delete.sh \
+  | HOTROD_NAMESPACE=sample-application bash
+```
+
 ---
 
 ## General Instructions

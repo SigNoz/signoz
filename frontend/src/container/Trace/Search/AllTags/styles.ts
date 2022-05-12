@@ -6,7 +6,7 @@ export const Container = styled(Card)`
 	min-height: 20vh;
 	width: 100%;
 	z-index: 2;
-	position: absolute;
+	position: absolute !important;
 
 	.ant-card-body {
 		padding-bottom: 0;
@@ -35,20 +35,16 @@ export const Wrapper = styled.div`
 	}
 `;
 
-export const ButtonContainer = styled.div`
+export const ButtonContainer = styled(Card)`
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	background-color: #303030;
-	padding-top: 11px;
-	padding-bottom: 11px;
-	padding-right: 38.01px;
 
-	margin-top: 1rem;
+	padding-top: 11px !important;
+	padding-bottom: 11px !important;
+	padding-right: 38.01px !important;
 
-	> button:nth-child(1) {
-		margin-right: 1rem;
-	}
+	margin-top: 1rem !important;
 `;
 
 export const CurrentTagsContainer = styled.div`

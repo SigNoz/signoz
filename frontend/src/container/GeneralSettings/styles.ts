@@ -1,16 +1,13 @@
 import {
+	Col,
 	Dropdown as DropDownComponent,
 	Input as InputComponent,
 	Typography as TypographyComponent,
 } from 'antd';
 import styled from 'styled-components';
 
-export const RetentionContainer = styled.div`
-	width: 50%;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 1rem;
+export const RetentionContainer = styled(Col)`
+	margin: 0.75rem 0;
 `;
 
 export const Input = styled(InputComponent)`
@@ -37,13 +34,6 @@ export const ButtonContainer = styled.div`
 	}
 `;
 
-export const Container = styled.div`
-	&&& {
-		display: flex;
-		flex-direction: column;
-	}
-`;
-
 export const Dropdown = styled(DropDownComponent)`
 	&&& {
 		display: flex;
@@ -66,6 +56,7 @@ export const ErrorTextContainer = styled.div`
 		margin-bottom: 2rem;
 		display: flex;
 		align-items: center;
+		gap: 1rem;
 
 		> article {
 			margin-right: 1rem;
@@ -89,4 +80,13 @@ export const ErrorText = styled(TypographyComponent)`
 		color: #e89a3c;
 		font-style: italic;
 	}
+`;
+
+export const RetentionFieldLabel = styled(TypographyComponent)`
+	vertical-align: middle;
+	white-space: pre-wrap;
+`;
+
+export const RetentionFieldInputContainer = styled.div`
+	display: inline-flex;
 `;

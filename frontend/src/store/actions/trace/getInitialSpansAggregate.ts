@@ -3,10 +3,12 @@ import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_SPANS_AGGREEGATE } from 'types/actions/trace';
+import { UPDATE_SPANS_AGGREGATE } from 'types/actions/trace';
 import { Props as GetSpanAggregateProps } from 'types/api/trace/getSpanAggregate';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+
+import { updateURL } from './util';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
@@ -29,10 +31,12 @@ export const GetSpansAggregate = (
 			return;
 		}
 
+		const { order = '' } = props;
+
 		try {
 			// triggering loading
 			dispatch({
-				type: UPDATE_SPANS_AGGREEGATE,
+				type: UPDATE_SPANS_AGGREGATE,
 				payload: {
 					spansAggregate: {
 						currentPage: props.current,
@@ -41,6 +45,8 @@ export const GetSpansAggregate = (
 						error: false,
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
+						order,
+						orderParam: spansAggregate.orderParam,
 					},
 				},
 			});
@@ -53,12 +59,13 @@ export const GetSpansAggregate = (
 				offset: props.current * props.pageSize - props.pageSize,
 				selectedTags: props.selectedTags,
 				isFilterExclude: traces.isFilterExclude,
-				order: props.order,
+				order,
+				orderParam: props.orderParam,
 			});
 
 			if (response.statusCode === 200) {
 				dispatch({
-					type: UPDATE_SPANS_AGGREEGATE,
+					type: UPDATE_SPANS_AGGREGATE,
 					payload: {
 						spansAggregate: {
 							currentPage: props.current,
@@ -67,16 +74,30 @@ export const GetSpansAggregate = (
 							error: false,
 							total: response.payload.totalSpans,
 							pageSize: props.pageSize,
+							order,
+							orderParam: spansAggregate.orderParam,
 						},
 					},
 				});
+
+				updateURL(
+					traces.selectedFilter,
+					traces.filterToFetchData,
+					props.current,
+					traces.selectedTags,
+					traces.isFilterExclude,
+					traces.userSelectedFilter,
+					order,
+					traces.spansAggregate.pageSize,
+					spansAggregate.orderParam,
+				);
 			} else {
 				notification.error({
 					message: response.error || 'Something went wrong',
 				});
 
 				dispatch({
-					type: UPDATE_SPANS_AGGREEGATE,
+					type: UPDATE_SPANS_AGGREGATE,
 					payload: {
 						spansAggregate: {
 							currentPage: props.current,
@@ -85,13 +106,15 @@ export const GetSpansAggregate = (
 							error: true,
 							total: spansAggregate.total,
 							pageSize: props.pageSize,
+							order,
+							orderParam: spansAggregate.orderParam,
 						},
 					},
 				});
 			}
 		} catch (error) {
 			dispatch({
-				type: UPDATE_SPANS_AGGREEGATE,
+				type: UPDATE_SPANS_AGGREGATE,
 				payload: {
 					spansAggregate: {
 						currentPage: props.current,
@@ -100,6 +123,8 @@ export const GetSpansAggregate = (
 						error: true,
 						total: spansAggregate.total,
 						pageSize: props.pageSize,
+						order,
+						orderParam: spansAggregate.orderParam,
 					},
 				},
 			});
@@ -115,4 +140,5 @@ export interface GetSpansAggregateProps {
 	pageSize: TraceReducer['spansAggregate']['pageSize'];
 	selectedTags: TraceReducer['selectedTags'];
 	order: GetSpanAggregateProps['order'];
+	orderParam: GetSpanAggregateProps['orderParam'];
 }

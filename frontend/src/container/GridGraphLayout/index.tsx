@@ -1,15 +1,15 @@
-/* eslint-disable react/jsx-no-useless-fragment */
 /* eslint-disable react/no-unstable-nested-components */
-/* eslint-disable react/display-name */
 import { SaveFilled } from '@ant-design/icons';
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import useComponentPermission from 'hooks/useComponentPermission';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
@@ -44,6 +44,9 @@ function GridGraph(): JSX.Element {
 
 	const isMounted = useRef(true);
 	const isDeleted = useRef(false);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [saveLayout] = useComponentPermission(['save_layout'], role);
 
 	const getPreLayouts: () => LayoutProps[] = useCallback(() => {
 		if (widgets === undefined) {
@@ -85,7 +88,7 @@ function GridGraph(): JSX.Element {
 							/>
 						);
 					}
-					return <></>;
+					return <div />;
 				},
 			}));
 	}, [widgets, data.layout]);
@@ -150,6 +153,7 @@ function GridGraph(): JSX.Element {
 								w: e.i === '__dropping-elem__' ? 6 : e.w,
 								h: e.i === '__dropping-elem__' ? 2 : e.h,
 							}))
+							// removing add widgets layout config
 							.filter((e) => e.maxW === undefined),
 					});
 				} catch (error) {
@@ -172,13 +176,15 @@ function GridGraph(): JSX.Element {
 		}));
 
 		const response = await updateDashboardApi({
-			title: data.title,
+			data: {
+				title: data.title,
+				description: data.description,
+				name: data.name,
+				tags: data.tags,
+				widgets: data.widgets,
+				layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
+			},
 			uuid: selectedDashboard.uuid,
-			description: data.description,
-			name: data.name,
-			tags: data.tags,
-			widgets: data.widgets,
-			layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
 		});
 		if (response.statusCode === 200) {
 			setSaveLayoutState((state) => ({
@@ -212,16 +218,18 @@ function GridGraph(): JSX.Element {
 
 	return (
 		<>
-			<ButtonContainer>
-				<Button
-					loading={saveLayoutState.loading}
-					onClick={onLayoutSaveHandler}
-					icon={<SaveFilled />}
-					danger={saveLayoutState.error}
-				>
-					Save Layout
-				</Button>
-			</ButtonContainer>
+			{saveLayout && (
+				<ButtonContainer>
+					<Button
+						loading={saveLayoutState.loading}
+						onClick={onLayoutSaveHandler}
+						icon={<SaveFilled />}
+						danger={saveLayoutState.error}
+					>
+						Save Layout
+					</Button>
+				</ButtonContainer>
+			)}
 
 			<ReactGridLayout
 				isResizable

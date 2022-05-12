@@ -13,11 +13,14 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import {
 	isTraceFilterEnum,
+	parseAggregateOrderParams,
 	parseFilterExclude,
 	parseFilterToFetchData,
 	parseIsSkippedSelection,
 	parseQueryIntoCurrent,
 	parseQueryIntoFilter,
+	parseQueryIntoOrder,
+	parseQueryIntoPageSize,
 	parseQueryIntoSelectedTags,
 	parseSelectedFilter,
 } from './util';
@@ -66,11 +69,26 @@ export const GetInitialTraceFilter = (
 				traces.spansAggregate.currentPage,
 			);
 
+			const parsedQueryOrder = parseQueryIntoOrder(
+				query,
+				traces.spansAggregate.order,
+			);
+
+			const parsedPageSize = parseQueryIntoPageSize(
+				query,
+				traces.spansAggregate.pageSize,
+			);
+
 			const isSelectionSkipped = parseIsSkippedSelection(query);
 
 			const parsedSelectedTags = parseQueryIntoSelectedTags(
 				query,
 				traces.selectedTags,
+			);
+
+			const parsedOrderParams = parseAggregateOrderParams(
+				query,
+				traces.spansAggregate.orderParam,
 			);
 
 			const parsedFilter = parseQueryIntoFilter(query, traces.filter);
@@ -148,6 +166,9 @@ export const GetInitialTraceFilter = (
 						selectedTags: parsedSelectedTags.currentValue,
 						userSelected: getUserSelected.currentValue,
 						isFilterExclude: getIsFilterExcluded.currentValue,
+						order: parsedQueryOrder.currentValue,
+						pageSize: parsedPageSize.currentValue,
+						orderParam: parsedOrderParams.currentValue,
 					},
 				});
 			} else {

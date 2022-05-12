@@ -16,6 +16,7 @@ const getSpanAggregate = async (
 			limit: props.limit,
 			offset: props.offset,
 			order: props.order,
+			orderParam: props.orderParam,
 		};
 
 		const exclude: TraceFilterEnum[] = [];

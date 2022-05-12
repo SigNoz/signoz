@@ -23,6 +23,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@ant-design/colors": "^6.0.0",
 		"@ant-design/icons": "^4.6.2",
 		"@grafana/data": "^8.4.3",
 		"@monaco-editor/react": "^4.3.1",
@@ -30,6 +31,7 @@
 		"@testing-library/react": "^11.1.0",
 		"@testing-library/user-event": "^12.1.10",
 		"@welldone-software/why-did-you-render": "^6.2.1",
+		"@xstate/react": "^3.0.0",
 		"antd": "4.19.2",
 		"axios": "^0.21.0",
 		"babel-eslint": "^10.1.0",
@@ -56,7 +58,8 @@
 		"i18next": "^21.6.12",
 		"i18next-browser-languagedetector": "^6.1.3",
 		"i18next-http-backend": "^1.3.2",
-		"jest": "26.6.0",
+		"jest": "^27.5.1",
+		"js-base64": "^3.7.2",
 		"less": "^4.1.2",
 		"less-loader": "^10.2.0",
 		"lodash-es": "^4.17.21",
@@ -67,6 +70,7 @@
 		"react-graph-vis": "^1.0.5",
 		"react-grid-layout": "^1.2.5",
 		"react-i18next": "^11.16.1",
+		"react-query": "^3.34.19",
 		"react-redux": "^7.2.2",
 		"react-router-dom": "^5.2.0",
 		"react-use": "^17.3.2",
@@ -83,7 +87,8 @@
 		"uuid": "^8.3.2",
 		"web-vitals": "^0.2.4",
 		"webpack": "^5.23.0",
-		"webpack-dev-server": "^4.3.1"
+		"webpack-dev-server": "^4.3.1",
+		"xstate": "^4.31.0"
 	},
 	"browserslist": {
 		"production": [
@@ -106,6 +111,7 @@
 		"@babel/preset-typescript": "^7.12.17",
 		"@jest/globals": "^27.5.1",
 		"@testing-library/cypress": "^8.0.0",
+		"@testing-library/react-hooks": "^7.0.2",
 		"@types/color": "^3.0.3",
 		"@types/compression-webpack-plugin": "^9.0.0",
 		"@types/copy-webpack-plugin": "^8.0.1",
@@ -154,6 +160,7 @@
 		"portfinder-sync": "^0.0.2",
 		"prettier": "2.2.1",
 		"react-hot-loader": "^4.13.0",
+		"ts-jest": "^27.1.4",
 		"ts-node": "^10.2.1",
 		"typescript-plugin-css-modules": "^3.4.0",
 		"webpack-bundle-analyzer": "^4.5.0",

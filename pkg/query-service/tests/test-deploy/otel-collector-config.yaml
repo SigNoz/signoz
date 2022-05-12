@@ -27,6 +27,12 @@ processors:
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 10000
+    dimensions:
+      - name: service.namespace
+        default: default
+      - name: deployment.environment
+        default: default
   # memory_limiter:
   #   # Same as --mem-ballast-size-mib CLI argument
   #   ballast_size_mib: 683
@@ -44,7 +50,7 @@ extensions:
   zpages: {}
 exporters:
   clickhouse:
-    datasource: tcp://clickhouse:9000
+    datasource: tcp://clickhouse:9000/?database=signoz_traces
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:

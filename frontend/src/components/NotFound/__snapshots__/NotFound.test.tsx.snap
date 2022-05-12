@@ -3,7 +3,7 @@
 exports[`Not Found page test should render Not Found page without errors 1`] = `
 <DocumentFragment>
   <div
-    class="sc-gtsrHT VomVY"
+    class="sc-gsDKAQ cLXpIa"
   >
     <svg
       fill="none"
@@ -272,21 +272,21 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
       </defs>
     </svg>
     <div
-      class="sc-hKFxyN dunFuJ"
+      class="sc-hKwDye foaleg"
     >
       <p
-        class="sc-dlnjwi cydxLA"
+        class="sc-dkPtRN fcyVIq"
       >
         Ah, seems like we reached a dead end!
       </p>
       <p
-        class="sc-dlnjwi cydxLA"
+        class="sc-dkPtRN fcyVIq"
       >
         Page Not Found
       </p>
     </div>
     <a
-      class="sc-bdnxRM bYqcho"
+      class="sc-bdvvtL dbTZkj"
       href="/application"
       tabindex="0"
     >

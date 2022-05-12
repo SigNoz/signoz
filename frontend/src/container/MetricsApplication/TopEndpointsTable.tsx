@@ -3,15 +3,24 @@ import { ColumnsType } from 'antd/lib/table';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import MetricReducer from 'types/reducer/metrics';
 
 function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
+	);
+	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
+	);
+
+	const selectedTraceTags: string = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
 	);
 
 	const { data } = props;
@@ -33,7 +42,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 		history.push(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&isSelectedFilterSkipped=true&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&isSelectedFilterSkipped=true`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
 

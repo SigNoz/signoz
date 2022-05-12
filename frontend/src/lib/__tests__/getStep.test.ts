@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import dayjs from 'dayjs';
-import getStep, { DefaultStepSize } from 'lib/getStep';
+import getStep, { DefaultStepSize, MaxDataPoints } from 'lib/getStep';
 
 describe('lib/getStep', () => {
 	test('should return default step when the given range is less than 1 day', () => {
@@ -40,7 +40,8 @@ describe('lib/getStep', () => {
 		const startUnix = start.valueOf();
 		const endUnix = end.valueOf();
 
-		const expectedStepSize = end.diff(start, 'days') * DefaultStepSize;
+		const expectedStepSize = Math.floor(end.diff(start, 's') / MaxDataPoints);
+
 		expect(
 			getStep({
 				start: startUnix / 1e3,

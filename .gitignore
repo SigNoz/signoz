@@ -43,7 +43,7 @@ frontend/cypress.env.json
 frontend/*.env
 pkg/query-service/signoz.db
 
-pkg/query-service/tframe/test-deploy/data/
+pkg/query-service/tests/test-deploy/data/
 
 
 # local data

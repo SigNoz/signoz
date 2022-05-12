@@ -3,35 +3,42 @@ import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import history from 'lib/history';
+import omit from 'lodash-es/omit';
 import React from 'react';
-import { connect, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import {
-	GetSpansAggregate,
-	GetSpansAggregateProps,
-} from 'store/actions/trace/getInitialSpansAggregate';
+import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
+import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import {
+	UPDATE_SPAN_ORDER,
+	UPDATE_SPAN_ORDER_PARAMS,
+	UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
+} from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
 dayjs.extend(duration);
 
-function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
+function TraceTable(): JSX.Element {
 	const {
 		spansAggregate,
 		selectedFilter,
 		selectedTags,
 		filterLoading,
+		userSelectedFilter,
+		isFilterExclude,
+		filterToFetchData,
+		filter,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const statusFilter = filter.get('status');
+	const selectedStatusFilter = selectedFilter.get('status');
 
-	const { loading, total } = spansAggregate;
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const { loading, order: spansAggregateOrder } = spansAggregate;
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
@@ -39,30 +46,17 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
 	};
 
-	const getValue = (value: string, record: TableType): JSX.Element => {
-		return (
-			<Link to={getLink(record)}>
-				<Typography>{value}</Typography>
-			</Link>
-		);
+	const getValue = (value: string): JSX.Element => {
+		return <Typography>{value}</Typography>;
 	};
 
 	const getHttpMethodOrStatus = (
-		value: TableType['httpMethod'],
-		record: TableType,
+		value: TableType['statusCode'],
 	): JSX.Element => {
 		if (value.length === 0) {
-			return (
-				<Link to={getLink(record)}>
-					<Typography>-</Typography>
-				</Link>
-			);
+			return <Typography>-</Typography>;
 		}
-		return (
-			<Link to={getLink(record)}>
-				<Tag color="magenta">{value}</Tag>
-			</Link>
-		);
+		return <Tag color="magenta">{value}</Tag>;
 	};
 
 	const columns: ColumnsType<TableType> = [
@@ -71,13 +65,9 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			dataIndex: 'timestamp',
 			key: 'timestamp',
 			sorter: true,
-			render: (value: TableType['timestamp'], record): JSX.Element => {
+			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
-				return (
-					<Link to={getLink(record)}>
-						<Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>
-					</Link>
-				);
+				return <Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>;
 			},
 		},
 		{
@@ -96,29 +86,39 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
-			render: (value: TableType['durationNano'], record): JSX.Element => (
-				<Link to={getLink(record)}>
-					<Typography>
-						{`${dayjs
-							.duration({ milliseconds: value / 1000000 })
-							.asMilliseconds()} ms`}
-					</Typography>
-				</Link>
+			sorter: true,
+			render: (value: TableType['durationNano']): JSX.Element => (
+				<Typography>
+					{`${dayjs
+						.duration({ milliseconds: value / 1000000 })
+						.asMilliseconds()
+						.toFixed(2)} ms`}
+				</Typography>
 			),
 		},
 		{
 			title: 'Method',
-			dataIndex: 'httpMethod',
-			key: 'httpMethod',
+			dataIndex: 'method',
+			key: 'method',
 			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
-			dataIndex: 'httpCode',
-			key: 'httpCode',
+			dataIndex: 'statusCode',
+			key: 'statusCode',
 			render: getHttpMethodOrStatus,
 		},
 	];
+
+	const getSortKey = (key: string): string => {
+		if (key === 'durationNano') {
+			return 'duration';
+		}
+		if (key === 'timestamp') {
+			return 'timestamp';
+		}
+		return '';
+	};
 
 	const onChangeHandler: TableProps<TableType>['onChange'] = (
 		props,
@@ -126,20 +126,61 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 		sort,
 	) => {
 		if (!Array.isArray(sort)) {
-			const { order = 'ascend' } = sort;
+			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				getSpansAggregate({
-					maxTime: globalTime.maxTime,
-					minTime: globalTime.minTime,
-					selectedFilter,
-					current: props.current,
-					pageSize: props.pageSize,
-					selectedTags,
-					order: order === 'ascend' ? 'ascending' : 'descending',
+				const spanOrder = order === 'ascend' ? 'ascending' : 'descending';
+				const orderParam = getSortKey(sort.field as string);
+
+				console.log({ spanOrder });
+
+				dispatch({
+					type: UPDATE_SPAN_ORDER,
+					payload: {
+						order: spanOrder,
+					},
 				});
+
+				dispatch({
+					type: UPDATE_SPAN_ORDER_PARAMS,
+					payload: {
+						orderParam,
+					},
+				});
+
+				dispatch({
+					type: UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
+					payload: {
+						pageSize: props.pageSize,
+					},
+				});
+
+				dispatch({
+					type: UPDATE_SPANS_AGGREGATE_PAGE_NUMBER,
+					payload: {
+						currentPage: props.current,
+					},
+				});
+
+				updateURL(
+					selectedFilter,
+					filterToFetchData,
+					props.current,
+					selectedTags,
+					isFilterExclude,
+					userSelectedFilter,
+					spanOrder,
+					props.pageSize,
+					orderParam,
+				);
 			}
 		}
 	};
+
+	const totalObject = omit(statusFilter, [...(selectedStatusFilter || [])]);
+	const totalCount = Object.values(totalObject).reduce(
+		(a, b) => parseInt(String(a), 10) + parseInt(String(b), 10),
+		0,
+	) as number;
 
 	return (
 		<Table
@@ -147,31 +188,26 @@ function TraceTable({ getSpansAggregate }: TraceProps): JSX.Element {
 			dataSource={spansAggregate.data}
 			loading={loading || filterLoading}
 			columns={columns}
-			rowKey="timestamp"
+			rowKey={(record): string => `${record.traceID}-${record.spanID}`}
 			style={{
 				cursor: 'pointer',
 			}}
+			onRow={(record): React.HTMLAttributes<TableType> => ({
+				onClick: (event): void => {
+					event.preventDefault();
+					event.stopPropagation();
+					history.push(getLink(record));
+				},
+			})}
 			pagination={{
 				current: spansAggregate.currentPage,
 				pageSize: spansAggregate.pageSize,
 				responsive: true,
 				position: ['bottomLeft'],
-				total,
+				total: totalCount,
 			}}
 		/>
 	);
 }
 
-interface DispatchProps {
-	getSpansAggregate: (props: GetSpansAggregateProps) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getSpansAggregate: bindActionCreators(GetSpansAggregate, dispatch),
-});
-
-type TraceProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(TraceTable);
+export default TraceTable;

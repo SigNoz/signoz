@@ -8,9 +8,12 @@ const getTopEndPoints = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
-			`/service/top_endpoints?&start=${props.start}&end=${props.end}&service=${props.service}`,
-		);
+		const response = await axios.post(`/service/top_endpoints`, {
+			start: `${props.start}`,
+			end: `${props.end}`,
+			service: props.service,
+			tags: props.selectedTags,
+		});
 
 		return {
 			statusCode: 200,

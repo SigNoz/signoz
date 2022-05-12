@@ -21,7 +21,7 @@ import {
 	ButtonContainer,
 	Container,
 	IconContainer,
-	TextCotainer,
+	TextContainer,
 } from './styles';
 
 const { Text } = Typography;
@@ -64,16 +64,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			const getprepdatedSelectedFilter = new Map(selectedFilter);
 			const getPreUserSelected = new Map(userSelectedFilter);
 
-			if (!isDefaultOpen) {
-				updatedFilterData = [PanelName];
-			} else {
-				// removing the selected filter
-				updatedFilterData = [
-					...filterToFetchData.filter((name) => name !== PanelName),
-				];
-				getprepdatedSelectedFilter.delete(PanelName);
-				getPreUserSelected.delete(PanelName);
-			}
+			updatedFilterData = [PanelName];
 
 			const response = await getFilters({
 				end: String(global.maxTime),
@@ -86,33 +77,14 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			if (response.statusCode === 200) {
 				const updatedFilter = getFilter(response.payload);
 
-				// is closed
-				if (!isDefaultOpen) {
-					// getprepdatedSelectedFilter.set(
-					// 	props.name,
-					// 	Object.keys(updatedFilter.get(props.name) || {}),
-					// );
-
+				if (!getPreUserSelected.has(PanelName)) {
 					getPreUserSelected.set(
 						PanelName,
-						Object.keys(updatedFilter.get(PanelName) || {}),
+						Object.keys(updatedFilter.get(PanelName) || []),
 					);
-
-					updatedFilterData = [...filterToFetchData, PanelName];
 				}
 
-				// now append the non prop.name trace filter enum over the list
-				// selectedFilter.forEach((value, key) => {
-				// 	if (key !== props.name) {
-				// 		getprepdatedSelectedFilter.set(key, value);
-				// 	}
-				// });
-
-				getPreUserSelected.forEach((value, key) => {
-					if (key !== PanelName) {
-						getPreUserSelected.set(key, value);
-					}
-				});
+				updatedFilterData = [...filterToFetchData, PanelName];
 				filter.forEach((value, key) => {
 					if (key !== PanelName) {
 						updatedFilter.set(key, value);
@@ -129,6 +101,9 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						selectedTags,
 						userSelected: getPreUserSelected,
 						isFilterExclude,
+						order: spansAggregate.order,
+						pageSize: spansAggregate.pageSize,
+						orderParam: spansAggregate.orderParam,
 					},
 				});
 
@@ -137,9 +112,11 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					updatedFilterData,
 					spansAggregate.currentPage,
 					selectedTags,
-					updatedFilter,
 					isFilterExclude,
 					getPreUserSelected,
+					spansAggregate.order,
+					spansAggregate.pageSize,
+					spansAggregate.orderParam,
 				);
 			} else {
 				notification.error({
@@ -153,6 +130,47 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				message: (error as AxiosError).toString() || defaultErrorMessage,
 			});
 		}
+	};
+
+	/**
+	 * @description this function removes the selected filter
+	 */
+	const onCloseHandler = (): void => {
+		const preSelectedFilter = new Map(selectedFilter);
+		// removing the filter from filter to fetch the data
+		const preFilterToFetchTheData = [
+			...filterToFetchData.filter((name) => name !== PanelName),
+		];
+
+		// preSelectedFilter.delete(PanelName);
+
+		dispatch({
+			type: UPDATE_ALL_FILTERS,
+			payload: {
+				current: spansAggregate.currentPage,
+				filter,
+				filterToFetchData: preFilterToFetchTheData,
+				selectedFilter: preSelectedFilter,
+				selectedTags,
+				userSelected: userSelectedFilter,
+				isFilterExclude,
+				order: spansAggregate.order,
+				pageSize: spansAggregate.pageSize,
+				orderParam: spansAggregate.orderParam,
+			},
+		});
+
+		updateURL(
+			preSelectedFilter,
+			preFilterToFetchTheData,
+			spansAggregate.currentPage,
+			selectedTags,
+			isFilterExclude,
+			userSelectedFilter,
+			spansAggregate.order,
+			spansAggregate.pageSize,
+			spansAggregate.orderParam,
+		);
 	};
 
 	const onClearAllHandler = async (): Promise<void> => {
@@ -177,18 +195,21 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			});
 
 			if (response.statusCode === 200 && response.payload) {
-				const getUpatedFilter = getFilter(response.payload);
+				const getUpdatedFilter = getFilter(response.payload);
 
 				dispatch({
 					type: UPDATE_ALL_FILTERS,
 					payload: {
 						current: spansAggregate.currentPage,
-						filter: getUpatedFilter,
+						filter: getUpdatedFilter,
 						filterToFetchData,
 						selectedFilter: updatedFilter,
 						selectedTags,
 						userSelected: preUserSelected,
 						isFilterExclude: postIsFilterExclude,
+						order: spansAggregate.order,
+						pageSize: spansAggregate.pageSize,
+						orderParam: spansAggregate.orderParam,
 					},
 				});
 
@@ -197,9 +218,11 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					filterToFetchData,
 					spansAggregate.currentPage,
 					selectedTags,
-					getUpatedFilter,
 					postIsFilterExclude,
 					preUserSelected,
+					spansAggregate.order,
+					spansAggregate.pageSize,
+					spansAggregate.orderParam,
 				);
 			} else {
 				notification.error({
@@ -280,7 +303,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					aria-disabled={filterLoading || isLoading}
 					aria-expanded={IsPanelOpen}
 				>
-					<TextCotainer onClick={onExpandHandler}>
+					<TextContainer onClick={isDefaultOpen ? onCloseHandler : onExpandHandler}>
 						<IconContainer>
 							{!IsPanelOpen ? <RightOutlined /> : <DownOutlined />}
 						</IconContainer>
@@ -288,7 +311,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						<Text style={{ textTransform: 'capitalize' }} ellipsis>
 							{AllPanelHeading.find((e) => e.key === PanelName)?.displayValue || ''}
 						</Text>
-					</TextCotainer>
+					</TextContainer>
 
 					{PanelName !== 'duration' && (
 						<ButtonContainer>

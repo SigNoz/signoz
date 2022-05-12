@@ -1,0 +1,13 @@
+{
+	"display_name": "Display Name",
+	"signoz": "SigNoz",
+	"email_address": "Email address",
+	"name_optional": "Name (optional)",
+	"role": "Role",
+	"email_placeholder": "john@signoz.io",
+	"name_placeholder": "John",
+	"add_another_team_member": "Add another team member",
+	"invite_team_members": "Invite team members",
+	"invite_members": "Invite Members",
+	"pending_invites": "Pending Invites"
+}

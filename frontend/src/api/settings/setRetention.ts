@@ -9,7 +9,11 @@ const setRetention = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post<PayloadProps>(
-			`/settings/ttl?duration=${props.duration}&type=${props.type}`,
+			`/settings/ttl?duration=${props.totalDuration}&type=${props.type}${
+				props.coldStorage
+					? `&coldStorage=${props.coldStorage};toColdDuration=${props.toColdDuration}`
+					: ''
+			}`,
 		);
 
 		return {

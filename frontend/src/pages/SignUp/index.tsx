@@ -1,43 +1,49 @@
 import { Typography } from 'antd';
-import getPreference from 'api/user/getPreference';
-import getVersion from 'api/user/getVersion';
+import getUserVersion from 'api/user/getVersion';
 import Spinner from 'components/Spinner';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
-import { PayloadProps as UserPrefPayload } from 'types/api/user/getUserPreference';
-import { PayloadProps as VersionPayload } from 'types/api/user/getVersion';
+import { useTranslation } from 'react-i18next';
+import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
 import SignUpComponent from './SignUp';
 
 function SignUp(): JSX.Element {
-	const versionResponse = useFetch<VersionPayload, undefined>(getVersion);
+	const { t } = useTranslation('common');
+	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const userPrefResponse = useFetch<UserPrefPayload, undefined>(getPreference);
+	const [versionResponse] = useQueries([
+		{
+			queryFn: getUserVersion,
+			queryKey: 'getUserVersion',
+			enabled: !isLoggedIn,
+		},
+	]);
 
-	if (versionResponse.error || userPrefResponse.error) {
+	if (
+		versionResponse.status === 'error' ||
+		(versionResponse.status === 'success' &&
+			versionResponse.data?.statusCode !== 200)
+	) {
 		return (
 			<Typography>
-				{versionResponse.errorMessage ||
-					userPrefResponse.errorMessage ||
-					'Somehthing went wrong'}
+				{versionResponse.data?.error || t('something_went_wrong')}
 			</Typography>
 		);
 	}
 
 	if (
-		versionResponse.loading ||
-		versionResponse.payload === undefined ||
-		userPrefResponse.loading ||
-		userPrefResponse.payload === undefined
+		versionResponse.status === 'loading' ||
+		!(versionResponse.data && versionResponse.data.payload)
 	) {
-		return <Spinner tip="Loading.." />;
+		return <Spinner tip="Loading..." />;
 	}
 
-	const { version } = versionResponse.payload;
+	const { version } = versionResponse.data.payload;
 
-	const userpref = userPrefResponse.payload;
-
-	return <SignUpComponent userpref={userpref} version={version} />;
+	return <SignUpComponent version={version} />;
 }
 
 export default SignUp;

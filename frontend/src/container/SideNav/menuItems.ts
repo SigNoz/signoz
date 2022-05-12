@@ -3,6 +3,7 @@ import {
 	AlignLeftOutlined,
 	ApiOutlined,
 	BarChartOutlined,
+	BugOutlined,
 	DashboardFilled,
 	DeploymentUnitOutlined,
 	LineChartOutlined,
@@ -24,12 +25,17 @@ const menus: SidebarMenu[] = [
 	{
 		Icon: DashboardFilled,
 		to: ROUTES.ALL_DASHBOARD,
-		name: 'Dashboard',
+		name: 'Dashboards',
 	},
 	{
 		Icon: AlertOutlined,
 		to: ROUTES.LIST_ALL_ALERT,
 		name: 'Alerts',
+	},
+	{
+		Icon: BugOutlined,
+		to: ROUTES.ALL_ERROR,
+		name: 'Exceptions',
 	},
 	{
 		to: ROUTES.SERVICE_MAP,

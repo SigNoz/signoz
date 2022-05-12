@@ -44,9 +44,11 @@ export const SelectedTraceFilter = (props: {
 			traces.filterToFetchData,
 			traces.spansAggregate.currentPage,
 			traces.selectedTags,
-			traces.filter,
 			traces.isFilterExclude,
 			traces.userSelectedFilter,
+			traces.spansAggregate.order,
+			traces.spansAggregate.pageSize,
+			traces.spansAggregate.orderParam,
 		);
 	};
 };

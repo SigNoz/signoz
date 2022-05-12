@@ -4,13 +4,18 @@ import { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	PagerChannel,
+	PagerType,
 	SlackChannel,
 	SlackType,
+	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
+import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
@@ -23,20 +28,26 @@ function FormAlertChannels({
 	type,
 	setSelectedConfig,
 	onTypeChangeHandler,
-	// onTestHandler,
+	onTestHandler,
 	onSaveHandler,
 	savingState,
+	testingState,
 	NotificationElement,
 	title,
 	initialValue,
-	nameDisable = false,
+	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
+	const { t } = useTranslation('channels');
+
 	const renderSettings = (): React.ReactElement | null => {
 		switch (type) {
 			case SlackType:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
 			case WebhookType:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
+			case PagerType:
+				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
+
 			default:
 				return null;
 		}
@@ -48,9 +59,9 @@ function FormAlertChannels({
 			<Title level={3}>{title}</Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<FormItem label="Name" labelAlign="left" name="name">
+				<FormItem label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
-						disabled={nameDisable}
+						disabled={editing}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
 								...state,
@@ -60,13 +71,16 @@ function FormAlertChannels({
 					/>
 				</FormItem>
 
-				<FormItem label="Type" labelAlign="left" name="type">
-					<Select onChange={onTypeChangeHandler} value={type}>
+				<FormItem label={t('field_channel_type')} labelAlign="left" name="type">
+					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
 						<Option value="slack" key="slack">
 							Slack
 						</Option>
 						<Option value="webhook" key="webhook">
 							Webhook
+						</Option>
+						<Option value="pagerduty" key="pagerduty">
+							Pagerduty
 						</Option>
 					</Select>
 				</FormItem>
@@ -80,15 +94,21 @@ function FormAlertChannels({
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
 					>
-						Save
+						{t('button_save_channel')}
 					</Button>
-					{/* <Button onClick={onTestHandler}>Test</Button> */}
+					<Button
+						disabled={testingState}
+						loading={testingState}
+						onClick={(): void => onTestHandler(type)}
+					>
+						{t('button_test_channel')}
+					</Button>
 					<Button
 						onClick={(): void => {
 							history.replace(ROUTES.SETTINGS);
 						}}
 					>
-						Back
+						{t('button_return')}
 					</Button>
 				</FormItem>
 			</Form>
@@ -99,9 +119,13 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
+	setSelectedConfig: React.Dispatch<
+		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;
+	onTestHandler: (props: ChannelType) => void;
+	testingState: boolean;
 	savingState: boolean;
 	NotificationElement: React.ReactElement<
 		unknown,
@@ -109,11 +133,12 @@ interface FormAlertChannelsProps {
 	>;
 	title: string;
 	initialValue: Store;
-	nameDisable?: boolean;
+	// editing indicates if the form is opened in edit mode
+	editing?: boolean;
 }
 
 FormAlertChannels.defaultProps = {
-	nameDisable: undefined,
+	editing: undefined,
 };
 
 export default FormAlertChannels;
