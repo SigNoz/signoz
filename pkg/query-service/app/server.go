@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	_ "net/http/pprof" // http profiler
 	"os"
 	"time"
 
@@ -257,7 +258,15 @@ func (s *Server) Start() error {
 			zap.S().Error("Could not start HTTP server", zap.Error(err))
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
+	}()
 
+	go func() {
+		zap.S().Info("Starting pprof server", zap.String("addr", constants.DebugHttpPort))
+
+		err = http.ListenAndServe(constants.DebugHttpPort, nil)
+		if err != nil {
+			zap.S().Error("Could not start HTTP server", zap.Error(err))
+		}
 	}()
 
 	return nil
