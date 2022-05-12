@@ -2337,23 +2337,31 @@ func (r *ClickHouseReader) RemoveTTL(ctx context.Context,
 	params *model.RemoveTTLParams) (*model.RemoveTTLResponseItem, *model.ApiError) {
 
 	var reqs []string
-	tracesQuery := fmt.Sprintf("ALTER TABLE default.%v REMOVE TTL", signozTraceTableName)
-	metricsQuery := fmt.Sprintf("ALTER TABLE %v REMOVE TTL", signozMetricDBName+"."+signozSampleName)
+	templateQuery := `ALTER TABLE %v REMOVE TTL`
+	tracesTables := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+	metricsTables := []string{signozMetricDBName + "." + signozSampleName}
+
 	switch params.Type {
 	case constants.TraceTTL:
-		reqs = append(reqs, tracesQuery)
+		for _, tableName := range tracesTables {
+			reqs = append(reqs, fmt.Sprintf(templateQuery, tableName))
+		}
 	case constants.MetricsTTL:
-		reqs = append(reqs, metricsQuery)
+		for _, tableName := range metricsTables {
+			reqs = append(reqs, fmt.Sprintf(templateQuery, tableName))
+		}
 	default:
-		reqs = append(reqs, tracesQuery, metricsQuery)
+		for _, tableName := range append(append([]string{}, tracesTables...), metricsTables...) {
+			reqs = append(reqs, fmt.Sprintf(templateQuery, tableName))
+		}
 	}
 
 	zap.S().Debugf("Executing remove TTL requests: %s\n", reqs)
 	for _, req := range reqs {
-		if _, err := r.db.Exec(req); err != nil {
+		if err := r.db.Exec(ctx, req); err != nil {
 			zap.S().Error(fmt.Errorf("error while removing ttl. Err=%v", err))
-			return nil, &model.ApiError{model.ErrorExec,
-				fmt.Errorf("error while removing ttl. Err=%v", err)}
+			return nil, &model.ApiError{Typ: model.ErrorExec,
+				Err: fmt.Errorf("error while removing ttl. Err=%v", err)}
 		}
 	}
 	return &model.RemoveTTLResponseItem{Message: "ttl has been successfully removed"}, nil
