@@ -75,14 +75,17 @@ function ErrorDetails(): JSX.Element {
 		},
 	);
 
+	// if errorType and serviceName is null redirecting to the ALL_ERROR page not now
 	if (errorType === null || serviceName === null) {
 		return <Redirect to={ROUTES.ALL_ERROR} />;
 	}
 
+	// when the api is in loading state
 	if (status === 'loading' || ErrorIdStatus === 'loading') {
 		return <Spinner tip="Loading.." />;
 	}
 
+	// if any error occurred while loading
 	if (status === 'error' || ErrorIdStatus === 'error') {
 		return (
 			<Typography>
@@ -91,9 +94,10 @@ function ErrorDetails(): JSX.Element {
 		);
 	}
 
+	// if API is successfully but there is an error
 	if (
-		(status === 'success' && data?.statusCode !== 200) ||
-		(ErrorIdStatus === 'success' && errorIdPayload.statusCode !== 200)
+		(status === 'success' && data?.statusCode >= 400) ||
+		(ErrorIdStatus === 'success' && errorIdPayload.statusCode >= 400)
 	) {
 		return <Typography>{data?.error || defaultError}</Typography>;
 	}
