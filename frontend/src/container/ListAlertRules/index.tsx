@@ -15,7 +15,7 @@ function ListAlertRules(): JSX.Element {
 	});
 
 	useEffect(() => {
-		if (status === 'error' || (status === 'success' && data.statusCode !== 200)) {
+		if (status === 'error' || (status === 'success' && data.statusCode >= 400)) {
 			notification.error({
 				message: data?.error || t('something_went_wrong'),
 			});
@@ -28,7 +28,7 @@ function ListAlertRules(): JSX.Element {
 	}
 
 	// api is successful but error is present
-	if (status === 'success' && data.statusCode !== 200) {
+	if (status === 'success' && data.statusCode >= 400) {
 		return (
 			<ListAlert
 				{...{
