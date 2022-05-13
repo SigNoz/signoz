@@ -98,7 +98,7 @@ export interface UpdateOrgName {
 	type: typeof UPDATE_ORG_NAME;
 	payload: {
 		name: string;
-		index: number;
+		orgId: string;
 	};
 }
 

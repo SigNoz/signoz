@@ -172,16 +172,19 @@ const appReducer = (
 
 		case UPDATE_ORG_NAME: {
 			const stateOrg = state.org || ({} as OrgPayload);
-			const { index, name: updatedName } = action.payload;
-			const current = stateOrg[index];
+			const { orgId, name: updatedName } = action.payload;
+
+			const orgIndex = stateOrg.findIndex((e) => e.id === orgId);
+
+			const current = stateOrg[orgIndex];
 
 			const updatedOrg: OrgPayload = [
-				...stateOrg.slice(0, index),
+				...stateOrg.slice(0, orgIndex),
 				{
 					...current,
 					name: updatedName,
 				},
-				...stateOrg.slice(index + 1, stateOrg.length),
+				...stateOrg.slice(orgIndex + 1, stateOrg.length),
 			];
 
 			return {
