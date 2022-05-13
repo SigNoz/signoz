@@ -265,7 +265,7 @@ func (s *Server) Start() error {
 
 		err = http.ListenAndServe(constants.DebugHttpPort, nil)
 		if err != nil {
-			zap.S().Error("Could not start HTTP server", zap.Error(err))
+			zap.S().Error("Could not start pprof server", zap.Error(err))
 		}
 	}()
 
