@@ -245,16 +245,9 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorUnauthorized}
 		}
-		org, apiErr := dao.DB().GetOrgByName(ctx, req.OrgName)
-		if apiErr != nil {
-			zap.S().Debugf("GetOrgByName failed, err: %v\n", apiErr.Err)
-			return apiErr
-		}
 
 		groupName = inv.Role
-		if org != nil {
-			orgId = org.Id
-		}
+		orgId = inv.OrgId
 	}
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
@@ -299,8 +292,11 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		return nil, err
 	}
 
-	accessJwtExpiry := time.Now().Add(JwtExpiry).Unix()
+	return generateLoginResponse(&user.User)
+}
 
+func generateLoginResponse(user *model.User) (*model.LoginResponse, error) {
+	accessJwtExpiry := time.Now().Add(JwtExpiry).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.Id,
 		"gid":   user.GroupId,

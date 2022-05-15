@@ -35,6 +35,9 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
+var GOOGLE_CLIENT_ID = GetOrDefaultEnv("GOOGLE_CLIENT_ID", "")
+var GOOGLE_CLIENT_SECRET = GetOrDefaultEnv("GOOGLE_CLIENT_SECRET", "")
+
 const (
 	ServiceName      = "serviceName"
 	HttpRoute        = "httpRoute"

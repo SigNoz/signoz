@@ -350,6 +350,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/oauth", OpenAccess(aH.handleGoogleLogin)).Methods(http.MethodGet)
+	router.HandleFunc("/callback-google", OpenAccess(aH.handleGoogleCallback)).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1292,6 +1295,34 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	// 	Expires:  time.Unix(resp.RefreshJwtExpiry, 0),
 	// 	HttpOnly: true,
 	// })
+
+	aH.writeJSON(w, r, resp)
+}
+
+func (aH *APIHandler) handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
+	// TODO(Ahsan): Properly hanlde the state variable.
+	url := auth.OAuthRedirectURL("google", "randomstate")
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+
+}
+
+func (aH *APIHandler) handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
+
+	state := r.URL.Query()["state"][0]
+	if state != "randomstate" {
+		respondError(w, &model.ApiError{
+			Typ: model.ErrorBadData,
+			Err: errors.New("unknown callback state")}, nil)
+		return
+
+	}
+
+	ctx := context.Background()
+	code := r.URL.Query()["code"][0]
+	resp, err := auth.OAuthRegisterOrLogin(ctx, "google", code)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorUnauthorized, Err: err}, nil)
+	}
 
 	aH.writeJSON(w, r, resp)
 }
