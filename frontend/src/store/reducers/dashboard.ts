@@ -1,3 +1,4 @@
+import GetQueryName from 'lib/query/GetQueryName';
 import {
 	APPLY_SETTINGS_TO_PANEL,
 	CREATE_DEFAULT_WIDGET,
@@ -193,7 +194,26 @@ const dashboard = (
 				};
 			}
 
-			const newQuery = [...selectedWidget.query, { query: '', legend: '' }];
+			const newQuery = [
+				...selectedWidget.query,
+				{
+					name: GetQueryName(selectedWidget.query),
+					formulas: [],
+					promQL: {
+						query: '',
+						legend: '',
+					},
+					clickHouseQuery: '',
+					queryBuilder: {
+						metricName: null,
+						aggregateOperator: null,
+						tagFilters: {
+							items: [],
+						},
+						groupBy: [],
+					},
+				},
+			];
 
 			return {
 				...state,

@@ -2,7 +2,7 @@ import { Button, Divider } from 'antd';
 import Input from 'components/Input';
 import TextToolTip from 'components/TextToolTip';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -18,22 +18,24 @@ import { DeleteQueryProps } from 'types/actions/dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 
+import QueryBuilder from './QueryBuilder';
 import {
 	ButtonContainer,
 	Container,
 	InputContainer,
 	QueryWrapper,
 } from './styles';
+import GetQueryName from './utils/GetQueryName';
 
 function Query({
 	currentIndex,
-	preLegend,
-	preQuery,
+	queryInput,
 	updateQuery,
 	deleteQuery,
+	name,
+	queryCategory,
+	updatedLocalQuery,
 }: QueryProps): JSX.Element {
-	const [promqlQuery, setPromqlQuery] = useState(preQuery);
-	const [legendFormat, setLegendFormat] = useState(preLegend);
 	const { search } = useLocation();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -49,10 +51,10 @@ function Query({
 		return new URLSearchParams(search);
 	}, [search]);
 
-	const getWidget = useCallback(() => {
+	const getWidget = () => {
 		const widgetId = urlQuery.get('widgetId');
 		return widgets?.find((e) => e.id === widgetId);
-	}, [widgets, urlQuery]);
+	};
 
 	const selectedWidget = getWidget() as Widgets;
 
@@ -66,8 +68,7 @@ function Query({
 	const onBlurHandler = (): void => {
 		updateQuery({
 			currentIndex,
-			legend: legendFormat,
-			query: promqlQuery,
+			updatedQuery,
 			widgetId,
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
@@ -79,11 +80,23 @@ function Query({
 			currentIndex,
 		});
 	};
+	const updateQueryData = (updatedQuery) => {
+		updatedLocalQuery({ currentIndex, updatedQuery });
+	};
+	const stageUpdatedQuery = () => {
+		updateQuery({
+			currentIndex,
+			updatedQuery: queryInput,
+			widgetId,
+			yAxisUnit: selectedWidget.yAxisUnit,
+		});
+	};
 
+	if (!queryInput) return null;
 	return (
 		<>
 			<Container>
-				<QueryWrapper>
+				{/* <QueryWrapper>
 					<InputContainer>
 						<Input
 							onChangeHandler={(event): void =>
@@ -117,7 +130,14 @@ function Query({
 							url: 'https://signoz.io/docs/userguide/send-metrics/#related-videos',
 						}}
 					/>
-				</ButtonContainer>
+				</ButtonContainer> */}
+				<QueryBuilder
+					name={name}
+					updateQueryData={updateQueryData}
+					onDelete={onDeleteQueryHandler}
+					queryData={queryInput}
+					queryCategory={queryCategory}
+				/>
 			</Container>
 
 			<Divider />
@@ -146,6 +166,7 @@ interface QueryProps extends DispatchProps {
 	currentIndex: number;
 	preQuery: string;
 	preLegend: string;
+	name: string;
 }
 
 export default connect(null, mapDispatchToProps)(Query);
