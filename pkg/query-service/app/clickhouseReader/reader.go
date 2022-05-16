@@ -124,6 +124,14 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 	}
 }
 
+func (r *ClickHouseReader) GetDB() clickhouse.Conn {
+	return r.db
+}
+
+func (r *ClickHouseReader) GetRelationalDB() *sqlx.DB {
+	return r.localDB
+}
+
 func (r *ClickHouseReader) Start() {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")

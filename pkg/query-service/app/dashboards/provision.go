@@ -55,3 +55,7 @@ func readCurrentDir(dir string) error {
 func LoadDashboardFiles() error {
 	return readCurrentDir("./config/dashboards")
 }
+
+func LoadFromPath(loc string) error {
+	return readCurrentDir(loc)
+}

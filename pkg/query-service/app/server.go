@@ -117,7 +117,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader, dao.DB())
+	apiHandler, err := NewAPIHandler(reader, dao.DB(), "")
 	if err != nil {
 		return nil, err
 	}

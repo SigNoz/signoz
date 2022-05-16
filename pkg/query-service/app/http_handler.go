@@ -42,14 +42,14 @@ type APIHandler struct {
 	// queryParser  queryParser
 	basePath     string
 	apiPrefix    string
-	reader       *Reader
+	reader       Reader
 	relationalDB dao.ModelDao
 	alertManager am.Manager
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
+func NewAPIHandler(reader Reader, relationalDB dao.ModelDao, dashboardLoadPath string) (*APIHandler, error) {
 
 	alertManager := am.New("")
 	aH := &APIHandler{
@@ -59,7 +59,12 @@ func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, erro
 	}
 	aH.ready = aH.testReady
 
-	dashboards.LoadDashboardFiles()
+	if dashboardLoadPath == "" {
+		dashboards.LoadFromPath(dashboardLoadPath)
+	} else {
+		dashboards.LoadDashboardFiles()
+	}
+
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
@@ -369,7 +374,7 @@ func Intersection(a, b []int) (c []int) {
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	alertList, apiErrorObj := (*aH.reader).GetRule(id)
+	alertList, apiErrorObj := aH.reader.GetRule(id)
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
 		return
@@ -379,7 +384,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
 	matchText := r.URL.Query().Get("match")
-	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText)
+	metricNameList, apiErrObj := aH.reader.GetMetricAutocompleteMetricNames(r.Context(), matchText)
 
 	if apiErrObj != nil {
 		respondError(w, apiErrObj, nil)
@@ -396,7 +401,7 @@ func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	tagKeyList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
+	tagKeyList, apiErrObj := aH.reader.GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
 
 	if apiErrObj != nil {
 		respondError(w, apiErrObj, nil)
@@ -418,7 +423,7 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 		return
 	}
 
-	tagValueList, apiErrObj := (*aH.reader).GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
+	tagValueList, apiErrObj := aH.reader.GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
 
 	if apiErrObj != nil {
 		respondError(w, apiErrObj, nil)
@@ -446,7 +451,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 }
 
 func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
-	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
+	alertList, apiErrorObj := aH.reader.ListRulesFromProm()
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
 		return
@@ -589,7 +594,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	apiErrorObj := (*aH.reader).DeleteRule(id)
+	apiErrorObj := aH.reader.DeleteRule(id)
 
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
@@ -609,7 +614,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
+	apiErrorObj := aH.reader.EditRule(postData["data"], id)
 
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
@@ -622,7 +627,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	channel, apiErrorObj := (*aH.reader).GetChannel(id)
+	channel, apiErrorObj := aH.reader.GetChannel(id)
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
 		return
@@ -632,7 +637,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	apiErrorObj := (*aH.reader).DeleteChannel(id)
+	apiErrorObj := aH.reader.DeleteChannel(id)
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
 		return
@@ -641,7 +646,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
-	channels, apiErrorObj := (*aH.reader).GetChannels()
+	channels, apiErrorObj := aH.reader.GetChannels()
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
 		return
@@ -695,7 +700,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := (*aH.reader).EditChannel(receiver, id)
+	_, apiErrorObj := aH.reader.EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
@@ -723,7 +728,7 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, apiErrorObj := (*aH.reader).CreateChannel(receiver)
+	_, apiErrorObj := aH.reader.CreateChannel(receiver)
 
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
@@ -746,7 +751,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
+	apiErrorObj := aH.reader.CreateRule(postData["data"])
 
 	if apiErrorObj != nil {
 		respondError(w, apiErrorObj, nil)
@@ -782,7 +787,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		defer cancel()
 	}
 
-	res, qs, apiError := (*aH.reader).GetQueryRangeResult(ctx, query)
+	res, qs, apiError := aH.reader.GetQueryRangeResult(ctx, query)
 
 	if apiError != nil {
 		respondError(w, apiError, nil)
@@ -836,7 +841,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 	}
 
-	res, qs, apiError := (*aH.reader).GetInstantQueryMetricsResult(ctx, queryParams)
+	res, qs, apiError := aH.reader.GetInstantQueryMetricsResult(ctx, queryParams)
 
 	if apiError != nil {
 		respondError(w, apiError, nil)
@@ -904,7 +909,7 @@ func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTopEndpoints(r.Context(), query)
+	result, apiErr := aH.reader.GetTopEndpoints(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -921,7 +926,7 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := (*aH.reader).GetUsage(r.Context(), query)
+	result, err := aH.reader.GetUsage(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -937,7 +942,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetServiceOverview(r.Context(), query)
+	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -953,7 +958,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -974,7 +979,7 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceMapDependencies(r.Context(), query)
+	result, err := aH.reader.GetServiceMapDependencies(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -984,7 +989,7 @@ func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Requ
 
 func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
-	result, err := (*aH.reader).GetServicesList(r.Context())
+	result, err := aH.reader.GetServicesList(r.Context())
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -998,7 +1003,7 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
 
-	result, err := (*aH.reader).SearchTraces(r.Context(), traceId)
+	result, err := aH.reader.SearchTraces(r.Context(), traceId)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1013,7 +1018,7 @@ func (aH *APIHandler) getErrors(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrors(r.Context(), query)
+	result, apiErr := aH.reader.GetErrors(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1028,7 +1033,7 @@ func (aH *APIHandler) getErrorForId(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForId(r.Context(), query)
+	result, apiErr := aH.reader.GetErrorForId(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1043,7 +1048,7 @@ func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForType(r.Context(), query)
+	result, apiErr := aH.reader.GetErrorForType(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1059,7 +1064,7 @@ func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetSpanFilters(r.Context(), query)
+	result, apiErr := aH.reader.GetSpanFilters(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1075,7 +1080,7 @@ func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetFilteredSpans(r.Context(), query)
+	result, apiErr := aH.reader.GetFilteredSpans(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1091,7 +1096,7 @@ func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetFilteredSpansAggregates(r.Context(), query)
+	result, apiErr := aH.reader.GetFilteredSpansAggregates(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1107,7 +1112,7 @@ func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTagFilters(r.Context(), query)
+	result, apiErr := aH.reader.GetTagFilters(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1123,7 +1128,7 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTagValues(r.Context(), query)
+	result, apiErr := aH.reader.GetTagValues(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1139,7 +1144,7 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Context is not used here as TTL is long duration operation which needs to converted to async
-	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
+	result, apiErr := aH.reader.SetTTL(context.Background(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1154,7 +1159,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTTL(r.Context(), ttlParams)
+	result, apiErr := aH.reader.GetTTL(r.Context(), ttlParams)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1163,7 +1168,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
-	result, apiErr := (*aH.reader).GetDisks(context.Background())
+	result, apiErr := aH.reader.GetDisks(context.Background())
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1603,7 +1608,7 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 // 		return
 // 	}
 
-// 	result, err := (*aH.reader).GetApplicationPercentiles(context.Background(), query)
+// 	result, err := aH.reader.GetApplicationPercentiles(context.Background(), query)
 // 	if aH.handleError(w, err, http.StatusBadRequest) {
 // 		return
 // 	}
