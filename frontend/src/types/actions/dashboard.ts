@@ -41,7 +41,7 @@ export const DELETE_WIDGET_ERROR = 'DELETE_WIDGET_ERROR';
 export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
 export const DELETE_QUERY = 'DELETE_QUERY';
-
+export const UPDATE_QUERY_TYPE = 'UPDATE_QUERY_TYPE';
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -172,6 +172,14 @@ interface DeleteQuery {
 	payload: DeleteQueryProps;
 }
 
+interface UpdateQueryType {
+	type: typeof UPDATE_QUERY_TYPE;
+	payload: {
+		queryType: number;
+		widgetId: string;
+	};
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -191,4 +199,5 @@ export type DashboardActions =
 	| WidgetDeleteSuccess
 	| IsAddWidget
 	| UpdateQuery
-	| DeleteQuery;
+	| DeleteQuery
+	| UpdateQueryType;

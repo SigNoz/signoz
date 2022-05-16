@@ -160,6 +160,7 @@ function NewWidget({
 		if (selectedWidget?.id.length !== 0) {
 			getQueryResults({
 				query: selectedWidget?.query || [],
+				queryType: selectedWidget?.queryType,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,

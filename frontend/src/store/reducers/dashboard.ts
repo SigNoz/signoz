@@ -1,3 +1,4 @@
+import GetQueryName from 'lib/query/GetQueryName';
 import {
 	APPLY_SETTINGS_TO_PANEL,
 	CREATE_DEFAULT_WIDGET,
@@ -18,6 +19,7 @@ import {
 	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
 	UPDATE_QUERY,
+	UPDATE_QUERY_TYPE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
 import InitialValueTypes from 'types/reducer/dashboards';
@@ -133,7 +135,6 @@ const dashboard = (
 		// NOTE: this action will will be dispatched in the single dashboard only
 		case CREATE_DEFAULT_WIDGET: {
 			const [selectedDashboard] = state.dashboards;
-
 			const { data } = selectedDashboard;
 			const { widgets } = data;
 			const defaultWidget = action.payload;
@@ -193,7 +194,27 @@ const dashboard = (
 				};
 			}
 
-			const newQuery = [...selectedWidget.query, { query: '', legend: '' }];
+			const newQuery = [
+				...selectedWidget.query,
+				{
+					name: GetQueryName(selectedWidget.query),
+					disabled: false,
+					promQL: {
+						query: '',
+						legend: '',
+					},
+					clickHouseQuery: '',
+					queryBuilder: {
+						metricName: null,
+						aggregateOperator: null,
+						tagFilters: {
+							op: 'AND',
+							items: [],
+						},
+						groupBy: [],
+					},
+				},
+			];
 
 			return {
 				...state,
@@ -428,6 +449,44 @@ const dashboard = (
 									...selectedWidget,
 									query,
 									yAxisUnit,
+								},
+								...afterWidget,
+							],
+						},
+					},
+				],
+			};
+		}
+		case UPDATE_QUERY_TYPE: {
+			const { widgetId, queryType } = action.payload;
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
+			const { widgets = [] } = data;
+
+			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
+
+			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
+			const afterWidget =
+				widgets?.slice(
+					selectedWidgetIndex + 1, // this is never undefined
+					widgets.length,
+				) || [];
+
+			const selectedWidget = widgets[selectedWidgetIndex];
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...preWidget,
+								{
+									...selectedWidget,
+									queryType,
 								},
 								...afterWidget,
 							],

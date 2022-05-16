@@ -16,8 +16,20 @@ export const GetQueryResults = (
 	props: GetQueryResultsProps,
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
+		console.log('QQQ', props, JSON.stringify(props));
+		const generatedQueryPayload = {}
+		props.query.map((query) => {
+			generatedQueryPayload[query.name] = query
+			query["rawQuery"] = query.clickHouseQuery
+		});
+		console.log({generatedQueryPayload})
 		try {
-			const queryData = props.query;
+			const queryData = [
+				{
+					query: 'system_cpu_load_average_5m',
+					legend: '',
+				},
+			];
 
 			const { globalTime } = store.getState();
 

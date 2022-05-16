@@ -2,6 +2,7 @@ import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
+import GetQueryName from 'lib/query/GetQueryName';
 import { Layout } from 'react-grid-layout';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
@@ -27,10 +28,27 @@ export const updateDashboard = async ({
 					nullZeroValues: '',
 					opacity: '',
 					panelTypes: graphType,
+					queryType: 0,
+					formulas: [],
 					query: [
 						{
-							query: '',
-							legend: '',
+							name: GetQueryName([]),
+							disabled: false,
+							
+							promQL: {
+								query: '',
+								legend: '',
+							},
+							clickHouseQuery: '',
+							queryBuilder: {
+								metricName: null,
+								aggregateOperator: null,
+								tagFilters: {
+									op: 'AND',
+									items: [],
+								},
+								groupBy: [],
+							},
 						},
 					],
 					queryData: {

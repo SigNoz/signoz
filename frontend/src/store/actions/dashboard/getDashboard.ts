@@ -1,5 +1,6 @@
 import getDashboard from 'api/dashboard/get';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import GetQueryName from 'lib/query/GetQueryName';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
@@ -37,6 +38,7 @@ export const GetDashboard = ({
 							panelTypes: graphType || 'TIME_SERIES',
 							timePreferance: 'GLOBAL_TIME',
 							title: '',
+							queryType: 0,
 							queryData: {
 								data: [],
 								error: false,
@@ -45,6 +47,7 @@ export const GetDashboard = ({
 							},
 							query: [
 								{
+									name: GetQueryName([]),
 									query: '',
 									legend: '',
 								},
