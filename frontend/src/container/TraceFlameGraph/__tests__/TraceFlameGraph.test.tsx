@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 
-import { expect } from '@jest/globals';
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import TraceFlameGraph from 'container/TraceFlameGraph';

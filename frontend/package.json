@@ -9,13 +9,13 @@
 		"prettify": "prettier --write .",
 		"lint": "eslint ./src",
 		"lint:fix": "eslint ./src --fix",
-		"cypress:open": "cypress open",
-		"cypress:run": "cypress run",
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
 		"postinstall": "yarn husky:configure",
-		"husky:configure": "cd .. && husky install frontend/.husky"
+		"husky:configure": "cd .. && husky install frontend/.husky",
+		"playwright": "playwright test --config=./playwright.config.ts",
+		"playwright:local:debug": "PWDEBUG=1 yarn playwright"
 	},
 	"engines": {
 		"node": ">=12.13.0"
@@ -46,7 +46,6 @@
 		"cross-env": "^7.0.3",
 		"css-loader": "4.3.0",
 		"css-minimizer-webpack-plugin": "^3.2.0",
-		"cypress": "^8.3.0",
 		"d3": "^6.2.0",
 		"d3-flame-graph": "^3.1.1",
 		"d3-tip": "^0.9.1",
@@ -110,7 +109,7 @@
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.12.17",
 		"@jest/globals": "^27.5.1",
-		"@testing-library/cypress": "^8.0.0",
+		"@playwright/test": "^1.22.0",
 		"@testing-library/react-hooks": "^7.0.2",
 		"@types/color": "^3.0.3",
 		"@types/compression-webpack-plugin": "^9.0.0",
@@ -155,6 +154,7 @@
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"eslint-plugin-sonarjs": "^0.12.0",
 		"husky": "^7.0.4",
+		"jest-playwright-preset": "^1.7.0",
 		"less-plugin-npm-import": "^2.1.0",
 		"lint-staged": "^12.3.7",
 		"portfinder-sync": "^0.0.2",

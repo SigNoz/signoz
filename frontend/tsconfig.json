@@ -30,6 +30,7 @@
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
-		"./cypress"
+		"./tests",
+		"playwright.config.ts"
 	]
 }
