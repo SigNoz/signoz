@@ -15,7 +15,7 @@
 		"postinstall": "yarn husky:configure",
 		"husky:configure": "cd .. && husky install frontend/.husky",
 		"playwright": "playwright test --config=./playwright.config.ts",
-		"playwright:local:debug": "PWDEBUG=1 yarn playwright"
+		"playwright:local:debug": "PWDEBUG=console yarn playwright"
 	},
 	"engines": {
 		"node": ">=12.13.0"
