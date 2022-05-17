@@ -14,6 +14,7 @@ import AppReducer from 'types/reducer/app';
 
 import { InputContainer, QueryBuilderWrapper, QueryWrapper } from '../styles';
 import { TQueryCategories } from '../types';
+import MetricTagKeyFilter from './MetricTagKeyFilter';
 import { AggregateFunctions } from './Options';
 
 const { Option } = Select;
@@ -134,21 +135,7 @@ function QueryBuilder({
 										>
 											<Option value="WHERE">WHERE</Option>
 										</Select>
-										<Select
-											showSearch
-											style={{ flex: 1 }}
-											defaultActiveFirstOption={false}
-											showArrow={false}
-											filterOption={false}
-											notFoundContent={null}
-										>
-											<Option value="jack">Jack</Option>
-											<Option value="lucy">Lucy</Option>
-											<Option value="disabled" disabled>
-												Disabled
-											</Option>
-											<Option value="Yiminghe">yiminghe</Option>
-										</Select>
+										<MetricTagKeyFilter />
 									</Row>
 									<Row>
 										<Select
@@ -184,7 +171,7 @@ function QueryBuilder({
 							height="200px"
 							onChange={handleClickhouseQueryChange}
 							value={queryData.clickHouseQuery}
-						// options={options}
+							// options={options}
 						/>
 					) : queryCategory === 'promql' ? (
 						<>
@@ -196,7 +183,7 @@ function QueryBuilder({
 									size="middle"
 									defaultValue={queryData.promQL.query}
 									addonBefore="PromQL Query"
-								// onBlur={(): void => onBlurHandler()}
+									// onBlur={(): void => onBlurHandler()}
 								/>
 							</InputContainer>
 
@@ -208,7 +195,7 @@ function QueryBuilder({
 									size="middle"
 									defaultValue={queryData.promQL.legend}
 									addonBefore="Legend Format"
-								// onBlur={(): void => onBlurHandler()}
+									// onBlur={(): void => onBlurHandler()}
 								/>
 							</InputContainer>
 						</>
