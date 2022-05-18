@@ -19,25 +19,71 @@ type QueryRangeParams struct {
 }
 
 type MetricQuery struct {
-	MetricName        string     `json:"metricName"`
-	TagFilters        *FilterSet `json:"tagFilters,omitempty"`
-	GroupingTags      []string   `json:"groupBy,omitempty"`
-	AggregateOperator string     `json:"aggregateOperator,omitempty"`
-	Percentile        float64    `json:"percentile,omitempty"`
+	QueryName         string            `json:"queryName"`
+	MetricName        string            `json:"metricName"`
+	TagFilters        *FilterSet        `json:"tagFilters,omitempty"`
+	GroupingTags      []string          `json:"groupBy,omitempty"`
+	AggregateOperator AggregateOperator `json:"aggregateOperator,omitempty"`
+}
+
+type QueryType int
+
+const (
+	QUERY_BUILDER QueryType = iota
+	CLICKHOUSE
+	PROM
+)
+
+type Prom struct {
+	Query string `json:"query"`
+	Stats string `json:"stats"`
 }
 
 type CompositeMetricQuery struct {
-	BuildMetricQueries []*MetricQuery `json:"buildMetricQueries"`
-	Formulas           []string       `json:"formulas,omitempty"`
-	RawQuery           string         `json:"rawQuery,omitempty"`
+	BuildMetricQueries map[string]*MetricQuery `json:"buildMetricQueries"`
+	Formulas           []string                `json:"formulas,omitempty"`
+	RawQuery           string                  `json:"rawQuery,omitempty"`
+	Prom               Prom                    `json:"prom,omitempty"`
+	QueryType          QueryType               `json:"queryType,omitempty"`
 }
 
+type AggregateOperator int
+
+const (
+	COUNT AggregateOperator = iota
+	COUNT_DISTINCT
+	SUM
+	AVG
+	MAX
+	MIN
+	P05
+	P10
+	P20
+	P25
+	P50
+	P75
+	P90
+	P95
+	P99
+	RATE_SUM
+	RATE_AVG
+	RATE_MAX
+	RATE_MIN
+)
+
+type DataSource int
+
+const (
+	METRICS DataSource = iota
+	TRACES
+	LOGS
+)
+
 type QueryRangeParamsV2 struct {
+	DataSource           DataSource            `json:"dataSource,omitempty"`
 	Start                int64                 `json:"start,omitempty"`
 	End                  int64                 `json:"end,omitempty"`
-	Step                 string                `json:"step,omitempty"`
-	Query                string                `json:"query,omitempty"` // legacy
-	Stats                string                `json:"stats,omitempty"` // legacy
+	Step                 int64                 `json:"step,omitempty"`
 	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery,omitempty"`
 }
 

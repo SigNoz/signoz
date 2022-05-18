@@ -12,12 +12,12 @@ func TestBuildQuery(t *testing.T) {
 		q := &model.QueryRangeParamsV2{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  "1 HOUR",
+			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: []*model.MetricQuery{
-					{
+				BuildMetricQueries: map[string]*model.MetricQuery{
+					"a": {
 						MetricName:        "name",
-						AggregateOperator: "rate",
+						AggregateOperator: model.RATE_MAX,
 					},
 				},
 			},
@@ -34,15 +34,15 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		q := &model.QueryRangeParamsV2{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  "1 HOUR",
+			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: []*model.MetricQuery{
-					{
+				BuildMetricQueries: map[string]*model.MetricQuery{
+					"a": {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
 							{Key: "a", Value: "b", Operation: "neq"},
 						}},
-						AggregateOperator: "rate",
+						AggregateOperator: model.RATE_MAX,
 					},
 				},
 			},
@@ -60,19 +60,19 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		q := &model.QueryRangeParamsV2{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  "1 HOUR",
+			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: []*model.MetricQuery{
-					{
+				BuildMetricQueries: map[string]*model.MetricQuery{
+					"a": {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
 							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
 						}},
-						AggregateOperator: "rate",
+						AggregateOperator: model.RATE_AVG,
 					},
-					{
+					"b": {
 						MetricName:        "name2",
-						AggregateOperator: "rate",
+						AggregateOperator: model.RATE_MAX,
 					},
 				},
 			},
@@ -89,19 +89,19 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		q := &model.QueryRangeParamsV2{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  "1 HOUR",
+			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: []*model.MetricQuery{
-					{
+				BuildMetricQueries: map[string]*model.MetricQuery{
+					"a": {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
 							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
 						}},
-						AggregateOperator: "rate",
+						AggregateOperator: model.RATE_MAX,
 					},
-					{
+					"b": {
 						MetricName:        "name2",
-						AggregateOperator: "rate",
+						AggregateOperator: model.RATE_AVG,
 					},
 				},
 				Formulas: []string{"a/b"},

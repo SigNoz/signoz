@@ -2618,20 +2618,18 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	return &tagValueList, nil
 }
 
-func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError) {
+func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError) {
 
 	var query string
 	var err error
 	var metricNameList []string
 	var rows driver.Rows
 
-	if len(matchText) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE $1;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
-	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query)
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE $1", signozMetricDBName, signozTSTableName)
+	if limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", limit)
 	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
 
 	if err != nil {
 		zap.S().Error(err)
@@ -2702,7 +2700,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	}
 
 	var result []*[]model.MetricResult
-	for _, v := range resultMap {
+	for key := range resultMap {
+		v := resultMap[key]
 		result = append(result, &v)
 	}
 	return result, nil

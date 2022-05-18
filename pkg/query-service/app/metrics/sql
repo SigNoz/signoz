@@ -1,0 +1,246 @@
+SELECT fingerprint, timestamp_ms, value
+FROM signoz_metrics.samples
+INNER JOIN signoz_metrics.time_series USING fingerprint
+WHERE timestamp_ms >= 1645089979785 AND timestamp_ms <= 1645183579785
+ORDER BY fingerprint, timestamp_ms;
+
+
+SELECT fingerprint, timestamp_ms, value
+FROM signoz_metrics.samples
+INNER JOIN (
+    SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' settings min_bytes_to_use_direct_io=1;
+) as filtered_time_series
+USING fingerprint
+WHERE timestamp_ms >= 1652325807762 AND timestamp_ms <= 1652423869525
+ORDER BY fingerprint, timestamp_ms;
+
+
+
+
+CREATE TABLE IF NOT EXISTS signoz_metrics.time_series_with_metric_name (
+                date Date Codec(DoubleDelta, LZ4),
+                metric_name LowCardinality(String) Codec(ZSTD(1)),
+                fingerprint UInt64 Codec(DoubleDelta, LZ4),
+                labels String Codec(ZSTD(5))
+                )
+		ENGINE = ReplacingMergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+CREATE TABLE IF NOT EXISTS signoz_metrics.time_series (
+			date Date Codec(DoubleDelta, LZ4),
+			fingerprint UInt64 Codec(DoubleDelta, LZ4),
+			labels String Codec(ZSTD(5))
+		)
+		ENGINE = ReplacingMergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+CREATE TABLE IF NOT EXISTS signoz_metrics.time_series_with_merge (
+			date Date Codec(DoubleDelta, LZ4),
+			fingerprint UInt64 Codec(DoubleDelta, LZ4),
+			labels String Codec(ZSTD(5))
+		)
+		ENGINE = MergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+
+CREATE TABLE IF NOT EXISTS signoz_metrics.samples (
+			fingerprint UInt64 Codec(DoubleDelta, LZ4),
+			timestamp_ms Int64 Codec(DoubleDelta, LZ4),
+			value Float64 Codec(Gorilla, LZ4)
+		)
+		ENGINE = MergeTree
+			PARTITION BY toDate(timestamp_ms / 1000)
+			ORDER BY (fingerprint, timestamp_ms)
+
+cat time_series.txt | ./clickhouse client --host localhost --port 9000 --query="INSERT INTO signoz_metrics.time_series FORMAT TabSeparated";
+
+
+
+INSERT INTO signoz_metrics.samples SELECT * FROM s3('', 'TabSeparatedWithNames') LIMIT 1000000;
+
+
+
+select *
+from s3('s3://signoz-benchmarks/signoz_metrics/10M-time_series.csv.gz', 'AKIARKCF5OX3IWQUAGPF', 'JkgfrVwFgf7crjFv806Zod9C4TlyoMNDnfNoJmjl', 'CSV', 'date Date, fingerprint UInt64, labels String') LIMIT 10
+
+
+select
+                    parts.*,
+                    columns.compressed_size,
+                    columns.uncompressed_size,
+                    columns.ratio
+                from (
+                    select database,
+                        table,
+                        formatReadableSize(sum(data_uncompressed_bytes))          AS uncompressed_size,
+                        formatReadableSize(sum(data_compressed_bytes))            AS compressed_size,
+                        sum(data_compressed_bytes) / sum(data_uncompressed_bytes) AS ratio
+                    from system.columns
+                    group by database, table
+                ) columns right join (
+                    select database,
+                           table,
+                           sum(rows)                                            as rows,
+                           max(modification_time)                               as latest_modification,
+                           formatReadableSize(sum(bytes))                       as disk_size,
+                           formatReadableSize(sum(primary_key_bytes_in_memory)) as primary_keys_size,
+                           any(engine)                                          as engine,
+                           sum(bytes)                                           as bytes_size
+                    from system.parts
+                    where active
+                    group by database, table
+                ) parts on ( columns.database = parts.database and columns.table = parts.table )
+                order by parts.bytes_size desc;
+
+
+
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' settings min_bytes_to_use_direct_io=1;
+
+SELECT fingerprint, labels from signoz_metrics.time_series_with_metric_name WHERE metric_name = 'node_memory_VmallocChunk_bytes' settings min_bytes_to_use_direct_io=1;
+
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'host_number') = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from signoz_metrics.time_series_with_metric_name WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'host_number') = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'service_name') = 'node_exporter' settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from signoz_metrics.time_series_with_metric_name WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'service_name') = 'node_exporter' settings min_bytes_to_use_direct_io=1;
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND match(JSONExtractString(labels, 'port'), '91*') settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from signoz_metrics.time_series_with_metric_name WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND match(JSONExtractString(labels, 'port'), '91*') settings min_bytes_to_use_direct_io=1;
+
+DESCRIBE s3('https://signoz-benchmarks.s3.amazonaws.com/signoz_metrics/10M-time_series.csv.gz', 'AKIARKCF5OX3NGN6MO6V', 'mGIVv2fcKh1h5qliF0EjrIsV5UiwI1YjQfxA+/ea', 'JSONEachRow') SETTINGS input_format_max_rows_to_read_for_schema_inference=100;
+
+SET allow_experimental_object_type=1;
+
+CREATE TABLE IF NOT EXISTS signoz_metrics.time_series_with_json (
+                date Date Codec(DoubleDelta, LZ4),
+                metric_name LowCardinality(String) Codec(ZSTD(1)),
+                fingerprint UInt64 Codec(DoubleDelta, LZ4),
+                labels JSON
+                )
+		ENGINE = ReplacingMergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+SET allow_experimental_object_type=1;
+
+CREATE TABLE IF NOT EXISTS signoz_metrics.time_series_with_name_and_json (
+                date Date Codec(DoubleDelta, LZ4),
+                metric_name LowCardinality(String) Codec(ZSTD(1)),
+                fingerprint UInt64 Codec(DoubleDelta, LZ4),
+                labels JSON
+                )
+		ENGINE = ReplacingMergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+CREATE TABLE IF NOT EXISTS time_series_with_name_and_json_with_merge (
+                date Date Codec(DoubleDelta, LZ4),
+                fingerprint UInt64 Codec(DoubleDelta, LZ4),
+                labels JSON
+                )
+		ENGINE = MergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+CREATE TABLE IF NOT EXISTS time_series_with_name_and_json_with_merge_zstd (
+                date Date Codec(DoubleDelta, LZ4),
+                fingerprint UInt64 Codec(DoubleDelta, LZ4),
+                labels JSON CODEC(ZSTD)
+                )
+		ENGINE = MergeTree
+			PARTITION BY date
+			ORDER BY fingerprint
+
+
+CREATE TABLE IF NOT EXISTS time_series_json (
+                date Date Codec(DoubleDelta, LZ4),
+                fingerprint UInt64 Codec(DoubleDelta, LZ4),
+                labels JSON CODEC(ZSTD)
+                )
+		ENGINE = MergeTree
+			PARTITION BY date
+			ORDER BY fingerprint, labels
+
+
+
+
+INSERT INTO signoz_metrics.time_series_with_name_and_json
+SELECT *
+FROM signoz_metrics.time_series_with_json
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' settings min_bytes_to_use_direct_io=1;
+
+SELECT fingerprint, labels from signoz_metrics.time_series_with_name_and_json WHERE metric_name = 'node_memory_VmallocChunk_bytes' settings min_bytes_to_use_direct_io=1;
+
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'host_number') = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from signoz_metrics.time_series_with_name_and_json WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND labels.host_number = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'service_name') = 'node_exporter' settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from signoz_metrics.time_series_with_name_and_json WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND labels.service_name = 'node_exporter' settings min_bytes_to_use_direct_io=1;
+
+SELECT fingerprint, labels from signoz_metrics.time_series WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND match(JSONExtractString(labels, 'port'), '91*') settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from signoz_metrics.time_series_with_name_and_json WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND match(labels.port, '91*') settings min_bytes_to_use_direct_io=1;
+
+
+SELECT fingerprint, labels from signoz_metrics.time_series_with_name_and_json WHERE metric_name = 'node_memory_VmallocChunk_bytes' AND labels.host_number = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+
+
+SELECT
+    fingerprint,
+    labels
+FROM signoz_metrics.time_series
+WHERE (JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes') AND
+      (JSONExtractString(labels, 'host_number') = 'cfg_464') AND
+      (JSONExtractString(labels, 'collector') != '') AND
+      (JSONExtractString(labels, 'scheme') = 'http') AND
+      (match(JSONExtractString(labels, 'thread_state'), '*'))
+SETTINGS min_bytes_to_use_direct_io = 1
+
+
+SELECT
+    fingerprint,
+    labels
+FROM signoz_metrics.time_series_with_name_and_json
+WHERE (labels.__name__ = 'node_memory_VmallocChunk_bytes') AND
+      (labels.host_number = 'cfg_464') AND
+      (labels.collector != '') AND
+      (labels.scheme = 'http') AND
+      (match(labels.thread_state, '*'))
+SETTINGS min_bytes_to_use_direct_io = 1
+
+
+select id, row, JSONExtractString(row, 'protocol') as protocol, JSONExtractString(row, 'method') as method from basejson where protocol='HTTP/1.0' and method='PUT' group by id,row settings min_bytes_to_use_direct_io=1;
+
+1667505 rows in set. Elapsed: 13.869 sec. Processed 30.00 million rows, 8.66 GB (2.16 million rows/s., 624.34 MB/s.)
+
+select id, row from json WHERE row.protocol = 'HTTP/1.0' and row.method = 'PUT' group by id, row settings min_bytes_to_use_direct_io=1;
+
+
+INSERT INTO time_series_with_name_and_json_with_merge_zstd
+SELECT date, fingerprint, labels
+FROM s3('https://signoz-benchmarks.s3.amazonaws.com/signoz_metrics/10M-time_series.csv.gz', 'AKIARKCF5OX3NGN6MO6V', 'mGIVv2fcKh1h5qliF0EjrIsV5UiwI1YjQfxA+/ea', 'CSVWithNames', 'date Date, fingerprint UInt64, labels String', 'gzip');
+
+INSERT INTO time_series_with_merge
+SELECT *
+FROM s3('https://signoz-benchmarks.s3.amazonaws.com/signoz_metrics/10M-time_series.csv.gz', 'AKIARKCF5OX3NGN6MO6V', 'mGIVv2fcKh1h5qliF0EjrIsV5UiwI1YjQfxA+/ea', 'CSVWithNames', 'date Date, fingerprint UInt64, labels String', 'gzip');
+
+
+
+SELECT fingerprint, labels from time_series_with_merge WHERE JSONExtractString(labels, '__name__') = 'node_memory_VmallocChunk_bytes' AND JSONExtractString(labels, 'host_number') = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+ 
+SELECT fingerprint, labels from time_series_with_name_and_json_with_merge WHERE labels.__name__ = 'node_memory_VmallocChunk_bytes' AND labels.host_number = 'cfg_464' settings min_bytes_to_use_direct_io=1;
+
+
+SELECT DISTINCT(JSONExtractString(labels, '__name__')) from signoz_metrics.time_series WHERE like(JSONExtractString(labels, '__name__'), 'signoz_%');

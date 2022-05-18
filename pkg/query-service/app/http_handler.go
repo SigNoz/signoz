@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
@@ -381,7 +382,12 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
 	matchText := r.URL.Query().Get("match")
-	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText)
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 0
+	}
+
+	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText, limit)
 
 	if apiErrObj != nil {
 		respondError(w, apiErrObj, nil)
@@ -439,9 +445,22 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
+		query := metricsQueryRangeParams.CompositeMetricQuery.Prom.Query
+		stats := metricsQueryRangeParams.CompositeMetricQuery.Prom.Stats
+		q := r.URL.Query()
+		q.Add("start", strconv.Itoa(int(metricsQueryRangeParams.Start/1000.0)))
+		q.Add("end", strconv.Itoa(int(metricsQueryRangeParams.End/1000.0)))
+		q.Add("step", strconv.Itoa(int(metricsQueryRangeParams.Step)))
+		q.Add("query", query)
+		q.Add("stats", stats)
+		r.URL.RawQuery = q.Encode()
+		(*aH).queryRangeMetrics(w, r)
+		return
+	}
+
 	// build queries
 	chQuries := metrics.BuildQueries(metricsQueryRangeParams, "time_series")
-	fmt.Println(chQuries)
 	if chQuries.Err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: chQuries.Err}, nil)
 	}
