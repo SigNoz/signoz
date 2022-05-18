@@ -1,4 +1,4 @@
-import { Button, Table, Tooltip } from 'antd';
+import { Table, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -51,17 +51,12 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-
-			// eslint-disable-next-line react/display-name
+			ellipsis: true,
 			render: (text: string): JSX.Element => (
 				<Tooltip placement="topLeft" title={text}>
-					<Button
-						className="topEndpointsButton"
-						type="link"
-						onClick={(): void => handleOnClick(text)}
-					>
+					<Typography.Link onClick={(): void => handleOnClick(text)}>
 						{text}
-					</Button>
+					</Typography.Link>
 				</Tooltip>
 			),
 		},
@@ -101,9 +96,9 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 			title={(): string => {
 				return 'Top Endpoints';
 			}}
+			tableLayout="fixed"
 			dataSource={data}
 			columns={columns}
-			pagination={false}
 			rowKey="name"
 		/>
 	);
