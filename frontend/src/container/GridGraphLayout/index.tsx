@@ -28,6 +28,7 @@ function GridGraph(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [saveLayoutState, setSaveLayoutState] = useState<State>({
 		loading: false,
 		error: false,
@@ -251,8 +252,13 @@ function GridGraph(): JSX.Element {
 					const isQueryType = type === 'VALUE';
 
 					return (
-						<CardContainer key={rest.i} data-grid={rest}>
-							<Card isQueryType={isQueryType}>
+						<CardContainer
+							isQueryType={isQueryType}
+							isDarkMode={isDarkMode}
+							key={rest.i}
+							data-grid={rest}
+						>
+							<Card isDarkMode={isDarkMode} isQueryType={isQueryType}>
 								<Component />
 							</Card>
 						</CardContainer>
