@@ -1,5 +1,5 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { Menu, Typography } from 'antd';
+import { Menu, Space, Tag, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -96,13 +96,21 @@ function SideNav(): JSX.Element {
 				selectedKeys={[pathname]}
 				mode="inline"
 			>
-				{menus.map(({ to, Icon, name }) => (
+				{menus.map(({ to, Icon, name, tags }) => (
 					<Menu.Item
 						key={to}
 						icon={<Icon />}
 						onClick={(): void => onClickHandler(to)}
 					>
-						<Typography>{name}</Typography>
+						<Space>
+							<Typography>{name}</Typography>
+							{tags &&
+								tags.map((e) => (
+									<Tag color="blue" key={e}>
+										{e}
+									</Tag>
+								))}
+						</Space>
 					</Menu.Item>
 				))}
 				{sidebar.map((props, index) => (
