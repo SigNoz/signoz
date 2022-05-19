@@ -77,6 +77,9 @@ function ImportJSON({
 							...queryData,
 							queryData: [],
 						})),
+						error: false,
+						errorMessage: '',
+						loading: false,
 					},
 				})),
 			};
