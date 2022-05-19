@@ -1,75 +1,88 @@
-package sqlite
+package postgres
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+	"go.signoz.io/query-service/config"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
-type ModelDaoSqlite struct {
+type modelDao struct {
 	db *sqlx.DB
 }
 
-func InitConn(dataSourceName string) (*sqlx.DB, error) {
-	var err error
+func InitConn(pgconf *config.PGConfig) (*sqlx.DB, error) {
 
-	db, err := sqlx.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to Open sqlite3 DB")
+	psqlInfo := fmt.Sprintf("dbname=%s user=%s host=%s port=%d ", pgconf.DBname, pgconf.User, pgconf.Host, pgconf.Port)
+	if pgconf.Password != "" {
+		psqlInfo = fmt.Sprintf("%s password=%s", psqlInfo, pgconf.Password)
 	}
-	db.SetMaxOpenConns(10)
 
-	return db, err
+	if pgconf.SSLmode != "" {
+		psqlInfo = fmt.Sprintf("%s sslmode=%s", psqlInfo, pgconf.SSLmode)
+	} else {
+		psqlInfo = fmt.Sprintf("%s sslmode=disable", psqlInfo)
+	}
+
+	db, err := sqlx.Open("postgres", psqlInfo)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(db *sqlx.DB) (*ModelDaoSqlite, error) {
+func InitDB(db *sqlx.DB) (*modelDao, error) {
 
 	table_schema := `
-		PRAGMA foreign_keys = ON;
 
-		CREATE TABLE IF NOT EXISTS invites (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			email TEXT NOT NULL UNIQUE,
-			token TEXT NOT NULL,
-			created_at INTEGER NOT NULL,
-			role TEXT NOT NULL,
-			org_id TEXT NOT NULL,
-			FOREIGN KEY(org_id) REFERENCES organizations(id)
-		);
 		CREATE TABLE IF NOT EXISTS organizations (
-			id TEXT PRIMARY KEY,
+			id UUID PRIMARY KEY,
 			name TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
 			is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
 			has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
 		);
+
+		CREATE TABLE IF NOT EXISTS invites (
+			id SERIAL PRIMARY KEY,
+			name TEXT NOT NULL,
+			email TEXT NOT NULL UNIQUE,
+			token TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			role TEXT NOT NULL,
+			org_id UUID NOT NULL,
+			FOREIGN KEY(org_id) REFERENCES organizations(id)
+		);
+
+		CREATE TABLE IF NOT EXISTS groups (
+			id UUID PRIMARY KEY,
+			name TEXT NOT NULL UNIQUE
+		);
+		
 		CREATE TABLE IF NOT EXISTS users (
-			id TEXT PRIMARY KEY,
+			id UUID PRIMARY KEY,
 			name TEXT NOT NULL,
 			email TEXT NOT NULL UNIQUE,
 			password TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
 			profile_picture_url TEXT,
-			group_id TEXT NOT NULL,
-			org_id TEXT NOT NULL,
+			group_id UUID NOT NULL,
+			org_id UUID NOT NULL,
 			FOREIGN KEY(group_id) REFERENCES groups(id),
 			FOREIGN KEY(org_id) REFERENCES organizations(id)
 		);
-		CREATE TABLE IF NOT EXISTS groups (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL UNIQUE
-		);
+	
 		CREATE TABLE IF NOT EXISTS reset_password_request (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id TEXT NOT NULL,
+			id SERIAL PRIMARY KEY ,
+			user_id UUID NOT NULL,
 			token TEXT NOT NULL,
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
@@ -80,7 +93,7 @@ func InitDB(db *sqlx.DB) (*ModelDaoSqlite, error) {
 		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
 	}
 
-	mds := &ModelDaoSqlite{db: db}
+	mds := &modelDao{db: db}
 
 	ctx := context.Background()
 	if err := mds.initializeOrgPreferences(ctx); err != nil {
@@ -98,7 +111,7 @@ func InitDB(db *sqlx.DB) (*ModelDaoSqlite, error) {
 // of in-memory telemetry for each of the org, having their own settings. As of now, we only
 // have one org so this method relies on the settings of this org to initialize the telemetry etc.
 // TODO(Ahsan): Make it multi-tenant when we move to a system with multiple orgs.
-func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
+func (mds *modelDao) initializeOrgPreferences(ctx context.Context) error {
 
 	// set anonymous setting as default in case of any failures to fetch UserPreference in below section
 	telemetry.GetInstance().SetTelemetryAnonymous(constants.DEFAULT_TELEMETRY_ANONYMOUS)
@@ -124,7 +137,7 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 }
 
 // initializeRBAC creates the ADMIN, EDITOR and VIEWER groups if they are not present.
-func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
+func (mds *modelDao) initializeRBAC(ctx context.Context) error {
 	f := func(groupName string) error {
 		_, err := mds.createGroupIfNotPresent(ctx, groupName)
 		return errors.Wrap(err, "Failed to create group")
@@ -143,7 +156,7 @@ func (mds *ModelDaoSqlite) initializeRBAC(ctx context.Context) error {
 	return nil
 }
 
-func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
+func (mds *modelDao) createGroupIfNotPresent(ctx context.Context,
 	name string) (*model.Group, error) {
 
 	group, err := mds.GetGroupByName(ctx, name)

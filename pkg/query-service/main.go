@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"go.signoz.io/query-service/app"
 	"go.signoz.io/query-service/auth"
+	"go.signoz.io/query-service/config"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"
 
@@ -33,12 +35,23 @@ func main() {
 	logger := loggerMgr.Sugar()
 	version.PrintVersion()
 
+	qsConfig, err := config.LoadQsConfigFromFile(config.GetDefaultConfigPath())
+	if err != nil {
+		if qsConfig == nil {
+			logger.Fatal(fmt.Sprintf("could not load QS config from path: %s", config.GetDefaultConfigPath()), zap.Error(err))
+		} else {
+			logger.Warn(fmt.Sprintf("could not load QS config from path: %s, loading default config", config.GetDefaultConfigPath()), zap.Error(err))
+			logger.Info("default config selected")
+		}
+	}
+
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
 		// DruidClientUrl: v.GetString(app.DruidClientUrl),
 
 		HTTPHostPort: constants.HTTPHostPort,
 		// DruidClientUrl: constants.DruidClientUrl,
+		QsConfig: qsConfig,
 	}
 
 	// Read the jwt secret key

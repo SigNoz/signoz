@@ -18,55 +18,52 @@ import (
 var db *sqlx.DB
 
 // InitDB sets up setting up the connection pool global variable.
-func InitDB(dataSourceName string) (*sqlx.DB, error) {
+func InitDB(conn *sqlx.DB) error {
 	var err error
 
-	db, err = sqlx.Open("sqlite3", dataSourceName)
-	if err != nil {
-		return nil, err
-	}
+	db = conn
 
 	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		uuid TEXT NOT NULL UNIQUE,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
-		data TEXT NOT NULL
+		created_at timestamp NOT NULL,
+		updated_at timestamp NOT NULL,
+		data JSONB NOT NULL
 	);`
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating dashboard table: %s", err.Error())
+		return fmt.Errorf("Error in creating dashboard table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		updated_at datetime NOT NULL,
+		id SERIAL PRIMARY KEY,
+		updated_at timestamp NOT NULL,
 		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
+		data JSONB NOT NULL
 	);`
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating rules table: %s", err.Error())
+		return fmt.Errorf("Error in creating rules table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		created_at datetime NOT NULL,
-		updated_at datetime NOT NULL,
+		id SERIAL PRIMARY KEY,
+		created_at timestamp NOT NULL,
+		updated_at timestamp NOT NULL,
 		name TEXT NOT NULL UNIQUE,
 		type TEXT NOT NULL,
 		deleted INTEGER DEFAULT 0,
-		data TEXT NOT NULL
+		data JSONB NOT NULL
 	);`
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
+		return fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
 	}
 
-	return db, nil
+	return nil
 }
 
 type Dashboard struct {

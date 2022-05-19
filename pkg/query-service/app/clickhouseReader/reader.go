@@ -772,7 +772,7 @@ func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError)
 
 	channels := []model.ChannelItem{}
 
-	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data data FROM notification_channels")
+	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data FROM notification_channels")
 
 	err := r.localDB.Select(&channels, query)
 
