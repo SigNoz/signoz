@@ -18,7 +18,7 @@ const ROUTES = {
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/setting/channels/new',
 	CHANNELS_EDIT: '/setting/channels/edit/:id',
-	ALL_ERROR: '/errors',
+	ALL_ERROR: '/exceptions',
 	ERROR_DETAIL: '/error-detail',
 	VERSION: '/status',
 	MY_SETTINGS: '/my-settings',
