@@ -15,7 +15,8 @@
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
 		"postinstall": "yarn husky:configure",
-		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*"
+		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
+		"commitlint": "commitlint --edit $1"
 	},
 	"engines": {
 		"node": ">=12.13.0"
