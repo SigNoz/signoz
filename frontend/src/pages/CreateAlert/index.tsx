@@ -7,7 +7,7 @@ import { State } from 'hooks/useFetch';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { PayloadProps as CreateAlertPayloadProps } from 'types/api/alerts/create';
-
+import CreateAlertRule from 'container/CreateAlertRule';
 import { ButtonContainer, Title } from './styles';
 
 function CreateAlert(): JSX.Element {
@@ -90,7 +90,8 @@ function CreateAlert(): JSX.Element {
 			{Element}
 
 			<Title>Create New Alert</Title>
-			<Editor onChange={(value): void => setEditorValue(value)} value={value} />
+			<CreateAlertRule />
+			{/*<Editor onChange={(value): void => setEditorValue(value)} value={value} />
 
 			<ButtonContainer>
 				<Button
@@ -101,7 +102,7 @@ function CreateAlert(): JSX.Element {
 				>
 					Save
 				</Button>
-			</ButtonContainer>
+	</ButtonContainer>*/}
 		</>
 	);
 }
