@@ -2,6 +2,7 @@
 import { notification } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
+import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -103,7 +104,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									history.push(ROUTES.UN_AUTHORIZED);
 								}
 							} else {
-								history.push(ROUTES.SOMETHING_WENT_WRONG);
+								Logout();
 
 								notification.error({
 									message: response.error || t('something_went_wrong'),
