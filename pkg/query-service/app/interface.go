@@ -50,6 +50,7 @@ type Reader interface {
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
+	RemoveTTL(ctx context.Context, ttlParams *model.RemoveTTLParams) (*model.RemoveTTLResponseItem, *model.ApiError)
 
 	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
