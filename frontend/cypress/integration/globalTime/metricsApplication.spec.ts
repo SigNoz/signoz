@@ -26,7 +26,7 @@ describe('Global Time Metrics Application', () => {
 
 		cy.wait('@defaultApps');
 
-		//clicking on frontend
+		// clicking on frontend
 		cy.get('tr:nth-child(1) > td:first-child').click();
 
 		cy
@@ -64,7 +64,7 @@ describe('Global Time Metrics Application', () => {
 
 				cy.wait('@topEndPoints');
 				cy.wait('@serviceOverview');
-				//TODO add errorPercentage also
+				// TODO add errorPercentage also
 				// cy.wait('@errorPercentage');
 				cy.wait('@requestPerSecond');
 

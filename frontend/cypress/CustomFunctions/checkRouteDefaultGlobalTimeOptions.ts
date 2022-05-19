@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import {
 	getDefaultOption,
 	getOptions,
-} from 'container/Header/DateTimeSelection/config';
-// import { AppState } from 'store/reducers';
+} from 'container/TopNav/DateTimeSelection/config';
 
 const CheckRouteDefaultGlobalTimeOptions = ({
 	route,

@@ -2333,6 +2333,40 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 	return nil
 }
 
+func (r *ClickHouseReader) RemoveTTL(ctx context.Context,
+	params *model.RemoveTTLParams) (*model.RemoveTTLResponseItem, *model.ApiError) {
+
+	var reqs []string
+	templateQuery := `ALTER TABLE %v REMOVE TTL`
+	tracesTables := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+	metricsTables := []string{signozMetricDBName + "." + signozSampleName}
+
+	switch params.Type {
+	case constants.TraceTTL:
+		for _, tableName := range tracesTables {
+			reqs = append(reqs, fmt.Sprintf(templateQuery, tableName))
+		}
+	case constants.MetricsTTL:
+		for _, tableName := range metricsTables {
+			reqs = append(reqs, fmt.Sprintf(templateQuery, tableName))
+		}
+	default:
+		for _, tableName := range append(append([]string{}, tracesTables...), metricsTables...) {
+			reqs = append(reqs, fmt.Sprintf(templateQuery, tableName))
+		}
+	}
+
+	zap.S().Debugf("Executing remove TTL requests: %s\n", reqs)
+	for _, req := range reqs {
+		if err := r.db.Exec(ctx, req); err != nil {
+			zap.S().Error(fmt.Errorf("error while removing ttl. Err=%v", err))
+			return nil, &model.ApiError{Typ: model.ErrorExec,
+				Err: fmt.Errorf("error while removing ttl. Err=%v", err)}
+		}
+	}
+	return &model.RemoveTTLResponseItem{Message: "ttl has been successfully removed"}, nil
+}
+
 // GetDisks returns a list of disks {name, type} configured in clickhouse DB.
 func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError) {
 	diskItems := []model.DiskItem{}

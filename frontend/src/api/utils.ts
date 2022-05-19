@@ -5,6 +5,7 @@ import history from 'lib/history';
 import store from 'store';
 import {
 	LOGGED_IN,
+	UPDATE_ORG,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_ORG_ROLE,
@@ -48,6 +49,13 @@ export const Logout = (): void => {
 		payload: {
 			accessJwt: '',
 			refreshJwt: '',
+		},
+	});
+
+	store.dispatch({
+		type: UPDATE_ORG,
+		payload: {
+			org: [],
 		},
 	});
 

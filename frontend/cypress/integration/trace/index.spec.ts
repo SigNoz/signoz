@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 import { AppState } from 'store/reducers';
@@ -33,7 +34,7 @@ describe('Trace', () => {
 			})
 			.as('Filters');
 
-		cy.visit(Cypress.env('baseUrl') + `${ROUTES.TRACE}`);
+		cy.visit(`${Cypress.env('baseUrl')}${ROUTES.TRACE}`);
 	});
 
 	it('First Initial Load should go with 3 AJAX request', () => {

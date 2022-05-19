@@ -58,6 +58,7 @@ describe('Metrics', () => {
 						parseFloat(errorRate.toString()).toFixed(2),
 					);
 					expect(rpsName).to.be.equals(callRate.toString());
+					return null;
 				});
 			});
 		});
