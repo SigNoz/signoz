@@ -77,7 +77,6 @@ function Metrics(): JSX.Element {
 				loading={loading}
 				dataSource={services}
 				columns={columns}
-				pagination={false}
 				rowKey="serviceName"
 			/>
 		</Container>
