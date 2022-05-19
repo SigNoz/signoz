@@ -20,9 +20,7 @@ function Editor({
 			options={{ fontSize: 16, automaticLayout: true, readOnly }}
 			height={height}
 			onChange={(newValue): void => {
-				if (newValue) {
-					onChange(newValue);
-				}
+				if (typeof newValue === 'string') onChange(newValue);
 			}}
 		/>
 	);

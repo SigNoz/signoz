@@ -1,6 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
+import { cloneDeep } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -8,15 +9,25 @@ import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { CreateQuery, CreateQueryProps } from 'store/actions';
 import {
+	GetQueryResults,
+	GetQueryResultsProps,
+} from 'store/actions/dashboard/getQueryResults';
+import {
 	UpdateQuery,
 	UpdateQueryProps,
 } from 'store/actions/dashboard/updateQuery';
+import {
+	UpdateQueryType,
+	UpdateQueryTypeProps,
+} from 'store/actions/dashboard/updateQueryType';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
+import { v4 as uuid } from 'uuid';
 
 import Query from './Query';
+import QueryBuilder from './QueryBuilder';
 import { QueryButton } from './styles';
 import { TQueryCategories } from './types';
 import GetQueryName from './utils/GetQueryName';
@@ -26,10 +37,10 @@ function QuerySection({
 	selectedTime,
 	createQuery,
 	updateQuery,
+	getQueryResults,
+	updateQueryType,
 }: QueryProps): JSX.Element {
-	const [queryCategory, setQueryCategory] = useState<TQueryCategories>(
-		'query_builder',
-	);
+
 	const [localQueryChanges, setLocalQueryChanges] = useState([]);
 
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
@@ -49,11 +60,12 @@ function QuerySection({
 	}, [widgets, urlQuery]);
 
 	const selectedWidget = getWidget() as Widgets;
+	const [queryCategory, setQueryCategory] = useState(selectedWidget.queryType);
+
 
 	const { query = [] } = selectedWidget || {};
-
 	useEffect(() => {
-		setLocalQueryChanges(query);
+		setLocalQueryChanges(cloneDeep(query));
 	}, [query]);
 
 	const queryOnClickHandler = () => {
@@ -61,7 +73,8 @@ function QuerySection({
 			...localQueryChanges,
 			{
 				name: GetQueryName(localQueryChanges),
-				formulas: [],
+				disabled: false,
+				
 				promQL: {
 					query: '',
 					legend: '',
@@ -71,6 +84,7 @@ function QuerySection({
 					metricName: null,
 					aggregateOperator: null,
 					tagFilters: {
+						op: 'AND',
 						items: [],
 					},
 					groupBy: [],
@@ -79,48 +93,69 @@ function QuerySection({
 		]);
 	};
 
-	const handleQueryCategoryChange = (qCategory: TQueryCategories): void => {
-		setQueryCategory(qCategory);
+	const handleQueryCategoryChange = (qCategory): void => {
+		setQueryCategory(parseInt(qCategory));
 	};
 	const handleLocalQueryUpdate = ({ currentIndex, updatedQuery }) => {
 		setLocalQueryChanges((prevState) => {
-			// prevState = [...prevState]
-			prevState[currentIndex] = updatedQuery;
+			prevState[currentIndex] = cloneDeep(updatedQuery);
 			return prevState;
 		});
-		// console.log(localQueryChanges)
 	};
 	const handleStageQuery = () => {
+		updateQueryType({
+			widgetId: urlQuery.get('widgetId'),
+			queryType: queryCategory,
+		});
 		updateQuery({
 			updatedQuery: localQueryChanges,
 			widgetId: urlQuery.get('widgetId'),
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
 	};
+	const handleDeleteQuery = ({ currentIndex }) => {
+		setLocalQueryChanges((prevState) => {
+			prevState.splice(currentIndex, 1);
+			return [...prevState];
+		});
+	};
 	return (
 		<>
-			<Button onClick={handleStageQuery}>Stage & Run Query</Button>
-			<Tabs
-				type="card"
-				style={{ width: '100%' }}
-				defaultActiveKey={queryCategory}
-				onChange={handleQueryCategoryChange}
-			>
-				<TabPane tab="Query Builder" key={'query_builder' as TQueryCategories} />
-				<TabPane
-					tab="ClickHouse Query"
-					key={'clickhouse_query' as TQueryCategories}
-				/>
-				<TabPane tab="PromQL" key={'promql' as TQueryCategories} />
-			</Tabs>
+			<div style={{ display: 'flex' }}>
+				<Tabs
+					type="card"
+					style={{ width: '100%' }}
+					defaultActiveKey={queryCategory.toString()}
+					onChange={handleQueryCategoryChange}
+					tabBarExtraContent={
+						<Button type="primary" onClick={handleStageQuery}>
+							Stage & Run Query
+						</Button>
+					}
+				>
+					<TabPane tab="Query Builder" key={"0"} />
+					<TabPane tab="ClickHouse Query" key={"1"} />
+					<TabPane tab="PromQL" key={"2"} />
+				</Tabs>
+			</div>
 			{localQueryChanges.map((e, index) => (
-				<Query
+				// <Query
+				// 	name={e.name}
+				// 	currentIndex={index}
+				// 	selectedTime={selectedTime}
+				// 	key={JSON.stringify(e)}
+				// 	queryInput={e}
+				// 	updatedLocalQuery={handleLocalQueryUpdate}
+				// 	queryCategory={queryCategory}
+				// />
+				<QueryBuilder
+					key={`${JSON.stringify(e)}`}
 					name={e.name}
-					currentIndex={index}
-					selectedTime={selectedTime}
-					key={JSON.stringify(e)}
-					queryInput={e}
-					updatedLocalQuery={handleLocalQueryUpdate}
+					updateQueryData={(updatedQuery) =>
+						handleLocalQueryUpdate({ currentIndex: index, updatedQuery })
+					}
+					onDelete={() => handleDeleteQuery({ currentIndex: index })}
+					queryData={e}
 					queryCategory={queryCategory}
 				/>
 			))}
@@ -142,6 +177,12 @@ interface DispatchProps {
 	updateQuery: (
 		props: UpdateQueryProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
+	getQueryResults: (
+		props: GetQueryResultsProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
+	updateQueryType: (
+		props: UpdateQueryTypeProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
@@ -149,6 +190,8 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	createQuery: bindActionCreators(CreateQuery, dispatch),
 	updateQuery: bindActionCreators(UpdateQuery, dispatch),
+	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
+	updateQueryType: bindActionCreators(UpdateQueryType, dispatch),
 });
 
 interface QueryProps extends DispatchProps {

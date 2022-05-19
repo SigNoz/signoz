@@ -21,7 +21,10 @@ export const GetTagKeys = async (): Promise<IOption[]> => {
 	// 		resolve(TagKeysCache);
 	// 	});
 	// }
-	const { payload } = await getResourceAttributesTagKeys();
+	const { payload } = await getResourceAttributesTagKeys({
+		metricName: 'signoz_calls_total',
+		match: 'resource_',
+	});
 	if (!payload || !payload?.data) {
 		return [];
 	}
@@ -32,7 +35,10 @@ export const GetTagKeys = async (): Promise<IOption[]> => {
 };
 
 export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
-	const { payload } = await getResourceAttributesTagValues(tagKey);
+	const { payload } = await getResourceAttributesTagValues({
+		tagKey,
+		metricName: 'signoz_calls_total',
+	});
 
 	if (!payload || !payload?.data) {
 		return [];

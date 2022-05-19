@@ -43,6 +43,7 @@ export interface Widgets {
 			query: string;
 		}[];
 	};
+	queryType: number;
 	stepSize?: number;
 	yAxisUnit?: string;
 }

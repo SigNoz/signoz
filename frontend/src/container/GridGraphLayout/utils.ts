@@ -28,10 +28,13 @@ export const updateDashboard = async ({
 					nullZeroValues: '',
 					opacity: '',
 					panelTypes: graphType,
+					queryType: 0,
+					formulas: [],
 					query: [
 						{
 							name: GetQueryName([]),
-							formulas: [],
+							disabled: false,
+							
 							promQL: {
 								query: '',
 								legend: '',
@@ -41,6 +44,7 @@ export const updateDashboard = async ({
 								metricName: null,
 								aggregateOperator: null,
 								tagFilters: {
+									op: 'AND',
 									items: [],
 								},
 								groupBy: [],

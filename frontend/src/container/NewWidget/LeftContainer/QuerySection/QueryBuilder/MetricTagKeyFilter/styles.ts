@@ -12,8 +12,6 @@ export const SearchContainer = styled.div<{
 	flex-direction: column;
 	padding: 0.2rem;
 	border: 1px solid #ccc5;
-	min-height: 70px;
-
 	${({ disabled }): string => (disabled ? `cursor: not-allowed;` : '')}
 `;
 export const QueryChipContainer = styled.span`

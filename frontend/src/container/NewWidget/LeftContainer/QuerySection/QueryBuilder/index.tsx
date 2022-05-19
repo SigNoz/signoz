@@ -7,18 +7,20 @@ import {
 import { Button, Col, Divider, Input, Row, Select, Spin, Tabs } from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
 import MonacoEditor from 'components/Editor';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { v4 as uuid } from 'uuid';
 
 import { InputContainer, QueryBuilderWrapper, QueryWrapper } from '../styles';
 import { TQueryCategories } from '../types';
+import MetricsBuilder from './metricsBuilder';
 import MetricTagKeyFilter from './MetricTagKeyFilter';
 import { AggregateFunctions } from './Options';
+import PromQLQueryBuilder from './promQL';
 
 const { Option } = Select;
-const { TabPane } = Tabs;
 function QueryBuilder({
 	name,
 	onDelete,
@@ -26,33 +28,44 @@ function QueryBuilder({
 	queryData,
 	updateQueryData,
 }: QueryBuilderProps): JSX.Element {
+	const [metricName, setMetricName] = useState(
+		queryData.queryBuilder.metricName,
+	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [hideFromUI, setHideFromUI] = useState<boolean>(false);
 	const handleHideFromUI = (): void => {
 		setHideFromUI(!hideFromUI);
 	};
-	const handleQueryBuilderChange = ({ aggregateFunction, metricName }) => {
-		updateQueryData({
-			...queryData,
-			queryBuilder: {
-				...queryData.queryBuilder,
-				aggregateOperator:
-					aggregateFunction || queryData.queryBuilder.aggregateFunction,
-				metricName: metricName || queryData.queryBuilder.metricName,
-			},
-		});
+	const handleQueryBuilderChange = ({
+		aggregateFunction,
+		metricName,
+		tagFilters,
+	}) => {
+		if (aggregateFunction) {
+			queryData.queryBuilder.aggregateOperator = aggregateFunction;
+		}
+
+		if (metricName) {
+			queryData.queryBuilder.metricName = metricName;
+		}
+
+		if (tagFilters) {
+			queryData.queryBuilder.tagFilters.items = tagFilters;
+		}
+
+		updateQueryData(queryData);
 	};
 	const handleClickhouseQueryChange = (clickHouseQuery) => {
-		updateQueryData({ ...queryData, clickHouseQuery });
+		if (clickHouseQuery !== null) {
+			queryData.clickHouseQuery = clickHouseQuery;
+		}
+		updateQueryData(queryData);
 	};
 	const handlePromQLQueryChange = ({ query, legend }) => {
-		updateQueryData({
-			...queryData,
-			promQL: {
-				query: query || queryData.promQL.query,
-				legend: legend || queryData.promQL.legend,
-			},
-		});
+		if (query) queryData.promQL.query = query;
+		if (legend) queryData.promQL.legend = legend;
+
+		updateQueryData(queryData);
 	};
 	const [metricNameList, setMetricNameList] = useState([]);
 	const [metricNameLoading, setMetricNameLoading] = useState(false);
@@ -66,6 +79,7 @@ function QueryBuilder({
 		}
 		setMetricNameList(payload.data);
 	};
+
 	return (
 		<QueryWrapper>
 			<Row style={{ justifyContent: 'space-between' }}>
@@ -84,87 +98,13 @@ function QueryBuilder({
 			</Row>
 			{!hideFromUI && (
 				<QueryBuilderWrapper isDarkMode={isDarkMode}>
-					{(queryCategory as TQueryCategories) === 'query_builder' ? (
-						<div
-							style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem' }}
-						>
-							<div>
-								<Select
-									onChange={(e) => handleQueryBuilderChange({ aggregateFunction: e })}
-									defaultValue={
-										queryData.queryBuilder.aggregateOperator || AggregateFunctions[0]
-									}
-									style={{ minWidth: 120 }}
-									options={AggregateFunctions.map((option) => ({
-										label: option,
-										value: option,
-									}))}
-								/>
-							</div>
-							<Row>
-								<Select
-									defaultValue="metrics"
-									showArrow={false}
-									dropdownStyle={{ display: 'none' }}
-								>
-									<Option value="metrics">Metrics</Option>
-								</Select>
-
-								<Select
-									showSearch
-									placeholder="Metric Name (system.cpu.time)"
-									style={{ flex: 1 }}
-									showArrow={false}
-									filterOption={false}
-									onSearch={handleMetricNameSearch}
-									notFoundContent={metricNameLoading ? <Spin size="small" /> : null}
-									options={metricNameList.map((option) => ({
-										label: option,
-										value: option,
-									}))}
-									defaultValue={queryData.queryBuilder.metricName}
-									onChange={(e) => handleQueryBuilderChange({ metricName: e })}
-								/>
-
-								<Col style={{ flex: 1 }}>
-									<Row>
-										<Select
-											defaultValue="WHERE"
-											showArrow={false}
-											dropdownStyle={{ display: 'none' }}
-										>
-											<Option value="WHERE">WHERE</Option>
-										</Select>
-										<MetricTagKeyFilter />
-									</Row>
-									<Row>
-										<Select
-											defaultValue="GROUP BY"
-											showArrow={false}
-											dropdownStyle={{ display: 'none' }}
-										>
-											<Option value="GROUP BY">GROUP BY</Option>
-										</Select>
-										<Select
-											showSearch
-											style={{ flex: 1 }}
-											defaultActiveFirstOption={false}
-											showArrow={false}
-											filterOption={false}
-											notFoundContent={null}
-										>
-											<Option value="jack">Jack</Option>
-											<Option value="lucy">Lucy</Option>
-											<Option value="disabled" disabled>
-												Disabled
-											</Option>
-											<Option value="Yiminghe">yiminghe</Option>
-										</Select>
-									</Row>
-								</Col>
-							</Row>
-						</div>
-					) : queryCategory === 'clickhouse_query' ? (
+					{queryCategory === 0 ? (
+						<MetricsBuilder
+							queryData={queryData}
+							updateQueryData={updateQueryData}
+							metricName={metricName}
+						/>
+					) : queryCategory === 1 ? (
 						<MonacoEditor
 							language="sql"
 							theme="vs-dark"
@@ -173,32 +113,13 @@ function QueryBuilder({
 							value={queryData.clickHouseQuery}
 							// options={options}
 						/>
-					) : queryCategory === 'promql' ? (
-						<>
-							<InputContainer>
-								<Input
-									onChange={(event): void =>
-										handlePromQLQueryChange({ query: event.target.value })
-									}
-									size="middle"
-									defaultValue={queryData.promQL.query}
-									addonBefore="PromQL Query"
-									// onBlur={(): void => onBlurHandler()}
-								/>
-							</InputContainer>
-
-							<InputContainer>
-								<Input
-									onChange={(event): void =>
-										handlePromQLQueryChange({ legend: event.target.value })
-									}
-									size="middle"
-									defaultValue={queryData.promQL.legend}
-									addonBefore="Legend Format"
-									// onBlur={(): void => onBlurHandler()}
-								/>
-							</InputContainer>
-						</>
+					) : queryCategory === 2 ? (
+						<PromQLQueryBuilder
+							query={queryData.promQL.query}
+							onQueryChange={(value) => handlePromQLQueryChange({ query: value })}
+							legend={queryData.promQL.legend}
+							onLegendChange={(value) => handlePromQLQueryChange({ legend: value })}
+						/>
 					) : null}
 				</QueryBuilderWrapper>
 			)}

@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import { map } from 'lodash-es';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { SetResourceAttributeQueries } from 'store/actions/metrics/setResourceAttributeQueries';
@@ -20,7 +20,11 @@ import { QueryChipItem, SearchContainer } from './styles';
 import { IMetricBuilderTagKeyQuery, IOption } from './types';
 import { createQuery, GetTagKeys, GetTagValues, OperatorSchema } from './utils';
 
-function MetricTagKeyFilter(): JSX.Element | null {
+function MetricTagKeyFilter({
+	metricName,
+	onSetQuery,
+	selectedTagFilters: selectedTagQueries,
+}): JSX.Element | null {
 	const dispatch = useDispatch();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
@@ -41,7 +45,8 @@ function MetricTagKeyFilter(): JSX.Element | null {
 	const dispatchQueries = (
 		updatedQueries: IMetricBuilderTagKeyQuery[],
 	): void => {
-		dispatch(SetResourceAttributeQueries(updatedQueries));
+		onSetQuery(updatedQueries);
+		setQueries(updatedQueries);
 	};
 	const handleLoading = (isLoading: boolean): void => {
 		setLoading(isLoading);
@@ -53,7 +58,7 @@ function MetricTagKeyFilter(): JSX.Element | null {
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
-				GetTagKeys()
+				GetTagKeys(metricName)
 					.then((tagKeys) => setOptionsData({ options: tagKeys, mode: undefined }))
 					.finally(() => {
 						handleLoading(false);
@@ -65,9 +70,9 @@ function MetricTagKeyFilter(): JSX.Element | null {
 			onSelectTagValue: () => {
 				handleLoading(true);
 
-				GetTagValues(staging[0])
+				GetTagValues(staging[0], metricName)
 					.then((tagValuesOptions) =>
-						setOptionsData({ options: tagValuesOptions, mode: 'multiple' }),
+						setOptionsData({ options: tagValuesOptions, mode: 'tags' }),
 					)
 					.finally(() => {
 						handleLoading(false);
@@ -83,16 +88,17 @@ function MetricTagKeyFilter(): JSX.Element | null {
 				}
 
 				const generatedQuery = createQuery([...staging, selectedValues]);
+
 				if (generatedQuery) {
-					// dispatchQueries([...queries, generatedQuery]);
+					dispatchQueries([...queries, generatedQuery]);
 				}
 			},
 		},
 	});
 
 	useEffect(() => {
-		setQueries(resourceAttributeQueries);
-	}, [resourceAttributeQueries]);
+		setQueries(selectedTagQueries);
+	}, [selectedTagQueries]);
 
 	const handleFocus = (): void => {
 		if (state.value === 'Idle') {
@@ -100,9 +106,14 @@ function MetricTagKeyFilter(): JSX.Element | null {
 		}
 	};
 
-	const handleBlur = (): void => {
+	const handleBlur = useCallback((): void => {
 		send('onBlur');
-	};
+	}, [send]);
+
+	useEffect(() => {
+		handleBlur();
+	}, [handleBlur, metricName]);
+
 	const handleChange = (value: never): void => {
 		if (!optionsData.mode) {
 			setStaging((prevStaging) => [...prevStaging, value]);
@@ -115,12 +126,12 @@ function MetricTagKeyFilter(): JSX.Element | null {
 	};
 
 	const handleClose = (id: string): void => {
-		// dispatchQueries(queries.filter((queryData) => queryData.id !== id));
+		dispatchQueries(queries.filter((queryData) => queryData.id !== id));
 	};
 
 	const handleClearAll = (): void => {
 		send('RESET');
-		// dispatchQueries([]);
+		dispatchQueries([]);
 		setStaging([]);
 		setSelectedValues([]);
 	};
@@ -133,31 +144,22 @@ function MetricTagKeyFilter(): JSX.Element | null {
 
 	return (
 		<SearchContainer isDarkMode={isDarkMode}>
-			<div
-				style={{
-					maxWidth: '100%',
-					display: 'flex',
-					overflowX: 'auto',
-				}}
-			>
-				{map(
-					queries,
-					(query): JSX.Element => {
-						return (
-							<QueryChip key={query.id} queryData={query} onClose={handleClose} />
-						);
-					},
-				)}
+			<div>
+				{queries.length > 0 &&
+					map(
+						queries,
+						(query): JSX.Element => {
+							return (
+								<QueryChip key={query.id} queryData={query} onClose={handleClose} />
+							);
+						},
+					)}
 				{map(staging, (item, idx) => {
-					return (
-						<QueryChipItem key={uuid()}>
-							{idx === 0 ? convertMetricKeyToTrace(item) : item}
-						</QueryChipItem>
-					);
+					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
 				})}
 			</div>
 
-			<div style={{ display: 'flex', alignSelf: 'flex-end', width: '100%' }}>
+			<div style={{ display: 'flex', width: '100%' }}>
 				<Select
 					placeholder={`Select ${state.value === 'Idle' ? 'Tag Key Pair' : state.value
 						}`}
