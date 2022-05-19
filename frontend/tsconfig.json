@@ -30,6 +30,9 @@
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
-		"./cypress"
+		"./cypress",
+		"./commitlint.config.js",
+		"./webpack.config.js",
+		"./webpack.config.prod.js"
 	]
 }
