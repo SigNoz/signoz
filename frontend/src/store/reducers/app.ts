@@ -12,6 +12,7 @@ import {
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
+	UPDATE_ORG,
 	UPDATE_ORG_NAME,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
@@ -190,6 +191,13 @@ const appReducer = (
 			return {
 				...state,
 				org: updatedOrg,
+			};
+		}
+
+		case UPDATE_ORG: {
+			return {
+				...state,
+				org: action.payload.org,
 			};
 		}
 
