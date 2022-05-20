@@ -45,6 +45,7 @@ function GeneralSettings(): JSX.Element {
 			{...{
 				getAvailableDiskPayload: getDisksResponse.data?.payload,
 				ttlValuesPayload: getRetentionPeriodApiResponse.data?.payload,
+				ttlValuesRefetch: getRetentionPeriodApiResponse.refetch
 			}}
 		/>
 	);

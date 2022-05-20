@@ -1,12 +1,15 @@
-import { Button, Col, Modal, notification, Row, Typography } from 'antd';
+import { Button, Col, Modal, notification, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import useComponentPermission from 'hooks/useComponentPermission';
 import find from 'lodash-es/find';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
+import { useBoolean, useInterval } from 'react-use';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
@@ -22,6 +25,7 @@ type NumberOrNull = number | null;
 function GeneralSettings({
 	ttlValuesPayload,
 	getAvailableDiskPayload,
+	ttlValuesRefetch,
 }: GeneralSettingsProps): JSX.Element {
 	const { t } = useTranslation();
 	const [modal, setModal] = useState<boolean>(false);
@@ -30,6 +34,7 @@ function GeneralSettings({
 	const [availableDisks] = useState<IDiskType[]>(getAvailableDiskPayload);
 
 	const [currentTTLValues, setCurrentTTLValues] = useState(ttlValuesPayload);
+
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [setRetentionPermission] = useComponentPermission(
@@ -53,6 +58,30 @@ function GeneralSettings({
 		tracesS3RetentionPeriod,
 		setTracesS3RetentionPeriod,
 	] = useState<NumberOrNull>(null);
+
+	const [isPolling, setPolling] = useState(false);
+
+	useInterval(
+		async (): Promise<void> => {
+			if (ttlValuesPayload.status === 'pending') {
+				ttlValuesRefetch();
+			}
+		},
+		isPolling ? 300 : null,
+	);
+
+	useEffect(() => {
+		if (ttlValuesPayload.status !== 'pending') {
+			setPolling(false)
+		}
+		if (ttlValuesPayload.status === 'success') {
+			notification.success({
+				message: 'Success!',
+				placement: 'topRight',
+				description: t('settings.retention_success_message', { name: '' }),
+			});
+		}
+	}, [t, ttlValuesPayload])
 
 	useEffect(() => {
 		if (currentTTLValues) {
@@ -156,7 +185,7 @@ function GeneralSettings({
 			if (
 				!(
 					currentTTLValues?.metrics_move_ttl_duration_hrs ===
-						metricsS3RetentionPeriod &&
+					metricsS3RetentionPeriod &&
 					currentTTLValues.metrics_ttl_duration_hrs === metricsTotalRetentionPeriod
 				)
 			) {
@@ -175,7 +204,7 @@ function GeneralSettings({
 			if (
 				!(
 					currentTTLValues?.traces_move_ttl_duration_hrs ===
-						tracesS3RetentionPeriod &&
+					tracesS3RetentionPeriod &&
 					currentTTLValues.traces_ttl_duration_hrs === tracesTotalRetentionPeriod
 				)
 			) {
@@ -196,21 +225,24 @@ function GeneralSettings({
 			apiResponses.forEach((apiResponse, idx) => {
 				const name = apiCallSequence[idx];
 				if (apiResponse) {
-					if (apiResponse.statusCode === 200) {
-						notification.success({
-							message: 'Success!',
-							placement: 'topRight',
+					// if (apiResponse.statusCode === 200) {
+					// 	notification.success({
+					// 		message: 'Success!',
+					// 		placement: 'topRight',
 
-							description: t('settings.retention_success_message', { name }),
-						});
-					} else {
-						notification.error({
-							message: 'Error',
-							description: t('settings.retention_error_message', { name }),
-							placement: 'topRight',
-						});
-					}
+					// 		description: t('settings.retention_success_message', { name }),
+					// 	});
+					// } else {
+					// 	notification.error({
+					// 		message: 'Error',
+					// 		description: t('settings.retention_error_message', { name }),
+					// 		placement: 'topRight',
+					// 	});
+					// }
 				}
+			});
+			ttlValuesRefetch().then(() => {
+				setPolling(true);
 			});
 			onModalToggleHandler();
 			setPostApiLoading(false);
@@ -275,7 +307,7 @@ function GeneralSettings({
 		if (
 			currentTTLValues?.metrics_ttl_duration_hrs === metricsTotalRetentionPeriod &&
 			currentTTLValues.metrics_move_ttl_duration_hrs ===
-				metricsS3RetentionPeriod &&
+			metricsS3RetentionPeriod &&
 			currentTTLValues.traces_ttl_duration_hrs === tracesTotalRetentionPeriod &&
 			currentTTLValues.traces_move_ttl_duration_hrs === tracesS3RetentionPeriod
 		) {
@@ -324,7 +356,13 @@ function GeneralSettings({
 
 			<ButtonContainer>
 				<Button onClick={onClickSaveHandler} disabled={isDisabled} type="primary">
-					Save
+					{ttlValuesPayload.status === 'pending' ? (
+						<>
+							<Spin size="small" /> Updating retention period
+						</>
+					) : (
+						'Save'
+					)}
 				</Button>
 			</ButtonContainer>
 		</Col>
@@ -334,6 +372,9 @@ function GeneralSettings({
 interface GeneralSettingsProps {
 	ttlValuesPayload: GetRetentionPayload;
 	getAvailableDiskPayload: GetDisksPayload;
+	ttlValuesRefetch: UseQueryResult<
+		ErrorResponse | SuccessResponse<GetRetentionPayload>
+	>['refetch'];
 }
 
 export default GeneralSettings;
