@@ -1,4 +1,4 @@
-import { notification, Table, Typography } from 'antd';
+import { notification, Table, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
 import ROUTES from 'constants/routes';
@@ -47,11 +47,13 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
 			render: (value, record): JSX.Element => (
-				<Link
-					to={`${ROUTES.ERROR_DETAIL}?serviceName=${record.serviceName}&errorType=${record.exceptionType}`}
-				>
-					{value}
-				</Link>
+				<Tooltip overlay={(): JSX.Element => value}>
+					<Link
+						to={`${ROUTES.ERROR_DETAIL}?serviceName=${record.serviceName}&errorType=${record.exceptionType}`}
+					>
+						{value}
+					</Link>
+				</Tooltip>
 			),
 			sorter: (a, b): number =>
 				a.exceptionType.charCodeAt(0) - b.exceptionType.charCodeAt(0),
@@ -61,13 +63,15 @@ function AllErrors(): JSX.Element {
 			dataIndex: 'exceptionMessage',
 			key: 'exceptionMessage',
 			render: (value): JSX.Element => (
-				<Typography.Paragraph
-					ellipsis={{
-						rows: 2,
-					}}
-				>
-					{value}
-				</Typography.Paragraph>
+				<Tooltip overlay={(): JSX.Element => value}>
+					<Typography.Paragraph
+						ellipsis={{
+							rows: 2,
+						}}
+					>
+						{value}
+					</Typography.Paragraph>
+				</Tooltip>
 			),
 		},
 		{

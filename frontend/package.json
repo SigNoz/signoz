@@ -13,12 +13,13 @@
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
 		"postinstall": "yarn husky:configure",
-		"husky:configure": "cd .. && husky install frontend/.husky",
 		"playwright": "playwright test --config=./playwright.config.ts",
-		"playwright:local:debug": "PWDEBUG=console yarn playwright --headed --browser=chromium"
+		"playwright:local:debug": "PWDEBUG=console yarn playwright --headed --browser=chromium",
+		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
+		"commitlint": "commitlint --edit $1"
 	},
 	"engines": {
-		"node": ">=12.13.0"
+		"node": ">=16.15.0"
 	},
 	"author": "",
 	"license": "ISC",
@@ -108,6 +109,8 @@
 		"@babel/preset-env": "^7.12.17",
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.12.17",
+		"@commitlint/cli": "^16.2.4",
+		"@commitlint/config-conventional": "^16.2.4",
 		"@jest/globals": "^27.5.1",
 		"@playwright/test": "^1.22.0",
 		"@testing-library/react-hooks": "^7.0.2",
@@ -135,7 +138,7 @@
 		"@typescript-eslint/parser": "^4.28.2",
 		"autoprefixer": "^9.0.0",
 		"babel-plugin-styled-components": "^1.12.0",
-		"compression-webpack-plugin": "^9.0.0",
+		"compression-webpack-plugin": "9.0.0",
 		"copy-webpack-plugin": "^8.1.0",
 		"critters-webpack-plugin": "^3.0.1",
 		"eslint": "^7.30.0",

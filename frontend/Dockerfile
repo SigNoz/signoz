@@ -12,6 +12,9 @@ WORKDIR /frontend
 # copy the package.json to install dependencies
 COPY package.json ./
 
+# configure node_env as production
+ENV NODE_ENV=production
+
 # Install the dependencies and make the folder
 RUN yarn install 
 

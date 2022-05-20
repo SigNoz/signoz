@@ -12,6 +12,7 @@ import {
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
+	UPDATE_ORG,
 	UPDATE_ORG_NAME,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
@@ -172,21 +173,31 @@ const appReducer = (
 
 		case UPDATE_ORG_NAME: {
 			const stateOrg = state.org || ({} as OrgPayload);
-			const { index, name: updatedName } = action.payload;
-			const current = stateOrg[index];
+			const { orgId, name: updatedName } = action.payload;
+
+			const orgIndex = stateOrg.findIndex((e) => e.id === orgId);
+
+			const current = stateOrg[orgIndex];
 
 			const updatedOrg: OrgPayload = [
-				...stateOrg.slice(0, index),
+				...stateOrg.slice(0, orgIndex),
 				{
 					...current,
 					name: updatedName,
 				},
-				...stateOrg.slice(index + 1, stateOrg.length),
+				...stateOrg.slice(orgIndex + 1, stateOrg.length),
 			];
 
 			return {
 				...state,
 				org: updatedOrg,
+			};
+		}
+
+		case UPDATE_ORG: {
+			return {
+				...state,
+				org: action.payload.org,
 			};
 		}
 

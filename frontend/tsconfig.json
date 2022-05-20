@@ -19,7 +19,8 @@
 		"noEmit": true,
 		"baseUrl": "./src",
 		"downlevelIteration": true,
-		"plugins": [{ "name": "typescript-plugin-css-modules" }]
+		"plugins": [{ "name": "typescript-plugin-css-modules" }],
+		"types": ["cypress", "@testing-library/cypress", "node"]
 	},
 	"exclude": ["node_modules"],
 	"include": [
@@ -31,6 +32,9 @@
 		"./conf/default.conf",
 		"./public",
 		"./tests",
-		"playwright.config.ts"
+		"playwright.config.ts",
+		"./commitlint.config.js",
+		"./webpack.config.js",
+		"./webpack.config.prod.js"
 	]
 }

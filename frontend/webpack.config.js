@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 // shared config (dev and prod)
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -5,8 +6,7 @@ const portFinderSync = require('portfinder-sync');
 const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
-	.BundleAnalyzerPlugin;
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 dotenv.config();
 
@@ -106,7 +106,7 @@ const config = {
 			},
 		],
 	},
-	plugins: plugins,
+	plugins,
 	performance: {
 		hints: false,
 	},
