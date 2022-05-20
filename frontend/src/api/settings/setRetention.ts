@@ -11,7 +11,7 @@ const setRetention = async (
 		const response = await axios.post<PayloadProps>(
 			`/settings/ttl?duration=${props.totalDuration}&type=${props.type}${
 				props.coldStorage
-					? `&coldStorage=${props.coldStorage};toColdDuration=${props.toColdDuration}`
+					? `&coldStorage=${props.coldStorage}&toColdDuration=${props.toColdDuration}`
 					: ''
 			}`,
 		);
