@@ -4419,12 +4419,20 @@ compressible@~2.0.16:
   dependencies:
     mime-db ">= 1.43.0 < 2"
 
-compression-webpack-plugin@*, compression-webpack-plugin@^9.0.0:
+compression-webpack-plugin@*:
   version "9.2.0"
   resolved "https://registry.npmjs.org/compression-webpack-plugin/-/compression-webpack-plugin-9.2.0.tgz"
   integrity sha512-R/Oi+2+UHotGfu72fJiRoVpuRifZT0tTC6UqFD/DUo+mv8dbOow9rVOuTvDv5nPPm3GZhHL/fKkwxwIHnJ8Nyw==
   dependencies:
     schema-utils "^4.0.0"
+    serialize-javascript "^6.0.0"
+
+compression-webpack-plugin@9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/compression-webpack-plugin/-/compression-webpack-plugin-9.0.0.tgz#38b4e18313f5d704c453ab5645e38a5805ba5889"
+  integrity sha512-V2KmQqaUkErPT+ZcUGHa8zWpIw1oTYaC7wjGewJm053GWAoY04GfU5B/NZ/JSz1eFp9MggMdLQpEHe1TJAQY1A==
+  dependencies:
+    schema-utils "^3.1.0"
     serialize-javascript "^6.0.0"
 
 compression@^1.7.4:
