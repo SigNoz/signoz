@@ -2387,13 +2387,16 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, error) {
 	statusItem := []model.TTLStatusItem{}
 
-	query := fmt.Sprintf("SELECT id, status FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
+	query := fmt.Sprintf("SELECT id, status, archived FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
 
 	err := r.localDB.Select(&statusItem, query)
 
 	zap.S().Info(query)
 
-	if err != nil || len(statusItem) == 0 {
+	if len(statusItem) == 0 {
+		return model.TTLStatusItem{}, nil
+	}
+	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return model.TTLStatusItem{}, err
 	}
@@ -2405,6 +2408,10 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray
 	status := constants.StatusSuccess
 	for _, tableName := range tableNameArray {
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+		emptyStatusStruct := model.TTLStatusItem{}
+		if statusItem == emptyStatusStruct || statusItem.Archived {
+			return "", nil
+		}
 		if err != nil {
 			return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 		}
@@ -2418,6 +2425,20 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray
 	}
 	if failFlag {
 		status = constants.StatusFailed
+	}
+	if status == constants.StatusSuccess {
+		for _, tableName := range tableNameArray {
+			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+			if err != nil {
+				return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
+			}
+			_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, archived = ? WHERE id = ?", time.Now(), true, statusItem.Id)
+			if dbErr != nil {
+				zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+				return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status update sql query")}
+			}
+		}
+
 	}
 	return status, nil
 }
@@ -2585,6 +2606,8 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	}
 
+	status := "" //status of TTL queries
+
 	tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
 	status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 	if err != nil {
@@ -2595,11 +2618,14 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		return nil, err
 	}
 
-	if status == constants.StatusSuccess {
+	if status == constants.StatusSuccess || status == "" {
 		tableNameArray = []string{signozMetricDBName + "." + signozSampleName}
-		status, err = r.setTTLQueryStatus(ctx, tableNameArray)
+		statusMetrics, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
+		}
+		if statusMetrics == constants.StatusSuccess {
+			status = statusMetrics
 		}
 	}
 	db2, err := getMetricsTTL()

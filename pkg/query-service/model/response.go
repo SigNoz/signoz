@@ -55,6 +55,7 @@ type TTLStatusItem struct {
 	TableName string    `json:"table_name" db:"table_name"`
 	TTL       int       `json:"ttl" db:"ttl"`
 	Status    string    `json:"status" db:"status"`
+	Archived  bool      `json:"archived" db:"archived"`
 }
 
 type ChannelItem struct {
@@ -273,7 +274,7 @@ type GetTTLResponseItem struct {
 	MetricsMoveTime int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
 	TracesTime      int    `json:"traces_ttl_duration_hrs,omitempty"`
 	TracesMoveTime  int    `json:"traces_move_ttl_duration_hrs,omitempty"`
-	Status          string `json:"status,omitempty"`
+	Status          string `json:"status"`
 }
 
 type DBResponseServiceName struct {

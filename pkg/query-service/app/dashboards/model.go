@@ -72,6 +72,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		updated_at datetime NOT NULL,
 		table_name TEXT NOT NULL,
 		ttl INTEGER DEFAULT 0,
+		archived BOOL DEFAULT false,
 		status TEXT NOT NULL
 	);`
 
