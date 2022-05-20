@@ -20,7 +20,7 @@
 		"baseUrl": "./src",
 		"downlevelIteration": true,
 		"plugins": [{ "name": "typescript-plugin-css-modules" }],
-		"types": ["cypress", "@testing-library/cypress", "node"]
+		"types": ["node", "jest"]
 	},
 	"exclude": ["node_modules"],
 	"include": [

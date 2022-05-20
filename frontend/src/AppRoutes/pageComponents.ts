@@ -12,10 +12,7 @@ export const ServiceMetricsPage = Loadable(
 );
 
 export const ServiceMapPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap/ServiceMap'
-		),
+	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
 export const TraceFilter = Loadable(
@@ -27,10 +24,7 @@ export const TraceDetail = Loadable(
 );
 
 export const UsageExplorerPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage/UsageExplorerDef'
-		),
+	() => import(/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage'),
 );
 
 export const SignupPage = Loadable(
