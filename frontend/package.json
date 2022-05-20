@@ -54,7 +54,7 @@
 		"dotenv": "8.2.0",
 		"file-loader": "6.1.1",
 		"history": "4.10.1",
-		"html-webpack-plugin": "5.5.0",
+		"html-webpack-plugin": "5.1.0",
 		"i18next": "^21.6.12",
 		"i18next-browser-languagedetector": "^6.1.3",
 		"i18next-http-backend": "^1.3.2",
