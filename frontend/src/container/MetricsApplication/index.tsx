@@ -55,19 +55,20 @@ function ServiceMetrics(): JSX.Element {
 	const externalMetrics = 'External Calls';
 
 	const getActiveKey = (): string => {
-		if (tab === null) {
-			return overMetrics;
+		switch (tab) {
+			case null: {
+				return overMetrics;
+			}
+			case dbCallMetrics: {
+				return dbCallMetrics;
+			}
+			case externalMetrics: {
+				return externalMetrics;
+			}
+			default: {
+				return overMetrics;
+			}
 		}
-
-		if (tab === dbCallMetrics) {
-			return dbCallMetrics;
-		}
-
-		if (tab === externalMetrics) {
-			return externalMetrics;
-		}
-
-		return overMetrics;
 	};
 
 	const activeKey = getActiveKey();

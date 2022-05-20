@@ -107,8 +107,8 @@ function SideNav(): JSX.Element {
 							<Typography>{name}</Typography>
 							{tags &&
 								tags.map((e) => (
-									<Tags color="#177DDC" key={e}>
-										<Typography.Text strong>{e}</Typography.Text>
+									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
+										<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
 									</Tags>
 								))}
 						</Space>
