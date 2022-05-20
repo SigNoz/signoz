@@ -139,7 +139,7 @@
 		"@typescript-eslint/parser": "^4.28.2",
 		"autoprefixer": "^9.0.0",
 		"babel-plugin-styled-components": "^1.12.0",
-		"compression-webpack-plugin": "^9.0.0",
+		"compression-webpack-plugin": "9.0.0",
 		"copy-webpack-plugin": "^8.1.0",
 		"critters-webpack-plugin": "^3.0.1",
 		"eslint": "^7.30.0",
