@@ -143,6 +143,33 @@ curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-del
 
 ## General Instructions
 
+**Before making any significant changes, please open an issue**. Each issue
+should describe the following:
+
+* Requirement - what kind of use case are you trying to solve?
+* Proposal - what do you suggest to solve the problem or improve the existing
+  situation?
+* Any open questions to address
+
+Discussing your proposed changes ahead of time will make the contribution
+process smooth for everyone. Once the approach is agreed upon, make your changes
+and open a pull request(s). Unless your change is small, Please consider submitting different PRs:
+
+* First PR should include the overall structure of the new component:
+  * Readme, configuration, interfaces or base classes etc...
+  * This PR is usually trivial to review, so the size limit does not apply to
+    it.
+* Second PR should include the concrete implementation of the component. If the
+  size of this PR is larger than the recommended size consider splitting it in
+  multiple PRs.
+* If there are multiple sub-component then ideally each one should be implemented as
+  a separate pull request.
+* Last PR should include changes to any user facing documentation. And should include
+  end to end tests if applicable. The component must be enabled
+  only after sufficient testing, and there is enough confidence in the
+  stability and quality of the component.
+
+
 You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack](https://signoz.io/slack).
 
 - If you find any bugs, please create an issue
