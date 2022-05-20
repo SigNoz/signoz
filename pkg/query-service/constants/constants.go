@@ -57,6 +57,9 @@ const (
 	Descending       = "descending"
 	Ascending        = "ascending"
 	ContextTimeout   = 60 // seconds
+	StatusPending    = "pending"
+	StatusFailed     = "failed"
+	StatusSuccess    = "success"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

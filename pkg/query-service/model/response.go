@@ -48,6 +48,15 @@ type RuleResponseItem struct {
 	Data      string    `json:"data" db:"data"`
 }
 
+type TTLStatusItem struct {
+	Id        int       `json:"id" db:"id"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	TableName string    `json:"table_name" db:"table_name"`
+	TTL       int       `json:"ttl" db:"ttl"`
+	Status    string    `json:"status" db:"status"`
+}
+
 type ChannelItem struct {
 	Id        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -260,10 +269,11 @@ type DBResponseTTL struct {
 }
 
 type GetTTLResponseItem struct {
-	MetricsTime     int `json:"metrics_ttl_duration_hrs,omitempty"`
-	MetricsMoveTime int `json:"metrics_move_ttl_duration_hrs,omitempty"`
-	TracesTime      int `json:"traces_ttl_duration_hrs,omitempty"`
-	TracesMoveTime  int `json:"traces_move_ttl_duration_hrs,omitempty"`
+	MetricsTime     int    `json:"metrics_ttl_duration_hrs,omitempty"`
+	MetricsMoveTime int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
+	TracesTime      int    `json:"traces_ttl_duration_hrs,omitempty"`
+	TracesMoveTime  int    `json:"traces_move_ttl_duration_hrs,omitempty"`
+	Status          string `json:"status,omitempty"`
 }
 
 type DBResponseServiceName struct {
