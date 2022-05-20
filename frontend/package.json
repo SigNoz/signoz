@@ -12,7 +12,7 @@
 		"jest": "jest",
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
-		"postinstall": "yarn husky:configure",
+		"postinstall": "is-ci || yarn husky:configure",
 		"playwright": "playwright test --config=./playwright.config.ts",
 		"playwright:local:debug": "PWDEBUG=console yarn playwright --headed --browser=chromium",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
@@ -157,6 +157,7 @@
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"eslint-plugin-sonarjs": "^0.12.0",
 		"husky": "^7.0.4",
+		"is-ci": "^3.0.1",
 		"jest-playwright-preset": "^1.7.0",
 		"less-plugin-npm-import": "^2.1.0",
 		"lint-staged": "^12.3.7",
@@ -167,7 +168,7 @@
 		"ts-node": "^10.2.1",
 		"typescript-plugin-css-modules": "^3.4.0",
 		"webpack-bundle-analyzer": "^4.5.0",
-		"webpack-cli": "^4.5.0"
+		"webpack-cli": "^4.9.2"
 	},
 	"lint-staged": {
 		"*.(js|jsx|ts|tsx)": [
