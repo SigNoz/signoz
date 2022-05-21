@@ -18,7 +18,7 @@ services:
       retries: 3
 
   alertmanager:
-    image: signoz/alertmanager:0.6.0
+    image: signoz/alertmanager:0.23.0-0.1
     depends_on:
       - query-service
     restart: on-failure
@@ -37,7 +37,7 @@ services:
     ports:
       - "8180:8080"
     environment:
-      - ClickHouseUrl=tcp://clickhouse:9000
+      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
@@ -51,7 +51,7 @@ services:
         condition: service_healthy
 
   otel-collector:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:0.43.0-0.1
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -64,7 +64,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.43.0
+    image: signoz/otelcontribcol:0.43.0-0.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

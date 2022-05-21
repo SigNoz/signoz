@@ -1,5 +1,5 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { Menu, Typography } from 'antd';
+import { Menu, Space, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -19,6 +19,7 @@ import {
 	Sider,
 	SlackButton,
 	SlackMenuItemContainer,
+	Tags,
 	VersionContainer,
 } from './styles';
 
@@ -96,13 +97,21 @@ function SideNav(): JSX.Element {
 				selectedKeys={[pathname]}
 				mode="inline"
 			>
-				{menus.map(({ to, Icon, name }) => (
+				{menus.map(({ to, Icon, name, tags }) => (
 					<Menu.Item
 						key={to}
 						icon={<Icon />}
 						onClick={(): void => onClickHandler(to)}
 					>
-						<Typography>{name}</Typography>
+						<Space style={{ position: 'relative' }}>
+							<Typography>{name}</Typography>
+							{tags &&
+								tags.map((e) => (
+									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
+										<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
+									</Tags>
+								))}
+						</Space>
 					</Menu.Item>
 				))}
 				{sidebar.map((props, index) => (

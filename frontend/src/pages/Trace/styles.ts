@@ -10,8 +10,8 @@ export const Container = styled.div`
 
 export const LeftContainer = styled(Card)`
 	flex: 0.5;
-	width: 95%;
-	padding-right: 0.5rem;
+	margin-right: 0.5rem;
+	width: 15rem;
 
 	.ant-card-body {
 		padding: 0;

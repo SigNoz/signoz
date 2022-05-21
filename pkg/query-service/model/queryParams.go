@@ -270,3 +270,8 @@ type FilterSet struct {
 	Operation string       `json:"op,omitempty"`
 	Items     []FilterItem `json:"items"`
 }
+
+type RemoveTTLParams struct {
+	Type         string
+	RemoveAllTTL bool
+}

@@ -545,7 +545,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	// Validate the TTL duration.
 	durationParsed, err := time.ParseDuration(delDuration)
-	if err != nil {
+	if err != nil || durationParsed.Seconds() <= 0 {
 		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
 	}
 
@@ -554,7 +554,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	// If some cold storage is provided, validate the cold storage move TTL.
 	if len(coldStorage) > 0 {
 		toColdParsed, err = time.ParseDuration(toColdDuration)
-		if err != nil {
+		if err != nil || toColdParsed.Seconds() <= 0 {
 			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
 		}
 		if toColdParsed.Seconds() != 0 && toColdParsed.Seconds() >= durationParsed.Seconds() {
@@ -585,6 +585,23 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	}
 
 	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
+}
+
+func parseRemoveTTL(r *http.Request) (*model.RemoveTTLParams, error) {
+
+	typeTTL := r.URL.Query().Get("type")
+	removeAllTTL := false
+
+	if len(typeTTL) == 0 {
+		removeAllTTL = true
+	} else {
+		// Validate the type parameter
+		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
+			return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
+		}
+	}
+
+	return &model.RemoveTTLParams{Type: typeTTL, RemoveAllTTL: removeAllTTL}, nil
 }
 
 func parseUserRequest(r *http.Request) (*model.User, error) {
