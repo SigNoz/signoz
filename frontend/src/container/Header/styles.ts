@@ -1,4 +1,4 @@
-import { Menu, Switch, Typography } from 'antd';
+import { Switch, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -46,10 +46,6 @@ export const LogoutContainer = styled.div`
 	display: flex;
 	gap: 0.5rem;
 	align-items: center;
-`;
-
-export const MenuContainer = styled(Menu)`
-	padding: 1rem;
 `;
 
 export interface DarkModeProps {

@@ -27,12 +27,7 @@ import AppReducer from 'types/reducer/app';
 
 import CurrentOrganization from './CurrentOrganization';
 import SignedInAS from './SignedInAs';
-import {
-	Container,
-	LogoutContainer,
-	MenuContainer,
-	ToggleButton,
-} from './styles';
+import { Container, LogoutContainer, ToggleButton } from './styles';
 
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
@@ -70,7 +65,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	};
 
 	const menu = (
-		<MenuContainer>
+		<Menu style={{ padding: '1rem' }}>
 			<Menu.ItemGroup>
 				<SignedInAS />
 				<Divider />
@@ -92,7 +87,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					</div>
 				</LogoutContainer>
 			</Menu.ItemGroup>
-		</MenuContainer>
+		</Menu>
 	);
 
 	return (
