@@ -14,7 +14,7 @@ func TestBuildQuery(t *testing.T) {
 			End:   1651078382000,
 			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: map[string]*model.MetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
 					"a": {
 						MetricName:        "name",
 						AggregateOperator: model.RATE_MAX,
@@ -22,10 +22,10 @@ func TestBuildQuery(t *testing.T) {
 				},
 			},
 		}
-		queries := BuildQueries(q, "table").Queries
+		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 1)
-		So(queries[0], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'__name__') = 'name' AND date >= fromUnixTimestamp64Milli(toInt64(1650991982000)) AND date <= fromUnixTimestamp64Milli(toInt64(1651078382000))")
-		So(queries[0], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["a"], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'__name__') = 'name' AND date >= fromUnixTimestamp64Milli(toInt64(1650991982000)) AND date <= fromUnixTimestamp64Milli(toInt64(1651078382000))")
+		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }
 
@@ -36,7 +36,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 			End:   1651078382000,
 			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: map[string]*model.MetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
 					"a": {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
@@ -47,11 +47,11 @@ func TestBuildQueryWithFilters(t *testing.T) {
 				},
 			},
 		}
-		queries := BuildQueries(q, "table").Queries
+		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 1)
 
-		So(queries[0], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'a') != 'b'")
-		So(queries[0], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["a"], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'a') != 'b'")
+		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }
 
@@ -62,7 +62,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 			End:   1651078382000,
 			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: map[string]*model.MetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
 					"a": {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
@@ -77,10 +77,10 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 				},
 			},
 		}
-		queries := BuildQueries(q, "table").Queries
+		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 2)
-		So(queries[0], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'in') IN ['a','b','c']")
-		So(queries[0], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["a"], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'in') IN ['a','b','c']")
+		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }
 
@@ -91,7 +91,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 			End:   1651078382000,
 			Step:  60,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuildMetricQueries: map[string]*model.MetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
 					"a": {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
@@ -104,11 +104,10 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 						AggregateOperator: model.RATE_AVG,
 					},
 				},
-				Formulas: []string{"a/b"},
 			},
 		}
-		queries := BuildQueries(q, "table").Queries
-		So(queries[0], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'in') IN ['a','b','c']")
-		So(queries[0], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		queries := PrepareBuilderMetricQueries(q, "table").Queries
+		So(queries["a"], ShouldContainSubstring, "WHERE JSONExtractString(table.labels,'in') IN ['a','b','c']")
+		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }

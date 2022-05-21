@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math"
+	"log"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
@@ -445,76 +447,99 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
-		query := metricsQueryRangeParams.CompositeMetricQuery.Prom.Query
-		stats := metricsQueryRangeParams.CompositeMetricQuery.Prom.Stats
-		q := r.URL.Query()
-		q.Add("start", strconv.Itoa(int(metricsQueryRangeParams.Start/1000.0)))
-		q.Add("end", strconv.Itoa(int(metricsQueryRangeParams.End/1000.0)))
-		q.Add("step", strconv.Itoa(int(metricsQueryRangeParams.Step)))
-		q.Add("query", query)
-		q.Add("stats", stats)
-		r.URL.RawQuery = q.Encode()
-		(*aH).queryRangeMetrics(w, r)
-		return
-	}
+	execClickHouseQueries := func(queries map[string]string) []*model.Series {
+		var seriesList []*model.Series
+		ch := make(chan []*model.Series, len(queries))
+		var wg sync.WaitGroup
 
-	// build queries
-	chQuries := metrics.BuildQueries(metricsQueryRangeParams, "time_series")
-	if chQuries.Err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: chQuries.Err}, nil)
-	}
+		for name, query := range queries {
+			wg.Add(1)
+			go func(name, query string) {
+				defer wg.Done()
+				seriesList, err := (*aH.reader).GetMetricResult(r.Context(), query)
+				for _, series := range seriesList {
+					series.QueryName = name
+				}
 
-	var results []*[]model.MetricResult
-	// read the result for individual metric queries and build query for formula
-	for _, query := range chQuries.Queries {
-		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
-		if err != nil {
-			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+				if err != nil {
+					log.Printf("err calling GetMetricResult(%s): %v", query, err)
+					return
+				}
+				ch <- seriesList
+			}(name, query)
 		}
-		// query may have group by and can result in multiple metric series
-		results = append(results, result...)
 
-	}
+		wg.Wait()
+		close(ch)
 
-	// each formula creates a new series
-	for _, query := range chQuries.FormulaQueries {
-		result, err := (*aH.reader).GetMetricResult(r.Context(), query)
-		if err != nil {
-			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		// read values from the channel
+		for r := range ch {
+			seriesList = append(seriesList, r...)
 		}
-		results = append(results, result...)
+		return seriesList
 	}
 
-	type DataResult struct {
-		Metrc map[string]string `json:"metric"`
-		Value [][]interface{}   `json:"values"`
-	}
+	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) []*model.Series {
+		var seriesList []*model.Series
+		ch := make(chan []*model.Series, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
+		var wg sync.WaitGroup
 
-	var apiResults []DataResult
-	for _, result := range results {
-		dr := DataResult{Metrc: make(map[string]string)}
-		for _, r := range *result {
-			if math.IsNaN(r.Result) || math.IsInf(r.Result, 0) {
-				continue
-			}
+		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
+			wg.Add(1)
+			go func(name string, query *model.PromQuery) {
+				defer wg.Done()
+				queryModel := model.QueryRangeParams{
+					Start: time.UnixMilli(metricsQueryRangeParams.Start),
+					End:   time.UnixMilli(metricsQueryRangeParams.End),
+					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
+					Query: query.Query,
+					Stats: query.Stats,
+				}
+				promResult, stats, err := (*aH.reader).GetQueryRangeResult(r.Context(), &queryModel)
 
-			var value []interface{}
-			value = append(value, r.Timestamp.Unix())
-			value = append(value, fmt.Sprintf("%f", r.Result))
-			dr.Value = append(dr.Value, value)
-			for _, labelItem := range r.GroupLabels {
-				dr.Metrc[labelItem.LabelKey] = labelItem.LabelValue
-			}
+				fmt.Println("promResult", queryModel, promResult, stats, err)
+				if err != nil {
+					log.Printf("err calling GetMetricResult(%s): %v", query, err)
+					return
+				}
+				ch <- seriesList
+			}(name, query)
 		}
-		apiResults = append(apiResults, dr)
+
+		wg.Wait()
+		close(ch)
+
+		// read values from the channel
+		for r := range ch {
+			seriesList = append(seriesList, r...)
+		}
+		return seriesList
+	}
+
+	var seriesList []*model.Series
+	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
+	case model.QUERY_BUILDER:
+		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, "time_series")
+		if runQueries.Err != nil {
+			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
+		}
+		seriesList = execClickHouseQueries(runQueries.Queries)
+
+	case model.CLICKHOUSE:
+		queries := make(map[string]string)
+		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
+			queries[name] = chQuery.Query
+		}
+		seriesList = execClickHouseQueries(queries)
+	case model.PROM:
+		seriesList = execPromQueries(metricsQueryRangeParams)
 	}
 
 	type ResponseFormat struct {
-		ResultType string       `json:"resultType"`
-		Result     []DataResult `json:"result"`
+		ResultType string          `json:"resultType"`
+		Result     []*model.Series `json:"result"`
 	}
-	resp := ResponseFormat{ResultType: "matrix", Result: apiResults}
+	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
 	aH.respond(w, resp)
 }
 

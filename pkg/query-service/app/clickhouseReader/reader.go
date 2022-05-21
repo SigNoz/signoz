@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"net"
 	"net/http"
@@ -2649,7 +2650,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 }
 
-func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*[]model.MetricResult, error) {
+func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -2661,48 +2662,49 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	for i := range columnTypes {
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 	}
-	resultMap := make(map[string][]model.MetricResult)
+	metricPointsMap := make(map[string][]model.MetricPoint)
+	attributesMap := make(map[string]map[string]string)
 
 	defer rows.Close()
 	for rows.Next() {
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
-		var result model.MetricResult
 		var groupBy []string
-		var groupLabels []model.GroupLabel
+		var metricPoint model.MetricPoint
+		groupAttributes := make(map[string]string)
 		for idx, v := range vars {
 			colName := columnNames[idx]
 			switch v := v.(type) {
 			case *string:
 				groupBy = append(groupBy, *v)
-				groupLabels = append(groupLabels, model.GroupLabel{LabelKey: colName, LabelValue: *v})
+				groupAttributes[colName] = *v
 			case *time.Time:
-				result.Timestamp = *v
+				metricPoint.Timestamp = v.UnixMilli()
 			case *float64:
-				result.Result = *v
+				metricPoint.Value = *v
 			}
+		}
+		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
+			continue
 		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
-		result.GroupLabels = groupLabels
-		if _, found := resultMap[key]; !found {
-			resultMap[key] = make([]model.MetricResult, 0)
-		}
-		resultMap[key] = append(resultMap[key], result)
+		attributesMap[key] = groupAttributes
+		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
 	}
-
-	zap.S().Info(query)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 
-	var result []*[]model.MetricResult
-	for key := range resultMap {
-		v := resultMap[key]
-		result = append(result, &v)
+	var seriesList []*model.Series
+	for key := range metricPointsMap {
+		points := metricPointsMap[key]
+		attributes := attributesMap[key]
+		series := model.Series{Labels: attributes, Points: points}
+		seriesList = append(seriesList, &series)
 	}
-	return result, nil
+	return seriesList, nil
 }

@@ -23,7 +23,8 @@ type MetricQuery struct {
 	MetricName        string            `json:"metricName"`
 	TagFilters        *FilterSet        `json:"tagFilters,omitempty"`
 	GroupingTags      []string          `json:"groupBy,omitempty"`
-	AggregateOperator AggregateOperator `json:"aggregateOperator,omitempty"`
+	AggregateOperator AggregateOperator `json:"aggregateOperator"`
+	Expression        string            `json:"expression"`
 }
 
 type QueryType int
@@ -34,17 +35,20 @@ const (
 	PROM
 )
 
-type Prom struct {
+type PromQuery struct {
 	Query string `json:"query"`
-	Stats string `json:"stats"`
+	Stats string `json:"stats,omitempty"`
+}
+
+type ClickHouseQuery struct {
+	Query string `json:"query"`
 }
 
 type CompositeMetricQuery struct {
-	BuildMetricQueries map[string]*MetricQuery `json:"buildMetricQueries"`
-	Formulas           []string                `json:"formulas,omitempty"`
-	RawQuery           string                  `json:"rawQuery,omitempty"`
-	Prom               Prom                    `json:"prom,omitempty"`
-	QueryType          QueryType               `json:"queryType,omitempty"`
+	BuilderQueries    map[string]*MetricQuery     `json:"builderQueries,omitempty"`
+	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
+	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
+	QueryType         QueryType                   `json:"queryType"`
 }
 
 type AggregateOperator int
@@ -80,11 +84,11 @@ const (
 )
 
 type QueryRangeParamsV2 struct {
-	DataSource           DataSource            `json:"dataSource,omitempty"`
-	Start                int64                 `json:"start,omitempty"`
-	End                  int64                 `json:"end,omitempty"`
-	Step                 int64                 `json:"step,omitempty"`
-	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery,omitempty"`
+	DataSource           DataSource            `json:"dataSource"`
+	Start                int64                 `json:"start"`
+	End                  int64                 `json:"end"`
+	Step                 int64                 `json:"step"`
+	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery"`
 }
 
 // Metric auto complete types

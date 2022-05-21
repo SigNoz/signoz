@@ -341,13 +341,21 @@ type ErrorWithSpan struct {
 	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }
 
-type GroupLabel struct {
-	LabelKey   string `json:"labelKey"`
-	LabelValue string `json:"labelValue"`
+type Series struct {
+	QueryName string            `json:"queryName"`
+	Labels    map[string]string `json:"metric"`
+	Points    []MetricPoint     `json:"values"`
 }
 
-type MetricResult struct {
-	GroupLabels []GroupLabel `json:"groupLabels,omitempty"`
-	Timestamp   time.Time    `json:"ts" ch:"ts"`
-	Result      float64      `json:"res" ch:"res"`
+type MetricPoint struct {
+	Timestamp int64
+	Value     float64
+}
+
+func (mp *MetricPoint) MarshalJSON() ([]byte, error) {
+	a := []interface{}{
+		mp.Timestamp,
+		mp.Value,
+	}
+	return json.Marshal(a)
 }
