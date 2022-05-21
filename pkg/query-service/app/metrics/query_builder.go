@@ -202,8 +202,8 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 	return errs
 }
 
-// formatErrs returns formatted error string
-func formatErrs(errs []error, separator string) string {
+// FormatErrs returns formatted error string
+func FormatErrs(errs []error, separator string) string {
 	var errStrs []string
 	for _, err := range errs {
 		errStrs = append(errStrs, err.Error())
@@ -232,7 +232,7 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 			}
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("error while creating query: %s", formatErrs(errs, "\n"))
+			return nil, fmt.Errorf("error while creating query: %s", FormatErrs(errs, "\n"))
 		}
 	}
 	return varToQuery, nil
@@ -284,7 +284,7 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 		expressions = append(expressions, bq.Expression)
 	}
 	if errs := validateExpressions(expressions, evalFuncs); len(errs) != 0 {
-		return &RunQueries{Err: fmt.Errorf("invalid expressions: %s", formatErrs(errs, "\n"))}
+		return &RunQueries{Err: fmt.Errorf("invalid expressions: %s", FormatErrs(errs, "\n"))}
 	}
 
 	varToQuery, err := varToQuery(qp, tableName)
@@ -312,7 +312,7 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 		}
 	}
 	if len(errs) != 0 {
-		return &RunQueries{Err: fmt.Errorf("errors with formulas: %s", formatErrs(errs, "\n"))}
+		return &RunQueries{Err: fmt.Errorf("errors with formulas: %s", FormatErrs(errs, "\n"))}
 	}
 	return &RunQueries{Queries: namedQueries}
 }

@@ -2684,9 +2684,15 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 }
 
+// GetMetricResult runs the query and returns list of time series
 func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
 
 	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("error in processing sql query")
+	}
 
 	var (
 		columnTypes = rows.ColumnTypes()
@@ -2696,7 +2702,11 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	for i := range columnTypes {
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 	}
+	// when group by is applied, each combination of cartesian product
+	// of attribute key is separate series. each item in metricPointsMap
+	// represent a unique series.
 	metricPointsMap := make(map[string][]model.MetricPoint)
+	// attribute key-value pairs for each group selection
 	attributesMap := make(map[string]map[string]string)
 
 	defer rows.Close()
@@ -2707,6 +2717,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		var groupBy []string
 		var metricPoint model.MetricPoint
 		groupAttributes := make(map[string]string)
+		// Assuming that the end result row contains a timestamp, value and option labels
+		// Label key and value are both strings.
 		for idx, v := range vars {
 			colName := columnNames[idx]
 			switch v := v.(type) {
@@ -2720,17 +2732,13 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			}
 		}
 		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
+			zap.S().Info("invalid metric point value found: %v", metricPoint.Value)
 			continue
 		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
 		attributesMap[key] = groupAttributes
 		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
-	}
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("error in processing sql query")
 	}
 
 	var seriesList []*model.Series

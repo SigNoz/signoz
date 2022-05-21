@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -387,7 +386,7 @@ func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *htt
 	matchText := r.URL.Query().Get("match")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
-		limit = 0
+		limit = 0 // no limit
 	}
 
 	metricNameList, apiErrObj := (*aH.reader).GetMetricAutocompleteMetricNames(r.Context(), matchText, limit)
@@ -448,9 +447,14 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	execClickHouseQueries := func(queries map[string]string) []*model.Series {
+	type channelResult struct {
+		Series []*model.Series
+		Err    error
+	}
+
+	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error) {
 		var seriesList []*model.Series
-		ch := make(chan []*model.Series, len(queries))
+		ch := make(chan channelResult, len(queries))
 		var wg sync.WaitGroup
 
 		for name, query := range queries {
@@ -463,26 +467,34 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				}
 
 				if err != nil {
-					log.Printf("err calling GetMetricResult(%s): %v", query, err)
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err)}
 					return
 				}
-				ch <- seriesList
+				ch <- channelResult{Series: seriesList}
 			}(name, query)
 		}
 
 		wg.Wait()
 		close(ch)
 
+		var errs []error
 		// read values from the channel
 		for r := range ch {
-			seriesList = append(seriesList, r...)
+			if r.Err != nil {
+				errs = append(errs, r.Err)
+				continue
+			}
+			seriesList = append(seriesList, r.Series...)
 		}
-		return seriesList
+		if len(errs) != 0 {
+			return nil, fmt.Errorf("encountered multiple errors %s", metrics.FormatErrs(errs, "\n"))
+		}
+		return seriesList, nil
 	}
 
-	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) []*model.Series {
+	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error) {
 		var seriesList []*model.Series
-		ch := make(chan []*model.Series, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
+		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
 		var wg sync.WaitGroup
 
 		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
@@ -494,46 +506,70 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					End:   time.UnixMilli(metricsQueryRangeParams.End),
 					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
 					Query: query.Query,
-					Stats: query.Stats,
 				}
-				promResult, stats, err := (*aH.reader).GetQueryRangeResult(r.Context(), &queryModel)
-
-				fmt.Println("promResult", queryModel, promResult, stats, err)
+				promResult, _, err := (*aH.reader).GetQueryRangeResult(r.Context(), &queryModel)
 				if err != nil {
-					log.Printf("err calling GetMetricResult(%s): %v", query, err)
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err)}
 					return
 				}
-				ch <- seriesList
+				matrix, _ := promResult.Matrix()
+				for _, v := range matrix {
+					var s model.Series
+					s.QueryName = name
+					s.Labels = v.Metric.Copy().Map()
+					for _, p := range v.Points {
+						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
+					}
+					seriesList = append(seriesList, &s)
+				}
+				ch <- channelResult{Series: seriesList}
 			}(name, query)
 		}
 
 		wg.Wait()
 		close(ch)
 
+		var errs []error
 		// read values from the channel
 		for r := range ch {
-			seriesList = append(seriesList, r...)
+			if r.Err != nil {
+				errs = append(errs, r.Err)
+				continue
+			}
+			seriesList = append(seriesList, r.Series...)
 		}
-		return seriesList
+		if len(errs) != 0 {
+			return nil, fmt.Errorf("encountered multiple errors %s", metrics.FormatErrs(errs, "\n"))
+		}
+		return seriesList, nil
 	}
 
 	var seriesList []*model.Series
+	var err error
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
 	case model.QUERY_BUILDER:
 		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, "time_series")
 		if runQueries.Err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 		}
-		seriesList = execClickHouseQueries(runQueries.Queries)
+		seriesList, err = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
 		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
 			queries[name] = chQuery.Query
 		}
-		seriesList = execClickHouseQueries(queries)
+		seriesList, err = execClickHouseQueries(queries)
 	case model.PROM:
-		seriesList = execPromQueries(metricsQueryRangeParams)
+		seriesList, err = execPromQueries(metricsQueryRangeParams)
+	default:
+		err = fmt.Errorf("invalid query type")
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErrObj, nil)
+		return
 	}
 
 	type ResponseFormat struct {
