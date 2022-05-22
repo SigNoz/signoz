@@ -1,0 +1,27 @@
+on:
+  pull_request_target:
+    types:
+      - closed
+
+env:
+  GITHUB_ACCESS_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+  PR_NUMBER: ${{ github.event.number }}
+jobs:
+  create_issue_on_merge:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v2
+        with:
+          repository: signoz/gh-bot
+      - name: Use Node v16
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - name: Setup Cache & Install Dependencies
+        uses: bahmutov/npm-install@v1
+        with:
+          install-command: yarn --frozen-lockfile
+      - name: Comment on PR
+        run: node create-issue.js

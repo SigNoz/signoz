@@ -1,4 +1,3 @@
-import { expect } from '@jest/globals';
 import dayjs from 'dayjs';
 
 import { convertTimeRange, TIME_UNITS } from '../xAxisConfig';

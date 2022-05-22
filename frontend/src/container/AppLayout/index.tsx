@@ -117,7 +117,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			dispatch({
 				type: UPDATE_LATEST_VERSION,
 				payload: {
-					latestVersion: getUserLatestVersionResponse.data.payload.name,
+					latestVersion: getUserLatestVersionResponse.data.payload.tag_name,
 				},
 			});
 		}

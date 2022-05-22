@@ -246,6 +246,10 @@ type SetTTLResponseItem struct {
 	Message string `json:"message"`
 }
 
+type RemoveTTLResponseItem struct {
+	Message string `json:"message"`
+}
+
 type DiskItem struct {
 	Name string `json:"name,omitempty" ch:"name"`
 	Type string `json:"type,omitempty" ch:"type"`

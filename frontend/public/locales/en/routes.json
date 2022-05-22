@@ -2,5 +2,8 @@
 	"general": "General",
 	"alert_channels": "Alert Channels",
 	"organization_settings": "Organization Settings",
-	"my_settings": "My Settings"
+	"my_settings": "My Settings",
+	"overview_metrics": "Overview Metrics",
+	"dbcall_metrics": "Database Calls",
+	"external_metrics": "External Calls"
 }

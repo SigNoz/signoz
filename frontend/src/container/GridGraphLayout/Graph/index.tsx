@@ -65,7 +65,7 @@ function GridCardGraph({
 						.map(async (query) => {
 							const result = await getQueryResult({
 								end,
-								query: query.query,
+								query: encodeURIComponent(query.query),
 								start,
 								step: '60',
 							});

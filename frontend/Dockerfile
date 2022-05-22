@@ -1,5 +1,5 @@
 # stage1 as builder
-FROM node:12.22.0 as builder
+FROM node:16.15.0-slim as builder
 
 # Add Maintainer Info
 LABEL maintainer="signoz"
@@ -12,8 +12,11 @@ WORKDIR /frontend
 # copy the package.json to install dependencies
 COPY package.json ./
 
+# configure node_env as production
+ENV NODE_ENV=production
+
 # Install the dependencies and make the folder
-RUN yarn install 
+RUN CI=1 yarn install 
 
 COPY . .
 

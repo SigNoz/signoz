@@ -1,7 +1,7 @@
-import { Checkbox, notification, Typography } from 'antd';
+import { Checkbox, notification, Tooltip, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -11,7 +11,7 @@ import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
-import { CheckBoxContainer } from './styles';
+import { CheckBoxContainer, ParaGraph } from './styles';
 
 function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const {
@@ -155,6 +155,11 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 	const isCheckBoxSelected = isUserSelected;
 
+	const TooTipOverLay = useMemo(
+		(): JSX.Element => <Typography>{keyValue}</Typography>,
+		[keyValue],
+	);
+
 	return (
 		<CheckBoxContainer>
 			<Checkbox
@@ -164,7 +169,9 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				defaultChecked
 				key={keyValue}
 			>
-				{keyValue}
+				<Tooltip overlay={TooTipOverLay}>
+					<ParaGraph ellipsis>{keyValue}</ParaGraph>
+				</Tooltip>
 			</Checkbox>
 			{isCheckBoxSelected ? (
 				<Typography>{value}</Typography>

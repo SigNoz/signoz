@@ -16,7 +16,7 @@ import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopEndpointsTable from '../TopEndpointsTable';
-import { Button, TableContainerCard } from './styles';
+import { Button } from './styles';
 
 function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
@@ -48,7 +48,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		);
 	};
 
-	const onClickhandler = async (
+	const onClickHandler = async (
 		event: ChartEvent,
 		elements: ActiveElement[],
 		chart: Chart,
@@ -119,7 +119,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickhandler(ChartEvent, activeElements, chart, data, 'Application');
+									onClickHandler(ChartEvent, activeElements, chart, data, 'Application');
 								}}
 								name="application_latency"
 								type="line"
@@ -189,7 +189,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								name="request_per_sec"
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
-									onClickhandler(event, element, chart, data, 'Request');
+									onClickHandler(event, element, chart, data, 'Request');
 								}}
 								widget={getWidget([
 									{
@@ -223,7 +223,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								name="error_percentage_%"
 								fullViewOptions={false}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickhandler(ChartEvent, activeElements, chart, data, 'Error');
+									onClickHandler(ChartEvent, activeElements, chart, data, 'Error');
 								}}
 								widget={getWidget([
 									{
@@ -238,9 +238,9 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<TableContainerCard>
+					<Card>
 						<TopEndpointsTable data={topEndPoints} />
-					</TableContainerCard>
+					</Card>
 				</Col>
 			</Row>
 		</>

@@ -20,7 +20,10 @@ function Login(): JSX.Element {
 		enabled: !isLoggedIn,
 	});
 
-	if (versionResult.status === 'error') {
+	if (
+		versionResult.status === 'error' ||
+		(versionResult.status === 'success' && versionResult?.data.statusCode !== 200)
+	) {
 		return (
 			<Typography>
 				{versionResult.data?.error || t('something_went_wrong')}
