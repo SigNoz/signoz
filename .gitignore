@@ -15,6 +15,7 @@ frontend/build
 frontend/.vscode
 frontend/.yarnclean
 frontend/.temp_cache
+frontend/test-results
 
 # misc
 .DS_Store
