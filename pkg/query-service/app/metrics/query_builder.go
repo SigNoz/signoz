@@ -2,9 +2,10 @@ package metrics
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
-	"github.com/Knetic/govaluate"
+	"github.com/SigNoz/govaluate"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 )
@@ -239,38 +240,39 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 }
 
 // expressionToQuery constructs the query for the expression
-func expressionToQuery(qp *model.QueryRangeParamsV2, expression *govaluate.EvaluableExpression) (string, error) {
+func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]string, expression *govaluate.EvaluableExpression) (string, error) {
 	var formulaQuery string
-	// vars := expression.Vars()
-	// for idx, var_ := range vars[1:] {
-	// 	x, y := vars[idx], var_
-	// 	if !reflect.DeepEqual(qp.CompositeMetricQuery.BuildMetricQueries[x].GroupingTags, qp.CompositeMetricQuery.BuildMetricQueries[y].GroupingTags) {
-	// 		return &CHMetricQueries{Err: fmt.Errorf("group by must be same")}
-	// 	}
-	// }
-	// var modified []govaluate.ExpressionToken
-	// for idx := range tokens {
-	// 	token := tokens[idx]
-	// 	if token.Kind == govaluate.VARIABLE {
-	// 		val, _ := token.Value.(string)
-	// 		token.Value = val + ".res"
-	// 	}
-	// 	modified = append(modified, token)
-	// }
-	// govaluate.NewEvaluableExpressionFromTokens(modified)
+	vars := expression.Vars()
+	for idx, var_ := range vars[1:] {
+		x, y := vars[idx], var_
+		if !reflect.DeepEqual(qp.CompositeMetricQuery.BuilderQueries[x].GroupingTags, qp.CompositeMetricQuery.BuilderQueries[y].GroupingTags) {
+			return "", fmt.Errorf("group by must be same")
+		}
+	}
+	var modified []govaluate.ExpressionToken
+	tokens := expression.Tokens()
+	for idx := range tokens {
+		token := tokens[idx]
+		if token.Kind == govaluate.VARIABLE {
+			token.Value = fmt.Sprintf("%v.res", token.Value)
+			token.Meta = fmt.Sprintf("%v.res", token.Meta)
+		}
+		modified = append(modified, token)
+	}
+	formula, _ := govaluate.NewEvaluableExpressionFromTokens(modified)
 
-	// var formulaSubQuery string
-	// for idx, var_ := range vars {
-	// 	query := varToQuery[var_]
-	// 	groupTags := groupSelect(qp.CompositeMetricQuery.BuildMetricQueries[var_].GroupingTags)
-	// 	formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
-	// 	if idx < len(vars)-1 {
-	// 		formulaSubQuery += "INNER JOIN"
-	// 	} else if len(vars) > 1 {
-	// 		formulaSubQuery += fmt.Sprintf("USING (ts %s)", groupTags)
-	// 	}
-	// }
-	// formulaQuery := fmt.Sprintf("SELECT ts, %s as res FROM ", formula) + formulaSubQuery
+	var formulaSubQuery string
+	for idx, var_ := range vars {
+		query := varToQuery[var_]
+		groupTags := strings.Join(qp.CompositeMetricQuery.BuilderQueries[var_].GroupingTags, ",")
+		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
+		if idx < len(vars)-1 {
+			formulaSubQuery += "INNER JOIN"
+		} else if len(vars) > 1 {
+			formulaSubQuery += fmt.Sprintf("USING (ts, %s)", groupTags)
+		}
+	}
+	formulaQuery = fmt.Sprintf("SELECT ts, %s as res FROM ", formula.ExpressionString()) + formulaSubQuery
 	return formulaQuery, nil
 }
 
@@ -304,7 +306,7 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 			_var := tokens[0].Value.(string)
 			namedQueries[builderQuery.QueryName] = varToQuery[_var]
 		} else {
-			query, err := expressionToQuery(qp, expression)
+			query, err := expressionToQuery(qp, varToQuery, expression)
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -314,5 +316,6 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 	if len(errs) != 0 {
 		return &RunQueries{Err: fmt.Errorf("errors with formulas: %s", FormatErrs(errs, "\n"))}
 	}
+	fmt.Println(namedQueries)
 	return &RunQueries{Queries: namedQueries}
 }
