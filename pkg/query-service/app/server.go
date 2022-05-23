@@ -27,7 +27,13 @@ import (
 
 type ServerOptions struct {
 	HTTPHostPort string
-	QsConfig     *config.QsConfig
+
+	// PromConfigPath stores the prometheus config file path
+	PromConfigPath string
+
+	// QsConfig contains the parameters needed for query service at the
+	// start up
+	QsConfig *config.QsConfig
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -71,27 +77,24 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// 	return nil, err
 	// }
 
-	if serverOptions.QsConfig == nil {
-		return nil, fmt.Errorf("failed to initialize Query service config")
+	// validate query service configuration.
+	if err := qsconfig.ValidateQs(serverOptions.QsConfig); err != nil {
+		return nil, err
 	}
 
-	if serverOptions.QsConfig.DB == nil {
-		return nil, fmt.Errorf("failed to find config for QS Database")
-	}
-
-	// initiate query service DB connection
-	qsdb, err := dao.InitConn(serverOptions.QsConfig.DB)
+	// initiate query service DB connection pool
+	qsdb, err := dao.InitConn(serverOptions.QsConfig.GetDB())
 	if err != nil {
 		return nil, err
 	}
 
 	// initiate base tables
-	if err := dao.InitDao(serverOptions.QsConfig.DB.Engine, qsdb); err != nil {
+	if err := dao.InitDao(serverOptions.QsConfig.GetDBEngine(), qsdb); err != nil {
 		return nil, err
 	}
 
 	// initiate tables and load default dashboards
-	err = dashboards.InitDB(qsdb)
+	err = dashboards.InitDB(serverOptions.QsConfig.DB.Engine, qsdb)
 	if err != nil {
 		return nil, err
 	}
@@ -121,20 +124,24 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 func (s *Server) createHTTPServer(qsdb *sqlx.DB) (*http.Server, error) {
 
 	var reader Reader
-
+	// note: qsdb is primary database used by query service to store
+	// config items like alert rules, channels, dashboard settings etc.
+	// on the other hand, STORAGE(env var) is used for connecting to
+	// metric and event data store (clickhouse)
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
 		// reader = druidReader.NewReader(qsdb)
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(qsdb)
+		clickhouseReader := clickhouseReader.NewReader(qsdb, s.serverOptions.PromConfigPath)
 		go clickhouseReader.Start()
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
+	// Initiate API handler with event data store and qs data model (modelDao)
 	apiHandler, err := NewAPIHandler(&reader, dao.DB())
 	if err != nil {
 		return nil, err

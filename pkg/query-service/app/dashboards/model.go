@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
+	qsconfig "go.signoz.io/query-service/config"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
@@ -17,11 +18,68 @@ import (
 // This time the global variable is unexported.
 var db *sqlx.DB
 
-// InitDB sets up setting up the connection pool global variable.
-func InitDB(conn *sqlx.DB) error {
+func InitDB(kind qsconfig.DBEngine, conn *sqlx.DB) error {
+	db = conn
+
+	switch kind {
+	case qsconfig.PG:
+		return initPG(conn)
+	case qsconfig.SQLLITE:
+		return initSQL(conn)
+	default:
+		return fmt.Errorf("database engine not supported")
+	}
+}
+
+func initSQL(conn *sqlx.DB) error {
 	var err error
 
-	db = conn
+	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		uuid TEXT NOT NULL UNIQUE,
+		created_at datetime NOT NULL,
+		updated_at datetime NOT NULL,
+		data TEXT NOT NULL
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return fmt.Errorf("Error in creating dashboard table: %s", err.Error())
+	}
+
+	table_schema = `CREATE TABLE IF NOT EXISTS rules (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		updated_at datetime NOT NULL,
+		deleted INTEGER DEFAULT 0,
+		data TEXT NOT NULL
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return fmt.Errorf("Error in creating rules table: %s", err.Error())
+	}
+
+	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		created_at datetime NOT NULL,
+		updated_at datetime NOT NULL,
+		name TEXT NOT NULL UNIQUE,
+		type TEXT NOT NULL,
+		deleted INTEGER DEFAULT 0,
+		data TEXT NOT NULL
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
+	}
+
+	return nil
+}
+
+// InitPG sets up setting up the PG connection pool global variable.
+func initPG(conn *sqlx.DB) error {
+	var err error
 
 	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
 		id SERIAL PRIMARY KEY,
@@ -39,8 +97,8 @@ func InitDB(conn *sqlx.DB) error {
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
 		id SERIAL PRIMARY KEY,
 		updated_at timestamp NOT NULL,
-		deleted INTEGER DEFAULT 0,
-		data JSONB NOT NULL
+		deleted bool DEFAULT false NOT NULL,
+		data TEXT NOT NULL
 	);`
 
 	_, err = db.Exec(table_schema)
@@ -54,7 +112,7 @@ func InitDB(conn *sqlx.DB) error {
 		updated_at timestamp NOT NULL,
 		name TEXT NOT NULL UNIQUE,
 		type TEXT NOT NULL,
-		deleted INTEGER DEFAULT 0,
+		deleted bool DEFAULT false NOT NULL,
 		data JSONB NOT NULL
 	);`
 
@@ -114,15 +172,14 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 		zap.S().Errorf("Error in marshalling data field in dashboard: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
-
+	var lastInsertId int64
 	// db.Prepare("Insert into dashboards where")
-	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data)
+	err = db.QueryRow("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4) RETURNING id", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data).Scan(&lastInsertId)
 
 	if err != nil {
 		zap.S().Errorf("Error in inserting dashboard data: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}

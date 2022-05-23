@@ -18,6 +18,7 @@ type modelDao struct {
 	db *sqlx.DB
 }
 
+// InitConn initializes postgres db connection
 func InitConn(pgconf *config.PGConfig) (*sqlx.DB, error) {
 
 	psqlInfo := fmt.Sprintf("dbname=%s user=%s host=%s port=%d ", pgconf.DBname, pgconf.User, pgconf.Host, pgconf.Port)
@@ -38,7 +39,8 @@ func InitConn(pgconf *config.PGConfig) (*sqlx.DB, error) {
 	return db, nil
 }
 
-// InitDB sets up setting up the connection pool global variable.
+// InitDB sets up data model (creates tables if necessary) and
+// the connection pool global variable.
 func InitDB(db *sqlx.DB) (*modelDao, error) {
 
 	table_schema := `
@@ -47,8 +49,8 @@ func InitDB(db *sqlx.DB) (*modelDao, error) {
 			id UUID PRIMARY KEY,
 			name TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
-			is_anonymous INTEGER NOT NULL DEFAULT 0 CHECK(is_anonymous IN (0,1)),
-			has_opted_updates INTEGER NOT NULL DEFAULT 1 CHECK(has_opted_updates IN (0,1))
+			is_anonymous bool DEFAULT false NOT NULL,
+			has_opted_updates bool DEFAULT false NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS invites (

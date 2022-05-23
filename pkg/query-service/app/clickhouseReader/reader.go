@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -94,11 +93,12 @@ type ClickHouseReader struct {
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
 	promConfig      *config.Config
+	promConfigPath  string
 	alertManager    am.Manager
 }
 
-// NewTraceReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB) *ClickHouseReader {
+// NewReader returns a TraceReader for the database
+func NewReader(localDB *sqlx.DB, promConfigPath string) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
@@ -121,6 +121,7 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		errorTable:      options.primary.ErrorTable,
 		durationTable:   options.primary.DurationTable,
 		spansTable:      options.primary.SpansTable,
+		promConfigPath:  promConfigPath,
 	}
 }
 
@@ -174,13 +175,11 @@ func (r *ClickHouseReader) Start() {
 
 		logLevel promlog.AllowedLevel
 	}{
+		configFile: r.promConfigPath,
 		notifier: notifier.Options{
 			Registerer: prometheus.DefaultRegisterer,
 		},
 	}
-
-	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
-	flag.Parse()
 
 	// fanoutStorage := remoteStorage
 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
@@ -356,6 +355,7 @@ func (r *ClickHouseReader) Start() {
 				// }
 				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
 				if err != nil {
+					zap.S().Errorf("error loading config from %q: %s", cfg.configFile, err)
 					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
 				}
 
@@ -682,17 +682,17 @@ func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiErr
 	if err := json.Unmarshal([]byte(channel.Data), receiver); err != nil { // Parse []byte to go struct pointer
 		return &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
-
-	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
+	postURL := constants.GetAlertManagerApiPrefix() + "v1/receivers"
+	response, err := http.Post(postURL, "application/json", bytes.NewBuffer([]byte(channel.Data)))
 
 	if err != nil {
-		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to %s/v1/receivers\n", constants.GetAlertManagerApiPrefix()), err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if response.StatusCode > 299 {
 		responseData, _ := ioutil.ReadAll(response.Body)
 
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s \n Data: %s", response.Status, string(responseData))
+		err := fmt.Errorf("Error in getting 2xx response in API call to %s\n Status: %s \n Data: %s", postURL, response.Status, string(responseData))
 		zap.S().Error(err)
 
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
@@ -706,7 +706,7 @@ func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.Api
 	idInt, _ := strconv.Atoi(id)
 	channel := model.ChannelItem{}
 
-	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=%d", idInt)
+	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data FROM notification_channels WHERE id=%d", idInt)
 
 	err := r.localDB.Get(&channel, query)
 
@@ -928,7 +928,7 @@ func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 	var lastInsertId int64
 
 	{
-		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
+		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2) RETURNING id;`)
 		if err != nil {
 			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
 			tx.Rollback()
@@ -936,16 +936,16 @@ func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 		}
 		defer stmt.Close()
 
-		result, err := stmt.Exec(time.Now(), rule)
+		err = stmt.QueryRow(time.Now(), rule).Scan(&lastInsertId)
 		if err != nil {
 			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
 			tx.Rollback() // return an error too, we may want to wrap them
 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
-		lastInsertId, _ = result.LastInsertId()
+		// LastInsertId() doesnt work for pq. hence using Returning INto above
+		// lastInsertId, _ = result.LastInsertId()
 
 		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
-
 		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
 
 		if err != nil {

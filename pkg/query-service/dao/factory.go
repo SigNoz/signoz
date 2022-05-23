@@ -12,6 +12,7 @@ import (
 
 var db ModelDao
 
+// InitConn initializes database connection. Supports both sql*lite and postgres
 func InitConn(dbconf *config.DBConfig) (*sqlx.DB, error) {
 	var err error
 	var conn *sqlx.DB
@@ -32,6 +33,8 @@ func InitConn(dbconf *config.DBConfig) (*sqlx.DB, error) {
 	return conn, nil
 }
 
+// InitDao initialize data model and db connection pool
+// to be used by query servie. Supports sql*lite and postgres
 func InitDao(engine config.DBEngine, conn *sqlx.DB) error {
 	var err error
 

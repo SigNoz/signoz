@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,7 +10,7 @@ import (
 
 	"go.signoz.io/query-service/app"
 	"go.signoz.io/query-service/auth"
-	"go.signoz.io/query-service/config"
+	qsconfig "go.signoz.io/query-service/config"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/version"
 
@@ -35,23 +36,67 @@ func main() {
 	logger := loggerMgr.Sugar()
 	version.PrintVersion()
 
-	qsConfig, err := config.LoadQsConfigFromFile(config.GetDefaultConfigPath())
-	if err != nil {
-		if qsConfig == nil {
-			logger.Fatal(fmt.Sprintf("could not load QS config from path: %s", config.GetDefaultConfigPath()), zap.Error(err))
-		} else {
-			logger.Warn(fmt.Sprintf("could not load QS config from path: %s, loading default config", config.GetDefaultConfigPath()), zap.Error(err))
-			logger.Info("default config selected")
+	var promConfigPath = flag.String("config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	var qsConfigPath = flag.String("qsdb.config-file", "", "(Config file used by Query Service)")
+	var qsDbType = flag.String("qsdb.engine", string(qsconfig.PG), "(Database used by Query Service. Values: sql or pg)")
+	var qsDbPath = flag.String("qsdb.path", "./signoz.db", "(Data file path for QS when sql*lite is used")
+	var qsDbHost = flag.String("qsdb.host", "localhost", "(Host for postgres DB)")
+	var qsDbPort = flag.Int("qsdb.port", 5432, "(Port for postgres DB)")
+	var qsDbName = flag.String("qsdb.name", "postgres", "(Name of Postgres DB)")
+	var qsDbUser = flag.String("qsdb.user", "postgres", "(User name for Postgres DB)")
+	var qsDbPassword = flag.String("qsdb.password", "", "(Password for Postgres DB)")
+	var qsDbPasswordFile = flag.String("qsdb.passwordFile", "", "(Password file for Postgres DB)")
+	var qsDbSSLMode = flag.String("qsdb.ssl", "disable", "(SSL Mode option for Postgres db)")
+	// todo(amol): move storage clickhouse url as flags?
+	flag.Parse()
+
+	// Load query service config from file or parse from command line
+	qsConf := &qsconfig.QsConfig{}
+	var err error
+	if *qsConfigPath != "" {
+		qsConf, err = qsconfig.LoadQsConfigFromFile(*qsConfigPath)
+		if err != nil {
+			logger.Fatal(fmt.Sprintf("failed to load config file (%s) for query service: %s", *qsConfigPath, err))
 		}
+	}
+
+	if *qsDbType == string(qsconfig.PG) {
+		qsConf.DB = &qsconfig.DBConfig{
+			Engine: qsconfig.PG,
+			PG: &qsconfig.PGConfig{
+				Host:     *qsDbHost,
+				Port:     int64(*qsDbPort),
+				DBname:   *qsDbName,
+				User:     *qsDbUser,
+				Password: *qsDbPassword,
+				SSLmode:  *qsDbSSLMode,
+			},
+		}
+
+		if *qsDbPasswordFile != "" {
+			err := qsConf.DB.PG.LoadPassword(*qsDbPasswordFile)
+			if err != nil {
+				logger.Fatal(fmt.Sprintf("failed to load postgres db password from file %s", *qsDbPasswordFile))
+			}
+		}
+	} else if *qsDbType == string(qsconfig.SQLLITE) {
+		qsConf.DB = &qsconfig.DBConfig{
+			Engine: qsconfig.SQLLITE,
+			SQL: &qsconfig.SQLConfig{
+				Path: *qsDbPath,
+			},
+		}
+	} else {
+		logger.Fatal(fmt.Sprintf("invalid option for qsdb.engine %s. Use either sql or postgres", *qsDbType))
 	}
 
 	serverOptions := &app.ServerOptions{
 		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
 		// DruidClientUrl: v.GetString(app.DruidClientUrl),
-
-		HTTPHostPort: constants.HTTPHostPort,
+		PromConfigPath: *promConfigPath,
+		HTTPHostPort:   constants.HTTPHostPort,
 		// DruidClientUrl: constants.DruidClientUrl,
-		QsConfig: qsConfig,
+		QsConfig: qsConf,
 	}
 
 	// Read the jwt secret key
