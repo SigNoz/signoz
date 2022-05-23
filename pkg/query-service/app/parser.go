@@ -586,23 +586,6 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
-func parseRemoveTTL(r *http.Request) (*model.RemoveTTLParams, error) {
-
-	typeTTL := r.URL.Query().Get("type")
-	removeAllTTL := false
-
-	if len(typeTTL) == 0 {
-		removeAllTTL = true
-	} else {
-		// Validate the type parameter
-		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-			return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
-		}
-	}
-
-	return &model.RemoveTTLParams{Type: typeTTL, RemoveAllTTL: removeAllTTL}, nil
-}
-
 func parseUserRequest(r *http.Request) (*model.User, error) {
 	var req model.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
