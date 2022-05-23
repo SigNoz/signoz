@@ -1139,9 +1139,14 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Context is not used here as TTL is long duration operation which needs to converted to async
+	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil {
+		if apiErr.Typ == model.ErrorConflict {
+			aH.handleError(w, apiErr.Err, http.StatusConflict)
+		} else {
+			aH.handleError(w, apiErr.Err, http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -1169,26 +1174,30 @@ func (aH *APIHandler) removeTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingTTL, apiErr := (*aH.reader).GetTTL(context.Background(), &model.GetTTLParams{GetAllTTL: true})
+	existingTracesTTL, apiErr := (*aH.reader).GetTTL(context.Background(), &model.GetTTLParams{Type: constants.TraceTTL})
+	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+	existingMetricsTTL, apiErr := (*aH.reader).GetTTL(context.Background(), &model.GetTTLParams{Type: constants.MetricsTTL})
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
-	if ttlParams.Type == constants.TraceTTL && existingTTL.TracesTime == -1 &&
+	if ttlParams.Type == constants.TraceTTL && existingTracesTTL.TracesTime == -1 &&
 		aH.handleError(w, fmt.Errorf("traces doesn't have any TTL set, cannot remove"), http.StatusBadRequest) {
 		return
 	}
 
-	if ttlParams.Type == constants.MetricsTTL && existingTTL.MetricsTime == -1 &&
+	if ttlParams.Type == constants.MetricsTTL && existingMetricsTTL.MetricsTime == -1 &&
 		aH.handleError(w, fmt.Errorf("metrics doesn't have any TTL set, cannot remove"), http.StatusBadRequest) {
 		return
 	}
 
 	if ttlParams.RemoveAllTTL {
-		if existingTTL.TracesTime == -1 && existingTTL.MetricsTime != -1 {
+		if existingTracesTTL.TracesTime == -1 && existingMetricsTTL.MetricsTime != -1 {
 			ttlParams.Type = constants.MetricsTTL
 			ttlParams.RemoveAllTTL = false
-		} else if existingTTL.TracesTime != -1 && existingTTL.MetricsTime == -1 {
+		} else if existingTracesTTL.TracesTime != -1 && existingMetricsTTL.MetricsTime == -1 {
 			ttlParams.Type = constants.TraceTTL
 			ttlParams.RemoveAllTTL = false
 		} else if aH.handleError(w, fmt.Errorf("no TTL set, cannot remove"), http.StatusBadRequest) {

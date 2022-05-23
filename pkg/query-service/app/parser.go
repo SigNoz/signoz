@@ -540,7 +540,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 
 	// Validate the type parameter
 	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-		return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
+		return nil, fmt.Errorf("type param should be metrics|traces, got %v", typeTTL)
 	}
 
 	// Validate the TTL duration.
@@ -573,18 +573,17 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 
 	typeTTL := r.URL.Query().Get("type")
-	getAllTTL := false
 
 	if len(typeTTL) == 0 {
-		getAllTTL = true
+		return nil, fmt.Errorf("type param cannot be empty from the query")
 	} else {
 		// Validate the type parameter
 		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-			return nil, fmt.Errorf("type param should be <metrics|traces>, got %v", typeTTL)
+			return nil, fmt.Errorf("type param should be metrics|traces, got %v", typeTTL)
 		}
 	}
 
-	return &model.GetTTLParams{Type: typeTTL, GetAllTTL: getAllTTL}, nil
+	return &model.GetTTLParams{Type: typeTTL}, nil
 }
 
 func parseRemoveTTL(r *http.Request) (*model.RemoveTTLParams, error) {

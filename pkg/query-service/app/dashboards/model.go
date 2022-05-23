@@ -68,11 +68,12 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		transaction_id TEXT NOT NULL,
 		created_at datetime NOT NULL,
 		updated_at datetime NOT NULL,
 		table_name TEXT NOT NULL,
 		ttl INTEGER DEFAULT 0,
-		archived BOOL DEFAULT false,
+		cold_storage_ttl INTEGER DEFAULT 0,
 		status TEXT NOT NULL
 	);`
 

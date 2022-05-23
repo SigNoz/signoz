@@ -193,7 +193,6 @@ type TTLParams struct {
 
 type GetTTLParams struct {
 	Type      string
-	GetAllTTL bool
 }
 
 type GetErrorsParams struct {

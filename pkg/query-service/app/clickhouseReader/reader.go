@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/google/uuid"
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -2268,11 +2269,19 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
-	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE created_at <= datetime('now','-7 days')")
+	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT 100)")
 	if err != nil {
 		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
 	}
 	var req, tableName string
+	uuidWithHyphen := uuid.New()
+	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+	coldStorageDuration := -1
+	if len(params.ColdStorageVolume) > 0 {
+		coldStorageDuration = int(params.ToColdStorageDuration)
+	}
+
 	switch params.Type {
 	case constants.TraceTTL:
 		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
@@ -2281,13 +2290,14 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			if err != nil {
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 			}
-			if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("TTL is already running")}
+			if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < constants.TTLRequestTimeout {
+				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 			}
 		}
 		for _, tableName := range tableNameArray {
+			// TODO: DB queries should be implemented with transactional statements but currently clickhouse doesn't support them. Issue: https://github.com/ClickHouse/ClickHouse/issues/22086
 			go func(tableName string) {
-				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (created_at, updated_at, table_name, ttl, status) VALUES (?, ?, ?, ?, ?)", time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending)
+				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 				if dbErr != nil {
 					zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
 					return
@@ -2339,11 +2349,11 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("TTL is already running")}
+		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < constants.TTLRequestTimeout {
+			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 		go func(tableName string) {
-			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (created_at, updated_at, table_name, ttl, status) VALUES (?, ?, ?, ?, ?)", time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending)
+			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 			if dbErr != nil {
 				zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
 				return
@@ -2384,10 +2394,10 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, error) {
+func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
-	query := fmt.Sprintf("SELECT id, status, archived FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
+	query := fmt.Sprintf("SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
 
 	err := r.localDB.Select(&statusItem, query)
 
@@ -2398,9 +2408,9 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName str
 	}
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return model.TTLStatusItem{}, err
+		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 	}
-	return statusItem[0], err
+	return statusItem[0], nil
 }
 
 func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray []string) (string, *model.ApiError) {
@@ -2409,7 +2419,7 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray
 	for _, tableName := range tableNameArray {
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		emptyStatusStruct := model.TTLStatusItem{}
-		if statusItem == emptyStatusStruct || statusItem.Archived {
+		if statusItem == emptyStatusStruct {
 			return "", nil
 		}
 		if err != nil {
@@ -2426,20 +2436,7 @@ func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray
 	if failFlag {
 		status = constants.StatusFailed
 	}
-	if status == constants.StatusSuccess {
-		for _, tableName := range tableNameArray {
-			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
-			if err != nil {
-				return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
-			}
-			_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, archived = ? WHERE id = ?", time.Now(), true, statusItem.Id)
-			if dbErr != nil {
-				zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
-				return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status update sql query")}
-			}
-		}
 
-	}
 	return status, nil
 }
 
@@ -2586,9 +2583,17 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		if err != nil {
 			return nil, err
 		}
+		ttlQuery, err := r.checkTTLStatusItem(ctx, tableNameArray[0])
+		if err != nil {
+			return nil, err
+		}
+		ttlQuery.TTL = ttlQuery.TTL / 3600
+		if ttlQuery.ColdStorageTtl != -1 {
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600
+		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, Status: status}, nil
+		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
 
 	case constants.MetricsTTL:
 		tableNameArray := []string{signozMetricDBName + "." + signozSampleName}
@@ -2600,48 +2605,22 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		if err != nil {
 			return nil, err
 		}
-
-		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, Status: status}, nil
-
-	}
-
-	status := "" //status of TTL queries
-
-	tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
-	status, err := r.setTTLQueryStatus(ctx, tableNameArray)
-	if err != nil {
-		return nil, err
-	}
-	db1, err := getTracesTTL()
-	if err != nil {
-		return nil, err
-	}
-
-	if status == constants.StatusSuccess || status == "" {
-		tableNameArray = []string{signozMetricDBName + "." + signozSampleName}
-		statusMetrics, err := r.setTTLQueryStatus(ctx, tableNameArray)
+		ttlQuery, err := r.checkTTLStatusItem(ctx, tableNameArray[0])
 		if err != nil {
 			return nil, err
 		}
-		if statusMetrics == constants.StatusSuccess {
-			status = statusMetrics
+		ttlQuery.TTL = ttlQuery.TTL / 3600
+		if ttlQuery.ColdStorageTtl != -1 {
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600
 		}
-	}
-	db2, err := getMetricsTTL()
-	if err != nil {
-		return nil, err
-	}
-	tracesDelTTL, tracesMoveTTL := parseTTL(db1.EngineFull)
-	metricsDelTTL, metricsMoveTTL := parseTTL(db2.EngineFull)
 
-	return &model.GetTTLResponseItem{
-		TracesTime:      tracesDelTTL,
-		TracesMoveTime:  tracesMoveTTL,
-		MetricsTime:     metricsDelTTL,
-		MetricsMoveTime: metricsMoveTTL,
-		Status:          status,
-	}, nil
+		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
+		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+	default:
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be <metrics|traces>, got %v",
+			ttlParams.Type)}
+	}
+
 }
 
 func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {
