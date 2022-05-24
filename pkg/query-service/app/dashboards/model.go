@@ -66,6 +66,22 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
 	}
 
+	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		transaction_id TEXT NOT NULL,
+		created_at datetime NOT NULL,
+		updated_at datetime NOT NULL,
+		table_name TEXT NOT NULL,
+		ttl INTEGER DEFAULT 0,
+		cold_storage_ttl INTEGER DEFAULT 0,
+		status TEXT NOT NULL
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating ttl_status table: %s", err.Error())
+	}
+
 	return db, nil
 }
 
