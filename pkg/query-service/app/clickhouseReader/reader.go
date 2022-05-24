@@ -2326,7 +2326,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
 					zap.S().Error(fmt.Errorf("Error in executing set TTL query: %s", err.Error()))
-					if err == nil {
+					if err != nil {
 						_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 						if dbErr != nil {
 							zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
@@ -2366,11 +2366,24 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
 					params.ToColdStorageDuration, params.ColdStorageVolume)
 			}
+			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
+			if err != nil {
+				zap.S().Error(fmt.Errorf("Error in setting cold storage: %s", err.Err.Error()))
+				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+				if err == nil {
+					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					if dbErr != nil {
+						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						return
+					}
+				}
+				return
+			}
 			zap.S().Debugf("Executing TTL request: %s\n", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
 				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-				if err == nil {
+				if err != nil {
 					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 					if dbErr != nil {
 						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
