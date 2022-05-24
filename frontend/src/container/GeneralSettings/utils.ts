@@ -50,5 +50,7 @@ export const convertHoursValueToRelevantUnitString = (
 ): string => {
 	if (!value) return '';
 	const convertedTimeUnit = convertHoursValueToRelevantUnit(value);
-	return `${convertedTimeUnit.value} ${convertedTimeUnit.timeUnitValue}`;
+	return `${convertedTimeUnit.value} ${convertedTimeUnit.timeUnitValue}${
+		convertedTimeUnit.value >= 2 ? 's' : ''
+	}`;
 };
