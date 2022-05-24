@@ -20,8 +20,8 @@ export const getDimensions = (num, highest) => {
 
 export const getGraphData = (serviceMap): graphDataType => {
 	const { items, services } = serviceMap;
-	const highestCallCount = maxBy(items, (e) => e.callCount).callCount;
-	const highestCallRate = maxBy(services, (e) => e.callRate).callRate;
+	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
+	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
 	const divNum = Number(
 		String(1).padEnd(highestCallCount.toString().length, '0'),
 	);
