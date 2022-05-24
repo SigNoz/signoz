@@ -10,7 +10,7 @@ import (
 type DBEngine string
 
 const (
-	SQLLITE DBEngine = "sql"
+	SQLLITE DBEngine = "sqlite3"
 	PG      DBEngine = "postgres"
 )
 
@@ -57,8 +57,8 @@ func LoadQsConfigFromFile(filename string) (*QsConfig, error) {
 // DBConfig contains parameters used for database connection
 type DBConfig struct {
 	Engine DBEngine   `yaml:"kind"`
-	SQL    *SQLConfig `yaml:"sql, omitempty"`
-	PG     *PGConfig  `yaml:"pg, omitempty"`
+	SQL    *SQLConfig `yaml:"sqlite, omitempty"`
+	PG     *PGConfig  `yaml:"postgres, omitempty"`
 }
 
 // SQLConfig contains parameters for SQL Lite connection

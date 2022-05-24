@@ -97,8 +97,13 @@ type ClickHouseReader struct {
 	alertManager    am.Manager
 }
 
+type ReaderOpts struct {
+	LocalDB        *sqlx.DB
+	PromConfigPath string
+}
+
 // NewReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB, promConfigPath string) *ClickHouseReader {
+func NewReader(opts *ReaderOpts) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
@@ -113,7 +118,7 @@ func NewReader(localDB *sqlx.DB, promConfigPath string) *ClickHouseReader {
 
 	return &ClickHouseReader{
 		db:              db,
-		localDB:         localDB,
+		localDB:         opts.LocalDB,
 		traceDB:         options.primary.TraceDB,
 		alertManager:    alertManager,
 		operationsTable: options.primary.OperationsTable,
@@ -121,7 +126,7 @@ func NewReader(localDB *sqlx.DB, promConfigPath string) *ClickHouseReader {
 		errorTable:      options.primary.ErrorTable,
 		durationTable:   options.primary.DurationTable,
 		spansTable:      options.primary.SpansTable,
-		promConfigPath:  promConfigPath,
+		promConfigPath:  opts.PromConfigPath,
 	}
 }
 

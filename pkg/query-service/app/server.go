@@ -78,7 +78,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	// }
 
 	// validate query service configuration.
-	if err := qsconfig.ValidateQs(serverOptions.QsConfig); err != nil {
+	if err := config.ValidateQs(serverOptions.QsConfig); err != nil {
 		return nil, err
 	}
 
@@ -128,13 +128,18 @@ func (s *Server) createHTTPServer(qsdb *sqlx.DB) (*http.Server, error) {
 	// config items like alert rules, channels, dashboard settings etc.
 	// on the other hand, STORAGE(env var) is used for connecting to
 	// metric and event data store (clickhouse)
+
 	storage := os.Getenv("STORAGE")
 	if storage == "druid" {
 		zap.S().Info("Using Apache Druid as datastore ...")
 		// reader = druidReader.NewReader(qsdb)
 	} else if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(qsdb, s.serverOptions.PromConfigPath)
+		readerOpts := &clickhouseReader.ReaderOpts{
+			LocalDB:        qsdb,
+			PromConfigPath: s.serverOptions.PromConfigPath,
+		}
+		clickhouseReader := clickhouseReader.NewReader(readerOpts)
 		go clickhouseReader.Start()
 		reader = clickhouseReader
 	} else {

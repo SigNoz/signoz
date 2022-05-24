@@ -38,8 +38,8 @@ func main() {
 
 	var promConfigPath = flag.String("config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	var qsConfigPath = flag.String("qsdb.config-file", "", "(Config file used by Query Service)")
-	var qsDbType = flag.String("qsdb.engine", string(qsconfig.PG), "(Database used by Query Service. Values: sql or pg)")
-	var qsDbPath = flag.String("qsdb.path", "./signoz.db", "(Data file path for QS when sql*lite is used")
+	var qsDbType = flag.String("qsdb.engine", string(qsconfig.PG), "(Database used by Query Service. Values: sqlite3 or postgres)")
+	var qsDbPath = flag.String("qsdb.path", "./signoz.db", "(Data file path for QS when sqlite3 is used")
 	var qsDbHost = flag.String("qsdb.host", "localhost", "(Host for postgres DB)")
 	var qsDbPort = flag.Int("qsdb.port", 5432, "(Port for postgres DB)")
 	var qsDbName = flag.String("qsdb.name", "postgres", "(Name of Postgres DB)")
@@ -87,7 +87,7 @@ func main() {
 			},
 		}
 	} else {
-		logger.Fatal(fmt.Sprintf("invalid option for qsdb.engine %s. Use either sql or postgres", *qsDbType))
+		logger.Fatal(fmt.Sprintf("invalid option for qsdb.engine %s. Use either sqlite3 or postgres", *qsDbType))
 	}
 
 	serverOptions := &app.ServerOptions{
