@@ -174,5 +174,9 @@
 		"*.(js|jsx|ts|tsx)": [
 			"eslint --fix"
 		]
+	},
+	"resolutions": {
+		"@types/react": "17.0.0",
+		"@types/react-dom": "17.0.0"
 	}
 }
