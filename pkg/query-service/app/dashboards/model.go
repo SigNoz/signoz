@@ -31,6 +31,7 @@ func InitDB(kind qsconfig.DBEngine, conn *sqlx.DB) error {
 	}
 }
 
+// initSQL sets up model tables in sqlite
 func initSQL(conn *sqlx.DB) error {
 	var err error
 
@@ -77,7 +78,7 @@ func initSQL(conn *sqlx.DB) error {
 	return nil
 }
 
-// InitPG sets up setting up the PG connection pool global variable.
+// InitPG sets up model (tables) in the database
 func initPG(conn *sqlx.DB) error {
 	var err error
 

@@ -947,8 +947,6 @@ func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
 			tx.Rollback() // return an error too, we may want to wrap them
 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
-		// LastInsertId() doesnt work for pq. hence using Returning INto above
-		// lastInsertId, _ = result.LastInsertId()
 
 		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
 		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
