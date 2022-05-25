@@ -1,0 +1,21 @@
+{
+	"total_retention_period": "Total Retention Period",
+	"move_to_s3": "Move to S3\n(should be lower than total retention period)",
+	"status_message": {
+		"success": "Your last call to change retention period to {{total_retention}} {{s3_part}} was successful.",
+		"failed": "Your last call to change retention period to {{total_retention}} {{s3_part}} failed. Please try again.",
+		"pending": "Your last call to change retention period to {{total_retention}} {{s3_part}} is pending. This may take some time.",
+		"s3_part": "and  S3 to {{s3_retention}}"
+	},
+	"retention_save_button": {
+		"pending": "Updating {{name}} retention period",
+		"success": "Save"
+	},
+	"retention_request_race_condition": "Your request to change retention period has failed, as another request is still in process.",
+	"retention_error_message": "There was an issue in changing the retention period for {{name}}. Please try again or reach out to support@signoz.io",
+	"retention_failed_message": "There was an issue in changing the retention period. Please try again or reach out to support@signoz.io",
+	"retention_comparison_error": "Total retention period for {{name}} can’t be lower or equal to the period after which data is moved to s3.",
+	"retention_null_value_error": "Retention Period for {{name}} is not set yet. Please set by choosing below",
+	"retention_confirmation": "Are you sure you want to change the retention period?",
+	"retention_confirmation_description": "This will change the amount of storage needed for saving {{name}}."
+}
