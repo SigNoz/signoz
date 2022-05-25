@@ -99,7 +99,7 @@ func TestAuthInviteAPI(t *testing.T) {
 
 func TestAuthRegisterAPI(t *testing.T) {
 	email := "alice@signoz.io"
-	resp, err := register(email, "password", "")
+	resp, err := register(email, "Password@123", "")
 	require.NoError(t, err)
 	require.Contains(t, resp, "user registered successfully")
 
@@ -108,7 +108,7 @@ func TestAuthRegisterAPI(t *testing.T) {
 func TestAuthLoginAPI(t *testing.T) {
 	t.Skip()
 	email := "abc-login@signoz.io"
-	password := "password123"
+	password := "Password@123"
 	inv := invite(t, email)
 
 	resp, err := register(email, password, inv.InviteToken)
