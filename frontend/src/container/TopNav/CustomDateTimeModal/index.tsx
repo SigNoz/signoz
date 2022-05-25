@@ -36,8 +36,6 @@ function CustomDateTimeModal({
 			style={{ position: 'absolute', top: 60, right: 40 }}
 			onOk={(): void => onCreate(customDateTimeRange || null)}
 		>
-			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-			{/* @ts-ignore:next-line */}
 			<RangePicker
 				disabledDate={disabledDate}
 				onOk={handleRangePickerOk}
