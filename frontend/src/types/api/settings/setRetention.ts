@@ -1,5 +1,7 @@
+import { TTTLType } from './common';
+
 export interface Props {
-	type: 'metrics' | 'traces';
+	type: TTTLType;
 	totalDuration: string;
 	coldStorage?: 's3' | null;
 	toColdDuration?: string;

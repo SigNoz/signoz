@@ -333,7 +333,6 @@ fi
 
 # echo -e "👉 ${RED}Two ways to go forward\n"  
 # echo -e "${RED}1) ClickHouse as database (default)\n"  
-# echo -e "${RED}2) Kafka + Druid as datastore \n"  
 # read -p "⚙️  Enter your preference (1/2):" choice_setup 
 
 # while [[ $choice_setup != "1"   &&  $choice_setup != "2" && $choice_setup != "" ]]
@@ -346,8 +345,6 @@ fi
 
 # if [[ $choice_setup == "1" || $choice_setup == "" ]];then
 #     setup_type='clickhouse'
-# else
-#     setup_type='druid'
 # fi
 
 setup_type='clickhouse'

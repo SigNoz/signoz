@@ -193,7 +193,6 @@ type TTLParams struct {
 
 type GetTTLParams struct {
 	Type      string
-	GetAllTTL bool
 }
 
 type GetErrorsParams struct {
@@ -205,9 +204,4 @@ type GetErrorParams struct {
 	ErrorType   string
 	ErrorID     string
 	ServiceName string
-}
-
-type RemoveTTLParams struct {
-	Type         string
-	RemoveAllTTL bool
 }
