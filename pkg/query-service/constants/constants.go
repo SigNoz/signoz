@@ -60,7 +60,6 @@ const (
 	StatusPending     = "pending"
 	StatusFailed      = "failed"
 	StatusSuccess     = "success"
-	TTLRequestTimeout = 3600 // seconds
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

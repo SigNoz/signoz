@@ -2272,11 +2272,8 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 // Status of TTL update is tracked with ttl_status table in sqlite db.
 func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
-	// Keep only last 100 transactions/requests
-	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT 100)")
-	if err != nil {
-		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
-	}
+	// Keep only latest 100 transactions/requests
+	r.deleteTtlTransactions(ctx, 100)
 	var req, tableName string
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
@@ -2295,7 +2292,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			if err != nil {
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 			}
-			if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < constants.TTLRequestTimeout {
+			if statusItem.Status == constants.StatusPending {
 				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 			}
 		}
@@ -2352,7 +2349,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < constants.TTLRequestTimeout {
+		if statusItem.Status == constants.StatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 		go func(tableName string) {
@@ -2406,6 +2403,13 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	}
 
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
+	if err != nil {
+		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
+	}
 }
 
 // checkTTLStatusItem checks if ttl_status table has an entry for the given table name
