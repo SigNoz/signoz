@@ -1,5 +1,6 @@
 import { green, orange, volcano } from '@ant-design/colors';
-import { Card } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Card, Col, Row } from 'antd';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TStatus } from 'types/api/settings/getRetention';
@@ -40,10 +41,22 @@ function StatusMessage({
 		<Card
 			style={{
 				width: '100%',
-				color: messageColor,
 			}}
 		>
-			{statusMessage}
+			<Row style={{ gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+				<Col xs={1}>
+					<InfoCircleOutlined style={{ fontSize: '1.5rem' }} />
+				</Col>
+
+				<Col
+					xs={22}
+					style={{
+						color: messageColor,
+					}}
+				>
+					{statusMessage}
+				</Col>
+			</Row>
 		</Card>
 	) : null;
 }
