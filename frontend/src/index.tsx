@@ -31,8 +31,3 @@ ReactDOM.render(
 	</QueryClientProvider>,
 	document.querySelector('#root'),
 );
-
-// setting the Store for the cypress
-if (window.Cypress) {
-	window.store = store;
-}
