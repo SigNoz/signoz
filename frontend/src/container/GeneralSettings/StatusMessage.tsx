@@ -12,7 +12,7 @@ function StatusMessage({
 	s3_retention,
 	status,
 }: StatusMessageProps): JSX.Element | null {
-	const { t } = useTranslation();
+	const { t } = useTranslation(['generalSettings']);
 
 	const messageColor = useMemo((): string => {
 		if (status === 'success') return green[6];
@@ -25,13 +25,13 @@ function StatusMessage({
 	}
 	const s3Part =
 		s3_retention && s3_retention !== -1
-			? t('settings.status_message.s3_part', {
+			? t('status_message.s3_part', {
 					s3_retention: convertHoursValueToRelevantUnitString(s3_retention),
 			  })
 			: '';
 	const statusMessage =
 		total_retention && total_retention !== -1
-			? t(`settings.status_message.${status}`, {
+			? t(`status_message.${status}`, {
 					total_retention: convertHoursValueToRelevantUnitString(total_retention),
 					s3_part: s3Part,
 			  })

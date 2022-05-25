@@ -6,28 +6,31 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { TTTLType } from 'types/api/settings/common';
 import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
 
 import GeneralSettingsContainer from './GeneralSettings';
 
+type TRetentionAPIReturn<T extends TTTLType> = Promise<
+	SuccessResponse<GetRetentionPeriodAPIPayloadProps<T>> | ErrorResponse
+>;
+
 function GeneralSettings(): JSX.Element {
 	const { t } = useTranslation('common');
+
 	const [
 		getRetentionPeriodMetricsApiResponse,
 		getRetentionPeriodTracesApiResponse,
 		getDisksResponse,
 	] = useQueries([
 		{
-			queryFn: (): Promise<
-				| SuccessResponse<GetRetentionPeriodAPIPayloadProps<'metrics'>>
-				| ErrorResponse
-			> => getRetentionPeriodApi('metrics'),
+			queryFn: (): TRetentionAPIReturn<'metrics'> =>
+				getRetentionPeriodApi('metrics'),
 			queryKey: 'getRetentionPeriodApiMetrics',
 		},
 		{
-			queryFn: (): Promise<
-				SuccessResponse<GetRetentionPeriodAPIPayloadProps<'traces'>> | ErrorResponse
-			> => getRetentionPeriodApi('traces'),
+			queryFn: (): TRetentionAPIReturn<'traces'> =>
+				getRetentionPeriodApi('traces'),
 			queryKey: 'getRetentionPeriodApiTraces',
 		},
 		{
@@ -36,6 +39,7 @@ function GeneralSettings(): JSX.Element {
 		},
 	]);
 
+	// Error State - When RetentionPeriodMetricsApi or getDiskApi gets errored out.
 	if (getRetentionPeriodMetricsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
@@ -46,6 +50,7 @@ function GeneralSettings(): JSX.Element {
 		);
 	}
 
+	// Error State - When RetentionPeriodTracesApi or getDiskApi gets errored out.
 	if (getRetentionPeriodTracesApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
@@ -56,6 +61,7 @@ function GeneralSettings(): JSX.Element {
 		);
 	}
 
+	// Loading State - When Metrics, Traces and Disk API are in progress and the promise has not been resolved/reject.
 	if (
 		getRetentionPeriodMetricsApiResponse.isLoading ||
 		getDisksResponse.isLoading ||

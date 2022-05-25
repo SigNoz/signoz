@@ -44,7 +44,7 @@ function GeneralSettings({
 	metricsTtlValuesRefetch,
 	tracesTtlValuesRefetch,
 }: GeneralSettingsProps): JSX.Element {
-	const { t } = useTranslation();
+	const { t } = useTranslation(['generalSettings']);
 	const [modalMetrics, setModalMetrics] = useState<boolean>(false);
 	const [postApiLoadingMetrics, setPostApiLoadingMetrics] = useState<boolean>(
 		false,
@@ -166,9 +166,9 @@ function GeneralSettings({
 		// Various methods to return dynamic error message text.
 		const messages = {
 			compareError: (name: string | number): string =>
-				t('settings.retention_comparison_error', { name }),
+				t('retention_comparison_error', { name }),
 			nullValueError: (name: string | number): string =>
-				t('settings.retention_null_value_error', { name }),
+				t('retention_null_value_error', { name }),
 		};
 
 		// Defaults to button not disabled and empty error message text.
@@ -256,7 +256,7 @@ function GeneralSettings({
 				hasSetTTLFailed = true;
 				notification.error({
 					message: 'Error',
-					description: t('settings.retention_request_race_condition'),
+					description: t('retention_request_race_condition'),
 					placement: 'topRight',
 				});
 			}
@@ -285,7 +285,7 @@ function GeneralSettings({
 		} catch (error) {
 			notification.error({
 				message: 'Error',
-				description: t('settings.retention_failed_message'),
+				description: t('retention_failed_message'),
 				placement: 'topRight',
 			});
 		}
@@ -299,12 +299,12 @@ function GeneralSettings({
 			name: 'Metrics',
 			retentionFields: [
 				{
-					name: t('settings.total_retention_period'),
+					name: t('total_retention_period'),
 					value: metricsTotalRetentionPeriod,
 					setValue: setMetricsTotalRetentionPeriod,
 				},
 				{
-					name: t('settings.move_to_s3'),
+					name: t('move_to_s3'),
 					value: metricsS3RetentionPeriod,
 					setValue: setMetricsS3RetentionPeriod,
 					hide: !s3Enabled,
@@ -318,10 +318,10 @@ function GeneralSettings({
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
 							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
-							{t('settings.retention_save_button.pending', { name: 'metrics' })}
+							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
-						<span>{t('settings.retention_save_button.success')}</span>
+						<span>{t('retention_save_button.success')}</span>
 					),
 				isDisabled:
 					metricsTtlValuesPayload.status === 'pending' || isMetricsSaveDisabled,
@@ -340,12 +340,12 @@ function GeneralSettings({
 			name: 'Traces',
 			retentionFields: [
 				{
-					name: t('settings.total_retention_period'),
+					name: t('total_retention_period'),
 					value: tracesTotalRetentionPeriod,
 					setValue: setTracesTotalRetentionPeriod,
 				},
 				{
-					name: t('settings.move_to_s3'),
+					name: t('move_to_s3'),
 					value: tracesS3RetentionPeriod,
 					setValue: setTracesS3RetentionPeriod,
 					hide: !s3Enabled,
@@ -359,10 +359,10 @@ function GeneralSettings({
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
 							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
-							{t('settings.retention_save_button.pending', { name: 'traces' })}
+							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
-						<span>{t('settings.retention_save_button.success')}</span>
+						<span>{t('retention_save_button.success')}</span>
 					),
 				isDisabled:
 					tracesTtlValuesPayload.status === 'pending' || isTracesSaveDisabled,
@@ -405,7 +405,7 @@ function GeneralSettings({
 							{category.statusComponent}
 						</ActionItemsContainer>
 						<Modal
-							title={t('settings.retention_confirmation')}
+							title={t('retention_confirmation')}
 							focusTriggerAfterClose
 							forceRender
 							destroyOnClose
@@ -421,7 +421,7 @@ function GeneralSettings({
 							confirmLoading={category.save.apiLoading}
 						>
 							<Typography>
-								{t('settings.retention_confirmation_description', {
+								{t('retention_confirmation_description', {
 									name: category.name.toLowerCase(),
 								})}
 							</Typography>
