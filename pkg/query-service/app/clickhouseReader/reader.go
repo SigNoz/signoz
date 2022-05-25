@@ -2267,13 +2267,15 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	return &GetFilteredSpansAggregatesResponse, nil
 }
 
+// SetTTL sets the TTL for traces or metrics tables.
+// This is an async API which creates goroutines to set TTL.
+// Status of TTL update is tracked with ttl_status table in sqlite db.
 func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
-	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT 100)")
-	if err != nil {
-		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
-	}
+	// Keep only latest 100 transactions/requests
+	r.deleteTtlTransactions(ctx, 100)
 	var req, tableName string
+	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 
@@ -2290,7 +2292,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			if err != nil {
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 			}
-			if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < constants.TTLRequestTimeout {
+			if statusItem.Status == constants.StatusPending {
 				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 			}
 		}
@@ -2326,12 +2328,10 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
 					zap.S().Error(fmt.Errorf("Error in executing set TTL query: %s", err.Error()))
-					if err != nil {
-						_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
-						if dbErr != nil {
-							zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
-							return
-						}
+					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					if dbErr != nil {
+						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						return
 					}
 					return
 				}
@@ -2349,7 +2349,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 		}
-		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < constants.TTLRequestTimeout {
+		if statusItem.Status == constants.StatusPending {
 			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
 		go func(tableName string) {
@@ -2383,12 +2383,10 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
 				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-				if err != nil {
-					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
-					if dbErr != nil {
-						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
-						return
-					}
+				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				if dbErr != nil {
+					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					return
 				}
 				return
 			}
@@ -2407,6 +2405,14 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
+func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
+	if err != nil {
+		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
+	}
+}
+
+// checkTTLStatusItem checks if ttl_status table has an entry for the given table name
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
@@ -2426,6 +2432,7 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName str
 	return statusItem[0], nil
 }
 
+// setTTLQueryStatus fetches ttl_status table status from DB
 func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray []string) (string, *model.ApiError) {
 	failFlag := false
 	status := constants.StatusSuccess
@@ -2484,6 +2491,7 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 	return &diskItems, nil
 }
 
+// GetTTL returns current ttl, expected ttl and past setTTL status for metrics/traces.
 func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 
 	parseTTL := func(queryResp string) (int, int) {
@@ -2566,9 +2574,9 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		if err != nil {
 			return nil, err
 		}
-		ttlQuery.TTL = ttlQuery.TTL / 3600
+		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
 		if ttlQuery.ColdStorageTtl != -1 {
-			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
@@ -2588,15 +2596,15 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		if err != nil {
 			return nil, err
 		}
-		ttlQuery.TTL = ttlQuery.TTL / 3600
+		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
 		if ttlQuery.ColdStorageTtl != -1 {
-			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
 		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
 		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
 	default:
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be <metrics|traces>, got %v",
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be metrics|traces, got %v",
 			ttlParams.Type)}
 	}
 
