@@ -5,15 +5,33 @@ import Spinner from 'components/Spinner';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { TTTLType } from 'types/api/settings/common';
+import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
 
 import GeneralSettingsContainer from './GeneralSettings';
 
+type TRetentionAPIReturn<T extends TTTLType> = Promise<
+	SuccessResponse<GetRetentionPeriodAPIPayloadProps<T>> | ErrorResponse
+>;
+
 function GeneralSettings(): JSX.Element {
 	const { t } = useTranslation('common');
-	const [getRetentionPeriodApiResponse, getDisksResponse] = useQueries([
+
+	const [
+		getRetentionPeriodMetricsApiResponse,
+		getRetentionPeriodTracesApiResponse,
+		getDisksResponse,
+	] = useQueries([
 		{
-			queryFn: getRetentionPeriodApi,
-			queryKey: 'getRetentionPeriodApi',
+			queryFn: (): TRetentionAPIReturn<'metrics'> =>
+				getRetentionPeriodApi('metrics'),
+			queryKey: 'getRetentionPeriodApiMetrics',
+		},
+		{
+			queryFn: (): TRetentionAPIReturn<'traces'> =>
+				getRetentionPeriodApi('traces'),
+			queryKey: 'getRetentionPeriodApiTraces',
 		},
 		{
 			queryFn: getDisks,
@@ -21,21 +39,38 @@ function GeneralSettings(): JSX.Element {
 		},
 	]);
 
-	if (getRetentionPeriodApiResponse.isError || getDisksResponse.isError) {
+	// Error State - When RetentionPeriodMetricsApi or getDiskApi gets errored out.
+	if (getRetentionPeriodMetricsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{getRetentionPeriodApiResponse.data?.error ||
+				{getRetentionPeriodMetricsApiResponse.data?.error ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>
 		);
 	}
 
+	// Error State - When RetentionPeriodTracesApi or getDiskApi gets errored out.
+	if (getRetentionPeriodTracesApiResponse.isError || getDisksResponse.isError) {
+		return (
+			<Typography>
+				{getRetentionPeriodTracesApiResponse.data?.error ||
+					getDisksResponse.data?.error ||
+					t('something_went_wrong')}
+			</Typography>
+		);
+	}
+
+	// Loading State - When Metrics, Traces and Disk API are in progress and the promise has not been resolved/reject.
 	if (
-		getRetentionPeriodApiResponse.isLoading ||
+		getRetentionPeriodMetricsApiResponse.isLoading ||
 		getDisksResponse.isLoading ||
 		!getDisksResponse.data?.payload ||
-		!getRetentionPeriodApiResponse.data?.payload
+		!getRetentionPeriodMetricsApiResponse.data?.payload ||
+		getRetentionPeriodTracesApiResponse.isLoading ||
+		getDisksResponse.isLoading ||
+		!getDisksResponse.data?.payload ||
+		!getRetentionPeriodTracesApiResponse.data?.payload
 	) {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
@@ -44,7 +79,10 @@ function GeneralSettings(): JSX.Element {
 		<GeneralSettingsContainer
 			{...{
 				getAvailableDiskPayload: getDisksResponse.data?.payload,
-				ttlValuesPayload: getRetentionPeriodApiResponse.data?.payload,
+				metricsTtlValuesPayload: getRetentionPeriodMetricsApiResponse.data?.payload,
+				metricsTtlValuesRefetch: getRetentionPeriodMetricsApiResponse.refetch,
+				tracesTtlValuesPayload: getRetentionPeriodTracesApiResponse.data?.payload,
+				tracesTtlValuesRefetch: getRetentionPeriodTracesApiResponse.refetch,
 			}}
 		/>
 	);

@@ -118,7 +118,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 					ctx.fillStyle = node.color;
 					ctx.beginPath();
 					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
-					ctx.fillStyle = isDarkMode ? '#3d0b00' : '#ffbcad';
+					ctx.fillStyle = isDarkMode ? '#3C8618' : '#D5F2BB';
 					ctx.fill();
 					ctx.textAlign = 'center';
 					ctx.textBaseline = 'middle';

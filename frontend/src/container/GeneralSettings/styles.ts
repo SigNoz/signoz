@@ -90,3 +90,11 @@ export const RetentionFieldLabel = styled(TypographyComponent)`
 export const RetentionFieldInputContainer = styled.div`
 	display: inline-flex;
 `;
+
+export const ActionItemsContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	margin-top: 10%;
+`;
