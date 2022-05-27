@@ -257,7 +257,7 @@ function GridGraph(): JSX.Element {
 						<CardContainer
 							isQueryType={isQueryType}
 							isDarkMode={isDarkMode}
-							key={rest.i}
+							key={rest.i + JSON.stringify(widget)}
 							data-grid={rest}
 						>
 							<Card isDarkMode={isDarkMode} isQueryType={isQueryType}>
