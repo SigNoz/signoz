@@ -19,7 +19,7 @@ const getAll = async (
 		return {
 			statusCode: 200,
 			error: null,
-			message: response.data.message,
+			message: 'Success',
 			payload: response.data,
 		};
 	} catch (error) {

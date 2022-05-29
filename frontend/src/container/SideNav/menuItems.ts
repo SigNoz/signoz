@@ -35,12 +35,13 @@ const menus: SidebarMenu[] = [
 	{
 		Icon: BugOutlined,
 		to: ROUTES.ALL_ERROR,
-		name: 'Errors',
+		name: 'Exceptions',
 	},
 	{
 		to: ROUTES.SERVICE_MAP,
 		name: 'Service Map',
 		Icon: DeploymentUnitOutlined,
+		tags: ['Beta'],
 	},
 	{
 		Icon: LineChartOutlined,
@@ -63,6 +64,7 @@ interface SidebarMenu {
 	to: string;
 	name: string;
 	Icon: typeof ApiOutlined;
+	tags?: string[];
 }
 
 export default menus;

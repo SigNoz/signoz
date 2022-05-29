@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 // shared config (dev and prod)
 const { resolve } = require('path');
@@ -9,8 +10,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
-	.BundleAnalyzerPlugin;
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
 
 const plugins = [
@@ -119,13 +119,13 @@ const config = {
 			},
 		],
 	},
-	plugins: plugins,
+	plugins,
 	optimization: {
 		chunkIds: 'named',
 		concatenateModules: false,
 		emitOnErrors: true,
 		flagIncludedChunks: true,
-		innerGraph: true, //tells webpack whether to conduct inner graph analysis for unused exports.
+		innerGraph: true, // tells webpack whether to conduct inner graph analysis for unused exports.
 		mangleWasmImports: true,
 		mergeDuplicateChunks: true,
 		minimize: true,

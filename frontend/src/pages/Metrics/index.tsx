@@ -1,3 +1,4 @@
+import { notification } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
@@ -20,10 +21,20 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const { services, resourceAttributeQueries } = useSelector<
-		AppState,
-		MetricReducer
-	>((state) => state.metrics);
+	const {
+		services,
+		resourceAttributeQueries,
+		error,
+		errorMessage,
+	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+
+	useEffect(() => {
+		if (error) {
+			notification.error({
+				message: errorMessage,
+			});
+		}
+	}, [error, errorMessage]);
 
 	const selectedTags = useMemo(
 		() =>

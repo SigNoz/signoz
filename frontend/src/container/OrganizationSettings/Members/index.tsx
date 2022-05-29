@@ -208,6 +208,7 @@ function UserFunction({
 						setEmailAddress,
 						setName: setUpdatedName,
 						setRole,
+						id,
 					}}
 				/>
 			</Modal>

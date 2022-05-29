@@ -29,6 +29,7 @@ const (
 	ErrorNotImplemented ErrorType = "not_implemented"
 	ErrorUnauthorized   ErrorType = "unauthorized"
 	ErrorForbidden      ErrorType = "forbidden"
+	ErrorConflict       ErrorType = "conflict"
 )
 
 type QueryDataV2 struct {
@@ -46,6 +47,16 @@ type RuleResponseItem struct {
 	Id        int       `json:"id" db:"id"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	Data      string    `json:"data" db:"data"`
+}
+
+type TTLStatusItem struct {
+	Id             int       `json:"id" db:"id"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at"`
+	TableName      string    `json:"table_name" db:"table_name"`
+	TTL            int       `json:"ttl" db:"ttl"`
+	Status         string    `json:"status" db:"status"`
+	ColdStorageTtl int       `json:"cold_storage_ttl" db:"cold_storage_ttl"`
 }
 
 type ChannelItem struct {
@@ -256,10 +267,15 @@ type DBResponseTTL struct {
 }
 
 type GetTTLResponseItem struct {
-	MetricsTime     int `json:"metrics_ttl_duration_hrs,omitempty"`
-	MetricsMoveTime int `json:"metrics_move_ttl_duration_hrs,omitempty"`
-	TracesTime      int `json:"traces_ttl_duration_hrs,omitempty"`
-	TracesMoveTime  int `json:"traces_move_ttl_duration_hrs,omitempty"`
+	MetricsTime             int    `json:"metrics_ttl_duration_hrs,omitempty"`
+	MetricsMoveTime         int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
+	TracesTime              int    `json:"traces_ttl_duration_hrs,omitempty"`
+	TracesMoveTime          int    `json:"traces_move_ttl_duration_hrs,omitempty"`
+	ExpectedMetricsTime     int    `json:"expected_metrics_ttl_duration_hrs,omitempty"`
+	ExpectedMetricsMoveTime int    `json:"expected_metrics_move_ttl_duration_hrs,omitempty"`
+	ExpectedTracesTime      int    `json:"expected_traces_ttl_duration_hrs,omitempty"`
+	ExpectedTracesMoveTime  int    `json:"expected_traces_move_ttl_duration_hrs,omitempty"`
+	Status                  string `json:"status"`
 }
 
 type DBResponseServiceName struct {
@@ -321,22 +337,22 @@ type SpanFiltersResponse struct {
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
 	ExceptionMsg   string    `json:"exceptionMessage" ch:"exceptionMessage"`
-	ExceptionCount int64     `json:"exceptionCount" ch:"exceptionCount"`
+	ExceptionCount uint64    `json:"exceptionCount" ch:"exceptionCount"`
 	LastSeen       time.Time `json:"lastSeen" ch:"lastSeen"`
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
 }
 
 type ErrorWithSpan struct {
-	ErrorID            string    `json:"errorId" ch:"errorID"`
-	ExceptionType      string    `json:"exceptionType" ch:"exceptionType"`
-	ExcepionStacktrace string    `json:"excepionStacktrace" ch:"excepionStacktrace"`
-	ExceptionEscaped   string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
-	ExceptionMsg       string    `json:"exceptionMessage" ch:"exceptionMessage"`
-	Timestamp          time.Time `json:"timestamp" ch:"timestamp"`
-	SpanID             string    `json:"spanID" ch:"spanID"`
-	TraceID            string    `json:"traceID" ch:"traceID"`
-	ServiceName        string    `json:"serviceName" ch:"serviceName"`
-	NewerErrorID       string    `json:"newerErrorId" ch:"newerErrorId"`
-	OlderErrorID       string    `json:"olderErrorId" ch:"olderErrorId"`
+	ErrorID             string    `json:"errorId" ch:"errorID"`
+	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
+	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
+	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
+	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
+	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
+	SpanID              string    `json:"spanID" ch:"spanID"`
+	TraceID             string    `json:"traceID" ch:"traceID"`
+	ServiceName         string    `json:"serviceName" ch:"serviceName"`
+	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
+	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }

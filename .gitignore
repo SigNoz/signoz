@@ -15,6 +15,7 @@ frontend/build
 frontend/.vscode
 frontend/.yarnclean
 frontend/.temp_cache
+frontend/test-results
 
 # misc
 .DS_Store
@@ -27,10 +28,6 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/src/constants/env.ts
-frontend/cypress/**/*.mp4
-
-# env file for cypress
-frontend/cypress.env.json
 
 .idea
 

@@ -34,7 +34,7 @@ function TraceGraph(): JSX.Element {
 		);
 	}
 
-	if (loading || payload === undefined) {
+	if (loading) {
 		return (
 			<Container>
 				<Spinner height="20vh" size="small" tip="Loading..." />

@@ -12,42 +12,28 @@ import {
 	Space,
 	Typography,
 } from 'antd';
-import remove from 'api/browser/localstorage/remove';
-import { LOCALSTORAGE } from 'constants/localStorage';
+import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import {
-	LOGGED_IN,
-	UPDATE_USER,
-	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
-	UPDATE_USER_ORG_ROLE,
-} from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
 import CurrentOrganization from './CurrentOrganization';
 import SignedInAS from './SignedInAs';
-import {
-	Container,
-	LogoutContainer,
-	MenuContainer,
-	ToggleButton,
-} from './styles';
+import { Container, LogoutContainer, ToggleButton } from './styles';
 
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const onToggleThemeHandler = useCallback(() => {
 		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
@@ -75,47 +61,11 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	};
 
 	const onClickLogoutHandler = (): void => {
-		remove(LOCALSTORAGE.AUTH_TOKEN);
-		remove(LOCALSTORAGE.IS_LOGGED_IN);
-		remove(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
-		dispatch({
-			type: LOGGED_IN,
-			payload: {
-				isLoggedIn: false,
-			},
-		});
-		dispatch({
-			type: UPDATE_USER_ORG_ROLE,
-			payload: {
-				org: null,
-				role: null,
-			},
-		});
-		dispatch({
-			type: UPDATE_USER,
-			payload: {
-				ROLE: 'VIEWER',
-				email: '',
-				name: '',
-				orgId: '',
-				orgName: '',
-				profilePictureURL: '',
-				userId: '',
-			},
-		});
-		dispatch({
-			type: UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
-			payload: {
-				accessJwt: '',
-				refreshJwt: '',
-			},
-		});
-
-		history.push(ROUTES.LOGIN);
+		Logout();
 	};
 
 	const menu = (
-		<MenuContainer>
+		<Menu style={{ padding: '1rem' }}>
 			<Menu.ItemGroup>
 				<SignedInAS />
 				<Divider />
@@ -137,7 +87,7 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					</div>
 				</LogoutContainer>
 			</Menu.ItemGroup>
-		</MenuContainer>
+		</Menu>
 	);
 
 	return (

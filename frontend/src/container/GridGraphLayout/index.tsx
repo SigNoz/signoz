@@ -28,6 +28,7 @@ function GridGraph(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [saveLayoutState, setSaveLayoutState] = useState<State>({
 		loading: false,
 		error: false,
@@ -73,24 +74,31 @@ function GridGraph(): JSX.Element {
 				};
 			});
 		}
-		return data.layout
-			.filter((_, index) => widgets[index])
-			.map((e, index) => ({
-				...e,
-				Component: (): JSX.Element => {
-					if (widgets[index]) {
-						return (
-							<Graph
-								name={e.i + index}
-								isDeleted={isDeleted}
-								widget={widgets[index]}
-								yAxisUnit={widgets[index].yAxisUnit}
-							/>
-						);
-					}
-					return <div />;
-				},
-			}));
+
+		return widgets.map((widget, index) => {
+			const allLayouts = data?.layout;
+			const lastLayout = (data?.layout || [])[(allLayouts?.length || 0) - 1];
+
+			const currentLayout = (allLayouts || [])[index] || {
+				h: lastLayout.h,
+				i: (lastLayout.i + 1).toString(),
+				w: lastLayout.w,
+				x: (lastLayout.x % 2) * 6,
+				y: lastLayout.y,
+			};
+
+			return {
+				...currentLayout,
+				Component: (): JSX.Element => (
+					<Graph
+						name={widget.id + index}
+						isDeleted={isDeleted}
+						widget={widget}
+						yAxisUnit={widget.yAxisUnit}
+					/>
+				),
+			};
+		});
 	}, [widgets, data.layout]);
 
 	useEffect(() => {
@@ -216,6 +224,8 @@ function GridGraph(): JSX.Element {
 		return <Spinner height="40vh" size="large" tip="Loading..." />;
 	}
 
+	console.log({ layouts });
+
 	return (
 		<>
 			{saveLayout && (
@@ -251,8 +261,13 @@ function GridGraph(): JSX.Element {
 					const isQueryType = type === 'VALUE';
 
 					return (
-						<CardContainer key={rest.i} data-grid={rest}>
-							<Card isQueryType={isQueryType}>
+						<CardContainer
+							isQueryType={isQueryType}
+							isDarkMode={isDarkMode}
+							key={rest.i + JSON.stringify(widget)}
+							data-grid={rest}
+						>
+							<Card isDarkMode={isDarkMode} isQueryType={isQueryType}>
 								<Component />
 							</Card>
 						</CardContainer>

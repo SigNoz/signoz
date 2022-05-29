@@ -205,7 +205,7 @@ func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is not accessible to the viewers."),
+				Err: errors.New("API is accessible to viewers/editors/admins."),
 			}, nil)
 			return
 		}
@@ -226,7 +226,7 @@ func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is not accessible to the editors."),
+				Err: errors.New("API is accessible to editors/admins."),
 			}, nil)
 			return
 		}
@@ -248,7 +248,7 @@ func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API accessible only for self userId or admins."),
+				Err: errors.New("API is accessible for self access or to the admins."),
 			}, nil)
 			return
 		}
@@ -269,7 +269,7 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !auth.IsAdmin(user) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API accessible only to the admins"),
+				Err: errors.New("API is accessible to admins only"),
 			}, nil)
 			return
 		}
@@ -306,7 +306,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/usage", AdminAccess(aH.getUsage)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
@@ -1141,9 +1141,14 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Context is not used here as TTL is long duration operation which needs to converted to async
+	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil {
+		if apiErr.Typ == model.ErrorConflict {
+			aH.handleError(w, apiErr.Err, http.StatusConflict)
+		} else {
+			aH.handleError(w, apiErr.Err, http.StatusInternalServerError)
+		}
 		return
 	}
 

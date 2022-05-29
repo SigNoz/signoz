@@ -4,10 +4,15 @@ export const getYAxisFormattedValue = (
 	value: string,
 	format: string,
 ): string => {
-	let numberValue: number = parseInt(value, 10);
 	let decimalPrecision: number | undefined;
+	const parsedValue = getValueFormat(format)(
+		parseFloat(value),
+		undefined,
+		undefined,
+		undefined,
+	);
 	try {
-		const decimalSplitted = value.split('.');
+		const decimalSplitted = parsedValue.text.split('.');
 		if (decimalSplitted.length === 1) {
 			decimalPrecision = 0;
 		} else {
@@ -19,19 +24,26 @@ export const getYAxisFormattedValue = (
 					nonZeroCtr += 1;
 					if (nonZeroCtr >= 2) {
 						decimalPrecision = idx + 1;
-						break;
 					}
+				} else if (nonZeroCtr) {
+					decimalPrecision = idx;
+					break;
 				}
 			}
-			numberValue = parseFloat(value);
 		}
+
 		return formattedValueToString(
-			getValueFormat(format)(numberValue, decimalPrecision, undefined, undefined),
+			getValueFormat(format)(
+				parseFloat(value),
+				decimalPrecision,
+				undefined,
+				undefined,
+			),
 		);
 	} catch (error) {
 		console.error(error);
 	}
-	return `${numberValue}`;
+	return `${parseFloat(value)}`;
 };
 
 export const getToolTipValue = (value: string, format: string): string => {

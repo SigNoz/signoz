@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import styled from 'styled-components';
 
 export const CheckBoxContainer = styled.div`
@@ -8,4 +9,11 @@ export const CheckBoxContainer = styled.div`
 
 	margin-top: 0.5rem;
 	margin-bottom: 0.5rem;
+`;
+
+export const ParaGraph = styled(Typography.Paragraph)`
+	&&& {
+		margin: 0;
+		max-width: 8rem;
+	}
 `;
