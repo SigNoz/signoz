@@ -7,9 +7,11 @@ We always recommend using the latest version of SigNoz to ensure you get all sec
 
 ## Reporting a Vulnerability
 
-If you believe you have found a vulnerability, feel free to reach out to <security@signoz.io> 
+If you believe you have found a security vulnerability within Infracost, please let us know right away. We'll try and fix the problem as soon as possible.
 
-We currently do not operate a bug bounty program, but we will generously reward you with merch for any actionable security vulnerabilities found.
+Do not report vulnerabilities using public GitHub issues. Instead, email <security@signoz.io> with a detailed account of the issue. Please submit one issue per email, this helps us triage vulnerabilities.
+
+Once we've received your email we'll keep you updated as we fix the vulnerability.
 
 ## Thanks
 
