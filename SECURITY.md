@@ -8,6 +8,7 @@ We always recommend using the latest version of SigNoz to ensure you get all sec
 ## Reporting a Vulnerability
 
 If you believe you have found a vulnerability, feel free to reach out to <security@signoz.io> 
+
 We currently do not operate a bug bounty program, but we will generously reward you with merch for any actionable security vulnerabilities found.
 
 ## Thanks
