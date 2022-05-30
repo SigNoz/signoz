@@ -26,7 +26,6 @@ import (
 
 type ServerOptions struct {
 	HTTPHostPort string
-	// DruidClientUrl string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -106,10 +105,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	var reader Reader
 
 	storage := os.Getenv("STORAGE")
-	if storage == "druid" {
-		zap.S().Info("Using Apache Druid as datastore ...")
-		// reader = druidReader.NewReader(localDB)
-	} else if storage == "clickhouse" {
+	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB)
 		go clickhouseReader.Start()
