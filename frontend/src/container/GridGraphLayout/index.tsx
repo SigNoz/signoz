@@ -1,14 +1,20 @@
 /* eslint-disable react/no-unstable-nested-components */
-import { SaveFilled } from '@ant-design/icons';
+import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
-import Spinner from 'components/Spinner';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import useComponentPermission from 'hooks/useComponentPermission';
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Layout } from 'react-grid-layout';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import {
+	ToggleAddWidget,
+	ToggleAddWidgetProps,
+} from 'store/actions/dashboard/toggleAddWidget';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
@@ -24,7 +30,9 @@ import {
 } from './styles';
 import { updateDashboard } from './utils';
 
-function GridGraph(): JSX.Element {
+function GridGraph(props: Props): JSX.Element {
+	const { toggleAddWidget } = props;
+
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -103,30 +111,7 @@ function GridGraph(): JSX.Element {
 		) {
 			const preLayouts = getPreLayouts();
 			setLayout(() => {
-				const getX = (): number => {
-					if (preLayouts && preLayouts?.length > 0) {
-						const last = preLayouts[(preLayouts?.length || 0) - 1];
-
-						return (last.w + last.x) % 12;
-					}
-					return 0;
-				};
-
-				return [
-					...preLayouts,
-					{
-						i: (preLayouts.length + 1).toString(),
-						x: getX(),
-						y: Infinity,
-						w: 6,
-						h: 2,
-						Component: AddWidgetWrapper,
-						maxW: 6,
-						isDraggable: false,
-						isResizable: false,
-						isBounded: true,
-					},
-				];
+				return [...preLayouts];
 			});
 		}
 
@@ -134,6 +119,52 @@ function GridGraph(): JSX.Element {
 			isMounted.current = false;
 		};
 	}, [widgets, layouts.length, AddWidgetWrapper, loading, getPreLayouts]);
+
+	const onLayoutSaveHandler = useCallback(
+		async (layout) => {
+			setSaveLayoutState((state) => ({
+				...state,
+				error: false,
+				errorMessage: '',
+				loading: true,
+			}));
+
+			const response = await updateDashboardApi({
+				data: {
+					title: data.title,
+					description: data.description,
+					name: data.name,
+					tags: data.tags,
+					widgets: data.widgets,
+					layout,
+				},
+				uuid: selectedDashboard.uuid,
+			});
+			if (response.statusCode === 200) {
+				setSaveLayoutState((state) => ({
+					...state,
+					error: false,
+					errorMessage: '',
+					loading: false,
+				}));
+			} else {
+				setSaveLayoutState((state) => ({
+					...state,
+					error: true,
+					errorMessage: response.error || 'Something went wrong',
+					loading: false,
+				}));
+			}
+		},
+		[
+			data.description,
+			data.name,
+			data.tags,
+			data.title,
+			data.widgets,
+			selectedDashboard.uuid,
+		],
+	);
 
 	const onDropHandler = useCallback(
 		async (allLayouts: Layout[], currentLayout: Layout, event: DragEvent) => {
@@ -143,22 +174,20 @@ function GridGraph(): JSX.Element {
 					const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
 					const generateWidgetId = v4();
 
-					await updateDashboard({
-						data,
-						generateWidgetId,
-						graphType,
-						selectedDashboard,
-						layout: allLayouts
-							.map((e, index) => ({
+					await Promise.all([
+						updateDashboard({
+							data,
+							generateWidgetId,
+							graphType,
+							selectedDashboard,
+							layout: allLayouts.map((e) => ({
 								...e,
-								i: index.toString(),
-								// when a new element drops
-								w: e.i === '__dropping-elem__' ? 6 : e.w,
-								h: e.i === '__dropping-elem__' ? 2 : e.h,
-							}))
-							// removing add widgets layout config
-							.filter((e) => e.maxW === undefined),
-					});
+								i: e.i,
+								w: e.w,
+								h: e.h,
+							})),
+						}),
+					]);
 				} catch (error) {
 					notification.error({
 						message:
@@ -170,59 +199,21 @@ function GridGraph(): JSX.Element {
 		[data, selectedDashboard],
 	);
 
-	const onLayoutSaveHandler = async (): Promise<void> => {
-		setSaveLayoutState((state) => ({
-			...state,
-			error: false,
-			errorMessage: '',
-			loading: true,
-		}));
-
-		const response = await updateDashboardApi({
-			data: {
-				title: data.title,
-				description: data.description,
-				name: data.name,
-				tags: data.tags,
-				widgets: data.widgets,
-				layout: saveLayoutState.payload.filter((e) => e.maxW === undefined),
-			},
-			uuid: selectedDashboard.uuid,
-		});
-		if (response.statusCode === 200) {
-			setSaveLayoutState((state) => ({
-				...state,
-				error: false,
-				errorMessage: '',
-				loading: false,
-			}));
-		} else {
-			setSaveLayoutState((state) => ({
-				...state,
-				error: true,
-				errorMessage: response.error || 'Something went wrong',
-				loading: false,
-			}));
-		}
-	};
-
-	const onLayoutChangeHandler = (layout: Layout[]): void => {
+	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setSaveLayoutState({
 			loading: false,
 			error: false,
 			errorMessage: '',
 			payload: layout,
 		});
-	};
 
-	if (layouts.length === 0) {
-		return <Spinner height="40vh" size="large" tip="Loading..." />;
-	}
+		await onLayoutSaveHandler(layout);
+	};
 
 	return (
 		<>
-			{saveLayout && (
-				<ButtonContainer>
+			<ButtonContainer>
+				{saveLayout && (
 					<Button
 						loading={saveLayoutState.loading}
 						onClick={onLayoutSaveHandler}
@@ -231,8 +222,17 @@ function GridGraph(): JSX.Element {
 					>
 						Save Layout
 					</Button>
-				</ButtonContainer>
-			)}
+				)}
+
+				<Button
+					onClick={(): void => {
+						toggleAddWidget(true);
+					}}
+					icon={<PlusOutlined />}
+				>
+					Add Panel
+				</Button>
+			</ButtonContainer>
 
 			<ReactGridLayout
 				isResizable
@@ -244,6 +244,7 @@ function GridGraph(): JSX.Element {
 				isDroppable
 				useCSSTransforms
 				onDrop={onDropHandler}
+				allowOverlap={false}
 				onLayoutChange={onLayoutChangeHandler}
 			>
 				{layouts.map(({ Component, ...rest }, index) => {
@@ -257,7 +258,7 @@ function GridGraph(): JSX.Element {
 						<CardContainer
 							isQueryType={isQueryType}
 							isDarkMode={isDarkMode}
-							key={rest.i + JSON.stringify(widget)}
+							key={widget.id}
 							data-grid={rest}
 						>
 							<Card isDarkMode={isDarkMode} isQueryType={isQueryType}>
@@ -282,4 +283,18 @@ interface State {
 	errorMessage: string;
 }
 
-export default memo(GridGraph);
+interface DispatchProps {
+	toggleAddWidget: (
+		props: ToggleAddWidgetProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	toggleAddWidget: bindActionCreators(ToggleAddWidget, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(memo(GridGraph));

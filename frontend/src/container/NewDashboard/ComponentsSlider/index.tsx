@@ -37,15 +37,17 @@ function DashboardGraphSlider(): JSX.Element {
 					return 0;
 				};
 
+				const uniqueId = uuid();
+
 				await updateDashboard({
 					data,
-					generateWidgetId: uuid(),
+					generateWidgetId: uniqueId,
 					graphType: name,
 					layout: [
 						...(data.layout || []),
 						{
 							h: 2,
-							i: (((data.layout || [])?.length || 0) + 1).toString(),
+							i: uniqueId,
 							w: 6,
 							x: getX(),
 							y: 0,

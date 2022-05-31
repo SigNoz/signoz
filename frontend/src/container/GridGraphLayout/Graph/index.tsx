@@ -42,7 +42,7 @@ function GridCardGraph({
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
-	const [deleteModal, setDeletModal] = useState(false);
+	const [deleteModal, setDeleteModal] = useState(false);
 
 	useEffect(() => {
 		(async (): Promise<void> => {
@@ -122,7 +122,7 @@ function GridCardGraph({
 
 	const onDeleteHandler = useCallback(() => {
 		deleteWidget({ widgetId: widget.id });
-		onToggleModal(setDeletModal);
+		onToggleModal(setDeleteModal);
 		// eslint-disable-next-line no-param-reassign
 		isDeleted.current = true;
 	}, [deleteWidget, widget, onToggleModal, isDeleted]);
@@ -132,7 +132,7 @@ function GridCardGraph({
 			<>
 				<Modal
 					destroyOnClose
-					onCancel={(): void => onToggleModal(setDeletModal)}
+					onCancel={(): void => onToggleModal(setDeleteModal)}
 					visible={deleteModal}
 					title="Delete"
 					height="10vh"
@@ -172,7 +172,7 @@ function GridCardGraph({
 					title={widget?.title}
 					widget={widget}
 					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeletModal)}
+					onDelete={(): void => onToggleModal(setDeleteModal)}
 				/>
 
 				<ErrorContainer>{state.errorMessage}</ErrorContainer>
@@ -204,7 +204,7 @@ function GridCardGraph({
 				title={widget.title}
 				widget={widget}
 				onView={(): void => onToggleModal(setModal)}
-				onDelete={(): void => onToggleModal(setDeletModal)}
+				onDelete={(): void => onToggleModal(setDeleteModal)}
 			/>
 
 			{getModals()}

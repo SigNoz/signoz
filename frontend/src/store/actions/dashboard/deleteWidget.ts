@@ -15,6 +15,9 @@ export const DeleteWidget = ({
 
 			const { widgets = [] } = selectedDashboard.data;
 			const updatedWidgets = widgets.filter((e) => e.id !== widgetId);
+			const updatedLayout = selectedDashboard.data.layout?.filter(
+				(e) => e.i !== widgetId,
+			);
 
 			const response = await updateDashboardApi({
 				data: {
@@ -23,6 +26,7 @@ export const DeleteWidget = ({
 					name: selectedDashboard.data.name,
 					tags: selectedDashboard.data.tags,
 					widgets: updatedWidgets,
+					layout: updatedLayout,
 				},
 				uuid: selectedDashboard.uuid,
 			});
