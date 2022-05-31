@@ -6,7 +6,6 @@ import Spinner from 'components/Spinner';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 import { connect, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
@@ -154,8 +153,6 @@ const mapStateToProps = (
 	};
 };
 
-export default withRouter(
-	connect(mapStateToProps, {
-		getDetailedServiceMapItems,
-	})(ServiceMap),
-);
+export default connect(mapStateToProps, {
+	getDetailedServiceMapItems,
+})(ServiceMap);

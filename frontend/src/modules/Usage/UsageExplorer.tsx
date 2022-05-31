@@ -5,7 +5,6 @@ import { Select, Space } from 'antd';
 import Graph from 'components/Graph';
 import React, { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { withRouter } from 'react-router-dom';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -84,7 +83,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 		if (selectedTime && selectedInterval) {
 			const maxTime = new Date().getTime() * 1000000;
 			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
-			
+
 			getUsageData(minTime, maxTime, selectedInterval.value, selectedService);
 		}
 	}, [selectedTime, selectedInterval, selectedService, getUsageData]);
@@ -214,9 +213,7 @@ const mapStateToProps = (
 	};
 };
 
-export const UsageExplorer = withRouter(
-	connect(mapStateToProps, {
-		getUsageData,
-		getServicesList: GetService,
-	})(_UsageExplorer),
-);
+export const UsageExplorer = connect(mapStateToProps, {
+	getUsageData,
+	getServicesList: GetService,
+})(_UsageExplorer);

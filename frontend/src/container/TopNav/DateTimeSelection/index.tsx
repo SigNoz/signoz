@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import getTimeString from 'lib/getTimeString';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
@@ -22,13 +22,13 @@ import { Container, Form, FormItem } from './styles';
 const { Option } = DefaultSelect;
 
 function DateTimeSelection({
-	location,
 	updateTimeInterval,
 	globalTimeLoading,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
+	const { search, pathname } = useLocation();
 
-	const params = new URLSearchParams(location.search);
+	const params = new URLSearchParams(search);
 	const searchStartTime = params.get('startTime');
 	const searchEndTime = params.get('endTime');
 
@@ -61,7 +61,7 @@ function DateTimeSelection({
 	const [startTime, setStartTime] = useState<Dayjs>();
 	const [endTime, setEndTime] = useState<Dayjs>();
 
-	const [options, setOptions] = useState(getOptions(location.pathname));
+	const [options, setOptions] = useState(getOptions(pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
@@ -107,7 +107,7 @@ function DateTimeSelection({
 	};
 
 	const [selectedTimeInterval, setSelectedTimeInterval] = useState<Time>(
-		getDefaultTime(location.pathname),
+		getDefaultTime(pathname),
 	);
 
 	const updateLocalStorageForRoutes = (value: Time): void => {
@@ -118,7 +118,7 @@ function DateTimeSelection({
 			const preRoute = {
 				...preRoutesObject,
 			};
-			preRoute[location.pathname] = value;
+			preRoute[pathname] = value;
 
 			setLocalStorageKey(
 				LOCALSTORAGE.METRICS_TIME_IN_DURATION,
@@ -209,7 +209,7 @@ function DateTimeSelection({
 			);
 		}
 
-		const currentRoute = location.pathname;
+		const currentRoute = pathname;
 		const time = getDefaultTime(currentRoute);
 
 		const currentOptions = getOptions(currentRoute);
@@ -239,7 +239,6 @@ function DateTimeSelection({
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 	}, [
-		location.pathname,
 		getTime,
 		localstorageEndTime,
 		localstorageStartTime,
@@ -247,6 +246,7 @@ function DateTimeSelection({
 		searchStartTime,
 		updateTimeInterval,
 		globalTimeLoading,
+		pathname,
 	]);
 
 	return (
@@ -307,6 +307,6 @@ const mapDispatchToProps = (
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
-type Props = DispatchProps & RouteComponentProps;
+type Props = DispatchProps;
 
-export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
+export default connect(null, mapDispatchToProps)(DateTimeSelection);
