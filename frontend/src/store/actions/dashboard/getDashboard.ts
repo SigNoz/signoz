@@ -45,13 +45,23 @@ export const GetDashboard = ({
 								errorMessage: '',
 								loading: false,
 							},
-							query: [
-								{
-									name: GetQueryName([]),
-									query: '',
-									legend: '',
-								},
-							],
+							query: {
+								promQL: [
+									{
+										name: GetQueryName([]),
+									},
+								],
+								clickHouse: [
+									{
+										name: GetQueryName([]),
+									},
+								],
+								metricsBuilder: [
+									{
+										name: GetQueryName([]),
+									},
+								],
+							},
 						},
 					});
 				}

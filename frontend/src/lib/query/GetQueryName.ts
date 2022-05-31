@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash-es';
 
-const MAX_QUERIES = 10;
+const MAX_QUERIES = 26;
 function GetQueryName(queries = []) {
 	if (!queries.length) return 'A';
 	if (queries.length === MAX_QUERIES) {

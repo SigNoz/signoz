@@ -196,24 +196,24 @@ const dashboard = (
 
 			const newQuery = [
 				...selectedWidget.query,
-				{
-					name: GetQueryName(selectedWidget.query),
-					disabled: false,
-					promQL: {
-						query: '',
-						legend: '',
-					},
-					clickHouseQuery: '',
-					queryBuilder: {
-						metricName: null,
-						aggregateOperator: null,
-						tagFilters: {
-							op: 'AND',
-							items: [],
-						},
-						groupBy: [],
-					},
-				},
+				// {
+				// 	name: GetQueryName(selectedWidget.query),
+				// 	disabled: false,
+				// 	promQL: {
+				// 		query: '',
+				// 		legend: '',
+				// 	},
+				// 	clickHouseQuery: '',
+				// 	queryBuilder: {
+				// 		metricName: null,
+				// 		aggregateOperator: null,
+				// 		tagFilters: {
+				// 			op: 'AND',
+				// 			items: [],
+				// 		},
+				// 		groupBy: [],
+				// 	},
+				// },
 			];
 
 			return {

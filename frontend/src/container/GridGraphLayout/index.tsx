@@ -81,7 +81,7 @@ function GridGraph(): JSX.Element {
 
 			const currentLayout = (allLayouts || [])[index] || {
 				h: lastLayout.h,
-				i: (lastLayout.i + 1).toString(),
+				i: widget.id,
 				w: lastLayout.w,
 				x: (lastLayout.x % 2) * 6,
 				y: lastLayout.y,

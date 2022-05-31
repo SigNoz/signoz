@@ -23,13 +23,22 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 as uuid } from 'uuid';
 
+import {
+	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
+	WIDGET_PROMQL_QUERY_KEY_NAME,
+	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
+} from './constants';
 import Query from './Query';
 import QueryBuilder from './QueryBuilder';
+import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
+import PromQLQueryContainer from './QueryBuilder/promQL';
+import QueryBuilderQueryContainer from './QueryBuilder/queryBuilder';
 import { QueryButton } from './styles';
-import { TQueryCategories } from './types';
+import { EQueryTypeToQueryKeyMapping, TQueryCategories } from './types';
 import GetQueryName from './utils/GetQueryName';
 
 const { TabPane } = Tabs;
@@ -40,8 +49,7 @@ function QuerySection({
 	getQueryResults,
 	updateQueryType,
 }: QueryProps): JSX.Element {
-
-	const [localQueryChanges, setLocalQueryChanges] = useState([]);
+	const [localQueryChanges, setLocalQueryChanges] = useState({});
 
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -60,8 +68,9 @@ function QuerySection({
 	}, [widgets, urlQuery]);
 
 	const selectedWidget = getWidget() as Widgets;
-	const [queryCategory, setQueryCategory] = useState(selectedWidget.queryType);
-
+	const [queryCategory, setQueryCategory] = useState<EQueryType>(
+		selectedWidget.query.queryType,
+	);
 
 	const { query = [] } = selectedWidget || {};
 	useEffect(() => {
@@ -71,42 +80,39 @@ function QuerySection({
 	const queryOnClickHandler = () => {
 		setLocalQueryChanges([
 			...localQueryChanges,
-			{
-				name: GetQueryName(localQueryChanges),
-				disabled: false,
-				
-				promQL: {
-					query: '',
-					legend: '',
-				},
-				clickHouseQuery: '',
-				queryBuilder: {
-					metricName: null,
-					aggregateOperator: null,
-					tagFilters: {
-						op: 'AND',
-						items: [],
-					},
-					groupBy: [],
-				},
-			},
+			// {
+			// 	name: GetQueryName(localQueryChanges),
+			// 	disabled: false,
+
+			// 	promQL: {
+			// 		query: '',
+			// 		legend: '',
+			// 	},
+			// 	clickHouseQuery: '',
+			// 	queryBuilder: {
+			// 		metricName: null,
+			// 		aggregateOperator: null,
+			// 		tagFilters: {
+			// 			op: 'AND',
+			// 			items: [],
+			// 		},
+			// 		groupBy: [],
+			// 	},
+			// },
 		]);
 	};
 
 	const handleQueryCategoryChange = (qCategory): void => {
 		setQueryCategory(parseInt(qCategory));
-	};
-	const handleLocalQueryUpdate = ({ currentIndex, updatedQuery }) => {
-		setLocalQueryChanges((prevState) => {
-			prevState[currentIndex] = cloneDeep(updatedQuery);
-			return prevState;
+		setLocalQueryChanges({
+			...localQueryChanges,
+			queryType: parseInt(qCategory),
 		});
+	};
+	const handleLocalQueryUpdate = ({ updatedQuery }) => {
+		setLocalQueryChanges(updatedQuery);
 	};
 	const handleStageQuery = () => {
-		updateQueryType({
-			widgetId: urlQuery.get('widgetId'),
-			queryType: queryCategory,
-		});
 		updateQuery({
 			updatedQuery: localQueryChanges,
 			widgetId: urlQuery.get('widgetId'),
@@ -133,12 +139,38 @@ function QuerySection({
 						</Button>
 					}
 				>
-					<TabPane tab="Query Builder" key={"0"} />
-					<TabPane tab="ClickHouse Query" key={"1"} />
-					<TabPane tab="PromQL" key={"2"} />
+					<TabPane tab="Query Builder" key={EQueryType.QUERY_BUILDER.toString()}>
+						<QueryBuilderQueryContainer
+							queryData={localQueryChanges}
+							updateQueryData={({ updatedQuery }) => {
+								handleLocalQueryUpdate({ updatedQuery });
+							}}
+							metricsBuilderQueries={
+								localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
+							}
+						/>
+					</TabPane>
+					<TabPane tab="ClickHouse Query" key={EQueryType.CLICKHOUSE.toString()}>
+						<ClickHouseQueryContainer
+							queryData={localQueryChanges}
+							updateQueryData={({ updatedQuery }) => {
+								handleLocalQueryUpdate({ updatedQuery });
+							}}
+							clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
+						/>
+					</TabPane>
+					<TabPane tab="PromQL" key={EQueryType.PROM.toString()}>
+						<PromQLQueryContainer
+							queryData={localQueryChanges}
+							updateQueryData={({ updatedQuery }) => {
+								handleLocalQueryUpdate({ updatedQuery });
+							}}
+							promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}
+						/>
+					</TabPane>
 				</Tabs>
 			</div>
-			{localQueryChanges.map((e, index) => (
+			{/* {localQueryChanges.map((e, index) => (
 				// <Query
 				// 	name={e.name}
 				// 	currentIndex={index}
@@ -158,14 +190,7 @@ function QuerySection({
 					queryData={e}
 					queryCategory={queryCategory}
 				/>
-			))}
-
-			<QueryButton onClick={queryOnClickHandler} icon={<PlusOutlined />}>
-				Query
-			</QueryButton>
-			<QueryButton onClick={queryOnClickHandler} icon={<PlusOutlined />}>
-				Formula
-			</QueryButton>
+			))} */}
 		</>
 	);
 }

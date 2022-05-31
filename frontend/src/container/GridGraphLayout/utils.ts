@@ -1,10 +1,16 @@
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
+import {
+	ClickHouseQueryTemplate,
+	PromQLQueryTemplate,
+	QueryBuilderQueryTemplate,
+} from 'constants/dashboard';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
 import GetQueryName from 'lib/query/GetQueryName';
 import { Layout } from 'react-grid-layout';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
 export const updateDashboard = async ({
 	data,
@@ -29,28 +35,31 @@ export const updateDashboard = async ({
 					opacity: '',
 					panelTypes: graphType,
 					queryType: 0,
-					formulas: [],
-					query: [
-						{
-							name: GetQueryName([]),
-							disabled: false,
-							
-							promQL: {
-								query: '',
-								legend: '',
+
+					query: {
+						queryType: EQueryType.QUERY_BUILDER,
+						promQL: [
+							{
+								name: GetQueryName([]),
+								...PromQLQueryTemplate,
 							},
-							clickHouseQuery: '',
-							queryBuilder: {
-								metricName: null,
-								aggregateOperator: null,
-								tagFilters: {
-									op: 'AND',
-									items: [],
+						],
+						clickHouse: [
+							{
+								name: GetQueryName([]),
+								...ClickHouseQueryTemplate,
+							},
+						],
+						metricsBuilder: {
+							formulas: [],
+							queryBuilder: [
+								{
+									name: GetQueryName([]),
+									...QueryBuilderQueryTemplate,
 								},
-								groupBy: [],
-							},
+							],
 						},
-					],
+					},
 					queryData: {
 						data: [],
 						error: false,

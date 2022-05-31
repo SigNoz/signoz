@@ -1,4 +1,4 @@
-import MEditor from '@monaco-editor/react';
+import MEditor, { EditorProps } from '@monaco-editor/react';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -10,14 +10,15 @@ function Editor({
 	onChange,
 	readOnly = false,
 	height = '40vh',
-}: EditorProps): JSX.Element {
+	options,
+}: MEditorProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	return (
 		<MEditor
 			theme={isDarkMode ? 'vs-dark' : 'vs-light'}
 			language={language}
 			value={value}
-			options={{ fontSize: 16, automaticLayout: true, readOnly }}
+			options={{ fontSize: 16, automaticLayout: true, readOnly, ...options }}
 			height={height}
 			onChange={(newValue): void => {
 				if (typeof newValue === 'string') onChange(newValue);
@@ -26,12 +27,13 @@ function Editor({
 	);
 }
 
-interface EditorProps {
+interface MEditorProps {
 	value: string;
 	language?: string;
 	onChange: (value: string) => void;
 	readOnly?: boolean;
 	height?: string;
+	options: EditorProps['options'];
 }
 
 Editor.defaultProps = {
