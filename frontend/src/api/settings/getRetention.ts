@@ -2,13 +2,15 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/settings/getRetention';
+import { PayloadProps, Props } from 'types/api/settings/getRetention';
 
-const getRetention = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
+const getRetention = async <T extends Props>(
+	props: T,
+): Promise<SuccessResponse<PayloadProps<T>> | ErrorResponse> => {
 	try {
-		const response = await axios.get<PayloadProps>(`/settings/ttl`);
+		const response = await axios.get<PayloadProps<T>>(
+			`/settings/ttl?type=${props}`,
+		);
 
 		return {
 			statusCode: 200,

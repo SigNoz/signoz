@@ -245,8 +245,7 @@ type TTLParams struct {
 }
 
 type GetTTLParams struct {
-	Type      string
-	GetAllTTL bool
+	Type string
 }
 
 type GetErrorsParams struct {
