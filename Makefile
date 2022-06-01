@@ -10,7 +10,6 @@ BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 
 # Internal variables or constants.
 FRONTEND_DIRECTORY ?= frontend
-FLATTENER_DIRECTORY ?= pkg/processors/flattener
 QUERY_SERVICE_DIRECTORY ?= pkg/query-service
 STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
 SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
@@ -20,7 +19,6 @@ DOCKER_TAG ?= latest
 
 FRONTEND_DOCKER_IMAGE ?= frontend
 QUERY_SERVICE_DOCKER_IMAGE ?= query-service
-FLATTERNER_DOCKER_IMAGE ?= flattener-processor
 
 # Build-time Go variables
 PACKAGE?=go.signoz.io/query-service
@@ -31,7 +29,7 @@ gitBranch=${PACKAGE}/version.gitBranch
 
 LD_FLAGS="-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}"
 
-all: build-push-frontend build-push-query-service build-push-flattener
+all: build-push-frontend build-push-query-service
 # Steps to build and push docker image of frontend
 .PHONY: build-frontend-amd64  build-push-frontend
 # Step to build docker image of frontend in amd64 (used in build pipeline)
@@ -72,27 +70,6 @@ build-push-query-service:
 	docker buildx build --file Dockerfile --progress plane --no-cache \
 	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
-
-# Steps to build and push docker image of flattener
-.PHONY: build-flattener-amd64  build-push-flattener
-# Step to build docker image of flattener in amd64 (used in build pipeline)
-build-flattener-amd64:
-	@echo "------------------"
-	@echo "--> Building flattener docker image for amd64"
-	@echo "------------------"
-	@cd $(FLATTENER_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) \
-	--build-arg TARGETPLATFORM="linux/amd64" .
-
-# Step to build and push docker image of flattener in amd64 (used in push pipeline)
-build-push-flattener:
-	@echo "------------------"
-	@echo "--> Building and pushing flattener docker image"
-	@echo "------------------"
-	@cd $(FLATTENER_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane \
-	--no-cache --push --platform linux/arm64,linux/amd64 \
-	--tag $(REPONAME)/$(FLATTERNER_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
 	mkdir -p /var/lib/signoz

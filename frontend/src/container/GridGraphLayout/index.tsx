@@ -28,7 +28,7 @@ function GridGraph(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const [saveLayoutState, setSaveLayoutState] = useState<State>({
 		loading: false,
 		error: false,
@@ -46,6 +46,8 @@ function GridGraph(): JSX.Element {
 	const isMounted = useRef(true);
 	const isDeleted = useRef(false);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [saveLayout] = useComponentPermission(['save_layout'], role);
 
@@ -92,7 +94,7 @@ function GridGraph(): JSX.Element {
 					return <div />;
 				},
 			}));
-	}, [widgets, data.layout]);
+	}, [widgets, data?.layout]);
 
 	useEffect(() => {
 		if (
@@ -255,7 +257,7 @@ function GridGraph(): JSX.Element {
 						<CardContainer
 							isQueryType={isQueryType}
 							isDarkMode={isDarkMode}
-							key={rest.i}
+							key={rest.i + JSON.stringify(widget)}
 							data-grid={rest}
 						>
 							<Card isDarkMode={isDarkMode} isQueryType={isQueryType}>

@@ -23,9 +23,13 @@ export const TimeUnits: ITimeUnit[] = [
 	},
 ];
 
+interface ITimeUnitConversion {
+	value: number;
+	timeUnitValue: SettingPeriod;
+}
 export const convertHoursValueToRelevantUnit = (
 	value: number,
-): { value: number; timeUnitValue: SettingPeriod } => {
+): ITimeUnitConversion => {
 	if (value)
 		for (let idx = TimeUnits.length - 1; idx >= 0; idx -= 1) {
 			const timeUnit = TimeUnits[idx];
@@ -39,4 +43,14 @@ export const convertHoursValueToRelevantUnit = (
 			}
 		}
 	return { value, timeUnitValue: TimeUnits[0].value };
+};
+
+export const convertHoursValueToRelevantUnitString = (
+	value: number,
+): string => {
+	if (!value) return '';
+	const convertedTimeUnit = convertHoursValueToRelevantUnit(value);
+	return `${convertedTimeUnit.value} ${convertedTimeUnit.timeUnitValue}${
+		convertedTimeUnit.value >= 2 ? 's' : ''
+	}`;
 };
