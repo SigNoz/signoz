@@ -18,7 +18,7 @@ function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 				<iframe
 					width="100%"
 					height="265"
-					src="https://www.youtube.com/embed/Ly34WBQ2640"
+					src="https://www.youtube.com/embed/J1Bof55DOb4"
 					frameBorder="0"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 					allowFullScreen
