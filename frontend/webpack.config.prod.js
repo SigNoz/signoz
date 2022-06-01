@@ -12,6 +12,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 const plugins = [
 	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
@@ -24,10 +25,8 @@ const plugins = [
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
-	new webpack.DefinePlugin({
-		'process.env': JSON.stringify(process.env),
-	}),
 	new MiniCssExtractPlugin(),
+	new Dotenv(),
 	new Critters({
 		preload: 'swap',
 		// Base path location of the CSS files

@@ -1,4 +1,5 @@
 import { Card, Space, Typography } from 'antd';
+import { ENVIRONMENT } from 'constants/env';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +17,7 @@ function WelcomeLeftContainer({
 		<Container>
 			<LeftContainer direction="vertical">
 				<Space align="center">
-					<Logo src="/signoz-signup.svg" alt="logo" />
+					<Logo src={`${ENVIRONMENT.baseConstant}/signoz-signup.svg`} alt="logo" />
 					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
 				</Space>
 				<Typography>{t('monitor_signup')}</Typography>

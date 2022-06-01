@@ -49,14 +49,9 @@
 		/>
 		<meta data-react-helmet="true" name="docusaurus_locale" content="en" />
 		<meta data-react-helmet="true" name="docusaurus_tag" content="default" />
-		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
+		<link data-react-helmet="true" rel="shortcut icon" href="./favicon.ico" />
 
-		<link
-			id="appMode"
-			rel="stylesheet"
-			type="text/css"
-			href="/css/antd.dark.min.css"
-		/>
+		<link id="appMode" rel="stylesheet" type="text/css" />
 	</head>
 	<body>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
@@ -73,9 +68,9 @@
 			}
 
 			if (userTheme === 'lightMode') {
-				themeNode.setAttribute('href', '/css/antd.min.css');
+				themeNode.setAttribute('href', './css/antd.min.css');
 			} else {
-				themeNode.setAttribute('href', '/css/antd.dark.min.css');
+				themeNode.setAttribute('href', './css/antd.dark.min.css');
 			}
 		</script>
 	</body>

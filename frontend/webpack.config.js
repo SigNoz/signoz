@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const Dotenv = require('dotenv-webpack');
 
 dotenv.config();
 
@@ -17,9 +18,7 @@ const plugins = [
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
-	new webpack.DefinePlugin({
-		'process.env': JSON.stringify(process.env),
-	}),
+	new Dotenv(),
 ];
 
 if (process.env.BUNDLE_ANALYSER === 'true') {
@@ -38,7 +37,7 @@ const config = {
 		port: portFinderSync.getPort(3301),
 		static: {
 			directory: resolve(__dirname, 'public'),
-			publicPath: '/',
+			publicPath: process.env.FRONTEND_BASE || '/',
 			watch: true,
 		},
 		allowedHosts: 'all',
