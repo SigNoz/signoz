@@ -122,38 +122,43 @@ function GridGraph(props: Props): JSX.Element {
 
 	const onLayoutSaveHandler = useCallback(
 		async (layout) => {
-			setSaveLayoutState((state) => ({
-				...state,
-				error: false,
-				errorMessage: '',
-				loading: true,
-			}));
-
-			const response = await updateDashboardApi({
-				data: {
-					title: data.title,
-					description: data.description,
-					name: data.name,
-					tags: data.tags,
-					widgets: data.widgets,
-					layout,
-				},
-				uuid: selectedDashboard.uuid,
-			});
-			if (response.statusCode === 200) {
+			try {
 				setSaveLayoutState((state) => ({
 					...state,
 					error: false,
 					errorMessage: '',
-					loading: false,
+					loading: true,
 				}));
-			} else {
-				setSaveLayoutState((state) => ({
-					...state,
-					error: true,
-					errorMessage: response.error || 'Something went wrong',
-					loading: false,
-				}));
+
+				const response = await updateDashboardApi({
+					data: {
+						title: data.title,
+						description: data.description,
+						name: data.name,
+						tags: data.tags,
+						widgets: data.widgets,
+						layout,
+					},
+					uuid: selectedDashboard.uuid,
+				});
+				if (response.statusCode === 200) {
+					setSaveLayoutState((state) => ({
+						...state,
+						error: false,
+						errorMessage: '',
+						loading: false,
+					}));
+				} else {
+					setSaveLayoutState((state) => ({
+						...state,
+						error: true,
+						errorMessage: response.error || 'Something went wrong',
+						loading: false,
+					}));
+				}
+			} catch (error) {
+				console.log('asd', error);
+				console.error(error);
 			}
 		},
 		[
@@ -216,7 +221,7 @@ function GridGraph(props: Props): JSX.Element {
 				{saveLayout && (
 					<Button
 						loading={saveLayoutState.loading}
-						onClick={onLayoutSaveHandler}
+						onClick={(): Promise<void> => onLayoutSaveHandler(layouts)}
 						icon={<SaveFilled />}
 						danger={saveLayoutState.error}
 					>
