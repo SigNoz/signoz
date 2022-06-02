@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { notification } from 'antd';
 import { updateDashboard } from 'container/GridGraphLayout/utils';
+import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -19,42 +20,46 @@ function DashboardGraphSlider(): JSX.Element {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 
-	const onDragStartHandler: React.DragEventHandler<HTMLDivElement> = useCallback(
-		(event: React.DragEvent<HTMLDivElement>) => {
-			event.dataTransfer.setData('text/plain', event.currentTarget.id);
-		},
-		[],
-	);
-
 	const onClickHandler = useCallback(
 		async (name: ITEMS) => {
 			try {
-				const getX = (): number => {
-					if (data.layout && data.layout?.length > 0) {
-						const lastIndexX = data.layout[(data.layout?.length || 0) - 1];
-						return (lastIndexX.w + lastIndexX.x) % 12;
-					}
-					return 0;
-				};
+				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
 
-				const uniqueId = uuid();
+				const isEmptyLayout = emptyLayout !== undefined;
 
-				await updateDashboard({
-					data,
-					generateWidgetId: uniqueId,
-					graphType: name,
-					layout: [
-						...(data.layout || []),
-						{
-							h: 2,
-							i: uniqueId,
-							w: 6,
-							x: getX(),
-							y: 0,
-						},
-					],
-					selectedDashboard,
-				});
+				if (!isEmptyLayout) {
+					const getX = (): number => {
+						if (data.layout && data.layout?.length > 0) {
+							const lastIndexX = data.layout[(data.layout?.length || 0) - 1];
+							return (lastIndexX.w + lastIndexX.x) % 12;
+						}
+						return 0;
+					};
+
+					const uniqueId = uuid();
+
+					await updateDashboard({
+						data,
+						generateWidgetId: uniqueId,
+						graphType: name,
+						layout: [
+							...(data.layout || []),
+							{
+								h: 2,
+								i: uniqueId,
+								w: 6,
+								x: getX(),
+								y: 0,
+							},
+						],
+						selectedDashboard,
+						isRedirected: true,
+					});
+				} else {
+					history.push(
+						`${history.location.pathname}/new?graphType=${name}&widgetId=${emptyLayout.i}`,
+					);
+				}
 			} catch (error) {
 				notification.error({
 					message: 'Something went wrong',
@@ -70,11 +75,12 @@ function DashboardGraphSlider(): JSX.Element {
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
 				<Card
-					onClick={(): Promise<void> => onClickHandler(name)}
+					onClick={(event): void => {
+						event.preventDefault();
+						onClickHandler(name);
+					}}
 					id={name}
-					onDragStart={onDragStartHandler}
 					key={name}
-					draggable
 				>
 					<Icon fillColor={fillColor} />
 					<Text>{display}</Text>

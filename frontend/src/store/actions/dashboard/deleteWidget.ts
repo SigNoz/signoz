@@ -1,5 +1,6 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
+import { Layout } from 'react-grid-layout';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -36,6 +37,7 @@ export const DeleteWidget = ({
 					type: 'DELETE_WIDGET_SUCCESS',
 					payload: {
 						widgetId,
+						layout: updatedLayout || [],
 					},
 				});
 			} else {
@@ -59,4 +61,5 @@ export const DeleteWidget = ({
 
 export interface DeleteWidgetProps {
 	widgetId: Widgets['id'];
+	layout: Layout[];
 }

@@ -28,7 +28,9 @@ function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 		return <div>{errorMessage}</div>;
 	}
 
-	if (loading || dashboards.length === 0) {
+	// when user comes from dashboard page. dashboard array is populated with some dashboard as dashboard is populated
+	// so to avoid any unmount call dashboard must have length zero
+	if (loading || dashboards.length === 0 || dashboards.length !== 1) {
 		return <Spinner tip="Loading.." />;
 	}
 

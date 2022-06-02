@@ -11,7 +11,9 @@ export const updateDashboard = async ({
 	generateWidgetId,
 	layout,
 	selectedDashboard,
+	isRedirected,
 }: UpdateDashboardProps): Promise<void> => {
+	console.log({ generateWidgetId });
 	const response = await updateDashboardApi({
 		data: {
 			title: data.title,
@@ -48,14 +50,16 @@ export const updateDashboard = async ({
 		uuid: selectedDashboard.uuid,
 	});
 
-	if (response.statusCode === 200) {
-		history.push(
-			`${history.location.pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`,
-		);
-	} else {
-		notification.error({
-			message: response.error || 'Something went wrong',
-		});
+	if (isRedirected) {
+		if (response.statusCode === 200) {
+			history.push(
+				`${history.location.pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`,
+			);
+		} else {
+			notification.error({
+				message: response.error || 'Something went wrong',
+			});
+		}
 	}
 };
 
@@ -65,4 +69,5 @@ interface UpdateDashboardProps {
 	generateWidgetId: string;
 	layout: Layout[];
 	selectedDashboard: Dashboard;
+	isRedirected: boolean;
 }

@@ -5,10 +5,7 @@ import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
-interface Props {
-	isQueryType: boolean;
-}
-export const Card = styled(CardComponent)<Props>`
+export const Card = styled(CardComponent)`
 	&&& {
 		height: 100%;
 	}

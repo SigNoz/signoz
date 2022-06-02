@@ -369,7 +369,7 @@ const dashboard = (
 		}
 
 		case DELETE_WIDGET_SUCCESS: {
-			const { widgetId } = action.payload;
+			const { widgetId, layout } = action.payload;
 
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
@@ -384,6 +384,7 @@ const dashboard = (
 						data: {
 							...data,
 							widgets: widgets.filter((e) => e.id !== widgetId),
+							layout,
 						},
 					},
 				],
