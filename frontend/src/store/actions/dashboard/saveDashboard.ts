@@ -102,6 +102,7 @@ export const SaveDashboard = ({
 							title: updatedTitle,
 							timePreferance: updatedtimePreferance,
 							yAxisUnit: updatedYAxisUnit,
+							panelTypes: selectedWidget.panelTypes,
 							queryData: {
 								...selectedWidget.queryData,
 								data: [

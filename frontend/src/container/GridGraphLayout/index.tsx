@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
@@ -18,7 +18,28 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 import Graph from './Graph';
 import GraphLayoutContainer from './GraphLayout';
-import { updateDashboard } from './utils';
+import { UpdateDashboard } from './utils';
+
+export const getPreLayouts = (
+	widgets: Widgets[] | undefined,
+	layout: Layout[],
+): LayoutProps[] =>
+	layout.map((e, index) => ({
+		...e,
+		Component: ({ setLayout }: ComponentProps): JSX.Element => {
+			const widget = widgets?.find((widget) => widget.id === e.i);
+
+			return (
+				<Graph
+					name={e.i + index}
+					widget={widget as Widgets}
+					yAxisUnit={widget?.yAxisUnit}
+					layout={layout}
+					setLayout={setLayout}
+				/>
+			);
+		},
+	}));
 
 function GridGraph(props: Props): JSX.Element {
 	const { toggleAddWidget } = props;
@@ -37,35 +58,9 @@ function GridGraph(props: Props): JSX.Element {
 	const { data } = selectedDashboard;
 	const { widgets } = data;
 
-	const getPreLayouts = useCallback(
-		(widgets: Widgets[] | undefined, layout: Layout[]) => {
-			return layout.map((e, index) => ({
-				...e,
-				Component: (): JSX.Element => {
-					const widget = widgets?.find((widget) => widget.id === e.i);
-
-					return (
-						<Graph
-							name={e.i + index}
-							widget={widget as Widgets}
-							yAxisUnit={widget?.yAxisUnit}
-							layout={layout}
-						/>
-					);
-				},
-			}));
-		},
-		[],
-	);
-
 	const [layouts, setLayout] = useState<LayoutProps[]>(
 		getPreLayouts(widgets, selectedDashboard.data.layout || []),
 	);
-
-	useEffect(() => {
-		setLayout(getPreLayouts(widgets, selectedDashboard.data.layout || []));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [getPreLayouts, widgets]);
 
 	const onLayoutSaveHandler = useCallback(
 		async (layout: Layout[]) => {
@@ -131,35 +126,40 @@ function GridGraph(props: Props): JSX.Element {
 				},
 				...(data.layout || []),
 			];
-			await Promise.all([
-				updateDashboard({
-					data,
-					generateWidgetId: id,
-					graphType: 'EMPTY_WIDGET',
-					selectedDashboard,
-					layout,
-					isRedirected: false,
-				}),
-			]);
+
+			await UpdateDashboard({
+				data,
+				generateWidgetId: id,
+				graphType: 'EMPTY_WIDGET',
+				selectedDashboard,
+				layout,
+				isRedirected: false,
+			});
+
 			setLayout(
-				layout.map((e) => ({
-					...e,
-					Component: (): JSX.Element => (
-						<Graph
-							name=""
-							widget={{} as Widgets}
-							yAxisUnit={undefined}
-							layout={layout}
-						/>
-					),
-				})),
+				layout.map((e) => {
+					const currentWidget =
+						widgets?.find((widget) => widget.id === e.i) || ({} as Widgets);
+
+					return {
+						...e,
+						Component: (): JSX.Element => (
+							<Graph
+								name={currentWidget.id}
+								widget={currentWidget}
+								yAxisUnit={currentWidget?.yAxisUnit}
+								layout={layout}
+							/>
+						),
+					};
+				}),
 			);
 		} catch (error) {
 			notification.error({
 				message: error instanceof Error ? error.toString() : 'Something went wrong',
 			});
 		}
-	}, [data, selectedDashboard]);
+	}, [data, selectedDashboard, widgets]);
 
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setSaveLayoutState({
@@ -169,7 +169,7 @@ function GridGraph(props: Props): JSX.Element {
 			payload: layout,
 		});
 
-		// await onLayoutSaveHandler(layout);
+		await onLayoutSaveHandler(layout);
 	};
 
 	const onAddPanelHandler = useCallback(() => {
@@ -210,13 +210,18 @@ function GridGraph(props: Props): JSX.Element {
 				onLayoutSaveHandler,
 				saveLayoutState,
 				widgets,
+				setLayout,
 			}}
 		/>
 	);
 }
 
+interface ComponentProps {
+	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+}
+
 export interface LayoutProps extends Layout {
-	Component: () => JSX.Element;
+	Component: (props: ComponentProps) => JSX.Element;
 }
 
 export interface State {

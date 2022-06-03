@@ -19,10 +19,12 @@ function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { dashboardId } = useParams<Params>();
 
 	useEffect(() => {
-		getDashboard({
-			uuid: dashboardId,
-		});
-	}, [getDashboard, dashboardId]);
+		if (dashboards.length !== 1) {
+			getDashboard({
+				uuid: dashboardId,
+			});
+		}
+	}, [getDashboard, dashboardId, dashboards.length]);
 
 	if (error && !loading && dashboards.length === 0) {
 		return <div>{errorMessage}</div>;

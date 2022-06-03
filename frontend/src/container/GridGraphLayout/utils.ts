@@ -1,20 +1,19 @@
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import history from 'lib/history';
 import { Layout } from 'react-grid-layout';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-export const updateDashboard = async ({
+export const UpdateDashboard = async ({
 	data,
 	graphType,
 	generateWidgetId,
 	layout,
 	selectedDashboard,
 	isRedirected,
-}: UpdateDashboardProps): Promise<void> => {
-	console.log({ generateWidgetId });
-	const response = await updateDashboardApi({
+}: UpdateDashboardProps): Promise<Dashboard | undefined> => {
+	const updatedSelectedDashboard: Dashboard = {
+		...selectedDashboard,
 		data: {
 			title: data.title,
 			description: data.description,
@@ -48,19 +47,20 @@ export const updateDashboard = async ({
 			layout,
 		},
 		uuid: selectedDashboard.uuid,
-	});
+	};
+
+	const response = await updateDashboardApi(updatedSelectedDashboard);
 
 	if (isRedirected) {
 		if (response.statusCode === 200) {
-			history.push(
-				`${history.location.pathname}/new?graphType=${graphType}&widgetId=${generateWidgetId}`,
-			);
-		} else {
-			notification.error({
-				message: response.error || 'Something went wrong',
-			});
+			return response.payload;
 		}
+		notification.error({
+			message: response.error || 'Something went wrong',
+		});
+		return undefined;
 	}
+	return undefined;
 };
 
 interface UpdateDashboardProps {

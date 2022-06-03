@@ -22,6 +22,7 @@ import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
@@ -33,6 +34,7 @@ function GridCardGraph({
 	name,
 	yAxisUnit,
 	layout = [],
+	setLayout,
 }: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -132,16 +134,13 @@ function GridCardGraph({
 	);
 
 	const onDeleteHandler = useCallback(() => {
-		const isEmptyWidget = layout.find((e) => e.i === 'empty') !== undefined;
+		const isEmptyWidget = widget?.id === 'empty' || isEmpty(widget);
 
-		const widgetId = isEmptyWidget ? layout[0].i : widget.id;
-		const allLayout = isEmptyWidget ? [] : layout;
+		const widgetId = isEmptyWidget ? layout[0].i : widget?.id;
 
-		console.log(widgetId, allLayout);
-
-		deleteWidget({ widgetId, layout: allLayout });
+		deleteWidget({ widgetId, setLayout });
 		onToggleModal(setDeleteModal);
-	}, [deleteWidget, layout, onToggleModal, widget?.id]);
+	}, [deleteWidget, layout, onToggleModal, setLayout, widget]);
 
 	const getModals = (): JSX.Element => {
 		return (
@@ -200,7 +199,7 @@ function GridCardGraph({
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
 
-	const isEmptyLayout = layout.find((e) => e.i === 'empty') !== undefined;
+	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
 	return (
 		<span
@@ -217,15 +216,17 @@ function GridCardGraph({
 				setHovered(false);
 			}}
 		>
-			<WidgetHeader
-				parentHover={hovered}
-				title={widget?.title}
-				widget={widget}
-				onView={(): void => onToggleModal(setModal)}
-				onDelete={(): void => onToggleModal(setDeleteModal)}
-			/>
+			{!isEmptyLayout && (
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={(): void => onToggleModal(setModal)}
+					onDelete={(): void => onToggleModal(setDeleteModal)}
+				/>
+			)}
 
-			{getModals()}
+			{!isEmptyLayout && getModals()}
 
 			{!isEmpty(widget) && (
 				<GridGraphComponent
@@ -265,6 +266,8 @@ interface GridCardGraphProps extends DispatchProps {
 	yAxisUnit: string | undefined;
 	// eslint-disable-next-line react/require-default-props
 	layout?: Layout[];
+	// eslint-disable-next-line react/require-default-props
+	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
 }
 
 const mapDispatchToProps = (

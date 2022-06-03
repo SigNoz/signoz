@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { notification } from 'antd';
-import { updateDashboard } from 'container/GridGraphLayout/utils';
+import { UpdateDashboard } from 'container/GridGraphLayout/utils';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { useSelector } from 'react-redux';
@@ -38,7 +38,7 @@ function DashboardGraphSlider(): JSX.Element {
 
 					const uniqueId = uuid();
 
-					await updateDashboard({
+					const response = await UpdateDashboard({
 						data,
 						generateWidgetId: uniqueId,
 						graphType: name,
@@ -55,6 +55,12 @@ function DashboardGraphSlider(): JSX.Element {
 						selectedDashboard,
 						isRedirected: true,
 					});
+
+					if (response) {
+						history.push(
+							`${history.location.pathname}/new?graphType=${name}&widgetId=${uniqueId}`,
+						);
+					}
 				} else {
 					history.push(
 						`${history.location.pathname}/new?graphType=${name}&widgetId=${emptyLayout.i}`,

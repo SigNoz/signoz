@@ -1,6 +1,6 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
-import { Layout } from 'react-grid-layout';
+import { getPreLayouts, LayoutProps } from 'container/GridGraphLayout';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
@@ -8,6 +8,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 
 export const DeleteWidget = ({
 	widgetId,
+	setLayout,
 }: DeleteWidgetProps): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
@@ -16,9 +17,8 @@ export const DeleteWidget = ({
 
 			const { widgets = [] } = selectedDashboard.data;
 			const updatedWidgets = widgets.filter((e) => e.id !== widgetId);
-			const updatedLayout = selectedDashboard.data.layout?.filter(
-				(e) => e.i !== widgetId,
-			);
+			const updatedLayout =
+				selectedDashboard.data.layout?.filter((e) => e.i !== widgetId) || [];
 
 			const response = await updateDashboardApi({
 				data: {
@@ -37,9 +37,12 @@ export const DeleteWidget = ({
 					type: 'DELETE_WIDGET_SUCCESS',
 					payload: {
 						widgetId,
-						layout: updatedLayout || [],
+						layout: updatedLayout,
 					},
 				});
+				if (setLayout) {
+					setLayout(getPreLayouts(updatedWidgets, updatedLayout));
+				}
 			} else {
 				dispatch({
 					type: 'DELETE_WIDGET_ERROR',
@@ -61,5 +64,5 @@ export const DeleteWidget = ({
 
 export interface DeleteWidgetProps {
 	widgetId: Widgets['id'];
-	layout: Layout[];
+	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
 }

@@ -24,6 +24,7 @@ function GraphLayout({
 	onAddPanelHandler,
 	onLayoutChangeHandler,
 	widgets,
+	setLayout,
 }: GraphLayoutProps): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -76,7 +77,7 @@ function GraphLayout({
 							data-grid={rest}
 						>
 							<Card>
-								<Component />
+								<Component setLayout={setLayout} />
 							</Card>
 						</CardContainer>
 					);
@@ -94,6 +95,7 @@ interface GraphLayoutProps {
 	onAddPanelHandler: VoidFunction;
 	onLayoutChangeHandler: (layout: Layout[]) => Promise<void>;
 	widgets: Widgets[] | undefined;
+	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
 }
 
 export default GraphLayout;
