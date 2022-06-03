@@ -112,6 +112,30 @@ function GridGraph(props: Props): JSX.Element {
 		],
 	);
 
+	const setLayoutFunction = useCallback(
+		(layout: Layout[]) => {
+			setLayout(
+				layout.map((e) => {
+					const currentWidget =
+						widgets?.find((widget) => widget.id === e.i) || ({} as Widgets);
+
+					return {
+						...e,
+						Component: (): JSX.Element => (
+							<Graph
+								name={currentWidget.id}
+								widget={currentWidget}
+								yAxisUnit={currentWidget?.yAxisUnit}
+								layout={layout}
+							/>
+						),
+					};
+				}),
+			);
+		},
+		[widgets],
+	);
+
 	const onEmptyWidgetHandler = useCallback(async () => {
 		try {
 			const id = 'empty';
@@ -136,38 +160,16 @@ function GridGraph(props: Props): JSX.Element {
 				isRedirected: false,
 			});
 
-			setLayout(
-				layout.map((e) => {
-					const currentWidget =
-						widgets?.find((widget) => widget.id === e.i) || ({} as Widgets);
-
-					return {
-						...e,
-						Component: (): JSX.Element => (
-							<Graph
-								name={currentWidget.id}
-								widget={currentWidget}
-								yAxisUnit={currentWidget?.yAxisUnit}
-								layout={layout}
-							/>
-						),
-					};
-				}),
-			);
+			setLayoutFunction(layout);
 		} catch (error) {
 			notification.error({
 				message: error instanceof Error ? error.toString() : 'Something went wrong',
 			});
 		}
-	}, [data, selectedDashboard, widgets]);
+	}, [data, selectedDashboard, setLayoutFunction]);
 
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
-		setSaveLayoutState({
-			loading: false,
-			error: false,
-			errorMessage: '',
-			payload: layout,
-		});
+		setLayoutFunction(layout);
 
 		await onLayoutSaveHandler(layout);
 	};
