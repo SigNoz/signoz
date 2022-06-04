@@ -124,6 +124,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	} else {
 		mq.TagFilters.Items = append(mq.TagFilters.Items, nameFilterItem)
 	}
+	mq.GroupingTags = append(mq.GroupingTags, "__name__")
 
 	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, tableName)
 	if err != nil {
