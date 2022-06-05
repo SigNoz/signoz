@@ -2,6 +2,7 @@ import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { Layout } from 'react-grid-layout';
+import store from 'store';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export const UpdateDashboard = async ({
@@ -50,6 +51,13 @@ export const UpdateDashboard = async ({
 	};
 
 	const response = await updateDashboardApi(updatedSelectedDashboard);
+
+	if (response.payload) {
+		store.dispatch({
+			type: 'UPDATE_DASHBOARD',
+			payload: response.payload,
+		});
+	}
 
 	if (isRedirected) {
 		if (response.statusCode === 200) {

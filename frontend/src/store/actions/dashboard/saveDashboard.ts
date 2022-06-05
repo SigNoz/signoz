@@ -26,6 +26,7 @@ export const SaveDashboard = ({
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const dashboard = store.getState();
+			const search = new URLSearchParams(history.location.search);
 
 			const selectedDashboard = dashboard.dashboards.dashboards.find(
 				(e) => e.uuid === uuid,
@@ -106,7 +107,7 @@ export const SaveDashboard = ({
 							title: updatedTitle,
 							timePreferance: updatedtimePreferance,
 							yAxisUnit: updatedYAxisUnit,
-							panelTypes: selectedWidget.panelTypes,
+							panelTypes: search.get('graphType'),
 							queryData: {
 								...selectedWidget.queryData,
 								data: [
