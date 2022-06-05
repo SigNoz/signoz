@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
-import React, { memo, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
@@ -127,6 +127,7 @@ function GridGraph(props: Props): JSX.Element {
 								widget={currentWidget}
 								yAxisUnit={currentWidget?.yAxisUnit}
 								layout={layout}
+								setLayout={setLayout}
 							/>
 						),
 					};
@@ -247,4 +248,4 @@ const mapDispatchToProps = (
 
 type Props = DispatchProps;
 
-export default connect(null, mapDispatchToProps)(memo(GridGraph));
+export default connect(null, mapDispatchToProps)(GridGraph);
