@@ -56,11 +56,13 @@ export const SaveDashboard = ({
 			const newWidgetId = v4();
 
 			const preWidget = data.widgets?.slice(0, selectedWidgetIndex) || [];
+
 			const afterWidget =
 				data.widgets?.slice(
 					(selectedWidgetIndex || 0) + 1, // this is never undefined
 					data.widgets?.length,
 				) || [];
+
 			const selectedWidget = (selectedDashboard.data.widgets || [])[
 				selectedWidgetIndex || 0
 			];
@@ -80,6 +82,8 @@ export const SaveDashboard = ({
 				];
 			};
 
+			const allLayout = getAllLayout();
+
 			const response = await updateDashboardApi({
 				data: {
 					...selectedDashboard.data,
@@ -88,7 +92,7 @@ export const SaveDashboard = ({
 					description: selectedDashboard.data.description,
 					tags: selectedDashboard.data.tags,
 					name: selectedDashboard.data.name,
-					layout: getAllLayout(),
+					layout: allLayout,
 					// as we are updated the widget only
 					widgets: [
 						...preWidget,
