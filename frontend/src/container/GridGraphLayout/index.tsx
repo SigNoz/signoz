@@ -4,7 +4,7 @@ import updateDashboardApi from 'api/dashboard/update';
 import React, { useCallback, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -13,11 +13,13 @@ import {
 } from 'store/actions/dashboard/toggleAddWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { UPDATE_DASHBOARD } from 'types/actions/dashboard';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import Graph from './Graph';
 import GraphLayoutContainer from './GraphLayout';
+import useMountOnce from './hooks';
 import { UpdateDashboard } from './utils';
 
 export const getPreLayouts = (
@@ -45,7 +47,7 @@ function GridGraph(props: Props): JSX.Element {
 	const { toggleAddWidget } = props;
 	const [addPanelLoading, setAddPanelLoading] = useState(false);
 	const { t } = useTranslation(['common']);
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
+	const { dashboards, isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 	const [saveLayoutState, setSaveLayoutState] = useState<State>({
@@ -57,10 +59,43 @@ function GridGraph(props: Props): JSX.Element {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 	const { widgets } = data;
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [layouts, setLayout] = useState<LayoutProps[]>(
 		getPreLayouts(widgets, selectedDashboard.data.layout || []),
 	);
+
+	useMountOnce(async () => {
+		if (!isAddWidget) {
+			const isEmptyLayoutPresent = layouts.find((e) => e.i === 'empty');
+			if (isEmptyLayoutPresent) {
+				// non empty layout
+				const updatedLayout = layouts.filter((e) => e.i !== 'empty');
+				// non widget
+				const updatedWidget = widgets?.filter((e) => e.id !== 'empty');
+				setLayout(updatedLayout);
+
+				const updatedDashboard: Dashboard = {
+					...selectedDashboard,
+					data: {
+						...selectedDashboard.data,
+						layout: updatedLayout,
+						widgets: updatedWidget,
+					},
+				};
+
+				await updateDashboardApi({
+					data: updatedDashboard.data,
+					uuid: updatedDashboard.uuid,
+				});
+
+				dispatch({
+					type: UPDATE_DASHBOARD,
+					payload: updatedDashboard,
+				});
+			}
+		}
+	});
 
 	const onLayoutSaveHandler = useCallback(
 		async (layout: Layout[]) => {
