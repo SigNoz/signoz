@@ -28,7 +28,7 @@ function GridGraph(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const [saveLayoutState, setSaveLayoutState] = useState<State>({
 		loading: false,
 		error: false,
@@ -46,6 +46,8 @@ function GridGraph(): JSX.Element {
 	const isMounted = useRef(true);
 	const isDeleted = useRef(false);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [saveLayout] = useComponentPermission(['save_layout'], role);
 
@@ -74,32 +76,25 @@ function GridGraph(): JSX.Element {
 				};
 			});
 		}
-
-		return widgets.map((widget, index) => {
-			const allLayouts = data?.layout;
-			const lastLayout = (data?.layout || [])[(allLayouts?.length || 0) - 1];
-
-			const currentLayout = (allLayouts || [])[index] || {
-				h: lastLayout.h,
-				i: (lastLayout.i + 1).toString(),
-				w: lastLayout.w,
-				x: (lastLayout.x % 2) * 6,
-				y: lastLayout.y,
-			};
-
-			return {
-				...currentLayout,
-				Component: (): JSX.Element => (
-					<Graph
-						name={widget.id + index}
-						isDeleted={isDeleted}
-						widget={widget}
-						yAxisUnit={widget.yAxisUnit}
-					/>
-				),
-			};
-		});
-	}, [widgets, data.layout]);
+		return data.layout
+			.filter((_, index) => widgets[index])
+			.map((e, index) => ({
+				...e,
+				Component: (): JSX.Element => {
+					if (widgets[index]) {
+						return (
+							<Graph
+								name={e.i + index}
+								isDeleted={isDeleted}
+								widget={widgets[index]}
+								yAxisUnit={widgets[index].yAxisUnit}
+							/>
+						);
+					}
+					return <div />;
+				},
+			}));
+	}, [widgets, data?.layout]);
 
 	useEffect(() => {
 		if (
@@ -223,8 +218,6 @@ function GridGraph(): JSX.Element {
 	if (layouts.length === 0) {
 		return <Spinner height="40vh" size="large" tip="Loading..." />;
 	}
-
-	console.log({ layouts });
 
 	return (
 		<>
