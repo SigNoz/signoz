@@ -9,7 +9,7 @@ export interface PayloadProps {
 	node_id: number;
 	prerelease: boolean;
 	published_at: string;
-	tag_name: number;
+	tag_name: string;
 	tarball_url: string;
 	target_commitish: string;
 	upload_url: string;

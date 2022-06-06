@@ -1143,9 +1143,14 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Context is not used here as TTL is long duration operation which needs to converted to async
+	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil {
+		if apiErr.Typ == model.ErrorConflict {
+			aH.handleError(w, apiErr.Err, http.StatusConflict)
+		} else {
+			aH.handleError(w, apiErr.Err, http.StatusInternalServerError)
+		}
 		return
 	}
 

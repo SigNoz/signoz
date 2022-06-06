@@ -1,4 +1,4 @@
-import { Layout, Typography } from 'antd';
+import { Layout, Tag, Typography } from 'antd';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
 
@@ -73,5 +73,13 @@ export const RedDot = styled.div`
 export const VersionContainer = styled.div`
 	&&& {
 		display: flex;
+	}
+`;
+
+export const Tags = styled(Tag)`
+	&&& {
+		position: absolute;
+		top: 0;
+		border-radius: 0.5rem;
 	}
 `;

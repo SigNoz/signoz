@@ -39,8 +39,9 @@ services:
   query-service:
     image: signoz/query-service:0.8.0
     command: ["-config=/root/config/prometheus.yml"]
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "6060:6060"     # pprof port
+    #   - "8080:8080"     # query-service port
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
@@ -85,7 +86,7 @@ services:
       - "4317:4317"     # OTLP gRPC receiver
       - "4318:4318"     # OTLP HTTP receiver
       # - "8889:8889"     # Prometheus metrics exposed by the agent
-      # - "13133"         # health_check
+      # - "13133:13133"   # health_check
       # - "14268:14268"   # Jaeger receiver
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zpages extension
