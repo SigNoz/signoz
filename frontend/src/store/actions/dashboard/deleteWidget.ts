@@ -4,7 +4,8 @@ import { getPreLayouts, LayoutProps } from 'container/GridGraphLayout';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { UPDATE_DASHBOARD } from 'types/actions/dashboard';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 
 export const DeleteWidget = ({
 	widgetId,
@@ -20,7 +21,8 @@ export const DeleteWidget = ({
 			const updatedLayout =
 				selectedDashboard.data.layout?.filter((e) => e.i !== widgetId) || [];
 
-			const response = await updateDashboardApi({
+			const updatedSelectedDashboard: Dashboard = {
+				...selectedDashboard,
 				data: {
 					title: selectedDashboard.data.title,
 					description: selectedDashboard.data.description,
@@ -30,15 +32,14 @@ export const DeleteWidget = ({
 					layout: updatedLayout,
 				},
 				uuid: selectedDashboard.uuid,
-			});
+			};
+
+			const response = await updateDashboardApi(updatedSelectedDashboard);
 
 			if (response.statusCode === 200) {
 				dispatch({
-					type: 'DELETE_WIDGET_SUCCESS',
-					payload: {
-						widgetId,
-						layout: updatedLayout,
-					},
+					type: UPDATE_DASHBOARD,
+					payload: updatedSelectedDashboard,
 				});
 				if (setLayout) {
 					setLayout(getPreLayouts(updatedWidgets, updatedLayout));
