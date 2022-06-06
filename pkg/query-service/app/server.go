@@ -120,6 +120,11 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, err
 	}
 
+	traces := os.Getenv("TRACES_DURATION")
+	if err := setupDuration(reader, constants.TraceTTL, traces); err != nil {
+		return nil, err
+	}
+
 	apiHandler, err := NewAPIHandler(&reader, dao.DB())
 	if err != nil {
 		return nil, err
