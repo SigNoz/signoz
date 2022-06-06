@@ -19,6 +19,7 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
+	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
@@ -114,6 +115,11 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
+	metrics := os.Getenv("METRICS_DURATION")
+	if err := setupDuration(reader, constants.MetricsTTL, metrics); err != nil {
+		return nil, err
+	}
+
 	apiHandler, err := NewAPIHandler(&reader, dao.DB())
 	if err != nil {
 		return nil, err
@@ -143,6 +149,31 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	return &http.Server{
 		Handler: handler,
 	}, nil
+}
+
+func setupDuration(reader Reader, durationType string, duration string) error {
+	if len(duration) == 0 {
+		return nil
+	}
+
+	durationParsed, err := time.ParseDuration(duration)
+
+	if err != nil || durationParsed.Seconds() <= 0 {
+		return fmt.Errorf("TTL type: Not a valid TTL duration %v for %v", duration, durationType)
+	}
+
+	_, apiErr := reader.SetTTL(
+		context.Background(),
+		&model.TTLParams{
+			Type:        durationType,
+			DelDuration: int64(durationParsed.Seconds()),
+		})
+
+	if apiErr != nil {
+		return apiErr.Err
+	}
+
+	return nil
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {
