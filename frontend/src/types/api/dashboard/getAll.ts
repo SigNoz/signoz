@@ -15,12 +15,12 @@ export interface Dashboard {
 }
 
 export interface DashboardData {
-	description: string;
-	tags: string[];
-	name: string;
-	widgets: Widgets[];
+	description?: string;
+	tags?: string[];
+	name?: string;
+	widgets?: Widgets[];
 	title: string;
-	layout: Layout[];
+	layout?: Layout[];
 }
 
 export interface Widgets {

@@ -107,7 +107,7 @@ export const SaveDashboard = ({
 							title: updatedTitle,
 							timePreferance: updatedtimePreferance,
 							yAxisUnit: updatedYAxisUnit,
-							panelTypes: search.get('graphType'),
+							panelTypes: search.get('graphType') as Widgets['panelTypes'],
 							queryData: {
 								...selectedWidget.queryData,
 								data: [
