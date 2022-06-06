@@ -52,6 +52,9 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-amd
+      # set retention period, requires units
+      #- TRACES_DURATION=360h
+      #- METRICS_DURATION=720h
     restart: on-failure
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]

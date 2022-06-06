@@ -53,6 +53,9 @@ services:
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-arm
+      # set retention period, requires units
+      #- TRACES_DURATION=360h
+      #- METRICS_DURATION=720h
       
     restart: on-failure
     healthcheck:
