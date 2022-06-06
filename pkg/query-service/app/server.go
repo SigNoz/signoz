@@ -158,6 +158,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	}, nil
 }
 
+// loggingMiddleware is used for logging public api calls
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
@@ -165,6 +166,18 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
 		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+	})
+}
+
+// loggingMiddlewarePrivate is used for logging private api calls
+// from internal services like alert manager
+func loggingMiddlewarePrivate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		startTime := time.Now()
+		next.ServeHTTP(w, r)
+		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
 	})
 }
 
