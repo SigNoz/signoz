@@ -124,7 +124,6 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	} else {
 		mq.TagFilters.Items = append(mq.TagFilters.Items, nameFilterItem)
 	}
-	mq.GroupingTags = append(mq.GroupingTags, "__name__")
 
 	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, tableName)
 	if err != nil {
@@ -134,59 +133,75 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
 
 	// Select the aggregate value for interval
-	intermediateResult :=
-		"SELECT fingerprint, %s" +
-			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts, " +
-			" %s as res" +
+	queryTmpl :=
+		"SELECT %s" +
+			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" INNER JOIN " +
-			" (%s) as filtered_time_series " +
-			" USING fingerprint " +
+			" INNER JOIN" +
+			" (%s) as filtered_time_series" +
+			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
-			" GROUP BY %s " +
-			" ORDER BY fingerprint, ts"
+			" GROUP BY %s" +
+			" ORDER BY %s ts"
 
-	groupBy := groupBy(mq.GroupingTags)
-	groupTags := groupSelect(mq.GroupingTags)
+	groupBy := groupBy(mq.GroupingTags...)
+	groupTags := groupSelect(mq.GroupingTags...)
 
 	switch mq.AggregateOperator {
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		sub_query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, op, filterSubQuery, groupBy)
-		query := `SELECT %s ts, runningDifference(res)/runningDifference(ts) as res FROM(%s)`
+		sub_query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
 		query = fmt.Sprintf(query, groupTags, sub_query)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
-		query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, op, filterSubQuery, groupBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.AVG, model.SUM, model.MIN, model.MAX:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, op, filterSubQuery, groupBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT:
 		op := "count(*)"
-		query := fmt.Sprintf(intermediateResult, groupTags, qp.Step, op, filterSubQuery, groupBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT_DISTINCT:
+		op := "count(distinct(value))"
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		return query, nil
+	case model.NOOP:
+		queryTmpl :=
+			"SELECT fingerprint, labels as metricNOOP," +
+				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+				" any(value) as value" +
+				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+				" INNER JOIN" +
+				" (%s) as filtered_time_series" +
+				" USING fingerprint" +
+				" WHERE " + samplesTableTimeFilter +
+				" GROUP BY fingerprint, labels, ts" +
+				" ORDER BY fingerprint, labels, ts"
+		query := fmt.Sprintf(queryTmpl, qp.Step, filterSubQuery)
+		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
 	}
-	return "", fmt.Errorf("unsupported aggregate operator")
 }
 
-func groupBy(tags []string) string {
-	groupByFilter := "fingerprint, ts"
+func groupBy(tags ...string) string {
+	groupByFilter := "ts"
 	for _, tag := range tags {
 		groupByFilter += fmt.Sprintf(", JSONExtractString(labels,'%s') as %s", tag, tag)
 	}
 	return groupByFilter
 }
 
-func groupSelect(tags []string) string {
+func groupSelect(tags ...string) string {
 	groupTags := strings.Join(tags, ",")
 	if len(tags) != 0 {
-		groupTags += ","
+		groupTags += ", "
 	}
 	return groupTags
 }
@@ -255,25 +270,28 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 	for idx := range tokens {
 		token := tokens[idx]
 		if token.Kind == govaluate.VARIABLE {
-			token.Value = fmt.Sprintf("%v.res", token.Value)
-			token.Meta = fmt.Sprintf("%v.res", token.Meta)
+			token.Value = fmt.Sprintf("%v.value", token.Value)
+			token.Meta = fmt.Sprintf("%v.value", token.Meta)
 		}
 		modified = append(modified, token)
 	}
 	formula, _ := govaluate.NewEvaluableExpressionFromTokens(modified)
 
 	var formulaSubQuery string
+	var joinUsing string
 	for idx, var_ := range vars {
 		query := varToQuery[var_]
-		groupTags := strings.Join(qp.CompositeMetricQuery.BuilderQueries[var_].GroupingTags, ",")
+		groupTags := qp.CompositeMetricQuery.BuilderQueries[var_].GroupingTags
+		groupTags = append(groupTags, "ts")
+		joinUsing = strings.Join(groupTags, ",")
 		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
 		if idx < len(vars)-1 {
 			formulaSubQuery += "INNER JOIN"
 		} else if len(vars) > 1 {
-			formulaSubQuery += fmt.Sprintf("USING (ts, %s)", groupTags)
+			formulaSubQuery += fmt.Sprintf("USING (%s)", joinUsing)
 		}
 	}
-	formulaQuery = fmt.Sprintf("SELECT ts, %s as res FROM ", formula.ExpressionString()) + formulaSubQuery
+	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
 	return formulaQuery, nil
 }
 

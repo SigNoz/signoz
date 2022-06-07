@@ -73,6 +73,7 @@ const (
 	RATE_AVG
 	RATE_MAX
 	RATE_MIN
+	NOOP
 )
 
 type DataSource int

@@ -2824,7 +2824,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 	}
 	// when group by is applied, each combination of cartesian product
-	// of attribute key is separate series. each item in metricPointsMap
+	// of attributes is separate series. each item in metricPointsMap
 	// represent a unique series.
 	metricPointsMap := make(map[string][]model.MetricPoint)
 	// attribute key-value pairs for each group selection
@@ -2844,8 +2844,21 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			colName := columnNames[idx]
 			switch v := v.(type) {
 			case *string:
-				groupBy = append(groupBy, *v)
-				groupAttributes[colName] = *v
+				// special case for NOOP
+				if colName == "metricNOOP" {
+					var metric map[string]string
+					err := json.Unmarshal([]byte(*v), &metric)
+					if err != nil {
+						return nil, err
+					}
+					for key, val := range metric {
+						groupBy = append(groupBy, val)
+						groupAttributes[key] = val
+					}
+				} else {
+					groupBy = append(groupBy, *v)
+					groupAttributes[colName] = *v
+				}
 			case *time.Time:
 				metricPoint.Timestamp = v.UnixMilli()
 			case *float64:
