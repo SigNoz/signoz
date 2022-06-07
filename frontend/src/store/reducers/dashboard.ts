@@ -484,18 +484,6 @@ const dashboard = (
 			};
 		}
 
-		// case : {
-		// 	const selectedDashboard = action.payload;
-
-		// 	return {
-		// 		...state,
-		// 		dashboards: [
-		// 			{
-		// 				...selectedDashboard,
-		// 			},
-		// 		],
-		// 	};
-		// }
 		default:
 			return state;
 	}
