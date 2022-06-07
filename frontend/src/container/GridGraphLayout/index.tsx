@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { connect, useDispatch, useSelector } from 'react-redux';
@@ -19,7 +19,6 @@ import DashboardReducer from 'types/reducer/dashboards';
 
 import Graph from './Graph';
 import GraphLayoutContainer from './GraphLayout';
-import useMountOnce from './hooks';
 import { UpdateDashboard } from './utils';
 
 export const getPreLayouts = (
@@ -65,37 +64,40 @@ function GridGraph(props: Props): JSX.Element {
 		getPreLayouts(widgets, selectedDashboard.data.layout || []),
 	);
 
-	useMountOnce(async () => {
-		if (!isAddWidget) {
-			const isEmptyLayoutPresent = layouts.find((e) => e.i === 'empty');
-			if (isEmptyLayoutPresent) {
-				// non empty layout
-				const updatedLayout = layouts.filter((e) => e.i !== 'empty');
-				// non widget
-				const updatedWidget = widgets?.filter((e) => e.id !== 'empty');
-				setLayout(updatedLayout);
+	useEffect(() => {
+		(async (): Promise<void> => {
+			if (!isAddWidget) {
+				const isEmptyLayoutPresent = layouts.find((e) => e.i === 'empty');
+				if (isEmptyLayoutPresent) {
+					// non empty layout
+					const updatedLayout = layouts.filter((e) => e.i !== 'empty');
+					// non widget
+					const updatedWidget = widgets?.filter((e) => e.id !== 'empty');
+					setLayout(updatedLayout);
 
-				const updatedDashboard: Dashboard = {
-					...selectedDashboard,
-					data: {
-						...selectedDashboard.data,
-						layout: updatedLayout,
-						widgets: updatedWidget,
-					},
-				};
+					const updatedDashboard: Dashboard = {
+						...selectedDashboard,
+						data: {
+							...selectedDashboard.data,
+							layout: updatedLayout,
+							widgets: updatedWidget,
+						},
+					};
 
-				await updateDashboardApi({
-					data: updatedDashboard.data,
-					uuid: updatedDashboard.uuid,
-				});
+					await updateDashboardApi({
+						data: updatedDashboard.data,
+						uuid: updatedDashboard.uuid,
+					});
 
-				dispatch({
-					type: UPDATE_DASHBOARD,
-					payload: updatedDashboard,
-				});
+					dispatch({
+						type: UPDATE_DASHBOARD,
+						payload: updatedDashboard,
+					});
+				}
 			}
-		}
-	});
+		})();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const onLayoutSaveHandler = useCallback(
 		async (layout: Layout[]) => {
