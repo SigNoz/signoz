@@ -10794,7 +10794,7 @@ react-graph-vis@^1.0.5:
     vis-data "^7.1.2"
     vis-network "^9.0.0"
 
-react-grid-layout@^1.2.5:
+react-grid-layout@^1.3.4:
   version "1.3.4"
   resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-1.3.4.tgz#4fa819be24a1ba9268aa11b82d63afc4762a32ff"
   integrity sha512-sB3rNhorW77HUdOjB4JkelZTdJGQKuXLl3gNg+BI8gJkTScspL1myfZzW/EM0dLEn+1eH+xW+wNqk0oIM9o7cw==
