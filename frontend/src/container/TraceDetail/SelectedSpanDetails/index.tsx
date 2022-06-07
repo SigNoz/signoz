@@ -7,7 +7,6 @@ import { ITraceTree } from 'types/api/trace/getTraceItem';
 import ErrorTag from './ErrorTag';
 import {
 	CardContainer,
-	// CustomSpace,
 	CustomSubText,
 	CustomSubTitle,
 	CustomText,
@@ -32,7 +31,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	return (
 		<CardContainer>
 			<StyledSpace
-				styledclass={[styles.selectedSpanDetailsContainer]}
+				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
 				style={{ marginLeft: '0.5rem' }}
 			>

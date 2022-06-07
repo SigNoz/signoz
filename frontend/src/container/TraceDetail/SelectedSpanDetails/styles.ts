@@ -17,7 +17,6 @@ export const CustomText = styled(Paragraph)`
 
 export const CustomSubTitle = styled(Title)`
 	&&& {
-		/* color: #bdbdbd; */
 		font-size: 14px;
 		margin-bottom: 8px;
 	}
@@ -71,9 +70,21 @@ const selectedSpanDetailsContainer = css`
 const spanEventsTabsContainer = css`
 	margin-top: 1rem;
 `;
+
+const overflow = css`
+	width: 95%;
+
+	> div.ant-space-item:nth-child(4) {
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+`;
+
 export const styles = {
 	removeMargin,
 	removePadding,
 	selectedSpanDetailsContainer,
 	spanEventsTabsContainer,
+	overflow,
 };
