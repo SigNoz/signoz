@@ -224,7 +224,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// initListener initialises listeners of the server
+// initListeners initialises listeners of the server
 func (s *Server) initListeners() error {
 	// listen on public port
 	var err error
@@ -300,7 +300,7 @@ func (s *Server) Start() error {
 		switch err := s.privateHTTP.Serve(s.privateConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
-			fmt.Println("failed ")
+			zap.S().Info("private http server closed")
 		default:
 			zap.S().Error("Could not start private HTTP server", zap.Error(err))
 		}

@@ -277,7 +277,7 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	}
 }
 
-// RegisterRoutes registers routes for this handler on the given router
+// RegisterPrivateRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
 }
