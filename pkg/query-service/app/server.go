@@ -25,7 +25,8 @@ import (
 )
 
 type ServerOptions struct {
-	HTTPHostPort string
+	PromConfigPath string
+	HTTPHostPort   string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -107,7 +108,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB)
+		clickhouseReader := clickhouseReader.NewReader(localDB, s.serverOptions.PromConfigPath)
 		go clickhouseReader.Start()
 		reader = clickhouseReader
 	} else {

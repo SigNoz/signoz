@@ -5,35 +5,43 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
+	"net/http"
+	neturl "net/url"
 )
 
 const contentType = "application/json"
 
 type Manager interface {
+	URL() *neturl.URL
+	URLPath(path string) *neturl.URL
 	AddRoute(receiver *Receiver) *model.ApiError
 	EditRoute(receiver *Receiver) *model.ApiError
 	DeleteRoute(name string) *model.ApiError
-	TestReceiver(receiver *Receiver) *model.ApiError
 }
 
-func New(url string) Manager {
+func New(url string) (Manager, error) {
 
 	if url == "" {
 		url = constants.GetAlertManagerApiPrefix()
 	}
 
-	return &manager{
-		url: url,
+	urlParsed, err := neturl.Parse(url)
+	if err != nil {
+		return nil, err
 	}
+
+	return &manager{
+		url:       url,
+		parsedURL: urlParsed,
+	}, nil
 }
 
 type manager struct {
-	url string
+	url       string
+	parsedURL *neturl.URL
 }
 
 func prepareAmChannelApiURL() string {
@@ -47,9 +55,17 @@ func prepareAmChannelApiURL() string {
 	return fmt.Sprintf("%s%s", basePath, AmChannelApiPath)
 }
 
-func prepareTestApiURL() string {
-	basePath := constants.GetAlertManagerApiPrefix()
-	return fmt.Sprintf("%s%s", basePath, "v1/testReceiver")
+func (m *manager) URL() *neturl.URL {
+	return m.parsedURL
+}
+
+func (m *manager) URLPath(path string) *neturl.URL {
+	upath, err := neturl.Parse(path)
+	if err != nil {
+		return nil
+	}
+
+	return m.parsedURL.ResolveReference(upath)
 }
 
 func (m *manager) AddRoute(receiver *Receiver) *model.ApiError {
@@ -128,32 +144,5 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 		zap.S().Error(err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-	return nil
-}
-
-func (m *manager) TestReceiver(receiver *Receiver) *model.ApiError {
-
-	receiverBytes, _ := json.Marshal(receiver)
-
-	amTestURL := prepareTestApiURL()
-	response, err := http.Post(amTestURL, contentType, bytes.NewBuffer(receiverBytes))
-
-	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(POST %s)\n", amTestURL), err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if response.StatusCode > 201 && response.StatusCode < 400 {
-		err := fmt.Errorf(fmt.Sprintf("Invalid parameters in test alert api for alertmanager(POST %s)\n", amTestURL), response.Status)
-		zap.S().Error(err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	if response.StatusCode > 400 {
-		err := fmt.Errorf(fmt.Sprintf("Received Server Error response for API call to alertmanager(POST %s)\n", amTestURL), response.Status)
-		zap.S().Error(err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
 	return nil
 }

@@ -96,12 +96,13 @@ type ClickHouseReader struct {
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
 	ruleManager     *rules.Manager
+	promConfigFile  string
 	promConfig      *config.Config
 	alertManager    am.Manager
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB) *ClickHouseReader {
+func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
@@ -124,6 +125,7 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 		errorTable:      options.primary.ErrorTable,
 		durationTable:   options.primary.DurationTable,
 		spansTable:      options.primary.SpansTable,
+		promConfigFile:  configFile,
 	}
 }
 
@@ -177,13 +179,11 @@ func (r *ClickHouseReader) Start() {
 
 		logLevel promlog.AllowedLevel
 	}{
+		configFile: r.promConfigFile,
 		notifier: notifier.Options{
 			Registerer: prometheus.DefaultRegisterer,
 		},
 	}
-
-	flag.StringVar(&cfg.configFile, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
-	flag.Parse()
 
 	// fanoutStorage := remoteStorage
 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
@@ -505,32 +505,6 @@ func computeExternalURL(u, listenAddr string) (*url.URL, error) {
 	eu.Path = ppref
 
 	return eu, nil
-}
-
-// sendAlerts implements the rules.NotifyFunc for a Notifier.
-func sendAlerts(n *notifier.Manager, externalURL string) rules.NotifyFunc {
-	return func(ctx context.Context, expr string, alerts ...*rules.Alert) {
-		var res []*notifier.Alert
-
-		for _, alert := range alerts {
-			a := &notifier.Alert{
-				StartsAt:     alert.FiredAt,
-				Labels:       alert.Labels,
-				Annotations:  alert.Annotations,
-				GeneratorURL: externalURL + strutil.TableLinkForExpression(expr),
-			}
-			if !alert.ResolvedAt.IsZero() {
-				a.EndsAt = alert.ResolvedAt
-			} else {
-				a.EndsAt = alert.ValidUntil
-			}
-			res = append(res, a)
-		}
-
-		if len(alerts) > 0 {
-			n.Send(res...)
-		}
-	}
 }
 
 func initialize(options *Options) (clickhouse.Conn, error) {
@@ -919,138 +893,6 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 
 	return receiver, nil
 
-}
-
-func (r *ClickHouseReader) CreateRule(rule string) *model.ApiError {
-
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	var lastInsertId int64
-
-	{
-		stmt, err := tx.Prepare(`INSERT into rules (updated_at, data) VALUES($1,$2);`)
-		if err != nil {
-			zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		result, err := stmt.Exec(time.Now(), rule)
-		if err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		lastInsertId, _ = result.LastInsertId()
-
-		groupName := fmt.Sprintf("%d-groupname", lastInsertId)
-
-		err = r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
-
-		if err != nil {
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		zap.S().Errorf("Error in committing transaction for INSERT to rules\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	return nil
-}
-
-func (r *ClickHouseReader) EditRule(rule string, id string) *model.ApiError {
-
-	idInt, _ := strconv.Atoi(id)
-
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	{
-		stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
-		if err != nil {
-			zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-
-		groupName := fmt.Sprintf("%d-groupname", idInt)
-
-		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
-
-		if err != nil {
-			tx.Rollback()
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		zap.S().Errorf("Error in committing transaction for UPDATE to rules\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return nil
-}
-
-func (r *ClickHouseReader) DeleteRule(id string) *model.ApiError {
-
-	idInt, _ := strconv.Atoi(id)
-
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	{
-		stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
-
-		if err != nil {
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-		defer stmt.Close()
-
-		if _, err := stmt.Exec(idInt); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
-			tx.Rollback() // return an error too, we may want to wrap them
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-
-		groupName := fmt.Sprintf("%d-groupname", idInt)
-
-		rule := "" // dummy rule to pass to function
-		// err = r.ruleManager.UpdateGroupWithAction(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName, "delete")
-		err = r.ruleManager.DeleteGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
-
-		if err != nil {
-			tx.Rollback()
-			zap.S().Errorf("Error in deleting rule from rulemanager...\n", err)
-			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-		}
-
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		zap.S().Errorf("Error in committing transaction for deleting rules\n", err)
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return nil
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {

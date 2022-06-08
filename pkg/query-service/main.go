@@ -25,6 +25,9 @@ func initZapLog() *zap.Logger {
 }
 
 func main() {
+	var promConfigPath string
+	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.Parse()
 
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
@@ -34,7 +37,8 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort: constants.HTTPHostPort,
+		HTTPHostPort:   constants.HTTPHostPort,
+		PromConfigPath: promConfigPath,
 	}
 
 	// Read the jwt secret key
