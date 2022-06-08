@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     restart: on-failure
     command:
-      - --queryService.url=http://query-service:8080
+      - --queryService.url=http://query-service:8085
       - --storage.path=/data
 
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
