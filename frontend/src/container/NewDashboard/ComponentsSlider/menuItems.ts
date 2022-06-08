@@ -14,7 +14,7 @@ const Items: ItemsProps[] = [
 	},
 ];
 
-export type ITEMS = 'TIME_SERIES' | 'VALUE';
+export type ITEMS = 'TIME_SERIES' | 'VALUE' | 'EMPTY_WIDGET';
 
 interface ItemsProps {
 	name: ITEMS;

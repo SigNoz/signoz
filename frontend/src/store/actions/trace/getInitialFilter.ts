@@ -191,7 +191,7 @@ export const GetInitialTraceFilter = (
 				},
 			});
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 			dispatch({
 				type: UPDATE_TRACE_FILTER_LOADING,
 				payload: {
