@@ -16,7 +16,8 @@ export type ComponentTypes =
 	| 'delete_widget'
 	| 'new_dashboard'
 	| 'new_alert_action'
-	| 'edit_widget';
+	| 'edit_widget'
+	| 'add_panel';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -34,6 +35,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	new_dashboard: ['ADMIN', 'EDITOR'],
 	new_alert_action: ['ADMIN'],
 	edit_widget: ['ADMIN', 'EDITOR'],
+	add_panel: ['ADMIN', 'EDITOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
