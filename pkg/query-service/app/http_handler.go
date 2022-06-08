@@ -497,8 +497,12 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		var wg sync.WaitGroup
 
 		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
+			if query.Disabled {
+				continue
+			}
 			wg.Add(1)
 			go func(name string, query *model.PromQuery) {
+				var seriesList []*model.Series
 				defer wg.Done()
 				queryModel := model.QueryRangeParams{
 					Start: time.UnixMilli(metricsQueryRangeParams.Start),
@@ -550,12 +554,16 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, "time_series")
 		if runQueries.Err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
+			return
 		}
 		seriesList, err = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
 		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
+			if chQuery.Disabled {
+				continue
+			}
 			queries[name] = chQuery.Query
 		}
 		seriesList, err = execClickHouseQueries(queries)

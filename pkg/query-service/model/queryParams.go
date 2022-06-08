@@ -25,6 +25,7 @@ type MetricQuery struct {
 	GroupingTags      []string          `json:"groupBy,omitempty"`
 	AggregateOperator AggregateOperator `json:"aggregateOperator"`
 	Expression        string            `json:"expression"`
+	Disabled          bool              `json:"disabled"`
 }
 
 type QueryType int
@@ -36,18 +37,27 @@ const (
 )
 
 type PromQuery struct {
-	Query string `json:"query"`
-	Stats string `json:"stats,omitempty"`
+	Query    string `json:"query"`
+	Stats    string `json:"stats,omitempty"`
+	Disabled bool   `json:"disabled"`
 }
 
 type ClickHouseQuery struct {
-	Query string `json:"query"`
+	Query    string `json:"query"`
+	Disabled bool   `json:"disabled"`
 }
+
+type WidgetType int
+
+const (
+	TIME_SERIES WidgetType = iota
+)
 
 type CompositeMetricQuery struct {
 	BuilderQueries    map[string]*MetricQuery     `json:"builderQueries,omitempty"`
 	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
+	WidgetType        WidgetType                  `json:"widgetType,omitempty"`
 	QueryType         QueryType                   `json:"queryType"`
 }
 

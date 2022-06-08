@@ -317,6 +317,9 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 
 	var errs []error
 	for _, builderQuery := range qp.CompositeMetricQuery.BuilderQueries {
+		if builderQuery.Disabled {
+			continue
+		}
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(builderQuery.Expression, evalFuncs)
 		tokens := expression.Tokens()
 		// expression with one token is used to represent
