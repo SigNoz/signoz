@@ -104,7 +104,7 @@ function WidgetHeader({
 			overlay={menu}
 			trigger={['click']}
 			overlayStyle={{ minWidth: 100 }}
-			placement="bottomCenter"
+			placement="bottom"
 		>
 			<HeaderContainer
 				onMouseOver={(): void => setLocalHover(true)}

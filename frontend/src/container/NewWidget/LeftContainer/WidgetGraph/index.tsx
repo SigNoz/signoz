@@ -5,7 +5,6 @@ import React, { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import { NewWidgetProps } from '../../index';
@@ -19,7 +18,6 @@ function WidgetGraph({
 	const { dashboards, isQueryFired } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [selectedDashboard] = dashboards;
 	const { search } = useLocation();
 
@@ -33,11 +31,7 @@ function WidgetGraph({
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	if (selectedWidget === undefined) {
-		return (
-			<Card isDarkMode={isDarkMode} isQueryType={false}>
-				Invalid widget
-			</Card>
-		);
+		return <Card>Invalid widget</Card>;
 	}
 
 	const { queryData } = selectedWidget;

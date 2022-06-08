@@ -19,16 +19,20 @@ function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { dashboardId } = useParams<Params>();
 
 	useEffect(() => {
-		getDashboard({
-			uuid: dashboardId,
-		});
-	}, [getDashboard, dashboardId]);
+		if (dashboards.length !== 1) {
+			getDashboard({
+				uuid: dashboardId,
+			});
+		}
+	}, [getDashboard, dashboardId, dashboards.length]);
 
 	if (error && !loading && dashboards.length === 0) {
 		return <div>{errorMessage}</div>;
 	}
 
-	if (loading || dashboards.length === 0) {
+	// when user comes from dashboard page. dashboard array is populated with some dashboard as dashboard is populated
+	// so to avoid any unmount call dashboard must have length zero
+	if (loading || dashboards.length === 0 || dashboards.length !== 1) {
 		return <Spinner tip="Loading.." />;
 	}
 
