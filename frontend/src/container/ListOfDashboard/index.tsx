@@ -15,11 +15,19 @@ import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+	Dispatch,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
@@ -36,6 +44,7 @@ function ListOfAllDashboard(): JSX.Element {
 	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action, createNewDashboard, newDashboard] = useComponentPermission(
@@ -131,6 +140,10 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
+				dispatch({
+					type: GET_ALL_DASHBOARD_SUCCESS,
+					payload: [],
+				});
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
@@ -151,7 +164,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t]);
+	}, [newDashboardState, t, dispatch]);
 
 	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
