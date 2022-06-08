@@ -230,8 +230,9 @@ func (s *Server) initListeners() error {
 	var err error
 	publicHostPort := s.serverOptions.HTTPHostPort
 	if publicHostPort == "" {
-		publicHostPort = ":8080"
+		return fmt.Errorf("constants.HTTPHostPort is required")
 	}
+
 	s.httpConn, err = net.Listen("tcp", publicHostPort)
 	if err != nil {
 		return err
@@ -243,7 +244,7 @@ func (s *Server) initListeners() error {
 	privateHostPort := s.serverOptions.PrivateHostPort
 
 	if privateHostPort == "" {
-		privateHostPort = ":9090"
+		return fmt.Errorf("constants.PrivateHostPort is required")
 	}
 
 	s.privateConn, err = net.Listen("tcp", privateHostPort)
