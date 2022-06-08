@@ -16,8 +16,9 @@ import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
 import React, { useCallback, useState } from 'react';
-import { useQueries } from 'react-query';
+import { useQueries, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
+import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -47,84 +48,33 @@ function FullView({
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
 
-	const maxMinTime = GetMaxMinTime({
-		graphType: widget.panelTypes,
-		maxTime,
-		minTime,
-	});
 
-	const getMinMax = (
-		time: timePreferenceType,
-	): { min: string | number; max: string | number } => {
-		if (time === 'GLOBAL_TIME') {
-			const minMax = GetMinMax(globalSelectedTime);
-			return {
-				min: convertToNanoSecondsToSecond(minMax.minTime / 1000),
-				max: convertToNanoSecondsToSecond(minMax.maxTime / 1000),
-			};
-		}
 
-		const minMax = getStartAndEndTime({
-			type: selectedTime.enum,
-			maxTime: maxMinTime.maxTime,
-			minTime: maxMinTime.minTime,
-		});
-		return { min: parseInt(minMax.start, 10), max: parseInt(minMax.end, 10) };
-	};
-
-	const queryMinMax = getMinMax(selectedTime.enum);
-
-	const queryLength = widget.query.filter((e) => e.query.length !== 0);
-
-	const response = useQueries(
-		queryLength.map((query) => {
-			return {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				queryFn: () => {
-					return getQueryResult({
-						end: queryMinMax.max.toString(),
-						query: query.query,
-						start: queryMinMax.min.toString(),
-						step: `${getStep({
-							start: queryMinMax.min,
-							end: queryMinMax.max,
-							inputFormat: 's',
-						})}`,
-					});
-				},
-				queryHash: `${query.query}-${query.legend}-${selectedTime.enum}`,
-				retryOnMount: false,
-			};
+	const response = useQuery('FullViewGetMetricsQueryRange', () =>
+		GetMetricQueryRange({
+			selectedTime: widget.timePreferance,
+			graphType: widget.panelTypes,
+			query: widget.query,
+			globalSelectedInterval: globalSelectedTime,
 		}),
 	);
 
-	const isError =
-		response.find((e) => e?.data?.statusCode !== 200) !== undefined ||
-		response.some((e) => e.isError === true);
-
-	const isLoading = response.some((e) => e.isLoading === true);
-
-	const errorMessage = response.find((e) => e.data?.error !== null)?.data?.error;
-
-	const data = response.map((responseOfQuery) =>
-		responseOfQuery?.data?.payload?.result.map((e, index) => ({
-			query: queryLength[index]?.query,
-			queryData: e,
-			legend: queryLength[index]?.legend,
-		})),
-	);
+	const isError = response.error;
+	const isLoading = response.isLoading === true;
+	const errorMessage = isError?.queryData?.error;
 
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
-	if (isError || data === undefined || data[0] === undefined) {
+	if (isError || !response?.data?.payload?.data?.result) {
 		return (
 			<NotFoundContainer>
 				<Typography>{errorMessage}</Typography>
 			</NotFoundContainer>
 		);
 	}
+	console.log({ response })
 
 	return (
 		<>
@@ -138,7 +88,7 @@ function FullView({
 					/>
 					<Button
 						onClick={(): void => {
-							response.forEach((e) => e.refetch());
+							response.refetch();
 						}}
 						type="primary"
 					>
@@ -151,11 +101,15 @@ function FullView({
 				{...{
 					GRAPH_TYPES: widget.panelTypes,
 					data: getChartData({
-						queryData: data.map((e) => ({
-							query: e?.map((e) => e.query).join(' ') || '',
-							queryData: e?.map((e) => e.queryData) || [],
-							legend: e?.map((e) => e.legend).join('') || '',
-						})),
+						queryData: [
+							{
+								query: 'q',
+								legend: '',
+								queryData: response.data?.payload?.data?.result
+									? response.data?.payload?.data?.result
+									: [],
+							},
+						],
 					}),
 					isStacked: widget.isStacked,
 					opacity: widget.opacity,

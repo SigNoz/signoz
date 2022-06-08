@@ -37,6 +37,14 @@ function ClickHouseQueryBuilder({
 					},
 				}}
 			/>
+			<Input
+				onChange={(event): void =>
+					handleQueryChange({ queryIndex, legend: event.target.value })
+				}
+				size="middle"
+				defaultValue={queryData.legend}
+				addonBefore="Legend Format"
+			/>
 		</QueryHeader>
 	);
 }

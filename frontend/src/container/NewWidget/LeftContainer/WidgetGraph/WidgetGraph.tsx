@@ -34,6 +34,14 @@ function WidgetGraph({
 
 	const { queryData, title, opacity, isStacked } = selectedWidget;
 
+	if (queryData.error) {
+		return (
+			<NotFoundContainer>
+				<Typography>{queryData.errorMessage}</Typography>
+			</NotFoundContainer>
+		);
+	}
+
 	if (queryData.data.length === 0) {
 		return (
 			<NotFoundContainer>
@@ -45,7 +53,7 @@ function WidgetGraph({
 	const chartDataSet = getChartData({
 		queryData: queryData.data,
 	});
-
+	
 	return (
 		<GridGraphComponent
 			title={title}

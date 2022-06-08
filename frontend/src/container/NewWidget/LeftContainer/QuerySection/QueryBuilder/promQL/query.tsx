@@ -28,7 +28,7 @@ function PromQLQueryBuilder({
 				size="middle"
 				defaultValue={queryData.query}
 				addonBefore="PromQL Query"
-				style={{ marginBottom: '0.5rem' }}
+				style={{marginBottom:'0.5rem'}}
 			/>
 
 
@@ -40,7 +40,7 @@ function PromQLQueryBuilder({
 				size="middle"
 				defaultValue={queryData.legend}
 				addonBefore="Legend Format"
-				style={{ marginBottom: '0.5rem' }}
+				style={{marginBottom:'0.5rem'}}
 			/>
 
 		</QueryHeader>

@@ -147,6 +147,7 @@ interface QueryError {
 	payload: {
 		errorMessage: string;
 		widgetId: string;
+		errorBoolean?: boolean;
 	};
 }
 

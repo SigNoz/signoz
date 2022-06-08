@@ -19,6 +19,7 @@ function ClickHouseQueryContainer({
 	const handleClickHouseQueryChange = ({
 		queryIndex,
 		rawQuery,
+		legend,
 		toggleDisable,
 		toggleDelete,
 	}): void => {
@@ -28,6 +29,11 @@ function ClickHouseQueryContainer({
 		if (rawQuery !== undefined) {
 			currentIndexQuery.rawQuery = rawQuery;
 		}
+
+		if (legend !== undefined) {
+			currentIndexQuery.legend = legend;
+		}
+		
 		if (toggleDisable) {
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
 		}

@@ -1,5 +1,4 @@
 import { Typography } from 'antd';
-import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
@@ -15,10 +14,12 @@ import {
 	DeleteWidget,
 	DeleteWidgetProps,
 } from 'store/actions/dashboard/deleteWidget';
+import { GetMetricQueryRange, GetQueryResults, GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
@@ -42,6 +43,10 @@ function GridCardGraph({
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
+	const { selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 	const [deleteModal, setDeletModal] = useState(false);
 
 	useEffect(() => {
@@ -59,28 +64,39 @@ function GridCardGraph({
 					minTime: getMaxMinTime.minTime,
 				});
 
-				const response = await Promise.all(
-					widget.query
-						.filter((e) => e.query.length !== 0)
-						.map(async (query) => {
-							const result = await getQueryResult({
-								end,
-								query: encodeURIComponent(query.query),
-								start,
-								step: '60',
-							});
+				const response = await GetMetricQueryRange({
+					selectedTime: widget.timePreferance,
+					graphType: widget.panelTypes,
+					query: widget.query,
+					globalSelectedInterval,
+				})
 
-							return {
-								query: query.query,
-								queryData: result,
-								legend: query.legend,
-							};
-						}),
-				);
+				// await Promise.all(
+				// 	widget.query
+				// 		.map(async (query) => {
+				// 			const result = await GetQueryResults({
+				// 				end,
+				// 				query: encodeURIComponent(query.query),
+				// 				start,
 
-				const isError = response.find((e) => e.queryData.statusCode !== 200);
+				// 				query: selectedWidget?.query || [],
+				// 				selectedTime: selectedTime.enum,
+				// 				widgetId: selectedWidget?.id || '',
+				// 				graphType: selectedGraph,
+				// 				globalSelectedInterval,
+				// 			});
 
-				if (isError !== undefined) {
+				// 			return {
+				// 				query: query.query,
+				// 				queryData: result,
+				// 				legend: query.legend,
+				// 			};
+				// 		}),
+				// );
+
+				const isError = response.error;
+
+				if (isError != null) {
 					setState((state) => ({
 						...state,
 						error: true,
@@ -89,11 +105,13 @@ function GridCardGraph({
 					}));
 				} else {
 					const chartDataSet = getChartData({
-						queryData: response.map((e) => ({
-							query: e.query,
-							legend: e.legend,
-							queryData: e.queryData.payload?.result || [],
-						})),
+						queryData: [{
+							query: 'q',
+							legend: '',
+							queryData: response.payload?.data?.result
+								? response.payload?.data?.result
+								: [],
+						}]
 					});
 
 					setState((state) => ({
@@ -235,6 +253,7 @@ interface DispatchProps {
 	deleteWidget: ({
 		widgetId,
 	}: DeleteWidgetProps) => (dispatch: Dispatch<AppActions>) => void;
+
 }
 
 interface GridCardGraphProps extends DispatchProps {

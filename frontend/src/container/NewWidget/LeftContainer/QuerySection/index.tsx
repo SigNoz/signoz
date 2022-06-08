@@ -1,5 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
+import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { cloneDeep } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

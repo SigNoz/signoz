@@ -20,7 +20,7 @@ export enum EAggregateOperator {
 	P05 = 6,
 	P10 = 7,
 	P20 = 8,
-	P25 =9,
+	P25 = 9,
 	P50 = 10,
 	P75 = 11,
 	P90 = 12,

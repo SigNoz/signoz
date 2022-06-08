@@ -147,7 +147,7 @@ function GridGraph(): JSX.Element {
 				try {
 					const graphType = event.dataTransfer.getData('text') as GRAPH_TYPES;
 					const generateWidgetId = v4();
-
+					
 					await updateDashboard({
 						data,
 						generateWidgetId,

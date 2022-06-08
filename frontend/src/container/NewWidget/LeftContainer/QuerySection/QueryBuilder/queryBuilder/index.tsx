@@ -1,19 +1,23 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input } from 'antd';
+import { Input, Row } from 'antd';
 import {
 	ClickHouseQueryTemplate,
+	QueryBuilderFormulaTemplate,
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
+import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
 import React, { useEffect, useState } from 'react';
 
 import {
 	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
 	WIDGET_PROMQL_QUERY_KEY_NAME,
+	WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME,
 	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from '../../constants';
 import { QueryButton } from '../../styles';
 import QueryHeader from '../QueryHeader';
+import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
 import ClickHouseQueryBuilder from './query';
 
@@ -28,6 +32,7 @@ function QueryBuilderQueryContainer({
 		metricName,
 		tagFilters,
 		groupBy,
+		legend,
 		toggleDisable,
 		toggleDelete,
 	}): void => {
@@ -45,8 +50,13 @@ function QueryBuilderQueryContainer({
 		if (tagFilters) {
 			currentIndexQuery.tagFilters.items = tagFilters;
 		}
+
 		if (groupBy) {
 			currentIndexQuery.groupBy = groupBy;
+		}
+
+		if (legend !== undefined) {
+			currentIndexQuery.legend = legend;
 		}
 		if (toggleDisable) {
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
@@ -56,13 +66,52 @@ function QueryBuilderQueryContainer({
 		}
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
+	const handleQueryBuilderFormulaChange = ({
+		formulaIndex,
+		expression,
+		toggleDisable,
+		toggleDelete,
+	}) => {
+		const allFormulas =
+			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+			];
+		const currentIndexFormula = allFormulas[formulaIndex];
 
+		if (expression) {
+			currentIndexFormula.expression = expression;
+		}
+
+		if (toggleDisable) {
+			currentIndexFormula.disabled = !currentIndexFormula.disabled;
+		}
+
+		if (toggleDelete) {
+			allFormulas.splice(formulaIndex, 1);
+		}
+		console.log({queryData})
+		updateQueryData({ updatedQuery: { ...queryData } });
+	};
 	const addQueryHandler = (): void => {
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder.push({
 			name: GetQueryName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder,
 			),
 			...QueryBuilderQueryTemplate,
+		});
+		updateQueryData({ updatedQuery: { ...queryData } });
+	};
+
+	const addFormulaHandler = (): void => {
+		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
+			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+		].push({
+			name: GetFormulaName(
+				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
+					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				],
+			),
+			...QueryBuilderFormulaTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
@@ -83,7 +132,15 @@ function QueryBuilderQueryContainer({
 			<QueryButton onClick={addQueryHandler} icon={<PlusOutlined />}>
 				Query
 			</QueryButton>
-			<QueryButton onClick={addQueryHandler} icon={<PlusOutlined />}>
+			{metricsBuilderQueries.formulas.map((f, idx) => (
+				<MetricsBuilderFormula
+					key={f.name}
+					formulaIndex={idx}
+					formulaData={f}
+					handleFormulaChange={handleQueryBuilderFormulaChange}
+				/>
+			))}
+			<QueryButton onClick={addFormulaHandler} icon={<PlusOutlined />}>
 				Formula
 			</QueryButton>
 		</>

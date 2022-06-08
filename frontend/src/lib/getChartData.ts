@@ -6,15 +6,15 @@ import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
 const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
-	const response = queryData.map(({ query, queryData, legend }) => {
+	const response = queryData.map(({ queryData }) => {
 		return queryData.map((e) => {
-			const { values = [], metric } = e || {};
+			const { values = [], metric, legend, queryName } = e || {};
+
 			const labelNames = getLabelName(
 				metric,
-				query, // query
-				legend || '', // legends
+				queryName || '', // query
+				legend || '',
 			);
-
 			const dataValue = values?.map((e) => {
 				const [first = 0, second = ''] = e || [];
 				return {
@@ -30,7 +30,6 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 			};
 		});
 	});
-
 	const allLabels = response
 		.map((e) => e.map((e) => e.label))
 		.reduce((a, b) => [...a, ...b], []);

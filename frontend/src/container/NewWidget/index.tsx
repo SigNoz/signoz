@@ -160,7 +160,6 @@ function NewWidget({
 		if (selectedWidget?.id.length !== 0) {
 			getQueryResults({
 				query: selectedWidget?.query || [],
-				queryType: selectedWidget?.queryType,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
@@ -183,8 +182,8 @@ function NewWidget({
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button onClick={onClickSaveHandler}>Save</Button>
-				<Button onClick={onClickApplyHandler}>Apply</Button>
+				<Button type='primary' onClick={onClickSaveHandler}>Save</Button>
+				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 

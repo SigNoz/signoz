@@ -9,6 +9,7 @@ import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import { NewWidgetProps } from '../../index';
+import PlotTag from './PlotTag';
 import { AlertIconContainer, Container, NotFoundContainer } from './styles';
 import WidgetGraphComponent from './WidgetGraph';
 
@@ -41,9 +42,9 @@ function WidgetGraph({
 	}
 
 	const { queryData } = selectedWidget;
-
 	return (
 		<Container>
+			<PlotTag queryType={selectedWidget.query.queryType} />
 			{queryData.error && (
 				<AlertIconContainer color="red" title={queryData.errorMessage}>
 					<InfoCircleOutlined />

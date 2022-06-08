@@ -238,7 +238,7 @@ const dashboard = (
 		}
 
 		case QUERY_ERROR: {
-			const { widgetId, errorMessage } = action.payload;
+			const { widgetId, errorMessage, errorBoolean = true } = action.payload;
 
 			const [selectedDashboard] = state.dashboards;
 			const { data } = selectedDashboard;
@@ -269,7 +269,7 @@ const dashboard = (
 									...selectedWidget,
 									queryData: {
 										...selectedWidget.queryData,
-										error: true,
+										error: errorBoolean,
 										errorMessage,
 									},
 								},
@@ -298,7 +298,6 @@ const dashboard = (
 					widgets.length,
 				) || [];
 			const selectedWidget = widgets[selectedWidgetIndex];
-
 			return {
 				...state,
 				dashboards: [
@@ -311,7 +310,7 @@ const dashboard = (
 								{
 									...selectedWidget,
 									queryData: {
-										data: [...queryDataResponse],
+										data: [queryDataResponse],
 										error: selectedWidget.queryData.error,
 										errorMessage: selectedWidget.queryData.errorMessage,
 										loading: false,

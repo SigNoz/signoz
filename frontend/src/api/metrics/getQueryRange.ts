@@ -9,43 +9,11 @@ import {
 	TagValuesPayloadProps,
 } from 'types/api/metrics/getResourceAttributes';
 
-export const getResourceAttributesTagValues = async (
+export const getMetricsQueryRange = async (
 	props: TagValueProps,
 ): Promise<SuccessResponse<TagValuesPayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/metrics/query_range`, {
-			dataSource: 0,
-			start: 1653130217335,
-			end: 1653132017335,
-			step: 60,
-			compositeMetricQuery: {
-				queryType: 0,
-				builderQueries: {
-					a: {
-						queryName: 'a',
-						metricName: 'system_disk_operations',
-						tagFilters: {
-							op: 'AND',
-							items: [
-								{
-									key: 'host_name',
-									op: 'like',
-									value: '',
-								},
-								{
-									key: 'device',
-									op: 'nin',
-									value: ['tmpfs', 'nsfs'],
-								},
-							],
-						},
-						groupBy: ['device', 'direction'],
-						aggregateOperator: 17,
-						expression: 'a',
-					},
-				},
-			},
-		});
+		const response = await axios.post(`/metrics/query_range`, props);
 
 		return {
 			statusCode: 200,
@@ -54,6 +22,7 @@ export const getResourceAttributesTagValues = async (
 			payload: response.data,
 		};
 	} catch (error) {
+		debugger;
 		return ErrorResponseHandler(error as AxiosError);
 	}
 };

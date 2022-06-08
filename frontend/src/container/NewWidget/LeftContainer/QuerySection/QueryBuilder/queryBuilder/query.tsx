@@ -36,6 +36,7 @@ function MetricsBuilder({
 	const [metricNameList, setMetricNameList] = useState([]);
 	const [metricNameLoading, setMetricNameLoading] = useState(false);
 	const handleMetricNameSearch = async (searchQuery = '') => {
+		console.log(searchQuery);
 		setMetricNameList([]);
 		setMetricNameLoading(true);
 		const { payload } = await getMetricName(searchQuery);
@@ -60,7 +61,7 @@ function MetricsBuilder({
 				handleQueryChange({ queryIndex, toggleDisable: true })
 			}
 			onDelete={(): void => {
-				handleQueryChange({ queryIndex, toggleDelete: true })
+				handleQueryChange({ queryIndex, toggleDelete: true });
 			}}
 		>
 			<div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem' }}>
@@ -72,8 +73,8 @@ function MetricsBuilder({
 						options={AggregateFunctions}
 					/>
 				</div>
-				<Row>
-					<div style={{ flex: 1 }}>
+				<Row style={{ gap: '3%' }}>
+					<Row style={{ flex: 2 }}>
 						<Select
 							defaultValue="metrics"
 							showArrow={false}
@@ -85,7 +86,7 @@ function MetricsBuilder({
 						<Select
 							showSearch
 							placeholder="Metric Name (Start typing to get suggestions)"
-							style={{ flex: 1 }}
+							style={{ flex: 1, minWidth: 200 }}
 							showArrow={false}
 							filterOption={false}
 							onSearch={handleMetricNameSearch}
@@ -95,13 +96,13 @@ function MetricsBuilder({
 								value: option,
 							}))}
 							defaultValue={queryData.metricName}
-							onChange={(e) => {
+							onSelect={(e) => {
 								handleQueryChange({ queryIndex, metricName: e });
 								setMetricName(e);
 							}}
 						/>
-					</div>
-					<Col style={{ flex: 1 }}>
+					</Row>
+					<Col style={{ flex: 3 }}>
 						<Row>
 							<Select
 								defaultValue="WHERE"
@@ -141,6 +142,16 @@ function MetricsBuilder({
 							/>
 						</Row>
 					</Col>
+				</Row>
+				<Row style={{ margin: '0.5rem 0' }}>
+					<Input
+						onChange={(e): void => {
+							handleQueryChange({ queryIndex, legend: e.target.value });
+						}}
+						size="middle"
+						defaultValue={queryData.legend}
+						addonBefore="Legend Format"
+					/>
 				</Row>
 			</div>
 		</QueryHeader>
