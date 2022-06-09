@@ -1,13 +1,11 @@
-import { Button as ButtonComponent, Card as CardComponent } from 'antd';
+import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
-interface Props {
-	isQueryType: boolean;
-}
-export const Card = styled(CardComponent)<Props>`
+export const Card = styled(CardComponent)`
 	&&& {
 		height: 100%;
 	}
@@ -18,20 +16,34 @@ export const Card = styled(CardComponent)<Props>`
 	}
 `;
 
-export const CardContainer = styled.div`
-	.react-resizable-handle {
-		position: absolute;
-		width: 20px;
-		height: 20px;
-		bottom: 0;
-		right: 0;
-		background: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/Pg08IS0tIEdlbmVyYXRvcjogQWRvYmUgRmlyZXdvcmtzIENTNiwgRXhwb3J0IFNWRyBFeHRlbnNpb24gYnkgQWFyb24gQmVhbGwgKGh0dHA6Ly9maXJld29ya3MuYWJlYWxsLmNvbSkgLiBWZXJzaW9uOiAwLjYuMSAgLS0+DTwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DTxzdmcgaWQ9IlVudGl0bGVkLVBhZ2UlMjAxIiB2aWV3Qm94PSIwIDAgNiA2IiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjojZmZmZmZmMDAiIHZlcnNpb249IjEuMSINCXhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbDpzcGFjZT0icHJlc2VydmUiDQl4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjZweCIgaGVpZ2h0PSI2cHgiDT4NCTxnIG9wYWNpdHk9IjAuMzAyIj4NCQk8cGF0aCBkPSJNIDYgNiBMIDAgNiBMIDAgNC4yIEwgNCA0LjIgTCA0LjIgNC4yIEwgNC4yIDAgTCA2IDAgTCA2IDYgTCA2IDYgWiIgZmlsbD0iIzAwMDAwMCIvPg0JPC9nPg08L3N2Zz4=');
-		background-position: bottom right;
-		padding: 0 3px 3px 0;
-		background-repeat: no-repeat;
-		background-origin: content-box;
-		box-sizing: border-box;
-		cursor: se-resize;
+interface Props {
+	isDarkMode: boolean;
+}
+
+export const CardContainer = styled.div<Props>`
+	:hover {
+		.react-resizable-handle {
+			position: absolute;
+			width: 20px;
+			height: 20px;
+			bottom: 0;
+			right: 0;
+			background-position: bottom right;
+			padding: 0 3px 3px 0;
+			background-repeat: no-repeat;
+			background-origin: content-box;
+			box-sizing: border-box;
+			cursor: se-resize;
+
+			${({ isDarkMode }): StyledCSS => {
+				const uri = `data:image/svg+xml,%3Csvg viewBox='0 0 6 6' style='background-color:%23ffffff00' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' xml:space='preserve' x='0px' y='0px' width='6px' height='6px'%0A%3E%3Cg opacity='0.302'%3E%3Cpath d='M 6 6 L 0 6 L 0 4.2 L 4 4.2 L 4.2 4.2 L 4.2 0 L 6 0 L 6 6 L 6 6 Z' fill='${
+					isDarkMode ? 'white' : 'grey'
+				}'/%3E%3C/g%3E%3C/svg%3E`;
+
+				return css`
+					background-image: ${(): string => `url("${uri}")`};
+				`;
+			}}
 	}
 `;
 
@@ -39,9 +51,22 @@ export const ReactGridLayout = styled(ReactGridLayoutComponent)`
 	border: 1px solid #434343;
 	margin-top: 1rem;
 	position: relative;
+	min-height: 40vh;
+
+	.react-grid-item.react-grid-placeholder {
+		background: grey;
+		opacity: 0.2;
+		transition-duration: 100ms;
+		z-index: 2;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		-o-user-select: none;
+		user-select: none;
+	}
 `;
 
-export const ButtonContainer = styled.div`
+export const ButtonContainer = styled(Space)`
 	display: flex;
 	justify-content: end;
 	margin-top: 1rem;

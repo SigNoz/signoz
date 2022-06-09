@@ -20,6 +20,7 @@ export const UPDATE_USER_IS_FETCH = 'UPDATE_USER_IS_FETCH';
 export const UPDATE_USER_ORG_ROLE = 'UPDATE_USER_ORG_ROLE';
 export const UPDATE_USER = 'UPDATE_USER';
 export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
+export const UPDATE_ORG = 'UPDATE_ORG';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -98,7 +99,14 @@ export interface UpdateOrgName {
 	type: typeof UPDATE_ORG_NAME;
 	payload: {
 		name: string;
-		index: number;
+		orgId: string;
+	};
+}
+
+export interface UpdateOrg {
+	type: typeof UPDATE_ORG;
+	payload: {
+		org: AppReducer['org'];
 	};
 }
 
@@ -113,4 +121,5 @@ export type AppAction =
 	| UpdateUserIsFetched
 	| UpdateUserOrgRole
 	| UpdateUser
-	| UpdateOrgName;
+	| UpdateOrgName
+	| UpdateOrg;

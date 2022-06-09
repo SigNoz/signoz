@@ -1,4 +1,3 @@
-import { Dictionary } from 'cypress/types/lodash';
 import groupBy from 'lodash-es/groupBy';
 import React, { useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getAll';
@@ -13,7 +12,7 @@ function FilteredTable({
 	allAlerts,
 	selectedFilter,
 }: FilteredTableProps): JSX.Element {
-	const allGroupsAlerts: Dictionary<Alerts[]> = useMemo(
+	const allGroupsAlerts = useMemo(
 		() =>
 			groupBy(FilterAlerts(allAlerts, selectedFilter), (obj) =>
 				selectedGroup.map((e) => obj.labels[`${e.value}`]).join('+'),

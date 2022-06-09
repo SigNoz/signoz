@@ -106,31 +106,69 @@ Need to update [https://github.com/SigNoz/charts](https://github.com/SigNoz/char
   - [k3d](https://k3d.io/#installation)
   - [minikube](https://minikube.sigs.k8s.io/docs/start/)
 - create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster
-- run `helm install -n platform --create-namespace my-release charts/signoz` to install SigNoz chart
-- run `kubectl -n platform port-forward svc/my-release-frontend 3301:3301` to make SigNoz UI available at [localhost:3301](http://localhost:3301)
+- run `make dev-install` to install SigNoz chart with `my-release` release name in `platform` namespace.
+- run `kubectl -n platform port-forward svc/my-release-signoz-frontend 3301:3301` to make SigNoz UI available at [localhost:3301](http://localhost:3301)
+
+**To install HotROD sample app:**
+
+```bash
+curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-install.sh \
+  | HELM_RELEASE=my-release SIGNOZ_NAMESPACE=platform bash
+```
 
 **To load data with HotROD sample app:**
 
-```sh
-kubectl create ns sample-application
-
-kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
-
+```bash
 kubectl -n sample-application run strzal --image=djbingham/curl \
---restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
-'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+  --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
+  'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
 ```
 
 **To stop the load generation:**
 
-```sh
+```bash
 kubectl -n sample-application run strzal --image=djbingham/curl \
- --restart='OnFailure' -i --tty --rm --command -- curl \
- http://locust-master:8089/stop
+  --restart='OnFailure' -i --tty --rm --command -- curl \
+  http://locust-master:8089/stop
 ```
+
+**To delete HotROD sample app:**
+
+```bash
+curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-delete.sh \
+  | HOTROD_NAMESPACE=sample-application bash
+```
+
 ---
 
 ## General Instructions
+
+**Before making any significant changes, please open an issue**. Each issue
+should describe the following:
+
+* Requirement - what kind of use case are you trying to solve?
+* Proposal - what do you suggest to solve the problem or improve the existing
+  situation?
+* Any open questions to address
+
+Discussing your proposed changes ahead of time will make the contribution
+process smooth for everyone. Once the approach is agreed upon, make your changes
+and open a pull request(s). Unless your change is small, Please consider submitting different PRs:
+
+* First PR should include the overall structure of the new component:
+  * Readme, configuration, interfaces or base classes etc...
+  * This PR is usually trivial to review, so the size limit does not apply to
+    it.
+* Second PR should include the concrete implementation of the component. If the
+  size of this PR is larger than the recommended size consider splitting it in
+  multiple PRs.
+* If there are multiple sub-component then ideally each one should be implemented as
+  a separate pull request.
+* Last PR should include changes to any user facing documentation. And should include
+  end to end tests if applicable. The component must be enabled
+  only after sufficient testing, and there is enough confidence in the
+  stability and quality of the component.
+
 
 You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack](https://signoz.io/slack).
 

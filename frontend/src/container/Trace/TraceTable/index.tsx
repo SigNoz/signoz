@@ -18,6 +18,7 @@ import {
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+import { v4 } from 'uuid';
 
 dayjs.extend(duration);
 
@@ -131,8 +132,6 @@ function TraceTable(): JSX.Element {
 				const spanOrder = order === 'ascend' ? 'ascending' : 'descending';
 				const orderParam = getSortKey(sort.field as string);
 
-				console.log({ spanOrder });
-
 				dispatch({
 					type: UPDATE_SPAN_ORDER,
 					payload: {
@@ -188,7 +187,7 @@ function TraceTable(): JSX.Element {
 			dataSource={spansAggregate.data}
 			loading={loading || filterLoading}
 			columns={columns}
-			rowKey={(record): string => `${record.traceID}-${record.spanID}`}
+			rowKey={(record): string => `${record.traceID}-${record.spanID}-${v4()}`}
 			style={{
 				cursor: 'pointer',
 			}}

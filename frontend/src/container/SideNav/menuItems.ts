@@ -41,6 +41,7 @@ const menus: SidebarMenu[] = [
 		to: ROUTES.SERVICE_MAP,
 		name: 'Service Map',
 		Icon: DeploymentUnitOutlined,
+		tags: ['Beta'],
 	},
 	{
 		Icon: LineChartOutlined,
@@ -63,6 +64,7 @@ interface SidebarMenu {
 	to: string;
 	name: string;
 	Icon: typeof ApiOutlined;
+	tags?: string[];
 }
 
 export default menus;

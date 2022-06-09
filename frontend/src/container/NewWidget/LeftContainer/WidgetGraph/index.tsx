@@ -31,7 +31,7 @@ function WidgetGraph({
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	if (selectedWidget === undefined) {
-		return <Card isQueryType={false}>Invalid widget</Card>;
+		return <Card>Invalid widget</Card>;
 	}
 
 	const { queryData } = selectedWidget;

@@ -30,15 +30,18 @@ services:
         condition: service_healthy
     restart: on-failure
     command:
-      - --queryService.url=http://query-service:8080
+      - --queryService.url=http://query-service:8085
       - --storage.path=/data
 
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:0.8.0
+    image: signoz/query-service:0.8.1
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
+    # ports:
+    #   - "6060:6060"     # pprof port
+    #   - "8080:8080"     # query-service port
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
@@ -60,7 +63,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: signoz/frontend:0.8.0
+    image: signoz/frontend:0.8.1
     container_name: frontend
     restart: on-failure
     depends_on:
@@ -72,7 +75,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.43.0-0.1
+    image: signoz/otelcontribcol:0.45.1-0.2
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -80,7 +83,7 @@ services:
       - "4317:4317"     # OTLP gRPC receiver
       - "4318:4318"     # OTLP HTTP receiver
       # - "8889:8889"     # Prometheus metrics exposed by the agent
-      # - "13133"         # health_check
+      # - "13133:13133"   # health_check
       # - "14268:14268"   # Jaeger receiver
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zpages extension
@@ -93,7 +96,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.43.0-0.1
+    image: signoz/otelcontribcol:0.45.1-0.2
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

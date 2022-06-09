@@ -277,6 +277,11 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	}
 }
 
+// RegisterPrivateRoutes registers routes for this handler on the given router
+func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
@@ -1138,9 +1143,14 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Context is not used here as TTL is long duration operation which needs to converted to async
+	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := (*aH.reader).SetTTL(context.Background(), ttlParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil {
+		if apiErr.Typ == model.ErrorConflict {
+			aH.handleError(w, apiErr.Err, http.StatusConflict)
+		} else {
+			aH.handleError(w, apiErr.Err, http.StatusInternalServerError)
+		}
 		return
 	}
 

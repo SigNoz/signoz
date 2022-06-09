@@ -1,54 +1,109 @@
-import { Tabs } from 'antd';
+import RouteTab from 'components/RouteTab';
+import ROUTES from 'constants/routes';
 import React from 'react';
+import { generatePath, useParams } from 'react-router-dom';
+import { useLocation } from 'react-use';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import ResourceAttributesFilter from './ResourceAttributesFilter';
-import Application from './Tabs/Application';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
+import Overview from './Tabs/Overview';
 
-const { TabPane } = Tabs;
+const getWidget = (query: Widgets['query']): Widgets => {
+	return {
+		description: '',
+		id: '',
+		isStacked: false,
+		nullZeroValues: '',
+		opacity: '0',
+		panelTypes: 'TIME_SERIES',
+		query,
+		queryData: {
+			data: [],
+			error: false,
+			errorMessage: '',
+			loading: false,
+		},
+		timePreferance: 'GLOBAL_TIME',
+		title: '',
+		stepSize: 60,
+	};
+};
+
+function OverViewTab(): JSX.Element {
+	return <Overview getWidget={getWidget} />;
+}
+
+function DbCallTab(): JSX.Element {
+	return <DBCall getWidget={getWidget} />;
+}
+
+function ExternalTab(): JSX.Element {
+	return <External getWidget={getWidget} />;
+}
 
 function ServiceMetrics(): JSX.Element {
-	const getWidget = (query: Widgets['query']): Widgets => {
-		return {
-			description: '',
-			id: '',
-			isStacked: false,
-			nullZeroValues: '',
-			opacity: '0',
-			panelTypes: 'TIME_SERIES',
-			query,
-			queryData: {
-				data: [],
-				error: false,
-				errorMessage: '',
-				loading: false,
-			},
-			timePreferance: 'GLOBAL_TIME',
-			title: '',
-			stepSize: 60,
-		};
+	const { search } = useLocation();
+	const { servicename } = useParams<{ servicename: string }>();
+
+	const searchParams = new URLSearchParams(search);
+	const tab = searchParams.get('tab');
+
+	const overMetrics = 'Overview Metrics';
+	const dbCallMetrics = 'Database Calls';
+	const externalMetrics = 'External Calls';
+
+	const getActiveKey = (): string => {
+		switch (tab) {
+			case null: {
+				return overMetrics;
+			}
+			case dbCallMetrics: {
+				return dbCallMetrics;
+			}
+			case externalMetrics: {
+				return externalMetrics;
+			}
+			default: {
+				return overMetrics;
+			}
+		}
 	};
+
+	const activeKey = getActiveKey();
 
 	return (
 		<>
 			<ResourceAttributesFilter />
-			<Tabs defaultActiveKey="1">
-				<TabPane animated destroyInactiveTabPane tab="Application Metrics" key="1">
-					<Application getWidget={getWidget} />
-				</TabPane>
-
-				<TabPane animated destroyInactiveTabPane tab="External Calls" key="2">
-					<External getWidget={getWidget} />
-				</TabPane>
-
-				<TabPane animated destroyInactiveTabPane tab="Database Calls" key="3">
-					<DBCall getWidget={getWidget} />
-				</TabPane>
-			</Tabs>
+			<RouteTab
+				routes={[
+					{
+						Component: OverViewTab,
+						name: overMetrics,
+						route: `${generatePath(ROUTES.SERVICE_METRICS, {
+							servicename,
+						})}?tab=${overMetrics}`,
+					},
+					{
+						Component: DbCallTab,
+						name: dbCallMetrics,
+						route: `${generatePath(ROUTES.SERVICE_METRICS, {
+							servicename,
+						})}?tab=${dbCallMetrics}`,
+					},
+					{
+						Component: ExternalTab,
+						name: externalMetrics,
+						route: `${generatePath(ROUTES.SERVICE_METRICS, {
+							servicename,
+						})}?tab=${externalMetrics}`,
+					},
+				]}
+				activeKey={activeKey}
+			/>
 		</>
 	);
 }
 
-export default ServiceMetrics;
+export default React.memo(ServiceMetrics);

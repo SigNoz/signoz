@@ -10,6 +10,8 @@ export type Unauthorized = 401;
 
 export type NotFound = 404;
 
+export type Conflict = 409;
+
 export type ServerError = 500;
 
 export type SuccessStatusCode = Created | Success;
@@ -20,6 +22,7 @@ export type ErrorStatusCode =
 	| Unauthorized
 	| NotFound
 	| ServerError
-	| BadRequest;
+	| BadRequest
+	| Conflict;
 
 export type StatusCode = SuccessStatusCode | ErrorStatusCode;

@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	HTTPHostPort = "0.0.0.0:8080"
+	HTTPHostPort    = "0.0.0.0:8080" // Address to serve http (query service)
+	PrivateHostPort = "0.0.0.0:8085" // Address to server internal services like alert manager
+	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
 )
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
@@ -56,6 +58,9 @@ const (
 	Descending       = "descending"
 	Ascending        = "ascending"
 	ContextTimeout   = 60 // seconds
+	StatusPending    = "pending"
+	StatusFailed     = "failed"
+	StatusSuccess    = "success"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

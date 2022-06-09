@@ -38,7 +38,7 @@ function DisplayName({
 				dispatch({
 					type: UPDATE_ORG_NAME,
 					payload: {
-						index,
+						orgId,
 						name: orgName,
 					},
 				});
