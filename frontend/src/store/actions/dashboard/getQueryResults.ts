@@ -122,9 +122,10 @@ export const GetMetricQueryRange = async ({
 		step: getStep({ start, end, inputFormat: 'ms' }),
 		...QueryPayload,
 	});
-
 	if (response.statusCode >= 400) {
-		throw new Error(`API responded with ${response.statusCode}`);
+		throw new Error(
+			`API responded with ${response.statusCode} -  ${response.error}`,
+		);
 	}
 
 	if (response.payload?.data?.result) {

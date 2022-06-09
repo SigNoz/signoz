@@ -1,6 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import TextToolTip from 'components/TextToolTip';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { cloneDeep } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -135,9 +136,16 @@ function QuerySection({
 					defaultActiveKey={queryCategory.toString()}
 					onChange={handleQueryCategoryChange}
 					tabBarExtraContent={
-						<Button type="primary" onClick={handleStageQuery}>
-							Stage & Run Query
-						</Button>
+						<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+							<TextToolTip
+								{...{
+									text: `This will temporarily save the current query and graph state. This will persist across tab change`,
+								}}
+							/>
+							<Button type="primary" onClick={handleStageQuery}>
+								Stage & Run Query
+							</Button>
+						</span>
 					}
 				>
 					<TabPane tab="Query Builder" key={EQueryType.QUERY_BUILDER.toString()}>

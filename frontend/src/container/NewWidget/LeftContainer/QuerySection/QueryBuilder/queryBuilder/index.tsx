@@ -74,7 +74,7 @@ function QueryBuilderQueryContainer({
 	}) => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
 		const currentIndexFormula = allFormulas[formulaIndex];
 
@@ -89,7 +89,7 @@ function QueryBuilderQueryContainer({
 		if (toggleDelete) {
 			allFormulas.splice(formulaIndex, 1);
 		}
-		console.log({queryData})
+		console.log({ queryData })
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const addQueryHandler = (): void => {
@@ -108,7 +108,7 @@ function QueryBuilderQueryContainer({
 		].push({
 			name: GetFormulaName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 				],
 			),
 			...QueryBuilderFormulaTemplate,
@@ -132,17 +132,20 @@ function QueryBuilderQueryContainer({
 			<QueryButton onClick={addQueryHandler} icon={<PlusOutlined />}>
 				Query
 			</QueryButton>
-			{metricsBuilderQueries.formulas.map((f, idx) => (
-				<MetricsBuilderFormula
-					key={f.name}
-					formulaIndex={idx}
-					formulaData={f}
-					handleFormulaChange={handleQueryBuilderFormulaChange}
-				/>
-			))}
-			<QueryButton onClick={addFormulaHandler} icon={<PlusOutlined />}>
-				Formula
-			</QueryButton>
+			<div style={{ marginTop: '1rem' }}>
+
+				{metricsBuilderQueries.formulas.map((f, idx) => (
+					<MetricsBuilderFormula
+						key={f.name}
+						formulaIndex={idx}
+						formulaData={f}
+						handleFormulaChange={handleQueryBuilderFormulaChange}
+					/>
+				))}
+				<QueryButton onClick={addFormulaHandler} icon={<PlusOutlined />}>
+					Formula
+				</QueryButton>
+			</div>
 		</>
 	);
 }

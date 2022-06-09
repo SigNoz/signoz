@@ -144,7 +144,7 @@ function MetricTagKeyFilter({
 
 	return (
 		<SearchContainer isDarkMode={isDarkMode}>
-			<div>
+			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
 				{queries.length > 0 &&
 					map(
 						queries,
@@ -154,6 +154,9 @@ function MetricTagKeyFilter({
 							);
 						},
 					)}
+
+			</div>
+			<div>
 				{map(staging, (item, idx) => {
 					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
 				})}

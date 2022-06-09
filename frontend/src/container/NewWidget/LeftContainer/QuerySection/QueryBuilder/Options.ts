@@ -33,10 +33,10 @@ export const AggregateFunctions = Object.keys(EAggregateOperator)
 // ];
 
 export const TagKeyOperator = [
-	{ label: 'REGEX', value: 'REGEX' },
 	{ label: 'Equal', value: 'EQ' },
 	{ label: 'Not Equal', value: 'NEQ' },
 	{ label: 'In', value: 'IN' },
 	{ label: 'Not In', value: 'NIN' },
 	{ label: 'Like', value: 'LIKE' },
+	// { label: 'REGEX', value: 'REGEX' },
 ];

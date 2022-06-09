@@ -48,8 +48,6 @@ function FullView({
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
 
-
-
 	const response = useQuery('FullViewGetMetricsQueryRange', () =>
 		GetMetricQueryRange({
 			selectedTime: widget.timePreferance,
@@ -61,12 +59,11 @@ function FullView({
 
 	const isError = response.error;
 	const isLoading = response.isLoading === true;
-	const errorMessage = isError?.queryData?.error;
+	const errorMessage = isError?.message;
 
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
-
 	if (isError || !response?.data?.payload?.data?.result) {
 		return (
 			<NotFoundContainer>
@@ -74,7 +71,6 @@ function FullView({
 			</NotFoundContainer>
 		);
 	}
-	console.log({ response })
 
 	return (
 		<>
@@ -103,8 +99,6 @@ function FullView({
 					data: getChartData({
 						queryData: [
 							{
-								query: 'q',
-								legend: '',
 								queryData: response.data?.payload?.data?.result
 									? response.data?.payload?.data?.result
 									: [],

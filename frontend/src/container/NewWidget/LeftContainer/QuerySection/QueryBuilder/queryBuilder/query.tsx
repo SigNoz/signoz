@@ -73,8 +73,8 @@ function MetricsBuilder({
 						options={AggregateFunctions}
 					/>
 				</div>
-				<Row style={{ gap: '3%' }}>
-					<Row style={{ flex: 2 }}>
+				<Row style={{ gap: '3%',margin:'0.5rem 0' }}>
+					<Row style={{ flex: 2, gap: '3%' }}>
 						<Select
 							defaultValue="metrics"
 							showArrow={false}
@@ -102,8 +102,8 @@ function MetricsBuilder({
 							}}
 						/>
 					</Row>
-					<Col style={{ flex: 3 }}>
-						<Row>
+					<Col style={{ flex: 3, }}>
+						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
 							<Select
 								defaultValue="WHERE"
 								showArrow={false}
@@ -119,7 +119,7 @@ function MetricsBuilder({
 								}
 							/>
 						</Row>
-						<Row>
+						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
 							<Select
 								defaultValue="GROUP BY"
 								showArrow={false}
