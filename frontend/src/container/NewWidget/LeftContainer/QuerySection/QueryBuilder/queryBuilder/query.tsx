@@ -4,7 +4,7 @@ import {
 	EyeFilled,
 	RightOutlined,
 } from '@ant-design/icons';
-import { Button, Col, Divider, Input, Row, Select, Spin, Tabs } from 'antd';
+import { Button, Col, AutoComplete,Divider, Input, Row, Select, Spin, Tabs } from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
 import MonacoEditor from 'components/Editor';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -83,7 +83,7 @@ function MetricsBuilder({
 							<Option value="metrics">Metrics</Option>
 						</Select>
 
-						<Select
+						<AutoComplete
 							showSearch
 							placeholder="Metric Name (Start typing to get suggestions)"
 							style={{ flex: 1, minWidth: 200 }}
