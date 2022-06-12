@@ -2878,6 +2878,11 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	var seriesList []*model.Series
 	for key := range metricPointsMap {
 		points := metricPointsMap[key]
+		// first point in each series could be invalid since the
+		// aggregations are applied with point from prev series
+		if len(points) != 0 {
+			points = points[1:]
+		}
 		attributes := attributesMap[key]
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
