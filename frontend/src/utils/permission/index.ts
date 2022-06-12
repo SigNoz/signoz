@@ -16,7 +16,8 @@ export type ComponentTypes =
 	| 'delete_widget'
 	| 'new_dashboard'
 	| 'new_alert_action'
-	| 'edit_widget';
+	| 'edit_widget'
+	| 'add_panel';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -34,6 +35,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	new_dashboard: ['ADMIN', 'EDITOR'],
 	new_alert_action: ['ADMIN'],
 	edit_widget: ['ADMIN', 'EDITOR'],
+	add_panel: ['ADMIN', 'EDITOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
@@ -47,7 +49,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	APPLICATION: ['ADMIN', 'EDITOR', 'VIEWER'],
 	CHANNELS_EDIT: ['ADMIN'],
 	CHANNELS_NEW: ['ADMIN'],
-	DASHBOARD: ['ADMIN', 'EDITOR', 'EDITOR'],
+	DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	DASHBOARD_WIDGET: ['ADMIN', 'EDITOR', 'VIEWER'],
 	EDIT_ALERTS: ['ADMIN'],
 	ERROR_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],

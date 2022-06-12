@@ -29,12 +29,15 @@ function GraphLayout({
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [saveLayout] = useComponentPermission(['save_layout'], role);
+	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
+		['save_layout', 'add_panel'],
+		role,
+	);
 
 	return (
 		<>
 			<ButtonContainer>
-				{saveLayout && (
+				{saveLayoutPermission && (
 					<Button
 						loading={saveLayoutState.loading}
 						onClick={(): Promise<void> => onLayoutSaveHandler(layouts)}
@@ -45,24 +48,26 @@ function GraphLayout({
 					</Button>
 				)}
 
-				<Button
-					loading={addPanelLoading}
-					disabled={addPanelLoading}
-					onClick={onAddPanelHandler}
-					icon={<PlusOutlined />}
-				>
-					Add Panel
-				</Button>
+				{addPanelPermission && (
+					<Button
+						loading={addPanelLoading}
+						disabled={addPanelLoading}
+						onClick={onAddPanelHandler}
+						icon={<PlusOutlined />}
+					>
+						Add Panel
+					</Button>
+				)}
 			</ButtonContainer>
 
 			<ReactGridLayout
-				isResizable
 				cols={12}
 				rowHeight={100}
 				autoSize
 				width={100}
-				isDraggable
-				isDroppable
+				isDraggable={addPanelPermission}
+				isDroppable={addPanelPermission}
+				isResizable={addPanelPermission}
 				useCSSTransforms
 				allowOverlap={false}
 				onLayoutChange={onLayoutChangeHandler}
