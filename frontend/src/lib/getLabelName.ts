@@ -10,7 +10,6 @@ const getLabelName = (
 	}
 
 	const keysArray = Object.keys(metric);
-
 	if (legends.length !== 0) {
 		const variables = legends
 			.split('{{')

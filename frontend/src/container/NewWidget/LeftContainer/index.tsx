@@ -14,7 +14,6 @@ function LeftContainer({
 	return (
 		<>
 			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
-
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} />
 			</QueryContainer>

@@ -182,8 +182,8 @@ function NewWidget({
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button onClick={onClickSaveHandler}>Save</Button>
-				<Button onClick={onClickApplyHandler}>Apply</Button>
+				<Button type='primary' onClick={onClickSaveHandler}>Save</Button>
+				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 

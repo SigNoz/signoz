@@ -6,7 +6,7 @@ import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import isEmpty from 'lodash-es/isEmpty';
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useQueries } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -16,10 +16,12 @@ import {
 	DeleteWidget,
 	DeleteWidgetProps,
 } from 'store/actions/dashboard/deleteWidget';
+import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
@@ -35,60 +37,141 @@ function GridCardGraph({
 	layout = [],
 	setLayout,
 }: GridCardGraphProps): JSX.Element {
+	const [state, setState] = useState<GridCardGraphState>({
+		loading: true,
+		errorMessage: '',
+		error: false,
+		payload: undefined,
+	});
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
+	const [deleteModal, setDeleteModal] = useState(false);
+
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
-	const [deleteModal, setDeleteModal] = useState(false);
+	const { selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
-	const getMaxMinTime = GetMaxMinTime({
-		graphType: widget?.panelTypes,
-		maxTime,
-		minTime,
-	});
+	// const getMaxMinTime = GetMaxMinTime({
+	// 	graphType: widget?.panelTypes,
+	// 	maxTime,
+	// 	minTime,
+	// });
 
-	const { start, end } = GetStartAndEndTime({
-		type: widget?.timePreferance,
-		maxTime: getMaxMinTime.maxTime,
-		minTime: getMaxMinTime.minTime,
-	});
+	// const { start, end } = GetStartAndEndTime({
+	// 	type: widget?.timePreferance,
+	// 	maxTime: getMaxMinTime.maxTime,
+	// 	minTime: getMaxMinTime.minTime,
+	// });
 
-	const queryLength = widget?.query?.filter((e) => e.query.length !== 0) || [];
+	// const queryLength = widget?.query?.filter((e) => e.query.length !== 0) || [];
 
-	const response = useQueries(
-		queryLength?.map((query) => {
-			return {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				queryFn: () => {
-					return getQueryResult({
-						end,
-						query: query?.query,
-						start,
-						step: '60',
+	// const response = useQueries(
+	// 	queryLength?.map((query) => {
+	// 		return {
+	// 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	// 			queryFn: () => {
+	// 				return getQueryResult({
+	// 					end,
+	// 					query: query?.query,
+	// 					start,
+	// 					step: '60',
+	// 				});
+	// 			},
+	// 			queryHash: `${query?.query}-${query?.legend}-${start}-${end}`,
+	// 			retryOnMount: false,
+	// 		};
+	// 	}),
+	// );
+
+	// const isError =
+	// 	response.find((e) => e?.data?.statusCode !== 200) !== undefined ||
+	// 	response.some((e) => e.isError === true);
+
+	// const isLoading = response.some((e) => e.isLoading === true);
+
+	// const errorMessage = response.find((e) => e.data?.error !== null)?.data?.error;
+
+	// const data = response.map((responseOfQuery) =>
+	// 	responseOfQuery?.data?.payload?.result.map((e, index) => ({
+	// 		query: queryLength[index]?.query,
+	// 		queryData: e,
+	// 		legend: queryLength[index]?.legend,
+	// 	})),
+	// );
+
+	useEffect(() => {
+		(async (): Promise<void> => {
+			try {
+				const response = await GetMetricQueryRange({
+					selectedTime: widget.timePreferance,
+					graphType: widget.panelTypes,
+					query: widget.query,
+					globalSelectedInterval,
+				});
+
+				// await Promise.all(
+				// 	widget.query
+				// 		.map(async (query) => {
+				// 			const result = await GetQueryResults({
+				// 				end,
+				// 				query: encodeURIComponent(query.query),
+				// 				start,
+
+				// 				query: selectedWidget?.query || [],
+				// 				selectedTime: selectedTime.enum,
+				// 				widgetId: selectedWidget?.id || '',
+				// 				graphType: selectedGraph,
+				// 				globalSelectedInterval,
+				// 			});
+
+				// 			return {
+				// 				query: query.query,
+				// 				queryData: result,
+				// 				legend: query.legend,
+				// 			};
+				// 		}),
+				// );
+
+				const isError = response.error;
+
+				if (isError != null) {
+					setState((state) => ({
+						...state,
+						error: true,
+						errorMessage: isError.queryData.error || 'Something went wrong',
+						loading: false,
+					}));
+				} else {
+					const chartDataSet = getChartData({
+						queryData: [
+							{
+								queryData: response.payload?.data?.result
+									? response.payload?.data?.result
+									: [],
+							},
+						],
 					});
-				},
-				queryHash: `${query?.query}-${query?.legend}-${start}-${end}`,
-				retryOnMount: false,
-			};
-		}),
-	);
 
-	const isError =
-		response.find((e) => e?.data?.statusCode !== 200) !== undefined ||
-		response.some((e) => e.isError === true);
-
-	const isLoading = response.some((e) => e.isLoading === true);
-
-	const errorMessage = response.find((e) => e.data?.error !== null)?.data?.error;
-
-	const data = response.map((responseOfQuery) =>
-		responseOfQuery?.data?.payload?.result.map((e, index) => ({
-			query: queryLength[index]?.query,
-			queryData: e,
-			legend: queryLength[index]?.legend,
-		})),
-	);
+					setState((state) => ({
+						...state,
+						loading: false,
+						payload: chartDataSet,
+					}));
+				}
+			} catch (error) {
+				setState((state) => ({
+					...state,
+					error: true,
+					errorMessage: (error as AxiosError).toString(),
+					loading: false,
+				}));
+			}
+		})();
+	}, [widget, maxTime, minTime, globalSelectedInterval]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -144,14 +227,11 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
-	if (isLoading) {
+	if (state.loading === true || state.payload === undefined) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
 
-	if (
-		(isError || data === undefined || data[0] === undefined) &&
-		!isEmptyLayout
-	) {
+	if (state.error && !isEmptyLayout) {
 		return (
 			<>
 				{getModals()}
@@ -163,18 +243,11 @@ function GridCardGraph({
 					onDelete={(): void => onToggleModal(setDeleteModal)}
 				/>
 
-				<ErrorContainer>{errorMessage}</ErrorContainer>
+				{/* <ErrorContainer>{errorMessage}</ErrorContainer> */}
 			</>
 		);
 	}
 
-	const chartData = getChartData({
-		queryData: data.map((e) => ({
-			query: e?.map((e) => e.query).join(' ') || '',
-			queryData: e?.map((e) => e.queryData) || [],
-			legend: e?.map((e) => e.legend).join('') || '',
-		})),
-	});
 
 	return (
 		<span
@@ -207,7 +280,7 @@ function GridCardGraph({
 				<GridGraphComponent
 					{...{
 						GRAPH_TYPES: widget.panelTypes,
-						data: chartData,
+						data: state.payload,
 						isStacked: widget.isStacked,
 						opacity: widget.opacity,
 						title: ' ', // empty title to accommodate absolutely positioned widget header
@@ -220,6 +293,13 @@ function GridCardGraph({
 			{isEmptyLayout && <EmptyWidget />}
 		</span>
 	);
+}
+
+interface GridCardGraphState {
+	loading: boolean;
+	error: boolean;
+	errorMessage: string;
+	payload: ChartData | undefined;
 }
 
 interface DispatchProps {

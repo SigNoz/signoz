@@ -1,3 +1,4 @@
+import GetQueryName from 'lib/query/GetQueryName';
 import {
 	APPLY_SETTINGS_TO_PANEL,
 	CREATE_DEFAULT_WIDGET,
@@ -19,6 +20,7 @@ import {
 	TOGGLE_EDIT_MODE,
 	UPDATE_DASHBOARD,
 	UPDATE_QUERY,
+	UPDATE_QUERY_TYPE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
 import InitialValueTypes from 'types/reducer/dashboards';
@@ -134,7 +136,6 @@ const dashboard = (
 		// NOTE: this action will will be dispatched in the single dashboard only
 		case CREATE_DEFAULT_WIDGET: {
 			const [selectedDashboard] = state.dashboards;
-
 			const { data } = selectedDashboard;
 			const { widgets } = data;
 			const defaultWidget = action.payload;
@@ -194,7 +195,27 @@ const dashboard = (
 				};
 			}
 
-			const newQuery = [...selectedWidget.query, { query: '', legend: '' }];
+			const newQuery = [
+				...selectedWidget.query,
+				// {
+				// 	name: GetQueryName(selectedWidget.query),
+				// 	disabled: false,
+				// 	promQL: {
+				// 		query: '',
+				// 		legend: '',
+				// 	},
+				// 	clickHouseQuery: '',
+				// 	queryBuilder: {
+				// 		metricName: null,
+				// 		aggregateOperator: null,
+				// 		tagFilters: {
+				// 			op: 'AND',
+				// 			items: [],
+				// 		},
+				// 		groupBy: [],
+				// 	},
+				// },
+			];
 
 			return {
 				...state,
@@ -218,7 +239,7 @@ const dashboard = (
 		}
 
 		case QUERY_ERROR: {
-			const { widgetId, errorMessage } = action.payload;
+			const { widgetId, errorMessage, errorBoolean = true } = action.payload;
 
 			const [selectedDashboard] = state.dashboards;
 			const { data } = selectedDashboard;
@@ -249,7 +270,7 @@ const dashboard = (
 									...selectedWidget,
 									queryData: {
 										...selectedWidget.queryData,
-										error: true,
+										error: errorBoolean,
 										errorMessage,
 									},
 								},
@@ -278,7 +299,6 @@ const dashboard = (
 					widgets.length,
 				) || [];
 			const selectedWidget = widgets[selectedWidgetIndex];
-
 			return {
 				...state,
 				dashboards: [
@@ -291,7 +311,7 @@ const dashboard = (
 								{
 									...selectedWidget,
 									queryData: {
-										data: [...queryDataResponse],
+										data: [queryDataResponse],
 										error: selectedWidget.queryData.error,
 										errorMessage: selectedWidget.queryData.errorMessage,
 										loading: false,
@@ -431,6 +451,44 @@ const dashboard = (
 									...selectedWidget,
 									query,
 									yAxisUnit,
+								},
+								...afterWidget,
+							],
+						},
+					},
+				],
+			};
+		}
+		case UPDATE_QUERY_TYPE: {
+			const { widgetId, queryType } = action.payload;
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
+			const { widgets = [] } = data;
+
+			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
+
+			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
+			const afterWidget =
+				widgets?.slice(
+					selectedWidgetIndex + 1, // this is never undefined
+					widgets.length,
+				) || [];
+
+			const selectedWidget = widgets[selectedWidgetIndex];
+
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							widgets: [
+								...preWidget,
+								{
+									...selectedWidget,
+									queryType,
 								},
 								...afterWidget,
 							],
