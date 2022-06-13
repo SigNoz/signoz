@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
+import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_DASHBOARD } from 'types/actions/dashboard';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import Graph from './Graph';
@@ -49,6 +51,9 @@ function GridGraph(props: Props): JSX.Element {
 	const { dashboards, isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const [saveLayoutPermission] = useComponentPermission(['save_layout'], role);
 	const [saveLayoutState, setSaveLayoutState] = useState<State>({
 		loading: false,
 		error: false,
@@ -109,31 +114,34 @@ function GridGraph(props: Props): JSX.Element {
 					loading: true,
 				}));
 
-				const response = await updateDashboardApi({
-					data: {
-						title: data.title,
-						description: data.description,
-						name: data.name,
-						tags: data.tags,
-						widgets: data.widgets,
-						layout,
-					},
-					uuid: selectedDashboard.uuid,
-				});
-				if (response.statusCode === 200) {
-					setSaveLayoutState((state) => ({
-						...state,
-						error: false,
-						errorMessage: '',
-						loading: false,
-					}));
-				} else {
-					setSaveLayoutState((state) => ({
-						...state,
-						error: true,
-						errorMessage: response.error || 'Something went wrong',
-						loading: false,
-					}));
+				// Save layout only when users has the has the permission to do so.
+				if (saveLayoutPermission) {
+					const response = await updateDashboardApi({
+						data: {
+							title: data.title,
+							description: data.description,
+							name: data.name,
+							tags: data.tags,
+							widgets: data.widgets,
+							layout,
+						},
+						uuid: selectedDashboard.uuid,
+					});
+					if (response.statusCode === 200) {
+						setSaveLayoutState((state) => ({
+							...state,
+							error: false,
+							errorMessage: '',
+							loading: false,
+						}));
+					} else {
+						setSaveLayoutState((state) => ({
+							...state,
+							error: true,
+							errorMessage: response.error || 'Something went wrong',
+							loading: false,
+						}));
+					}
 				}
 			} catch (error) {
 				console.error(error);
@@ -145,6 +153,7 @@ function GridGraph(props: Props): JSX.Element {
 			data.tags,
 			data.title,
 			data.widgets,
+			saveLayoutPermission,
 			selectedDashboard.uuid,
 		],
 	);
