@@ -1,14 +1,11 @@
-import { Button as ButtonComponent, Card as CardComponent } from 'antd';
+import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import RGL, { WidthProvider } from 'react-grid-layout';
 import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
-interface Props {
-	isQueryType: boolean;
-}
-export const Card = styled(CardComponent)<Props>`
+export const Card = styled(CardComponent)`
 	&&& {
 		height: 100%;
 	}
@@ -54,9 +51,22 @@ export const ReactGridLayout = styled(ReactGridLayoutComponent)`
 	border: 1px solid #434343;
 	margin-top: 1rem;
 	position: relative;
+	min-height: 40vh;
+
+	.react-grid-item.react-grid-placeholder {
+		background: grey;
+		opacity: 0.2;
+		transition-duration: 100ms;
+		z-index: 2;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		-o-user-select: none;
+		user-select: none;
+	}
 `;
 
-export const ButtonContainer = styled.div`
+export const ButtonContainer = styled(Space)`
 	display: flex;
 	justify-content: end;
 	margin-top: 1rem;

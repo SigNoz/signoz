@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	HTTPHostPort  = "0.0.0.0:8080" // Address to serve http (query service)
-	DebugHttpPort = "0.0.0.0:6060" // Address to serve http (pprof)
+	HTTPHostPort    = "0.0.0.0:8080" // Address to serve http (query service)
+	PrivateHostPort = "0.0.0.0:8085" // Address to server internal services like alert manager
+	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
 )
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
@@ -37,29 +38,29 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
-	ServiceName       = "serviceName"
-	HttpRoute         = "httpRoute"
-	HttpCode          = "httpCode"
-	HttpHost          = "httpHost"
-	HttpUrl           = "httpUrl"
-	HttpMethod        = "httpMethod"
-	Component         = "component"
-	OperationDB       = "name"
-	OperationRequest  = "operation"
-	Status            = "status"
-	Duration          = "duration"
-	DBName            = "dbName"
-	DBOperation       = "dbOperation"
-	DBSystem          = "dbSystem"
-	MsgSystem         = "msgSystem"
-	MsgOperation      = "msgOperation"
-	Timestamp         = "timestamp"
-	Descending        = "descending"
-	Ascending         = "ascending"
-	ContextTimeout    = 60 // seconds
-	StatusPending     = "pending"
-	StatusFailed      = "failed"
-	StatusSuccess     = "success"
+	ServiceName      = "serviceName"
+	HttpRoute        = "httpRoute"
+	HttpCode         = "httpCode"
+	HttpHost         = "httpHost"
+	HttpUrl          = "httpUrl"
+	HttpMethod       = "httpMethod"
+	Component        = "component"
+	OperationDB      = "name"
+	OperationRequest = "operation"
+	Status           = "status"
+	Duration         = "duration"
+	DBName           = "dbName"
+	DBOperation      = "dbOperation"
+	DBSystem         = "dbSystem"
+	MsgSystem        = "msgSystem"
+	MsgOperation     = "msgOperation"
+	Timestamp        = "timestamp"
+	Descending       = "descending"
+	Ascending        = "ascending"
+	ContextTimeout   = 60 // seconds
+	StatusPending    = "pending"
+	StatusFailed     = "failed"
+	StatusSuccess    = "success"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {
