@@ -1,3 +1,4 @@
+import { Layout } from 'react-grid-layout';
 import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettingsToPanel';
 import { Dashboard, Query, Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -159,6 +160,7 @@ interface WidgetDeleteSuccess {
 	type: typeof DELETE_WIDGET_SUCCESS;
 	payload: {
 		widgetId: Widgets['id'];
+		layout: Layout[];
 	};
 }
 

@@ -277,6 +277,11 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	}
 }
 
+// RegisterPrivateRoutes registers routes for this handler on the given router
+func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
