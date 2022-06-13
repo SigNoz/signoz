@@ -30,4 +30,5 @@ export enum EAggregateOperator {
 	RATE_AVG = 16,
 	RATE_MAX = 17,
 	RATE_MIN = 18,
+	NOOP = 19,
 }
