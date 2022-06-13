@@ -340,7 +340,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								!organizationName ||
 								!password ||
 								!confirmPassword ||
-								confirmPasswordError
+								confirmPasswordError ||
+								isPasswordPolicyError
 							}
 						>
 							Get Started

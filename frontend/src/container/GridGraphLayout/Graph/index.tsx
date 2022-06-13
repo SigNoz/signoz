@@ -1,12 +1,14 @@
 import { Typography } from 'antd';
-import { AxiosError } from 'axios';
-import { ChartData } from 'chart.js';
+import getQueryResult from 'api/widgets/getQuery';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
-import React, { useCallback, useEffect, useState } from 'react';
+import isEmpty from 'lodash-es/isEmpty';
+import React, { memo, useCallback, useEffect, useState } from 'react';
+import { Layout } from 'react-grid-layout';
+import { useQueries } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -14,13 +16,15 @@ import {
 	DeleteWidget,
 	DeleteWidgetProps,
 } from 'store/actions/dashboard/deleteWidget';
-import { GetMetricQueryRange, GetQueryResults, GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
+import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { LayoutProps } from '..';
+import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { ErrorContainer, FullViewContainer, Modal } from './styles';
@@ -28,9 +32,10 @@ import { ErrorContainer, FullViewContainer, Modal } from './styles';
 function GridCardGraph({
 	widget,
 	deleteWidget,
-	isDeleted,
 	name,
 	yAxisUnit,
+	layout = [],
+	setLayout,
 }: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -40,6 +45,8 @@ function GridCardGraph({
 	});
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
+	const [deleteModal, setDeleteModal] = useState(false);
+
 	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
 		(state) => state.globalTime,
 	);
@@ -47,29 +54,64 @@ function GridCardGraph({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const [deleteModal, setDeletModal] = useState(false);
+
+	// const getMaxMinTime = GetMaxMinTime({
+	// 	graphType: widget?.panelTypes,
+	// 	maxTime,
+	// 	minTime,
+	// });
+
+	// const { start, end } = GetStartAndEndTime({
+	// 	type: widget?.timePreferance,
+	// 	maxTime: getMaxMinTime.maxTime,
+	// 	minTime: getMaxMinTime.minTime,
+	// });
+
+	// const queryLength = widget?.query?.filter((e) => e.query.length !== 0) || [];
+
+	// const response = useQueries(
+	// 	queryLength?.map((query) => {
+	// 		return {
+	// 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	// 			queryFn: () => {
+	// 				return getQueryResult({
+	// 					end,
+	// 					query: query?.query,
+	// 					start,
+	// 					step: '60',
+	// 				});
+	// 			},
+	// 			queryHash: `${query?.query}-${query?.legend}-${start}-${end}`,
+	// 			retryOnMount: false,
+	// 		};
+	// 	}),
+	// );
+
+	// const isError =
+	// 	response.find((e) => e?.data?.statusCode !== 200) !== undefined ||
+	// 	response.some((e) => e.isError === true);
+
+	// const isLoading = response.some((e) => e.isLoading === true);
+
+	// const errorMessage = response.find((e) => e.data?.error !== null)?.data?.error;
+
+	// const data = response.map((responseOfQuery) =>
+	// 	responseOfQuery?.data?.payload?.result.map((e, index) => ({
+	// 		query: queryLength[index]?.query,
+	// 		queryData: e,
+	// 		legend: queryLength[index]?.legend,
+	// 	})),
+	// );
 
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				const getMaxMinTime = GetMaxMinTime({
-					graphType: widget?.panelTypes,
-					maxTime,
-					minTime,
-				});
-
-				const { start, end } = GetStartAndEndTime({
-					type: widget.timePreferance,
-					maxTime: getMaxMinTime.maxTime,
-					minTime: getMaxMinTime.minTime,
-				});
-
 				const response = await GetMetricQueryRange({
 					selectedTime: widget.timePreferance,
 					graphType: widget.panelTypes,
 					query: widget.query,
 					globalSelectedInterval,
-				})
+				});
 
 				// await Promise.all(
 				// 	widget.query
@@ -105,13 +147,13 @@ function GridCardGraph({
 					}));
 				} else {
 					const chartDataSet = getChartData({
-						queryData: [{
-							query: 'q',
-							legend: '',
-							queryData: response.payload?.data?.result
-								? response.payload?.data?.result
-								: [],
-						}]
+						queryData: [
+							{
+								queryData: response.payload?.data?.result
+									? response.payload?.data?.result
+									: [],
+							},
+						],
 					});
 
 					setState((state) => ({
@@ -129,7 +171,7 @@ function GridCardGraph({
 				}));
 			}
 		})();
-	}, [widget, maxTime, minTime]);
+	}, [widget, maxTime, minTime, globalSelectedInterval]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -139,18 +181,20 @@ function GridCardGraph({
 	);
 
 	const onDeleteHandler = useCallback(() => {
-		deleteWidget({ widgetId: widget.id });
-		onToggleModal(setDeletModal);
-		// eslint-disable-next-line no-param-reassign
-		isDeleted.current = true;
-	}, [deleteWidget, widget, onToggleModal, isDeleted]);
+		const isEmptyWidget = widget?.id === 'empty' || isEmpty(widget);
+
+		const widgetId = isEmptyWidget ? layout[0].i : widget?.id;
+
+		deleteWidget({ widgetId, setLayout });
+		onToggleModal(setDeleteModal);
+	}, [deleteWidget, layout, onToggleModal, setLayout, widget]);
 
 	const getModals = (): JSX.Element => {
 		return (
 			<>
 				<Modal
 					destroyOnClose
-					onCancel={(): void => onToggleModal(setDeletModal)}
+					onCancel={(): void => onToggleModal(setDeleteModal)}
 					visible={deleteModal}
 					title="Delete"
 					height="10vh"
@@ -181,7 +225,13 @@ function GridCardGraph({
 		);
 	};
 
-	if (state.error) {
+	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
+
+	if (state.loading === true || state.payload === undefined) {
+		return <Spinner height="20vh" tip="Loading..." />;
+	}
+
+	if (state.error && !isEmptyLayout) {
 		return (
 			<>
 				{getModals()}
@@ -190,17 +240,14 @@ function GridCardGraph({
 					title={widget?.title}
 					widget={widget}
 					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeletModal)}
+					onDelete={(): void => onToggleModal(setDeleteModal)}
 				/>
 
-				<ErrorContainer>{state.errorMessage}</ErrorContainer>
+				{/* <ErrorContainer>{errorMessage}</ErrorContainer> */}
 			</>
 		);
 	}
 
-	if (state.loading === true || state.payload === undefined) {
-		return <Spinner height="20vh" tip="Loading..." />;
-	}
 
 	return (
 		<span
@@ -217,27 +264,33 @@ function GridCardGraph({
 				setHovered(false);
 			}}
 		>
-			<WidgetHeader
-				parentHover={hovered}
-				title={widget.title}
-				widget={widget}
-				onView={(): void => onToggleModal(setModal)}
-				onDelete={(): void => onToggleModal(setDeletModal)}
-			/>
+			{!isEmptyLayout && (
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={(): void => onToggleModal(setModal)}
+					onDelete={(): void => onToggleModal(setDeleteModal)}
+				/>
+			)}
 
-			{getModals()}
+			{!isEmptyLayout && getModals()}
 
-			<GridGraphComponent
-				{...{
-					GRAPH_TYPES: widget.panelTypes,
-					data: state.payload,
-					isStacked: widget.isStacked,
-					opacity: widget.opacity,
-					title: ' ', // empty title to accommodate absolutely positioned widget header
-					name,
-					yAxisUnit,
-				}}
-			/>
+			{!isEmpty(widget) && (
+				<GridGraphComponent
+					{...{
+						GRAPH_TYPES: widget.panelTypes,
+						data: state.payload,
+						isStacked: widget.isStacked,
+						opacity: widget.opacity,
+						title: ' ', // empty title to accommodate absolutely positioned widget header
+						name,
+						yAxisUnit,
+					}}
+				/>
+			)}
+
+			{isEmptyLayout && <EmptyWidget />}
 		</span>
 	);
 }
@@ -253,14 +306,16 @@ interface DispatchProps {
 	deleteWidget: ({
 		widgetId,
 	}: DeleteWidgetProps) => (dispatch: Dispatch<AppActions>) => void;
-
 }
 
 interface GridCardGraphProps extends DispatchProps {
 	widget: Widgets;
-	isDeleted: React.MutableRefObject<boolean>;
 	name: string;
 	yAxisUnit: string | undefined;
+	// eslint-disable-next-line react/require-default-props
+	layout?: Layout[];
+	// eslint-disable-next-line react/require-default-props
+	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
 }
 
 const mapDispatchToProps = (
@@ -269,4 +324,4 @@ const mapDispatchToProps = (
 	deleteWidget: bindActionCreators(DeleteWidget, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(GridCardGraph);
+export default connect(null, mapDispatchToProps)(memo(GridCardGraph));

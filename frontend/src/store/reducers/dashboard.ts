@@ -18,6 +18,7 @@ import {
 	QUERY_SUCCESS,
 	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
+	UPDATE_DASHBOARD,
 	UPDATE_QUERY,
 	UPDATE_QUERY_TYPE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
@@ -375,7 +376,8 @@ const dashboard = (
 			};
 		}
 
-		case SAVE_SETTING_TO_PANEL_SUCCESS: {
+		case SAVE_SETTING_TO_PANEL_SUCCESS:
+		case UPDATE_DASHBOARD: {
 			const selectedDashboard = action.payload;
 
 			return {
@@ -389,7 +391,7 @@ const dashboard = (
 		}
 
 		case DELETE_WIDGET_SUCCESS: {
-			const { widgetId } = action.payload;
+			const { widgetId, layout } = action.payload;
 
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
@@ -404,6 +406,7 @@ const dashboard = (
 						data: {
 							...data,
 							widgets: widgets.filter((e) => e.id !== widgetId),
+							layout,
 						},
 					},
 				],
@@ -538,6 +541,7 @@ const dashboard = (
 				],
 			};
 		}
+
 		default:
 			return state;
 	}

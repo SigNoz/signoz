@@ -66,7 +66,7 @@ export const RedDot = styled.div`
 	background: #d32029;
 	border-radius: 50%;
 
-	margin-left: 1rem;
+	margin-left: 0.5rem;
 	margin-top: 0.5rem;
 `;
 
