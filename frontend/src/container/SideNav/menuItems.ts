@@ -15,7 +15,7 @@ const menus: SidebarMenu[] = [
 	{
 		Icon: BarChartOutlined,
 		to: ROUTES.APPLICATION,
-		name: 'Metrics',
+		name: 'Services',
 	},
 	{
 		Icon: AlignLeftOutlined,
