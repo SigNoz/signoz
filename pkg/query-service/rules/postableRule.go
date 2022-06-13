@@ -7,20 +7,25 @@ import (
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
-
+	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/utils/times"
 	"go.signoz.io/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 
+type RuleCondition struct {
+	CompositeMetricQuery *model.CompositeMetricQuery `json:"compositeMetricQuery,omitempty" yaml:"compositeMetricQuery,omitempty"`
+}
+
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	Alert        string            `yaml:"alert,omitempty"`
-	HoldDuration time.Duration     `yaml:"holdDuration,omitempty"`
-	Frequency    time.Duration     `yaml:"frequency,omitempty"`
-	QueryBuilder QueryBuilder      `yaml:"queryBuilder,omitempty"`
-	Labels       map[string]string `yaml:"labels,omitempty"`
-	Annotations  map[string]string `yaml:"annotations,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	RuleType      RuleType          `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
+	EvalWindow    time.Duration     `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
+	Frequency     time.Duration     `yaml:"frequency,omitempty" json:"frequency,omitempty"`
+	RuleCondition RuleCondition     `yaml:"condition,omitempty" json:"condition,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, []error) {
@@ -88,7 +93,6 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 			"__alert_"+rl.Alert,
 			tmplData,
 			times.Time(timestamp.FromTime(time.Now())),
-			nil,
 			nil,
 		)
 		return tmpl.ParseTest()

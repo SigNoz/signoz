@@ -304,6 +304,7 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 	for _, bq := range qp.CompositeMetricQuery.BuilderQueries {
 		expressions = append(expressions, bq.Expression)
 	}
+	fmt.Println("expressions:", expressions)
 	if errs := validateExpressions(expressions, evalFuncs); len(errs) != 0 {
 		return &RunQueries{Err: fmt.Errorf("invalid expressions: %s", FormatErrs(errs, "\n"))}
 	}

@@ -3,10 +3,9 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"database/sql"
 	"encoding/json"
-	"flag"
+
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -28,20 +27,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
 	sd_config "github.com/prometheus/prometheus/discovery/config"
-	"github.com/prometheus/prometheus/notifier"
 	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/rules"
+
 	"github.com/prometheus/prometheus/scrape"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
 	"github.com/prometheus/prometheus/util/stats"
-	"github.com/prometheus/prometheus/util/strutil"
-	"github.com/prometheus/tsdb"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -95,10 +90,10 @@ type ClickHouseReader struct {
 	spansTable      string
 	queryEngine     *promql.Engine
 	remoteStorage   *remote.Storage
-	ruleManager     *rules.Manager
-	promConfigFile  string
-	promConfig      *config.Config
-	alertManager    am.Manager
+
+	promConfigFile string
+	promConfig     *config.Config
+	alertManager   am.Manager
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -110,10 +105,11 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 
 	if err != nil {
 		zap.S().Error(err)
+		fmt.Println("failed to initialize ch:", err)
 		os.Exit(1)
 	}
 
-	alertManager := am.New("")
+	alertManager, _ := am.New("")
 
 	return &ClickHouseReader{
 		db:              db,
@@ -144,30 +140,14 @@ func (r *ClickHouseReader) Start() {
 
 	startTime := func() (int64, error) {
 		return int64(promModel.Latest), nil
-
 	}
 
 	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
 
-	// conf, err := config.LoadFile(*filename)
-	// if err != nil {
-	// 	zap.S().Error("couldn't load configuration (--config.file=%q): %v", filename, err)
-	// }
-
-	// err = remoteStorage.ApplyConfig(conf)
-	// if err != nil {
-	// 	zap.S().Error("Error in remoteStorage.ApplyConfig: ", err)
-	// }
 	cfg := struct {
 		configFile string
 
 		localStoragePath    string
-		notifier            notifier.Options
-		notifierTimeout     promModel.Duration
-		forGracePeriod      promModel.Duration
-		outageTolerance     promModel.Duration
-		resendDelay         promModel.Duration
-		tsdb                tsdb.Options
 		lookbackDelta       promModel.Duration
 		webTimeout          promModel.Duration
 		queryTimeout        promModel.Duration
@@ -180,19 +160,10 @@ func (r *ClickHouseReader) Start() {
 		logLevel promlog.AllowedLevel
 	}{
 		configFile: r.promConfigFile,
-		notifier: notifier.Options{
-			Registerer: prometheus.DefaultRegisterer,
-		},
 	}
 
 	// fanoutStorage := remoteStorage
 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-	localStorage := remoteStorage
-
-	cfg.notifier.QueueCapacity = 10000
-	cfg.notifierTimeout = promModel.Duration(time.Duration.Seconds(10))
-	notifier := notifier.NewManager(&cfg.notifier, log.With(logger, "component", "notifier"))
-	// notifier.ApplyConfig(conf)
 
 	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
 	if err != nil {
@@ -200,47 +171,15 @@ func (r *ClickHouseReader) Start() {
 		os.Exit(2)
 	}
 
-	cfg.outageTolerance = promModel.Duration(time.Duration.Hours(1))
-	cfg.forGracePeriod = promModel.Duration(time.Duration.Minutes(10))
-	cfg.resendDelay = promModel.Duration(time.Duration.Minutes(1))
-
 	ctxScrape, cancelScrape := context.WithCancel(context.Background())
 	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
 
-	ctxNotify, cancelNotify := context.WithCancel(context.Background())
-	discoveryManagerNotify := discovery.NewManager(ctxNotify, log.With(logger, "component", "discovery manager notify"), discovery.Name("notify"))
-
 	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
-
-	opts := promql.EngineOpts{
-		Logger:        log.With(logger, "component", "query engine"),
-		Reg:           nil,
-		MaxConcurrent: 20,
-		MaxSamples:    50000000,
-		Timeout:       time.Duration(2 * time.Minute),
-	}
-
-	queryEngine := promql.NewEngine(opts)
-
-	ruleManager := rules.NewManager(&rules.ManagerOptions{
-		Appendable:      fanoutStorage,
-		TSDB:            localStorage,
-		QueryFunc:       rules.EngineQueryFunc(queryEngine, fanoutStorage),
-		NotifyFunc:      sendAlerts(notifier, ExternalURL.String()),
-		Context:         context.Background(),
-		ExternalURL:     ExternalURL,
-		Registerer:      prometheus.DefaultRegisterer,
-		Logger:          log.With(logger, "component", "rule manager"),
-		OutageTolerance: time.Duration(cfg.outageTolerance),
-		ForGracePeriod:  time.Duration(cfg.forGracePeriod),
-		ResendDelay:     time.Duration(cfg.resendDelay),
-	})
 
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
-		// The Scrape and notifier managers need to reload before the Discovery manager as
+		// The Scrape managers need to reload before the Discovery manager as
 		// they need to read the most updated config when receiving the new targets list.
-		notifier.ApplyConfig,
 		scrapeManager.ApplyConfig,
 		func(cfg *config.Config) error {
 			c := make(map[string]sd_config.ServiceDiscoveryConfig)
@@ -249,32 +188,6 @@ func (r *ClickHouseReader) Start() {
 			}
 			return discoveryManagerScrape.ApplyConfig(c)
 		},
-		func(cfg *config.Config) error {
-			c := make(map[string]sd_config.ServiceDiscoveryConfig)
-			for _, v := range cfg.AlertingConfig.AlertmanagerConfigs {
-				// AlertmanagerConfigs doesn't hold an unique identifier so we use the config hash as the identifier.
-				b, err := json.Marshal(v)
-				if err != nil {
-					return err
-				}
-				c[fmt.Sprintf("%x", md5.Sum(b))] = v.ServiceDiscoveryConfig
-			}
-			return discoveryManagerNotify.ApplyConfig(c)
-		},
-		// func(cfg *config.Config) error {
-		// 	// Get all rule files matching the configuration oaths.
-		// 	var files []string
-		// 	for _, pat := range cfg.RuleFiles {
-		// 		fs, err := filepath.Glob(pat)
-		// 		if err != nil {
-		// 			// The only error can be a bad pattern.
-		// 			return fmt.Errorf("error retrieving rule files for %s: %s", pat, err)
-		// 		}
-		// 		files = append(files, fs...)
-		// 	}
-		// 	return ruleManager.Update(time.Duration(cfg.GlobalConfig.EvaluationInterval), files)
-		// },
-
 	}
 
 	// sync.Once is used to make sure we can close the channel at different execution stages(SIGTERM or when the config is loaded).
@@ -305,20 +218,6 @@ func (r *ClickHouseReader) Start() {
 			func(err error) {
 				level.Info(logger).Log("msg", "Stopping scrape discovery manager...")
 				cancelScrape()
-			},
-		)
-	}
-	{
-		// Notify discovery manager.
-		g.Add(
-			func() error {
-				err := discoveryManagerNotify.Run()
-				level.Info(logger).Log("msg", "Notify discovery manager stopped")
-				return err
-			},
-			func(err error) {
-				level.Info(logger).Log("msg", "Stopping notify discovery manager...")
-				cancelNotify()
 			},
 		)
 	}
@@ -364,18 +263,6 @@ func (r *ClickHouseReader) Start() {
 
 				reloadReady.Close()
 
-				rules, apiErrorObj := r.GetRulesFromDB()
-
-				if apiErrorObj != nil {
-					zap.S().Errorf("Not able to read rules from DB")
-				}
-				for _, rule := range *rules {
-					apiErrorObj = r.LoadRule(rule)
-					if apiErrorObj != nil {
-						zap.S().Errorf("Not able to load rule with id=%d loaded from DB", rule.Id, rule.Data)
-					}
-				}
-
 				channels, apiErrorObj := r.GetChannels()
 
 				if apiErrorObj != nil {
@@ -397,48 +284,6 @@ func (r *ClickHouseReader) Start() {
 			},
 		)
 	}
-	{
-		// Rule manager.
-		// TODO(krasi) refactor ruleManager.Run() to be blocking to avoid using an extra blocking channel.
-		cancel := make(chan struct{})
-		g.Add(
-			func() error {
-				<-reloadReady.C
-				ruleManager.Run()
-				<-cancel
-				return nil
-			},
-			func(err error) {
-				ruleManager.Stop()
-				close(cancel)
-			},
-		)
-	}
-	{
-		// Notifier.
-
-		// Calling notifier.Stop() before ruleManager.Stop() will cause a panic if the ruleManager isn't running,
-		// so keep this interrupt after the ruleManager.Stop().
-		g.Add(
-			func() error {
-				// When the notifier manager receives a new targets list
-				// it needs to read a valid config for each job.
-				// It depends on the config being in sync with the discovery manager
-				// so we wait until the config is fully loaded.
-				<-reloadReady.C
-
-				notifier.Run(discoveryManagerNotify.SyncCh())
-				level.Info(logger).Log("msg", "Notifier manager stopped")
-				return nil
-			},
-			func(err error) {
-				notifier.Stop()
-			},
-		)
-	}
-	r.queryEngine = queryEngine
-	r.remoteStorage = remoteStorage
-	r.ruleManager = ruleManager
 
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
@@ -525,132 +370,8 @@ func connect(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	return cfg.Connector(cfg)
 }
 
-type byAlertStateAndNameSorter struct {
-	alerts []*AlertingRuleWithGroup
-}
-
-func (s byAlertStateAndNameSorter) Len() int {
-	return len(s.alerts)
-}
-
-func (s byAlertStateAndNameSorter) Less(i, j int) bool {
-	return s.alerts[i].State() > s.alerts[j].State() ||
-		(s.alerts[i].State() == s.alerts[j].State() &&
-			s.alerts[i].Name() < s.alerts[j].Name())
-}
-
-func (s byAlertStateAndNameSorter) Swap(i, j int) {
-	s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i]
-}
-
-type AlertingRuleWithGroup struct {
-	rules.AlertingRule
-	Id int
-}
-
-func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.ApiError) {
-
-	rules := []model.RuleResponseItem{}
-
-	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules")
-
-	err := r.localDB.Select(&rules, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return &rules, nil
-}
-
-func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
-
-	idInt, _ := strconv.Atoi(id)
-
-	rule := &model.RuleResponseItem{}
-
-	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
-
-	err := r.localDB.Get(rule, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return rule, nil
-}
-
-func (r *ClickHouseReader) ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError) {
-
-	groups := r.ruleManager.RuleGroups()
-
-	alertingRulesWithGroupObjects := []*AlertingRuleWithGroup{}
-
-	for _, group := range groups {
-		groupNameParts := strings.Split(group.Name(), "-groupname")
-		if len(groupNameParts) < 2 {
-			continue
-		}
-		id, _ := strconv.Atoi(groupNameParts[0])
-		for _, rule := range group.Rules() {
-			if alertingRule, ok := rule.(*rules.AlertingRule); ok {
-				alertingRulesWithGroupObject := AlertingRuleWithGroup{
-					*alertingRule,
-					id,
-				}
-				alertingRulesWithGroupObjects = append(alertingRulesWithGroupObjects, &alertingRulesWithGroupObject)
-			}
-		}
-	}
-
-	// alertingRules := r.ruleManager.AlertingRules()
-
-	alertsSorter := byAlertStateAndNameSorter{alerts: alertingRulesWithGroupObjects}
-	sort.Sort(alertsSorter)
-	alerts := []*model.AlertingRuleResponse{}
-
-	for _, alertingRule := range alertsSorter.alerts {
-
-		alertingRuleResponseObject := &model.AlertingRuleResponse{
-			Labels: alertingRule.Labels(),
-			// Annotations: alertingRule.Annotations(),
-			Name: alertingRule.Name(),
-			Id:   alertingRule.Id,
-		}
-		if len(alertingRule.ActiveAlerts()) == 0 {
-			alertingRuleResponseObject.State = rules.StateInactive.String()
-		} else {
-			alertingRuleResponseObject.State = (*(alertingRule.ActiveAlerts()[0])).State.String()
-		}
-
-		alerts = append(
-			alerts,
-			alertingRuleResponseObject,
-		)
-	}
-
-	res := &model.AlertDiscovery{Alerts: alerts}
-
-	return res, nil
-}
-
-func (r *ClickHouseReader) LoadRule(rule model.RuleResponseItem) *model.ApiError {
-
-	groupName := fmt.Sprintf("%d-groupname", rule.Id)
-
-	err := r.ruleManager.AddGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule.Data, groupName)
-
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-
-	return nil
+func (r *ClickHouseReader) GetConn() clickhouse.Conn {
+	return r.db
 }
 
 func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiError {

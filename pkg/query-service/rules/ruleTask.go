@@ -3,20 +3,18 @@ package rules
 import (
 	"context"
 	"fmt"
-	"net/url"
+	"github.com/go-kit/log"
+	opentracing "github.com/opentracing/opentracing-go"
+	"go.signoz.io/query-service/utils/labels"
+	"go.uber.org/zap"
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/utils/labels"
 )
 
-// Group is a set of rules that have a logical relation.
-type Group struct {
+// RuleTask holds a rule (with composite queries)
+// and evaluates the rule at a given frequency
+type RuleTask struct {
 	name                 string
 	file                 string
 	frequency            time.Duration
@@ -35,16 +33,24 @@ type Group struct {
 	managerDone chan struct{}
 
 	logger log.Logger
+	notify NotifyFunc
 }
 
 func groupKey(name, file string) string {
 	return name + ";" + file
 }
 
-// NewGroup makes a new Group with the given name, options, and rules.
-func NewGroup(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions) *Group {
+const DefaultFrequency = 1 * time.Minute
 
-	return &Group{
+// newRuleTask makes a new RuleTask with the given name, options, and rules.
+func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
+	zap.S().Info("Initiating a new rule group: %v with frequency: %v", name, frequency)
+	fmt.Println("Initiating a new rule group with frequency", name, frequency)
+	if time.Now() == time.Now().Add(frequency) {
+		frequency = DefaultFrequency
+	}
+
+	return &RuleTask{
 		name:                 name,
 		file:                 file,
 		frequency:            frequency,
@@ -53,18 +59,22 @@ func NewGroup(name, file string, frequency time.Duration, rules []Rule, opts *Ma
 		seriesInPreviousEval: make([]map[string]labels.Labels, len(rules)),
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
+		notify:               notify,
 		logger:               log.With(opts.Logger, "group", name),
 	}
 }
 
 // Name returns the group name.
-func (g *Group) Name() string { return g.name }
+func (g *RuleTask) Name() string { return g.name }
+
+// Name returns the group name.
+func (g *RuleTask) Type() TaskType { return TaskTypeCh }
 
 // Rules returns the group's rules.
-func (g *Group) Rules() []Rule { return g.rules }
+func (g *RuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
-func (g *Group) Interval() time.Duration { return g.frequency }
+func (g *RuleTask) Interval() time.Duration { return g.frequency }
 
 type QueryOrigin struct{}
 
@@ -72,12 +82,12 @@ func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) con
 	return context.WithValue(ctx, QueryOrigin{}, data)
 }
 
-func (g *Group) run(ctx context.Context) {
+func (g *RuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-
+	fmt.Println(" group run to begin at: ", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
@@ -85,7 +95,7 @@ func (g *Group) run(ctx context.Context) {
 	}
 
 	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
-		"ruleGroup": map[string]string{
+		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
 	})
@@ -144,12 +154,12 @@ func (g *Group) run(ctx context.Context) {
 	}
 }
 
-func (g *Group) stop() {
+func (g *RuleTask) Stop() {
 	close(g.done)
 	<-g.terminated
 }
 
-func (g *Group) hash() uint64 {
+func (g *RuleTask) hash() uint64 {
 	l := labels.New(
 		labels.Label{Name: "name", Value: g.name},
 	)
@@ -157,7 +167,7 @@ func (g *Group) hash() uint64 {
 }
 
 // ThresholdRules returns the list of the group's threshold rules.
-func (g *Group) ThresholdRules() []*ThresholdRule {
+func (g *RuleTask) ThresholdRules() []*ThresholdRule {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	var alerts []*ThresholdRule
@@ -175,7 +185,7 @@ func (g *Group) ThresholdRules() []*ThresholdRule {
 }
 
 // HasAlertingRules returns true if the group contains at least one AlertingRule.
-func (g *Group) HasAlertingRules() bool {
+func (g *RuleTask) HasAlertingRules() bool {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 
@@ -188,49 +198,49 @@ func (g *Group) HasAlertingRules() bool {
 }
 
 // GetEvaluationDuration returns the time in seconds it took to evaluate the rule group.
-func (g *Group) GetEvaluationDuration() time.Duration {
+func (g *RuleTask) GetEvaluationDuration() time.Duration {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	return g.evaluationDuration
 }
 
 // SetEvaluationDuration sets the time in seconds the last evaluation took.
-func (g *Group) SetEvaluationDuration(dur time.Duration) {
+func (g *RuleTask) SetEvaluationDuration(dur time.Duration) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.evaluationDuration = dur
 }
 
 // GetEvaluationTime returns the time in seconds it took to evaluate the rule group.
-func (g *Group) GetEvaluationTime() time.Duration {
+func (g *RuleTask) GetEvaluationTime() time.Duration {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	return g.evaluationTime
 }
 
 // setEvaluationTime sets the time in seconds the last evaluation took.
-func (g *Group) setEvaluationTime(dur time.Duration) {
+func (g *RuleTask) setEvaluationTime(dur time.Duration) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.evaluationTime = dur
 }
 
 // GetLastEvaluation returns the time the last evaluation of the rule group took place.
-func (g *Group) GetLastEvaluation() time.Time {
+func (g *RuleTask) GetLastEvaluation() time.Time {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	return g.lastEvaluation
 }
 
 // setLastEvaluation updates evaluationTimestamp to the timestamp of when the rule group was last evaluated.
-func (g *Group) setLastEvaluation(ts time.Time) {
+func (g *RuleTask) setLastEvaluation(ts time.Time) {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
 	g.lastEvaluation = ts
 }
 
 // EvalTimestamp returns the immediately preceding consistently slotted evaluation time.
-func (g *Group) EvalTimestamp(startTime int64) time.Time {
+func (g *RuleTask) EvalTimestamp(startTime int64) time.Time {
 	var (
 		offset = int64(g.hash() % uint64(g.frequency))
 		adjNow = startTime - offset
@@ -248,7 +258,12 @@ func nameAndLabels(rule Rule) string {
 //
 // Rules are matched based on their name and labels. If there are duplicates, the
 // first is matched with the first, second with the second etc.
-func (g *Group) CopyState(from *Group) {
+func (g *RuleTask) CopyState(fromTask Task) error {
+
+	from, ok := fromTask.(*RuleTask)
+	if !ok {
+		return fmt.Errorf("invalid from task for copy")
+	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation
 
@@ -295,10 +310,12 @@ func (g *Group) CopyState(from *Group) {
 			}
 		}
 	}
+	return nil
 }
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
-func (g *Group) Eval(ctx context.Context, ts time.Time) {
+func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
+	fmt.Println("group eval started:", ts)
 	var samplesTotal float64
 	for i, rule := range g.rules {
 		if rule == nil {
@@ -322,12 +339,12 @@ func (g *Group) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
-			vector, err := rule.Eval(ctx, ts, g.opts.Queriers, g.opts.ExternalURL)
+			data, err := rule.Eval(ctx, ts, g.opts.Queriers, g.opts.ExternalURL)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
 
-				level.Warn(g.logger).Log("msg", "Evaluating rule failed", "rule", rule, "err", err)
+				zap.S().Warn("msg:", "Evaluating rule failed", "/trule:", rule, "/terr: ", err)
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.
@@ -336,10 +353,11 @@ func (g *Group) Eval(ctx context.Context, ts time.Time) {
 				//}
 				return
 			}
+			vector := data.(Vector)
 			samplesTotal += float64(len(vector))
 
 			if ar, ok := rule.(*ThresholdRule); ok {
-				ar.sendAlerts(ctx, ts, g.opts.ResendDelay, g.interval, g.opts.NotifyFunc)
+				ar.sendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
 			}
 
 			seriesReturned := make(map[string]labels.Labels, len(g.seriesInPreviousEval[i]))

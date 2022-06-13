@@ -8,7 +8,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
-	"k8s.io/apimachinery/pkg/labels"
+	"go.signoz.io/query-service/utils/labels"
 )
 
 type ApiError struct {
@@ -75,11 +75,11 @@ type AlertDiscovery struct {
 
 // Alert has info for an alert.
 type AlertingRuleResponse struct {
-	Labels      labels.Labels `json:"labels"`
-	Annotations labels.Labels `json:"annotations"`
-	State       string        `json:"state"`
-	Name        string        `json:"name"`
-	Id          int           `json:"id"`
+	Labels      labels.BaseLabels `json:"labels"`
+	Annotations labels.BaseLabels `json:"annotations"`
+	State       string            `json:"state"`
+	Name        string            `json:"name"`
+	Id          int               `json:"id"`
 	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
 	// Value       float64       `json:"value"`
 }

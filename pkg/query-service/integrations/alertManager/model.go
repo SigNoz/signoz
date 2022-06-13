@@ -31,10 +31,10 @@ type ReceiverResponse struct {
 type Alert struct {
 	// Label value pairs for purpose of aggregation, matching, and disposition
 	// dispatching. This must minimally include an "alertname" label.
-	Labels labels.Labels `json:"labels"`
+	Labels labels.BaseLabels `json:"labels"`
 
 	// Extra key/value information which does not define alert identity.
-	Annotations labels.Labels `json:"annotations"`
+	Annotations labels.BaseLabels `json:"annotations"`
 
 	// The known time range for this alert. Both ends are optional.
 	StartsAt     time.Time `json:"startsAt,omitempty"`

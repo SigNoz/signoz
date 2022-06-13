@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"time"
 
 	html_template "html/template"
 	text_template "text/template"
@@ -49,10 +48,6 @@ type TemplateExpander struct {
 	funcMap text_template.FuncMap
 }
 
-func query(ctx context.Context, q string, ts time.Time, queryFn QueryFunc) (tmplQueryResults, error) {
-	return nil, nil
-}
-
 // NewTemplateExpander returns a template expander ready to use.
 func NewTemplateExpander(
 	ctx context.Context,
@@ -60,7 +55,6 @@ func NewTemplateExpander(
 	name string,
 	data interface{},
 	timestamp times.Time,
-	queryFunc QueryFunc,
 	externalURL *url.URL,
 ) *TemplateExpander {
 	return &TemplateExpander{
@@ -68,9 +62,6 @@ func NewTemplateExpander(
 		name: name,
 		data: data,
 		funcMap: text_template.FuncMap{
-			"query": func(q string) (tmplQueryResults, error) {
-				return query(ctx, q, time.Now(), queryFunc)
-			},
 			"first": func(v tmplQueryResults) (*tmplQueryRecord, error) {
 				if len(v) > 0 {
 					return v[0], nil

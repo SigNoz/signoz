@@ -1,8 +1,12 @@
 package rules
 
 import (
-	"go.signoz.io/query-service/model"
+	"fmt"
+	"github.com/jmoiron/sqlx"
+	qsmodel "go.signoz.io/query-service/model"
 	"go.uber.org/zap"
+	"strconv"
+	"time"
 )
 
 // Data store to capture user alert rule settings
@@ -17,7 +21,7 @@ type RuleDB interface {
 	DeleteRuleTx(id string) (string, Tx, error)
 
 	// GetRules fetches the rule definitions from db
-	GetRules() (*[]model.RuleResponseItem, error)
+	GetRules() ([]qsmodel.RuleResponseItem, error)
 }
 
 type Tx interface {
@@ -29,8 +33,10 @@ type ruleDB struct {
 	*sqlx.DB
 }
 
+// todo: move init methods for creating tables
+
 func newRuleDB(db *sqlx.DB) RuleDB {
-	return ruleDB{
+	return &ruleDB{
 		db,
 	}
 }
@@ -76,63 +82,53 @@ func (r *ruleDB) EditRuleTx(rule string, id string) (string, Tx, error) {
 
 	tx, err := r.Begin()
 	if err != nil {
-		return groupName, err
+		return groupName, tx, err
 	}
 
 	stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
 		tx.Rollback()
-		return groupName, err
+		return groupName, tx, err
 	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
 		tx.Rollback() // return an error too, we may want to wrap them
-		return groupName, err
+		return groupName, tx, err
 	}
-
-	//		err = r.ruleManager.EditGroup(time.Duration(r.promConfig.GlobalConfig.EvaluationInterval), rule, groupName)
-
-	//	if err != nil {
-	//	tx.Rollback()
-	//	return &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	//}
-
 	return groupName, tx, nil
 }
 
 func (r *ruleDB) DeleteRuleTx(id string) (string, Tx, error) {
 
 	idInt, _ := strconv.Atoi(id)
-
+	groupName := fmt.Sprintf("%d-groupname", idInt)
 	tx, err := r.Begin()
 	if err != nil {
-		return nil, err
+		return groupName, tx, err
 	}
 
 	stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
 
 	if err != nil {
-		return nil, err
+		return groupName, tx, err
 	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(idInt); err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
 		tx.Rollback() // return an error too, we may want to wrap them
-		return nil, err
+		return groupName, tx, err
 	}
-
-	groupName := fmt.Sprintf("%d-groupname", idInt)
 
 	return groupName, tx, nil
 }
 
-func (r *ruleDB) GetRules() ([]model.RuleResponseItem{}, error){
+func (r *ruleDB) GetRules() ([]qsmodel.RuleResponseItem, error) {
 
-	rules := []model.RuleResponseItem{}
+	rules := []qsmodel.RuleResponseItem{}
 
 	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules")
 
