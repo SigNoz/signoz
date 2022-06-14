@@ -73,7 +73,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 		<AutoComplete
 			dropdownClassName="certain-category-search-dropdown"
 			dropdownMatchSelectWidth={500}
-			style={{ width: 300 }}
+			style={{ width: '100%' }}
 			options={options}
 			value={selectedKey}
 			onChange={(value): void => {

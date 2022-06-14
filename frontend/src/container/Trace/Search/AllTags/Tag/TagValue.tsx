@@ -7,7 +7,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { SelectComponent } from './styles';
+import { AutoCompleteComponent } from './styles';
 
 function TagValue(props: TagValueProps): JSX.Element {
 	const { tag, setLocalSelectedTags, index, tagKey } = props;
@@ -34,7 +34,18 @@ function TagValue(props: TagValueProps): JSX.Element {
 	);
 
 	return (
-		<SelectComponent
+		<AutoCompleteComponent
+			options={data?.payload?.map((e) => ({
+				label: e.tagValues,
+				value: e.tagValues,
+			}))}
+			allowClear
+			defaultOpen
+			showSearch
+			filterOption={(inputValue, option): boolean =>
+				option?.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+			}
+			disabled={isLoading}
 			value={selectedValues[0]}
 			onSelect={(value: unknown): void => {
 				if (typeof value === 'string') {
@@ -49,7 +60,6 @@ function TagValue(props: TagValueProps): JSX.Element {
 					]);
 				}
 			}}
-			loading={isLoading || false}
 		>
 			{data &&
 				data.payload &&
@@ -58,7 +68,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 						{suggestion.tagValues}
 					</Select.Option>
 				))}
-		</SelectComponent>
+		</AutoCompleteComponent>
 	);
 }
 
