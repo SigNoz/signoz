@@ -20,8 +20,11 @@ export const Container = styled(Space)`
 		margin-bottom: 1rem;
 	}
 
-	.ant-space-item:not(:last-child) {
+	.ant-space-item:not(:last-child, :nth-child(2)) {
 		width: 100%;
+	}
+	.ant-space-item:nth-child(2) {
+		width: 50%;
 	}
 `;
 
