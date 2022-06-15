@@ -64,8 +64,8 @@ const (
 )
 const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
-	SIGNOZ_SAMPLES_TABLENAME    = "samples"
-	SIGNOZ_TIMESERIES_TABLENAME = "time_series"
+	SIGNOZ_SAMPLES_TABLENAME    = "samples_v2"
+	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

@@ -85,52 +85,54 @@ func formattedValue(v interface{}) string {
 
 // BuildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
-func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, tableName string) (string, error) {
-	queryString := ""
-	for idx, item := range fs.Items {
-		fmtVal := formattedValue(item.Value)
-		switch op := strings.ToLower(item.Operation); op {
-		case "eq":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') = %s", tableName, item.Key, fmtVal)
-		case "neq":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') != %s", tableName, item.Key, fmtVal)
-		case "in":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') IN %s", tableName, item.Key, fmtVal)
-		case "nin":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') NOT IN %s", tableName, item.Key, fmtVal)
-		case "like":
-			queryString += fmt.Sprintf("like(JSONExtractString(%s.labels,'%s'), %s)", tableName, item.Key, fmtVal)
-		case "match":
-			queryString += fmt.Sprintf("match(JSONExtractString(%s.labels,'%s'), %s)", tableName, item.Key, fmtVal)
-		default:
-			return "", fmt.Errorf("unsupported operation")
+func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, metricName string, aggregateOperator model.AggregateOperator) (string, error) {
+	var conditions []string
+	conditions = append(conditions, fmt.Sprintf("metric_name = %s", formattedValue(metricName)))
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			fmtVal := formattedValue(item.Value)
+			switch op := strings.ToLower(item.Operation); op {
+			case "eq":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s = %s", item.Key, fmtVal))
+			case "neq":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s != %s", item.Key, fmtVal))
+			case "in":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s IN %s", item.Key, fmtVal))
+			case "nin":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s NOT IN %s", item.Key, fmtVal))
+			case "like":
+				conditions = append(conditions, fmt.Sprintf("like(labels_object.%s, %s)", item.Key, fmtVal))
+			case "match":
+				conditions = append(conditions, fmt.Sprintf("match(labels_object.%s, %s)", item.Key, fmtVal))
+			default:
+				return "", fmt.Errorf("unsupported operation")
+			}
 		}
-		if idx != len(fs.Items)-1 {
-			queryString += " " + fs.Operation + " "
+	}
+	queryString := strings.Join(conditions, " AND ")
+
+	var selectLabels string
+	if len(groupTags) == 0 && aggregateOperator == model.NOOP {
+		selectLabels = "labels, "
+	} else {
+		for _, tag := range groupTags {
+			selectLabels += fmt.Sprintf(" labels_object.%s as %s,", tag, tag)
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM %s.%s WHERE %s", constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
 
 func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, tableName string) (string, error) {
-	nameFilterItem := model.FilterItem{Key: "__name__", Value: mq.MetricName, Operation: "EQ"}
-	if mq.TagFilters == nil {
-		mq.TagFilters = &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-			nameFilterItem,
-		}}
-	} else {
-		mq.TagFilters.Items = append(mq.TagFilters.Items, nameFilterItem)
-	}
 
-	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, tableName)
+	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, mq.GroupingTags, mq.MetricName, mq.AggregateOperator)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms < %d", formattedValue(mq.MetricName), qp.Start, qp.End)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -191,11 +193,8 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 }
 
 func groupBy(tags ...string) string {
-	groupByFilter := "ts"
-	for _, tag := range tags {
-		groupByFilter += fmt.Sprintf(", JSONExtractString(labels,'%s') as %s", tag, tag)
-	}
-	return groupByFilter
+	tags = append(tags, "ts")
+	return strings.Join(tags, ",")
 }
 
 func groupSelect(tags ...string) string {

@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   clickhouse:
-    image: altinity/clickhouse-server:21.12.3.32.altinitydev.arm
+    image: clickhouse/clickhouse-server:22.4.5-alpine
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
     restart: on-failure

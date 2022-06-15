@@ -556,7 +556,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	var err error
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
 	case model.QUERY_BUILDER:
-		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, "time_series")
+		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		if runQueries.Err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
