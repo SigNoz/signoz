@@ -368,10 +368,8 @@ type MetricPoint struct {
 	Value     float64
 }
 
-func (mp *MetricPoint) MarshalJSON() ([]byte, error) {
-	a := []interface{}{
-		mp.Timestamp,
-		mp.Value,
-	}
-	return json.Marshal(a)
+// MarshalJSON implements json.Marshaler.
+func (p *MetricPoint) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
 }
