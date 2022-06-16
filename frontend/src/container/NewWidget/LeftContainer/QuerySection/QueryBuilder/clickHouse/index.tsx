@@ -33,7 +33,7 @@ function ClickHouseQueryContainer({
 		if (legend !== undefined) {
 			currentIndexQuery.legend = legend;
 		}
-		
+
 		if (toggleDisable) {
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
 		}

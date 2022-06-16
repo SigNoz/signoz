@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Row } from 'antd';
+import { Input, notification, Row } from 'antd';
 import {
 	ClickHouseQueryTemplate,
 	QueryBuilderFormulaTemplate,
@@ -74,7 +74,7 @@ function QueryBuilderQueryContainer({
 	}) => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
 		const currentIndexFormula = allFormulas[formulaIndex];
 
@@ -89,10 +89,13 @@ function QueryBuilderQueryContainer({
 		if (toggleDelete) {
 			allFormulas.splice(formulaIndex, 1);
 		}
-		console.log({ queryData })
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const addQueryHandler = (): void => {
+
+		notification.error({
+			message:'',
+		});
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder.push({
 			name: GetQueryName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder,
@@ -108,7 +111,7 @@ function QueryBuilderQueryContainer({
 		].push({
 			name: GetFormulaName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 				],
 			),
 			...QueryBuilderFormulaTemplate,
@@ -133,7 +136,6 @@ function QueryBuilderQueryContainer({
 				Query
 			</QueryButton>
 			<div style={{ marginTop: '1rem' }}>
-
 				{metricsBuilderQueries.formulas.map((f, idx) => (
 					<MetricsBuilderFormula
 						key={f.name}

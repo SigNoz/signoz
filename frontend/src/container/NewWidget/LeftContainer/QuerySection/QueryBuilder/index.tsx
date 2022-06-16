@@ -15,10 +15,10 @@ import { v4 as uuid } from 'uuid';
 
 import { InputContainer, QueryBuilderWrapper, QueryWrapper } from '../styles';
 import { TQueryCategories } from '../types';
-import MetricsBuilder from './queryBuilder/query';
-import MetricTagKeyFilter from './queryBuilder/MetricTagKeyFilter';
 import { AggregateFunctions } from './Options';
 import PromQLQueryBuilder from './promQL/promQL';
+import MetricTagKeyFilter from './queryBuilder/MetricTagKeyFilter';
+import MetricsBuilder from './queryBuilder/query';
 
 const { Option } = Select;
 function QueryBuilder({

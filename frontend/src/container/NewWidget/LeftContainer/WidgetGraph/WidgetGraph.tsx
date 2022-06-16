@@ -53,7 +53,7 @@ function WidgetGraph({
 	const chartDataSet = getChartData({
 		queryData: queryData.data,
 	});
-	
+
 	return (
 		<GridGraphComponent
 			title={title}

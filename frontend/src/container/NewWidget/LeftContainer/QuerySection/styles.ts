@@ -1,6 +1,7 @@
+import { presetPrimaryColors } from '@ant-design/colors';
 import { Button } from 'antd';
 import styled from 'styled-components';
-import { presetPrimaryColors } from '@ant-design/colors';
+
 export const InputContainer = styled.div`
 	width: 50%;
 `;
@@ -27,7 +28,6 @@ export const QueryWrapper = styled.div`
 `;
 
 export const QueryBuilderWrapper = styled.div`
-	
 	background: ${({ isDarkMode }) => (isDarkMode ? '#000' : '#efefef')};
 `;
 

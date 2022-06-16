@@ -11,6 +11,7 @@ export enum EQueryType {
 }
 
 export enum EAggregateOperator {
+	NOOP = 19,
 	COUNT = 0,
 	COUNT_DISTINCT = 1,
 	SUM = 2,
@@ -30,5 +31,4 @@ export enum EAggregateOperator {
 	RATE_AVG = 16,
 	RATE_MAX = 17,
 	RATE_MIN = 18,
-	NOOP = 19,
 }

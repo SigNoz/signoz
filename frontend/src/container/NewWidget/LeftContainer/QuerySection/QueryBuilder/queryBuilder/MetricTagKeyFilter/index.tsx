@@ -91,6 +91,9 @@ function MetricTagKeyFilter({
 
 				if (generatedQuery) {
 					dispatchQueries([...queries, generatedQuery]);
+					setSelectedValues([]);
+					setStaging([]);
+					send('RESET');
 				}
 			},
 		},
@@ -154,7 +157,6 @@ function MetricTagKeyFilter({
 							);
 						},
 					)}
-
 			</div>
 			<div>
 				{map(staging, (item, idx) => {
@@ -164,6 +166,7 @@ function MetricTagKeyFilter({
 
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Select
+					disabled={!metricName}
 					placeholder={`Select ${state.value === 'Idle' ? 'Tag Key Pair' : state.value
 						}`}
 					onChange={handleChange}

@@ -9,8 +9,7 @@ const { TextArea } = Input;
 function MetricsBuilderFormula({
 	formulaData,
 	formulaIndex,
-	handleFormulaChange
-
+	handleFormulaChange,
 }): JSX.Element {
 	return (
 		<QueryHeader

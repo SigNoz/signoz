@@ -1,5 +1,4 @@
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
-import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME } from 'container/NewWidget/LeftContainer/QuerySection/constants';
@@ -9,7 +8,7 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';

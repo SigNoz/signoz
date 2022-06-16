@@ -113,29 +113,6 @@ function GridCardGraph({
 					globalSelectedInterval,
 				});
 
-				// await Promise.all(
-				// 	widget.query
-				// 		.map(async (query) => {
-				// 			const result = await GetQueryResults({
-				// 				end,
-				// 				query: encodeURIComponent(query.query),
-				// 				start,
-
-				// 				query: selectedWidget?.query || [],
-				// 				selectedTime: selectedTime.enum,
-				// 				widgetId: selectedWidget?.id || '',
-				// 				graphType: selectedGraph,
-				// 				globalSelectedInterval,
-				// 			});
-
-				// 			return {
-				// 				query: query.query,
-				// 				queryData: result,
-				// 				legend: query.legend,
-				// 			};
-				// 		}),
-				// );
-
 				const isError = response.error;
 
 				if (isError != null) {
@@ -247,7 +224,6 @@ function GridCardGraph({
 			</>
 		);
 	}
-
 
 	return (
 		<span
