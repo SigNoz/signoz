@@ -182,7 +182,6 @@ function NewWidget({
 		getQueryResult();
 	}, [getQueryResult]);
 
-	console.log({ hasUnstagedChanges });
 	return (
 		<Container>
 			<ButtonContainer>
