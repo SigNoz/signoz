@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, Modal, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
@@ -28,6 +28,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
+import QueryTypeTag from './LeftContainer/QueryTypeTag';
 import RightContainer from './RightContainer';
 import TimeItems, { timePreferance } from './RightContainer/timeItems';
 import {
@@ -87,6 +88,8 @@ function NewWidget({
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
 	);
+	const [saveModal, setSaveModal] = useState(false);
+	const [hasUnstagedChanges, setHasUnstagedChanges] = useState(false);
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -116,17 +119,17 @@ function NewWidget({
 			dashboardId,
 		});
 	}, [
-		opacity,
-		description,
-		query,
-		selectedTime,
-		stacked,
-		title,
-		selectedNullZeroValue,
 		saveSettingOfPanel,
-		selectedDashboard,
-		dashboardId,
+		selectedDashboard.uuid,
+		description,
+		stacked,
+		selectedNullZeroValue,
+		opacity,
+		selectedTime.enum,
+		title,
 		yAxisUnit,
+		query,
+		dashboardId,
 	]);
 
 	const onClickApplyHandler = (): void => {
@@ -179,10 +182,11 @@ function NewWidget({
 		getQueryResult();
 	}, [getQueryResult]);
 
+	console.log({ hasUnstagedChanges });
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button type="primary" onClick={onClickSaveHandler}>
+				<Button type="primary" onClick={() => setSaveModal(true)}>
 					Save
 				</Button>
 				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
@@ -192,6 +196,7 @@ function NewWidget({
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
 					<LeftContainer
+						handleUnstagedChanges={setHasUnstagedChanges}
 						selectedTime={selectedTime}
 						selectedGraph={selectedGraph}
 						yAxisUnit={yAxisUnit}
@@ -220,6 +225,32 @@ function NewWidget({
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
+			<Modal
+				title="Save Changes"
+				focusTriggerAfterClose
+				forceRender
+				destroyOnClose
+				closable
+				onCancel={(): void => setSaveModal(false)}
+				onOk={(): void => {
+					onClickSaveHandler();
+				}}
+				centered
+				visible={saveModal}
+			>
+				{hasUnstagedChanges ? (
+					<Typography>
+						Looks like you have unstaged changes. Would you like to SAVE the last
+						staged changes?(If you want to stage new changes - Press Stage & Run Query
+						and then try saving again.
+					</Typography>
+				) : (
+					<Typography>
+						Your graph built with <QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be Saved
+						press OK to confirm
+					</Typography>
+				)}
+			</Modal>
 		</Container>
 	);
 }

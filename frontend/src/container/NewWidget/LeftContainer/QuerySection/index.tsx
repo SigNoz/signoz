@@ -48,6 +48,7 @@ import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
 const { TabPane } = Tabs;
 function QuerySection({
+	handleUnstagedChanges,
 	selectedTime,
 	createQuery,
 	updateQuery,
@@ -115,6 +116,12 @@ function QuerySection({
 		return !isEqual(queryA[keyOfConcern], queryB[keyOfConcern]);
 	};
 
+	useEffect(() => {
+		handleUnstagedChanges(
+			queryDiff(query, localQueryChanges, parseInt(queryCategory)),
+		);
+	}, [handleUnstagedChanges, localQueryChanges, query, queryCategory]);
+
 	const purgeLocalChanges = () => {
 		setLocalQueryChanges(query);
 	};
@@ -153,12 +160,12 @@ function QuerySection({
 				}
 			}
 		}
-			
+
 		setQueryCategory(parseInt(qCategory));
 		const newLocalQuery = {
 			...cloneDeep(query),
-			queryType: parseInt(qCategory)
-		}
+			queryType: parseInt(qCategory),
+		};
 		setLocalQueryChanges(newLocalQuery);
 		regenRctKeys();
 		updateQuery({
@@ -177,7 +184,6 @@ function QuerySection({
 			return [...prevState];
 		});
 	};
-	console.log({ query, localQueryChanges })
 	return (
 		<>
 			<div style={{ display: 'flex' }}>
@@ -321,6 +327,7 @@ const mapDispatchToProps = (
 
 interface QueryProps extends DispatchProps {
 	selectedTime: timePreferance;
+	handleUnstagedChanges: (arg0: boolean) => void;
 }
 
 export default connect(null, mapDispatchToProps)(QuerySection);

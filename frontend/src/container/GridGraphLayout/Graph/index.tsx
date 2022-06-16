@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
+import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
@@ -204,10 +205,6 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
-	if (state.loading === true || state.payload === undefined) {
-		return <Spinner height="20vh" tip="Loading..." />;
-	}
-
 	if (state.error && !isEmptyLayout) {
 		return (
 			<>
@@ -220,10 +217,15 @@ function GridCardGraph({
 					onDelete={(): void => onToggleModal(setDeleteModal)}
 				/>
 
-				{/* <ErrorContainer>{errorMessage}</ErrorContainer> */}
+				<ErrorContainer>{state.errorMessage}</ErrorContainer>
 			</>
 		);
 	}
+
+	if (state.loading === true || state.payload === undefined) {
+		return <Spinner height="20vh" tip="Loading..." />;
+	}
+
 
 	return (
 		<span

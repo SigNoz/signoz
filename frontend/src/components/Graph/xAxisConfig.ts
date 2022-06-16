@@ -1,4 +1,5 @@
 import { Chart, TimeUnit } from 'chart.js';
+import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -109,14 +110,14 @@ export const useXAxisTimeUnit = (data: Chart['data']): IAxisTimeConfig => {
 		let minTime = Number.POSITIVE_INFINITY;
 		let maxTime = Number.NEGATIVE_INFINITY;
 		data?.labels?.forEach((timeStamp: unknown): void => {
-			const getTimeStamp = (time: string | number): Date | number | string => {
-				if (typeof timeStamp === 'string') {
-					return Date.parse(timeStamp);
+			const getTimeStamp = (time: Date | number): Date | number | string => {
+				if (time instanceof Date) {
+					return Date.parse(time.toString());
 				}
 
 				return time;
 			};
-			const time = getTimeStamp(timeStamp as string | number);
+			const time = getTimeStamp(timeStamp as Date | number);
 
 			minTime = Math.min(parseInt(time.toString(), 10), minTime);
 			maxTime = Math.max(parseInt(time.toString(), 10), maxTime);
