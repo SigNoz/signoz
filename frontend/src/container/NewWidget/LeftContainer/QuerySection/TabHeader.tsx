@@ -13,7 +13,7 @@ function TabHeader({ tabName, hasUnstagedChanges }) {
         >
             {tabName}
             {hasUnstagedChanges && (
-                <Tooltip title="Looks like you have un-staged changes. Make sure you click 'Stage & Run Query' before saving it.">
+                <Tooltip title="Looks like you have un-staged changes. Make sure you click 'Stage & Run Query' if you want to save these changes.">
             <div
                 style={{
                     height: '0.6rem',

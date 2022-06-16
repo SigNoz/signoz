@@ -20,6 +20,7 @@ import QueryHeader from '../QueryHeader';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
 import ClickHouseQueryBuilder from './query';
+import { canCreateQueryAndFormula } from './utils';
 
 function QueryBuilderQueryContainer({
 	queryData,
@@ -74,7 +75,7 @@ function QueryBuilderQueryContainer({
 	}) => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
 		const currentIndexFormula = allFormulas[formulaIndex];
 
@@ -92,10 +93,12 @@ function QueryBuilderQueryContainer({
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const addQueryHandler = (): void => {
-
-		notification.error({
-			message:'',
-		});
+		if (!canCreateQueryAndFormula(queryData)) {
+			notification.error({
+				message: 'Unable to create query. You can create at max 10 queries and formulae.',
+			});
+			return;
+		}
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder.push({
 			name: GetQueryName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder,
@@ -106,12 +109,18 @@ function QueryBuilderQueryContainer({
 	};
 
 	const addFormulaHandler = (): void => {
+		if (!canCreateQueryAndFormula(queryData)) {
+			notification.error({
+				message: 'Unable to create formula. You can create at max 10 queries and formulae.',
+			});
+			return;
+		}
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 		].push({
 			name: GetFormulaName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 				],
 			),
 			...QueryBuilderFormulaTemplate,
