@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { QueryWrapper } from '../styles';
 
 function QueryHeader(props): JSX.Element {
-	const [collapse, setCollapse] = useState(false)
+	const [collapse, setCollapse] = useState(false);
 	return (
 		<QueryWrapper>
 			<Row style={{ justifyContent: 'space-between' }}>

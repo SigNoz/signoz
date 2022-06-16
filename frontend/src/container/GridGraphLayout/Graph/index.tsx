@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import getQueryResult from 'api/widgets/getQuery';
+import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
@@ -113,29 +114,6 @@ function GridCardGraph({
 					globalSelectedInterval,
 				});
 
-				// await Promise.all(
-				// 	widget.query
-				// 		.map(async (query) => {
-				// 			const result = await GetQueryResults({
-				// 				end,
-				// 				query: encodeURIComponent(query.query),
-				// 				start,
-
-				// 				query: selectedWidget?.query || [],
-				// 				selectedTime: selectedTime.enum,
-				// 				widgetId: selectedWidget?.id || '',
-				// 				graphType: selectedGraph,
-				// 				globalSelectedInterval,
-				// 			});
-
-				// 			return {
-				// 				query: query.query,
-				// 				queryData: result,
-				// 				legend: query.legend,
-				// 			};
-				// 		}),
-				// );
-
 				const isError = response.error;
 
 				if (isError != null) {
@@ -227,10 +205,6 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
-	if (state.loading === true || state.payload === undefined) {
-		return <Spinner height="20vh" tip="Loading..." />;
-	}
-
 	if (state.error && !isEmptyLayout) {
 		return (
 			<>
@@ -243,9 +217,13 @@ function GridCardGraph({
 					onDelete={(): void => onToggleModal(setDeleteModal)}
 				/>
 
-				{/* <ErrorContainer>{errorMessage}</ErrorContainer> */}
+				<ErrorContainer>{state.errorMessage}</ErrorContainer>
 			</>
 		);
+	}
+
+	if (state.loading === true || state.payload === undefined) {
+		return <Spinner height="20vh" tip="Loading..." />;
 	}
 
 

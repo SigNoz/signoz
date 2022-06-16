@@ -1,6 +1,7 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Layout } from 'react-grid-layout';
+import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 
 import { QueryData } from '../widgets/getQuery';
 
@@ -32,7 +33,7 @@ export interface Widgets {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	query: Query[];
+	query: Query;
 	queryData: {
 		loading: boolean;
 		error: boolean;
@@ -49,6 +50,48 @@ export interface Widgets {
 }
 
 export interface Query {
+	queryType: EQueryType;
+	promQL: IPromQLQuery;
+	metricsBuilder: {
+		formulas: IMetricsBuilderFormula[];
+		queryBuilder: IMetricsBuilderQuery[];
+	};
+}
+
+export interface IMetricsBuilderFormula {
+	expression: string;
+	disabled: boolean;
+	name: string;
+}
+export interface IMetricsBuilderQuery {
+	aggregateOperator: EAggregateOperator;
+	disabled: boolean;
+	name: string;
+	legend: string;
+	metricName: string;
+	groupBy: string[];
+	tagFilters: IQueryBuilderTagFilters[];
+}
+
+export interface IQueryBuilderTagFilters {
+	op: string;
+	items: {
+		id: string;
+		key: string;
+		op: string;
+		value: string[];
+	};
+}
+
+export interface IClickHouseQuery {
+	name: string;
+	rawQuery: string;
+	legend: string;
+	disabled: boolean;
+}
+export interface IPromQLQuery {
 	query: string;
-	legend?: string;
+	legend: string;
+	disabled: boolean;
+	name: string;
 }

@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, Row } from 'antd';
+import { Input, notification, Row } from 'antd';
 import {
 	ClickHouseQueryTemplate,
 	QueryBuilderFormulaTemplate,
@@ -20,6 +20,7 @@ import QueryHeader from '../QueryHeader';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
 import ClickHouseQueryBuilder from './query';
+import { canCreateQueryAndFormula } from './utils';
 
 function QueryBuilderQueryContainer({
 	queryData,
@@ -89,10 +90,15 @@ function QueryBuilderQueryContainer({
 		if (toggleDelete) {
 			allFormulas.splice(formulaIndex, 1);
 		}
-		console.log({ queryData })
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const addQueryHandler = (): void => {
+		if (!canCreateQueryAndFormula(queryData)) {
+			notification.error({
+				message: 'Unable to create query. You can create at max 10 queries and formulae.',
+			});
+			return;
+		}
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder.push({
 			name: GetQueryName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder,
@@ -103,6 +109,12 @@ function QueryBuilderQueryContainer({
 	};
 
 	const addFormulaHandler = (): void => {
+		if (!canCreateQueryAndFormula(queryData)) {
+			notification.error({
+				message: 'Unable to create formula. You can create at max 10 queries and formulae.',
+			});
+			return;
+		}
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 		].push({
@@ -133,7 +145,6 @@ function QueryBuilderQueryContainer({
 				Query
 			</QueryButton>
 			<div style={{ marginTop: '1rem' }}>
-
 				{metricsBuilderQueries.formulas.map((f, idx) => (
 					<MetricsBuilderFormula
 						key={f.name}

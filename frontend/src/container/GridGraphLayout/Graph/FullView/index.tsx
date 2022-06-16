@@ -50,7 +50,7 @@ function FullView({
 
 	const response = useQuery('FullViewGetMetricsQueryRange', () =>
 		GetMetricQueryRange({
-			selectedTime: widget.timePreferance,
+			selectedTime,
 			graphType: widget.panelTypes,
 			query: widget.query,
 			globalSelectedInterval: globalSelectedTime,

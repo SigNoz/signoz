@@ -43,6 +43,7 @@ export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
 export const DELETE_QUERY = 'DELETE_QUERY';
 export const UPDATE_QUERY_TYPE = 'UPDATE_QUERY_TYPE';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;

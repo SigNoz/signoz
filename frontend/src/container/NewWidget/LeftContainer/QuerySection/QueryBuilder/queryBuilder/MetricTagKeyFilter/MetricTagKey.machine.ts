@@ -27,10 +27,10 @@ export const ResourceAttributesFilterMachine =
 						actions: 'onSelectTagValue',
 						target: 'TagValue',
 					},
-					onBlur: {
-						actions: 'onBlurPurge',
-						target: 'Idle',
-					},
+					// onBlur: {
+					// 	actions: 'onBlurPurge',
+					// 	target: 'Idle',
+					// },
 					RESET: {
 						target: 'Idle',
 					},
@@ -39,8 +39,8 @@ export const ResourceAttributesFilterMachine =
 			TagValue: {
 				on: {
 					onBlur: {
-						actions: ['onValidateQuery', 'onBlurPurge'],
-						target: 'Idle',
+						actions: ['onValidateQuery'],
+						// target: 'Idle',
 					},
 					RESET: {
 						target: 'Idle',

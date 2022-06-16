@@ -1,3 +1,5 @@
+import { EAggregateOperator } from 'types/common/dashboard';
+
 export const PromQLQueryTemplate = {
 	query: '',
 	legend: '',
@@ -12,7 +14,7 @@ export const ClickHouseQueryTemplate = {
 
 export const QueryBuilderQueryTemplate = {
 	metricName: null,
-	aggregateOperator: null,
+	aggregateOperator: EAggregateOperator.NOOP,
 	tagFilters: {
 		op: 'AND',
 		items: [],

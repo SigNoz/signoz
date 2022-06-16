@@ -5,9 +5,9 @@ import {
 import { OperatorConversions } from 'constants/resourceAttributes';
 import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import { v4 as uuid } from 'uuid';
-import { TagKeyOperator } from '../../Options';
 
-import { IOption, IMetricBuilderTagKeyQuery } from './types';
+import { TagKeyOperator } from '../../Options';
+import { IMetricBuilderTagKeyQuery, IOption } from './types';
 
 export const OperatorSchema: IOption[] = TagKeyOperator;
 

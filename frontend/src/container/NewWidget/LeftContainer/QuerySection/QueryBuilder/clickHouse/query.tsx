@@ -22,7 +22,7 @@ function ClickHouseQueryBuilder({
 				handleQueryChange({ queryIndex, toggleDisable: true })
 			}
 			onDelete={(): void => {
-				handleQueryChange({ queryIndex, toggleDelete: true })
+				handleQueryChange({ queryIndex, toggleDelete: true });
 			}}
 		>
 			<MonacoEditor

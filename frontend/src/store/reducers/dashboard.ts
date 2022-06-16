@@ -497,7 +497,7 @@ const dashboard = (
 				],
 			};
 		}
-
+		
 		case DELETE_QUERY: {
 			const { currentIndex, widgetId } = action.payload;
 			const { dashboards } = state;

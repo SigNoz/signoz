@@ -7,8 +7,7 @@ import QueryHeader from '../QueryHeader';
 function PromQLQueryBuilder({
 	queryData,
 	queryIndex,
-	handleQueryChange
-
+	handleQueryChange,
 }): JSX.Element {
 	return (
 		<QueryHeader
@@ -28,10 +27,8 @@ function PromQLQueryBuilder({
 				size="middle"
 				defaultValue={queryData.query}
 				addonBefore="PromQL Query"
-				style={{marginBottom:'0.5rem'}}
+				style={{ marginBottom: '0.5rem' }}
 			/>
-
-
 
 			<Input
 				onChange={(event): void =>
@@ -40,9 +37,8 @@ function PromQLQueryBuilder({
 				size="middle"
 				defaultValue={queryData.legend}
 				addonBefore="Legend Format"
-				style={{marginBottom:'0.5rem'}}
+				style={{ marginBottom: '0.5rem' }}
 			/>
-
 		</QueryHeader>
 	);
 }

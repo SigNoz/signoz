@@ -37,7 +37,6 @@ export const UpdateDashboard = async ({
 					opacity: '',
 					panelTypes: graphType,
 					queryType: 0,
-
 					query: {
 						queryType: EQueryType.QUERY_BUILDER,
 						promQL: [

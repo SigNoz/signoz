@@ -4,7 +4,17 @@ import {
 	EyeFilled,
 	RightOutlined,
 } from '@ant-design/icons';
-import { Button, Col, AutoComplete,Divider, Input, Row, Select, Spin, Tabs } from 'antd';
+import {
+	AutoComplete,
+	Button,
+	Col,
+	Divider,
+	Input,
+	Row,
+	Select,
+	Spin,
+	Tabs,
+} from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
 import MonacoEditor from 'components/Editor';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -36,7 +46,6 @@ function MetricsBuilder({
 	const [metricNameList, setMetricNameList] = useState([]);
 	const [metricNameLoading, setMetricNameLoading] = useState(false);
 	const handleMetricNameSearch = async (searchQuery = '') => {
-		console.log(searchQuery);
 		setMetricNameList([]);
 		setMetricNameLoading(true);
 		const { payload } = await getMetricName(searchQuery);
@@ -45,6 +54,10 @@ function MetricsBuilder({
 			return;
 		}
 		setMetricNameList(payload.data);
+	};
+	const [aggregateFunctionList, setAggregateFunctionList] = useState(AggregateFunctions);
+	const handleAggregateFunctionsSearch = (searchQuery = '') => {
+		setAggregateFunctionList(AggregateFunctions.filter(({ label }) => label.includes(searchQuery.toUpperCase())) || [])
 	};
 
 	useEffect(() => {
@@ -69,11 +82,15 @@ function MetricsBuilder({
 					<Select
 						onChange={(e) => handleQueryChange({ queryIndex, aggregateFunction: e })}
 						defaultValue={queryData.aggregateOperator || AggregateFunctions[0]}
-						style={{ minWidth: 120 }}
-						options={AggregateFunctions}
+						style={{ minWidth: 150 }}
+						options={aggregateFunctionList}
+						showSearch
+						onSearch={handleAggregateFunctionsSearch}
+						filterOption={false}
+
 					/>
 				</div>
-				<Row style={{ gap: '3%',margin:'0.5rem 0' }}>
+				<Row style={{ gap: '3%', margin: '0.5rem 0' }}>
 					<Row style={{ flex: 2, gap: '3%' }}>
 						<Select
 							defaultValue="metrics"
@@ -102,8 +119,8 @@ function MetricsBuilder({
 							}}
 						/>
 					</Row>
-					<Col style={{ flex: 3, }}>
-						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
+					<Col style={{ flex: 3 }}>
+						<Row style={{ gap: '3%', marginBottom: '1rem', }}>
 							<Select
 								defaultValue="WHERE"
 								showArrow={false}
