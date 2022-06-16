@@ -166,11 +166,11 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT:
-		op := "count(*)"
+		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT_DISTINCT:
-		op := "count(distinct(value))"
+		op := "toFloat64(count(distinct(value)))"
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.NOOP:
