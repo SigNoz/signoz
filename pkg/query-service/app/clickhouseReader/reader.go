@@ -1188,7 +1188,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	m4xx := make(map[string]uint64)
 
 	for j := range service4xxItems {
-		m5xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
+		m4xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
 	}
 
 	for i := range serviceItems {
