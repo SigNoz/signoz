@@ -22,7 +22,6 @@ const getOrCreateLegendList = (
 		listContainer.style.height = '100%';
 		listContainer.style.flexWrap = 'wrap';
 		listContainer.style.justifyContent = 'center';
-
 		legendContainer?.appendChild(listContainer);
 	}
 

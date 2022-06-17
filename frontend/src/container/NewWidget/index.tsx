@@ -37,6 +37,7 @@ import {
 	LeftContainerWrapper,
 	PanelContainer,
 	RightContainerWrapper,
+	Tag,
 } from './styles';
 
 function NewWidget({
@@ -236,17 +237,18 @@ function NewWidget({
 				}}
 				centered
 				visible={saveModal}
+				width={600}
 			>
 				{hasUnstagedChanges ? (
 					<Typography>
 						Looks like you have unstaged changes. Would you like to SAVE the last
-						staged changes?(If you want to stage new changes - Press Stage & Run Query
-						and then try saving again.
+						staged changes? If you want to stage new changes - Press{' '}
+						<Tag>Stage & Run Query</Tag> and then try saving again.
 					</Typography>
 				) : (
 					<Typography>
-						Your graph built with <QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be Saved
-						press OK to confirm
+						Your graph built with{' '}
+						<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be Saved press OK to confirm
 					</Typography>
 				)}
 			</Modal>

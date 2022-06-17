@@ -27,7 +27,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
-import FullView from './FullView';
+import FullView from './FullView/index.metricsBuilder';
 import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
 function GridCardGraph({
