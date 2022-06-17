@@ -150,15 +150,12 @@ function QuerySection({
 			localQueryChanges,
 			parseInt(queryCategory),
 		);
-		if (unstagedChanges) {
-			if (showUnstagedStashConfirmBox()) {
-				const continueTabChange = window.confirm(
-					"You are trying to navigate to different tab with unstaged changes. Your current changes will be purged. Press 'Stage & Run Query' to stage them.",
-				);
-				if (!continueTabChange) {
-					return;
-				}
-			}
+
+		if (unstagedChanges && showUnstagedStashConfirmBox()) {
+			window.confirm(
+				"You are trying to navigate to different tab with unstaged changes. Your current changes will be purged. Press 'Stage & Run Query' to stage them.",
+			);
+			return;
 		}
 
 		setQueryCategory(parseInt(qCategory));

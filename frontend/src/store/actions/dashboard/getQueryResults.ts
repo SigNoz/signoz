@@ -55,7 +55,6 @@ export const GetMetricQueryRange = async ({
 				generatedFormulaPayload.queryName = formula.name;
 				generatedFormulaPayload.expression = formula.expression;
 				generatedFormulaPayload.disabled = formula.disabled;
-
 				builderQueries[formula.name] = generatedFormulaPayload;
 			});
 			QueryPayload.compositeMetricQuery.builderQueries = builderQueries;
@@ -64,6 +63,7 @@ export const GetMetricQueryRange = async ({
 		case EQueryType.CLICKHOUSE: {
 			const chQueries = {};
 			queryData.map((query) => {
+				if (!query.rawQuery) return;
 				chQueries[query.name] = {
 					query: query.rawQuery,
 					disabled: query.disabled,
@@ -76,6 +76,7 @@ export const GetMetricQueryRange = async ({
 		case EQueryType.PROM: {
 			const promQueries = {};
 			queryData.map((query) => {
+				if (!query.query) return;
 				promQueries[query.name] = {
 					query: query.query,
 					disabled: query.disabled,

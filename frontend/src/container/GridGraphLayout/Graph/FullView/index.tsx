@@ -47,14 +47,15 @@ function FullView({
 		name: getSelectedTime()?.name || '',
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
-
-	const response = useQuery('FullViewGetMetricsQueryRange', () =>
-		GetMetricQueryRange({
-			selectedTime,
-			graphType: widget.panelTypes,
-			query: widget.query,
-			globalSelectedInterval: globalSelectedTime,
-		}),
+	const response = useQuery(
+		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}`,
+		() =>
+			GetMetricQueryRange({
+				selectedTime: selectedTime.enum,
+				graphType: widget.panelTypes,
+				query: widget.query,
+				globalSelectedInterval: globalSelectedTime,
+			}),
 	);
 
 	const isError = response.error;

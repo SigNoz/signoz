@@ -1,6 +1,7 @@
-import { Tag } from 'antd';
 import React from 'react';
 import { EQueryType } from 'types/common/dashboard';
+
+import { Tag } from '../styles';
 
 function QueryTypeTag({ queryType }): JSX.Element {
 	switch (queryType) {
