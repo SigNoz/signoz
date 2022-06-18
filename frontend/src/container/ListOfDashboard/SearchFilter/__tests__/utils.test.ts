@@ -1,28 +1,31 @@
+import { Dashboard } from 'types/api/dashboard/getAll';
+import { v4 as uuid } from 'uuid';
+
 import { TOperator } from '../types';
 import { executeSearchQueries } from '../utils';
 
 describe('executeSearchQueries', () => {
-	const firstDashboard = {
+	const firstDashboard: Dashboard = {
 		id: 11111,
-		uuid: 'uuid1',
+		uuid: uuid(),
 		created_at: '',
 		updated_at: '',
 		data: {
 			title: 'first dashboard',
 		},
 	};
-	const secondDashboard = {
+	const secondDashboard: Dashboard = {
 		id: 22222,
-		uuid: 'uuid2',
+		uuid: uuid(),
 		created_at: '',
 		updated_at: '',
 		data: {
 			title: 'second dashboard',
 		},
 	};
-	const thirdDashboard = {
-		id: 22222,
-		uuid: 'uuid2',
+	const thirdDashboard: Dashboard = {
+		id: 333333,
+		uuid: uuid(),
 		created_at: '',
 		updated_at: '',
 		data: {
