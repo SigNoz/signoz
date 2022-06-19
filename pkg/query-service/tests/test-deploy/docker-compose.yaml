@@ -2,9 +2,11 @@ version: "2.4"
 
 services:
   clickhouse:
-    image: yandex/clickhouse-server:21.12.3.32
+    image: clickhouse/clickhouse-server:22.4.5-alpine
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
     restart: on-failure
     logging:
       options:
@@ -17,8 +19,8 @@ services:
       timeout: 5s
       retries: 3
     ports:
-        - "9000:9000"
-        - "8123:8123"
+      - "9000:9000"
+      - "8123:8123"
 
   alertmanager:
     image: signoz/alertmanager:0.23.0-0.1
