@@ -28,7 +28,7 @@ services:
     volumes:
       - ./data/alertmanager:/data
     command:
-      - --queryService.url=http://query-service:8080
+      - --queryService.url=http://query-service:8085
       - --storage.path=/data
     depends_on:
       - query-service
@@ -37,7 +37,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.8.0
+    image: signoz/query-service:0.8.2
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -65,7 +65,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.8.0
+    image: signoz/frontend:0.8.2
     deploy:
       restart_policy:
         condition: on-failure
@@ -78,7 +78,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.43.0-0.1
+    image: signoz/otelcontribcol:0.45.1-0.3
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -104,7 +104,7 @@ services:
       - clickhouse
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.43.0-0.1
+    image: signoz/otelcontribcol:0.45.1-0.3
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

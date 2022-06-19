@@ -52,7 +52,7 @@ extensions:
   health_check: {}
   zpages: {}
 exporters:
-  clickhouse:
+  clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
@@ -66,7 +66,7 @@ service:
     traces:
       receivers: [jaeger, otlp]
       processors: [signozspanmetrics/prometheus, batch]
-      exporters: [clickhouse]
+      exporters: [clickhousetraces]
     metrics:
       receivers: [otlp, hostmetrics]
       processors: [batch]
