@@ -1048,7 +1048,7 @@ func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForType(r.Context(), query)
+	result, apiErr := (*aH.reader).GetErrorIdForType(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

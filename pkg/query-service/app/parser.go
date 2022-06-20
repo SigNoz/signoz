@@ -379,6 +379,16 @@ func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
 		params.ErrorID = errorId
 	}
 
+	errorMessage := r.URL.Query().Get("errorMessage")
+	if len(errorMessage) != 0 {
+		params.ErrorMessage = errorMessage
+	}
+
+	timestamp, err := parseTime("timestamp", r)
+	if err != nil {
+		return nil, err
+	}
+	params.Timestamp = timestamp
 	return params, nil
 }
 

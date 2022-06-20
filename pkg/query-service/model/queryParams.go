@@ -192,7 +192,7 @@ type TTLParams struct {
 }
 
 type GetTTLParams struct {
-	Type      string
+	Type string
 }
 
 type GetErrorsParams struct {
@@ -201,7 +201,9 @@ type GetErrorsParams struct {
 }
 
 type GetErrorParams struct {
-	ErrorType   string
-	ErrorID     string
-	ServiceName string
+	ErrorType    string
+	ErrorID      string
+	ServiceName  string
+	ErrorMessage string
+	Timestamp    *time.Time
 }

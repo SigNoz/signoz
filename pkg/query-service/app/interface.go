@@ -43,7 +43,7 @@ type Reader interface {
 
 	GetErrors(ctx context.Context, params *model.GetErrorsParams) (*[]model.Error, *model.ApiError)
 	GetErrorForId(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
-	GetErrorForType(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
+	GetErrorIdForType(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
 	// Search Interfaces
 	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 

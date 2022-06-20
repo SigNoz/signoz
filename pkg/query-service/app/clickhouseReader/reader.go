@@ -2639,7 +2639,7 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
 	// TODO: Optimize this query further
-	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, exceptionStacktrace, exceptionEscaped, olderErrorId, newerErrorId FROM (SELECT *, lagInFrame(toNullable(errorID)) over w as olderErrorId, leadInFrame(toNullable(errorID)) over w as newerErrorId FROM %s.%s window w as (ORDER BY exceptionType, serviceName, timestamp rows between unbounded preceding and unbounded following)) WHERE errorID = @errorID", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, exceptionStacktrace, exceptionEscaped FROM %s.%s WHERE errorID = @errorID", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID)}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
@@ -2663,7 +2663,7 @@ func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model
 
 }
 
-func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
+func (r *ClickHouseReader) GetErrorIdForType(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
 
 	if queryParams.ErrorType == "" || queryParams.ServiceName == "" {
 		zap.S().Debug("errorType/serviceName missing from params")
@@ -2671,9 +2671,8 @@ func (r *ClickHouseReader) GetErrorForType(ctx context.Context, queryParams *mod
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	// TODO: Optimize this query further
-	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp , serviceName, exceptionType, exceptionMessage, exceptionStacktrace, exceptionEscaped, newerErrorId, olderErrorId FROM (SELECT *, lagInFrame(errorID) over w as olderErrorId, leadInFrame(errorID) over w as newerErrorId FROM %s.%s WHERE serviceName = @serviceName AND exceptionType = @errorType window w as (ORDER BY timestamp DESC rows between unbounded preceding and unbounded following))", r.traceDB, r.errorTable)
-	args := []interface{}{clickhouse.Named("serviceName", queryParams.ServiceName), clickhouse.Named("errorType", queryParams.ErrorType)}
+	query := fmt.Sprintf("SELECT errorID FROM %s.%s WHERE serviceName = @serviceName AND exceptionType = @errorType AND exceptionMessage = @errorMessage ORDER BY timestamp DESC LIMIT 1", r.traceDB, r.errorTable)
+	args := []interface{}{clickhouse.Named("serviceName", queryParams.ServiceName), clickhouse.Named("errorType", queryParams.ErrorType), clickhouse.Named("errorMessage", queryParams.ErrorMessage)}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
 

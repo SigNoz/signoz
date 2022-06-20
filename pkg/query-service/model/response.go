@@ -353,6 +353,4 @@ type ErrorWithSpan struct {
 	SpanID              string    `json:"spanID" ch:"spanID"`
 	TraceID             string    `json:"traceID" ch:"traceID"`
 	ServiceName         string    `json:"serviceName" ch:"serviceName"`
-	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
-	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }
