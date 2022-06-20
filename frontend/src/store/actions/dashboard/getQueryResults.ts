@@ -13,7 +13,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
-import { EQueryType } from 'types/common/dashboard';
+import { EDataSource, EPanelType, EQueryType, EReduceOperator } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 export const GetMetricQueryRange = async ({
@@ -26,10 +26,17 @@ export const GetMetricQueryRange = async ({
 	const queryKey = EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
 	const queryData = query[queryKey];
 	const legendMap = {};
+	let panelType = null;
+	if (graphType === 'TIME_SERIES') {
+		panelType = EPanelType.TIME_SERIES
+	} else if (graphType === 'VALUE') {
+		panelType = EPanelType.QUERY_VALUE
+	}
 	const QueryPayload = {
-		dataSource: 0,
+		dataSource: EDataSource.METRICS,
 		compositeMetricQuery: {
 			queryType,
+			panelType,
 		},
 	};
 	switch (queryType as EQueryType) {
@@ -46,6 +53,7 @@ export const GetMetricQueryRange = async ({
 
 				generatedQueryPayload.expression = query.name;
 				generatedQueryPayload.disabled = query.disabled;
+				generatedQueryPayload.reduceTo = query.reduceTo ?? EReduceOperator.LAST;
 				builderQueries[query.name] = generatedQueryPayload;
 				legendMap[query.name] = query.legend || '';
 			});
