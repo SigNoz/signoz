@@ -2,7 +2,7 @@ name: Playwright Tests
 on: [pull_request]
 
 jobs:
-  test:
+  playwright:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
