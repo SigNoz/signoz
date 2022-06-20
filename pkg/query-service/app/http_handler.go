@@ -451,6 +451,12 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// prometheus instant query needs same timestamp
+	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
+		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
+		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
+	}
+
 	type channelResult struct {
 		Series []*model.Series
 		Err    error
@@ -581,6 +587,13 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		respondError(w, apiErrObj, nil)
+		return
+	}
+	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
+		len(seriesList) > 1 &&
+		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER ||
+			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.CLICKHOUSE) {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: he query resulted in more than one series for value type")}, nil)
 		return
 	}
 
