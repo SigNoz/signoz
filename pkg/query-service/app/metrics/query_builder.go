@@ -112,8 +112,8 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 	queryString := strings.Join(conditions, " AND ")
 
 	var selectLabels string
-	if len(groupTags) == 0 && aggregateOperator == model.NOOP {
-		selectLabels = "labels, "
+	if aggregateOperator == model.NOOP || aggregateOperator == model.RATE {
+		selectLabels = "labels,"
 	} else {
 		for _, tag := range groupTags {
 			selectLabels += fmt.Sprintf(" labels_object.%s as %s,", tag, tag)
@@ -126,6 +126,10 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 }
 
 func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, tableName string) (string, error) {
+
+	if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE && len(mq.GroupingTags) != 0 {
+		return "", fmt.Errorf("reduce operator cannot be applied for the query")
+	}
 
 	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, mq.GroupingTags, mq.MetricName, mq.AggregateOperator)
 	if err != nil {
@@ -151,11 +155,34 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupTags := groupSelect(mq.GroupingTags...)
 
 	switch mq.AggregateOperator {
+	case model.RATE:
+		// Calculate rate of change of metric for each unique time series
+		groupBy = "fingerprint, ts"
+		groupTags = "fingerprint,"
+		op := "max(value)" // max value should be the closest value for point in time
+		subQuery := fmt.Sprintf(
+			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
+		) // labels will be same so any should be fine
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
+
+		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
+		return query, nil
+	case model.SUM_RATE:
+		rateGroupBy := "fingerprint, " + groupBy
+		rateGroupTags := "fingerprint, " + groupTags
+		op := "max(value)"
+		subQuery := fmt.Sprintf(
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+		) // labels will be same so any should be fine
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		sub_query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
-		query = fmt.Sprintf(query, groupTags, sub_query)
+		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
@@ -175,7 +202,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		return query, nil
 	case model.NOOP:
 		queryTmpl :=
-			"SELECT fingerprint, labels as metricNOOP," +
+			"SELECT fingerprint, labels as fullLabels," +
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
@@ -227,6 +254,36 @@ func FormatErrs(errs []error, separator string) string {
 	return strings.Join(errStrs, separator)
 }
 
+func reduceQuery(query string, reduceTo model.ReduceToOperator, aggregateOperator model.AggregateOperator) (string, error) {
+	var selectLabels string
+	var groupBy string
+	// NOOP and RATE can possibly return multiple time series and reduce should be applied
+	// for each uniques series. When the final result contains more than one series we throw
+	// an error post DB fetching. Otherwise just return the single data. This is not known until queried so the
+	// the query is prepared accordingly.
+	if aggregateOperator == model.NOOP || aggregateOperator == model.RATE {
+		selectLabels = ", any(fullLabels) as fullLabels"
+		groupBy = "GROUP BY fingerprint"
+	}
+	// the timestamp picked is not relevant here since the final value used is show the single
+	// chart with just the query value. For the quer
+	switch reduceTo {
+	case model.RLAST:
+		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RSUM:
+		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RAVG:
+		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RMAX:
+		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RMIN:
+		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	default:
+		return "", fmt.Errorf("unsupported reduce operator")
+	}
+	return query, nil
+}
+
 // varToQuery constructs the query for each named builder block
 func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]string, error) {
 	evalFuncs := GoValuateFuncs()
@@ -243,6 +300,13 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 				query, err := BuildMetricQuery(qp, mq, tableName)
 				if err != nil {
 					errs = append(errs, err)
+				} else {
+					if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE {
+						query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
+						if err != nil {
+							errs = append(errs, err)
+						}
+					}
 				}
 				varToQuery[_var] = query
 			}

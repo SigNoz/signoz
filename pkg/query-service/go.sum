@@ -57,8 +57,8 @@ github.com/OneOfOne/xxhash v1.2.8 h1:31czK/TI9sNkxIKfaUfGlU47BAxQ0ztGgd9vPyqimf8
 github.com/OneOfOne/xxhash v1.2.8/go.mod h1:eZbhyaAYD41SGSSsnmcpxVoRiQ/MPUTjUdIIOT9Um7Q=
 github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb h1:bneLSKPf9YUSFmafKx32bynV6QrzViL/s+ZDvQxH1E4=
 github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb/go.mod h1:JznGDNg9x1cujDKa22RaQOimOvvEfy3nxzDGd8XDgmA=
-github.com/SigNoz/prometheus v1.9.70 h1:0214i78cje5MkX0tXYwX2cK4cHXrFw18WcSLhv4YDpk=
-github.com/SigNoz/prometheus v1.9.70/go.mod h1:Y4J9tGDmacMC+EcOTp+EIAn2C1sN+9kE+idyVKadiVM=
+github.com/SigNoz/prometheus v1.9.71 h1:X+6f4k5bqX+lpPFHCi+f6XiSehTj3Yzh1B/FDJi//Sk=
+github.com/SigNoz/prometheus v1.9.71/go.mod h1:Y4J9tGDmacMC+EcOTp+EIAn2C1sN+9kE+idyVKadiVM=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

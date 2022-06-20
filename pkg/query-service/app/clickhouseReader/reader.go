@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"math/rand"
 	"net"
 	"net/http"
@@ -2842,8 +2841,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			colName := columnNames[idx]
 			switch v := v.(type) {
 			case *string:
-				// special case for NOOP
-				if colName == "metricNOOP" {
+				// special case for returning all labels
+				if colName == "fullLabels" {
 					var metric map[string]string
 					err := json.Unmarshal([]byte(*v), &metric)
 					if err != nil {
@@ -2863,10 +2862,6 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				metricPoint.Value = *v
 			}
 		}
-		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
-			zap.S().Info("invalid metric point value found: %v", metricPoint.Value)
-			continue
-		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
 		attributesMap[key] = groupAttributes
@@ -2878,7 +2873,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		points := metricPointsMap[key]
 		// first point in each series could be invalid since the
 		// aggregations are applied with point from prev series
-		if len(points) != 0 {
+		if len(points) != 0 && len(points) > 1 {
 			points = points[1:]
 		}
 		attributes := attributesMap[key]

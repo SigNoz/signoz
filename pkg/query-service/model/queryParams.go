@@ -26,12 +26,25 @@ type MetricQuery struct {
 	AggregateOperator AggregateOperator `json:"aggregateOperator"`
 	Expression        string            `json:"expression"`
 	Disabled          bool              `json:"disabled"`
+	ReduceTo          ReduceToOperator  `json:"reduceTo,omitempty"`
 }
+
+type ReduceToOperator int
+
+const (
+	_ ReduceToOperator = iota
+	RLAST
+	RSUM
+	RAVG
+	RMAX
+	RMIN
+)
 
 type QueryType int
 
 const (
-	QUERY_BUILDER QueryType = iota
+	_ QueryType = iota
+	QUERY_BUILDER
 	CLICKHOUSE
 	PROM
 )
@@ -47,24 +60,28 @@ type ClickHouseQuery struct {
 	Disabled bool   `json:"disabled"`
 }
 
-type WidgetType int
+type PanelType int
 
 const (
-	TIME_SERIES WidgetType = iota
+	_ PanelType = iota
+	TIME_SERIES
+	QUERY_VALUE
 )
 
 type CompositeMetricQuery struct {
 	BuilderQueries    map[string]*MetricQuery     `json:"builderQueries,omitempty"`
 	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
-	WidgetType        WidgetType                  `json:"widgetType,omitempty"`
+	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
 }
 
 type AggregateOperator int
 
 const (
-	COUNT AggregateOperator = iota
+	_ AggregateOperator = iota
+	NOOP
+	COUNT
 	COUNT_DISTINCT
 	SUM
 	AVG
@@ -79,17 +96,23 @@ const (
 	P90
 	P95
 	P99
+	RATE
+	SUM_RATE
+	// leave blank space for possily {AVG, X}_RATE
+	_
+	_
+	_
 	RATE_SUM
 	RATE_AVG
 	RATE_MAX
 	RATE_MIN
-	NOOP
 )
 
 type DataSource int
 
 const (
-	METRICS DataSource = iota
+	_ DataSource = iota
+	METRICS
 	TRACES
 	LOGS
 )
