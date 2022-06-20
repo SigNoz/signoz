@@ -41,9 +41,10 @@ export enum EAggregateOperator {
 	P95 = 15,
 	P99 = 16,
 	RATE = 17,
-	RATE_SUM = 18,
-	RATE_AVG = 19,
-	RATE_MAX = 20,
-	RATE_MIN = 21,
-	SUM_RATE = 22,
+	SUM_RATE = 18,
+	// leaving gap for possible future {X}_RATE
+	RATE_SUM = 22,
+	RATE_AVG = 23,
+	RATE_MAX = 24,
+	RATE_MIN = 25,
 }
