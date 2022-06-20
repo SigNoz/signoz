@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: "14.x"
       - name: Install dependencies
-        run: cd frontend && npm ci
+        run: cd frontend && npm install
       - name: Install Playwright
         run: cd frontend && npx playwright install --with-deps
       - name: Run Playwright tests
