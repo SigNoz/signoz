@@ -5,7 +5,6 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    if: github.event.deployment_status.state == 'success'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -16,7 +15,7 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: npm run playwright
         env:
           # This might depend on your test-runner/language binding
           PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
