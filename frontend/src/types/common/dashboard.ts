@@ -42,9 +42,9 @@ export enum EPanelType {
 }
 
 export enum EReduceOperator {
-	LAST = 1,
-	SUM,
-	AVG,
-	MAX,
-	MIN,
+	'Latest of values in timeframe' = 1, // LAST
+	'Average of values in timeframe', // SUM
+	'Sum of values in timeframe', // AVG
+	'Min of values in timeframe', // MAX
+	'Max of values in timeframe', // MIN
 }

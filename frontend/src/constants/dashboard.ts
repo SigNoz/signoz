@@ -24,7 +24,7 @@ export const QueryBuilderQueryTemplate = {
 	// Specific to TIME_SERIES type graph
 	groupBy: [],
 	// Specific to VALUE type graph
-	reduceTo: null,
+	reduceTo: EReduceOperator['Latest of values in timeframe'],
 };
 
 export const QueryBuilderFormulaTemplate = {
