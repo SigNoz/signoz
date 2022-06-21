@@ -222,10 +222,12 @@ function GridCardGraph({
 		);
 	}
 
-	if (state.loading === true || state.payload === undefined) {
+	if (
+		(state.loading === true || state.payload === undefined) &&
+		!isEmptyLayout
+	) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
-
 
 	return (
 		<span

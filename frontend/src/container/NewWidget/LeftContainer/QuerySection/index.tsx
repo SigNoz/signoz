@@ -2,6 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import TextToolTip from 'components/TextToolTip';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { cloneDeep, differenceWith, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -54,6 +55,7 @@ function QuerySection({
 	updateQuery,
 	getQueryResults,
 	updateQueryType,
+	selectedGraph,
 }: QueryProps): JSX.Element {
 	const [localQueryChanges, setLocalQueryChanges] = useState({});
 	const [rctTabKey, setRctTabKey] = useState({
@@ -225,6 +227,7 @@ function QuerySection({
 							metricsBuilderQueries={
 								localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
 							}
+							selectedGraph={selectedGraph}
 						/>
 					</TabPane>
 					<TabPane
@@ -323,6 +326,7 @@ const mapDispatchToProps = (
 });
 
 interface QueryProps extends DispatchProps {
+	selectedGraph: GRAPH_TYPES;
 	selectedTime: timePreferance;
 	handleUnstagedChanges: (arg0: boolean) => void;
 }

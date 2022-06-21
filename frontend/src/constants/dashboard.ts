@@ -1,4 +1,4 @@
-import { EAggregateOperator } from 'types/common/dashboard';
+import { EAggregateOperator, EReduceOperator } from 'types/common/dashboard';
 
 export const PromQLQueryTemplate = {
 	query: '',
@@ -19,9 +19,12 @@ export const QueryBuilderQueryTemplate = {
 		op: 'AND',
 		items: [],
 	},
-	groupBy: [],
 	legend: '',
 	disabled: false,
+	// Specific to TIME_SERIES type graph
+	groupBy: [],
+	// Specific to VALUE type graph
+	reduceTo: null,
 };
 
 export const QueryBuilderFormulaTemplate = {

@@ -19,6 +19,7 @@ function LeftContainer({
 				<QuerySection
 					selectedTime={selectedTime}
 					handleUnstagedChanges={handleUnstagedChanges}
+					selectedGraph={selectedGraph}
 				/>
 			</QueryContainer>
 		</>

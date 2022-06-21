@@ -43,7 +43,7 @@ export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
 export const DELETE_QUERY = 'DELETE_QUERY';
 export const UPDATE_QUERY_TYPE = 'UPDATE_QUERY_TYPE';
-
+export const FLUSH_DASHBOARD = 'FLUSH_DASHBOARD';
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -184,6 +184,10 @@ interface UpdateQueryType {
 	};
 }
 
+interface FlushDashboard {
+	type: typeof FLUSH_DASHBOARD;
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -204,4 +208,5 @@ export type DashboardActions =
 	| IsAddWidget
 	| UpdateQuery
 	| DeleteQuery
-	| UpdateQueryType;
+	| UpdateQueryType
+	| FlushDashboard;

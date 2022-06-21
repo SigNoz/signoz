@@ -26,6 +26,7 @@ function QueryBuilderQueryContainer({
 	queryData,
 	updateQueryData,
 	metricsBuilderQueries,
+	selectedGraph
 }): JSX.Element | null {
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
@@ -36,6 +37,7 @@ function QueryBuilderQueryContainer({
 		legend,
 		toggleDisable,
 		toggleDelete,
+		reduceTo
 	}): void => {
 		const allQueries =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder;
@@ -54,6 +56,10 @@ function QueryBuilderQueryContainer({
 
 		if (groupBy) {
 			currentIndexQuery.groupBy = groupBy;
+		}
+
+		if (reduceTo) {
+			currentIndexQuery.reduceTo = reduceTo;
 		}
 
 		if (legend !== undefined) {
@@ -139,6 +145,7 @@ function QueryBuilderQueryContainer({
 					queryIndex={idx}
 					queryData={q}
 					handleQueryChange={handleQueryBuilderQueryChange}
+					selectedGraph={selectedGraph}
 				/>
 			))}
 			<QueryButton onClick={addQueryHandler} icon={<PlusOutlined />}>

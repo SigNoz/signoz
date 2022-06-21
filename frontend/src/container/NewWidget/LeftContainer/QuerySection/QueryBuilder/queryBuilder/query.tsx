@@ -17,9 +17,11 @@ import {
 } from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
 import MonacoEditor from 'components/Editor';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { EReduceOperator } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
@@ -39,6 +41,7 @@ function MetricsBuilder({
 	queryData,
 	queryIndex,
 	handleQueryChange,
+	selectedGraph,
 }: QueryBuilderProps): JSX.Element {
 	const [groupByOptions, setGroupByOptions] = useState([]);
 	const [metricName, setMetricName] = useState(queryData.metricName);
@@ -55,9 +58,15 @@ function MetricsBuilder({
 		}
 		setMetricNameList(payload.data);
 	};
-	const [aggregateFunctionList, setAggregateFunctionList] = useState(AggregateFunctions);
+	const [aggregateFunctionList, setAggregateFunctionList] = useState(
+		AggregateFunctions,
+	);
 	const handleAggregateFunctionsSearch = (searchQuery = '') => {
-		setAggregateFunctionList(AggregateFunctions.filter(({ label }) => label.includes(searchQuery.toUpperCase())) || [])
+		setAggregateFunctionList(
+			AggregateFunctions.filter(({ label }) =>
+				label.includes(searchQuery.toUpperCase()),
+			) || [],
+		);
 	};
 
 	useEffect(() => {
@@ -87,7 +96,6 @@ function MetricsBuilder({
 						showSearch
 						onSearch={handleAggregateFunctionsSearch}
 						filterOption={false}
-
 					/>
 				</div>
 				<Row style={{ gap: '3%', margin: '0.5rem 0' }}>
@@ -120,7 +128,7 @@ function MetricsBuilder({
 						/>
 					</Row>
 					<Col style={{ flex: 3 }}>
-						<Row style={{ gap: '3%', marginBottom: '1rem', }}>
+						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
 							<Select
 								defaultValue="WHERE"
 								showArrow={false}
@@ -137,26 +145,55 @@ function MetricsBuilder({
 							/>
 						</Row>
 						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
-							<Select
-								defaultValue="GROUP BY"
-								showArrow={false}
-								dropdownStyle={{ display: 'none' }}
-							>
-								<Option value="GROUP BY">GROUP BY</Option>
-							</Select>
-							<Select
-								mode="multiple"
-								showSearch
-								style={{ flex: 1 }}
-								defaultActiveFirstOption={false}
-								filterOption={false}
-								notFoundContent={metricNameLoading ? <Spin size="small" /> : null}
-								options={groupByOptions}
-								defaultValue={queryData.groupBy}
-								onChange={(e) => {
-									handleQueryChange({ queryIndex, groupBy: e });
-								}}
-							/>
+							{selectedGraph === 'TIME_SERIES' ? (
+								<>
+									{' '}
+									<Select
+										defaultValue="GROUP BY"
+										showArrow={false}
+										dropdownStyle={{ display: 'none' }}
+									>
+										<Option value="GROUP BY">GROUP BY</Option>
+									</Select>
+									<Select
+										mode="multiple"
+										showSearch
+										style={{ flex: 1 }}
+										defaultActiveFirstOption={false}
+										filterOption={false}
+										notFoundContent={metricNameLoading ? <Spin size="small" /> : null}
+										options={groupByOptions}
+										defaultValue={queryData.groupBy}
+										onChange={(e) => {
+											handleQueryChange({ queryIndex, groupBy: e });
+										}}
+									/>
+								</>
+							) : (
+								<>
+									<Select
+										defaultValue="REDUCE TO"
+										showArrow={false}
+										dropdownStyle={{ display: 'none' }}
+									>
+										<Option value="GROUP BY">REDUCE TO</Option>
+									</Select>
+									<Select
+										placeholder="Latest of values in timeframe"
+										style={{ flex: 1 }}
+										options={Object.keys(EReduceOperator)
+											.filter((op) => !(parseInt(op) >= 0))
+											.map((op) => ({
+												label: op,
+												value: EReduceOperator[op],
+											}))}
+										defaultValue={EReduceOperator[queryData.reduceTo]}
+										onChange={(e) => {
+											handleQueryChange({ queryIndex, reduceTo: e });
+										}}
+									/>
+								</>
+							)}
 						</Row>
 					</Col>
 				</Row>
@@ -176,6 +213,7 @@ function MetricsBuilder({
 }
 
 interface QueryBuilderProps {
+	selectedGraph: GRAPH_TYPES;
 	queryCategory: TQueryCategories;
 }
 export default MetricsBuilder;

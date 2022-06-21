@@ -7,6 +7,7 @@ import {
 	DELETE_DASHBOARD_SUCCESS,
 	DELETE_QUERY,
 	DELETE_WIDGET_SUCCESS,
+	FLUSH_DASHBOARD,
 	GET_ALL_DASHBOARD_ERROR,
 	GET_ALL_DASHBOARD_LOADING_START,
 	GET_ALL_DASHBOARD_SUCCESS,
@@ -390,6 +391,12 @@ const dashboard = (
 			};
 		}
 
+		case FLUSH_DASHBOARD: {
+			return {
+				...state,
+				dashboards: [],
+			};
+		}
 		case DELETE_WIDGET_SUCCESS: {
 			const { widgetId, layout } = action.payload;
 
@@ -497,7 +504,7 @@ const dashboard = (
 				],
 			};
 		}
-		
+
 		case DELETE_QUERY: {
 			const { currentIndex, widgetId } = action.payload;
 			const { dashboards } = state;

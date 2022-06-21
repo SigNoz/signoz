@@ -13,7 +13,12 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { Query } from 'types/api/dashboard/getAll';
-import { EQueryType } from 'types/common/dashboard';
+import {
+	EDataSource,
+	EPanelType,
+	EQueryType,
+	EReduceOperator,
+} from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 export const GetMetricQueryRange = async ({
@@ -27,9 +32,10 @@ export const GetMetricQueryRange = async ({
 	const queryData = query[queryKey];
 	const legendMap = {};
 	const QueryPayload = {
-		dataSource: 0,
+		dataSource: EDataSource.METRICS,
 		compositeMetricQuery: {
 			queryType,
+			panelType: EPanelType[graphType],
 		},
 	};
 	switch (queryType as EQueryType) {
@@ -37,12 +43,18 @@ export const GetMetricQueryRange = async ({
 			const builderQueries = {};
 			queryData.queryBuilder.map((query) => {
 				const generatedQueryPayload = {};
-
 				generatedQueryPayload.queryName = query.name;
+				generatedQueryPayload.aggregateOperator = query.aggregateOperator;
 				generatedQueryPayload.metricName = query.metricName;
 				generatedQueryPayload.tagFilters = query.tagFilters;
-				generatedQueryPayload.groupBy = query.groupBy;
-				generatedQueryPayload.aggregateOperator = query.aggregateOperator;
+
+				if (graphType === 'TIME_SERIES') {
+					generatedQueryPayload.groupBy = query.groupBy;
+				}
+				// Value
+				else {
+					generatedQueryPayload.reduceTo = query.reduceTo;
+				}
 
 				generatedQueryPayload.expression = query.name;
 				generatedQueryPayload.disabled = query.disabled;
@@ -106,7 +118,7 @@ export const GetMetricQueryRange = async ({
 	]);
 
 	const getMaxMinTime = GetMaxMinTime({
-		graphType,
+		graphType: null,
 		maxTime: minMax.maxTime,
 		minTime: minMax.minTime,
 	});
