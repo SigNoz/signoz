@@ -29,7 +29,7 @@ const getLabelName = (
 
 	const index = keysArray.findIndex((e) => e === '__name__');
 
-	const preArray = keysArray.slice(0, index);
+	const preArray = index !== -1 ? keysArray.slice(0, index) : [];
 	const postArray = keysArray.slice(index + 1, keysArray.length);
 
 	if (index === undefined && preArray.length === 0 && postArray.length) {
@@ -46,7 +46,6 @@ const getLabelName = (
 	if (post.length === 0 && pre.length === 0) {
 		return result;
 	}
-
 	return `${result}{${pre}${post}}`;
 };
 
