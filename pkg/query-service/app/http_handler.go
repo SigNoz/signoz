@@ -457,6 +457,13 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
 	}
 
+	// round up the end to neaerest multiple
+	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
+		end := (metricsQueryRangeParams.End) / 1000
+		step := metricsQueryRangeParams.Step
+		metricsQueryRangeParams.End = (((end + step - 1) / step) * step) * 1000
+	}
+
 	type channelResult struct {
 		Series []*model.Series
 		Err    error

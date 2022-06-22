@@ -151,7 +151,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms < %d", formattedValue(mq.MetricName), qp.Start, qp.End)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", formattedValue(mq.MetricName), qp.Start, qp.End)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
