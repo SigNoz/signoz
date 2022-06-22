@@ -35,7 +35,11 @@ function EditRules(): JSX.Element {
 		}
 	}, [isValidRuleId, ruleId]);
 
-	if ((isError && !isValidRuleId) || ruleId == null) {
+	if (
+		(isError && !isValidRuleId) ||
+		ruleId == null ||
+		(data?.payload?.data === undefined && !isLoading)
+	) {
 		return <div>{data?.error || t('something_went_wrong')}</div>;
 	}
 
