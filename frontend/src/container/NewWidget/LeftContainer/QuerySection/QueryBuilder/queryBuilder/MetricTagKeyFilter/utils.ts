@@ -53,3 +53,5 @@ export const createQuery = (
 	}
 	return null;
 };
+
+export const SingleValueOperators = ['LIKE', 'NLIKE'];

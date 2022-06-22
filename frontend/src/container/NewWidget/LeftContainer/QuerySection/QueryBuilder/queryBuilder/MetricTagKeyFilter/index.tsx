@@ -18,7 +18,13 @@ import { ResourceAttributesFilterMachine } from './MetricTagKey.machine';
 import QueryChip from './QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 import { IMetricBuilderTagKeyQuery, IOption } from './types';
-import { createQuery, GetTagKeys, GetTagValues, OperatorSchema } from './utils';
+import {
+	createQuery,
+	GetTagKeys,
+	GetTagValues,
+	OperatorSchema,
+	SingleValueOperators,
+} from './utils';
 
 function MetricTagKeyFilter({
 	metricName,
@@ -124,6 +130,13 @@ function MetricTagKeyFilter({
 			send('NEXT');
 			return;
 		}
+		if (
+			state.value === 'TagValue' &&
+			SingleValueOperators.includes(staging[staging.length - 1])
+		) {
+			setSelectedValues([value[value.length - 1]]);
+			return;
+		}
 
 		setSelectedValues([...value]);
 	};
@@ -167,8 +180,9 @@ function MetricTagKeyFilter({
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Select
 					disabled={!metricName}
-					placeholder={`Select ${state.value === 'Idle' ? 'Tag Key Pair' : state.value
-						}`}
+					placeholder={`Select ${
+						state.value === 'Idle' ? 'Tag Key Pair' : state.value
+					}`}
 					onChange={handleChange}
 					bordered={false}
 					value={selectedValues as never}
