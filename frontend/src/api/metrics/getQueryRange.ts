@@ -3,13 +3,13 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	TagValueProps,
-	TagValuesPayloadProps,
-} from 'types/api/metrics/getResourceAttributes';
+	MetricRangePayloadProps,
+	MetricsRangeProps,
+} from 'types/api/metrics/getQueryRange';
 
 export const getMetricsQueryRange = async (
-	props: TagValueProps,
-): Promise<SuccessResponse<TagValuesPayloadProps> | ErrorResponse> => {
+	props: MetricsRangeProps,
+): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post(`/metrics/query_range`, props);
 

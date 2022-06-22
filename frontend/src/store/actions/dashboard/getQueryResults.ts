@@ -143,10 +143,11 @@ export const GetMetricQueryRange = async ({
 	if (response.payload?.data?.result) {
 		response.payload.data.result = response.payload.data.result.map(
 			(queryData) => {
-				queryData.legend = legendMap[queryData.queryName];
+				const newQueryData = queryData;
+				newQueryData.legend = legendMap[queryData.queryName];
 				if (isEmpty(queryData.metric)) {
-					queryData.metric[queryData.queryName] = queryData.queryName;
-					queryData.legend = queryData.queryName;
+					newQueryData.metric[queryData.queryName] = queryData.queryName;
+					newQueryData.legend = queryData.queryName;
 				}
 				return queryData;
 			},
