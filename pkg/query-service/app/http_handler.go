@@ -564,7 +564,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	case model.QUERY_BUILDER:
 		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		if runQueries.Err != nil {
-			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: runQueries.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
 		seriesList, err = execClickHouseQueries(runQueries.Queries)
@@ -582,6 +582,8 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		seriesList, err = execPromQueries(metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
 	}
 
 	if err != nil {
