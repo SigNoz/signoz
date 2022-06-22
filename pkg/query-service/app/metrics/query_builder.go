@@ -92,7 +92,9 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 		for _, item := range fs.Items {
 			toFormat := item.Value
 			// if the received value is an array for like/match op, just take the first value
-			if strings.ToLower(item.Operation) == "like" || strings.ToLower(item.Operation) == "match" {
+			if strings.ToLower(item.Operation) == "like" ||
+				strings.ToLower(item.Operation) == "match" ||
+				strings.ToLower(item.Operation) == "nlike" {
 				x, ok := item.Value.([]interface{})
 				if ok {
 					if len(x) == 0 {
@@ -113,6 +115,8 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 				conditions = append(conditions, fmt.Sprintf("labels_object.%s NOT IN %s", item.Key, fmtVal))
 			case "like":
 				conditions = append(conditions, fmt.Sprintf("like(labels_object.%s, %s)", item.Key, fmtVal))
+			case "nlike":
+				conditions = append(conditions, fmt.Sprintf("notLike(labels_object.%s, %s)", item.Key, fmtVal))
 			case "match":
 				conditions = append(conditions, fmt.Sprintf("match(labels_object.%s, %s)", item.Key, fmtVal))
 			default:
