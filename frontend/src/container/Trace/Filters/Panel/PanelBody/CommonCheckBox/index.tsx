@@ -41,14 +41,16 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 
 	return (
 		<>
-			<Search
-				value={searchFilter}
-				onChange={(e): void => setSearchFilter(e.target.value)}
-				style={{
-					padding: '0 3%',
-				}}
-				placeholder="Filter Values"
-			/>
+			{statusObj.length > 0 && (
+				<Search
+					value={searchFilter}
+					onChange={(e): void => setSearchFilter(e.target.value)}
+					style={{
+						padding: '0 3%',
+					}}
+					placeholder="Filter Values"
+				/>
+			)}
 
 			{statusObj
 				.sort((a, b) => {
