@@ -90,7 +90,18 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 	conditions = append(conditions, fmt.Sprintf("metric_name = %s", formattedValue(metricName)))
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
-			fmtVal := formattedValue(item.Value)
+			toFormat := item.Value
+			// if the received value is an array for like/match op, just take the first value
+			if strings.ToLower(item.Operation) == "like" || strings.ToLower(item.Operation) == "match" {
+				x, ok := item.Value.([]interface{})
+				if ok {
+					if len(x) == 0 {
+						continue
+					}
+					toFormat = x[0]
+				}
+			}
+			fmtVal := formattedValue(toFormat)
 			switch op := strings.ToLower(item.Operation); op {
 			case "eq":
 				conditions = append(conditions, fmt.Sprintf("labels_object.%s = %s", item.Key, fmtVal))

@@ -497,7 +497,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
 		}
 		return seriesList, nil
 	}
@@ -553,7 +553,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
 		}
 		return seriesList, nil
 	}
@@ -564,7 +564,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	case model.QUERY_BUILDER:
 		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		if runQueries.Err != nil {
-			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: runQueries.Err}, nil)
 			return
 		}
 		seriesList, err = execClickHouseQueries(runQueries.Queries)
@@ -585,7 +585,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		respondError(w, apiErrObj, nil)
 		return
 	}

@@ -2808,8 +2808,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("error in processing sql query")
+		zap.S().Debug("Error in processing query: ", err)
+		return nil, fmt.Errorf("error in processing query")
 	}
 
 	var (
