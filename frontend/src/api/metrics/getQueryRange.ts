@@ -3,8 +3,6 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	TagKeyProps,
-	TagKeysPayloadProps,
 	TagValueProps,
 	TagValuesPayloadProps,
 } from 'types/api/metrics/getResourceAttributes';

@@ -11,6 +11,6 @@ export const canCreateQueryAndFormula = (query) => {
 		query[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 		];
-		
+
 	return queries.length + formulas.length < QUERY_AND_FORMULA_LIMIT;
 };

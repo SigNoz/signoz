@@ -26,7 +26,7 @@ function QueryBuilderQueryContainer({
 	queryData,
 	updateQueryData,
 	metricsBuilderQueries,
-	selectedGraph
+	selectedGraph,
 }): JSX.Element | null {
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
@@ -37,7 +37,7 @@ function QueryBuilderQueryContainer({
 		legend,
 		toggleDisable,
 		toggleDelete,
-		reduceTo
+		reduceTo,
 	}): void => {
 		const allQueries =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder;
@@ -81,7 +81,7 @@ function QueryBuilderQueryContainer({
 	}) => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
 		const currentIndexFormula = allFormulas[formulaIndex];
 
@@ -101,7 +101,8 @@ function QueryBuilderQueryContainer({
 	const addQueryHandler = (): void => {
 		if (!canCreateQueryAndFormula(queryData)) {
 			notification.error({
-				message: 'Unable to create query. You can create at max 10 queries and formulae.',
+				message:
+					'Unable to create query. You can create at max 10 queries and formulae.',
 			});
 			return;
 		}
@@ -117,7 +118,8 @@ function QueryBuilderQueryContainer({
 	const addFormulaHandler = (): void => {
 		if (!canCreateQueryAndFormula(queryData)) {
 			notification.error({
-				message: 'Unable to create formula. You can create at max 10 queries and formulae.',
+				message:
+					'Unable to create formula. You can create at max 10 queries and formulae.',
 			});
 			return;
 		}
@@ -126,7 +128,7 @@ function QueryBuilderQueryContainer({
 		].push({
 			name: GetFormulaName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 				],
 			),
 			...QueryBuilderFormulaTemplate,

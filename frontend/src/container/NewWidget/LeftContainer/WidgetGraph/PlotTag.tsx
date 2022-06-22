@@ -1,10 +1,10 @@
 import { Tag } from 'antd';
 import React, { useCallback } from 'react';
 import { EQueryType } from 'types/common/dashboard';
+
 import QueryTypeTag from '../QueryTypeTag';
 
 function PlotTag({ queryType }) {
-
 	if (queryType === undefined) {
 		return null;
 	}
