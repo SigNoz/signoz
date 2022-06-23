@@ -461,7 +461,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
 		end := (metricsQueryRangeParams.End) / 1000
 		step := metricsQueryRangeParams.Step
-		metricsQueryRangeParams.End = (((end + step - 1) / step) * step) * 1000
+		metricsQueryRangeParams.End = (end / step * step) * 1000
 	}
 
 	type channelResult struct {
@@ -594,7 +594,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		respondError(w, apiErrObj, nil)
 		return
 	}
