@@ -39,6 +39,10 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 		});
 	};
 
+	const isMoreButtonAvilable = Boolean(
+		numberOfFilters && statusObj.length > numberOfFilters,
+	);
+
 	return (
 		<>
 			{statusObj.length > 0 && (
@@ -62,13 +66,15 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 					}
 					return countA - countB;
 				})
-				.filter((_, index) => index < numberOfFilters)
 				.filter((filter) => {
 					if (searchFilter.length === 0) {
 						return true;
 					}
-					return filter.includes(searchFilter);
+					return filter
+						.toLocaleLowerCase()
+						.includes(searchFilter.toLocaleLowerCase());
 				})
+				.filter((_, index) => index < numberOfFilters)
 				.map((e) => (
 					<CheckBoxComponent
 						key={e}
@@ -80,7 +86,7 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 					/>
 				))}
 
-			{numberOfFilters && statusObj.length > numberOfFilters && (
+			{isMoreButtonAvilable && (
 				<Button onClick={onClickMoreHandler} type="link">
 					More
 				</Button>
