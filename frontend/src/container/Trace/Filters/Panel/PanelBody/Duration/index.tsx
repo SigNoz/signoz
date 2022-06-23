@@ -141,7 +141,7 @@ function Duration(): JSX.Element {
 		(min, max) => {
 			updatedUrl(min as number, max as number);
 		},
-		1500,
+		1000,
 		undefined,
 	);
 
