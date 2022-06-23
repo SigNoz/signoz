@@ -5,6 +5,7 @@ export interface MetricRangePayloadProps {
 			queryName: string;
 			metric: Record<string, string>;
 			values: [number, string][];
+			legend?: string;
 		}[];
 		resultType: string;
 	};

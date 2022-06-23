@@ -5,18 +5,13 @@ export const getYAxisFormattedValue = (
 	format: string,
 ): string => {
 	let decimalPrecision: number | undefined;
-	const parsedValue = getValueFormat(format)(
-		parseFloat(value),
-		6,
-		6,
-		undefined,
-	);
+	const parsedValue = getValueFormat(format)(parseFloat(value), 6, 6, undefined);
 
 	try {
 		const decimalSplitted = parsedValue.text.split('.');
 		if (
 			decimalSplitted.length === 1 ||
-			parseFloat(parsedValue.text) === parseInt(parsedValue.text)
+			parseFloat(parsedValue.text) === parseInt(parsedValue.text, 10)
 		) {
 			decimalPrecision = 0;
 		} else {

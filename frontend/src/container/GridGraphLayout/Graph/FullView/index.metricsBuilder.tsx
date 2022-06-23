@@ -1,5 +1,4 @@
 import { Button, Typography } from 'antd';
-import getQueryResult from 'api/widgets/getQuery';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
@@ -7,16 +6,10 @@ import GridGraphComponent from 'container/GridGraphComponent';
 import {
 	timeItems,
 	timePreferance,
-	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import getChartData from 'lib/getChartData';
-import GetMaxMinTime from 'lib/getMaxMinTime';
-import GetMinMax from 'lib/getMinMax';
-import getStartAndEndTime from 'lib/getStartAndEndTime';
-import getStep from 'lib/getStep';
 import React, { useCallback, useState } from 'react';
-import { useQueries, useQuery } from 'react-query';
+import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
@@ -32,7 +25,7 @@ function FullView({
 	name,
 	yAxisUnit,
 }: FullViewProps): JSX.Element {
-	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
+	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);

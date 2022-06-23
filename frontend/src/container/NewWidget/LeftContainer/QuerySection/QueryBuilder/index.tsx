@@ -129,5 +129,6 @@ function QueryBuilder({
 
 interface QueryBuilderProps {
 	queryCategory: TQueryCategories;
+	name: string;
 }
 export default QueryBuilder;

@@ -1,5 +1,4 @@
 import { Chart, TimeUnit } from 'chart.js';
-import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

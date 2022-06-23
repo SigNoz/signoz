@@ -12,25 +12,22 @@ import { isEmpty } from 'lodash-es';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Query } from 'types/api/dashboard/getAll';
-import {
-	EDataSource,
-	EPanelType,
-	EQueryType,
-	EReduceOperator,
-} from 'types/common/dashboard';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { EDataSource, EPanelType, EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-export const GetMetricQueryRange = async ({
+export async function GetMetricQueryRange({
 	query,
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
-}) => {
+}): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
 	const { queryType } = query;
 	const queryKey = EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
 	const queryData = query[queryKey];
-	const legendMap = {};
+	const legendMap: Record<string, string> = {};
 	const QueryPayload = {
 		dataSource: EDataSource.METRICS,
 		compositeMetricQuery: {
@@ -51,6 +48,7 @@ export const GetMetricQueryRange = async ({
 				if (graphType === 'TIME_SERIES') {
 					generatedQueryPayload.groupBy = query.groupBy;
 				}
+
 				// Value
 				else {
 					generatedQueryPayload.reduceTo = query.reduceTo;
@@ -102,14 +100,6 @@ export const GetMetricQueryRange = async ({
 			return;
 	}
 
-	// const generatedQueryPayload = {};
-	// props.query.map((query) => {
-	// 	generatedQueryPayload[query.name] = query;
-	// 	query['rawQuery'] = query.clickHouseQuery;
-	// });
-	// console.log({ generatedQueryPayload });
-	// debugger;
-
 	const { globalTime } = store.getState();
 
 	const minMax = GetMinMax(globalSelectedInterval, [
@@ -129,8 +119,8 @@ export const GetMetricQueryRange = async ({
 		minTime: getMaxMinTime.minTime,
 	});
 	const response = await getMetricsQueryRange({
-		start: parseInt(start * 1000),
-		end: parseInt(end * 1000),
+		start: parseInt(start, 10) * 1e3,
+		end: parseInt(end, 10) * 1e3,
 		step: getStep({ start, end, inputFormat: 'ms' }),
 		...QueryPayload,
 	});
@@ -154,7 +144,7 @@ export const GetMetricQueryRange = async ({
 		);
 	}
 	return response;
-};
+}
 
 export const GetQueryResults = (
 	props: GetQueryResultsProps,
@@ -162,25 +152,6 @@ export const GetQueryResults = (
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const response = await GetMetricQueryRange(props);
-
-			// debugger;
-			// await Promise.all(
-			// 	queryData
-			// 		.filter((e) => e.query)
-			// 		.map(async (query) => {
-			// 			const result = await getQueryResult({
-			// 				end,
-			// 				query: encodeURIComponent(query.query),
-			// 				start,
-			// 				step: `${getStep({ start, end, inputFormat: 'ms' })}`,
-			// 			});
-			// 			return {
-			// 				query: query.query,
-			// 				queryData: result,
-			// 				legend: query.legend,
-			// 			};
-			// 		}),
-			// );
 
 			const isError = response.error;
 
@@ -206,8 +177,6 @@ export const GetQueryResults = (
 				payload: {
 					widgetId: props.widgetId,
 					data: {
-						query: 'Q1',
-						legend: '',
 						queryData: response.payload?.data?.result
 							? response.payload?.data?.result
 							: [],

@@ -1,15 +1,11 @@
 import { Typography } from 'antd';
-import getQueryResult from 'api/widgets/getQuery';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
-import GetMaxMinTime from 'lib/getMaxMinTime';
-import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import isEmpty from 'lodash-es/isEmpty';
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
-import { useQueries } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

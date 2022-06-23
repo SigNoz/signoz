@@ -1,8 +1,6 @@
-import { Button, Divider } from 'antd';
-import Input from 'components/Input';
-import TextToolTip from 'components/TextToolTip';
+import { Divider } from 'antd';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -19,13 +17,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import QueryBuilder from './QueryBuilder';
-import {
-	ButtonContainer,
-	Container,
-	InputContainer,
-	QueryWrapper,
-} from './styles';
-import GetQueryName from './utils/GetQueryName';
+import { Container } from './styles';
 
 function Query({
 	currentIndex,
@@ -35,7 +27,7 @@ function Query({
 	name,
 	queryCategory,
 	updatedLocalQuery,
-}: QueryProps): JSX.Element {
+}: QueryProps): JSX.Element | null {
 	const { search } = useLocation();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -51,28 +43,28 @@ function Query({
 		return new URLSearchParams(search);
 	}, [search]);
 
-	const getWidget = () => {
+	const getWidget = (): Widgets | undefined => {
 		const widgetId = urlQuery.get('widgetId');
 		return widgets?.find((e) => e.id === widgetId);
 	};
 
 	const selectedWidget = getWidget() as Widgets;
 
-	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
-			setFunc(value);
-		},
-		[],
-	);
+	// const onChangeHandler = useCallback(
+	// 	(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+	// 		setFunc(value);
+	// 	},
+	// 	[],
+	// );
 
-	const onBlurHandler = (): void => {
-		updateQuery({
-			currentIndex,
-			updatedQuery,
-			widgetId,
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
-	};
+	// const onBlurHandler = (): void => {
+	// 	updateQuery({
+	// 		currentIndex,
+	// 		updatedQuery,
+	// 		widgetId,
+	// 		yAxisUnit: selectedWidget.yAxisUnit,
+	// 	});
+	// };
 
 	const onDeleteQueryHandler = (): void => {
 		deleteQuery({
@@ -80,17 +72,17 @@ function Query({
 			currentIndex,
 		});
 	};
-	const updateQueryData = (updatedQuery) => {
+	const updateQueryData = (updatedQuery): void => {
 		updatedLocalQuery({ currentIndex, updatedQuery });
 	};
-	const stageUpdatedQuery = () => {
-		updateQuery({
-			currentIndex,
-			updatedQuery: queryInput,
-			widgetId,
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
-	};
+	// const stageUpdatedQuery = () => {
+	// 	updateQuery({
+	// 		currentIndex,
+	// 		updatedQuery: queryInput,
+	// 		widgetId,
+	// 		yAxisUnit: selectedWidget.yAxisUnit,
+	// 	});
+	// };
 
 	if (!queryInput) return null;
 	return (
