@@ -1,17 +1,11 @@
 import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
 import { Button, Select, Spin } from 'antd';
-import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
-import { SetResourceAttributeQueries } from 'store/actions/metrics/setResourceAttributeQueries';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
-import MetricReducer from 'types/reducer/metrics';
 import { v4 as uuid } from 'uuid';
 
 import { ResourceAttributesFilterMachine } from './MetricTagKey.machine';
@@ -31,11 +25,7 @@ function MetricTagKeyFilter({
 	onSetQuery,
 	selectedTagFilters: selectedTagQueries,
 }): JSX.Element | null {
-	const dispatch = useDispatch();
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
 	const [loading, setLoading] = useState(true);
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[]>([]);

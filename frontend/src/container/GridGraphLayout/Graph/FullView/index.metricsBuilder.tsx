@@ -13,7 +13,9 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { NotFoundContainer, TimeContainer } from './styles';
@@ -40,7 +42,9 @@ function FullView({
 		name: getSelectedTime()?.name || '',
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
-	const response = useQuery(
+	const response = useQuery<
+		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+	>(
 		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}`,
 		() =>
 			GetMetricQueryRange({
@@ -51,9 +55,9 @@ function FullView({
 			}),
 	);
 
-	const isError = response.error;
+	const isError = response?.error;
 	const isLoading = response.isLoading === true;
-	const errorMessage = isError?.message;
+	const errorMessage = isError instanceof Error ? isError?.message : '';
 
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;

@@ -5,7 +5,12 @@ export const getYAxisFormattedValue = (
 	format: string,
 ): string => {
 	let decimalPrecision: number | undefined;
-	const parsedValue = getValueFormat(format)(parseFloat(value), 6, 6, undefined);
+	const parsedValue = getValueFormat(format)(
+		parseFloat(value),
+		12,
+		12,
+		undefined,
+	);
 
 	try {
 		const decimalSplitted = parsedValue.text.split('.');

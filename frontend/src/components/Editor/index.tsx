@@ -6,10 +6,10 @@ import AppReducer from 'types/reducer/app';
 
 function Editor({
 	value,
-	language = 'yaml',
+	language,
 	onChange,
-	readOnly = false,
-	height = '40vh',
+	readOnly,
+	height,
 	options,
 }: MEditorProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -33,13 +33,14 @@ interface MEditorProps {
 	onChange: (value: string) => void;
 	readOnly?: boolean;
 	height?: string;
-	options: EditorProps['options'];
+	options?: EditorProps['options'];
 }
 
 Editor.defaultProps = {
-	language: undefined,
+	language: 'yaml',
 	readOnly: false,
 	height: '40vh',
+	options: {},
 };
 
 export default Editor;

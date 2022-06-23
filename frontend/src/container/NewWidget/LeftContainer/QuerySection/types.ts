@@ -1,5 +1,3 @@
-import { EQueryType } from 'types/common/dashboard';
-
 export type TQueryCategories = 'query_builder' | 'clickhouse_query' | 'promql';
 
 export enum EQueryCategories {

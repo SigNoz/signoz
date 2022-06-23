@@ -1,13 +1,9 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input } from 'antd';
 import { ClickHouseQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import {
-	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
-	WIDGET_PROMQL_QUERY_KEY_NAME,
-} from '../../constants';
+import { WIDGET_CLICKHOUSE_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
 import ClickHouseQueryBuilder from './query';
 

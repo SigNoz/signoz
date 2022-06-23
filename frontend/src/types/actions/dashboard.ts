@@ -25,7 +25,6 @@ export const DELETE_DASHBOARD_ERROR = 'DELETE_DASHBOARD_ERROR';
 
 export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
 
-export const CREATE_NEW_QUERY = 'CREATE_NEW_QUERY';
 export const QUERY_SUCCESS = 'QUERY_SUCCESS';
 export const QUERY_ERROR = 'QUERY_ERROR';
 
@@ -86,13 +85,6 @@ interface CreateDefaultWidget {
 	payload: Widgets;
 }
 
-interface CreateNewQuery {
-	type: typeof CREATE_NEW_QUERY;
-	payload: {
-		widgetId: string;
-	};
-}
-
 interface IsAddWidget {
 	type: typeof IS_ADD_WIDGET;
 	payload: {
@@ -128,7 +120,11 @@ interface ToggleEditMode {
 
 export interface QuerySuccessPayload {
 	widgetId: string;
-	data: { legend: string; queryData: QueryData[]; query: string }[];
+	data: {
+		// legend: string;
+		queryData: QueryData[];
+		// query: string
+	}[];
 }
 interface QuerySuccess {
 	type: typeof QUERY_SUCCESS;
@@ -138,7 +134,7 @@ interface QuerySuccess {
 interface UpdateQuery {
 	type: typeof UPDATE_QUERY;
 	payload: {
-		query: Query[];
+		query: Query;
 		widgetId: string;
 		yAxisUnit: string | undefined;
 	};
@@ -199,7 +195,6 @@ export type DashboardActions =
 	| UpdateDashboardTitle
 	| ToggleEditMode
 	| CreateDefaultWidget
-	| CreateNewQuery
 	| QuerySuccess
 	| QueryError
 	| ApplySettingsToPanel

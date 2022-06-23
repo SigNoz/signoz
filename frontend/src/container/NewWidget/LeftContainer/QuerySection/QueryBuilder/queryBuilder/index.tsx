@@ -1,25 +1,20 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, notification, Row } from 'antd';
+import { notification } from 'antd';
 import {
-	ClickHouseQueryTemplate,
 	QueryBuilderFormulaTemplate,
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
 import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import {
-	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
-	WIDGET_PROMQL_QUERY_KEY_NAME,
 	WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME,
 	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from '../../constants';
 import { QueryButton } from '../../styles';
-import QueryHeader from '../QueryHeader';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
-import ClickHouseQueryBuilder from './query';
 import { canCreateQueryAndFormula } from './utils';
 
 function QueryBuilderQueryContainer({
@@ -78,7 +73,7 @@ function QueryBuilderQueryContainer({
 		expression,
 		toggleDisable,
 		toggleDelete,
-	}) => {
+	}): void => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME

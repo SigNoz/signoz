@@ -1,4 +1,3 @@
-import { presetPrimaryColors } from '@ant-design/colors';
 import { Button } from 'antd';
 import styled from 'styled-components';
 
@@ -27,8 +26,8 @@ export const QueryWrapper = styled.div`
 	flex-direction: column;
 `;
 
-export const QueryBuilderWrapper = styled.div`
-	background: ${({ isDarkMode }) => (isDarkMode ? '#000' : '#efefef')};
+export const QueryBuilderWrapper = styled.div<{ isDarkMode: boolean }>`
+	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#efefef')};
 `;
 
 export const ButtonContainer = styled.div`

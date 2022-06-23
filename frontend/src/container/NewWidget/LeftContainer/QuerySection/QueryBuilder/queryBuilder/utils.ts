@@ -5,7 +5,7 @@ import {
 
 const QUERY_AND_FORMULA_LIMIT = 10;
 
-export const canCreateQueryAndFormula = (query) => {
+export const canCreateQueryAndFormula = (query): boolean => {
 	const queries = query[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder;
 	const formulas =
 		query[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][

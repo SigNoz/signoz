@@ -1,8 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input } from 'antd';
 import { PromQLQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { WIDGET_PROMQL_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
@@ -21,7 +20,7 @@ function PromQLQueryContainer({
 		legend,
 		toggleDisable,
 		toggleDelete,
-	}) => {
+	}): void => {
 		const allQueries = queryData[WIDGET_PROMQL_QUERY_KEY_NAME];
 		const currentIndexQuery = allQueries[queryIndex];
 		if (query) currentIndexQuery.query = query;
@@ -35,7 +34,7 @@ function PromQLQueryContainer({
 		}
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
-	const addQueryHandler = () => {
+	const addQueryHandler = (): void => {
 		queryData[WIDGET_PROMQL_QUERY_KEY_NAME].push({
 			name: GetQueryName(queryData[WIDGET_PROMQL_QUERY_KEY_NAME]),
 			...PromQLQueryTemplate,
@@ -48,14 +47,16 @@ function PromQLQueryContainer({
 	}
 	return (
 		<>
-			{promQLQueries.map((q, idx) => (
-				<PromQLQueryBuilder
-					key={q.name}
-					queryIndex={idx}
-					queryData={q}
-					handleQueryChange={handlePromQLQueryChange}
-				/>
-			))}
+			{promQLQueries.map(
+				(q, idx): JSX.Element => (
+					<PromQLQueryBuilder
+						key={q.name}
+						queryIndex={idx}
+						queryData={q}
+						handleQueryChange={handlePromQLQueryChange}
+					/>
+				),
+			)}
 			<QueryButton onClick={addQueryHandler} icon={<PlusOutlined />}>
 				Query
 			</QueryButton>

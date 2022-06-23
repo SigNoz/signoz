@@ -42,7 +42,7 @@ function WidgetGraph({
 		);
 	}
 
-	if (queryData.data.length === 0) {
+	if (queryData.data.length === 0 || queryData.data[0].queryData.length === 0) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>

@@ -10,7 +10,13 @@ import React, { useState } from 'react';
 
 import { QueryWrapper } from '../styles';
 
-function QueryHeader(props): JSX.Element {
+function QueryHeader({
+	disabled,
+	onDisable,
+	name,
+	onDelete,
+	children,
+}): JSX.Element {
 	const [collapse, setCollapse] = useState(false);
 	return (
 		<QueryWrapper>
@@ -18,10 +24,10 @@ function QueryHeader(props): JSX.Element {
 				<Row>
 					<Button
 						type="ghost"
-						icon={props.disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
-						onClick={props.onDisable}
+						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
+						onClick={onDisable}
 					>
-						{props.name}
+						{name}
 					</Button>
 					<Button
 						type="ghost"
@@ -30,14 +36,9 @@ function QueryHeader(props): JSX.Element {
 					/>
 				</Row>
 
-				<Button
-					type="ghost"
-					danger
-					icon={<DeleteOutlined />}
-					onClick={props.onDelete}
-				/>
+				<Button type="ghost" danger icon={<DeleteOutlined />} onClick={onDelete} />
 			</Row>
-			{!collapse && props.children}
+			{!collapse && children}
 		</QueryWrapper>
 	);
 }

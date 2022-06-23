@@ -1,7 +1,6 @@
 import { Input } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import { InputContainer } from '../../styles';
 import QueryHeader from '../QueryHeader';
 
 function PromQLQueryBuilder({

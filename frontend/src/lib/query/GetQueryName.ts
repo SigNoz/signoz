@@ -1,7 +1,7 @@
 import { sortBy } from 'lodash-es';
 
 const MAX_QUERIES = 26;
-function GetQueryName(queries = []) {
+function GetQueryName(queries = []): string | null {
 	if (!queries.length) return 'A';
 	if (queries.length === MAX_QUERIES) {
 		return null;
@@ -22,6 +22,8 @@ function GetQueryName(queries = []) {
 		}
 		query_iterator_idx += 1;
 	}
+
+	return null;
 }
 
 export default GetQueryName;

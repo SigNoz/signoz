@@ -1,10 +1,8 @@
-import { PlusOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
-import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import { cloneDeep, differenceWith, isEqual } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -35,26 +33,17 @@ import {
 	WIDGET_PROMQL_QUERY_KEY_NAME,
 	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from './constants';
-import Query from './Query';
-import QueryBuilder from './QueryBuilder';
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 import QueryBuilderQueryContainer from './QueryBuilder/queryBuilder';
-import { QueryButton } from './styles';
 import TabHeader from './TabHeader';
-import { EQueryTypeToQueryKeyMapping, TQueryCategories } from './types';
 import { getQueryKey } from './utils/getQueryKey';
-import GetQueryName from './utils/GetQueryName';
 import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
 const { TabPane } = Tabs;
 function QuerySection({
 	handleUnstagedChanges,
-	selectedTime,
-	createQuery,
 	updateQuery,
-	getQueryResults,
-	updateQueryType,
 	selectedGraph,
 }: QueryProps): JSX.Element {
 	const [localQueryChanges, setLocalQueryChanges] = useState({});
@@ -183,6 +172,7 @@ function QuerySection({
 			return [...prevState];
 		});
 	};
+
 	return (
 		<>
 			<div style={{ display: 'flex' }}>
@@ -302,27 +292,27 @@ function QuerySection({
 }
 
 interface DispatchProps {
-	createQuery: ({
-		widgetId,
-	}: CreateQueryProps) => (dispatch: Dispatch<AppActions>) => void;
+	// createQuery: ({
+	// 	widgetId,
+	// }: CreateQueryProps) => (dispatch: Dispatch<AppActions>) => void;
 	updateQuery: (
 		props: UpdateQueryProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
-	getQueryResults: (
-		props: GetQueryResultsProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-	updateQueryType: (
-		props: UpdateQueryTypeProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
+	// getQueryResults: (
+	// 	props: GetQueryResultsProps,
+	// ) => (dispatch: Dispatch<AppActions>) => void;
+	// updateQueryType: (
+	// 	props: UpdateQueryTypeProps,
+	// ) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	createQuery: bindActionCreators(CreateQuery, dispatch),
+	// createQuery: bindActionCreators(CreateQuery, dispatch),
 	updateQuery: bindActionCreators(UpdateQuery, dispatch),
-	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
-	updateQueryType: bindActionCreators(UpdateQueryType, dispatch),
+	// getQueryResults: bindActionCreators(GetQueryResults, dispatch),
+	// updateQueryType: bindActionCreators(UpdateQueryType, dispatch),
 });
 
 interface QueryProps extends DispatchProps {

@@ -2,8 +2,6 @@ import {
 	getResourceAttributesTagKeys,
 	getResourceAttributesTagValues,
 } from 'api/metrics/getResourceAttributes';
-import { OperatorConversions } from 'constants/resourceAttributes';
-import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
 import { v4 as uuid } from 'uuid';
 
 import { TagKeyOperator } from '../../Options';

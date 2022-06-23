@@ -1,15 +1,14 @@
 import { Input } from 'antd';
 import MonacoEditor from 'components/Editor';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import { InputContainer } from '../../styles';
 import QueryHeader from '../QueryHeader';
 
 function ClickHouseQueryBuilder({
 	queryData,
 	queryIndex,
 	handleQueryChange,
-}): JSX.Element {
+}): JSX.Element | null {
 	if (queryData === undefined) {
 		return null;
 	}
@@ -29,7 +28,9 @@ function ClickHouseQueryBuilder({
 				language="sql"
 				theme="vs-dark"
 				height="200px"
-				onChange={(value) => handleQueryChange({ queryIndex, rawQuery: value })}
+				onChange={(value): void =>
+					handleQueryChange({ queryIndex, rawQuery: value })
+				}
 				value={queryData.rawQuery}
 				options={{
 					scrollbar: {

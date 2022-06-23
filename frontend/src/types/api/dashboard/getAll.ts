@@ -39,9 +39,9 @@ export interface Widgets {
 		error: boolean;
 		errorMessage: string;
 		data: {
-			legend?: string;
+			// legend?: string;
 			queryData: QueryData[];
-			query: string;
+			// query: string;
 		}[];
 	};
 	queryType: number;
@@ -51,11 +51,12 @@ export interface Widgets {
 
 export interface Query {
 	queryType: EQueryType;
-	promQL: IPromQLQuery;
+	promQL: IPromQLQuery[];
 	metricsBuilder: {
 		formulas: IMetricsBuilderFormula[];
 		queryBuilder: IMetricsBuilderQuery[];
 	};
+	clickHouse: IClickHouseQuery[];
 }
 
 export interface IMetricsBuilderFormula {
@@ -68,19 +69,21 @@ export interface IMetricsBuilderQuery {
 	disabled: boolean;
 	name: string;
 	legend: string;
-	metricName: string;
+	metricName: string | null;
 	groupBy: string[];
-	tagFilters: IQueryBuilderTagFilters[];
+	tagFilters: IQueryBuilderTagFilters;
 }
 
 export interface IQueryBuilderTagFilters {
 	op: string;
-	items: {
-		id: string;
-		key: string;
-		op: string;
-		value: string[];
-	};
+	items:
+		| {
+				id: string;
+				key: string;
+				op: string;
+				value: string[];
+		  }[]
+		| [];
 }
 
 export interface IClickHouseQuery {

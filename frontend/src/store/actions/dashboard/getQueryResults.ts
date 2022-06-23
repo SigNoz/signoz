@@ -1,9 +1,11 @@
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { AxiosError } from 'axios';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME } from 'container/NewWidget/LeftContainer/QuerySection/constants';
 import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { Time } from 'container/TopNav/DateTimeSelection/config';
 import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
@@ -23,9 +25,15 @@ export async function GetMetricQueryRange({
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
+}: {
+	query: Query;
+	graphType: GRAPH_TYPES;
+	selectedTime: timePreferenceType;
+	globalSelectedInterval: Time;
 }): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
 	const { queryType } = query;
-	const queryKey = EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
+	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
+		EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
 	const queryData = query[queryKey];
 	const legendMap: Record<string, string> = {};
 	const QueryPayload = {
@@ -39,11 +47,12 @@ export async function GetMetricQueryRange({
 		case EQueryType.QUERY_BUILDER: {
 			const builderQueries = {};
 			queryData.queryBuilder.map((query) => {
-				const generatedQueryPayload = {};
-				generatedQueryPayload.queryName = query.name;
-				generatedQueryPayload.aggregateOperator = query.aggregateOperator;
-				generatedQueryPayload.metricName = query.metricName;
-				generatedQueryPayload.tagFilters = query.tagFilters;
+				const generatedQueryPayload = {
+					queryName: query.name,
+					aggregateOperator: query.aggregateOperator,
+					metricName: query.metricName,
+					tagFilters: query.tagFilters,
+				};
 
 				if (graphType === 'TIME_SERIES') {
 					generatedQueryPayload.groupBy = query.groupBy;
@@ -197,6 +206,7 @@ export const GetQueryResults = (
 				payload: {
 					errorMessage: (error as AxiosError).toString(),
 					widgetId: props.widgetId,
+					errorBoolean: true,
 				},
 			});
 		}

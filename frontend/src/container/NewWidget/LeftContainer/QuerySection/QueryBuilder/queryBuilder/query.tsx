@@ -1,41 +1,9 @@
-import {
-	DeleteOutlined,
-	DownOutlined,
-	EyeFilled,
-	RightOutlined,
-} from '@ant-design/icons';
-import {
-	AutoComplete,
-	Button,
-	Col,
-	Divider,
-	Input,
-	Row,
-	Select,
-	Spin,
-	Tabs,
-} from 'antd';
+import { AutoComplete, Col, Input, Row, Select, Spin } from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
-import MonacoEditor from 'components/Editor';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import React, { useEffect, useState } from 'react';
 import { EReduceOperator } from 'types/common/dashboard';
-import AppReducer from 'types/reducer/app';
-import { v4 as uuid } from 'uuid';
 
-import {
-	InputContainer,
-	QueryBuilderWrapper,
-	QueryWrapper,
-} from '../../styles';
 import { TQueryCategories } from '../../types';
 import { AggregateFunctions } from '../Options';
 import QueryHeader from '../QueryHeader';
@@ -55,12 +23,12 @@ function MetricsBuilder({
 	const [metricNameList, setMetricNameList] = useState([]);
 	const [metricNameLoading, setMetricNameLoading] = useState(false);
 
-	const handleMetricNameSelect = (e) => {
+	const handleMetricNameSelect = (e): void => {
 		handleQueryChange({ queryIndex, metricName: e });
 		setMetricName(e);
 	};
 
-	const handleMetricNameSearch = async (searchQuery = '') => {
+	const handleMetricNameSearch = async (searchQuery = ''): Promise<void> => {
 		handleMetricNameSelect(searchQuery);
 		setMetricNameList([]);
 		setMetricNameLoading(true);
@@ -74,7 +42,7 @@ function MetricsBuilder({
 	const [aggregateFunctionList, setAggregateFunctionList] = useState(
 		AggregateFunctions,
 	);
-	const handleAggregateFunctionsSearch = (searchQuery = '') => {
+	const handleAggregateFunctionsSearch = (searchQuery = ''): void => {
 		setAggregateFunctionList(
 			AggregateFunctions.filter(({ label }) =>
 				label.includes(searchQuery.toUpperCase()),
@@ -102,7 +70,9 @@ function MetricsBuilder({
 			<div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem' }}>
 				<div>
 					<Select
-						onChange={(e) => handleQueryChange({ queryIndex, aggregateFunction: e })}
+						onChange={(e): void =>
+							handleQueryChange({ queryIndex, aggregateFunction: e })
+						}
 						defaultValue={queryData.aggregateOperator || AggregateFunctions[0]}
 						style={{ minWidth: 150 }}
 						options={aggregateFunctionList}
@@ -150,7 +120,7 @@ function MetricsBuilder({
 							<MetricTagKeyFilter
 								metricName={metricName}
 								selectedTagFilters={queryData.tagFilters.items}
-								onSetQuery={(updatedTagFilters) =>
+								onSetQuery={(updatedTagFilters): void =>
 									handleQueryChange({ queryIndex, tagFilters: updatedTagFilters })
 								}
 							/>
@@ -175,7 +145,7 @@ function MetricsBuilder({
 										notFoundContent={metricNameLoading ? <Spin size="small" /> : null}
 										options={groupByOptions}
 										defaultValue={queryData.groupBy}
-										onChange={(e) => {
+										onChange={(e): void => {
 											handleQueryChange({ queryIndex, groupBy: e });
 										}}
 									/>
@@ -193,13 +163,13 @@ function MetricsBuilder({
 										placeholder="Latest of values in timeframe"
 										style={{ flex: 1 }}
 										options={Object.keys(EReduceOperator)
-											.filter((op) => !(parseInt(op) >= 0))
+											.filter((op) => !(parseInt(op, 10) >= 0))
 											.map((op) => ({
 												label: op,
 												value: EReduceOperator[op],
 											}))}
 										defaultValue={EReduceOperator[queryData.reduceTo]}
-										onChange={(e) => {
+										onChange={(e): void => {
 											handleQueryChange({ queryIndex, reduceTo: e });
 										}}
 									/>
