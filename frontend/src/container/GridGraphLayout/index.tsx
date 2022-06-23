@@ -218,7 +218,7 @@ function GridGraph(props: Props): JSX.Element {
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setLayoutFunction(layout);
 
-		await onLayoutSaveHandler(layout);
+		// await onLayoutSaveHandler(layout);
 	};
 
 	const onAddPanelHandler = useCallback(() => {
