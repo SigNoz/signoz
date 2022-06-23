@@ -1,11 +1,14 @@
-/* eslint-disable react/no-unstable-nested-components */
-import { Input, Slider } from 'antd';
+import { Slider } from 'antd';
 import { SliderRangeProps } from 'antd/lib/slider';
 import getFilters from 'api/trace/getFilters';
-import dayjs from 'dayjs';
-import durationPlugin from 'dayjs/plugin/duration';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -15,19 +18,8 @@ import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { Container, InputContainer, Text } from './styles';
-
-dayjs.extend(durationPlugin);
-
-const getMs = (value: string): string => {
-	return parseFloat(
-		dayjs
-			.duration({
-				milliseconds: parseInt(value, 10) / 1000000,
-			})
-			.format('SSS'),
-	).toFixed(2);
-};
+import { Container, InputComponent, InputContainer, Text } from './styles';
+import { getMs } from './util';
 
 function Duration(): JSX.Element {
 	const {
@@ -77,17 +69,18 @@ function Duration(): JSX.Element {
 			preLocalMinDuration.current = parseFloat(minDuration);
 		}
 
-		setPreMax(maxDuration);
-		setPreMin(minDuration);
+		setPreMax(getMs(maxDuration));
+		setPreMin(getMs(minDuration));
 	}, [getDuration]);
-
-	const defaultValue = [parseFloat(preMin), parseFloat(preMax)];
 
 	const updatedUrl = async (min: number, max: number): Promise<void> => {
 		const preSelectedFilter = new Map(selectedFilter);
 		const preUserSelected = new Map(userSelectedFilter);
 
-		preSelectedFilter.set('duration', [String(max), String(min)]);
+		preSelectedFilter.set('duration', [
+			String(max * 1000000),
+			String(min * 1000000),
+		]);
 
 		const response = await getFilters({
 			end: String(globalTime.maxTime),
@@ -137,18 +130,18 @@ function Duration(): JSX.Element {
 		}
 	};
 
-	const onRangeSliderHandler = (number: [number, number]): void => {
+	const onRangeSliderHandler = (number: [string, string]): void => {
 		const [min, max] = number;
 
-		setPreMin(min.toString());
-		setPreMax(max.toString());
+		setPreMin(min);
+		setPreMax(max);
 	};
 
 	const debouncedFunction = useDebouncedFn(
 		(min, max) => {
 			updatedUrl(min as number, max as number);
 		},
-		500,
+		1500,
 		undefined,
 	);
 
@@ -156,8 +149,8 @@ function Duration(): JSX.Element {
 		event,
 	) => {
 		const { value } = event.target;
-		const min = parseFloat(preMin);
-		const max = parseFloat(value) * 1000000;
+		const min = preMin;
+		const max = value;
 
 		onRangeSliderHandler([min, max]);
 		debouncedFunction(min, max);
@@ -167,8 +160,9 @@ function Duration(): JSX.Element {
 		event,
 	) => {
 		const { value } = event.target;
-		const min = parseFloat(value) * 1000000;
-		const max = parseFloat(preMax);
+		const min = value;
+		const max = preMax;
+
 		onRangeSliderHandler([min, max]);
 		debouncedFunction(min, max);
 	};
@@ -177,45 +171,48 @@ function Duration(): JSX.Element {
 		updatedUrl(min, max);
 	};
 
+	const TipComponent = useCallback((value) => {
+		if (value === undefined) {
+			return <div />;
+		}
+		return <div>{`${getMs(value?.toString())}ms`}</div>;
+	}, []);
+
 	return (
 		<div>
 			<Container>
 				<InputContainer>
 					<Text>Min</Text>
 				</InputContainer>
-				<Input
+				<InputComponent
 					addonAfter="ms"
+					type="number"
 					onChange={onChangeMinHandler}
-					value={getMs(preMin)}
+					value={preMin}
 				/>
 
 				<InputContainer>
 					<Text>Max</Text>
 				</InputContainer>
-				<Input
+				<InputComponent
 					addonAfter="ms"
+					type="number"
 					onChange={onChangeMaxHandler}
-					value={getMs(preMax)}
+					value={preMax}
 				/>
 			</Container>
 
 			<Container>
 				<Slider
-					defaultValue={[defaultValue[0], defaultValue[1]]}
-					min={parseFloat((preLocalMinDuration.current || 0).toString())}
-					max={parseFloat((preLocalMaxDuration.current || 0).toString())}
+					min={Number(getMs(String(preLocalMinDuration.current || 0)))}
+					max={Number(getMs(String(preLocalMaxDuration.current || 0)))}
 					range
-					tipFormatter={(value): JSX.Element => {
-						if (value === undefined) {
-							return <div />;
-						}
-						return <div>{`${getMs(value?.toString())}ms`}</div>;
-					}}
+					tipFormatter={TipComponent}
 					onChange={([min, max]): void => {
-						onRangeSliderHandler([min, max]);
+						onRangeSliderHandler([String(min), String(max)]);
 					}}
 					onAfterChange={onRangeHandler}
-					value={[parseFloat(preMin), parseFloat(preMax)]}
+					value={[Number(preMin), Number(preMax)]}
 				/>
 			</Container>
 		</div>
