@@ -18,4 +18,4 @@ jobs:
         run: cd frontend && yarn playwright
         env:
           # This might depend on your test-runner/language binding
-          PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
+          PLAYWRIGHT_TEST_BASE_URL: ${{ secrets.PLAYWRIGHT_TEST_BASE_URL }}
