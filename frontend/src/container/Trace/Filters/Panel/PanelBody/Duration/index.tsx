@@ -168,7 +168,6 @@ function Duration(): JSX.Element {
 	};
 
 	const onRangeHandler: SliderRangeProps['onChange'] = ([min, max]) => {
-		console.log({ min, max });
 		updatedUrl(min, max);
 	};
 
