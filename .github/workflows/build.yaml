@@ -18,7 +18,7 @@ jobs:
       - name: Run ESLint
         run: cd frontend && npm run lint
       - name: Run Jest
-      run: cd frontend && npm run jest
+        run: cd frontend && npm run jest
       - name: TSC
         run: yarn tsc
         working-directory: ./frontend
