@@ -42,6 +42,8 @@ export const executeSearchQueries = (
 	if (!searchData.length || !queries.length) {
 		return searchData;
 	}
+	const escapeRegExp = (regExp: string): string =>
+		regExp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 	queries.forEach((query: IQueryStructure) => {
 		const { operator } = query;
@@ -61,7 +63,7 @@ export const executeSearchQueries = (
 				for (const searchSpaceItem of searchSpace) {
 					if (searchSpaceItem)
 						for (const queryValue of value) {
-							if (searchSpaceItem.match(queryValue)) {
+							if (searchSpaceItem.match(escapeRegExp(queryValue))) {
 								return resolveOperator(true, operator);
 							}
 						}
