@@ -1,7 +1,7 @@
-import { Space, Tabs, Typography } from 'antd';
+import { Tabs, Tooltip, Typography } from 'antd';
 import { StyledSpace } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import ErrorTag from './ErrorTag';
@@ -19,29 +19,38 @@ const { TabPane } = Tabs;
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree } = props;
 	const { isDarkMode } = useThemeMode();
+
+	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
+	const OverLayComponentServiceName = useMemo(() => tree?.serviceName, [
+		tree?.serviceName,
+	]);
+
 	if (!tree) {
 		return <div />;
 	}
 
-	const { name, tags, serviceName } = tree;
+	const { tags } = tree;
 
 	return (
 		<CardContainer>
 			<StyledSpace
-				styledclass={[styles.selectedSpanDetailsContainer]}
+				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
 				style={{ marginLeft: '0.5rem' }}
 			>
 				<strong> Details for selected Span </strong>
-				<Space direction="vertical" size={2}>
-					<CustomTitle>Service</CustomTitle>
-					<CustomText>{serviceName}</CustomText>
-				</Space>
-				<Space direction="vertical" size={2}>
-					<CustomTitle>Operation</CustomTitle>
-					<CustomText>{name}</CustomText>
-				</Space>
+
+				<CustomTitle>Service</CustomTitle>
+				<Tooltip overlay={OverLayComponentServiceName}>
+					<CustomText ellipsis>{tree.serviceName}</CustomText>
+				</Tooltip>
+
+				<CustomTitle>Operation</CustomTitle>
+				<Tooltip overlay={OverLayComponentName}>
+					<CustomText ellipsis>{tree.name}</CustomText>
+				</Tooltip>
 			</StyledSpace>
+
 			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
 					{tags.length !== 0 ? (
