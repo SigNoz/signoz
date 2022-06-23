@@ -11,11 +11,11 @@ jobs:
         with:
           node-version: "14.x"
       - name: Install dependencies
-        run: cd frontend && npm install
+        run: cd frontend && RUN CI=1 yarn install
       - name: Install Playwright
         run: cd frontend && npx playwright install --with-deps
       - name: Run Playwright tests
-        run: cd frontend && npm run playwright
+        run: cd frontend && yarn playwright
         env:
           # This might depend on your test-runner/language binding
           PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
