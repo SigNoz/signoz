@@ -592,19 +592,43 @@ func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.A
 
 func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
 
-	idInt, _ := strconv.Atoi(id)
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		zap.S().Debug("Error in parsing param: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
 
 	rule := &model.RuleResponseItem{}
 
-	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
-
-	err := r.localDB.Get(rule, query)
-
-	zap.S().Info(query)
+	query := "SELECT id, updated_at, data FROM rules WHERE id=?"
+	rows, err := r.localDB.Query(query, idInt)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	count := 0
+	// iterate over each row
+	for rows.Next() {
+		err = rows.Scan(&rule.Id, &rule.UpdatedAt, &rule.Data)
+		if err != nil {
+			zap.S().Debug(err)
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		count += 1
+
+	}
+
+	if count == 0 {
+		err = fmt.Errorf("no rule with id %d found", idInt)
+		zap.S().Debug(err)
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: err}
+	}
+	if count > 1 {
+		err = fmt.Errorf("multiple rules with id %d found", idInt)
+		zap.S().Debug(err)
+		return nil, &model.ApiError{Typ: model.ErrorConflict, Err: err}
 	}
 
 	return rule, nil
