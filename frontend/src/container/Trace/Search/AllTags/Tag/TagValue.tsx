@@ -1,13 +1,13 @@
 import { Select } from 'antd';
 import getTagValue from 'api/trace/getTagValue';
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { SelectComponent } from './styles';
+import { AutoCompleteComponent } from './styles';
 
 function TagValue(props: TagValueProps): JSX.Element {
 	const { tag, setLocalSelectedTags, index, tagKey } = props;
@@ -16,6 +16,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 		Operator: selectedOperator,
 		Values: selectedValues,
 	} = tag;
+	const [localValue, setLocalValue] = useState<string>(selectedValues[0]);
 
 	const globalReducer = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -34,22 +35,38 @@ function TagValue(props: TagValueProps): JSX.Element {
 	);
 
 	return (
-		<SelectComponent
-			value={selectedValues[0]}
+		<AutoCompleteComponent
+			options={data?.payload?.map((e) => ({
+				label: e.tagValues,
+				value: e.tagValues,
+			}))}
+			allowClear
+			defaultOpen
+			showSearch
+			filterOption={(inputValue, option): boolean =>
+				option?.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+			}
+			disabled={isLoading}
+			value={localValue}
+			onChange={(values): void => {
+				if (typeof values === 'string') {
+					setLocalValue(values);
+				}
+			}}
 			onSelect={(value: unknown): void => {
 				if (typeof value === 'string') {
+					setLocalValue(value);
 					setLocalSelectedTags((tags) => [
 						...tags.slice(0, index),
 						{
 							Key: selectedKey,
 							Operator: selectedOperator,
-							Values: [...selectedValues, value],
+							Values: [value],
 						},
 						...tags.slice(index + 1, tags.length),
 					]);
 				}
 			}}
-			loading={isLoading || false}
 		>
 			{data &&
 				data.payload &&
@@ -58,7 +75,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 						{suggestion.tagValues}
 					</Select.Option>
 				))}
-		</SelectComponent>
+		</AutoCompleteComponent>
 	);
 }
 

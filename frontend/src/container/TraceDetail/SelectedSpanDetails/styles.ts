@@ -1,7 +1,7 @@
-import { Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import styled, { css } from 'styled-components';
 
-const { Text, Title, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 export const CustomTitle = styled(Title)`
 	&&& {
@@ -9,7 +9,7 @@ export const CustomTitle = styled(Title)`
 	}
 `;
 
-export const CustomText = styled(Text)`
+export const CustomText = styled(Paragraph)`
 	&&& {
 		color: #2d9cdb;
 	}
@@ -17,7 +17,6 @@ export const CustomText = styled(Text)`
 
 export const CustomSubTitle = styled(Title)`
 	&&& {
-		/* color: #bdbdbd; */
 		font-size: 14px;
 		margin-bottom: 8px;
 	}
@@ -44,6 +43,17 @@ export const CardContainer = styled.div`
 	width: 100%;
 	flex: 1;
 	overflow-y: auto;
+	overflow-x: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+`;
+
+export const CustomSpace = styled(Space)`
+	&&& {
+		.ant-space-item {
+			width: 100%;
+		}
+	}
 `;
 
 const removeMargin = css`
@@ -60,9 +70,21 @@ const selectedSpanDetailsContainer = css`
 const spanEventsTabsContainer = css`
 	margin-top: 1rem;
 `;
+
+const overflow = css`
+	width: 95%;
+
+	> div.ant-space-item:nth-child(4) {
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+`;
+
 export const styles = {
 	removeMargin,
 	removePadding,
 	selectedSpanDetailsContainer,
 	spanEventsTabsContainer,
+	overflow,
 };
