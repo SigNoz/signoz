@@ -35,6 +35,7 @@
 		"playwright.config.ts",
 		"./commitlint.config.js",
 		"./webpack.config.js",
-		"./webpack.config.prod.js"
+		"./webpack.config.prod.js",
+		"./jest.setup.ts"
 	]
 }

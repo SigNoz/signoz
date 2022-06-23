@@ -159,6 +159,7 @@
 		"husky": "^7.0.4",
 		"is-ci": "^3.0.1",
 		"jest-playwright-preset": "^1.7.0",
+		"jest-styled-components": "^7.0.8",
 		"less-plugin-npm-import": "^2.1.0",
 		"lint-staged": "^12.3.7",
 		"portfinder-sync": "^0.0.2",
