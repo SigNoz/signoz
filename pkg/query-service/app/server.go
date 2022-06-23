@@ -6,11 +6,13 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
+	"net/url"
 	"os"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -19,6 +21,9 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
+	am "go.signoz.io/query-service/integrations/alertManager"
+	pqle "go.signoz.io/query-service/pqlEngine"
+	"go.signoz.io/query-service/rules"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
@@ -42,6 +47,7 @@ type Server struct {
 	httpConn net.Listener
 	// grpcServer         *grpc.Server
 	httpServer         *http.Server
+	ruleManager        *rules.Manager
 	separatePorts      bool
 	unavailableChannel chan healthcheck.Status
 }
@@ -85,6 +91,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		// separatePorts:      grpcPort != httpPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
+
 	httpServer, err := s.createHTTPServer()
 
 	if err != nil {
@@ -115,7 +122,14 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	apiHandler, err := NewAPIHandler(&reader, dao.DB())
+	// todo(amol): need to fix this
+	externalURL, _ := url.Parse("http://signoz.io")
+	s.ruleManager, err = makeRulesManager(s.serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), externalURL, localDB, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	apiHandler, err := NewAPIHandler(&reader, dao.DB(), s.ruleManager)
 	if err != nil {
 		return nil, err
 	}
@@ -253,6 +267,9 @@ func (s *Server) initListener() (cmux.CMux, error) {
 // Start http, GRPC and cmux servers concurrently
 func (s *Server) Start() error {
 
+	// initiate rule manager first
+	s.ruleManager.Start()
+
 	_, err := s.initListener()
 	if err != nil {
 		return err
@@ -285,4 +302,49 @@ func (s *Server) Start() error {
 	}()
 
 	return nil
+}
+
+func makeRulesManager(
+	promConfigPath,
+	alertManagerURL string,
+	externalURL *url.URL,
+	db *sqlx.DB,
+	ch Reader) (*rules.Manager, error) {
+
+	// create engine
+	pqle, err := pqle.FromConfigPath(promConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create pql engine : %v", err)
+	}
+
+	// notifier opts
+	notifierOpts := am.NotifierOptions{
+		QueueCapacity:    10000,
+		Timeout:          1 * time.Second,
+		AlertManagerURLs: []string{alertManagerURL},
+	}
+
+	// create manager opts
+	managerOpts := &rules.ManagerOptions{
+		NotifierOpts: notifierOpts,
+		Queriers: &rules.Queriers{
+			PqlEngine: pqle,
+			Ch:        ch.GetConn(),
+		},
+		ExternalURL: externalURL,
+		Conn:        db,
+		Context:     context.Background(),
+		Logger:      nil,
+	}
+
+	// create Manager
+	manager, err := rules.NewManager(managerOpts)
+	if err != nil {
+		fmt.Println("manager error:", err)
+		return nil, fmt.Errorf("rule manager error: %v", err)
+	}
+
+	zap.S().Info("rules manager is ready")
+
+	return manager, nil
 }

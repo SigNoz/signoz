@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -85,6 +84,11 @@ func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
 	if a.ResolvedAt.After(a.LastSentAt) {
 		return true
 	}
-	fmt.Println("resendDelay", resendDelay)
+
 	return a.LastSentAt.Add(resendDelay).Before(ts)
+}
+
+type NamedAlert struct {
+	Name string
+	*Alert
 }

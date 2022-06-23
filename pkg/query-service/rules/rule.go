@@ -10,10 +10,15 @@ import (
 // A Rule encapsulates a vector expression which is evaluated at a specified
 // interval and acted upon (currently used for alerting).
 type Rule interface {
+	ID() string
 	Name() string
 	Type() RuleType
 
 	Labels() labels.BaseLabels
+	Annotations() labels.BaseLabels
+	Condition() *RuleCondition
+	State() AlertState
+	ActiveAlerts() []*Alert
 
 	Eval(context.Context, time.Time, *Queriers, *url.URL) (interface{}, error)
 	String() string

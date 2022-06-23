@@ -13,6 +13,7 @@ import (
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
 	pqle "go.signoz.io/query-service/pqlEngine"
+	"go.signoz.io/query-service/utils/value"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"net/url"
@@ -108,8 +109,11 @@ func TestRules(t *testing.T) {
 	}*/
 	// create builder rule
 	metricQuery := &model.MetricQuery{
-		QueryName:         "A",
-		MetricName:        "signoz_latency_count",
+		QueryName:  "A",
+		MetricName: "signoz_latency_count",
+		TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
+			{Key: "span_kind", Value: "SPAN_KIND_SERVER", Operation: "neq"},
+		}},
 		GroupingTags:      []string{"service_name"},
 		AggregateOperator: model.RATE_SUM,
 		Expression:        "A",
@@ -121,6 +125,8 @@ func TestRules(t *testing.T) {
 		EvalWindow: 5 * time.Minute,
 		Frequency:  30 * time.Second,
 		RuleCondition: RuleCondition{
+			Target:    value.Float64(500),
+			CompareOp: TargetIsMore,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
 				QueryType: model.QUERY_BUILDER,
 				BuilderQueries: map[string]*model.MetricQuery{

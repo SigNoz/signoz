@@ -32,12 +32,9 @@ type RuleTask struct {
 	terminated  chan struct{}
 	managerDone chan struct{}
 
+	pause  bool
 	logger log.Logger
 	notify NotifyFunc
-}
-
-func groupKey(name, file string) string {
-	return name + ";" + file
 }
 
 const DefaultFrequency = 1 * time.Minute
@@ -45,7 +42,7 @@ const DefaultFrequency = 1 * time.Minute
 // newRuleTask makes a new RuleTask with the given name, options, and rules.
 func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
 	zap.S().Info("Initiating a new rule group: %v with frequency: %v", name, frequency)
-	fmt.Println("Initiating a new rule group with frequency", name, frequency)
+
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
 	}
@@ -53,6 +50,7 @@ func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 	return &RuleTask{
 		name:                 name,
 		file:                 file,
+		pause:                false,
 		frequency:            frequency,
 		rules:                rules,
 		opts:                 opts,
@@ -75,6 +73,12 @@ func (g *RuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
 func (g *RuleTask) Interval() time.Duration { return g.frequency }
+
+func (g *RuleTask) Pause(b bool) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.pause = b
+}
 
 type QueryOrigin struct{}
 
@@ -101,7 +105,9 @@ func (g *RuleTask) Run(ctx context.Context) {
 	})
 
 	iter := func() {
-
+		if g.pause {
+			return
+		}
 		start := time.Now()
 		g.Eval(ctx, evalTimestamp)
 		timeSinceStart := time.Since(start)

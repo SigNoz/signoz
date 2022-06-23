@@ -91,6 +91,7 @@ func NewNotifier(o *NotifierOptions, logger log.Logger) (*Notifier, error) {
 		return n, err
 	}
 	n.alertmanagers = amset
+	zap.S().Info("Starting notifier with alert manager:", o.AlertManagerURLs)
 	return n, nil
 }
 

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	am "go.signoz.io/query-service/integrations/alertManager"
@@ -15,12 +16,6 @@ type Reader interface {
 	DeleteChannel(id string) *model.ApiError
 	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
 	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
-
-	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
-	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
-	CreateRule(alert string) *model.ApiError
-	EditRule(alert string, id string) *model.ApiError
-	DeleteRule(id string) *model.ApiError
 
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
@@ -54,4 +49,7 @@ type Reader interface {
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
+
+	// Connection needed for rules
+	GetConn() clickhouse.Conn
 }

@@ -20,6 +20,7 @@ type Task interface {
 	Run(ctx context.Context)
 	Rules() []Rule
 	Stop()
+	Pause(b bool)
 }
 
 // newTask returns an appropriate group for

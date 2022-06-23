@@ -20,6 +20,7 @@ import (
 )
 
 type PromRule struct {
+	id            string
 	name          string
 	ruleCondition *RuleCondition
 
@@ -43,6 +44,7 @@ type PromRule struct {
 }
 
 func NewPromRule(
+	id string,
 	name string,
 	ruleCondition *RuleCondition,
 	evalWindow time.Duration,
@@ -57,6 +59,7 @@ func NewPromRule(
 	fmt.Println("creating new alerting rule:", name)
 
 	return &PromRule{
+		id:            id,
 		name:          name,
 		ruleCondition: ruleCondition,
 		evalWindow:    evalWindow,
@@ -70,6 +73,14 @@ func NewPromRule(
 
 func (r *PromRule) Name() string {
 	return r.name
+}
+
+func (r *PromRule) ID() string {
+	return r.id
+}
+
+func (r *PromRule) Condition() *RuleCondition {
+	return r.ruleCondition
 }
 
 func (r *PromRule) Type() RuleType {
@@ -399,17 +410,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, e
 }
 
 func (r *PromRule) String() string {
-	var cond RuleCondition
-
-	if r.ruleCondition == nil {
-		cond = RuleCondition{}
-	} else {
-		cond = *r.ruleCondition
-	}
 
 	ar := PostableRule{
 		Alert:         r.name,
-		RuleCondition: cond,
+		RuleCondition: r.ruleCondition,
 		EvalWindow:    time.Duration(r.evalWindow),
 		Labels:        r.labels.Map(),
 		Annotations:   r.annotations.Map(),

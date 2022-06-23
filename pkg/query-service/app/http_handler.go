@@ -20,9 +20,11 @@ import (
 	"go.signoz.io/query-service/app/parser"
 	"go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/constants"
+
 	"go.signoz.io/query-service/dao"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/rules"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
 	"go.uber.org/zap"
@@ -49,17 +51,22 @@ type APIHandler struct {
 	reader       *Reader
 	relationalDB dao.ModelDao
 	alertManager am.Manager
+	ruleManager  *rules.Manager
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
+func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao, ruleManager *rules.Manager) (*APIHandler, error) {
 
-	alertManager := am.New("")
+	alertManager, err := am.New("")
+	if err != nil {
+		return nil, err
+	}
 	aH := &APIHandler{
 		reader:       reader,
 		relationalDB: relationalDB,
 		alertManager: alertManager,
+		ruleManager:  ruleManager,
 	}
 	aH.ready = aH.testReady
 
@@ -291,7 +298,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/channels", EditAccess(aH.createChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", EditAccess(aH.testChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules", ViewAccess(aH.listRulesFromProm)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", EditAccess(aH.createRule)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
@@ -373,12 +380,12 @@ func Intersection(a, b []int) (c []int) {
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	alertList, apiErrorObj := (*aH.reader).GetRule(id)
-	if apiErrorObj != nil {
-		respondError(w, apiErrorObj, nil)
+	ruleResponse, err := aH.ruleManager.GetRule(id)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	aH.respond(w, alertList)
+	aH.respond(w, ruleResponse)
 }
 
 func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
@@ -579,13 +586,17 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	aH.respond(w, resp)
 }
 
-func (aH *APIHandler) listRulesFromProm(w http.ResponseWriter, r *http.Request) {
-	alertList, apiErrorObj := (*aH.reader).ListRulesFromProm()
-	if apiErrorObj != nil {
-		respondError(w, apiErrorObj, nil)
+func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
+
+	rules, err := aH.ruleManager.ListRuleStates()
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	aH.respond(w, alertList)
+
+	// todo(amol): need to add sorter
+
+	aH.respond(w, rules)
 }
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
@@ -723,10 +734,10 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	apiErrorObj := (*aH.reader).DeleteRule(id)
+	err := (*aH.ruleManager).DeleteRule(id)
 
-	if apiErrorObj != nil {
-		respondError(w, apiErrorObj, nil)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
@@ -743,10 +754,10 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).EditRule(postData["data"], id)
+	err = (*aH.ruleManager).EditRule(postData["data"], id)
 
-	if apiErrorObj != nil {
-		respondError(w, apiErrorObj, nil)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
@@ -880,10 +891,9 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiErrorObj := (*aH.reader).CreateRule(postData["data"])
-
-	if apiErrorObj != nil {
-		respondError(w, apiErrorObj, nil)
+	err = (*aH.ruleManager).CreateRule(postData["data"])
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 

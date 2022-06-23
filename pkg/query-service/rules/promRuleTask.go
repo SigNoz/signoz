@@ -32,6 +32,7 @@ type PromRuleTask struct {
 	terminated  chan struct{}
 	managerDone chan struct{}
 
+	pause  bool
 	logger log.Logger
 	notify NotifyFunc
 }
@@ -48,6 +49,7 @@ func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 	return &PromRuleTask{
 		name:                 name,
 		file:                 file,
+		pause:                false,
 		frequency:            frequency,
 		rules:                rules,
 		opts:                 opts,
@@ -69,6 +71,12 @@ func (g *PromRuleTask) Rules() []Rule { return g.rules }
 
 // Interval returns the group's interval.
 func (g *PromRuleTask) Interval() time.Duration { return g.frequency }
+
+func (g *PromRuleTask) Pause(b bool) {
+	g.mtx.Lock()
+	defer g.mtx.Unlock()
+	g.pause = b
+}
 
 func (g *PromRuleTask) Run(ctx context.Context) {
 	defer close(g.terminated)

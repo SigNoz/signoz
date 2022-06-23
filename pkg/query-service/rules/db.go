@@ -3,7 +3,6 @@ package rules
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	qsmodel "go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 	"strconv"
 	"time"
@@ -20,8 +19,17 @@ type RuleDB interface {
 	// DeleteRuleTx deletes the given rule in the db and returns tx and group name (on success)
 	DeleteRuleTx(id string) (string, Tx, error)
 
-	// GetRules fetches the rule definitions from db
-	GetRules() ([]qsmodel.RuleResponseItem, error)
+	// GetStoredRules fetches the rule definitions from db
+	GetStoredRules() ([]StoredRule, error)
+
+	// GetStoredRule for a given ID from DB
+	GetStoredRule(id string) (*StoredRule, error)
+}
+
+type StoredRule struct {
+	Id        int       `json:"id" db:"id"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	Data      string    `json:"data" db:"data"`
 }
 
 type Tx interface {
@@ -126,9 +134,9 @@ func (r *ruleDB) DeleteRuleTx(id string) (string, Tx, error) {
 	return groupName, tx, nil
 }
 
-func (r *ruleDB) GetRules() ([]qsmodel.RuleResponseItem, error) {
+func (r *ruleDB) GetStoredRules() ([]StoredRule, error) {
 
-	rules := []qsmodel.RuleResponseItem{}
+	rules := []StoredRule{}
 
 	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules")
 
@@ -142,5 +150,23 @@ func (r *ruleDB) GetRules() ([]qsmodel.RuleResponseItem, error) {
 	return rules, nil
 }
 
-type MetricsDB interface {
+func (r *ruleDB) GetStoredRule(id string) (*StoredRule, error) {
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id parameter")
+	}
+
+	rule := &StoredRule{}
+
+	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", intId)
+	err = r.Get(rule, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Error("Error in processing sql query: ", err)
+		return nil, err
+	}
+
+	return rule, nil
 }

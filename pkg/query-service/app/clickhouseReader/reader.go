@@ -263,17 +263,19 @@ func (r *ClickHouseReader) Start() {
 
 				reloadReady.Close()
 
-				channels, apiErrorObj := r.GetChannels()
+				// ! commented the alert manager can now
+				// call query service to do this
+				// channels, apiErrorObj := r.GetChannels()
 
-				if apiErrorObj != nil {
-					zap.S().Errorf("Not able to read channels from DB")
-				}
-				for _, channel := range *channels {
-					apiErrorObj = r.LoadChannel(&channel)
-					if apiErrorObj != nil {
-						zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
-					}
-				}
+				//if apiErrorObj != nil {
+				//	zap.S().Errorf("Not able to read channels from DB")
+				//}
+				//for _, channel := range *channels {
+				//apiErrorObj = r.LoadChannel(&channel)
+				//if apiErrorObj != nil {
+				//	zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
+				//}
+				//}
 
 				<-cancel
 

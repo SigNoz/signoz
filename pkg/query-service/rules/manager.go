@@ -2,9 +2,11 @@ package rules
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,28 +18,15 @@ import (
 	"github.com/pkg/errors"
 
 	// opentracing "github.com/opentracing/opentracing-go"
-	"go.signoz.io/query-service/app/clickhouseReader"
 	am "go.signoz.io/query-service/integrations/alertManager"
-	pqle "go.signoz.io/query-service/pqlEngine"
 )
 
 // namespace for prom metrics
 const namespace = "signoz"
 const taskNamesuffix = "webAppEditor"
 
-// Queriers register the options for querying metrics or event sources
-// which return a condition that results in a alert. Currently we support
-// promql engine and clickhouse queries but in future we may include
-// api readers for Machine Learning (ML) use cases.
-// Note: each rule will pick up the querier it is interested in
-// and use it. This allows rules to have flexibility in choosing
-// the query engines.
-type Queriers struct {
-	// promql engine
-	PqlEngine *pqle.PqlEngine
-
-	// metric querier
-	Ch *clickhouseReader.ClickHouseReader
+func groupKey(name, file string) string {
+	return name + ";" + file
 }
 
 // ManagerOptions bundles options for the Manager.
@@ -58,6 +47,7 @@ type ManagerOptions struct {
 type Manager struct {
 	opts  *ManagerOptions
 	tasks map[string]Task
+	rules map[string]Rule
 	mtx   sync.RWMutex
 	block chan struct{}
 	// Notifier sends messages through alert manager
@@ -65,6 +55,9 @@ type Manager struct {
 
 	// datastore to store alert definitions
 	ruleDB RuleDB
+
+	// pause all rule tasks
+	pause  bool
 	logger log.Logger
 }
 
@@ -98,6 +91,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 
 	m := &Manager{
 		tasks:    map[string]Task{},
+		rules:    map[string]Rule{},
 		notifier: notifier,
 		ruleDB:   db,
 		opts:     o,
@@ -114,17 +108,25 @@ func (m *Manager) Start() {
 	m.run()
 }
 
+func (m *Manager) Pause(b bool) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	for _, t := range m.tasks {
+		t.Pause(b)
+	}
+}
+
 func (m *Manager) initiate() error {
-	ruleRecs, err := m.ruleDB.GetRules()
+	storedRules, err := m.ruleDB.GetStoredRules()
 	if err != nil {
 		return err
 	}
-	if len(ruleRecs) == 0 {
+	if len(storedRules) == 0 {
 		return nil
 	}
 	var loadErrors []error
 
-	for _, rec := range ruleRecs {
+	for _, rec := range storedRules {
 		groupName := fmt.Sprintf("%d-groupname", rec.Id)
 		parsedRule, errs := ParsePostableRule([]byte(rec.Data))
 
@@ -139,6 +141,7 @@ func (m *Manager) initiate() error {
 			zap.S().Errorf("failed to load the rule definition (%s): %v", groupName, err)
 		}
 	}
+	m.Pause(true)
 	return nil
 }
 
@@ -189,12 +192,10 @@ func (m *Manager) editTask(rule *PostableRule, groupName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	// m.restored = true
-
 	var tasks map[string]Task
 	var errs []error
 
-	tasks, errs = m.loadTask(rule, groupName)
+	tasks, errs = m.loadTask(false, rule, groupName)
 
 	if errs != nil {
 		for _, e := range errs {
@@ -257,6 +258,7 @@ func (m *Manager) DeleteRule(id string) error {
 		tx.Rollback()
 		return err
 	}
+
 	return tx.Commit()
 }
 
@@ -264,9 +266,8 @@ func (m *Manager) deleteTask(groupName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	// m.restored = true
-
 	gn := groupKey(groupName, taskNamesuffix)
+
 	oldg, ok := m.tasks[gn]
 
 	var wg sync.WaitGroup
@@ -275,6 +276,7 @@ func (m *Manager) deleteTask(groupName string) error {
 		if ok {
 			oldg.Stop()
 			delete(m.tasks, gn)
+			delete(m.rules, groupName)
 		}
 		defer wg.Done()
 	}(oldg)
@@ -316,11 +318,11 @@ func (m *Manager) addTask(rule *PostableRule, groupName string) error {
 	var tasks map[string]Task
 	var errs []error
 
-	tasks, errs = m.loadTask(rule, groupName)
+	tasks, errs = m.loadTask(false, rule, groupName)
 
 	if errs != nil {
 		for _, e := range errs {
-			level.Error(m.logger).Log("msg", "loading tasks failed", "err", e)
+			zap.S().Errorf("msg", "loading rule tasks failed", "err", e)
 		}
 		return errors.New("error loading rules, previous rule set restored")
 	}
@@ -361,8 +363,13 @@ func (m *Manager) addTask(rule *PostableRule, groupName string) error {
 	return nil
 }
 
-// loadTask loads a given rule in rule manager
-func (m *Manager) loadTask(r *PostableRule, groupName string) (map[string]Task, []error) {
+// loadTask loads a given rule in rule manager. the method
+func (m *Manager) loadTask(acquireLock bool, r *PostableRule, groupName string) (map[string]Task, []error) {
+
+	if acquireLock {
+		m.mtx.Lock()
+		defer m.mtx.Unlock()
+	}
 
 	rules := make([]Rule, 0)
 	tasks := make(map[string]Task)
@@ -371,32 +378,47 @@ func (m *Manager) loadTask(r *PostableRule, groupName string) (map[string]Task, 
 		return tasks, []error{fmt.Errorf("at least one rule must be set")}
 	}
 
+	ruleId := strings.Split(groupName, "-groupname")[0]
+
 	if r.RuleType == RuleTypeThreshold {
 		// create a threshold rule
-		rules = append(rules, NewThresholdRule(
+		tr := NewThresholdRule(
+			ruleId,
 			r.Alert,
-			&r.RuleCondition,
+			r.RuleCondition,
 			time.Duration(r.EvalWindow),
 			r.Labels,
 			r.Annotations,
 			log.With(m.logger, "alert", r.Alert),
-		))
+		)
+
+		rules = append(rules, tr)
 
 		// create ch rule task for evalution
 		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeCh, groupName, taskNamesuffix, r.Frequency, rules, m.opts, m.prepareNotifyFunc())
 
+		// add rule to memory
+		m.rules[ruleId] = tr
+
 	} else if r.RuleType == RuleTypeProm {
+
 		// create promql rule
-		rules = append(rules, NewPromRule(
+		pr := NewPromRule(
+			ruleId,
 			r.Alert,
-			&r.RuleCondition,
+			r.RuleCondition,
 			time.Duration(r.EvalWindow),
 			r.Labels,
 			r.Annotations,
 			log.With(m.logger, "alert", r.Alert),
-		))
+		)
+		rules = append(rules, pr)
+
 		// create promql rule task for evalution
 		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeProm, groupName, taskNamesuffix, r.Frequency, rules, m.opts, m.prepareNotifyFunc())
+
+		// add rule to memory
+		m.rules[ruleId] = pr
 
 	} else {
 		return nil, []error{fmt.Errorf(fmt.Sprintf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold))}
@@ -442,13 +464,34 @@ func (m *Manager) Rules() []Rule {
 	m.mtx.RLock()
 	defer m.mtx.RUnlock()
 
-	var rules []Rule
-	for _, g := range m.tasks {
-		taskRules := g.Rules()
-		rules = append(rules, taskRules...)
+	rules := []Rule{}
+	for _, r := range m.rules {
+		rules = append(rules, r)
 	}
 
 	return rules
+}
+
+// TriggeredAlerts returns the list of the manager's rules.
+func (m *Manager) TriggeredAlerts() []*NamedAlert {
+	// m.mtx.RLock()
+	// defer m.mtx.RUnlock()
+
+	namedAlerts := []*NamedAlert{}
+
+	for _, r := range m.rules {
+		active := r.ActiveAlerts()
+
+		for _, a := range active {
+			awn := &NamedAlert{
+				Alert: a,
+				Name:  r.Name(),
+			}
+			namedAlerts = append(namedAlerts, awn)
+		}
+	}
+
+	return namedAlerts
 }
 
 // NotifyFunc sends notifications about a set of alerts generated by the given expression.
@@ -478,4 +521,56 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 			m.notifier.Send(res...)
 		}
 	}
+}
+
+func (m *Manager) ListActiveRules() ([]Rule, error) {
+	ruleList := []Rule{}
+
+	for _, r := range m.rules {
+		ruleList = append(ruleList, r)
+	}
+
+	return ruleList, nil
+}
+
+func (m *Manager) ListRuleStates() (*GettableRules, error) {
+
+	// fetch rules from DB
+	storedRules, err := m.ruleDB.GetStoredRules()
+	fmt.Println("stored :", len(storedRules))
+	// initiate response object
+	resp := make([]*GettableRule, len(storedRules))
+
+	for _, s := range storedRules {
+		fmt.Println("stored rules:", s)
+		ruleResponse := &GettableRule{}
+		if err := json.Unmarshal([]byte(s.Data), ruleResponse); err != nil { // Parse []byte to go struct pointer
+			zap.S().Errorf("msg:", "invalid rule data", "/terr:", err)
+		}
+
+		ruleResponse.Id = fmt.Sprintf("%d", s.Id)
+
+		// fetch state of rule from memory
+		if rm, ok := m.rules[ruleResponse.Id]; !ok {
+			zap.S().Errorf("msg:", "invalid rule id  found while fetching list of rules", "/terr:", err, "/trule_id:", ruleResponse.Id)
+		} else {
+			ruleResponse.State = string(rm.State())
+		}
+		resp = append(resp, ruleResponse)
+	}
+
+	return &GettableRules{Rules: resp}, nil
+}
+
+func (m *Manager) GetRule(id string) (*GettableRule, error) {
+	s, err := m.ruleDB.GetStoredRule(id)
+	if err != nil {
+		return nil, err
+	}
+	r := &GettableRule{}
+	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
+		return nil, err
+	}
+	r.Id = fmt.Sprintf("%d", s.Id)
+	return r, nil
 }

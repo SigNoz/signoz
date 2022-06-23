@@ -3,24 +3,27 @@ package rules
 import (
 	"context"
 	"fmt"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"go.uber.org/zap"
 	"net/url"
 	"reflect"
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-
-	"go.signoz.io/query-service/app/clickhouseReader"
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.signoz.io/query-service/app/metrics"
 	qsmodel "go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/utils/labels"
 	"go.signoz.io/query-service/utils/times"
 	"go.signoz.io/query-service/utils/timestamp"
+	"go.signoz.io/query-service/utils/value"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
 type ThresholdRule struct {
+	id            string
 	name          string
 	ruleCondition *RuleCondition
 	evalWindow    time.Duration
@@ -43,34 +46,25 @@ type ThresholdRule struct {
 }
 
 func NewThresholdRule(
+	id string,
 	name string,
 	ruleCondition *RuleCondition,
 	evalWindow time.Duration,
 	l, a map[string]string,
 	logger log.Logger,
 ) *ThresholdRule {
-	// if queryBuilder == nil || queryBuilder.CompositeMetricQuery == nil {
-
-	//	queryBuilder = &QueryBuilder{
-	//		CompositeMetricQuery: &qsmodel.CompositeMetricQuery{
-	//			RawQuery: `SELECT '3dwe3e324' fingerprint, 1651387726874 ts, 12.12 res FROM system.one`,
-	//			BuildMetricQueries: []*qsmodel.MetricQuery{
-	//				{
-	//					MetricName:        "signoz_latency_count",
-	//					AggregateOperator: "rate",
-	//				},
-	//			},
-	//		},
-	//	}
-	//}
 
 	if int64(evalWindow) == 0 {
 		evalWindow = 5 * time.Minute
 	}
 
+	// todo(amol) raise an error if target is null
+	// or target compare op is null
+
 	fmt.Println("creating new alerting rule:", name)
 
 	return &ThresholdRule{
+		id:            id,
 		name:          name,
 		ruleCondition: ruleCondition,
 		evalWindow:    evalWindow,
@@ -85,6 +79,14 @@ func NewThresholdRule(
 
 func (r *ThresholdRule) Name() string {
 	return r.name
+}
+
+func (r *ThresholdRule) ID() string {
+	return r.id
+}
+
+func (r *ThresholdRule) Condition() *RuleCondition {
+	return r.ruleCondition
 }
 
 func (r *ThresholdRule) Type() RuleType {
@@ -266,6 +268,25 @@ func (r *ThresholdRule) sendAlerts(ctx context.Context, ts time.Time, resendDela
 	})
 	notifyFunc(ctx, "", alerts...)
 }
+func (r *ThresholdRule) CheckCondition(v float64) bool {
+	if value.IsNaN(v) {
+		zap.S().Debugf("found NaN in rule condition: ", r.Name())
+		return false
+	}
+
+	switch r.ruleCondition.CompareOp {
+	case TargetIsEq:
+		return v == *r.ruleCondition.Target
+	case TargetIsNotEq:
+		return v != *r.ruleCondition.Target
+	case TargetIsLess:
+		return v > *r.ruleCondition.Target
+	case TargetIsMore:
+		return v < *r.ruleCondition.Target
+	default:
+		return false
+	}
+}
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParamsV2 {
 
@@ -281,8 +302,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParam
 }
 
 // queryClickhouse runs actual query against clickhouse
-func (r *ThresholdRule) runChQuery(ctx context.Context, ch *clickhouseReader.ClickHouseReader, query string) (Vector, error) {
-	db := ch.GetConn()
+func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, query string) (Vector, error) {
 	rows, err := db.Query(ctx, query)
 	if err != nil {
 		fmt.Println("failed to get alert query result")
@@ -303,7 +323,11 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, ch *clickhouseReader.Cli
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 	}
 
+	// []sample list
 	var result Vector
+
+	// map[fingerprint]sample
+	resultMap := make(map[uint64]Sample, 0)
 
 	defer rows.Close()
 	for rows.Next() {
@@ -354,10 +378,20 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, ch *clickhouseReader.Cli
 				fmt.Println("var", v, columnNames[i])
 			}
 		}
+
 		// capture lables in result
 		sample.Metric = lbls.Labels()
+		// assumption here: the ch query will always order
+		// the data by timestamp, here we pick the last record
+		// to send as result to alert
+		resultMap[lbls.Labels().Hash()] = sample
+	}
 
-		result = append(result, sample)
+	for _, sample := range resultMap {
+		// check alert rule condition before dumping results
+		if r.CheckCondition(sample.Point.V) {
+			result = append(result, sample)
+		}
 	}
 
 	return result, nil
@@ -365,7 +399,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, ch *clickhouseReader.Cli
 
 // query looks if alert condition is being
 // satisfied and returns the signals
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch *clickhouseReader.ClickHouseReader) (Vector, error) {
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
 	params := r.prepareQueryRange(ts)
 	fmt.Println("params: ", params)
 	runQueries := metrics.PrepareBuilderMetricQueries(params, "time_series")
@@ -457,8 +491,6 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
 
-		fmt.Println("lbs:", lbs)
-		fmt.Println("alert found:", alerts[h])
 		if _, ok := alerts[h]; ok {
 			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
 			// We have already acquired the lock above hence using SetHealth and
@@ -476,6 +508,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			Value:       smpl.V,
 		}
 	}
+
+	fmt.Println("alerts: ", alerts)
+	fmt.Println("alerts: ", len(alerts))
 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
@@ -519,15 +554,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 }
 
 func (r *ThresholdRule) String() string {
-	var cond RuleCondition
-	if r.ruleCondition == nil {
-		cond = RuleCondition{}
-	} else {
-		cond = *r.ruleCondition
-	}
+
 	ar := PostableRule{
 		Alert:         r.name,
-		RuleCondition: cond,
+		RuleCondition: r.ruleCondition,
 		EvalWindow:    time.Duration(r.evalWindow),
 		Labels:        r.labels.Map(),
 		Annotations:   r.annotations.Map(),
