@@ -592,19 +592,23 @@ func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.A
 
 func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
 
-	idInt, _ := strconv.Atoi(id)
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		zap.S().Debug("Error in parsing param: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
 
 	rule := &model.RuleResponseItem{}
 
 	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
 
-	err := r.localDB.Get(rule, query)
+	err = r.localDB.Get(rule, query)
 
 	zap.S().Info(query)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: err}
 	}
 
 	return rule, nil
