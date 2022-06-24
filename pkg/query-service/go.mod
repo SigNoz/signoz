@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.0.12
+	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
 	github.com/go-kit/log v0.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
@@ -107,7 +108,7 @@ require (
 	github.com/segmentio/backo-go v1.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/smartystreets/assertions v1.1.0 // indirect
+	github.com/smartystreets/assertions v1.1.0
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.7.1
@@ -139,4 +140,4 @@ require (
 	k8s.io/client-go v8.0.0+incompatible // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.70
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.72

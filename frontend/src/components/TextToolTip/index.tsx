@@ -10,9 +10,11 @@ function TextToolTip({ text, url }: TextToolTipProps): JSX.Element {
 				return (
 					<div>
 						{`${text} `}
-						<a href={url} rel="noopener noreferrer" target="_blank">
-							here
-						</a>
+						{url && (
+							<a href={url} rel="noopener noreferrer" target="_blank">
+								here
+							</a>
+						)}
 					</div>
 				);
 			}}

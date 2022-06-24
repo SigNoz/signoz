@@ -10,13 +10,17 @@ function LeftContainer({
 	selectedGraph,
 	selectedTime,
 	yAxisUnit,
+	handleUnstagedChanges,
 }: LeftContainerProps): JSX.Element {
 	return (
 		<>
 			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
-
 			<QueryContainer>
-				<QuerySection selectedTime={selectedTime} />
+				<QuerySection
+					selectedTime={selectedTime}
+					handleUnstagedChanges={handleUnstagedChanges}
+					selectedGraph={selectedGraph}
+				/>
 			</QueryContainer>
 		</>
 	);
@@ -24,6 +28,7 @@ function LeftContainer({
 
 interface LeftContainerProps extends NewWidgetProps {
 	selectedTime: timePreferance;
+	handleUnstagedChanges: (arg0: boolean) => void;
 }
 
 export default memo(LeftContainer);
