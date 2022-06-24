@@ -155,10 +155,9 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 	const isCheckBoxSelected = isUserSelected;
 
-	const TooTipOverLay = useMemo(
-		(): JSX.Element => <Typography>{keyValue}</Typography>,
-		[keyValue],
-	);
+	const TooTipOverLay = useMemo((): JSX.Element => <div>{keyValue}</div>, [
+		keyValue,
+	]);
 
 	return (
 		<CheckBoxContainer>

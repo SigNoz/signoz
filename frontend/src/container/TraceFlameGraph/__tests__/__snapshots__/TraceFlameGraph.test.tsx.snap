@@ -2,12 +2,30 @@
 
 exports[`loads and displays greeting 1`] = `
 <DocumentFragment>
-  <div
-    class="sc-gsDKAQ jFDWPs"
+  .c1 {
+  position: absolute;
+  top: 0px;
+  left: NaN%;
+  width: Infinity%;
+  height: 10px;
+  margin: 1px 0;
+  background-color: hsl(282.9,100%,60.7%);
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.c0 {
+  position: relative;
+  width: 100%;
+  height: 120px;
+}
+
+<div
+    class="c0"
     height="0"
   >
     <div
-      class="sc-bdvvtL fyFVjh"
+      class="c1"
       title=""
       width="Infinity"
     />
