@@ -356,3 +356,20 @@ type ErrorWithSpan struct {
 	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
 	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
 }
+
+type Series struct {
+	QueryName string            `json:"queryName"`
+	Labels    map[string]string `json:"metric"`
+	Points    []MetricPoint     `json:"values"`
+}
+
+type MetricPoint struct {
+	Timestamp int64
+	Value     float64
+}
+
+// MarshalJSON implements json.Marshaler.
+func (p *MetricPoint) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
+}
