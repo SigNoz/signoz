@@ -6,9 +6,6 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-
-jobs:
-  playwright:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
