@@ -24,7 +24,7 @@ import {
 } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
-export const INITIAL_FILTER_VALUE = 4;
+export const INITIAL_FILTER_VALUE = 8;
 
 const initialValue: TraceReducer = {
 	filter: new Map(),
