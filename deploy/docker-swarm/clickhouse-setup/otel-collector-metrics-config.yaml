@@ -15,6 +15,7 @@ receivers:
 processors:
   batch:
     send_batch_size: 10000
+    send_batch_max_size: 11000
     timeout: 10s
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
