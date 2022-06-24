@@ -84,7 +84,6 @@ export const SaveDashboard = ({
 			};
 
 			const allLayout = getAllLayout();
-
 			const response = await updateDashboardApi({
 				data: {
 					...selectedDashboard.data,

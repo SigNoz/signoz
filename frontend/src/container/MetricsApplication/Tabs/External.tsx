@@ -4,7 +4,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
@@ -102,7 +102,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 }
 
 interface ExternalProps {
-	getWidget: (query: Widgets['query']) => Widgets;
+	getWidget: (query: PromQLWidgets['query']) => PromQLWidgets;
 }
 
 export default External;

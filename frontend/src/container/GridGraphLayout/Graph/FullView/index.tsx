@@ -19,7 +19,7 @@ import React, { useCallback, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { NotFoundContainer, TimeContainer } from './styles';
@@ -173,7 +173,7 @@ function FullView({
 }
 
 interface FullViewProps {
-	widget: Widgets;
+	widget: PromQLWidgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: GraphOnClickHandler;
 	name: string;

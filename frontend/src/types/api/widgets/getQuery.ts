@@ -8,6 +8,7 @@ export interface QueryData {
 		__name__: string;
 		[key: string]: string;
 	};
+	queryName: string;
 	values: [number, string][];
 }
 
