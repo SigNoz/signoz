@@ -34,7 +34,15 @@ function WidgetGraph({
 
 	const { queryData, title, opacity, isStacked } = selectedWidget;
 
-	if (queryData.data.length === 0) {
+	if (queryData.error) {
+		return (
+			<NotFoundContainer>
+				<Typography>{queryData.errorMessage}</Typography>
+			</NotFoundContainer>
+		);
+	}
+
+	if (queryData.data.length === 0 || queryData.data[0].queryData.length === 0) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>

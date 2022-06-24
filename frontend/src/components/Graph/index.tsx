@@ -182,11 +182,10 @@ function Graph({
 			};
 			const chartHasData = hasData(data);
 			const chartPlugins = [];
-			if (chartHasData) {
-				chartPlugins.push(legend(name, data.datasets.length > 3));
-			} else {
-				chartPlugins.push(emptyGraph);
-			}
+
+			if (!chartHasData) chartPlugins.push(emptyGraph);
+			chartPlugins.push(legend(name, data.datasets.length > 3));
+
 			lineChartRef.current = new Chart(chartRef.current, {
 				type,
 				data,

@@ -12,7 +12,7 @@ receivers:
       grpc:
       thrift_http:
   hostmetrics:
-    collection_interval: 30s
+    collection_interval: 60s
     scrapers:
       cpu:
       load:
@@ -22,7 +22,8 @@ receivers:
       network:
 processors:
   batch:
-    send_batch_size: 1000
+    send_batch_size: 10000
+    send_batch_max_size: 11000
     timeout: 10s
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus

@@ -7,8 +7,8 @@ export const Container = styled(Card)`
 	}
 
 	.ant-card-body {
-		padding: 0;
-		height: 55vh;
+		padding: 1.5rem 0;
+		height: 57vh;
 		/* padding-bottom: 2rem; */
 	}
 `;

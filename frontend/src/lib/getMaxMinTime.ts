@@ -19,7 +19,7 @@ const GetMaxMinTime = ({
 };
 
 interface GetMaxMinProps {
-	graphType: Widgets['panelTypes'];
+	graphType: Widgets['panelTypes'] | null;
 	maxTime: GlobalTime['maxTime'];
 	minTime: GlobalTime['minTime'];
 }
