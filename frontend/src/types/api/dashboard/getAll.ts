@@ -24,7 +24,7 @@ export interface DashboardData {
 	layout?: Layout[];
 }
 
-export interface Widgets {
+export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
 	panelTypes: GRAPH_TYPES;
@@ -33,7 +33,6 @@ export interface Widgets {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	query: Query;
 	queryData: {
 		loading: boolean;
 		error: boolean;
@@ -44,11 +43,16 @@ export interface Widgets {
 			// query: string;
 		}[];
 	};
-	queryType: number;
 	stepSize?: number;
 	yAxisUnit?: string;
 }
+export interface Widgets extends IBaseWidget {
+	query: Query;
+}
 
+export interface PromQLWidgets extends IBaseWidget {
+	query: { query: string; legend: string }[];
+}
 export interface Query {
 	queryType: EQueryType;
 	promQL: IPromQLQuery[];

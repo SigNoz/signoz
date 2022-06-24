@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { AxiosError } from 'axios';
+import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import getChartData from 'lib/getChartData';
@@ -116,7 +117,7 @@ function GridCardGraph({
 					setState((state) => ({
 						...state,
 						error: true,
-						errorMessage: isError.queryData.error || 'Something went wrong',
+						errorMessage: isError || 'Something went wrong',
 						loading: false,
 					}));
 				} else {
@@ -252,7 +253,7 @@ function GridCardGraph({
 
 			{!isEmptyLayout && getModals()}
 
-			{!isEmpty(widget) && (
+			{!isEmpty(widget) && !!state.payload && (
 				<GridGraphComponent
 					{...{
 						GRAPH_TYPES: widget.panelTypes,

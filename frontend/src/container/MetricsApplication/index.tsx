@@ -3,14 +3,14 @@ import ROUTES from 'constants/routes';
 import React from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets } from 'types/api/dashboard/getAll';
 
 import ResourceAttributesFilter from './ResourceAttributesFilter';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
 
-const getWidget = (query: Widgets['query']): Widgets => {
+const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
 	return {
 		description: '',
 		id: '',
