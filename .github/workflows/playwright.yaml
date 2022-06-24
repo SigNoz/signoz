@@ -3,6 +3,12 @@ on: [pull_request]
 
 jobs:
   playwright:
+    defaults:
+      run:
+        working-directory: frontend
+
+jobs:
+  playwright:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -11,11 +17,11 @@ jobs:
         with:
           node-version: "16.x"
       - name: Install dependencies
-        run: cd frontend && CI=1 yarn install
+        run: CI=1 yarn install
       - name: Install Playwright
-        run: cd frontend && npx playwright install --with-deps
+        run: npx playwright install --with-deps
       - name: Run Playwright tests
-        run: cd frontend && yarn playwright
+        run: yarn playwright
         env:
           # This might depend on your test-runner/language binding
           PLAYWRIGHT_TEST_BASE_URL: ${{ secrets.PLAYWRIGHT_TEST_BASE_URL }}
