@@ -13,6 +13,7 @@ import {
 	Typography,
 } from 'antd';
 import { Logout } from 'api/utils';
+import { ENVIRONMENT } from 'constants/env';
 import ROUTES from 'constants/routes';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
@@ -102,7 +103,10 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
 					to={ROUTES.APPLICATION}
 				>
-					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
+					<img
+						src={`${ENVIRONMENT.baseConstant}/signoz.svg?currentVersion=${currentVersion}`}
+						alt="SigNoz"
+					/>
 					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
 						SigNoz
 					</Typography.Title>
