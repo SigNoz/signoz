@@ -8,19 +8,10 @@ import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { CreateQuery, CreateQueryProps } from 'store/actions';
-import {
-	GetQueryResults,
-	GetQueryResultsProps,
-} from 'store/actions/dashboard/getQueryResults';
 import {
 	UpdateQuery,
 	UpdateQueryProps,
 } from 'store/actions/dashboard/updateQuery';
-import {
-	UpdateQueryType,
-	UpdateQueryTypeProps,
-} from 'store/actions/dashboard/updateQueryType';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';

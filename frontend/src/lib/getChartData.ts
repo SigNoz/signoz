@@ -58,7 +58,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 };
 
 interface GetChartDataProps {
-	queryData: Widgets['queryData']['data'];
+	queryData: Widgets['queryData']['data'][];
 }
 
 export default getChartData;

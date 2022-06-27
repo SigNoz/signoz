@@ -41,7 +41,7 @@ export interface IBaseWidget {
 			// legend?: string;
 			queryData: QueryData[];
 			// query: string;
-		}[];
+		};
 	};
 	stepSize?: number;
 	yAxisUnit?: string;

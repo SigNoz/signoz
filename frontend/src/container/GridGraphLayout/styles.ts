@@ -11,7 +11,7 @@ export const Card = styled(CardComponent)`
 	}
 
 	.ant-card-body {
-		height: 95%;
+		height: 100%;
 		padding: 0;
 	}
 `;

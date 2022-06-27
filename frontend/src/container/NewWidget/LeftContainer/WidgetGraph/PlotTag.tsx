@@ -1,8 +1,9 @@
 import React from 'react';
+import { EQueryType } from 'types/common/dashboard';
 
 import QueryTypeTag from '../QueryTypeTag';
 
-function PlotTag({ queryType }): JSX.Element | null {
+function PlotTag({ queryType }: { queryType: EQueryType }): JSX.Element | null {
 	if (queryType === undefined) {
 		return null;
 	}

@@ -41,7 +41,6 @@ export const DELETE_WIDGET_ERROR = 'DELETE_WIDGET_ERROR';
 export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
 export const DELETE_QUERY = 'DELETE_QUERY';
-export const UPDATE_QUERY_TYPE = 'UPDATE_QUERY_TYPE';
 export const FLUSH_DASHBOARD = 'FLUSH_DASHBOARD';
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
@@ -124,7 +123,7 @@ export interface QuerySuccessPayload {
 		// legend: string;
 		queryData: QueryData[];
 		// query: string
-	}[];
+	};
 }
 interface QuerySuccess {
 	type: typeof QUERY_SUCCESS;
@@ -172,14 +171,6 @@ interface DeleteQuery {
 	payload: DeleteQueryProps;
 }
 
-interface UpdateQueryType {
-	type: typeof UPDATE_QUERY_TYPE;
-	payload: {
-		queryType: number;
-		widgetId: string;
-	};
-}
-
 interface FlushDashboard {
 	type: typeof FLUSH_DASHBOARD;
 }
@@ -203,5 +194,4 @@ export type DashboardActions =
 	| IsAddWidget
 	| UpdateQuery
 	| DeleteQuery
-	| UpdateQueryType
 	| FlushDashboard;

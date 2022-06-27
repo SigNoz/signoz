@@ -138,7 +138,7 @@ function NewWidget({
 	const getQueryResult = useCallback(() => {
 		if (selectedWidget?.id.length !== 0) {
 			getQueryResults({
-				query: selectedWidget?.query || [],
+				query: selectedWidget?.query,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,

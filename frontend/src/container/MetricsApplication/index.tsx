@@ -20,7 +20,7 @@ const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
 		panelTypes: 'TIME_SERIES',
 		query,
 		queryData: {
-			data: [],
+			data: { queryData: [] },
 			error: false,
 			errorMessage: '',
 			loading: false,

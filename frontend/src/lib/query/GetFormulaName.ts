@@ -8,7 +8,7 @@ function GetFormulaName(formulas = []): string | null {
 		return null;
 	}
 	const formulasNameNumbered = sortBy(
-		formulas.map(({ name }) => {
+		formulas.map(({ name }: { name: string }) => {
 			return parseInt(name.slice(1), 10);
 		}),
 		(e) => e,
@@ -22,6 +22,7 @@ function GetFormulaName(formulas = []): string | null {
 		}
 		// formulaIteratorIdx += 1;
 	}
+	return null;
 }
 
 export default GetFormulaName;
