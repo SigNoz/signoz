@@ -11,7 +11,7 @@ const config: PlaywrightTestConfig = {
 	testDir: './tests',
 	use: {
 		trace: 'retain-on-failure',
-		baseURL: process.env.FRONTEND_API_ENDPOINT,
+		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3301',
 	},
 	updateSnapshots: 'all',
 	fullyParallel: false,

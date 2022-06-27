@@ -1,9 +1,16 @@
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
+import {
+	ClickHouseQueryTemplate,
+	PromQLQueryTemplate,
+	QueryBuilderQueryTemplate,
+} from 'constants/dashboard';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import GetQueryName from 'lib/query/GetQueryName';
 import { Layout } from 'react-grid-layout';
 import store from 'store';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
 export const UpdateDashboard = async ({
 	data,
@@ -29,12 +36,31 @@ export const UpdateDashboard = async ({
 					nullZeroValues: '',
 					opacity: '',
 					panelTypes: graphType,
-					query: [
-						{
-							query: '',
-							legend: '',
+					queryType: 0,
+					query: {
+						queryType: EQueryType.QUERY_BUILDER,
+						promQL: [
+							{
+								name: GetQueryName([]),
+								...PromQLQueryTemplate,
+							},
+						],
+						clickHouse: [
+							{
+								name: GetQueryName([]),
+								...ClickHouseQueryTemplate,
+							},
+						],
+						metricsBuilder: {
+							formulas: [],
+							queryBuilder: [
+								{
+									name: GetQueryName([]),
+									...QueryBuilderQueryTemplate,
+								},
+							],
 						},
-					],
+					},
 					queryData: {
 						data: [],
 						error: false,

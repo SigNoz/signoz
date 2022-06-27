@@ -18,27 +18,114 @@ type QueryRangeParams struct {
 	Stats string
 }
 
-type Query struct {
-	Datasource string `json:"datasource"`
-	Format     string `json:"format"`
-	Expr       string `json:"expr"`
+type MetricQuery struct {
+	QueryName         string            `json:"queryName"`
+	MetricName        string            `json:"metricName"`
+	TagFilters        *FilterSet        `json:"tagFilters,omitempty"`
+	GroupingTags      []string          `json:"groupBy,omitempty"`
+	AggregateOperator AggregateOperator `json:"aggregateOperator"`
+	Expression        string            `json:"expression"`
+	Disabled          bool              `json:"disabled"`
+	ReduceTo          ReduceToOperator  `json:"reduceTo,omitempty"`
 }
+
+type ReduceToOperator int
+
+const (
+	_ ReduceToOperator = iota
+	RLAST
+	RSUM
+	RAVG
+	RMAX
+	RMIN
+)
+
+type QueryType int
+
+const (
+	_ QueryType = iota
+	QUERY_BUILDER
+	CLICKHOUSE
+	PROM
+)
+
+type PromQuery struct {
+	Query    string `json:"query"`
+	Stats    string `json:"stats,omitempty"`
+	Disabled bool   `json:"disabled"`
+}
+
+type ClickHouseQuery struct {
+	Query    string `json:"query"`
+	Disabled bool   `json:"disabled"`
+}
+
+type PanelType int
+
+const (
+	_ PanelType = iota
+	TIME_SERIES
+	QUERY_VALUE
+)
+
+type CompositeMetricQuery struct {
+	BuilderQueries    map[string]*MetricQuery     `json:"builderQueries,omitempty"`
+	ClickHouseQueries map[string]*ClickHouseQuery `json:"chQueries,omitempty"`
+	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
+	PanelType         PanelType                   `json:"panelType"`
+	QueryType         QueryType                   `json:"queryType"`
+}
+
+type AggregateOperator int
+
+const (
+	_ AggregateOperator = iota
+	NOOP
+	COUNT
+	COUNT_DISTINCT
+	SUM
+	AVG
+	MAX
+	MIN
+	P05
+	P10
+	P20
+	P25
+	P50
+	P75
+	P90
+	P95
+	P99
+	RATE
+	SUM_RATE
+	// leave blank space for possily {AVG, X}_RATE
+	_
+	_
+	_
+	RATE_SUM
+	RATE_AVG
+	RATE_MAX
+	RATE_MIN
+)
+
+type DataSource int
+
+const (
+	_ DataSource = iota
+	METRICS
+	TRACES
+	LOGS
+)
 
 type QueryRangeParamsV2 struct {
-	Start    time.Time
-	End      time.Time
-	Step     time.Duration
-	StartStr string  `json:"start"`
-	EndStr   string  `json:"end"`
-	StepStr  string  `json:"step"`
-	Queries  []Query `json:"queries"`
+	DataSource           DataSource            `json:"dataSource"`
+	Start                int64                 `json:"start"`
+	End                  int64                 `json:"end"`
+	Step                 int64                 `json:"step"`
+	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery"`
 }
 
-func (params QueryRangeParamsV2) sanitizeAndValidate() (*QueryRangeParamsV2, error) {
-
-	return nil, nil
-}
-
+// Metric auto complete types
 type metricTags map[string]string
 
 type MetricAutocompleteTagParams struct {
@@ -192,7 +279,7 @@ type TTLParams struct {
 }
 
 type GetTTLParams struct {
-	Type      string
+	Type string
 }
 
 type GetErrorsParams struct {
@@ -204,4 +291,20 @@ type GetErrorParams struct {
 	ErrorType   string
 	ErrorID     string
 	ServiceName string
+}
+
+type FilterItem struct {
+	Key       string      `json:"key"`
+	Value     interface{} `json:"value"`
+	Operation string      `json:"op"`
+}
+
+type FilterSet struct {
+	Operation string       `json:"op,omitempty"`
+	Items     []FilterItem `json:"items"`
+}
+
+type RemoveTTLParams struct {
+	Type         string
+	RemoveAllTTL bool
 }

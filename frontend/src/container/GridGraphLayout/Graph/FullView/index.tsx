@@ -19,7 +19,7 @@ import React, { useCallback, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { NotFoundContainer, TimeContainer } from './styles';
@@ -57,7 +57,10 @@ function FullView({
 		time: timePreferenceType,
 	): { min: string | number; max: string | number } => {
 		if (time === 'GLOBAL_TIME') {
-			const minMax = GetMinMax(globalSelectedTime);
+			const minMax = GetMinMax(globalSelectedTime, [
+				minTime / 1000000,
+				maxTime / 1000000,
+			]);
 			return {
 				min: convertToNanoSecondsToSecond(minMax.minTime / 1000),
 				max: convertToNanoSecondsToSecond(minMax.maxTime / 1000),
@@ -170,7 +173,7 @@ function FullView({
 }
 
 interface FullViewProps {
-	widget: Widgets;
+	widget: PromQLWidgets;
 	fullViewOptions?: boolean;
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
