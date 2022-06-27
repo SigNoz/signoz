@@ -5,6 +5,7 @@ import AppRoutes from 'AppRoutes';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
 import { Provider } from 'react-redux';
 import reportWebVitals from 'reportWebVitals';
 import store from 'store';
@@ -28,6 +29,7 @@ ReactDOM.render(
 				<AppRoutes />
 			</React.StrictMode>
 		</Provider>
+		{process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
 	</QueryClientProvider>,
 	document.querySelector('#root'),
 );
