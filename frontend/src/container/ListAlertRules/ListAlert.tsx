@@ -69,7 +69,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		},
 		{
 			title: 'Alert Name',
-			dataIndex: 'name',
+			dataIndex: 'alert',
 			key: 'name',
 			sorter: (a, b): number => a.name.charCodeAt(0) - b.name.charCodeAt(0),
 		},

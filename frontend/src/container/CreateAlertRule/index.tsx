@@ -1,17 +1,23 @@
-import React,  from 'react';
 import { Form } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
+import { baseQuery } from 'container/FormAlertRules/types';
+import React from 'react';
 
 function CreateAlertRule(): JSX.Element {
 	const [formInstance] = Form.useForm();
-	// const [selectedConfig, setSelectedConfig] = useState();
 
 	return (
 		<FormAlertRules
 			{...{
 				formInstance,
-				title: 'Create Alert',
+				title: '',
 				initialValue: {},
+				initQueries: [
+					{
+						...baseQuery,
+						name: 'A',
+					},
+				],
 			}}
 		/>
 	);

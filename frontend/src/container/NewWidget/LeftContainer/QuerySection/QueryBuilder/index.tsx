@@ -128,6 +128,6 @@ function QueryBuilder({
 }
 
 interface QueryBuilderProps {
-	queryCategory: TQueryCategories;
+	queryCategory: 0 | 1 | 2;
 }
 export default QueryBuilder;

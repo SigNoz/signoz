@@ -1,50 +1,74 @@
-import React from 'react';
-import { Form, FormInstance, Input, Typography } from 'antd';
-const { Title } = Typography;
-import { Store } from 'antd/lib/form/interface';
+import { SaveOutlined } from '@ant-design/icons';
+import { Button, Form, FormInstance, notification } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
-import QueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder';
+import { Store } from 'antd/lib/form/interface';
+import React, { useCallback, useState } from 'react';
+import { AlertDef } from 'types/api/alerts/create';
+
+import BasicInfo from './BasicInfo';
+import QuerySection from './QuerySection';
+import RuleOptions from './RuleOptions';
+import { ActionButton, ButtonContainer } from './styles';
+import { baseQuery, defaultAlert, Query, QueryType } from './types';
+
 function FormAlertRules({
 	formInstance,
 	initialValue,
-	title,
+	initQueries,
+	ruleId,
 }: FormAlertRuleProps): JSX.Element {
+	console.log('FormAlertRules:', initialValue);
+	console.log('FormAlertRules:', ruleId);
+	const [notifications, Element] = notification.useNotification();
+
+	const [loading, setLoading] = useState(false);
+
+	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
+
+	const [queryCategory, setQueryCategory] = useState<QueryType>(0);
+	const [queryList, setQueryList] = useState<Array<Query>>(initQueries);
+
+	const onSaveHandler = useCallback(async () => {
+		console.log('saved');
+	}, [notifications, queryList]);
+
+	const renderBasicInfo = (): JSX.Element => {
+		return <BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />;
+	};
+
 	return (
 		<>
-			<Title level={3}>{title}</Title>
+			{Element}
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<FormItem label="Name" labelAlign="left" name="name">
-					<Input />
+				<FormItem labelAlign="left" name="query">
+					<QuerySection
+						queryList={queryList}
+						setQueryList={setQueryList}
+						queryCategory={queryCategory}
+						setQueryCategory={setQueryCategory}
+					/>
 				</FormItem>
-
-				<QueryBuilder
-					key="12"
-					name="A"
-					updateQueryData={(updatedQuery: any): void =>
-						console.log('do nothing', updatedQuery)
-					}
-					onDelete={(): void => console.log('do nothing')}
-					queryData={{
-						name: 'A',
-						disabled: false,
-
-						promQL: {
-							query: '',
-							legend: '',
-						},
-						clickHouseQuery: '',
-						queryBuilder: {
-							metricName: null,
-							aggregateOperator: null,
-							tagFilters: {
-								op: 'AND',
-								items: [],
-							},
-							groupBy: [],
-						},
-					}}
-					queryCategory={0}
+				<RuleOptions
+					ruleType={queryCategory === 2 ? 'prom_rule' : 'threshold_rule'}
 				/>
+				{renderBasicInfo()}
+				<ButtonContainer>
+					<ActionButton
+						loading={loading || false}
+						type="primary"
+						onClick={onSaveHandler}
+						icon={<SaveOutlined />}
+					>
+						Save Alert
+					</ActionButton>
+					<ActionButton
+						loading={loading || false}
+						type="default"
+						onClick={(e): void => console.log('do nothing')}
+					>
+						Cancel
+					</ActionButton>
+				</ButtonContainer>
 			</Form>
 		</>
 	);
@@ -53,7 +77,7 @@ function FormAlertRules({
 interface FormAlertRuleProps {
 	formInstance: FormInstance;
 	initialValue: Store;
-	title: string;
+	ruleId: string;
 }
 
 export default FormAlertRules;

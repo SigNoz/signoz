@@ -16,6 +16,7 @@ function EditRules(): JSX.Element {
 				id: parseInt(ruleId, 10),
 			}),
 	});
+	console.log('data:', data);
 
 	if (isError) {
 		return <div>{data?.error || t('something_went_wrong')}</div>;
@@ -25,7 +26,7 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
-	return <EditRulesContainer ruleId={ruleId} initialData={data.payload.data} />;
+	return <EditRulesContainer ruleId={ruleId} initialValue={data.payload.data} />;
 }
 
 interface EditRulesParam {
