@@ -9,15 +9,16 @@ import { QueryButton } from '../../styles';
 import ClickHouseQueryBuilder from './query';
 import { IClickHouseQueryHandleChange } from './types';
 
+interface IClickHouseQueryContainerProps {
+	queryData: Query;
+	updateQueryData: (args: { updatedQuery: Query }) => void;
+	clickHouseQueries: Query['clickHouse'];
+}
 function ClickHouseQueryContainer({
 	queryData,
 	updateQueryData,
 	clickHouseQueries,
-}: {
-	queryData: Query;
-	updateQueryData: (args: { updatedQuery: Query }) => void;
-	clickHouseQueries: Query['clickHouse'];
-}): JSX.Element | null {
+}: IClickHouseQueryContainerProps): JSX.Element | null {
 	const handleClickHouseQueryChange = ({
 		queryIndex,
 		rawQuery,

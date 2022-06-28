@@ -9,15 +9,17 @@ import { QueryButton } from '../../styles';
 import PromQLQueryBuilder from './query';
 import { IPromQLQueryHandleChange } from './types';
 
+interface IPromQLQueryContainerProps {
+	queryData: Query;
+	updateQueryData: (args: { updatedQuery: Query }) => void;
+	promQLQueries: IPromQLQuery[];
+}
+
 function PromQLQueryContainer({
 	queryData,
 	updateQueryData,
 	promQLQueries,
-}: {
-	queryData: Query;
-	updateQueryData: (args: { updatedQuery: Query }) => void;
-	promQLQueries: IPromQLQuery[];
-}): JSX.Element | null {
+}: IPromQLQueryContainerProps): JSX.Element | null {
 	const handlePromQLQueryChange = ({
 		queryIndex,
 		query,

@@ -23,17 +23,19 @@ import {
 } from './types';
 import { canCreateQueryAndFormula } from './utils';
 
+interface IQueryBuilderQueryContainerProps {
+	queryData: Query;
+	updateQueryData: (args: { updatedQuery: Query }) => void;
+	metricsBuilderQueries: Query['metricsBuilder'];
+	selectedGraph: GRAPH_TYPES;
+}
+
 function QueryBuilderQueryContainer({
 	queryData,
 	updateQueryData,
 	metricsBuilderQueries,
 	selectedGraph,
-}: {
-	queryData: Query;
-	updateQueryData: (args: { updatedQuery: Query }) => void;
-	metricsBuilderQueries: Query['metricsBuilder'];
-	selectedGraph: GRAPH_TYPES;
-}): JSX.Element | null {
+}: IQueryBuilderQueryContainerProps): JSX.Element | null {
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
 		aggregateFunction,

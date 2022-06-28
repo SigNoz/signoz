@@ -7,15 +7,16 @@ import { IQueryBuilderFormulaHandleChange } from './types';
 
 const { TextArea } = Input;
 
+interface IMetricsBuilderFormulaProps {
+	formulaData: IMetricsBuilderFormula;
+	formulaIndex: number;
+	handleFormulaChange: (args: IQueryBuilderFormulaHandleChange) => void;
+}
 function MetricsBuilderFormula({
 	formulaData,
 	formulaIndex,
 	handleFormulaChange,
-}: {
-	formulaData: IMetricsBuilderFormula;
-	formulaIndex: number;
-	handleFormulaChange: (args: IQueryBuilderFormulaHandleChange) => void;
-}): JSX.Element {
+}: IMetricsBuilderFormulaProps): JSX.Element {
 	return (
 		<QueryHeader
 			name={formulaData.name}

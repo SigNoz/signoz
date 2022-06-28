@@ -7,7 +7,7 @@ const ReactGridLayoutComponent = WidthProvider(RGL);
 
 export const Card = styled(CardComponent)`
 	&&& {
-		height: 100%;
+		height: 95%;
 	}
 
 	.ant-card-body {

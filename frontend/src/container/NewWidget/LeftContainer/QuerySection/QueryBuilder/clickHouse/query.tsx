@@ -6,15 +6,17 @@ import { IClickHouseQuery } from 'types/api/dashboard/getAll';
 import QueryHeader from '../QueryHeader';
 import { IClickHouseQueryHandleChange } from './types';
 
+interface IClickHouseQueryBuilderProps {
+	queryData: IClickHouseQuery;
+	queryIndex: number;
+	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
+}
+
 function ClickHouseQueryBuilder({
 	queryData,
 	queryIndex,
 	handleQueryChange,
-}: {
-	queryData: IClickHouseQuery;
-	queryIndex: number;
-	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
-}): JSX.Element | null {
+}: IClickHouseQueryBuilderProps): JSX.Element | null {
 	if (queryData === undefined) {
 		return null;
 	}

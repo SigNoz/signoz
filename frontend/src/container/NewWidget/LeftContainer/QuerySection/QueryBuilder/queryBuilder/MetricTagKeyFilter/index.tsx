@@ -21,15 +21,17 @@ import {
 	SingleValueOperators,
 } from './utils';
 
+interface IMetricTagKeyFilterProps {
+	metricName: IMetricsBuilderQuery['metricName'];
+	onSetQuery: (args: IMetricsBuilderQuery['tagFilters']['items']) => void;
+	selectedTagFilters: IMetricsBuilderQuery['tagFilters']['items'];
+}
+
 function MetricTagKeyFilter({
 	metricName,
 	onSetQuery,
 	selectedTagFilters: selectedTagQueries,
-}: {
-	metricName: IMetricsBuilderQuery['metricName'];
-	onSetQuery: (args: IMetricsBuilderQuery['tagFilters']['items']) => void;
-	selectedTagFilters: IMetricsBuilderQuery['tagFilters']['items'];
-}): JSX.Element | null {
+}: IMetricTagKeyFilterProps): JSX.Element | null {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [loading, setLoading] = useState(true);
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
@@ -120,7 +122,7 @@ function MetricTagKeyFilter({
 
 	const handleChange = (value: never | string[]): void => {
 		if (!optionsData.mode) {
-			setStaging((prevStaging) => [...prevStaging, (value as unknown) as string]);
+			setStaging((prevStaging) => [...prevStaging, String(value)]);
 			setSelectedValues([]);
 			send('NEXT');
 			return;

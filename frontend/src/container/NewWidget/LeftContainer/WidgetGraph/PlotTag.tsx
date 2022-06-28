@@ -3,7 +3,11 @@ import { EQueryType } from 'types/common/dashboard';
 
 import QueryTypeTag from '../QueryTypeTag';
 
-function PlotTag({ queryType }: { queryType: EQueryType }): JSX.Element | null {
+interface IPlotTagProps {
+	queryType: EQueryType;
+}
+
+function PlotTag({ queryType }: IPlotTagProps): JSX.Element | null {
 	if (queryType === undefined) {
 		return null;
 	}

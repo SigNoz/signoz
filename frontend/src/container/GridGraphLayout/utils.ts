@@ -40,13 +40,13 @@ export const UpdateDashboard = async ({
 						queryType: EQueryType.QUERY_BUILDER,
 						promQL: [
 							{
-								name: GetQueryName([]) as string,
+								name: GetQueryName([]) || '',
 								...PromQLQueryTemplate,
 							},
 						],
 						clickHouse: [
 							{
-								name: GetQueryName([]) as string,
+								name: GetQueryName([]) || '',
 								...ClickHouseQueryTemplate,
 							},
 						],
@@ -54,7 +54,7 @@ export const UpdateDashboard = async ({
 							formulas: [],
 							queryBuilder: [
 								{
-									name: GetQueryName([]) as string,
+									name: GetQueryName([]) || '',
 									...QueryBuilderQueryTemplate,
 								},
 							],

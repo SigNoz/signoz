@@ -5,15 +5,17 @@ import { IPromQLQuery } from 'types/api/dashboard/getAll';
 import QueryHeader from '../QueryHeader';
 import { IPromQLQueryHandleChange } from './types';
 
+interface IPromQLQueryBuilderProps {
+	queryData: IPromQLQuery;
+	queryIndex: number;
+	handleQueryChange: (args: IPromQLQueryHandleChange) => void;
+}
+
 function PromQLQueryBuilder({
 	queryData,
 	queryIndex,
 	handleQueryChange,
-}: {
-	queryData: IPromQLQuery;
-	queryIndex: number;
-	handleQueryChange: (args: IPromQLQueryHandleChange) => void;
-}): JSX.Element {
+}: IPromQLQueryBuilderProps): JSX.Element {
 	return (
 		<QueryHeader
 			name={queryData.name}
