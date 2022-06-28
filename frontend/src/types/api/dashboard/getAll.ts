@@ -42,9 +42,9 @@ export interface IBaseWidget {
 		error: boolean;
 		errorMessage: string;
 		data: {
-			// legend?: string;
+			query?: string;
+			legend?: string;
 			queryData: QueryData[];
-			// query: string;
 		};
 	};
 	stepSize?: number;
