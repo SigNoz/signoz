@@ -16,6 +16,7 @@ const config: PlaywrightTestConfig = {
 	updateSnapshots: 'all',
 	fullyParallel: false,
 	quiet: true,
+	testMatch: ['**/*.spec.ts'],
 };
 
 export default config;
