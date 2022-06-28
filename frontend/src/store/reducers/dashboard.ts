@@ -19,7 +19,6 @@ import {
 	TOGGLE_EDIT_MODE,
 	UPDATE_DASHBOARD,
 	UPDATE_QUERY,
-	UPDATE_QUERY_TYPE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
 import InitialValueTypes from 'types/reducer/dashboards';
@@ -216,6 +215,7 @@ const dashboard = (
 
 		case QUERY_SUCCESS: {
 			const { widgetId, data: queryDataResponse } = action.payload;
+
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
 			const { data } = selectedDashboard;
@@ -243,7 +243,7 @@ const dashboard = (
 								{
 									...selectedWidget,
 									queryData: {
-										data: [queryDataResponse],
+										data: queryDataResponse,
 										error: selectedWidget.queryData.error,
 										errorMessage: selectedWidget.queryData.errorMessage,
 										loading: false,
@@ -397,88 +397,6 @@ const dashboard = (
 				],
 			};
 		}
-		case UPDATE_QUERY_TYPE: {
-			const { widgetId, queryType } = action.payload;
-			const { dashboards } = state;
-			const [selectedDashboard] = dashboards;
-			const { data } = selectedDashboard;
-			const { widgets = [] } = data;
-
-			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
-
-			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
-			const afterWidget =
-				widgets?.slice(
-					selectedWidgetIndex + 1, // this is never undefined
-					widgets.length,
-				) || [];
-
-			const selectedWidget = widgets[selectedWidgetIndex];
-
-			return {
-				...state,
-				dashboards: [
-					{
-						...selectedDashboard,
-						data: {
-							...data,
-							widgets: [
-								...preWidget,
-								{
-									...selectedWidget,
-									queryType,
-								},
-								...afterWidget,
-							],
-						},
-					},
-				],
-			};
-		}
-
-		// case DELETE_QUERY: {
-		// 	const { currentIndex, widgetId } = action.payload;
-		// 	const { dashboards } = state;
-		// 	const [selectedDashboard] = dashboards;
-		// 	const { data } = selectedDashboard;
-		// 	const { widgets = [] } = data;
-
-		// 	const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
-
-		// 	const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
-		// 	const afterWidget =
-		// 		widgets?.slice(
-		// 			selectedWidgetIndex + 1, // this is never undefined
-		// 			widgets.length,
-		// 		) || [];
-
-		// 	const selectedWidget = widgets[selectedWidgetIndex];
-
-		// 	const { query } = selectedWidget;
-
-		// 	const preQuery = query.slice(0, currentIndex);
-		// 	const postQuery = query.slice(currentIndex + 1, query.length);
-
-		// 	return {
-		// 		...state,
-		// 		dashboards: [
-		// 			{
-		// 				...selectedDashboard,
-		// 				data: {
-		// 					...data,
-		// 					widgets: [
-		// 						...preWidget,
-		// 						{
-		// 							...selectedWidget,
-		// 							query: [...preQuery, ...postQuery],
-		// 						},
-		// 						...afterWidget,
-		// 					],
-		// 				},
-		// 			},
-		// 		],
-		// 	};
-		// }
 
 		default:
 			return state;

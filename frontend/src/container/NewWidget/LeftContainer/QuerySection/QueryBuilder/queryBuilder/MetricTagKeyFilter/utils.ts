@@ -5,7 +5,7 @@ import {
 import { v4 as uuid } from 'uuid';
 
 import { TagKeyOperator } from '../../Options';
-import { IMetricBuilderTagKeyQuery, IOption } from './types';
+import { IOption, ITagKeyValueQuery } from './types';
 
 export const OperatorSchema: IOption[] = TagKeyOperator;
 
@@ -40,12 +40,12 @@ export const GetTagValues = async (
 
 export const createQuery = (
 	selectedItems: Array<string | string[]> = [],
-): IMetricBuilderTagKeyQuery | null => {
+): ITagKeyValueQuery | null => {
 	if (selectedItems.length === 3) {
 		return {
 			id: uuid().slice(0, 8),
-			key: selectedItems[0] as string,
-			op: selectedItems[1] as string,
+			key: typeof selectedItems[0] === 'string' ? selectedItems[0] : '',
+			op: typeof selectedItems[1] === 'string' ? selectedItems[1] : '',
 			value: selectedItems[2] as string[],
 		};
 	}

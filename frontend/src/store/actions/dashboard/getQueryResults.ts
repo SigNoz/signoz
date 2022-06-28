@@ -1,3 +1,7 @@
+/* eslint-disable  */
+// @ts-ignore
+// @ts-nocheck
+
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { AxiosError } from 'axios';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -36,6 +40,7 @@ export async function GetMetricQueryRange({
 		EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
 	const queryData = query[queryKey];
 	const legendMap: Record<string, string> = {};
+
 	const QueryPayload = {
 		dataSource: EDataSource.METRICS,
 		compositeMetricQuery: {
@@ -175,12 +180,6 @@ export const GetQueryResults = (
 				return;
 			}
 
-			// const data = response.map((e) => ({
-			// 	query: e.query,
-			// 	legend: e.legend || '',
-			// 	queryData: e.queryData.payload?.result || [],
-			// }));
-
 			dispatch({
 				type: 'QUERY_SUCCESS',
 				payload: {
@@ -216,7 +215,7 @@ export const GetQueryResults = (
 export interface GetQueryResultsProps {
 	widgetId: string;
 	selectedTime: timePreferenceType;
-	query: Query[];
+	query: Query;
 	graphType: ITEMS;
 	globalSelectedInterval: GlobalReducer['selectedTime'];
 }

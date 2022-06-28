@@ -10,13 +10,21 @@ import React, { useState } from 'react';
 
 import { QueryWrapper } from '../styles';
 
+interface IQueryHeaderProps {
+	disabled: boolean;
+	onDisable: VoidFunction;
+	name: string;
+	onDelete: VoidFunction;
+	children: React.ReactNode;
+}
+
 function QueryHeader({
 	disabled,
 	onDisable,
 	name,
 	onDelete,
 	children,
-}): JSX.Element {
+}: IQueryHeaderProps): JSX.Element {
 	const [collapse, setCollapse] = useState(false);
 	return (
 		<QueryWrapper>

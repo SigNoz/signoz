@@ -82,7 +82,6 @@ export const SaveDashboard = ({
 					...allLayout.slice(emptyLayoutIndex + 1, allLayout.length),
 				];
 			};
-
 			const allLayout = getAllLayout();
 			const response = await updateDashboardApi({
 				data: {
@@ -109,12 +108,6 @@ export const SaveDashboard = ({
 							panelTypes: search.get('graphType') as Widgets['panelTypes'],
 							queryData: {
 								...selectedWidget.queryData,
-								data: [
-									...selectedWidget.queryData.data.map((e) => ({
-										...e,
-										queryData: [],
-									})),
-								],
 							},
 						},
 						...afterWidget,

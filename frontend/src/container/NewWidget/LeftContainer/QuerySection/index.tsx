@@ -1,3 +1,6 @@
+/* eslint-disable  */
+//@ts-nocheck
+
 import { Button, Tabs } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -8,22 +11,13 @@ import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { CreateQuery, CreateQueryProps } from 'store/actions';
-import {
-	GetQueryResults,
-	GetQueryResultsProps,
-} from 'store/actions/dashboard/getQueryResults';
 import {
 	UpdateQuery,
 	UpdateQueryProps,
 } from 'store/actions/dashboard/updateQuery';
-import {
-	UpdateQueryType,
-	UpdateQueryTypeProps,
-} from 'store/actions/dashboard/updateQueryType';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Query, Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 as uuid } from 'uuid';
@@ -46,11 +40,13 @@ function QuerySection({
 	updateQuery,
 	selectedGraph,
 }: QueryProps): JSX.Element {
-	const [localQueryChanges, setLocalQueryChanges] = useState({});
-	const [rctTabKey, setRctTabKey] = useState({
+	const [localQueryChanges, setLocalQueryChanges] = useState<Query>({} as Query);
+	const [rctTabKey, setRctTabKey] = useState<
+		Record<keyof typeof EQueryType, string>
+	>({
 		QUERY_BUILDER: uuid(),
 		CLICKHOUSE: uuid(),
-		PROMQL: uuid(),
+		PROM: uuid(),
 	});
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -73,104 +69,80 @@ function QuerySection({
 		selectedWidget.query.queryType,
 	);
 
-	const { query = [] } = selectedWidget || {};
+	const { query } = selectedWidget || {};
 	useEffect(() => {
-		setLocalQueryChanges(cloneDeep(query));
+		setLocalQueryChanges(cloneDeep(query) as Query);
 	}, [query]);
-	const queryOnClickHandler = () => {
-		setLocalQueryChanges([
-			...localQueryChanges,
-			// {
-			// 	name: GetQueryName(localQueryChanges),
-			// 	disabled: false,
 
-			// 	promQL: {
-			// 		query: '',
-			// 		legend: '',
-			// 	},
-			// 	clickHouseQuery: '',
-			// 	queryBuilder: {
-			// 		metricName: null,
-			// 		aggregateOperator: null,
-			// 		tagFilters: {
-			// 			op: 'AND',
-			// 			items: [],
-			// 		},
-			// 		groupBy: [],
-			// 	},
-			// },
-		]);
-	};
 
-	const queryDiff = (queryA, queryB, queryCategory) => {
+	const queryDiff = (
+		queryA: Query,
+		queryB: Query,
+		queryCategory: EQueryType,
+	): boolean => {
 		const keyOfConcern = getQueryKey(queryCategory);
 		return !isEqual(queryA[keyOfConcern], queryB[keyOfConcern]);
 	};
 
 	useEffect(() => {
 		handleUnstagedChanges(
-			queryDiff(query, localQueryChanges, parseInt(queryCategory)),
+			queryDiff(query, localQueryChanges, parseInt(`${queryCategory}`, 10)),
 		);
 	}, [handleUnstagedChanges, localQueryChanges, query, queryCategory]);
 
-	const purgeLocalChanges = () => {
-		setLocalQueryChanges(query);
-	};
-	const regenRctKeys = () => {
+	const regenRctKeys = (): void => {
 		setRctTabKey((prevState) => {
-			Object.keys(prevState).map((key) => {
-				prevState[key] = uuid();
+			const newState = prevState;
+			Object.keys(newState).forEach((key) => {
+				newState[key as keyof typeof EQueryType] = uuid();
 			});
 
-			return cloneDeep(prevState);
+			return cloneDeep(newState);
 		});
 	};
 
-	const handleStageQuery = () => {
+	const handleStageQuery = (): void => {
 		updateQuery({
 			updatedQuery: localQueryChanges,
-			widgetId: urlQuery.get('widgetId'),
+			widgetId: urlQuery.get('widgetId') || '',
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
 	};
 
-	const handleQueryCategoryChange = (qCategory): void => {
+	const handleQueryCategoryChange = (qCategory: string): void => {
 		// If true, then it means that the user has made some changes and haven't staged them
 		const unstagedChanges = queryDiff(
 			query,
 			localQueryChanges,
-			parseInt(queryCategory),
+			parseInt(`${queryCategory}`, 10),
 		);
 
 		if (unstagedChanges && showUnstagedStashConfirmBox()) {
+			// eslint-disable-next-line no-alert
 			window.confirm(
 				"You are trying to navigate to different tab with unstaged changes. Your current changes will be purged. Press 'Stage & Run Query' to stage them.",
 			);
 			return;
 		}
 
-		setQueryCategory(parseInt(qCategory));
+		setQueryCategory(parseInt(`${qCategory}`, 10));
 		const newLocalQuery = {
 			...cloneDeep(query),
-			queryType: parseInt(qCategory),
+			queryType: parseInt(`${qCategory}`, 10),
 		};
 		setLocalQueryChanges(newLocalQuery);
 		regenRctKeys();
 		updateQuery({
 			updatedQuery: newLocalQuery,
-			widgetId: urlQuery.get('widgetId'),
+			widgetId: urlQuery.get('widgetId') || '',
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
 	};
-	const handleLocalQueryUpdate = ({ updatedQuery }) => {
-		setLocalQueryChanges(updatedQuery);
-	};
 
-	const handleDeleteQuery = ({ currentIndex }) => {
-		setLocalQueryChanges((prevState) => {
-			prevState.splice(currentIndex, 1);
-			return [...prevState];
-		});
+	const handleLocalQueryUpdate = ({
+		updatedQuery,
+	}: IHandleUpdatedQuery): void => {
+		setLocalQueryChanges(updatedQuery);
 	};
 
 	return (
@@ -211,7 +183,7 @@ function QuerySection({
 						<QueryBuilderQueryContainer
 							key={rctTabKey.QUERY_BUILDER}
 							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }) => {
+							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 								handleLocalQueryUpdate({ updatedQuery });
 							}}
 							metricsBuilderQueries={
@@ -236,7 +208,7 @@ function QuerySection({
 						<ClickHouseQueryContainer
 							key={rctTabKey.CLICKHOUSE}
 							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }) => {
+							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 								handleLocalQueryUpdate({ updatedQuery });
 							}}
 							clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
@@ -256,9 +228,9 @@ function QuerySection({
 						key={EQueryType.PROM.toString()}
 					>
 						<PromQLQueryContainer
-							key={rctTabKey.PROMQL}
+							key={rctTabKey.PROM}
 							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }) => {
+							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 								handleLocalQueryUpdate({ updatedQuery });
 							}}
 							promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}

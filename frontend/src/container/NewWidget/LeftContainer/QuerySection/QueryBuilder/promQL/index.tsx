@@ -2,25 +2,32 @@ import { PlusOutlined } from '@ant-design/icons';
 import { PromQLQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
+import { IPromQLQuery, Query } from 'types/api/dashboard/getAll';
 
 import { WIDGET_PROMQL_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
+import { IHandleUpdatedQuery } from '../../types';
 import PromQLQueryBuilder from './query';
+import { IPromQLQueryHandleChange } from './types';
+
+interface IPromQLQueryContainerProps {
+	queryData: Query;
+	updateQueryData: (args: IHandleUpdatedQuery) => void;
+	promQLQueries: IPromQLQuery[];
+}
 
 function PromQLQueryContainer({
 	queryData,
 	updateQueryData,
 	promQLQueries,
-	onQueryChange,
-	onQueryAdd,
-}): JSX.Element | null {
+}: IPromQLQueryContainerProps): JSX.Element | null {
 	const handlePromQLQueryChange = ({
 		queryIndex,
 		query,
 		legend,
 		toggleDisable,
 		toggleDelete,
-	}): void => {
+	}: IPromQLQueryHandleChange): void => {
 		const allQueries = queryData[WIDGET_PROMQL_QUERY_KEY_NAME];
 		const currentIndexQuery = allQueries[queryIndex];
 		if (query) currentIndexQuery.query = query;
@@ -36,7 +43,7 @@ function PromQLQueryContainer({
 	};
 	const addQueryHandler = (): void => {
 		queryData[WIDGET_PROMQL_QUERY_KEY_NAME].push({
-			name: GetQueryName(queryData[WIDGET_PROMQL_QUERY_KEY_NAME]),
+			name: GetQueryName(queryData[WIDGET_PROMQL_QUERY_KEY_NAME]) || '',
 			...PromQLQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });
@@ -48,7 +55,7 @@ function PromQLQueryContainer({
 	return (
 		<>
 			{promQLQueries.map(
-				(q, idx): JSX.Element => (
+				(q: IPromQLQuery, idx: number): JSX.Element => (
 					<PromQLQueryBuilder
 						key={q.name}
 						queryIndex={idx}

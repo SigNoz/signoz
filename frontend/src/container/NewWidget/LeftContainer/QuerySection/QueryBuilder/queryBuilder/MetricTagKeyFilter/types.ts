@@ -9,3 +9,10 @@ export interface IMetricBuilderTagKeyQuery {
 	operator: string;
 	tagValue: string[];
 }
+
+export interface ITagKeyValueQuery {
+	id: string;
+	key: string;
+	op: string;
+	value: string[];
+}

@@ -41,8 +41,7 @@ function WidgetGraph({
 			</NotFoundContainer>
 		);
 	}
-
-	if (queryData.data.length === 0 || queryData.data[0].queryData.length === 0) {
+	if (queryData.data.queryData.length === 0) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>
@@ -51,7 +50,7 @@ function WidgetGraph({
 	}
 
 	const chartDataSet = getChartData({
-		queryData: queryData.data,
+		queryData: [queryData.data],
 	});
 
 	return (

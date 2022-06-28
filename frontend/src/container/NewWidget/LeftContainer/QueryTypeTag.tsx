@@ -4,7 +4,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { Tag } from '../styles';
 
 interface IQueryTypeTagProps {
-	queryType: EQueryType;
+	queryType: EQueryType | undefined;
 }
 function QueryTypeTag({ queryType }: IQueryTypeTagProps): JSX.Element {
 	switch (queryType) {

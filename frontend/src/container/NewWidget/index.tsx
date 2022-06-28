@@ -136,9 +136,9 @@ function NewWidget({
 	}, [dashboardId, dispatch]);
 
 	const getQueryResult = useCallback(() => {
-		if (selectedWidget?.id.length !== 0) {
+		if (selectedWidget?.id.length !== 0 && selectedWidget?.query) {
 			getQueryResults({
-				query: selectedWidget?.query || [],
+				query: selectedWidget?.query,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
