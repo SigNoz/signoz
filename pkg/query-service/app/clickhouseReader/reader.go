@@ -50,6 +50,7 @@ import (
 	"go.signoz.io/query-service/constants"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -2828,6 +2829,10 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 // GetMetricResult runs the query and returns list of time series
 func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
+
+	defer utils.Elapsed("GetMetricResult")()
+
+	zap.S().Infof("Executing metric result query: %s", query)
 
 	rows, err := r.db.Query(ctx, query)
 

@@ -42,8 +42,8 @@ func TestBuildQueryWithFilters(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "a", Value: "b", Operation: "neq"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "a", Value: "b", Operator: "neq"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
@@ -70,8 +70,8 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: model.RATE_AVG,
 						Expression:        "a",
@@ -103,8 +103,8 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
