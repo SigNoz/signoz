@@ -92,7 +92,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		fgRef && fgRef.current && fgRef.current.zoomToFit(100, 120);
 	};
 
-	const { nodes, links } = getGraphData(serviceMap);
+	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
 	const graphData = { nodes, links };
 	return (
 		<Container>
@@ -109,7 +109,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 				linkAutoColorBy={(d) => d.target}
 				linkDirectionalParticles="value"
 				linkDirectionalParticleSpeed={(d) => d.value}
-				nodeCanvasObject={(node, ctx, globalScale) => {
+				nodeCanvasObject={(node, ctx) => {
 					const label = transformLabel(node.id);
 					const { fontSize } = node;
 					ctx.font = `${fontSize}px Roboto`;
@@ -118,7 +118,6 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 					ctx.fillStyle = node.color;
 					ctx.beginPath();
 					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
-					ctx.fillStyle = isDarkMode ? '#3C8618' : '#D5F2BB';
 					ctx.fill();
 					ctx.textAlign = 'center';
 					ctx.textBaseline = 'middle';
