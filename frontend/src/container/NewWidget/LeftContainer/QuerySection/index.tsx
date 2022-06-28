@@ -74,30 +74,6 @@ function QuerySection({
 		setLocalQueryChanges(cloneDeep(query) as Query);
 	}, [query]);
 
-	// const queryOnClickHandler = () => {
-	// 	setLocalQueryChanges([
-	// 		...localQueryChanges,
-	// 		// {
-	// 		// 	name: GetQueryName(localQueryChanges),
-	// 		// 	disabled: false,
-
-	// 		// 	promQL: {
-	// 		// 		query: '',
-	// 		// 		legend: '',
-	// 		// 	},
-	// 		// 	clickHouseQuery: '',
-	// 		// 	queryBuilder: {
-	// 		// 		metricName: null,
-	// 		// 		aggregateOperator: null,
-	// 		// 		tagFilters: {
-	// 		// 			op: 'AND',
-	// 		// 			items: [],
-	// 		// 		},
-	// 		// 		groupBy: [],
-	// 		// 	},
-	// 		// },
-	// 	]);
-	// };
 
 	const queryDiff = (
 		queryA: Query,
@@ -114,9 +90,6 @@ function QuerySection({
 		);
 	}, [handleUnstagedChanges, localQueryChanges, query, queryCategory]);
 
-	// const purgeLocalChanges = () => {
-	// 	setLocalQueryChanges(query);
-	// };
 	const regenRctKeys = (): void => {
 		setRctTabKey((prevState) => {
 			const newState = prevState;
@@ -165,18 +138,12 @@ function QuerySection({
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
 	};
+
 	const handleLocalQueryUpdate = ({
 		updatedQuery,
 	}: IHandleUpdatedQuery): void => {
 		setLocalQueryChanges(updatedQuery);
 	};
-
-	// const handleDeleteQuery = ({ currentIndex }) => {
-	// 	setLocalQueryChanges((prevState) => {
-	// 		prevState.splice(currentIndex, 1);
-	// 		return [...prevState];
-	// 	});
-	// };
 
 	return (
 		<>
