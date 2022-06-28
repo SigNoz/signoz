@@ -17,7 +17,10 @@ import {
 import { QueryButton } from '../../styles';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
-import { IQueryBuilderFormulaHandleChange, IQueryBuilderQueryHandleChange } from './types';
+import {
+	IQueryBuilderFormulaHandleChange,
+	IQueryBuilderQueryHandleChange,
+} from './types';
 import { canCreateQueryAndFormula } from './utils';
 
 function QueryBuilderQueryContainer({
@@ -84,7 +87,7 @@ function QueryBuilderQueryContainer({
 	}: IQueryBuilderFormulaHandleChange): void => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
 		const currentIndexFormula = allFormulas[formulaIndex];
 
@@ -110,9 +113,9 @@ function QueryBuilderQueryContainer({
 			return;
 		}
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder.push({
-			name: GetQueryName(
-				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder,
-			),
+			name:
+				GetQueryName(queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder) ||
+				'',
 			...QueryBuilderQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });
@@ -129,11 +132,12 @@ function QueryBuilderQueryContainer({
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 		].push({
-			name: GetFormulaName(
-				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
-				],
-			),
+			name:
+				GetFormulaName(
+					queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
+						WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+					],
+				) || '',
 			...QueryBuilderFormulaTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });

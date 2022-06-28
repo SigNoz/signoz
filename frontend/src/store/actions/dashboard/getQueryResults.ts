@@ -1,3 +1,7 @@
+/* eslint-disable  */
+// @ts-ignore
+// @ts-nocheck
+
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { AxiosError } from 'axios';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';

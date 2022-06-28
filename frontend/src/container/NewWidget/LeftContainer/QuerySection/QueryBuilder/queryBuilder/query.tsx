@@ -130,7 +130,7 @@ function MetricsBuilder({
 								metricName={metricName}
 								selectedTagFilters={queryData.tagFilters.items}
 								onSetQuery={(
-									updatedTagFilters: IMetricsBuilderQuery['tagFilters'],
+									updatedTagFilters: IMetricsBuilderQuery['tagFilters']['items'],
 								): void =>
 									handleQueryChange({ queryIndex, tagFilters: updatedTagFilters })
 								}

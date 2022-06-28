@@ -24,8 +24,11 @@ function TextToolTip({ text, url }: TextToolTipProps): JSX.Element {
 	);
 }
 
+TextToolTip.defaultProps = {
+	url: '',
+};
 interface TextToolTipProps {
-	url: string;
+	url?: string;
 	text: string;
 }
 

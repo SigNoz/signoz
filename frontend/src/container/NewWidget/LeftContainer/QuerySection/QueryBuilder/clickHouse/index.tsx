@@ -46,7 +46,7 @@ function ClickHouseQueryContainer({
 	};
 	const addQueryHandler = (): void => {
 		queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME].push({
-			name: GetQueryName(queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]),
+			name: GetQueryName(queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]) || '',
 			...ClickHouseQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });

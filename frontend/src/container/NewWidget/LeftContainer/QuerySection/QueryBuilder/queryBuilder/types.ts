@@ -7,7 +7,7 @@ export interface IQueryBuilderQueryHandleChange {
 	queryIndex: number;
 	aggregateFunction?: IMetricsBuilderQuery['aggregateOperator'];
 	metricName?: IMetricsBuilderQuery['metricName'];
-	tagFilters?: IMetricsBuilderQuery['tagFilters'];
+	tagFilters?: IMetricsBuilderQuery['tagFilters']['items'];
 	groupBy?: IMetricsBuilderQuery['groupBy'];
 	legend?: IMetricsBuilderQuery['legend'];
 	toggleDisable?: boolean;

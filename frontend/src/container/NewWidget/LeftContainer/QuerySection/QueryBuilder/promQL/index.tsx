@@ -17,7 +17,6 @@ function PromQLQueryContainer({
 	queryData: Query;
 	updateQueryData: (args: { updatedQuery: Query }) => void;
 	promQLQueries: IPromQLQuery[];
-
 }): JSX.Element | null {
 	const handlePromQLQueryChange = ({
 		queryIndex,
@@ -41,7 +40,7 @@ function PromQLQueryContainer({
 	};
 	const addQueryHandler = (): void => {
 		queryData[WIDGET_PROMQL_QUERY_KEY_NAME].push({
-			name: GetQueryName(queryData[WIDGET_PROMQL_QUERY_KEY_NAME]),
+			name: GetQueryName(queryData[WIDGET_PROMQL_QUERY_KEY_NAME]) || '',
 			...PromQLQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });
