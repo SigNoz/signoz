@@ -1,13 +1,15 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
+interface ITabHeaderProps {
+	tabName: string;
+	hasUnstagedChanges: boolean;
+}
+
 function TabHeader({
 	tabName,
 	hasUnstagedChanges,
-}: {
-	tabName: string;
-	hasUnstagedChanges: boolean;
-}): JSX.Element {
+}: ITabHeaderProps): JSX.Element {
 	return (
 		<div
 			style={{

@@ -167,9 +167,7 @@ function QuerySection({
 	};
 	const handleLocalQueryUpdate = ({
 		updatedQuery,
-	}: {
-		updatedQuery: Query;
-	}): void => {
+	}: IHandleUpdatedQuery): void => {
 		setLocalQueryChanges(updatedQuery);
 	};
 
@@ -218,7 +216,7 @@ function QuerySection({
 						<QueryBuilderQueryContainer
 							key={rctTabKey.QUERY_BUILDER}
 							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: { updatedQuery: Query }): void => {
+							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 								handleLocalQueryUpdate({ updatedQuery });
 							}}
 							metricsBuilderQueries={
@@ -243,7 +241,7 @@ function QuerySection({
 						<ClickHouseQueryContainer
 							key={rctTabKey.CLICKHOUSE}
 							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: { updatedQuery: Query }): void => {
+							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 								handleLocalQueryUpdate({ updatedQuery });
 							}}
 							clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
@@ -265,7 +263,7 @@ function QuerySection({
 						<PromQLQueryContainer
 							key={rctTabKey.PROM}
 							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: { updatedQuery: Query }): void => {
+							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 								handleLocalQueryUpdate({ updatedQuery });
 							}}
 							promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}

@@ -6,12 +6,13 @@ import { IPromQLQuery, Query } from 'types/api/dashboard/getAll';
 
 import { WIDGET_PROMQL_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
+import { IHandleUpdatedQuery } from '../../types';
 import PromQLQueryBuilder from './query';
 import { IPromQLQueryHandleChange } from './types';
 
 interface IPromQLQueryContainerProps {
 	queryData: Query;
-	updateQueryData: (args: { updatedQuery: Query }) => void;
+	updateQueryData: (args: IHandleUpdatedQuery) => void;
 	promQLQueries: IPromQLQuery[];
 }
 

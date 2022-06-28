@@ -6,12 +6,13 @@ import { Query } from 'types/api/dashboard/getAll';
 
 import { WIDGET_CLICKHOUSE_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
+import { IHandleUpdatedQuery } from '../../types';
 import ClickHouseQueryBuilder from './query';
 import { IClickHouseQueryHandleChange } from './types';
 
 interface IClickHouseQueryContainerProps {
 	queryData: Query;
-	updateQueryData: (args: { updatedQuery: Query }) => void;
+	updateQueryData: (args: IHandleUpdatedQuery) => void;
 	clickHouseQueries: Query['clickHouse'];
 }
 function ClickHouseQueryContainer({

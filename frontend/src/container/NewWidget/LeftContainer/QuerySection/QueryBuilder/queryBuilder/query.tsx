@@ -13,17 +13,20 @@ import { GetTagKeys } from './MetricTagKeyFilter/utils';
 import { IQueryBuilderQueryHandleChange } from './types';
 
 const { Option } = Select;
+
+interface IMetricsBuilderProps {
+	queryIndex: number;
+	selectedGraph: GRAPH_TYPES;
+	queryData: IMetricsBuilderQuery;
+	handleQueryChange: (args: IQueryBuilderQueryHandleChange) => void;
+}
+
 function MetricsBuilder({
 	queryIndex,
 	selectedGraph,
 	queryData,
 	handleQueryChange,
-}: {
-	queryIndex: number;
-	selectedGraph: GRAPH_TYPES;
-	queryData: IMetricsBuilderQuery;
-	handleQueryChange: (args: IQueryBuilderQueryHandleChange) => void;
-}): JSX.Element {
+}: IMetricsBuilderProps): JSX.Element {
 	const [groupByOptions, setGroupByOptions] = useState<IOption[]>([]);
 	const [metricName, setMetricName] = useState<string | null>(
 		queryData.metricName,

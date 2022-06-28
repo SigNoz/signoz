@@ -15,6 +15,7 @@ import {
 	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from '../../constants';
 import { QueryButton } from '../../styles';
+import { IHandleUpdatedQuery } from '../../types';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
 import {
@@ -25,7 +26,7 @@ import { canCreateQueryAndFormula } from './utils';
 
 interface IQueryBuilderQueryContainerProps {
 	queryData: Query;
-	updateQueryData: (args: { updatedQuery: Query }) => void;
+	updateQueryData: (args: IHandleUpdatedQuery) => void;
 	metricsBuilderQueries: Query['metricsBuilder'];
 	selectedGraph: GRAPH_TYPES;
 }
