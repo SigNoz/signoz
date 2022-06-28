@@ -5,13 +5,14 @@ import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { IMetricsBuilderQuery } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import { ResourceAttributesFilterMachine } from './MetricTagKey.machine';
 import QueryChip from './QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
-import { IMetricBuilderTagKeyQuery, IOption } from './types';
+import { IOption, ITagKeyValueQuery } from './types';
 import {
 	createQuery,
 	GetTagKeys,
@@ -24,12 +25,16 @@ function MetricTagKeyFilter({
 	metricName,
 	onSetQuery,
 	selectedTagFilters: selectedTagQueries,
+}: {
+	metricName: IMetricsBuilderQuery['metricName'];
+	onSetQuery: (args: IMetricsBuilderQuery['tagFilters']['items']) => void;
+	selectedTagFilters: IMetricsBuilderQuery['tagFilters']['items'];
 }): JSX.Element | null {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [loading, setLoading] = useState(true);
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[]>([]);
-	const [queries, setQueries] = useState<IMetricBuilderTagKeyQuery[]>([]);
+	const [queries, setQueries] = useState<ITagKeyValueQuery[]>([]);
 	const [optionsData, setOptionsData] = useState<{
 		mode: undefined | 'tags' | 'multiple';
 		options: IOption[];
@@ -39,7 +44,7 @@ function MetricTagKeyFilter({
 	});
 
 	const dispatchQueries = (
-		updatedQueries: IMetricBuilderTagKeyQuery[],
+		updatedQueries: IMetricsBuilderQuery['tagFilters']['items'],
 	): void => {
 		onSetQuery(updatedQueries);
 		setQueries(updatedQueries);
@@ -54,7 +59,7 @@ function MetricTagKeyFilter({
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
-				GetTagKeys(metricName)
+				GetTagKeys(metricName || '')
 					.then((tagKeys) => setOptionsData({ options: tagKeys, mode: undefined }))
 					.finally(() => {
 						handleLoading(false);
@@ -66,7 +71,7 @@ function MetricTagKeyFilter({
 			onSelectTagValue: () => {
 				handleLoading(true);
 
-				GetTagValues(staging[0], metricName)
+				GetTagValues(staging[0], metricName || '')
 					.then((tagValuesOptions) =>
 						setOptionsData({ options: tagValuesOptions, mode: 'tags' }),
 					)
@@ -113,16 +118,17 @@ function MetricTagKeyFilter({
 		handleBlur();
 	}, [handleBlur, metricName]);
 
-	const handleChange = (value: never): void => {
+	const handleChange = (value: never | string[]): void => {
 		if (!optionsData.mode) {
-			setStaging((prevStaging) => [...prevStaging, value]);
+			setStaging((prevStaging) => [...prevStaging, (value as unknown) as string]);
 			setSelectedValues([]);
 			send('NEXT');
 			return;
 		}
 		if (
 			state.value === 'TagValue' &&
-			SingleValueOperators.includes(staging[staging.length - 1])
+			SingleValueOperators.includes(staging[staging.length - 1]) &&
+			Array.isArray(value)
 		) {
 			setSelectedValues([value[value.length - 1]]);
 			return;
@@ -142,12 +148,6 @@ function MetricTagKeyFilter({
 		setSelectedValues([]);
 	};
 
-	const disabledOrEmpty = !!(
-		queries.length ||
-		staging.length ||
-		selectedValues.length
-	);
-
 	return (
 		<SearchContainer isDarkMode={isDarkMode}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
@@ -162,7 +162,7 @@ function MetricTagKeyFilter({
 					)}
 			</div>
 			<div>
-				{map(staging, (item, idx) => {
+				{map(staging, (item) => {
 					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
 				})}
 			</div>

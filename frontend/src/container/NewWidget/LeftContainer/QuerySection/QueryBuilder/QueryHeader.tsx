@@ -16,6 +16,12 @@ function QueryHeader({
 	name,
 	onDelete,
 	children,
+}: {
+	disabled: boolean;
+	onDisable: VoidFunction;
+	name: string;
+	onDelete: VoidFunction;
+	children: JSX.Element | JSX.Element[];
 }): JSX.Element {
 	const [collapse, setCollapse] = useState(false);
 	return (

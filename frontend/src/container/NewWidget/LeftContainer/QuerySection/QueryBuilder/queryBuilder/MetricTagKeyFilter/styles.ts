@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 export const SearchContainer = styled.div<{
 	isDarkMode: boolean;
-	disabled: boolean;
+	disabled?: boolean;
 }>`
 	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
 	flex: 1;

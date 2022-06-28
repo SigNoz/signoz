@@ -1,13 +1,19 @@
 import { Input } from 'antd';
 import MonacoEditor from 'components/Editor';
 import React from 'react';
+import { IClickHouseQuery } from 'types/api/dashboard/getAll';
 
 import QueryHeader from '../QueryHeader';
+import { IClickHouseQueryHandleChange } from './types';
 
 function ClickHouseQueryBuilder({
 	queryData,
 	queryIndex,
 	handleQueryChange,
+}: {
+	queryData: IClickHouseQuery;
+	queryIndex: number;
+	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
 }): JSX.Element | null {
 	if (queryData === undefined) {
 		return null;
@@ -26,7 +32,6 @@ function ClickHouseQueryBuilder({
 		>
 			<MonacoEditor
 				language="sql"
-				theme="vs-dark"
 				height="200px"
 				onChange={(value): void =>
 					handleQueryChange({ queryIndex, rawQuery: value })

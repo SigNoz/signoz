@@ -4,9 +4,11 @@ import {
 	QueryBuilderFormulaTemplate,
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
+import { Query } from 'types/api/dashboard/getAll';
 
 import {
 	WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME,
@@ -15,6 +17,7 @@ import {
 import { QueryButton } from '../../styles';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
+import { IQueryBuilderFormulaHandleChange, IQueryBuilderQueryHandleChange } from './types';
 import { canCreateQueryAndFormula } from './utils';
 
 function QueryBuilderQueryContainer({
@@ -22,6 +25,11 @@ function QueryBuilderQueryContainer({
 	updateQueryData,
 	metricsBuilderQueries,
 	selectedGraph,
+}: {
+	queryData: Query;
+	updateQueryData: (args: { updatedQuery: Query }) => void;
+	metricsBuilderQueries: Query['metricsBuilder'];
+	selectedGraph: GRAPH_TYPES;
 }): JSX.Element | null {
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
@@ -33,7 +41,7 @@ function QueryBuilderQueryContainer({
 		toggleDisable,
 		toggleDelete,
 		reduceTo,
-	}): void => {
+	}: IQueryBuilderQueryHandleChange): void => {
 		const allQueries =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder;
 		const currentIndexQuery = allQueries[queryIndex];
@@ -73,10 +81,10 @@ function QueryBuilderQueryContainer({
 		expression,
 		toggleDisable,
 		toggleDelete,
-	}): void => {
+	}: IQueryBuilderFormulaHandleChange): void => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
 		const currentIndexFormula = allFormulas[formulaIndex];
 
@@ -123,7 +131,7 @@ function QueryBuilderQueryContainer({
 		].push({
 			name: GetFormulaName(
 				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 				],
 			),
 			...QueryBuilderFormulaTemplate,

@@ -2,17 +2,22 @@ import { PlusOutlined } from '@ant-design/icons';
 import { PromQLQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
+import { IPromQLQuery, Query } from 'types/api/dashboard/getAll';
 
 import { WIDGET_PROMQL_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
 import PromQLQueryBuilder from './query';
+import { IPromQLQueryHandleChange } from './types';
 
 function PromQLQueryContainer({
 	queryData,
 	updateQueryData,
 	promQLQueries,
-	onQueryChange,
-	onQueryAdd,
+}: {
+	queryData: Query;
+	updateQueryData: (args: { updatedQuery: Query }) => void;
+	promQLQueries: IPromQLQuery[];
+
 }): JSX.Element | null {
 	const handlePromQLQueryChange = ({
 		queryIndex,
@@ -20,7 +25,7 @@ function PromQLQueryContainer({
 		legend,
 		toggleDisable,
 		toggleDelete,
-	}): void => {
+	}: IPromQLQueryHandleChange): void => {
 		const allQueries = queryData[WIDGET_PROMQL_QUERY_KEY_NAME];
 		const currentIndexQuery = allQueries[queryIndex];
 		if (query) currentIndexQuery.query = query;
@@ -48,7 +53,7 @@ function PromQLQueryContainer({
 	return (
 		<>
 			{promQLQueries.map(
-				(q, idx): JSX.Element => (
+				(q: IPromQLQuery, idx: number): JSX.Element => (
 					<PromQLQueryBuilder
 						key={q.name}
 						queryIndex={idx}

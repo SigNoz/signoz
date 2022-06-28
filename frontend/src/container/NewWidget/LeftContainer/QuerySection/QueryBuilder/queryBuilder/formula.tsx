@@ -1,7 +1,9 @@
 import { Input } from 'antd';
 import React from 'react';
+import { IMetricsBuilderFormula } from 'types/api/dashboard/getAll';
 
 import QueryHeader from '../QueryHeader';
+import { IQueryBuilderFormulaHandleChange } from './types';
 
 const { TextArea } = Input;
 
@@ -9,6 +11,10 @@ function MetricsBuilderFormula({
 	formulaData,
 	formulaIndex,
 	handleFormulaChange,
+}: {
+	formulaData: IMetricsBuilderFormula;
+	formulaIndex: number;
+	handleFormulaChange: (args: IQueryBuilderFormulaHandleChange) => void;
 }): JSX.Element {
 	return (
 		<QueryHeader

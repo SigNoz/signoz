@@ -1,12 +1,12 @@
 import React from 'react';
 
 import { QueryChipContainer, QueryChipItem } from './styles';
-import { IMetricBuilderTagKeyQuery } from './types';
+import { ITagKeyValueQuery } from './types';
 
 interface IQueryChipProps {
-	queryData: IMetricBuilderTagKeyQuery;
+	queryData: ITagKeyValueQuery;
 	onClose: (id: string) => void;
-	disabled: boolean;
+	disabled?: boolean;
 }
 
 export default function QueryChip({
@@ -29,3 +29,6 @@ export default function QueryChip({
 		</QueryChipContainer>
 	);
 }
+QueryChip.defaultProps = {
+	disabled: false,
+};

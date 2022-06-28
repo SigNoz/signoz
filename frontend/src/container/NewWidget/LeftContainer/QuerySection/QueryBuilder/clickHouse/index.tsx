@@ -2,15 +2,21 @@ import { PlusOutlined } from '@ant-design/icons';
 import { ClickHouseQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
+import { Query } from 'types/api/dashboard/getAll';
 
 import { WIDGET_CLICKHOUSE_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
 import ClickHouseQueryBuilder from './query';
+import { IClickHouseQueryHandleChange } from './types';
 
 function ClickHouseQueryContainer({
 	queryData,
 	updateQueryData,
 	clickHouseQueries,
+}: {
+	queryData: Query;
+	updateQueryData: (args: { updatedQuery: Query }) => void;
+	clickHouseQueries: Query['clickHouse'];
 }): JSX.Element | null {
 	const handleClickHouseQueryChange = ({
 		queryIndex,
@@ -18,7 +24,7 @@ function ClickHouseQueryContainer({
 		legend,
 		toggleDisable,
 		toggleDelete,
-	}): void => {
+	}: IClickHouseQueryHandleChange): void => {
 		const allQueries = queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME];
 		const currentIndexQuery = allQueries[queryIndex];
 

@@ -1,7 +1,11 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Layout } from 'react-grid-layout';
-import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
+import {
+	EAggregateOperator,
+	EQueryType,
+	EReduceOperator,
+} from 'types/common/dashboard';
 
 import { QueryData } from '../widgets/getQuery';
 
@@ -74,8 +78,9 @@ export interface IMetricsBuilderQuery {
 	name: string;
 	legend: string;
 	metricName: string | null;
-	groupBy: string[];
+	groupBy?: string[];
 	tagFilters: IQueryBuilderTagFilters;
+	reduceTo?: EReduceOperator;
 }
 
 export interface IQueryBuilderTagFilters {
