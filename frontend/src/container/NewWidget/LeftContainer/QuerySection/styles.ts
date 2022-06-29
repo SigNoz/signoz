@@ -8,6 +8,7 @@ export const InputContainer = styled.div`
 export const Container = styled.div`
 	margin-top: 1rem;
 	display: flex;
+	flex-direction: column;
 `;
 
 export const QueryButton = styled(Button)`
@@ -18,11 +19,15 @@ export const QueryButton = styled(Button)`
 `;
 
 export const QueryWrapper = styled.div`
-	width: 100%; // parent need to 100%
+	width: 100%;
+	margin: 1rem 0;
+	padding: 1rem 0.5rem;
+	display: flex;
+	flex-direction: column;
+`;
 
-	> div {
-		width: 95%; // each child is taking 95% of the parent
-	}
+export const QueryBuilderWrapper = styled.div<{ isDarkMode: boolean }>`
+	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#efefef')};
 `;
 
 export const ButtonContainer = styled.div`

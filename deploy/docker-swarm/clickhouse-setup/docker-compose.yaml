@@ -2,12 +2,14 @@ version: "3.9"
 
 services:
   clickhouse:
-    image: yandex/clickhouse-server:21.12.3.32
+    image: clickhouse/clickhouse-server:22.4.5-alpine
     # ports:
     #   - "9000:9000"
     #   - "8123:8123"
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
     deploy:
       restart_policy:
@@ -37,7 +39,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.8.2
+    image: signoz/query-service:0.9.0
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -65,7 +67,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.8.2
+    image: signoz/frontend:0.9.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -78,7 +80,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/otelcontribcol:0.45.1-0.3
+    image: signoz/otelcontribcol:0.45.1-1.0
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -104,7 +106,7 @@ services:
       - clickhouse
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.45.1-0.3
+    image: signoz/otelcontribcol:0.45.1-1.0
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

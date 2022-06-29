@@ -1,14 +1,13 @@
-import { Button } from 'antd';
+import { Button, Modal, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ApplySettingsToPanel, ApplySettingsToPanelProps } from 'store/actions';
 import {
 	GetQueryResults,
 	GetQueryResultsProps,
@@ -17,17 +16,15 @@ import {
 	SaveDashboard,
 	SaveDashboardProps,
 } from 'store/actions/dashboard/saveDashboard';
-import {
-	UpdateQuery,
-	UpdateQueryProps,
-} from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
+import QueryTypeTag from './LeftContainer/QueryTypeTag';
 import RightContainer from './RightContainer';
 import TimeItems, { timePreferance } from './RightContainer/timeItems';
 import {
@@ -36,15 +33,15 @@ import {
 	LeftContainerWrapper,
 	PanelContainer,
 	RightContainerWrapper,
+	Tag,
 } from './styles';
 
 function NewWidget({
 	selectedGraph,
-	applySettingsToPanel,
 	saveSettingOfPanel,
 	getQueryResults,
-	updateQuery,
 }: Props): JSX.Element {
+	const dispatch = useDispatch();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -87,6 +84,8 @@ function NewWidget({
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
 	);
+	const [saveModal, setSaveModal] = useState(false);
+	const [hasUnstagedChanges, setHasUnstagedChanges] = useState(false);
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -116,50 +115,30 @@ function NewWidget({
 			dashboardId,
 		});
 	}, [
-		opacity,
-		description,
-		query,
-		selectedTime,
-		stacked,
-		title,
-		selectedNullZeroValue,
 		saveSettingOfPanel,
-		selectedDashboard,
-		dashboardId,
+		selectedDashboard.uuid,
+		description,
+		stacked,
+		selectedNullZeroValue,
+		opacity,
+		selectedTime.enum,
+		title,
 		yAxisUnit,
+		query,
+		dashboardId,
 	]);
 
-	const onClickApplyHandler = (): void => {
-		selectedWidget?.query.forEach((element, index) => {
-			updateQuery({
-				widgetId: selectedWidget?.id || '',
-				query: element.query || '',
-				legend: element.legend || '',
-				currentIndex: index,
-				yAxisUnit,
-			});
-		});
-
-		applySettingsToPanel({
-			description,
-			isStacked: stacked,
-			nullZeroValues: selectedNullZeroValue,
-			opacity,
-			timePreferance: selectedTime.enum,
-			title,
-			widgetId: selectedWidget?.id || '',
-			yAxisUnit,
-		});
-	};
-
 	const onClickDiscardHandler = useCallback(() => {
+		dispatch({
+			type: FLUSH_DASHBOARD,
+		});
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId]);
+	}, [dashboardId, dispatch]);
 
 	const getQueryResult = useCallback(() => {
-		if (selectedWidget?.id.length !== 0) {
+		if (selectedWidget?.id.length !== 0 && selectedWidget?.query) {
 			getQueryResults({
-				query: selectedWidget?.query || [],
+				query: selectedWidget?.query,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
@@ -182,14 +161,17 @@ function NewWidget({
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button onClick={onClickSaveHandler}>Save</Button>
-				<Button onClick={onClickApplyHandler}>Apply</Button>
+				<Button type="primary" onClick={(): void => setSaveModal(true)}>
+					Save
+				</Button>
+				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
 					<LeftContainer
+						handleUnstagedChanges={setHasUnstagedChanges}
 						selectedTime={selectedTime}
 						selectedGraph={selectedGraph}
 						yAxisUnit={yAxisUnit}
@@ -218,6 +200,34 @@ function NewWidget({
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
+			<Modal
+				title="Save Changes"
+				focusTriggerAfterClose
+				forceRender
+				destroyOnClose
+				closable
+				onCancel={(): void => setSaveModal(false)}
+				onOk={(): void => {
+					onClickSaveHandler();
+				}}
+				centered
+				visible={saveModal}
+				width={600}
+			>
+				{hasUnstagedChanges ? (
+					<Typography>
+						Looks like you have unstaged changes. Would you like to SAVE the last
+						staged changes? If you want to stage new changes - Press{' '}
+						<Tag>Stage & Run Query</Tag> and then try saving again.
+					</Typography>
+				) : (
+					<Typography>
+						Your graph built with{' '}
+						<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
+						saved. Press OK to confirm.
+					</Typography>
+				)}
+			</Modal>
 		</Container>
 	);
 }
@@ -228,27 +238,19 @@ export interface NewWidgetProps {
 }
 
 interface DispatchProps {
-	applySettingsToPanel: (
-		props: ApplySettingsToPanelProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
 	saveSettingOfPanel: (
 		props: SaveDashboardProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
 	getQueryResults: (
 		props: GetQueryResultsProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
-	updateQuery: (
-		props: UpdateQueryProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	applySettingsToPanel: bindActionCreators(ApplySettingsToPanel, dispatch),
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
 	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
-	updateQuery: bindActionCreators(UpdateQuery, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

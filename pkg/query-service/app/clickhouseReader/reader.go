@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -61,10 +62,8 @@ const (
 	signozErrorIndexTable = "signoz_error_index"
 	signozTraceTableName  = "signoz_index_v2"
 	signozMetricDBName    = "signoz_metrics"
-	signozSampleName      = "samples"
-	signozTSName          = "time_series"
-	signozSampleTableName = "samples"
-	signozTSTableName     = "time_series"
+	signozSampleTableName = "samples_v2"
+	signozTSTableName     = "time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -592,19 +591,43 @@ func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.A
 
 func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
 
-	idInt, _ := strconv.Atoi(id)
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		zap.S().Debug("Error in parsing param: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
 
 	rule := &model.RuleResponseItem{}
 
-	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
-
-	err := r.localDB.Get(rule, query)
-
-	zap.S().Info(query)
+	query := "SELECT id, updated_at, data FROM rules WHERE id=?"
+	rows, err := r.localDB.Query(query, idInt)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	count := 0
+	// iterate over each row
+	for rows.Next() {
+		err = rows.Scan(&rule.Id, &rule.UpdatedAt, &rule.Data)
+		if err != nil {
+			zap.S().Debug(err)
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		count += 1
+
+	}
+
+	if count == 0 {
+		err = fmt.Errorf("no rule with id %d found", idInt)
+		zap.S().Debug(err)
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: err}
+	}
+	if count > 1 {
+		err = fmt.Errorf("multiple rules with id %d found", idInt)
+		zap.S().Debug(err)
+		return nil, &model.ApiError{Typ: model.ErrorConflict, Err: err}
 	}
 
 	return rule, nil
@@ -2344,7 +2367,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableName = signozMetricDBName + "." + signozSampleName
+		tableName = signozMetricDBName + "." + signozSampleTableName
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
@@ -2583,7 +2606,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
 
 	case constants.MetricsTTL:
-		tableNameArray := []string{signozMetricDBName + "." + signozSampleName}
+		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
@@ -2702,16 +2725,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, para
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
 	// "select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from signoz_metrics.time_series WHERE JSONExtractString(labels,'__name__')='node_udp_queues'))  WHERE distinctTagKeys ILIKE '%host%';"
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
 
 		rows, err = r.db.Query(ctx, query, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
 
 		rows, err = r.db.Query(ctx, query, params.MetricName)
 	}
@@ -2741,16 +2764,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
 
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s AND JSONExtractString(labels, $1) ILIKE $3;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) from %s.%s WHERE metric_name=$1 %s AND labels_object.%s ILIKE $2;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause, params.TagKey)
 
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) FROM %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) FROM %s.%s WHERE metric_name=$2 %s;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause)
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName)
 
 	}
@@ -2772,20 +2795,18 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	return &tagValueList, nil
 }
 
-func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError) {
+func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError) {
 
 	var query string
 	var err error
 	var metricNameList []string
 	var rows driver.Rows
 
-	if len(matchText) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE $1;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
-	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query)
+	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	if limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", limit)
 	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
 
 	if err != nil {
 		zap.S().Error(err)
@@ -2803,4 +2824,85 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 	return &metricNameList, nil
 
+}
+
+// GetMetricResult runs the query and returns list of time series
+func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
+
+	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing query: ", err)
+		return nil, fmt.Errorf("error in processing query")
+	}
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+	// when group by is applied, each combination of cartesian product
+	// of attributes is separate series. each item in metricPointsMap
+	// represent a unique series.
+	metricPointsMap := make(map[string][]model.MetricPoint)
+	// attribute key-value pairs for each group selection
+	attributesMap := make(map[string]map[string]string)
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		var groupBy []string
+		var metricPoint model.MetricPoint
+		groupAttributes := make(map[string]string)
+		// Assuming that the end result row contains a timestamp, value and option labels
+		// Label key and value are both strings.
+		for idx, v := range vars {
+			colName := columnNames[idx]
+			switch v := v.(type) {
+			case *string:
+				// special case for returning all labels
+				if colName == "fullLabels" {
+					var metric map[string]string
+					err := json.Unmarshal([]byte(*v), &metric)
+					if err != nil {
+						return nil, err
+					}
+					for key, val := range metric {
+						groupBy = append(groupBy, val)
+						groupAttributes[key] = val
+					}
+				} else {
+					groupBy = append(groupBy, *v)
+					groupAttributes[colName] = *v
+				}
+			case *time.Time:
+				metricPoint.Timestamp = v.UnixMilli()
+			case *float64:
+				metricPoint.Value = *v
+			}
+		}
+		sort.Strings(groupBy)
+		key := strings.Join(groupBy, "")
+		attributesMap[key] = groupAttributes
+		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
+	}
+
+	var seriesList []*model.Series
+	for key := range metricPointsMap {
+		points := metricPointsMap[key]
+		// first point in each series could be invalid since the
+		// aggregations are applied with point from prev series
+		if len(points) != 0 && len(points) > 1 {
+			points = points[1:]
+		}
+		attributes := attributesMap[key]
+		series := model.Series{Labels: attributes, Points: points}
+		seriesList = append(seriesList, &series)
+	}
+	return seriesList, nil
 }

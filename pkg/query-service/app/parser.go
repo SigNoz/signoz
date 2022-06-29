@@ -667,3 +667,12 @@ func parseChangePasswordRequest(r *http.Request) (*model.ChangePasswordRequest, 
 
 	return &req, nil
 }
+
+func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
+	var filterSet model.FilterSet
+	err := json.NewDecoder(r.Body).Decode(&filterSet)
+	if err != nil {
+		return nil, err
+	}
+	return &filterSet, nil
+}

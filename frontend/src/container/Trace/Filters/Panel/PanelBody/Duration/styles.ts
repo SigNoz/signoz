@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const DurationText = styled.div`
@@ -7,6 +7,19 @@ export const DurationText = styled.div`
 	justify-content: space-around;
 	min-height: 8vh;
 	flex-direction: column;
+`;
+
+export const InputComponent = styled(Input)`
+	input::-webkit-outer-spin-button,
+	input::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+
+	/* Firefox */
+	input[type='number'] {
+		-moz-appearance: textfield;
+	}
 `;
 
 export const InputContainer = styled.div`
