@@ -44,6 +44,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 						MetricName: "name",
 						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
 							{Key: "a", Value: "b", Operator: "neq"},
+							{Key: "code", Value: "ERROR_*", Operator: "nmatch"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
@@ -56,6 +57,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 
 		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.a != 'b'")
 		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["a"], ShouldContainSubstring, "not match(labels_object.code, 'ERROR_*')")
 	})
 }
 
