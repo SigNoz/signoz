@@ -9,8 +9,10 @@ services:
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      - ./runnDiff-custom-function.xml:/etc/clickhouse-server/runnDiff-custom-function.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
+      - ./user_scripts:/var/lib/clickhouse/user_scripts/
     restart: on-failure
     logging:
       options:
