@@ -6,20 +6,24 @@ test.describe('Version API fail while loading login page', async () => {
 	test('Something went wrong', async ({ page, baseURL }) => {
 		const loginPage = `${baseURL}${ROUTES.LOGIN}`;
 
+		const text = 'Something went wrong';
+
 		await page.route(`**/${getVersion}`, (route) =>
 			route.fulfill({
 				contentType: 'application/json',
 				status: 500,
-				body: '',
+				body: JSON.stringify({ error: text }),
 			}),
 		);
 
-		await Promise.all([page.goto(loginPage), page.waitForRequest('**/version')]);
+		await page.goto(loginPage, {
+			waitUntil: 'networkidle',
+		});
 
-		const el = page.locator(`text=Something went wrong`);
+		const el = page.locator(`text=${text}`);
 
 		expect(el).toBeVisible();
-		expect(el).toHaveText('Something asdasd wrong');
+		expect(el).toHaveText(`${text}`);
 		expect(await el.getAttribute('disabled')).toBe(null);
 	});
 });
