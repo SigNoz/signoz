@@ -13,7 +13,7 @@ test.describe('Login Page', () => {
 		await Promise.all([page.goto(loginPage), page.waitForRequest('**/version')]);
 	});
 
-	test('Login Page', async ({ page }) => {
+	test('Login Page text should be visible', async ({ page }) => {
 		const signup = 'Monitor your applications. Find what is causing issues.';
 
 		// Click text=Monitor your applications. Find what is causing issues.
