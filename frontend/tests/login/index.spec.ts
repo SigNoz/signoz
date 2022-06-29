@@ -22,7 +22,10 @@ test.describe('Login Page', () => {
 		expect(el).toBeVisible();
 	});
 
-	test('Sign Up should be present', async ({ page, baseURL }) => {
+	test('Create an account button should be present', async ({
+		page,
+		baseURL,
+	}) => {
 		const loginPage = `${baseURL}${ROUTES.LOGIN}`;
 
 		// find button which has text=Create an account

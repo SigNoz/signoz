@@ -1,7 +1,24 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, PlaywrightTestOptions, test } from '@playwright/test';
 import ROUTES from 'constants/routes';
 
 import { waitForVersionApiSuccess } from '../fixtures/common';
+import {
+	validCompanyName,
+	validemail,
+	validName,
+	validPassword,
+} from '../fixtures/constant';
+
+const waitForSignUpPageSuccess = async (
+	baseURL: PlaywrightTestOptions['baseURL'],
+	page: Page,
+): Promise<void> => {
+	const signupPage = `${baseURL}${ROUTES.SIGN_UP}`;
+
+	await page.goto(signupPage);
+
+	await waitForVersionApiSuccess(page);
+};
 
 test.describe('Sign Up Page', () => {
 	test('When User successfull signup and logged in, he should be redirected to dashboard', async ({
@@ -21,95 +38,64 @@ test.describe('Sign Up Page', () => {
 		expect(page).toHaveURL(`${baseURL}${ROUTES.SIGN_UP}`);
 	});
 
+	test('Invite link validation', async ({ baseURL, page }) => {
+		await waitForSignUpPageSuccess(baseURL, page);
+		const message =
+			'This will create an admin account. If you are not an admin, please ask your admin for an invite link';
+
+		const messageText = await page.locator(`text=${message}`).innerText();
+
+		expect(messageText).toBe(message);
+	});
+
 	test('User Sign up with valid details', async ({ baseURL, page }) => {
-		const signupPage = `${baseURL}${ROUTES.SIGN_UP}`;
+		await waitForSignUpPageSuccess(baseURL, page);
 
-		await page.goto(signupPage);
+		const emailplaceholder = '[placeholder="name\\@yourcompany\\.com"]';
+		const nameplaceholder = '[placeholder="Your Name"]';
+		const companyPlaceholder = '[placeholder="Your Company"]';
+		const currentPasswordId = '#currentPassword';
+		const confirmPasswordId = '#confirmPassword';
+		const confirmPasswordErrorId = '#password-confirm-error';
 
-		await waitForVersionApiSuccess(page);
+		const gettingStartedButton = page.locator('button[data-attr="signup"]');
+
+		expect(await gettingStartedButton.isDisabled()).toBe(true);
+
+		// Fill [placeholder="name\@yourcompany\.com"]
+		await page.locator(emailplaceholder).fill(validemail);
+
+		// Fill [placeholder="Your Name"]
+		await page.locator(nameplaceholder).fill(validName);
+
+		// Fill [placeholder="Your Company"]
+		await page.locator(companyPlaceholder).fill(validCompanyName);
+
+		// Fill #currentPassword
+		await page.locator(currentPasswordId).fill(validPassword);
+
+		// Fill #confirmPasswordId
+		await page.locator(confirmPasswordId).fill(validPassword);
+
+		// password validation message is not present
+		const locator = await page.locator(confirmPasswordErrorId).isVisible();
+		expect(locator).toBe(false);
+
+		const buttonText = await gettingStartedButton.evaluate((e) => e.innerHTML);
+
+		expect(buttonText).toMatch(/Get Started/i);
+
+		// Getting Started button is not disabled
+		expect(await gettingStartedButton.isDisabled()).toBe(false);
+
+		await page.route(`**/register`, ({ fulfill }) => {
+			return fulfill({
+				status: 201,
+				contentType: `application/json`,
+				body: JSON.stringify({}),
+			});
+		});
+
+		await gettingStartedButton.click();
 	});
 });
-
-// test('When User successfully signup and loggged-in', ({ page, baseURL }) => {
-// 	await page.locator('text=Create an account').click();
-// 	await expect(page).toHaveURL('http://localhost:3301/signup');
-// 	// Click [placeholder="name\@yourcompany\.com"]
-// 	await page.locator('[placeholder="name\\@yourcompany\\.com"]').click();
-// 	// Fill [placeholder="name\@yourcompany\.com"]
-// 	await page
-// 		.locator('[placeholder="name\\@yourcompany\\.com"]')
-// 		.fill('sample@signoz.io');
-// 	// Press Tab
-// 	await page.locator('[placeholder="name\\@yourcompany\\.com"]').press('Tab');
-// 	// Fill [placeholder="Your Name"]
-// 	await page.locator('[placeholder="Your Name"]').fill('Palash');
-// 	// Press a with modifiers
-// 	await page.locator('[placeholder="Your Name"]').press('Meta+a');
-// 	// Fill [placeholder="Your Name"]
-// 	await page.locator('[placeholder="Your Name"]').fill('Admin User');
-// 	// Press Tab
-// 	await page.locator('[placeholder="Your Name"]').press('Tab');
-// 	// Fill [placeholder="Your Company"]
-// 	await page.locator('[placeholder="Your Company"]').fill('Signoz');
-// 	// Press Tab
-// 	await page.locator('[placeholder="Your Company"]').press('Tab');
-// 	// Fill #currentPassword
-// 	await page.locator('#currentPassword').fill('SampleSignoz@.@');
-// 	// Press Tab
-// 	await page.locator('#currentPassword').press('Tab');
-// 	// Fill text=Confirm PasswordPasswords don’t match. Please try againPassword must a have mini >> input[type="password"]
-// 	await page
-// 		.locator(
-// 			'text=Confirm PasswordPasswords don’t match. Please try againPassword must a have mini >> input[type="password"]',
-// 		)
-// 		.fill('SampleSignoz@.@');
-// 	// Click svg >> nth=0
-// 	await page.locator('svg').first().click();
-// 	// Click path >> nth=1
-// 	await page.locator('path').nth(1).click();
-// 	// Click text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]
-// 	await page
-// 		.locator(
-// 			'text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]',
-// 		)
-// 		.click();
-// 	// Press ArrowLeft
-// 	await page
-// 		.locator(
-// 			'text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]',
-// 		)
-// 		.press('ArrowLeft');
-// 	// Press ArrowLeft
-// 	await page
-// 		.locator(
-// 			'text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]',
-// 		)
-// 		.press('ArrowLeft');
-// 	// Press ArrowLeft
-// 	await page
-// 		.locator(
-// 			'text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]',
-// 		)
-// 		.press('ArrowLeft');
-// 	// Fill text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]
-// 	await page
-// 		.locator(
-// 			'text=Confirm PasswordPassword must a have minimum of 8 characters with at least one l >> input[type="text"]',
-// 		)
-// 		.fill('SampleSignoz98@.@');
-// 	// Click #currentPassword
-// 	await page.locator('#currentPassword').click();
-// 	// Press ArrowLeft
-// 	await page.locator('#currentPassword').press('ArrowLeft');
-// 	// Press ArrowLeft
-// 	await page.locator('#currentPassword').press('ArrowLeft');
-// 	// Press ArrowLeft
-// 	await page.locator('#currentPassword').press('ArrowLeft');
-// 	// Fill #currentPassword
-// 	await page.locator('#currentPassword').fill('SampleSignoz98@.@');
-// 	// Click button:has-text("Get Started")
-// 	await Promise.all([
-// 		page.waitForNavigation(/*{ url: 'http://localhost:3301/application' }*/),
-// 		page.locator('button:has-text("Get Started")').click(),
-// 	]);
-// });
