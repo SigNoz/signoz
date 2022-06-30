@@ -1,11 +1,14 @@
+import { Form } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
 import React from 'react';
-import { AlertDef } from 'types/api/alerts/def.ts';
+import { AlertDef } from 'types/api/alerts/def';
 
 function EditRules({ initialValue, ruleId }: EditRulesProps): JSX.Element {
+	const [formInstance] = Form.useForm();
+
 	return (
 		<FormAlertRules
-			formInstance={null}
+			formInstance={formInstance}
 			initialValue={initialValue}
 			ruleId={ruleId}
 		/>
@@ -14,7 +17,7 @@ function EditRules({ initialValue, ruleId }: EditRulesProps): JSX.Element {
 
 interface EditRulesProps {
 	initialValue: AlertDef;
-	ruleId: string;
+	ruleId: number;
 }
 
 export default EditRules;

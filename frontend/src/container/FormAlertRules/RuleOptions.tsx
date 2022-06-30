@@ -1,6 +1,7 @@
 import { Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
+import { AlertDef } from 'types/api/alerts/def';
 
 import {
 	FormContainer,
@@ -11,7 +12,11 @@ import {
 
 const { Option } = Select;
 
-function RuleOptions({ ruleType }: RuleOptionsProps): JSX.Element {
+function RuleOptions({
+	initialValue,
+	ruleType,
+	setAlertDef,
+}: RuleOptionsProps): JSX.Element {
 	if (ruleType === 'prom_rule') {
 		return <></>;
 	}
@@ -23,17 +28,42 @@ function RuleOptions({ ruleType }: RuleOptionsProps): JSX.Element {
 				<FormItem>
 					<Typography.Text>
 						Send a notification when the metric is{' '}
-						<InlineSelect defaultValue="0">
+						<InlineSelect
+							defaultValue="0"
+							value={initialValue.condition?.op}
+							onChange={(value: string | unknown): void => {
+								const newOp: string = (value as string) || initialValue.condition?.op;
+								setAlertDef({
+									...initialValue,
+									condition: {
+										...initialValue.condition,
+										op: newOp,
+									},
+								});
+							}}
+						>
 							<Option value="0">above</Option>
 							<Option value="1">below</Option>
 						</InlineSelect>{' '}
 						the threshold{' '}
-						<InlineSelect defaultValue="0">
+						<InlineSelect
+							defaultValue="0"
+							value={initialValue.condition?.matchType}
+							onChange={(value: string | unknown): void => {
+								const m: string =
+									(value as string) || initialValue.condition?.matchType;
+								setAlertDef({
+									...initialValue,
+									condition: {
+										...initialValue.condition,
+										matchType: m,
+									},
+								});
+							}}
+						>
 							{' '}
 							<Option value="0">all the times</Option>
-							<Option value="1" disabled>
-								at least once
-							</Option>
+							<Option value="1">at least once</Option>
 							<Option value="2" disabled>
 								on Average
 							</Option>
@@ -42,7 +72,17 @@ function RuleOptions({ ruleType }: RuleOptionsProps): JSX.Element {
 							</Option>
 						</InlineSelect>{' '}
 						during the last{' '}
-						<InlineSelect defaultValue="5m0s">
+						<InlineSelect
+							defaultValue="5m0s"
+							value={initialValue.evalWindow}
+							onChange={(value: string | unknown): void => {
+								const ew: string = (value as string) || initialValue.evalWindow;
+								setAlertDef({
+									...initialValue,
+									evalWindow: ew,
+								});
+							}}
+						>
 							{' '}
 							<Option value="5m0s"> 5 mins</Option>
 							<Option value="10m0s"> 10 mins</Option>
@@ -52,8 +92,24 @@ function RuleOptions({ ruleType }: RuleOptionsProps): JSX.Element {
 						</InlineSelect>
 					</Typography.Text>
 				</FormItem>
-				<FormItem label="Alert Threshold" labelAlign="left" name="threshold">
-					<ThresholdInput />
+				<FormItem
+					label="Alert Threshold"
+					labelAlign="left"
+					name={['condition', 'target']}
+				>
+					<ThresholdInput
+						type="number"
+						onChange={(e): void => {
+							const t: number = parseInt(e.target.value, 10);
+							setAlertDef({
+								...initialValue,
+								condition: {
+									...initialValue.condition,
+									target: t,
+								},
+							});
+						}}
+					/>
 				</FormItem>
 			</FormContainer>
 		</>
@@ -61,6 +117,8 @@ function RuleOptions({ ruleType }: RuleOptionsProps): JSX.Element {
 }
 
 interface RuleOptionsProps {
+	initialValue: AlertDef;
+	setAlertDef: (a: AlertDef) => void;
 	ruleType: 'threshold_rule' | 'prom_rule';
 }
 export default RuleOptions;

@@ -4,23 +4,18 @@ import {
 	EyeFilled,
 	RightOutlined,
 } from '@ant-design/icons';
-import { Button, Col, Divider, Input, Row, Select, Spin, Tabs } from 'antd';
-import { getMetricName } from 'api/metrics/getMetricName';
+import { Button, Row } from 'antd';
 import MonacoEditor from 'components/Editor';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
-import { v4 as uuid } from 'uuid';
 
-import { InputContainer, QueryBuilderWrapper, QueryWrapper } from '../styles';
+import { QueryBuilderWrapper, QueryWrapper } from '../styles';
 import { TQueryCategories } from '../types';
-import MetricsBuilder from './metricsBuilder';
-import MetricTagKeyFilter from './MetricTagKeyFilter';
-import { AggregateFunctions } from './Options';
-import PromQLQueryBuilder from './promQL';
+import PromQLQueryBuilder from './promQL/promQL';
+import MetricsBuilder from './queryBuilder/query';
 
-const { Option } = Select;
 function QueryBuilder({
 	name,
 	onDelete,
@@ -28,56 +23,22 @@ function QueryBuilder({
 	queryData,
 	updateQueryData,
 }: QueryBuilderProps): JSX.Element {
-	const [metricName, setMetricName] = useState(
-		queryData.queryBuilder.metricName,
-	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [hideFromUI, setHideFromUI] = useState<boolean>(false);
 	const handleHideFromUI = (): void => {
 		setHideFromUI(!hideFromUI);
 	};
-	const handleQueryBuilderChange = ({
-		aggregateFunction,
-		metricName,
-		tagFilters,
-	}) => {
-		if (aggregateFunction) {
-			queryData.queryBuilder.aggregateOperator = aggregateFunction;
-		}
-
-		if (metricName) {
-			queryData.queryBuilder.metricName = metricName;
-		}
-
-		if (tagFilters) {
-			queryData.queryBuilder.tagFilters.items = tagFilters;
-		}
-
-		updateQueryData(queryData);
-	};
-	const handleClickhouseQueryChange = (clickHouseQuery) => {
+	const handleClickhouseQueryChange = (clickHouseQuery): void => {
 		if (clickHouseQuery !== null) {
 			queryData.clickHouseQuery = clickHouseQuery;
 		}
 		updateQueryData(queryData);
 	};
-	const handlePromQLQueryChange = ({ query, legend }) => {
+	const handlePromQLQueryChange = ({ query, legend }): void => {
 		if (query) queryData.promQL.query = query;
 		if (legend) queryData.promQL.legend = legend;
 
 		updateQueryData(queryData);
-	};
-	const [metricNameList, setMetricNameList] = useState([]);
-	const [metricNameLoading, setMetricNameLoading] = useState(false);
-	const handleMetricNameSearch = async (searchQuery = '') => {
-		setMetricNameList([]);
-		setMetricNameLoading(true);
-		const { payload } = await getMetricName(searchQuery);
-		setMetricNameLoading(false);
-		if (!payload || !payload.data) {
-			return;
-		}
-		setMetricNameList(payload.data);
 	};
 
 	return (
@@ -102,7 +63,7 @@ function QueryBuilder({
 						<MetricsBuilder
 							queryData={queryData}
 							updateQueryData={updateQueryData}
-							metricName={metricName}
+							metricName={queryData.queryBuilder.metricName}
 						/>
 					) : queryCategory === 1 ? (
 						<MonacoEditor
@@ -128,6 +89,7 @@ function QueryBuilder({
 }
 
 interface QueryBuilderProps {
-	queryCategory: 0 | 1 | 2;
+	queryCategory: TQueryCategories;
+	name: string;
 }
 export default QueryBuilder;

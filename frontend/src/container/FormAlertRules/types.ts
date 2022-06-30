@@ -1,6 +1,18 @@
 import { AlertDef } from 'types/api/alerts/create';
+import { MetricQuery } from 'types/api/metrics/compositeQuery';
 
 export type QueryType = 0 | 1 | 2;
+/* unused
+export interface MetricQueryList {
+	[key: string]: MetricQueryLocal;
+}
+
+export type MetricQueryLocal = MetricQuery & {
+	name: string;
+	disabled: boolean;
+	toggleDisable: boolean;
+	toggleDelete: boolean;
+}
 
 export type Query = {
 	name: string;
@@ -33,3 +45,5 @@ export const baseQuery: Query = {
 		groupBy: [],
 	},
 };
+
+*/

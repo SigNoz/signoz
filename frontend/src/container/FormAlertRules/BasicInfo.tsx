@@ -1,7 +1,7 @@
 import { Input, Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
-import { AlertDef } from 'types/api/alerts/create';
+import { AlertDef } from 'types/api/alerts/def';
 
 import {
 	FormContainer,
@@ -9,6 +9,7 @@ import {
 	SeveritySelect,
 	StepHeading,
 } from './styles';
+import { QueryType } from './types';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -16,21 +17,29 @@ const { Option } = Select;
 function BasicInfo({
 	alertDef,
 	setAlertDef,
+	queryCategory,
 }: {
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
+	queryCategory: QueryType;
 }): JSX.Element {
 	return (
 		<>
-			<StepHeading> Step 3 - Alert Configuration </StepHeading>
+			<StepHeading>
+				{' '}
+				Step {queryCategory === 2 ? 2 : 3} - Alert Configuration{' '}
+			</StepHeading>
 			<FormContainer>
-				<FormItem label="Severity" labelAlign="left" name="severity">
+				<FormItem label="Severity" labelAlign="left" name={['labels', 'severity']}>
 					<SeveritySelect
 						defaultValue="critical"
-						onChange={(e): void => {
+						onChange={(value: unknown | string): void => {
 							setAlertDef({
 								...alertDef,
-								severity: e.target.value,
+								labels: {
+									...alertDef.labels,
+									severity: value,
+								},
 							});
 						}}
 					>
@@ -51,12 +60,19 @@ function BasicInfo({
 						}}
 					/>
 				</FormItem>
-				<FormItem label="Alert Description" labelAlign="left" name="description">
+				<FormItem
+					label="Alert Description"
+					labelAlign="left"
+					name={['annotations', 'description']}
+				>
 					<TextArea
 						onChange={(e): void => {
 							setAlertDef({
 								...alertDef,
-								message: e.target.value,
+								annotations: {
+									...alertDef.annotations,
+									description: e.target.value,
+								},
 							});
 						}}
 					/>

@@ -8,6 +8,7 @@ import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import { NewWidgetProps } from '../../index';
+import PlotTag from './PlotTag';
 import { AlertIconContainer, Container, NotFoundContainer } from './styles';
 import WidgetGraphComponent from './WidgetGraph';
 
@@ -31,13 +32,13 @@ function WidgetGraph({
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	if (selectedWidget === undefined) {
-		return <Card isQueryType={false}>Invalid widget</Card>;
+		return <Card>Invalid widget</Card>;
 	}
 
 	const { queryData } = selectedWidget;
-
 	return (
 		<Container>
+			<PlotTag queryType={selectedWidget.query.queryType} />
 			{queryData.error && (
 				<AlertIconContainer color="red" title={queryData.errorMessage}>
 					<InfoCircleOutlined />

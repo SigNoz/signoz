@@ -8,15 +8,14 @@ import { useParams } from 'react-router-dom';
 
 function EditRules(): JSX.Element {
 	const { ruleId } = useParams<EditRulesParam>();
-	const { t } = useTranslation('common');
 
+	const { t } = useTranslation('common');
 	const { isLoading, data, isError } = useQuery(['ruleId', ruleId], {
 		queryFn: () =>
 			get({
 				id: parseInt(ruleId, 10),
 			}),
 	});
-	console.log('data:', data);
 
 	if (isError) {
 		return <div>{data?.error || t('something_went_wrong')}</div>;
@@ -26,7 +25,12 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
-	return <EditRulesContainer ruleId={ruleId} initialValue={data.payload.data} />;
+	return (
+		<EditRulesContainer
+			ruleId={parseInt(ruleId, 10)}
+			initialValue={data.payload.data}
+		/>
+	);
 }
 
 interface EditRulesParam {

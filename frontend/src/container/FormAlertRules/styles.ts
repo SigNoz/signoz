@@ -19,6 +19,7 @@ export const QueryButton = styled(Button)`
 	&&& {
 		display: flex;
 		align-items: center;
+		margin-right: 1rem;
 	}
 `;
 

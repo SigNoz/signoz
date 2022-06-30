@@ -4,7 +4,7 @@ export interface CompositeMetricQuery {
 	queryType: number;
 }
 
-interface PromQueries {
+export interface PromQueries {
 	[key: string]: PromQuery;
 }
 
@@ -13,17 +13,23 @@ export interface PromQuery {
 	stats: string;
 }
 
-interface BuilderQueries {
+export interface BuilderQueries {
 	[key: string]: MetricQuery;
 }
 
 export interface MetricQuery {
 	queryName: string;
-	metricName: string;
-	tagFilters: FilterSet;
-	groupBy: string[];
-	aggregateOperator: number;
-	expression: string;
+	metricName?: string;
+	tagFilters?: FilterSet;
+	groupBy?: string[];
+	reduceTo?: string[];
+	aggregateOperator?: number | undefined;
+	expression?: string;
+	formulaOnly?: boolean;
+
+	disabled?: boolean;
+	toggleDisable?: boolean;
+	toggleDelete?: boolean;
 }
 export interface FilterSet {
 	op: string;

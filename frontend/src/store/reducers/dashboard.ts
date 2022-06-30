@@ -1,12 +1,11 @@
-import GetQueryName from 'lib/query/GetQueryName';
 import {
 	APPLY_SETTINGS_TO_PANEL,
 	CREATE_DEFAULT_WIDGET,
-	CREATE_NEW_QUERY,
 	DashboardActions,
 	DELETE_DASHBOARD_SUCCESS,
-	DELETE_QUERY,
+	// DELETE_QUERY,
 	DELETE_WIDGET_SUCCESS,
+	FLUSH_DASHBOARD,
 	GET_ALL_DASHBOARD_ERROR,
 	GET_ALL_DASHBOARD_LOADING_START,
 	GET_ALL_DASHBOARD_SUCCESS,
@@ -18,8 +17,8 @@ import {
 	QUERY_SUCCESS,
 	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
+	UPDATE_DASHBOARD,
 	UPDATE_QUERY,
-	UPDATE_QUERY_TYPE,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
 import InitialValueTypes from 'types/reducer/dashboards';
@@ -169,76 +168,8 @@ const dashboard = (
 			};
 		}
 
-		case CREATE_NEW_QUERY: {
-			const [selectedDashboard] = state.dashboards;
-
-			const { data } = selectedDashboard;
-			const { widgets } = data;
-			const selectedWidgetId = action.payload.widgetId;
-			const selectedWidgetIndex = data.widgets?.findIndex(
-				(e) => e.id === selectedWidgetId,
-			);
-
-			const preWidget = data.widgets?.slice(0, selectedWidgetIndex);
-			const afterWidget = data.widgets?.slice(
-				(selectedWidgetIndex || 0) + 1, // this is never undefined
-				widgets?.length,
-			);
-
-			const selectedWidget = (data.widgets || [])[selectedWidgetIndex || 0];
-
-			// this condition will never run as there will a widget with this widgetId
-			if (selectedWidget === undefined) {
-				return {
-					...state,
-				};
-			}
-
-			const newQuery = [
-				...selectedWidget.query,
-				{
-					name: GetQueryName(selectedWidget.query),
-					disabled: false,
-					promQL: {
-						query: '',
-						legend: '',
-					},
-					clickHouseQuery: '',
-					queryBuilder: {
-						metricName: null,
-						aggregateOperator: null,
-						tagFilters: {
-							op: 'AND',
-							items: [],
-						},
-						groupBy: [],
-					},
-				},
-			];
-
-			return {
-				...state,
-				dashboards: [
-					{
-						...selectedDashboard,
-						data: {
-							...data,
-							widgets: [
-								...(preWidget || []),
-								{
-									...selectedWidget,
-									query: newQuery,
-								},
-								...(afterWidget || []),
-							],
-						},
-					},
-				],
-			};
-		}
-
 		case QUERY_ERROR: {
-			const { widgetId, errorMessage } = action.payload;
+			const { widgetId, errorMessage, errorBoolean = true } = action.payload;
 
 			const [selectedDashboard] = state.dashboards;
 			const { data } = selectedDashboard;
@@ -269,7 +200,7 @@ const dashboard = (
 									...selectedWidget,
 									queryData: {
 										...selectedWidget.queryData,
-										error: true,
+										error: errorBoolean,
 										errorMessage,
 									},
 								},
@@ -284,6 +215,7 @@ const dashboard = (
 
 		case QUERY_SUCCESS: {
 			const { widgetId, data: queryDataResponse } = action.payload;
+
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
 			const { data } = selectedDashboard;
@@ -311,7 +243,7 @@ const dashboard = (
 								{
 									...selectedWidget,
 									queryData: {
-										data: [...queryDataResponse],
+										data: queryDataResponse,
 										error: selectedWidget.queryData.error,
 										errorMessage: selectedWidget.queryData.errorMessage,
 										loading: false,
@@ -376,7 +308,8 @@ const dashboard = (
 			};
 		}
 
-		case SAVE_SETTING_TO_PANEL_SUCCESS: {
+		case SAVE_SETTING_TO_PANEL_SUCCESS:
+		case UPDATE_DASHBOARD: {
 			const selectedDashboard = action.payload;
 
 			return {
@@ -389,8 +322,14 @@ const dashboard = (
 			};
 		}
 
+		case FLUSH_DASHBOARD: {
+			return {
+				...state,
+				dashboards: [],
+			};
+		}
 		case DELETE_WIDGET_SUCCESS: {
-			const { widgetId } = action.payload;
+			const { widgetId, layout } = action.payload;
 
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
@@ -405,6 +344,7 @@ const dashboard = (
 						data: {
 							...data,
 							widgets: widgets.filter((e) => e.id !== widgetId),
+							layout,
 						},
 					},
 				],
@@ -457,88 +397,89 @@ const dashboard = (
 				],
 			};
 		}
-		case UPDATE_QUERY_TYPE: {
-			const { widgetId, queryType } = action.payload;
-			const { dashboards } = state;
-			const [selectedDashboard] = dashboards;
-			const { data } = selectedDashboard;
-			const { widgets = [] } = data;
+		// case UPDATE_QUERY_TYPE: {
+		// 	const { widgetId, queryType } = action.payload;
+		// 	const { dashboards } = state;
+		// 	const [selectedDashboard] = dashboards;
+		// 	const { data } = selectedDashboard;
+		// 	const { widgets = [] } = data;
 
-			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
+		// 	const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
 
-			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
-			const afterWidget =
-				widgets?.slice(
-					selectedWidgetIndex + 1, // this is never undefined
-					widgets.length,
-				) || [];
+		// 	const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
+		// 	const afterWidget =
+		// 		widgets?.slice(
+		// 			selectedWidgetIndex + 1, // this is never undefined
+		// 			widgets.length,
+		// 		) || [];
 
-			const selectedWidget = widgets[selectedWidgetIndex];
+		// 	const selectedWidget = widgets[selectedWidgetIndex];
 
-			return {
-				...state,
-				dashboards: [
-					{
-						...selectedDashboard,
-						data: {
-							...data,
-							widgets: [
-								...preWidget,
-								{
-									...selectedWidget,
-									queryType,
-								},
-								...afterWidget,
-							],
-						},
-					},
-				],
-			};
-		}
+		// 	return {
+		// 		...state,
+		// 		dashboards: [
+		// 			{
+		// 				...selectedDashboard,
+		// 				data: {
+		// 					...data,
+		// 					widgets: [
+		// 						...preWidget,
+		// 						{
+		// 							...selectedWidget,
+		// 							queryType,
+		// 						},
+		// 						...afterWidget,
+		// 					],
+		// 				},
+		// 			},
+		// 		],
+		// 	};
+		// }
 
-		case DELETE_QUERY: {
-			const { currentIndex, widgetId } = action.payload;
-			const { dashboards } = state;
-			const [selectedDashboard] = dashboards;
-			const { data } = selectedDashboard;
-			const { widgets = [] } = data;
+		// case DELETE_QUERY: {
+		// 	const { currentIndex, widgetId } = action.payload;
+		// 	const { dashboards } = state;
+		// 	const [selectedDashboard] = dashboards;
+		// 	const { data } = selectedDashboard;
+		// 	const { widgets = [] } = data;
 
-			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
+		// 	const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
 
-			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
-			const afterWidget =
-				widgets?.slice(
-					selectedWidgetIndex + 1, // this is never undefined
-					widgets.length,
-				) || [];
+		// 	const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
+		// 	const afterWidget =
+		// 		widgets?.slice(
+		// 			selectedWidgetIndex + 1, // this is never undefined
+		// 			widgets.length,
+		// 		) || [];
 
-			const selectedWidget = widgets[selectedWidgetIndex];
+		// 	const selectedWidget = widgets[selectedWidgetIndex];
 
-			const { query } = selectedWidget;
+		// 	const { query } = selectedWidget;
 
-			const preQuery = query.slice(0, currentIndex);
-			const postQuery = query.slice(currentIndex + 1, query.length);
+		// 	const preQuery = query.slice(0, currentIndex);
+		// 	const postQuery = query.slice(currentIndex + 1, query.length);
 
-			return {
-				...state,
-				dashboards: [
-					{
-						...selectedDashboard,
-						data: {
-							...data,
-							widgets: [
-								...preWidget,
-								{
-									...selectedWidget,
-									query: [...preQuery, ...postQuery],
-								},
-								...afterWidget,
-							],
-						},
-					},
-				],
-			};
-		}
+		// 	return {
+		// 		...state,
+		// 		dashboards: [
+		// 			{
+		// 				...selectedDashboard,
+		// 				data: {
+		// 					...data,
+		// 					widgets: [
+		// 						...preWidget,
+		// 						{
+		// 							...selectedWidget,
+		// 							query: [...preQuery, ...postQuery],
+		// 						},
+		// 						...afterWidget,
+		// 					],
+		// 				},
+		// 			},
+		// 		],
+		// 	};
+		// }
+
 		default:
 			return state;
 	}

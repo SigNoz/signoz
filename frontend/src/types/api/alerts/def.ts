@@ -3,12 +3,11 @@ import { CompositeMetricQuery } from 'types/api/metrics/compositeQuery';
 export interface AlertDef {
 	id: number;
 	alert: string;
-	description: string;
-	severity: string;
 	ruleType: string;
-	ruleCondition: RuleCondition;
+	condition: RuleCondition;
 	labels: Labels;
 	annotations: Labels;
+	evalWindow: string;
 }
 
 interface RuleCondition {
