@@ -6,6 +6,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
+	"math"
 	"net/url"
 	"reflect"
 	"sync"
@@ -87,6 +88,27 @@ func (r *ThresholdRule) ID() string {
 
 func (r *ThresholdRule) Condition() *RuleCondition {
 	return r.ruleCondition
+}
+
+func (r *ThresholdRule) target() *float64 {
+	if r.ruleCondition == nil {
+		return nil
+	}
+	return r.ruleCondition.Target
+}
+
+func (r *ThresholdRule) matchType() MatchType {
+	if r.ruleCondition == nil {
+		return AtleastOnce
+	}
+	return r.ruleCondition.MatchType
+}
+
+func (r *ThresholdRule) compareOp() CompareOp {
+	if r.ruleCondition == nil {
+		return TargetIsEq
+	}
+	return r.ruleCondition.CompareOp
 }
 
 func (r *ThresholdRule) Type() RuleType {
@@ -251,7 +273,7 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 	}
 }
 
-func (r *ThresholdRule) sendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
+func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if alert.needsSending(ts, resendDelay) {
@@ -269,19 +291,24 @@ func (r *ThresholdRule) sendAlerts(ctx context.Context, ts time.Time, resendDela
 	notifyFunc(ctx, "", alerts...)
 }
 func (r *ThresholdRule) CheckCondition(v float64) bool {
+
 	if value.IsNaN(v) {
 		zap.S().Debugf("found NaN in rule condition: ", r.Name())
 		return false
 	}
 
+	if r.ruleCondition.Target == nil {
+		zap.S().Debugf("found null target in rule condition: ", r.Name())
+		return false
+	}
 	switch r.ruleCondition.CompareOp {
 	case TargetIsEq:
 		return v == *r.ruleCondition.Target
 	case TargetIsNotEq:
 		return v != *r.ruleCondition.Target
-	case TargetIsLess:
+	case TargetIsBelow:
 		return v > *r.ruleCondition.Target
-	case TargetIsMore:
+	case TargetIsAbove:
 		return v < *r.ruleCondition.Target
 	default:
 		return false
@@ -291,7 +318,7 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParamsV2 {
 
 	tsEnd := ts.UnixNano() / int64(time.Millisecond)
-	tsStart := ts.Add(-time.Duration(5*time.Minute)).UnixNano() / int64(time.Millisecond)
+	tsStart := ts.Add(-time.Duration(r.evalWindow)).UnixNano() / int64(time.Millisecond)
 
 	return &qsmodel.QueryRangeParamsV2{
 		Start:                tsStart,
@@ -331,7 +358,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 	defer rows.Close()
 	for rows.Next() {
-		// fmt.Println("first row:")
+
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
@@ -340,7 +367,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		lbls := labels.NewBuilder(labels.Labels{})
 
 		for i, v := range vars {
+
 			colName := columnNames[i]
+
 			switch v := v.(type) {
 			case *string:
 				lbls.Set(colName, *v)
@@ -354,41 +383,70 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				}
 
 			case *float64:
-				if colName == "res" {
+				if colName == "res" || colName == "value" {
 					sample.Point.V = *v
+
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", *v))
 				}
 			case *uint64:
 				intv := *v
-				if colName == "res" {
+				if colName == "res" || colName == "value" {
 					sample.Point.V = float64(intv)
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%d", intv))
 				}
 			case *uint8:
 				intv := *v
-				if colName == "res" {
+				if colName == "res" || colName == "value" {
 					sample.Point.V = float64(intv)
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%d", intv))
 				}
 			default:
-				// todo(amol): log  error
-				fmt.Println("var", v, columnNames[i])
+				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])
 			}
+		}
+
+		if value.IsNaN(sample.Point.V) {
+			continue
 		}
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
-		// assumption here: the ch query will always order
-		// the data by timestamp, here we pick the last record
-		// to send as result to alert
-		resultMap[lbls.Labels().Hash()] = sample
+
+		// here we re-evaluate stored values of samples
+		// and pick the most relavant according to
+		// match type and compare op
+		if existing, ok := resultMap[lbls.Labels().Hash()]; ok {
+
+			if r.matchType() == AllTheTimes {
+				if r.compareOp() == TargetIsAbove {
+					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
+					resultMap[lbls.Labels().Hash()] = sample
+				} else if r.compareOp() == TargetIsBelow {
+					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
+					resultMap[lbls.Labels().Hash()] = sample
+				}
+			}
+			if r.matchType() == AtleastOnce {
+				if r.compareOp() == TargetIsAbove {
+					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
+					resultMap[lbls.Labels().Hash()] = sample
+				} else if r.compareOp() == TargetIsBelow {
+					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
+					resultMap[lbls.Labels().Hash()] = sample
+				}
+			}
+		} else {
+			resultMap[lbls.Labels().Hash()] = sample
+		}
+
 	}
 
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results
+		fmt.Println("sample.Point.V:", sample.Point.V)
 		if r.CheckCondition(sample.Point.V) {
 			result = append(result, sample)
 		}
@@ -401,28 +459,24 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 // satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
 	params := r.prepareQueryRange(ts)
-	fmt.Println("params: ", params)
+
 	runQueries := metrics.PrepareBuilderMetricQueries(params, "time_series")
 	if runQueries.Err != nil {
-		return nil, fmt.Errorf("failed to build alert query: %v", runQueries.Err)
+		return nil, fmt.Errorf("failed to prepare metric queries: %v", runQueries.Err)
 	}
 
 	if len(runQueries.Queries) == 0 {
-		return nil, fmt.Errorf("failed to build query")
+		return nil, fmt.Errorf("no queries could be built with the rule config")
 	}
 
-	// pick the last query as that will lead to the final result
-	// todo(amol): need to find a way to get final result
+	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", runQueries.Queries)
 
-	if queryString, ok := runQueries.Queries["C"]; ok {
-		return r.runChQuery(ctx, ch, queryString)
-	}
+	queryLabelAscii := 64 + len(runQueries.Queries)
+	queryLabel := string(rune(queryLabelAscii))
 
-	if queryString, ok := runQueries.Queries["B"]; ok {
-		return r.runChQuery(ctx, ch, queryString)
-	}
+	zap.S().Debugf("ruleId: ", r.ID(), "/tresult query label:", queryLabel)
 
-	if queryString, ok := runQueries.Queries["A"]; ok {
+	if queryString, ok := runQueries.Queries[queryLabel]; ok {
 		return r.runChQuery(ctx, ch, queryString)
 	}
 
@@ -436,6 +490,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
+		zap.S().Debugf("ruleid:", r.ID(), "/tfailure in buildAndRunQuery:", err)
 		return nil, err
 	}
 
@@ -492,7 +547,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
+			zap.S().Errorf("ruleId: ", r.ID(), "\t msg:", "the alert query returns duplicate records:", alerts[h])
+			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 			// We have already acquired the lock above hence using SetHealth and
 			// SetLastError will deadlock.
 			r.health = HealthBad
@@ -517,6 +573,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
 		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
+
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
 			continue
@@ -558,7 +615,7 @@ func (r *ThresholdRule) String() string {
 	ar := PostableRule{
 		Alert:         r.name,
 		RuleCondition: r.ruleCondition,
-		EvalWindow:    time.Duration(r.evalWindow),
+		EvalWindow:    Duration(r.evalWindow),
 		Labels:        r.labels.Map(),
 		Annotations:   r.annotations.Map(),
 	}

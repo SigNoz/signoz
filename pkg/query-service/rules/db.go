@@ -85,28 +85,33 @@ func (r *ruleDB) CreateRuleTx(rule string) (string, Tx, error) {
 
 func (r *ruleDB) EditRuleTx(rule string, id string) (string, Tx, error) {
 	var groupName string
+	fmt.Println("id:", id)
 	idInt, _ := strconv.Atoi(id)
-	groupName = fmt.Sprintf("%d-groupname", idInt)
-
-	tx, err := r.Begin()
-	if err != nil {
-		return groupName, tx, err
+	if idInt == 0 {
+		return groupName, nil, fmt.Errorf("failed to read alert id from parameters")
 	}
 
-	stmt, err := tx.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
+	groupName = fmt.Sprintf("%d-groupname", idInt)
+
+	// tx, err := r.Begin()
+	//if err != nil {
+	//	return groupName, tx, err
+	//}
+
+	stmt, err := r.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
-		tx.Rollback()
-		return groupName, tx, err
+		// tx.Rollback()
+		return groupName, nil, err
 	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(time.Now(), rule, idInt); err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
-		tx.Rollback() // return an error too, we may want to wrap them
-		return groupName, tx, err
+		// tx.Rollback() // return an error too, we may want to wrap them
+		return groupName, nil, err
 	}
-	return groupName, tx, nil
+	return groupName, nil, nil
 }
 
 func (r *ruleDB) DeleteRuleTx(id string) (string, Tx, error) {

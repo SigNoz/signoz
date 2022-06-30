@@ -31,4 +31,6 @@ type Rule interface {
 	GetEvaluationDuration() time.Duration
 	SetEvaluationTimestamp(time.Time)
 	GetEvaluationTimestamp() time.Time
+
+	SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc)
 }

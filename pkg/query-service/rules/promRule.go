@@ -245,7 +245,7 @@ func (r *PromRule) ForEachActiveAlert(f func(*Alert)) {
 	}
 }
 
-func (r *PromRule) sendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
+func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if alert.needsSending(ts, resendDelay) {
@@ -414,7 +414,7 @@ func (r *PromRule) String() string {
 	ar := PostableRule{
 		Alert:         r.name,
 		RuleCondition: r.ruleCondition,
-		EvalWindow:    time.Duration(r.evalWindow),
+		EvalWindow:    Duration(r.evalWindow),
 		Labels:        r.labels.Map(),
 		Annotations:   r.annotations.Map(),
 	}

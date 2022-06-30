@@ -1,10 +1,11 @@
 package rules
 
 import (
-	"time"
-
+	"encoding/json"
 	"github.com/pkg/errors"
+	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/utils/labels"
+	"time"
 )
 
 // how long before re-sending the alert
@@ -91,4 +92,65 @@ func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
 type NamedAlert struct {
 	Name string
 	*Alert
+}
+
+type CompareOp string
+
+const (
+	TargetIsAbove CompareOp = "0"
+	TargetIsBelow CompareOp = "1"
+	TargetIsEq    CompareOp = "2"
+	TargetIsNotEq CompareOp = "3"
+)
+
+type MatchType string
+
+const (
+	AllTheTimes MatchType = "0"
+	AtleastOnce MatchType = "1"
+	OnAverage   MatchType = "2"
+	InTotal     MatchType = "3"
+)
+
+type RuleCondition struct {
+	CompositeMetricQuery *model.CompositeMetricQuery `json:"compositeMetricQuery,omitempty" yaml:"compositeMetricQuery,omitempty"`
+	CompareOp            CompareOp                   `yaml:"op,omitempty" json:"op,omitempty"`
+	Target               *float64                    `yaml:"target,omitempty" json:"target,omitempty"`
+	MatchType            `json:"matchType,omitempty"`
+}
+
+func (rc *RuleCondition) String() string {
+	if rc == nil {
+		return ""
+	}
+	data, _ := json.Marshal(*rc)
+	return string(data)
+}
+
+type Duration time.Duration
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).String())
+}
+
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value))
+		return nil
+	case string:
+		tmp, err := time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+		*d = Duration(tmp)
+
+		return nil
+	default:
+		return errors.New("invalid duration")
+	}
 }

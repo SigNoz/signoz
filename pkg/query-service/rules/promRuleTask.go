@@ -40,8 +40,8 @@ type PromRuleTask struct {
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
 func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *PromRuleTask {
-	zap.S().Info("Initiating a new rule group: %v with frequency: %v", name, frequency)
-	fmt.Println("Initiating a new rule group with frequency", name, frequency)
+	zap.S().Info("Initiating a new rule group:", name, "/t frequency:", frequency)
+
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
 	}
@@ -162,13 +162,13 @@ func (g *PromRuleTask) hash() uint64 {
 	return l.Hash()
 }
 
-// ThresholdRules returns the list of the group's threshold rules.
-func (g *PromRuleTask) ThresholdRules() []*ThresholdRule {
+// PromRules returns the list of the group's promql rules.
+func (g *PromRuleTask) PromRules() []*PromRule {
 	g.mtx.Lock()
 	defer g.mtx.Unlock()
-	var alerts []*ThresholdRule
+	var alerts []*PromRule
 	for _, rule := range g.rules {
-		if tr, ok := rule.(*ThresholdRule); ok {
+		if tr, ok := rule.(*PromRule); ok {
 			alerts = append(alerts, tr)
 		}
 	}
@@ -350,7 +350,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 			samplesTotal += float64(len(vector))
 
 			if ar, ok := rule.(*ThresholdRule); ok {
-				ar.sendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
+				ar.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
 			}
 
 			seriesReturned := make(map[string]plabels.Labels, len(g.seriesInPreviousEval[i]))

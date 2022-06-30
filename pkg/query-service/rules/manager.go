@@ -19,6 +19,7 @@ import (
 
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
 )
 
 // namespace for prom metrics
@@ -131,9 +132,36 @@ func (m *Manager) initiate() error {
 		parsedRule, errs := ParsePostableRule([]byte(rec.Data))
 
 		if len(errs) > 0 {
-			zap.S().Errorf("failed to parse and initialize rule:", errs)
-			// just one rule is being parsed so expect just one error
-			loadErrors = append(loadErrors, errs[0])
+			fmt.Println("errs:", errs[0])
+			if errs[0].Error() == "failed to load json" {
+				zap.S().Info("failed to load rule in json format, trying yaml now:", rec.Data)
+				parsedRule, errs = parsePostableRule([]byte(rec.Data), "yaml")
+				if parsedRule == nil {
+					zap.S().Errorf("failed to parse and initialize yaml rule:", errs)
+					// just one rule is being parsed so expect just one error
+					loadErrors = append(loadErrors, errs[0])
+					continue
+				} else {
+					// migrate the rule to json before continuing
+					zap.S().Info("migrating rule from JSON to yaml", rec.Id)
+					ruleJSON, err := json.Marshal(parsedRule)
+					if err == nil {
+						_, tx, err := m.ruleDB.EditRuleTx(string(ruleJSON), fmt.Sprintf("%d", rec.Id))
+						if err != nil {
+							zap.S().Errorf("failed to migrate rule ", err, ruleJSON, rec.Id)
+						} else {
+							tx.Commit()
+						}
+
+					}
+
+				}
+			} else {
+				zap.S().Errorf("failed to parse and initialize rule:", errs)
+				// just one rule is being parsed so expect just one error
+				loadErrors = append(loadErrors, errs[0])
+				continue
+			}
 		}
 
 		err := m.addTask(parsedRule, groupName)
@@ -141,7 +169,7 @@ func (m *Manager) initiate() error {
 			zap.S().Errorf("failed to load the rule definition (%s): %v", groupName, err)
 		}
 	}
-	m.Pause(true)
+
 	return nil
 }
 
@@ -175,17 +203,19 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 		return errs[0]
 	}
 
-	groupName, tx, err := m.ruleDB.EditRuleTx(ruleStr, id)
+	groupName, _, err := m.ruleDB.EditRuleTx(ruleStr, id)
 	if err != nil {
 		return err
 	}
 
 	err = m.editTask(parsedRule, groupName)
 	if err != nil {
-		tx.Rollback()
+		//tx.Rollback()
+		return err
 	}
 
-	return tx.Commit()
+	// return tx.Commit()
+	return nil
 }
 
 func (m *Manager) editTask(rule *PostableRule, groupName string) error {
@@ -199,7 +229,7 @@ func (m *Manager) editTask(rule *PostableRule, groupName string) error {
 
 	if errs != nil {
 		for _, e := range errs {
-			level.Error(m.logger).Log("msg", "loading tasks failed", "err", e)
+			zap.S().Errorf("msg", "loading tasks failed", "err", e)
 		}
 		return errors.New("error loading rules, previous rule set restored")
 	}
@@ -395,7 +425,7 @@ func (m *Manager) loadTask(acquireLock bool, r *PostableRule, groupName string) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeCh, groupName, taskNamesuffix, r.Frequency, rules, m.opts, m.prepareNotifyFunc())
+		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeCh, groupName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
 
 		// add rule to memory
 		m.rules[ruleId] = tr
@@ -415,7 +445,7 @@ func (m *Manager) loadTask(acquireLock bool, r *PostableRule, groupName string) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeProm, groupName, taskNamesuffix, r.Frequency, rules, m.opts, m.prepareNotifyFunc())
+		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeProm, groupName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
 
 		// add rule to memory
 		m.rules[ruleId] = pr
@@ -537,24 +567,26 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 	// fetch rules from DB
 	storedRules, err := m.ruleDB.GetStoredRules()
-	fmt.Println("stored :", len(storedRules))
+	zap.S().Info("stored rules:", len(storedRules))
 	// initiate response object
-	resp := make([]*GettableRule, len(storedRules))
+	resp := make([]*GettableRule, 0)
 
 	for _, s := range storedRules {
-		fmt.Println("stored rules:", s)
+
 		ruleResponse := &GettableRule{}
 		if err := json.Unmarshal([]byte(s.Data), ruleResponse); err != nil { // Parse []byte to go struct pointer
 			zap.S().Errorf("msg:", "invalid rule data", "/terr:", err)
+			continue
 		}
 
 		ruleResponse.Id = fmt.Sprintf("%d", s.Id)
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			zap.S().Errorf("msg:", "invalid rule id  found while fetching list of rules", "/terr:", err, "/trule_id:", ruleResponse.Id)
+			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "/terr:", err, "/trule_id:", ruleResponse.Id)
 		} else {
-			ruleResponse.State = string(rm.State())
+			fmt.Println("rule in memory:", rm.State())
+			ruleResponse.State = rm.State().String()
 		}
 		resp = append(resp, ruleResponse)
 	}
@@ -567,7 +599,25 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := &GettableRule{}
+	target := float64(120)
+	r := &GettableRule{
+		RuleCondition: RuleCondition{
+			Target:    &target,
+			CompareOp: TargetIsAbove,
+			MatchType: AllTheTimes,
+			CompositeMetricQuery: &model.CompositeMetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
+					"A": &model.MetricQuery{
+						MetricName: "name",
+						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
+							{Key: "a", Value: []string{"b"}, Operation: "neq"},
+						}},
+						AggregateOperator: model.RATE_MAX,
+					},
+				},
+			},
+		},
+	}
 	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
 		return nil, err
 	}

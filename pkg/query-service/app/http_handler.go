@@ -381,6 +381,7 @@ func Intersection(a, b []int) (c []int) {
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	ruleResponse, err := aH.ruleManager.GetRule(id)
+	fmt.Println("ruleResponse", ruleResponse)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -744,17 +745,19 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	aH.respond(w, "rule successfully deleted")
 
 }
+
 func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	var postData map[string]string
-	err := json.NewDecoder(r.Body).Decode(&postData)
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = (*aH.ruleManager).EditRule(postData["data"], id)
+	err = aH.ruleManager.EditRule(string(body), id)
 
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)

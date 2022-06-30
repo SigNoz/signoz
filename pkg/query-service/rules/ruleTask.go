@@ -41,7 +41,7 @@ const DefaultFrequency = 1 * time.Minute
 
 // newRuleTask makes a new RuleTask with the given name, options, and rules.
 func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
-	zap.S().Info("Initiating a new rule group: %v with frequency: %v", name, frequency)
+	zap.S().Info("Initiating a new rule group:", name, "frequency:", frequency)
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -91,7 +91,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	fmt.Println(" group run to begin at: ", evalTimestamp)
+	zap.S().Debugf("group:", g.name, "/t group run to begin at: ", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
@@ -106,6 +106,8 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	iter := func() {
 		if g.pause {
+			// todo(amol): remove in memory active alerts
+			// and last series state
 			return
 		}
 		start := time.Now()
@@ -291,6 +293,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 		g.seriesInPreviousEval[i] = from.seriesInPreviousEval[fi]
 		ruleMap[nameAndLabels] = indexes[1:]
 
+		// todo(amol): support other rules too here
 		ar, ok := rule.(*ThresholdRule)
 		if !ok {
 			continue
@@ -321,7 +324,9 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
-	fmt.Println("group eval started:", ts)
+
+	zap.S().Debugf("group:", g.name, "group eval started at:", ts)
+
 	var samplesTotal float64
 	for i, rule := range g.rules {
 		if rule == nil {
@@ -359,23 +364,19 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				//}
 				return
 			}
+
 			vector := data.(Vector)
 			samplesTotal += float64(len(vector))
 
-			if ar, ok := rule.(*ThresholdRule); ok {
-				ar.sendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
-			}
+			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
 
 			seriesReturned := make(map[string]labels.Labels, len(g.seriesInPreviousEval[i]))
-
-			defer func() {
-				g.seriesInPreviousEval[i] = seriesReturned
-			}()
 
 			for _, s := range vector {
 				seriesReturned[s.Metric.String()] = s.Metric
 			}
 
+			g.seriesInPreviousEval[i] = seriesReturned
 		}(i, rule)
 	}
 }

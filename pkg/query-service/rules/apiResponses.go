@@ -2,13 +2,14 @@ package rules
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
+	"go.signoz.io/query-service/model"
+	"go.uber.org/zap"
 	"time"
 	"unicode/utf8"
 
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/utils/labels"
 	"go.signoz.io/query-service/utils/times"
 	"go.signoz.io/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
@@ -17,27 +18,13 @@ import (
 // this file contains api request and responses to be
 // served over http
 
-type CompareOp string
-
-const (
-	TargetIsEq    CompareOp = "="
-	TargetIsNotEq CompareOp = "!="
-	TargetIsLess  CompareOp = "<"
-	TargetIsMore  CompareOp = ">"
-)
-
-type RuleCondition struct {
-	CompositeMetricQuery *model.CompositeMetricQuery `json:"compositeMetricQuery,omitempty" yaml:"compositeMetricQuery,omitempty"`
-	CompareOp            CompareOp                   `yaml:"op,omitempty" json:"op,omitempty"`
-	Target               *float64                    `yaml:"target,omitempty" json:"target,omitempty"`
-}
-
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	Alert      string        `yaml:"alert,omitempty" json:"alert,omitempty"`
-	RuleType   RuleType      `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow time.Duration `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency  time.Duration `yaml:"frequency,omitempty" json:"frequency,omitempty"`
+	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
+	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
+	EvalWindow  Duration `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
+	Frequency   Duration `yaml:"frequency,omitempty" json:"frequency,omitempty"`
 
 	RuleCondition *RuleCondition    `yaml:"condition,omitempty" json:"condition,omitempty"`
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
@@ -48,17 +35,33 @@ type PostableRule struct {
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, []error) {
-	rule := PostableRule{}
-	fmt.Println("content:", string(content))
-	if err := yaml.Unmarshal(content, &rule); err != nil {
-		return nil, []error{err}
-	}
+	return parsePostableRule(content, "json")
+}
 
-	if rule.RuleType == "" && rule.Expr != "" {
+func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
+	rule := PostableRule{}
+
+	var err error
+	if kind == "json" {
+		if err = json.Unmarshal(content, &rule); err != nil {
+			zap.S().Debugf("postable rule content", string(content), "/tkind:", kind)
+			return nil, []error{fmt.Errorf("failed to load json")}
+		}
+	} else if kind == "yaml" {
+		if err = yaml.Unmarshal(content, &rule); err != nil {
+			zap.S().Debugf("postable rule content", string(content), "/tkind:", kind)
+			return nil, []error{fmt.Errorf("failed to load yaml")}
+		}
+	} else {
+		return nil, []error{fmt.Errorf("invalid data type")}
+	}
+	zap.S().Debugf("postable rule(parsed):", rule)
+
+	if rule.RuleCondition == nil && rule.Expr != "" {
 		// account for legacy rules
 		rule.RuleType = RuleTypeProm
-		rule.EvalWindow = 5 * time.Minute
-		rule.Frequency = 30 * time.Second
+		rule.EvalWindow = Duration(5 * time.Minute)
+		rule.Frequency = Duration(1 * time.Minute)
 		rule.RuleCondition = &RuleCondition{
 			CompositeMetricQuery: &model.CompositeMetricQuery{
 				QueryType: model.PROM,
@@ -70,7 +73,34 @@ func ParsePostableRule(content []byte) (*PostableRule, []error) {
 			},
 		}
 	}
-	fmt.Println("postable rule:", rule)
+
+	if rule.EvalWindow == 0 {
+		rule.EvalWindow = Duration(5 * time.Minute)
+	}
+	if rule.Frequency == 0 {
+		rule.Frequency = Duration(1 * time.Minute)
+	}
+
+	if rule.RuleCondition != nil {
+		if rule.RuleCondition.CompositeMetricQuery != nil {
+			if len(rule.RuleCondition.CompositeMetricQuery.BuilderQueries) > 0 {
+				rule.RuleType = RuleTypeThreshold
+			}
+
+			if len(rule.RuleCondition.CompositeMetricQuery.PromQueries) > 0 {
+				rule.RuleType = RuleTypeProm
+			}
+
+			for qLabel, q := range rule.RuleCondition.CompositeMetricQuery.BuilderQueries {
+				if q.Expression == "" {
+					q.Expression = qLabel
+				}
+			}
+		}
+	}
+
+	zap.S().Debugf("postable rule:", rule, "\t condition", rule.RuleCondition.String())
+
 	if errs := rule.Validate(); len(errs) > 0 {
 		return nil, errs
 	}
@@ -94,6 +124,14 @@ func isValidLabelValue(v string) bool {
 }
 
 func (r *PostableRule) Validate() (errs []error) {
+
+	if r.RuleCondition == nil {
+		errs = append(errs, errors.Errorf("rule condition is required"))
+	} else {
+		if r.RuleCondition.CompositeMetricQuery == nil {
+			errs = append(errs, errors.Errorf("composite metric query is required"))
+		}
+	}
 
 	if r.RuleType == RuleTypeThreshold {
 		if r.RuleCondition.Target == nil {
@@ -173,15 +211,17 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Labels        labels.BaseLabels `json:"labels"`
-	Annotations   labels.BaseLabels `json:"annotations"`
-	State         string            `json:"state"`
-	Alert         string            `json:"name"`
-	Id            string            `json:"id"`
-	RuleType      RuleType          `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow    time.Duration     `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency     time.Duration     `yaml:"frequency,omitempty" json:"frequency,omitempty"`
-	RuleCondition RuleCondition     `yaml:"condition,omitempty" json:"condition,omitempty"`
+	Labels      map[string]string `json:"labels"`
+	Annotations map[string]string `json:"annotations"`
+	State       string            `json:"state"`
+	Alert       string            `json:"alert"`
+	// Description string            `yaml:"description,omitempty" json:"description,omitempty"`
+
+	Id            string        `json:"id"`
+	RuleType      RuleType      `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
+	EvalWindow    Duration      `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
+	Frequency     Duration      `yaml:"frequency,omitempty" json:"frequency,omitempty"`
+	RuleCondition RuleCondition `yaml:"condition,omitempty" json:"condition,omitempty"`
 
 	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
 	// Value       float64       `json:"value"`
