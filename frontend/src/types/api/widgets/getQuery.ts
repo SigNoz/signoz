@@ -9,6 +9,7 @@ export interface QueryData {
 		[key: string]: string;
 	};
 	queryName: string;
+	legend?: string;
 	values: [number, string][];
 }
 

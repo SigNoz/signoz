@@ -4,25 +4,39 @@ import {
 	QueryBuilderFormulaTemplate,
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
+import { Query } from 'types/api/dashboard/getAll';
 
 import {
 	WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME,
 	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from '../../constants';
 import { QueryButton } from '../../styles';
+import { IHandleUpdatedQuery } from '../../types';
 import MetricsBuilderFormula from './formula';
 import MetricsBuilder from './query';
+import {
+	IQueryBuilderFormulaHandleChange,
+	IQueryBuilderQueryHandleChange,
+} from './types';
 import { canCreateQueryAndFormula } from './utils';
+
+interface IQueryBuilderQueryContainerProps {
+	queryData: Query;
+	updateQueryData: (args: IHandleUpdatedQuery) => void;
+	metricsBuilderQueries: Query['metricsBuilder'];
+	selectedGraph: GRAPH_TYPES;
+}
 
 function QueryBuilderQueryContainer({
 	queryData,
 	updateQueryData,
 	metricsBuilderQueries,
 	selectedGraph,
-}): JSX.Element | null {
+}: IQueryBuilderQueryContainerProps): JSX.Element | null {
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
 		aggregateFunction,
@@ -33,7 +47,7 @@ function QueryBuilderQueryContainer({
 		toggleDisable,
 		toggleDelete,
 		reduceTo,
-	}): void => {
+	}: IQueryBuilderQueryHandleChange): void => {
 		const allQueries =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder;
 		const currentIndexQuery = allQueries[queryIndex];
@@ -73,7 +87,7 @@ function QueryBuilderQueryContainer({
 		expression,
 		toggleDisable,
 		toggleDelete,
-	}): void => {
+	}: IQueryBuilderFormulaHandleChange): void => {
 		const allFormulas =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
@@ -102,9 +116,9 @@ function QueryBuilderQueryContainer({
 			return;
 		}
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder.push({
-			name: GetQueryName(
-				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder,
-			),
+			name:
+				GetQueryName(queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder) ||
+				'',
 			...QueryBuilderQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });
@@ -121,11 +135,12 @@ function QueryBuilderQueryContainer({
 		queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 			WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 		].push({
-			name: GetFormulaName(
-				queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
-					WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
-				],
-			),
+			name:
+				GetFormulaName(
+					queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
+						WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
+					],
+				) || '',
 			...QueryBuilderFormulaTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });

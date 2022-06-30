@@ -5,7 +5,7 @@ export const AggregateFunctions = Object.keys(EAggregateOperator)
 	.map((key) => {
 		return {
 			label: key,
-			value: EAggregateOperator[key],
+			value: EAggregateOperator[key as keyof typeof EAggregateOperator],
 		};
 	});
 

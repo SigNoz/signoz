@@ -2,13 +2,16 @@ import { sortBy } from 'lodash-es';
 
 const MAX_QUERIES = 20;
 
-function GetFormulaName(formulas = []): string | null {
+function GetFormulaName(
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	formulas: { name: string; [key: string]: any }[] = [],
+): string | null {
 	if (!formulas.length) return 'F1';
 	if (formulas.length === MAX_QUERIES) {
 		return null;
 	}
 	const formulasNameNumbered = sortBy(
-		formulas.map(({ name }) => {
+		formulas.map(({ name }: { name: string }) => {
 			return parseInt(name.slice(1), 10);
 		}),
 		(e) => e,
@@ -22,6 +25,7 @@ function GetFormulaName(formulas = []): string | null {
 		}
 		// formulaIteratorIdx += 1;
 	}
+	return null;
 }
 
 export default GetFormulaName;
