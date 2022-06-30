@@ -3,12 +3,12 @@ package rules
 import (
 	"context"
 	"fmt"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"go.uber.org/zap"
 	"net/url"
 	"sync"
 	"time"
-
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 
 	plabels "github.com/prometheus/prometheus/pkg/labels"
 	pql "github.com/prometheus/prometheus/promql"
@@ -267,30 +267,22 @@ func (r *PromRule) getPqlQuery() (string, error) {
 
 	if r.ruleCondition.CompositeMetricQuery.QueryType == model.PROM {
 		if len(r.ruleCondition.CompositeMetricQuery.PromQueries) > 0 {
-			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["D"]; ok {
-				return promQuery.Query, nil
-			}
-			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["C"]; ok {
-				return promQuery.Query, nil
-			}
-			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["B"]; ok {
-				return promQuery.Query, nil
-			}
 			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["A"]; ok {
 				return promQuery.Query, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("invalid rule query")
+	return "", fmt.Errorf("invalid promql rule query")
 }
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, externalURL *url.URL) (interface{}, error) {
+
 	q, err := r.getPqlQuery()
 	if err != nil {
 		return nil, err
 	}
-
+	zap.S().Info("rule:", r.Name(), "/t evaluating promql query: ", q)
 	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, ts)
 	if err != nil {
 		r.SetHealth(HealthBad)

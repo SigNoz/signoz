@@ -97,10 +97,10 @@ type NamedAlert struct {
 type CompareOp string
 
 const (
-	TargetIsAbove CompareOp = "0"
-	TargetIsBelow CompareOp = "1"
-	TargetIsEq    CompareOp = "2"
-	TargetIsNotEq CompareOp = "3"
+	ValueIsAbove CompareOp = "0"
+	ValueIsBelow CompareOp = "1"
+	ValueIsEq    CompareOp = "2"
+	ValueIsNotEq CompareOp = "3"
 )
 
 type MatchType string

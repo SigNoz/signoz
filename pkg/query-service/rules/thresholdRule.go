@@ -62,7 +62,7 @@ func NewThresholdRule(
 	// todo(amol) raise an error if target is null
 	// or target compare op is null
 
-	fmt.Println("creating new alerting rule:", name)
+	zap.S().Info("creating new alerting rule:", name)
 
 	return &ThresholdRule{
 		id:            id,
@@ -106,7 +106,7 @@ func (r *ThresholdRule) matchType() MatchType {
 
 func (r *ThresholdRule) compareOp() CompareOp {
 	if r.ruleCondition == nil {
-		return TargetIsEq
+		return ValueIsEq
 	}
 	return r.ruleCondition.CompareOp
 }
@@ -274,6 +274,7 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
+	zap.S().Info("rule:", r.Name(), "\t msg:", "sending alerts")
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if alert.needsSending(ts, resendDelay) {
@@ -301,15 +302,18 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 		zap.S().Debugf("found null target in rule condition: ", r.Name())
 		return false
 	}
+
+	fmt.Println("v:", v, *r.ruleCondition.Target)
+
 	switch r.ruleCondition.CompareOp {
-	case TargetIsEq:
+	case ValueIsEq:
 		return v == *r.ruleCondition.Target
-	case TargetIsNotEq:
+	case ValueIsNotEq:
 		return v != *r.ruleCondition.Target
-	case TargetIsBelow:
-		return v > *r.ruleCondition.Target
-	case TargetIsAbove:
+	case ValueIsBelow:
 		return v < *r.ruleCondition.Target
+	case ValueIsAbove:
+		return v > *r.ruleCondition.Target
 	default:
 		return false
 	}
@@ -320,6 +324,12 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParam
 	tsEnd := ts.UnixNano() / int64(time.Millisecond)
 	tsStart := ts.Add(-time.Duration(r.evalWindow)).UnixNano() / int64(time.Millisecond)
 
+	// for k, v := range r.ruleCondition.CompositeMetricQuery.BuilderQueries {
+	//	v.ReduceTo = qsmodel.RMAX
+	//	r.ruleCondition.CompositeMetricQuery.BuilderQueries[k] = v
+	// }
+
+	zap.S().Info("rule:", r.Name(), "/t condition:", r.ruleCondition.String())
 	return &qsmodel.QueryRangeParamsV2{
 		Start:                tsStart,
 		End:                  tsEnd,
@@ -355,6 +365,12 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 	// map[fingerprint]sample
 	resultMap := make(map[uint64]Sample, 0)
+
+	// for rates we want to skip the first record
+	// but we dont know when the rates are being used
+	// so we always pick timeframe - 30 seconds interval
+	// and skip the first record for a given label combo
+	skipFirstRecord := make(map[uint64]bool, 0)
 
 	defer rows.Close()
 	for rows.Next() {
@@ -415,38 +431,44 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		// capture lables in result
 		sample.Metric = lbls.Labels()
 
+		labelHash := lbls.Labels().Hash()
 		// here we re-evaluate stored values of samples
 		// and pick the most relavant according to
 		// match type and compare op
-		if existing, ok := resultMap[lbls.Labels().Hash()]; ok {
+		if existing, ok := resultMap[labelHash]; ok {
 
 			if r.matchType() == AllTheTimes {
-				if r.compareOp() == TargetIsAbove {
+				if r.compareOp() == ValueIsAbove {
 					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
-					resultMap[lbls.Labels().Hash()] = sample
-				} else if r.compareOp() == TargetIsBelow {
+					resultMap[labelHash] = sample
+				} else if r.compareOp() == ValueIsBelow {
 					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
-					resultMap[lbls.Labels().Hash()] = sample
+					resultMap[labelHash] = sample
 				}
 			}
 			if r.matchType() == AtleastOnce {
-				if r.compareOp() == TargetIsAbove {
+				if r.compareOp() == ValueIsAbove {
 					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
-					resultMap[lbls.Labels().Hash()] = sample
-				} else if r.compareOp() == TargetIsBelow {
+					resultMap[labelHash] = sample
+				} else if r.compareOp() == ValueIsBelow {
 					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
-					resultMap[lbls.Labels().Hash()] = sample
+					resultMap[labelHash] = sample
 				}
 			}
 		} else {
-			resultMap[lbls.Labels().Hash()] = sample
+			if exists, _ := skipFirstRecord[labelHash]; exists {
+				resultMap[labelHash] = sample
+			} else {
+				// looks like the first record for this label combo, skip it
+				skipFirstRecord[labelHash] = true
+			}
+
 		}
 
 	}
 
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results
-		fmt.Println("sample.Point.V:", sample.Point.V)
 		if r.CheckCondition(sample.Point.V) {
 			result = append(result, sample)
 		}
@@ -460,7 +482,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
 	params := r.prepareQueryRange(ts)
 
-	runQueries := metrics.PrepareBuilderMetricQueries(params, "time_series")
+	runQueries := metrics.PrepareBuilderMetricQueries(params, "time_series_v2")
 	if runQueries.Err != nil {
 		return nil, fmt.Errorf("failed to prepare metric queries: %v", runQueries.Err)
 	}
@@ -474,7 +496,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	queryLabelAscii := 64 + len(runQueries.Queries)
 	queryLabel := string(rune(queryLabelAscii))
 
-	zap.S().Debugf("ruleId: ", r.ID(), "/tresult query label:", queryLabel)
+	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
 
 	if queryString, ok := runQueries.Queries[queryLabel]; ok {
 		return r.runChQuery(ctx, ch, queryString)
@@ -565,8 +587,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 	}
 
-	fmt.Println("alerts: ", alerts)
-	fmt.Println("alerts: ", len(alerts))
+	zap.S().Info("rule:", r.Name(), "\t alerts found: ", len(alerts))
 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {

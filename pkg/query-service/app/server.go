@@ -340,7 +340,6 @@ func makeRulesManager(
 	// create Manager
 	manager, err := rules.NewManager(managerOpts)
 	if err != nil {
-		fmt.Println("manager error:", err)
 		return nil, fmt.Errorf("rule manager error: %v", err)
 	}
 

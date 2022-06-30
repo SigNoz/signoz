@@ -85,52 +85,73 @@ func formattedValue(v interface{}) string {
 
 // BuildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
-func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, tableName string) (string, error) {
-	queryString := ""
-	for idx, item := range fs.Items {
-		fmtVal := formattedValue(item.Value)
-		switch op := strings.ToLower(item.Operation); op {
-		case "eq":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') = %s", tableName, item.Key, fmtVal)
-		case "neq":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') != %s", tableName, item.Key, fmtVal)
-		case "in":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') IN %s", tableName, item.Key, fmtVal)
-		case "nin":
-			queryString += fmt.Sprintf("JSONExtractString(%s.labels,'%s') NOT IN %s", tableName, item.Key, fmtVal)
-		case "like":
-			queryString += fmt.Sprintf("like(JSONExtractString(%s.labels,'%s'), %s)", tableName, item.Key, fmtVal)
-		case "match":
-			queryString += fmt.Sprintf("match(JSONExtractString(%s.labels,'%s'), %s)", tableName, item.Key, fmtVal)
-		default:
-			return "", fmt.Errorf("unsupported operation")
+func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, metricName string, aggregateOperator model.AggregateOperator) (string, error) {
+	var conditions []string
+	conditions = append(conditions, fmt.Sprintf("metric_name = %s", formattedValue(metricName)))
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			toFormat := item.Value
+			// if the received value is an array for like/match op, just take the first value
+			if strings.ToLower(item.Operation) == "like" ||
+				strings.ToLower(item.Operation) == "match" ||
+				strings.ToLower(item.Operation) == "nlike" {
+				x, ok := item.Value.([]interface{})
+				if ok {
+					if len(x) == 0 {
+						continue
+					}
+					toFormat = x[0]
+				}
+			}
+			fmtVal := formattedValue(toFormat)
+			switch op := strings.ToLower(item.Operation); op {
+			case "eq":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s = %s", item.Key, fmtVal))
+			case "neq":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s != %s", item.Key, fmtVal))
+			case "in":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s IN %s", item.Key, fmtVal))
+			case "nin":
+				conditions = append(conditions, fmt.Sprintf("labels_object.%s NOT IN %s", item.Key, fmtVal))
+			case "like":
+				conditions = append(conditions, fmt.Sprintf("like(labels_object.%s, %s)", item.Key, fmtVal))
+			case "nlike":
+				conditions = append(conditions, fmt.Sprintf("notLike(labels_object.%s, %s)", item.Key, fmtVal))
+			case "match":
+				conditions = append(conditions, fmt.Sprintf("match(labels_object.%s, %s)", item.Key, fmtVal))
+			default:
+				return "", fmt.Errorf("unsupported operation")
+			}
 		}
-		if idx != len(fs.Items)-1 {
-			queryString += " " + fs.Operation + " "
+	}
+	queryString := strings.Join(conditions, " AND ")
+
+	var selectLabels string
+	if aggregateOperator == model.NOOP || aggregateOperator == model.RATE {
+		selectLabels = "labels,"
+	} else {
+		for _, tag := range groupTags {
+			selectLabels += fmt.Sprintf(" labels_object.%s as %s,", tag, tag)
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT fingerprint, labels FROM %s.%s WHERE %s", constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
 
 func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, tableName string) (string, error) {
-	nameFilterItem := model.FilterItem{Key: "__name__", Value: mq.MetricName, Operation: "EQ"}
-	if mq.TagFilters == nil {
-		mq.TagFilters = &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-			nameFilterItem,
-		}}
-	} else {
-		mq.TagFilters.Items = append(mq.TagFilters.Items, nameFilterItem)
+
+	if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE && len(mq.GroupingTags) != 0 {
+		return "", fmt.Errorf("reduce operator cannot be applied for the query")
 	}
 
-	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, tableName)
+	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, mq.GroupingTags, mq.MetricName, mq.AggregateOperator)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", qp.Start, qp.End)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", formattedValue(mq.MetricName), qp.Start, qp.End)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -149,11 +170,34 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupTags := groupSelect(mq.GroupingTags...)
 
 	switch mq.AggregateOperator {
+	case model.RATE:
+		// Calculate rate of change of metric for each unique time series
+		groupBy = "fingerprint, ts"
+		groupTags = "fingerprint,"
+		op := "max(value)" // max value should be the closest value for point in time
+		subQuery := fmt.Sprintf(
+			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
+		) // labels will be same so any should be fine
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
+
+		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
+		return query, nil
+	case model.SUM_RATE:
+		rateGroupBy := "fingerprint, " + groupBy
+		rateGroupTags := "fingerprint, " + groupTags
+		op := "max(value)"
+		subQuery := fmt.Sprintf(
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+		) // labels will be same so any should be fine
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		sub_query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
-		query = fmt.Sprintf(query, groupTags, sub_query)
+		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
@@ -164,16 +208,16 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT:
-		op := "count(*)"
+		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT_DISTINCT:
-		op := "count(distinct(value))"
+		op := "toFloat64(count(distinct(value)))"
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.NOOP:
 		queryTmpl :=
-			"SELECT fingerprint, labels as metricNOOP," +
+			"SELECT fingerprint, labels as fullLabels," +
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
@@ -191,11 +235,8 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 }
 
 func groupBy(tags ...string) string {
-	groupByFilter := "ts"
-	for _, tag := range tags {
-		groupByFilter += fmt.Sprintf(", JSONExtractString(labels,'%s') as %s", tag, tag)
-	}
-	return groupByFilter
+	tags = append(tags, "ts")
+	return strings.Join(tags, ",")
 }
 
 func groupSelect(tags ...string) string {
@@ -228,6 +269,36 @@ func FormatErrs(errs []error, separator string) string {
 	return strings.Join(errStrs, separator)
 }
 
+func reduceQuery(query string, reduceTo model.ReduceToOperator, aggregateOperator model.AggregateOperator) (string, error) {
+	var selectLabels string
+	var groupBy string
+	// NOOP and RATE can possibly return multiple time series and reduce should be applied
+	// for each uniques series. When the final result contains more than one series we throw
+	// an error post DB fetching. Otherwise just return the single data. This is not known until queried so the
+	// the query is prepared accordingly.
+	if aggregateOperator == model.NOOP || aggregateOperator == model.RATE {
+		selectLabels = ", any(fullLabels) as fullLabels"
+		groupBy = "GROUP BY fingerprint"
+	}
+	// the timestamp picked is not relevant here since the final value used is show the single
+	// chart with just the query value. For the quer
+	switch reduceTo {
+	case model.RLAST:
+		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RSUM:
+		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RAVG:
+		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RMAX:
+		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	case model.RMIN:
+		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+	default:
+		return "", fmt.Errorf("unsupported reduce operator")
+	}
+	return query, nil
+}
+
 // varToQuery constructs the query for each named builder block
 func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]string, error) {
 	evalFuncs := GoValuateFuncs()
@@ -244,6 +315,13 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 				query, err := BuildMetricQuery(qp, mq, tableName)
 				if err != nil {
 					errs = append(errs, err)
+				} else {
+					if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE {
+						query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
+						if err != nil {
+							errs = append(errs, err)
+						}
+					}
 				}
 				varToQuery[_var] = query
 			}
@@ -304,7 +382,6 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 	for _, bq := range qp.CompositeMetricQuery.BuilderQueries {
 		expressions = append(expressions, bq.Expression)
 	}
-
 	if errs := validateExpressions(expressions, evalFuncs); len(errs) != 0 {
 		return &RunQueries{Err: fmt.Errorf("invalid expressions: %s", FormatErrs(errs, "\n"))}
 	}
@@ -318,6 +395,9 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 
 	var errs []error
 	for _, builderQuery := range qp.CompositeMetricQuery.BuilderQueries {
+		if builderQuery.Disabled {
+			continue
+		}
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(builderQuery.Expression, evalFuncs)
 		tokens := expression.Tokens()
 		// expression with one token is used to represent

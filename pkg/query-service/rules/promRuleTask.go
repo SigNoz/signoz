@@ -308,7 +308,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
-	fmt.Println("group eval started:", ts)
+	zap.S().Info("promql rule task:", g.name, "\t eval started at:", ts)
 	var samplesTotal float64
 	for i, rule := range g.rules {
 		if rule == nil {

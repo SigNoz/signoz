@@ -123,7 +123,7 @@ func (n *Notifier) nextBatch() []*Alert {
 
 // Run dispatches notifications continuously.
 func (n *Notifier) Run() {
-
+	zap.S().Info("Initiating alert notifier...")
 	for {
 		select {
 		case <-n.ctx.Done():
@@ -227,7 +227,6 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 
 		go func(ams *alertmanagerSet, am Manager) {
 			u := am.URLPath(alertPushEndpoint).String()
-
 			if err := n.sendOne(ctx, ams.client, u, b); err != nil {
 				level.Error(n.logger).Log("alertmanager", u, "count", len(alerts), "msg", "Error sending alert", "err", err)
 				//n.metrics.errors.WithLabelValues(u).Inc()

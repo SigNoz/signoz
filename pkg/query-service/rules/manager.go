@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+
 	"go.uber.org/zap"
 
 	"github.com/jmoiron/sqlx"
@@ -80,7 +80,8 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 func NewManager(o *ManagerOptions) (*Manager, error) {
 
 	o = defaultOptions(o)
-
+	// here we just initiate notifier, it will be started
+	// in run()
 	notifier, err := am.NewNotifier(&o.NotifierOpts, nil)
 	if err != nil {
 		// todo(amol): rethink on this, the query service
@@ -132,7 +133,6 @@ func (m *Manager) initiate() error {
 		parsedRule, errs := ParsePostableRule([]byte(rec.Data))
 
 		if len(errs) > 0 {
-			fmt.Println("errs:", errs[0])
 			if errs[0].Error() == "failed to load json" {
 				zap.S().Info("failed to load rule in json format, trying yaml now:", rec.Data)
 				parsedRule, errs = parsePostableRule([]byte(rec.Data), "yaml")
@@ -175,6 +175,7 @@ func (m *Manager) initiate() error {
 
 // Run starts processing of the rule manager.
 func (m *Manager) run() {
+	go m.notifier.Run()
 	close(m.block)
 }
 
@@ -183,13 +184,13 @@ func (m *Manager) Stop() {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	level.Info(m.logger).Log("msg", "Stopping rule manager...")
+	zap.S().Info("msg: ", "Stopping rule manager...")
 
 	for _, t := range m.tasks {
 		t.Stop()
 	}
 
-	level.Info(m.logger).Log("msg", "Rule manager stopped")
+	zap.S().Info("msg: ", "Rule manager stopped")
 }
 
 // EditRuleDefinition writes the rule definition to the
@@ -599,11 +600,13 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 	if err != nil {
 		return nil, err
 	}
+	r := &GettableRule{}
+	/* todo(amol): test data to be removed before deployment
 	target := float64(120)
 	r := &GettableRule{
 		RuleCondition: RuleCondition{
 			Target:    &target,
-			CompareOp: TargetIsAbove,
+			CompareOp: ValueIsAbove,
 			MatchType: AllTheTimes,
 			CompositeMetricQuery: &model.CompositeMetricQuery{
 				BuilderQueries: map[string]*model.MetricQuery{
@@ -617,7 +620,7 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 				},
 			},
 		},
-	}
+	}*/
 	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
 		return nil, err
 	}

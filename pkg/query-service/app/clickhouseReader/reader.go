@@ -58,10 +58,10 @@ const (
 	signozErrorIndexTable = "signoz_error_index"
 	signozTraceTableName  = "signoz_index_v2"
 	signozMetricDBName    = "signoz_metrics"
-	signozSampleName      = "samples"
-	signozTSName          = "time_series"
-	signozSampleTableName = "samples"
-	signozTSTableName     = "time_series"
+	signozSampleName      = "samples_v2"
+	signozTSName          = "time_series_v2"
+	signozSampleTableName = "samples_v2"
+	signozTSTableName     = "time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
