@@ -287,6 +287,8 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 			alert.ValidUntil = ts.Add(4 * delta)
 			anew := *alert
 			alerts = append(alerts, &anew)
+		} else {
+			zap.S().Debugf("msg: skipping send alert due to resend delay", "/t rule: ", r.Name(), "\t alert:", alert.Labels)
 		}
 	})
 	notifyFunc(ctx, "", alerts...)
@@ -320,7 +322,7 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 }
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParamsV2 {
-
+	// todo(amol): add 30 seconds to evalWindow for rate calc
 	tsEnd := ts.UnixNano() / int64(time.Millisecond)
 	tsStart := ts.Add(-time.Duration(r.evalWindow)).UnixNano() / int64(time.Millisecond)
 
@@ -432,12 +434,14 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		sample.Metric = lbls.Labels()
 
 		labelHash := lbls.Labels().Hash()
-		// here we re-evaluate stored values of samples
-		// and pick the most relavant according to
-		// match type and compare op
+
+		// here we walk through values of time series
+		// and calculate the final value used to compare
+		// with rule target
 		if existing, ok := resultMap[labelHash]; ok {
 
-			if r.matchType() == AllTheTimes {
+			switch r.matchType() {
+			case AllTheTimes:
 				if r.compareOp() == ValueIsAbove {
 					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
 					resultMap[labelHash] = sample
@@ -445,8 +449,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
 					resultMap[labelHash] = sample
 				}
-			}
-			if r.matchType() == AtleastOnce {
+			case AtleastOnce:
 				if r.compareOp() == ValueIsAbove {
 					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
 					resultMap[labelHash] = sample
@@ -454,7 +457,14 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
 					resultMap[labelHash] = sample
 				}
+			case OnAverage:
+				sample.Point.V = (existing.Point.V + sample.Point.V) / 2
+				resultMap[labelHash] = sample
+			case InTotal:
+				sample.Point.V = (existing.Point.V + sample.Point.V)
+				resultMap[labelHash] = sample
 			}
+
 		} else {
 			if exists, _ := skipFirstRecord[labelHash]; exists {
 				resultMap[labelHash] = sample
@@ -462,9 +472,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				// looks like the first record for this label combo, skip it
 				skipFirstRecord[labelHash] = true
 			}
-
 		}
-
 	}
 
 	for _, sample := range resultMap {

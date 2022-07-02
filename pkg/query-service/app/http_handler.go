@@ -292,7 +292,8 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
+	// router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", ViewAccess(aH.getChannel)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.editChannel)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
@@ -752,7 +753,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		zap.S().Errorf("Error in getting req body of edit rule API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -884,17 +885,15 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
-	decoder := json.NewDecoder(r.Body)
-
-	var postData map[string]string
-	err := decoder.Decode(&postData)
-
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		zap.S().Errorf("Error in getting req body for create rule API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = (*aH.ruleManager).CreateRule(postData["data"])
+	err = aH.ruleManager.CreateRule(string(body))
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return

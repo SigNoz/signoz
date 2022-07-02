@@ -349,9 +349,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 			vector := data.(pql.Vector)
 			samplesTotal += float64(len(vector))
 
-			if ar, ok := rule.(*ThresholdRule); ok {
-				ar.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
-			}
+			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
 
 			seriesReturned := make(map[string]plabels.Labels, len(g.seriesInPreviousEval[i]))
 

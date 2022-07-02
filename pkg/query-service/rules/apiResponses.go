@@ -77,24 +77,21 @@ func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
 	if rule.EvalWindow == 0 {
 		rule.EvalWindow = Duration(5 * time.Minute)
 	}
+
 	if rule.Frequency == 0 {
 		rule.Frequency = Duration(1 * time.Minute)
 	}
 
 	if rule.RuleCondition != nil {
-		if rule.RuleCondition.CompositeMetricQuery != nil {
-			if len(rule.RuleCondition.CompositeMetricQuery.BuilderQueries) > 0 {
-				rule.RuleType = RuleTypeThreshold
-			}
+		if rule.RuleCondition.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
+			rule.RuleType = RuleTypeThreshold
+		} else if rule.RuleCondition.CompositeMetricQuery.QueryType == model.PROM {
+			rule.RuleType = RuleTypeProm
+		}
 
-			if len(rule.RuleCondition.CompositeMetricQuery.PromQueries) > 0 {
-				rule.RuleType = RuleTypeProm
-			}
-
-			for qLabel, q := range rule.RuleCondition.CompositeMetricQuery.BuilderQueries {
-				if q.Expression == "" {
-					q.Expression = qLabel
-				}
+		for qLabel, q := range rule.RuleCondition.CompositeMetricQuery.BuilderQueries {
+			if q.MetricName != "" && q.Expression == "" {
+				q.Expression = qLabel
 			}
 		}
 	}
@@ -140,10 +137,11 @@ func (r *PostableRule) Validate() (errs []error) {
 		if r.RuleCondition.CompareOp == "" {
 			errs = append(errs, errors.Errorf("rule condition missing the compare op"))
 		}
+		if r.RuleCondition.MatchType == "" {
+			errs = append(errs, errors.Errorf("rule condition missing the match option"))
+		}
 	}
-	//	if r.RuleType == "" {
-	//	r.RuleCondition
-	// }
+
 	for k, v := range r.Labels {
 		if !isValidLabelName(k) {
 			errs = append(errs, errors.Errorf("invalid label name: %s", k))

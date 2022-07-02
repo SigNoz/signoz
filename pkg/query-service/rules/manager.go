@@ -19,7 +19,6 @@ import (
 
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
 )
 
 // namespace for prom metrics
@@ -586,7 +585,6 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
 			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "/terr:", err, "/trule_id:", ruleResponse.Id)
 		} else {
-			fmt.Println("rule in memory:", rm.State())
 			ruleResponse.State = rm.State().String()
 		}
 		resp = append(resp, ruleResponse)
@@ -601,26 +599,6 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 		return nil, err
 	}
 	r := &GettableRule{}
-	/* todo(amol): test data to be removed before deployment
-	target := float64(120)
-	r := &GettableRule{
-		RuleCondition: RuleCondition{
-			Target:    &target,
-			CompareOp: ValueIsAbove,
-			MatchType: AllTheTimes,
-			CompositeMetricQuery: &model.CompositeMetricQuery{
-				BuilderQueries: map[string]*model.MetricQuery{
-					"A": &model.MetricQuery{
-						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "a", Value: []string{"b"}, Operation: "neq"},
-						}},
-						AggregateOperator: model.RATE_MAX,
-					},
-				},
-			},
-		},
-	}*/
 	if err := json.Unmarshal([]byte(s.Data), r); err != nil {
 		return nil, err
 	}

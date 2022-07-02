@@ -264,10 +264,14 @@ func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 }
 
 func (r *PromRule) getPqlQuery() (string, error) {
-
+	fmt.Println("model.PROM ", model.PROM)
+	fmt.Println("q type ", r.ruleCondition.CompositeMetricQuery.QueryType)
 	if r.ruleCondition.CompositeMetricQuery.QueryType == model.PROM {
+		fmt.Println("got prom type")
 		if len(r.ruleCondition.CompositeMetricQuery.PromQueries) > 0 {
+			fmt.Println("got prom queries leng> 0")
 			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["A"]; ok {
+				fmt.Println("found promquery")
 				return promQuery.Query, nil
 			}
 		}

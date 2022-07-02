@@ -123,7 +123,7 @@ func (n *Notifier) nextBatch() []*Alert {
 
 // Run dispatches notifications continuously.
 func (n *Notifier) Run() {
-	zap.S().Info("Initiating alert notifier...")
+	zap.S().Info("msg: Initiating alert notifier...")
 	for {
 		select {
 		case <-n.ctx.Done():
@@ -133,6 +133,7 @@ func (n *Notifier) Run() {
 		alerts := n.nextBatch()
 
 		if !n.sendAll(alerts...) {
+			zap.S().Warn("msg: dropped alerts", "/t count:", len(alerts))
 			// n.metrics.dropped.Add(float64(len(alerts)))
 		}
 		// If the queue still has items left, kick off the next iteration.
@@ -204,7 +205,7 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 
 	b, err := json.Marshal(alerts)
 	if err != nil {
-		level.Error(n.logger).Log("msg", "Encoding alerts failed", "err", err)
+		zap.S().Errorf("msg", "Encoding alerts failed", "err", err)
 		return false
 	}
 
@@ -228,8 +229,7 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 		go func(ams *alertmanagerSet, am Manager) {
 			u := am.URLPath(alertPushEndpoint).String()
 			if err := n.sendOne(ctx, ams.client, u, b); err != nil {
-				level.Error(n.logger).Log("alertmanager", u, "count", len(alerts), "msg", "Error sending alert", "err", err)
-				//n.metrics.errors.WithLabelValues(u).Inc()
+				zap.S().Errorf("alertmanager", u, "count", len(alerts), "msg", "Error calling alert API", "err", err)
 			} else {
 				atomic.AddUint64(&numSuccess, 1)
 			}
