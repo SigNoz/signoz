@@ -19,6 +19,7 @@ export interface BuilderQueries {
 
 export interface MetricQuery {
 	queryName: string;
+	name?: string;
 	metricName?: string;
 	tagFilters?: FilterSet;
 	groupBy?: string[];
@@ -26,7 +27,6 @@ export interface MetricQuery {
 	aggregateOperator?: number | undefined;
 	expression?: string;
 	formulaOnly?: boolean;
-
 	disabled?: boolean;
 	toggleDisable?: boolean;
 	toggleDelete?: boolean;

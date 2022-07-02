@@ -10,7 +10,6 @@ export interface PayloadProps {
 }
 
 export const alertDefaults: AlertDef = {
-	ruleType: 'threshold_rule',
 	condition: {
 		compositeMetricQuery: {
 			builderQueries: {
@@ -22,19 +21,18 @@ export const alertDefaults: AlertDef = {
 						items: [],
 					},
 					groupBy: [],
-					aggregateOperator: 0,
+					aggregateOperator: 17,
 					expression: 'A',
 					disabled: false,
 					toggleDisable: false,
-					toggleDelete: false
+					toggleDelete: false,
 				},
 			},
 			promQueries: {},
-			queryType: 0,
+			queryType: 1,
 		},
-	op: 'above',
-	target: 100,
-	matchType: '0',
+		op: 'above',
+		matchType: '0',
 	},
 	labels: {
 		severity: 'warning',
@@ -43,4 +41,4 @@ export const alertDefaults: AlertDef = {
 		description: 'A new alert',
 	},
 	evalWindow: '5m0s',
-}
+};

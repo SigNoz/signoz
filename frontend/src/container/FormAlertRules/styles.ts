@@ -1,4 +1,4 @@
-import { Button, Input, Card, Select } from 'antd';
+import { Button, Card, Input, Select } from 'antd';
 import styled from 'styled-components';
 
 export const ButtonContainer = styled.div`
@@ -55,18 +55,15 @@ export const SeveritySelect = styled(Select)`
 export const InputSmall = styled(Input)`
 	width: 25% !important;
 `;
- 
 
 export const FormContainer = styled.div`
-padding: 2em;
-margin-top: 1rem;
-display: flex;
-flex-direction: column;
-background: #262626;
-border-radius: 4px;
+	padding: 2em;
+	margin-top: 1rem;
+	display: flex;
+	flex-direction: column;
+	background: #262626;
+	border-radius: 4px;
 `;
-
-
 
 export const ThresholdInput = styled(Input)`
 	&&& {

@@ -2,6 +2,8 @@ import { SaveOutlined } from '@ant-design/icons';
 import { Form, FormInstance, notification } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import saveAlertApi from 'api/alerts/save';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { AlertDef } from 'types/api/alerts/def';
 import { BuilderQueries, PromQueries } from 'types/api/metrics/compositeQuery';
@@ -10,7 +12,7 @@ import BasicInfo from './BasicInfo';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
 import { ActionButton, ButtonContainer } from './styles';
-import { QueryType } from './types';
+import { PROMQL, QUERY_BUILDER, QueryType } from './types';
 
 function FormAlertRules({
 	formInstance,
@@ -39,20 +41,78 @@ function FormAlertRules({
 		...alertDef?.condition?.compositeMetricQuery?.promQueries,
 	});
 
+	const onCancelHandler = useCallback(async () => {
+		history.replace(ROUTES.LIST_ALL_ALERT);
+	}, []);
+
+	const isFormValid = useCallback((): boolean => {
+		let retval = true;
+
+		if (!alertDef.alert || alertDef.alert === '') {
+			notification.error({
+				message: 'Error',
+				description: 'alert name is required',
+			});
+			return false;
+		}
+
+		if (
+			queryCategory === PROMQL &&
+			(!promQueries || Object.keys(promQueries).length === 0)
+		) {
+			notification.error({
+				message: 'Error',
+				description:
+					'promql expression is required when query format is set to PromQL',
+			});
+			return false;
+		}
+
+		if (
+			(queryCategory === QUERY_BUILDER && !metricQueries) ||
+			Object.keys(metricQueries).length === 0
+		) {
+			notification.error({
+				message: 'Error',
+				description:
+					'metric name must be set when query format is set to Query Builder',
+			});
+			return false;
+		}
+
+		Object.keys(metricQueries).forEach((key) => {
+			if (metricQueries[key].metricName === '') {
+				retval = false;
+				notification.error({
+					message: 'Error',
+					description:
+						'metric name must be set when query format is set to Query Builder',
+				});
+			}
+		});
+
+		return retval;
+	}, [alertDef, queryCategory, metricQueries, promQueries]);
+
 	const onSaveHandler = useCallback(async () => {
-		const qType = Object.keys(metricQueries).length > 0 ? 0 : 2;
+		if (!isFormValid()) {
+			return;
+		}
+
 		const postableAlert: AlertDef = {
 			...alertDef,
+			ruleType: queryCategory === PROMQL ? 'promql_rule' : 'threshold_rule',
 			condition: {
 				...alertDef.condition,
 				compositeMetricQuery: {
 					builderQueries: metricQueries,
 					promQueries,
-					queryType: qType,
+					queryType: queryCategory,
 				},
 			},
 		};
 		console.log(' postableAlert :', postableAlert);
+
 		setLoading(true);
 		const apiReq =
 			ruleId && ruleId > 0
@@ -64,12 +124,14 @@ function FormAlertRules({
 		if (response.statusCode === 200) {
 			notifications.success({
 				message: 'Success',
-				description: 'Rule edited successfully',
+				description:
+					!ruleId || ruleId === 0
+						? 'Rule created successfully'
+						: 'Rule edited successfully',
 			});
-
-			// setTimeout(() => {
-			//	history.replace(ROUTES.SETTINGS);
-			//}, 2000);
+			setTimeout(() => {
+				history.replace(ROUTES.LIST_ALL_ALERT);
+			}, 2000);
 		} else {
 			notifications.error({
 				message: 'Error',
@@ -77,14 +139,21 @@ function FormAlertRules({
 			});
 		}
 		setLoading(false);
-	}, [ruleId, notifications, alertDef, metricQueries, promQueries]);
+	}, [
+		isFormValid,
+		queryCategory,
+		ruleId,
+		notifications,
+		alertDef,
+		metricQueries,
+		promQueries,
+	]);
 
 	const renderBasicInfo = (): JSX.Element => (
 		<BasicInfo
 			queryCategory={queryCategory}
 			alertDef={alertDef}
 			setAlertDef={setAlertDef}
-			notifications={notifications}
 		/>
 	);
 
@@ -103,11 +172,9 @@ function FormAlertRules({
 						allowCategoryChange={!(ruleId > 0)}
 					/>
 				</FormItem>
-				<RuleOptions
-					initialValue={alertDef}
-					setAlertDef={setAlertDef}
-					ruleType={queryCategory === 2 ? 'prom_rule' : 'threshold_rule'}
-				/>
+				{queryCategory !== PROMQL && (
+					<RuleOptions initialValue={alertDef} setAlertDef={setAlertDef} />
+				)}
 				{renderBasicInfo()}
 				<ButtonContainer>
 					<ActionButton
@@ -116,14 +183,14 @@ function FormAlertRules({
 						onClick={onSaveHandler}
 						icon={<SaveOutlined />}
 					>
-						Save Alert
+						{ruleId > 0 ? 'Save Changes' : 'Create Rule'}
 					</ActionButton>
 					<ActionButton
 						loading={loading || false}
 						type="default"
-						onClick={(e): void => console.log('do nothing')}
+						onClick={onCancelHandler}
 					>
-						Cancel
+						{ruleId > 0 ? 'Return to rules' : 'Cancel'}
 					</ActionButton>
 				</ButtonContainer>
 			</Form>

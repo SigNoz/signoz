@@ -1,8 +1,9 @@
 import { Input, Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
-import { AlertDef } from 'types/api/alerts/def';
+import { AlertDef, Labels } from 'types/api/alerts/def';
 
+import LabelSelect from './labels';
 import {
 	FormContainer,
 	InputSmall,
@@ -34,11 +35,12 @@ function BasicInfo({
 					<SeveritySelect
 						defaultValue="critical"
 						onChange={(value: unknown | string): void => {
+							const s = (value as string) || 'critical';
 							setAlertDef({
 								...alertDef,
 								labels: {
 									...alertDef.labels,
-									severity: value,
+									severity: s,
 								},
 							});
 						}}
@@ -75,6 +77,14 @@ function BasicInfo({
 								},
 							});
 						}}
+					/>
+				</FormItem>
+				<FormItem label="Labels">
+					<LabelSelect
+						onSetLabels={(l: Labels): void => {
+							console.log('got labels:', l);
+						}}
+						initialValues={alertDef.labels}
 					/>
 				</FormItem>
 			</FormContainer>

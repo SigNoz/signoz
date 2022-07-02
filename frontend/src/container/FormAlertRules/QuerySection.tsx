@@ -1,10 +1,13 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { notification } from 'antd';
-import { Tabs } from 'antd';
+import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { message, Modal, notification, Tabs } from 'antd';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
-import React, { useCallback, useState } from 'react';
-import { BuilderQueries, PromQueries } from 'types/api/metrics/compositeQuery';
+import React, { useCallback } from 'react';
+import {
+	BuilderQueries,
+	FilterItem,
+	PromQueries,
+} from 'types/api/metrics/compositeQuery';
 
 import PromqlSection from './PromqlSection';
 import {
@@ -14,7 +17,12 @@ import {
 	QueryContainer,
 	StepHeading,
 } from './styles';
-import { QueryType } from './types';
+import {
+	PROMQL,
+	QUERY_BUILDER,
+	QueryType,
+	resolveQueryCategoryName,
+} from './types';
 
 const { TabPane } = Tabs;
 function QuerySection({
@@ -24,12 +32,9 @@ function QuerySection({
 	setMetricQueries,
 	promQueries,
 	setPromQueries,
-	selectedGraph,
-	selectedTime,
-	yAxisUnit,
 	allowCategoryChange,
 }: QuerySectionProps): JSX.Element {
-	const handleQueryCategoryChange = (n: string): void => {
+	const handleQueryCategoryChange = (s: string): void => {
 		if (!allowCategoryChange) {
 			notification.error({
 				message:
@@ -37,8 +42,25 @@ function QuerySection({
 			});
 			return;
 		}
-		const selected = parseInt(n, 10);
-		setQueryCategory(selected as QueryType);
+
+		const popupContent = `This will set the query format to ${resolveQueryCategoryName(
+			parseInt(s, 10),
+		)}. The settings in the current tab will be ignored. Do you want to proceed?`;
+
+		Modal.confirm({
+			title: 'Confirm',
+			icon: <ExclamationCircleOutlined />,
+			content: popupContent,
+			onOk() {
+				const selected = parseInt(s, 10);
+				setQueryCategory(selected as QueryType);
+				message.success(
+					`Query format changed to ${resolveQueryCategoryName(parseInt(s, 10))}`,
+				);
+			},
+			okText: 'Yes',
+			cancelText: 'No',
+		});
 	};
 
 	const getNextQueryLabel = useCallback((): string => {
@@ -64,6 +86,11 @@ function QuerySection({
 		expression,
 		toggleDisable,
 		toggleDelete,
+	}: {
+		formulaIndex: string;
+		expression: string;
+		toggleDisable: boolean;
+		toggleDelete: boolean;
 	}): void => {
 		const allQueries = metricQueries;
 		const current = allQueries[formulaIndex];
@@ -92,10 +119,19 @@ function QuerySection({
 		metricName,
 		tagFilters,
 		groupBy,
-		legend,
 		toggleDisable,
 		toggleDelete,
 		reduceTo,
+	}: {
+		queryIndex: string;
+		aggregateFunction: number | undefined;
+		metricName: string;
+		tagFilters: FilterItem[];
+		groupBy: string[];
+		legend: string;
+		toggleDisable: boolean;
+		toggleDelete: boolean;
+		reduceTo: string[];
 	}): void => {
 		const allQueries = metricQueries;
 		const current = metricQueries[queryIndex];
@@ -105,19 +141,17 @@ function QuerySection({
 		if (metricName) {
 			current.metricName = metricName;
 		}
-		if (tagFilters) {
+
+		if (tagFilters && current.tagFilters) {
 			current.tagFilters.items = tagFilters;
 		}
+
 		if (groupBy) {
 			current.groupBy = groupBy;
 		}
 
 		if (reduceTo) {
 			current.reduceTo = reduceTo;
-		}
-
-		if (legend !== undefined) {
-			current.legend = legend;
 		}
 
 		if (toggleDisable) {
@@ -135,63 +169,58 @@ function QuerySection({
 		});
 	};
 
-	const addMetricQuery = useCallback(
-		async (e) => {
-			if (Object.keys(metricQueries).length > 4) {
-				notification.error({
-					message:
-						'Unable to create query. You can create at max 5 queries and 1 formulae.',
-				});
-				return;
-			}
-			const queryLabel = getNextQueryLabel();
-
-			const queries = metricQueries;
-			queries[queryLabel] = {
-				queryName: queryLabel,
-				metricName: '',
-				formulaOnly: false,
-				aggregateOperator: undefined,
-				tagFilters: {
-					op: 'AND',
-					items: [],
-				},
-				groupBy: [],
-			};
-			setMetricQueries({ ...queries });
-		},
-		[getNextQueryLabel, metricQueries, setMetricQueries],
-	);
-
-	const addFormula = useCallback(
-		async (e) => {
-			let formulaCount = 0;
-			Object.keys(metricQueries).forEach((key) => {
-				if (metricQueries[key].expression !== '') {
-					formulaCount += 1;
-				}
+	const addMetricQuery = useCallback(async () => {
+		if (Object.keys(metricQueries).length > 4) {
+			notification.error({
+				message:
+					'Unable to create query. You can create at max 5 queries and 1 formulae.',
 			});
+			return;
+		}
+		const queryLabel = getNextQueryLabel();
 
-			if (formulaCount > 0) {
-				notification.error({
-					message: 'Unable to add formula. You can create at max 1 formula',
-				});
-				return;
+		const queries = metricQueries;
+		queries[queryLabel] = {
+			queryName: queryLabel,
+			metricName: 'signoz_latency_count',
+			formulaOnly: false,
+			aggregateOperator: undefined,
+			tagFilters: {
+				op: 'AND',
+				items: [],
+			},
+			groupBy: [],
+			expression: queryLabel,
+		};
+		setMetricQueries({ ...queries });
+	}, [getNextQueryLabel, metricQueries, setMetricQueries]);
+
+	const addFormula = useCallback(async () => {
+		let formulaCount = 0;
+		Object.keys(metricQueries).forEach((key) => {
+			if (metricQueries[key].metricName === '' || metricQueries[key].formulaOnly) {
+				formulaCount += 1;
 			}
+		});
 
-			const queryLabel = getNextQueryLabel();
+		if (formulaCount > 0) {
+			notification.error({
+				message: 'Unable to add formula. You can create at max 1 formula',
+			});
+			return;
+		}
 
-			const queries = metricQueries;
-			queries[queryLabel] = {
-				queryName: queryLabel,
-				formulaOnly: true,
-				expression: 'A',
-			};
+		const queryLabel = getNextQueryLabel();
 
-			setMetricQueries({ ...queries });
-		},
-		[getNextQueryLabel, metricQueries, setMetricQueries],
-	);
+		const queries = metricQueries;
+		queries[queryLabel] = {
+			queryName: queryLabel,
+			formulaOnly: true,
+			expression: 'A',
+		};
+		console.log('queries:', queries);
+		setMetricQueries({ ...queries });
+	}, [getNextQueryLabel, metricQueries, setMetricQueries]);
 	const renderAddons = (): JSX.Element => {
 		return (
 			<ButtonContainer>
@@ -217,18 +246,16 @@ function QuerySection({
 				{metricQueries &&
 					Object.keys(metricQueries).map((key: string) => {
 						// todo(amol): need to handle this in fetch
-						metricQueries[key].queryName = key;
-						metricQueries[key].name = key;
+						const current = metricQueries[key];
+						current.queryName = key;
+						current.name = key;
 
-						if (
-							metricQueries[key].metricName === '' ||
-							metricQueries[key].formulaOnly
-						) {
+						if (current.metricName === '' || current.formulaOnly) {
 							return (
 								<MetricsBuilderFormula
 									key={key}
 									formulaIndex={key}
-									formulaData={metricQueries[key]}
+									formulaData={current}
 									handleFormulaChange={handleFormulaChange}
 								/>
 							);
@@ -237,7 +264,7 @@ function QuerySection({
 							<MetricsBuilder
 								key={key}
 								queryIndex={key}
-								queryData={metricQueries[key]}
+								queryData={current}
 								selectedGraph="TIME_SERIES"
 								handleQueryChange={handleMetricQueryChange}
 							/>
@@ -254,15 +281,16 @@ function QuerySection({
 					<Tabs
 						type="card"
 						style={{ width: '100%' }}
-						defaultActiveKey="0"
+						defaultActiveKey="1"
+						activeKey={queryCategory.toString()}
 						onChange={handleQueryCategoryChange}
 					>
-						<TabPane tab="Query Builder" key="0" />
-						<TabPane tab="PromQL" key="2" />
+						<TabPane tab="Query Builder" key={QUERY_BUILDER.toString()} />
+						<TabPane tab="PromQL" key={PROMQL.toString()} />
 					</Tabs>
 				</div>
-				{queryCategory === 2 ? renderPromqlUI() : renderMetricUI()}
-				{queryCategory !== 2 && renderAddons()}
+				{queryCategory === PROMQL ? renderPromqlUI() : renderMetricUI()}
+				{queryCategory !== PROMQL && renderAddons()}
 			</FormContainer>
 		</>
 	);
@@ -275,9 +303,6 @@ interface QuerySectionProps {
 	setMetricQueries: (b: BuilderQueries) => void;
 	promQueries: PromQueries;
 	setPromQueries: (p: PromQueries) => void;
-	// selectedTime: timePreferance;
-	// selectedGraph: GRAPH_TYPES;
-	// yAxisUnit: Widgets['yAxisUnit'];
 	allowCategoryChange: boolean;
 }
 

@@ -1,49 +1,17 @@
-import { AlertDef } from 'types/api/alerts/create';
-import { MetricQuery } from 'types/api/metrics/compositeQuery';
+export type QueryType = 1 | 2 | 3;
 
-export type QueryType = 0 | 1 | 2;
-/* unused
-export interface MetricQueryList {
-	[key: string]: MetricQueryLocal;
-}
+export const QUERY_BUILDER: QueryType = 1;
+export const PROMQL: QueryType = 3;
 
-export type MetricQueryLocal = MetricQuery & {
-	name: string;
-	disabled: boolean;
-	toggleDisable: boolean;
-	toggleDelete: boolean;
-}
-
-export type Query = {
-	name: string;
-	disabled: boolean;
-	promQL: {};
-	clickHouseQuery: string;
-	queryBuilder: {};
+export const resolveQueryCategoryName = (s: number): string => {
+	switch (s) {
+		case 1:
+			return 'Query Builder';
+		case 2:
+			return 'Clickhouse Query';
+		case 3:
+			return 'PromQL Expression';
+		default:
+			return '';
+	}
 };
-
-export const defaultAlert: AlertDef = {
-	alert: '',
-}
-
-export const baseQuery: Query = {
-	name: 'A',
-	disabled: false,
-
-	promQL: {
-		query: '',
-		legend: '',
-	},
-	clickHouseQuery: '',
-	queryBuilder: {
-		metricName: null,
-		aggregateOperator: null,
-		tagFilters: {
-			op: 'AND',
-			items: [],
-		},
-		groupBy: [],
-	},
-};
-
-*/

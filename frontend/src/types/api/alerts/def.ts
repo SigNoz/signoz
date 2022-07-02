@@ -1,22 +1,22 @@
 import { CompositeMetricQuery } from 'types/api/metrics/compositeQuery';
 
 export interface AlertDef {
-	id: number;
-	alert: string;
-	ruleType: string;
+	id?: number;
+	alert?: string;
+	ruleType?: string;
 	condition: RuleCondition;
-	labels: Labels;
-	annotations: Labels;
-	evalWindow: string;
+	labels?: Labels;
+	annotations?: Labels;
+	evalWindow?: string;
 }
 
-interface RuleCondition {
+export interface RuleCondition {
 	compositeMetricQuery: CompositeMetricQuery;
-	op: string;
-	target: number;
-	matchType: string;
+	op?: string | undefined;
+	target?: number | undefined;
+	matchType?: string | undefined;
 }
 
-interface Labels {
+export interface Labels {
 	[key: string]: string;
 }

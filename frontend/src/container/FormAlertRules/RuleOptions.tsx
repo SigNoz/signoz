@@ -14,13 +14,8 @@ const { Option } = Select;
 
 function RuleOptions({
 	initialValue,
-	ruleType,
 	setAlertDef,
 }: RuleOptionsProps): JSX.Element {
-	if (ruleType === 'prom_rule') {
-		return <></>;
-	}
-
 	return (
 		<>
 			<StepHeading> Step 2 - Define Alert Conditions</StepHeading>
@@ -32,7 +27,8 @@ function RuleOptions({
 							defaultValue="0"
 							value={initialValue.condition?.op}
 							onChange={(value: string | unknown): void => {
-								const newOp: string = (value as string) || initialValue.condition?.op;
+								const newOp = (value as string) || '';
+
 								setAlertDef({
 									...initialValue,
 									condition: {
@@ -50,8 +46,7 @@ function RuleOptions({
 							defaultValue="0"
 							value={initialValue.condition?.matchType}
 							onChange={(value: string | unknown): void => {
-								const m: string =
-									(value as string) || initialValue.condition?.matchType;
+								const m = (value as string) || initialValue.condition?.matchType;
 								setAlertDef({
 									...initialValue,
 									condition: {
@@ -64,19 +59,15 @@ function RuleOptions({
 							{' '}
 							<Option value="0">all the times</Option>
 							<Option value="1">at least once</Option>
-							<Option value="2" disabled>
-								on Average
-							</Option>
-							<Option value="3" disabled>
-								in total
-							</Option>
+							<Option value="2">on Average</Option>
+							<Option value="3">in total</Option>
 						</InlineSelect>{' '}
 						during the last{' '}
 						<InlineSelect
 							defaultValue="5m0s"
 							value={initialValue.evalWindow}
 							onChange={(value: string | unknown): void => {
-								const ew: string = (value as string) || initialValue.evalWindow;
+								const ew = (value as string) || initialValue.evalWindow;
 								setAlertDef({
 									...initialValue,
 									evalWindow: ew,
@@ -100,7 +91,7 @@ function RuleOptions({
 					<ThresholdInput
 						type="number"
 						onChange={(e): void => {
-							const t: number = parseInt(e.target.value, 10);
+							const t = e.target.valueAsNumber;
 							setAlertDef({
 								...initialValue,
 								condition: {
@@ -119,6 +110,5 @@ function RuleOptions({
 interface RuleOptionsProps {
 	initialValue: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
-	ruleType: 'threshold_rule' | 'prom_rule';
 }
 export default RuleOptions;

@@ -9,7 +9,7 @@ const create = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/rules', {
-			data: props.data,
+			...props.data,
 		});
 
 		return {
