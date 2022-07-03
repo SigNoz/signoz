@@ -10,7 +10,6 @@ test.describe('Version API fail while loading login page', async () => {
 
 		await page.route(`**/${getVersion}`, (route) =>
 			route.fulfill({
-				contentType: 'application/json',
 				status: 500,
 				body: JSON.stringify({ error: text }),
 			}),

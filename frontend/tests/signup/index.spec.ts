@@ -1,7 +1,7 @@
 import { expect, Page, PlaywrightTestOptions, test } from '@playwright/test';
 import ROUTES from 'constants/routes';
 
-import { waitForVersionApiSuccess } from '../fixtures/common';
+import { loginApi, waitForVersionApiSuccess } from '../fixtures/common';
 import {
 	validCompanyName,
 	validemail,
@@ -48,7 +48,7 @@ test.describe('Sign Up Page', () => {
 		expect(messageText).toBe(message);
 	});
 
-	test('User Sign up with valid details', async ({ baseURL, page }) => {
+	test('User Sign up with valid details', async ({ baseURL, page, context }) => {
 		await waitForSignUpPageSuccess(baseURL, page);
 
 		const emailplaceholder = '[placeholder="name\\@yourcompany\\.com"]';
@@ -88,14 +88,14 @@ test.describe('Sign Up Page', () => {
 		// Getting Started button is not disabled
 		expect(await gettingStartedButton.isDisabled()).toBe(false);
 
-		await page.route(`**/register`, ({ fulfill }) => {
-			return fulfill({
-				status: 201,
-				contentType: `application/json`,
-				body: JSON.stringify({}),
-			});
-		});
+		await loginApi(page);
 
 		await gettingStartedButton.click();
+
+		await expect(page).toHaveURL(`${baseURL}${ROUTES.APPLICATION}`);
+
+		await context.storageState({
+			path: 'tests/auth.json',
+		});
 	});
 });
