@@ -134,20 +134,23 @@ We ❤️ contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING
 
 Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://signoz.io/slack)
 
-Project maintainers
+### Project maintainers
 
-- Backend
-  - [Ankit Nayan](https://github.com/ankitnayan)
-  - [Nityananda Gohain](https://github.com/nityanandagohain)
-  - [Srikanth Chekuri](https://github.com/srikanthccv)
-  - [Vishal Sharma](https://github.com/makeavish)
+#### Backend
 
-- Frontend
-  - [Palash Gupta](https://github.com/palashgdev)
-  - [Pranshu Chittora](https://github.com/pranshuchittora)
+- [Ankit Nayan](https://github.com/ankitnayan)
+- [Nityananda Gohain](https://github.com/nityanandagohain)
+- [Srikanth Chekuri](https://github.com/srikanthccv)
+- [Vishal Sharma](https://github.com/makeavish)
 
-- DevOps
-  - [Prashant Shahi](https://github.com/prashant-shahi)
+#### Frontend
+
+- [Palash Gupta](https://github.com/palashgdev)
+- [Pranshu Chittora](https://github.com/pranshuchittora)
+
+#### DevOps
+
+- [Prashant Shahi](https://github.com/prashant-shahi)
 
 <br /><br />
 
