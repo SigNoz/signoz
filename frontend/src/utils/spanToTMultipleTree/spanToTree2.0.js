@@ -1,5 +1,5 @@
 const { cloneDeep } = require('lodash');
-const { input } = require('./spanTreeData.input');
+const { input ,input_epifi} = require('./spanTreeData.input');
 
 const spanToTreeUtil = (inputSpanList) => {
 	const spanList = cloneDeep(inputSpanList);
@@ -78,4 +78,4 @@ const getSpanReferences = (rawReferences = []) => {
 // 	]),
 // );
 
-spanToTreeUtil(input);
+spanToTreeUtil(input_epifi);
