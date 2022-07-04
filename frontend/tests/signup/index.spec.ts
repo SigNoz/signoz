@@ -3,6 +3,8 @@ import ROUTES from 'constants/routes';
 
 import { loginApi, waitForVersionApiSuccess } from '../fixtures/common';
 import {
+	confirmPasswordSelector,
+	getStartedButtonSelector,
 	validCompanyName,
 	validemail,
 	validName,
@@ -18,6 +20,45 @@ const waitForSignUpPageSuccess = async (
 	await page.goto(signupPage);
 
 	await waitForVersionApiSuccess(page);
+};
+
+interface FillDetailsInSignUpFormProps {
+	page: Page;
+	email: string;
+	name: string;
+	companyName: string;
+	password: string;
+	confirmPassword: string;
+}
+
+const fillDetailsInSignUpForm = async ({
+	page,
+	email,
+	name,
+	companyName,
+	password,
+	confirmPassword,
+}: FillDetailsInSignUpFormProps): Promise<void> => {
+	const emailplaceholder = '[placeholder="name\\@yourcompany\\.com"]';
+	const nameplaceholder = '[placeholder="Your Name"]';
+	const companyPlaceholder = '[placeholder="Your Company"]';
+	const currentPasswordId = '#currentPassword';
+	const confirmPasswordId = '#confirmPassword';
+
+	// Fill [placeholder="name\@yourcompany\.com"]
+	await page.locator(emailplaceholder).fill(email);
+
+	// Fill [placeholder="Your Name"]
+	await page.locator(nameplaceholder).fill(name);
+
+	// Fill [placeholder="Your Company"]
+	await page.locator(companyPlaceholder).fill(companyName);
+
+	// Fill #currentPassword
+	await page.locator(currentPasswordId).fill(password);
+
+	// Fill #confirmPasswordId
+	await page.locator(confirmPasswordId).fill(confirmPassword);
 };
 
 test.describe('Sign Up Page', () => {
@@ -51,34 +92,21 @@ test.describe('Sign Up Page', () => {
 	test('User Sign up with valid details', async ({ baseURL, page, context }) => {
 		await waitForSignUpPageSuccess(baseURL, page);
 
-		const emailplaceholder = '[placeholder="name\\@yourcompany\\.com"]';
-		const nameplaceholder = '[placeholder="Your Name"]';
-		const companyPlaceholder = '[placeholder="Your Company"]';
-		const currentPasswordId = '#currentPassword';
-		const confirmPasswordId = '#confirmPassword';
-		const confirmPasswordErrorId = '#password-confirm-error';
-
-		const gettingStartedButton = page.locator('button[data-attr="signup"]');
+		const gettingStartedButton = page.locator(getStartedButtonSelector);
 
 		expect(await gettingStartedButton.isDisabled()).toBe(true);
 
-		// Fill [placeholder="name\@yourcompany\.com"]
-		await page.locator(emailplaceholder).fill(validemail);
-
-		// Fill [placeholder="Your Name"]
-		await page.locator(nameplaceholder).fill(validName);
-
-		// Fill [placeholder="Your Company"]
-		await page.locator(companyPlaceholder).fill(validCompanyName);
-
-		// Fill #currentPassword
-		await page.locator(currentPasswordId).fill(validPassword);
-
-		// Fill #confirmPasswordId
-		await page.locator(confirmPasswordId).fill(validPassword);
+		await fillDetailsInSignUpForm({
+			companyName: validCompanyName,
+			confirmPassword: validPassword,
+			email: validemail,
+			name: validName,
+			page,
+			password: validPassword,
+		});
 
 		// password validation message is not present
-		const locator = await page.locator(confirmPasswordErrorId).isVisible();
+		const locator = await page.locator(confirmPasswordSelector).isVisible();
 		expect(locator).toBe(false);
 
 		const buttonText = await gettingStartedButton.evaluate((e) => e.innerHTML);
@@ -97,5 +125,100 @@ test.describe('Sign Up Page', () => {
 		await context.storageState({
 			path: 'tests/auth.json',
 		});
+	});
+
+	test('Empty name with valid details', async ({ baseURL, page }) => {
+		await waitForSignUpPageSuccess(baseURL, page);
+
+		await fillDetailsInSignUpForm({
+			companyName: validCompanyName,
+			confirmPassword: validPassword,
+			email: validemail,
+			name: '',
+			page,
+			password: validPassword,
+		});
+
+		const gettingStartedButton = page.locator(getStartedButtonSelector);
+
+		expect(await gettingStartedButton.isDisabled()).toBe(true);
+	});
+
+	test('Empty Company name with valid details', async ({ baseURL, page }) => {
+		await waitForSignUpPageSuccess(baseURL, page);
+
+		await fillDetailsInSignUpForm({
+			companyName: '',
+			confirmPassword: validPassword,
+			email: validemail,
+			name: validName,
+			page,
+			password: validPassword,
+		});
+
+		const gettingStartedButton = page.locator(getStartedButtonSelector);
+
+		expect(await gettingStartedButton.isDisabled()).toBe(true);
+	});
+
+	test('Empty Email with valid details', async ({ baseURL, page }) => {
+		await waitForSignUpPageSuccess(baseURL, page);
+
+		await fillDetailsInSignUpForm({
+			companyName: validCompanyName,
+			confirmPassword: validPassword,
+			email: '',
+			name: validName,
+			page,
+			password: validPassword,
+		});
+
+		const gettingStartedButton = page.locator(getStartedButtonSelector);
+
+		expect(await gettingStartedButton.isDisabled()).toBe(true);
+	});
+
+	test('Empty Password and confirm password with valid details', async ({
+		baseURL,
+		page,
+	}) => {
+		await waitForSignUpPageSuccess(baseURL, page);
+
+		await fillDetailsInSignUpForm({
+			companyName: validCompanyName,
+			confirmPassword: '',
+			email: validemail,
+			name: validName,
+			page,
+			password: '',
+		});
+
+		const gettingStartedButton = page.locator(getStartedButtonSelector);
+
+		expect(await gettingStartedButton.isDisabled()).toBe(true);
+
+		// password validation message is not present
+		const locator = await page.locator(confirmPasswordSelector).isVisible();
+		expect(locator).toBe(false);
+	});
+
+	test('Miss Match Password and confirm password with valid details', async ({
+		baseURL,
+		page,
+	}) => {
+		await waitForSignUpPageSuccess(baseURL, page);
+
+		await fillDetailsInSignUpForm({
+			companyName: validCompanyName,
+			confirmPassword: validPassword,
+			email: validemail,
+			name: validName,
+			page,
+			password: '',
+		});
+
+		// password validation message is not present
+		const locator = await page.locator(confirmPasswordSelector).isVisible();
+		expect(locator).toBe(true);
 	});
 });

@@ -341,6 +341,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								!organizationName ||
 								!password ||
 								!confirmPassword ||
+								!firstName ||
 								confirmPasswordError ||
 								isPasswordPolicyError
 							}
