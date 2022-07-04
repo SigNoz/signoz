@@ -15,7 +15,11 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
+import { Dispatch } from 'redux';
+import AppActions from 'types/actions';
+import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
 import { EditorContainer, FooterContainer } from './styles';
@@ -30,6 +34,8 @@ function ImportJSON({
 	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
 		false,
 	);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
 	const [editorValue, setEditorValue] = useState<string>('');
@@ -86,6 +92,9 @@ function ImportJSON({
 			});
 
 			if (response.statusCode === 200) {
+				dispatch({
+					type: FLUSH_DASHBOARD,
+				});
 				setTimeout(() => {
 					history.push(
 						generatePath(ROUTES.DASHBOARD, {

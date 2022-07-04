@@ -32,7 +32,6 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 👉 Run aggregates on trace data to get business relevant metrics
 
-
 ![screenzy-1644432902955](https://user-images.githubusercontent.com/504541/153270713-1b2156e6-ec03-42de-975b-3c02b8ec1836.png)
 <br />
 ![screenzy-1644432986784](https://user-images.githubusercontent.com/504541/153270725-0efb73b3-06ed-4207-bf13-9b7e2e17c4b8.png)
@@ -88,8 +87,7 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 <img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
 
 ## Getting Started
-  
-  
+
 ### Deploy using Docker
 
 Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker
@@ -102,7 +100,6 @@ The [troubleshooting instructions](https://signoz.io/docs/deployment/troubleshoo
 ### Deploy in Kubernetes using Helm
 
 Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_chart) to install using helm charts
-  
 
 <br /><br />
 
@@ -112,7 +109,7 @@ Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_cha
 
 ### SigNoz vs Prometheus
 
-Prometheus is good if you want to do just metrics. But if you want to have a seamless experience between metrics and traces, then current experience of stitching together Prometheus & Jaeger is not great. 
+Prometheus is good if you want to do just metrics. But if you want to have a seamless experience between metrics and traces, then current experience of stitching together Prometheus & Jaeger is not great.
 
 Our goal is to provide an integrated UI between metrics & traces - similar to what SaaS vendors like Datadog provides - and give advanced filtering and aggregation over traces, something which Jaeger currently lack.
 
@@ -133,10 +130,27 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 ## Contributing
 
-
-We ❤️  contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz. 
+We ❤️ contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz.
 
 Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://signoz.io/slack)
+
+### Project maintainers
+
+#### Backend
+
+- [Ankit Nayan](https://github.com/ankitnayan)
+- [Nityananda Gohain](https://github.com/nityanandagohain)
+- [Srikanth Chekuri](https://github.com/srikanthccv)
+- [Vishal Sharma](https://github.com/makeavish)
+
+#### Frontend
+
+- [Palash Gupta](https://github.com/palashgdev)
+- [Pranshu Chittora](https://github.com/pranshuchittora)
+
+#### DevOps
+
+- [Prashant Shahi](https://github.com/prashant-shahi)
 
 <br /><br />
 
@@ -156,11 +170,8 @@ Join the [slack community](https://signoz.io/slack) to know more about distribut
 
 If you have any ideas, questions, or any feedback, please share on our [Github Discussions](https://github.com/SigNoz/signoz/discussions)
 
-As always, thanks to our amazing contributors!    
+As always, thanks to our amazing contributors!
 
 <a href="https://github.com/signoz/signoz/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=signoz/signoz" />
 </a>
-
-
-
