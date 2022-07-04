@@ -1,6 +1,6 @@
 import { QueryData } from '../widgets/getQuery';
 
-export type MetricsRangeProps = any;
+export type MetricsRangeProps = never;
 export interface MetricRangePayloadProps {
 	data: {
 		result: QueryData[];

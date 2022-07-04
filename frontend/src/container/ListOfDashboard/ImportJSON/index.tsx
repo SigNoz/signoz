@@ -73,10 +73,7 @@ function ImportJSON({
 					...e,
 					queryData: {
 						...e.queryData,
-						data: e.queryData.data.map((queryData) => ({
-							...queryData,
-							queryData: [],
-						})),
+						data: e.queryData.data,
 						error: false,
 						errorMessage: '',
 						loading: false,

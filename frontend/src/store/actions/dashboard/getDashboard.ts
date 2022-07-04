@@ -46,11 +46,10 @@ export const GetDashboard = ({
 							title: '',
 							queryType: 0,
 							queryData: {
-								data: [
-									{
-										queryData: [],
-									},
-								],
+								data: {
+									queryData: [],
+								},
+
 								error: false,
 								errorMessage: '',
 								loading: false,

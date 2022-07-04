@@ -58,7 +58,7 @@ services:
         condition: service_healthy
 
   otel-collector:
-    image: signoz/otelcontribcol:0.45.1-0.3
+    image: signoz/otelcontribcol:0.45.1-1.0
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -71,7 +71,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/otelcontribcol:0.45.1-0.3
+    image: signoz/otelcontribcol:0.45.1-1.0
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

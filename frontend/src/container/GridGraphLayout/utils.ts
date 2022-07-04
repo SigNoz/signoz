@@ -36,18 +36,17 @@ export const UpdateDashboard = async ({
 					nullZeroValues: '',
 					opacity: '',
 					panelTypes: graphType,
-					queryType: 0,
 					query: {
 						queryType: EQueryType.QUERY_BUILDER,
 						promQL: [
 							{
-								name: GetQueryName([]),
+								name: GetQueryName([]) || '',
 								...PromQLQueryTemplate,
 							},
 						],
 						clickHouse: [
 							{
-								name: GetQueryName([]),
+								name: GetQueryName([]) || '',
 								...ClickHouseQueryTemplate,
 							},
 						],
@@ -55,14 +54,14 @@ export const UpdateDashboard = async ({
 							formulas: [],
 							queryBuilder: [
 								{
-									name: GetQueryName([]),
+									name: GetQueryName([]) || '',
 									...QueryBuilderQueryTemplate,
 								},
 							],
 						},
 					},
 					queryData: {
-						data: [],
+						data: { queryData: [] },
 						error: false,
 						errorMessage: '',
 						loading: false,

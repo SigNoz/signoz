@@ -55,7 +55,7 @@
 			id="appMode"
 			rel="stylesheet"
 			type="text/css"
-			href="/css/antd.dark.min.css"
+			rel="preload"
 		/>
 	</head>
 	<body>
@@ -64,13 +64,7 @@
 
 		<script>
 			const themeNode = document.getElementById('appMode');
-			let userTheme;
-
-			try {
-				userTheme = localStorage.getItem('theme');
-			} catch (e) {
-				userTheme = '';
-			}
+			let userTheme = localStorage.getItem('theme') || "";
 
 			if (userTheme === 'lightMode') {
 				themeNode.setAttribute('href', '/css/antd.min.css');
