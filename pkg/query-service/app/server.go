@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	_ "net/http/pprof" // http profiler
 	"os"
 	"time"
 
@@ -24,24 +25,24 @@ import (
 )
 
 type ServerOptions struct {
-	HTTPHostPort string
-	// DruidClientUrl string
+	HTTPHostPort    string
+	PrivateHostPort string
 }
 
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
 	// logger       *zap.Logger
-	// querySvc     *querysvc.QueryService
-	// queryOptions *QueryOptions
-
 	// tracer opentracing.Tracer // TODO make part of flags.Service
 	serverOptions *ServerOptions
-	conn          net.Listener
-	// grpcConn           net.Listener
-	httpConn net.Listener
-	// grpcServer         *grpc.Server
-	httpServer         *http.Server
-	separatePorts      bool
+
+	// public http router
+	httpConn   net.Listener
+	httpServer *http.Server
+
+	// private http
+	privateConn net.Listener
+	privateHTTP *http.Server
+
 	unavailableChannel chan healthcheck.Status
 }
 
@@ -51,64 +52,22 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 }
 
 // NewServer creates and initializes Server
-// func NewServer(logger *zap.Logger, querySvc *querysvc.QueryService, options *QueryOptions, tracer opentracing.Tracer) (*Server, error) {
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
-
-	// _, httpPort, err := net.SplitHostPort(serverOptions.HTTPHostPort)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// _, grpcPort, err := net.SplitHostPort(options.GRPCHostPort)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// grpcServer, err := createGRPCServer(querySvc, options, logger, tracer)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
 		return nil, err
 	}
-
-	s := &Server{
-		// logger: logger,
-		// querySvc:           querySvc,
-		// queryOptions:       options,
-		// tracer:             tracer,
-		// grpcServer:         grpcServer,
-		serverOptions: serverOptions,
-		separatePorts: true,
-		// separatePorts:      grpcPort != httpPort,
-		unavailableChannel: make(chan healthcheck.Status),
-	}
-	httpServer, err := s.createHTTPServer()
-
-	if err != nil {
-		return nil, err
-	}
-	s.httpServer = httpServer
-
-	return s, nil
-}
-
-func (s *Server) createHTTPServer() (*http.Server, error) {
-
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+
 	if err != nil {
 		return nil, err
 	}
+
 	localDB.SetMaxOpenConns(10)
 
 	var reader Reader
-
 	storage := os.Getenv("STORAGE")
-	if storage == "druid" {
-		zap.S().Info("Using Apache Druid as datastore ...")
-		// reader = druidReader.NewReader(localDB)
-	} else if storage == "clickhouse" {
+	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB)
 		go clickhouseReader.Start()
@@ -122,24 +81,75 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 		return nil, err
 	}
 
+	s := &Server{
+		// logger: logger,
+		// tracer: tracer,
+		serverOptions:      serverOptions,
+		unavailableChannel: make(chan healthcheck.Status),
+	}
+
+	httpServer, err := s.createPublicServer(apiHandler)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.httpServer = httpServer
+
+	privateServer, err := s.createPrivateServer(apiHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	s.privateHTTP = privateServer
+
+	return s, nil
+}
+
+func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
+
+	r := NewRouter()
+
+	r.Use(setTimeoutMiddleware)
+	r.Use(s.analyticsMiddleware)
+	r.Use(loggingMiddlewarePrivate)
+
+	api.RegisterPrivateRoutes(r)
+
+	c := cors.New(cors.Options{
+		//todo(amol): find out a way to add exact domain or
+		// ip here for alert manager
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+	})
+
+	handler := c.Handler(r)
+	handler = handlers.CompressHandler(handler)
+
+	return &http.Server{
+		Handler: handler,
+	}, nil
+}
+
+func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
+
 	r := NewRouter()
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	apiHandler.RegisterRoutes(r)
-	apiHandler.RegisterMetricsRoutes(r)
+	api.RegisterRoutes(r)
+	api.RegisterMetricsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		// AllowCredentials: true,
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	})
 
 	handler := c.Handler(r)
-	// var handler http.Handler = r
 
 	handler = handlers.CompressHandler(handler)
 
@@ -148,6 +158,7 @@ func (s *Server) createHTTPServer() (*http.Server, error) {
 	}, nil
 }
 
+// loggingMiddleware is used for logging public api calls
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
@@ -158,18 +169,48 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// loggingMiddlewarePrivate is used for logging private api calls
+// from internal services like alert manager
+func loggingMiddlewarePrivate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		startTime := time.Now()
+		next.ServeHTTP(w, r)
+		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+	})
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
+	// WriteHeader(int) is not called if our response implicitly returns 200 OK, so
+	// we default to that status code.
+	return &loggingResponseWriter{w, http.StatusOK}
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		data := map[string]interface{}{"path": path}
+		lrw := NewLoggingResponseWriter(w)
+		next.ServeHTTP(lrw, r)
+
+		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
 
-		next.ServeHTTP(w, r)
 	})
 }
 
@@ -183,61 +224,42 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// initListener initialises listeners of the server
-func (s *Server) initListener() (cmux.CMux, error) {
-	if s.separatePorts { // use separate ports and listeners each for gRPC and HTTP requests
-		var err error
-		// s.grpcConn, err = net.Listen("tcp", s.queryOptions.GRPCHostPort)
-		// if err != nil {
-		// 	return nil, err
-		// }
-
-		s.httpConn, err = net.Listen("tcp", s.serverOptions.HTTPHostPort)
-		if err != nil {
-			return nil, err
-		}
-		zap.S().Info("Query server started ...")
-		return nil, nil
+// initListeners initialises listeners of the server
+func (s *Server) initListeners() error {
+	// listen on public port
+	var err error
+	publicHostPort := s.serverOptions.HTTPHostPort
+	if publicHostPort == "" {
+		return fmt.Errorf("constants.HTTPHostPort is required")
 	}
 
-	// //  old behavior using cmux
-	// conn, err := net.Listen("tcp", s.queryOptions.HostPort)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// s.conn = conn
+	s.httpConn, err = net.Listen("tcp", publicHostPort)
+	if err != nil {
+		return err
+	}
 
-	// var tcpPort int
-	// if port, err := netutils
+	zap.S().Info(fmt.Sprintf("Query server started listening on %s...", s.serverOptions.HTTPHostPort))
 
-	// utils.GetPort(s.conn.Addr()); err == nil {
-	// 	tcpPort = port
-	// }
+	// listen on private port to support internal services
+	privateHostPort := s.serverOptions.PrivateHostPort
 
-	// zap.S().Info(
-	// 	"Query server started",
-	// 	zap.Int("port", tcpPort),
-	// 	zap.String("addr", s.queryOptions.HostPort))
+	if privateHostPort == "" {
+		return fmt.Errorf("constants.PrivateHostPort is required")
+	}
 
-	// // cmux server acts as a reverse-proxy between HTTP and GRPC backends.
-	// cmuxServer := cmux.New(s.conn)
+	s.privateConn, err = net.Listen("tcp", privateHostPort)
+	if err != nil {
+		return err
+	}
+	zap.S().Info(fmt.Sprintf("Query server started listening on private port %s...", s.serverOptions.PrivateHostPort))
 
-	// s.grpcConn = cmuxServer.MatchWithWriters(
-	// 	cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"),
-	// 	cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc+proto"),
-	// )
-	// s.httpConn = cmuxServer.Match(cmux.Any())
-	// s.queryOptions.HTTPHostPort = s.queryOptions.HostPort
-	// s.queryOptions.GRPCHostPort = s.queryOptions.HostPort
-
-	return nil, nil
-
+	return nil
 }
 
-// Start http, GRPC and cmux servers concurrently
+// Start listening on http and private http port concurrently
 func (s *Server) Start() error {
 
-	_, err := s.initListener()
+	err := s.initListeners()
 	if err != nil {
 		return err
 	}
@@ -256,6 +278,34 @@ func (s *Server) Start() error {
 		default:
 			zap.S().Error("Could not start HTTP server", zap.Error(err))
 		}
+		s.unavailableChannel <- healthcheck.Unavailable
+	}()
+
+	go func() {
+		zap.S().Info("Starting pprof server", zap.String("addr", constants.DebugHttpPort))
+
+		err = http.ListenAndServe(constants.DebugHttpPort, nil)
+		if err != nil {
+			zap.S().Error("Could not start pprof server", zap.Error(err))
+		}
+	}()
+
+	var privatePort int
+	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
+		privatePort = port
+	}
+	fmt.Println("starting private http")
+	go func() {
+		zap.S().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
+
+		switch err := s.privateHTTP.Serve(s.privateConn); err {
+		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
+			// normal exit, nothing to do
+			zap.S().Info("private http server closed")
+		default:
+			zap.S().Error("Could not start private HTTP server", zap.Error(err))
+		}
+
 		s.unavailableChannel <- healthcheck.Unavailable
 
 	}()

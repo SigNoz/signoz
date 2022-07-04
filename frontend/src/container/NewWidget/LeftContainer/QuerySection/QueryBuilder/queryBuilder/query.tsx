@@ -2,30 +2,40 @@ import { AutoComplete, Col, Input, Row, Select, Spin } from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { useEffect, useState } from 'react';
+import { IMetricsBuilderQuery } from 'types/api/dashboard/getAll';
 import { EReduceOperator } from 'types/common/dashboard';
 
-import { TQueryCategories } from '../../types';
 import { AggregateFunctions } from '../Options';
 import QueryHeader from '../QueryHeader';
 import MetricTagKeyFilter from './MetricTagKeyFilter';
+import { IOption } from './MetricTagKeyFilter/types';
 import { GetTagKeys } from './MetricTagKeyFilter/utils';
-import { MetricQuery } from 'types/api/metrics/compositeQuery';
+import { IQueryBuilderQueryHandleChange } from './types';
 
 const { Option } = Select;
-function MetricsBuilder({
-	queryData,
-	queryIndex,
-	handleQueryChange,
-	selectedGraph,
-	hideLegend,
-}: QueryBuilderProps): JSX.Element {
-	const [groupByOptions, setGroupByOptions] = useState([]);
-	const [metricName, setMetricName] = useState(queryData.metricName);
 
-	const [metricNameList, setMetricNameList] = useState([]);
+interface IMetricsBuilderProps {
+	queryIndex: number;
+	selectedGraph: GRAPH_TYPES;
+	queryData: IMetricsBuilderQuery;
+	handleQueryChange: (args: IQueryBuilderQueryHandleChange) => void;
+}
+
+function MetricsBuilder({
+	queryIndex,
+	selectedGraph,
+	queryData,
+	handleQueryChange,
+}: IMetricsBuilderProps): JSX.Element {
+	const [groupByOptions, setGroupByOptions] = useState<IOption[]>([]);
+	const [metricName, setMetricName] = useState<string | null>(
+		queryData.metricName,
+	);
+
+	const [metricNameList, setMetricNameList] = useState<string[]>([]);
 	const [metricNameLoading, setMetricNameLoading] = useState(false);
 
-	const handleMetricNameSelect = (e): void => {
+	const handleMetricNameSelect = (e: string): void => {
 		handleQueryChange({ queryIndex, metricName: e });
 		setMetricName(e);
 	};
@@ -53,10 +63,11 @@ function MetricsBuilder({
 	};
 
 	useEffect(() => {
-		GetTagKeys(metricName).then((tagKeys) => {
+		GetTagKeys(metricName || '').then((tagKeys) => {
 			setGroupByOptions(tagKeys);
 		});
 	}, [metricName]);
+
 	return (
 		<QueryHeader
 			name={queryData.name}
@@ -121,7 +132,9 @@ function MetricsBuilder({
 							<MetricTagKeyFilter
 								metricName={metricName}
 								selectedTagFilters={queryData.tagFilters.items}
-								onSetQuery={(updatedTagFilters): void =>
+								onSetQuery={(
+									updatedTagFilters: IMetricsBuilderQuery['tagFilters']['items'],
+								): void =>
 									handleQueryChange({ queryIndex, tagFilters: updatedTagFilters })
 								}
 							/>
@@ -167,9 +180,13 @@ function MetricsBuilder({
 											.filter((op) => !(parseInt(op, 10) >= 0))
 											.map((op) => ({
 												label: op,
-												value: EReduceOperator[op],
+												value: EReduceOperator[op as keyof typeof EReduceOperator],
 											}))}
-										defaultValue={EReduceOperator[queryData.reduceTo]}
+										defaultValue={
+											EReduceOperator[
+												(queryData.reduceTo as unknown) as keyof typeof EReduceOperator
+											]
+										}
 										onChange={(e): void => {
 											handleQueryChange({ queryIndex, reduceTo: e });
 										}}
@@ -179,28 +196,19 @@ function MetricsBuilder({
 						</Row>
 					</Col>
 				</Row>
-				{hideLegend && (
-					<Row style={{ margin: '0.5rem 0' }}>
-						<Input
-							onChange={(e): void => {
-								handleQueryChange({ queryIndex, legend: e.target.value });
-							}}
-							size="middle"
-							defaultValue={queryData.legend}
-							addonBefore="Legend Format"
-						/>
-					</Row>
-				)}
+				<Row style={{ margin: '0.5rem 0' }}>
+					<Input
+						onChange={(e): void => {
+							handleQueryChange({ queryIndex, legend: e.target.value });
+						}}
+						size="middle"
+						defaultValue={queryData.legend}
+						addonBefore="Legend Format"
+					/>
+				</Row>
 			</div>
 		</QueryHeader>
 	);
 }
 
-interface QueryBuilderProps {
-	selectedGraph: GRAPH_TYPES;
-	queryIndex: string;
-	queryData: MetricQuery;
-	queryCategory: TQueryCategories;
-	hideLegend: boolean;
-}
 export default MetricsBuilder;

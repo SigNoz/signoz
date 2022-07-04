@@ -11,7 +11,6 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
-import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Alerts } from 'types/api/alerts/getAll';
@@ -51,11 +50,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [notifications, Element] = notification.useNotification();
 
 	const onEditHandler = (id: string): void => {
-		history.push(
-			generatePath(ROUTES.EDIT_ALERTS, {
-				ruleId: id,
-			}),
-		);
+		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
 	};
 
 	const columns: ColumnsType<Alerts> = [

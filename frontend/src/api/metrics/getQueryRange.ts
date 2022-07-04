@@ -3,17 +3,15 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	TagKeyProps,
-	TagKeysPayloadProps,
-	TagValueProps,
-	TagValuesPayloadProps,
-} from 'types/api/metrics/getResourceAttributes';
+	MetricRangePayloadProps,
+	MetricsRangeProps,
+} from 'types/api/metrics/getQueryRange';
 
-export const getResourceAttributesTagValues = async (
-	props: TagValueProps,
-): Promise<SuccessResponse<TagValuesPayloadProps> | ErrorResponse> => {
+export const getMetricsQueryRange = async (
+	props: MetricsRangeProps,
+): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/metrics/query_range`, {});
+		const response = await axios.post(`/metrics/query_range`, props);
 
 		return {
 			statusCode: 200,

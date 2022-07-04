@@ -34,11 +34,8 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		// HTTPHostPort:   v.GetString(app.HTTPHostPort),
-		// DruidClientUrl: v.GetString(app.DruidClientUrl),
-
-		HTTPHostPort: constants.HTTPHostPort,
-		// DruidClientUrl: constants.DruidClientUrl,
+		HTTPHostPort:    constants.HTTPHostPort,
+		PrivateHostPort: constants.PrivateHostPort,
 	}
 
 	// Read the jwt secret key

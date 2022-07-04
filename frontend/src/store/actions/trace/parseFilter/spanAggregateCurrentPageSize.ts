@@ -19,7 +19,7 @@ export const parseQueryIntoPageSize = (
 				current = parseInt(parsedValue, 10);
 			}
 		} catch (error) {
-			console.log('error while parsing json');
+			console.error('error while parsing json');
 		}
 	}
 

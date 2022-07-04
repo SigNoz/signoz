@@ -43,7 +43,7 @@ export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
-	return payload.data.filter(Boolean).map((tagValue: string) => ({
+	return payload.data.map((tagValue: string) => ({
 		label: tagValue,
 		value: tagValue,
 	}));

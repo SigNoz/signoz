@@ -1,17 +1,23 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { notification } from 'antd';
-import { updateDashboard } from 'container/GridGraphLayout/utils';
+import history from 'lib/history';
 import React, { useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import {
+	ToggleAddWidget,
+	ToggleAddWidgetProps,
+} from 'store/actions/dashboard/toggleAddWidget';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
-import { v4 as uuid } from 'uuid';
 
 import menuItems, { ITEMS } from './menuItems';
 import { Card, Container, Text } from './styles';
 
-function DashboardGraphSlider(): JSX.Element {
+function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -19,47 +25,30 @@ function DashboardGraphSlider(): JSX.Element {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 
-	const onDragStartHandler: React.DragEventHandler<HTMLDivElement> = useCallback(
-		(event: React.DragEvent<HTMLDivElement>) => {
-			event.dataTransfer.setData('text/plain', event.currentTarget.id);
-		},
-		[],
-	);
-
 	const onClickHandler = useCallback(
 		async (name: ITEMS) => {
 			try {
-				const getX = (): number => {
-					if (data.layout && data.layout?.length > 0) {
-						const lastIndexX = data.layout[(data.layout?.length || 0) - 1];
-						return (lastIndexX.w + lastIndexX.x) % 12;
-					}
-					return 0;
-				};
+				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
 
-				await updateDashboard({
-					data,
-					generateWidgetId: uuid(),
-					graphType: name,
-					layout: [
-						...(data.layout || []),
-						{
-							h: 2,
-							i: (((data.layout || [])?.length || 0) + 1).toString(),
-							w: 6,
-							x: getX(),
-							y: 0,
-						},
-					],
-					selectedDashboard,
-				});
+				if (emptyLayout === undefined) {
+					notification.error({
+						message: 'Please click on Add Panel Button',
+					});
+					return;
+				}
+
+				toggleAddWidget(false);
+
+				history.push(
+					`${history.location.pathname}/new?graphType=${name}&widgetId=${emptyLayout.i}`,
+				);
 			} catch (error) {
 				notification.error({
 					message: 'Something went wrong',
 				});
 			}
 		},
-		[data, selectedDashboard],
+		[data, toggleAddWidget],
 	);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const fillColor: React.CSSProperties['color'] = isDarkMode ? 'white' : 'black';
@@ -68,11 +57,12 @@ function DashboardGraphSlider(): JSX.Element {
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
 				<Card
-					onClick={(): Promise<void> => onClickHandler(name)}
+					onClick={(event): void => {
+						event.preventDefault();
+						onClickHandler(name);
+					}}
 					id={name}
-					onDragStart={onDragStartHandler}
 					key={name}
-					draggable
 				>
 					<Icon fillColor={fillColor} />
 					<Text>{display}</Text>
@@ -84,4 +74,18 @@ function DashboardGraphSlider(): JSX.Element {
 
 export type GRAPH_TYPES = ITEMS;
 
-export default DashboardGraphSlider;
+interface DispatchProps {
+	toggleAddWidget: (
+		props: ToggleAddWidgetProps,
+	) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	toggleAddWidget: bindActionCreators(ToggleAddWidget, dispatch),
+});
+
+type Props = DispatchProps;
+
+export default connect(null, mapDispatchToProps)(DashboardGraphSlider);

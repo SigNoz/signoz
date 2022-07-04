@@ -12,7 +12,7 @@ receivers:
       grpc:
       thrift_http:
   hostmetrics:
-    collection_interval: 30s
+    collection_interval: 60s
     scrapers:
       cpu:
       load:
@@ -22,7 +22,8 @@ receivers:
       network:
 processors:
   batch:
-    send_batch_size: 1000
+    send_batch_size: 10000
+    send_batch_max_size: 11000
     timeout: 10s
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
@@ -52,7 +53,7 @@ extensions:
   health_check: {}
   zpages: {}
 exporters:
-  clickhouse:
+  clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
@@ -66,7 +67,7 @@ service:
     traces:
       receivers: [jaeger, otlp]
       processors: [signozspanmetrics/prometheus, batch]
-      exporters: [clickhouse]
+      exporters: [clickhousetraces]
     metrics:
       receivers: [otlp, hostmetrics]
       processors: [batch]

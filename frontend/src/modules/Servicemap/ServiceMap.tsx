@@ -5,12 +5,13 @@ import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
+import AppReducer from 'types/reducer/app';
 
 import SelectService from './SelectService';
 import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
@@ -53,6 +54,8 @@ export interface graphDataType {
 function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
 
 	useEffect(() => {
@@ -89,7 +92,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		fgRef && fgRef.current && fgRef.current.zoomToFit(100, 120);
 	};
 
-	const { nodes, links } = getGraphData(serviceMap);
+	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
 	const graphData = { nodes, links };
 	return (
 		<Container>
@@ -106,7 +109,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 				linkAutoColorBy={(d) => d.target}
 				linkDirectionalParticles="value"
 				linkDirectionalParticleSpeed={(d) => d.value}
-				nodeCanvasObject={(node, ctx, globalScale) => {
+				nodeCanvasObject={(node, ctx) => {
 					const label = transformLabel(node.id);
 					const { fontSize } = node;
 					ctx.font = `${fontSize}px Roboto`;
@@ -118,7 +121,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 					ctx.fill();
 					ctx.textAlign = 'center';
 					ctx.textBaseline = 'middle';
-					ctx.fillStyle = '#646464';
+					ctx.fillStyle = isDarkMode ? '#ffffff' : '#000000';
 					ctx.fillText(label, node.x, node.y);
 				}}
 				onNodeClick={(node) => {

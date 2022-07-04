@@ -20,12 +20,16 @@ var (
 	client http.Client
 )
 
-func setTTL(table, coldStorage, toColdTTL, deleteTTL string) ([]byte, error) {
+func setTTL(table, coldStorage, toColdTTL, deleteTTL string, jwtToken string) ([]byte, error) {
 	params := fmt.Sprintf("type=%s&duration=%s", table, deleteTTL)
 	if len(toColdTTL) > 0 {
 		params += fmt.Sprintf("&coldStorage=%s&toColdDuration=%s", coldStorage, toColdTTL)
 	}
-	resp, err := client.Post(endpoint+"/api/v1/settings/ttl?"+params, "", nil)
+	var bearer = "Bearer " + jwtToken
+	req, err := http.NewRequest("POST", endpoint+"/api/v1/settings/ttl?"+params, nil)
+	req.Header.Add("Authorization", bearer)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +44,18 @@ func setTTL(table, coldStorage, toColdTTL, deleteTTL string) ([]byte, error) {
 }
 
 func TestListDisks(t *testing.T) {
-	resp, err := client.Get(endpoint + "/api/v1/disks")
+	t.Skip()
+	email := "alice@signoz.io"
+	password := "Password@123"
+
+	loginResp, err := login(email, password, "")
+	require.NoError(t, err)
+
+	var bearer = "Bearer " + loginResp.AccessJwt
+	req, err := http.NewRequest("POST", endpoint+"/api/v1/disks", nil)
+	req.Header.Add("Authorization", bearer)
+
+	resp, err := client.Do(req)
 	require.NoError(t, err)
 
 	defer resp.Body.Close()
@@ -50,6 +65,11 @@ func TestListDisks(t *testing.T) {
 }
 
 func TestSetTTL(t *testing.T) {
+	email := "alice@signoz.io"
+	password := "Password@123"
+
+	loginResp, err := login(email, password, "")
+	require.NoError(t, err)
 
 	testCases := []struct {
 		caseNo      int
@@ -60,7 +80,7 @@ func TestSetTTL(t *testing.T) {
 		expected    string
 	}{
 		{
-			1, "s3", "traces", "100s", "60s",
+			1, "s3", "traces", "100h", "60h",
 			"Delete TTL should be greater than cold storage move TTL.",
 		},
 		{
@@ -72,21 +92,17 @@ func TestSetTTL(t *testing.T) {
 			"Not a valid TTL duration 100",
 		},
 		{
-			4, "s3", "traces", "", "60s",
+			4, "s3", "metrics", "1h", "2h",
 			"move ttl has been successfully set up",
 		},
 		{
-			5, "s3", "traces", "10s", "600s",
+			5, "s3", "traces", "10s", "6h",
 			"move ttl has been successfully set up",
-		},
-		{
-			6, "s4", "traces", "10s", "600s",
-			"No such volume `s4` in storage policy `tiered`",
 		},
 	}
 
 	for _, tc := range testCases {
-		r, err := setTTL(tc.table, tc.coldStorage, tc.coldTTL, tc.deleteTTL)
+		r, err := setTTL(tc.table, tc.coldStorage, tc.coldTTL, tc.deleteTTL, loginResp.AccessJwt)
 		require.NoErrorf(t, err, "Failed case: %d", tc.caseNo)
 		require.Containsf(t, string(r), tc.expected, "Failed case: %d", tc.caseNo)
 	}
@@ -104,13 +120,17 @@ func TestSetTTL(t *testing.T) {
 	fmt.Printf("=== Found %d objects in Minio\n", count)
 }
 
-func getTTL(t *testing.T, table string) *model.GetTTLResponseItem {
-	req := endpoint + fmt.Sprintf("/api/v1/settings/ttl?type=%s", table)
+func getTTL(t *testing.T, table string, jwtToken string) *model.GetTTLResponseItem {
+	url := endpoint + fmt.Sprintf("/api/v1/settings/ttl?type=%s", table)
 	if len(table) == 0 {
-		req = endpoint + "/api/v1/settings/ttl"
+		url = endpoint + "/api/v1/settings/ttl"
 	}
 
-	resp, err := client.Get(req)
+	var bearer = "Bearer " + jwtToken
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Add("Authorization", bearer)
+	resp, err := client.Do(req)
+
 	require.NoError(t, err)
 
 	defer resp.Body.Close()
@@ -123,55 +143,69 @@ func getTTL(t *testing.T, table string) *model.GetTTLResponseItem {
 }
 
 func TestGetTTL(t *testing.T) {
-	r, err := setTTL("traces", "s3", "3600s", "7200s")
+	email := "alice@signoz.io"
+	password := "Password@123"
+
+	loginResp, err := login(email, password, "")
+	require.NoError(t, err)
+
+	resp := getTTL(t, "traces", loginResp.AccessJwt)
+	for resp.Status == "pending" {
+		time.Sleep(time.Second)
+	}
+	require.Equal(t, "success", resp.Status)
+
+	r, err := setTTL("traces", "s3", "1h", "2h", loginResp.AccessJwt)
 	require.NoError(t, err)
 	require.Contains(t, string(r), "successfully set up")
 
-	resp := getTTL(t, "traces")
+	resp = getTTL(t, "traces", loginResp.AccessJwt)
+	for resp.Status == "pending" {
+		time.Sleep(time.Second)
+		resp = getTTL(t, "traces", loginResp.AccessJwt)
+		require.Equal(t, 1, resp.ExpectedTracesMoveTime)
+		require.Equal(t, 2, resp.ExpectedTracesTime)
+	}
+	resp = getTTL(t, "traces", loginResp.AccessJwt)
+	require.Equal(t, "success", resp.Status)
 	require.Equal(t, 1, resp.TracesMoveTime)
 	require.Equal(t, 2, resp.TracesTime)
 
-	r, err = setTTL("metrics", "s3", "3600s", "7200s")
+	resp = getTTL(t, "metrics", loginResp.AccessJwt)
+	for resp.Status == "pending" {
+		time.Sleep(time.Second)
+	}
+	require.Equal(t, "success", resp.Status)
+
+	r, err = setTTL("traces", "s3", "10h", "20h", loginResp.AccessJwt)
 	require.NoError(t, err)
 	require.Contains(t, string(r), "successfully set up")
 
-	resp = getTTL(t, "metrics")
+	resp = getTTL(t, "traces", loginResp.AccessJwt)
+	for resp.Status == "pending" {
+		time.Sleep(time.Second)
+		resp = getTTL(t, "traces", loginResp.AccessJwt)
+	}
+	require.Equal(t, "success", resp.Status)
+	require.Equal(t, 10, resp.TracesMoveTime)
+	require.Equal(t, 20, resp.TracesTime)
+
+	resp = getTTL(t, "metrics", loginResp.AccessJwt)
+	for resp.Status != "success" && resp.Status != "failed" {
+		time.Sleep(time.Second)
+		resp = getTTL(t, "metrics", loginResp.AccessJwt)
+	}
+	require.Equal(t, "success", resp.Status)
 	require.Equal(t, 1, resp.MetricsMoveTime)
 	require.Equal(t, 2, resp.MetricsTime)
 
-	r, err = setTTL("traces", "s3", "36000s", "72000s")
+	r, err = setTTL("metrics", "s3", "0s", "0s", loginResp.AccessJwt)
 	require.NoError(t, err)
-	require.Contains(t, string(r), "successfully set up")
+	require.Contains(t, string(r), "Not a valid TTL duration 0s")
 
-	resp = getTTL(t, "")
-	require.Equal(t, 10, resp.TracesMoveTime)
-	require.Equal(t, 20, resp.TracesTime)
-	require.Equal(t, 1, resp.MetricsMoveTime)
-	require.Equal(t, 2, resp.MetricsTime)
-
-	r, err = setTTL("metrics", "s3", "15h", "50h")
+	r, err = setTTL("traces", "s3", "0s", "0s", loginResp.AccessJwt)
 	require.NoError(t, err)
-	require.Contains(t, string(r), "successfully set up")
-
-	resp = getTTL(t, "")
-	require.Equal(t, 10, resp.TracesMoveTime)
-	require.Equal(t, 20, resp.TracesTime)
-	require.Equal(t, 15, resp.MetricsMoveTime)
-	require.Equal(t, 50, resp.MetricsTime)
-
-	r, err = setTTL("metrics", "s3", "0s", "0s")
-	require.NoError(t, err)
-	require.Contains(t, string(r), "successfully set up")
-
-	r, err = setTTL("traces", "s3", "0s", "0s")
-	require.NoError(t, err)
-	require.Contains(t, string(r), "successfully set up")
-
-	resp = getTTL(t, "")
-	require.Equal(t, 0, resp.TracesMoveTime)
-	require.Equal(t, 0, resp.TracesTime)
-	require.Equal(t, 0, resp.MetricsMoveTime)
-	require.Equal(t, 0, resp.MetricsTime)
+	require.Contains(t, string(r), "Not a valid TTL duration 0s")
 }
 
 func TestMain(m *testing.M) {

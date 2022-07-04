@@ -27,12 +27,19 @@ function RouteTab({
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={activeKey}
+			animated
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
 		>
 			{routes.map(
-				({ Component, name }): JSX.Element => (
-					<TabPane tab={name} key={name}>
+				({ Component, name, route }): JSX.Element => (
+					<TabPane
+						tabKey={route}
+						animated
+						destroyInactiveTabPane
+						tab={name}
+						key={name}
+					>
 						<Component />
 					</TabPane>
 				),

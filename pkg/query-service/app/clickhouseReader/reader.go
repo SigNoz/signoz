@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/google/uuid"
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -60,10 +62,8 @@ const (
 	signozErrorIndexTable = "signoz_error_index"
 	signozTraceTableName  = "signoz_index_v2"
 	signozMetricDBName    = "signoz_metrics"
-	signozSampleName      = "samples"
-	signozTSName          = "time_series"
-	signozSampleTableName = "samples"
-	signozTSTableName     = "time_series"
+	signozSampleTableName = "samples_v2"
+	signozTSTableName     = "time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -591,19 +591,43 @@ func (r *ClickHouseReader) GetRulesFromDB() (*[]model.RuleResponseItem, *model.A
 
 func (r *ClickHouseReader) GetRule(id string) (*model.RuleResponseItem, *model.ApiError) {
 
-	idInt, _ := strconv.Atoi(id)
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		zap.S().Debug("Error in parsing param: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
 
 	rule := &model.RuleResponseItem{}
 
-	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", idInt)
-
-	err := r.localDB.Get(rule, query)
-
-	zap.S().Info(query)
+	query := "SELECT id, updated_at, data FROM rules WHERE id=?"
+	rows, err := r.localDB.Query(query, idInt)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	count := 0
+	// iterate over each row
+	for rows.Next() {
+		err = rows.Scan(&rule.Id, &rule.UpdatedAt, &rule.Data)
+		if err != nil {
+			zap.S().Debug(err)
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+		count += 1
+
+	}
+
+	if count == 0 {
+		err = fmt.Errorf("no rule with id %d found", idInt)
+		zap.S().Debug(err)
+		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: err}
+	}
+	if count > 1 {
+		err = fmt.Errorf("multiple rules with id %d found", idInt)
+		zap.S().Debug(err)
+		return nil, &model.ApiError{Typ: model.ErrorConflict, Err: err}
 	}
 
 	return rule, nil
@@ -1187,7 +1211,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	m4xx := make(map[string]uint64)
 
 	for j := range service4xxItems {
-		m5xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
+		m4xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
 	}
 
 	for i := range serviceItems {
@@ -2266,48 +2290,135 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	return &GetFilteredSpansAggregatesResponse, nil
 }
 
+// SetTTL sets the TTL for traces or metrics tables.
+// This is an async API which creates goroutines to set TTL.
+// Status of TTL update is tracked with ttl_status table in sqlite db.
 func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
-
+	// Keep only latest 100 transactions/requests
+	r.deleteTtlTransactions(ctx, 100)
 	var req, tableName string
+	// uuid is used as transaction id
+	uuidWithHyphen := uuid.New()
+	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+	coldStorageDuration := -1
+	if len(params.ColdStorageVolume) > 0 {
+		coldStorageDuration = int(params.ToColdStorageDuration)
+	}
+
 	switch params.Type {
 	case constants.TraceTTL:
 		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
-		for _, tableName := range tableNameArray {
-			req = fmt.Sprintf(
-				"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
-				tableName, params.DelDuration)
-			if len(params.ColdStorageVolume) > 0 {
-				req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
-					params.ToColdStorageDuration, params.ColdStorageVolume)
-			}
-			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
+		for _, tableName = range tableNameArray {
+			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
-				return nil, err
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 			}
-
-			zap.S().Debugf("Executing TTL request: %s\n", req)
-			if err := r.db.Exec(ctx, req); err != nil {
-				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
+			if statusItem.Status == constants.StatusPending {
+				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 			}
+		}
+		for _, tableName := range tableNameArray {
+			// TODO: DB queries should be implemented with transactional statements but currently clickhouse doesn't support them. Issue: https://github.com/ClickHouse/ClickHouse/issues/22086
+			go func(tableName string) {
+				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+				if dbErr != nil {
+					zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
+					return
+				}
+				req = fmt.Sprintf(
+					"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
+					tableName, params.DelDuration)
+				if len(params.ColdStorageVolume) > 0 {
+					req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
+						params.ToColdStorageDuration, params.ColdStorageVolume)
+				}
+				err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
+				if err != nil {
+					zap.S().Error(fmt.Errorf("Error in setting cold storage: %s", err.Err.Error()))
+					statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+					if err == nil {
+						_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+						if dbErr != nil {
+							zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+							return
+						}
+					}
+					return
+				}
+				zap.S().Debugf("Executing TTL request: %s\n", req)
+				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
+				if err := r.db.Exec(context.Background(), req); err != nil {
+					zap.S().Error(fmt.Errorf("Error in executing set TTL query: %s", err.Error()))
+					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					if dbErr != nil {
+						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						return
+					}
+					return
+				}
+				_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+				if dbErr != nil {
+					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					return
+				}
+			}(tableName)
 		}
 
 	case constants.MetricsTTL:
-		tableName = signozMetricDBName + "." + signozSampleName
-		req = fmt.Sprintf(
-			"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
-				"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
-		if len(params.ColdStorageVolume) > 0 {
-			req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
-				" + INTERVAL %v SECOND TO VOLUME '%s'",
-				params.ToColdStorageDuration, params.ColdStorageVolume)
+		tableName = signozMetricDBName + "." + signozSampleTableName
+		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 		}
-		zap.S().Debugf("Executing TTL request: %s\n", req)
-		if err := r.db.Exec(ctx, req); err != nil {
-			zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. Err=%v", err)}
+		if statusItem.Status == constants.StatusPending {
+			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
 		}
+		go func(tableName string) {
+			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+			if dbErr != nil {
+				zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
+				return
+			}
+			req = fmt.Sprintf(
+				"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
+					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+			if len(params.ColdStorageVolume) > 0 {
+				req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
+					" + INTERVAL %v SECOND TO VOLUME '%s'",
+					params.ToColdStorageDuration, params.ColdStorageVolume)
+			}
+			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
+			if err != nil {
+				zap.S().Error(fmt.Errorf("Error in setting cold storage: %s", err.Err.Error()))
+				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+				if err == nil {
+					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					if dbErr != nil {
+						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						return
+					}
+				}
+				return
+			}
+			zap.S().Debugf("Executing TTL request: %s\n", req)
+			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
+			if err := r.db.Exec(ctx, req); err != nil {
+				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				if dbErr != nil {
+					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					return
+				}
+				return
+			}
+			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+			if dbErr != nil {
+				zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+				return
+			}
+		}(tableName)
 
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v",
@@ -2315,6 +2426,61 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	}
 
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
+}
+
+func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
+	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
+	if err != nil {
+		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
+	}
+}
+
+// checkTTLStatusItem checks if ttl_status table has an entry for the given table name
+func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
+	statusItem := []model.TTLStatusItem{}
+
+	query := fmt.Sprintf("SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
+
+	err := r.localDB.Select(&statusItem, query)
+
+	zap.S().Info(query)
+
+	if len(statusItem) == 0 {
+		return model.TTLStatusItem{}, nil
+	}
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
+	}
+	return statusItem[0], nil
+}
+
+// setTTLQueryStatus fetches ttl_status table status from DB
+func (r *ClickHouseReader) setTTLQueryStatus(ctx context.Context, tableNameArray []string) (string, *model.ApiError) {
+	failFlag := false
+	status := constants.StatusSuccess
+	for _, tableName := range tableNameArray {
+		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+		emptyStatusStruct := model.TTLStatusItem{}
+		if statusItem == emptyStatusStruct {
+			return "", nil
+		}
+		if err != nil {
+			return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
+		}
+		if statusItem.Status == constants.StatusPending && statusItem.UpdatedAt.Unix()-time.Now().Unix() < 3600 {
+			status = constants.StatusPending
+			return status, nil
+		}
+		if statusItem.Status == constants.StatusFailed {
+			failFlag = true
+		}
+	}
+	if failFlag {
+		status = constants.StatusFailed
+	}
+
+	return status, nil
 }
 
 func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string, coldStorageVolume string) *model.ApiError {
@@ -2348,6 +2514,7 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 	return &diskItems, nil
 }
 
+// GetTTL returns current ttl, expected ttl and past setTTL status for metrics/traces.
 func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 
 	parseTTL := func(queryResp string) (int, int) {
@@ -2417,42 +2584,53 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	switch ttlParams.Type {
 	case constants.TraceTTL:
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
+		if err != nil {
+			return nil, err
+		}
 		dbResp, err := getTracesTTL()
 		if err != nil {
 			return nil, err
 		}
+		ttlQuery, err := r.checkTTLStatusItem(ctx, tableNameArray[0])
+		if err != nil {
+			return nil, err
+		}
+		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
+		if ttlQuery.ColdStorageTtl != -1 {
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
+		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL}, nil
+		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
 
 	case constants.MetricsTTL:
+		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
+		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
+		if err != nil {
+			return nil, err
+		}
 		dbResp, err := getMetricsTTL()
 		if err != nil {
 			return nil, err
 		}
+		ttlQuery, err := r.checkTTLStatusItem(ctx, tableNameArray[0])
+		if err != nil {
+			return nil, err
+		}
+		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
+		if ttlQuery.ColdStorageTtl != -1 {
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
+		}
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
-		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL}, nil
-
-	}
-	db1, err := getTracesTTL()
-	if err != nil {
-		return nil, err
+		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+	default:
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be metrics|traces, got %v",
+			ttlParams.Type)}
 	}
 
-	db2, err := getMetricsTTL()
-	if err != nil {
-		return nil, err
-	}
-	tracesDelTTL, tracesMoveTTL := parseTTL(db1.EngineFull)
-	metricsDelTTL, metricsMoveTTL := parseTTL(db2.EngineFull)
-
-	return &model.GetTTLResponseItem{
-		TracesTime:      tracesDelTTL,
-		TracesMoveTime:  tracesMoveTTL,
-		MetricsTime:     metricsDelTTL,
-		MetricsMoveTime: metricsMoveTTL,
-	}, nil
 }
 
 func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {
@@ -2547,16 +2725,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, para
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
 	// "select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from signoz_metrics.time_series WHERE JSONExtractString(labels,'__name__')='node_udp_queues'))  WHERE distinctTagKeys ILIKE '%host%';"
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
 
 		rows, err = r.db.Query(ctx, query, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
 
 		rows, err = r.db.Query(ctx, query, params.MetricName)
 	}
@@ -2586,16 +2764,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
 
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s AND JSONExtractString(labels, $1) ILIKE $3;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) from %s.%s WHERE metric_name=$1 %s AND labels_object.%s ILIKE $2;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause, params.TagKey)
 
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) FROM %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) FROM %s.%s WHERE metric_name=$2 %s;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause)
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName)
 
 	}
@@ -2617,20 +2795,18 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	return &tagValueList, nil
 }
 
-func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError) {
+func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError) {
 
 	var query string
 	var err error
 	var metricNameList []string
 	var rows driver.Rows
 
-	if len(matchText) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE $1;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
-	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query)
+	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	if limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", limit)
 	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
 
 	if err != nil {
 		zap.S().Error(err)
@@ -2648,4 +2824,85 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 	return &metricNameList, nil
 
+}
+
+// GetMetricResult runs the query and returns list of time series
+func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
+
+	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing query: ", err)
+		return nil, fmt.Errorf("error in processing query")
+	}
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+	// when group by is applied, each combination of cartesian product
+	// of attributes is separate series. each item in metricPointsMap
+	// represent a unique series.
+	metricPointsMap := make(map[string][]model.MetricPoint)
+	// attribute key-value pairs for each group selection
+	attributesMap := make(map[string]map[string]string)
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		var groupBy []string
+		var metricPoint model.MetricPoint
+		groupAttributes := make(map[string]string)
+		// Assuming that the end result row contains a timestamp, value and option labels
+		// Label key and value are both strings.
+		for idx, v := range vars {
+			colName := columnNames[idx]
+			switch v := v.(type) {
+			case *string:
+				// special case for returning all labels
+				if colName == "fullLabels" {
+					var metric map[string]string
+					err := json.Unmarshal([]byte(*v), &metric)
+					if err != nil {
+						return nil, err
+					}
+					for key, val := range metric {
+						groupBy = append(groupBy, val)
+						groupAttributes[key] = val
+					}
+				} else {
+					groupBy = append(groupBy, *v)
+					groupAttributes[colName] = *v
+				}
+			case *time.Time:
+				metricPoint.Timestamp = v.UnixMilli()
+			case *float64:
+				metricPoint.Value = *v
+			}
+		}
+		sort.Strings(groupBy)
+		key := strings.Join(groupBy, "")
+		attributesMap[key] = groupAttributes
+		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
+	}
+
+	var seriesList []*model.Series
+	for key := range metricPointsMap {
+		points := metricPointsMap[key]
+		// first point in each series could be invalid since the
+		// aggregations are applied with point from prev series
+		if len(points) != 0 && len(points) > 1 {
+			points = points[1:]
+		}
+		attributes := attributesMap[key]
+		series := model.Series{Labels: attributes, Points: points}
+		seriesList = append(seriesList, &series)
+	}
+	return seriesList, nil
 }

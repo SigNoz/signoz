@@ -1,4 +1,3 @@
-import { expect } from '@jest/globals';
 import dayjs from 'dayjs';
 import getStep, { DefaultStepSize, MaxDataPoints } from 'lib/getStep';
 
@@ -36,7 +35,7 @@ describe('lib/getStep', () => {
 
 	test('should return relevant step when the given range is greater than 1 day', () => {
 		const start = dayjs();
-		const end = start.add(1, 'Day').add(1, 'Second');
+		const end = start.add(1, 'day').add(1, 'second');
 		const startUnix = start.valueOf();
 		const endUnix = end.valueOf();
 
