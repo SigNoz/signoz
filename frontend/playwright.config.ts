@@ -17,6 +17,7 @@ const config: PlaywrightTestConfig = {
 	fullyParallel: false,
 	quiet: true,
 	testMatch: ['**/*.spec.ts'],
+	reporter: process.env.CI ? 'dot' : 'list',
 };
 
 export default config;
