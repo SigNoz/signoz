@@ -6,6 +6,7 @@ services:
     # ports:
     #   - "9000:9000"
     #   - "8123:8123"
+    tty: true
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
@@ -39,7 +40,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.9.0
+    image: signoz/query-service:0.9.1
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -67,7 +68,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.9.0
+    image: signoz/frontend:0.9.1
     deploy:
       restart_policy:
         condition: on-failure
