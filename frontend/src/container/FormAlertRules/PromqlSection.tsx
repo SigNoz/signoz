@@ -1,7 +1,7 @@
 import { Input } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
-import { PromQueries } from 'types/api/metrics/compositeQuery';
+import { IPromQueries } from 'types/api/alerts/compositeQuery';
 
 function PromqlSection({
 	promQueries,
@@ -25,8 +25,8 @@ function PromqlSection({
 }
 
 interface PromqlSectionProps {
-	promQueries: PromQueries;
-	setPromQueries: (p: PromQueries) => void;
+	promQueries: IPromQueries;
+	setPromQueries: (p: IPromQueries) => void;
 }
 
 export default PromqlSection;

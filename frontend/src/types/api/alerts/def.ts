@@ -1,4 +1,4 @@
-import { CompositeMetricQuery } from 'types/api/metrics/compositeQuery';
+import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
 export interface AlertDef {
 	id?: number;
@@ -11,7 +11,7 @@ export interface AlertDef {
 }
 
 export interface RuleCondition {
-	compositeMetricQuery: CompositeMetricQuery;
+	compositeMetricQuery: ICompositeMetricQuery;
 	op?: string | undefined;
 	target?: number | undefined;
 	matchType?: string | undefined;

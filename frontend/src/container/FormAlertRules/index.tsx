@@ -1,18 +1,27 @@
 import { SaveOutlined } from '@ant-design/icons';
-import { Form, FormInstance, notification } from 'antd';
+import { Form, FormInstance, message, notification } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import saveAlertApi from 'api/alerts/save';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+	IFormulaQueries,
+	IMetricQueries,
+	IPromQueries,
+} from 'types/api/alerts/compositeQuery';
 import { AlertDef } from 'types/api/alerts/def';
-import { BuilderQueries, PromQueries } from 'types/api/metrics/compositeQuery';
 
 import BasicInfo from './BasicInfo';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
 import { ActionButton, ButtonContainer } from './styles';
 import { PROMQL, QUERY_BUILDER, QueryType } from './types';
+import {
+	prepareBuilderQueries,
+	toFormulaQueries,
+	toMetricQueries,
+} from './utils';
 
 function FormAlertRules({
 	formInstance,
@@ -28,18 +37,46 @@ function FormAlertRules({
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 
 	const [queryCategory, setQueryCategory] = useState<QueryType>(
-		alertDef?.condition?.compositeMetricQuery?.queryType as QueryType,
+		initialValue?.condition?.compositeMetricQuery?.queryType as QueryType,
 	);
 
 	// local state to handle metric queries
-	const [metricQueries, setMetricQueries] = useState<BuilderQueries>({
-		...alertDef?.condition?.compositeMetricQuery?.builderQueries,
-	});
+	const [metricQueries, setMetricQueries] = useState<IMetricQueries>(
+		toMetricQueries(
+			initialValue?.condition?.compositeMetricQuery?.builderQueries,
+		),
+	);
+
+	// local state to handle formula queries
+	const [formulaQueries, setFormulaQueries] = useState<IFormulaQueries>(
+		toFormulaQueries(
+			initialValue?.condition?.compositeMetricQuery?.builderQueries,
+		),
+	);
 
 	// local state to handle promql queries
-	const [promQueries, setPromQueries] = useState<PromQueries>({
-		...alertDef?.condition?.compositeMetricQuery?.promQueries,
+	const [promQueries, setPromQueries] = useState<IPromQueries>({
+		...initialValue?.condition?.compositeMetricQuery?.promQueries,
 	});
+
+	useEffect(() => {
+		setQueryCategory(
+			initialValue?.condition?.compositeMetricQuery?.queryType as QueryType,
+		);
+		setMetricQueries(
+			toMetricQueries(
+				initialValue?.condition?.compositeMetricQuery?.builderQueries,
+			),
+		);
+		setFormulaQueries(
+			toFormulaQueries(
+				initialValue?.condition?.compositeMetricQuery?.builderQueries,
+			),
+		);
+		setPromQueries({
+			...initialValue?.condition?.compositeMetricQuery?.promQueries,
+		});
+	}, [initialValue]);
 
 	const onCancelHandler = useCallback(async () => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
@@ -74,8 +111,7 @@ function FormAlertRules({
 		) {
 			notification.error({
 				message: 'Error',
-				description:
-					'metric name must be set when query format is set to Query Builder',
+				description: 'at least one metric condition is required',
 			});
 			return false;
 		}
@@ -85,14 +121,23 @@ function FormAlertRules({
 				retval = false;
 				notification.error({
 					message: 'Error',
-					description:
-						'metric name must be set when query format is set to Query Builder',
+					description: `metric name is missing in ${metricQueries[key].name}`,
+				});
+			}
+		});
+
+		Object.keys(formulaQueries).forEach((key) => {
+			if (formulaQueries[key].expression === '') {
+				retval = false;
+				notification.error({
+					message: 'Error',
+					description: `expression is missing in ${formulaQueries[key].name}`,
 				});
 			}
 		});
 
 		return retval;
-	}, [alertDef, queryCategory, metricQueries, promQueries]);
+	}, [alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
 
 	const onSaveHandler = useCallback(async () => {
 		if (!isFormValid()) {
@@ -105,7 +150,7 @@ function FormAlertRules({
 			condition: {
 				...alertDef.condition,
 				compositeMetricQuery: {
-					builderQueries: metricQueries,
+					builderQueries: prepareBuilderQueries(metricQueries, formulaQueries),
 					promQueries,
 					queryType: queryCategory,
 				},
@@ -146,6 +191,7 @@ function FormAlertRules({
 		notifications,
 		alertDef,
 		metricQueries,
+		formulaQueries,
 		promQueries,
 	]);
 
@@ -165,6 +211,8 @@ function FormAlertRules({
 					<QuerySection
 						metricQueries={metricQueries}
 						setMetricQueries={setMetricQueries}
+						formulaQueries={formulaQueries}
+						setFormulaQueries={setFormulaQueries}
 						promQueries={promQueries}
 						setPromQueries={setPromQueries}
 						queryCategory={queryCategory}

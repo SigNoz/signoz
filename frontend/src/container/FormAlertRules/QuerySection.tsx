@@ -2,12 +2,17 @@ import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { message, Modal, notification, Tabs } from 'antd';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
+import {
+	IQueryBuilderFormulaHandleChange,
+	IQueryBuilderQueryHandleChange,
+} from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/types';
 import React, { useCallback } from 'react';
 import {
-	BuilderQueries,
-	FilterItem,
-	PromQueries,
-} from 'types/api/metrics/compositeQuery';
+	IFormulaQueries,
+	IMetricQueries,
+	IPromQueries,
+} from 'types/api/alerts/compositeQuery';
+import { EAggregateOperator } from 'types/common/dashboard';
 
 import PromqlSection from './PromqlSection';
 import {
@@ -23,6 +28,7 @@ import {
 	QueryType,
 	resolveQueryCategoryName,
 } from './types';
+import { toIMetricsBuilderQuery } from './utils';
 
 const { TabPane } = Tabs;
 function QuerySection({
@@ -30,6 +36,8 @@ function QuerySection({
 	setQueryCategory,
 	metricQueries,
 	setMetricQueries,
+	formulaQueries,
+	setFormulaQueries,
 	promQueries,
 	setPromQueries,
 	allowCategoryChange,
@@ -64,36 +72,20 @@ function QuerySection({
 	};
 
 	const getNextQueryLabel = useCallback((): string => {
-		if (Object.keys(metricQueries).length === 0) {
-			return 'A';
-		}
+		const queryCount =
+			Object.keys(metricQueries).length + Object.keys(formulaQueries).length;
 
-		if (Object.keys(metricQueries).length === 1) {
-			return 'B';
-		}
-		if (Object.keys(metricQueries).length === 2) {
-			return 'C';
-		}
-		if (Object.keys(metricQueries).length === 3) {
-			return 'D';
-		}
-
-		return 'E';
-	}, [metricQueries]);
+		return String.fromCharCode(64 + queryCount + 1);
+	}, [metricQueries, formulaQueries]);
 
 	const handleFormulaChange = ({
 		formulaIndex,
 		expression,
 		toggleDisable,
 		toggleDelete,
-	}: {
-		formulaIndex: string;
-		expression: string;
-		toggleDisable: boolean;
-		toggleDelete: boolean;
-	}): void => {
-		const allQueries = metricQueries;
-		const current = allQueries[formulaIndex];
+	}: IQueryBuilderFormulaHandleChange): void => {
+		const allFormulas = formulaQueries;
+		const current = allFormulas[formulaIndex];
 		if (expression) {
 			current.expression = expression;
 		}
@@ -103,13 +95,13 @@ function QuerySection({
 		}
 
 		if (toggleDelete) {
-			delete allQueries[formulaIndex];
+			delete allFormulas[formulaIndex];
 		} else {
-			allQueries[formulaIndex] = current;
+			allFormulas[formulaIndex] = current;
 		}
 
-		setMetricQueries({
-			...allQueries,
+		setFormulaQueries({
+			...allFormulas,
 		});
 	};
 
@@ -121,18 +113,7 @@ function QuerySection({
 		groupBy,
 		toggleDisable,
 		toggleDelete,
-		reduceTo,
-	}: {
-		queryIndex: string;
-		aggregateFunction: number | undefined;
-		metricName: string;
-		tagFilters: FilterItem[];
-		groupBy: string[];
-		legend: string;
-		toggleDisable: boolean;
-		toggleDelete: boolean;
-		reduceTo: string[];
-	}): void => {
+	}: IQueryBuilderQueryHandleChange): void => {
 		const allQueries = metricQueries;
 		const current = metricQueries[queryIndex];
 		if (aggregateFunction) {
@@ -148,10 +129,6 @@ function QuerySection({
 
 		if (groupBy) {
 			current.groupBy = groupBy;
-		}
-
-		if (reduceTo) {
-			current.reduceTo = reduceTo;
 		}
 
 		if (toggleDisable) {
@@ -181,46 +158,46 @@ function QuerySection({
 
 		const queries = metricQueries;
 		queries[queryLabel] = {
+			name: queryLabel,
 			queryName: queryLabel,
 			metricName: 'signoz_latency_count',
 			formulaOnly: false,
-			aggregateOperator: undefined,
+			aggregateOperator: EAggregateOperator.NOOP,
+			legend: '',
 			tagFilters: {
 				op: 'AND',
 				items: [],
 			},
 			groupBy: [],
+			disabled: false,
 			expression: queryLabel,
 		};
 		setMetricQueries({ ...queries });
 	}, [getNextQueryLabel, metricQueries, setMetricQueries]);
 
 	const addFormula = useCallback(async () => {
-		let formulaCount = 0;
-		Object.keys(metricQueries).forEach((key) => {
-			if (metricQueries[key].metricName === '' || metricQueries[key].formulaOnly) {
-				formulaCount += 1;
-			}
-		});
-
-		if (formulaCount > 0) {
+		if (Object.keys(formulaQueries).length === 1) {
 			notification.error({
-				message: 'Unable to add formula. You can create at max 1 formula',
+				message:
+					'can not add formula. Only one formula is supported in the alert rule.',
 			});
 			return;
 		}
 
 		const queryLabel = getNextQueryLabel();
 
-		const queries = metricQueries;
-		queries[queryLabel] = {
+		const formulas = formulaQueries;
+		formulas[queryLabel] = {
 			queryName: queryLabel,
+			name: queryLabel,
 			formulaOnly: true,
 			expression: 'A',
+			disabled: false,
 		};
-		console.log('queries:', queries);
-		setMetricQueries({ ...queries });
-	}, [getNextQueryLabel, metricQueries, setMetricQueries]);
+
+		setFormulaQueries({ ...formulas });
+	}, [getNextQueryLabel, formulaQueries, setFormulaQueries]);
+
 	const renderAddons = (): JSX.Element => {
 		return (
 			<ButtonContainer>
@@ -247,26 +224,31 @@ function QuerySection({
 					Object.keys(metricQueries).map((key: string) => {
 						// todo(amol): need to handle this in fetch
 						const current = metricQueries[key];
-						current.queryName = key;
 						current.name = key;
 
-						if (current.metricName === '' || current.formulaOnly) {
-							return (
-								<MetricsBuilderFormula
-									key={key}
-									formulaIndex={key}
-									formulaData={current}
-									handleFormulaChange={handleFormulaChange}
-								/>
-							);
-						}
 						return (
 							<MetricsBuilder
 								key={key}
 								queryIndex={key}
-								queryData={current}
+								queryData={toIMetricsBuilderQuery(current)}
 								selectedGraph="TIME_SERIES"
 								handleQueryChange={handleMetricQueryChange}
+								hideLegend
+							/>
+						);
+					})}
+				{formulaQueries &&
+					Object.keys(formulaQueries).map((key: string) => {
+						// todo(amol): need to handle this in fetch
+						const current = formulaQueries[key];
+						current.name = key;
+
+						return (
+							<MetricsBuilderFormula
+								key={key}
+								formulaIndex={key}
+								formulaData={current}
+								handleFormulaChange={handleFormulaChange}
 							/>
 						);
 					})}
@@ -299,10 +281,12 @@ function QuerySection({
 interface QuerySectionProps {
 	queryCategory: QueryType;
 	setQueryCategory: (n: QueryType) => void;
-	metricQueries: BuilderQueries;
-	setMetricQueries: (b: BuilderQueries) => void;
-	promQueries: PromQueries;
-	setPromQueries: (p: PromQueries) => void;
+	metricQueries: IMetricQueries;
+	setMetricQueries: (b: IMetricQueries) => void;
+	formulaQueries: IFormulaQueries;
+	setFormulaQueries: (b: IFormulaQueries) => void;
+	promQueries: IPromQueries;
+	setPromQueries: (p: IPromQueries) => void;
 	allowCategoryChange: boolean;
 }
 

@@ -15,10 +15,11 @@ import { IQueryBuilderQueryHandleChange } from './types';
 const { Option } = Select;
 
 interface IMetricsBuilderProps {
-	queryIndex: number;
+	queryIndex: number | string;
 	selectedGraph: GRAPH_TYPES;
 	queryData: IMetricsBuilderQuery;
 	handleQueryChange: (args: IQueryBuilderQueryHandleChange) => void;
+	hideLegend: boolean;
 }
 
 function MetricsBuilder({
@@ -26,6 +27,7 @@ function MetricsBuilder({
 	selectedGraph,
 	queryData,
 	handleQueryChange,
+	hideLegend = false,
 }: IMetricsBuilderProps): JSX.Element {
 	const [groupByOptions, setGroupByOptions] = useState<IOption[]>([]);
 	const [metricName, setMetricName] = useState<string | null>(
@@ -196,16 +198,18 @@ function MetricsBuilder({
 						</Row>
 					</Col>
 				</Row>
-				<Row style={{ margin: '0.5rem 0' }}>
-					<Input
-						onChange={(e): void => {
-							handleQueryChange({ queryIndex, legend: e.target.value });
-						}}
-						size="middle"
-						defaultValue={queryData.legend}
-						addonBefore="Legend Format"
-					/>
-				</Row>
+				{!hideLegend && (
+					<Row style={{ margin: '0.5rem 0' }}>
+						<Input
+							onChange={(e): void => {
+								handleQueryChange({ queryIndex, legend: e.target.value });
+							}}
+							size="middle"
+							defaultValue={queryData.legend}
+							addonBefore="Legend Format"
+						/>
+					</Row>
+				)}
 			</div>
 		</QueryHeader>
 	);
