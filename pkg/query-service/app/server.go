@@ -19,6 +19,7 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
+	"go.signoz.io/query-service/interfaces"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
@@ -65,7 +66,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
-	var reader Reader
+	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
@@ -75,6 +76,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
+
+	telemetry.GetInstance().SetReader(reader)
 
 	apiHandler, err := NewAPIHandler(&reader, dao.DB())
 	if err != nil {
