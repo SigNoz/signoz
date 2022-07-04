@@ -2906,3 +2906,77 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	}
 	return seriesList, nil
 }
+
+func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
+
+	var totalSpans uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", signozTraceDBName, signozTraceTableName)
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSpans)
+
+	return totalSpans, nil
+}
+
+func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+
+	var spansInLastHeartBeatInterval uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, 30)
+
+	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
+
+	return spansInLastHeartBeatInterval, nil
+}
+
+// func sum(array []tsByMetricName) uint64 {
+// 	var result uint64
+// 	result = 0
+// 	for _, v := range array {
+// 		result += v.count
+// 	}
+// 	return result
+// }
+
+func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
+
+	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
+
+	// r.db.Select(ctx, &tsByMetricName, queryStr)
+
+	rows, _ := r.db.Query(ctx, queryStr)
+
+	var totalTS uint64
+	totalTS = 0
+
+	var maxTS uint64
+	maxTS = 0
+
+	count := 0
+	for rows.Next() {
+
+		var value uint64
+		rows.Scan(&value)
+		totalTS += value
+		if count == 0 {
+			maxTS = value
+		}
+		count += 1
+	}
+
+	timeSeriesData := map[string]interface{}{}
+	timeSeriesData["totalTS"] = totalTS
+	timeSeriesData["maxTS"] = maxTS
+
+	return timeSeriesData, nil
+}
+
+func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+
+	var totalSamples uint64
+
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, 30)
+
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+
+	return totalSamples, nil
+}
