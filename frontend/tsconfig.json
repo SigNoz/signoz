@@ -32,8 +32,8 @@
 		"./conf/default.conf",
 		"./public",
 		"./tests",
-		"playwright.config.ts",
-		"./commitlint.config.js",
+		"./playwright.config.ts",
+		"./commitlint.config.ts",
 		"./webpack.config.js",
 		"./webpack.config.prod.js",
 		"./jest.setup.ts"
