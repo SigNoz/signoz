@@ -7,11 +7,18 @@ import {
 	IQueryBuilderQueryHandleChange,
 } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/types';
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
 } from 'types/api/alerts/compositeQuery';
+import {
+	PROMQL,
+	QUERY_BUILDER,
+	QueryType,
+	resolveQueryCategoryName,
+} from 'types/api/alerts/queryType';
 import { EAggregateOperator } from 'types/common/dashboard';
 
 import PromqlSection from './PromqlSection';
@@ -22,12 +29,6 @@ import {
 	QueryContainer,
 	StepHeading,
 } from './styles';
-import {
-	PROMQL,
-	QUERY_BUILDER,
-	QueryType,
-	resolveQueryCategoryName,
-} from './types';
 import { toIMetricsBuilderQuery } from './utils';
 
 const { TabPane } = Tabs;
@@ -42,6 +43,9 @@ function QuerySection({
 	setPromQueries,
 	allowCategoryChange,
 }: QuerySectionProps): JSX.Element {
+	// init namespace for translations
+	const { t } = useTranslation('rules');
+
 	const handleQueryCategoryChange = (s: string): void => {
 		if (!allowCategoryChange) {
 			notification.error({
@@ -56,7 +60,7 @@ function QuerySection({
 		)}. The settings in the current tab will be ignored. Do you want to proceed?`;
 
 		Modal.confirm({
-			title: 'Confirm',
+			title: t('title_confirm'),
 			icon: <ExclamationCircleOutlined />,
 			content: popupContent,
 			onOk() {
@@ -66,8 +70,8 @@ function QuerySection({
 					`Query format changed to ${resolveQueryCategoryName(parseInt(s, 10))}`,
 				);
 			},
-			okText: 'Yes',
-			cancelText: 'No',
+			okText: t('button_ok'),
+			cancelText: t('button_cancel'),
 		});
 	};
 
@@ -202,10 +206,10 @@ function QuerySection({
 		return (
 			<ButtonContainer>
 				<QueryButton onClick={addMetricQuery} icon={<PlusOutlined />}>
-					Query
+					{t('button_query')}
 				</QueryButton>
 				<QueryButton onClick={addFormula} icon={<PlusOutlined />}>
-					Formula
+					{t('button_formula')}
 				</QueryButton>
 			</ButtonContainer>
 		);
@@ -263,12 +267,12 @@ function QuerySection({
 					<Tabs
 						type="card"
 						style={{ width: '100%' }}
-						defaultActiveKey="1"
+						defaultActiveKey={QUERY_BUILDER.toString()}
 						activeKey={queryCategory.toString()}
 						onChange={handleQueryCategoryChange}
 					>
-						<TabPane tab="Query Builder" key={QUERY_BUILDER.toString()} />
-						<TabPane tab="PromQL" key={PROMQL.toString()} />
+						<TabPane tab={t('tab_qb')} key={QUERY_BUILDER.toString()} />
+						<TabPane tab={t('tab_promql')} key={PROMQL.toString()} />
 					</Tabs>
 				</div>
 				{queryCategory === PROMQL ? renderPromqlUI() : renderMetricUI()}

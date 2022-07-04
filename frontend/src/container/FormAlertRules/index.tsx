@@ -1,22 +1,23 @@
 import { SaveOutlined } from '@ant-design/icons';
-import { Form, FormInstance, message, notification } from 'antd';
+import { Form, FormInstance, notification } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import saveAlertApi from 'api/alerts/save';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
 } from 'types/api/alerts/compositeQuery';
 import { AlertDef } from 'types/api/alerts/def';
+import { PROMQL, QUERY_BUILDER, QueryType } from 'types/api/alerts/queryType';
 
 import BasicInfo from './BasicInfo';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
 import { ActionButton, ButtonContainer } from './styles';
-import { PROMQL, QUERY_BUILDER, QueryType } from './types';
 import {
 	prepareBuilderQueries,
 	toFormulaQueries,
@@ -28,8 +29,8 @@ function FormAlertRules({
 	initialValue,
 	ruleId,
 }: FormAlertRuleProps): JSX.Element {
-	console.log('FormAlertRules:', initialValue);
-	console.log('FormAlertRules:', ruleId);
+	// init namespace for translations
+	const { t } = useTranslation('rules');
 	const [notifications, Element] = notification.useNotification();
 
 	const [loading, setLoading] = useState(false);
@@ -231,14 +232,14 @@ function FormAlertRules({
 						onClick={onSaveHandler}
 						icon={<SaveOutlined />}
 					>
-						{ruleId > 0 ? 'Save Changes' : 'Create Rule'}
+						{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
 					</ActionButton>
 					<ActionButton
 						loading={loading || false}
 						type="default"
 						onClick={onCancelHandler}
 					>
-						{ruleId > 0 ? 'Return to rules' : 'Cancel'}
+						{ruleId > 0 ? t('button_returntorules') : t('button_cancelchanges')}
 					</ActionButton>
 				</ButtonContainer>
 			</Form>

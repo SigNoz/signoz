@@ -1,7 +1,9 @@
 import { Input, Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
+import { QueryType } from 'types/api/alerts/queryType';
 
 import LabelSelect from './labels';
 import {
@@ -10,7 +12,6 @@ import {
 	SeveritySelect,
 	StepHeading,
 } from './styles';
-import { QueryType } from './types';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -24,6 +25,9 @@ function BasicInfo({
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: QueryType;
 }): JSX.Element {
+	// init namespace for translations
+	const { t } = useTranslation('rules');
+
 	return (
 		<>
 			<StepHeading>
@@ -31,7 +35,11 @@ function BasicInfo({
 				Step {queryCategory === 2 ? 2 : 3} - Alert Configuration{' '}
 			</StepHeading>
 			<FormContainer>
-				<FormItem label="Severity" labelAlign="left" name={['labels', 'severity']}>
+				<FormItem
+					label={t('field_severity')}
+					labelAlign="left"
+					name={['labels', 'severity']}
+				>
 					<SeveritySelect
 						defaultValue="critical"
 						onChange={(value: unknown | string): void => {
@@ -45,14 +53,14 @@ function BasicInfo({
 							});
 						}}
 					>
-						<Option value="critical">Critical</Option>
-						<Option value="error">Error</Option>
-						<Option value="warning">Warning</Option>
-						<Option value="info">Info</Option>
+						<Option value="critical">{t('option_critical')}</Option>
+						<Option value="error">{t('option_error')}</Option>
+						<Option value="warning">{t('option_warning')}</Option>
+						<Option value="info">{t('option_info')}</Option>
 					</SeveritySelect>
 				</FormItem>
 
-				<FormItem label="Alert Name" labelAlign="left" name="alert">
+				<FormItem label={t('field_alert_name')} labelAlign="left" name="alert">
 					<InputSmall
 						onChange={(e): void => {
 							setAlertDef({
@@ -63,7 +71,7 @@ function BasicInfo({
 					/>
 				</FormItem>
 				<FormItem
-					label="Alert Description"
+					label={t('field_alert_desc')}
 					labelAlign="left"
 					name={['annotations', 'description']}
 				>
@@ -79,7 +87,7 @@ function BasicInfo({
 						}}
 					/>
 				</FormItem>
-				<FormItem label="Labels">
+				<FormItem label={t('field_labels')}>
 					<LabelSelect
 						onSetLabels={(l: Labels): void => {
 							setAlertDef({

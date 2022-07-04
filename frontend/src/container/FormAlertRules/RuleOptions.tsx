@@ -1,6 +1,7 @@
 import { Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertDef } from 'types/api/alerts/def';
 
 import {
@@ -9,20 +10,22 @@ import {
 	StepHeading,
 	ThresholdInput,
 } from './styles';
-
 const { Option } = Select;
 
 function RuleOptions({
 	initialValue,
 	setAlertDef,
 }: RuleOptionsProps): JSX.Element {
+	// init namespace for translations
+	const { t } = useTranslation('rules');
+
 	return (
 		<>
-			<StepHeading> Step 2 - Define Alert Conditions</StepHeading>
+			<StepHeading>{t('text_step2')}</StepHeading>
 			<FormContainer>
 				<FormItem>
 					<Typography.Text>
-						Send a notification when the metric is{' '}
+						{t('text_condition1')}{' '}
 						<InlineSelect
 							defaultValue="0"
 							value={initialValue.condition?.op}
@@ -38,10 +41,10 @@ function RuleOptions({
 								});
 							}}
 						>
-							<Option value="0">above</Option>
-							<Option value="1">below</Option>
+							<Option value="0">{t('option_above')}</Option>
+							<Option value="1">{t('option_below')}</Option>
 						</InlineSelect>{' '}
-						the threshold{' '}
+						{t('text_condition2')}{' '}
 						<InlineSelect
 							defaultValue="0"
 							value={initialValue.condition?.matchType}
@@ -57,12 +60,12 @@ function RuleOptions({
 							}}
 						>
 							{' '}
-							<Option value="0">all the times</Option>
-							<Option value="1">at least once</Option>
-							<Option value="2">on Average</Option>
-							<Option value="3">in total</Option>
+							<Option value="0">{t('option_allthetimes')}</Option>
+							<Option value="1">{t('option_atleastonce')}</Option>
+							<Option value="2">{t('option_onaverage')}</Option>
+							<Option value="3">{t('option_intotal')}</Option>
 						</InlineSelect>{' '}
-						during the last{' '}
+						{t('text_condition3')}{' '}
 						<InlineSelect
 							defaultValue="5m0s"
 							value={initialValue.evalWindow}
@@ -75,16 +78,16 @@ function RuleOptions({
 							}}
 						>
 							{' '}
-							<Option value="5m0s"> 5 mins</Option>
-							<Option value="10m0s"> 10 mins</Option>
-							<Option value="15m0s"> 15 mins</Option>
-							<Option value="60m0s"> 60 mins</Option>
-							<Option value="1440m0s"> 24 hours</Option>
+							<Option value="5m0s">{t('option_5min')}</Option>
+							<Option value="10m0s">{t('option_10min')}</Option>
+							<Option value="15m0s">{t('option_15min')}</Option>
+							<Option value="60m0s">{t('option_60min')}</Option>
+							<Option value="1440m0s">{t('option_24hours')}</Option>
 						</InlineSelect>
 					</Typography.Text>
 				</FormItem>
 				<FormItem
-					label="Alert Threshold"
+					label={t('field_threshold')}
 					labelAlign="left"
 					name={['condition', 'target']}
 				>

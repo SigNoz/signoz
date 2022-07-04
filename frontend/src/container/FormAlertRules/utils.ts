@@ -1,6 +1,7 @@
 import {
 	IBuilderQueries,
 	IFormulaQueries,
+	IFormulaQuery,
 	IMetricQueries,
 	IMetricQuery,
 } from 'types/api/alerts/compositeQuery';
@@ -10,7 +11,7 @@ export const toFormulaQueries = (b: IBuilderQueries): IFormulaQueries => {
 	const f: IFormulaQueries = {};
 	Object.keys(b).forEach((key) => {
 		if (!b[key].metricName || b[key].metricName === '') {
-			f[key] = b[key];
+			f[key] = b[key] as IFormulaQuery;
 		}
 	});
 
@@ -21,12 +22,12 @@ export const toMetricQueries = (b: IBuilderQueries): IMetricQueries => {
 	const m: IMetricQueries = {};
 	Object.keys(b).forEach((key) => {
 		if (b[key].metricName !== '') {
-			m[key] = b[key];
+			m[key] = b[key] as IMetricQuery;
 		}
 	});
 
 	return m;
-}
+};
 
 export const prepareBuilderQueries = (
 	m: IMetricQueries,
@@ -58,4 +59,4 @@ export const toIMetricsBuilderQuery = (
 		disabled: q.disabled,
 		legend: q.legend,
 	};
-}
+};

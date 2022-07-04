@@ -3,7 +3,7 @@ import {
 	IMetricsBuilderQuery,
 	IQueryBuilderTagFilters,
 } from 'types/api/dashboard/getAll';
-import { EAggregateOperator, EReduceOperator } from 'types/common/dashboard';
+import { EAggregateOperator } from 'types/common/dashboard';
 
 export interface ICompositeMetricQuery {
 	builderQueries: IBuilderQueries;
@@ -49,7 +49,7 @@ export interface IFormulaQueries {
 export interface IFormulaQuery extends IMetricsBuilderFormula {
 	formulaOnly: boolean;
 	queryName: string;
-};
+}
 
 export interface IMetricQueries {
 	[key: string]: IMetricQuery;
