@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 import { ILabelRecord, IOption } from './types';
 import { Labels } from 'types/api/alerts/def';
 
+const hiddenLabels = ['severity', 'description'];
 
 export const createQuery = (
 	selectedItems: Array<string | string[]> = [],
@@ -21,10 +22,12 @@ export const flattenLabels = (labels: Labels): ILabelRecord[] => {
 	const recs: ILabelRecord[] = [];
 
 	Object.keys(labels).forEach((key) => {
-		recs.push({
-			key,
-			value: labels[key],
-		});
+		if (!hiddenLabels.includes(key)) {
+			recs.push({
+				key,
+				value: labels[key],
+			});
+		}
 	});
 
 	return recs;
@@ -35,7 +38,9 @@ export const prepareLabels = (recs: ILabelRecord[]): Labels => {
 
 	// eslint-disable-next-line no-plusplus
 	for (let i = 0; i < recs.length; i++) {
-		labels[recs[i].key] = recs[i].value;
+		if (!hiddenLabels.includes(recs[i].key)) {
+			labels[recs[i].key] = recs[i].value;
+		}
 	}
 	return labels;
 }

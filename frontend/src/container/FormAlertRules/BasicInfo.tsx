@@ -82,7 +82,13 @@ function BasicInfo({
 				<FormItem label="Labels">
 					<LabelSelect
 						onSetLabels={(l: Labels): void => {
-							console.log('got labels:', l);
+							setAlertDef({
+								...alertDef,
+								labels: {
+									...alertDef.labels,
+									...l,
+								},
+							});
 						}}
 						initialValues={alertDef.labels}
 					/>
