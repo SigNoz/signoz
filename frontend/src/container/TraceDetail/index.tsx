@@ -84,6 +84,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	};
 
 	const onResetHandler = (): void => {
+		const x = response[0].events;
+		const y = spanToTreeUtil(response[0].events)
+		console.log(x, y)
+		debugger;
 		setTreeData(spanToTreeUtil(response[0].events));
 	};
 
