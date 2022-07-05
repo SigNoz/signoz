@@ -74,6 +74,7 @@ function QuerySection({
 		setLocalQueryChanges(cloneDeep(query) as Query);
 	}, [query]);
 
+
 	const queryDiff = (
 		queryA: Query,
 		queryB: Query,
