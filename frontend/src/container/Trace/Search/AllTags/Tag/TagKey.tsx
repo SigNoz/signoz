@@ -73,11 +73,24 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 		<AutoComplete
 			dropdownClassName="certain-category-search-dropdown"
 			dropdownMatchSelectWidth={500}
-			style={{ width: 300 }}
-			options={options}
+			style={{ width: '100%' }}
 			value={selectedKey}
-			onChange={(value): void => {
-				if (options && options.find((option) => option.value === value)) {
+			allowClear
+			showSearch
+			options={options?.map((e) => ({
+				label: e.label?.toString(),
+				value: e.value,
+			}))}
+			filterOption={(inputValue, option): boolean =>
+				option?.label?.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+			}
+			onChange={(e): void => setSelectedKey(e)}
+			onSelect={(value: unknown): void => {
+				if (
+					typeof value === 'string' &&
+					options &&
+					options.find((option) => option.value === value)
+				) {
 					setSelectedKey(value);
 
 					setLocalSelectedTags((tags) => [
@@ -89,8 +102,6 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 						},
 						...tags.slice(index + 1, tags.length),
 					]);
-				} else {
-					setSelectedKey('');
 				}
 			}}
 		>

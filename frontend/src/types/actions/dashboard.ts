@@ -1,3 +1,4 @@
+import { Layout } from 'react-grid-layout';
 import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettingsToPanel';
 import { Dashboard, Query, Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -24,7 +25,6 @@ export const DELETE_DASHBOARD_ERROR = 'DELETE_DASHBOARD_ERROR';
 
 export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
 
-export const CREATE_NEW_QUERY = 'CREATE_NEW_QUERY';
 export const QUERY_SUCCESS = 'QUERY_SUCCESS';
 export const QUERY_ERROR = 'QUERY_ERROR';
 
@@ -41,7 +41,7 @@ export const DELETE_WIDGET_ERROR = 'DELETE_WIDGET_ERROR';
 export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
 export const DELETE_QUERY = 'DELETE_QUERY';
-
+export const FLUSH_DASHBOARD = 'FLUSH_DASHBOARD';
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -84,13 +84,6 @@ interface CreateDefaultWidget {
 	payload: Widgets;
 }
 
-interface CreateNewQuery {
-	type: typeof CREATE_NEW_QUERY;
-	payload: {
-		widgetId: string;
-	};
-}
-
 interface IsAddWidget {
 	type: typeof IS_ADD_WIDGET;
 	payload: {
@@ -126,7 +119,11 @@ interface ToggleEditMode {
 
 export interface QuerySuccessPayload {
 	widgetId: string;
-	data: { legend: string; queryData: QueryData[]; query: string }[];
+	data: {
+		// legend: string;
+		queryData: QueryData[];
+		// query: string
+	};
 }
 interface QuerySuccess {
 	type: typeof QUERY_SUCCESS;
@@ -136,7 +133,7 @@ interface QuerySuccess {
 interface UpdateQuery {
 	type: typeof UPDATE_QUERY;
 	payload: {
-		query: Query[];
+		query: Query;
 		widgetId: string;
 		yAxisUnit: string | undefined;
 	};
@@ -147,6 +144,7 @@ interface QueryError {
 	payload: {
 		errorMessage: string;
 		widgetId: string;
+		errorBoolean?: boolean;
 	};
 }
 
@@ -159,6 +157,7 @@ interface WidgetDeleteSuccess {
 	type: typeof DELETE_WIDGET_SUCCESS;
 	payload: {
 		widgetId: Widgets['id'];
+		layout: Layout[];
 	};
 }
 
@@ -172,6 +171,10 @@ interface DeleteQuery {
 	payload: DeleteQueryProps;
 }
 
+interface FlushDashboard {
+	type: typeof FLUSH_DASHBOARD;
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -183,7 +186,6 @@ export type DashboardActions =
 	| UpdateDashboardTitle
 	| ToggleEditMode
 	| CreateDefaultWidget
-	| CreateNewQuery
 	| QuerySuccess
 	| QueryError
 	| ApplySettingsToPanel
@@ -191,4 +193,5 @@ export type DashboardActions =
 	| WidgetDeleteSuccess
 	| IsAddWidget
 	| UpdateQuery
-	| DeleteQuery;
+	| DeleteQuery
+	| FlushDashboard;

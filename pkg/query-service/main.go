@@ -38,8 +38,9 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:   constants.HTTPHostPort,
-		PromConfigPath: promConfigPath,
+		HTTPHostPort:    constants.HTTPHostPort,
+		PromConfigPath:  promConfigPath,
+		PrivateHostPort: constants.PrivateHostPort,
 	}
 
 	// Read the jwt secret key

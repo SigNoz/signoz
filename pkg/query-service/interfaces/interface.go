@@ -1,4 +1,4 @@
-package app
+package interfaces
 
 import (
 	"context"
@@ -50,6 +50,11 @@ type Reader interface {
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
 
-	// Connection needed for rules
+	GetTotalSpans(ctx context.Context) (uint64, error)
+	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
+	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+
+	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
 }

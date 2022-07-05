@@ -23,6 +23,7 @@ import (
 
 	"go.signoz.io/query-service/dao"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/interfaces"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/rules"
 	"go.signoz.io/query-service/telemetry"
@@ -48,7 +49,7 @@ type APIHandler struct {
 	// queryParser  queryParser
 	basePath     string
 	apiPrefix    string
-	reader       *Reader
+	reader       *interfaces.Reader
 	relationalDB dao.ModelDao
 	alertManager am.Manager
 	ruleManager  *rules.Manager
@@ -288,6 +289,11 @@ func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	}
 }
 
+// RegisterPrivateRoutes registers routes for this handler on the given router
+func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
@@ -455,6 +461,19 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// prometheus instant query needs same timestamp
+	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
+		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
+		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
+	}
+
+	// round up the end to neaerest multiple
+	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
+		end := (metricsQueryRangeParams.End) / 1000
+		step := metricsQueryRangeParams.Step
+		metricsQueryRangeParams.End = (end / step * step) * 1000
+	}
+
 	type channelResult struct {
 		Series []*model.Series
 		Err    error
@@ -495,7 +514,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
 		}
 		return seriesList, nil
 	}
@@ -506,8 +525,12 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		var wg sync.WaitGroup
 
 		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
+			if query.Disabled {
+				continue
+			}
 			wg.Add(1)
 			go func(name string, query *model.PromQuery) {
+				var seriesList []*model.Series
 				defer wg.Done()
 				queryModel := model.QueryRangeParams{
 					Start: time.UnixMilli(metricsQueryRangeParams.Start),
@@ -547,7 +570,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
 		}
 		return seriesList, nil
 	}
@@ -556,15 +579,19 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	var err error
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
 	case model.QUERY_BUILDER:
-		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, "time_series")
+		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		if runQueries.Err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
+			return
 		}
 		seriesList, err = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
 		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
+			if chQuery.Disabled {
+				continue
+			}
 			queries[name] = chQuery.Query
 		}
 		seriesList, err = execClickHouseQueries(queries)
@@ -572,11 +599,20 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		seriesList, err = execPromQueries(metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
 	}
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		respondError(w, apiErrObj, nil)
+		return
+	}
+	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
+		len(seriesList) > 1 &&
+		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER ||
+			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.CLICKHOUSE) {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
 		return
 	}
 

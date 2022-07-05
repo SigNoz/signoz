@@ -3,17 +3,20 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
+	TagKeyProps,
 	TagKeysPayloadProps,
 	TagValueProps,
 	TagValuesPayloadProps,
 } from 'types/api/metrics/getResourceAttributes';
 
-export const getResourceAttributesTagKeys = async (): Promise<
-	SuccessResponse<TagKeysPayloadProps> | ErrorResponse
-> => {
+export const getResourceAttributesTagKeys = async (
+	props: TagKeyProps,
+): Promise<SuccessResponse<TagKeysPayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			'/metrics/autocomplete/tagKey?metricName=signoz_calls_total&match=resource_',
+			`/metrics/autocomplete/tagKey?metricName=${props.metricName}${
+				props.match ? `&match=${props.match}` : ''
+			}`,
 		);
 
 		return {
@@ -32,7 +35,7 @@ export const getResourceAttributesTagValues = async (
 ): Promise<SuccessResponse<TagValuesPayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			`/metrics/autocomplete/tagValue?metricName=signoz_calls_total&tagKey=${props}`,
+			`/metrics/autocomplete/tagValue?metricName=${props.metricName}&tagKey=${props.tagKey}`,
 		);
 
 		return {

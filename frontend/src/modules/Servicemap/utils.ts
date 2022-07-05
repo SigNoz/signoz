@@ -2,7 +2,6 @@
 //@ts-nocheck
 
 import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash-es';
-
 import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
@@ -18,7 +17,7 @@ export const getDimensions = (num, highest) => {
 	};
 };
 
-export const getGraphData = (serviceMap): graphDataType => {
+export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	const { items, services } = serviceMap;
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
 	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
@@ -39,7 +38,7 @@ export const getGraphData = (serviceMap): graphDataType => {
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
 	const nodes = uniqNodes.map((node, i) => {
 		const service = find(services, (service) => service.serviceName === node);
-		let color = '#88CEA5';
+		let color = isDarkMode ? '#7CA568' : '#D5F2BB';
 		if (!service) {
 			return {
 				id: node,
@@ -54,9 +53,9 @@ export const getGraphData = (serviceMap): graphDataType => {
 			};
 		}
 		if (service.errorRate > 0) {
-			color = '#F98989';
+			color = isDarkMode ? '#DB836E' : '#F98989';
 		} else if (service.fourXXRate > 0) {
-			color = '#F9DA7B';
+			color = isDarkMode ? '#C79931' : '#F9DA7B';
 		}
 		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {

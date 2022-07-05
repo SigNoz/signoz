@@ -58,8 +58,6 @@ const (
 	signozErrorIndexTable = "signoz_error_index"
 	signozTraceTableName  = "signoz_index_v2"
 	signozMetricDBName    = "signoz_metrics"
-	signozSampleName      = "samples_v2"
-	signozTSName          = "time_series_v2"
 	signozSampleTableName = "samples_v2"
 	signozTSTableName     = "time_series_v2"
 
@@ -164,12 +162,6 @@ func (r *ClickHouseReader) Start() {
 
 	// fanoutStorage := remoteStorage
 	fanoutStorage := storage.NewFanout(logger, remoteStorage)
-
-	ExternalURL, err := computeExternalURL("", "0.0.0.0:3301")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "parse external URL %q", ExternalURL.String()))
-		os.Exit(2)
-	}
 
 	ctxScrape, cancelScrape := context.WithCancel(context.Background())
 	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
@@ -319,39 +311,6 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 func startsOrEndsWithQuote(s string) bool {
 	return strings.HasPrefix(s, "\"") || strings.HasPrefix(s, "'") ||
 		strings.HasSuffix(s, "\"") || strings.HasSuffix(s, "'")
-}
-
-// computeExternalURL computes a sanitized external URL from a raw input. It infers unset
-// URL parts from the OS and the given listen address.
-func computeExternalURL(u, listenAddr string) (*url.URL, error) {
-	if u == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return nil, err
-		}
-		_, port, err := net.SplitHostPort(listenAddr)
-		if err != nil {
-			return nil, err
-		}
-		u = fmt.Sprintf("http://%s:%s/", hostname, port)
-	}
-
-	if startsOrEndsWithQuote(u) {
-		return nil, fmt.Errorf("URL must not begin or end with quotes")
-	}
-
-	eu, err := url.Parse(u)
-	if err != nil {
-		return nil, err
-	}
-
-	ppref := strings.TrimRight(eu.Path, "/")
-	if ppref != "" && !strings.HasPrefix(ppref, "/") {
-		ppref = "/" + ppref
-	}
-	eu.Path = ppref
-
-	return eu, nil
 }
 
 func initialize(options *Options) (clickhouse.Conn, error) {
@@ -755,7 +714,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	m4xx := make(map[string]uint64)
 
 	for j := range service4xxItems {
-		m5xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
+		m4xx[service4xxItems[j].ServiceName] = service4xxItems[j].Num4XX
 	}
 
 	for i := range serviceItems {
@@ -1911,7 +1870,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableName = signozMetricDBName + "." + signozSampleName
+		tableName = signozMetricDBName + "." + signozSampleTableName
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
@@ -2150,7 +2109,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		return &model.GetTTLResponseItem{TracesTime: delTTL, TracesMoveTime: moveTTL, ExpectedTracesTime: ttlQuery.TTL, ExpectedTracesMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
 
 	case constants.MetricsTTL:
-		tableNameArray := []string{signozMetricDBName + "." + signozSampleName}
+		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
@@ -2269,16 +2228,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, para
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
 	// "select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from signoz_metrics.time_series WHERE JSONExtractString(labels,'__name__')='node_udp_queues'))  WHERE distinctTagKeys ILIKE '%host%';"
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 %s)) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName, tagsWhereClause)
 
 		rows, err = r.db.Query(ctx, query, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE JSONExtractString(labels,'__name__')=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 %s ));", signozMetricDBName, signozTSTableName, tagsWhereClause)
 
 		rows, err = r.db.Query(ctx, query, params.MetricName)
 	}
@@ -2308,16 +2267,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf("AND JSONExtractString(labels,'%s') = '%s'", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
 
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s AND JSONExtractString(labels, $1) ILIKE $3;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) from %s.%s WHERE metric_name=$1 %s AND labels_object.%s ILIKE $2;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause, params.TagKey)
 
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) FROM %s.%s WHERE JSONExtractString(labels,'__name__')=$2 %s;", signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) FROM %s.%s WHERE metric_name=$2 %s;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause)
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName)
 
 	}
@@ -2346,7 +2305,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 	var metricNameList []string
 	var rows driver.Rows
 
-	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels,'__name__')) from %s.%s WHERE JSONExtractString(labels,'__name__') ILIKE $1", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
 	if limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", limit)
 	}
@@ -2376,8 +2335,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("error in processing sql query")
+		zap.S().Debug("Error in processing query: ", err)
+		return nil, fmt.Errorf("error in processing query")
 	}
 
 	var (
@@ -2409,8 +2368,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			colName := columnNames[idx]
 			switch v := v.(type) {
 			case *string:
-				// special case for NOOP
-				if colName == "metricNOOP" {
+				// special case for returning all labels
+				if colName == "fullLabels" {
 					var metric map[string]string
 					err := json.Unmarshal([]byte(*v), &metric)
 					if err != nil {
@@ -2430,10 +2389,6 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				metricPoint.Value = *v
 			}
 		}
-		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
-			zap.S().Info("invalid metric point value found: %v", metricPoint.Value)
-			continue
-		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
 		attributesMap[key] = groupAttributes
@@ -2443,9 +2398,88 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	var seriesList []*model.Series
 	for key := range metricPointsMap {
 		points := metricPointsMap[key]
+		// first point in each series could be invalid since the
+		// aggregations are applied with point from prev series
+		if len(points) != 0 && len(points) > 1 {
+			points = points[1:]
+		}
 		attributes := attributesMap[key]
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, nil
+}
+
+func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
+
+	var totalSpans uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", signozTraceDBName, signozTraceTableName)
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSpans)
+
+	return totalSpans, nil
+}
+
+func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+
+	var spansInLastHeartBeatInterval uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, 30)
+
+	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
+
+	return spansInLastHeartBeatInterval, nil
+}
+
+// func sum(array []tsByMetricName) uint64 {
+// 	var result uint64
+// 	result = 0
+// 	for _, v := range array {
+// 		result += v.count
+// 	}
+// 	return result
+// }
+
+func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
+
+	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
+
+	// r.db.Select(ctx, &tsByMetricName, queryStr)
+
+	rows, _ := r.db.Query(ctx, queryStr)
+
+	var totalTS uint64
+	totalTS = 0
+
+	var maxTS uint64
+	maxTS = 0
+
+	count := 0
+	for rows.Next() {
+
+		var value uint64
+		rows.Scan(&value)
+		totalTS += value
+		if count == 0 {
+			maxTS = value
+		}
+		count += 1
+	}
+
+	timeSeriesData := map[string]interface{}{}
+	timeSeriesData["totalTS"] = totalTS
+	timeSeriesData["maxTS"] = maxTS
+
+	return timeSeriesData, nil
+}
+
+func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+
+	var totalSamples uint64
+
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, 30)
+
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+
+	return totalSamples, nil
 }
