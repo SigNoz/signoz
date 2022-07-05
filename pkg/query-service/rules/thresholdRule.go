@@ -344,7 +344,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParam
 func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, query string) (Vector, error) {
 	rows, err := db.Query(ctx, query)
 	if err != nil {
-		fmt.Println("failed to get alert query result")
+		zap.S().Errorf("rule:", r.Name(), "\t failed to get alert query result")
 		return nil, err
 	}
 
@@ -510,7 +510,8 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		return r.runChQuery(ctx, ch, queryString)
 	}
 
-	return nil, fmt.Errorf("this is unexpected, more than 3 queries in the setup")
+	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "/t queries:", runQueries.Queries)
+	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, externalURL *url.URL) (interface{}, error) {
