@@ -47,7 +47,6 @@ export interface IBaseWidget {
 			queryData: QueryData[];
 		};
 	};
-	queryType: number;
 	stepSize?: number;
 	yAxisUnit?: string;
 }
