@@ -8,11 +8,8 @@ import (
 
 	"fmt"
 	"io/ioutil"
-	"math"
 	"math/rand"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"reflect"
 	"regexp"
@@ -248,6 +245,7 @@ func (r *ClickHouseReader) Start() {
 				// 	reloadReady.Close()
 				// 	return nil
 				// }
+				var err error
 				r.promConfig, err = reloadConfig(cfg.configFile, logger, reloaders...)
 				if err != nil {
 					return fmt.Errorf("error loading config from %q: %s", cfg.configFile, err)
@@ -306,11 +304,6 @@ func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config
 	}
 	level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
 	return conf, nil
-}
-
-func startsOrEndsWithQuote(s string) bool {
-	return strings.HasPrefix(s, "\"") || strings.HasPrefix(s, "'") ||
-		strings.HasSuffix(s, "\"") || strings.HasSuffix(s, "'")
 }
 
 func initialize(options *Options) (clickhouse.Conn, error) {

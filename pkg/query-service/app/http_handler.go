@@ -57,7 +57,7 @@ type APIHandler struct {
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao, ruleManager *rules.Manager) (*APIHandler, error) {
+func NewAPIHandler(reader *interfaces.Reader, relationalDB dao.ModelDao, ruleManager *rules.Manager) (*APIHandler, error) {
 
 	alertManager, err := am.New("")
 	if err != nil {

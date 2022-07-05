@@ -8,6 +8,7 @@ import (
 	_ "net/http/pprof" // http profiler
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -80,22 +81,26 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB, s.serverOptions.PromConfigPath)
+		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath)
 		go clickhouseReader.Start()
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	// todo(amol): need to fix this
-	externalURL, _ := url.Parse("http://signoz.io")
-	s.ruleManager, err = makeRulesManager(s.serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), externalURL, localDB, reader)
+	externalURL, err := computeExternalURL("", "0.0.0.0:3301")
+	if err != nil {
+		zap.S().Errorf("failed to parse external url:", externalURL.String())
+		externalURL, _ = url.Parse("http://signoz.io")
+	}
+
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), externalURL, localDB, reader)
 	if err != nil {
 		return nil, err
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	apiHandler, err := NewAPIHandler(&reader, dao.DB(), s.ruleManager)
+	apiHandler, err := NewAPIHandler(&reader, dao.DB(), rm)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +108,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s := &Server{
 		// logger: logger,
 		// tracer: tracer,
+		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -123,6 +129,44 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s.privateHTTP = privateServer
 
 	return s, nil
+}
+
+// computeExternalURL computes a sanitized external URL from a raw input. It infers unset
+// URL parts from the OS and the given listen address.
+func computeExternalURL(u, listenAddr string) (*url.URL, error) {
+	if u == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return nil, err
+		}
+		_, port, err := net.SplitHostPort(listenAddr)
+		if err != nil {
+			return nil, err
+		}
+		u = fmt.Sprintf("http://%s:%s/", hostname, port)
+	}
+
+	startsOrEndsWithQuote := func(s string) bool {
+		return strings.HasPrefix(s, "\"") || strings.HasPrefix(s, "'") ||
+			strings.HasSuffix(s, "\"") || strings.HasSuffix(s, "'")
+	}
+
+	if startsOrEndsWithQuote(u) {
+		return nil, fmt.Errorf("URL must not begin or end with quotes")
+	}
+
+	eu, err := url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
+
+	ppref := strings.TrimRight(eu.Path, "/")
+	if ppref != "" && !strings.HasPrefix(ppref, "/") {
+		ppref = "/" + ppref
+	}
+	eu.Path = ppref
+
+	return eu, nil
 }
 
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
@@ -340,7 +384,7 @@ func makeRulesManager(
 	alertManagerURL string,
 	externalURL *url.URL,
 	db *sqlx.DB,
-	ch Reader) (*rules.Manager, error) {
+	ch interfaces.Reader) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
