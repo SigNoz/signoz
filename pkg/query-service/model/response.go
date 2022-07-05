@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type ApiError struct {
@@ -42,6 +43,12 @@ type QueryData struct {
 	Stats      *stats.QueryStats `json:"stats,omitempty"`
 }
 
+type RuleResponseItem struct {
+	Id        int       `json:"id" db:"id"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	Data      string    `json:"data" db:"data"`
+}
+
 type TTLStatusItem struct {
 	Id             int       `json:"id" db:"id"`
 	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
@@ -59,6 +66,22 @@ type ChannelItem struct {
 	Name      string    `json:"name" db:"name"`
 	Type      string    `json:"type" db:"type"`
 	Data      string    `json:"data" db:"data"`
+}
+
+// AlertDiscovery has info for all active alerts.
+type AlertDiscovery struct {
+	Alerts []*AlertingRuleResponse `json:"rules"`
+}
+
+// Alert has info for an alert.
+type AlertingRuleResponse struct {
+	Labels      labels.Labels `json:"labels"`
+	Annotations labels.Labels `json:"annotations"`
+	State       string        `json:"state"`
+	Name        string        `json:"name"`
+	Id          int           `json:"id"`
+	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
+	// Value       float64       `json:"value"`
 }
 
 type ServiceItem struct {
@@ -345,10 +368,8 @@ type MetricPoint struct {
 	Value     float64
 }
 
-func (mp *MetricPoint) MarshalJSON() ([]byte, error) {
-	a := []interface{}{
-		mp.Timestamp,
-		mp.Value,
-	}
-	return json.Marshal(a)
+// MarshalJSON implements json.Marshaler.
+func (p *MetricPoint) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
 }
