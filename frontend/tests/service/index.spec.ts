@@ -1,17 +1,22 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import ROUTES from 'constants/routes';
 
 import { loginApi } from '../fixtures/common';
 
+let page: Page;
+
 test.describe('Service Page', () => {
-	test('', async ({ browser, baseURL }) => {
+	test.beforeEach(async ({ baseURL, browser }) => {
 		const context = await browser.newContext({ storageState: 'tests/auth.json' });
-		const page = await context.newPage();
+		const newPage = await context.newPage();
 
-		await loginApi(page);
+		await loginApi(newPage);
 
-		await page.goto(`${baseURL}${ROUTES.APPLICATION}`);
+		await newPage.goto(`${baseURL}${ROUTES.APPLICATION}`);
 
+		page = newPage;
+	});
+	test('Serice Page is rendered', async ({ baseURL }) => {
 		await expect(page).toHaveURL(`${baseURL}${ROUTES.APPLICATION}`);
 	});
 });
