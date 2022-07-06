@@ -9,6 +9,7 @@ import { IMetricsBuilderQuery } from 'types/api/dashboard/getAll';
 
 export const toFormulaQueries = (b: IBuilderQueries): IFormulaQueries => {
 	const f: IFormulaQueries = {};
+	if (!b) return f;
 	Object.keys(b).forEach((key) => {
 		if (!b[key].metricName || b[key].metricName === '') {
 			f[key] = b[key] as IFormulaQuery;
@@ -20,6 +21,7 @@ export const toFormulaQueries = (b: IBuilderQueries): IFormulaQueries => {
 
 export const toMetricQueries = (b: IBuilderQueries): IMetricQueries => {
 	const m: IMetricQueries = {};
+	if (!b) return m;
 	Object.keys(b).forEach((key) => {
 		if (b[key].metricName !== '') {
 			m[key] = b[key] as IMetricQuery;
@@ -33,6 +35,7 @@ export const prepareBuilderQueries = (
 	m: IMetricQueries,
 	f: IFormulaQueries,
 ): IBuilderQueries => {
+	if (!m) return {};
 	const b: IBuilderQueries = {
 		...m,
 	};
