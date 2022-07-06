@@ -50,13 +50,19 @@ func NewPromRule(
 	evalWindow time.Duration,
 	labels, annotations map[string]string,
 	logger log.Logger,
-) *PromRule {
+) (*PromRule, error) {
 
 	if int64(evalWindow) == 0 {
 		evalWindow = 5 * time.Minute
 	}
 
-	fmt.Println("creating new alerting rule:", name)
+	if ruleCondition == nil {
+		return nil, fmt.Errorf("no rule condition")
+	} else if !ruleCondition.IsValid() {
+		return nil, fmt.Errorf("invalid rule condition")
+	}
+
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String())
 
 	return &PromRule{
 		id:            id,
@@ -68,7 +74,7 @@ func NewPromRule(
 		health:        HealthUnknown,
 		active:        map[uint64]*Alert{},
 		logger:        logger,
-	}
+	}, nil
 }
 
 func (r *PromRule) Name() string {
@@ -264,14 +270,10 @@ func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 }
 
 func (r *PromRule) getPqlQuery() (string, error) {
-	fmt.Println("model.PROM ", model.PROM)
-	fmt.Println("q type ", r.ruleCondition.CompositeMetricQuery.QueryType)
+
 	if r.ruleCondition.CompositeMetricQuery.QueryType == model.PROM {
-		fmt.Println("got prom type")
 		if len(r.ruleCondition.CompositeMetricQuery.PromQueries) > 0 {
-			fmt.Println("got prom queries leng> 0")
 			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["A"]; ok {
-				fmt.Println("found promquery")
 				return promQuery.Query, nil
 			}
 		}
@@ -286,7 +288,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, e
 	if err != nil {
 		return nil, err
 	}
-	zap.S().Info("rule:", r.Name(), "/t evaluating promql query: ", q)
+	zap.S().Info("rule:", r.Name(), "\t evaluating promql query: ", q)
 	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, ts)
 	if err != nil {
 		r.SetHealth(HealthBad)

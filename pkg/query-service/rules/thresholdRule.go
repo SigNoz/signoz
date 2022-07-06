@@ -3,8 +3,6 @@ package rules
 import (
 	"context"
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
 	"math"
 	"net/url"
@@ -42,8 +40,6 @@ type ThresholdRule struct {
 
 	// map of active alerts
 	active map[uint64]*Alert
-
-	logger log.Logger
 }
 
 func NewThresholdRule(
@@ -52,17 +48,19 @@ func NewThresholdRule(
 	ruleCondition *RuleCondition,
 	evalWindow time.Duration,
 	l, a map[string]string,
-	logger log.Logger,
-) *ThresholdRule {
+) (*ThresholdRule, error) {
 
 	if int64(evalWindow) == 0 {
 		evalWindow = 5 * time.Minute
 	}
 
-	// todo(amol) raise an error if target is null
-	// or target compare op is null
+	if ruleCondition == nil {
+		return nil, fmt.Errorf("no rule condition")
+	} else if !ruleCondition.IsValid() {
+		return nil, fmt.Errorf("invalid rule condition")
+	}
 
-	zap.S().Info("creating new alerting rule:", name)
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String())
 
 	return &ThresholdRule{
 		id:            id,
@@ -74,8 +72,7 @@ func NewThresholdRule(
 
 		health: HealthUnknown,
 		active: map[uint64]*Alert{},
-		logger: logger,
-	}
+	}, nil
 }
 
 func (r *ThresholdRule) Name() string {
@@ -274,7 +271,7 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	zap.S().Info("rule:", r.Name(), "\t msg:", "sending alerts")
+	zap.S().Info("msg:", "initiating send alerts (if any)", "\t rule:", r.Name())
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if alert.needsSending(ts, resendDelay) {
@@ -288,7 +285,7 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 			anew := *alert
 			alerts = append(alerts, &anew)
 		} else {
-			zap.S().Debugf("msg: skipping send alert due to resend delay", "/t rule: ", r.Name(), "\t alert:", alert.Labels)
+			zap.S().Debugf("msg: skipping send alert due to resend delay", "\t rule: ", r.Name(), "\t alert:", alert.Labels)
 		}
 	})
 	notifyFunc(ctx, "", alerts...)
@@ -296,16 +293,14 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	if value.IsNaN(v) {
-		zap.S().Debugf("found NaN in rule condition: ", r.Name())
+		zap.S().Debugf("msg:", "found NaN in rule condition", "\t rule name:", r.Name())
 		return false
 	}
 
 	if r.ruleCondition.Target == nil {
-		zap.S().Debugf("found null target in rule condition: ", r.Name())
+		zap.S().Debugf("msg:", "found null target in rule condition", "\t rulename:", r.Name())
 		return false
 	}
-
-	fmt.Println("v:", v, *r.ruleCondition.Target)
 
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
@@ -331,7 +326,6 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParam
 	//	r.ruleCondition.CompositeMetricQuery.BuilderQueries[k] = v
 	// }
 
-	zap.S().Info("rule:", r.Name(), "/t condition:", r.ruleCondition.String())
 	return &qsmodel.QueryRangeParamsV2{
 		Start:                tsStart,
 		End:                  tsEnd,
@@ -510,7 +504,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		return r.runChQuery(ctx, ch, queryString)
 	}
 
-	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "/t queries:", runQueries.Queries)
+	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "\t queries:", runQueries.Queries)
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
@@ -521,7 +515,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
-		zap.S().Debugf("ruleid:", r.ID(), "/tfailure in buildAndRunQuery:", err)
+		zap.S().Debugf("ruleid:", r.ID(), "\t failure in buildAndRunQuery:", err)
 		return nil, err
 	}
 
@@ -556,7 +550,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				level.Warn(r.logger).Log("msg", "Expanding alert template failed", "err", err, "data", tmplData)
+				zap.S().Errorf("msg:", "Expanding alert template failed", "\t err", err, "\t data", tmplData)
 			}
 			return result
 		}

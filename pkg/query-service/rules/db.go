@@ -49,6 +49,8 @@ func newRuleDB(db *sqlx.DB) RuleDB {
 	}
 }
 
+// CreateRuleTx stores a given rule in db and returns task name,
+// sql tx and error (if any)
 func (r *ruleDB) CreateRuleTx(rule string) (string, Tx, error) {
 
 	var groupName string
@@ -77,27 +79,30 @@ func (r *ruleDB) CreateRuleTx(rule string) (string, Tx, error) {
 
 	lastInsertId, _ = result.LastInsertId()
 
-	groupName = fmt.Sprintf("%d-groupname", lastInsertId)
+	groupName = prepareTaskName(lastInsertId)
 
 	return groupName, tx, nil
 
 }
 
+// EditRuleTx stores a given rule string in database and returns
+// task name, sql tx and error (if any)
 func (r *ruleDB) EditRuleTx(rule string, id string) (string, Tx, error) {
+
 	var groupName string
-	fmt.Println("id:", id)
 	idInt, _ := strconv.Atoi(id)
 	if idInt == 0 {
 		return groupName, nil, fmt.Errorf("failed to read alert id from parameters")
 	}
 
-	groupName = fmt.Sprintf("%d-groupname", idInt)
+	groupName = prepareTaskName(int64(idInt))
 
+	// todo(amol): resolve this error - database locked when using
+	// edit transaction with sqlx
 	// tx, err := r.Begin()
 	//if err != nil {
 	//	return groupName, tx, err
 	//}
-
 	stmt, err := r.Prepare(`UPDATE rules SET updated_at=$1, data=$2 WHERE id=$3;`)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
@@ -114,10 +119,13 @@ func (r *ruleDB) EditRuleTx(rule string, id string) (string, Tx, error) {
 	return groupName, nil, nil
 }
 
+// DeleteRuleTx deletes a given rule with id and returns
+// taskname, sql tx and error (if any)
 func (r *ruleDB) DeleteRuleTx(id string) (string, Tx, error) {
 
 	idInt, _ := strconv.Atoi(id)
-	groupName := fmt.Sprintf("%d-groupname", idInt)
+	groupName := prepareTaskName(int64(idInt))
+
 	tx, err := r.Begin()
 	if err != nil {
 		return groupName, tx, err
@@ -166,7 +174,7 @@ func (r *ruleDB) GetStoredRule(id string) (*StoredRule, error) {
 	query := fmt.Sprintf("SELECT id, updated_at, data FROM rules WHERE id=%d", intId)
 	err = r.Get(rule, query)
 
-	zap.S().Info(query)
+	// zap.S().Info(query)
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)

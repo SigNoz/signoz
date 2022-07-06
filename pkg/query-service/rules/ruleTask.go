@@ -3,7 +3,6 @@ package rules
 import (
 	"context"
 	"fmt"
-	"github.com/go-kit/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	"go.signoz.io/query-service/utils/labels"
 	"go.uber.org/zap"
@@ -33,7 +32,6 @@ type RuleTask struct {
 	managerDone chan struct{}
 
 	pause  bool
-	logger log.Logger
 	notify NotifyFunc
 }
 
@@ -41,11 +39,11 @@ const DefaultFrequency = 1 * time.Minute
 
 // newRuleTask makes a new RuleTask with the given name, options, and rules.
 func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
-	zap.S().Info("Initiating a new rule group:", name, "frequency:", frequency)
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
 	}
+	zap.S().Info("msg:", "initiating a new rule task", "\t name:", name, "\t frequency:", frequency)
 
 	return &RuleTask{
 		name:                 name,
@@ -58,12 +56,16 @@ func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
 		notify:               notify,
-		logger:               log.With(opts.Logger, "group", name),
 	}
 }
 
 // Name returns the group name.
 func (g *RuleTask) Name() string { return g.name }
+
+// Key returns the group key
+func (g *RuleTask) Key() string {
+	return g.name + ";" + g.file
+}
 
 // Name returns the group name.
 func (g *RuleTask) Type() TaskType { return TaskTypeCh }
@@ -91,7 +93,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.S().Debugf("group:", g.name, "/t group run to begin at: ", evalTimestamp)
+	zap.S().Debugf("group:", g.name, "\t group run to begin at: ", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
@@ -309,6 +311,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 	}
 
 	// Handle deleted and unmatched duplicate rules.
+	// todo(amol): possibly not needed any more
 	g.staleSeries = from.staleSeries
 	for fi, fromRule := range from.rules {
 		nameAndLabels := nameAndLabels(fromRule)
@@ -325,7 +328,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
-	zap.S().Debugf("group:", g.name, "group eval started at:", ts)
+	zap.S().Debugf("msg:", "rule task eval started", "\t name:", g.name, "\t start time:", ts)
 
 	var samplesTotal float64
 	for i, rule := range g.rules {
@@ -355,7 +358,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
 
-				zap.S().Warn("msg:", "Evaluating rule failed", "/trule:", rule, "/terr: ", err)
+				zap.S().Warn("msg:", "Evaluating rule failed", "\t rule:", rule, "\t err: ", err)
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

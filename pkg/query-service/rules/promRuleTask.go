@@ -40,7 +40,7 @@ type PromRuleTask struct {
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
 func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *PromRuleTask {
-	zap.S().Info("Initiating a new rule group:", name, "/t frequency:", frequency)
+	zap.S().Info("Initiating a new rule group:", name, "\t frequency:", frequency)
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -64,6 +64,11 @@ func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 // Name returns the group name.
 func (g *PromRuleTask) Name() string { return g.name }
 
+// Key returns the group key
+func (g *PromRuleTask) Key() string {
+	return g.name + ";" + g.file
+}
+
 func (g *PromRuleTask) Type() TaskType { return TaskTypeProm }
 
 // Rules returns the group's rules.
@@ -83,7 +88,6 @@ func (g *PromRuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	fmt.Println(" group run to begin at: ", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:

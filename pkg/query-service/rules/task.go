@@ -14,6 +14,10 @@ const (
 
 type Task interface {
 	Name() string
+
+	// Key returns the group key
+	Key() string
+
 	Type() TaskType
 	CopyState(from Task) error
 	Eval(ctx context.Context, ts time.Time)

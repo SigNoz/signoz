@@ -119,6 +119,38 @@ type RuleCondition struct {
 	MatchType            `json:"matchType,omitempty"`
 }
 
+func (rc *RuleCondition) IsValid() bool {
+
+	if rc.CompositeMetricQuery == nil {
+		return false
+	}
+
+	if rc.QueryType() == model.QUERY_BUILDER {
+		if rc.Target == nil {
+			return false
+		}
+		if rc.CompareOp == "" {
+			return false
+		}
+	}
+	if rc.QueryType() == model.PROM {
+
+		if len(rc.CompositeMetricQuery.PromQueries) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// QueryType is a short hand method to get query type
+func (rc *RuleCondition) QueryType() model.QueryType {
+	if rc.CompositeMetricQuery != nil {
+		return rc.CompositeMetricQuery.QueryType
+	}
+	return 0
+}
+
+// String is useful in printing rule condition in logs
 func (rc *RuleCondition) String() string {
 	if rc == nil {
 		return ""

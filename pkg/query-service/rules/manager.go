@@ -25,8 +25,12 @@ import (
 const namespace = "signoz"
 const taskNamesuffix = "webAppEditor"
 
-func groupKey(name, file string) string {
-	return name + ";" + file
+func ruleIdFromTaskName(n string) string {
+	return strings.Split(n, "-groupname")[0]
+}
+
+func prepareTaskName(ruleId int64) string {
+	return fmt.Sprintf("%d-groupname", ruleId)
 }
 
 // ManagerOptions bundles options for the Manager.
@@ -128,33 +132,38 @@ func (m *Manager) initiate() error {
 	var loadErrors []error
 
 	for _, rec := range storedRules {
-		groupName := fmt.Sprintf("%d-groupname", rec.Id)
+		taskName := fmt.Sprintf("%d-groupname", rec.Id)
 		parsedRule, errs := ParsePostableRule([]byte(rec.Data))
 
 		if len(errs) > 0 {
 			if errs[0].Error() == "failed to load json" {
 				zap.S().Info("failed to load rule in json format, trying yaml now:", rec.Data)
+
+				// see if rule is stored in yaml format
 				parsedRule, errs = parsePostableRule([]byte(rec.Data), "yaml")
+
 				if parsedRule == nil {
 					zap.S().Errorf("failed to parse and initialize yaml rule:", errs)
 					// just one rule is being parsed so expect just one error
 					loadErrors = append(loadErrors, errs[0])
 					continue
-				} else {
-					// migrate the rule to json before continuing
-					zap.S().Info("migrating rule from JSON to yaml", rec.Id)
-					ruleJSON, err := json.Marshal(parsedRule)
-					if err == nil {
-						_, tx, err := m.ruleDB.EditRuleTx(string(ruleJSON), fmt.Sprintf("%d", rec.Id))
-						if err != nil {
-							zap.S().Errorf("failed to migrate rule ", err, ruleJSON, rec.Id)
-						} else {
-							tx.Commit()
-						}
-
-					}
-
 				}
+				// else {
+				// rule stored in yaml, so migrate it to json
+				// todo(amol): commenting for now as more tests are needed
+				// zap.S().Info("migrating rule from JSON to yaml", rec.Data)
+				// ruleJSON, err := json.Marshal(parsedRule)
+				// if err == nil {
+				// 	taskName, _, err := m.ruleDB.EditRuleTx(string(ruleJSON), fmt.Sprintf("%d", rec.Id))
+				// 	if err != nil {
+				// 		zap.S().Errorf("failed to migrate rule ", err, ruleJSON, rec.Id)
+				// 	} else {
+				// 		zap.S().Info("migrated rule:", taskName)
+				// 	}
+
+				// }
+
+				// }
 			} else {
 				zap.S().Errorf("failed to parse and initialize rule:", errs)
 				// just one rule is being parsed so expect just one error
@@ -163,9 +172,9 @@ func (m *Manager) initiate() error {
 			}
 		}
 
-		err := m.addTask(parsedRule, groupName)
+		err := m.addTask(parsedRule, taskName)
 		if err != nil {
-			zap.S().Errorf("failed to load the rule definition (%s): %v", groupName, err)
+			zap.S().Errorf("failed to load the rule definition (%s): %v", taskName, err)
 		}
 	}
 
@@ -174,7 +183,10 @@ func (m *Manager) initiate() error {
 
 // Run starts processing of the rule manager.
 func (m *Manager) run() {
+	// initiate notifier
 	go m.notifier.Run()
+
+	// initiate blocked tasks
 	close(m.block)
 }
 
@@ -203,13 +215,15 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 		return errs[0]
 	}
 
-	groupName, _, err := m.ruleDB.EditRuleTx(ruleStr, id)
+	taskName, _, err := m.ruleDB.EditRuleTx(ruleStr, id)
 	if err != nil {
 		return err
 	}
 
-	err = m.editTask(parsedRule, groupName)
+	err = m.editTask(parsedRule, taskName)
 	if err != nil {
+		// todo(amol): using tx with sqllite3 is gets
+		// database locked. need to research and resolve this
 		//tx.Rollback()
 		return err
 	}
@@ -218,73 +232,51 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 	return nil
 }
 
-func (m *Manager) editTask(rule *PostableRule, groupName string) error {
+func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	var tasks map[string]Task
-	var errs []error
+	newTask, err := m.prepareTask(false, rule, taskName)
 
-	tasks, errs = m.loadTask(false, rule, groupName)
-
-	if errs != nil {
-		for _, e := range errs {
-			zap.S().Errorf("msg", "loading tasks failed", "err", e)
-		}
-		return errors.New("error loading rules, previous rule set restored")
+	if err != nil {
+		zap.S().Errorf("msg:", "loading tasks failed", "\t err:", err)
+		return errors.New("error preparing rule with given parameters, previous rule set restored")
 	}
 
-	var wg sync.WaitGroup
-
-	for _, newg := range tasks {
-		wg.Add(1)
-
-		// If there is an old group with the same identifier, stop it and wait for
-		// it to finish the current iteration. Then copy it into the new group.
-		gn := groupKey(newg.Name(), taskNamesuffix)
-		oldg, ok := m.tasks[gn]
-		if !ok {
-			return errors.New("rule not found")
-		}
-
-		delete(m.tasks, gn)
-
-		go func(newg Task) {
-			if ok {
-				oldg.Stop()
-				newg.CopyState(oldg)
-			}
-			go func() {
-				// Wait with starting evaluation until the rule manager
-				// is told to run. This is necessary to avoid running
-				// queries against a bootstrapping storage.
-				<-m.block
-				newg.Run(m.opts.Context)
-			}()
-			wg.Done()
-		}(newg)
-
-		m.tasks[gn] = newg
-
+	// If there is an old task with the same identifier, stop it and wait for
+	// it to finish the current iteration. Then copy it into the new group.
+	oldTask, ok := m.tasks[taskName]
+	if !ok {
+		zap.S().Errorf("msg:", "rule task not found, edit task failed", "\t task name:", taskName)
+		return errors.New("rule task not found, edit task failed")
 	}
 
-	// // Stop remaining old tasks.
-	// for _, oldg := range m.tasks {
-	// 	oldg.Stop()
-	// }
+	delete(m.tasks, taskName)
 
-	wg.Wait()
+	if ok {
+		oldTask.Stop()
+		newTask.CopyState(oldTask)
+	}
 
+	go func() {
+		// Wait with starting evaluation until the rule manager
+		// is told to run. This is necessary to avoid running
+		// queries against a bootstrapping storage.
+		<-m.block
+		newTask.Run(m.opts.Context)
+	}()
+
+	m.tasks[taskName] = newTask
 	return nil
 }
 
 func (m *Manager) DeleteRule(id string) error {
-	groupName, tx, err := m.ruleDB.DeleteRuleTx(id)
+	taskName, tx, err := m.ruleDB.DeleteRuleTx(id)
 	if err != nil {
 		return err
 	}
 
-	if err := m.deleteTask(groupName); err != nil {
+	if err := m.deleteTask(taskName); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -292,26 +284,19 @@ func (m *Manager) DeleteRule(id string) error {
 	return tx.Commit()
 }
 
-func (m *Manager) deleteTask(groupName string) error {
+func (m *Manager) deleteTask(taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	gn := groupKey(groupName, taskNamesuffix)
-
-	oldg, ok := m.tasks[gn]
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func(newg Task) {
-		if ok {
-			oldg.Stop()
-			delete(m.tasks, gn)
-			delete(m.rules, groupName)
-		}
-		defer wg.Done()
-	}(oldg)
-
-	wg.Wait()
+	oldg, ok := m.tasks[taskName]
+	if ok {
+		oldg.Stop()
+		delete(m.tasks, taskName)
+		delete(m.rules, ruleIdFromTaskName(taskName))
+	} else {
+		zap.S().Errorf("msg:", "rule not found for deletion", "\t name:", taskName)
+		return fmt.Errorf("rule not found")
+	}
 
 	return nil
 }
@@ -327,74 +312,49 @@ func (m *Manager) CreateRule(ruleStr string) error {
 		return errs[0]
 	}
 
-	groupName, tx, err := m.ruleDB.CreateRuleTx(ruleStr)
+	taskName, tx, err := m.ruleDB.CreateRuleTx(ruleStr)
 	if err != nil {
 		return err
 	}
 
-	if err := m.addTask(parsedRule, groupName); err != nil {
+	if err := m.addTask(parsedRule, taskName); err != nil {
 		tx.Rollback()
 		return err
 	}
 	return tx.Commit()
 }
 
-func (m *Manager) addTask(rule *PostableRule, groupName string) error {
+func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	// m.restored = true
+	newTask, err := m.prepareTask(false, rule, taskName)
 
-	var tasks map[string]Task
-	var errs []error
-
-	tasks, errs = m.loadTask(false, rule, groupName)
-
-	if errs != nil {
-		for _, e := range errs {
-			zap.S().Errorf("msg", "loading rule tasks failed", "err", e)
-		}
+	if err != nil {
+		zap.S().Errorf("msg:", "creating rule task failed", "\t name:", taskName, "\t err", err)
 		return errors.New("error loading rules, previous rule set restored")
 	}
 
-	var wg sync.WaitGroup
-
-	for _, newg := range tasks {
-		wg.Add(1)
-
-		// If there is an old group with the same identifier, stop it and wait for
-		// it to finish the current iteration. Then copy it into the new group.
-		gn := groupKey(newg.Name(), taskNamesuffix)
-		oldg, ok := m.tasks[gn]
-		delete(m.tasks, gn)
-
-		go func(newg Task) {
-			if ok {
-				oldg.Stop()
-				newg.CopyState(oldg)
-			}
-			go func() {
-				// Wait with starting evaluation until the rule manager
-				// is told to run. This is necessary to avoid running
-				// queries against a bootstrapping storage.
-				<-m.block
-				newg.Run(m.opts.Context)
-			}()
-			wg.Done()
-		}(newg)
-
-		if !ok {
-			m.tasks[gn] = newg
-		}
+	// If there is an another task with the same identifier, raise an error
+	_, ok := m.tasks[taskName]
+	if ok {
+		return fmt.Errorf("a rule with the same name already exists")
 	}
 
-	wg.Wait()
+	go func() {
+		// Wait with starting evaluation until the rule manager
+		// is told to run. This is necessary to avoid running
+		// queries against a bootstrapping storage.
+		<-m.block
+		newTask.Run(m.opts.Context)
+	}()
 
+	m.tasks[taskName] = newTask
 	return nil
 }
 
-// loadTask loads a given rule in rule manager. the method
-func (m *Manager) loadTask(acquireLock bool, r *PostableRule, groupName string) (map[string]Task, []error) {
+// prepareTask prepares a rule task from postable rule
+func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string) (Task, error) {
 
 	if acquireLock {
 		m.mtx.Lock()
@@ -402,30 +362,33 @@ func (m *Manager) loadTask(acquireLock bool, r *PostableRule, groupName string) 
 	}
 
 	rules := make([]Rule, 0)
-	tasks := make(map[string]Task)
+	var task Task
 
 	if r.Alert == "" {
-		return tasks, []error{fmt.Errorf("at least one rule must be set")}
+		zap.S().Errorf("msg:", "task load failed, at least one rule must be set", "\t task name:", taskName)
+		return task, fmt.Errorf("task load failed, at least one rule must be set")
 	}
 
-	ruleId := strings.Split(groupName, "-groupname")[0]
-
+	ruleId := ruleIdFromTaskName(taskName)
 	if r.RuleType == RuleTypeThreshold {
 		// create a threshold rule
-		tr := NewThresholdRule(
+		tr, err := NewThresholdRule(
 			ruleId,
 			r.Alert,
 			r.RuleCondition,
 			time.Duration(r.EvalWindow),
 			r.Labels,
 			r.Annotations,
-			log.With(m.logger, "alert", r.Alert),
 		)
+
+		if err != nil {
+			return task, err
+		}
 
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeCh, groupName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
 
 		// add rule to memory
 		m.rules[ruleId] = tr
@@ -433,28 +396,34 @@ func (m *Manager) loadTask(acquireLock bool, r *PostableRule, groupName string) 
 	} else if r.RuleType == RuleTypeProm {
 
 		// create promql rule
-		pr := NewPromRule(
+		pr, err := NewPromRule(
 			ruleId,
 			r.Alert,
 			r.RuleCondition,
 			time.Duration(r.EvalWindow),
 			r.Labels,
 			r.Annotations,
+			// required as promql engine works with logger and not zap
 			log.With(m.logger, "alert", r.Alert),
 		)
+
+		if err != nil {
+			return task, err
+		}
+
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		tasks[groupKey(groupName, taskNamesuffix)] = newTask(TaskTypeProm, groupName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
 
 		// add rule to memory
 		m.rules[ruleId] = pr
 
 	} else {
-		return nil, []error{fmt.Errorf(fmt.Sprintf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold))}
+		return nil, fmt.Errorf(fmt.Sprintf("unsupported rule type. Supported types: %s, %s", RuleTypeProm, RuleTypeThreshold))
 	}
 
-	return tasks, nil
+	return task, nil
 }
 
 // RuleTasks returns the list of manager's rule tasks.
@@ -567,7 +536,7 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 	// fetch rules from DB
 	storedRules, err := m.ruleDB.GetStoredRules()
-	zap.S().Info("stored rules:", len(storedRules))
+
 	// initiate response object
 	resp := make([]*GettableRule, 0)
 
@@ -575,7 +544,7 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 		ruleResponse := &GettableRule{}
 		if err := json.Unmarshal([]byte(s.Data), ruleResponse); err != nil { // Parse []byte to go struct pointer
-			zap.S().Errorf("msg:", "invalid rule data", "/terr:", err)
+			zap.S().Errorf("msg:", "invalid rule data", "\t err:", err)
 			continue
 		}
 
@@ -583,7 +552,7 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "/terr:", err, "/trule_id:", ruleResponse.Id)
+			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "\t err:", err, "\t rule_id:", ruleResponse.Id)
 		} else {
 			ruleResponse.State = rm.State().String()
 		}
