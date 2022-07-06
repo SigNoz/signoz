@@ -147,23 +147,19 @@ func (m *Manager) initiate() error {
 					// just one rule is being parsed so expect just one error
 					loadErrors = append(loadErrors, errs[0])
 					continue
+				} else {
+					// rule stored in yaml, so migrate it to json
+					zap.S().Info("msg:", "migrating rule from JSON to yaml", "\t rule:", rec.Data, "\t parsed rule:", parsedRule)
+					ruleJSON, err := json.Marshal(parsedRule)
+					if err == nil {
+						taskName, _, err := m.ruleDB.EditRuleTx(string(ruleJSON), fmt.Sprintf("%d", rec.Id))
+						if err != nil {
+							zap.S().Errorf("msg: failed to migrate rule ", "/t error:", err)
+						} else {
+							zap.S().Info("msg:", "migrated rule from yaml to json", "/t rule:", taskName)
+						}
+					}
 				}
-				// else {
-				// rule stored in yaml, so migrate it to json
-				// todo(amol): commenting for now as more tests are needed
-				// zap.S().Info("migrating rule from JSON to yaml", rec.Data)
-				// ruleJSON, err := json.Marshal(parsedRule)
-				// if err == nil {
-				// 	taskName, _, err := m.ruleDB.EditRuleTx(string(ruleJSON), fmt.Sprintf("%d", rec.Id))
-				// 	if err != nil {
-				// 		zap.S().Errorf("failed to migrate rule ", err, ruleJSON, rec.Id)
-				// 	} else {
-				// 		zap.S().Info("migrated rule:", taskName)
-				// 	}
-
-				// }
-
-				// }
 			} else {
 				zap.S().Errorf("failed to parse and initialize rule:", errs)
 				// just one rule is being parsed so expect just one error
