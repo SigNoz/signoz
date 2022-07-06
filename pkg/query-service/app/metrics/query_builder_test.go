@@ -42,8 +42,9 @@ func TestBuildQueryWithFilters(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "a", Value: "b", Operation: "neq"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "a", Value: "b", Operator: "neq"},
+							{Key: "code", Value: "ERROR_*", Operator: "nmatch"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
@@ -56,6 +57,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 
 		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.a != 'b'")
 		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["a"], ShouldContainSubstring, "not match(labels_object.code, 'ERROR_*')")
 	})
 }
 
@@ -70,8 +72,8 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: model.RATE_AVG,
 						Expression:        "a",
@@ -103,8 +105,8 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
