@@ -22,6 +22,7 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/interfaces"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/version"
@@ -46,14 +47,14 @@ type APIHandler struct {
 	// queryParser  queryParser
 	basePath     string
 	apiPrefix    string
-	reader       *Reader
+	reader       *interfaces.Reader
 	relationalDB dao.ModelDao
 	alertManager am.Manager
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader *Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
+func NewAPIHandler(reader *interfaces.Reader, relationalDB dao.ModelDao) (*APIHandler, error) {
 
 	alertManager := am.New("")
 	aH := &APIHandler{
@@ -179,10 +180,10 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 }
 func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", aH.queryRangeMetricsV2).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/list", aH.metricAutocompleteMetricName).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagKey", aH.metricAutocompleteTagKey).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagValue", aH.metricAutocompleteTagValue).Methods(http.MethodGet)
+	subRouter.HandleFunc("/query_range", ViewAccess(aH.queryRangeMetricsV2)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/autocomplete/list", ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagKey", ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagValue", ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) respond(w http.ResponseWriter, data interface{}) {

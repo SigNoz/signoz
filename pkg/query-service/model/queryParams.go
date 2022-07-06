@@ -294,17 +294,12 @@ type GetErrorParams struct {
 }
 
 type FilterItem struct {
-	Key       string      `json:"key"`
-	Value     interface{} `json:"value"`
-	Operation string      `json:"op"`
+	Key      string      `json:"key"`
+	Value    interface{} `json:"value"`
+	Operator string      `json:"op"`
 }
 
 type FilterSet struct {
-	Operation string       `json:"op,omitempty"`
-	Items     []FilterItem `json:"items"`
-}
-
-type RemoveTTLParams struct {
-	Type         string
-	RemoveAllTTL bool
+	Operator string       `json:"op,omitempty"`
+	Items    []FilterItem `json:"items"`
 }
