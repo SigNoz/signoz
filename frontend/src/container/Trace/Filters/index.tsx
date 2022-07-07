@@ -11,6 +11,8 @@ export const AllTraceFilterEnum: TraceFilterEnum[] = [
 	'component',
 	'httpCode',
 	'httpHost',
+	'rpcMethod',
+	'responseStatusCode',
 	'httpMethod',
 	'httpRoute',
 	'httpUrl',
