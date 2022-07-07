@@ -1,6 +1,6 @@
 # Query Service
 
-Query service is the interface between forntend and databases. It is written in **Golang**. It will have modules for all supported databases. Query service is responsible to:
+Query service is the interface between frontend and databases. It is written in **Golang**. It will have modules for all supported databases. Query service is responsible to:
 - parse the request from Frontend
 - create relevant Clickhouse queries (and all other supported database queries)
 - parse response from databases and handle error if any
