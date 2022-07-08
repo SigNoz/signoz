@@ -30,7 +30,6 @@ linters:
     - deadcode
     - gosimple
     - ineffassign
-    - contextcheck
     - depguard
     - errorlint
     - structcheck
