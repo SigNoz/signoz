@@ -64,6 +64,9 @@ type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
 	dsnURL, err := url.Parse(cfg.Datasource)
+	if err != nil {
+		return nil, err
+	}
 	options := &clickhouse.Options{
 		Addr: []string{dsnURL.Host},
 	}

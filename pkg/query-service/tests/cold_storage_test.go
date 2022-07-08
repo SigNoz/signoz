@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -27,6 +28,9 @@ func setTTL(table, coldStorage, toColdTTL, deleteTTL string, jwtToken string) ([
 	}
 	var bearer = "Bearer " + jwtToken
 	req, err := http.NewRequest("POST", endpoint+"/api/v1/settings/ttl?"+params, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Authorization", bearer)
 
 	resp, err := client.Do(req)
@@ -128,6 +132,9 @@ func getTTL(t *testing.T, table string, jwtToken string) *model.GetTTLResponseIt
 
 	var bearer = "Bearer " + jwtToken
 	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	req.Header.Add("Authorization", bearer)
 	resp, err := client.Do(req)
 
@@ -214,5 +221,5 @@ func TestMain(m *testing.M) {
 	}
 	defer stopCluster()
 
-	m.Run()
+	os.Exit(m.Run())
 }

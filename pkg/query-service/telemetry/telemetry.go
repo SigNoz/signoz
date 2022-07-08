@@ -24,7 +24,7 @@ const (
 	EventOrgSettings       = "Org Settings"
 )
 
-const apiKey = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
+const writeKey = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
 const IpNotFoundPlaceholder = "NA"
 
 const HeartBeatDuration = 6 * time.Hour
@@ -45,7 +45,7 @@ type Telemetry struct {
 
 func createTelemetry() {
 	telemetry = &Telemetry{
-		operator:  analytics.New(apiKey),
+		operator:  analytics.New(writeKey),
 		ipAddress: getOutboundIP(),
 	}
 
