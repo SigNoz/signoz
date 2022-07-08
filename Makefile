@@ -118,6 +118,7 @@ install-tools:
 
 .PHONY: lint
 lint:
+	@cd $(QUERY_SERVICE_DIRECTORY) && \
 	golangci-lint -v run
 
 .PHONY: fmt
