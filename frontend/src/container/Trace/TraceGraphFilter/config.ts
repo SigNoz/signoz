@@ -43,7 +43,7 @@ export const groupBy: Dropdown[] = [
 		key: 'rpcMethod',
 	},
 	{
-		displayValue: 'Starus Code',
+		displayValue: 'Status Code',
 		key: 'responseStatusCode',
 	},
 	{
