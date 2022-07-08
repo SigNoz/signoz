@@ -14,7 +14,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 	const { resourceAttributePromQLQuery } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
-	const legend = '{{http_url}}';
+	const legend = '{{address}}';
 
 	return (
 		<>
