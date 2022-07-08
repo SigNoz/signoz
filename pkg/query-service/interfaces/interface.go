@@ -44,10 +44,9 @@ type Reader interface {
 	GetErrors(ctx context.Context, params *model.GetErrorsParams) (*[]model.Error, *model.ApiError)
 	GetErrorForId(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
 	GetErrorForType(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
-	// Search Interfaces
+
 	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 
-	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
 	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
