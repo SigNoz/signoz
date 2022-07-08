@@ -28,7 +28,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[1m]) OR vector(0)) by (address))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[1m])) by (address)) < 1000 OR vector(0)`,
+										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[1m]) OR vector(0)) by (address))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[1m])) by (address)) < 1000 OR vector(0)`,
 										legend: 'External Call Error Percentage',
 									},
 								])}
