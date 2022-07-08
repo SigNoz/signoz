@@ -21,6 +21,7 @@ const getSpanReferences = (
 	});
 };
 
+// This getSpanTags is migrated from the previous implementation.
 const getSpanTags = (spanData: Span): { key: string; value: string }[] => {
 	const tags = [];
 	if (spanData[7] !== null && spanData[8] !== null) {

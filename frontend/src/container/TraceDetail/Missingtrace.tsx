@@ -1,9 +1,9 @@
 import { volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import { Popover } from 'antd';
 import React from 'react';
 
-function ToolTipOverlay(): JSX.Element {
+function PopOverContent(): JSX.Element {
 	return (
 		<div>
 			More details on missing spans{' '}
@@ -20,7 +20,7 @@ function ToolTipOverlay(): JSX.Element {
 
 function MissingSpansMessage(): JSX.Element {
 	return (
-		<Tooltip overlay={ToolTipOverlay} placement="bottom">
+		<Popover content={PopOverContent} trigger="hover" placement="bottom">
 			<div
 				style={{
 					textAlign: 'center',
@@ -35,7 +35,7 @@ function MissingSpansMessage(): JSX.Element {
 				/>{' '}
 				This trace has missing spans
 			</div>
-		</Tooltip>
+		</Popover>
 	);
 }
 
