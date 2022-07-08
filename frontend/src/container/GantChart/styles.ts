@@ -38,6 +38,7 @@ export const CardWrapper = styled.div`
 export const CardContainer = styled.li`
 	display: flex;
 	width: 100%;
+	position: relative;
 `;
 
 export const CollapseButton = styled.div`

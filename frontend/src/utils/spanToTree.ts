@@ -1,137 +1,125 @@
-/* eslint-disable */
-// @ts-nocheck
-
+/* eslint-disable no-restricted-syntax */
 import { cloneDeep } from 'lodash-es';
-import { ITraceTree, Span } from 'types/api/trace/getTraceItem';
+import { ITraceForest, ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
-export const spanToTreeUtil = (originalList: Span[]): ITraceTree => {
-	// Initializing tree. What should be returned is trace is empty? We should have better error handling
-	let tree: ITraceTree = {
-		id: 'empty',
-		name: 'default',
-		value: 0,
-		time: 0,
-		startTime: 0,
-		tags: [],
-		children: [],
-		serviceColour: '',
-		serviceName: '',
-	};
-
-	const spanlist = cloneDeep(originalList);
-
-	// let spans :spanItem[]= trace.spans;
-
-	if (spanlist) {
-		// Create a dict with spanIDs as keys
-		// PNOTE
-		// Can we now assign different strings as id - Yes
-		// https://stackoverflow.com/questions/15877362/declare-and-initialize-a-dictionary-in-typescript
-
-		// May1
-		// https://stackoverflow.com/questions/13315131/enforcing-the-type-of-the-indexed-members-of-a-typescript-object
-
-		const mapped_array: { [id: string]: Span } = {};
-		const originalListArray: { [id: string]: Span } = {};
-
-		for (let i = 0; i < spanlist.length; i++) {
-			originalListArray[spanlist[i][1]] = originalList[i];
-
-			mapped_array[spanlist[i][1]] = spanlist[i];
-			mapped_array[spanlist[i][1]][10] = []; // initialising the 10th element in the Span data structure which is array
-			//  of type ITraceTree
-			// console.log('IDs while creating mapped array')
-			// console.log(`SpanID is ${spanlist[i][1]}\n`);
-		}
-
-		// console.log(`In SpanTreeUtil: mapped_arrayis ${mapped_array}`);
-
-		for (const id in mapped_array) {
-			const child_span = mapped_array[id];
-
-			// mapping tags to new structure
-			const tags_temp = [];
-			if (child_span[7] !== null && child_span[8] !== null) {
-				if (
-					typeof child_span[7] === 'string' &&
-					typeof child_span[8] === 'string'
-				) {
-					tags_temp.push({ key: child_span[7], value: child_span[8] });
-				} else if (child_span[7].length > 0 && child_span[8].length > 0) {
-					for (let j = 0; j < child_span[7].length; j++) {
-						tags_temp.push({ key: child_span[7][j], value: child_span[8][j] });
-					}
-				}
-			}
-
-			const push_object: ITraceTree = {
-				id: child_span[1],
-				name: child_span[4],
-				value: parseInt(child_span[6]),
-				time: parseInt(child_span[6]),
-				startTime: child_span[0],
-				tags: tags_temp,
-				children: mapped_array[id][10],
-				serviceName: child_span[3],
-				hasError: !!child_span[11],
-				serviceColour: '',
-				event: originalListArray[id][10].map((e) => {
-					return JSON.parse(decodeURIComponent(e || '{}')) || {};
-				}),
-			};
-
-			const referencesArr = mapped_array[id][9];
-			let refArray = [];
-			if (typeof referencesArr === 'string') {
-				refArray.push(referencesArr);
-			} else {
-				refArray = referencesArr;
-			}
-			const references = [];
-
-			refArray.forEach((element) => {
-				element = element
-					.replaceAll('{', '')
-					.replaceAll('}', '')
-					.replaceAll(' ', '');
-				const arr = element.split(',');
-				const refItem = { traceID: '', spanID: '', refType: '' };
-				arr.forEach((obj) => {
-					const arr2 = obj.split('=');
-					if (arr2[0] === 'TraceId') {
-						refItem.traceID = arr2[1];
-					} else if (arr2[0] === 'SpanId') {
-						refItem.spanID = arr2[1];
-					} else if (arr2[0] === 'RefType') {
-						refItem.refType = arr2[1];
-					}
-				});
-
-				references.push(refItem);
+const getSpanReferences = (
+	rawReferences: string[] = [],
+): Record<string, string>[] => {
+	return rawReferences.map((rawRef) => {
+		const refObject: Record<string, string> = {};
+		rawRef
+			.replaceAll('{', '')
+			.replaceAll('}', '')
+			.replaceAll(' ', '')
+			.split(',')
+			.forEach((rawRefKeyPair) => {
+				const [key, value] = rawRefKeyPair.split('=');
+				refObject[key] = value;
 			});
 
-			if (references.length !== 0 && references[0].spanID.length !== 0) {
-				if (references[0].refType === 'CHILD_OF') {
-					const parentID = references[0].spanID;
-					// console.log(`In SpanTreeUtil: mapped_array[parentID] is ${mapped_array[parentID]}`);
+		return refObject;
+	});
+};
 
-					if (typeof mapped_array[parentID] !== 'undefined') {
-						// checking for undefined [10] issue
-						mapped_array[parentID][10].push(push_object);
-					} else {
-						// console.log(
-						// 	`In SpanTreeUtil: mapped_array[parentID] is undefined, parentID is ${parentID}`,
-						// );
-						// console.log(
-						// 	`In SpanTreeUtil: mapped_array[parentID] is undefined, mapped_array[parentID] is ${mapped_array[parentID]}`,
-						// );
-					}
-				}
-			} else {
-				tree = push_object;
+// This getSpanTags is migrated from the previous implementation.
+const getSpanTags = (spanData: Span): { key: string; value: string }[] => {
+	const tags = [];
+	if (spanData[7] !== null && spanData[8] !== null) {
+		if (typeof spanData[7] === 'string' && typeof spanData[8] === 'string') {
+			tags.push({ key: spanData[7], value: spanData[8] });
+		} else if (spanData[7].length > 0 && spanData[8].length > 0) {
+			for (let j = 0; j < spanData[7].length; j += 1) {
+				tags.push({ key: spanData[7][j], value: spanData[8][j] });
 			}
-		} // end of for loop
-	} // end of if(spans)
+		}
+	}
+	return tags;
+};
 
-	return { ...tree };
+// eslint-disable-next-line sonarjs/cognitive-complexity
+export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
+	const spanList = cloneDeep(inputSpanList);
+	const traceIdSet: Set<string> = new Set();
+	const spanMap: Record<string, ITraceTree> = {};
+
+	const createTarceRootSpan = (
+		spanReferences: Record<string, string>[],
+	): void => {
+		spanReferences.forEach(({ SpanId, TraceId }) => {
+			traceIdSet.add(TraceId);
+			if (SpanId && !spanMap[SpanId]) {
+				spanMap[SpanId] = {
+					id: SpanId,
+					name: `Missing Span (${SpanId})`,
+					children: [],
+					serviceColour: '',
+					serviceName: '',
+					startTime: null as never,
+					tags: [],
+					time: null as never,
+					value: null as never,
+					isMissing: true,
+				};
+			}
+		});
+	};
+
+	spanList.forEach((span) => {
+		const spanReferences = getSpanReferences(span[9] as string[]);
+		const spanObject = {
+			id: span[1],
+			name: span[4],
+			value: parseInt(span[6], 10),
+			time: parseInt(span[6], 10),
+			startTime: span[0],
+			tags: getSpanTags(span),
+			children: [],
+			serviceName: span[3],
+			hasError: !!span[11],
+			serviceColour: '',
+			event: span[10].map((e) => {
+				return (
+					JSON.parse(decodeURIComponent((e as never) || ('{}' as never))) ||
+					({} as Record<string, unknown>)
+				);
+			}),
+			references: spanReferences,
+		};
+		spanMap[span[1]] = spanObject;
+	});
+
+	for (const [, spanData] of Object.entries(spanMap)) {
+		if (spanData.references) {
+			createTarceRootSpan(spanData.references);
+			spanData.references.forEach(({ SpanId: parentSpanId }) => {
+				if (spanMap[parentSpanId]) {
+					spanData.isProcessed = true;
+					spanMap[parentSpanId].children.push(spanData);
+				}
+			});
+		}
+	}
+	for (const [spanId, spanData] of Object.entries(spanMap)) {
+		if (spanData.isProcessed) {
+			delete spanMap[spanId];
+		}
+	}
+
+	const spanTree: ITraceTree[] = [];
+	const missingSpanTree: ITraceTree[] = [];
+	const referencedTraceIds: string[] = Array.from(traceIdSet);
+	Object.keys(spanMap).forEach((spanId) => {
+		for (const traceId of referencedTraceIds) {
+			if (traceId.includes(spanId)) {
+				spanTree.push(spanMap[spanId]);
+			} else {
+				missingSpanTree.push(spanMap[spanId]);
+			}
+		}
+	});
+
+	return {
+		spanTree,
+		missingSpanTree,
+	};
 };
