@@ -31,6 +31,8 @@ export const UPDATE_SPANS_AGGREGATE_PAGE_NUMBER =
 export const UPDATE_SPANS_AGGREGATE_PAGE_SIZE =
 	'UPDATE_SPANS_AGGREGATE_PAGE_SIZE';
 export const UPDATE_SPAN_ORDER_PARAMS = 'UPDATE_SPAN_ORDER_PARAMS';
+export const UPDATE_SPAN_UPDATE_FILTER_DISPLAY_VALUE =
+	'UPDATE_SPAN_UPDATE_FILTER_DISPLAY_VALUE';
 
 export interface UpdateFilter {
 	type: typeof UPDATE_TRACE_FILTER;
@@ -187,6 +189,11 @@ export interface UpdateSpanParams {
 	};
 }
 
+export interface UpdateTraceFilterDisplayValue {
+	type: typeof UPDATE_SPAN_UPDATE_FILTER_DISPLAY_VALUE;
+	payload: TraceReducer['filterDisplayValue'];
+}
+
 export type TraceActions =
 	| UpdateFilter
 	| GetTraceFilter
@@ -208,4 +215,5 @@ export type TraceActions =
 	| UpdateSpanOrder
 	| UpdateSpansAggregatePageNumber
 	| UpdateSpanSize
-	| UpdateSpanParams;
+	| UpdateSpanParams
+	| UpdateTraceFilterDisplayValue;

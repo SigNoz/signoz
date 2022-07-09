@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"go.signoz.io/query-service/constants"
+	"go.signoz.io/query-service/interfaces"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/version"
 	"gopkg.in/segmentio/analytics-go.v3"
@@ -25,6 +27,10 @@ const (
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 
+const HEART_BEAT_DURATION = 6 * time.Hour
+
+// const HEART_BEAT_DURATION = 10 * time.Second
+
 var telemetry *Telemetry
 var once sync.Once
 
@@ -34,6 +40,7 @@ type Telemetry struct {
 	isEnabled   bool
 	isAnonymous bool
 	distinctId  string
+	reader      interfaces.Reader
 }
 
 func createTelemetry() {
@@ -46,11 +53,24 @@ func createTelemetry() {
 
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
 	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
-	ticker := time.NewTicker(6 * time.Hour)
+	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
+				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
+				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background())
+				getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background())
+				tsInfo, _ := telemetry.reader.GetTimeSeriesInfo(context.Background())
+
+				data := map[string]interface{}{
+					"totalSpans":                            totalSpans,
+					"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
+					"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
+				}
+				for key, value := range tsInfo {
+					data[key] = value
+				}
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
 			}
 		}
@@ -151,6 +171,10 @@ func (a *Telemetry) isTelemetryEnabled() bool {
 
 func (a *Telemetry) SetTelemetryEnabled(value bool) {
 	a.isEnabled = value
+}
+
+func (a *Telemetry) SetReader(reader interfaces.Reader) {
+	a.reader = reader
 }
 
 func GetInstance() *Telemetry {

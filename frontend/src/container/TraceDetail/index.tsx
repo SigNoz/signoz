@@ -17,15 +17,23 @@ import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
+import { map } from 'lodash-es';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ITraceTree, PayloadProps } from 'types/api/trace/getTraceItem';
+import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
 
+import MissingSpansMessage from './Missingtrace';
 import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
-import { getSortedData, IIntervalUnit, INTERVAL_UNITS } from './utils';
+import { FlameGraphMissingSpansContainer, GanttChartWrapper } from './styles';
+import {
+	getSortedData,
+	getTreeLevelsCount,
+	IIntervalUnit,
+	INTERVAL_UNITS,
+} from './utils';
 
 function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(
@@ -43,17 +51,23 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
 
-	const [treeData, setTreeData] = useState<ITraceTree>(
+	const [treesData, setTreesData] = useState<ITraceForest>(
 		spanToTreeUtil(response[0].events),
 	);
 
-	const { treeData: tree, ...traceMetaData } = useMemo(() => {
-		const tree = getSortedData(treeData);
+	const { treesData: tree, ...traceMetaData } = useMemo(() => {
+		const sortedTreesData: ITraceForest = {
+			spanTree: map(treesData.spanTree, (tree) => getSortedData(tree)),
+			missingSpanTree: map(
+				treesData.missingSpanTree,
+				(tree) => getSortedData(tree) || [],
+			),
+		};
 		// Note: Handle undefined
 		/*eslint-disable */
-		return getSpanTreeMetadata(tree as ITraceTree, spanServiceColors);
+		return getSpanTreeMetadata(sortedTreesData, spanServiceColors);
 		/* eslint-enable */
-	}, [treeData, spanServiceColors]);
+	}, [treesData, spanServiceColors]);
 
 	const [globalTraceMetadata] = useState<ITraceMetaData>({
 		...traceMetaData,
@@ -69,23 +83,33 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	}, [activeSelectedId]);
 
 	const getSelectedNode = useMemo(() => {
-		return getNodeById(activeSelectedId, treeData);
-	}, [activeSelectedId, treeData]);
+		return getNodeById(activeSelectedId, treesData);
+	}, [activeSelectedId, treesData]);
 
 	// const onSearchHandler = (value: string) => {
 	// 	setSearchSpanString(value);
 	// 	setTreeData(spanToTreeUtil(response[0].events));
 	// };
+
 	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
+
 		if (treeNode) {
-			setTreeData(treeNode);
+			setTreesData(treeNode);
 		}
 	};
 
 	const onResetHandler = (): void => {
-		setTreeData(spanToTreeUtil(response[0].events));
+		setTreesData(spanToTreeUtil(response[0].events));
 	};
+
+	const hasMissingSpans = useMemo(
+		(): boolean =>
+			tree.missingSpanTree &&
+			Array.isArray(tree.missingSpanTree) &&
+			tree.missingSpanTree.length > 0,
+		[tree],
+	);
 
 	return (
 		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
@@ -101,16 +125,45 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						<StyledTypography.Text styledclass={[styles.removeMargin]}>
 							{traceMetaData.totalSpans} Span
 						</StyledTypography.Text>
+						{hasMissingSpans && <MissingSpansMessage />}
 					</StyledCol>
 					<Col flex="auto">
-						<TraceFlameGraph
-							treeData={tree}
-							traceMetaData={traceMetaData}
-							hoveredSpanId={activeHoverId}
-							selectedSpanId={activeSelectedId}
-							onSpanHover={setActiveHoverId}
-							onSpanSelect={setActiveSelectedId}
-						/>
+						{map(tree.spanTree, (tree) => {
+							return (
+								<TraceFlameGraph
+									key={tree as never}
+									treeData={tree}
+									traceMetaData={traceMetaData}
+									hoveredSpanId={activeHoverId}
+									selectedSpanId={activeSelectedId}
+									onSpanHover={setActiveHoverId}
+									onSpanSelect={setActiveSelectedId}
+									missingSpanTree={false}
+								/>
+							);
+						})}
+
+						{hasMissingSpans && (
+							<FlameGraphMissingSpansContainer>
+								{map(tree.missingSpanTree, (tree) => {
+									return (
+										<TraceFlameGraph
+											key={tree as never}
+											treeData={tree}
+											traceMetaData={{
+												...traceMetaData,
+												levels: getTreeLevelsCount(tree),
+											}}
+											hoveredSpanId={activeHoverId}
+											selectedSpanId={activeSelectedId}
+											onSpanHover={setActiveHoverId}
+											onSpanSelect={setActiveSelectedId}
+											missingSpanTree
+										/>
+									);
+								})}
+							</FlameGraphMissingSpansContainer>
+						)}
 					</Col>
 				</StyledRow>
 				<StyledRow styledclass={[styles.traceDateAndTimelineContainer]}>
@@ -122,7 +175,9 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							justifyContent: 'center',
 						}}
 					>
-						{tree && dayjs(tree.startTime).format('hh:mm:ss a MM/DD')}
+						{tree &&
+							traceMetaData.globalStart &&
+							dayjs(traceMetaData.globalStart).format('hh:mm:ss a MM/DD')}
 					</StyledCol>
 					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
 						<Timeline
@@ -141,14 +196,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						}),
 					]}
 				>
-					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`}>
-						{/* <Search
-							placeholder="Type to filter.."
-							allowClear
-							onSearch={onSearchHandler}
-							style={{ width: 200 }}
-						/> */}
-					</Col>
+					<Col flex={`${SPAN_DETAILS_LEFT_COL_WIDTH}px`} />
 					<Col flex="auto">
 						<StyledSpace styledclass={[styles.floatRight]}>
 							<Button onClick={onFocusSelectedSpanHandler} icon={<FilterOutlined />}>
@@ -161,23 +209,50 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					</Col>
 				</StyledRow>
 				<StyledDiv styledclass={[styles.ganttChartContainer]}>
-					<GanttChart
-						traceMetaData={traceMetaData}
-						data={tree}
-						activeSelectedId={activeSelectedId}
-						activeHoverId={activeHoverId}
-						setActiveHoverId={setActiveHoverId}
-						setActiveSelectedId={setActiveSelectedId}
-						spanId={spanId || ''}
-						intervalUnit={intervalUnit}
-					/>
+					<GanttChartWrapper>
+						{map([...tree.spanTree, ...tree.missingSpanTree], (tree) => (
+							<GanttChart
+								key={tree as never}
+								traceMetaData={traceMetaData}
+								data={tree}
+								activeSelectedId={activeSelectedId}
+								activeHoverId={activeHoverId}
+								setActiveHoverId={setActiveHoverId}
+								setActiveSelectedId={setActiveSelectedId}
+								spanId={spanId || ''}
+								intervalUnit={intervalUnit}
+							/>
+						))}
+						{/* {map(tree.missingSpanTree, (tree) => (
+							<GanttChart
+								key={tree as never}
+								traceMetaData={traceMetaData}
+								data={tree}
+								activeSelectedId={activeSelectedId}
+								activeHoverId={activeHoverId}
+								setActiveHoverId={setActiveHoverId}
+								setActiveSelectedId={setActiveSelectedId}
+								spanId={spanId || ''}
+								intervalUnit={intervalUnit}
+							/>
+						))} */}
+					</GanttChartWrapper>
 				</StyledDiv>
 			</StyledCol>
 			<Col>
 				<StyledDivider styledclass={[styles.verticalSeparator]} type="vertical" />
 			</Col>
 			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
-				<SelectedSpanDetails tree={getSelectedNode} />
+				<SelectedSpanDetails
+					tree={[
+						...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
+						...(getSelectedNode.missingSpanTree
+							? getSelectedNode.missingSpanTree
+							: []),
+					]
+						.filter(Boolean)
+						.find((tree) => tree)}
+				/>
 			</StyledCol>
 		</StyledRow>
 	);

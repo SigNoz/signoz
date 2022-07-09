@@ -6,31 +6,31 @@ import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
 const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
-	const response = queryData.map(({ query, queryData, legend }) => {
-		return queryData.map((e) => {
-			const { values = [], metric } = e || {};
-			const labelNames = getLabelName(
-				metric,
-				query, // query
-				legend || '', // legends
-			);
+	const response = queryData.map(
+		({ queryData, query: queryG, legend: legendG }) => {
+			return queryData.map((e) => {
+				const { values = [], metric, legend, queryName } = e || {};
+				const labelNames = getLabelName(
+					metric,
+					queryName || queryG || '', // query
+					legend || legendG || '',
+				);
+				const dataValue = values?.map((e) => {
+					const [first = 0, second = ''] = e || [];
+					return {
+						first: new Date(parseInt(convertIntoEpoc(first * 1000), 10)), // converting in ms
+						second: Number(parseFloat(second)),
+					};
+				});
 
-			const dataValue = values?.map((e) => {
-				const [first = 0, second = ''] = e || [];
 				return {
-					first: new Date(parseInt(convertIntoEpoc(first * 1000), 10)), // converting in ms
-					second: Number(parseFloat(second)),
+					label: labelNames !== 'undefined' ? labelNames : '',
+					first: dataValue.map((e) => e.first),
+					second: dataValue.map((e) => e.second),
 				};
 			});
-
-			return {
-				label: labelNames !== 'undefined' ? labelNames : '',
-				first: dataValue.map((e) => e.first),
-				second: dataValue.map((e) => e.second),
-			};
-		});
-	});
-
+		},
+	);
 	const allLabels = response
 		.map((e) => e.map((e) => e.label))
 		.reduce((a, b) => [...a, ...b], []);
@@ -59,7 +59,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 };
 
 interface GetChartDataProps {
-	queryData: Widgets['queryData']['data'];
+	queryData: Widgets['queryData']['data'][];
 }
 
 export default getChartData;

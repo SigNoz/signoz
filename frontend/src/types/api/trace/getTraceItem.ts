@@ -21,7 +21,8 @@ export type Span = [
 	string | string[],
 	string | string[],
 	string | string[],
-	ITraceTree[],
+	Record<string, unknown>[],
+	boolean,
 ];
 
 export interface ITraceTree {
@@ -37,6 +38,10 @@ export interface ITraceTree {
 	serviceColour: string;
 	hasError?: boolean;
 	event?: ITraceEvents[];
+	isMissing?: boolean;
+	// For internal use
+	isProcessed?: boolean;
+	references?: Record<string, string>[];
 }
 
 export interface ITraceTag {
@@ -47,4 +52,9 @@ export interface ITraceTag {
 interface ITraceEvents {
 	attributeMap: { event: string; [key: string]: string };
 	name?: string;
+}
+
+export interface ITraceForest {
+	spanTree: ITraceTree[];
+	missingSpanTree: ITraceTree[];
 }

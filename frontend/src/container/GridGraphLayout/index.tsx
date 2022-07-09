@@ -113,20 +113,21 @@ function GridGraph(props: Props): JSX.Element {
 					errorMessage: '',
 					loading: true,
 				}));
-
+				const updatedDashboard: Dashboard = {
+					...selectedDashboard,
+					data: {
+						title: data.title,
+						description: data.description,
+						name: data.name,
+						tags: data.tags,
+						widgets: data.widgets,
+						layout,
+					},
+					uuid: selectedDashboard.uuid,
+				};
 				// Save layout only when users has the has the permission to do so.
 				if (saveLayoutPermission) {
-					const response = await updateDashboardApi({
-						data: {
-							title: data.title,
-							description: data.description,
-							name: data.name,
-							tags: data.tags,
-							widgets: data.widgets,
-							layout,
-						},
-						uuid: selectedDashboard.uuid,
-					});
+					const response = await updateDashboardApi(updatedDashboard);
 					if (response.statusCode === 200) {
 						setSaveLayoutState((state) => ({
 							...state,
@@ -134,6 +135,10 @@ function GridGraph(props: Props): JSX.Element {
 							errorMessage: '',
 							loading: false,
 						}));
+						dispatch({
+							type: UPDATE_DASHBOARD,
+							payload: updatedDashboard,
+						});
 					} else {
 						setSaveLayoutState((state) => ({
 							...state,
@@ -153,8 +158,9 @@ function GridGraph(props: Props): JSX.Element {
 			data.tags,
 			data.title,
 			data.widgets,
+			dispatch,
 			saveLayoutPermission,
-			selectedDashboard.uuid,
+			selectedDashboard,
 		],
 	);
 
@@ -218,7 +224,7 @@ function GridGraph(props: Props): JSX.Element {
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setLayoutFunction(layout);
 
-		await onLayoutSaveHandler(layout);
+		// await onLayoutSaveHandler(layout);
 	};
 
 	const onAddPanelHandler = useCallback(() => {

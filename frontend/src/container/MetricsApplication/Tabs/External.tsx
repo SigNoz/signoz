@@ -4,7 +4,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
@@ -29,7 +29,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 								widget={getWidget([
 									{
 										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[1m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[1m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[1m])) by (http_url)) < 1000 OR vector(0)`,
-										legend,
+										legend: 'External Call Error Percentage',
 									},
 								])}
 								yAxisUnit="%"
@@ -102,7 +102,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 }
 
 interface ExternalProps {
-	getWidget: (query: Widgets['query']) => Widgets;
+	getWidget: (query: PromQLWidgets['query']) => PromQLWidgets;
 }
 
 export default External;

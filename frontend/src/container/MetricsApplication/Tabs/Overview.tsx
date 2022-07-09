@@ -11,7 +11,7 @@ import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
@@ -248,7 +248,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 }
 
 interface DashboardProps {
-	getWidget: (query: Widgets['query']) => Widgets;
+	getWidget: (query: PromQLWidgets['query']) => PromQLWidgets;
 }
 
 export default Application;

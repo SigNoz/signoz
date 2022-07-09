@@ -1,4 +1,4 @@
-package app
+package interfaces
 
 import (
 	"context"
@@ -50,7 +50,13 @@ type Reader interface {
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
-	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string) (*[]string, *model.ApiError)
+	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
+	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
+
+	GetTotalSpans(ctx context.Context) (uint64, error)
+	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
+	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 }
