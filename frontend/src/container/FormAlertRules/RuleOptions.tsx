@@ -47,6 +47,7 @@ function RuleOptions({
 						{t('text_condition2')}{' '}
 						<InlineSelect
 							defaultValue="0"
+							style={{ minWidth: '130px' }}
 							value={initialValue.condition?.matchType}
 							onChange={(value: string | unknown): void => {
 								const m = (value as string) || initialValue.condition?.matchType;
@@ -68,6 +69,7 @@ function RuleOptions({
 						{t('text_condition3')}{' '}
 						<InlineSelect
 							defaultValue="5m0s"
+							style={{ minWidth: '90px' }}
 							value={initialValue.evalWindow}
 							onChange={(value: string | unknown): void => {
 								const ew = (value as string) || initialValue.evalWindow;

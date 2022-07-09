@@ -4,7 +4,7 @@ import FormItem from 'antd/lib/form/FormItem';
 import saveAlertApi from 'api/alerts/save';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	IFormulaQueries,
@@ -12,16 +12,19 @@ import {
 	IPromQueries,
 } from 'types/api/alerts/compositeQuery';
 import { AlertDef } from 'types/api/alerts/def';
-import { PROMQL, QUERY_BUILDER, QueryType } from 'types/api/alerts/queryType';
-
+import { Query as StagedQuery } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
+import { resolveQueryCategoryName } from 'types/api/alerts/queryType';
 import BasicInfo from './BasicInfo';
+import ChartPreview from './ChartPreview';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
-import { ActionButton, ButtonContainer } from './styles';
+import { ActionButton, ButtonContainer, MainFormContainer } from './styles';
 import {
 	prepareBuilderQueries,
 	toFormulaQueries,
 	toMetricQueries,
+	prepareStagedQuery,
 } from './utils';
 
 function FormAlertRules({
@@ -31,55 +34,87 @@ function FormAlertRules({
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('rules');
-	const [notifications, Element] = notification.useNotification();
 
 	const [loading, setLoading] = useState(false);
 
+	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 
-	const [queryCategory, setQueryCategory] = useState<QueryType>(
-		initialValue?.condition?.compositeMetricQuery?.queryType as QueryType,
+	// initQuery contains initial query when component was mounted
+	const initQuery = initialValue?.condition?.compositeMetricQuery;
+
+	const [queryCategory, setQueryCategory] = useState<EQueryType>(
+		initQuery?.queryType as EQueryType,
 	);
 
 	// local state to handle metric queries
 	const [metricQueries, setMetricQueries] = useState<IMetricQueries>(
-		toMetricQueries(
-			initialValue?.condition?.compositeMetricQuery?.builderQueries,
-		),
+		toMetricQueries(initQuery?.builderQueries),
 	);
 
 	// local state to handle formula queries
 	const [formulaQueries, setFormulaQueries] = useState<IFormulaQueries>(
-		toFormulaQueries(
-			initialValue?.condition?.compositeMetricQuery?.builderQueries,
-		),
+		toFormulaQueries(initQuery?.builderQueries),
 	);
 
 	// local state to handle promql queries
 	const [promQueries, setPromQueries] = useState<IPromQueries>({
-		...initialValue?.condition?.compositeMetricQuery?.promQueries,
+		...initQuery?.promQueries,
 	});
 
-	useEffect(() => {
-		setQueryCategory(
-			initialValue?.condition?.compositeMetricQuery?.queryType as QueryType,
-		);
-		setMetricQueries(
-			toMetricQueries(
-				initialValue?.condition?.compositeMetricQuery?.builderQueries,
-			),
-		);
-		setFormulaQueries(
-			toFormulaQueries(
-				initialValue?.condition?.compositeMetricQuery?.builderQueries,
-			),
-		);
-		setPromQueries({
-			...initialValue?.condition?.compositeMetricQuery?.promQueries,
-		});
-	}, [initialValue]);
+	// staged query is used to display chart preview
+	const [stagedQuery, setStagedQuery] = useState<StagedQuery>();
 
-	const onCancelHandler = useCallback(async () => {
+	// set when query setup changes, user hasnt staged the changes
+	const [queryChanged, setQueryChanged] = useState<boolean>(false);
+
+	useEffect(() => {
+		setQueryChanged(true);
+	}, [metricQueries, promQueries, formulaQueries]);
+
+	// this use effect initiates staged query and
+	// other queries based on server data.
+	// useful when fetching of initial values (from api)
+	// is delayed
+	useEffect(() => {
+		const t = initQuery?.queryType as EQueryType;
+
+		// extract metric query from builderQueries
+		const mq = toMetricQueries(initQuery?.builderQueries);
+
+		// extract formula query from builderQueries
+		const fq = toFormulaQueries(initQuery?.builderQueries);
+
+		// prepare staged query
+		const sq = prepareStagedQuery(
+			initQuery.queryType,
+			mq,
+			fq,
+			initQuery?.promQueries,
+		);
+		const pq = initQuery?.promQueries;
+
+		setQueryCategory(t);
+		setMetricQueries(mq);
+		setFormulaQueries(fq);
+		setPromQueries(pq);
+		setStagedQuery(sq);
+	}, [initQuery]);
+
+	// this useEffect updates staging query when
+	// any of its sub-parameters changes
+	useEffect(() => {
+		// prepare staged query
+		const sq: StagedQuery = prepareStagedQuery(
+			queryCategory,
+			metricQueries,
+			formulaQueries,
+			promQueries,
+		);
+		setStagedQuery(sq);
+	}, [queryCategory, metricQueries, formulaQueries, promQueries]);
+
+	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
 	}, []);
 
@@ -95,7 +130,7 @@ function FormAlertRules({
 		}
 
 		if (
-			queryCategory === PROMQL &&
+			queryCategory === EQueryType.PROM &&
 			(!promQueries || Object.keys(promQueries).length === 0)
 		) {
 			notification.error({
@@ -107,7 +142,7 @@ function FormAlertRules({
 		}
 
 		if (
-			(queryCategory === QUERY_BUILDER && !metricQueries) ||
+			(queryCategory === EQueryType.QUERY_BUILDER && !metricQueries) ||
 			Object.keys(metricQueries).length === 0
 		) {
 			notification.error({
@@ -147,7 +182,8 @@ function FormAlertRules({
 
 		const postableAlert: AlertDef = {
 			...alertDef,
-			ruleType: queryCategory === PROMQL ? 'promql_rule' : 'threshold_rule',
+			ruleType:
+				queryCategory === EQueryType.PROM ? 'promql_rule' : 'threshold_rule',
 			condition: {
 				...alertDef.condition,
 				compositeMetricQuery: {
@@ -168,7 +204,7 @@ function FormAlertRules({
 		const response = await saveAlertApi(apiReq);
 
 		if (response.statusCode === 200) {
-			notifications.success({
+			notification.success({
 				message: 'Success',
 				description:
 					!ruleId || ruleId === 0
@@ -179,7 +215,7 @@ function FormAlertRules({
 				history.replace(ROUTES.LIST_ALL_ALERT);
 			}, 2000);
 		} else {
-			notifications.error({
+			notification.error({
 				message: 'Error',
 				description: response.error || 'failed to create or edit rule',
 			});
@@ -189,7 +225,6 @@ function FormAlertRules({
 		isFormValid,
 		queryCategory,
 		ruleId,
-		notifications,
 		alertDef,
 		metricQueries,
 		formulaQueries,
@@ -204,24 +239,42 @@ function FormAlertRules({
 		/>
 	);
 
+	const renderQBChartPreview = (): JSX.Element => {
+		return (
+			<ChartPreview name="Chart Preview (Query Builder)" query={stagedQuery} />
+		);
+	};
+
+	const renderPromChartPreview = (): JSX.Element => {
+		return <ChartPreview name="Chart Preview (PromQL)" query={stagedQuery} />;
+	};
+
 	return (
 		<>
 			{Element}
-			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
+			<MainFormContainer
+				initialValues={initialValue}
+				layout="vertical"
+				form={formInstance}
+			>
+				{queryCategory === EQueryType.QUERY_BUILDER && renderQBChartPreview()}
+				{queryCategory === EQueryType.PROM && renderPromChartPreview()}
 				<FormItem labelAlign="left" name="query">
 					<QuerySection
+						queryChanged={queryChanged}
+						queryCategory={queryCategory}
+						setQueryCategory={setQueryCategory}
 						metricQueries={metricQueries}
 						setMetricQueries={setMetricQueries}
 						formulaQueries={formulaQueries}
 						setFormulaQueries={setFormulaQueries}
 						promQueries={promQueries}
 						setPromQueries={setPromQueries}
-						queryCategory={queryCategory}
-						setQueryCategory={setQueryCategory}
-						allowCategoryChange={!(ruleId > 0)}
+						stagedQuery={stagedQuery}
+						setStagedQuery={setStagedQuery}
 					/>
 				</FormItem>
-				{queryCategory !== PROMQL && (
+				{queryCategory !== EQueryType.PROM && (
 					<RuleOptions initialValue={alertDef} setAlertDef={setAlertDef} />
 				)}
 				{renderBasicInfo()}
@@ -242,7 +295,7 @@ function FormAlertRules({
 						{ruleId > 0 ? t('button_returntorules') : t('button_cancelchanges')}
 					</ActionButton>
 				</ButtonContainer>
-			</Form>
+			</MainFormContainer>
 		</>
 	);
 }

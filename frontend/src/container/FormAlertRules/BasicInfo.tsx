@@ -3,7 +3,7 @@ import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
-import { QueryType } from 'types/api/alerts/queryType';
+import { EQueryType } from 'types/common/dashboard';
 
 import LabelSelect from './labels';
 import {
@@ -16,15 +16,17 @@ import {
 const { TextArea } = Input;
 const { Option } = Select;
 
+interface BasicInfoProps {
+	alertDef: AlertDef;
+	setAlertDef: (a: AlertDef) => void;
+	queryCategory: EQueryType;
+}
+
 function BasicInfo({
 	alertDef,
 	setAlertDef,
 	queryCategory,
-}: {
-	alertDef: AlertDef;
-	setAlertDef: (a: AlertDef) => void;
-	queryCategory: QueryType;
-}): JSX.Element {
+}: BasicInfoProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('rules');
 
@@ -32,7 +34,7 @@ function BasicInfo({
 		<>
 			<StepHeading>
 				{' '}
-				Step {queryCategory === 2 ? 2 : 3} - Alert Configuration{' '}
+				Step {queryCategory === EQueryType.PROM ? 2 : 3} - Alert Configuration{' '}
 			</StepHeading>
 			<FormContainer>
 				<FormItem

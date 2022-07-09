@@ -1,5 +1,9 @@
-import { Button, Card, Input, Select } from 'antd';
+import { Button, Card, Form, Input, Select } from 'antd';
 import styled from 'styled-components';
+
+export const MainFormContainer = styled(Form)`
+	max-width: 900px;
+`;
 
 export const ButtonContainer = styled.div`
 	&&& {
@@ -44,8 +48,8 @@ export const StepHeading = styled.p`
 export const InlineSelect = styled(Select)`
 	display: inline-block;
 	width: 10% !important;
-	margin-left: 1em;
-	margin-right: 1em;
+	margin-left: 0.2em;
+	margin-right: 0.2em;
 `;
 
 export const SeveritySelect = styled(Select)`
@@ -61,8 +65,9 @@ export const FormContainer = styled.div`
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
-	background: #262626;
+	background: #141414;
 	border-radius: 4px;
+	border: 1px solid #303030;
 `;
 
 export const ThresholdInput = styled(Input)`
