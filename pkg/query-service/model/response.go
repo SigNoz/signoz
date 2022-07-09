@@ -341,6 +341,7 @@ type Error struct {
 	LastSeen       time.Time `json:"lastSeen" ch:"lastSeen"`
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
+	GroupID        string    `json:"groupID" ch:"groupID"`
 }
 
 type ErrorWithSpan struct {

@@ -437,7 +437,10 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 
 }
 
-func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
+func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
+
+	var allowedOrderParams = []string{"exceptionType", "exceptionCount", "firstSeen", "lastSeen", "serviceName"}
+	var allowedOrderDirections = []string{"ascending", "descending"}
 
 	startTime, err := parseTime("start", r)
 	if err != nil {
@@ -448,9 +451,37 @@ func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 		return nil, err
 	}
 
-	params := &model.GetErrorsParams{
-		Start: startTime,
-		End:   endTime,
+	order := r.URL.Query().Get("order")
+	if !DoesExistInSlice(order, allowedOrderDirections) {
+		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", order))
+	}
+	orderParam := r.URL.Query().Get("orderParam")
+	if !DoesExistInSlice(orderParam, allowedOrderParams) {
+		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", orderParam))
+	}
+	limit := r.URL.Query().Get("limit")
+	offset := r.URL.Query().Get("offset")
+
+	if len(offset) == 0 || len(limit) == 0 {
+		return nil, fmt.Errorf("offset or limit param cannot be empty from the query")
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return nil, errors.New("limit param is not in correct format")
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return nil, errors.New("offset param is not in correct format")
+	}
+
+	params := &model.ListErrorsParams{
+		Start:      startTime,
+		End:        endTime,
+		OrderParam: orderParam,
+		Order:      order,
+		Limit:      int64(limitInt),
+		Offset:     int64(offsetInt),
 	}
 
 	return params, nil

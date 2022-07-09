@@ -282,9 +282,13 @@ type GetTTLParams struct {
 	Type string
 }
 
-type GetErrorsParams struct {
-	Start *time.Time
-	End   *time.Time
+type ListErrorsParams struct {
+	Start      *time.Time
+	End        *time.Time
+	Limit      int64  `json:"limit"`
+	OrderParam string `json:"orderParam"`
+	Order      string `json:"order"`
+	Offset     int64  `json:"offset"`
 }
 
 type GetErrorParams struct {

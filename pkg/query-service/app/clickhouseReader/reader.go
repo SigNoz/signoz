@@ -60,7 +60,7 @@ const (
 	signozTraceDBName     = "signoz_traces"
 	signozDurationMVTable = "durationSort"
 	signozSpansTable      = "signoz_spans"
-	signozErrorIndexTable = "signoz_error_index"
+	signozErrorIndexTable = "signoz_error_index_v2"
 	signozTraceTableName  = "signoz_index_v2"
 	signozMetricDBName    = "signoz_metrics"
 	signozSampleTableName = "samples_v2"
@@ -2634,14 +2634,30 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 }
 
-func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.GetErrorsParams) (*[]model.Error, *model.ApiError) {
+func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.ListErrorsParams) (*[]model.Error, *model.ApiError) {
 
-	var getErrorReponses []model.Error
+	var getErrorResponses []model.Error
 
-	query := fmt.Sprintf("SELECT exceptionType, exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, serviceName FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU GROUP BY serviceName, exceptionType, exceptionMessage", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT any(exceptionType) as exceptionType, any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, anyLast(timestamp) as lastSeen, any(serviceName) as serviceName, groupID FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU GROUP BY groupID", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+	if len(queryParams.OrderParam) != 0 {
+		if queryParams.Order == constants.Descending {
+			query = query + " ORDER BY " + queryParams.OrderParam + " DESC"
+		} else if queryParams.Order == constants.Ascending {
+			query = query + " ORDER BY " + queryParams.OrderParam + " ASC"
+		}
+	}
+	if queryParams.Limit > 0 {
+		query = query + " LIMIT @limit"
+		args = append(args, clickhouse.Named("limit", queryParams.Limit))
+	}
 
-	err := r.db.Select(ctx, &getErrorReponses, query, args...)
+	if queryParams.Offset > 0 {
+		query = query + " OFFSET @offset"
+		args = append(args, clickhouse.Named("offset", queryParams.Offset))
+	}
+
+	err := r.db.Select(ctx, &getErrorResponses, query, args...)
 
 	zap.S().Info(query)
 
@@ -2650,8 +2666,7 @@ func (r *ClickHouseReader) GetErrors(ctx context.Context, queryParams *model.Get
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
-	return &getErrorReponses, nil
-
+	return &getErrorResponses, nil
 }
 
 func (r *ClickHouseReader) GetErrorForId(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {

@@ -329,7 +329,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/getTagValues", ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/errors", ViewAccess(aH.getErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/listErrors", ViewAccess(aH.listErrors)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithId", ViewAccess(aH.getErrorForId)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorWithType", ViewAccess(aH.getErrorForType)).Methods(http.MethodGet)
 
@@ -1177,13 +1177,13 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getErrors(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseErrorsRequest(r)
+	query, err := parseListErrorsRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrors(r.Context(), query)
+	result, apiErr := (*aH.reader).ListErrors(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
