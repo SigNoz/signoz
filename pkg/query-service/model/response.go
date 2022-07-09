@@ -348,12 +348,19 @@ type ErrorWithSpan struct {
 	ErrorID             string    `json:"errorId" ch:"errorID"`
 	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
 	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
-	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
+	ExceptionEscaped    bool      `json:"exceptionEscaped" ch:"exceptionEscaped"`
 	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
 	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
 	SpanID              string    `json:"spanID" ch:"spanID"`
 	TraceID             string    `json:"traceID" ch:"traceID"`
 	ServiceName         string    `json:"serviceName" ch:"serviceName"`
+	GroupID             string    `json:"groupID" ch:"groupID"`
+}
+
+type NextPrevErrorIDs struct {
+	NextErrorID string `json:"nextErrorID" ch:"nextErrorID"`
+	PrevErrorID string `json:"prevErrorID" ch:"prevErrorID"`
+	GroupID     string `json:"groupID" ch:"groupID"`
 }
 
 type Series struct {

@@ -360,38 +360,6 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 	return postData, nil
 }
 
-func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
-
-	params := &model.GetErrorParams{}
-
-	serviceName := r.URL.Query().Get("serviceName")
-	if len(serviceName) != 0 {
-		params.ServiceName = serviceName
-	}
-
-	errorType := r.URL.Query().Get("errorType")
-	if len(errorType) != 0 {
-		params.ErrorType = errorType
-	}
-
-	errorId := r.URL.Query().Get("errorId")
-	if len(errorId) != 0 {
-		params.ErrorID = errorId
-	}
-
-	errorMessage := r.URL.Query().Get("errorMessage")
-	if len(errorMessage) != 0 {
-		params.ErrorMessage = errorMessage
-	}
-
-	timestamp, err := parseTime("timestamp", r)
-	if err != nil {
-		return nil, err
-	}
-	params.Timestamp = timestamp
-	return params, nil
-}
-
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 	var postData *model.TagFilterParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -482,6 +450,29 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 		Order:      order,
 		Limit:      int64(limitInt),
 		Offset:     int64(offsetInt),
+	}
+
+	return params, nil
+}
+
+func parseGetErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
+
+	timestamp, err := parseTime("timestamp", r)
+	if err != nil {
+		return nil, err
+	}
+
+	groupID := r.URL.Query().Get("groupID")
+
+	if len(groupID) == 0 {
+		return nil, fmt.Errorf("groupID param cannot be empty from the query")
+	}
+	errorID := r.URL.Query().Get("errorID")
+
+	params := &model.GetErrorParams{
+		Timestamp: timestamp,
+		GroupID:   groupID,
+		ErrorID:   errorID,
 	}
 
 	return params, nil
