@@ -165,6 +165,16 @@ func (r *ClickHouseReader) Start() {
 
 	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
 
+	opts := promql.EngineOpts{
+		Logger:        log.With(logger, "component", "query engine"),
+		Reg:           nil,
+		MaxConcurrent: 20,
+		MaxSamples:    50000000,
+		Timeout:       time.Duration(2 * time.Minute),
+	}
+
+	queryEngine := promql.NewEngine(opts)
+
 	reloaders := []func(cfg *config.Config) error{
 		remoteStorage.ApplyConfig,
 		// The Scrape managers need to reload before the Discovery manager as
@@ -276,6 +286,8 @@ func (r *ClickHouseReader) Start() {
 			},
 		)
 	}
+	r.queryEngine = queryEngine
+	r.remoteStorage = remoteStorage
 
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
