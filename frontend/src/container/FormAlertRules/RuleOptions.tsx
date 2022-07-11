@@ -145,15 +145,11 @@ function RuleOptions({
 				{queryCategory === EQueryType.PROM
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
-				<FormItem
-					label={t('field_threshold')}
-					labelAlign="left"
-					name={['condition', 'target']}
-				>
+				<div style={{ display: 'flex', alignItems: 'center' }}>
 					<ThresholdInput
 						controls={false}
+						addonBefore={t('field_threshold')}
 						value={alertDef?.condition?.target}
-						maxLength={15}
 						onChange={(value: number | unknown): void => {
 							setAlertDef({
 								...alertDef,
@@ -164,7 +160,7 @@ function RuleOptions({
 							});
 						}}
 					/>
-				</FormItem>
+				</div>
 			</FormContainer>
 		</>
 	);

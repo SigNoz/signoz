@@ -72,9 +72,18 @@ export const FormContainer = styled.div`
 `;
 
 export const ThresholdInput = styled(InputNumber)`
-	&&& {
-		width: 20%;
+&> div {
+	display: flex;
+	align-items:  center	;
+	&> .ant-input-number-group-addon {
+		width: 130px;
 	}
+	&> .ant-input-number {
+			width: 50%;
+			margin-left: 1em;	
+	}	
+}
+
 `;
 
 
