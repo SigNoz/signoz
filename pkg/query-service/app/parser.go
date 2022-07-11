@@ -420,11 +420,11 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	}
 
 	order := r.URL.Query().Get("order")
-	if !DoesExistInSlice(order, allowedOrderDirections) {
+	if len(order) > 0 && !DoesExistInSlice(order, allowedOrderDirections) {
 		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", order))
 	}
 	orderParam := r.URL.Query().Get("orderParam")
-	if !DoesExistInSlice(orderParam, allowedOrderParams) {
+	if len(order) > 0 && !DoesExistInSlice(orderParam, allowedOrderParams) {
 		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", orderParam))
 	}
 	limit := r.URL.Query().Get("limit")
