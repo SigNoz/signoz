@@ -27,7 +27,10 @@ func initZapLog() *zap.Logger {
 
 func main() {
 	var promConfigPath string
+	var disableRules bool
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+
+	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -41,6 +44,7 @@ func main() {
 		HTTPHostPort:    constants.HTTPHostPort,
 		PromConfigPath:  promConfigPath,
 		PrivateHostPort: constants.PrivateHostPort,
+		DisableRules:    disableRules,
 	}
 
 	// Read the jwt secret key

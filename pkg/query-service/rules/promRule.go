@@ -274,7 +274,17 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	if r.ruleCondition.CompositeMetricQuery.QueryType == model.PROM {
 		if len(r.ruleCondition.CompositeMetricQuery.PromQueries) > 0 {
 			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["A"]; ok {
-				return promQuery.Query, nil
+				query := promQuery.Query
+				if query == "" {
+					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
+				}
+
+				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
+					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), *r.ruleCondition.Target)
+					return query, nil
+				} else {
+					return query, nil
+				}
 			}
 		}
 	}

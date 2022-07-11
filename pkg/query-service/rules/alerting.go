@@ -97,19 +97,35 @@ type NamedAlert struct {
 type CompareOp string
 
 const (
-	ValueIsAbove CompareOp = "0"
-	ValueIsBelow CompareOp = "1"
-	ValueIsEq    CompareOp = "2"
-	ValueIsNotEq CompareOp = "3"
+	CompareOpNone CompareOp = "0"
+	ValueIsAbove  CompareOp = "1"
+	ValueIsBelow  CompareOp = "2"
+	ValueIsEq     CompareOp = "3"
+	ValueIsNotEq  CompareOp = "4"
 )
+
+func ResolveCompareOp(cop CompareOp) string {
+	switch cop {
+	case ValueIsAbove:
+		return ">"
+	case ValueIsBelow:
+		return "<"
+	case ValueIsEq:
+		return "=="
+	case ValueIsNotEq:
+		return "!="
+	}
+	return ""
+}
 
 type MatchType string
 
 const (
-	AllTheTimes MatchType = "0"
-	AtleastOnce MatchType = "1"
-	OnAverage   MatchType = "2"
-	InTotal     MatchType = "3"
+	MatchTypeNone MatchType = "0"
+	AllTheTimes   MatchType = "1"
+	AtleastOnce   MatchType = "2"
+	OnAverage     MatchType = "3"
+	InTotal       MatchType = "4"
 )
 
 type RuleCondition struct {

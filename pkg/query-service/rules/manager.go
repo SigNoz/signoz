@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -42,9 +43,10 @@ type ManagerOptions struct {
 	// rule db conn
 	Conn *sqlx.DB
 
-	Context     context.Context
-	Logger      log.Logger
-	ResendDelay time.Duration
+	Context      context.Context
+	Logger       log.Logger
+	ResendDelay  time.Duration
+	DisableRules bool
 }
 
 // The Manager manages recording and alerting rules.
@@ -75,6 +77,7 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 	if o.ResendDelay == time.Duration(0) {
 		o.ResendDelay = 1 * time.Minute
 	}
+
 	return o
 }
 
@@ -203,6 +206,7 @@ func (m *Manager) Stop() {
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ruleStr string, id string) error {
+	// todo(amol): fetch recent rule from db first
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
 	if len(errs) > 0 {
@@ -216,12 +220,14 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 		return err
 	}
 
-	err = m.editTask(parsedRule, taskName)
-	if err != nil {
-		// todo(amol): using tx with sqllite3 is gets
-		// database locked. need to research and resolve this
-		//tx.Rollback()
-		return err
+	if !m.opts.DisableRules {
+		err = m.editTask(parsedRule, taskName)
+		if err != nil {
+			// todo(amol): using tx with sqllite3 is gets
+			// database locked. need to research and resolve this
+			//tx.Rollback()
+			return err
+		}
 	}
 
 	// return tx.Commit()
@@ -253,7 +259,6 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 		oldTask.Stop()
 		newTask.CopyState(oldTask)
 	}
-
 	go func() {
 		// Wait with starting evaluation until the rule manager
 		// is told to run. This is necessary to avoid running
@@ -267,17 +272,27 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 }
 
 func (m *Manager) DeleteRule(id string) error {
-	taskName, tx, err := m.ruleDB.DeleteRuleTx(id)
+
+	idInt, err := strconv.Atoi(id)
 	if err != nil {
+		zap.S().Errorf("msg: ", "delete rule received an rule id in invalid format, must be a number", "\t ruleid:", id)
+		return fmt.Errorf("delete rule received an rule id in invalid format, must be a number")
+	}
+
+	taskName := prepareTaskName(int64(idInt))
+	if !m.opts.DisableRules {
+		if err := m.deleteTask(taskName); err != nil {
+			zap.S().Errorf("msg: ", "failed to unload the rule task from memory, please retry", "\t ruleid: ", id)
+			return err
+		}
+	}
+
+	if _, _, err := m.ruleDB.DeleteRuleTx(id); err != nil {
+		zap.S().Errorf("msg: ", "failed to delete the rule from rule db", "\t ruleid: ", id)
 		return err
 	}
 
-	if err := m.deleteTask(taskName); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
+	return nil
 }
 
 func (m *Manager) deleteTask(taskName string) error {
@@ -312,10 +327,11 @@ func (m *Manager) CreateRule(ruleStr string) error {
 	if err != nil {
 		return err
 	}
-
-	if err := m.addTask(parsedRule, taskName); err != nil {
-		tx.Rollback()
-		return err
+	if !m.opts.DisableRules {
+		if err := m.addTask(parsedRule, taskName); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 	return tx.Commit()
 }

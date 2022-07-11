@@ -7,11 +7,13 @@ import (
 	"math"
 	"net/url"
 	"reflect"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.signoz.io/query-service/app/metrics"
+	"go.signoz.io/query-service/constants"
 	qsmodel "go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/utils/labels"
 	"go.signoz.io/query-service/utils/times"
@@ -484,7 +486,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
 	params := r.prepareQueryRange(ts)
 
-	runQueries := metrics.PrepareBuilderMetricQueries(params, "time_series_v2")
+	runQueries := metrics.PrepareBuilderMetricQueries(params, constants.SIGNOZ_TIMESERIES_TABLENAME)
 	if runQueries.Err != nil {
 		return nil, fmt.Errorf("failed to prepare metric queries: %v", runQueries.Err)
 	}
@@ -495,8 +497,21 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", runQueries.Queries)
 
-	queryLabelAscii := 64 + len(runQueries.Queries)
-	queryLabel := string(rune(queryLabelAscii))
+	// find target query label
+	if query, ok := runQueries.Queries["F1"]; ok {
+		// found a formula query, run with it
+		return r.runChQuery(ctx, ch, query)
+	}
+
+	// no formula in rule condition, now look for
+	// query label with max ascii val
+	keys := make([]string, 0, len(runQueries.Queries))
+	for k := range runQueries.Queries {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	queryLabel := keys[len(keys)-1]
 
 	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
 

@@ -35,6 +35,7 @@ type ServerOptions struct {
 	PromConfigPath  string
 	HTTPHostPort    string
 	PrivateHostPort string
+	DisableRules    bool
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -94,7 +95,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		externalURL, _ = url.Parse("http://signoz.io")
 	}
 
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), externalURL, localDB, reader)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), externalURL, localDB, reader, serverOptions.DisableRules)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +324,11 @@ func (s *Server) initListeners() error {
 func (s *Server) Start() error {
 
 	// initiate rule manager first
-	s.ruleManager.Start()
+	if !s.serverOptions.DisableRules {
+		s.ruleManager.Start()
+	} else {
+		zap.S().Info("msg: Rules disabled as rules.disable is set to TRUE")
+	}
 
 	err := s.initListeners()
 	if err != nil {
@@ -384,7 +389,8 @@ func makeRulesManager(
 	alertManagerURL string,
 	externalURL *url.URL,
 	db *sqlx.DB,
-	ch interfaces.Reader) (*rules.Manager, error) {
+	ch interfaces.Reader,
+	disableRules bool) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -406,10 +412,11 @@ func makeRulesManager(
 			PqlEngine: pqle,
 			Ch:        ch.GetConn(),
 		},
-		ExternalURL: externalURL,
-		Conn:        db,
-		Context:     context.Background(),
-		Logger:      nil,
+		ExternalURL:  externalURL,
+		Conn:         db,
+		Context:      context.Background(),
+		Logger:       nil,
+		DisableRules: disableRules,
 	}
 
 	// create Manager

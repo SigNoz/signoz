@@ -770,9 +770,11 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
 
-	err := (*aH.ruleManager).DeleteRule(id)
+	id := mux.Vars(r)["id"]
+	fmt.Println("deleting rule:", id)
+
+	err := aH.ruleManager.DeleteRule(id)
 
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)

@@ -126,25 +126,27 @@ func (r *ruleDB) DeleteRuleTx(id string) (string, Tx, error) {
 	idInt, _ := strconv.Atoi(id)
 	groupName := prepareTaskName(int64(idInt))
 
-	tx, err := r.Begin()
+	// commented as this causes db locked error
+	// tx, err := r.Begin()
+	// if err != nil {
+	// 	return groupName, tx, err
+	// }
+
+	stmt, err := r.Prepare(`DELETE FROM rules WHERE id=$1;`)
+
 	if err != nil {
-		return groupName, tx, err
+		return groupName, nil, err
 	}
 
-	stmt, err := tx.Prepare(`DELETE FROM rules WHERE id=$1;`)
-
-	if err != nil {
-		return groupName, tx, err
-	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(idInt); err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
-		tx.Rollback() // return an error too, we may want to wrap them
-		return groupName, tx, err
+		// tx.Rollback()
+		return groupName, nil, err
 	}
 
-	return groupName, tx, nil
+	return groupName, nil, nil
 }
 
 func (r *ruleDB) GetStoredRules() ([]StoredRule, error) {
