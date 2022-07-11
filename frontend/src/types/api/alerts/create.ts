@@ -15,13 +15,15 @@ export const alertDefaults: AlertDef = {
 			builderQueries: {
 				A: {
 					queryName: 'A',
-					metricName: 'signoz_latency_count',
+					name: 'A',
+					formulaOnly: false,
+					metricName: '',
 					tagFilters: {
 						op: 'AND',
 						items: [],
 					},
 					groupBy: [],
-					aggregateOperator: 17,
+					aggregateOperator: 1,
 					expression: 'A',
 					disabled: false,
 					toggleDisable: false,

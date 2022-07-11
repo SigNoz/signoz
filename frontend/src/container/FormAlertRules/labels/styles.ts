@@ -6,6 +6,8 @@ export const SearchContainer = styled.div<{
 	isDarkMode: boolean;
 	disabled: boolean;
 }>`
+	width: 70%;
+	border-radisu: 4px;
 	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
 	flex: 1;
 	display: flex;
@@ -14,7 +16,6 @@ export const SearchContainer = styled.div<{
 	border: 1px solid #ccc5;
 	${({ disabled }): string => (disabled ? `cursor: not-allowed;` : '')}
 `;
-
 
 export const QueryChipContainer = styled.span`
 	display: flex;

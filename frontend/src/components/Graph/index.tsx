@@ -22,6 +22,7 @@ import {
 	Tooltip,
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -50,6 +51,7 @@ Chart.register(
 	SubTitle,
 	BarController,
 	BarElement,
+	annotationPlugin,
 );
 
 function Graph({
@@ -62,6 +64,7 @@ function Graph({
 	name,
 	yAxisUnit = 'short',
 	forceReRender,
+	annotations,
 }: GraphProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -99,6 +102,12 @@ function Graph({
 					intersect: false,
 				},
 				plugins: {
+					annotation:
+						annotations && annotations.length > 0
+							? {
+									annotations,
+							  }
+							: undefined,
 					title: {
 						display: title !== undefined,
 						text: title,
@@ -180,6 +189,7 @@ function Graph({
 					}
 				},
 			};
+
 			const chartHasData = hasData(data);
 			const chartPlugins = [];
 
@@ -205,6 +215,7 @@ function Graph({
 		name,
 		yAxisUnit,
 		onClickHandler,
+		annotations,
 	]);
 
 	useEffect(() => {
@@ -229,6 +240,7 @@ interface GraphProps {
 	name: string;
 	yAxisUnit?: string;
 	forceReRender?: boolean | null | number;
+	annotations?: [];
 }
 
 export type GraphOnClickHandler = (
@@ -245,5 +257,6 @@ Graph.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	forceReRender: undefined,
+	annotations: undefined,
 };
 export default Graph;

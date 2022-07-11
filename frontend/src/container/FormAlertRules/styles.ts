@@ -1,4 +1,5 @@
-import { Button, Card, Form, Input, Select } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Select } from 'antd';
+import TextArea from 'antd/lib/input/TextArea';
 import styled from 'styled-components';
 
 export const MainFormContainer = styled(Form)`
@@ -57,7 +58,7 @@ export const SeveritySelect = styled(Select)`
 `;
 
 export const InputSmall = styled(Input)`
-	width: 25% !important;
+	width: 40% !important;
 `;
 
 export const FormContainer = styled.div`
@@ -70,8 +71,13 @@ export const FormContainer = styled.div`
 	border: 1px solid #303030;
 `;
 
-export const ThresholdInput = styled(Input)`
+export const ThresholdInput = styled(InputNumber)`
 	&&& {
 		width: 20%;
 	}
+`;
+
+
+export const TextareaMedium = styled(TextArea)`
+	width: 70%;
 `;

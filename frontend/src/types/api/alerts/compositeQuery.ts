@@ -40,6 +40,8 @@ export interface IBuilderQuery
 	groupBy?: string[];
 	expression?: string;
 	tagFilters?: IQueryBuilderTagFilters;
+	toggleDisable?: boolean;
+	toggleDelete?: boolean;
 }
 
 export interface IFormulaQueries {

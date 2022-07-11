@@ -10,7 +10,7 @@ export const resolveQueryCategoryName = (s: number): string => {
 		case 2:
 			return 'Clickhouse Query';
 		case 3:
-			return 'PromQL Expression';
+			return 'PromQL';
 		default:
 			return '';
 	}

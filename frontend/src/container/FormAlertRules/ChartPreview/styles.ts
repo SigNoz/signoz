@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card, Tooltip } from 'antd';
 import styled from 'styled-components';
 
 export const NotFoundContainer = styled.div`
@@ -6,6 +6,12 @@ export const NotFoundContainer = styled.div`
 	justify-content: center;
 	align-items: center;
 	min-height: 55vh;
+`;
+
+export const FailedMessageContainer = styled(Tooltip)`
+	position: absolute;
+	top: 10px;
+	left: 10px;
 `;
 
 export const ChartContainer = styled(Card)`

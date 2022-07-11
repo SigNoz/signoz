@@ -1,5 +1,14 @@
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
+// default match type for threshold
+export const defaultMatchType = '1';
+
+// default eval window
+export const defaultEvalWindow = '5m0s';
+
+// default compare op: above
+export const defaultCompareOp = '0';
+
 export interface AlertDef {
 	id?: number;
 	alert?: string;

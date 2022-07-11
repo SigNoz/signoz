@@ -1,5 +1,5 @@
 import {
-	IBuilderQueries, 
+	IBuilderQueries,
 	IFormulaQueries,
 	IFormulaQuery,
 	IMetricQueries,
@@ -7,15 +7,17 @@ import {
 	IPromQueries,
 	IPromQuery,
 } from 'types/api/alerts/compositeQuery';
-import { IMetricsBuilderFormula, IMetricsBuilderQuery, IPromQLQuery } from 'types/api/dashboard/getAll';
+import {
+	IMetricsBuilderQuery,
+	Query as IStagedQuery,
+} from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
-import { Query as IStagedQuery } from 'types/api/dashboard/getAll';
 
 export const toFormulaQueries = (b: IBuilderQueries): IFormulaQueries => {
 	const f: IFormulaQueries = {};
 	if (!b) return f;
 	Object.keys(b).forEach((key) => {
-		if (!b[key].metricName || b[key].metricName === '') {
+		if (key === 'F1') {
 			f[key] = b[key] as IFormulaQuery;
 		}
 	});
@@ -27,7 +29,7 @@ export const toMetricQueries = (b: IBuilderQueries): IMetricQueries => {
 	const m: IMetricQueries = {};
 	if (!b) return m;
 	Object.keys(b).forEach((key) => {
-		if (b[key].metricName !== '') {
+		if (key !== 'F1') {
 			m[key] = b[key] as IMetricQuery;
 		}
 	});
@@ -48,7 +50,6 @@ export const toIMetricsBuilderQuery = (
 		legend: q.legend,
 	};
 };
-
 
 export const prepareBuilderQueries = (
 	m: IMetricQueries,
@@ -96,9 +97,10 @@ export const prepareStagedQuery = (
 	// convert map[string]IPromQuery to IPromQuery[]
 	if (p) {
 		Object.keys(p).forEach((key) => {
-			promList.push(p[key]);
+			promList.push({ ...p[key], name: key });
 		});
 	}
+
 	return {
 		queryType: t,
 		promQL: promList,

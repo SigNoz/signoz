@@ -1,9 +1,8 @@
-import { Input, Select } from 'antd';
+import { Select } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
-import { EQueryType } from 'types/common/dashboard';
 
 import LabelSelect from './labels';
 import {
@@ -11,31 +10,23 @@ import {
 	InputSmall,
 	SeveritySelect,
 	StepHeading,
+	TextareaMedium,
 } from './styles';
 
-const { TextArea } = Input;
 const { Option } = Select;
 
 interface BasicInfoProps {
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
-	queryCategory: EQueryType;
 }
 
-function BasicInfo({
-	alertDef,
-	setAlertDef,
-	queryCategory,
-}: BasicInfoProps): JSX.Element {
+function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('rules');
 
 	return (
 		<>
-			<StepHeading>
-				{' '}
-				Step {queryCategory === EQueryType.PROM ? 2 : 3} - Alert Configuration{' '}
-			</StepHeading>
+			<StepHeading> {t('alert_form_step3')} </StepHeading>
 			<FormContainer>
 				<FormItem
 					label={t('field_severity')}
@@ -77,7 +68,7 @@ function BasicInfo({
 					labelAlign="left"
 					name={['annotations', 'description']}
 				>
-					<TextArea
+					<TextareaMedium
 						onChange={(e): void => {
 							setAlertDef({
 								...alertDef,

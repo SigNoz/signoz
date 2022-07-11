@@ -1,35 +1,26 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, message, Modal, notification, Tabs } from 'antd';
-import TextToolTip from 'components/TextToolTip';
+import { notification, Tabs } from 'antd';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
 import {
 	IQueryBuilderFormulaHandleChange,
 	IQueryBuilderQueryHandleChange,
 } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/types';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
 } from 'types/api/alerts/compositeQuery';
-import { Query as StagedQuery } from 'types/api/dashboard/getAll';
 import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 
 import PromqlSection from './PromqlSection';
-import {
-	ButtonContainer,
-	FormContainer,
-	QueryButton,
-	QueryContainer,
-	StepHeading,
-} from './styles';
-import { prepareStagedQuery, toIMetricsBuilderQuery } from './utils';
+import { FormContainer, QueryButton, StepHeading } from './styles';
+import { toIMetricsBuilderQuery } from './utils';
 
 const { TabPane } = Tabs;
 function QuerySection({
-	queryChanged,
 	queryCategory,
 	setQueryCategory,
 	metricQueries,
@@ -38,7 +29,6 @@ function QuerySection({
 	setFormulaQueries,
 	promQueries,
 	setPromQueries,
-	setStagedQuery,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('rules');
@@ -58,26 +48,23 @@ function QuerySection({
 				},
 			});
 		}
+
 		console.log('setting category:', parseInt(s, 10));
 		setQueryCategory(parseInt(s, 10));
 	};
 
 	const getNextQueryLabel = useCallback((): string => {
-		const queryCount =
-			Object.keys(metricQueries).length + Object.keys(formulaQueries).length;
+		let maxAscii = 0;
 
-		return String.fromCharCode(64 + queryCount + 1);
-	}, [metricQueries, formulaQueries]);
+		Object.keys(metricQueries).forEach((key) => {
+			const n = key.charCodeAt(0);
+			if (n > maxAscii) {
+				maxAscii = n - 64;
+			}
+		});
 
-	const handleStageQuery = async (): Promise<void> => {
-		const s: StagedQuery = prepareStagedQuery(
-			queryCategory,
-			metricQueries,
-			formulaQueries,
-			promQueries,
-		);
-		setStagedQuery(s);
-	};
+		return String.fromCharCode(64 + maxAscii + 1);
+	}, [metricQueries]);
 
 	const handleFormulaChange = ({
 		formulaIndex,
@@ -153,20 +140,20 @@ function QuerySection({
 	};
 
 	const addMetricQuery = useCallback(async () => {
-		if (Object.keys(metricQueries).length > 4) {
+		if (Object.keys(metricQueries).length > 5) {
 			notification.error({
-				message:
-					'Unable to create query. You can create at max 5 queries and 1 formulae.',
+				message: t('metric_query_max_limit'),
 			});
 			return;
 		}
+
 		const queryLabel = getNextQueryLabel();
 
 		const queries = metricQueries;
 		queries[queryLabel] = {
 			name: queryLabel,
 			queryName: queryLabel,
-			metricName: 'signoz_latency_count',
+			metricName: '',
 			formulaOnly: false,
 			aggregateOperator: EAggregateOperator.NOOP,
 			legend: '',
@@ -179,18 +166,12 @@ function QuerySection({
 			expression: queryLabel,
 		};
 		setMetricQueries({ ...queries });
-	}, [getNextQueryLabel, metricQueries, setMetricQueries]);
+	}, [t, getNextQueryLabel, metricQueries, setMetricQueries]);
 
 	const addFormula = useCallback(async () => {
-		if (Object.keys(formulaQueries).length === 1) {
-			notification.error({
-				message:
-					'can not add formula. Only one formula is supported in the alert rule.',
-			});
-			return;
-		}
-
-		const queryLabel = getNextQueryLabel();
+		// defaulting to F1 as only one formula is supported
+		// in alert definition
+		const queryLabel = 'F1';
 
 		const formulas = formulaQueries;
 		formulas[queryLabel] = {
@@ -202,7 +183,7 @@ function QuerySection({
 		};
 
 		setFormulaQueries({ ...formulas });
-	}, [getNextQueryLabel, formulaQueries, setFormulaQueries]);
+	}, [formulaQueries, setFormulaQueries]);
 
 	const renderPromqlUI = (): JSX.Element => {
 		return (
@@ -263,14 +244,18 @@ function QuerySection({
 								/>
 							);
 						})}
-					{queryCategory !== EQueryType.PROM && renderFormulaButton()}
+					{queryCategory === EQueryType.QUERY_BUILDER &&
+						(!formulaQueries || Object.keys(formulaQueries).length === 0) &&
+						metricQueries &&
+						Object.keys(metricQueries).length > 0 &&
+						renderFormulaButton()}
 				</div>
 			</div>
 		);
 	};
 	return (
 		<>
-			<StepHeading> Step 1 - Define the metric</StepHeading>
+			<StepHeading> {t('alert_form_step1')}</StepHeading>
 			<FormContainer>
 				<div style={{ display: 'flex' }}>
 					<Tabs
@@ -303,7 +288,6 @@ function QuerySection({
 }
 
 interface QuerySectionProps {
-	queryChanged: boolean;
 	queryCategory: EQueryType;
 	setQueryCategory: (n: EQueryType) => void;
 	metricQueries: IMetricQueries;
@@ -312,8 +296,6 @@ interface QuerySectionProps {
 	setFormulaQueries: (b: IFormulaQueries) => void;
 	promQueries: IPromQueries;
 	setPromQueries: (p: IPromQueries) => void;
-	stagedQuery: StagedQuery | undefined;
-	setStagedQuery: (q: StagedQuery) => void;
 }
 
 export default QuerySection;

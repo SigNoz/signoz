@@ -18,6 +18,7 @@ function GridGraphComponent({
 	onClickHandler,
 	name,
 	yAxisUnit,
+	annotations,
 }: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
@@ -36,6 +37,7 @@ function GridGraphComponent({
 					onClickHandler,
 					name,
 					yAxisUnit,
+					annotations,
 				}}
 			/>
 		);
@@ -82,6 +84,7 @@ export interface GridGraphComponentProps {
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
+	annotations?: [];
 }
 
 GridGraphComponent.defaultProps = {
@@ -90,6 +93,7 @@ GridGraphComponent.defaultProps = {
 	isStacked: undefined,
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
+	annotations: undefined,
 };
 
 export default GridGraphComponent;

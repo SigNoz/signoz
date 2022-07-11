@@ -1,17 +1,12 @@
-import { Input } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
 import PromQLQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL/query';
 import { IPromQLQueryHandleChange } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL/types';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { IPromQueries } from 'types/api/alerts/compositeQuery';
 
 function PromqlSection({
 	promQueries,
 	setPromQueries,
 }: PromqlSectionProps): JSX.Element {
-	// init namespace for translations
-	const { t } = useTranslation('rules');
 	const handlePromQLQueryChange = ({
 		query,
 		legend,
@@ -40,7 +35,7 @@ function PromqlSection({
 		<PromQLQueryBuilder
 			key="A"
 			queryIndex="A"
-			queryData={promQueries?.A}
+			queryData={{ ...promQueries?.A, name: 'A' }}
 			handleQueryChange={handlePromQLQueryChange}
 		/>
 	);

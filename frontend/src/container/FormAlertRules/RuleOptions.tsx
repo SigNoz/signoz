@@ -2,7 +2,13 @@ import { Select, Typography } from 'antd';
 import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertDef } from 'types/api/alerts/def';
+import {
+	AlertDef,
+	defaultCompareOp,
+	defaultEvalWindow,
+	defaultMatchType,
+} from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
 
 import {
 	FormContainer,
@@ -10,98 +16,150 @@ import {
 	StepHeading,
 	ThresholdInput,
 } from './styles';
+
 const { Option } = Select;
 
 function RuleOptions({
-	initialValue,
+	alertDef,
 	setAlertDef,
+	queryCategory,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('rules');
 
+	const handleMatchOptChange = (value: string | unknown): void => {
+		const m = (value as string) || alertDef.condition?.matchType;
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				matchType: m,
+			},
+		});
+	};
+
+	const renderCompareOps = (): JSX.Element => {
+		return (
+			<InlineSelect
+				defaultValue={defaultCompareOp}
+				value={alertDef.condition?.op}
+				style={{ minWidth: '120px' }}
+				onChange={(value: string | unknown): void => {
+					const newOp = (value as string) || '';
+
+					setAlertDef({
+						...alertDef,
+						condition: {
+							...alertDef.condition,
+							op: newOp,
+						},
+					});
+				}}
+			>
+				<Option value="1">{t('option_above')}</Option>
+				<Option value="2">{t('option_below')}</Option>
+				<Option value="3">{t('option_equal')}</Option>
+				<Option value="4">{t('option_notequal')}</Option>
+			</InlineSelect>
+		);
+	};
+
+	const renderThresholdMatchOpts = (): JSX.Element => {
+		return (
+			<InlineSelect
+				defaultValue={defaultMatchType}
+				style={{ minWidth: '130px' }}
+				value={alertDef.condition?.matchType}
+				onChange={(value: string | unknown): void => handleMatchOptChange(value)}
+			>
+				<Option value="1">{t('option_atleastonce')}</Option>
+				<Option value="2">{t('option_allthetimes')}</Option>
+				<Option value="3">{t('option_onaverage')}</Option>
+				<Option value="4">{t('option_intotal')}</Option>
+			</InlineSelect>
+		);
+	};
+
+	const renderPromMatchOpts = (): JSX.Element => {
+		return (
+			<InlineSelect
+				defaultValue={defaultMatchType}
+				style={{ minWidth: '130px' }}
+				value={alertDef.condition?.matchType}
+				onChange={(value: string | unknown): void => handleMatchOptChange(value)}
+			>
+				<Option value="1">{t('option_atleastonce')}</Option>
+			</InlineSelect>
+		);
+	};
+
+	const renderEvalWindows = (): JSX.Element => {
+		return (
+			<InlineSelect
+				defaultValue={defaultEvalWindow}
+				style={{ minWidth: '90px' }}
+				value={alertDef.evalWindow}
+				onChange={(value: string | unknown): void => {
+					const ew = (value as string) || alertDef.evalWindow;
+					setAlertDef({
+						...alertDef,
+						evalWindow: ew,
+					});
+				}}
+			>
+				{' '}
+				<Option value="5m0s">{t('option_5min')}</Option>
+				<Option value="10m0s">{t('option_10min')}</Option>
+				<Option value="15m0s">{t('option_15min')}</Option>
+				<Option value="60m0s">{t('option_60min')}</Option>
+				<Option value="1440m0s">{t('option_24hours')}</Option>
+			</InlineSelect>
+		);
+	};
+
+	const renderThresholdRuleOpts = (): JSX.Element => {
+		return (
+			<FormItem>
+				<Typography.Text>
+					{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
+					{renderThresholdMatchOpts()} {t('text_condition3')} {renderEvalWindows()}
+				</Typography.Text>
+			</FormItem>
+		);
+	};
+	const renderPromRuleOptions = (): JSX.Element => {
+		return (
+			<FormItem>
+				<Typography.Text>
+					{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
+					{renderPromMatchOpts()}
+				</Typography.Text>
+			</FormItem>
+		);
+	};
+
 	return (
 		<>
-			<StepHeading>{t('text_step2')}</StepHeading>
+			<StepHeading>{t('alert_form_step2')}</StepHeading>
 			<FormContainer>
-				<FormItem>
-					<Typography.Text>
-						{t('text_condition1')}{' '}
-						<InlineSelect
-							defaultValue="0"
-							value={initialValue.condition?.op}
-							onChange={(value: string | unknown): void => {
-								const newOp = (value as string) || '';
-
-								setAlertDef({
-									...initialValue,
-									condition: {
-										...initialValue.condition,
-										op: newOp,
-									},
-								});
-							}}
-						>
-							<Option value="0">{t('option_above')}</Option>
-							<Option value="1">{t('option_below')}</Option>
-						</InlineSelect>{' '}
-						{t('text_condition2')}{' '}
-						<InlineSelect
-							defaultValue="0"
-							style={{ minWidth: '130px' }}
-							value={initialValue.condition?.matchType}
-							onChange={(value: string | unknown): void => {
-								const m = (value as string) || initialValue.condition?.matchType;
-								setAlertDef({
-									...initialValue,
-									condition: {
-										...initialValue.condition,
-										matchType: m,
-									},
-								});
-							}}
-						>
-							{' '}
-							<Option value="0">{t('option_allthetimes')}</Option>
-							<Option value="1">{t('option_atleastonce')}</Option>
-							<Option value="2">{t('option_onaverage')}</Option>
-							<Option value="3">{t('option_intotal')}</Option>
-						</InlineSelect>{' '}
-						{t('text_condition3')}{' '}
-						<InlineSelect
-							defaultValue="5m0s"
-							style={{ minWidth: '90px' }}
-							value={initialValue.evalWindow}
-							onChange={(value: string | unknown): void => {
-								const ew = (value as string) || initialValue.evalWindow;
-								setAlertDef({
-									...initialValue,
-									evalWindow: ew,
-								});
-							}}
-						>
-							{' '}
-							<Option value="5m0s">{t('option_5min')}</Option>
-							<Option value="10m0s">{t('option_10min')}</Option>
-							<Option value="15m0s">{t('option_15min')}</Option>
-							<Option value="60m0s">{t('option_60min')}</Option>
-							<Option value="1440m0s">{t('option_24hours')}</Option>
-						</InlineSelect>
-					</Typography.Text>
-				</FormItem>
+				{queryCategory === EQueryType.PROM
+					? renderPromRuleOptions()
+					: renderThresholdRuleOpts()}
 				<FormItem
 					label={t('field_threshold')}
 					labelAlign="left"
 					name={['condition', 'target']}
 				>
 					<ThresholdInput
-						type="number"
-						onChange={(e): void => {
-							const t = e.target.valueAsNumber;
+						controls={false}
+						value={alertDef?.condition?.target}
+						maxLength={15}
+						onChange={(value: number | unknown): void => {
 							setAlertDef({
-								...initialValue,
+								...alertDef,
 								condition: {
-									...initialValue.condition,
-									target: t,
+									...alertDef.condition,
+									target: (value as number) || undefined,
 								},
 							});
 						}}
@@ -113,7 +171,8 @@ function RuleOptions({
 }
 
 interface RuleOptionsProps {
-	initialValue: AlertDef;
+	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
+	queryCategory: EQueryType;
 }
 export default RuleOptions;

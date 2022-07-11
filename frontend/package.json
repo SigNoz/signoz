@@ -43,6 +43,7 @@
 		"babel-preset-react-app": "^10.0.0",
 		"chart.js": "^3.4.0",
 		"chartjs-adapter-date-fns": "^2.0.0",
+		"chartjs-plugin-annotation": "^1.4.0",
 		"color": "^4.2.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "4.3.0",

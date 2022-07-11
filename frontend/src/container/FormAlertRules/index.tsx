@@ -1,30 +1,37 @@
-import { SaveOutlined } from '@ant-design/icons';
-import { Form, FormInstance, notification } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
+import { FormInstance, Modal, notification, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import ROUTES from 'constants/routes';
+import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
+import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from 'react-query';
 import {
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
 } from 'types/api/alerts/compositeQuery';
-import { AlertDef } from 'types/api/alerts/def';
+import {
+	AlertDef,
+	defaultEvalWindow,
+	defaultMatchType,
+} from 'types/api/alerts/def';
 import { Query as StagedQuery } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
-import { resolveQueryCategoryName } from 'types/api/alerts/queryType';
+
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
 import { ActionButton, ButtonContainer, MainFormContainer } from './styles';
+import useDebounce from './useDebounce';
 import {
 	prepareBuilderQueries,
+	prepareStagedQuery,
 	toFormulaQueries,
 	toMetricQueries,
-	prepareStagedQuery,
 } from './utils';
 
 function FormAlertRules({
@@ -34,6 +41,9 @@ function FormAlertRules({
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('rules');
+
+	// use query client
+	const ruleCache = useQueryClient();
 
 	const [loading, setLoading] = useState(false);
 
@@ -64,13 +74,7 @@ function FormAlertRules({
 
 	// staged query is used to display chart preview
 	const [stagedQuery, setStagedQuery] = useState<StagedQuery>();
-
-	// set when query setup changes, user hasnt staged the changes
-	const [queryChanged, setQueryChanged] = useState<boolean>(false);
-
-	useEffect(() => {
-		setQueryChanged(true);
-	}, [metricQueries, promQueries, formulaQueries]);
+	const debouncedStagedQuery = useDebounce(stagedQuery, 500);
 
 	// this use effect initiates staged query and
 	// other queries based on server data.
@@ -118,13 +122,29 @@ function FormAlertRules({
 		history.replace(ROUTES.LIST_ALL_ALERT);
 	}, []);
 
+	// onQueryCategoryChange handles changes to query category
+	// in state as well as sets additional defaults
+	const onQueryCategoryChange = (val: EQueryType): void => {
+		setQueryCategory(val);
+		if (val === EQueryType.PROM) {
+			setAlertDef({
+				...alertDef,
+				condition: {
+					...alertDef.condition,
+					matchType: defaultMatchType,
+				},
+				evalWindow: defaultEvalWindow,
+			});
+		}
+	};
+
 	const isFormValid = useCallback((): boolean => {
 		let retval = true;
 
 		if (!alertDef.alert || alertDef.alert === '') {
 			notification.error({
 				message: 'Error',
-				description: 'alert name is required',
+				description: t('alertname_required'),
 			});
 			return false;
 		}
@@ -135,8 +155,7 @@ function FormAlertRules({
 		) {
 			notification.error({
 				message: 'Error',
-				description:
-					'promql expression is required when query format is set to PromQL',
+				description: t('promql_required'),
 			});
 			return false;
 		}
@@ -147,7 +166,7 @@ function FormAlertRules({
 		) {
 			notification.error({
 				message: 'Error',
-				description: 'at least one metric condition is required',
+				description: t('condition_required'),
 			});
 			return false;
 		}
@@ -157,7 +176,7 @@ function FormAlertRules({
 				retval = false;
 				notification.error({
 					message: 'Error',
-					description: `metric name is missing in ${metricQueries[key].name}`,
+					description: t('metricname_missing', { where: metricQueries[key].name }),
 				});
 			}
 		});
@@ -167,15 +186,15 @@ function FormAlertRules({
 				retval = false;
 				notification.error({
 					message: 'Error',
-					description: `expression is missing in ${formulaQueries[key].name}`,
+					description: t('expression_missing', formulaQueries[key].name),
 				});
 			}
 		});
 
 		return retval;
-	}, [alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
+	}, [t, alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
 
-	const onSaveHandler = useCallback(async () => {
+	const saveRule = useCallback(async () => {
 		if (!isFormValid()) {
 			return;
 		}
@@ -193,35 +212,36 @@ function FormAlertRules({
 				},
 			},
 		};
-		console.log(' postableAlert :', postableAlert);
 
 		setLoading(true);
 		const apiReq =
 			ruleId && ruleId > 0
 				? { data: postableAlert, id: ruleId }
 				: { data: postableAlert };
-		console.log(' ruleId :', ruleId);
+
 		const response = await saveAlertApi(apiReq);
 
 		if (response.statusCode === 200) {
 			notification.success({
 				message: 'Success',
-				description:
-					!ruleId || ruleId === 0
-						? 'Rule created successfully'
-						: 'Rule edited successfully',
+				description: !ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
 			});
+			console.log('invalidting cache');
+			// invalidate rule in cache
+			ruleCache.invalidateQueries(['ruleId', ruleId]);
+
 			setTimeout(() => {
 				history.replace(ROUTES.LIST_ALL_ALERT);
 			}, 2000);
 		} else {
 			notification.error({
 				message: 'Error',
-				description: response.error || 'failed to create or edit rule',
+				description: response.error || t('unexpected_error'),
 			});
 		}
 		setLoading(false);
 	}, [
+		t,
 		isFormValid,
 		queryCategory,
 		ruleId,
@@ -229,24 +249,52 @@ function FormAlertRules({
 		metricQueries,
 		formulaQueries,
 		promQueries,
+		ruleCache,
 	]);
 
+	const onSaveHandler = useCallback(async () => {
+		const content = (
+			<Typography.Text>
+				{' '}
+				{t('confirm_save_content_part1')} <QueryTypeTag queryType={queryCategory} />{' '}
+				{t('confirm_save_content_part2')}
+			</Typography.Text>
+		);
+		Modal.confirm({
+			icon: <ExclamationCircleOutlined />,
+			title: t('confirm_save_title'),
+			centered: true,
+			content,
+			onOk() {
+				saveRule();
+			},
+		});
+	}, [t, saveRule, queryCategory]);
+
 	const renderBasicInfo = (): JSX.Element => (
-		<BasicInfo
-			queryCategory={queryCategory}
-			alertDef={alertDef}
-			setAlertDef={setAlertDef}
-		/>
+		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
 	);
 
 	const renderQBChartPreview = (): JSX.Element => {
 		return (
-			<ChartPreview name="Chart Preview (Query Builder)" query={stagedQuery} />
+			<ChartPreview
+				headline={<PlotTag queryType={queryCategory} />}
+				name=""
+				threshold={alertDef.condition?.target}
+				query={debouncedStagedQuery}
+			/>
 		);
 	};
 
 	const renderPromChartPreview = (): JSX.Element => {
-		return <ChartPreview name="Chart Preview (PromQL)" query={stagedQuery} />;
+		return (
+			<ChartPreview
+				headline={<PlotTag queryType={queryCategory} />}
+				name="Chart Preview"
+				threshold={alertDef.condition?.target}
+				query={debouncedStagedQuery}
+			/>
+		);
 	};
 
 	return (
@@ -259,24 +307,23 @@ function FormAlertRules({
 			>
 				{queryCategory === EQueryType.QUERY_BUILDER && renderQBChartPreview()}
 				{queryCategory === EQueryType.PROM && renderPromChartPreview()}
-				<FormItem labelAlign="left" name="query">
-					<QuerySection
-						queryChanged={queryChanged}
-						queryCategory={queryCategory}
-						setQueryCategory={setQueryCategory}
-						metricQueries={metricQueries}
-						setMetricQueries={setMetricQueries}
-						formulaQueries={formulaQueries}
-						setFormulaQueries={setFormulaQueries}
-						promQueries={promQueries}
-						setPromQueries={setPromQueries}
-						stagedQuery={stagedQuery}
-						setStagedQuery={setStagedQuery}
-					/>
-				</FormItem>
-				{queryCategory !== EQueryType.PROM && (
-					<RuleOptions initialValue={alertDef} setAlertDef={setAlertDef} />
-				)}
+				<QuerySection
+					queryCategory={queryCategory}
+					setQueryCategory={onQueryCategoryChange}
+					metricQueries={metricQueries}
+					setMetricQueries={setMetricQueries}
+					formulaQueries={formulaQueries}
+					setFormulaQueries={setFormulaQueries}
+					promQueries={promQueries}
+					setPromQueries={setPromQueries}
+				/>
+
+				<RuleOptions
+					queryCategory={queryCategory}
+					alertDef={alertDef}
+					setAlertDef={setAlertDef}
+				/>
+
 				{renderBasicInfo()}
 				<ButtonContainer>
 					<ActionButton
@@ -288,11 +335,12 @@ function FormAlertRules({
 						{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
 					</ActionButton>
 					<ActionButton
-						loading={loading || false}
+						disabled={loading || false}
 						type="default"
 						onClick={onCancelHandler}
 					>
-						{ruleId > 0 ? t('button_returntorules') : t('button_cancelchanges')}
+						{ruleId === 0 && t('button_cancelchanges')}
+						{ruleId > 0 && t('button_discard')}
 					</ActionButton>
 				</ButtonContainer>
 			</MainFormContainer>
