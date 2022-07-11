@@ -2675,7 +2675,7 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, exceptionStacktrace, exceptionEscaped, groupID FROM %s.%s WHERE groupID = @groupID AND timestamp <= @timestamp AND errorID = @errorID LIMIT 1", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT spanID, traceID, errorID, timestamp, serviceName, exceptionType, exceptionMessage, exceptionStacktrace, exceptionEscaped, groupID FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID = @errorID LIMIT 1", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
@@ -2726,16 +2726,14 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 	}
 	var err *model.ApiError
 	getNextPrevErrorIDsResponse := model.NextPrevErrorIDs{
-		NextErrorID: "",
-		PrevErrorID: "",
-		GroupID:     queryParams.GroupID,
+		GroupID: queryParams.GroupID,
 	}
-	getNextPrevErrorIDsResponse.NextErrorID, err = r.getNextErrorID(ctx, queryParams)
+	getNextPrevErrorIDsResponse.NextErrorID, getNextPrevErrorIDsResponse.NextTimestamp, err = r.getNextErrorID(ctx, queryParams)
 	if err != nil {
 		zap.S().Debug("Unable to get next error ID due to err: ", err)
 		return nil, err
 	}
-	getNextPrevErrorIDsResponse.PrevErrorID, err = r.getPrevErrorID(ctx, queryParams)
+	getNextPrevErrorIDsResponse.PrevErrorID, getNextPrevErrorIDsResponse.PrevTimestamp, err = r.getPrevErrorID(ctx, queryParams)
 	if err != nil {
 		zap.S().Debug("Unable to get prev error ID due to err: ", err)
 		return nil, err
@@ -2744,11 +2742,11 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 
 }
 
-func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, *model.ApiError) {
+func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
 
 	var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-	query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp FROM %s.%s WHERE groupID = @groupID AND timestamp >= @timestamp AND errorID != @errorID ORDER BY timestamp ASC LIMIT 2", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp >= @timestamp AND errorID != @errorID ORDER BY timestamp ASC LIMIT 2", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
@@ -2757,19 +2755,19 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 	if len(getNextErrorIDReponse) == 0 {
 		zap.S().Info("NextErrorID not found")
-		return "", nil
+		return "", time.Time{}, nil
 	} else if len(getNextErrorIDReponse) == 1 {
 		zap.S().Info("NextErrorID found")
-		return getNextErrorIDReponse[0].NextErrorID, nil
+		return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 	} else {
 		if getNextErrorIDReponse[0].Timestamp.UnixNano() == getNextErrorIDReponse[1].Timestamp.UnixNano() {
 			var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-			query := fmt.Sprintf("SELECT errorID as nextErrorID FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID > @errorID ORDER BY errorID ASC LIMIT 1", r.traceDB, r.errorTable)
+			query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID > @errorID ORDER BY errorID ASC LIMIT 1", r.traceDB, r.errorTable)
 			args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 			err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
@@ -2778,27 +2776,46 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+				return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 			}
 			if len(getNextErrorIDReponse) == 0 {
-				zap.S().Info("NextErrorID not found")
-				return "", nil
+				var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
+
+				query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp > @timestamp ORDER BY timestamp ASC LIMIT 1", r.traceDB, r.errorTable)
+				args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
+
+				err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
+
+				zap.S().Info(query)
+
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+				}
+
+				if len(getNextErrorIDReponse) == 0 {
+					zap.S().Info("NextErrorID not found")
+					return "", time.Time{}, nil
+				} else {
+					zap.S().Info("NextErrorID found")
+					return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
+				}
 			} else {
 				zap.S().Info("NextErrorID found")
-				return getNextErrorIDReponse[0].NextErrorID, nil
+				return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 			}
 		} else {
 			zap.S().Info("NextErrorID found")
-			return getNextErrorIDReponse[0].NextErrorID, nil
+			return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 		}
 	}
 }
 
-func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, *model.ApiError) {
+func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
 
 	var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-	query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp FROM %s.%s WHERE groupID = @groupID AND timestamp <= @timestamp AND errorID != @errorID ORDER BY timestamp DESC LIMIT 2", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp <= @timestamp AND errorID != @errorID ORDER BY timestamp DESC LIMIT 2", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
@@ -2807,19 +2824,19 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 	if len(getPrevErrorIDReponse) == 0 {
 		zap.S().Info("PrevErrorID not found")
-		return "", nil
+		return "", time.Time{}, nil
 	} else if len(getPrevErrorIDReponse) == 1 {
 		zap.S().Info("PrevErrorID found")
-		return getPrevErrorIDReponse[0].PrevErrorID, nil
+		return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 	} else {
 		if getPrevErrorIDReponse[0].Timestamp.UnixNano() == getPrevErrorIDReponse[1].Timestamp.UnixNano() {
 			var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
-			query := fmt.Sprintf("SELECT errorID as prevErrorID FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID < @errorID ORDER BY errorID DESC LIMIT 1", r.traceDB, r.errorTable)
+			query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp = @timestamp AND errorID < @errorID ORDER BY errorID DESC LIMIT 1", r.traceDB, r.errorTable)
 			args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 			err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
@@ -2828,18 +2845,37 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
-				return "", &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+				return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 			}
 			if len(getPrevErrorIDReponse) == 0 {
-				zap.S().Info("PrevErrorID not found")
-				return "", nil
+				var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
+
+				query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp < @timestamp ORDER BY timestamp DESC LIMIT 1", r.traceDB, r.errorTable)
+				args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
+
+				err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
+
+				zap.S().Info(query)
+
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+				}
+
+				if len(getPrevErrorIDReponse) == 0 {
+					zap.S().Info("PrevErrorID not found")
+					return "", time.Time{}, nil
+				} else {
+					zap.S().Info("PrevErrorID found")
+					return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
+				}
 			} else {
 				zap.S().Info("PrevErrorID found")
-				return getPrevErrorIDReponse[0].PrevErrorID, nil
+				return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 			}
 		} else {
 			zap.S().Info("PrevErrorID found")
-			return getPrevErrorIDReponse[0].PrevErrorID, nil
+			return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 		}
 	}
 }

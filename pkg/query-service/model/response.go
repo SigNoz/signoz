@@ -358,15 +358,19 @@ type ErrorWithSpan struct {
 }
 
 type NextPrevErrorIDsDBResponse struct {
-	NextErrorID string    `json:"nextErrorID" ch:"nextErrorID"`
-	PrevErrorID string    `json:"prevErrorID" ch:"prevErrorID"`
-	Timestamp   time.Time `json:"timestamp" ch:"timestamp"`
+	NextErrorID   string    `ch:"nextErrorID"`
+	NextTimestamp time.Time `ch:"nextTimestamp"`
+	PrevErrorID   string    `ch:"prevErrorID"`
+	PrevTimestamp time.Time `ch:"prevTimestamp"`
+	Timestamp     time.Time `ch:"timestamp"`
 }
 
 type NextPrevErrorIDs struct {
-	NextErrorID string `json:"nextErrorID"`
-	PrevErrorID string `json:"prevErrorID"`
-	GroupID     string `json:"groupID"`
+	NextErrorID   string    `json:"nextErrorID"`
+	NextTimestamp time.Time `json:"nextTimestamp"`
+	PrevErrorID   string    `json:"prevErrorID"`
+	PrevTimestamp time.Time `json:"prevTimestamp"`
+	GroupID       string    `json:"groupID"`
 }
 
 type Series struct {
