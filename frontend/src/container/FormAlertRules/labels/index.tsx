@@ -6,6 +6,7 @@ import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
 import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Labels } from 'types/api/alerts/def';
@@ -18,13 +19,16 @@ import { QueryChipItem, SearchContainer } from './styles';
 import { ILabelRecord } from './types';
 import { createQuery, flattenLabels, prepareLabels } from './utils';
 
+interface LabelSelectProps {
+	onSetLabels: (q: Labels) => void;
+	initialValues: Labels | undefined;
+}
+
 function LabelSelect({
 	onSetLabels,
 	initialValues,
-}: {
-	onSetLabels: (q: Labels) => void;
-	initialValues: Labels | undefined;
-}): JSX.Element | null {
+}: LabelSelectProps): JSX.Element | null {
+	const { t } = useTranslation('rules');
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentVal, setCurrentVal] = useState('');
 	const [staging, setStaging] = useState<string[]>([]);
@@ -43,7 +47,6 @@ function LabelSelect({
 		actions: {
 			onSelectLabelKey: () => {},
 			onSelectLabelValue: () => {
-				console.log('onSelectLabelValue:', currentVal);
 				if (currentVal !== '') {
 					setStaging((prevState) => [...prevState, currentVal]);
 				} else {
@@ -52,16 +55,12 @@ function LabelSelect({
 				setCurrentVal('');
 			},
 			onValidateQuery: (): void => {
-				console.log('onValidateQuery:', currentVal);
 				if (currentVal === '') {
 					return;
 				}
 
-				console.log('staging', staging);
-
 				const generatedQuery = createQuery([...staging, currentVal]);
 
-				console.log('generatedQuery:', generatedQuery);
 				if (generatedQuery) {
 					dispatchChanges([...queries, generatedQuery]);
 					setStaging([]);
@@ -86,7 +85,7 @@ function LabelSelect({
 		handleBlur();
 	}, [handleBlur]);
 
-	const handleChange = (e): void => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		setCurrentVal(e.target?.value);
 	};
 
@@ -98,15 +97,15 @@ function LabelSelect({
 		Modal.confirm({
 			title: 'Confirm',
 			icon: <ExclamationCircleOutlined />,
-			content: 'This action will remove all the labels. Do you want to proceed?',
+			content: t('remove_label_confirm'),
 			onOk() {
 				send('RESET');
 				dispatchChanges([]);
 				setStaging([]);
-				message.success('Labels cleared');
+				message.success(t('remove_label_success'));
 			},
-			okText: 'Yes',
-			cancelText: 'No',
+			okText: t('button_yes'),
+			cancelText: t('button_no'),
 		});
 	};
 
@@ -124,22 +123,18 @@ function LabelSelect({
 					)}
 			</div>
 			<div>
-				{map(staging, (item, idx) => {
-					return (
-						<QueryChipItem key={uuid()} onRemove={handleClose}>
-							{item}
-						</QueryChipItem>
-					);
+				{map(staging, (item) => {
+					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
 				})}
 			</div>
 
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Input
 					placeholder={`Enter ${
-						state.value === 'Idle' ? 'Label Key Pair' : state.value
+						state.value === 'Idle' ? t('placeholder_label_key_pair') : state.value
 					}`}
 					onChange={handleChange}
-					onKeyUp={(e) => {
+					onKeyUp={(e): void => {
 						if (e.key === 'Enter' || e.code === 'Enter') {
 							send('NEXT');
 						}

@@ -72,20 +72,18 @@ export const FormContainer = styled.div`
 `;
 
 export const ThresholdInput = styled(InputNumber)`
-&> div {
-	display: flex;
-	align-items:  center	;
-	&> .ant-input-number-group-addon {
-		width: 130px;
-	}
-	&> .ant-input-number {
+	& > div {
+		display: flex;
+		align-items: center;
+		& > .ant-input-number-group-addon {
+			width: 130px;
+		}
+		& > .ant-input-number {
 			width: 50%;
-			margin-left: 1em;	
-	}	
-}
-
+			margin-left: 1em;
+		}
+	}
 `;
-
 
 export const TextareaMedium = styled(TextArea)`
 	width: 70%;

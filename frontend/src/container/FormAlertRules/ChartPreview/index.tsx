@@ -5,6 +5,7 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getChartData from 'lib/getChartData';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { Query } from 'types/api/dashboard/getAll';
@@ -31,6 +32,7 @@ function ChartPreview({
 	headline,
 	threshold,
 }: ChartPreviewProps): JSX.Element | null {
+	const { t } = useTranslation('rules');
 	const annotations = [
 		{
 			type: 'line',
@@ -39,7 +41,7 @@ function ChartPreview({
 			borderColor: '#f14',
 			borderWidth: 1,
 			label: {
-				content: `Threshold (y=${threshold})`,
+				content: `${t('preview_chart_threshold_label')} (y=${threshold})`,
 				enabled: true,
 				font: {
 					size: 10,
@@ -95,7 +97,7 @@ function ChartPreview({
 					<InfoCircleOutlined />{' '}
 					{queryResponse?.data?.error ||
 						queryResponse?.error ||
-						'An unexpeced error occurred updating the chart, please check your query.'}
+						t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
 

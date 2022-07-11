@@ -1,4 +1,11 @@
 {
+  "preview_chart_unexpected_error": "An unexpeced error occurred updating the chart, please check your query.",
+  "preview_chart_threshold_label": "Threshold",
+  "placeholder_label_key_pair": "Label Key Pair",
+  "button_yes": "Yes",
+  "button_no": "No",
+  "remove_label_confirm": "This action will remove all the labels. Do you want to proceed?",
+  "remove_label_success": "Labels cleared",
   "alert_form_step1": "Step 1 - Define the metric",
   "alert_form_step2": "Step 2 - Define Alert Conditions",
   "alert_form_step3": "Step 3 - Alert Configuration",

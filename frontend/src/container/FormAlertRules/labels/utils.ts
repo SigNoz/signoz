@@ -1,8 +1,6 @@
-
-import { v4 as uuid } from 'uuid';
-
-import { ILabelRecord, IOption } from './types';
 import { Labels } from 'types/api/alerts/def';
+
+import { ILabelRecord } from './types';
 
 const hiddenLabels = ['severity', 'description'];
 
@@ -36,11 +34,11 @@ export const flattenLabels = (labels: Labels): ILabelRecord[] => {
 export const prepareLabels = (recs: ILabelRecord[]): Labels => {
 	const labels: Labels = {};
 
-	// eslint-disable-next-line no-plusplus
-	for (let i = 0; i < recs.length; i++) {
-		if (!hiddenLabels.includes(recs[i].key)) {
-			labels[recs[i].key] = recs[i].value;
+	recs.forEach((rec) => {
+		if (!hiddenLabels.includes(rec.key)) {
+			labels[rec.key] = rec.value;
 		}
-	}
+	});
+
 	return labels;
-}
+};

@@ -54,7 +54,7 @@ function FormAlertRules({
 	const initQuery = initialValue?.condition?.compositeMetricQuery;
 
 	const [queryCategory, setQueryCategory] = useState<EQueryType>(
-		initQuery?.queryType as EQueryType,
+		initQuery?.queryType,
 	);
 
 	// local state to handle metric queries
@@ -81,7 +81,7 @@ function FormAlertRules({
 	// useful when fetching of initial values (from api)
 	// is delayed
 	useEffect(() => {
-		const t = initQuery?.queryType as EQueryType;
+		const typ = initQuery?.queryType;
 
 		// extract metric query from builderQueries
 		const mq = toMetricQueries(initQuery?.builderQueries);
@@ -90,15 +90,10 @@ function FormAlertRules({
 		const fq = toFormulaQueries(initQuery?.builderQueries);
 
 		// prepare staged query
-		const sq = prepareStagedQuery(
-			initQuery.queryType,
-			mq,
-			fq,
-			initQuery?.promQueries,
-		);
+		const sq = prepareStagedQuery(typ, mq, fq, initQuery?.promQueries);
 		const pq = initQuery?.promQueries;
 
-		setQueryCategory(t);
+		setQueryCategory(typ);
 		setMetricQueries(mq);
 		setFormulaQueries(fq);
 		setPromQueries(pq);
@@ -214,29 +209,38 @@ function FormAlertRules({
 		};
 
 		setLoading(true);
-		const apiReq =
-			ruleId && ruleId > 0
-				? { data: postableAlert, id: ruleId }
-				: { data: postableAlert };
+		try {
+			const apiReq =
+				ruleId && ruleId > 0
+					? { data: postableAlert, id: ruleId }
+					: { data: postableAlert };
 
-		const response = await saveAlertApi(apiReq);
+			const response = await saveAlertApi(apiReq);
 
-		if (response.statusCode === 200) {
-			notification.success({
-				message: 'Success',
-				description: !ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
-			});
-			console.log('invalidting cache');
-			// invalidate rule in cache
-			ruleCache.invalidateQueries(['ruleId', ruleId]);
+			if (response.statusCode === 200) {
+				notification.success({
+					message: 'Success',
+					description:
+						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
+				});
+				console.log('invalidting cache');
+				// invalidate rule in cache
+				ruleCache.invalidateQueries(['ruleId', ruleId]);
 
-			setTimeout(() => {
-				history.replace(ROUTES.LIST_ALL_ALERT);
-			}, 2000);
-		} else {
+				setTimeout(() => {
+					history.replace(ROUTES.LIST_ALL_ALERT);
+				}, 2000);
+			} else {
+				notification.error({
+					message: 'Error',
+					description: response.error || t('unexpected_error'),
+				});
+			}
+		} catch (e) {
+			console.log('save alert api failed:', e);
 			notification.error({
 				message: 'Error',
-				description: response.error || t('unexpected_error'),
+				description: t('unexpected_error'),
 			});
 		}
 		setLoading(false);

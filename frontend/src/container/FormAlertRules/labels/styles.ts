@@ -2,10 +2,12 @@ import { grey } from '@ant-design/colors';
 import { Tag } from 'antd';
 import styled from 'styled-components';
 
-export const SearchContainer = styled.div<{
+interface SearchContainerProps {
 	isDarkMode: boolean;
 	disabled: boolean;
-}>`
+}
+
+export const SearchContainer = styled.div<SearchContainerProps>`
 	width: 70%;
 	border-radisu: 4px;
 	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};

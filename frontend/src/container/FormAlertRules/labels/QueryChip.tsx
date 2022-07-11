@@ -3,13 +3,15 @@ import React from 'react';
 import { QueryChipContainer, QueryChipItem } from './styles';
 import { ILabelRecord } from './types';
 
+interface QueryChipProps {
+	queryData: ILabelRecord;
+	onRemove: (id: string) => void;
+}
+
 export default function QueryChip({
 	queryData,
 	onRemove,
-}: {
-	queryData: ILabelRecord;
-	onRemove: (id: string) => void;
-}): JSX.Element {
+}: QueryChipProps): JSX.Element {
 	const { key, value } = queryData;
 	return (
 		<QueryChipContainer>
