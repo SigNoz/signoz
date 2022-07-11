@@ -37,8 +37,6 @@ function LabelSelect({
 	);
 
 	const dispatchChanges = (updatedRecs: ILabelRecord[]): void => {
-		const preparedLabels = prepareLabels(updatedRecs, initialValues);
-		console.log('preparedLabels:', preparedLabels);
 		onSetLabels(prepareLabels(updatedRecs, initialValues));
 		setQueries(updatedRecs);
 	};
