@@ -93,8 +93,9 @@ function TraceFlameGraph(props: {
 	onSpanSelect: SpanItemProps['onSpanSelect'];
 	hoveredSpanId: string;
 	selectedSpanId: string;
+	missingSpanTree: boolean;
 }): JSX.Element {
-	const { treeData, traceMetaData, onSpanHover } = props;
+	const { treeData, traceMetaData, onSpanHover, missingSpanTree } = props;
 
 	if (!treeData || treeData.id === 'empty' || !traceMetaData) {
 		return <div />;
@@ -140,6 +141,7 @@ function TraceFlameGraph(props: {
 					hoveredSpanId={hoveredSpanId}
 					selectedSpanId={selectedSpanId}
 				/>
+
 				{spanData.children.map((childData) => (
 					<RenderSpanRecursive
 						level={level + 1}
@@ -164,7 +166,7 @@ function TraceFlameGraph(props: {
 				onSpanSelect={onSpanSelect}
 				hoveredSpanId={hoveredSpanId}
 				selectedSpanId={selectedSpanId}
-				level={0}
+				level={missingSpanTree ? -1 : 0}
 				parentLeftOffset={0}
 			/>
 		</TraceFlameGraphContainer>
