@@ -86,7 +86,6 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 							setAlertDef({
 								...alertDef,
 								labels: {
-									...alertDef.labels,
 									...l,
 								},
 							});

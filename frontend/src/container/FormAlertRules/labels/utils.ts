@@ -31,7 +31,10 @@ export const flattenLabels = (labels: Labels): ILabelRecord[] => {
 	return recs;
 };
 
-export const prepareLabels = (recs: ILabelRecord[]): Labels => {
+export const prepareLabels = (
+	recs: ILabelRecord[],
+	alertLabels: Labels | undefined,
+): Labels => {
 	const labels: Labels = {};
 
 	recs.forEach((rec) => {
@@ -39,6 +42,13 @@ export const prepareLabels = (recs: ILabelRecord[]): Labels => {
 			labels[rec.key] = rec.value;
 		}
 	});
+	if (alertLabels) {
+		Object.keys(alertLabels).forEach((key) => {
+			if (hiddenLabels.includes(key)) {
+				labels[key] = alertLabels[key];
+			}
+		});
+	}
 
 	return labels;
 };

@@ -32,16 +32,16 @@ function LabelSelect({
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentVal, setCurrentVal] = useState('');
 	const [staging, setStaging] = useState<string[]>([]);
-	const [queries, setQueries] = useState<ILabelRecord[]>([]);
+	const [queries, setQueries] = useState<ILabelRecord[]>(
+		initialValues ? flattenLabels(initialValues) : [],
+	);
 
 	const dispatchChanges = (updatedRecs: ILabelRecord[]): void => {
-		onSetLabels(prepareLabels(updatedRecs));
+		const preparedLabels = prepareLabels(updatedRecs, initialValues);
+		console.log('preparedLabels:', preparedLabels);
+		onSetLabels(prepareLabels(updatedRecs, initialValues));
 		setQueries(updatedRecs);
 	};
-
-	useEffect(() => {
-		if (initialValues) setQueries(flattenLabels(initialValues));
-	}, [initialValues]);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
@@ -108,7 +108,6 @@ function LabelSelect({
 			cancelText: t('button_no'),
 		});
 	};
-
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={false}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
