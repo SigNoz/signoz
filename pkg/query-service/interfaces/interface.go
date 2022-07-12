@@ -59,4 +59,8 @@ type Reader interface {
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
 	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+
+	// Logs
+	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
+	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError
 }

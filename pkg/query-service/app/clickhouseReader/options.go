@@ -18,16 +18,20 @@ const (
 )
 
 const (
-	defaultDatasource      string        = "tcp://localhost:9000"
-	defaultTraceDB         string        = "signoz_traces"
-	defaultOperationsTable string        = "signoz_operations"
-	defaultIndexTable      string        = "signoz_index_v2"
-	defaultErrorTable      string        = "signoz_error_index"
-	defaulDurationTable    string        = "durationSortMV"
-	defaultSpansTable      string        = "signoz_spans"
-	defaultWriteBatchDelay time.Duration = 5 * time.Second
-	defaultWriteBatchSize  int           = 10000
-	defaultEncoding        Encoding      = EncodingJSON
+	defaultDatasource            string        = "tcp://localhost:9000"
+	defaultTraceDB               string        = "signoz_traces"
+	defaultOperationsTable       string        = "signoz_operations"
+	defaultIndexTable            string        = "signoz_index_v2"
+	defaultErrorTable            string        = "signoz_error_index"
+	defaulDurationTable          string        = "durationSortMV"
+	defaultSpansTable            string        = "signoz_spans"
+	defaultLogsDB                string        = "signoz_logs"
+	defaultLogsTable             string        = "logs"
+	defaultLogAttributeKeysTable string        = "logs_atrribute_keys"
+	defaultLogResourceKeysTable  string        = "logs_resource_keys"
+	defaultWriteBatchDelay       time.Duration = 5 * time.Second
+	defaultWriteBatchSize        int           = 10000
+	defaultEncoding              Encoding      = EncodingJSON
 )
 
 const (
@@ -43,19 +47,23 @@ const (
 
 // NamespaceConfig is Clickhouse's internal configuration data
 type namespaceConfig struct {
-	namespace       string
-	Enabled         bool
-	Datasource      string
-	TraceDB         string
-	OperationsTable string
-	IndexTable      string
-	DurationTable   string
-	SpansTable      string
-	ErrorTable      string
-	WriteBatchDelay time.Duration
-	WriteBatchSize  int
-	Encoding        Encoding
-	Connector       Connector
+	namespace              string
+	Enabled                bool
+	Datasource             string
+	TraceDB                string
+	OperationsTable        string
+	IndexTable             string
+	DurationTable          string
+	SpansTable             string
+	ErrorTable             string
+	LogsDB                 string
+	LogsTable              string
+	LogsAttributeKeysTable string
+	LogsResourceKeysTable  string
+	WriteBatchDelay        time.Duration
+	WriteBatchSize         int
+	Encoding               Encoding
+	Connector              Connector
 }
 
 // Connecto defines how to connect to the database
@@ -102,19 +110,23 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 
 	options := &Options{
 		primary: &namespaceConfig{
-			namespace:       primaryNamespace,
-			Enabled:         true,
-			Datasource:      datasource,
-			TraceDB:         defaultTraceDB,
-			OperationsTable: defaultOperationsTable,
-			IndexTable:      defaultIndexTable,
-			ErrorTable:      defaultErrorTable,
-			DurationTable:   defaulDurationTable,
-			SpansTable:      defaultSpansTable,
-			WriteBatchDelay: defaultWriteBatchDelay,
-			WriteBatchSize:  defaultWriteBatchSize,
-			Encoding:        defaultEncoding,
-			Connector:       defaultConnector,
+			namespace:              primaryNamespace,
+			Enabled:                true,
+			Datasource:             datasource,
+			TraceDB:                defaultTraceDB,
+			OperationsTable:        defaultOperationsTable,
+			IndexTable:             defaultIndexTable,
+			ErrorTable:             defaultErrorTable,
+			DurationTable:          defaulDurationTable,
+			SpansTable:             defaultSpansTable,
+			LogsDB:                 defaultLogsDB,
+			LogsTable:              defaultLogsTable,
+			LogsAttributeKeysTable: defaultLogAttributeKeysTable,
+			LogsResourceKeysTable:  defaultLogResourceKeysTable,
+			WriteBatchDelay:        defaultWriteBatchDelay,
+			WriteBatchSize:         defaultWriteBatchSize,
+			Encoding:               defaultEncoding,
+			Connector:              defaultConnector,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}
@@ -122,16 +134,20 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 	for _, namespace := range otherNamespaces {
 		if namespace == archiveNamespace {
 			options.others[namespace] = &namespaceConfig{
-				namespace:       namespace,
-				Datasource:      datasource,
-				TraceDB:         "",
-				OperationsTable: "",
-				IndexTable:      "",
-				ErrorTable:      "",
-				WriteBatchDelay: defaultWriteBatchDelay,
-				WriteBatchSize:  defaultWriteBatchSize,
-				Encoding:        defaultEncoding,
-				Connector:       defaultConnector,
+				namespace:              namespace,
+				Datasource:             datasource,
+				TraceDB:                "",
+				OperationsTable:        "",
+				IndexTable:             "",
+				ErrorTable:             "",
+				LogsDB:                 "",
+				LogsTable:              "",
+				LogsAttributeKeysTable: "",
+				LogsResourceKeysTable:  "",
+				WriteBatchDelay:        defaultWriteBatchDelay,
+				WriteBatchSize:         defaultWriteBatchSize,
+				Encoding:               defaultEncoding,
+				Connector:              defaultConnector,
 			}
 		} else {
 			options.others[namespace] = &namespaceConfig{namespace: namespace}

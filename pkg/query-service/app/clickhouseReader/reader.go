@@ -83,19 +83,23 @@ var (
 
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
-	db              clickhouse.Conn
-	localDB         *sqlx.DB
-	traceDB         string
-	operationsTable string
-	durationTable   string
-	indexTable      string
-	errorTable      string
-	spansTable      string
-	queryEngine     *promql.Engine
-	remoteStorage   *remote.Storage
-	ruleManager     *rules.Manager
-	promConfig      *config.Config
-	alertManager    am.Manager
+	db                clickhouse.Conn
+	localDB           *sqlx.DB
+	traceDB           string
+	operationsTable   string
+	durationTable     string
+	indexTable        string
+	errorTable        string
+	spansTable        string
+	logsDB            string
+	logsTable         string
+	logsAttributeKeys string
+	logsResourceKeys  string
+	queryEngine       *promql.Engine
+	remoteStorage     *remote.Storage
+	ruleManager       *rules.Manager
+	promConfig        *config.Config
+	alertManager      am.Manager
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -113,15 +117,19 @@ func NewReader(localDB *sqlx.DB) *ClickHouseReader {
 	alertManager := am.New("")
 
 	return &ClickHouseReader{
-		db:              db,
-		localDB:         localDB,
-		traceDB:         options.primary.TraceDB,
-		alertManager:    alertManager,
-		operationsTable: options.primary.OperationsTable,
-		indexTable:      options.primary.IndexTable,
-		errorTable:      options.primary.ErrorTable,
-		durationTable:   options.primary.DurationTable,
-		spansTable:      options.primary.SpansTable,
+		db:                db,
+		localDB:           localDB,
+		traceDB:           options.primary.TraceDB,
+		alertManager:      alertManager,
+		operationsTable:   options.primary.OperationsTable,
+		indexTable:        options.primary.IndexTable,
+		errorTable:        options.primary.ErrorTable,
+		durationTable:     options.primary.DurationTable,
+		spansTable:        options.primary.SpansTable,
+		logsDB:            options.primary.LogsDB,
+		logsTable:         options.primary.LogsTable,
+		logsAttributeKeys: options.primary.LogsAttributeKeysTable,
+		logsResourceKeys:  options.primary.LogsResourceKeysTable,
 	}
 }
 
@@ -2984,4 +2992,90 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
 	return totalSamples, nil
+}
+
+func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
+	// response will contain top level fields from the otel log model
+	response := model.GetFieldsResponse{
+		Selected:    constants.StaticSelectedLogFields,
+		Interesting: []model.LogField{},
+	}
+
+	// get attribute keys
+	attributes := &[]model.LogField{}
+	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsAttributeKeys)
+	err := r.db.Select(ctx, attributes, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	// get resource keys
+	resources := &[]model.LogField{}
+	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsResourceKeys)
+	err = r.db.Select(ctx, resources, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	statements := []model.CreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, attributes, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, resources, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response)
+
+	return &response, nil
+}
+
+func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
+	for _, field := range *fields {
+		field.Type = fieldType
+		if strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field.Name)) {
+			response.Selected = append(response.Selected, field)
+		} else {
+			response.Interesting = append(response.Interesting, field)
+		}
+	}
+}
+
+func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	// if a field is selected it means that the field is indexed
+	if field.Selected {
+		// if the type is attribute or resource, create the materialized column first
+		if field.Type == constants.Attributes || field.Type == constants.Resources {
+			// create materialized
+			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')]", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+			err := r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
+		}
+
+		// create the index
+		if field.IndexType == nil {
+			iType := constants.DefaultLogSkipIndexType
+			field.IndexType = &iType
+		}
+		if field.IndexGranularity == nil {
+			granularity := constants.DefaultLogSkipIndexGranularity
+			field.IndexGranularity = &granularity
+		}
+		query := fmt.Sprintf("ALTER TABLE %s.%s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d", r.logsDB, r.logsTable, field.Name, field.Name, *field.IndexType, *field.IndexGranularity)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	} else {
+		// remove index
+		query := fmt.Sprintf("ALTER TABLE %s.%s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsTable, field.Name)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	}
+	return nil
 }

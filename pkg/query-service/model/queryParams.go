@@ -303,3 +303,12 @@ type FilterSet struct {
 	Operator string       `json:"op,omitempty"`
 	Items    []FilterItem `json:"items"`
 }
+
+type UpdateField struct {
+	Name             string  `json:"name"`
+	DataType         string  `json:"dataType"`
+	Type             string  `json:"type"`
+	Selected         bool    `json:"selected"`
+	IndexType        *string `json:"index"`
+	IndexGranularity *int    `json:"indexGranularity"`
+}

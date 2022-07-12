@@ -373,3 +373,18 @@ func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
 }
+
+type CreateTableStatement struct {
+	Statement string `json:"statement" ch:"statement"`
+}
+
+type LogField struct {
+	Name     string `json:"name" ch:"name"`
+	DataType string `json:"dataType" ch:"datatype"`
+	Type     string `json:"type"`
+}
+
+type GetFieldsResponse struct {
+	Selected    []LogField `json:"selected"`
+	Interesting []LogField `json:"interesting"`
+}
