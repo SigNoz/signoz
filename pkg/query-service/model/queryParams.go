@@ -291,6 +291,11 @@ type ListErrorsParams struct {
 	Offset     int64
 }
 
+type CountErrorsParams struct {
+	Start *time.Time
+	End   *time.Time
+}
+
 type GetErrorParams struct {
 	GroupID   string
 	ErrorID   string

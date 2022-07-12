@@ -327,9 +327,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getFilteredSpans", ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/getTagValues", ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/listErrors", ViewAccess(aH.listErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/countErrors", ViewAccess(aH.countErrors)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorFromErrorID", ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorFromGroupID", ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/nextPrevErrorIDs", ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
@@ -1190,7 +1191,21 @@ func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.writeJSON(w, r, result)
+}
 
+func (aH *APIHandler) countErrors(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseCountErrorsRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := (*aH.reader).CountErrors(r.Context(), query)
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.writeJSON(w, r, result)
 }
 
 func (aH *APIHandler) getErrorFromErrorID(w http.ResponseWriter, r *http.Request) {
@@ -1206,7 +1221,6 @@ func (aH *APIHandler) getErrorFromErrorID(w http.ResponseWriter, r *http.Request
 	}
 
 	aH.writeJSON(w, r, result)
-
 }
 
 func (aH *APIHandler) getNextPrevErrorIDs(w http.ResponseWriter, r *http.Request) {
@@ -1222,7 +1236,6 @@ func (aH *APIHandler) getNextPrevErrorIDs(w http.ResponseWriter, r *http.Request
 	}
 
 	aH.writeJSON(w, r, result)
-
 }
 
 func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request) {
@@ -1238,7 +1251,6 @@ func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request
 	}
 
 	aH.writeJSON(w, r, result)
-
 }
 
 func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {

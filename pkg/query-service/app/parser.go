@@ -455,6 +455,25 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	return params, nil
 }
 
+func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.CountErrorsParams{
+		Start:      startTime,
+		End:        endTime,
+	}
+
+	return params, nil
+}
+
 func parseGetErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
 
 	timestamp, err := parseTime("timestamp", r)
