@@ -81,6 +81,7 @@ function FormAlertRules({
 	// useful when fetching of initial values (from api)
 	// is delayed
 	useEffect(() => {
+		const initQuery = initialValue?.condition?.compositeMetricQuery;
 		const typ = initQuery?.queryType;
 
 		// extract metric query from builderQueries
@@ -98,7 +99,8 @@ function FormAlertRules({
 		setFormulaQueries(fq);
 		setPromQueries(pq);
 		setStagedQuery(sq);
-	}, [initQuery]);
+		setAlertDef(initialValue);
+	}, [initialValue]);
 
 	// this useEffect updates staging query when
 	// any of its sub-parameters changes
