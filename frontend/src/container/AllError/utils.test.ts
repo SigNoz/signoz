@@ -1,4 +1,4 @@
-import { isOrderParams } from './utils';
+import { isOrder, isOrderParams } from './utils';
 
 describe('Error utils', () => {
 	test('Valid OrderBy Params', () => {
@@ -13,5 +13,16 @@ describe('Error utils', () => {
 		expect(isOrderParams('invalid')).toBe(false);
 		expect(isOrderParams(null)).toBe(false);
 		expect(isOrderParams('')).toBe(false);
+	});
+
+	test('Valid Order', () => {
+		expect(isOrder('ascending')).toBe(true);
+		expect(isOrder('descending')).toBe(true);
+	});
+
+	test('Invalid Order', () => {
+		expect(isOrder('invalid')).toBe(false);
+		expect(isOrder(null)).toBe(false);
+		expect(isOrder('')).toBe(false);
 	});
 });
