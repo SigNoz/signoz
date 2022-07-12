@@ -122,8 +122,8 @@ type MatchType string
 
 const (
 	MatchTypeNone MatchType = "0"
-	AllTheTimes   MatchType = "1"
-	AtleastOnce   MatchType = "2"
+	AtleastOnce   MatchType = "1"
+	AllTheTimes   MatchType = "2"
 	OnAverage     MatchType = "3"
 	InTotal       MatchType = "4"
 )
