@@ -76,8 +76,10 @@ function LabelSelect({
 	};
 
 	const handleBlur = useCallback((): void => {
-		send('onBlur');
-	}, [send]);
+		if (staging.length === 1 && staging[0] !== undefined) {
+			send('onBlur');
+		}
+	}, [send, staging]);
 
 	useEffect(() => {
 		handleBlur();
@@ -106,6 +108,12 @@ function LabelSelect({
 			cancelText: t('button_no'),
 		});
 	};
+	const renderPlaceholder = useCallback((): string => {
+		if (state.value === 'LabelKey') return 'Enter a label key then press ENTER.';
+		if (state.value === 'LabelValue')
+			return `Enter a value for label key(${staging[0]}) then press ENTER.`;
+		return t('placeholder_label_key_pair');
+	}, [t, state, staging]);
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={false}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
@@ -127,9 +135,7 @@ function LabelSelect({
 
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Input
-					placeholder={`Enter ${
-						state.value === 'Idle' ? t('placeholder_label_key_pair') : state.value
-					}`}
+					placeholder={renderPlaceholder()}
 					onChange={handleChange}
 					onKeyUp={(e): void => {
 						if (e.key === 'Enter' || e.code === 'Enter') {

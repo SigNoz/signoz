@@ -30,6 +30,7 @@ import useDebounce from './useDebounce';
 import {
 	prepareBuilderQueries,
 	prepareStagedQuery,
+	toChartInterval,
 	toFormulaQueries,
 	toMetricQueries,
 } from './utils';
@@ -288,6 +289,7 @@ function FormAlertRules({
 				name=""
 				threshold={alertDef.condition?.target}
 				query={debouncedStagedQuery}
+				selectedInterval={toChartInterval(alertDef.evalWindow)}
 			/>
 		);
 	};

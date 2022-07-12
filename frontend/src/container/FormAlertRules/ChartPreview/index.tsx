@@ -55,7 +55,7 @@ function ChartPreview({
 	];
 	const queryKey = JSON.stringify(query);
 	const queryResponse = useQuery({
-		queryKey: ['chartPreview', queryKey],
+		queryKey: ['chartPreview', queryKey, selectedInterval],
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
