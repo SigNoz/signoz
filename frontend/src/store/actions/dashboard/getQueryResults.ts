@@ -143,17 +143,23 @@ export async function GetMetricQueryRange({
 			`API responded with ${response.statusCode} -  ${response.error}`,
 		);
 	}
-
 	if (response.payload?.data?.result) {
 		response.payload.data.result = response.payload.data.result.map(
 			(queryData) => {
 				const newQueryData = queryData;
-				newQueryData.legend = legendMap[queryData.queryName];
+				newQueryData.legend = legendMap[queryData.queryName]; // Adds the legend if it is already defined by the user.
+				// If metric names is an empty object
 				if (isEmpty(queryData.metric)) {
-					newQueryData.metric[queryData.queryName] = queryData.queryName;
-					newQueryData.legend = queryData.queryName;
+					// If metrics list is empty && the user haven't defined a legend then add the legend equal to the name of the query.
+					if (!newQueryData.legend) {
+						newQueryData.legend = queryData.queryName;
+					}
+					// If name of the query and the legend if inserted is same then add the same to the metrics object.
+					if (queryData.queryName === newQueryData.legend) {
+						newQueryData.metric[queryData.queryName] = queryData.queryName;
+					}
 				}
-				return queryData;
+				return newQueryData;
 			},
 		);
 	}

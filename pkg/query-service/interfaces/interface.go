@@ -1,4 +1,4 @@
-package app
+package interfaces
 
 import (
 	"context"
@@ -54,4 +54,9 @@ type Reader interface {
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
+
+	GetTotalSpans(ctx context.Context) (uint64, error)
+	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
+	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 }

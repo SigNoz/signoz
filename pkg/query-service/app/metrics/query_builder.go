@@ -91,10 +91,9 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			toFormat := item.Value
+			op := strings.ToLower(strings.TrimSpace(item.Operator))
 			// if the received value is an array for like/match op, just take the first value
-			if strings.ToLower(item.Operation) == "like" ||
-				strings.ToLower(item.Operation) == "match" ||
-				strings.ToLower(item.Operation) == "nlike" {
+			if op == "like" || op == "match" || op == "nlike" || op == "nmatch" {
 				x, ok := item.Value.([]interface{})
 				if ok {
 					if len(x) == 0 {
@@ -104,7 +103,7 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 				}
 			}
 			fmtVal := formattedValue(toFormat)
-			switch op := strings.ToLower(item.Operation); op {
+			switch op {
 			case "eq":
 				conditions = append(conditions, fmt.Sprintf("labels_object.%s = %s", item.Key, fmtVal))
 			case "neq":
@@ -119,6 +118,8 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 				conditions = append(conditions, fmt.Sprintf("notLike(labels_object.%s, %s)", item.Key, fmtVal))
 			case "match":
 				conditions = append(conditions, fmt.Sprintf("match(labels_object.%s, %s)", item.Key, fmtVal))
+			case "nmatch":
+				conditions = append(conditions, fmt.Sprintf("not match(labels_object.%s, %s)", item.Key, fmtVal))
 			default:
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -416,6 +417,5 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 	if len(errs) != 0 {
 		return &RunQueries{Err: fmt.Errorf("errors with formulas: %s", FormatErrs(errs, "\n"))}
 	}
-	fmt.Println(namedQueries)
 	return &RunQueries{Queries: namedQueries}
 }
