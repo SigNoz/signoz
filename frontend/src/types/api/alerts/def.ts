@@ -7,7 +7,7 @@ export const defaultMatchType = '1';
 export const defaultEvalWindow = '5m0s';
 
 // default compare op: above
-export const defaultCompareOp = '0';
+export const defaultCompareOp = '1';
 
 export interface AlertDef {
 	id?: number;

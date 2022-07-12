@@ -1,5 +1,7 @@
 import { AlertDef } from 'types/api/alerts/def';
 
+import { defaultCompareOp, defaultEvalWindow, defaultMatchType } from './def';
+
 export interface Props {
 	data: AlertDef;
 }
@@ -33,8 +35,8 @@ export const alertDefaults: AlertDef = {
 			promQueries: {},
 			queryType: 1,
 		},
-		op: 'above',
-		matchType: '0',
+		op: defaultCompareOp,
+		matchType: defaultMatchType,
 	},
 	labels: {
 		severity: 'warning',
@@ -42,5 +44,5 @@ export const alertDefaults: AlertDef = {
 	annotations: {
 		description: 'A new alert',
 	},
-	evalWindow: '5m0s',
+	evalWindow: defaultEvalWindow,
 };
