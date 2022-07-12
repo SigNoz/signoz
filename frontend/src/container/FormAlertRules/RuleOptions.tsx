@@ -97,7 +97,7 @@ function RuleOptions({
 		return (
 			<InlineSelect
 				defaultValue={defaultEvalWindow}
-				style={{ minWidth: '90px' }}
+				style={{ minWidth: '120px' }}
 				value={alertDef.evalWindow}
 				onChange={(value: string | unknown): void => {
 					const ew = (value as string) || alertDef.evalWindow;
