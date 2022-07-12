@@ -1,12 +1,15 @@
 import { Button, Divider, notification, Space, Table, Typography } from 'antd';
+import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
+import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
+import { urlKey } from 'pages/ErrorDetails/utils';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
-import { PayloadProps } from 'types/api/errors/getById';
 
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
@@ -14,12 +17,23 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
 	const [isLoading, setLoading] = useState<boolean>(false);
 	const { t } = useTranslation(['errorDetails', 'common']);
+	const { data: nextPrevData, status: nextPrevStatus } = useQuery(
+		[idPayload.errorId, idPayload.groupID, idPayload.timestamp],
+		{
+			queryFn: () =>
+				getNextPrevId({
+					errorID: idPayload.errorId,
+					groupID: idPayload.groupID,
+					timestamp: getNanoSeconds(idPayload.timestamp).toString(),
+				}),
+		},
+	);
 
 	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-	const queryErrorId = params.get('errorId');
-	const serviceName = params.get('serviceName');
-	const errorType = params.get('errorType');
+	const params = useMemo(() => new URLSearchParams(search), [search]);
+
+	const serviceName = params.get(urlKey.serviceName);
+	const errorType = params.get(urlKey.exceptionType);
 
 	const errorDetail = idPayload;
 
@@ -48,13 +62,15 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			'errorId',
 			'timestamp',
 			'exceptionMessage',
-			'newerErrorId',
-			'olderErrorId',
+			'exceptionEscaped',
 		],
 		[],
 	);
 
-	const onClickErrorIdHandler = async (id: string): Promise<void> => {
+	const onClickErrorIdHandler = async (
+		id: string,
+		timespamp: string,
+	): Promise<void> => {
 		try {
 			setLoading(true);
 
@@ -68,8 +84,12 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			setLoading(false);
 
-			history.push(
-				`${history.location.pathname}?errorId=${id}&serviceName=${serviceName}&errorType=${errorType}`,
+			history.replace(
+				`${history.location.pathname}?${urlKey.serviceName}=${serviceName}&${
+					urlKey.exceptionType
+				}=${errorType}&groupId=${idPayload.groupID}&timestamp=${getNanoSeconds(
+					timespamp,
+				)}&errorId=${id}`,
 			);
 		} catch (error) {
 			notification.error({
@@ -106,25 +126,33 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				<div>
 					<Space align="end" direction="horizontal">
 						<Button
-							loading={isLoading}
+							loading={nextPrevStatus === 'loading'}
 							disabled={
-								errorDetail.olderErrorId.length === 0 ||
-								queryErrorId === errorDetail.olderErrorId
+								nextPrevData?.payload?.prevErrorID.length === 0 ||
+								isLoading ||
+								nextPrevData?.payload?.prevErrorID === idPayload?.errorId
 							}
 							onClick={(): Promise<void> =>
-								onClickErrorIdHandler(errorDetail.olderErrorId)
+								onClickErrorIdHandler(
+									nextPrevData?.payload?.prevErrorID || '',
+									nextPrevData?.payload?.prevTimestamp || '',
+								)
 							}
 						>
 							{t('older')}
 						</Button>
 						<Button
-							loading={isLoading}
+							loading={nextPrevStatus === 'loading'}
 							disabled={
-								errorDetail.newerErrorId.length === 0 ||
-								queryErrorId === errorDetail.newerErrorId
+								nextPrevData?.payload?.nextErrorID.length === 0 ||
+								isLoading ||
+								nextPrevData?.payload?.nextErrorID === idPayload?.errorId
 							}
 							onClick={(): Promise<void> =>
-								onClickErrorIdHandler(errorDetail.newerErrorId)
+								onClickErrorIdHandler(
+									nextPrevData?.payload?.nextErrorID || '',
+									nextPrevData?.payload?.nextTimestamp || '',
+								)
 							}
 						>
 							{t('newer')}
@@ -153,7 +181,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 }
 
 interface ErrorDetailsProps {
-	idPayload: PayloadProps;
+	idPayload: GetByErrorTypeAndServicePayload;
 }
 
 export default ErrorDetails;
