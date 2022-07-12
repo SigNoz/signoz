@@ -9,6 +9,7 @@ export const urlKey = {
 	order: 'order',
 	offset: 'offset',
 	orderParam: 'orderParam',
+	pageSize: 'pageSize',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy => {
@@ -78,4 +79,11 @@ export const getNanoSeconds = (date: string): number => {
 		parseInt((new Date(date).getTime() / 1e3).toString(), 10) * 1e9 +
 		Timestamp.fromString(date).getNano()
 	);
+};
+
+export const getUpdatePageSize = (pageSize: string | null): number => {
+	if (pageSize) {
+		return parseInt(pageSize, 10);
+	}
+	return 10;
 };

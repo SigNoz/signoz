@@ -1,17 +1,19 @@
 import { notification, Table, TableProps, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import getAll from 'api/errors/getAll';
+import getErrorCounts from 'api/errors/getErrorCounts';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Exception } from 'types/api/errors/getAll';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
@@ -20,6 +22,7 @@ import {
 	getOffSet,
 	getOrder,
 	getOrderParams,
+	getUpdatePageSize,
 	urlKey,
 } from './utils';
 
@@ -35,6 +38,7 @@ function AllErrors(): JSX.Element {
 	const updatedOrder = getOrder(params.get(urlKey.order));
 	const getUpdatedOffset = getOffSet(params.get(urlKey.offset));
 	const getUpdatedParams = getOrderParams(params.get(urlKey.orderParam));
+	const getUpdatedPageSize = getUpdatePageSize(params.get(urlKey.pageSize));
 
 	const updatedPath = useMemo(
 		() =>
@@ -42,25 +46,40 @@ function AllErrors(): JSX.Element {
 				order: updatedOrder,
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
+				pageSize: getUpdatedPageSize,
 			})}`,
-		[pathname, updatedOrder, getUpdatedOffset, getUpdatedParams],
+		[
+			pathname,
+			updatedOrder,
+			getUpdatedOffset,
+			getUpdatedParams,
+			getUpdatedPageSize,
+		],
 	);
 
-	const { isLoading, data } = useQuery(
-		['getAllError', [maxTime, minTime, updatedPath]],
+	const [{ isLoading, data }, errorCountResponse] = useQueries([
 		{
-			queryFn: () =>
+			queryKey: ['getAllErrors', updatedPath, maxTime, minTime],
+			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
 				getAll({
 					end: maxTime,
 					start: minTime,
-					order: getOrder(params.get(urlKey.order)),
-					limit: 10,
-					offset: getOffSet(params.get(urlKey.offset)),
-					orderParam: getOrderParams(params.get(urlKey.orderParam)),
+					order: updatedOrder,
+					limit: getUpdatedPageSize,
+					offset: getUpdatedOffset,
+					orderParam: getUpdatedParams,
 				}),
 			enabled: !loading,
 		},
-	);
+		{
+			queryKey: ['getErrorCounts', maxTime, minTime],
+			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
+				getErrorCounts({
+					end: maxTime,
+					start: minTime,
+				}),
+		},
+	]);
 
 	useEffect(() => {
 		if (data?.error) {
@@ -70,11 +89,9 @@ function AllErrors(): JSX.Element {
 		}
 	}, [data?.error, data?.payload, t]);
 
-	const getDateValue = (value: string): JSX.Element => {
-		return (
-			<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
-		);
-	};
+	const getDateValue = (value: string): JSX.Element => (
+		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
+	);
 
 	const columns: ColumnsType<Exception> = [
 		{
@@ -171,7 +188,7 @@ function AllErrors(): JSX.Element {
 		sorter,
 	) => {
 		if (!Array.isArray(sorter)) {
-			const { current = 0 } = paginations;
+			const { current = 0, pageSize = 0 } = paginations;
 			const { columnKey = '', order } = sorter;
 			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
 
@@ -180,6 +197,7 @@ function AllErrors(): JSX.Element {
 					order: updatedOrder,
 					offset: current - 1,
 					orderParam: columnKey,
+					pageSize,
 				})}`,
 			);
 		}
@@ -191,13 +209,13 @@ function AllErrors(): JSX.Element {
 			dataSource={data?.payload as Exception[]}
 			columns={columns}
 			rowKey="firstSeen"
-			loading={isLoading || false}
+			loading={isLoading || false || errorCountResponse.status === 'loading'}
 			pagination={{
-				pageSize: 10,
+				pageSize: getUpdatedPageSize,
 				responsive: true,
 				current: getUpdatedOffset + 1,
 				position: ['bottomLeft'],
-				total: 20,
+				total: errorCountResponse.data?.payload || 0,
 			}}
 			onChange={onChangeHandler}
 		/>
