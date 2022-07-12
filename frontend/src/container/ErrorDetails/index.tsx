@@ -15,25 +15,35 @@ import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
-	const [isLoading, setLoading] = useState<boolean>(false);
 	const { t } = useTranslation(['errorDetails', 'common']);
+	const { search } = useLocation();
+
+	const params = useMemo(() => new URLSearchParams(search), [search]);
+
+	const errorId = params.get(urlKey.errorId);
+	const serviceName = params.get(urlKey.serviceName);
+	const errorType = params.get(urlKey.exceptionType);
+	const timestamp = params.get(urlKey.timestamp);
+
 	const { data: nextPrevData, status: nextPrevStatus } = useQuery(
-		[idPayload.errorId, idPayload.groupID, idPayload.timestamp],
+		[
+			idPayload.errorId,
+			idPayload.groupID,
+			idPayload.timestamp,
+			errorId,
+			serviceName,
+			errorType,
+			timestamp,
+		],
 		{
 			queryFn: () =>
 				getNextPrevId({
-					errorID: idPayload.errorId,
+					errorID: errorId || idPayload.errorId,
 					groupID: idPayload.groupID,
-					timestamp: getNanoSeconds(idPayload.timestamp).toString(),
+					timestamp: timestamp || getNanoSeconds(idPayload.timestamp).toString(),
 				}),
 		},
 	);
-
-	const { search } = useLocation();
-	const params = useMemo(() => new URLSearchParams(search), [search]);
-
-	const serviceName = params.get(urlKey.serviceName);
-	const errorType = params.get(urlKey.exceptionType);
 
 	const errorDetail = idPayload;
 
@@ -72,17 +82,12 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		timespamp: string,
 	): Promise<void> => {
 		try {
-			setLoading(true);
-
 			if (id.length === 0) {
 				notification.error({
 					message: 'Error Id cannot be empty',
 				});
-				setLoading(false);
 				return;
 			}
-
-			setLoading(false);
 
 			history.replace(
 				`${history.location.pathname}?${urlKey.serviceName}=${serviceName}&${
@@ -95,7 +100,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			notification.error({
 				message: t('something_went_wrong'),
 			});
-			setLoading(false);
 		}
 	};
 
@@ -127,11 +131,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					<Space align="end" direction="horizontal">
 						<Button
 							loading={nextPrevStatus === 'loading'}
-							disabled={
-								nextPrevData?.payload?.prevErrorID.length === 0 ||
-								isLoading ||
-								nextPrevData?.payload?.prevErrorID === idPayload?.errorId
-							}
+							disabled={nextPrevData?.payload?.prevErrorID.length === 0}
 							onClick={(): Promise<void> =>
 								onClickErrorIdHandler(
 									nextPrevData?.payload?.prevErrorID || '',
@@ -143,11 +143,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 						</Button>
 						<Button
 							loading={nextPrevStatus === 'loading'}
-							disabled={
-								nextPrevData?.payload?.nextErrorID.length === 0 ||
-								isLoading ||
-								nextPrevData?.payload?.nextErrorID === idPayload?.errorId
-							}
+							disabled={nextPrevData?.payload?.nextErrorID.length === 0}
 							onClick={(): Promise<void> =>
 								onClickErrorIdHandler(
 									nextPrevData?.payload?.nextErrorID || '',
