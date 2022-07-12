@@ -55,7 +55,7 @@ function QueryBuilderQueryContainer({
 			currentIndexQuery.aggregateOperator = aggregateFunction;
 		}
 
-		if (metricName) {
+		if (metricName !== undefined) {
 			currentIndexQuery.metricName = metricName;
 		}
 
