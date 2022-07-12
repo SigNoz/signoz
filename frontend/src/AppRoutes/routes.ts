@@ -14,6 +14,7 @@ import {
 	InstrumentationPage,
 	ListAllALertsPage,
 	Login,
+	Logs,
 	MySettings,
 	NewDashboardPage,
 	OrganizationSettings,
@@ -192,6 +193,13 @@ const routes: AppRoutes[] = [
 		component: MySettings,
 		isPrivate: true,
 		key: 'MY_SETTINGS',
+	},
+	{
+		path: ROUTES.LOGS,
+		exact: true,
+		component: Logs,
+		key: 'LOGS',
+		isPrivate: true,
 	},
 	{
 		path: ROUTES.LOGIN,
