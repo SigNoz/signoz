@@ -28,11 +28,10 @@ function MissingSpansMessage(): JSX.Element {
 					justifyContent: 'center',
 					alignItems: 'center',
 					margin: '1rem 0',
+					fontSize: '0.8rem',
 				}}
 			>
-				<InfoCircleOutlined
-					style={{ color: volcano[6], fontSize: '1.4rem', marginRight: '0.3rem' }}
-				/>{' '}
+				<InfoCircleOutlined style={{ color: volcano[6], marginRight: '0.3rem' }} />{' '}
 				This trace has missing spans
 			</div>
 		</Popover>
