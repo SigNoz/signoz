@@ -49,7 +49,6 @@ function QuerySection({
 			});
 		}
 
-		console.log('setting category:', parseInt(s, 10));
 		setQueryCategory(parseInt(s, 10));
 	};
 
@@ -139,7 +138,7 @@ function QuerySection({
 		});
 	};
 
-	const addMetricQuery = useCallback(async () => {
+	const addMetricQuery = useCallback(() => {
 		if (Object.keys(metricQueries).length > 5) {
 			notification.error({
 				message: t('metric_query_max_limit'),
@@ -168,7 +167,7 @@ function QuerySection({
 		setMetricQueries({ ...queries });
 	}, [t, getNextQueryLabel, metricQueries, setMetricQueries]);
 
-	const addFormula = useCallback(async () => {
+	const addFormula = useCallback(() => {
 		// defaulting to F1 as only one formula is supported
 		// in alert definition
 		const queryLabel = 'F1';
@@ -264,18 +263,6 @@ function QuerySection({
 						defaultActiveKey={EQueryType.QUERY_BUILDER.toString()}
 						activeKey={queryCategory.toString()}
 						onChange={handleQueryCategoryChange}
-						// {tabBarExtraContent={
-						// 	<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						// 		<TextToolTip
-						// 			{...{
-						// 				text: `Preview Chart: This will stage and run the current query in the tab. Use this option to get a preview of query result.`,
-						// 			}}
-						// 		/>
-						// 		<Button type="primary" onClick={handleStageQuery}>
-						// 			Preview Chart
-						// 		</Button>
-						// 	</span>
-						// }
 					>
 						<TabPane tab={t('tab_qb')} key={EQueryType.QUERY_BUILDER.toString()} />
 						<TabPane tab={t('tab_promql')} key={EQueryType.PROM.toString()} />
