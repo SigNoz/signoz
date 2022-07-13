@@ -6,18 +6,30 @@ Thank you for your interest in contributing to our project. Whether it's a bug r
 
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary information to effectively respond to your bug report or contribution.
 
+## Finding contributions to work on 💬
+
+Looking at the existing issues is a great way to find something to contribute on. 
+Also, have a look at these [good first issues labels](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with.
+
 ## Sections:
-- [General Guidelines](#1-general-instructions) 
-- [How to Contribute](#2-how-to-contribute)
-- [Develop Frontend](#3-develop-frontend)
+- [General Instructions](#1-general-instructions-) 
+    - [For Creating Issue(s)](#11-for-creating-issues)
+    - [For Pull Requests(s)](#12-for-pull-requests)
+- [How to Contribute](#2-how-to-contribute-%EF%B8%8F)
+- [Develop Frontend](#3-develop-frontend-)
   - [Contribute to Frontend with Docker installation of SigNoz](#31-contribute-to-frontend-with-docker-installation-of-signoz)
   - [Contribute to Frontend without installing SigNoz backend](#32-contribute-to-frontend-without-installing-signoz-backend)
-- [Contribute to Query-Service](#4-contribute-to-query-service)
-- [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart)
+- [Contribute to Backend (Query-Service)](#4-contribute-to-backend-query-service-)
+    - [To run ClickHouse setup](#41-to-run-clickhouse-setup-recommended-for-local-development)
+- [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart-)
+    - [To run helm chart for local development](#51-to-run-helm-chart-for-local-development)
 
 # 1. General Instructions 📝
 
-Before making any significant changes and before filing an issue, please check [existing open](https://github.com/SigNoz/signoz/issues?q=is%3Aopen+is%3Aissue), or [recently closed](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aclosed), issues to make sure somebody else hasn't already reported the issue. Please try to include as much information as you can. 
+## 1.1 For Creating Issue(s)
+Before making any significant changes and before filing a new issue, please check [existing open](https://github.com/SigNoz/signoz/issues?q=is%3Aopen+is%3Aissue), or [recently closed](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aclosed) issues to make sure somebody else hasn't already reported the issue. Please try to include as much information as you can. 
+
+**Issue Types** - [Bug Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=bug_report.md&title=) | [Feature Request](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=feature_request.md&title=) | [Performance Issue Report](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=performance-issue-report.md&title=) | [Report a Security Vulnerability](https://github.com/SigNoz/signoz/security/policy)
 
 #### Details like these are incredibly useful:
 
@@ -33,12 +45,16 @@ Before making any significant changes and before filing an issue, please check [
 - Any modifications you've made relevant to the bug🐞.
 - Anything unusual about your environment or deployment.
 
+Discussing your proposed changes ahead of time will make the contribution
+process smooth for everyone 🙌.
+
+ **[`^top^`](#)**
+ 
 <hr>
 
-Discussing your proposed changes ahead of time will make the contribution
-process smooth for everyone. 
+## 1.2 For Pull Request(s)
 
-Once the approach is agreed upon✅, make your changes
+Once the approach is agreed upon ✅, make your changes
 and open a Pull Request(s). 
 
 **Note:** Unless your change is small, **please** consider submitting different Pull Rrequest(s):
@@ -48,11 +64,11 @@ and open a Pull Request(s).
   * This PR is usually trivial to review, so the size limit does not apply to
     it.
 * 2️⃣ Second PR should include the concrete implementation of the component. If the
-  size of this PR is larger than the recommended size, consider splitting it into
+  size of this PR is larger than the recommended size, consider **splitting** ⚔️ it into
   multiple PRs.
 * If there are multiple sub-component then ideally each one should be implemented as
-  a separate pull request.
-* Last PR should include changes to any user-facing documentation. And should include
+  a **separate** pull request.
+* Last PR should include changes to **any user-facing documentation.** And should include
   end-to-end tests if applicable. The component must be enabled
   only after sufficient testing, and there is enough confidence in the
   stability and quality of the component.
@@ -60,6 +76,7 @@ and open a Pull Request(s).
 
 You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [SLACK](https://signoz.io/slack).
 
+### Pointers:
 - If you find any **bugs** → please create an **issue.**
 - If you find anything **missing** in documentation → you can create an issue with the label **`documentation`**.
 - If you want to build any **new feature** → please create an issue with the label **`enhancement`**.
@@ -69,23 +86,24 @@ You can always reach out to `ankit@signoz.io` to understand more about the repo 
 
 ### Conventions to follow when submitting Commits and Pull Request(s).
 
-- We try to follow [Conventional Commits.](https://www.conventionalcommits.org/en/v1.0.0/)
-, more specifically the commits and PRs should have type specifiers prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea.
+We try to follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), more specifically the commits and PRs **should have type specifiers** prefixed in the name. [This](https://www.conventionalcommits.org/en/v1.0.0/#specification) should give you a better idea.
 
 e.g. If you are submitting a fix for an issue in frontend, the PR name should be prefixed with **`fix(FE):`**
 
 - Follow [GitHub Flow](https://guides.github.com/introduction/flow/) guidelines for your contribution flows.
 
-- Feel free to ping us on [#contributing](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [#contributing-frontend](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
+- Feel free to ping us on [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
 
+ **[`^top^`](#)**
+ 
 <hr>
 
 # 2. How to Contribute 🙋🏻‍♂️
 
 #### There are primarily 2 areas in which you can contribute to SigNoz
 
-- **Frontend** (Written in Typescript, React)
-- **Backend** (Query Service,  written in Go)
+- [**Frontend**](#3-develop-frontend-) (Written in Typescript, React)
+- [**Backend**]() (Query Service,  written in Go)
 
 Depending upon your area of expertise & interest, you can choose one or more to contribute. Below are detailed instructions to contribute in each area.
 
@@ -93,66 +111,92 @@ Depending upon your area of expertise & interest, you can choose one or more to 
 
 ⚠️ If you just raise a PR, without the corresponding issue being assigned to you - it may not be accepted.
 
+ **[`^top^`](#)**
+ 
 <hr>
 
-# 3. Develop Frontend 🌝
+# 3. Develop Frontend 🌚
 
-Need to update [https://github.com/SigNoz/signoz/tree/main/frontend](https://github.com/SigNoz/signoz/tree/main/frontend)
+**Need to Update: [https://github.com/SigNoz/signoz/tree/main/frontend](https://github.com/SigNoz/signoz/tree/main/frontend)**
 
 ### 3.1 Contribute to Frontend with Docker installation of SigNoz
 
-- `git clone https://github.com/SigNoz/signoz.git && cd signoz`
-- comment out frontend service section at `deploy/docker/clickhouse-setup/docker-compose.yaml#L62`
-- run `cd deploy` to move to deploy directory
-- Install signoz locally without the frontend
-    - Add below configuration to query-service section at `docker/clickhouse-setup/docker-compose.yaml#L38`
-
+- Clone the SigNoz repository and cd into signoz directory,
+  ```
+  git clone https://github.com/SigNoz/signoz.git && cd signoz
+  ```
+- Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/a09a4c264e49694c331c08c3dd15cc2bf6dc9106/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+- run `cd deploy` to move to deploy directory,
+- Install signoz locally **without** the frontend,
+    - Add below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/a09a4c264e49694c331c08c3dd15cc2bf6dc9106/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
     ```docker
     ports:
       - "8080:8080"
     ```
-  - If you are using x86_64 processors (All Intel/AMD processors) run `sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d`
-  - If you are on arm64 processors (Apple M1 Macbooks) run `sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d`
-- `cd ../frontend` and change baseURL to `http://localhost:8080` in file `src/constants/env.ts`
-- `yarn install`
-- `yarn dev`
+    
+  - If you are using `x86_64` processors (All Intel/AMD processors) run 
+    ```
+    sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
+    ```
+  - If you are on `arm64` processors (Apple M1 Macbooks) run 
+    ```
+    sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d
+    ```
+- `cd ../frontend` and change baseURL to `http://localhost:8080` in file [`src/constants/env.ts`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts)
+- Next, 
+  ```
+  yarn install
+  yarn dev
+  ```
 
-> Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
+### Important Notes:
+The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
+
+ **[`^top^`](#)**
 
 ### 3.2 Contribute to Frontend without installing SigNoz backend
 
-If you don't want to install the SigNoz backend just for doing frontend development, we can provide you with test environments that you can use as the backend. Please ping us in the #contributing channel in our [slack community](https://signoz.io/slack) and we will DM you with `<test environment URL>`
+If you don't want to install the SigNoz backend just for doing frontend development, we can provide you with test environments that you can use as the backend. 
 
-- `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
-- Create a file `.env` with `FRONTEND_API_ENDPOINT=<test environment URL>`
-- `yarn install`
-- `yarn dev`
+- Clone the SigNoz repository and cd into signoz/frontend directory,
+  ```
+  git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend
+  ````
+- Create a file `.env` in the `frontend` directory with `FRONTEND_API_ENDPOINT=<test environment URL>`
+- Next, 
+  ```
+  yarn install
+  yarn dev
+  ```
 
-**_Frontend should now be accessible at `http://localhost:3301/application`_**
+Please ping us in the [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) channel or ask `@Prashant Shahi` in our [Slack Community](https://signoz.io/slack)  and we will DM you with `<test environment URL>`.
 
+**Frontend should now be accessible at** [`http://localhost:3301/application`](http://localhost:3301/application)
+
+ **[`^top^`](#)**
+ 
 <hr>
 
-# 4. Contribute to Backend (Query-Service) 🌕
+# 4. Contribute to Backend (Query-Service) 🌑
 
-Need to update: [**https://github.com/SigNoz/signoz/tree/main/pkg/query-service**](https://github.com/SigNoz/signoz/tree/main/pkg/query-service)
+**Need to Update:** [**https://github.com/SigNoz/signoz/tree/main/pkg/query-service**](https://github.com/SigNoz/signoz/tree/main/pkg/query-service)
 
 ### 4.1 To run ClickHouse setup (recommended for local development)
 
-- Clone SigNoz,
+- Clone the SigNoz repository and cd into signoz directory,
 ```
-git clone https://github.com/SigNoz/signoz.git
+git clone https://github.com/SigNoz/signoz.git && cd signoz
 ```
-- run `cd signoz` to move to signoz directory,
 - run `sudo make dev-setup` to configure local setup to run query-service,
-- comment out frontend service section at [`docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
-- comment out query-service section at [`docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
-- add below configuration to clickhouse section at [`docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
-```docker
-    expose:
-      - 9000
-    ports:
-      - 9001:9000
-```
+- comment out frontend service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
+- comment out query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
+- add below configuration to clickhouse section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
+  ```
+  expose:
+    - 9000
+  ports:
+    - 9001:9000
+  ```
 
 - run `cd pkg/query-service/` to move to `query-service` directory,
 - Open [`./constants/constants.go`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go)
@@ -163,18 +207,19 @@ git clone https://github.com/SigNoz/signoz.git
   - If you are using `x86_64` processors (All Intel/AMD processors) run `sudo make run-x86`
   - If you are on `arm64` processors (Apple M1 Macs) run `sudo make run-arm`
 
-#### Run locally
-```console
+#### Run locally,
+```
 ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse go run main.go
 ```
+### Important Note:
+The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
 
-> Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
 
-**_Query Service should now be available at [http://localhost:8080](http://localhost:8080)_**
 
-> If you want to see how the frontend plays with query service, you can run the frontend also in your local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
+**Query Service should now be available at** [`http://localhost:8080`](http://localhost:8080)
 
----
+If you want to see how the frontend plays with query service, you can run the frontend also in your local env with the baseURL changed to `http://localhost:8080` in file [`frontend/src/constants/env.ts`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts) as the `query-service` is now running at port `8080`.
+
 <!-- Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), a VSCode-based Web IDE.
 
 Click the button below. A workspace with all required environments will be created.
@@ -183,31 +228,40 @@ Click the button below. A workspace with all required environments will be creat
 
 > To use it on your forked repo, edit the 'Open in Gitpod' button URL to `https://gitpod.io/#https://github.com/<your-github-username>/signoz` -->
 
+ **[`^top^`](#)**
+ 
 <hr>
 
-# 5. Contribute to SigNoz Helm Chart
+# 5. Contribute to SigNoz Helm Chart 📊
 
-Need to update [https://github.com/SigNoz/charts](https://github.com/SigNoz/charts).
+**Need to Update: [https://github.com/SigNoz/charts](https://github.com/SigNoz/charts).**
 
 ### 5.1 To run helm chart for local development
 
-- run `git clone https://github.com/SigNoz/charts.git` followed by `cd charts`
-- it is recommended to use lightweight kubernetes (k8s) cluster for local development:
+- Clone the SigNoz repository and cd into charts directory,
+```
+git clone https://github.com/SigNoz/charts.git && cd charts
+``` 
+- It is recommended to use lightweight kubernetes (k8s) cluster for local development:
   - [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
   - [k3d](https://k3d.io/#installation)
   - [minikube](https://minikube.sigs.k8s.io/docs/start/)
-- create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster
-- run `make dev-install` to install SigNoz chart with `my-release` release name in `platform` namespace.
-- run `kubectl -n platform port-forward svc/my-release-signoz-frontend 3301:3301` to make SigNoz UI available at [localhost:3301](http://localhost:3301)
+- create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster,
+- run `make dev-install` to install SigNoz chart with `my-release` release name in `platform` namespace,
+- next run,
+```
+kubectl -n platform port-forward svc/my-release-signoz-frontend 3301:3301
+``` 
+to make SigNoz UI available at [localhost:3301](http://localhost:3301)
 
-**To install the HotROD sample app:**
+**5.1.1 To install the HotROD sample app:**
 
 ```bash
 curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-install.sh \
   | HELM_RELEASE=my-release SIGNOZ_NAMESPACE=platform bash
 ```
 
-**To load data with the HotROD sample app:**
+**5.1.2 To load data with the HotROD sample app:**
 
 ```bash
 kubectl -n sample-application run strzal --image=djbingham/curl \
@@ -215,7 +269,7 @@ kubectl -n sample-application run strzal --image=djbingham/curl \
   'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
 ```
 
-**To stop the load generation:**
+**5.1.3 To stop the load generation:**
 
 ```bash
 kubectl -n sample-application run strzal --image=djbingham/curl \
@@ -223,13 +277,15 @@ kubectl -n sample-application run strzal --image=djbingham/curl \
   http://locust-master:8089/stop
 ```
 
-**To delete the HotROD sample app:**
+**5.1.4 To delete the HotROD sample app:**
 
 ```bash
 curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-delete.sh \
   | HOTROD_NAMESPACE=sample-application bash
 ```
 
+ **[`^top^`](#)**
+ 
 ---
 
 Again, feel free to ping us on `#contributing` or `#contributing-frontend` on our slack community if you need any help on this :)
