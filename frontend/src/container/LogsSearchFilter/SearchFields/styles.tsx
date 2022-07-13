@@ -12,7 +12,7 @@ export function CategoryHeading({ children }) {
 
 export const QueryFieldContainer = styled.div`
 	padding: 0.25rem 0.5rem;
-	margin: 0.1rem 0.5rem 0.5rem;
+	margin: 0.1rem 0.5rem 0;
 	display: flex;
 	flex-direction: row;
 	border-radius: 0.25rem;
