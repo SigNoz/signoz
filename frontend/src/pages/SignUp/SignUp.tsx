@@ -262,12 +262,13 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								setState(updateValue, setConfirmPassword);
 							}}
 							required
-							id="UpdatePassword"
+							id="confirmPassword"
 						/>
 
 						{confirmPasswordError && (
 							<Typography.Paragraph
 								italic
+								id="password-confirm-error"
 								style={{
 									color: '#D89614',
 									marginTop: '0.50rem',
@@ -340,6 +341,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								!organizationName ||
 								!password ||
 								!confirmPassword ||
+								!firstName ||
 								confirmPasswordError ||
 								isPasswordPolicyError
 							}
