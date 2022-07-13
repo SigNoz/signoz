@@ -82,14 +82,8 @@ dev-setup:
 run-x86:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml up -d
 
-run-arm:
-	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.arm.yaml up -d
-
 down-x86:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
-
-down-arm:
-	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.arm.yaml down -v
 
 clear-standalone-data:
 	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \
