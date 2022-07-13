@@ -1,11 +1,13 @@
 ## Welcome to SigNoz contributing section. Thank you for taking out the time to contribute to this project.
 
-Sections:
-1. [General Guidelines](#1-general-instructions) 
-2. [How to Contribute](#2-how-to-contribute)
-3. [Develop Frontend](#3-develop-frontend)
-4. [Contribute to Query-Service](#4-contribute-to-query-service)
-5. [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart)
+## Sections:
+- [General Guidelines](#1-general-instructions) 
+- [How to Contribute](#2-how-to-contribute)
+- [Develop Frontend](#3-develop-frontend)
+  - [Contribute to Frontend with Docker installation of SigNoz](#31-contribute-to-frontend-with-docker-installation-of-signoz)
+  - [Contribute to Frontend without installing SigNoz backend](#32-contribute-to-frontend-without-installing-signoz-backend)
+- [Contribute to Query-Service](#4-contribute-to-query-service)
+- [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart)
 
 # 1. General Instructions
 
@@ -36,7 +38,7 @@ and open a pull request(s). Unless your change is small, Please consider submitt
   stability and quality of the component.
 
 
-You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [slack](https://signoz.io/slack).
+You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [SLACK](https://signoz.io/slack).
 
 - If you find any bugs, please create an issue
 - If you find anything missing in documentation, you can create an issue with label **documentation**
@@ -132,14 +134,14 @@ Need to update [https://github.com/SigNoz/signoz/tree/main/pkg/query-service](ht
   - If you are using x86_64 processors (All Intel/AMD processors) run `sudo make run-x86`
   - If you are on arm64 processors (Apple M1 Macbooks) run `sudo make run-arm`
 
-#### 4.2 Run locally
+#### Run locally
 ```console
 ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse go run main.go
 ```
 
 > Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh`
 
-**_Query Service should now be available at `http://localhost:8080`_**
+**_Query Service should now be available at [http://localhost:8080](http://localhost:8080)_**
 
 > If you want to see how, frontend plays with query service, you can run frontend also in you local env with the baseURL changed to `http://localhost:8080` in file `src/constants/env.ts` as the query-service is now running at port `8080`
 
