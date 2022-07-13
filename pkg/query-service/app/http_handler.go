@@ -327,11 +327,13 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getFilteredSpans", ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v1/getTagValues", ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/errors", ViewAccess(aH.getErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorWithId", ViewAccess(aH.getErrorForId)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorWithType", ViewAccess(aH.getErrorForType)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/listErrors", ViewAccess(aH.listErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/countErrors", ViewAccess(aH.countErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorFromErrorID", ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorFromGroupID", ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/nextPrevErrorIDs", ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/disks", ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
@@ -1177,49 +1179,78 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getErrors(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseErrorsRequest(r)
+	query, err := parseListErrorsRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrors(r.Context(), query)
+	result, apiErr := (*aH.reader).ListErrors(r.Context(), query)
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
 	aH.writeJSON(w, r, result)
-
 }
 
-func (aH *APIHandler) getErrorForId(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) countErrors(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseErrorRequest(r)
+	query, err := parseCountErrorsRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForId(r.Context(), query)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	result, apiErr := (*aH.reader).CountErrors(r.Context(), query)
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
 		return
 	}
 
 	aH.writeJSON(w, r, result)
-
 }
 
-func (aH *APIHandler) getErrorForType(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getErrorFromErrorID(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseErrorRequest(r)
+	query, err := parseGetErrorRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
-	result, apiErr := (*aH.reader).GetErrorForType(r.Context(), query)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	result, apiErr := (*aH.reader).GetErrorFromErrorID(r.Context(), query)
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
 		return
 	}
 
 	aH.writeJSON(w, r, result)
+}
 
+func (aH *APIHandler) getNextPrevErrorIDs(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetErrorRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := (*aH.reader).GetNextPrevErrorIDs(r.Context(), query)
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
+func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseGetErrorRequest(r)
+	if aH.handleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := (*aH.reader).GetErrorFromGroupID(r.Context(), query)
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.writeJSON(w, r, result)
 }
 
 func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {

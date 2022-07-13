@@ -341,20 +341,36 @@ type Error struct {
 	LastSeen       time.Time `json:"lastSeen" ch:"lastSeen"`
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
+	GroupID        string    `json:"groupID" ch:"groupID"`
 }
 
 type ErrorWithSpan struct {
 	ErrorID             string    `json:"errorId" ch:"errorID"`
 	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
 	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
-	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
+	ExceptionEscaped    bool      `json:"exceptionEscaped" ch:"exceptionEscaped"`
 	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
 	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
 	SpanID              string    `json:"spanID" ch:"spanID"`
 	TraceID             string    `json:"traceID" ch:"traceID"`
 	ServiceName         string    `json:"serviceName" ch:"serviceName"`
-	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
-	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
+	GroupID             string    `json:"groupID" ch:"groupID"`
+}
+
+type NextPrevErrorIDsDBResponse struct {
+	NextErrorID   string    `ch:"nextErrorID"`
+	NextTimestamp time.Time `ch:"nextTimestamp"`
+	PrevErrorID   string    `ch:"prevErrorID"`
+	PrevTimestamp time.Time `ch:"prevTimestamp"`
+	Timestamp     time.Time `ch:"timestamp"`
+}
+
+type NextPrevErrorIDs struct {
+	NextErrorID   string    `json:"nextErrorID"`
+	NextTimestamp time.Time `json:"nextTimestamp"`
+	PrevErrorID   string    `json:"prevErrorID"`
+	PrevTimestamp time.Time `json:"prevTimestamp"`
+	GroupID       string    `json:"groupID"`
 }
 
 type Series struct {
