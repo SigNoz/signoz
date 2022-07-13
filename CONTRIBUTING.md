@@ -200,9 +200,9 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 git clone https://github.com/SigNoz/signoz.git && cd signoz
 ```
 - run `sudo make dev-setup` to configure local setup to run query-service,
-- comment out frontend service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
-- comment out query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
-- add below configuration to clickhouse section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
+- Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+- Comment out `query-service` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L41`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L41)
+- add below configuration to `clickhouse` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
   ```
   expose:
     - 9000
@@ -211,7 +211,7 @@ git clone https://github.com/SigNoz/signoz.git && cd signoz
   ```
 
 - run `cd pkg/query-service/` to move to `query-service` directory,
-- Open [`./constants/constants.go`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go)
+- Open [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go#L38)
     - Replace ```const RELATIONAL_DATASOURCE_PATH = "/var/lib/signoz/signoz.db"``` \
         with →  ```const RELATIONAL_DATASOURCE_PATH = "./signoz.db".```
 
