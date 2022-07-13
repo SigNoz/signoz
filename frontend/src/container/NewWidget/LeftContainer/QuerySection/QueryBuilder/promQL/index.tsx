@@ -30,8 +30,8 @@ function PromQLQueryContainer({
 	}: IPromQLQueryHandleChange): void => {
 		const allQueries = queryData[WIDGET_PROMQL_QUERY_KEY_NAME];
 		const currentIndexQuery = allQueries[queryIndex];
-		if (query) currentIndexQuery.query = query;
-		if (legend) currentIndexQuery.legend = legend;
+		if (query !== undefined) currentIndexQuery.query = query;
+		if (legend !== undefined) currentIndexQuery.legend = legend;
 
 		if (toggleDisable) {
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
