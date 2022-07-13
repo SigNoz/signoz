@@ -3,7 +3,6 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/json"
 
 	"fmt"
