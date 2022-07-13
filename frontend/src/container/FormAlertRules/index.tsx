@@ -199,6 +199,7 @@ function FormAlertRules({
 
 		const postableAlert: AlertDef = {
 			...alertDef,
+			source: window?.location.toString(),
 			ruleType:
 				queryCategory === EQueryType.PROM ? 'promql_rule' : 'threshold_rule',
 			condition: {

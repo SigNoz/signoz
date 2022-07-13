@@ -67,6 +67,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'alert',
 			key: 'name',
 			sorter: (a, b): number => a.name.charCodeAt(0) - b.name.charCodeAt(0),
+			render: (value, record): JSX.Element => (
+				<Typography.Link onClick={(): void => onEditHandler(record.id.toString())}>
+					{value}
+				</Typography.Link>
+			),
 		},
 		{
 			title: 'Severity',
@@ -83,7 +88,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			},
 		},
 		{
-			title: 'Tags',
+			title: 'Labels',
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
@@ -100,7 +105,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						{withOutSeverityKeys.map((e) => {
 							return (
 								<Tag key={e} color="magenta">
-									{e}
+									{e}: {value[e]}
 								</Tag>
 							);
 						})}
