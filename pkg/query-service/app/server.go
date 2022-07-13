@@ -55,10 +55,10 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
-	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := dao.InitDao("sqlite", constants.RelationalDatasourcePath); err != nil {
 		return nil, err
 	}
-	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	localDB, err := dashboards.InitDB(constants.RelationalDatasourcePath)
 
 	if err != nil {
 		return nil, err
@@ -70,11 +70,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB)
-		go clickhouseReader.Start()
-		reader = clickhouseReader
+		chReader := clickhouseReader.NewReader(localDB)
+		go chReader.Start()
+		reader = chReader
 	} else {
-		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
+		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
 	}
 
 	telemetry.GetInstance().SetReader(reader)
@@ -211,7 +211,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+			telemetry.GetInstance().SendEvent(telemetry.EventPath, data)
 		}
 
 	})

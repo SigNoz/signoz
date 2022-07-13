@@ -18,7 +18,7 @@ func TestBuildQuery(t *testing.T) {
 					"a": {
 						QueryName:         "a",
 						MetricName:        "name",
-						AggregateOperator: model.RATE_MAX,
+						AggregateOperator: model.RateMax,
 						Expression:        "a",
 					},
 				},
@@ -46,7 +46,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 							{Key: "a", Value: "b", Operator: "neq"},
 							{Key: "code", Value: "ERROR_*", Operator: "nmatch"},
 						}},
-						AggregateOperator: model.RATE_MAX,
+						AggregateOperator: model.RateMax,
 						Expression:        "a",
 					},
 				},
@@ -75,13 +75,13 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
 							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
-						AggregateOperator: model.RATE_AVG,
+						AggregateOperator: model.RateAvg,
 						Expression:        "a",
 					},
 					"b": {
 						QueryName:         "b",
 						MetricName:        "name2",
-						AggregateOperator: model.RATE_MAX,
+						AggregateOperator: model.RateMax,
 						Expression:        "b",
 					},
 				},
@@ -108,12 +108,12 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
 							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
-						AggregateOperator: model.RATE_MAX,
+						AggregateOperator: model.RateMax,
 						Expression:        "a",
 					},
 					"b": {
 						MetricName:        "name2",
-						AggregateOperator: model.RATE_AVG,
+						AggregateOperator: model.RateAvg,
 						Expression:        "b",
 					},
 					"c": {

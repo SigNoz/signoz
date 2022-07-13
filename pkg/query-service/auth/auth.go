@@ -21,9 +21,10 @@ const (
 )
 
 var (
-	ErrorInvalidCreds = fmt.Errorf("Invalid credentials")
+	ErrorInvalidCreds = fmt.Errorf("invalid credentials")
 )
 
+// Invite sends the invitation for users
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
 	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)

@@ -73,7 +73,7 @@ type AlertDiscovery struct {
 	Alerts []*AlertingRuleResponse `json:"rules"`
 }
 
-// Alert has info for an alert.
+// AlertingRuleResponse has info for an alert.
 type AlertingRuleResponse struct {
 	Labels      labels.Labels `json:"labels"`
 	Annotations labels.Labels `json:"annotations"`
@@ -137,7 +137,7 @@ type GetFilterSpansResponse struct {
 	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type SearchSpanDBReponseItem struct {
+type SearchSpanDBResponseItem struct {
 	Timestamp time.Time `ch:"timestamp"`
 	TraceID   string    `ch:"traceID"`
 	Model     string    `ch:"model"`
@@ -150,7 +150,7 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
-type SearchSpanReponseItem struct {
+type SearchSpanResponseItem struct {
 	TimeUnixNano uint64            `json:"timestamp"`
 	SpanID       string            `json:"spanID"`
 	TraceID      string            `json:"traceID"`
@@ -177,13 +177,13 @@ func (ref *OtelSpanRef) toString() string {
 	return retString
 }
 
-func (item *SearchSpanReponseItem) GetValues() []interface{} {
+func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
-	references := []OtelSpanRef{}
-	jsonbody, _ := json.Marshal(item.References)
-	json.Unmarshal(jsonbody, &references)
+	var references []OtelSpanRef
+	jsonBody, _ := json.Marshal(item.References)
+	json.Unmarshal(jsonBody, &references)
 
-	referencesStringArray := []string{}
+	var referencesStringArray []string
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
