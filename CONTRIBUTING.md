@@ -11,6 +11,7 @@ Please read through this document before submitting any issues or pull requests 
 Looking at the existing issues is a great way to find something to contribute on. 
 Also, have a look at these [good first issues labels](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with.
 
+
 ## Sections:
 - [General Instructions](#1-general-instructions-) 
     - [For Creating Issue(s)](#11-for-creating-issues)
@@ -298,6 +299,17 @@ curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-del
  **[`^top^`](#)**
  
 ---
+
+## Other ways to contribute
+
+There are many other ways to get involved with the community and to participate in this project:
+
+- Use the product, submitting GitHub issues when a problem is found.
+- Help code review pull requests and participate in issue threads.
+- Submit a new feature request as an issue.
+- Help answer questions on forums such as Stack Overflow and [SigNoz Community Slack Channel](https://signoz.io/slack).
+- Tell others about the project on Twitter, your blog, etc.
+
 
 ## License
 
