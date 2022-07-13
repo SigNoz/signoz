@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-#### Welcome to SigNoz Contributing section 🎉
+## Welcome to SigNoz Contributing section 🎉
 
 Hi there! We're thrilled that you'd like to contribute to this project, thank you for your interest. Whether it's a bug report, new feature, correction, or additional documentation, we greatly value feedback and contributions from our community.
 
@@ -133,7 +133,7 @@ Depending upon your area of expertise & interest, you can choose one or more to 
 
 # 3. Develop Frontend 🌚
 
-**Need to Update: [https://github.com/SigNoz/signoz/tree/main/frontend](https://github.com/SigNoz/signoz/tree/main/frontend)**
+**Need to Update: [https://github.com/SigNoz/signoz/tree/develop/frontend](https://github.com/SigNoz/signoz/tree/develop/frontend)**
 
 ### 3.1 Contribute to Frontend with Docker installation of SigNoz
 
@@ -191,7 +191,7 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 # 4. Contribute to Backend (Query-Service) 🌑
 
-**Need to Update:** [**https://github.com/SigNoz/signoz/tree/main/pkg/query-service**](https://github.com/SigNoz/signoz/tree/main/pkg/query-service)
+**Need to Update:** [**https://github.com/SigNoz/signoz/tree/develop/pkg/query-service**](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)
 
 ### 4.1 To run ClickHouse setup (recommended for local development)
 
