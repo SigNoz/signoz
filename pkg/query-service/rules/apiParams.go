@@ -30,8 +30,12 @@ type PostableRule struct {
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 
+	// Source captures the source url where rule has been created
+	Source string `json:"source,omitempty"`
+
 	// legacy
-	Expr string `yaml:"expr,omitempty" json:"expr,omitempty"`
+	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
+	OldYaml string `json:"yaml,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, []error) {

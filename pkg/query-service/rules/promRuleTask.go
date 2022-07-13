@@ -336,7 +336,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
-			data, err := rule.Eval(ctx, ts, g.opts.Queriers, g.opts.ExternalURL)
+			data, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)

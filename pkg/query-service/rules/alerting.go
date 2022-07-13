@@ -23,6 +23,10 @@ const (
 
 	// AlertStateLabel is the label name indicating the state of an alert.
 	alertStateLabel = "alertstate"
+
+	metricNameLabel  = "__name__"
+	alertRuleIdLabel = "ruleId"
+	ruleSourceLabel  = "ruleSource"
 )
 
 type RuleType string
@@ -66,6 +70,8 @@ type Alert struct {
 
 	Labels      labels.BaseLabels
 	Annotations labels.BaseLabels
+
+	GeneratorURL string
 
 	Value      float64
 	ActiveAt   time.Time

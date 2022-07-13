@@ -6,9 +6,7 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -35,7 +33,9 @@ type ServerOptions struct {
 	PromConfigPath  string
 	HTTPHostPort    string
 	PrivateHostPort string
-	DisableRules    bool
+	// alert specific params
+	DisableRules bool
+	RuleRepoURL  string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -89,13 +89,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	externalURL, err := computeExternalURL("", "0.0.0.0:3301")
-	if err != nil {
-		zap.S().Errorf("failed to parse external url:", externalURL.String())
-		externalURL, _ = url.Parse("http://signoz.io")
-	}
-
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), externalURL, localDB, reader, serverOptions.DisableRules)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
 	if err != nil {
 		return nil, err
 	}
@@ -130,44 +124,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s.privateHTTP = privateServer
 
 	return s, nil
-}
-
-// computeExternalURL computes a sanitized external URL from a raw input. It infers unset
-// URL parts from the OS and the given listen address.
-func computeExternalURL(u, listenAddr string) (*url.URL, error) {
-	if u == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return nil, err
-		}
-		_, port, err := net.SplitHostPort(listenAddr)
-		if err != nil {
-			return nil, err
-		}
-		u = fmt.Sprintf("http://%s:%s/", hostname, port)
-	}
-
-	startsOrEndsWithQuote := func(s string) bool {
-		return strings.HasPrefix(s, "\"") || strings.HasPrefix(s, "'") ||
-			strings.HasSuffix(s, "\"") || strings.HasSuffix(s, "'")
-	}
-
-	if startsOrEndsWithQuote(u) {
-		return nil, fmt.Errorf("URL must not begin or end with quotes")
-	}
-
-	eu, err := url.Parse(u)
-	if err != nil {
-		return nil, err
-	}
-
-	ppref := strings.TrimRight(eu.Path, "/")
-	if ppref != "" && !strings.HasPrefix(ppref, "/") {
-		ppref = "/" + ppref
-	}
-	eu.Path = ppref
-
-	return eu, nil
 }
 
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
@@ -387,7 +343,7 @@ func (s *Server) Start() error {
 func makeRulesManager(
 	promConfigPath,
 	alertManagerURL string,
-	externalURL *url.URL,
+	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
 	disableRules bool) (*rules.Manager, error) {
@@ -412,7 +368,7 @@ func makeRulesManager(
 			PqlEngine: pqle,
 			Ch:        ch.GetConn(),
 		},
-		ExternalURL:  externalURL,
+		RepoURL:      ruleRepoURL,
 		Conn:         db,
 		Context:      context.Background(),
 		Logger:       nil,

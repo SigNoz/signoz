@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,7 +37,9 @@ func prepareTaskName(ruleId int64) string {
 type ManagerOptions struct {
 	NotifierOpts am.NotifierOptions
 	Queriers     *Queriers
-	ExternalURL  *url.URL
+
+	// RepoURL is used to generate a backlink in sent alert messages
+	RepoURL string
 
 	// rule db conn
 	Conn *sqlx.DB
@@ -77,7 +78,6 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 	if o.ResendDelay == time.Duration(0) {
 		o.ResendDelay = 1 * time.Minute
 	}
-
 	return o
 }
 
@@ -391,6 +391,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			time.Duration(r.EvalWindow),
 			r.Labels,
 			r.Annotations,
+			r.Source,
 		)
 
 		if err != nil {
@@ -417,6 +418,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			r.Annotations,
 			// required as promql engine works with logger and not zap
 			log.With(m.logger, "alert", r.Alert),
+			r.Source,
 		)
 
 		if err != nil {
@@ -514,11 +516,16 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 		var res []*am.Alert
 
 		for _, alert := range alerts {
+			generatorURL := alert.GeneratorURL
+			if generatorURL == "" {
+				generatorURL = m.opts.RepoURL
+			}
+
 			a := &am.Alert{
 				StartsAt:     alert.FiredAt,
 				Labels:       alert.Labels,
 				Annotations:  alert.Annotations,
-				GeneratorURL: m.opts.ExternalURL.String(),
+				GeneratorURL: generatorURL,
 			}
 			if !alert.ResolvedAt.IsZero() {
 				a.EndsAt = alert.ResolvedAt

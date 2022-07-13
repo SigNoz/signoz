@@ -6,7 +6,6 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
-	"net/url"
 	"sync"
 	"time"
 
@@ -22,6 +21,7 @@ import (
 type PromRule struct {
 	id            string
 	name          string
+	source        string
 	ruleCondition *RuleCondition
 
 	evalWindow   time.Duration
@@ -50,6 +50,7 @@ func NewPromRule(
 	evalWindow time.Duration,
 	labels, annotations map[string]string,
 	logger log.Logger,
+	source string,
 ) (*PromRule, error) {
 
 	if int64(evalWindow) == 0 {
@@ -67,6 +68,7 @@ func NewPromRule(
 	return &PromRule{
 		id:            id,
 		name:          name,
+		source:        source,
 		ruleCondition: ruleCondition,
 		evalWindow:    evalWindow,
 		labels:        plabels.FromMap(labels),
@@ -91,6 +93,10 @@ func (r *PromRule) Condition() *RuleCondition {
 
 func (r *PromRule) Type() RuleType {
 	return RuleTypeProm
+}
+
+func (r *PromRule) GeneratorURL() string {
+	return r.source
 }
 
 func (r *PromRule) SetLastError(err error) {
@@ -150,8 +156,8 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 		lb.Set(l.Name, l.Value)
 	}
 
-	lb.Set(plabels.MetricName, alertMetricName)
-	lb.Set(plabels.AlertName, r.name)
+	lb.Set(metricNameLabel, alertMetricName)
+	lb.Set(alertNameLabel, r.name)
 	lb.Set(alertStateLabel, alert.State.String())
 
 	s := pql.Sample{
@@ -292,7 +298,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
-func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, externalURL *url.URL) (interface{}, error) {
+func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
 	q, err := r.getPqlQuery()
 	if err != nil {
@@ -332,7 +338,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, e
 				"__alert_"+r.Name(),
 				tmplData,
 				times.Time(timestamp.FromTime(ts)),
-				externalURL,
+				nil,
 			)
 			result, err := tmpl.Expand()
 			if err != nil {
@@ -347,7 +353,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, e
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
 		}
-		lb.Set(plabels.AlertName, r.Name())
+		lb.Set(alertNameLabel, r.Name())
+		lb.Set(alertRuleIdLabel, r.ID())
+		lb.Set(ruleSourceLabel, r.GeneratorURL())
 
 		annotations := make(plabels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
@@ -368,11 +376,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, e
 		}
 
 		alerts[h] = &Alert{
-			Labels:      lbs,
-			Annotations: annotations,
-			ActiveAt:    ts,
-			State:       StatePending,
-			Value:       smpl.V,
+			Labels:       lbs,
+			Annotations:  annotations,
+			ActiveAt:     ts,
+			State:        StatePending,
+			Value:        smpl.V,
+			GeneratorURL: r.GeneratorURL(),
 		}
 	}
 

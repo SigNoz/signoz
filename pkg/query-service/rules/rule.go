@@ -3,7 +3,6 @@ package rules
 import (
 	"context"
 	"go.signoz.io/query-service/utils/labels"
-	"net/url"
 	"time"
 )
 
@@ -20,7 +19,7 @@ type Rule interface {
 	State() AlertState
 	ActiveAlerts() []*Alert
 
-	Eval(context.Context, time.Time, *Queriers, *url.URL) (interface{}, error)
+	Eval(context.Context, time.Time, *Queriers) (interface{}, error)
 	String() string
 	// Query() string
 	SetLastError(error)

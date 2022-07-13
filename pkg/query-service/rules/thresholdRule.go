@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"math"
-	"net/url"
 	"reflect"
 	"sort"
 	"sync"
@@ -26,6 +25,7 @@ import (
 type ThresholdRule struct {
 	id            string
 	name          string
+	source        string
 	ruleCondition *RuleCondition
 	evalWindow    time.Duration
 	holdDuration  time.Duration
@@ -50,6 +50,7 @@ func NewThresholdRule(
 	ruleCondition *RuleCondition,
 	evalWindow time.Duration,
 	l, a map[string]string,
+	source string,
 ) (*ThresholdRule, error) {
 
 	if int64(evalWindow) == 0 {
@@ -67,6 +68,7 @@ func NewThresholdRule(
 	return &ThresholdRule{
 		id:            id,
 		name:          name,
+		source:        source,
 		ruleCondition: ruleCondition,
 		evalWindow:    evalWindow,
 		labels:        labels.FromMap(l),
@@ -87,6 +89,10 @@ func (r *ThresholdRule) ID() string {
 
 func (r *ThresholdRule) Condition() *RuleCondition {
 	return r.ruleCondition
+}
+
+func (r *ThresholdRule) GeneratorURL() string {
+	return r.source
 }
 
 func (r *ThresholdRule) target() *float64 {
@@ -171,7 +177,8 @@ func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
 	}
 
 	lb.Set(labels.MetricName, alertMetricName)
-	lb.Set(labels.AlertName, r.name)
+	lb.Set(alertNameLabel, r.name)
+	lb.Set(alertRuleIdLabel, r.ID())
 	lb.Set(alertStateLabel, alert.State.String())
 
 	s := Sample{
@@ -191,7 +198,7 @@ func (r *ThresholdRule) forStateSample(alert *Alert, ts time.Time, v float64) Sa
 	}
 
 	lb.Set(labels.MetricName, alertForStateMetricName)
-	lb.Set(labels.AlertName, r.name)
+	lb.Set(alertNameLabel, r.name)
 
 	s := Sample{
 		Metric: lb.Labels(),
@@ -523,7 +530,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
-func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers, externalURL *url.URL) (interface{}, error) {
+func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
@@ -560,7 +567,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 				"__alert_"+r.Name(),
 				tmplData,
 				times.Time(timestamp.FromTime(ts)),
-				externalURL,
+				nil,
 			)
 			result, err := tmpl.Expand()
 			if err != nil {
@@ -575,7 +582,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
 		}
-		lb.Set(labels.AlertName, r.Name())
+
+		lb.Set(alertNameLabel, r.Name())
+		lb.Set(alertRuleIdLabel, r.ID())
+		lb.Set(ruleSourceLabel, r.GeneratorURL())
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
@@ -597,11 +607,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		alerts[h] = &Alert{
-			Labels:      lbs,
-			Annotations: annotations,
-			ActiveAt:    ts,
-			State:       StatePending,
-			Value:       smpl.V,
+			Labels:       lbs,
+			Annotations:  annotations,
+			ActiveAt:     ts,
+			State:        StatePending,
+			Value:        smpl.V,
+			GeneratorURL: r.GeneratorURL(),
 		}
 	}
 
