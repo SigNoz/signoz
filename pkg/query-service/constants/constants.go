@@ -61,6 +61,10 @@ const (
 	StatusPending    = "pending"
 	StatusFailed     = "failed"
 	StatusSuccess    = "success"
+	ExceptionType    = "exceptionType"
+	ExceptionCount   = "exceptionCount"
+	LastSeen         = "lastSeen"
+	FirstSeen        = "firstSeen"
 )
 const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"

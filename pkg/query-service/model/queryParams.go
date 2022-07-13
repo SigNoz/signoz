@@ -282,15 +282,24 @@ type GetTTLParams struct {
 	Type string
 }
 
-type GetErrorsParams struct {
+type ListErrorsParams struct {
+	Start      *time.Time
+	End        *time.Time
+	Limit      int64
+	OrderParam string
+	Order      string
+	Offset     int64
+}
+
+type CountErrorsParams struct {
 	Start *time.Time
 	End   *time.Time
 }
 
 type GetErrorParams struct {
-	ErrorType   string
-	ErrorID     string
-	ServiceName string
+	GroupID   string
+	ErrorID   string
+	Timestamp *time.Time
 }
 
 type FilterItem struct {
