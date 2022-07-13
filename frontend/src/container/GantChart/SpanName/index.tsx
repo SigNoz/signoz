@@ -10,7 +10,7 @@ function SpanNameComponent({
 		<Container title={`${name} ${serviceName}`}>
 			<SpanWrapper>
 				<Span ellipsis>{name}</Span>
-				<Service>{serviceName}</Service>
+				<Service ellipsis>{serviceName}</Service>
 			</SpanWrapper>
 		</Container>
 	);

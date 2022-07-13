@@ -18,16 +18,16 @@ const (
 )
 
 const (
-	defaultDatasource      string = "tcp://localhost:9000"
-	defaultTraceDB         string = "signoz_traces"
-	defaultOperationsTable string = "signoz_operations"
-	defaultIndexTable      string = "signoz_index_v2"
-	defaultErrorTable      string = "signoz_error_index"
-	defaultDurationTable   string = "durationSortMV"
-	defaultSpansTable      string = "signoz_spans"
-	defaultWriteBatchDelay        = 5 * time.Second
-	defaultWriteBatchSize  int    = 10000
-	defaultEncoding               = EncodingJSON
+	defaultDatasource      string        = "tcp://localhost:9000"
+	defaultTraceDB         string        = "signoz_traces"
+	defaultOperationsTable string        = "signoz_operations"
+	defaultIndexTable      string        = "signoz_index_v2"
+	defaultErrorTable      string        = "signoz_error_index_v2"
+	defaultDurationTable   string        = "durationSortMV"
+	defaultSpansTable      string        = "signoz_spans"
+	defaultWriteBatchDelay time.Duration = 5 * time.Second
+	defaultWriteBatchSize  int           = 10000
+	defaultEncoding        Encoding      = EncodingJSON
 )
 
 const (
