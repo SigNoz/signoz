@@ -16,6 +16,7 @@ SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
 
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
+GOPATH ?= $(shell go env GOPATH)
 GOTEST=go test -v $(RACE)
 GOFMT=gofmt
 FMT_LOG=.fmt.log
@@ -113,7 +114,7 @@ install-tools:
 .PHONY: lint
 lint:
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	golangci-lint -v run
+	$(GOPATH)/bin/golangci-lint -v run
 
 .PHONY: fmt
 fmt:
