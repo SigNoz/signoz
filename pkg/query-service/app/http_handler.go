@@ -1821,15 +1821,15 @@ func (aH *APIHandler) writeJSON(w http.ResponseWriter, r *http.Request, response
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
+	subRouter.HandleFunc("", ViewAccess(aH.getLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
-
 	fields, apiErr := (*aH.reader).GetLogFields(r.Context())
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to fetch org from the DB")
+		respondError(w, apiErr, "Failed to fetch fields from the DB")
 		return
 	}
 	aH.writeJSON(w, r, fields)
@@ -1852,8 +1852,31 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 
 	apiErr := (*aH.reader).UpdateLogField(r.Context(), &field)
 	if apiErr != nil {
-		respondError(w, apiErr, "Failed to fetch org from the DB")
+		respondError(w, apiErr, "Failed to update filed in the DB")
 		return
 	}
 	aH.writeJSON(w, r, field)
+}
+
+func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
+	params, err := logs.ParseFilterParams(r)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect params")
+		return
+	}
+
+	err = logs.ValidateFilters(&params.Filters)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect filter")
+		return
+	}
+
+	res, apiErr := (*aH.reader).GetLogs(r.Context(), params)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch logs from the DB")
+		return
+	}
+	aH.writeJSON(w, r, map[string]interface{}{"results": res})
 }

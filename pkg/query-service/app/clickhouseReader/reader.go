@@ -47,6 +47,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
+	"go.signoz.io/query-service/app/logs"
 	"go.signoz.io/query-service/constants"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
@@ -3078,4 +3079,38 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		}
 	}
 	return nil
+}
+
+func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError) {
+	response := &[]model.GetLogsResponse{}
+	fields, apiErr := r.GetLogFields(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	filterSql, err := logs.ParseLogFilter(fields, &params.Filters)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
+	}
+
+	query := fmt.Sprintf("SELECT "+
+		"timestamp, observed_timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,"+
+		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,"+
+		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,"+
+		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,"+
+		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
+		"from %s.%s", r.logsDB, r.logsTable)
+
+	if filterSql != nil && *filterSql != "" {
+		query += fmt.Sprintf(" where %s", *filterSql)
+	}
+
+	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
+	zap.S().Debug(query)
+	err = r.db.Select(ctx, response, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	return response, nil
 }

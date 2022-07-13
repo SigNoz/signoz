@@ -312,3 +312,16 @@ type UpdateField struct {
 	IndexType        *string `json:"index"`
 	IndexGranularity *int    `json:"indexGranularity"`
 }
+
+type LogFilter struct {
+	Column    string        `json:"col"`
+	Operation string        `json:"op"`
+	Value     []interface{} `json:"val"`
+}
+
+type LogsFilterParams struct {
+	Limit   int         `json:"limit"`
+	OrderBy string      `json:"orderBy"`
+	Order   string      `json:"order"`
+	Filters []LogFilter `json:"filters"`
+}

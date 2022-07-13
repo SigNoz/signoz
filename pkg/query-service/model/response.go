@@ -388,3 +388,19 @@ type GetFieldsResponse struct {
 	Selected    []LogField `json:"selected"`
 	Interesting []LogField `json:"interesting"`
 }
+
+type GetLogsResponse struct {
+	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
+	ObservedTimestamp  uint64             `json:"observedTimestamp" ch:"observed_timestamp"`
+	ID                 string             `json:"id" ch:"id"`
+	TraceID            string             `json:"traceId" ch:"trace_id"`
+	SpanID             string             `json:"spanId" ch:"span_id"`
+	TraceFlags         uint32             `json:"traceFlags" ch:"trace_flags"`
+	SeverityText       string             `json:"severityText" ch:"severity_text"`
+	SeverityNumber     int32              `json:"severityNumber" ch:"severity_number"`
+	Body               string             `json:"body" ch:"body"`
+	Resources_string   map[string]string  `json:"resourcesString" ch:"resources_string"`
+	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`
+	Attributes_int64   map[string]int64   `json:"attributesInt" ch:"attributes_int64"`
+	Attributes_float64 map[string]float64 `json:"attributesFloat" ch:"attributes_float64"`
+}
