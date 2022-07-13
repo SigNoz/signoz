@@ -1755,12 +1755,12 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	err := r.db.Select(ctx, &getFilterSpansResponseItems, baseQuery, args...)
 	// Fill status and method
 	for i, e := range getFilterSpansResponseItems {
-		if e.HttpCode == "" {
+		if e.GRPCode != "" {
 			getFilterSpansResponseItems[i].StatusCode = e.GRPCode
 		} else {
 			getFilterSpansResponseItems[i].StatusCode = e.HttpCode
 		}
-		if e.HttpMethod == "" {
+		if e.GRPMethod != "" {
 			getFilterSpansResponseItems[i].Method = e.GRPMethod
 		} else {
 			getFilterSpansResponseItems[i].Method = e.HttpMethod
