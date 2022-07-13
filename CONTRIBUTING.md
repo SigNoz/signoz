@@ -54,8 +54,23 @@ process smooth for everyone 🙌.
 
 ## 1.2 For Pull Request(s)
 
-Once the approach is agreed upon ✅, make your changes
-and open a Pull Request(s). 
+Contributions via pull requests are much appreciated. Once the approach is agreed upon ✅, make your changes and open a Pull Request(s). 
+Before sending us a pull request, please ensure that,
+
+- Fork the SigNoz repo on GitHub, clone it on your machine.
+- Create a branch with your changes.
+- You are working against the latest source on the `develop` branch.
+- Modify the source; please focus only on the specific change you are contributing.
+- Ensure local tests pass.
+- Commit to your fork using clear commit messages.
+- Send us a pull request, answering any default questions in the pull request interface.
+- Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation
+- Once you've pushed your commits to GitHub, make sure that your branch can be auto-merged (there are no merge conflicts). If not, on your computer, merge main into your branch, resolve any merge conflicts, make sure everything still runs correctly and passes all the tests, and then push up those changes.
+- Once the change has been approved and merged, we will inform you in a comment.
+
+
+GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
+[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
 **Note:** Unless your change is small, **please** consider submitting different Pull Rrequest(s):
 
@@ -284,5 +299,10 @@ curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-del
  
 ---
 
+## License
+
+By contributing to FBShipIt, you agree that your contributions will be licensed under its MIT license.
+
 Again, feel free to ping us on `#contributing` or `#contributing-frontend` on our slack community if you need any help on this :)
 
+Thank You!
