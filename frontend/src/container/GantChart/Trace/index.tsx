@@ -39,6 +39,7 @@ function Trace(props: TraceProps): JSX.Element {
 		isExpandAll,
 		intervalUnit,
 		children,
+		isMissing,
 	} = props;
 
 	const { isDarkMode } = useThemeMode();
@@ -125,7 +126,7 @@ function Trace(props: TraceProps): JSX.Element {
 				isDarkMode={isDarkMode}
 			/>
 
-			<CardContainer onClick={onClick}>
+			<CardContainer isMissing={isMissing} onClick={onClick}>
 				<StyledCol flex={`${panelWidth}px`} styledclass={[styles.overFlowHidden]}>
 					<StyledRow styledclass={[styles.flexNoWrap]}>
 						<Col>
@@ -174,6 +175,7 @@ function Trace(props: TraceProps): JSX.Element {
 							activeSpanPath={activeSpanPath}
 							isExpandAll={isExpandAll}
 							intervalUnit={intervalUnit}
+							isMissing={child.isMissing}
 						/>
 					))}
 				</>
@@ -181,6 +183,10 @@ function Trace(props: TraceProps): JSX.Element {
 		</Wrapper>
 	);
 }
+
+Trace.defaultProps = {
+	isMissing: false,
+};
 
 interface ITraceGlobal {
 	globalSpread: ITraceMetaData['spread'];
@@ -196,6 +202,7 @@ interface TraceProps extends ITraceTree, ITraceGlobal {
 	activeSpanPath: string[];
 	isExpandAll: boolean;
 	intervalUnit: IIntervalUnit;
+	isMissing?: boolean;
 }
 
 export default Trace;

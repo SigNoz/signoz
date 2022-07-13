@@ -62,7 +62,7 @@ export const convertTimeToRelevantUnit = (
 	return relevantTime;
 };
 
-export const getSortedData = (treeData: ITraceTree): undefined | ITraceTree => {
+export const getSortedData = (treeData: ITraceTree): ITraceTree => {
 	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
@@ -79,4 +79,22 @@ export const getSortedData = (treeData: ITraceTree): undefined | ITraceTree => {
 	traverse(treeData, 1);
 
 	return treeData;
+};
+
+export const getTreeLevelsCount = (tree: ITraceTree): number => {
+	let levels = 0;
+	const traverse = (treeNode: ITraceTree, level: number): void => {
+		if (!treeNode) {
+			return;
+		}
+
+		levels = Math.max(level, levels);
+
+		treeNode.children.forEach((childNode) => {
+			traverse(childNode, level + 1);
+		});
+	};
+	traverse(tree, levels);
+
+	return levels;
 };

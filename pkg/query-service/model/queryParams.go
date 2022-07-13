@@ -282,29 +282,33 @@ type GetTTLParams struct {
 	Type string
 }
 
-type GetErrorsParams struct {
+type ListErrorsParams struct {
+	Start      *time.Time
+	End        *time.Time
+	Limit      int64
+	OrderParam string
+	Order      string
+	Offset     int64
+}
+
+type CountErrorsParams struct {
 	Start *time.Time
 	End   *time.Time
 }
 
 type GetErrorParams struct {
-	ErrorType   string
-	ErrorID     string
-	ServiceName string
+	GroupID   string
+	ErrorID   string
+	Timestamp *time.Time
 }
 
 type FilterItem struct {
-	Key       string      `json:"key"`
-	Value     interface{} `json:"value"`
-	Operation string      `json:"op"`
+	Key      string      `json:"key"`
+	Value    interface{} `json:"value"`
+	Operator string      `json:"op"`
 }
 
 type FilterSet struct {
-	Operation string       `json:"op,omitempty"`
-	Items     []FilterItem `json:"items"`
-}
-
-type RemoveTTLParams struct {
-	Type         string
-	RemoveAllTTL bool
+	Operator string       `json:"op,omitempty"`
+	Items    []FilterItem `json:"items"`
 }
