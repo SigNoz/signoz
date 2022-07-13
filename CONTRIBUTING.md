@@ -125,22 +125,18 @@ Depending upon your area of expertise & interest, you can choose one or more to 
   ```
   git clone https://github.com/SigNoz/signoz.git && cd signoz
   ```
-- Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/a09a4c264e49694c331c08c3dd15cc2bf6dc9106/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+- Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
 - run `cd deploy` to move to deploy directory,
 - Install signoz locally **without** the frontend,
-    - Add below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/a09a4c264e49694c331c08c3dd15cc2bf6dc9106/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
+    - Add below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
     ```docker
     ports:
       - "8080:8080"
     ```
     
-  - If you are using `x86_64` processors (All Intel/AMD processors) run 
+  - Next run,
     ```
     sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
-    ```
-  - If you are on `arm64` processors (Apple M1 Macbooks) run 
-    ```
-    sudo docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d
     ```
 - `cd ../frontend` and change baseURL to `http://localhost:8080` in file [`src/constants/env.ts`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts)
 - Next, 
