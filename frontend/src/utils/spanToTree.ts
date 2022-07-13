@@ -109,6 +109,12 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 	const missingSpanTree: ITraceTree[] = [];
 	const referencedTraceIds: string[] = Array.from(traceIdSet);
 	Object.keys(spanMap).forEach((spanId) => {
+		const isRoot = spanMap[spanId].references?.some((refs) => refs.SpanId === '');
+		if (isRoot) {
+			spanTree.push(spanMap[spanId]);
+			return;
+		}
+
 		for (const traceId of referencedTraceIds) {
 			if (traceId.includes(spanId)) {
 				spanTree.push(spanMap[spanId]);
