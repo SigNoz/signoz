@@ -26,7 +26,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	}
 	db.SetMaxOpenConns(10)
 
-	table_schema := `
+	tableSchema := `
 		PRAGMA foreign_keys = ON;
 
 		CREATE TABLE IF NOT EXISTS invites (
@@ -70,9 +70,9 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		);
 	`
 
-	_, err = db.Exec(table_schema)
+	_, err = db.Exec(tableSchema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
+		return nil, fmt.Errorf("error in creating tables: %v", err.Error())
 	}
 
 	mds := &ModelDaoSqlite{db: db}
@@ -96,7 +96,7 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 
 	// set anonymous setting as default in case of any failures to fetch UserPreference in below section
-	telemetry.GetInstance().SetTelemetryAnonymous(constants.DEFAULT_TELEMETRY_ANONYMOUS)
+	telemetry.GetInstance().SetTelemetryAnonymous(constants.DefaultTelemetryAnonymous)
 
 	orgs, apiError := mds.GetOrgs(ctx)
 	if apiError != nil {

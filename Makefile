@@ -14,6 +14,14 @@ QUERY_SERVICE_DIRECTORY ?= pkg/query-service
 STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
 SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
 
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+GOPATH ?= $(shell go env GOPATH)
+GOTEST=go test -v $(RACE)
+GOFMT=gofmt
+FMT_LOG=.fmt.log
+IMPORT_LOG=.import.log
+
 REPONAME ?= signoz
 DOCKER_TAG ?= latest
 
@@ -30,6 +38,12 @@ gitBranch=${PACKAGE}/version.gitBranch
 LD_FLAGS="-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}"
 
 all: build-push-frontend build-push-query-service
+
+.DEFAULT_GOAL := test-and-lint
+
+.PHONY: test-and-lint
+test-and-lint: fmt lint
+
 # Steps to build and push docker image of frontend
 .PHONY: build-frontend-amd64  build-push-frontend
 # Step to build docker image of frontend in amd64 (used in build pipeline)
@@ -92,3 +106,23 @@ clear-standalone-data:
 clear-swarm-data:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
+
+.PHONY: install-tools
+install-tools:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.0
+
+.PHONY: lint
+lint:
+	@cd $(QUERY_SERVICE_DIRECTORY) && \
+	$(GOPATH)/bin/golangci-lint -v run
+
+.PHONY: fmt
+fmt:
+	@echo Running go fmt on query service ...
+	@$(GOFMT) -e -s -l -w $(QUERY_SERVICE_DIRECTORY)
+
+.PHONY: install-ci
+install-ci: install-tools
+
+.PHONY: test-ci
+test-ci: lint

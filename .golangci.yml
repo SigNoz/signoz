@@ -1,0 +1,37 @@
+run:
+  timeout: 10m
+linters-settings:
+  depguard:
+    list-type: blacklist
+    include-go-root: true
+  gofmt:
+    simplify: true
+  gosimple:
+    go: '1.17'
+linters:
+  enable:
+    - gofmt
+    - goimports
+    - misspell
+  disable:
+    - staticcheck
+    - typecheck
+    - gosec
+    - govet
+    - errcheck
+    - gocritic
+    - revive
+    - deadcode
+    - gosimple
+    - ineffassign
+    - depguard
+    - errorlint
+    - structcheck
+    - varcheck
+    - unused
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec

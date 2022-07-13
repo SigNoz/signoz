@@ -28,14 +28,14 @@ var AggregateOperatorToPercentile = map[model.AggregateOperator]float64{
 }
 
 var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
-	model.AVG:      "avg",
-	model.MAX:      "max",
-	model.MIN:      "min",
-	model.SUM:      "sum",
-	model.RATE_SUM: "sum",
-	model.RATE_AVG: "avg",
-	model.RATE_MAX: "max",
-	model.RATE_MIN: "min",
+	model.Avg:     "avg",
+	model.Max:     "max",
+	model.Min:     "min",
+	model.Sum:     "sum",
+	model.RateSum: "sum",
+	model.RateAvg: "avg",
+	model.RateMax: "max",
+	model.RateMin: "min",
 }
 
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
@@ -128,7 +128,7 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 	queryString := strings.Join(conditions, " AND ")
 
 	var selectLabels string
-	if aggregateOperator == model.NOOP || aggregateOperator == model.RATE {
+	if aggregateOperator == model.NoOp || aggregateOperator == model.Rate {
 		selectLabels = "labels,"
 	} else {
 		for _, tag := range groupTags {
@@ -136,14 +136,14 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SignozMetricDbname, constants.SignozTimeSeriesTableName, queryString)
 
 	return filterSubQuery, nil
 }
 
 func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, tableName string) (string, error) {
 
-	if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE && len(mq.GroupingTags) != 0 {
+	if qp.CompositeMetricQuery.PanelType == model.QueryValue && len(mq.GroupingTags) != 0 {
 		return "", fmt.Errorf("reduce operator cannot be applied for the query")
 	}
 
@@ -159,7 +159,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		"SELECT %s" +
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SignozMetricDbname + "." + constants.SignozSamplesTableName +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -171,7 +171,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupTags := groupSelect(mq.GroupingTags...)
 
 	switch mq.AggregateOperator {
-	case model.RATE:
+	case model.Rate:
 		// Calculate rate of change of metric for each unique time series
 		groupBy = "fingerprint, ts"
 		groupTags = "fingerprint,"
@@ -183,7 +183,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
-	case model.SUM_RATE:
+	case model.SumRate:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		op := "max(value)"
@@ -194,7 +194,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
-	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
+	case model.RateSum, model.RateMax, model.RateAvg, model.RateMin:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
@@ -204,24 +204,24 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
-	case model.AVG, model.SUM, model.MIN, model.MAX:
+	case model.Avg, model.Sum, model.Min, model.Max:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
-	case model.COUNT:
+	case model.Count:
 		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
-	case model.COUNT_DISTINCT:
+	case model.CountDistinct:
 		op := "toFloat64(count(distinct(value)))"
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
-	case model.NOOP:
+	case model.NoOp:
 		queryTmpl :=
 			"SELECT fingerprint, labels as fullLabels," +
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
-				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+				" FROM " + constants.SignozMetricDbname + "." + constants.SignozSamplesTableName +
 				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
@@ -275,24 +275,24 @@ func reduceQuery(query string, reduceTo model.ReduceToOperator, aggregateOperato
 	var groupBy string
 	// NOOP and RATE can possibly return multiple time series and reduce should be applied
 	// for each uniques series. When the final result contains more than one series we throw
-	// an error post DB fetching. Otherwise just return the single data. This is not known until queried so the
-	// the query is prepared accordingly.
-	if aggregateOperator == model.NOOP || aggregateOperator == model.RATE {
+	// an error post DB fetching. Otherwise, just return the single data. This is not known until queried so the
+	//  query is prepared accordingly.
+	if aggregateOperator == model.NoOp || aggregateOperator == model.Rate {
 		selectLabels = ", any(fullLabels) as fullLabels"
 		groupBy = "GROUP BY fingerprint"
 	}
 	// the timestamp picked is not relevant here since the final value used is show the single
-	// chart with just the query value. For the quer
+	// chart with just the query value.
 	switch reduceTo {
-	case model.RLAST:
+	case model.RLast:
 		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
-	case model.RSUM:
+	case model.RSum:
 		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
-	case model.RAVG:
+	case model.RAvg:
 		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
-	case model.RMAX:
+	case model.RMax:
 		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
-	case model.RMIN:
+	case model.RMin:
 		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
@@ -317,7 +317,7 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 				if err != nil {
 					errs = append(errs, err)
 				} else {
-					if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE {
+					if qp.CompositeMetricQuery.PanelType == model.QueryValue {
 						query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 						if err != nil {
 							errs = append(errs, err)

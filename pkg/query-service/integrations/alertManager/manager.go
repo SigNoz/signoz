@@ -40,7 +40,7 @@ func prepareAmChannelApiURL() string {
 	basePath := constants.GetAlertManagerApiPrefix()
 	AmChannelApiPath := constants.AmChannelApiPath
 
-	if len(AmChannelApiPath) > 0 && rune(AmChannelApiPath[0]) == rune('/') {
+	if len(AmChannelApiPath) > 0 && rune(AmChannelApiPath[0]) == '/' {
 		AmChannelApiPath = AmChannelApiPath[1:]
 	}
 
@@ -109,7 +109,7 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 	req, err := http.NewRequest(http.MethodDelete, amURL, bytes.NewBuffer(requestData))
 
 	if err != nil {
-		zap.S().Errorf("Error in creating new delete request to alertmanager/v1/receivers\n", err)
+		zap.S().Error("Error in creating new delete request to alertmanager/v1/receivers\n", err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -119,7 +119,7 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 	response, err := client.Do(req)
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(DELETE %s)\n", amURL), err)
+		zap.S().Error("Error in getting response of API call to alertmanager(DELETE %s)\n", amURL, err)
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
