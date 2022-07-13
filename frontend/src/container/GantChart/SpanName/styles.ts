@@ -9,7 +9,7 @@ export const Span = styled(Typography.Paragraph)`
 	}
 `;
 
-export const Service = styled(Typography)`
+export const Service = styled(Typography.Paragraph)`
 	&&& {
 		color: #acacac;
 		font-size: 0.75rem;
