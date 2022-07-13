@@ -93,9 +93,9 @@ GitHub provides additional document on [forking a repository](https://help.githu
 You can always reach out to `ankit@signoz.io` to understand more about the repo and product. We are very responsive over email and [SLACK](https://signoz.io/slack).
 
 ### Pointers:
-- If you find any **bugs** → please create an **issue.**
+- If you find any **bugs** → please create an [**issue.**](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=bug_report.md&title=)
 - If you find anything **missing** in documentation → you can create an issue with the label **`documentation`**.
-- If you want to build any **new feature** → please create an issue with the label **`enhancement`**.
+- If you want to build any **new feature** → please create an [issue with the label **`enhancement`**.](https://github.com/SigNoz/signoz/issues/new?assignees=&labels=&template=feature_request.md&title=)
 - If you want to **discuss** something about the product, start a new [**discussion**.](https://github.com/SigNoz/signoz/discussions)
 
 <hr>
@@ -119,7 +119,7 @@ e.g. If you are submitting a fix for an issue in frontend, the PR name should be
 #### There are primarily 2 areas in which you can contribute to SigNoz
 
 - [**Frontend**](#3-develop-frontend-) (Written in Typescript, React)
-- [**Backend**]() (Query Service,  written in Go)
+- [**Backend**](#4-contribute-to-backend-query-service-) (Query Service,  written in Go)
 
 Depending upon your area of expertise & interest, you can choose one or more to contribute. Below are detailed instructions to contribute in each area.
 
