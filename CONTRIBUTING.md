@@ -313,7 +313,7 @@ There are many other ways to get involved with the community and to participate 
 
 ## License
 
-By contributing to FBShipIt, you agree that your contributions will be licensed under its MIT license.
+By contributing to SigNoz, you agree that your contributions will be licensed under its MIT license.
 
 Again, feel free to ping us on `#contributing` or `#contributing-frontend` on our slack community if you need any help on this :)
 
