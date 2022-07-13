@@ -1,27 +1,21 @@
 run:
   timeout: 10m
-
 linters-settings:
   depguard:
     list-type: blacklist
     include-go-root: true
-    # packages:
-    #   - io/ioutil
-    # packages-with-error-message:
-    #   - io/ioutil: "Use os or io instead of io/ioutil"
   gofmt:
     simplify: true
-
   gosimple:
-    go: "1.17"
-
+    go: '1.17'
 linters:
   enable:
     - gofmt
     - goimports
-    - staticcheck
     - misspell
   disable:
+    - staticcheck
+    - typecheck
     - gosec
     - govet
     - errcheck
