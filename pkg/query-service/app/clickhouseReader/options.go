@@ -22,8 +22,8 @@ const (
 	defaultTraceDB         string        = "signoz_traces"
 	defaultOperationsTable string        = "signoz_operations"
 	defaultIndexTable      string        = "signoz_index_v2"
-	defaultErrorTable      string        = "signoz_error_index"
-	defaulDurationTable    string        = "durationSortMV"
+	defaultErrorTable      string        = "signoz_error_index_v2"
+	defaultDurationTable   string        = "durationSortMV"
 	defaultSpansTable      string        = "signoz_spans"
 	defaultWriteBatchDelay time.Duration = 5 * time.Second
 	defaultWriteBatchSize  int           = 10000
@@ -58,12 +58,15 @@ type namespaceConfig struct {
 	Connector       Connector
 }
 
-// Connecto defines how to connect to the database
+// Connector defines how to connect to the database
 type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
 	dsnURL, err := url.Parse(cfg.Datasource)
+	if err != nil {
+		return nil, err
+	}
 	options := &clickhouse.Options{
 		Addr: []string{dsnURL.Host},
 	}
@@ -109,7 +112,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			ErrorTable:      defaultErrorTable,
-			DurationTable:   defaulDurationTable,
+			DurationTable:   defaultDurationTable,
 			SpansTable:      defaultSpansTable,
 			WriteBatchDelay: defaultWriteBatchDelay,
 			WriteBatchSize:  defaultWriteBatchSize,

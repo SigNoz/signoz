@@ -8,6 +8,21 @@ on:
       - release/v*
 
 jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Install tools
+        run: make install-ci
+
+      - name: Run unit tests
+        run: make test-ci
+
   build-frontend:
     runs-on: ubuntu-latest
     steps:

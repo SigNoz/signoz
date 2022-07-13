@@ -22,7 +22,7 @@ func TestParseFilterSingleFilter(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NOOP)
+		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NoOp)
 		So(query, ShouldContainSubstring, "signoz_metrics.time_series_v2 WHERE metric_name = 'table' AND labels_object.namespace = 'a'")
 	})
 }
@@ -38,7 +38,7 @@ func TestParseFilterMultipleFilter(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NOOP)
+		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NoOp)
 		So(query, should.ContainSubstring, "labels_object.host IN ['host-1','host-2']")
 		So(query, should.ContainSubstring, "labels_object.namespace = 'a'")
 	})
@@ -54,7 +54,7 @@ func TestParseFilterNotSupportedOp(t *testing.T) {
 		}`)
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
-		_, err := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NOOP)
+		_, err := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NoOp)
 		So(err, should.BeError, "unsupported operation")
 	})
 }
