@@ -137,7 +137,7 @@ type GetFilterSpansResponse struct {
 	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type SearchSpanDBRResponseItem struct {
+type SearchSpanDBResponseItem struct {
 	Timestamp time.Time `ch:"timestamp"`
 	TraceID   string    `ch:"traceID"`
 	Model     string    `ch:"model"`

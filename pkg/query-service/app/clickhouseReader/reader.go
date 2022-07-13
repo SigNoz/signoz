@@ -2006,7 +2006,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
 
-	var searchScanResponses []model.SearchSpanDBRResponseItem
+	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
 
