@@ -144,7 +144,7 @@ Depending upon your area of expertise & interest, you can choose one or more to 
 - Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
 - run `cd deploy` to move to deploy directory,
 - Install signoz locally **without** the frontend,
-    - Add below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
+    - Add / Uncomment the below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
     ```docker
     ports:
       - "8080:8080"
