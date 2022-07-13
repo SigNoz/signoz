@@ -176,10 +176,10 @@ func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
 		lb.Set(l.Name, l.Value)
 	}
 
-	lb.Set(labels.MetricName, alertMetricName)
-	lb.Set(alertNameLabel, r.name)
-	lb.Set(alertRuleIdLabel, r.ID())
-	lb.Set(alertStateLabel, alert.State.String())
+	lb.Set(labels.MetricNameLabel, alertMetricName)
+	lb.Set(labels.AlertNameLabel, r.name)
+	lb.Set(labels.AlertRuleIdLabel, r.ID())
+	lb.Set(labels.AlertStateLabel, alert.State.String())
 
 	s := Sample{
 		Metric: lb.Labels(),
@@ -197,8 +197,8 @@ func (r *ThresholdRule) forStateSample(alert *Alert, ts time.Time, v float64) Sa
 		lb.Set(l.Name, l.Value)
 	}
 
-	lb.Set(labels.MetricName, alertForStateMetricName)
-	lb.Set(alertNameLabel, r.name)
+	lb.Set(labels.MetricNameLabel, alertForStateMetricName)
+	lb.Set(labels.AlertNameLabel, r.name)
 
 	s := Sample{
 		Metric: lb.Labels(),
@@ -577,15 +577,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			return result
 		}
 
-		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricName)
+		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel)
 
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
 		}
 
-		lb.Set(alertNameLabel, r.Name())
-		lb.Set(alertRuleIdLabel, r.ID())
-		lb.Set(ruleSourceLabel, r.GeneratorURL())
+		lb.Set(labels.AlertNameLabel, r.Name())
+		lb.Set(labels.AlertRuleIdLabel, r.ID())
+		lb.Set(labels.RuleSourceLabel, r.GeneratorURL())
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {

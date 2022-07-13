@@ -298,8 +298,7 @@ func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	// router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", aH.listChannels).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", ViewAccess(aH.getChannel)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.editChannel)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
@@ -388,7 +387,6 @@ func Intersection(a, b []int) (c []int) {
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	ruleResponse, err := aH.ruleManager.GetRule(id)
-	fmt.Println("ruleResponse", ruleResponse)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -772,7 +770,6 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
-	fmt.Println("deleting rule:", id)
 
 	err := aH.ruleManager.DeleteRule(id)
 
@@ -791,7 +788,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of edit rule API\n", err)
+		zap.S().Errorf("msg: error in getting req body of edit rule API\n", "\t error:", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}

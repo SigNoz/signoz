@@ -42,7 +42,7 @@ type ManagerOptions struct {
 	RepoURL string
 
 	// rule db conn
-	Conn *sqlx.DB
+	DBConn *sqlx.DB
 
 	Context      context.Context
 	Logger       log.Logger
@@ -95,7 +95,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		return nil, err
 	}
 
-	db := newRuleDB(o.Conn)
+	db := newRuleDB(o.DBConn)
 
 	m := &Manager{
 		tasks:    map[string]Task{},

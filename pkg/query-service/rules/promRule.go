@@ -156,9 +156,9 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 		lb.Set(l.Name, l.Value)
 	}
 
-	lb.Set(metricNameLabel, alertMetricName)
-	lb.Set(alertNameLabel, r.name)
-	lb.Set(alertStateLabel, alert.State.String())
+	lb.Set(qslabels.MetricNameLabel, alertMetricName)
+	lb.Set(qslabels.AlertNameLabel, r.name)
+	lb.Set(qslabels.AlertStateLabel, alert.State.String())
 
 	s := pql.Sample{
 		Metric: lb.Labels(),
@@ -353,9 +353,9 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
 		}
-		lb.Set(alertNameLabel, r.Name())
-		lb.Set(alertRuleIdLabel, r.ID())
-		lb.Set(ruleSourceLabel, r.GeneratorURL())
+		lb.Set(qslabels.AlertNameLabel, r.Name())
+		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
+		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
 
 		annotations := make(plabels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {

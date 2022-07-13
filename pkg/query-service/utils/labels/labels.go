@@ -14,10 +14,16 @@ const sep = '\xff'
 
 // Well-known label names used by Prometheus components.
 const (
-	MetricName   = "__name__"
-	AlertName    = "alertname"
-	BucketLabel  = "le"
-	InstanceName = "instance"
+	MetricNameLabel = "__name__"
+	AlertNameLabel  = "alertname"
+	BucketLabel     = "le"
+	InstanceName    = "instance"
+
+	// AlertStateLabel is the label name indicating the state of an alert.
+	AlertStateLabel = "alertstate"
+
+	AlertRuleIdLabel = "ruleId"
+	RuleSourceLabel  = "ruleSource"
 )
 
 // Label is a key/value pair of strings.
@@ -106,7 +112,7 @@ func (ls Labels) HashWithoutLabels(names ...string) uint64 {
 
 Outer:
 	for _, v := range ls {
-		if v.Name == MetricName {
+		if v.Name == MetricNameLabel {
 			continue
 		}
 		for _, n := range names {

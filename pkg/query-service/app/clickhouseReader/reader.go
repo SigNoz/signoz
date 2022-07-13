@@ -99,12 +99,16 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	db, err := initialize(options)
 
 	if err != nil {
-		zap.S().Error(err)
-		fmt.Println("failed to initialize ch:", err)
+		zap.S().Error("failed to initialize ClickHouse: ", err)
 		os.Exit(1)
 	}
 
-	alertManager, _ := am.New("")
+	alertManager, err := am.New("")
+	if err != nil {
+		zap.S().Errorf("msg: failed to initialize alert manager: ", "/t error:", err)
+		zap.S().Errorf("msg: check if the alert manager URL is correctly set and valid")
+		os.Exit(1)
+	}
 
 	return &ClickHouseReader{
 		db:              db,

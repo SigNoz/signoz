@@ -369,7 +369,7 @@ func makeRulesManager(
 			Ch:        ch.GetConn(),
 		},
 		RepoURL:      ruleRepoURL,
-		Conn:         db,
+		DBConn:       db,
 		Context:      context.Background(),
 		Logger:       nil,
 		DisableRules: disableRules,

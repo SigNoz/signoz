@@ -17,16 +17,6 @@ const (
 
 	// AlertForStateMetricName is the metric name for 'for' state of alert.
 	alertForStateMetricName = "ALERTS_FOR_STATE"
-
-	// AlertNameLabel is the label name indicating the name of an alert.
-	alertNameLabel = "alertname"
-
-	// AlertStateLabel is the label name indicating the state of an alert.
-	alertStateLabel = "alertstate"
-
-	metricNameLabel  = "__name__"
-	alertRuleIdLabel = "ruleId"
-	ruleSourceLabel  = "ruleSource"
 )
 
 type RuleType string
