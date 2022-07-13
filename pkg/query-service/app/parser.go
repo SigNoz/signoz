@@ -467,8 +467,8 @@ func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) 
 	}
 
 	params := &model.CountErrorsParams{
-		Start:      startTime,
-		End:        endTime,
+		Start: startTime,
+		End:   endTime,
 	}
 
 	return params, nil
