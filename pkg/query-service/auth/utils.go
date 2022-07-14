@@ -33,6 +33,7 @@ func isValidRole(role string) bool {
 	default:
 		return false
 	}
+	return false
 }
 
 func validateInviteRequest(req *model.InviteRequest) error {

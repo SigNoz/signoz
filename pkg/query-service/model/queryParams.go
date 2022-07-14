@@ -33,20 +33,20 @@ type ReduceToOperator int
 
 const (
 	_ ReduceToOperator = iota
-	RLast
-	RSum
-	RAvg
-	RMax
-	RMin
+	RLAST
+	RSUM
+	RAVG
+	RMAX
+	RMIN
 )
 
 type QueryType int
 
 const (
 	_ QueryType = iota
-	QueryBuilder
-	ClickHouse
-	Prom
+	QUERY_BUILDER
+	CLICKHOUSE
+	PROM
 )
 
 type PromQuery struct {
@@ -64,8 +64,8 @@ type PanelType int
 
 const (
 	_ PanelType = iota
-	TimeSeries
-	QueryValue
+	TIME_SERIES
+	QUERY_VALUE
 )
 
 type CompositeMetricQuery struct {
@@ -80,13 +80,13 @@ type AggregateOperator int
 
 const (
 	_ AggregateOperator = iota
-	NoOp
-	Count
-	CountDistinct
-	Sum
-	Avg
-	Max
-	Min
+	NOOP
+	COUNT
+	COUNT_DISTINCT
+	SUM
+	AVG
+	MAX
+	MIN
 	P05
 	P10
 	P20
@@ -96,25 +96,25 @@ const (
 	P90
 	P95
 	P99
-	Rate
-	SumRate
-	// leave blank space for possibly {AVG, X}_RATE
+	RATE
+	SUM_RATE
+	// leave blank space for possily {AVG, X}_RATE
 	_
 	_
 	_
-	RateSum
-	RateAvg
-	RateMax
-	RateMin
+	RATE_SUM
+	RATE_AVG
+	RATE_MAX
+	RATE_MIN
 )
 
 type DataSource int
 
 const (
 	_ DataSource = iota
-	Metrics
-	Traces
-	Logs
+	METRICS
+	TRACES
+	LOGS
 )
 
 type QueryRangeParamsV2 struct {
