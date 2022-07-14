@@ -11,8 +11,13 @@ receivers:
           scrape_interval: 60s
           static_configs:
             - targets:
-              - localhost:8888
               - otel-collector:8888
+        # otel-collector-metrics internal metrics
+        - job_name: "otel-collector-metrics"
+          scrape_interval: 60s
+          static_configs:
+            - targets:
+              - localhost:8888
         # SigNoz span metrics
         - job_name: "signozspanmetrics-collector"
           scrape_interval: 60s

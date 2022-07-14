@@ -61,9 +61,10 @@ processors:
   #   queue_size: 100
   #   retry_on_failure: true
   resourcedetection:
-    detectors: [env]
+    # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
+    detectors: [env, system] # include ec2 for AWS, gce for GCP and azure for Azure.
     timeout: 2s
-    override: true
+    override: false
 
 extensions:
   health_check:
@@ -98,10 +99,13 @@ service:
       processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp, hostmetrics]
+      receivers: [otlp]
       processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
-      processors: [batch]
       exporters: [prometheus]

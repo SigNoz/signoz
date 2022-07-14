@@ -61,9 +61,9 @@ processors:
   #   queue_size: 100
   #   retry_on_failure: true
   resourcedetection:
-    detectors: [env]
+    detectors: [env, system]
     timeout: 2s
-    override: true
+    override: false
 
 extensions:
   health_check:
@@ -98,10 +98,13 @@ service:
       processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp, hostmetrics]
+      receivers: [otlp]
       processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
-      processors: [batch]
       exporters: [prometheus]

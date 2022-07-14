@@ -38,7 +38,7 @@ processors:
     timeout: 10s
   resourcedetection:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
-    detectors: [env] # include ec2 for AWS, gce for GCP and azure for Azure.
+    detectors: [env, system] # include ec2 for AWS, gce for GCP and azure for Azure.
     timeout: 2s
     override: false
   signozspanmetrics/prometheus:
@@ -93,13 +93,16 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics/prometheus, resourcedetection, batch]
+      processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp, hostmetrics]
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
       processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
-      processors: [batch]
       exporters: [prometheus]

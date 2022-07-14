@@ -7,8 +7,13 @@ receivers:
           scrape_interval: 60s
           static_configs:
             - targets:
-              - localhost:8888
               - otel-collector:8888
+        # otel-collector-metrics internal metrics
+        - job_name: "otel-collector-metrics"
+          scrape_interval: 60s
+          static_configs:
+            - targets:
+              - localhost:8888
         # SigNoz span metrics
         - job_name: "signozspanmetrics-collector"
           scrape_interval: 60s
@@ -21,11 +26,6 @@ processors:
     send_batch_size: 10000
     send_batch_max_size: 11000
     timeout: 10s
-  resourcedetection:
-    # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
-    detectors: [env] # include ec2 for AWS, gce for GCP and azure for Azure.
-    timeout: 2s
-    override: false
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500

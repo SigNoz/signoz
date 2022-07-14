@@ -98,7 +98,7 @@ services:
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
     environment:
-      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}},dockerswarm.service.name={{.Service.Name}},dockerswarm.task.name={{.Task.Name}}
     deploy:
       mode: replicated
       replicas: 3
