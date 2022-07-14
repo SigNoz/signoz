@@ -3,14 +3,14 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import createQueryParams from 'lib/createQueryParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/errors/getAll';
+import { PayloadProps, Props } from 'types/api/errors/getNextPrevId';
 
-const getAll = async (
+const getErrorCounts = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			`/listErrors?${createQueryParams({
+			`/nextPrevErrorIDs?${createQueryParams({
 				...props,
 			})}`,
 		);
@@ -18,7 +18,7 @@ const getAll = async (
 		return {
 			statusCode: 200,
 			error: null,
-			message: 'Success',
+			message: response.data.message,
 			payload: response.data,
 		};
 	} catch (error) {
@@ -26,4 +26,4 @@ const getAll = async (
 	}
 };
 
-export default getAll;
+export default getErrorCounts;
