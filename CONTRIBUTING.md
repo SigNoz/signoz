@@ -225,12 +225,17 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
     ```
 - run `sudo make dev-setup` to configure local setup to run query-service,
 - Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+<img width="982" alt="develop-frontend" src="https://user-images.githubusercontent.com/52788043/179043977-012be8b0-a2ed-40d1-b2e6-2ab72d7989c0.png">
+
 - Comment out `query-service` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L41`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L41)
+<img width="1068" alt="Screenshot 2022-07-14 at 22 48 07" src="https://user-images.githubusercontent.com/52788043/179044151-a65ba571-db0b-4a16-b64b-ca3fadcf3af0.png">
+
 - add below configuration to `clickhouse` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
   ```
   ports:
     - 9001:9000
   ```
+<img width="1013" alt="Screenshot 2022-07-14 at 22 50 37" src="https://user-images.githubusercontent.com/52788043/179044544-a293d3bc-4c4f-49ea-a276-505a381de67d.png">
 
 - run `cd pkg/query-service/` to move to `query-service` directory,
 - Then, you need to create a `.env` file with the following environment variable 
