@@ -126,7 +126,7 @@ export const toChartInterval = (evalWindow: string | undefined): Time => {
 			return '30min';
 		case '60m0s':
 			return '30min';
-		case '1440m0s':
+		case '24h0m0s':
 			return '1day';
 		default:
 			return '5min';
