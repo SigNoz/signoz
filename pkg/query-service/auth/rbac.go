@@ -17,13 +17,13 @@ type Group struct {
 	GroupName string
 }
 
-type Cache struct {
+type AuthCache struct {
 	AdminGroupId  string
 	EditorGroupId string
 	ViewerGroupId string
 }
 
-var CacheObj Cache
+var AuthCacheObj AuthCache
 
 // InitAuthCache reads the DB and initialize the auth cache.
 func InitAuthCache(ctx context.Context) error {
@@ -37,13 +37,13 @@ func InitAuthCache(ctx context.Context) error {
 		return nil
 	}
 
-	if err := setGroupId(constants.AdminGroup, &CacheObj.AdminGroupId); err != nil {
+	if err := setGroupId(constants.AdminGroup, &AuthCacheObj.AdminGroupId); err != nil {
 		return err
 	}
-	if err := setGroupId(constants.EditorGroup, &CacheObj.EditorGroupId); err != nil {
+	if err := setGroupId(constants.EditorGroup, &AuthCacheObj.EditorGroupId); err != nil {
 		return err
 	}
-	if err := setGroupId(constants.ViewerGroup, &CacheObj.ViewerGroupId); err != nil {
+	if err := setGroupId(constants.ViewerGroup, &AuthCacheObj.ViewerGroupId); err != nil {
 		return err
 	}
 
@@ -65,9 +65,9 @@ func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
 
 func IsSelfAccessRequest(user *model.UserPayload, id string) bool { return user.Id == id }
 
-func IsViewer(user *model.UserPayload) bool { return user.GroupId == CacheObj.ViewerGroupId }
-func IsEditor(user *model.UserPayload) bool { return user.GroupId == CacheObj.EditorGroupId }
-func IsAdmin(user *model.UserPayload) bool  { return user.GroupId == CacheObj.AdminGroupId }
+func IsViewer(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.ViewerGroupId }
+func IsEditor(user *model.UserPayload) bool { return user.GroupId == AuthCacheObj.EditorGroupId }
+func IsAdmin(user *model.UserPayload) bool  { return user.GroupId == AuthCacheObj.AdminGroupId }
 
 func ValidatePassword(password string) error {
 	if len(password) < minimumPasswordLength {

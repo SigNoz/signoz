@@ -11,7 +11,7 @@ const (
 	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
 )
 
-var DefaultTelemetryAnonymous = false
+var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsTelemetryEnabled() bool {
 	isTelemetryEnabledStr := os.Getenv("TELEMETRY_ENABLED")
@@ -32,44 +32,52 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
-// AmChannelApiPath is a channel subpath for Alert manager
+// Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
-var RelationalDatasourcePath = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
+var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
-	ServiceName      = "serviceName"
-	HttpRoute        = "httpRoute"
-	HttpCode         = "httpCode"
-	HttpHost         = "httpHost"
-	HttpUrl          = "httpUrl"
-	HttpMethod       = "httpMethod"
-	Component        = "component"
-	OperationDB      = "name"
-	OperationRequest = "operation"
-	Status           = "status"
-	Duration         = "duration"
-	DBName           = "dbName"
-	DBOperation      = "dbOperation"
-	DBSystem         = "dbSystem"
-	MsgSystem        = "msgSystem"
-	MsgOperation     = "msgOperation"
-	Timestamp        = "timestamp"
-	Descending       = "descending"
-	Ascending        = "ascending"
-	ContextTimeout   = 60 // seconds
-	StatusPending    = "pending"
-	StatusFailed     = "failed"
-	StatusSuccess    = "success"
-	ExceptionType    = "exceptionType"
-	ExceptionCount   = "exceptionCount"
-	LastSeen         = "lastSeen"
-	FirstSeen        = "firstSeen"
+	ServiceName        = "serviceName"
+	HttpRoute          = "httpRoute"
+	HttpCode           = "httpCode"
+	HttpHost           = "httpHost"
+	HttpUrl            = "httpUrl"
+	HttpMethod         = "httpMethod"
+	Component          = "component"
+	OperationDB        = "name"
+	OperationRequest   = "operation"
+	Status             = "status"
+	Duration           = "duration"
+	DBName             = "dbName"
+	DBOperation        = "dbOperation"
+	DBSystem           = "dbSystem"
+	MsgSystem          = "msgSystem"
+	MsgOperation       = "msgOperation"
+	Timestamp          = "timestamp"
+	RPCMethod          = "rpcMethod"
+	ResponseStatusCode = "responseStatusCode"
+	Descending         = "descending"
+	Ascending          = "ascending"
+	ContextTimeout     = 60 // seconds
+	StatusPending      = "pending"
+	StatusFailed       = "failed"
+	StatusSuccess      = "success"
+	ExceptionType      = "exceptionType"
+	ExceptionCount     = "exceptionCount"
+	LastSeen           = "lastSeen"
+	FirstSeen          = "firstSeen"
 )
 const (
-	SignozMetricDbname        = "signoz_metrics"
-	SignozSamplesTableName    = "samples_v2"
-	SignozTimeSeriesTableName = "time_series_v2"
+	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
+	SIGNOZ_SAMPLES_TABLENAME    = "samples_v2"
+	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
+)
+
+// alert related constants
+const (
+	// AlertHelpPage is used in case default alert repo url is not set
+	AlertHelpPage = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

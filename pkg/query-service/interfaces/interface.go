@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	am "go.signoz.io/query-service/integrations/alertManager"
@@ -15,12 +16,6 @@ type Reader interface {
 	DeleteChannel(id string) *model.ApiError
 	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
 	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
-
-	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
-	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
-	CreateRule(alert string) *model.ApiError
-	EditRule(alert string, id string) *model.ApiError
-	DeleteRule(id string) *model.ApiError
 
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
@@ -47,8 +42,10 @@ type Reader interface {
 	GetErrorFromGroupID(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
 	GetNextPrevErrorIDs(ctx context.Context, params *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError)
 
+	// Search Interfaces
 	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 
+	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
 	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
@@ -60,4 +57,7 @@ type Reader interface {
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
 	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+
+	// Connection needed for rules, not ideal but required
+	GetConn() clickhouse.Conn
 }

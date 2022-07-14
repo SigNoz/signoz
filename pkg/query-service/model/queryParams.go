@@ -33,20 +33,20 @@ type ReduceToOperator int
 
 const (
 	_ ReduceToOperator = iota
-	RLast
-	RSum
-	RAvg
-	RMax
-	RMin
+	RLAST
+	RSUM
+	RAVG
+	RMAX
+	RMIN
 )
 
 type QueryType int
 
 const (
 	_ QueryType = iota
-	QueryBuilder
-	ClickHouse
-	Prom
+	QUERY_BUILDER
+	CLICKHOUSE
+	PROM
 )
 
 type PromQuery struct {
@@ -64,8 +64,8 @@ type PanelType int
 
 const (
 	_ PanelType = iota
-	TimeSeries
-	QueryValue
+	TIME_SERIES
+	QUERY_VALUE
 )
 
 type CompositeMetricQuery struct {
@@ -80,13 +80,13 @@ type AggregateOperator int
 
 const (
 	_ AggregateOperator = iota
-	NoOp
-	Count
-	CountDistinct
-	Sum
-	Avg
-	Max
-	Min
+	NOOP
+	COUNT
+	COUNT_DISTINCT
+	SUM
+	AVG
+	MAX
+	MIN
 	P05
 	P10
 	P20
@@ -96,25 +96,25 @@ const (
 	P90
 	P95
 	P99
-	Rate
-	SumRate
-	// leave blank space for possibly {AVG, X}_RATE
+	RATE
+	SUM_RATE
+	// leave blank space for possily {AVG, X}_RATE
 	_
 	_
 	_
-	RateSum
-	RateAvg
-	RateMax
-	RateMin
+	RATE_SUM
+	RATE_AVG
+	RATE_MAX
+	RATE_MIN
 )
 
 type DataSource int
 
 const (
 	_ DataSource = iota
-	Metrics
-	Traces
-	Logs
+	METRICS
+	TRACES
+	LOGS
 )
 
 type QueryRangeParamsV2 struct {
@@ -181,94 +181,102 @@ type TagQuery struct {
 }
 
 type GetFilteredSpansParams struct {
-	ServiceName []string   `json:"serviceName"`
-	Operation   []string   `json:"operation"`
-	Kind        string     `json:"kind"`
-	Status      []string   `json:"status"`
-	HttpRoute   []string   `json:"httpRoute"`
-	HttpCode    []string   `json:"httpCode"`
-	HttpUrl     []string   `json:"httpUrl"`
-	HttpHost    []string   `json:"httpHost"`
-	HttpMethod  []string   `json:"httpMethod"`
-	Component   []string   `json:"component"`
-	StartStr    string     `json:"start"`
-	EndStr      string     `json:"end"`
-	MinDuration string     `json:"minDuration"`
-	MaxDuration string     `json:"maxDuration"`
-	Limit       int64      `json:"limit"`
-	OrderParam  string     `json:"orderParam"`
-	Order       string     `json:"order"`
-	Offset      int64      `json:"offset"`
-	Tags        []TagQuery `json:"tags"`
-	Exclude     []string   `json:"exclude"`
-	Start       *time.Time
-	End         *time.Time
+	ServiceName        []string   `json:"serviceName"`
+	Operation          []string   `json:"operation"`
+	Kind               string     `json:"kind"`
+	Status             []string   `json:"status"`
+	HttpRoute          []string   `json:"httpRoute"`
+	HttpCode           []string   `json:"httpCode"`
+	HttpUrl            []string   `json:"httpUrl"`
+	HttpHost           []string   `json:"httpHost"`
+	HttpMethod         []string   `json:"httpMethod"`
+	Component          []string   `json:"component"`
+	RPCMethod          []string   `json:"rpcMethod"`
+	ResponseStatusCode []string   `json:"responseStatusCode"`
+	StartStr           string     `json:"start"`
+	EndStr             string     `json:"end"`
+	MinDuration        string     `json:"minDuration"`
+	MaxDuration        string     `json:"maxDuration"`
+	Limit              int64      `json:"limit"`
+	OrderParam         string     `json:"orderParam"`
+	Order              string     `json:"order"`
+	Offset             int64      `json:"offset"`
+	Tags               []TagQuery `json:"tags"`
+	Exclude            []string   `json:"exclude"`
+	Start              *time.Time
+	End                *time.Time
 }
 
 type GetFilteredSpanAggregatesParams struct {
-	ServiceName       []string   `json:"serviceName"`
-	Operation         []string   `json:"operation"`
-	Kind              string     `json:"kind"`
-	Status            []string   `json:"status"`
-	HttpRoute         []string   `json:"httpRoute"`
-	HttpCode          []string   `json:"httpCode"`
-	HttpUrl           []string   `json:"httpUrl"`
-	HttpHost          []string   `json:"httpHost"`
-	HttpMethod        []string   `json:"httpMethod"`
-	Component         []string   `json:"component"`
-	MinDuration       string     `json:"minDuration"`
-	MaxDuration       string     `json:"maxDuration"`
-	Tags              []TagQuery `json:"tags"`
-	StartStr          string     `json:"start"`
-	EndStr            string     `json:"end"`
-	StepSeconds       int        `json:"step"`
-	Dimension         string     `json:"dimension"`
-	AggregationOption string     `json:"aggregationOption"`
-	GroupBy           string     `json:"groupBy"`
-	Function          string     `json:"function"`
-	Exclude           []string   `json:"exclude"`
-	Start             *time.Time
-	End               *time.Time
+	ServiceName        []string   `json:"serviceName"`
+	Operation          []string   `json:"operation"`
+	Kind               string     `json:"kind"`
+	Status             []string   `json:"status"`
+	HttpRoute          []string   `json:"httpRoute"`
+	HttpCode           []string   `json:"httpCode"`
+	HttpUrl            []string   `json:"httpUrl"`
+	HttpHost           []string   `json:"httpHost"`
+	HttpMethod         []string   `json:"httpMethod"`
+	Component          []string   `json:"component"`
+	RPCMethod          []string   `json:"rpcMethod"`
+	ResponseStatusCode []string   `json:"responseStatusCode"`
+	MinDuration        string     `json:"minDuration"`
+	MaxDuration        string     `json:"maxDuration"`
+	Tags               []TagQuery `json:"tags"`
+	StartStr           string     `json:"start"`
+	EndStr             string     `json:"end"`
+	StepSeconds        int        `json:"step"`
+	Dimension          string     `json:"dimension"`
+	AggregationOption  string     `json:"aggregationOption"`
+	GroupBy            string     `json:"groupBy"`
+	Function           string     `json:"function"`
+	Exclude            []string   `json:"exclude"`
+	Start              *time.Time
+	End                *time.Time
 }
 
 type SpanFilterParams struct {
-	Status      []string `json:"status"`
-	ServiceName []string `json:"serviceName"`
-	HttpRoute   []string `json:"httpRoute"`
-	HttpCode    []string `json:"httpCode"`
-	HttpUrl     []string `json:"httpUrl"`
-	HttpHost    []string `json:"httpHost"`
-	HttpMethod  []string `json:"httpMethod"`
-	Component   []string `json:"component"`
-	Operation   []string `json:"operation"`
-	GetFilters  []string `json:"getFilters"`
-	Exclude     []string `json:"exclude"`
-	MinDuration string   `json:"minDuration"`
-	MaxDuration string   `json:"maxDuration"`
-	StartStr    string   `json:"start"`
-	EndStr      string   `json:"end"`
-	Start       *time.Time
-	End         *time.Time
+	Status             []string `json:"status"`
+	ServiceName        []string `json:"serviceName"`
+	HttpRoute          []string `json:"httpRoute"`
+	HttpCode           []string `json:"httpCode"`
+	HttpUrl            []string `json:"httpUrl"`
+	HttpHost           []string `json:"httpHost"`
+	HttpMethod         []string `json:"httpMethod"`
+	Component          []string `json:"component"`
+	Operation          []string `json:"operation"`
+	RPCMethod          []string `json:"rpcMethod"`
+	ResponseStatusCode []string `json:"responseStatusCode"`
+	GetFilters         []string `json:"getFilters"`
+	Exclude            []string `json:"exclude"`
+	MinDuration        string   `json:"minDuration"`
+	MaxDuration        string   `json:"maxDuration"`
+	StartStr           string   `json:"start"`
+	EndStr             string   `json:"end"`
+	Start              *time.Time
+	End                *time.Time
 }
 
 type TagFilterParams struct {
-	Status      []string `json:"status"`
-	ServiceName []string `json:"serviceName"`
-	HttpRoute   []string `json:"httpRoute"`
-	HttpCode    []string `json:"httpCode"`
-	HttpUrl     []string `json:"httpUrl"`
-	HttpHost    []string `json:"httpHost"`
-	HttpMethod  []string `json:"httpMethod"`
-	Component   []string `json:"component"`
-	Operation   []string `json:"operation"`
-	Exclude     []string `json:"exclude"`
-	MinDuration string   `json:"minDuration"`
-	MaxDuration string   `json:"maxDuration"`
-	StartStr    string   `json:"start"`
-	EndStr      string   `json:"end"`
-	TagKey      string   `json:"tagKey"`
-	Start       *time.Time
-	End         *time.Time
+	Status             []string `json:"status"`
+	ServiceName        []string `json:"serviceName"`
+	HttpRoute          []string `json:"httpRoute"`
+	HttpCode           []string `json:"httpCode"`
+	HttpUrl            []string `json:"httpUrl"`
+	HttpHost           []string `json:"httpHost"`
+	HttpMethod         []string `json:"httpMethod"`
+	Component          []string `json:"component"`
+	Operation          []string `json:"operation"`
+	RPCMethod          []string `json:"rpcMethod"`
+	ResponseStatusCode []string `json:"responseStatusCode"`
+	Exclude            []string `json:"exclude"`
+	MinDuration        string   `json:"minDuration"`
+	MaxDuration        string   `json:"maxDuration"`
+	StartStr           string   `json:"start"`
+	EndStr             string   `json:"end"`
+	TagKey             string   `json:"tagKey"`
+	Start              *time.Time
+	End                *time.Time
 }
 
 type TTLParams struct {

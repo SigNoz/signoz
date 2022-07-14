@@ -11,13 +11,13 @@ import (
 
 func validateQueryRangeParamsV2(qp *model.QueryRangeParamsV2) error {
 	var errs []error
-	if !(qp.DataSource >= model.Metrics && qp.DataSource <= model.Logs) {
+	if !(qp.DataSource >= model.METRICS && qp.DataSource <= model.LOGS) {
 		errs = append(errs, fmt.Errorf("unsupported data source"))
 	}
-	if !(qp.CompositeMetricQuery.QueryType >= model.QueryBuilder && qp.CompositeMetricQuery.QueryType <= model.Prom) {
+	if !(qp.CompositeMetricQuery.QueryType >= model.QUERY_BUILDER && qp.CompositeMetricQuery.QueryType <= model.PROM) {
 		errs = append(errs, fmt.Errorf("unsupported query type"))
 	}
-	if !(qp.CompositeMetricQuery.PanelType >= model.TimeSeries && qp.CompositeMetricQuery.PanelType <= model.QueryValue) {
+	if !(qp.CompositeMetricQuery.PanelType >= model.TIME_SERIES && qp.CompositeMetricQuery.PanelType <= model.QUERY_VALUE) {
 		errs = append(errs, fmt.Errorf("unsupported panel type"))
 	}
 	if len(errs) != 0 {

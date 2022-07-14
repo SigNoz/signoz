@@ -73,7 +73,7 @@ type AlertDiscovery struct {
 	Alerts []*AlertingRuleResponse `json:"rules"`
 }
 
-// AlertingRuleResponse has info for an alert.
+// Alert has info for an alert.
 type AlertingRuleResponse struct {
 	Labels      labels.Labels `json:"labels"`
 	Annotations labels.Labels `json:"annotations"`
@@ -118,18 +118,20 @@ type SearchSpansResult struct {
 }
 
 type GetFilterSpansResponseItem struct {
-	Timestamp    time.Time `ch:"timestamp" json:"timestamp"`
-	SpanID       string    `ch:"spanID" json:"spanID"`
-	TraceID      string    `ch:"traceID" json:"traceID"`
-	ServiceName  string    `ch:"serviceName" json:"serviceName"`
-	Operation    string    `ch:"name" json:"operation"`
-	DurationNano uint64    `ch:"durationNano" json:"durationNano"`
-	HttpCode     string    `ch:"httpCode"`
-	HttpMethod   string    `ch:"httpMethod"`
-	GRPCode      string    `ch:"gRPCCode"`
-	GRPMethod    string    `ch:"gRPCMethod"`
-	StatusCode   string    `json:"statusCode"`
-	Method       string    `json:"method"`
+	Timestamp          time.Time `ch:"timestamp" json:"timestamp"`
+	SpanID             string    `ch:"spanID" json:"spanID"`
+	TraceID            string    `ch:"traceID" json:"traceID"`
+	ServiceName        string    `ch:"serviceName" json:"serviceName"`
+	Operation          string    `ch:"name" json:"operation"`
+	DurationNano       uint64    `ch:"durationNano" json:"durationNano"`
+	HttpCode           string    `ch:"httpCode"`
+	HttpMethod         string    `ch:"httpMethod"`
+	GRPCode            string    `ch:"gRPCCode"`
+	GRPMethod          string    `ch:"gRPCMethod"`
+	StatusCode         string    `json:"statusCode"`
+	Method             string    `json:"method"`
+	ResponseStatusCode string    `ch:"responseStatusCode"`
+	RPCMethod          string    `ch:"rpcMethod"`
 }
 
 type GetFilterSpansResponse struct {
@@ -137,7 +139,7 @@ type GetFilterSpansResponse struct {
 	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type SearchSpanDBResponseItem struct {
+type SearchSpanDBReponseItem struct {
 	Timestamp time.Time `ch:"timestamp"`
 	TraceID   string    `ch:"traceID"`
 	Model     string    `ch:"model"`
@@ -150,7 +152,7 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
-type SearchSpanResponseItem struct {
+type SearchSpanReponseItem struct {
 	TimeUnixNano uint64            `json:"timestamp"`
 	SpanID       string            `json:"spanID"`
 	TraceID      string            `json:"traceID"`
@@ -177,13 +179,13 @@ func (ref *OtelSpanRef) toString() string {
 	return retString
 }
 
-func (item *SearchSpanResponseItem) GetValues() []interface{} {
+func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
-	var references []OtelSpanRef
-	jsonBody, _ := json.Marshal(item.References)
-	json.Unmarshal(jsonBody, &references)
+	references := []OtelSpanRef{}
+	jsonbody, _ := json.Marshal(item.References)
+	json.Unmarshal(jsonbody, &references)
 
-	var referencesStringArray []string
+	referencesStringArray := []string{}
 	for _, item := range references {
 		referencesStringArray = append(referencesStringArray, item.toString())
 	}
@@ -303,6 +305,16 @@ type DBResponseHttpMethod struct {
 	Count      uint64 `ch:"count"`
 }
 
+type DBResponseStatusCodeMethod struct {
+	ResponseStatusCode string `ch:"responseStatusCode"`
+	Count              uint64 `ch:"count"`
+}
+
+type DBResponseRPCMethod struct {
+	RPCMethod string `ch:"rpcMethod"`
+	Count     uint64 `ch:"count"`
+}
+
 type DBResponseHttpHost struct {
 	HttpHost string `ch:"httpHost"`
 	Count    uint64 `ch:"count"`
@@ -323,16 +335,18 @@ type DBResponseTotal struct {
 }
 
 type SpanFiltersResponse struct {
-	ServiceName map[string]uint64 `json:"serviceName"`
-	Status      map[string]uint64 `json:"status"`
-	Duration    map[string]uint64 `json:"duration"`
-	Operation   map[string]uint64 `json:"operation"`
-	HttpCode    map[string]uint64 `json:"httpCode"`
-	HttpUrl     map[string]uint64 `json:"httpUrl"`
-	HttpMethod  map[string]uint64 `json:"httpMethod"`
-	HttpRoute   map[string]uint64 `json:"httpRoute"`
-	HttpHost    map[string]uint64 `json:"httpHost"`
-	Component   map[string]uint64 `json:"component"`
+	ServiceName        map[string]uint64 `json:"serviceName"`
+	Status             map[string]uint64 `json:"status"`
+	Duration           map[string]uint64 `json:"duration"`
+	Operation          map[string]uint64 `json:"operation"`
+	HttpCode           map[string]uint64 `json:"httpCode"`
+	ResponseStatusCode map[string]uint64 `json:"responseStatusCode"`
+	RPCMethod          map[string]uint64 `json:"rpcMethod"`
+	HttpUrl            map[string]uint64 `json:"httpUrl"`
+	HttpMethod         map[string]uint64 `json:"httpMethod"`
+	HttpRoute          map[string]uint64 `json:"httpRoute"`
+	HttpHost           map[string]uint64 `json:"httpHost"`
+	Component          map[string]uint64 `json:"component"`
 }
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
