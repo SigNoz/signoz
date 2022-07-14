@@ -17,4 +17,6 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v1
+        with:
+          fail-on-severity: low
+        uses: actions/dependency-review-action@v2
