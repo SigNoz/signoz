@@ -4,7 +4,6 @@ import saveAlertApi from 'api/alerts/save';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
-import { PanelContainer } from 'container/NewWidget/styles';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +29,7 @@ import {
 	ActionButton,
 	ButtonContainer,
 	MainFormContainer,
+	PanelContainer,
 	StyledLeftContainer,
 	StyledRightContainer,
 } from './styles';

@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
-import Graph, { GraphOnClickHandler } from 'components/Graph';
+import Graph, { GraphOnClickHandler, StaticLineProps } from 'components/Graph';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -18,7 +18,7 @@ function GridGraphComponent({
 	onClickHandler,
 	name,
 	yAxisUnit,
-	annotations,
+	staticLine,
 }: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
@@ -37,7 +37,7 @@ function GridGraphComponent({
 					onClickHandler,
 					name,
 					yAxisUnit,
-					annotations,
+					staticLine,
 				}}
 			/>
 		);
@@ -84,7 +84,7 @@ export interface GridGraphComponentProps {
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
-	annotations?: [];
+	staticLine?: StaticLineProps;
 }
 
 GridGraphComponent.defaultProps = {
@@ -93,7 +93,7 @@ GridGraphComponent.defaultProps = {
 	isStacked: undefined,
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
-	annotations: undefined,
+	staticLine: undefined,
 };
 
 export default GridGraphComponent;

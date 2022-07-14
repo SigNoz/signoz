@@ -1,4 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { StaticLineProps } from 'components/Graph';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -33,26 +34,18 @@ function ChartPreview({
 	threshold,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('rules');
-	const annotations = [
-		{
-			type: 'line',
-			yMin: threshold,
-			yMax: threshold,
-			borderColor: '#f14',
-			borderWidth: 1,
-			label: {
-				content: `${t('preview_chart_threshold_label')} (y=${threshold})`,
-				enabled: true,
-				font: {
-					size: 10,
-				},
-				borderWidth: 0,
-				position: 'start',
-				backgroundColor: 'transparent',
-				color: '#f14',
-			},
-		},
-	];
+	const staticLine: StaticLineProps | undefined =
+		threshold && threshold > 0
+			? {
+					yMin: threshold,
+					yMax: threshold,
+					borderColor: '#f14',
+					borderWidth: 1,
+					lineText: `${t('preview_chart_threshold_label')} (y=${threshold})`,
+					textColor: '#f14',
+			  }
+			: undefined;
+
 	const queryKey = JSON.stringify(query);
 	const queryResponse = useQuery({
 		queryKey: ['chartPreview', queryKey, selectedInterval],
@@ -108,7 +101,7 @@ function ChartPreview({
 					isStacked
 					GRAPH_TYPES={graphType || 'TIME_SERIES'}
 					name={name || 'Chart Preview'}
-					annotations={threshold && threshold > 0 ? annotations : undefined}
+					staticLine={staticLine}
 				/>
 			)}
 		</ChartContainer>

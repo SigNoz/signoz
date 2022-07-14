@@ -18,10 +18,10 @@ export type Span = [
 	string,
 	string,
 	string,
-	string | string[],
-	string | string[],
-	string | string[],
-	Record<string, unknown>[],
+	string[],
+	string[],
+	string[],
+	string[],
 	boolean,
 ];
 

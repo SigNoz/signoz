@@ -193,7 +193,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[2m]))`,
+										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))`,
 										legend: 'Requests',
 									},
 								])}
@@ -227,7 +227,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[1m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."${resourceAttributePromQLQuery}}[1m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[1m]))) < 1000 OR vector(0)`,
+										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
 										legend: 'Error Percentage',
 									},
 								])}

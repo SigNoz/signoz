@@ -38,34 +38,46 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
-	ServiceName      = "serviceName"
-	HttpRoute        = "httpRoute"
-	HttpCode         = "httpCode"
-	HttpHost         = "httpHost"
-	HttpUrl          = "httpUrl"
-	HttpMethod       = "httpMethod"
-	Component        = "component"
-	OperationDB      = "name"
-	OperationRequest = "operation"
-	Status           = "status"
-	Duration         = "duration"
-	DBName           = "dbName"
-	DBOperation      = "dbOperation"
-	DBSystem         = "dbSystem"
-	MsgSystem        = "msgSystem"
-	MsgOperation     = "msgOperation"
-	Timestamp        = "timestamp"
-	Descending       = "descending"
-	Ascending        = "ascending"
-	ContextTimeout   = 60 // seconds
-	StatusPending    = "pending"
-	StatusFailed     = "failed"
-	StatusSuccess    = "success"
+	ServiceName        = "serviceName"
+	HttpRoute          = "httpRoute"
+	HttpCode           = "httpCode"
+	HttpHost           = "httpHost"
+	HttpUrl            = "httpUrl"
+	HttpMethod         = "httpMethod"
+	Component          = "component"
+	OperationDB        = "name"
+	OperationRequest   = "operation"
+	Status             = "status"
+	Duration           = "duration"
+	DBName             = "dbName"
+	DBOperation        = "dbOperation"
+	DBSystem           = "dbSystem"
+	MsgSystem          = "msgSystem"
+	MsgOperation       = "msgOperation"
+	Timestamp          = "timestamp"
+	RPCMethod          = "rpcMethod"
+	ResponseStatusCode = "responseStatusCode"
+	Descending         = "descending"
+	Ascending          = "ascending"
+	ContextTimeout     = 60 // seconds
+	StatusPending      = "pending"
+	StatusFailed       = "failed"
+	StatusSuccess      = "success"
+	ExceptionType      = "exceptionType"
+	ExceptionCount     = "exceptionCount"
+	LastSeen           = "lastSeen"
+	FirstSeen          = "firstSeen"
 )
 const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
 	SIGNOZ_SAMPLES_TABLENAME    = "samples_v2"
 	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
+)
+
+// alert related constants
+const (
+	// AlertHelpPage is used in case default alert repo url is not set
+	AlertHelpPage = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {
