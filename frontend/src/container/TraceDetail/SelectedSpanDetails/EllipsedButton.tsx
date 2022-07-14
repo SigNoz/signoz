@@ -8,6 +8,7 @@ function EllipsedButton({
 	setText,
 	value,
 	event,
+	buttonText = 'View full log event message',
 }: Props): JSX.Element {
 	return (
 		<StyledButton
@@ -21,7 +22,7 @@ function EllipsedButton({
 			}}
 			type="link"
 		>
-			View full log event message
+			{buttonText}
 		</StyledButton>
 	);
 }
@@ -31,6 +32,7 @@ interface Props {
 	setText: (text: { subText: string; text: string }) => void;
 	value: string;
 	event: string;
+	buttonText: string;
 }
 
 export default EllipsedButton;

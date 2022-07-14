@@ -32,7 +32,7 @@ export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 		font-size: 12px;
 		padding: 6px 8px;
 		word-break: break-all;
-		margin-bottom: 16px;
+		margin-bottom: 0.5rem;
 	}
 `;
 

@@ -113,6 +113,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 														onToggleHandler,
 														setText,
 														value,
+														buttonText: 'view full text',
 													}}
 												/>
 											)}
