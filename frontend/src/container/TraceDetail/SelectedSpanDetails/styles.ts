@@ -26,6 +26,12 @@ interface CustomSubTextProps {
 	isDarkMode: boolean;
 }
 
+export const SubTextContainer = styled.div<CustomSubTextProps>`
+	&&& {
+		background: ${({ isDarkMode }): string => (isDarkMode ? '#444' : '#ddd')};
+	}
+`;
+
 export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 	&&& {
 		background: ${({ isDarkMode }): string => (isDarkMode ? '#444' : '#ddd')};

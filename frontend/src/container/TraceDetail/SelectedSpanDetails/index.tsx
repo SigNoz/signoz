@@ -14,6 +14,7 @@ import {
 	CustomText,
 	CustomTitle,
 	styles,
+	SubTextContainer,
 } from './styles';
 
 const { TabPane } = Tabs;
@@ -95,27 +96,30 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 									{tags.value && (
 										<>
 											<CustomSubTitle>{tags.key}</CustomSubTitle>
-											<Tooltip overlay={(): string => value}>
-												<CustomSubText
-													ellipsis={{
-														rows: 1,
-													}}
-													isDarkMode={isDarkMode}
-												>
-													{value}
-												</CustomSubText>
-											</Tooltip>
-											{isEllipsed && (
-												<EllipsedButton
-													{...{
-														event: tags.key,
-														onToggleHandler,
-														setText,
-														value,
-														buttonText: 'View full value',
-													}}
-												/>
-											)}
+											<SubTextContainer isDarkMode={isDarkMode}>
+												<Tooltip overlay={(): string => value}>
+													<CustomSubText
+														ellipsis={{
+															rows: 1,
+														}}
+														isDarkMode={isDarkMode}
+													>
+														{value}
+													</CustomSubText>
+
+													{isEllipsed && (
+														<EllipsedButton
+															{...{
+																event: tags.key,
+																onToggleHandler,
+																setText,
+																value,
+																buttonText: 'View full value',
+															}}
+														/>
+													)}
+												</Tooltip>
+											</SubTextContainer>
 										</>
 									)}
 								</React.Fragment>
