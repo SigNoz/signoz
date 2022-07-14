@@ -1,0 +1,7 @@
+{
+	"accessJwt": "authtoken",
+	"accessJwtExpiry": 1656609177,
+	"refreshJwt": "refreshJwt",
+	"refreshJwtExpiry": 1659199377,
+	"userId": "34917776-514b-4b95-a4f5-1a5cc06e34b6"
+}

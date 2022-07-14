@@ -1,4 +1,5 @@
-import { css } from 'styled-components';
+import { volcano } from '@ant-design/colors';
+import styled, { css } from 'styled-components';
 
 /**
  * Styles for the left container. Containers flamegraph, timeline and gantt chart
@@ -75,4 +76,39 @@ export const floatRight = css`
 `;
 export const removeMargin = css`
 	margin: 0;
+`;
+
+export const GanttChartWrapper = styled.ul`
+	padding-left: 0;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+
+	ul {
+		list-style: none;
+		border-left: 1px solid #434343;
+		padding-left: 1rem;
+		width: 100%;
+	}
+
+	ul li {
+		position: relative;
+
+		&:before {
+			position: absolute;
+			left: -1rem;
+			top: 10px;
+			content: '';
+			height: 1px;
+			width: 1rem;
+			background-color: #434343;
+		}
+	}
+`;
+
+export const FlameGraphMissingSpansContainer = styled.div`
+	border: 1px dashed ${volcano[6]};
+	padding: 0.5rem 0;
+	margin-top: 1rem;
+	border-radius: 0.25rem;
 `;

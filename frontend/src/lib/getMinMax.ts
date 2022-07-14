@@ -13,6 +13,9 @@ const GetMinMax = (
 	if (interval === '1min') {
 		const minTimeAgo = getMinAgo({ minutes: 1 }).getTime();
 		minTime = minTimeAgo;
+	} else if (interval === '10min') {
+		const minTimeAgo = getMinAgo({ minutes: 10 }).getTime();
+		minTime = minTimeAgo;
 	} else if (interval === '15min') {
 		const minTimeAgo = getMinAgo({ minutes: 15 }).getTime();
 		minTime = minTimeAgo;
@@ -33,8 +36,9 @@ const GetMinMax = (
 		// one week = one day * 7
 		const minTimeAgo = getMinAgo({ minutes: 26 * 60 * 7 }).getTime();
 		minTime = minTimeAgo;
-	} else if (interval === '6hr') {
-		const minTimeAgo = getMinAgo({ minutes: 6 * 60 }).getTime();
+	} else if (['4hr', '6hr'].includes(interval)) {
+		const h = parseInt(interval.replace('hr', ''), 10);
+		const minTimeAgo = getMinAgo({ minutes: h * 60 }).getTime();
 		minTime = minTimeAgo;
 	} else if (interval === 'custom') {
 		maxTime = (dateTimeRange || [])[1] || 0;

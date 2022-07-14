@@ -1,0 +1,211 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utils/spanToTree should return a single tree on valid trace data 1`] = `
+Object {
+  "missingSpanTree": Array [],
+  "spanTree": Array [
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [
+            Object {
+              "children": Array [],
+              "event": Array [
+                Object {
+                  "attributeMap": Object {
+                    "event": "HTTP request received S3",
+                    "level": "info",
+                    "method": "GET",
+                    "url": "/dispatch?customer=392&nonse=0.015296363321630757",
+                  },
+                  "timeUnixNano": 1657275433246142000,
+                },
+              ],
+              "hasError": false,
+              "id": "span_3",
+              "isProcessed": true,
+              "name": "HTTP GET SPAN 3",
+              "references": Array [
+                Object {
+                  "RefType": "CHILD_OF",
+                  "SpanId": "span_2",
+                  "TraceId": "0000000000000000span_1",
+                },
+              ],
+              "serviceColour": "",
+              "serviceName": "frontend",
+              "startTime": 1657275433246,
+              "tags": Array [
+                Object {
+                  "key": "host.name.span3",
+                  "value": "span_3",
+                },
+              ],
+              "time": 683273000,
+              "value": 683273000,
+            },
+          ],
+          "event": Array [
+            Object {
+              "attributeMap": Object {
+                "event": "HTTP request received S2",
+                "level": "info",
+                "method": "GET",
+                "url": "/dispatch?customer=392&nonse=0.015296363321630757",
+              },
+              "timeUnixNano": 1657275433246142000,
+            },
+          ],
+          "hasError": false,
+          "id": "span_2",
+          "isProcessed": true,
+          "name": "HTTP GET SPAN 2",
+          "references": Array [
+            Object {
+              "RefType": "CHILD_OF",
+              "SpanId": "span_1",
+              "TraceId": "0000000000000000span_1",
+            },
+          ],
+          "serviceColour": "",
+          "serviceName": "frontend",
+          "startTime": 1657275433246,
+          "tags": Array [
+            Object {
+              "key": "host.name.span2",
+              "value": "span_2",
+            },
+          ],
+          "time": 683273000,
+          "value": 683273000,
+        },
+      ],
+      "event": Array [
+        Object {
+          "attributeMap": Object {
+            "event": "HTTP request received S1",
+            "level": "info",
+            "method": "GET",
+            "url": "/dispatch?customer=392&nonse=0.015296363321630757",
+          },
+          "timeUnixNano": 1657275433246142000,
+        },
+      ],
+      "hasError": false,
+      "id": "span_1",
+      "name": "HTTP GET SPAN 1",
+      "references": Array [
+        Object {
+          "RefType": "CHILD_OF",
+          "SpanId": "",
+          "TraceId": "0000000000000000span_1",
+        },
+      ],
+      "serviceColour": "",
+      "serviceName": "frontend",
+      "startTime": 1657275433246,
+      "tags": Array [
+        Object {
+          "key": "host.name.span1",
+          "value": "span_1",
+        },
+      ],
+      "time": 683273000,
+      "value": 683273000,
+    },
+  ],
+}
+`;
+
+exports[`utils/spanToTree should return a single tree on valid trace data 2`] = `
+Object {
+  "missingSpanTree": Array [
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [],
+          "event": Array [
+            Object {
+              "attributeMap": Object {
+                "event": "HTTP request received S3",
+                "level": "info",
+                "method": "GET",
+                "url": "/dispatch?customer=392&nonse=0.015296363321630757",
+              },
+              "timeUnixNano": 1657275433246142000,
+            },
+          ],
+          "hasError": false,
+          "id": "span_3",
+          "isProcessed": true,
+          "name": "HTTP GET SPAN 3",
+          "references": Array [
+            Object {
+              "RefType": "CHILD_OF",
+              "SpanId": "span_2",
+              "TraceId": "0000000000000000span_1",
+            },
+          ],
+          "serviceColour": "",
+          "serviceName": "frontend",
+          "startTime": 1657275433246,
+          "tags": Array [
+            Object {
+              "key": "host.name.span3",
+              "value": "span_3",
+            },
+          ],
+          "time": 683273000,
+          "value": 683273000,
+        },
+      ],
+      "id": "span_2",
+      "isMissing": true,
+      "name": "Missing Span (span_2)",
+      "serviceColour": "",
+      "serviceName": "",
+      "startTime": null,
+      "tags": Array [],
+      "time": null,
+      "value": null,
+    },
+  ],
+  "spanTree": Array [
+    Object {
+      "children": Array [],
+      "event": Array [
+        Object {
+          "attributeMap": Object {
+            "event": "HTTP request received S1",
+            "level": "info",
+            "method": "GET",
+            "url": "/dispatch?customer=392&nonse=0.015296363321630757",
+          },
+          "timeUnixNano": 1657275433246142000,
+        },
+      ],
+      "hasError": false,
+      "id": "span_1",
+      "name": "HTTP GET SPAN 1",
+      "references": Array [
+        Object {
+          "RefType": "CHILD_OF",
+          "SpanId": "",
+          "TraceId": "0000000000000000span_1",
+        },
+      ],
+      "serviceColour": "",
+      "serviceName": "frontend",
+      "startTime": 1657275433246,
+      "tags": Array [
+        Object {
+          "key": "host.name.span1",
+          "value": "span_1",
+        },
+      ],
+      "time": 683273000,
+      "value": 683273000,
+    },
+  ],
+}
+`;

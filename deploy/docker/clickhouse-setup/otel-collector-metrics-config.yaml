@@ -3,15 +3,28 @@ receivers:
     protocols:
       grpc:
       http:
-
-  # Data sources: metrics
   prometheus:
     config:
       scrape_configs:
+        # otel-collector internal metrics
         - job_name: "otel-collector"
           scrape_interval: 60s
           static_configs:
-            - targets: ["otel-collector:8889"]
+            - targets:
+              - otel-collector:8888
+        # otel-collector-metrics internal metrics
+        - job_name: "otel-collector-metrics"
+          scrape_interval: 60s
+          static_configs:
+            - targets:
+              - localhost:8888
+        # SigNoz span metrics
+        - job_name: "signozspanmetrics-collector"
+          scrape_interval: 60s
+          static_configs:
+            - targets:
+              - otel-collector:8889
+
 processors:
   batch:
     send_batch_size: 10000
@@ -32,17 +45,29 @@ processors:
   #   num_workers: 4
   #   queue_size: 100
   #   retry_on_failure: true
+
 extensions:
-  health_check: {}
-  zpages: {}
+  health_check:
+    endpoint: 0.0.0.0:13133
+  zpages:
+    endpoint: 0.0.0.0:55679
+  pprof:
+    endpoint: 0.0.0.0:1777
+
 exporters:
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
 
 service:
-  extensions: [health_check, zpages]
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+  extensions:
+    - health_check
+    - zpages
+    - pprof
   pipelines:
     metrics:
-      receivers: [otlp, prometheus]
+      receivers: [prometheus]
       processors: [batch]
       exporters: [clickhousemetricswrite]

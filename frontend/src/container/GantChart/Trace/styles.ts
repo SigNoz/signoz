@@ -1,3 +1,4 @@
+import { volcano } from '@ant-design/colors';
 import styled, {
 	css,
 	DefaultTheme,
@@ -15,7 +16,6 @@ export const Wrapper = styled.ul<Props>`
 	padding-top: 0.5rem;
 	position: relative;
 	z-index: 1;
-
 	ul {
 		border-left: ${({ isOnlyChild }): StyledCSS =>
 			isOnlyChild && 'none'} !important;
@@ -36,10 +36,14 @@ export const Wrapper = styled.ul<Props>`
 	}
 `;
 
-export const CardContainer = styled.li`
+export const CardContainer = styled.li<{ isMissing?: boolean }>`
 	display: flex;
 	width: 100%;
 	cursor: pointer;
+	border-radius: 0.25rem;
+	z-index: 2;
+	${({ isMissing }): string =>
+		isMissing ? `border: 1px dashed ${volcano[6]} !important;` : ''}
 `;
 
 interface Props {
