@@ -5,35 +5,44 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
 	"go.uber.org/zap"
+	"net/http"
+	neturl "net/url"
 )
 
 const contentType = "application/json"
 
 type Manager interface {
+	URL() *neturl.URL
+	URLPath(path string) *neturl.URL
 	AddRoute(receiver *Receiver) *model.ApiError
 	EditRoute(receiver *Receiver) *model.ApiError
 	DeleteRoute(name string) *model.ApiError
 	TestReceiver(receiver *Receiver) *model.ApiError
 }
 
-func New(url string) Manager {
+func New(url string) (Manager, error) {
 
 	if url == "" {
 		url = constants.GetAlertManagerApiPrefix()
 	}
 
-	return &manager{
-		url: url,
+	urlParsed, err := neturl.Parse(url)
+	if err != nil {
+		return nil, err
 	}
+
+	return &manager{
+		url:       url,
+		parsedURL: urlParsed,
+	}, nil
 }
 
 type manager struct {
-	url string
+	url       string
+	parsedURL *neturl.URL
 }
 
 func prepareAmChannelApiURL() string {
@@ -50,6 +59,19 @@ func prepareAmChannelApiURL() string {
 func prepareTestApiURL() string {
 	basePath := constants.GetAlertManagerApiPrefix()
 	return fmt.Sprintf("%s%s", basePath, "v1/testReceiver")
+}
+
+func (m *manager) URL() *neturl.URL {
+	return m.parsedURL
+}
+
+func (m *manager) URLPath(path string) *neturl.URL {
+	upath, err := neturl.Parse(path)
+	if err != nil {
+		return nil
+	}
+
+	return m.parsedURL.ResolveReference(upath)
 }
 
 func (m *manager) AddRoute(receiver *Receiver) *model.ApiError {

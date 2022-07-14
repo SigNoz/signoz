@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 
 type FiveMin = '5min';
+type TenMin = '10min';
 type FifteenMin = '15min';
 type ThirtyMin = '30min';
 type OneMin = '1min';
@@ -12,6 +13,7 @@ type Custom = 'custom';
 
 export type Time =
 	| FiveMin
+	| TenMin
 	| FifteenMin
 	| ThirtyMin
 	| OneMin

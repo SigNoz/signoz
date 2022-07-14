@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -19,15 +20,22 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/healthcheck"
+	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/interfaces"
+	pqle "go.signoz.io/query-service/pqlEngine"
+	"go.signoz.io/query-service/rules"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
 )
 
 type ServerOptions struct {
+	PromConfigPath  string
 	HTTPHostPort    string
 	PrivateHostPort string
+	// alert specific params
+	DisableRules bool
+	RuleRepoURL  string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -35,6 +43,9 @@ type Server struct {
 	// logger       *zap.Logger
 	// tracer opentracing.Tracer // TODO make part of flags.Service
 	serverOptions *ServerOptions
+	conn          net.Listener
+	ruleManager   *rules.Manager
+	separatePorts bool
 
 	// public http router
 	httpConn   net.Listener
@@ -58,6 +69,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
 		return nil, err
 	}
+
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
@@ -70,16 +82,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB)
+		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath)
 		go clickhouseReader.Start()
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	telemetry.GetInstance().SetReader(reader)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
+	if err != nil {
+		return nil, err
+	}
 
-	apiHandler, err := NewAPIHandler(&reader, dao.DB())
+	telemetry.GetInstance().SetReader(reader)
+	apiHandler, err := NewAPIHandler(&reader, dao.DB(), rm)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +103,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	s := &Server{
 		// logger: logger,
 		// tracer: tracer,
+		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -262,6 +279,13 @@ func (s *Server) initListeners() error {
 // Start listening on http and private http port concurrently
 func (s *Server) Start() error {
 
+	// initiate rule manager first
+	if !s.serverOptions.DisableRules {
+		s.ruleManager.Start()
+	} else {
+		zap.S().Info("msg: Rules disabled as rules.disable is set to TRUE")
+	}
+
 	err := s.initListeners()
 	if err != nil {
 		return err
@@ -314,4 +338,50 @@ func (s *Server) Start() error {
 	}()
 
 	return nil
+}
+
+func makeRulesManager(
+	promConfigPath,
+	alertManagerURL string,
+	ruleRepoURL string,
+	db *sqlx.DB,
+	ch interfaces.Reader,
+	disableRules bool) (*rules.Manager, error) {
+
+	// create engine
+	pqle, err := pqle.FromConfigPath(promConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create pql engine : %v", err)
+	}
+
+	// notifier opts
+	notifierOpts := am.NotifierOptions{
+		QueueCapacity:    10000,
+		Timeout:          1 * time.Second,
+		AlertManagerURLs: []string{alertManagerURL},
+	}
+
+	// create manager opts
+	managerOpts := &rules.ManagerOptions{
+		NotifierOpts: notifierOpts,
+		Queriers: &rules.Queriers{
+			PqlEngine: pqle,
+			Ch:        ch.GetConn(),
+		},
+		RepoURL:      ruleRepoURL,
+		DBConn:       db,
+		Context:      context.Background(),
+		Logger:       nil,
+		DisableRules: disableRules,
+	}
+
+	// create Manager
+	manager, err := rules.NewManager(managerOpts)
+	if err != nil {
+		return nil, fmt.Errorf("rule manager error: %v", err)
+	}
+
+	zap.S().Info("rules manager is ready")
+
+	return manager, nil
 }
