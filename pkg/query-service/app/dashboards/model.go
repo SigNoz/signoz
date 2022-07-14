@@ -17,7 +17,7 @@ import (
 // This time the global variable is unexported.
 var db *sqlx.DB
 
-// InitDB sets up the connection pool global variable.
+// InitDB sets up setting up the connection pool global variable.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	var err error
 
@@ -26,7 +26,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	tableSchema := `CREATE TABLE IF NOT EXISTS dashboards (
+	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		uuid TEXT NOT NULL UNIQUE,
 		created_at datetime NOT NULL,
@@ -34,24 +34,24 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(tableSchema)
+	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating dashboard table: %s", err.Error())
+		return nil, fmt.Errorf("Error in creating dashboard table: %s", err.Error())
 	}
 
-	tableSchema = `CREATE TABLE IF NOT EXISTS rules (
+	table_schema = `CREATE TABLE IF NOT EXISTS rules (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		updated_at datetime NOT NULL,
 		deleted INTEGER DEFAULT 0,
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(tableSchema)
+	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating rules table: %s", err.Error())
+		return nil, fmt.Errorf("Error in creating rules table: %s", err.Error())
 	}
 
-	tableSchema = `CREATE TABLE IF NOT EXISTS notification_channels (
+	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		created_at datetime NOT NULL,
 		updated_at datetime NOT NULL,
@@ -61,12 +61,12 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(tableSchema)
+	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
+		return nil, fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
 	}
 
-	tableSchema = `CREATE TABLE IF NOT EXISTS ttl_status (
+	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		transaction_id TEXT NOT NULL,
 		created_at datetime NOT NULL,
@@ -77,9 +77,9 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		status TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(tableSchema)
+	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
+		return nil, fmt.Errorf("Error in creating ttl_status table: %s", err.Error())
 	}
 
 	return db, nil
@@ -128,17 +128,17 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 	dash.UpdateSlug()
 	dash.Uuid = uuid.New().String()
 
-	mapData, err := json.Marshal(dash.Data)
+	map_data, err := json.Marshal(dash.Data)
 	if err != nil {
-		zap.S().Error("Error in marshalling data field in dashboard: ", dash, err)
+		zap.S().Errorf("Error in marshalling data field in dashboard: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
 	// db.Prepare("Insert into dashboards where")
-	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, mapData)
+	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data)
 
 	if err != nil {
-		zap.S().Error("Error in inserting dashboard data: ", dash, err)
+		zap.S().Errorf("Error in inserting dashboard data: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 	lastInsertId, err := result.LastInsertId()
@@ -153,7 +153,7 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 
 func GetDashboards() ([]Dashboard, *model.ApiError) {
 
-	var dashboards []Dashboard
+	dashboards := []Dashboard{}
 	query := fmt.Sprintf("SELECT * FROM dashboards;")
 
 	err := db.Select(&dashboards, query)
@@ -200,9 +200,9 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 
 func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *model.ApiError) {
 
-	mapData, err := json.Marshal(data)
+	map_data, err := json.Marshal(data)
 	if err != nil {
-		zap.S().Error("Error in marshalling data field in dashboard: ", data, err)
+		zap.S().Errorf("Error in marshalling data field in dashboard: ", data, err)
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
@@ -215,10 +215,10 @@ func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *mod
 	dashboard.Data = data
 
 	// db.Prepare("Insert into dashboards where")
-	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, data=$2 WHERE uuid=$3 ", dashboard.UpdatedAt, mapData, dashboard.Uuid)
+	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, data=$2 WHERE uuid=$3 ", dashboard.UpdatedAt, map_data, dashboard.Uuid)
 
 	if err != nil {
-		zap.S().Error("Error in inserting dashboard data: ", data, err)
+		zap.S().Errorf("Error in inserting dashboard data: ", data, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -249,7 +249,7 @@ func IsPostDataSane(data *map[string]interface{}) error {
 func SlugifyTitle(title string) string {
 	s := slug.Make(strings.ToLower(title))
 	if s == "" {
-		// If the dashboard name is only characters outside the
+		// If the dashboard name is only characters outside of the
 		// sluggable characters, the slug creation will return an
 		// empty string which will mess up URLs. This failsafe picks
 		// that up and creates the slug as a base64 identifier instead.

@@ -467,8 +467,8 @@ func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) 
 	}
 
 	params := &model.CountErrorsParams{
-		Start: startTime,
-		End:   endTime,
+		Start:      startTime,
+		End:        endTime,
 	}
 
 	return params, nil
@@ -597,7 +597,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	// Validate the TTL duration.
 	durationParsed, err := time.ParseDuration(delDuration)
 	if err != nil || durationParsed.Seconds() <= 0 {
-		return nil, fmt.Errorf("not a valid TTL duration %v", delDuration)
+		return nil, fmt.Errorf("Not a valid TTL duration %v", delDuration)
 	}
 
 	var toColdParsed time.Duration
@@ -606,10 +606,10 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	if len(coldStorage) > 0 {
 		toColdParsed, err = time.ParseDuration(toColdDuration)
 		if err != nil || toColdParsed.Seconds() <= 0 {
-			return nil, fmt.Errorf("not a valid toCold TTL duration %v", toColdDuration)
+			return nil, fmt.Errorf("Not a valid toCold TTL duration %v", toColdDuration)
 		}
 		if toColdParsed.Seconds() != 0 && toColdParsed.Seconds() >= durationParsed.Seconds() {
-			return nil, fmt.Errorf("delete TTL should be greater than cold storage move TTL")
+			return nil, fmt.Errorf("Delete TTL should be greater than cold storage move TTL.")
 		}
 	}
 

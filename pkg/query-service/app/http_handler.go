@@ -210,7 +210,7 @@ func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to viewers/editors/admins"),
+				Err: errors.New("API is accessible to viewers/editors/admins."),
 			}, nil)
 			return
 		}
@@ -231,7 +231,7 @@ func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to editors/admins"),
+				Err: errors.New("API is accessible to editors/admins."),
 			}, nil)
 			return
 		}
@@ -253,7 +253,7 @@ func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
 			respondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible for self access or to the admins"),
+				Err: errors.New("API is accessible for self access or to the admins."),
 			}, nil)
 			return
 		}
@@ -455,13 +455,13 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	// prometheus instant query needs same timestamp
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QueryValue &&
-		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.Prom {
+	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
+		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
 		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
 	}
 
-	// round down the end to the nearest multiple
-	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QueryBuilder {
+	// round up the end to neaerest multiple
+	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
 		end := (metricsQueryRangeParams.End) / 1000
 		step := metricsQueryRangeParams.Step
 		metricsQueryRangeParams.End = (end / step * step) * 1000
@@ -571,15 +571,15 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	var seriesList []*model.Series
 	var err error
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
-	case model.QueryBuilder:
-		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SignozTimeSeriesTableName)
+	case model.QUERY_BUILDER:
+		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		if runQueries.Err != nil {
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
 		seriesList, err = execClickHouseQueries(runQueries.Queries)
 
-	case model.ClickHouse:
+	case model.CLICKHOUSE:
 		queries := make(map[string]string)
 		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
 			if chQuery.Disabled {
@@ -588,7 +588,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			queries[name] = chQuery.Query
 		}
 		seriesList, err = execClickHouseQueries(queries)
-	case model.Prom:
+	case model.PROM:
 		seriesList, err = execPromQueries(metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
@@ -601,10 +601,10 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		respondError(w, apiErrObj, nil)
 		return
 	}
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QueryValue &&
+	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
 		len(seriesList) > 1 &&
-		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QueryBuilder ||
-			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.ClickHouse) {
+		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER ||
+			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.CLICKHOUSE) {
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
 		return
 	}
@@ -667,7 +667,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 		inter = Intersection(inter, tags2Dash[tag])
 	}
 
-	var filteredDashboards []dashboards.Dashboard
+	filteredDashboards := []dashboards.Dashboard{}
 	for _, val := range inter {
 		dash := (allDashboards)[val]
 		filteredDashboards = append(filteredDashboards, dash)
@@ -827,14 +827,14 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Error("Error in getting req body of testChannel API\n", err)
+		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Error("Error in parsing req body of testChannel API\n", err)
+		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -855,14 +855,14 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Error("Error in getting req body of editChannel API\n", err)
+		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Error("Error in parsing req body of editChannel API\n", err)
+		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -883,14 +883,14 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Error("Error in getting req body of createChannel API\n", err)
+		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Error("Error in parsing req body of createChannel API\n", err)
+		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -968,20 +968,20 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
-	responseData := &model.QueryData{
+	response_data := &model.QueryData{
 		ResultType: res.Value.Type(),
 		Result:     res.Value,
 		Stats:      qs,
 	}
 
-	aH.respond(w, responseData)
+	aH.respond(w, response_data)
 
 }
 
@@ -1022,20 +1022,20 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
-		respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
 	}
 
-	responseData := &model.QueryData{
+	response_data := &model.QueryData{
 		ResultType: res.Value.Type(),
 		Result:     res.Value,
 		Stats:      qs,
 	}
 
-	aH.respond(w, responseData)
+	aH.respond(w, response_data)
 
 }
 
@@ -1065,7 +1065,7 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.EventInproductFeedback, data)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data)
 
 }
 
@@ -1134,7 +1134,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		"number": len(*result),
 	}
 
-	telemetry.GetInstance().SendEvent(telemetry.EventNumberOfServices, data)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
 
 	aH.writeJSON(w, r, result)
 }
@@ -1378,8 +1378,8 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
-	v := version.GetVersion()
-	aH.writeJSON(w, r, map[string]string{"version": v})
+	version := version.GetVersion()
+	aH.writeJSON(w, r, map[string]string{"version": version})
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.
@@ -1411,7 +1411,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, resp)
 }
 
-// revokeInvite is used to revoke an invitation.
+// revokeInvite is used to revoke an invite.
 func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 	email := mux.Vars(r)["email"]
 
@@ -1529,7 +1529,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: errors.New("user not found"),
+			Err: errors.New("User not found"),
 		}, nil)
 		return
 	}
@@ -1540,7 +1540,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // editUser only changes the user's Name and ProfilePictureURL. It is intentionally designed
-// to not support update of orgId, Password, createdAt for the security reasons.
+// to not support update of orgId, Password, createdAt for the sucurity reasons.
 func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
@@ -1596,7 +1596,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("user not found"),
+			Err: errors.New("User not found"),
 		}, nil)
 		return
 	}
@@ -1638,7 +1638,7 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		respondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
-			Err: errors.New("no user found"),
+			Err: errors.New("No user found"),
 		}, nil)
 		return
 	}
@@ -1678,8 +1678,8 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure that the request is not demoting the last admin user.
-	if user.GroupId == auth.CacheObj.AdminGroupId {
-		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.CacheObj.AdminGroupId)
+	if user.GroupId == auth.AuthCacheObj.AdminGroupId {
+		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
 		if apiErr != nil {
 			respondError(w, apiErr, "Failed to fetch adminUsers")
 			return
@@ -1687,7 +1687,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 
 		if len(adminUsers) == 1 {
 			respondError(w, &model.ApiError{
-				Err: errors.New("cannot demote the last admin"),
+				Err: errors.New("Cannot demote the last admin"),
 				Typ: model.ErrorInternal}, nil)
 			return
 		}
@@ -1739,7 +1739,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"organizationName": req.Name,
 	}
 
-	telemetry.GetInstance().SendEvent(telemetry.EventOrgSettings, data)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data)
 
 	aH.writeJSON(w, r, map[string]string{"data": "org updated successfully"})
 }

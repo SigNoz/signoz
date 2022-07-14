@@ -11,7 +11,7 @@ const (
 	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
 )
 
-var DefaultTelemetryAnonymous = false
+var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsTelemetryEnabled() bool {
 	isTelemetryEnabledStr := os.Getenv("TELEMETRY_ENABLED")
@@ -32,10 +32,10 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
-// AmChannelApiPath is a channel subpath for Alert manager
+// Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
-var RelationalDatasourcePath = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
+var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
 	ServiceName      = "serviceName"
@@ -67,9 +67,9 @@ const (
 	FirstSeen        = "firstSeen"
 )
 const (
-	SignozMetricDbname        = "signoz_metrics"
-	SignozSamplesTableName    = "samples_v2"
-	SignozTimeSeriesTableName = "time_series_v2"
+	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
+	SIGNOZ_SAMPLES_TABLENAME    = "samples_v2"
+	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

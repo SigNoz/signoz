@@ -16,18 +16,18 @@ import (
 )
 
 const (
-	EventPath              = "API Call"
-	EventUser              = "User"
-	EventInproductFeedback = "InProduct Feedback Submitted"
-	EventNumberOfServices  = "Number of Services"
-	EventHeartBeat         = "Heart Beat"
-	EventOrgSettings       = "Org Settings"
+	TELEMETRY_EVENT_PATH               = "API Call"
+	TELEMETRY_EVENT_USER               = "User"
+	TELEMETRY_EVENT_INPRODUCT_FEEDBACK = "InProduct Feeback Submitted"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
+	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
+	TELEMETRY_EVENT_ORG_SETTINGS       = "Org Settings"
 )
 
-const writeKey = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
-const IpNotFoundPlaceholder = "NA"
+const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
+const IP_NOT_FOUND_PLACEHOLDER = "NA"
 
-const HeartBeatDuration = 6 * time.Hour
+const HEART_BEAT_DURATION = 6 * time.Hour
 
 // const HEART_BEAT_DURATION = 10 * time.Second
 
@@ -45,15 +45,15 @@ type Telemetry struct {
 
 func createTelemetry() {
 	telemetry = &Telemetry{
-		operator:  analytics.New(writeKey),
+		operator:  analytics.New(api_key),
 		ipAddress: getOutboundIP(),
 	}
 
 	data := map[string]interface{}{}
 
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(EventHeartBeat, data)
-	ticker := time.NewTicker(HeartBeatDuration)
+	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	go func() {
 		for {
 			select {
@@ -71,7 +71,7 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(EventHeartBeat, data)
+				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
 			}
 		}
 	}()
@@ -81,7 +81,7 @@ func createTelemetry() {
 // Get preferred outbound ip of this machine
 func getOutboundIP() string {
 
-	ip := []byte(IpNotFoundPlaceholder)
+	ip := []byte(IP_NOT_FOUND_PLACEHOLDER)
 	resp, err := http.Get("https://api.ipify.org?format=text")
 
 	if err != nil {
@@ -112,7 +112,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 }
 func (a *Telemetry) checkEvents(event string) bool {
 	sendEvent := true
-	if event == EventUser && a.isTelemetryAnonymous() {
+	if event == TELEMETRY_EVENT_USER && a.isTelemetryAnonymous() {
 		sendEvent = false
 	}
 	return sendEvent
@@ -139,7 +139,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 	}
 
 	userId := a.ipAddress
-	if a.isTelemetryAnonymous() || userId == IpNotFoundPlaceholder {
+	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
 		userId = a.GetDistinctId()
 	}
 
