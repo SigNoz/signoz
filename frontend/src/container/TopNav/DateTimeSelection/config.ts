@@ -7,6 +7,7 @@ type ThirtyMin = '30min';
 type OneMin = '1min';
 type SixHour = '6hr';
 type OneHour = '1hr';
+type FourHour = '4hr';
 type OneDay = '1day';
 type OneWeek = '1week';
 type Custom = 'custom';
@@ -17,6 +18,7 @@ export type Time =
 	| FifteenMin
 	| ThirtyMin
 	| OneMin
+	| FourHour
 	| SixHour
 	| OneHour
 	| Custom
