@@ -14,7 +14,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 	const { resourceAttributePromQLQuery } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
-	const legend = '{{http_url}}';
+	const legend = '{{address}}';
 
 	return (
 		<>
@@ -28,7 +28,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_external_call_latency_count{service_name="${servicename}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]) OR vector(0)) by (http_url))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (http_url)) < 1000 OR vector(0)`,
+										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR vector(0)) by (address))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address)) < 1000 OR vector(0)`,
 										legend: 'External Call Error Percentage',
 									},
 								])}
@@ -68,7 +68,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (http_url)`,
+										query: `sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address)`,
 										legend,
 									},
 								])}
@@ -87,7 +87,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={getWidget([
 									{
-										query: `(sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (http_url))/(sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (http_url))`,
+										query: `(sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address))/(sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address))`,
 										legend,
 									},
 								])}
