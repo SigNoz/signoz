@@ -1348,6 +1348,12 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
+	if len(queryParams.RPCMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.RPCMethod, constants.RPCMethod, &query, args)
+	}
+	if len(queryParams.ResponseStatusCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ResponseStatusCode, constants.ResponseStatusCode, &query, args)
+	}
 
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= @durationNanoMin"
@@ -1361,16 +1367,18 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	traceFilterReponse := model.SpanFiltersResponse{
-		Status:      map[string]uint64{},
-		Duration:    map[string]uint64{},
-		ServiceName: map[string]uint64{},
-		Operation:   map[string]uint64{},
-		HttpCode:    map[string]uint64{},
-		HttpMethod:  map[string]uint64{},
-		HttpUrl:     map[string]uint64{},
-		HttpRoute:   map[string]uint64{},
-		HttpHost:    map[string]uint64{},
-		Component:   map[string]uint64{},
+		Status:             map[string]uint64{},
+		Duration:           map[string]uint64{},
+		ServiceName:        map[string]uint64{},
+		Operation:          map[string]uint64{},
+		ResponseStatusCode: map[string]uint64{},
+		RPCMethod:          map[string]uint64{},
+		HttpCode:           map[string]uint64{},
+		HttpMethod:         map[string]uint64{},
+		HttpUrl:            map[string]uint64{},
+		HttpRoute:          map[string]uint64{},
+		HttpHost:           map[string]uint64{},
+		Component:          map[string]uint64{},
 	}
 
 	for _, e := range queryParams.GetFilters {
@@ -1571,6 +1579,42 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			if len(dBResponse2) > 0 {
 				traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
 			}
+		case constants.RPCMethod:
+			finalQuery := fmt.Sprintf("SELECT rpcMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY rpcMethod"
+			var dBResponse []model.DBResponseRPCMethod
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %s", err)}
+			}
+			for _, service := range dBResponse {
+				if service.RPCMethod != "" {
+					traceFilterReponse.RPCMethod[service.RPCMethod] = service.Count
+				}
+			}
+
+		case constants.ResponseStatusCode:
+			finalQuery := fmt.Sprintf("SELECT responseStatusCode, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.indexTable)
+			finalQuery += query
+			finalQuery += " GROUP BY responseStatusCode"
+			var dBResponse []model.DBResponseStatusCodeMethod
+			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			zap.S().Info(finalQuery)
+
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %s", err)}
+			}
+			for _, service := range dBResponse {
+				if service.ResponseStatusCode != "" {
+					traceFilterReponse.ResponseStatusCode[service.ResponseStatusCode] = service.Count
+				}
+			}
+
 		default:
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("filter type: %s not supported", e)}
 		}
@@ -1639,6 +1683,14 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
 	}
+	if len(queryParams.RPCMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.RPCMethod, constants.RPCMethod, &query, args)
+	}
+
+	if len(queryParams.ResponseStatusCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ResponseStatusCode, constants.ResponseStatusCode, &query, args)
+	}
+
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= @durationNanoMin"
 		args = append(args, clickhouse.Named("durationNanoMin", queryParams.MinDuration))
@@ -1698,17 +1750,17 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
 
-	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, gRPCCode, gRPCMethod, httpMethod FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, gRPCCode, gRPCMethod, httpMethod, rpcMethod, responseStatusCode FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
 	baseQuery += query
 	err := r.db.Select(ctx, &getFilterSpansResponseItems, baseQuery, args...)
 	// Fill status and method
 	for i, e := range getFilterSpansResponseItems {
-		if e.HttpCode == "" {
+		if e.GRPCode != "" {
 			getFilterSpansResponseItems[i].StatusCode = e.GRPCode
 		} else {
 			getFilterSpansResponseItems[i].StatusCode = e.HttpCode
 		}
-		if e.HttpMethod == "" {
+		if e.GRPMethod != "" {
 			getFilterSpansResponseItems[i].Method = e.GRPMethod
 		} else {
 			getFilterSpansResponseItems[i].Method = e.HttpMethod
@@ -1820,6 +1872,12 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+	if len(queryParams.RPCMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.RPCMethod, constants.RPCMethod, &query, args)
+	}
+	if len(queryParams.ResponseStatusCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ResponseStatusCode, constants.ResponseStatusCode, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= @durationNanoMin"
@@ -2158,6 +2216,11 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
 		case constants.Component:
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
+		case constants.RPCMethod:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, rpcMethod as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
+		case constants.ResponseStatusCode:
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, responseStatusCode as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
+
 		default:
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
@@ -2188,6 +2251,12 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
+	}
+	if len(queryParams.RPCMethod) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.RPCMethod, constants.RPCMethod, &query, args)
+	}
+	if len(queryParams.ResponseStatusCode) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ResponseStatusCode, constants.ResponseStatusCode, &query, args)
 	}
 	if len(queryParams.MinDuration) != 0 {
 		query = query + " AND durationNano >= @durationNanoMin"
@@ -2237,6 +2306,11 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			query = query + " GROUP BY time, dbSystem as groupBy ORDER BY time"
 		case constants.Component:
 			query = query + " GROUP BY time, component as groupBy ORDER BY time"
+		case constants.RPCMethod:
+			query = query + " GROUP BY time, rpcMethod as groupBy ORDER BY time"
+		case constants.ResponseStatusCode:
+			query = query + " GROUP BY time, responseStatusCode as groupBy ORDER BY time"
+
 		default:
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
 		}
