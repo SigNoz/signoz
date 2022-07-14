@@ -118,18 +118,20 @@ type SearchSpansResult struct {
 }
 
 type GetFilterSpansResponseItem struct {
-	Timestamp    time.Time `ch:"timestamp" json:"timestamp"`
-	SpanID       string    `ch:"spanID" json:"spanID"`
-	TraceID      string    `ch:"traceID" json:"traceID"`
-	ServiceName  string    `ch:"serviceName" json:"serviceName"`
-	Operation    string    `ch:"name" json:"operation"`
-	DurationNano uint64    `ch:"durationNano" json:"durationNano"`
-	HttpCode     string    `ch:"httpCode"`
-	HttpMethod   string    `ch:"httpMethod"`
-	GRPCode      string    `ch:"gRPCCode"`
-	GRPMethod    string    `ch:"gRPCMethod"`
-	StatusCode   string    `json:"statusCode"`
-	Method       string    `json:"method"`
+	Timestamp          time.Time `ch:"timestamp" json:"timestamp"`
+	SpanID             string    `ch:"spanID" json:"spanID"`
+	TraceID            string    `ch:"traceID" json:"traceID"`
+	ServiceName        string    `ch:"serviceName" json:"serviceName"`
+	Operation          string    `ch:"name" json:"operation"`
+	DurationNano       uint64    `ch:"durationNano" json:"durationNano"`
+	HttpCode           string    `ch:"httpCode"`
+	HttpMethod         string    `ch:"httpMethod"`
+	GRPCode            string    `ch:"gRPCCode"`
+	GRPMethod          string    `ch:"gRPCMethod"`
+	StatusCode         string    `json:"statusCode"`
+	Method             string    `json:"method"`
+	ResponseStatusCode string    `ch:"responseStatusCode"`
+	RPCMethod          string    `ch:"rpcMethod"`
 }
 
 type GetFilterSpansResponse struct {
@@ -303,6 +305,16 @@ type DBResponseHttpMethod struct {
 	Count      uint64 `ch:"count"`
 }
 
+type DBResponseStatusCodeMethod struct {
+	ResponseStatusCode string `ch:"responseStatusCode"`
+	Count              uint64 `ch:"count"`
+}
+
+type DBResponseRPCMethod struct {
+	RPCMethod string `ch:"rpcMethod"`
+	Count     uint64 `ch:"count"`
+}
+
 type DBResponseHttpHost struct {
 	HttpHost string `ch:"httpHost"`
 	Count    uint64 `ch:"count"`
@@ -323,16 +335,18 @@ type DBResponseTotal struct {
 }
 
 type SpanFiltersResponse struct {
-	ServiceName map[string]uint64 `json:"serviceName"`
-	Status      map[string]uint64 `json:"status"`
-	Duration    map[string]uint64 `json:"duration"`
-	Operation   map[string]uint64 `json:"operation"`
-	HttpCode    map[string]uint64 `json:"httpCode"`
-	HttpUrl     map[string]uint64 `json:"httpUrl"`
-	HttpMethod  map[string]uint64 `json:"httpMethod"`
-	HttpRoute   map[string]uint64 `json:"httpRoute"`
-	HttpHost    map[string]uint64 `json:"httpHost"`
-	Component   map[string]uint64 `json:"component"`
+	ServiceName        map[string]uint64 `json:"serviceName"`
+	Status             map[string]uint64 `json:"status"`
+	Duration           map[string]uint64 `json:"duration"`
+	Operation          map[string]uint64 `json:"operation"`
+	HttpCode           map[string]uint64 `json:"httpCode"`
+	ResponseStatusCode map[string]uint64 `json:"responseStatusCode"`
+	RPCMethod          map[string]uint64 `json:"rpcMethod"`
+	HttpUrl            map[string]uint64 `json:"httpUrl"`
+	HttpMethod         map[string]uint64 `json:"httpMethod"`
+	HttpRoute          map[string]uint64 `json:"httpRoute"`
+	HttpHost           map[string]uint64 `json:"httpHost"`
+	Component          map[string]uint64 `json:"component"`
 }
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
@@ -341,20 +355,36 @@ type Error struct {
 	LastSeen       time.Time `json:"lastSeen" ch:"lastSeen"`
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
+	GroupID        string    `json:"groupID" ch:"groupID"`
 }
 
 type ErrorWithSpan struct {
 	ErrorID             string    `json:"errorId" ch:"errorID"`
 	ExceptionType       string    `json:"exceptionType" ch:"exceptionType"`
 	ExceptionStacktrace string    `json:"exceptionStacktrace" ch:"exceptionStacktrace"`
-	ExceptionEscaped    string    `json:"exceptionEscaped" ch:"exceptionEscaped"`
+	ExceptionEscaped    bool      `json:"exceptionEscaped" ch:"exceptionEscaped"`
 	ExceptionMsg        string    `json:"exceptionMessage" ch:"exceptionMessage"`
 	Timestamp           time.Time `json:"timestamp" ch:"timestamp"`
 	SpanID              string    `json:"spanID" ch:"spanID"`
 	TraceID             string    `json:"traceID" ch:"traceID"`
 	ServiceName         string    `json:"serviceName" ch:"serviceName"`
-	NewerErrorID        string    `json:"newerErrorId" ch:"newerErrorId"`
-	OlderErrorID        string    `json:"olderErrorId" ch:"olderErrorId"`
+	GroupID             string    `json:"groupID" ch:"groupID"`
+}
+
+type NextPrevErrorIDsDBResponse struct {
+	NextErrorID   string    `ch:"nextErrorID"`
+	NextTimestamp time.Time `ch:"nextTimestamp"`
+	PrevErrorID   string    `ch:"prevErrorID"`
+	PrevTimestamp time.Time `ch:"prevTimestamp"`
+	Timestamp     time.Time `ch:"timestamp"`
+}
+
+type NextPrevErrorIDs struct {
+	NextErrorID   string    `json:"nextErrorID"`
+	NextTimestamp time.Time `json:"nextTimestamp"`
+	PrevErrorID   string    `json:"prevErrorID"`
+	PrevTimestamp time.Time `json:"prevTimestamp"`
+	GroupID       string    `json:"groupID"`
 }
 
 type Series struct {
