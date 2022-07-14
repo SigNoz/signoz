@@ -1,10 +1,24 @@
-import { Button, Card, Form, Input, InputNumber, Select } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Select } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import styled from 'styled-components';
 
-export const MainFormContainer = styled(Form)`
-	max-width: 900px;
+export const PanelContainer = styled.div`
+	display: flex;
 `;
+
+export const StyledRightContainer = styled(Col)`
+	&&& {
+	}
+`;
+
+export const StyledLeftContainer = styled(Col)`
+	&&& {
+		margin-right: 1rem;
+		min-width: 850px;
+	}
+`;
+
+export const MainFormContainer = styled(Form)``;
 
 export const ButtonContainer = styled.div`
 	&&& {
