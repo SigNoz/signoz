@@ -67,14 +67,13 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 			<Modal
 				onCancel={(): void => onToggleHandler(false)}
-				title="Log Message"
+				title={text.text}
 				visible={isOpen}
 				destroyOnClose
 				footer={[]}
 				width="70vw"
+				centered
 			>
-				<CustomSubTitle>{text.text}</CustomSubTitle>
-
 				{text.text === 'exception.stacktrace' ? (
 					<Editor onChange={(): void => {}} readOnly value={text.subText} />
 				) : (
@@ -113,7 +112,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 														onToggleHandler,
 														setText,
 														value,
-														buttonText: 'view full text',
+														buttonText: 'View full value',
 													}}
 												/>
 											)}
