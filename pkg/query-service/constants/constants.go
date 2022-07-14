@@ -74,6 +74,12 @@ const (
 	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
 )
 
+// alert related constants
+const (
+	// AlertHelpPage is used in case default alert repo url is not set
+	AlertHelpPage = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+)
+
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)
 	if len(v) == 0 {
