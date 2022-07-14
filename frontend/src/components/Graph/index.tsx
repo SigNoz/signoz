@@ -64,7 +64,7 @@ function Graph({
 	name,
 	yAxisUnit = 'short',
 	forceReRender,
-	annotations,
+	staticLine,
 }: GraphProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -102,12 +102,30 @@ function Graph({
 					intersect: false,
 				},
 				plugins: {
-					annotation:
-						annotations && annotations.length > 0
-							? {
-									annotations,
-							  }
-							: undefined,
+					annotation: staticLine
+						? {
+								annotations: [
+									{
+										type: 'line',
+										yMin: staticLine.yMin,
+										yMax: staticLine.yMax,
+										borderColor: staticLine.borderColor,
+										borderWidth: staticLine.borderWidth,
+										label: {
+											content: staticLine.lineText,
+											enabled: true,
+											font: {
+												size: 10,
+											},
+											borderWidth: 0,
+											position: 'start',
+											backgroundColor: 'transparent',
+											color: staticLine.textColor,
+										},
+									},
+								],
+						  }
+						: undefined,
 					title: {
 						display: title !== undefined,
 						text: title,
@@ -215,7 +233,7 @@ function Graph({
 		name,
 		yAxisUnit,
 		onClickHandler,
-		annotations,
+		staticLine,
 	]);
 
 	useEffect(() => {
@@ -240,7 +258,16 @@ interface GraphProps {
 	name: string;
 	yAxisUnit?: string;
 	forceReRender?: boolean | null | number;
-	annotations?: [];
+	staticLine?: StaticLineProps | undefined;
+}
+
+export interface StaticLineProps {
+	yMin: number | undefined;
+	yMax: number | undefined;
+	borderColor: string;
+	borderWidth: number;
+	lineText: string;
+	textColor: string;
 }
 
 export type GraphOnClickHandler = (
@@ -257,6 +284,6 @@ Graph.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	forceReRender: undefined,
-	annotations: undefined,
+	staticLine: undefined,
 };
 export default Graph;
