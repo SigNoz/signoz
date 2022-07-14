@@ -6,6 +6,12 @@ Hi there! We're thrilled that you'd like to contribute to this project, thank yo
 
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary information to effectively respond to your bug report or contribution.
 
+- We accept contributions made to the [SigNoz `develop` branch]()
+- Find all SigNoz Docker Hub images here 
+    - [signoz/frontend](https://hub.docker.com/r/signoz/frontend)
+    - [signoz/query-service](https://hub.docker.com/r/signoz/query-service)
+    - [signoz/otelcontribcol](https://hub.docker.com/r/signoz/otelcontribcol)
+
 ## Finding contributions to work on 💬
 
 Looking at the existing issues is a great way to find something to contribute on. 
@@ -24,6 +30,7 @@ Also, have a look at these [good first issues labels](https://github.com/SigNoz/
     - [To run ClickHouse setup](#41-to-run-clickhouse-setup-recommended-for-local-development)
 - [Contribute to SigNoz Helm Chart](#5-contribute-to-signoz-helm-chart-)
     - [To run helm chart for local development](#51-to-run-helm-chart-for-local-development)
+- [Other Ways to Contribute](#other-ways-to-contribute)
 
 # 1. General Instructions 📝
 
@@ -135,26 +142,43 @@ Depending upon your area of expertise & interest, you can choose one or more to 
 
 **Need to Update: [https://github.com/SigNoz/signoz/tree/develop/frontend](https://github.com/SigNoz/signoz/tree/develop/frontend)**
 
-### 3.1 Contribute to Frontend with Docker installation of SigNoz
+Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/develop/frontend/README.md) sections for more info on how to setup SigNoz frontend locally (with and without Docker).
+
+## 3.1 Contribute to Frontend with Docker installation of SigNoz
 
 - Clone the SigNoz repository and cd into signoz directory,
   ```
   git clone https://github.com/SigNoz/signoz.git && cd signoz
   ```
 - Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
+
+![develop-frontend](https://user-images.githubusercontent.com/52788043/179009217-6692616b-17dc-4d27-b587-9d007098d739.jpeg)
+
+
 - run `cd deploy` to move to deploy directory,
 - Install signoz locally **without** the frontend,
     - Add / Uncomment the below configuration to query-service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L47`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L47)
-    ```docker
+    ```
     ports:
       - "8080:8080"
     ```
+<img width="869" alt="query service" src="https://user-images.githubusercontent.com/52788043/179010251-8489be31-04ca-42f8-b30d-ef0bb6accb6b.png">    
     
   - Next run,
     ```
     sudo docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
     ```
-- `cd ../frontend` and change baseURL to `http://localhost:8080` in file [`src/constants/env.ts`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts)
+- `cd ../frontend` and change baseURL in file [`frontend/src/constants/env.ts#L2`](https://github.com/SigNoz/signoz/blob/develop/frontend/src/constants/env.ts#L2) and for that, you need to create a `.env` file in the `frontend` directory with the following environment variable (`FRONTEND_API_ENDPOINT`) matching your configuration.
+
+    If you have backend api exposed via frontend nginx:
+    ```
+    FRONTEND_API_ENDPOINT=http://localhost:3301
+    ```
+    If not:
+    ```
+    FRONTEND_API_ENDPOINT=http://localhost:8080
+    ```
+
 - Next, 
   ```
   yarn install
@@ -166,7 +190,7 @@ The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Que
 
  **[`^top^`](#)**
 
-### 3.2 Contribute to Frontend without installing SigNoz backend
+## 3.2 Contribute to Frontend without installing SigNoz backend
 
 If you don't want to install the SigNoz backend just for doing frontend development, we can provide you with test environments that you can use as the backend. 
 
@@ -193,27 +217,27 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 **Need to Update:** [**https://github.com/SigNoz/signoz/tree/develop/pkg/query-service**](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)
 
-### 4.1 To run ClickHouse setup (recommended for local development)
+## 4.1 To run ClickHouse setup (recommended for local development)
 
 - Clone the SigNoz repository and cd into signoz directory,
-```
-git clone https://github.com/SigNoz/signoz.git && cd signoz
-```
+    ```
+    git clone https://github.com/SigNoz/signoz.git && cd signoz
+    ```
 - run `sudo make dev-setup` to configure local setup to run query-service,
 - Comment out `frontend` service section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L68`](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L68)
 - Comment out `query-service` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml#L41`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml#L41)
 - add below configuration to `clickhouse` section at [`deploy/docker/clickhouse-setup/docker-compose.yaml`,](https://github.com/SigNoz/signoz/blob/develop/deploy/docker/clickhouse-setup/docker-compose.yaml)
   ```
-  expose:
-    - 9000
   ports:
     - 9001:9000
   ```
 
 - run `cd pkg/query-service/` to move to `query-service` directory,
-- Open [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go#L38)
-    - Replace ```const RELATIONAL_DATASOURCE_PATH = "/var/lib/signoz/signoz.db"``` \
-        with →  ```const RELATIONAL_DATASOURCE_PATH = "./signoz.db".```
+- Then, you need to create a `.env` file with the following environment variable 
+    ```
+    SIGNOZ_LOCAL_DB_PATH="./signoz.db"
+    ```
+to set your local environment with the right `RELATIONAL_DATASOURCE_PATH` as mentioned in [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go#L38)
 
 - Now, install SigNoz locally **without** the `frontend` and `query-service`,
   - If you are using `x86_64` processors (All Intel/AMD processors) run `sudo make run-x86`
@@ -223,6 +247,29 @@ git clone https://github.com/SigNoz/signoz.git && cd signoz
 ```
 ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse go run main.go
 ```
+
+#### Build and Run locally
+```
+cd pkg/query-service
+go build -o build/query-service main.go
+ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse build/query-service
+```
+
+#### Docker Images
+The docker images of query-service is available at https://hub.docker.com/r/signoz/query-service
+
+```
+docker pull signoz/query-service
+```
+
+```
+docker pull signoz/query-service:latest
+```
+
+```
+docker pull signoz/query-service:develop
+```
+
 ### Important Note:
 The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
 
@@ -248,12 +295,12 @@ Click the button below. A workspace with all required environments will be creat
 
 **Need to Update: [https://github.com/SigNoz/charts](https://github.com/SigNoz/charts).**
 
-### 5.1 To run helm chart for local development
+## 5.1 To run helm chart for local development
 
 - Clone the SigNoz repository and cd into charts directory,
-```
-git clone https://github.com/SigNoz/charts.git && cd charts
-``` 
+    ```
+    git clone https://github.com/SigNoz/charts.git && cd charts
+    ``` 
 - It is recommended to use lightweight kubernetes (k8s) cluster for local development:
   - [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
   - [k3d](https://k3d.io/#installation)
@@ -261,9 +308,9 @@ git clone https://github.com/SigNoz/charts.git && cd charts
 - create a k8s cluster and make sure `kubectl` points to the locally created k8s cluster,
 - run `make dev-install` to install SigNoz chart with `my-release` release name in `platform` namespace,
 - next run,
-```
-kubectl -n platform port-forward svc/my-release-signoz-frontend 3301:3301
-``` 
+    ```
+    kubectl -n platform port-forward svc/my-release-signoz-frontend 3301:3301
+    ``` 
 to make SigNoz UI available at [localhost:3301](http://localhost:3301)
 
 **5.1.1 To install the HotROD sample app:**
@@ -300,7 +347,7 @@ curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-del
  
 ---
 
-## Other ways to contribute
+## Other Ways to Contribute
 
 There are many other ways to get involved with the community and to participate in this project:
 
@@ -315,6 +362,6 @@ There are many other ways to get involved with the community and to participate 
 
 By contributing to SigNoz, you agree that your contributions will be licensed under its MIT license.
 
-Again, feel free to ping us on `#contributing` or `#contributing-frontend` on our slack community if you need any help on this :)
+Again, Feel free to ping us on [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
 
 Thank You!
