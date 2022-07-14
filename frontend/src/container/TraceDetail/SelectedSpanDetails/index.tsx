@@ -18,6 +18,7 @@ const { TabPane } = Tabs;
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree } = props;
+
 	const { isDarkMode } = useThemeMode();
 
 	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
