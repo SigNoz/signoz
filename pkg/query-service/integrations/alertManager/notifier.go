@@ -133,7 +133,7 @@ func (n *Notifier) Run() {
 		alerts := n.nextBatch()
 
 		if !n.sendAll(alerts...) {
-			zap.S().Warn("msg: dropped alerts", "/t count:", len(alerts))
+			zap.S().Warn("msg: dropped alerts", "\t count:", len(alerts))
 			// n.metrics.dropped.Add(float64(len(alerts)))
 		}
 		// If the queue still has items left, kick off the next iteration.
