@@ -8,13 +8,13 @@ export const PanelContainer = styled.div`
 
 export const StyledRightContainer = styled(Col)`
 	&&& {
+		max-width: 300px;
 	}
 `;
 
 export const StyledLeftContainer = styled(Col)`
 	&&& {
 		margin-right: 1rem;
-		min-width: 850px;
 	}
 `;
 

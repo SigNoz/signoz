@@ -318,7 +318,7 @@ function FormAlertRules({
 		<>
 			{Element}
 			<PanelContainer>
-				<StyledLeftContainer flex={4}>
+				<StyledLeftContainer flex={5}>
 					<MainFormContainer
 						initialValues={initialValue}
 						layout="vertical"
