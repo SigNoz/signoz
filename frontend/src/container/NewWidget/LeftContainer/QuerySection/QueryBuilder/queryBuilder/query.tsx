@@ -15,7 +15,7 @@ import { IQueryBuilderQueryHandleChange } from './types';
 const { Option } = Select;
 
 interface IMetricsBuilderProps {
-	queryIndex: number;
+	queryIndex: number | string;
 	selectedGraph: GRAPH_TYPES;
 	queryData: IMetricsBuilderQuery;
 	handleQueryChange: (args: IQueryBuilderQueryHandleChange) => void;
