@@ -9,7 +9,7 @@ const { TextArea } = Input;
 
 interface IMetricsBuilderFormulaProps {
 	formulaData: IMetricsBuilderFormula;
-	formulaIndex: number;
+	formulaIndex: number | string;
 	handleFormulaChange: (args: IQueryBuilderFormulaHandleChange) => void;
 }
 function MetricsBuilderFormula({
