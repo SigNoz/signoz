@@ -3,21 +3,20 @@ import FormAlertRules from 'container/FormAlertRules';
 import React from 'react';
 import { AlertDef } from 'types/api/alerts/def';
 
-function EditRules({ initialValue, ruleId }: EditRulesProps): JSX.Element {
+function CreateRules({ initialValue }: CreateRulesProps): JSX.Element {
 	const [formInstance] = Form.useForm();
 
 	return (
 		<FormAlertRules
 			formInstance={formInstance}
 			initialValue={initialValue}
-			ruleId={ruleId}
+			ruleId={0}
 		/>
 	);
 }
 
-interface EditRulesProps {
+interface CreateRulesProps {
 	initialValue: AlertDef;
-	ruleId: number;
 }
 
-export default EditRules;
+export default CreateRules;

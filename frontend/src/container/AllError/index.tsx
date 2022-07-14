@@ -188,14 +188,14 @@ function AllErrors(): JSX.Element {
 		sorter,
 	) => {
 		if (!Array.isArray(sorter)) {
-			const { current = 0, pageSize = 0 } = paginations;
+			const { pageSize = 0, current = 0 } = paginations;
 			const { columnKey = '', order } = sorter;
 			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
 
 			history.replace(
 				`${pathname}?${createQueryParams({
 					order: updatedOrder,
-					offset: current - 1,
+					offset: (current - 1) * pageSize,
 					orderParam: columnKey,
 					pageSize,
 				})}`,
@@ -213,7 +213,7 @@ function AllErrors(): JSX.Element {
 			pagination={{
 				pageSize: getUpdatedPageSize,
 				responsive: true,
-				current: getUpdatedOffset + 1,
+				current: getUpdatedOffset / 10 + 1,
 				position: ['bottomLeft'],
 				total: errorCountResponse.data?.payload || 0,
 			}}
