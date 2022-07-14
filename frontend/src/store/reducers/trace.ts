@@ -64,6 +64,8 @@ const initialValue: TraceReducer = {
 		['httpMethod', INITIAL_FILTER_VALUE],
 		['httpUrl', INITIAL_FILTER_VALUE],
 		['operation', INITIAL_FILTER_VALUE],
+		['rpcMethod', INITIAL_FILTER_VALUE],
+		['responseStatusCode', INITIAL_FILTER_VALUE],
 		['serviceName', INITIAL_FILTER_VALUE],
 		['status', INITIAL_FILTER_VALUE],
 	]),

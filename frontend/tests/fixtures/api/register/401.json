@@ -1,0 +1,5 @@
+{
+	"status": "error",
+	"errorType": "unauthorized",
+	"error": "You are not allowed to create an account. Please ask your admin to send an invite link"
+}

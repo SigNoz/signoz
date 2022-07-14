@@ -3,17 +3,15 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import createQueryParams from 'lib/createQueryParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/errors/getById';
+import { PayloadProps, Props } from 'types/api/errors/getByErrorId';
 
 const getById = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			`/errorWithId?${createQueryParams({
-				start: props.start.toString(),
-				end: props.end.toString(),
-				errorId: props.errorId,
+			`/errorFromErrorID?${createQueryParams({
+				...props,
 			})}`,
 		);
 
