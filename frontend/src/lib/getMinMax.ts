@@ -13,6 +13,9 @@ const GetMinMax = (
 	if (interval === '1min') {
 		const minTimeAgo = getMinAgo({ minutes: 1 }).getTime();
 		minTime = minTimeAgo;
+	} else if (interval === '10min') {
+		const minTimeAgo = getMinAgo({ minutes: 10 }).getTime();
+		minTime = minTimeAgo;
 	} else if (interval === '15min') {
 		const minTimeAgo = getMinAgo({ minutes: 15 }).getTime();
 		minTime = minTimeAgo;
