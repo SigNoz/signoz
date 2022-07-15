@@ -15,7 +15,7 @@ Please read through this document before submitting any issues or pull requests 
 ## Finding contributions to work on 💬
 
 Looking at the existing issues is a great way to find something to contribute on. 
-Also, have a look at these [good first issues labels](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with.
+Also, have a look at these [good first issues label](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with.
 
 
 ## Sections:
