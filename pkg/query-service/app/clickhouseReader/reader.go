@@ -734,8 +734,8 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			serviceItems[i].Num4XX = val
 		}
 		serviceItems[i].CallRate = float64(serviceItems[i].NumCalls) / float64(queryParams.Period)
-		serviceItems[i].FourXXRate = float64(serviceItems[i].Num4XX) / float64(serviceItems[i].NumCalls)
-		serviceItems[i].ErrorRate = float64(serviceItems[i].NumErrors) / float64(serviceItems[i].NumCalls)
+		serviceItems[i].FourXXRate = float64(serviceItems[i].Num4XX) * 100 / float64(serviceItems[i].NumCalls)
+		serviceItems[i].ErrorRate = float64(serviceItems[i].NumErrors) * 100 / float64(serviceItems[i].NumCalls)
 	}
 
 	return &serviceItems, nil
