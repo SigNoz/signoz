@@ -1,28 +1,21 @@
-import { Collapse, Modal } from 'antd';
-import Editor from 'components/Editor';
-import { StyledButton } from 'components/Styled';
+import { Collapse } from 'antd';
 import useThemeMode from 'hooks/useThemeMode';
 import keys from 'lodash-es/keys';
 import map from 'lodash-es/map';
-import React, { useState } from 'react';
+import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-import { CustomSubText, CustomSubTitle, styles } from './styles';
+import EllipsedButton from './EllipsedButton';
+import { CustomSubText, CustomSubTitle } from './styles';
 
 const { Panel } = Collapse;
 
-function ErrorTag({ event }: ErrorTagProps): JSX.Element {
-	const [isOpen, setIsOpen] = useState(false);
+function ErrorTag({
+	event,
+	onToggleHandler,
+	setText,
+}: ErrorTagProps): JSX.Element {
 	const { isDarkMode } = useThemeMode();
-
-	const [text, setText] = useState({
-		text: '',
-		subText: '',
-	});
-
-	const onToggleHandler = (state: boolean): void => {
-		setIsOpen(state);
-	};
 
 	return (
 		<>
@@ -45,23 +38,23 @@ function ErrorTag({ event }: ErrorTagProps): JSX.Element {
 								return (
 									<>
 										<CustomSubTitle>{event}</CustomSubTitle>
-										<CustomSubText ellipsis={isEllipsed} isDarkMode={isDarkMode}>
+										<CustomSubText
+											ellipsis={{
+												rows: isEllipsed ? 1 : 0,
+											}}
+											isDarkMode={isDarkMode}
+										>
 											{value}
 											<br />
 											{isEllipsed && (
-												<StyledButton
-													styledclass={[styles.removeMargin, styles.removePadding]}
-													onClick={(): void => {
-														onToggleHandler(true);
-														setText({
-															subText: value,
-															text: event,
-														});
+												<EllipsedButton
+													{...{
+														event,
+														onToggleHandler,
+														setText,
+														value,
 													}}
-													type="link"
-												>
-													View full log event message
-												</StyledButton>
+												/>
 											)}
 										</CustomSubText>
 									</>
@@ -71,31 +64,14 @@ function ErrorTag({ event }: ErrorTagProps): JSX.Element {
 					</Collapse>
 				);
 			})}
-
-			<Modal
-				onCancel={(): void => onToggleHandler(false)}
-				title="Log Message"
-				visible={isOpen}
-				destroyOnClose
-				footer={[]}
-				width="70vw"
-			>
-				<CustomSubTitle>{text.text}</CustomSubTitle>
-
-				{text.text === 'exception.stacktrace' ? (
-					<Editor onChange={(): void => {}} readOnly value={text.subText} />
-				) : (
-					<CustomSubText ellipsis={false} isDarkMode={isDarkMode}>
-						{text.subText}
-					</CustomSubText>
-				)}
-			</Modal>
 		</>
 	);
 }
 
 interface ErrorTagProps {
 	event: ITraceTree['event'];
+	onToggleHandler: (isOpen: boolean) => void;
+	setText: (text: { subText: string; text: string }) => void;
 }
 
 export default ErrorTag;

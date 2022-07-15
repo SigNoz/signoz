@@ -25,7 +25,7 @@ function DBCall({ getWidget }: DBCallProps): JSX.Element {
 							fullViewOptions={false}
 							widget={getWidget([
 								{
-									query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[1m])) by (db_system)`,
+									query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (db_system)`,
 									legend: '{{db_system}}',
 								},
 							])}
