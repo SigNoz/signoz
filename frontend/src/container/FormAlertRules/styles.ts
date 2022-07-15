@@ -1,14 +1,13 @@
-import { Button, Card, Col, Form, Input, InputNumber, Select } from 'antd';
+import { Button, Card, Col, Form, Input, InputNumber, Row, Select } from 'antd';
 import TextArea from 'antd/lib/input/TextArea';
 import styled from 'styled-components';
 
-export const PanelContainer = styled.div`
-	display: flex;
+export const PanelContainer = styled(Row)`
+	flex-wrap: nowrap;
 `;
 
 export const StyledRightContainer = styled(Col)`
 	&&& {
-		max-width: 300px;
 	}
 `;
 

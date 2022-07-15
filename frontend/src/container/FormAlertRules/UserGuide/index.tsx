@@ -1,4 +1,5 @@
-import { Typography } from 'antd';
+import { Col, Row, Typography } from 'antd';
+import TextToolTip from 'components/TextToolTip';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { EQueryType } from 'types/common/dashboard';
@@ -107,9 +108,17 @@ function UserGuide({ queryType }: UserGuideProps): JSX.Element {
 
 	return (
 		<StyledMainContainer>
-			<div style={{ display: 'flex' }}>
-				<Typography.Paragraph> {t('user_guide_headline')} </Typography.Paragraph>
-			</div>
+			<Row>
+				<Col flex="auto">
+					<Typography.Paragraph> {t('user_guide_headline')} </Typography.Paragraph>
+				</Col>
+				<Col flex="none">
+					<TextToolTip
+						text={t('user_tooltip_more_help')}
+						url="https://signoz.io/docs/userguide/alerts-management/#create-alert-rules"
+					/>
+				</Col>
+			</Row>
 			{queryType === EQueryType.QUERY_BUILDER && renderGuideForQB()}
 			{queryType === EQueryType.PROM && renderGuideForPQL()}
 		</StyledMainContainer>

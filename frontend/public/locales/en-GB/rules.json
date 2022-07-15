@@ -79,5 +79,6 @@
   "user_guide_pql_step2b": "Enter the Alert threshold",
   "user_guide_pql_step3": "Step 3 -Alert Configuration",
   "user_guide_pql_step3a": "Set alert severity, name and descriptions",
-  "user_guide_pql_step3b": "Add tags to the alert in the Label field if needed"
+  "user_guide_pql_step3b": "Add tags to the alert in the Label field if needed",
+  "user_tooltip_more_help": "More details on how to create alerts"
 }
