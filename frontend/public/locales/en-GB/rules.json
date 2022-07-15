@@ -33,6 +33,7 @@
   "option_10min": "10 mins",
   "option_15min": "15 mins",
   "option_60min": "60 mins",
+  "option_4hours": "4 hours",
   "option_24hours": "24 hours",
   "field_threshold": "Alert Threshold",
   "option_allthetimes": "all the times",
