@@ -33,7 +33,7 @@ function ChartPreview({
 	headline,
 	threshold,
 }: ChartPreviewProps): JSX.Element | null {
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 	const staticLine: StaticLineProps | undefined =
 		threshold && threshold > 0
 			? {

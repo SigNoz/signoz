@@ -22,7 +22,7 @@ interface BasicInfoProps {
 
 function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 	// init namespace for translations
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 
 	return (
 		<>

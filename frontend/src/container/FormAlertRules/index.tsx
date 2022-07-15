@@ -25,8 +25,16 @@ import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
 import QuerySection from './QuerySection';
 import RuleOptions from './RuleOptions';
-import { ActionButton, ButtonContainer, MainFormContainer } from './styles';
+import {
+	ActionButton,
+	ButtonContainer,
+	MainFormContainer,
+	PanelContainer,
+	StyledLeftContainer,
+	StyledRightContainer,
+} from './styles';
 import useDebounce from './useDebounce';
+import UserGuide from './UserGuide';
 import {
 	prepareBuilderQueries,
 	prepareStagedQuery,
@@ -41,7 +49,7 @@ function FormAlertRules({
 	ruleId,
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 
 	// use query client
 	const ruleCache = useQueryClient();
@@ -309,50 +317,57 @@ function FormAlertRules({
 	return (
 		<>
 			{Element}
-			<MainFormContainer
-				initialValues={initialValue}
-				layout="vertical"
-				form={formInstance}
-			>
-				{queryCategory === EQueryType.QUERY_BUILDER && renderQBChartPreview()}
-				{queryCategory === EQueryType.PROM && renderPromChartPreview()}
-				<QuerySection
-					queryCategory={queryCategory}
-					setQueryCategory={onQueryCategoryChange}
-					metricQueries={metricQueries}
-					setMetricQueries={setMetricQueries}
-					formulaQueries={formulaQueries}
-					setFormulaQueries={setFormulaQueries}
-					promQueries={promQueries}
-					setPromQueries={setPromQueries}
-				/>
-
-				<RuleOptions
-					queryCategory={queryCategory}
-					alertDef={alertDef}
-					setAlertDef={setAlertDef}
-				/>
-
-				{renderBasicInfo()}
-				<ButtonContainer>
-					<ActionButton
-						loading={loading || false}
-						type="primary"
-						onClick={onSaveHandler}
-						icon={<SaveOutlined />}
+			<PanelContainer>
+				<StyledLeftContainer flex="5 1 600px">
+					<MainFormContainer
+						initialValues={initialValue}
+						layout="vertical"
+						form={formInstance}
 					>
-						{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
-					</ActionButton>
-					<ActionButton
-						disabled={loading || false}
-						type="default"
-						onClick={onCancelHandler}
-					>
-						{ruleId === 0 && t('button_cancelchanges')}
-						{ruleId > 0 && t('button_discard')}
-					</ActionButton>
-				</ButtonContainer>
-			</MainFormContainer>
+						{queryCategory === EQueryType.QUERY_BUILDER && renderQBChartPreview()}
+						{queryCategory === EQueryType.PROM && renderPromChartPreview()}
+						<QuerySection
+							queryCategory={queryCategory}
+							setQueryCategory={onQueryCategoryChange}
+							metricQueries={metricQueries}
+							setMetricQueries={setMetricQueries}
+							formulaQueries={formulaQueries}
+							setFormulaQueries={setFormulaQueries}
+							promQueries={promQueries}
+							setPromQueries={setPromQueries}
+						/>
+
+						<RuleOptions
+							queryCategory={queryCategory}
+							alertDef={alertDef}
+							setAlertDef={setAlertDef}
+						/>
+
+						{renderBasicInfo()}
+						<ButtonContainer>
+							<ActionButton
+								loading={loading || false}
+								type="primary"
+								onClick={onSaveHandler}
+								icon={<SaveOutlined />}
+							>
+								{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
+							</ActionButton>
+							<ActionButton
+								disabled={loading || false}
+								type="default"
+								onClick={onCancelHandler}
+							>
+								{ruleId === 0 && t('button_cancelchanges')}
+								{ruleId > 0 && t('button_discard')}
+							</ActionButton>
+						</ButtonContainer>
+					</MainFormContainer>
+				</StyledLeftContainer>
+				<StyledRightContainer flex="1 1 300px">
+					<UserGuide queryType={queryCategory} />
+				</StyledRightContainer>
+			</PanelContainer>
 		</>
 	);
 }

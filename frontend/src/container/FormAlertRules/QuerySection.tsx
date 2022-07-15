@@ -31,7 +31,7 @@ function QuerySection({
 	setPromQueries,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 
 	const handleQueryCategoryChange = (s: string): void => {
 		if (

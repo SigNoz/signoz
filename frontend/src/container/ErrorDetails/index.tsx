@@ -40,7 +40,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				getNextPrevId({
 					errorID: errorId || idPayload.errorId,
 					groupID: idPayload.groupID,
-					timestamp: timestamp || getNanoSeconds(idPayload.timestamp).toString(),
+					timestamp: timestamp || getNanoSeconds(idPayload.timestamp),
 				}),
 		},
 	);
@@ -79,7 +79,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	const onClickErrorIdHandler = async (
 		id: string,
-		timespamp: string,
+		timestamp: string,
 	): Promise<void> => {
 		try {
 			if (id.length === 0) {
@@ -92,7 +92,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			history.replace(
 				`${history.location.pathname}?&groupId=${
 					idPayload.groupID
-				}&timestamp=${getNanoSeconds(timespamp)}&errorId=${id}`,
+				}&timestamp=${getNanoSeconds(timestamp)}&errorId=${id}`,
 			);
 		} catch (error) {
 			notification.error({

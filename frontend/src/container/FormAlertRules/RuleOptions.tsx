@@ -25,7 +25,7 @@ function RuleOptions({
 	queryCategory,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 
 	const handleMatchOptChange = (value: string | unknown): void => {
 		const m = (value as string) || alertDef.condition?.matchType;
