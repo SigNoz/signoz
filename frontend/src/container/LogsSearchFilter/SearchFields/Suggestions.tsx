@@ -1,7 +1,7 @@
 import { Typography, Button } from 'antd';
+import CategoryHeading from 'components/Logs/CategoryHeading';
 import React from 'react';
 import FieldKey from './FieldKey';
-import { CategoryHeading } from './styles';
 
 function SuggestedItem({ name, type }) {
     return (

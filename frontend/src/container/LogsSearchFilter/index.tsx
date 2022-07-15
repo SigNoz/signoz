@@ -8,12 +8,12 @@ import { DropDownContainer } from './styles';
 const { Search } = Input;
 
 function SearchFilter() {
-	const [showDropDown, setShowDropDown] = useState(true);
+	const [showDropDown, setShowDropDown] = useState(false);
 
 	const searchComponentRef = useRef(null);
 
 	useClickAway(searchComponentRef, () => {
-		// setShowDropDown(false);
+		setShowDropDown(false);
 	});
 
 	return (

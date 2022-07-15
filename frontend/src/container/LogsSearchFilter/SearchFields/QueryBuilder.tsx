@@ -1,18 +1,16 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Button, Input } from 'antd';
+import CategoryHeading from 'components/Logs/CategoryHeading';
 import React, { useRef, useState } from 'react';
 import { useHoverDirty } from 'react-use';
 
 import FieldKey from './FieldKey';
-import { CategoryHeading, QueryFieldContainer } from './styles';
+import {  QueryFieldContainer } from './styles';
 
 function QueryField() {
-	const fieldRef = useRef(null);
-	const isHovering = useHoverDirty(fieldRef);
 	return (
 		<QueryFieldContainer
-			ref={fieldRef}
-			
+
 		>
 			<div style={{ flex: 3 }}>
 				<FieldKey name="host_name" type="string" />
@@ -33,9 +31,6 @@ function QueryField() {
 					icon={<CloseOutlined />}
 					type="text"
 					size="small"
-					style={{
-						visibility: isHovering ? 'visible' : 'hidden',
-					}}
 				/>
 			</div>
 		</QueryFieldContainer>

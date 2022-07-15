@@ -1,25 +1,8 @@
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-import SearchFilter from 'container/LogsSearchFilter';
-import React, { useEffect } from 'react';
+import Logs from 'container/Logs';
+import React from 'react';
 
 function LogsHome() {
-	return (
-		<>
-			<div>
-				<SearchFilter />
-			</div>
-			<div
-				style={{
-					width: '100%',
-					height: '20vh',
-					background: '#ccc2',
-					margin: '1rem 0'
-				}}
-			>
-				Graph PlaceHolder
-			</div>
-		</>
-	);
+	return <Logs />;
 }
 
 export default LogsHome;

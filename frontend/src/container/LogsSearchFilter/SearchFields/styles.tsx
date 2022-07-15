@@ -1,14 +1,5 @@
-import { Typography } from 'antd';
-import React from 'react';
+import { blue } from '@ant-design/colors';
 import styled from 'styled-components';
-import { blue } from '@ant-design/colors'
-const CategoryHeadingText = styled(Typography.Text)`
-	font-size: 0.9rem;
-`;
-
-export function CategoryHeading({ children }) {
-	return <CategoryHeadingText type="secondary">{children}</CategoryHeadingText>;
-}
 
 export const QueryFieldContainer = styled.div`
 	padding: 0.25rem 0.5rem;
