@@ -90,11 +90,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			}
 
 			history.replace(
-				`${history.location.pathname}?${urlKey.serviceName}=${serviceName}&${
-					urlKey.exceptionType
-				}=${errorType}&groupId=${idPayload.groupID}&timestamp=${getNanoSeconds(
-					timespamp,
-				)}&errorId=${id}`,
+				`${history.location.pathname}?&groupId=${
+					idPayload.groupID
+				}&timestamp=${getNanoSeconds(timespamp)}&errorId=${id}`,
 			);
 		} catch (error) {
 			notification.error({
