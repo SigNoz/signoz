@@ -56,7 +56,7 @@ function Metrics(): JSX.Element {
 			render: (value: number): string => (value / 1000000).toFixed(2),
 		},
 		{
-			title: 'Error Rate (in %)',
+			title: 'Error Rate (% of requests)',
 			dataIndex: 'errorRate',
 			key: 'errorRate',
 			sorter: (a: DataProps, b: DataProps): number => a.errorRate - b.errorRate,

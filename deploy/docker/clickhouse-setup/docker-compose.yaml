@@ -82,16 +82,20 @@ services:
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
+      # - "1777:1777"     # pprof extension
       - "4317:4317"     # OTLP gRPC receiver
       - "4318:4318"     # OTLP HTTP receiver
-      # - "8889:8889"     # Prometheus metrics exposed by the agent
-      # - "13133:13133"   # health_check
-      # - "14268:14268"   # Jaeger receiver
+      # - "8888:8888"     # OtelCollector internal metrics
+      # - "8889:8889"     # signoz spanmetrics exposed by the agent
+      # - "9411:9411"     # Zipkin port
+      # - "13133:13133"   # health check extension
+      # - "14250:14250"   # Jaeger gRPC
+      # - "14268:14268"   # Jaeger thrift HTTP
       # - "55678:55678"   # OpenCensus receiver
-      # - "55679:55679"   # zpages extension
-      # - "55680:55680"   # OTLP gRPC legacy receiver
-      # - "55681:55681"   # OTLP HTTP legacy receiver
+      # - "55679:55679"   # zPages extension
     mem_limit: 2000m
     restart: on-failure
     depends_on:
@@ -103,6 +107,11 @@ services:
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
+    # ports:
+    #   - "1777:1777"     # pprof extension
+    #   - "8888:8888"     # OtelCollector internal metrics
+    #   - "13133:13133"   # Health check extension
+    #   - "55679:55679"   # zPages extension
     restart: on-failure
     depends_on:
       clickhouse:

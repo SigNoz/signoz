@@ -1,28 +1,40 @@
 receivers:
+  opencensus:
+    endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
     protocols:
       grpc:
-        endpoint: "localhost:12345"
+        endpoint: localhost:12345
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
       http:
+        endpoint: 0.0.0.0:4318
   jaeger:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:14250
       thrift_http:
+        endpoint: 0.0.0.0:14268
+      # thrift_compact:
+      #   endpoint: 0.0.0.0:6831
+      # thrift_binary:
+      #   endpoint: 0.0.0.0:6832
   hostmetrics:
-    collection_interval: 30s
+    collection_interval: 60s
     scrapers:
-      cpu:
-      load:
-      memory:
-      disk:
-      filesystem:
-      network:
+      cpu: {}
+      load: {}
+      memory: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+
 processors:
   batch:
-    send_batch_size: 1000
+    send_batch_size: 10000
+    send_batch_max_size: 11000
     timeout: 10s
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
@@ -34,20 +46,33 @@ processors:
       - name: deployment.environment
         default: default
   # memory_limiter:
-  #   # Same as --mem-ballast-size-mib CLI argument
-  #   ballast_size_mib: 683
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
   #   # 25% of limit up to 2G
   #   spike_limit_mib: 512
   #   check_interval: 5s
+  #
+  #   # 50% of the maximum memory
+  #   limit_percentage: 50
+  #   # 20% of max memory usage spike expected
+  #   spike_limit_percentage: 20
   # queued_retry:
   #   num_workers: 4
   #   queue_size: 100
   #   retry_on_failure: true
+  resourcedetection:
+    detectors: [env, system]
+    timeout: 2s
+    override: false
+
 extensions:
-  health_check: {}
-  zpages: {}
+  health_check:
+    endpoint: 0.0.0.0:13133
+  zpages:
+    endpoint: 0.0.0.0:55679
+  pprof:
+    endpoint: 0.0.0.0:1777
+
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
@@ -56,17 +81,29 @@ exporters:
     resource_to_telemetry_conversion:
       enabled: true
   prometheus:
-    endpoint: "0.0.0.0:8889"
+    endpoint: 0.0.0.0:8889
+  # logging: {}
+
 service:
-  extensions: [health_check, zpages]
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+  extensions:
+    - health_check
+    - zpages
+    - pprof
   pipelines:
     traces:
       receivers: [jaeger, otlp]
       processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp, hostmetrics]
+      receivers: [otlp]
       processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
