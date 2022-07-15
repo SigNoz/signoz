@@ -1,30 +1,46 @@
 receivers:
+  opencensus:
+    endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
     protocols:
       grpc:
-        endpoint: "localhost:12345"
+        endpoint: localhost:12345
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
       http:
+        endpoint: 0.0.0.0:4318
   jaeger:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:14250
       thrift_http:
+        endpoint: 0.0.0.0:14268
+      # thrift_compact:
+      #   endpoint: 0.0.0.0:6831
+      # thrift_binary:
+      #   endpoint: 0.0.0.0:6832
   hostmetrics:
     collection_interval: 60s
     scrapers:
-      cpu:
-      load:
-      memory:
-      disk:
-      filesystem:
-      network:
+      cpu: {}
+      load: {}
+      memory: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+
 processors:
   batch:
     send_batch_size: 10000
     send_batch_max_size: 11000
     timeout: 10s
+  resourcedetection:
+    # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
+    detectors: [env, system] # include ec2 for AWS, gce for GCP and azure for Azure.
+    timeout: 2s
+    override: false
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
@@ -49,9 +65,7 @@ processors:
   #   num_workers: 4
   #   queue_size: 100
   #   retry_on_failure: true
-extensions:
-  health_check: {}
-  zpages: {}
+
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
@@ -60,17 +74,34 @@ exporters:
     resource_to_telemetry_conversion:
       enabled: true
   prometheus:
-    endpoint: "0.0.0.0:8889"
+    endpoint: 0.0.0.0:8889
+  # logging: {}
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  zpages:
+    endpoint: 0.0.0.0:55679
+  pprof:
+    endpoint: 0.0.0.0:1777
+
 service:
-  extensions: [health_check, zpages]
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+  extensions: [health_check, zpages, pprof]
   pipelines:
     traces:
       receivers: [jaeger, otlp]
       processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhousetraces]
     metrics:
-      receivers: [otlp, hostmetrics]
+      receivers: [otlp]
       processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
