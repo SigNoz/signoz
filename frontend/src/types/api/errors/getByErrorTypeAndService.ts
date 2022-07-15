@@ -1,10 +1,6 @@
-import { GlobalTime } from 'types/actions/globalTime';
-
 export interface Props {
-	start: GlobalTime['minTime'];
-	end: GlobalTime['maxTime'];
-	serviceName: string;
-	errorType: string;
+	timestamp: string;
+	groupID: string;
 }
 
 export interface PayloadProps {
@@ -16,7 +12,6 @@ export interface PayloadProps {
 	timestamp: string;
 	spanID: string;
 	traceID: string;
-	serviceName: Props['serviceName'];
-	newerErrorId: string;
-	olderErrorId: string;
+	serviceName: string;
+	groupID: string;
 }

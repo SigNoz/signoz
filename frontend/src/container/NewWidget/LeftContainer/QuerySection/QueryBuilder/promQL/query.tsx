@@ -7,7 +7,7 @@ import { IPromQLQueryHandleChange } from './types';
 
 interface IPromQLQueryBuilderProps {
 	queryData: IPromQLQuery;
-	queryIndex: number;
+	queryIndex: number | string;
 	handleQueryChange: (args: IPromQLQueryHandleChange) => void;
 }
 
