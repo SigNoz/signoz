@@ -38,7 +38,12 @@ function ErrorTag({
 								return (
 									<>
 										<CustomSubTitle>{event}</CustomSubTitle>
-										<CustomSubText ellipsis={isEllipsed} isDarkMode={isDarkMode}>
+										<CustomSubText
+											ellipsis={{
+												rows: isEllipsed ? 1 : 0,
+											}}
+											isDarkMode={isDarkMode}
+										>
 											{value}
 											<br />
 											{isEllipsed && (

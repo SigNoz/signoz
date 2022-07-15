@@ -8,7 +8,7 @@ function EllipsedButton({
 	setText,
 	value,
 	event,
-	buttonText = 'View full log event message',
+	buttonText,
 }: Props): JSX.Element {
 	const isFullValueButton = buttonText === 'View full value';
 
@@ -43,7 +43,11 @@ interface Props {
 	setText: (text: { subText: string; text: string }) => void;
 	value: string;
 	event: string;
-	buttonText: string;
+	buttonText?: string;
 }
+
+EllipsedButton.defaultProps = {
+	buttonText: 'View full log event message',
+};
 
 export default EllipsedButton;

@@ -100,7 +100,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 												<Tooltip overlay={(): string => value}>
 													<CustomSubText
 														ellipsis={{
-															rows: 1,
+															rows: isEllipsed ? 1 : 0,
 														}}
 														isDarkMode={isDarkMode}
 													>
