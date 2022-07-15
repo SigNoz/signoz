@@ -23,8 +23,8 @@ function ErrorDetails(): JSX.Element {
 	const { search } = useLocation();
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
-	const serviceName = params.get(urlKey.serviceName);
-	const expectionType = params.get(urlKey.exceptionType);
+	// const serviceName = params.get(urlKey.serviceName);
+	// const expectionType = params.get(urlKey.exceptionType);
 	const groupId = params.get(urlKey.groupId);
 	const errorId = params.get(urlKey.errorId);
 	const timestamp = params.get(urlKey.timestamp);
@@ -52,10 +52,10 @@ function ErrorDetails(): JSX.Element {
 
 	const { data, status } = useQuery(
 		[
-			'expectionType',
-			expectionType,
-			'serviceName',
-			serviceName,
+			// 'expectionType',
+			// expectionType,
+			// 'serviceName',
+			// serviceName,
 			maxTime,
 			minTime,
 			groupId,
@@ -67,14 +67,15 @@ function ErrorDetails(): JSX.Element {
 					timestamp: timestamp || '',
 				}),
 			enabled:
-				!!expectionType && !!serviceName && !!groupId && IdStatus !== 'success',
+				// !!expectionType && !!serviceName && 
+				!!groupId && IdStatus !== 'success',
 		},
 	);
 
 	// if errorType and serviceName is null redirecting to the ALL_ERROR page not now
 	if (
-		serviceName === null ||
-		expectionType === null ||
+		// serviceName === null ||
+		// expectionType === null ||
 		groupId === null ||
 		timestamp === null
 	) {
