@@ -28,7 +28,7 @@ function LabelSelect({
 	onSetLabels,
 	initialValues,
 }: LabelSelectProps): JSX.Element | null {
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentVal, setCurrentVal] = useState('');
 	const [staging, setStaging] = useState<string[]>([]);
