@@ -74,10 +74,10 @@ export const getDefaultOrder = (
 	return undefined;
 };
 
-export const getNanoSeconds = (date: string): number => {
+export const getNanoSeconds = (date: string): string => {
 	return (
-		parseInt((new Date(date).getTime() / 1e3).toString(), 10) * 1e9 +
-		Timestamp.fromString(date).getNano()
+		Math.floor(new Date(date).getTime() / 1e3).toString() +
+		Timestamp.fromString(date).getNano().toString()
 	);
 };
 
