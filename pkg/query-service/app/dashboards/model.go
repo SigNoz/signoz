@@ -165,7 +165,6 @@ func GetDashboards() ([]Dashboard, *model.ApiError) {
 }
 
 func DeleteDashboard(uuid string) *model.ApiError {
-	// Convert to Prepared Statements.
 	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
 
 	result, err := db.Exec(query)
