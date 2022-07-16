@@ -204,9 +204,14 @@ start_docker() {
             echo "Starting docker service"
             $sudo_cmd systemctl start docker.service
         fi
+        # if [[ -z $sudo_cmd ]]; then
+        #     docker ps > /dev/null && true
+        #     if [[ $? -ne 0 ]]; then
+        #         request_sudo
+        #     fi
+        # fi
         if [[ -z $sudo_cmd ]]; then
-            docker ps > /dev/null && true
-            if [[ $? -ne 0 ]]; then
+            if ! docker ps > /dev/null && true; then
                 request_sudo
             fi
         fi
