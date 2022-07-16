@@ -165,7 +165,7 @@ func GetDashboards() ([]Dashboard, *model.ApiError) {
 }
 
 func DeleteDashboard(uuid string) *model.ApiError {
-
+	// Convert to Prepared Statements.
 	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
 
 	result, err := db.Exec(query)
@@ -188,6 +188,7 @@ func DeleteDashboard(uuid string) *model.ApiError {
 func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 
 	dashboard := Dashboard{}
+	// Convert to Prepared Statements.
 	query := fmt.Sprintf("SELECT * FROM dashboards WHERE uuid='%s';", uuid)
 
 	err := db.Get(&dashboard, query)

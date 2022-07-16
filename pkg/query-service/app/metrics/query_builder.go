@@ -270,6 +270,7 @@ func FormatErrs(errs []error, separator string) string {
 	return strings.Join(errStrs, separator)
 }
 
+// selectLabels and groupBy are whitelisted. So This part should be safe from SQL injection.
 func reduceQuery(query string, reduceTo model.ReduceToOperator, aggregateOperator model.AggregateOperator) (string, error) {
 	var selectLabels string
 	var groupBy string
@@ -335,6 +336,7 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 }
 
 // expressionToQuery constructs the query for the expression
+// Should the groupingTags and Tokens be white-listed.?
 func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]string, expression *govaluate.EvaluableExpression) (string, error) {
 	var formulaQuery string
 	vars := expression.Vars()
