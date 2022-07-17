@@ -273,8 +273,12 @@ request_sudo() {
         if (( $EUID != 0 )); then
             sudo_cmd="sudo"
             echo -e "Please enter your sudo password, if prompt."
-            $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null
-            if [[ $? -ne 0 ]] && ! $sudo_cmd -v; then
+            # $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null
+            # if [[ $? -ne 0 ]] && ! $sudo_cmd -v; then
+            #     echo "Need sudo privileges to proceed with the installation."
+            #     exit 1;
+            # fi
+            if ! $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null && ! $sudo_cmd -v; then
                 echo "Need sudo privileges to proceed with the installation."
                 exit 1;
             fi
@@ -308,8 +312,13 @@ echo -e "🌏 Detecting your OS ...\n"
 check_os
 
 # Obtain unique installation id
-sysinfo="$(uname -a)"
-if [[ $? -ne 0 ]]; then
+# sysinfo="$(uname -a)"
+# if [[ $? -ne 0 ]]; then
+#     uuid="$(uuidgen)"
+#     uuid="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
+#     sysinfo="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
+# fi
+if ! sysinfo="$(uname -a)"; then
     uuid="$(uuidgen)"
     uuid="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
     sysinfo="${uuid:-$(cat /proc/sys/kernel/random/uuid)}"
