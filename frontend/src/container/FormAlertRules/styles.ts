@@ -74,14 +74,12 @@ export const InputSmall = styled(Input)`
 	width: 40% !important;
 `;
 
-export const FormContainer = styled.div`
+export const FormContainer = styled(Card)`
 	padding: 2em;
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
-	background: #141414;
 	border-radius: 4px;
-	border: 1px solid #303030;
 `;
 
 export const ThresholdInput = styled(InputNumber)`
