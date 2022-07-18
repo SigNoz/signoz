@@ -83,7 +83,7 @@ function FormAlertRules({
 
 	// staged query is used to display chart preview
 	const [stagedQuery, setStagedQuery] = useState<StagedQuery>();
-	const debouncedStagedQuery = useDebounce(stagedQuery, 500);
+	const debouncedStagedQuery = useDebounce(stagedQuery, 1000);
 
 	// this use effect initiates staged query and
 	// other queries based on server data.
