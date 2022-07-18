@@ -13,7 +13,7 @@ import {
 
 function UserGuide({ queryType }: UserGuideProps): JSX.Element {
 	// init namespace for translations
-	const { t } = useTranslation('rules');
+	const { t } = useTranslation('alerts');
 
 	const renderStep1QB = (): JSX.Element => {
 		return (
