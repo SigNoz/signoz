@@ -45,5 +45,6 @@ test.describe('Login Page', () => {
 		element.isVisible();
 		const text = await element.innerText();
 		expect(text).toBe(`SigNoz ${version}`);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 });

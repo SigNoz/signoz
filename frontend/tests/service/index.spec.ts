@@ -16,7 +16,17 @@ test.describe('Service Page', () => {
 
 		page = newPage;
 	});
+
 	test('Serice Page is rendered', async ({ baseURL }) => {
 		await expect(page).toHaveURL(`${baseURL}${ROUTES.APPLICATION}`);
+		expect(await page.screenshot()).toMatchSnapshot();
+	});
+
+	test('Logged In must be true', async () => {
+		const { app } = await page.evaluate(() => window.store.getState());
+
+		const { isLoggedIn } = app;
+
+		expect(isLoggedIn).toBe(true);
 	});
 });
