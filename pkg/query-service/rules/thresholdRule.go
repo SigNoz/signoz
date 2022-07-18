@@ -96,26 +96,7 @@ func (r *ThresholdRule) Condition() *RuleCondition {
 }
 
 func (r *ThresholdRule) GeneratorURL() string {
-	if r.source == "" {
-		return r.source
-	}
-
-	// check if source is a valid url
-	_, err := url.Parse(r.source)
-	if err != nil {
-		return ""
-	}
-
-	hasNew := strings.LastIndex(r.source, "new")
-	if hasNew > -1 {
-		ruleURL := fmt.Sprintf("%sedit?ruleId=%s", r.source[0:hasNew], r.ID())
-		r.mtx.Lock()
-		defer r.mtx.Unlock()
-		r.source = ruleURL
-		return ruleURL
-	}
-
-	return r.source
+	return prepareRuleGeneratorURL(r.ID(), r.source)
 }
 
 func (r *ThresholdRule) target() *float64 {
