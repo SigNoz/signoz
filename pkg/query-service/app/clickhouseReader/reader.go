@@ -3088,7 +3088,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		return nil, apiErr
 	}
 
-	filterSql, err := logs.ParseLogFilter(fields, &params.Filters)
+	filterSql, err := logs.GenerateSQLWhere(fields, params)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
@@ -3113,4 +3113,22 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	}
 
 	return response, nil
+}
+
+func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) *model.ApiError {
+	for i := 0; i < 10; i++ {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			data := fmt.Sprintf("hello log %d", i)
+			client.Logs <- &data
+			time.Sleep(time.Second)
+		}
+	}
+	done := true
+	client.Done <- &done
+	fmt.Println("done in the tail logs")
+
+	return nil
 }

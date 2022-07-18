@@ -313,15 +313,13 @@ type UpdateField struct {
 	IndexGranularity *int    `json:"indexGranularity"`
 }
 
-type LogFilter struct {
-	Column    string        `json:"col"`
-	Operation string        `json:"op"`
-	Value     []interface{} `json:"val"`
-}
-
 type LogsFilterParams struct {
-	Limit   int         `json:"limit"`
-	OrderBy string      `json:"orderBy"`
-	Order   string      `json:"order"`
-	Filters []LogFilter `json:"filters"`
+	Limit          int     `json:"limit"`
+	OrderBy        string  `json:"orderBy"`
+	Order          string  `json:"order"`
+	Query          *string `json:"q"`
+	TimestampStart *int64  `json:"timestampStart"`
+	TimestampEnd   *int64  `json:"timestampEnd"`
+	IdStart        *string `json:"idStart"`
+	IdEnd          *string `json:"idEnd"`
 }

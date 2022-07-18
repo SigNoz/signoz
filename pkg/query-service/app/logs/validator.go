@@ -38,28 +38,3 @@ func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 	}
 	return nil
 }
-
-func ValidateFilters(filters *[]model.LogFilter) error {
-	opsRegex := "^(gte|lte|gt|lt|eq|neq|in|like|ilike)$"
-	regex, err := regexp.Compile(opsRegex)
-	if err != nil {
-		return err
-	}
-	for _, val := range *filters {
-		if val.Column == "" {
-			return fmt.Errorf("col cannot be empty")
-		}
-		if val.Operation == "" {
-			return fmt.Errorf("op cannot be empty")
-		}
-		if len(val.Value) == 0 {
-			return fmt.Errorf("val cannot be empty")
-		}
-
-		matched := regex.MatchString(val.Operation)
-		if !matched {
-			return fmt.Errorf("op type %s not supported", val.Operation)
-		}
-	}
-	return nil
-}

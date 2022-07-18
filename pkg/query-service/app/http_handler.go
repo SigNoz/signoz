@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1822,6 +1823,7 @@ func (aH *APIHandler) writeJSON(w http.ResponseWriter, r *http.Request, response
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
 	subRouter.HandleFunc("", ViewAccess(aH.getLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/tail", ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 }
@@ -1866,17 +1868,44 @@ func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = logs.ValidateFilters(&params.Filters)
-	if err != nil {
-		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		respondError(w, apiErr, "Incorrect filter")
-		return
-	}
-
 	res, apiErr := (*aH.reader).GetLogs(r.Context(), params)
 	if apiErr != nil {
 		respondError(w, apiErr, "Failed to fetch logs from the DB")
 		return
 	}
 	aH.writeJSON(w, r, map[string]interface{}{"results": res})
+}
+
+func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
+	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *string, 100), Done: make(chan *bool)}
+	go (*aH.reader).TailLogs(r.Context(), client)
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		respondError(w, &err, "streaming is not supported")
+		return
+	}
+
+	loop := true
+	for loop {
+		select {
+		case ev := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(ev)
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			fmt.Printf("data: %v\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			fmt.Println("done!")
+			return
+		}
+	}
 }

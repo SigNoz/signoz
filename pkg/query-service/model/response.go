@@ -18,18 +18,19 @@ type ApiError struct {
 type ErrorType string
 
 const (
-	ErrorNone           ErrorType = ""
-	ErrorTimeout        ErrorType = "timeout"
-	ErrorCanceled       ErrorType = "canceled"
-	ErrorExec           ErrorType = "execution"
-	ErrorBadData        ErrorType = "bad_data"
-	ErrorInternal       ErrorType = "internal"
-	ErrorUnavailable    ErrorType = "unavailable"
-	ErrorNotFound       ErrorType = "not_found"
-	ErrorNotImplemented ErrorType = "not_implemented"
-	ErrorUnauthorized   ErrorType = "unauthorized"
-	ErrorForbidden      ErrorType = "forbidden"
-	ErrorConflict       ErrorType = "conflict"
+	ErrorNone                  ErrorType = ""
+	ErrorTimeout               ErrorType = "timeout"
+	ErrorCanceled              ErrorType = "canceled"
+	ErrorExec                  ErrorType = "execution"
+	ErrorBadData               ErrorType = "bad_data"
+	ErrorInternal              ErrorType = "internal"
+	ErrorUnavailable           ErrorType = "unavailable"
+	ErrorNotFound              ErrorType = "not_found"
+	ErrorNotImplemented        ErrorType = "not_implemented"
+	ErrorUnauthorized          ErrorType = "unauthorized"
+	ErrorForbidden             ErrorType = "forbidden"
+	ErrorConflict              ErrorType = "conflict"
+	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
 )
 
 type QueryDataV2 struct {
@@ -403,4 +404,10 @@ type GetLogsResponse struct {
 	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributesInt" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributesFloat" ch:"attributes_float64"`
+}
+
+type LogsTailClient struct {
+	Name string
+	Logs chan *string
+	Done chan *bool
 }

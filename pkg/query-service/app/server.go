@@ -201,6 +201,11 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
+// Flush implements the http.Flush interface.
+func (lrw *loggingResponseWriter) Flush() {
+	lrw.ResponseWriter.(http.Flusher).Flush()
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)

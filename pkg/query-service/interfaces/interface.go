@@ -64,4 +64,5 @@ type Reader interface {
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError
 	GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError)
+	TailLogs(ctx context.Context, client *model.LogsTailClient) *model.ApiError
 }
