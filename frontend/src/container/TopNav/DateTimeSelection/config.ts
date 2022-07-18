@@ -1,20 +1,24 @@
 import ROUTES from 'constants/routes';
 
 type FiveMin = '5min';
+type TenMin = '10min';
 type FifteenMin = '15min';
 type ThirtyMin = '30min';
 type OneMin = '1min';
 type SixHour = '6hr';
 type OneHour = '1hr';
+type FourHour = '4hr';
 type OneDay = '1day';
 type OneWeek = '1week';
 type Custom = 'custom';
 
 export type Time =
 	| FiveMin
+	| TenMin
 	| FifteenMin
 	| ThirtyMin
 	| OneMin
+	| FourHour
 	| SixHour
 	| OneHour
 	| Custom

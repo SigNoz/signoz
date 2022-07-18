@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 	am "go.signoz.io/query-service/integrations/alertManager"
@@ -15,12 +16,6 @@ type Reader interface {
 	DeleteChannel(id string) *model.ApiError
 	CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError)
 	EditChannel(receiver *am.Receiver, id string) (*am.Receiver, *model.ApiError)
-
-	GetRule(id string) (*model.RuleResponseItem, *model.ApiError)
-	ListRulesFromProm() (*model.AlertDiscovery, *model.ApiError)
-	CreateRule(alert string) *model.ApiError
-	EditRule(alert string, id string) *model.ApiError
-	DeleteRule(id string) *model.ApiError
 
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
@@ -41,9 +36,12 @@ type Reader interface {
 	GetFilteredSpans(ctx context.Context, query *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError)
 	GetFilteredSpansAggregates(ctx context.Context, query *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError)
 
-	GetErrors(ctx context.Context, params *model.GetErrorsParams) (*[]model.Error, *model.ApiError)
-	GetErrorForId(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
-	GetErrorForType(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
+	ListErrors(ctx context.Context, params *model.ListErrorsParams) (*[]model.Error, *model.ApiError)
+	CountErrors(ctx context.Context, params *model.CountErrorsParams) (uint64, *model.ApiError)
+	GetErrorFromErrorID(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
+	GetErrorFromGroupID(ctx context.Context, params *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError)
+	GetNextPrevErrorIDs(ctx context.Context, params *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError)
+
 	// Search Interfaces
 	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 
@@ -65,4 +63,7 @@ type Reader interface {
 	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError
 	GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError)
 	TailLogs(ctx context.Context, client *model.LogsTailClient) *model.ApiError
+
+	// Connection needed for rules, not ideal but required
+	GetConn() clickhouse.Conn
 }

@@ -36,6 +36,7 @@
 		"./commitlint.config.ts",
 		"./webpack.config.js",
 		"./webpack.config.prod.js",
-		"./jest.setup.ts"
+		"./jest.setup.ts",
+		"./tests/**.ts",
 	]
 }

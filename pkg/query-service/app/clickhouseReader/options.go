@@ -22,7 +22,7 @@ const (
 	defaultTraceDB               string        = "signoz_traces"
 	defaultOperationsTable       string        = "signoz_operations"
 	defaultIndexTable            string        = "signoz_index_v2"
-	defaultErrorTable            string        = "signoz_error_index"
+	defaultErrorTable            string        = "signoz_error_index_v2"
 	defaulDurationTable          string        = "durationSortMV"
 	defaultSpansTable            string        = "signoz_spans"
 	defaultLogsDB                string        = "signoz_logs"
