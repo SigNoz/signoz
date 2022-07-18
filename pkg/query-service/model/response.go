@@ -437,7 +437,9 @@ type GetLogsResponse struct {
 }
 
 type LogsTailClient struct {
-	Name string
-	Logs chan *string
-	Done chan *bool
+	Name   string
+	Logs   chan *GetLogsResponse
+	Done   chan *bool
+	Error  chan error
+	Filter LogsFilterParams
 }

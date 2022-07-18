@@ -1903,7 +1903,7 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
-	params, err := logs.ParseFilterParams(r)
+	params, err := logs.ParseLogFilterParams(r)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		respondError(w, apiErr, "Incorrect params")
@@ -1919,7 +1919,15 @@ func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
-	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *string, 100), Done: make(chan *bool)}
+	params, err := logs.ParseLogFilterParams(r)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect params")
+		return
+	}
+
+	// create the client
+	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
 	go (*aH.reader).TailLogs(r.Context(), client)
 
 	w.Header().Set("Connection", "keep-alive")
@@ -1947,6 +1955,9 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		case <-client.Done:
 			fmt.Println("done!")
+			return
+		case <-client.Error:
+			fmt.Println("error occured!")
 			return
 		}
 	}

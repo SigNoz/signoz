@@ -335,8 +335,8 @@ type LogsFilterParams struct {
 	OrderBy        string  `json:"orderBy"`
 	Order          string  `json:"order"`
 	Query          *string `json:"q"`
-	TimestampStart *int64  `json:"timestampStart"`
-	TimestampEnd   *int64  `json:"timestampEnd"`
+	TimestampStart *uint64 `json:"timestampStart"`
+	TimestampEnd   *uint64 `json:"timestampEnd"`
 	IdStart        *string `json:"idStart"`
 	IdEnd          *string `json:"idEnd"`
 }

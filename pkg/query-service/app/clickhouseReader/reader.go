@@ -2883,20 +2883,86 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	return response, nil
 }
 
-func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) *model.ApiError {
-	for i := 0; i < 10; i++ {
+func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) {
+	response := &[]model.GetLogsResponse{}
+	fields, apiErr := r.GetLogFields(ctx)
+	if apiErr != nil {
+		client.Error <- apiErr.Err
+		return
+	}
+
+	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+		Query: client.Filter.Query,
+	})
+
+	if err != nil {
+		client.Error <- err
+		return
+	}
+
+	query := fmt.Sprintf("SELECT "+
+		"timestamp, observed_timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,"+
+		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,"+
+		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,"+
+		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,"+
+		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
+		"from %s.%s", r.logsDB, r.logsTable)
+
+	currentTime := uint64(time.Now().UnixNano() / int64(time.Millisecond))
+	tsStart := &currentTime
+	if client.Filter.TimestampStart != nil {
+		tsStart = client.Filter.TimestampStart
+	}
+
+	var idStart *string
+	if client.Filter.IdStart != nil {
+		idStart = client.Filter.IdStart
+	}
+
+	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			done := true
+			client.Done <- &done
+			zap.S().Debug("closing go routine : " + client.Name)
+			return
 		default:
-			data := fmt.Sprintf("hello log %d", i)
-			client.Logs <- &data
-			time.Sleep(time.Second)
+			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, *tsStart)
+			if filterSql != nil && *filterSql != "" {
+				tmpQuery += fmt.Sprintf(" and %s", *filterSql)
+			}
+			if idStart != nil {
+				tmpQuery += fmt.Sprintf(" and id > '%s'", *idStart)
+			}
+			tmpQuery = fmt.Sprintf("%s order by timestamp asc limit 1000", tmpQuery)
+			zap.S().Debug(tmpQuery)
+			err := r.db.Select(ctx, response, tmpQuery)
+			if err != nil {
+				zap.S().Debug(err)
+				client.Error <- err
+				return
+			}
+			len := len(*response)
+			for i := 0; i < len; i++ {
+				select {
+				case <-ctx.Done():
+					done := true
+					client.Done <- &done
+					zap.S().Debug("closing go routine while sending logs : " + client.Name)
+					return
+				default:
+					client.Logs <- &(*response)[i]
+					if i == len-1 {
+						tsStart = &(*response)[i].Timestamp
+						idStart = &(*response)[i].ID
+					}
+				}
+			}
+			if len == 0 {
+				currentTime := uint64(time.Now().UnixNano() / int64(time.Millisecond))
+				tsStart = &currentTime
+			}
+			time.Sleep(2 * time.Second)
 		}
 	}
-	done := true
-	client.Done <- &done
-	fmt.Println("done in the tail logs")
-
-	return nil
 }

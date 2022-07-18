@@ -24,7 +24,7 @@ var operatorMapping = map[string]string{
 var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?)?(([\w.-]+ (in|nin) \(["\w.,' \-><]+\))|([\w.-]+ (gt|lt|gte|lte|contains|ncontains) ("|')?\S+("|')?))`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
-func ParseFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
+func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 	res := model.LogsFilterParams{
 		Limit:   30,
 		OrderBy: "timestamp",
@@ -52,7 +52,7 @@ func ParseFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 		if err != nil {
 			return nil, err
 		}
-		ts64 := int64(ts)
+		ts64 := uint64(ts)
 		res.TimestampStart = &ts64
 	}
 	if val, ok := params["timestampEnd"]; ok {
@@ -60,7 +60,7 @@ func ParseFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 		if err != nil {
 			return nil, err
 		}
-		ts64 := int64(ts)
+		ts64 := uint64(ts)
 		res.TimestampEnd = &ts64
 	}
 	if val, ok := params["idStart"]; ok {
@@ -68,6 +68,26 @@ func ParseFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 	}
 	if val, ok := params["idEnd"]; ok {
 		res.IdEnd = &val[0]
+	}
+	return &res, nil
+}
+
+func ParseLiveTailFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
+	res := model.LogsFilterParams{}
+	params := r.URL.Query()
+	if val, ok := params["q"]; ok {
+		res.Query = &val[0]
+	}
+	if val, ok := params["timestampStart"]; ok {
+		ts, err := strconv.Atoi(val[0])
+		if err != nil {
+			return nil, err
+		}
+		ts64 := uint64(ts)
+		res.TimestampStart = &ts64
+	}
+	if val, ok := params["idStart"]; ok {
+		res.IdStart = &val[0]
 	}
 	return &res, nil
 }
@@ -158,9 +178,13 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 }
 
 func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (*string, error) {
-	tokens, err := parseLogQuery(*params.Query)
-	if err != nil {
-		return nil, err
+	var tokens []string
+	var err error
+	if params.Query != nil {
+		tokens, err = parseLogQuery(*params.Query)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	tokens, err = replaceInterestingFields(allFields, tokens)
