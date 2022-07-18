@@ -17,6 +17,9 @@ import (
 	"go.signoz.io/query-service/utils/times"
 )
 
+// this file contains all the methods and structs
+// related to go templating in rule labels and annotations
+
 type tmplQueryRecord struct {
 	Labels map[string]string
 	Value  float64
