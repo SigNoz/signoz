@@ -21,7 +21,7 @@ var operatorMapping = map[string]string{
 	"ncontains": "NOT ILIKE",
 }
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?)?(([\w.-]+ (in|nin) \(["\w.,' \-><]+\))|([\w.-]+ (gt|lt|gte|lte|contains|ncontains) ("|')?\S+("|')?))`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?)?(([\w.-]+ (in|nin) \([\S ]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) (')?[\S ]+(')?)`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
@@ -108,13 +108,15 @@ func parseLogQuery(query string) ([]string, error) {
 
 	for _, v := range filterTokens {
 		op := strings.TrimSpace(operatorRegex.FindString(v))
+		opLower := strings.ToLower(op)
 
-		if strings.ToLower(op) == "contains" {
+		if opLower == "contains" || opLower == "ncontains" {
 			searchString := strings.TrimSpace(strings.Split(v, op)[1])
-			sqlQueryTokens = append(sqlQueryTokens, fmt.Sprintf(`AND body ILIKE '%%%s%%' `, searchString[1:len(searchString)-1]))
-		} else if strings.ToLower(op) == "ncontains" {
-			searchString := strings.TrimSpace(strings.Split(v, op)[1])
-			sqlQueryTokens = append(sqlQueryTokens, fmt.Sprintf(`AND body NOT ILIKE '%%%s%%' `, searchString[1:len(searchString)-1]))
+			f := fmt.Sprintf(`body %s '%%%s%%' `, operatorMapping[opLower], searchString[1:len(searchString)-1])
+			if strings.HasPrefix(strings.ToLower(v), "and") {
+				f = "AND " + f
+			}
+			sqlQueryTokens = append(sqlQueryTokens, f)
 		} else {
 			symbol := operatorMapping[strings.ToLower(op)]
 			sqlQueryTokens = append(sqlQueryTokens, strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)+" ")

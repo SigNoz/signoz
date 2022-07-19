@@ -23,6 +23,11 @@ var correctQueriesTest = []struct {
 		[]string{`body ILIKE '%searchstring%' `},
 	},
 	{
+		`fulltext with quotes and space`,
+		`FULLTEXT contains 'Hello, "World"'`,
+		[]string{`body ILIKE '%Hello, "World"%' `},
+	},
+	{
 		`filters with lt,gt,lte,gte operators`,
 		`id lt 100 and id gt 50 and code lte 500 and code gte 400`,
 		[]string{`id < 100 `, `and id > 50 `, `and code <= 500 `, `and code >= 400 `},
@@ -197,8 +202,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 	}
 
 	query := "id lt 100 and id gt 50 and code lte 500 and code gte 400"
-	tsStart := int64(1657689292000)
-	tsEnd := int64(1657689294000)
+	tsStart := uint64(1657689292000)
+	tsEnd := uint64(1657689294000)
 	idStart := "2BsKLKv8cZrLCn6rkOcRGkdjBdM"
 	idEnd := "2BsKG6tRpFWjYMcWsAGKfSxoQdU"
 	sqlWhere := "id < 100 and id > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 and timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' "
