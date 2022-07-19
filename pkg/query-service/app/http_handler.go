@@ -1943,13 +1943,12 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loop := true
-	for loop {
+	for {
 		select {
-		case ev := <-client.Logs:
+		case log := <-client.Logs:
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
-			enc.Encode(ev)
+			enc.Encode(log)
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
