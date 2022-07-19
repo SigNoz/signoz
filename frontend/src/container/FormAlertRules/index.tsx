@@ -177,25 +177,26 @@ function FormAlertRules({
 			return false;
 		}
 
-		Object.keys(metricQueries).forEach((key) => {
-			if (metricQueries[key].metricName === '') {
-				retval = false;
-				notification.error({
-					message: 'Error',
-					description: t('metricname_missing', { where: metricQueries[key].name }),
-				});
-			}
-		});
-
-		Object.keys(formulaQueries).forEach((key) => {
-			if (formulaQueries[key].expression === '') {
-				retval = false;
-				notification.error({
-					message: 'Error',
-					description: t('expression_missing', formulaQueries[key].name),
-				});
-			}
-		});
+		if (queryCategory === EQueryType.QUERY_BUILDER) {
+			Object.keys(metricQueries).forEach((key) => {
+				if (metricQueries[key].metricName === '') {
+					retval = false;
+					notification.error({
+						message: 'Error',
+						description: t('metricname_missing', { where: metricQueries[key].name }),
+					});
+				}
+			});
+			Object.keys(formulaQueries).forEach((key) => {
+				if (formulaQueries[key].expression === '') {
+					retval = false;
+					notification.error({
+						message: 'Error',
+						description: t('expression_missing', formulaQueries[key].name),
+					});
+				}
+			});
+		}
 
 		return retval;
 	}, [t, alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
@@ -235,7 +236,7 @@ function FormAlertRules({
 					description:
 						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
 				});
-				console.log('invalidting cache');
+
 				// invalidate rule in cache
 				ruleCache.invalidateQueries(['ruleId', ruleId]);
 
