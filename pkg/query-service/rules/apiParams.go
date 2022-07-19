@@ -30,6 +30,8 @@ type PostableRule struct {
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 
+	Disabled bool `json:"disabled"`
+
 	// Source captures the source url where rule has been created
 	Source string `json:"source,omitempty"`
 
@@ -44,7 +46,10 @@ func ParsePostableRule(content []byte) (*PostableRule, []error) {
 
 func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
 	rule := PostableRule{}
+	return parseIntoRule(&rule, content, kind)
+}
 
+func parseIntoRule(rule *PostableRule, content []byte, kind string) (*PostableRule, []error) {
 	var err error
 	if kind == "json" {
 		if err = json.Unmarshal(content, &rule); err != nil {
@@ -105,7 +110,7 @@ func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
 	if errs := rule.Validate(); len(errs) > 0 {
 		return nil, errs
 	}
-	return &rule, []error{}
+	return rule, []error{}
 }
 
 func isValidLabelName(ln string) bool {

@@ -29,8 +29,16 @@ func ruleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
-func prepareTaskName(ruleId int64) string {
-	return fmt.Sprintf("%d-groupname", ruleId)
+func prepareTaskName(ruleId interface{}) string {
+	switch ruleId.(type) {
+	case int, int64:
+		return fmt.Sprintf("%d-groupname", ruleId)
+	case string:
+		return fmt.Sprintf("%s-groupname", ruleId)
+	default:
+		return fmt.Sprintf("%s-groupname", ruleId)
+	}
+
 }
 
 // ManagerOptions bundles options for the Manager.
@@ -206,7 +214,7 @@ func (m *Manager) Stop() {
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ruleStr string, id string) error {
-	// todo(amol): fetch recent rule from db first
+
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
 	if len(errs) > 0 {
@@ -592,4 +600,66 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 	}
 	r.Id = fmt.Sprintf("%d", s.Id)
 	return r, nil
+}
+
+// PatchRule  writes the rule definition to the
+// datastore and also updates the rule executor
+func (m *Manager) PatchRule(ruleStr string, ruleId string) error {
+
+	if ruleId == "" {
+		return fmt.Errorf("id is mandatory for patching rule")
+	}
+
+	taskName := prepareTaskName(ruleId)
+
+	// retrieve rule from DB
+	s, err := m.ruleDB.GetStoredRule(ruleId)
+	if err != nil {
+		zap.S().Errorf("msg:", "failed to get stored rule with given id", "\t error:", err)
+		return err
+	}
+
+	// storedRule holds the current stored rule from DB
+	storedRule := &PostableRule{}
+	if err := json.Unmarshal([]byte(s.Data), storedRule); err != nil {
+		zap.S().Errorf("msg:", "failed to get unmarshal stored rule with given id", "\t error:", err)
+		return err
+	}
+
+	// parsed Rule is combo of stored rule and patch received in request
+	parsedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
+	if len(errs) > 0 {
+		zap.S().Errorf("failed to parse rules:", errs)
+		// just one rule is being parsed so expect just one error
+		return errs[0]
+	}
+
+	if parsedRule.Disabled {
+		// check if rule has any task running
+		if _, ok := m.tasks[taskName]; ok {
+			// delete task from memory
+			if err := m.deleteTask(taskName); err != nil {
+				return err
+			}
+		}
+	} else {
+		// check if rule has a task running
+		if _, ok := m.tasks[taskName]; !ok {
+			// rule has not task, start one
+			if err := m.addTask(parsedRule, taskName); err != nil {
+				return err
+			}
+		}
+	}
+
+	editedRuleBytes, err := json.Marshal(parsedRule)
+	if err != nil {
+		return err
+	}
+
+	if _, _, err = m.ruleDB.EditRuleTx(string(editedRuleBytes), ruleId); err != nil {
+		return err
+	}
+
+	return nil
 }
