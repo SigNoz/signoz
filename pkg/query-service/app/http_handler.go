@@ -1951,13 +1951,12 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			enc := json.NewEncoder(&buf)
 			enc.Encode(ev)
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
-			fmt.Printf("data: %v\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			fmt.Println("done!")
+			zap.S().Debug("done!")
 			return
 		case <-client.Error:
-			fmt.Println("error occured!")
+			zap.S().Debug("error occured!")
 			return
 		}
 	}

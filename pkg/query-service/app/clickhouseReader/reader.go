@@ -2884,7 +2884,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 }
 
 func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) {
-	response := &[]model.GetLogsResponse{}
+
 	fields, apiErr := r.GetLogFields(ctx)
 	if apiErr != nil {
 		client.Error <- apiErr.Err
@@ -2934,8 +2934,9 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			if idStart != nil {
 				tmpQuery += fmt.Sprintf(" and id > '%s'", *idStart)
 			}
-			tmpQuery = fmt.Sprintf("%s order by timestamp asc limit 1000", tmpQuery)
+			tmpQuery = fmt.Sprintf("%s order by timestamp asc, id asc limit 1000", tmpQuery)
 			zap.S().Debug(tmpQuery)
+			response := &[]model.GetLogsResponse{}
 			err := r.db.Select(ctx, response, tmpQuery)
 			if err != nil {
 				zap.S().Debug(err)

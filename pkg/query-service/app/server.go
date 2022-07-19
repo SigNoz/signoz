@@ -166,8 +166,8 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
 	})
 
 	handler := c.Handler(r)
