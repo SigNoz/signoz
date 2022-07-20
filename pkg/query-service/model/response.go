@@ -443,3 +443,19 @@ type LogsTailClient struct {
 	Error  chan error
 	Filter LogsFilterParams
 }
+
+type GetLogsAggregatesResponse struct {
+	Items map[int64]LogsAggregatesResponseItem `json:"items"`
+}
+
+type LogsAggregatesResponseItem struct {
+	Timestamp int64                  `json:"timestamp,omitempty" `
+	Value     interface{}            `json:"value,omitempty"`
+	GroupBy   map[string]interface{} `json:"groupBy,omitempty"`
+}
+
+type LogsAggregatesDBResponseItem struct {
+	Timestamp int64   `ch:"time"`
+	Value     float64 `ch:"value"`
+	GroupBy   string  `ch:"groupBy"`
+}

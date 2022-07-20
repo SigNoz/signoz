@@ -92,6 +92,54 @@ func ParseLiveTailFilterParams(r *http.Request) (*model.LogsFilterParams, error)
 	return &res, nil
 }
 
+func ParseLogAggregateParams(r *http.Request) (*model.LogsAggregateParams, error) {
+	res := model.LogsAggregateParams{}
+	params := r.URL.Query()
+	if val, ok := params["timestampStart"]; ok {
+		ts, err := strconv.Atoi(val[0])
+		if err != nil {
+			return nil, err
+		}
+		ts64 := uint64(ts)
+		res.TimestampStart = &ts64
+	} else {
+		return nil, fmt.Errorf("timestampStart is required")
+	}
+	if val, ok := params["timestampEnd"]; ok {
+		ts, err := strconv.Atoi(val[0])
+		if err != nil {
+			return nil, err
+		}
+		ts64 := uint64(ts)
+		res.TimestampEnd = &ts64
+	} else {
+		return nil, fmt.Errorf("timestampEnd is required")
+	}
+
+	if val, ok := params["q"]; ok {
+		res.Query = &val[0]
+	}
+
+	if val, ok := params["groupBy"]; ok {
+		res.GroupBy = &val[0]
+	}
+
+	if val, ok := params["function"]; ok {
+		res.Function = &val[0]
+	}
+
+	if val, ok := params["step"]; ok {
+		step, err := strconv.Atoi(val[0])
+		if err != nil {
+			return nil, err
+		}
+		res.StepSeconds = &step
+	} else {
+		return nil, fmt.Errorf("step is required")
+	}
+	return &res, nil
+}
+
 func parseLogQuery(query string) ([]string, error) {
 	sqlQueryTokens := []string{}
 	filterTokens := tokenRegex.FindAllString(query, -1)

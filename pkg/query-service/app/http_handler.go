@@ -1868,6 +1868,7 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter.HandleFunc("/tail", ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/aggregate", ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -1959,4 +1960,20 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
+	params, err := logs.ParseLogAggregateParams(r)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect params")
+		return
+	}
+
+	res, apiErr := (*aH.reader).AggregateLogs(r.Context(), params)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
+		return
+	}
+	aH.writeJSON(w, r, res)
 }

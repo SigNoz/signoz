@@ -2967,3 +2967,84 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		}
 	}
 }
+
+func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError) {
+	logAggregatesDBResponseItems := &[]model.LogsAggregatesDBResponseItem{}
+
+	groupBy := ""
+	if params.GroupBy != nil {
+		groupBy = *params.GroupBy
+	}
+
+	function := "toFloat64(count()) as value"
+	if params.Function != nil {
+		function = fmt.Sprintf("toFloat64(%s) as value", *params.Function)
+	}
+
+	fields, apiErr := r.GetLogFields(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+		Query: params.Query,
+	})
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
+	}
+
+	query := ""
+	if groupBy != "" {
+		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000), INTERVAL %d minute))*1000) as time, toString(%s) as groupBy, "+
+			"%s "+
+			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			*params.StepSeconds/60, groupBy, function, r.logsDB, r.logsTable, *params.TimestampStart, *params.TimestampEnd)
+	} else {
+		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000), INTERVAL %d minute))*1000) as time, "+
+			"%s "+
+			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			*params.StepSeconds/60, function, r.logsDB, r.logsTable, *params.TimestampStart, *params.TimestampEnd)
+	}
+	if filterSql != nil && *filterSql != "" {
+		query += fmt.Sprintf(" AND %s ", *filterSql)
+	}
+	if groupBy != "" {
+		query += fmt.Sprintf("GROUP BY time, toString(%s) as groupBy ORDER BY time", groupBy)
+	} else {
+		query += "GROUP BY time ORDER BY time"
+	}
+
+	zap.S().Debug(query)
+	err = r.db.Select(ctx, logAggregatesDBResponseItems, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	aggregateResponse := model.GetLogsAggregatesResponse{
+		Items: make(map[int64]model.LogsAggregatesResponseItem),
+	}
+
+	for i := range *logAggregatesDBResponseItems {
+		if elem, ok := aggregateResponse.Items[int64((*logAggregatesDBResponseItems)[i].Timestamp)]; ok {
+			if groupBy != "" && (*logAggregatesDBResponseItems)[i].GroupBy != "" {
+				elem.GroupBy[(*logAggregatesDBResponseItems)[i].GroupBy] = (*logAggregatesDBResponseItems)[i].Value
+			}
+			aggregateResponse.Items[(*logAggregatesDBResponseItems)[i].Timestamp] = elem
+		} else {
+			if groupBy != "" && (*logAggregatesDBResponseItems)[i].GroupBy != "" {
+				aggregateResponse.Items[(*logAggregatesDBResponseItems)[i].Timestamp] = model.LogsAggregatesResponseItem{
+					Timestamp: (*logAggregatesDBResponseItems)[i].Timestamp,
+					GroupBy:   map[string]interface{}{(*logAggregatesDBResponseItems)[i].GroupBy: (*logAggregatesDBResponseItems)[i].Value},
+				}
+			} else if groupBy == "" {
+				aggregateResponse.Items[(*logAggregatesDBResponseItems)[i].Timestamp] = model.LogsAggregatesResponseItem{
+					Timestamp: (*logAggregatesDBResponseItems)[i].Timestamp,
+					Value:     (*logAggregatesDBResponseItems)[i].Value,
+				}
+			}
+		}
+
+	}
+
+	return &aggregateResponse, nil
+}

@@ -63,6 +63,7 @@ type Reader interface {
 	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError
 	GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError)
 	TailLogs(ctx context.Context, client *model.LogsTailClient)
+	AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
