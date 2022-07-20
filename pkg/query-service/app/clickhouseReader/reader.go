@@ -2995,12 +2995,12 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 
 	query := ""
 	if groupBy != "" {
-		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000), INTERVAL %d minute))*1000) as time, toString(%s) as groupBy, "+
+		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as time, toString(%s) as groupBy, "+
 			"%s "+
 			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
 			*params.StepSeconds/60, groupBy, function, r.logsDB, r.logsTable, *params.TimestampStart, *params.TimestampEnd)
 	} else {
-		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000), INTERVAL %d minute))*1000) as time, "+
+		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as time, "+
 			"%s "+
 			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
 			*params.StepSeconds/60, function, r.logsDB, r.logsTable, *params.TimestampStart, *params.TimestampEnd)
