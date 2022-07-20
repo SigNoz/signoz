@@ -422,7 +422,6 @@ type GetFieldsResponse struct {
 
 type GetLogsResponse struct {
 	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
-	ObservedTimestamp  uint64             `json:"observedTimestamp" ch:"observed_timestamp"`
 	ID                 string             `json:"id" ch:"id"`
 	TraceID            string             `json:"traceId" ch:"trace_id"`
 	SpanID             string             `json:"spanId" ch:"span_id"`
