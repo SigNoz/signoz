@@ -6,3 +6,5 @@ export const validPassword = 'SamplePassword98@@';
 
 export const getStartedButtonSelector = 'button[data-attr="signup"]';
 export const confirmPasswordSelector = '#password-confirm-error';
+
+export const JsonApplicationType = 'application/json';
