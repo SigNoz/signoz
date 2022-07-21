@@ -243,16 +243,32 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 	}
 
 	if params.TimestampStart != nil {
-		tokens = append(tokens, fmt.Sprintf("and timestamp >= '%d' ", *params.TimestampStart))
+		filter := fmt.Sprintf("timestamp >= '%d' ", *params.TimestampStart)
+		if len(tokens) > 0 {
+			filter = "and " + filter
+		}
+		tokens = append(tokens, filter)
 	}
 	if params.TimestampEnd != nil {
-		tokens = append(tokens, fmt.Sprintf("and timestamp <= '%d' ", *params.TimestampEnd))
+		filter := fmt.Sprintf("timestamp <= '%d' ", *params.TimestampEnd)
+		if len(tokens) > 0 {
+			filter = "and " + filter
+		}
+		tokens = append(tokens, filter)
 	}
 	if params.IdStart != nil {
-		tokens = append(tokens, fmt.Sprintf("and id > '%v' ", *params.IdStart))
+		filter := fmt.Sprintf("id > '%v' ", *params.IdStart)
+		if len(tokens) > 0 {
+			filter = "and " + filter
+		}
+		tokens = append(tokens, filter)
 	}
 	if params.IdEnd != nil {
-		tokens = append(tokens, fmt.Sprintf("and id < '%v' ", *params.IdEnd))
+		filter := fmt.Sprintf("id < '%v' ", *params.IdEnd)
+		if len(tokens) > 0 {
+			filter = "and " + filter
+		}
+		tokens = append(tokens, filter)
 	}
 
 	sqlWhere := strings.Join(tokens, "")
