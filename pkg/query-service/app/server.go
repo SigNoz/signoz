@@ -242,8 +242,14 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
-		defer cancel()
+		ctx := r.Context()
+		var cancel context.CancelFunc
+		// check if route is not excluded
+		url := r.URL.Path
+		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
+			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+			defer cancel()
+		}
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

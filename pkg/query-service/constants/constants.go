@@ -81,6 +81,10 @@ const (
 	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
 )
 
+var TimeoutExcludedRoutes = map[string]bool{
+	"/api/v1/logs/tail": true,
+}
+
 // alert related constants
 const (
 	// AlertHelpPage is used in case default alert repo url is not set
