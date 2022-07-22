@@ -2771,30 +2771,30 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	}
 
 	// get attribute keys
-	attributes := &[]model.LogField{}
+	attributes := []model.LogField{}
 	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsAttributeKeys)
-	err := r.db.Select(ctx, attributes, query)
+	err := r.db.Select(ctx, &attributes, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
 	// get resource keys
-	resources := &[]model.LogField{}
+	resources := []model.LogField{}
 	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsResourceKeys)
-	err = r.db.Select(ctx, resources, query)
+	err = r.db.Select(ctx, &resources, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
-	statements := []model.CreateTableStatement{}
+	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, attributes, &response)
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, resources, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
 	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response)
 
 	return &response, nil
@@ -2812,7 +2812,7 @@ func extractSelectedAndInterestingFields(tableStatement string, fieldType string
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
-	// if a field is selected it means that the field is indexed
+	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
 		// if the type is attribute or resource, create the materialized column first
 		if field.Type == constants.Attributes || field.Type == constants.Resources {
@@ -2850,7 +2850,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 }
 
 func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError) {
-	response := &[]model.GetLogsResponse{}
+	response := []model.GetLogsResponse{}
 	fields, apiErr := r.GetLogFields(ctx)
 	if apiErr != nil {
 		return nil, apiErr
@@ -2875,12 +2875,12 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 
 	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
 	zap.S().Debug(query)
-	err = r.db.Select(ctx, response, query)
+	err = r.db.Select(ctx, &response, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
-	return response, nil
+	return &response, nil
 }
 
 func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) {
@@ -2969,7 +2969,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 }
 
 func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError) {
-	logAggregatesDBResponseItems := &[]model.LogsAggregatesDBResponseItem{}
+	logAggregatesDBResponseItems := []model.LogsAggregatesDBResponseItem{}
 
 	groupBy := ""
 	if params.GroupBy != nil {
@@ -3015,7 +3015,7 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	}
 
 	zap.S().Debug(query)
-	err = r.db.Select(ctx, logAggregatesDBResponseItems, query)
+	err = r.db.Select(ctx, &logAggregatesDBResponseItems, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
@@ -3024,22 +3024,22 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		Items: make(map[int64]model.LogsAggregatesResponseItem),
 	}
 
-	for i := range *logAggregatesDBResponseItems {
-		if elem, ok := aggregateResponse.Items[int64((*logAggregatesDBResponseItems)[i].Timestamp)]; ok {
-			if groupBy != "" && (*logAggregatesDBResponseItems)[i].GroupBy != "" {
-				elem.GroupBy[(*logAggregatesDBResponseItems)[i].GroupBy] = (*logAggregatesDBResponseItems)[i].Value
+	for i := range logAggregatesDBResponseItems {
+		if elem, ok := aggregateResponse.Items[int64(logAggregatesDBResponseItems[i].Timestamp)]; ok {
+			if groupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
+				elem.GroupBy[logAggregatesDBResponseItems[i].GroupBy] = logAggregatesDBResponseItems[i].Value
 			}
-			aggregateResponse.Items[(*logAggregatesDBResponseItems)[i].Timestamp] = elem
+			aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = elem
 		} else {
-			if groupBy != "" && (*logAggregatesDBResponseItems)[i].GroupBy != "" {
-				aggregateResponse.Items[(*logAggregatesDBResponseItems)[i].Timestamp] = model.LogsAggregatesResponseItem{
-					Timestamp: (*logAggregatesDBResponseItems)[i].Timestamp,
-					GroupBy:   map[string]interface{}{(*logAggregatesDBResponseItems)[i].GroupBy: (*logAggregatesDBResponseItems)[i].Value},
+			if groupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
+				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
+					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
+					GroupBy:   map[string]interface{}{logAggregatesDBResponseItems[i].GroupBy: (*logAggregatesDBResponseItems)[i].Value},
 				}
 			} else if groupBy == "" {
-				aggregateResponse.Items[(*logAggregatesDBResponseItems)[i].Timestamp] = model.LogsAggregatesResponseItem{
-					Timestamp: (*logAggregatesDBResponseItems)[i].Timestamp,
-					Value:     (*logAggregatesDBResponseItems)[i].Value,
+				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
+					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
+					Value:     logAggregatesDBResponseItems[i].Value,
 				}
 			}
 		}

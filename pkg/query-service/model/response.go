@@ -405,7 +405,7 @@ func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
 }
 
-type CreateTableStatement struct {
+type ShowCreateTableStatement struct {
 	Statement string `json:"statement" ch:"statement"`
 }
 
