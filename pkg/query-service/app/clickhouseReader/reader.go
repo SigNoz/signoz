@@ -2908,15 +2908,14 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
 		"from %s.%s", r.logsDB, r.logsTable)
 
-	currentTime := uint64(time.Now().UnixNano() / int64(time.Millisecond))
-	tsStart := &currentTime
+	tsStart := uint64(time.Now().UnixNano() / int64(time.Millisecond))
 	if client.Filter.TimestampStart != nil {
-		tsStart = client.Filter.TimestampStart
+		tsStart = *client.Filter.TimestampStart
 	}
 
-	var idStart *string
+	var idStart string
 	if client.Filter.IdStart != nil {
-		idStart = client.Filter.IdStart
+		idStart = *client.Filter.IdStart
 	}
 
 	for {
@@ -2927,23 +2926,23 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			zap.S().Debug("closing go routine : " + client.Name)
 			return
 		default:
-			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, *tsStart)
+			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, tsStart)
 			if filterSql != "" {
 				tmpQuery += fmt.Sprintf(" and %s", filterSql)
 			}
-			if idStart != nil {
-				tmpQuery += fmt.Sprintf(" and id > '%s'", *idStart)
+			if idStart != "" {
+				tmpQuery += fmt.Sprintf(" and id > '%s'", idStart)
 			}
 			tmpQuery = fmt.Sprintf("%s order by timestamp asc, id asc limit 1000", tmpQuery)
 			zap.S().Debug(tmpQuery)
-			response := &[]model.GetLogsResponse{}
-			err := r.db.Select(ctx, response, tmpQuery)
+			response := []model.GetLogsResponse{}
+			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
 				zap.S().Debug(err)
 				client.Error <- err
 				return
 			}
-			len := len(*response)
+			len := len(response)
 			for i := 0; i < len; i++ {
 				select {
 				case <-ctx.Done():
@@ -2952,16 +2951,15 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 					zap.S().Debug("closing go routine while sending logs : " + client.Name)
 					return
 				default:
-					client.Logs <- &(*response)[i]
+					client.Logs <- &response[i]
 					if i == len-1 {
-						tsStart = &(*response)[i].Timestamp
-						idStart = &(*response)[i].ID
+						tsStart = response[i].Timestamp
+						idStart = response[i].ID
 					}
 				}
 			}
 			if len == 0 {
-				currentTime := uint64(time.Now().UnixNano() / int64(time.Millisecond))
-				tsStart = &currentTime
+				tsStart = uint64(time.Now().UnixNano() / int64(time.Millisecond))
 			}
 			time.Sleep(2 * time.Second)
 		}
