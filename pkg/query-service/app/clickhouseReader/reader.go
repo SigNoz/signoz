@@ -2861,13 +2861,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
 
-	query := fmt.Sprintf("SELECT "+
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,"+
-		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,"+
-		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,"+
-		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,"+
-		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
-		"from %s.%s", r.logsDB, r.logsTable)
+	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
 
 	if filterSql != "" {
 		query += fmt.Sprintf(" where %s", filterSql)
@@ -2900,13 +2894,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		return
 	}
 
-	query := fmt.Sprintf("SELECT "+
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,"+
-		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,"+
-		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,"+
-		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,"+
-		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
-		"from %s.%s", r.logsDB, r.logsTable)
+	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
 
 	tsStart := uint64(time.Now().UnixNano())
 	if client.Filter.TimestampStart != nil {
@@ -2958,10 +2946,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 					}
 				}
 			}
-			if len == 0 {
-				tsStart = uint64(time.Now().UnixNano())
-			}
-			time.Sleep(2 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}
 }

@@ -139,3 +139,12 @@ var StaticSelectedLogFields = []model.LogField{
 		Type:     Static,
 	},
 }
+
+const (
+	LogsSQLSelect = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body," +
+		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
+		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+)
