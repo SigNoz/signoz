@@ -2869,8 +2869,8 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
 		"from %s.%s", r.logsDB, r.logsTable)
 
-	if filterSql != nil && *filterSql != "" {
-		query += fmt.Sprintf(" where %s", *filterSql)
+	if filterSql != "" {
+		query += fmt.Sprintf(" where %s", filterSql)
 	}
 
 	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
@@ -2928,8 +2928,8 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			return
 		default:
 			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, *tsStart)
-			if filterSql != nil && *filterSql != "" {
-				tmpQuery += fmt.Sprintf(" and %s", *filterSql)
+			if filterSql != "" {
+				tmpQuery += fmt.Sprintf(" and %s", filterSql)
 			}
 			if idStart != nil {
 				tmpQuery += fmt.Sprintf(" and id > '%s'", *idStart)
@@ -3005,8 +3005,8 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
 			*params.StepSeconds/60, function, r.logsDB, r.logsTable, *params.TimestampStart, *params.TimestampEnd)
 	}
-	if filterSql != nil && *filterSql != "" {
-		query += fmt.Sprintf(" AND %s ", *filterSql)
+	if filterSql != "" {
+		query += fmt.Sprintf(" AND %s ", filterSql)
 	}
 	if groupBy != "" {
 		query += fmt.Sprintf("GROUP BY time, toString(%s) as groupBy ORDER BY time", groupBy)
@@ -3034,7 +3034,7 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 			if groupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
 				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
 					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
-					GroupBy:   map[string]interface{}{logAggregatesDBResponseItems[i].GroupBy: (*logAggregatesDBResponseItems)[i].Value},
+					GroupBy:   map[string]interface{}{logAggregatesDBResponseItems[i].GroupBy: logAggregatesDBResponseItems[i].Value},
 				}
 			} else if groupBy == "" {
 				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{

@@ -242,19 +242,20 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 	return queryTokens, nil
 }
 
-func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (*string, error) {
+func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, error) {
 	var tokens []string
 	var err error
+	var sqlWhere string
 	if params.Query != nil {
 		tokens, err = parseLogQuery(*params.Query)
 		if err != nil {
-			return nil, err
+			return sqlWhere, err
 		}
 	}
 
 	tokens, err = replaceInterestingFields(allFields, tokens)
 	if err != nil {
-		return nil, err
+		return sqlWhere, err
 	}
 
 	if params.TimestampStart != nil {
@@ -286,7 +287,7 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 		tokens = append(tokens, filter)
 	}
 
-	sqlWhere := strings.Join(tokens, "")
+	sqlWhere = strings.Join(tokens, "")
 
-	return &sqlWhere, nil
+	return sqlWhere, nil
 }

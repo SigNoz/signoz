@@ -214,6 +214,6 @@ func TestGenerateSQLQuery(t *testing.T) {
 	sqlWhere := "id < 100 and id > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 and timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' "
 	Convey("testInterestingFields", t, func() {
 		res, _ := GenerateSQLWhere(&allFields, &model.LogsFilterParams{Query: &query, TimestampStart: &tsStart, TimestampEnd: &tsEnd, IdStart: &idStart, IdEnd: &idEnd})
-		So(*res, ShouldEqual, sqlWhere)
+		So(res, ShouldEqual, sqlWhere)
 	})
 }
