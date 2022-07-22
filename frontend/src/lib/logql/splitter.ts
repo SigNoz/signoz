@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-const splitter = (queryString) => {
+export const splitter = (queryString) => {
 	const splittedParts = [];
 	let start = 0;
 	let isBracketStart = false;

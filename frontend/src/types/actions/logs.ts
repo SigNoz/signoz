@@ -7,6 +7,7 @@
 // import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 // import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
 
+import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IFields } from 'types/api/logs/fields';
 
 // export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
@@ -19,6 +20,11 @@ import { IFields } from 'types/api/logs/fields';
 // export const RESET_INITIAL_APPLICATION_DATA = 'RESET_INITIAL_APPLICATION_DATA';
 export const GET_FIELDS = 'LOGS_GET_FIELDS';
 export const SET_FIELDS = 'LOGS_SET_FIELDS';
+export const SET_SEARCH_QUERY_STRING = 'LOGS_SET_SEARCH_QUERY_STRING';
+export const SET_SEARCH_QUERY_PARSED_PAYLOAD =
+	'LOGS_SET_SEARCH_QUERY_PARSED_PAYLOAD';
+export const ADD_SEARCH_FIELD_QUERY_STRING =
+	'LOGS_ADD_SEARCH_FIELD_QUERY_STRING';
 
 export interface GetFields {
 	type: typeof GET_FIELDS;
@@ -27,6 +33,19 @@ export interface GetFields {
 export interface SetFields {
 	type: typeof SET_FIELDS;
 	payload: IFields;
+}
+export interface SetSearchQueryString {
+	type: typeof SET_SEARCH_QUERY_STRING;
+	payload: string;
+}
+
+export interface SetSearchQueryParsedPayload {
+	type: typeof SET_SEARCH_QUERY_PARSED_PAYLOAD;
+	payload: ILogQLParsedQueryItem[];
+}
+export interface AddSearchFieldQueryString {
+	type: typeof ADD_SEARCH_FIELD_QUERY_STRING;
+	payload: string;
 }
 
 // export interface GetServiceListLoading {
@@ -66,4 +85,9 @@ export interface SetFields {
 // 	};
 // }
 
-export type LogsActions = GetFields | SetFields;
+export type LogsActions =
+	| GetFields
+	| SetFields
+	| SetSearchQueryString
+	| SetSearchQueryParsedPayload
+	| AddSearchFieldQueryString;

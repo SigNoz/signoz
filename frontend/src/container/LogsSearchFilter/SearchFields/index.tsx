@@ -1,12 +1,12 @@
 import React from 'react';
-import QueryBuilder from './QueryBuilder';
+import QueryBuilder from './QueryBuilder/QueryBuilder';
 import Suggestions from './Suggestions';
 
-function SearchFields(): JSX.Element {
+function SearchFields({updateParsedQuery}): JSX.Element {
 
 	return (
 		<>
-			<QueryBuilder />
+			<QueryBuilder updateParsedQuery={updateParsedQuery} />
 			<Suggestions />
 		</>
 	);

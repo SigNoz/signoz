@@ -1,20 +1,22 @@
 // @ts-nocheck
 
-const reverseParser = (parserQueryArr: { type: string; value: any }[] = []) => {
-	const queryString = '';
+export const reverseParser = (
+	parserQueryArr: { type: string; value: any }[] = [],
+) => {
+	let queryString = '';
 	parserQueryArr.forEach((query) => {
 		if (queryString) {
 			queryString += ' ';
 		}
 
 		if (Array.isArray(query.value)) {
-			queryString += `(${query.value.map((val) => "'" + val + "'").join(',')})`;
+			queryString += `(${query.value.map((val) => `'${val}'`).join(',')})`;
 		} else {
 			queryString += query.value;
 		}
 	});
 
-	console.log(queryString);
+	// console.log(queryString);
 	return queryString;
 };
 

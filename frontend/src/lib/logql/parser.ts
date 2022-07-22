@@ -34,7 +34,7 @@ const validateMultiValue = (queryToken: string): boolean => {
 	}
 	return queryValues;
 };
-const parseQuery = (queryString) => {
+export const parseQuery = (queryString) => {
 	let parsedRaw = [];
 	const generateQuery = (queryToken) => {
 		const prevToken = parsedRaw[parsedRaw.length - 1];
@@ -72,6 +72,14 @@ const parseQuery = (queryString) => {
 		else if (prevToken && prevToken.type === QueryTypes.QUERY_OPERATOR) {
 			// Check for multi value
 			let value = queryToken;
+			// if (
+			// 	typeof queryToken === 'string' &&
+			// 	queryToken.length >= 2 &&
+			// 	queryToken[0] === "'" &&
+			// 	queryToken[queryToken.length - 1] === "'"
+			// ) {
+			// 	value = queryToken.slice(1, queryToken.length - 1);
+			// }
 			if (
 				Object.values(QueryOperatorsMultiVal).some(
 					(operator) => operator.toLowerCase() === prevToken.value.toLowerCase(),
@@ -134,7 +142,7 @@ const parseQuery = (queryString) => {
 		}
 	}
 
-	console.log(parsedRaw);
+	// console.log(parsedRaw);
 	return parsedRaw;
 };
 
