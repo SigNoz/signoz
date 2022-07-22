@@ -28,6 +28,11 @@ var correctQueriesTest = []struct {
 		[]string{`body ILIKE '%Hello, "World"%' `},
 	},
 	{
+		`contains search with a different attributes`,
+		`resource contains 'Hello, "World"'`,
+		[]string{`resource ILIKE '%Hello, "World"%' `},
+	},
+	{
 		`filters with lt,gt,lte,gte operators`,
 		`id lt 100 and id gt 50 and code lte 500 and code gte 400`,
 		[]string{`id < 100 `, `and id > 50 `, `and code <= 500 `, `and code >= 400 `},

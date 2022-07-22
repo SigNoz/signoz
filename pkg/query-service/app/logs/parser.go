@@ -21,6 +21,10 @@ var operatorMapping = map[string]string{
 	"ncontains": "NOT ILIKE",
 }
 
+const (
+	AND = "and"
+)
+
 var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?)?(([\w.-]+ (in|nin) \([\S ]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) (')?[\S ]+(')?)`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
@@ -160,8 +164,19 @@ func parseLogQuery(query string) ([]string, error) {
 
 		if opLower == "contains" || opLower == "ncontains" {
 			searchString := strings.TrimSpace(strings.Split(v, op)[1])
-			f := fmt.Sprintf(`body %s '%%%s%%' `, operatorMapping[opLower], searchString[1:len(searchString)-1])
-			if strings.HasPrefix(strings.ToLower(v), "and") {
+
+			operatorRemovedTokens := strings.Split(operatorRegex.ReplaceAllString(v, " "), " ")
+			searchCol := strings.ToLower(operatorRemovedTokens[0])
+			if searchCol == AND {
+				searchCol = strings.ToLower(operatorRemovedTokens[1])
+			}
+			col := searchCol
+			if strings.ToLower(searchCol) == "fulltext" {
+				col = "body"
+			}
+
+			f := fmt.Sprintf(`%s %s '%%%s%%' `, col, operatorMapping[opLower], searchString[1:len(searchString)-1])
+			if strings.HasPrefix(strings.ToLower(v), AND) {
 				f = "AND " + f
 			}
 			sqlQueryTokens = append(sqlQueryTokens, f)
@@ -185,7 +200,7 @@ func parseColumn(s string) (*string, error) {
 		return nil, fmt.Errorf("incorrect filter")
 	}
 
-	if strings.HasPrefix(s, "and") {
+	if strings.HasPrefix(s, AND) {
 		colName = filter[1]
 	} else {
 		colName = filter[0]
