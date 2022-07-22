@@ -99,30 +99,37 @@ func GetOrDefaultEnv(key string, fallback string) string {
 	return v
 }
 
+const (
+	STRING                = "String"
+	UINT32                = "UInt32"
+	LOWCARDINALITY_STRING = "LowCardinality(String)"
+	INT32                 = "Int32"
+)
+
 var StaticInterestingLogFields = []model.LogField{
 	{
 		Name:     "trace_id",
-		DataType: "String",
+		DataType: STRING,
 		Type:     Static,
 	},
 	{
 		Name:     "span_id",
-		DataType: "String",
+		DataType: STRING,
 		Type:     Static,
 	},
 	{
 		Name:     "trace_flags",
-		DataType: "UInt32",
+		DataType: UINT32,
 		Type:     Static,
 	},
 	{
 		Name:     "severity_text",
-		DataType: "LowCardinality(String)",
+		DataType: LOWCARDINALITY_STRING,
 		Type:     Static,
 	},
 	{
 		Name:     "severity_number",
-		DataType: "Int32",
+		DataType: INT32,
 		Type:     Static,
 	},
 }
@@ -130,12 +137,12 @@ var StaticInterestingLogFields = []model.LogField{
 var StaticSelectedLogFields = []model.LogField{
 	{
 		Name:     "timestamp",
-		DataType: "UInt64",
+		DataType: UINT32,
 		Type:     Static,
 	},
 	{
 		Name:     "id",
-		DataType: "String",
+		DataType: STRING,
 		Type:     Static,
 	},
 }
