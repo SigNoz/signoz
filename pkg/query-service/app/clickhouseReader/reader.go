@@ -2908,7 +2908,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "+
 		"from %s.%s", r.logsDB, r.logsTable)
 
-	tsStart := uint64(time.Now().UnixNano() / int64(time.Millisecond))
+	tsStart := uint64(time.Now().UnixNano())
 	if client.Filter.TimestampStart != nil {
 		tsStart = *client.Filter.TimestampStart
 	}
@@ -2959,7 +2959,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 				}
 			}
 			if len == 0 {
-				tsStart = uint64(time.Now().UnixNano() / int64(time.Millisecond))
+				tsStart = uint64(time.Now().UnixNano())
 			}
 			time.Sleep(2 * time.Second)
 		}
