@@ -27,13 +27,13 @@ func ValidateUpdateFieldPayload(field *model.UpdateField) error {
 		return fmt.Errorf("type %s not supported", field.Type)
 	}
 
-	if field.IndexType != nil {
-		matched, err := regexp.MatchString(`^(minmax|set\([0-9]\)|bloom_filter\((0?.?[0-9]+|1)\)|tokenbf_v1\([0-9]+,[0-9]+,[0-9]+\)|ngrambf_v1\([0-9]+,[0-9]+,[0-9]+,[0-9]+\))$`, *field.IndexType)
+	if field.IndexType != "" {
+		matched, err := regexp.MatchString(`^(minmax|set\([0-9]\)|bloom_filter\((0?.?[0-9]+|1)\)|tokenbf_v1\([0-9]+,[0-9]+,[0-9]+\)|ngrambf_v1\([0-9]+,[0-9]+,[0-9]+,[0-9]+\))$`, field.IndexType)
 		if err != nil {
 			return err
 		}
 		if !matched {
-			return fmt.Errorf("index type %s not supported", *field.IndexType)
+			return fmt.Errorf("index type %s not supported", field.IndexType)
 		}
 	}
 	return nil

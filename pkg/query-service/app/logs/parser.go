@@ -22,7 +22,13 @@ var operatorMapping = map[string]string{
 }
 
 const (
-	AND = "and"
+	AND             = "and"
+	ORDER           = "order"
+	ORDER_BY        = "orderBy"
+	TIMESTAMP_START = "timestampStart"
+	TIMESTAMP_END   = "timestampEnd"
+	IDSTART         = "idStart"
+	IDEND           = "idEnd"
 )
 
 var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?)?(([\w.-]+ (in|nin) \([\S ]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) (')?[\S ]+(')?)`)
@@ -42,36 +48,34 @@ func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 			return nil, err
 		}
 	}
-	if val, ok := params["orderBy"]; ok {
+	if val, ok := params[ORDER_BY]; ok {
 		res.OrderBy = val[0]
 	}
-	if val, ok := params["order"]; ok {
+	if val, ok := params[ORDER]; ok {
 		res.Order = val[0]
 	}
 	if val, ok := params["q"]; ok {
-		res.Query = &val[0]
+		res.Query = val[0]
 	}
-	if val, ok := params["timestampStart"]; ok {
+	if val, ok := params[TIMESTAMP_START]; ok {
 		ts, err := strconv.Atoi(val[0])
 		if err != nil {
 			return nil, err
 		}
-		ts64 := uint64(ts)
-		res.TimestampStart = &ts64
+		res.TimestampStart = uint64(ts)
 	}
-	if val, ok := params["timestampEnd"]; ok {
+	if val, ok := params[TIMESTAMP_END]; ok {
 		ts, err := strconv.Atoi(val[0])
 		if err != nil {
 			return nil, err
 		}
-		ts64 := uint64(ts)
-		res.TimestampEnd = &ts64
+		res.TimestampEnd = uint64(ts)
 	}
-	if val, ok := params["idStart"]; ok {
-		res.IdStart = &val[0]
+	if val, ok := params[IDSTART]; ok {
+		res.IdStart = val[0]
 	}
-	if val, ok := params["idEnd"]; ok {
-		res.IdEnd = &val[0]
+	if val, ok := params[IDEND]; ok {
+		res.IdEnd = val[0]
 	}
 	return &res, nil
 }
@@ -80,18 +84,17 @@ func ParseLiveTailFilterParams(r *http.Request) (*model.LogsFilterParams, error)
 	res := model.LogsFilterParams{}
 	params := r.URL.Query()
 	if val, ok := params["q"]; ok {
-		res.Query = &val[0]
+		res.Query = val[0]
 	}
-	if val, ok := params["timestampStart"]; ok {
+	if val, ok := params[TIMESTAMP_START]; ok {
 		ts, err := strconv.Atoi(val[0])
 		if err != nil {
 			return nil, err
 		}
-		ts64 := uint64(ts)
-		res.TimestampStart = &ts64
+		res.TimestampStart = uint64(ts)
 	}
-	if val, ok := params["idStart"]; ok {
-		res.IdStart = &val[0]
+	if val, ok := params[IDSTART]; ok {
+		res.IdStart = val[0]
 	}
 	return &res, nil
 }
@@ -99,37 +102,35 @@ func ParseLiveTailFilterParams(r *http.Request) (*model.LogsFilterParams, error)
 func ParseLogAggregateParams(r *http.Request) (*model.LogsAggregateParams, error) {
 	res := model.LogsAggregateParams{}
 	params := r.URL.Query()
-	if val, ok := params["timestampStart"]; ok {
+	if val, ok := params[TIMESTAMP_START]; ok {
 		ts, err := strconv.Atoi(val[0])
 		if err != nil {
 			return nil, err
 		}
-		ts64 := uint64(ts)
-		res.TimestampStart = &ts64
+		res.TimestampStart = uint64(ts)
 	} else {
 		return nil, fmt.Errorf("timestampStart is required")
 	}
-	if val, ok := params["timestampEnd"]; ok {
+	if val, ok := params[TIMESTAMP_END]; ok {
 		ts, err := strconv.Atoi(val[0])
 		if err != nil {
 			return nil, err
 		}
-		ts64 := uint64(ts)
-		res.TimestampEnd = &ts64
+		res.TimestampEnd = uint64(ts)
 	} else {
 		return nil, fmt.Errorf("timestampEnd is required")
 	}
 
 	if val, ok := params["q"]; ok {
-		res.Query = &val[0]
+		res.Query = val[0]
 	}
 
 	if val, ok := params["groupBy"]; ok {
-		res.GroupBy = &val[0]
+		res.GroupBy = val[0]
 	}
 
 	if val, ok := params["function"]; ok {
-		res.Function = &val[0]
+		res.Function = val[0]
 	}
 
 	if val, ok := params["step"]; ok {
@@ -137,7 +138,7 @@ func ParseLogAggregateParams(r *http.Request) (*model.LogsAggregateParams, error
 		if err != nil {
 			return nil, err
 		}
-		res.StepSeconds = &step
+		res.StepSeconds = step
 	} else {
 		return nil, fmt.Errorf("step is required")
 	}
@@ -246,8 +247,8 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 	var tokens []string
 	var err error
 	var sqlWhere string
-	if params.Query != nil {
-		tokens, err = parseLogQuery(*params.Query)
+	if params.Query != "" {
+		tokens, err = parseLogQuery(params.Query)
 		if err != nil {
 			return sqlWhere, err
 		}
@@ -258,29 +259,29 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 		return sqlWhere, err
 	}
 
-	if params.TimestampStart != nil {
-		filter := fmt.Sprintf("timestamp >= '%d' ", *params.TimestampStart)
+	if params.TimestampStart != 0 {
+		filter := fmt.Sprintf("timestamp >= '%d' ", params.TimestampStart)
 		if len(tokens) > 0 {
 			filter = "and " + filter
 		}
 		tokens = append(tokens, filter)
 	}
-	if params.TimestampEnd != nil {
-		filter := fmt.Sprintf("timestamp <= '%d' ", *params.TimestampEnd)
+	if params.TimestampEnd != 0 {
+		filter := fmt.Sprintf("timestamp <= '%d' ", params.TimestampEnd)
 		if len(tokens) > 0 {
 			filter = "and " + filter
 		}
 		tokens = append(tokens, filter)
 	}
-	if params.IdStart != nil {
-		filter := fmt.Sprintf("id > '%v' ", *params.IdStart)
+	if params.IdStart != "" {
+		filter := fmt.Sprintf("id > '%v' ", params.IdStart)
 		if len(tokens) > 0 {
 			filter = "and " + filter
 		}
 		tokens = append(tokens, filter)
 	}
-	if params.IdEnd != nil {
-		filter := fmt.Sprintf("id < '%v' ", *params.IdEnd)
+	if params.IdEnd != "" {
+		filter := fmt.Sprintf("id < '%v' ", params.IdEnd)
 		if len(tokens) > 0 {
 			filter = "and " + filter
 		}

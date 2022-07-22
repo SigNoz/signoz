@@ -322,30 +322,30 @@ type FilterSet struct {
 }
 
 type UpdateField struct {
-	Name             string  `json:"name"`
-	DataType         string  `json:"dataType"`
-	Type             string  `json:"type"`
-	Selected         bool    `json:"selected"`
-	IndexType        *string `json:"index"`
-	IndexGranularity *int    `json:"indexGranularity"`
+	Name             string `json:"name"`
+	DataType         string `json:"dataType"`
+	Type             string `json:"type"`
+	Selected         bool   `json:"selected"`
+	IndexType        string `json:"index"`
+	IndexGranularity int    `json:"indexGranularity"`
 }
 
 type LogsFilterParams struct {
-	Limit          int     `json:"limit"`
-	OrderBy        string  `json:"orderBy"`
-	Order          string  `json:"order"`
-	Query          *string `json:"q"`
-	TimestampStart *uint64 `json:"timestampStart"`
-	TimestampEnd   *uint64 `json:"timestampEnd"`
-	IdStart        *string `json:"idStart"`
-	IdEnd          *string `json:"idEnd"`
+	Limit          int    `json:"limit"`
+	OrderBy        string `json:"orderBy"`
+	Order          string `json:"order"`
+	Query          string `json:"q"`
+	TimestampStart uint64 `json:"timestampStart"`
+	TimestampEnd   uint64 `json:"timestampEnd"`
+	IdStart        string `json:"idStart"`
+	IdEnd          string `json:"idEnd"`
 }
 
 type LogsAggregateParams struct {
-	Query          *string `json:"q"`
-	TimestampStart *uint64 `json:"timestampStart"`
-	TimestampEnd   *uint64 `json:"timestampEnd"`
-	GroupBy        *string `json:"groupBy"`
-	Function       *string `json:"function"`
-	StepSeconds    *int    `json:"step"`
+	Query          string `json:"q"`
+	TimestampStart uint64 `json:"timestampStart"`
+	TimestampEnd   uint64 `json:"timestampEnd"`
+	GroupBy        string `json:"groupBy"`
+	Function       string `json:"function"`
+	StepSeconds    int    `json:"step"`
 }
