@@ -7,7 +7,7 @@ Query service is the interface between frontend and databases. It is written in 
 - clickhouse response in the format accepted by Frontend
 
 # Complete the clickhouse setup locally.
-https://github.com/jshiwam/signoz/blob/main/CONTRIBUTING.md#to-run-clickhouse-setup-recommended-for-local-development
+https://github.com/SigNoz/signoz/blob/main/CONTRIBUTING.md#to-run-clickhouse-setup-recommended-for-local-development
 
 - Comment out the query-service and the frontend section in `signoz/deploy/docker/clickhouse-setup/docker-compose.yaml`
 - Change the alertmanager section in `signoz/deploy/docker/clickhouse-setup/docker-compose.yaml` as follows:
