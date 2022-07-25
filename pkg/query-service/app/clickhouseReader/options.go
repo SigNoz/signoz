@@ -18,20 +18,21 @@ const (
 )
 
 const (
-	defaultDatasource            string        = "tcp://localhost:9000"
-	defaultTraceDB               string        = "signoz_traces"
-	defaultOperationsTable       string        = "signoz_operations"
-	defaultIndexTable            string        = "signoz_index_v2"
-	defaultErrorTable            string        = "signoz_error_index_v2"
-	defaulDurationTable          string        = "durationSortMV"
-	defaultSpansTable            string        = "signoz_spans"
-	defaultLogsDB                string        = "signoz_logs"
-	defaultLogsTable             string        = "logs"
-	defaultLogAttributeKeysTable string        = "logs_atrribute_keys"
-	defaultLogResourceKeysTable  string        = "logs_resource_keys"
-	defaultWriteBatchDelay       time.Duration = 5 * time.Second
-	defaultWriteBatchSize        int           = 10000
-	defaultEncoding              Encoding      = EncodingJSON
+	defaultDatasource             string        = "tcp://localhost:9000"
+	defaultTraceDB                string        = "signoz_traces"
+	defaultOperationsTable        string        = "signoz_operations"
+	defaultIndexTable             string        = "signoz_index_v2"
+	defaultErrorTable             string        = "signoz_error_index_v2"
+	defaulDurationTable           string        = "durationSortMV"
+	defaultSpansTable             string        = "signoz_spans"
+	defaultLogsDB                 string        = "signoz_logs"
+	defaultLogsTable              string        = "logs"
+	defaultLogAttributeKeysTable  string        = "logs_atrribute_keys"
+	defaultLogResourceKeysTable   string        = "logs_resource_keys"
+	defaultLiveTailRefreshSeconds int           = 10
+	defaultWriteBatchDelay        time.Duration = 5 * time.Second
+	defaultWriteBatchSize         int           = 10000
+	defaultEncoding               Encoding      = EncodingJSON
 )
 
 const (
@@ -60,6 +61,7 @@ type namespaceConfig struct {
 	LogsTable              string
 	LogsAttributeKeysTable string
 	LogsResourceKeysTable  string
+	LiveTailRefreshSeconds int
 	WriteBatchDelay        time.Duration
 	WriteBatchSize         int
 	Encoding               Encoding
@@ -123,6 +125,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			LogsTable:              defaultLogsTable,
 			LogsAttributeKeysTable: defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:  defaultLogResourceKeysTable,
+			LiveTailRefreshSeconds: defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:        defaultWriteBatchDelay,
 			WriteBatchSize:         defaultWriteBatchSize,
 			Encoding:               defaultEncoding,
@@ -144,6 +147,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 				LogsTable:              "",
 				LogsAttributeKeysTable: "",
 				LogsResourceKeysTable:  "",
+				LiveTailRefreshSeconds: defaultLiveTailRefreshSeconds,
 				WriteBatchDelay:        defaultWriteBatchDelay,
 				WriteBatchSize:         defaultWriteBatchSize,
 				Encoding:               defaultEncoding,
