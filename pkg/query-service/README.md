@@ -19,7 +19,7 @@ alertmanager:
     expose:
       - "9093"
     ports:
-      - "9093:9093"
+      - "8080:9093"
     # depends_on:
     #   query-service:
     #     condition: service_healthy
@@ -64,9 +64,6 @@ ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse build/query-service
 ```console
 export FRONTEND_API_ENDPOINT=http://localhost:8080
 ```
-
-- Update ${ENVIRONMENT.baseURL} from below line to localhost:9093
-https://github.com/SigNoz/signoz/blob/main/frontend/src/api/index.ts#L99
 
 - Run the following 
 ```console
