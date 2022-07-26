@@ -4,8 +4,10 @@ import {
 	GET_FIELDS,
 	LogsActions,
 	SET_FIELDS,
+	SET_LOGS,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
+	SET_LOG_LINES_PER_PAGE,
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -18,6 +20,8 @@ const initialState: ILogsReducer = {
 		queryString: '',
 		parsedQuery: [],
 	},
+	logs: [],
+	logLinesPerPage: 10,
 };
 
 export const LogsReducer = (
@@ -76,6 +80,19 @@ export const LogsReducer = (
 			};
 		}
 
+		case SET_LOGS: {
+			const logsData = action.payload;
+			return {
+				...state,
+				logs: logsData,
+			};
+		}
+		case SET_LOG_LINES_PER_PAGE: {
+			return {
+				...state,
+				logLinesPerPage: action.payload,
+			};
+		}
 		default:
 			return state;
 	}

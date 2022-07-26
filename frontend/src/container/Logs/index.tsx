@@ -1,4 +1,5 @@
 import { Divider, Row } from 'antd';
+import LogControls from 'container/LogControls';
 import LogsFilters from 'container/LogsFilters';
 import SearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
@@ -10,41 +11,43 @@ import { GetLogsFields } from 'store/actions/logs/getFields';
 import AppActions from 'types/actions';
 
 function Logs({ getLogsFields }) {
-    useEffect(() => {
-        getLogsFields();
-    }, [getLogsFields]);
-    return (
-        <>
-            <div>
-                <SearchFilter />
-            </div>
-            <div
-                style={{
-                    width: '100%',
-                    height: '200px',
-                    background: '#ccc2',
-                    margin: '1rem 0',
-                }}
-            >
-                Graph PlaceHolder
-            </div>
-            <Divider />
-            <Row gutter={20}>
-                <LogsFilters />
-                <LogsTable />
-            </Row>
-        </>
-    );
+	useEffect(() => {
+		getLogsFields();
+	}, [getLogsFields]);
+
+	return (
+		<>
+			<div>
+				<SearchFilter />
+			</div>
+			<div
+				style={{
+					width: '100%',
+					height: '200px',
+					background: '#ccc2',
+					margin: '1rem 0',
+				}}
+			>
+				Graph PlaceHolder
+			</div>
+			<LogControls />
+			<Divider />
+			<Row gutter={20} style={{ flexWrap: 'nowrap' }}>
+				<LogsFilters flex="450px" />
+				<LogsTable flex="auto" />
+			</Row>
+		</>
+	);
 }
 
 interface DispatchProps {
-    getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
-    dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-    getLogsFields: bindActionCreators(GetLogsFields, dispatch),
+	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(memo(Logs));

@@ -10,3 +10,7 @@ export interface IFields {
 }
 export type ISelectedFields = IField;
 export type IInterestingFields = IField;
+
+export type IFieldMoveToSelected = IField & {
+	selected: boolean;
+};

@@ -1,4 +1,5 @@
-import { Input } from 'antd';
+import { CloseCircleFilled } from '@ant-design/icons';
+import { Button, Input } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import React, { useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
@@ -15,7 +16,7 @@ function SearchFilter() {
 		updateParsedQuery,
 		updateQueryString,
 	} = useSearchParser();
-	const [showDropDown, setShowDropDown] = useState(true);
+	const [showDropDown, setShowDropDown] = useState(false);
 
 	const searchComponentRef = useRef<HTMLDivElement>(null);
 
@@ -33,10 +34,10 @@ function SearchFilter() {
 		if (
 			e.nodeName === 'DIV' &&
 			![
+				// 'ant-empty-image',
+				// 'ant-select-item',
+				// 'ant-col',
 				'ant-select-item-option-content',
-				'ant-empty-image',
-				'ant-select-item',
-				'ant-col',
 				'ant-select-item-option-active',
 			].find((p) => p.indexOf(e.className) !== -1) &&
 			!(e.ariaSelected === 'true') &&
@@ -56,6 +57,13 @@ function SearchFilter() {
 			<div style={{ position: 'relative' }}>
 				{showDropDown && (
 					<DropDownContainer>
+						<Button type='text' onClick={() => setShowDropDown(false)} style={{
+							position: 'absolute',
+							top: 0,
+							right: 0
+						}}>
+							<CloseCircleFilled />
+						</Button>
 						<SearchFields updateParsedQuery={updateParsedQuery} />
 					</DropDownContainer>
 				)}

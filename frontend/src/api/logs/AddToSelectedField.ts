@@ -2,14 +2,13 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/logs/getSearchFields';
+import { PayloadProps, Props } from 'types/api/logs/addToSelectedFields';
 
-const GetSearchFields = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
+const AddToSelectedFields = async (
+	props: Props,
+): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const data = await axios.get(`/logs/fields`);
-
+		const data = await axios.post(`/logs/fields`, props);
 		return {
 			statusCode: 200,
 			error: null,
@@ -21,4 +20,4 @@ const GetSearchFields = async (): Promise<
 	}
 };
 
-export default GetSearchFields;
+export default AddToSelectedFields;

@@ -8,7 +8,8 @@
 // import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
 
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
-import { IFields } from 'types/api/logs/fields';
+import { IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
+import { ILog } from 'types/api/logs/log';
 
 // export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
 // export const GET_SERVICE_LIST_LOADING_START = 'GET_SERVICE_LIST_LOADING_START';
@@ -25,6 +26,9 @@ export const SET_SEARCH_QUERY_PARSED_PAYLOAD =
 	'LOGS_SET_SEARCH_QUERY_PARSED_PAYLOAD';
 export const ADD_SEARCH_FIELD_QUERY_STRING =
 	'LOGS_ADD_SEARCH_FIELD_QUERY_STRING';
+export const ADD_TO_SELECTED_FIELD = 'LOGS_ADD_TO_SELECTED_FIELD';
+export const SET_LOGS = 'LOGS_SET_LOGS';
+export const SET_LOG_LINES_PER_PAGE = 'LOGS_SET_LOG_LINES_PER_PAGE';
 
 export interface GetFields {
 	type: typeof GET_FIELDS;
@@ -46,6 +50,19 @@ export interface SetSearchQueryParsedPayload {
 export interface AddSearchFieldQueryString {
 	type: typeof ADD_SEARCH_FIELD_QUERY_STRING;
 	payload: string;
+}
+export interface AddToSelectedField {
+	type: typeof ADD_TO_SELECTED_FIELD;
+	payload: IFieldMoveToSelected;
+}
+
+export interface UpdateLogs {
+	type: typeof SET_LOGS;
+	payload: ILog[];
+}
+export interface SetLogsLinesPerPage {
+	type: typeof SET_LOG_LINES_PER_PAGE;
+	payload: number;
 }
 
 // export interface GetServiceListLoading {
@@ -90,4 +107,7 @@ export type LogsActions =
 	| SetFields
 	| SetSearchQueryString
 	| SetSearchQueryParsedPayload
-	| AddSearchFieldQueryString;
+	| AddSearchFieldQueryString
+	| AddToSelectedField
+	| UpdateLogs
+	| SetLogsLinesPerPage;
