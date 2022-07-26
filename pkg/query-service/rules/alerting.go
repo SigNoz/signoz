@@ -41,6 +41,7 @@ const (
 	StateInactive AlertState = iota
 	StatePending
 	StateFiring
+	StateDisabled
 )
 
 func (s AlertState) String() string {
@@ -51,6 +52,8 @@ func (s AlertState) String() string {
 		return "pending"
 	case StateFiring:
 		return "firing"
+	case StateDisabled:
+		return "disabled"
 	}
 	panic(errors.Errorf("unknown alert state: %d", s))
 }

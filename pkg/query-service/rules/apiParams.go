@@ -230,6 +230,8 @@ type GettableRule struct {
 	Frequency     Duration      `yaml:"frequency,omitempty" json:"frequency,omitempty"`
 	RuleCondition RuleCondition `yaml:"condition,omitempty" json:"condition,omitempty"`
 
+	Disabled bool `json:"disabled"`
+
 	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
 	// Value       float64       `json:"value"`
 }

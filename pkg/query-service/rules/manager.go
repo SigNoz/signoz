@@ -178,10 +178,11 @@ func (m *Manager) initiate() error {
 				continue
 			}
 		}
-
-		err := m.addTask(parsedRule, taskName)
-		if err != nil {
-			zap.S().Errorf("failed to load the rule definition (%s): %v", taskName, err)
+		if !parsedRule.Disabled {
+			err := m.addTask(parsedRule, taskName)
+			if err != nil {
+				zap.S().Errorf("failed to load the rule definition (%s): %v", taskName, err)
+			}
 		}
 	}
 
@@ -316,7 +317,6 @@ func (m *Manager) deleteTask(taskName string) error {
 		zap.S().Errorf("msg:", "rule not found for deletion", "\t name:", taskName)
 		return fmt.Errorf("rule not found")
 	}
-
 	return nil
 }
 
@@ -579,7 +579,9 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "\t err:", err, "\t rule_id:", ruleResponse.Id)
+			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "\t rule_id:", ruleResponse.Id)
+			ruleResponse.State = StateDisabled.String()
+			ruleResponse.Disabled = true
 		} else {
 			ruleResponse.State = rm.State().String()
 		}
@@ -604,10 +606,10 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 
 // PatchRule  writes the rule definition to the
 // datastore and also updates the rule executor
-func (m *Manager) PatchRule(ruleStr string, ruleId string) error {
+func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error) {
 
 	if ruleId == "" {
-		return fmt.Errorf("id is mandatory for patching rule")
+		return nil, fmt.Errorf("id is mandatory for patching rule")
 	}
 
 	taskName := prepareTaskName(ruleId)
@@ -616,50 +618,70 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) error {
 	s, err := m.ruleDB.GetStoredRule(ruleId)
 	if err != nil {
 		zap.S().Errorf("msg:", "failed to get stored rule with given id", "\t error:", err)
-		return err
+		return nil, err
 	}
 
 	// storedRule holds the current stored rule from DB
 	storedRule := &PostableRule{}
 	if err := json.Unmarshal([]byte(s.Data), storedRule); err != nil {
 		zap.S().Errorf("msg:", "failed to get unmarshal stored rule with given id", "\t error:", err)
-		return err
+		return nil, err
 	}
 
 	// parsed Rule is combo of stored rule and patch received in request
-	parsedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
+	patchedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
 	if len(errs) > 0 {
 		zap.S().Errorf("failed to parse rules:", errs)
 		// just one rule is being parsed so expect just one error
-		return errs[0]
+		return nil, errs[0]
 	}
 
-	if parsedRule.Disabled {
+	if patchedRule.Disabled {
 		// check if rule has any task running
 		if _, ok := m.tasks[taskName]; ok {
 			// delete task from memory
 			if err := m.deleteTask(taskName); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	} else {
 		// check if rule has a task running
 		if _, ok := m.tasks[taskName]; !ok {
 			// rule has not task, start one
-			if err := m.addTask(parsedRule, taskName); err != nil {
-				return err
+			if err := m.addTask(patchedRule, taskName); err != nil {
+				return nil, err
 			}
 		}
 	}
 
-	editedRuleBytes, err := json.Marshal(parsedRule)
+	// prepare rule json to write to update db
+	patchedRuleBytes, err := json.Marshal(patchedRule)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if _, _, err = m.ruleDB.EditRuleTx(string(editedRuleBytes), ruleId); err != nil {
-		return err
+	// write updated rule to db
+	if _, _, err = m.ruleDB.EditRuleTx(string(patchedRuleBytes), ruleId); err != nil {
+		return nil, err
 	}
 
-	return nil
+	// prepare http response
+	response := GettableRule{}
+	if err := json.Unmarshal(patchedRuleBytes, &response); err != nil { // Parse []byte to go struct pointer
+		zap.S().Errorf("msg:", "invalid rule data found in patchedRule", "\t err:", err, "\t data:", patchedRuleBytes)
+		return nil, err
+	}
+
+	response.Id = fmt.Sprintf("%d", ruleId)
+
+	// fetch state of rule from memory
+	if rm, ok := m.rules[ruleId]; !ok {
+		zap.S().Warnf("msg:", "invalid rule id found while fetching a patched rule", "\t err:", err, "\t rule_id:", ruleId)
+		response.State = StateDisabled.String()
+		response.Disabled = true
+	} else {
+		response.State = rm.State().String()
+	}
+
+	return &response, nil
 }

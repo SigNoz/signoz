@@ -797,14 +797,14 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.PatchRule(string(body), id)
+	gettableRule, err := aH.ruleManager.PatchRule(string(body), id)
 
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	aH.respond(w, "rule successfully patched")
+	aH.respond(w, gettableRule)
 }
 
 func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
