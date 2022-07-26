@@ -258,7 +258,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	// it to finish the current iteration. Then copy it into the new group.
 	oldTask, ok := m.tasks[taskName]
 	if !ok {
-		zap.S().Errorf("msg:", "rule task not found, a new task will be created ", "\t task name:", taskName)
+		zap.S().Warnf("msg:", "rule task not found, a new task will be created ", "\t task name:", taskName)
 	}
 
 	delete(m.tasks, taskName)
