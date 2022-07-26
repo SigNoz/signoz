@@ -33,6 +33,11 @@ var correctQueriesTest = []struct {
 		[]string{`resource ILIKE '%Hello, "World"%' `},
 	},
 	{
+		`more than one continas`,
+		`resource contains 'Hello, "World"' and myresource contains 'abcd'`,
+		[]string{`resource ILIKE '%Hello, "World"%' `, `AND myresource ILIKE '%abcd%' `},
+	},
+	{
 		`filters with lt,gt,lte,gte operators`,
 		`id lt 100 and id gt 50 and code lte 500 and code gte 400`,
 		[]string{`id < 100 `, `and id > 50 `, `and code <= 500 `, `and code >= 400 `},
