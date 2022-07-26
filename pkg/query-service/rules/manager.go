@@ -563,6 +563,9 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 	// fetch rules from DB
 	storedRules, err := m.ruleDB.GetStoredRules()
+	if err != nil {
+		return nil, err
+	}
 
 	// initiate response object
 	resp := make([]*GettableRule, 0)
@@ -579,7 +582,6 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "\t rule_id:", ruleResponse.Id)
 			ruleResponse.State = StateDisabled.String()
 			ruleResponse.Disabled = true
 		} else {
@@ -676,7 +678,6 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
-		zap.S().Warnf("msg:", "invalid rule id found while fetching a patched rule", "\t err:", err, "\t rule_id:", ruleId)
 		response.State = StateDisabled.String()
 		response.Disabled = true
 	} else {
