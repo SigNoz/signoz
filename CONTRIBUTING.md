@@ -215,7 +215,7 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 # 4. Contribute to Backend (Query-Service) 🌑
 
-**Need to Update:** [**https://github.com/SigNoz/signoz/tree/develop/pkg/query-service**](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)
+[**https://github.com/SigNoz/signoz/tree/develop/pkg/query-service**](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)
 
 ## 4.1 To run ClickHouse setup (recommended for local development)
 
