@@ -229,7 +229,7 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 		return err
 	}
 
-	if !m.opts.DisableRules {
+	if !m.opts.DisableRules && !parsedRule.Disabled {
 		err = m.editTask(parsedRule, taskName)
 		if err != nil {
 			// todo(amol): using tx with sqllite3 is gets
@@ -258,8 +258,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	// it to finish the current iteration. Then copy it into the new group.
 	oldTask, ok := m.tasks[taskName]
 	if !ok {
-		zap.S().Errorf("msg:", "rule task not found, edit task failed", "\t task name:", taskName)
-		return errors.New("rule task not found, edit task failed")
+		zap.S().Errorf("msg:", "rule task not found, a new task will be created ", "\t task name:", taskName)
 	}
 
 	delete(m.tasks, taskName)
@@ -314,8 +313,7 @@ func (m *Manager) deleteTask(taskName string) error {
 		delete(m.tasks, taskName)
 		delete(m.rules, ruleIdFromTaskName(taskName))
 	} else {
-		zap.S().Errorf("msg:", "rule not found for deletion", "\t name:", taskName)
-		return fmt.Errorf("rule not found")
+		zap.S().Warnf("msg:", "rule not found for deletion", "\t name:", taskName)
 	}
 	return nil
 }
