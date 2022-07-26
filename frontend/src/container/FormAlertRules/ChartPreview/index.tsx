@@ -66,8 +66,12 @@ function ChartPreview({
 			}),
 		enabled:
 			query != null &&
-			(query.queryType !== EQueryType.PROM ||
-				(query.promQL?.length > 0 && query.promQL[0].query !== '')),
+			((query.queryType === EQueryType.PROM &&
+				query.promQL?.length > 0 &&
+				query.promQL[0].query !== '') ||
+				(query.queryType === EQueryType.QUERY_BUILDER &&
+					query.metricsBuilder?.queryBuilder?.length > 0 &&
+					query.metricsBuilder?.queryBuilder[0].metricName !== '')),
 	});
 
 	const chartDataSet = queryResponse.isError

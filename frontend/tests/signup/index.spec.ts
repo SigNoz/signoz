@@ -77,6 +77,7 @@ test.describe('Sign Up Page', () => {
 		await buttonSignupButton.click();
 
 		expect(page).toHaveURL(`${baseURL}${ROUTES.SIGN_UP}`);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('Invite link validation', async ({ baseURL, page }) => {
@@ -87,6 +88,7 @@ test.describe('Sign Up Page', () => {
 		const messageText = await page.locator(`text=${message}`).innerText();
 
 		expect(messageText).toBe(message);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('User Sign up with valid details', async ({ baseURL, page, context }) => {
@@ -125,6 +127,7 @@ test.describe('Sign Up Page', () => {
 		await context.storageState({
 			path: 'tests/auth.json',
 		});
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('Empty name with valid details', async ({ baseURL, page }) => {
@@ -142,6 +145,7 @@ test.describe('Sign Up Page', () => {
 		const gettingStartedButton = page.locator(getStartedButtonSelector);
 
 		expect(await gettingStartedButton.isDisabled()).toBe(true);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('Empty Company name with valid details', async ({ baseURL, page }) => {
@@ -159,6 +163,7 @@ test.describe('Sign Up Page', () => {
 		const gettingStartedButton = page.locator(getStartedButtonSelector);
 
 		expect(await gettingStartedButton.isDisabled()).toBe(true);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('Empty Email with valid details', async ({ baseURL, page }) => {
@@ -176,6 +181,7 @@ test.describe('Sign Up Page', () => {
 		const gettingStartedButton = page.locator(getStartedButtonSelector);
 
 		expect(await gettingStartedButton.isDisabled()).toBe(true);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('Empty Password and confirm password with valid details', async ({
@@ -200,6 +206,7 @@ test.describe('Sign Up Page', () => {
 		// password validation message is not present
 		const locator = await page.locator(confirmPasswordSelector).isVisible();
 		expect(locator).toBe(false);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 
 	test('Miss Match Password and confirm password with valid details', async ({
@@ -220,5 +227,6 @@ test.describe('Sign Up Page', () => {
 		// password validation message is not present
 		const locator = await page.locator(confirmPasswordSelector).isVisible();
 		expect(locator).toBe(true);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 });

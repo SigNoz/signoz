@@ -1,0 +1,92 @@
+[
+	{
+		"exceptionType": "ConnectionError",
+		"exceptionMessage": "HTTPSConnectionPool(host='run.mocekdy.io', port=443): Max retries exceeded with url: /v3/1cwb67153-a6ac-4aae-aca6-273ed68b5d9e (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x108ce9c10\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 2,
+		"lastSeen": "2022-07-14T10:29:48.955274Z",
+		"firstSeen": "2022-07-14T10:29:48.950721Z",
+		"serviceName": "1rfflaskAp",
+		"groupID": "e24d35bda98c5499a5c8df3ba61b0238"
+	},
+	{
+		"exceptionType": "NameError",
+		"exceptionMessage": "name 'listf' is not defined",
+		"exceptionCount": 8,
+		"lastSeen": "2022-07-14T10:30:42.411035Z",
+		"firstSeen": "2022-07-14T10:29:45.426784Z",
+		"serviceName": "1rfflaskAp",
+		"groupID": "efc46adcd5e87b65f8f244cba683b265"
+	},
+	{
+		"exceptionType": "ZeroDivisionError",
+		"exceptionMessage": "division by zero",
+		"exceptionCount": 1,
+		"lastSeen": "2022-07-14T10:29:54.195996Z",
+		"firstSeen": "2022-07-14T10:29:54.195996Z",
+		"serviceName": "1rfflaskAp",
+		"groupID": "a49058b540eef9aefe159d84f1a2b6df"
+	},
+	{
+		"exceptionType": "MaxRetryError",
+		"exceptionMessage": "HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x108ec2640\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 1,
+		"lastSeen": "2022-07-14T10:29:49.471402Z",
+		"firstSeen": "2022-07-14T10:29:49.471402Z",
+		"serviceName": "1rfflaskAp",
+		"groupID": "e59d39239f4d48842d83e3cc4cf53249"
+	},
+	{
+		"exceptionType": "MaxRetryError",
+		"exceptionMessage": "HTTPSConnectionPool(host='run.mocekdy.io', port=443): Max retries exceeded with url: /v3/1cwb67153-a6ac-4aae-aca6-273ed68b5d9e (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x108ce9c10\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 1,
+		"lastSeen": "2022-07-14T10:29:48.947579Z",
+		"firstSeen": "2022-07-14T10:29:48.947579Z",
+		"serviceName": "1rfflaskAp",
+		"groupID": "14d18a6fb1cd3f541de1566530e75486"
+	},
+	{
+		"exceptionType": "ConnectionError",
+		"exceptionMessage": "HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x108ec2640\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 2,
+		"lastSeen": "2022-07-14T10:29:49.476718Z",
+		"firstSeen": "2022-07-14T10:29:49.472271Z",
+		"serviceName": "1rfflaskAp",
+		"groupID": "bf6d88d10397ca3194b96a10f4719031"
+	},
+	{
+		"exceptionType": "github.com/gin-gonic/gin.Error",
+		"exceptionMessage": "Sample Error",
+		"exceptionCount": 6,
+		"lastSeen": "2022-07-15T18:55:32.3538096Z",
+		"firstSeen": "2022-07-14T14:47:19.874387Z",
+		"serviceName": "goApp",
+		"groupID": "b4fd099280072d45318e1523d82aa9c1"
+	},
+	{
+		"exceptionType": "MaxRetryError",
+		"exceptionMessage": "HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x10801b490\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 1,
+		"lastSeen": "2022-07-14T11:07:06.560593Z",
+		"firstSeen": "2022-07-14T11:07:06.560593Z",
+		"serviceName": "samplFlaskApp",
+		"groupID": "1945671c945b10641e73b0fe28c4d486"
+	},
+	{
+		"exceptionType": "ConnectionError",
+		"exceptionMessage": "HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x10801b490\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 2,
+		"lastSeen": "2022-07-14T11:07:06.56493Z",
+		"firstSeen": "2022-07-14T11:07:06.561074Z",
+		"serviceName": "samplFlaskApp",
+		"groupID": "5bea5295cac187404005f9c96e71aa53"
+	},
+	{
+		"exceptionType": "ConnectionError",
+		"exceptionMessage": "HTTPSConnectionPool(host='rufn.fmoceky.io', port=443): Max retries exceeded with url: /v3/b851a5c6-ab54-495a-be04-69834ae0d2a7 (Caused by NewConnectionError('\u003curllib3.connection.HTTPSConnection object at 0x108031820\u003e: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))",
+		"exceptionCount": 2,
+		"lastSeen": "2022-07-14T11:07:06.363977Z",
+		"firstSeen": "2022-07-14T11:07:06.361163Z",
+		"serviceName": "samplFlaskApp",
+		"groupID": "52a1fbe033453d806c0f24ba39168a78"
+	}
+]
