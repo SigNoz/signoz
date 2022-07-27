@@ -2928,7 +2928,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			response := []model.GetLogsResponse{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
-				zap.S().Debug(err)
+				zap.S().Error(err)
 				client.Error <- err
 				return
 			}
