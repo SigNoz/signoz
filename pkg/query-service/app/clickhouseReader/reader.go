@@ -2865,7 +2865,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
 
 	if filterSql != "" {
-		query += fmt.Sprintf(" where %s", filterSql)
+		query = fmt.Sprintf("%s where %s", query, filterSql)
 	}
 
 	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
@@ -2918,10 +2918,10 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			// get the new 100 logs as anything more older won't make sense
 			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, tsStart)
 			if filterSql != "" {
-				tmpQuery += fmt.Sprintf(" and %s", filterSql)
+				tmpQuery = fmt.Sprintf("%s and %s", tmpQuery, filterSql)
 			}
 			if idStart != "" {
-				tmpQuery += fmt.Sprintf(" and id > '%s'", idStart)
+				tmpQuery = fmt.Sprintf("%s and id > '%s'", tmpQuery, idStart)
 			}
 			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
 			zap.S().Debug(tmpQuery)
@@ -2932,8 +2932,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 				client.Error <- err
 				return
 			}
-			len := len(response)
-			for i := len - 1; i >= 0; i-- {
+			for i := len(response) - 1; i >= 0; i-- {
 				select {
 				case <-ctx.Done():
 					done := true
@@ -2986,12 +2985,12 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 			params.StepSeconds/60, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
 	}
 	if filterSql != "" {
-		query += fmt.Sprintf(" AND %s ", filterSql)
+		query = fmt.Sprintf("%s AND %s ", query, filterSql)
 	}
 	if params.GroupBy != "" {
-		query += fmt.Sprintf("GROUP BY time, toString(%s) as groupBy ORDER BY time", params.GroupBy)
+		query = fmt.Sprintf("%s GROUP BY time, toString(%s) as groupBy ORDER BY time", query, params.GroupBy)
 	} else {
-		query += "GROUP BY time ORDER BY time"
+		query = fmt.Sprintf("%s GROUP BY time ORDER BY time", query)
 	}
 
 	zap.S().Debug(query)
