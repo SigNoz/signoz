@@ -1955,8 +1955,8 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		case <-client.Done:
 			zap.S().Debug("done!")
 			return
-		case <-client.Error:
-			zap.S().Debug("error occured!")
+		case err := <-client.Error:
+			zap.S().Error("error occured!", err)
 			return
 		}
 	}
