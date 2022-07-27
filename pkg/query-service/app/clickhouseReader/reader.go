@@ -393,6 +393,7 @@ func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.Api
 	}
 
 	return &channel, nil
+
 }
 
 func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
@@ -451,7 +452,6 @@ func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError)
 	err := r.localDB.Select(&channels, query)
 
 	zap.S().Info(query)
-	zap.S().Info(channels)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
@@ -635,7 +635,6 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
 
 	services := []string{}
-	// Convert following to Prepared Statements.
 	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s WHERE toDate(timestamp) > now() - INTERVAL 1 DAY`, r.traceDB, r.indexTable)
 
 	rows, err := r.db.Query(ctx, query)
@@ -665,8 +664,6 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	}
 
 	serviceItems := []model.ServiceItem{}
-	// Convert the subsequent Queries and buildQueryWithTagParams to make it compatible with
-	// Prepared Statement.
 
 	query := fmt.Sprintf("SELECT serviceName, quantile(0.99)(durationNano) as p99, avg(durationNano) as avgDuration, count(*) as numCalls FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2'", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	args := []interface{}{}
@@ -754,8 +751,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
 	serviceOverviewItems := []model.ServiceOverviewItem{}
-	// Convert the subsequent Queries and buildQueryWithTagParams to make it compatible with
-	// Prepared Statement.
+
 	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, quantile(0.99)(durationNano) as p99, quantile(0.95)(durationNano) as p95,quantile(0.50)(durationNano) as p50, count(*) as numCalls FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s'", strconv.Itoa(int(queryParams.StepSeconds/60)), r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
 	args := []interface{}{}
 	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
@@ -809,8 +805,6 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	return &serviceOverviewItems, nil
 }
 
-// this function would change if we want to Convert the Query built by it to be used as
-// Prepared Statements
 func buildFilterArrayQuery(ctx context.Context, excludeMap map[string]struct{}, params []string, filter string, query *string, args []interface{}) []interface{} {
 	for i, e := range params {
 		filterKey := filter + String(5)
@@ -847,8 +841,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		}
 		excludeMap[e] = struct{}{}
 	}
-	// Convert buildFilterArrayQuery, getStatusFilters and subsequesnt queries to make
-	// them compatible with Prepared Statements.
+
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
@@ -915,8 +908,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY serviceName"
 			var dBResponse []model.DBResponseServiceName
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-
-			fmt.Printf("GetSpanFilters dBResponse constant.ServiceName %v gives %+v \n", constants.ServiceName, dBResponse)
 			zap.S().Info(finalQuery)
 
 			if err != nil {
@@ -934,8 +925,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpCode"
 			var dBResponse []model.DBResponseHttpCode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-
-			fmt.Printf("GetSpanFilters dBResponse constant.HttpCode %v gives %+v \n", constants.HttpCode, dBResponse)
 			zap.S().Info(finalQuery)
 
 			if err != nil {
@@ -953,7 +942,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpRoute"
 			var dBResponse []model.DBResponseHttpRoute
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			fmt.Printf("GetSpanFilters dBResponse constant.HttpRoute %v gives %+v \n", constants.HttpRoute, dBResponse)
 			zap.S().Info(finalQuery)
 
 			if err != nil {
@@ -972,7 +960,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			var dBResponse []model.DBResponseHttpUrl
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			zap.S().Info(finalQuery)
-			fmt.Printf("GetSpanFilters dBResponse constant.HttpUrl %v gives %+v \n", constants.HttpUrl, dBResponse)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -989,7 +977,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			var dBResponse []model.DBResponseHttpMethod
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			zap.S().Info(finalQuery)
-			fmt.Printf("GetSpanFilters dBResponse constant.HttpMethod %v gives %+v \n", constants.HttpMethod, dBResponse)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1006,7 +994,7 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			var dBResponse []model.DBResponseHttpHost
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			zap.S().Info(finalQuery)
-			fmt.Printf("GetSpanFilters dBResponse constant.HttpHost %v gives %+v \n", constants.HttpHost, dBResponse)
+
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
@@ -1098,7 +1086,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " ORDER BY durationNano DESC LIMIT 1"
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
-
 			zap.S().Info(finalQuery)
 
 			if err != nil {
@@ -1155,8 +1142,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	return &traceFilterReponse, nil
 }
 
-// Would have to convert this function
-// if we want to get a PreparedStatement Query from this function.
 func getStatusFilters(query string, statusParams []string, excludeMap map[string]struct{}) string {
 
 	// status can only be two and if both are selected than they are equivalent to none selected
@@ -1191,8 +1176,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		excludeMap[e] = struct{}{}
 	}
 
-	// Convert buildFilterArrayQuery, getStatusFilters, buildQueryWithTagParams  and
-	// subsequent queries to be compatible with Prepared Statements.
 	var query string
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
@@ -1289,7 +1272,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, gRPCCode, gRPCMethod, httpMethod, rpcMethod, responseStatusCode FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
 	baseQuery += query
 	err := r.db.Select(ctx, &getFilterSpansResponseItems, baseQuery, args...)
-	fmt.Printf("GetFilteredSpans called %+v\n", getFilterSpansResponseItems)
 	// Fill status and method
 	for i, e := range getFilterSpansResponseItems {
 		if e.GRPCode != "" {
@@ -1331,7 +1313,6 @@ func String(length int) string {
 	return StringWithCharset(length, charset)
 }
 
-// make this function compatible to use with Prepared Statements
 func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *string, args []interface{}) ([]interface{}, *model.ApiError) {
 
 	for _, item := range tags {
@@ -1385,8 +1366,6 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		excludeMap[e] = struct{}{}
 	}
 
-	// Convert the buildFilterArrayQuery and getStatusFilters and finalQuery to make it
-	// compatible with Prepared Statements.
 	var query string
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
@@ -1436,7 +1415,7 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	// Alternative query: SELECT groupUniqArrayArray(mapKeys(tagMap)) as tagKeys  FROM signoz_index_v2
 	finalQuery += query
 	err := r.db.Select(ctx, &tagFilters, finalQuery, args...)
-	fmt.Printf("GetTagFilters called %+v\n", tagFilters)
+
 	zap.S().Info(query)
 
 	if err != nil {
@@ -1483,8 +1462,6 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 		excludeMap[e] = struct{}{}
 	}
 
-	// Convert buildFilterArrayQuery and getStatusFilters and finalQuery to be compatible with
-	// Prepared Statements.
 	var query string
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) > 0 {
@@ -1529,7 +1506,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	finalQuery += " GROUP BY tagMap[@key]"
 	args = append(args, clickhouse.Named("key", queryParams.TagKey))
 	err := r.db.Select(ctx, &tagValues, finalQuery, args...)
-	fmt.Printf("GetTagValues called %+v\n", tagValues)
+
 	zap.S().Info(query)
 
 	if err != nil {
@@ -1550,7 +1527,6 @@ func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *mod
 
 	var topEndpointsItems []model.TopEndpointsItem
 
-	// Convert to Prepared Statements
 	query := fmt.Sprintf("SELECT quantile(0.5)(durationNano) as p50, quantile(0.95)(durationNano) as p95, quantile(0.99)(durationNano) as p99, COUNT(1) as numCalls, name  FROM %s.%s WHERE  timestamp >= '%s' AND timestamp <= '%s' AND  kind='2' and serviceName='%s'", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
 	args := []interface{}{}
 	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
@@ -1559,7 +1535,7 @@ func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *mod
 	}
 	query += " GROUP BY name"
 	err := r.db.Select(ctx, &topEndpointsItems, query, args...)
-	fmt.Printf("GetTopEndpoints called %+v \n", topEndpointsItems)
+
 	zap.S().Info(query)
 
 	if err != nil {
@@ -1579,8 +1555,6 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	var usageItems []model.UsageItem
 
 	var query string
-
-	// Convert to Prepared Statement.
 	if len(queryParams.ServiceName) != 0 {
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s.%s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	} else {
@@ -1588,7 +1562,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	}
 
 	err := r.db.Select(ctx, &usageItems, query)
-	fmt.Printf("GetUsage called %+v", usageItems)
+
 	zap.S().Info(query)
 
 	if err != nil {
@@ -1611,11 +1585,10 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	var searchScanReponses []model.SearchSpanDBReponseItem
 
-	// Uses Default Values, should be converted to Prepared Statement?
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
 
 	err := r.db.Select(ctx, &searchScanReponses, query, traceId)
-	fmt.Printf("SearchTraces called %+v\n", searchScanReponses)
+
 	zap.S().Info(query)
 
 	if err != nil {
@@ -1651,7 +1624,6 @@ func interfaceArrayToStringArray(array []interface{}) []string {
 func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 	serviceMapDependencyItems := []model.ServiceMapDependencyItem{}
 
-	// Contains default and white-listed values, should be converted to Prepared Statements?
 	query := fmt.Sprintf(`SELECT spanID, parentSpanID, serviceName FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s'`, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 
 	err := r.db.Select(ctx, &serviceMapDependencyItems, query)
@@ -1733,8 +1705,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
-	// The following Query contains the variables that are either white-listed or default vals
-	// Do we need to convert it to Prepared Statement?
+
 	var query string
 	if queryParams.GroupBy != "" {
 		switch queryParams.GroupBy {
@@ -1949,9 +1920,6 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
 					return
 				}
-				// Should we use Prepared Statement for DDLS?
-				// Refs: https://www.javamadesoeasy.com/2015/07/jdbc-preparedstatement-example-execute.html
-				// TLDR; It recommends not to do so.
 				req = fmt.Sprintf(
 					"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
 					tableName, params.DelDuration)
@@ -2006,9 +1974,6 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
 				return
 			}
-			// Should we use Prepared Statement for DDLS?
-			// Refs: https://www.javamadesoeasy.com/2015/07/jdbc-preparedstatement-example-execute.html
-			// TLDR; It recommends not to do so.
 			req = fmt.Sprintf(
 				"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
 					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
@@ -2067,11 +2032,10 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
-	// Convert this to Prepared Statement.
 	query := fmt.Sprintf("SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
 
 	err := r.localDB.Select(&statusItem, query)
-	fmt.Printf("checkTTLStatusItem called %+v\n", statusItem)
+
 	zap.S().Info(query)
 
 	if len(statusItem) == 0 {
@@ -2116,10 +2080,6 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 
 	// Set the storage policy for the required table. If it is already set, then setting it again
 	// will not a problem.
-
-	// Should we use Prepared Statement for DDLS?
-	// Refs: https://www.javamadesoeasy.com/2015/07/jdbc-preparedstatement-example-execute.html
-	// TLDR; It recommends not to do so.
 	if len(coldStorageVolume) > 0 {
 		policyReq := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='tiered'", tableName)
 
@@ -2182,11 +2142,10 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		// We use constants in this query do we need to convert it to preapred statements
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleTableName)
 
 		err := r.db.Select(ctx, &dbResp, query)
-		fmt.Printf("getMetricsTTL Response is %+v", dbResp)
+
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
@@ -2201,12 +2160,10 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		// We use constants in this query does this need to be converted to prepared
-		// statements
 		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozTraceTableName, signozTraceDBName)
 
 		err := r.db.Select(ctx, &dbResp, query)
-		fmt.Printf("getTracesTTL Response is %+v", dbResp)
+
 		if err != nil {
 			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
@@ -2226,7 +2183,6 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 			return nil, err
 		}
 		dbResp, err := getTracesTTL()
-
 		if err != nil {
 			return nil, err
 		}
@@ -2274,10 +2230,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 
 	var getErrorResponses []model.Error
 
-	// Need to convert this to prepared statement.
-	// Here we should use ? or $1 instead of named Placeholders and then we can make use of
-	// Prepared Statements
-	query := fmt.Sprintf("SELECT exceptionType, exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, serviceName FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU GROUP BY serviceName, exceptionType, exceptionMessage", r.traceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT any(exceptionType) as exceptionType, any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, any(serviceName) as serviceName, groupID FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU GROUP BY groupID", r.traceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.OrderParam) != 0 {
 		if queryParams.Order == constants.Descending {
@@ -2547,7 +2500,6 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, para
 
 	tagsWhereClause := ""
 
-	// Need to convert this to Prepared Statements as well?
 	for key, val := range params.MetricTags {
 		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
@@ -2587,7 +2539,6 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	var rows driver.Rows
 	tagsWhereClause := ""
 
-	// Need to convert this to Prepared Statement as well?
 	for key, val := range params.MetricTags {
 		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
 	}
