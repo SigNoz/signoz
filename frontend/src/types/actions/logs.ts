@@ -29,7 +29,10 @@ export const ADD_SEARCH_FIELD_QUERY_STRING =
 export const ADD_TO_SELECTED_FIELD = 'LOGS_ADD_TO_SELECTED_FIELD';
 export const SET_LOGS = 'LOGS_SET_LOGS';
 export const SET_LOG_LINES_PER_PAGE = 'LOGS_SET_LOG_LINES_PER_PAGE';
-
+export const GET_NEXT_LOG_LINES = 'LOGS_GET_NEXT_LOG_LINES';
+export const GET_PREVIOUS_LOG_LINES = 'LOGS_GET_PREVIOUS_LOG_LINES';
+export const RESET_ID_START_AND_END = 'LOGS_RESET_ID_START_AND_END';
+export const SET_LOADING = 'LOGS_SET_LOADING';
 export interface GetFields {
 	type: typeof GET_FIELDS;
 }
@@ -65,6 +68,19 @@ export interface SetLogsLinesPerPage {
 	payload: number;
 }
 
+export interface PreviousLogsLines {
+	type: typeof GET_PREVIOUS_LOG_LINES;
+}
+export interface NextLogsLines {
+	type: typeof GET_NEXT_LOG_LINES;
+}
+export interface ResetIdStartAndEnd {
+	type: typeof RESET_ID_START_AND_END;
+}
+export interface SetLoading {
+	type: typeof SET_LOADING;
+	payload: boolean;
+}
 // export interface GetServiceListLoading {
 // 	type:
 // 		| typeof GET_SERVICE_LIST_LOADING_START
@@ -110,4 +126,8 @@ export type LogsActions =
 	| AddSearchFieldQueryString
 	| AddToSelectedField
 	| UpdateLogs
-	| SetLogsLinesPerPage;
+	| SetLogsLinesPerPage
+	| PreviousLogsLines
+	| NextLogsLines
+	| ResetIdStartAndEnd
+	| SetLoading;

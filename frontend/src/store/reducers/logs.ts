@@ -2,12 +2,16 @@ import { parseQuery } from 'lib/logql';
 import {
 	ADD_SEARCH_FIELD_QUERY_STRING,
 	GET_FIELDS,
+	GET_NEXT_LOG_LINES,
+	GET_PREVIOUS_LOG_LINES,
 	LogsActions,
 	SET_FIELDS,
+	SET_LOG_LINES_PER_PAGE,
 	SET_LOGS,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
-	SET_LOG_LINES_PER_PAGE,
+	RESET_ID_START_AND_END,
+	SET_LOADING,
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -22,6 +26,9 @@ const initialState: ILogsReducer = {
 	},
 	logs: [],
 	logLinesPerPage: 10,
+	idEnd: '',
+	idStart: '',
+	isLoading: false,
 };
 
 export const LogsReducer = (
@@ -29,6 +36,12 @@ export const LogsReducer = (
 	action: LogsActions,
 ): ILogsReducer => {
 	switch (action.type) {
+		case SET_LOADING: {
+			return {
+				...state,
+				isLoading: action.payload,
+			};
+		}
 		case GET_FIELDS:
 			return {
 				...state,
@@ -91,6 +104,33 @@ export const LogsReducer = (
 			return {
 				...state,
 				logLinesPerPage: action.payload,
+			};
+		}
+
+		case GET_PREVIOUS_LOG_LINES: {
+			const idStart = state.logs.length > 0 ? state.logs[0].id : '';
+			return {
+				...state,
+				idStart,
+				idEnd: '',
+			};
+		}
+
+		case GET_NEXT_LOG_LINES: {
+			const idEnd =
+				state.logs.length > 0 ? state.logs[state.logs.length - 1].id : '';
+			return {
+				...state,
+				idStart: '',
+				idEnd,
+			};
+		}
+
+		case RESET_ID_START_AND_END: {
+			return {
+				...state,
+				idEnd: '',
+				idStart: '',
 			};
 		}
 		default:

@@ -19,7 +19,6 @@ export function FieldItem({
 	isLoading,
 }) {
 	const [isHovered, setIsHovered] = useState(false);
-
 	return (
 		<Field
 			onMouseEnter={() => {
@@ -31,7 +30,8 @@ export function FieldItem({
 			{isLoading ? (
 				<Spin spinning size="small" indicator={<LoadingOutlined spin />} />
 			) : (
-				isHovered && (
+				isHovered &&
+				buttonOnClick && (
 					<Button
 						type="text"
 						size="small"

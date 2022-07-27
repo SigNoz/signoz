@@ -10,6 +10,9 @@ export interface ILogsReducer {
 	};
 	logs: ILog[];
 	logLinesPerPage: number;
+	idEnd: string;
+	idStart: string;
+	isLoading: boolean;
 }
 
 export default ILogsReducer;

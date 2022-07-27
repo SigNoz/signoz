@@ -1,10 +1,15 @@
 import GetLogs from 'api/logs/GetLogs';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { SET_LOGS } from 'types/actions/logs';
+import { SET_LOGS, SET_LOADING } from 'types/actions/logs';
 
 export const getLogs = (props): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch): void => {
+		dispatch({
+			type: SET_LOADING,
+			payload: true,
+		});
+
 		const response = await GetLogs(props);
 
 		if (response.payload)
@@ -17,5 +22,10 @@ export const getLogs = (props): ((dispatch: Dispatch<AppActions>) => void) => {
 				type: SET_LOGS,
 				payload: [],
 			});
+
+		dispatch({
+			type: SET_LOADING,
+			payload: false,
+		});
 	};
 };

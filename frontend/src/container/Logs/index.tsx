@@ -31,9 +31,10 @@ function Logs({ getLogsFields }) {
 				Graph PlaceHolder
 			</div>
 			<LogControls />
-			<Divider />
+			<Divider style={{ margin: 0 }} />
 			<Row gutter={20} style={{ flexWrap: 'nowrap' }}>
 				<LogsFilters flex="450px" />
+				<Divider type="vertical" style={{ height: '100%', margin: 0 }} />
 				<LogsTable flex="auto" />
 			</Row>
 		</>

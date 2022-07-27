@@ -1,35 +1,111 @@
-import { ArrowLeftOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Select } from 'antd'
-import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { AppState } from 'store/reducers'
-import { SET_LOG_LINES_PER_PAGE } from 'types/actions/logs'
-import ILogsReducer from 'types/reducer/logs'
-import { Container } from './styles'
-const { Option } = Select
+import {
+	ArrowLeftOutlined,
+	FastBackwardOutlined,
+	LeftOutlined,
+	RightOutlined,
+} from '@ant-design/icons';
+import { Button, Select } from 'antd';
+import React, { memo } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { getLogs } from 'store/actions/logs/getLogs';
+import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import {
+	GET_NEXT_LOG_LINES,
+	GET_PREVIOUS_LOG_LINES,
+	RESET_ID_START_AND_END,
+	SET_LOG_LINES_PER_PAGE,
+} from 'types/actions/logs';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import ILogsReducer from 'types/reducer/logs';
 
-const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100]
+import { Container } from './styles';
 
-function LogControls() {
+const { Option } = Select;
 
-    const { logLinesPerPage } = useSelector<AppState, ILogsReducer>((state) => state.logs);
-    const dispatch = useDispatch();
+const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
-    const handleLogLinesPerPageChange = (e: number) => {
-        dispatch({
-            type: SET_LOG_LINES_PER_PAGE,
-            payload: e
-        })
-    }
-    return <Container>
-        <Button size='small' type='link'><LeftOutlined /> Previous</Button>
-        <Button size="small" type='link'>Next <RightOutlined /></Button>
-        <Select style={{ width: 120 }} value={logLinesPerPage} onChange={handleLogLinesPerPageChange}>
-            {ITEMS_PER_PAGE_OPTIONS.map((count) => {
-                return <Option key={count} value={count} >{`${count} / page`}</Option>
-            })}
-        </Select>
-    </Container>
+function LogControls({ getLogs }) {
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const {
+		logLinesPerPage,
+		idStart,
+		idEnd,
+		searchFilter: { queryString },
+	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	const dispatch = useDispatch();
+
+	const handleLogLinesPerPageChange = (e: number) => {
+		dispatch({
+			type: SET_LOG_LINES_PER_PAGE,
+			payload: e,
+		});
+	};
+
+	const handleGoToLatest = () => {
+		dispatch({
+			type: RESET_ID_START_AND_END,
+		});
+
+		getLogs({
+			q: queryString,
+			limit: logLinesPerPage,
+			orderBy: 'timestamp',
+			order: 'desc',
+			timestampStart: minTime,
+			timestampEnd: maxTime,
+			...(idStart ? { idStart } : {}),
+			...(idEnd ? { idEnd } : {}),
+		});
+	};
+
+	const handleNavigatePrevious = () => {
+		dispatch({
+			type: GET_PREVIOUS_LOG_LINES,
+		});
+	};
+	const handleNavigateNext = () => {
+		dispatch({
+			type: GET_NEXT_LOG_LINES,
+		});
+	};
+
+	return (
+		<Container>
+			<Button size="small" type="link" onClick={handleGoToLatest}>
+				<FastBackwardOutlined /> Go to latest
+			</Button>
+			<Button size="small" type="link" onClick={handleNavigatePrevious}>
+				<LeftOutlined /> Previous
+			</Button>
+			<Button size="small" type="link" onClick={handleNavigateNext}>
+				Next <RightOutlined />
+			</Button>
+			<Select
+				style={{ width: 120 }}
+				value={logLinesPerPage}
+				onChange={handleLogLinesPerPageChange}
+			>
+				{ITEMS_PER_PAGE_OPTIONS.map((count) => {
+					return <Option key={count} value={count}>{`${count} / page`}</Option>;
+				})}
+			</Select>
+		</Container>
+	);
 }
 
-export default LogControls
+interface DispatchProps {
+	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	getLogs: bindActionCreators(getLogs, dispatch),
+});
+
+export default connect(null, mapDispatchToProps)(memo(LogControls));

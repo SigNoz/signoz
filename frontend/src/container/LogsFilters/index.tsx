@@ -27,7 +27,14 @@ import {
     FieldContainer,
 } from './styles';
 
-const { Search } = Input;
+const fieldSearchFilter = (searchSpace = '', currentValue = '') => {
+    if (!currentValue || !searchSpace) {
+        return true;
+    }
+    return searchSpace.toLowerCase().indexOf(currentValue.toLowerCase()) !== -1;
+};
+
+const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id'];
 
 function LogsFilters({ getLogsFields }) {
     const {
@@ -37,7 +44,10 @@ function LogsFilters({ getLogsFields }) {
     const [selectedFieldLoading, setSelectedFieldLoading] = useState([]);
     const [interestingFieldLoading, setInterestingFieldLoading] = useState([]);
 
-    const onSearch = () => { };
+    const [filterValuesInput, setFilterValuesInput] = useState('');
+    const handleSearch = (e) => {
+        setFilterValuesInput(e.target.value);
+    };
 
     const handleAddInterestingToSelected = async ({ fieldData, fieldIndex }) => {
         setInterestingFieldLoading((prevState) => {
@@ -74,42 +84,51 @@ function LogsFilters({ getLogsFields }) {
     };
     return (
         <Container>
-            <Search
+            <Input
                 placeholder="Filter Values"
-                onSearch={onSearch}
+                onInput={handleSearch}
                 style={{ width: '100%' }}
+                value={filterValuesInput}
+                onChange={handleSearch}
             />
 
             <CategoryContainer>
                 <CategoryHeading>SELECTED FIELDS</CategoryHeading>
                 <FieldContainer>
-                    {selected.map((field, idx) => (
-                        <FieldItem
-                            key={field + idx}
-                            name={field.name}
-                            fieldData={field}
-                            fieldIndex={idx}
-                            buttonIcon={<CloseOutlined style={{ color: red[5] }} />}
-                            buttonOnClick={handleRemoveSelectedField}
-                            isLoading={selectedFieldLoading.includes(idx)}
-                        />
-                    ))}
+                    {selected
+                        .filter((field) => fieldSearchFilter(field.name, filterValuesInput))
+                        .map((field, idx) => (
+                            <FieldItem
+                                key={field + idx}
+                                name={field.name}
+                                fieldData={field}
+                                fieldIndex={idx}
+                                buttonIcon={<CloseOutlined style={{ color: red[5] }} />}
+                                buttonOnClick={
+                                    !RESTRICTED_SELECTED_FIELDS.includes(field.name) &&
+                                    handleRemoveSelectedField
+                                }
+                                isLoading={selectedFieldLoading.includes(idx)}
+                            />
+                        ))}
                 </FieldContainer>
             </CategoryContainer>
             <CategoryContainer>
                 <CategoryHeading>INTERESTING FIELDS</CategoryHeading>
                 <FieldContainer>
-                    {interesting.map((field, idx) => (
-                        <FieldItem
-                            key={field + idx}
-                            name={field.name}
-                            fieldData={field}
-                            fieldIndex={idx}
-                            buttonIcon={<PlusCircleFilled />}
-                            buttonOnClick={handleAddInterestingToSelected}
-                            isLoading={interestingFieldLoading.includes(idx)}
-                        />
-                    ))}
+                    {interesting
+                        .filter((field) => fieldSearchFilter(field.name, filterValuesInput))
+                        .map((field, idx) => (
+                            <FieldItem
+                                key={field + idx}
+                                name={field.name}
+                                fieldData={field}
+                                fieldIndex={idx}
+                                buttonIcon={<PlusCircleFilled />}
+                                buttonOnClick={handleAddInterestingToSelected}
+                                isLoading={interestingFieldLoading.includes(idx)}
+                            />
+                        ))}
                 </FieldContainer>
             </CategoryContainer>
             {/* <ExtractField>Extract Fields</ExtractField> */}
