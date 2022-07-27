@@ -52,7 +52,7 @@ func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
 func parseIntoRule(rule *PostableRule, content []byte, kind string) (*PostableRule, []error) {
 	var err error
 	if kind == "json" {
-		if err = json.Unmarshal(content, &rule); err != nil {
+		if err = json.Unmarshal(content, rule); err != nil {
 			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load json")}
 		}
