@@ -2907,6 +2907,8 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		idStart = client.Filter.IdStart
 	}
 
+	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -2914,7 +2916,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			client.Done <- &done
 			zap.S().Debug("closing go routine : " + client.Name)
 			return
-		default:
+		case <-ticker.C:
 			// get the new 100 logs as anything more older won't make sense
 			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, tsStart)
 			if filterSql != "" {
@@ -2947,7 +2949,6 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 					}
 				}
 			}
-			time.Sleep(time.Duration(r.liveTailRefreshSeconds) * time.Second)
 		}
 	}
 }
