@@ -10,7 +10,9 @@ const intitalState: GlobalReducer = {
 	maxTime: Date.now() * 1000000,
 	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
 	loading: true,
-	selectedTime: getDefaultOption(window.location.pathname),
+	selectedTime: getDefaultOption(
+		typeof window !== 'undefined' ? window?.location?.pathname : '',
+	),
 };
 
 const globalTimeReducer = (

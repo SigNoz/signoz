@@ -1,9 +1,9 @@
-import { Alerts } from './getAll';
+import { AlertDef } from './def';
 
 export interface Props {
-	id: Alerts['id'];
+	id: AlertDef['id'];
 }
 
 export type PayloadProps = {
-	data: string;
+	data: AlertDef;
 };
