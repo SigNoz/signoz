@@ -3,7 +3,6 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 
 	"fmt"
@@ -375,25 +374,21 @@ func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.Api
 	idInt, _ := strconv.Atoi(id)
 	channel := model.ChannelItem{}
 
-	tx, err := r.localDB.Begin()
-	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
-	}
-	defer tx.Rollback()
+	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=? "
 
-	err = tx.QueryRow(`SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=$1`, idInt).
-		Scan(&channel.Id, &channel.CreatedAt, &channel.UpdatedAt, &channel.Name, &channel.Type, &channel.Data)
+	stmt, err := r.localDB.Preparex(query)
+
+	zap.S().Info(query, idInt)
+
 	if err != nil {
-		if err == sql.ErrNoRows {
-			zap.S().Errorf("No channels with id %d exist", idInt)
-		} else {
-			zap.S().Errorf("Error in preparing statement for SELECT from noitification_channels", err)
-		}
+		zap.S().Debug("Error in preparing sql query for GetChannel : ", err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
-	if err = tx.Commit(); err != nil {
-		zap.S().Errorf("Error in committing transaction for SELECT command from notification_channels\n", err)
+	err = stmt.Get(&channel, idInt)
+
+	if err != nil {
+		zap.S().Debug(fmt.Sprintf("Error in getting channel with id=%d : ", idInt), err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
