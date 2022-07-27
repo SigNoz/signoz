@@ -36,7 +36,7 @@ func prepareTaskName(ruleId interface{}) string {
 	case string:
 		return fmt.Sprintf("%s-groupname", ruleId)
 	default:
-		return fmt.Sprintf("%s-groupname", ruleId)
+		return fmt.Sprintf("%v-groupname", ruleId)
 	}
 
 }
