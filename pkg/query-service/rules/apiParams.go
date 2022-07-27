@@ -45,19 +45,23 @@ func ParsePostableRule(content []byte) (*PostableRule, []error) {
 }
 
 func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
-	rule := PostableRule{}
-	return parseIntoRule(&rule, content, kind)
+	return parseIntoRule(PostableRule{}, content, kind)
 }
 
-func parseIntoRule(rule *PostableRule, content []byte, kind string) (*PostableRule, []error) {
+// parseIntoRule loads the content (data) into PostableRule and also
+// validates the end result
+func parseIntoRule(initRule PostableRule, content []byte, kind string) (*PostableRule, []error) {
+
+	rule := &initRule
+
 	var err error
 	if kind == "json" {
-		if err = json.Unmarshal(content, &rule); err != nil {
+		if err = json.Unmarshal(content, rule); err != nil {
 			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load json")}
 		}
 	} else if kind == "yaml" {
-		if err = yaml.Unmarshal(content, &rule); err != nil {
+		if err = yaml.Unmarshal(content, rule); err != nil {
 			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load yaml")}
 		}
@@ -110,6 +114,7 @@ func parseIntoRule(rule *PostableRule, content []byte, kind string) (*PostableRu
 	if errs := rule.Validate(); len(errs) > 0 {
 		return nil, errs
 	}
+
 	return rule, []error{}
 }
 

@@ -313,7 +313,7 @@ func (m *Manager) deleteTask(taskName string) error {
 		delete(m.tasks, taskName)
 		delete(m.rules, ruleIdFromTaskName(taskName))
 	} else {
-		zap.S().Warnf("msg:", "rule not found for deletion", "\t name:", taskName)
+		zap.S().Info("msg: ", "rule not found for deletion", "\t name:", taskName)
 	}
 	return nil
 }
@@ -622,8 +622,8 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 	}
 
 	// storedRule holds the current stored rule from DB
-	storedRule := &PostableRule{}
-	if err := json.Unmarshal([]byte(s.Data), storedRule); err != nil {
+	storedRule := PostableRule{}
+	if err := json.Unmarshal([]byte(s.Data), &storedRule); err != nil {
 		zap.S().Errorf("msg:", "failed to get unmarshal stored rule with given id", "\t error:", err)
 		return nil, err
 	}
