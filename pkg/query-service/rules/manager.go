@@ -604,7 +604,7 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 	return r, nil
 }
 
-// syncRuleWithTask ensures that the state of a stored rule matches
+// syncRuleStateWithTask ensures that the state of a stored rule matches
 // the task state. For example - if a stored rule is disabled, then
 // there is no task running against it.
 func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) error {
@@ -629,8 +629,8 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 	return nil
 }
 
-// PatchRule  writes the rule definition to the
-// datastore and also updates the rule executor
+// PatchRule supports attribute level changes to the rule definition unlike
+// EditRule, which updates entire rule definition in the DB.
 // the process:
 //  - get the latest rule from db
 //  - over write the patch attributes received in input (ruleStr)
