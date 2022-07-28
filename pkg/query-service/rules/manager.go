@@ -604,8 +604,38 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 	return r, nil
 }
 
+// syncRuleWithTask ensures that the state of a stored rule matches
+// the task state. For example - if a stored rule is disabled, then
+// there is no task running against it.
+func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) error {
+
+	if rule.Disabled {
+		// check if rule has any task running
+		if _, ok := m.tasks[taskName]; ok {
+			// delete task from memory
+			if err := m.deleteTask(taskName); err != nil {
+				return err
+			}
+		}
+	} else {
+		// check if rule has a task running
+		if _, ok := m.tasks[taskName]; !ok {
+			// rule has not task, start one
+			if err := m.addTask(rule, taskName); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // PatchRule  writes the rule definition to the
 // datastore and also updates the rule executor
+// the process:
+//  - get the latest rule from db
+//  - over write the patch attributes received in input (ruleStr)
+//  - re-deploy or undeploy task as necessary
+//  - update the patched rule in the DB
 func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error) {
 
 	if ruleId == "" {
@@ -615,7 +645,7 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 	taskName := prepareTaskName(ruleId)
 
 	// retrieve rule from DB
-	s, err := m.ruleDB.GetStoredRule(ruleId)
+	storedJSON, err := m.ruleDB.GetStoredRule(ruleId)
 	if err != nil {
 		zap.S().Errorf("msg:", "failed to get stored rule with given id", "\t error:", err)
 		return nil, err
@@ -623,7 +653,7 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 
 	// storedRule holds the current stored rule from DB
 	storedRule := PostableRule{}
-	if err := json.Unmarshal([]byte(s.Data), &storedRule); err != nil {
+	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
 		zap.S().Errorf("msg:", "failed to get unmarshal stored rule with given id", "\t error:", err)
 		return nil, err
 	}
@@ -636,22 +666,9 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 		return nil, errs[0]
 	}
 
-	if patchedRule.Disabled {
-		// check if rule has any task running
-		if _, ok := m.tasks[taskName]; ok {
-			// delete task from memory
-			if err := m.deleteTask(taskName); err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		// check if rule has a task running
-		if _, ok := m.tasks[taskName]; !ok {
-			// rule has not task, start one
-			if err := m.addTask(patchedRule, taskName); err != nil {
-				return nil, err
-			}
-		}
+	if err := m.syncRuleStateWithTask(taskName, patchedRule); err != nil {
+		zap.S().Errorf("failed to sync stored rule state with the task")
+		return nil, err
 	}
 
 	// prepare rule json to write to update db
@@ -662,6 +679,13 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 
 	// write updated rule to db
 	if _, _, err = m.ruleDB.EditRuleTx(string(patchedRuleBytes), ruleId); err != nil {
+		// write failed, rollback task state
+
+		// restore task state from the stored rule
+		if err := m.syncRuleStateWithTask(taskName, &storedRule); err != nil {
+			zap.S().Errorf("msg: ", "failed to restore rule after patch failure", "\t error:", err)
+		}
+
 		return nil, err
 	}
 
