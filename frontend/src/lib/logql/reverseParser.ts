@@ -9,7 +9,7 @@ export const reverseParser = (
 			queryString += ' ';
 		}
 
-		if (Array.isArray(query.value)) {
+		if (Array.isArray(query.value) && query.value.length > 0) {
 			queryString += `(${query.value.map((val) => `'${val}'`).join(',')})`;
 		} else {
 			queryString += query.value;

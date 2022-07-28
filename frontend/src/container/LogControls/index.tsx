@@ -4,7 +4,7 @@ import {
 	LeftOutlined,
 	RightOutlined,
 } from '@ant-design/icons';
-import { Button, Select } from 'antd';
+import { Button, Divider, Select } from 'antd';
 import React, { memo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -79,6 +79,7 @@ function LogControls({ getLogs }) {
 			<Button size="small" type="link" onClick={handleGoToLatest}>
 				<FastBackwardOutlined /> Go to latest
 			</Button>
+			<Divider type='vertical' />
 			<Button size="small" type="link" onClick={handleNavigatePrevious}>
 				<LeftOutlined /> Previous
 			</Button>

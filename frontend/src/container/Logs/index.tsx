@@ -1,5 +1,6 @@
 import { Divider, Row } from 'antd';
 import LogControls from 'container/LogControls';
+import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import SearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
@@ -20,16 +21,7 @@ function Logs({ getLogsFields }) {
 			<div>
 				<SearchFilter />
 			</div>
-			<div
-				style={{
-					width: '100%',
-					height: '200px',
-					background: '#ccc2',
-					margin: '1rem 0',
-				}}
-			>
-				Graph PlaceHolder
-			</div>
+			<LogsAggregate />
 			<LogControls />
 			<Divider style={{ margin: 0 }} />
 			<Row gutter={20} style={{ flexWrap: 'nowrap' }}>

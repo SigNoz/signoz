@@ -45,6 +45,18 @@ function QueryField({ query, queryIndex, onUpdate, onDelete }) {
 	]);
 	const handleChange = (qIdx, value) => {
 		query[qIdx].value = value || '';
+
+		if (qIdx === 1) {
+			if (Object.values(QueryOperatorsMultiVal).includes(value)) {
+				if (!Array.isArray(query[2].value)) {
+					query[2].value = [];
+				}
+			} else if (Object.values(QueryOperatorsSingleVal).includes(value)) {
+				if (Array.isArray(query[2].value)) {
+					query[2].value = '';
+				}
+			}
+		}
 		onUpdate(query, queryIndex);
 	};
 
@@ -54,6 +66,7 @@ function QueryField({ query, queryIndex, onUpdate, onDelete }) {
 	if (!Array.isArray(query)) {
 		return null;
 	}
+
 	return (
 		<QueryFieldContainer
 			style={{ ...(queryIndex === 0 && { gridColumnStart: 2 }) }}
@@ -125,14 +138,15 @@ function QueryConditionField({ query, queryIndex, onUpdate }) {
 	);
 }
 const hashCode = (s) => {
-
 	if (!s) {
 		return '0';
 	}
-	return `${s.split('').reduce((a, b) => {
-		a = (a << 5) - a + b.charCodeAt(0);
-		return a & a;
-	}, 0)}`
+	return `${Math.abs(
+		s.split('').reduce((a, b) => {
+			a = (a << 5) - a + b.charCodeAt(0);
+			return a & a;
+		}, 0),
+	)}`;
 };
 
 function QueryBuilder({ updateParsedQuery }) {
@@ -152,18 +166,15 @@ function QueryBuilder({ updateParsedQuery }) {
 		}
 	}, [parsedQuery]);
 
-	const debouncedUpdateParsedQuery = useCallback(
-		debounce((updatedQuery) => updateParsedQuery(updatedQuery), 200),
-		[],
-	);
 
-	const handleUpdate = (query, queryIndex) => {
+
+	const handleUpdate = (query, queryIndex): void => {
 		const updatedParsedQuery = generatedQueryStructure;
 		updatedParsedQuery[queryIndex] = query;
 
 		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
-		debouncedUpdateParsedQuery(flatParsedQuery);
+		updateParsedQuery(flatParsedQuery);
 	};
 
 	const handleDelete = (queryIndex) => {
@@ -172,7 +183,7 @@ function QueryBuilder({ updateParsedQuery }) {
 
 		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
 		keyPrefixRef.current = v4();
-		debouncedUpdateParsedQuery(flatParsedQuery);
+		updateParsedQuery(flatParsedQuery);
 	};
 
 	const QueryUI = () =>

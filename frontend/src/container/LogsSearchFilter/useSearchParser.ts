@@ -31,6 +31,11 @@ export function useSearchParser(initialQueryString = '') {
 		},
 		[dispatch, parsedQuery],
 	);
+
+	useEffect(() => {
+		updateQueryString(queryString);
+	}, [queryString, updateQueryString]);
+
 	const updateParsedQuery = useCallback(
 		(updatedParsedPayload) => {
 			dispatch({

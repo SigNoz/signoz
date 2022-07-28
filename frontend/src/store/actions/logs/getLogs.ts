@@ -1,7 +1,7 @@
 import GetLogs from 'api/logs/GetLogs';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { SET_LOGS, SET_LOADING } from 'types/actions/logs';
+import { SET_LOADING, SET_LOGS } from 'types/actions/logs';
 
 export const getLogs = (props): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch): void => {

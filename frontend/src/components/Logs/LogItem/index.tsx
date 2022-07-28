@@ -8,6 +8,8 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import ILogsReducer from 'types/reducer/logs';
 
+import AddToQueryHOC from './AddToQueryHOC';
+import CopyClipboardHOC from './CopyClipboardHOC';
 import { Container } from './styles';
 
 function LogGeneralField({ fieldKey, fieldValue }) {
@@ -20,10 +22,12 @@ function LogGeneralField({ fieldKey, fieldValue }) {
 			}}
 		>
 			<Typography.Text type="secondary">{fieldKey}</Typography.Text>
-			<Typography.Text ellipsis>
-				{': '}
-				{fieldValue}
-			</Typography.Text>
+			<CopyClipboardHOC textToCopy={fieldValue}>
+				<Typography.Text ellipsis>
+					{': '}
+					{fieldValue}
+				</Typography.Text>
+			</CopyClipboardHOC>
 		</div>
 	);
 }
@@ -37,11 +41,23 @@ function LogSelectedField({ fieldKey = '', fieldValue = '' }) {
 				width: '100%',
 			}}
 		>
-			<Typography.Text style={{ color: blue[4] }}>{fieldKey}</Typography.Text>
-			<Typography.Text ellipsis>
-				<span>{': '}</span>
-				<span style={{ color: orange[6] }}>{fieldValue}</span>
-			</Typography.Text>
+			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
+				<Typography.Text>
+					{`"`}
+					<span style={{ color: blue[4] }}>{fieldKey}</span>
+					{`"`}
+				</Typography.Text>
+			</AddToQueryHOC>
+			<CopyClipboardHOC textToCopy={fieldValue}>
+				<Typography.Text ellipsis>
+					<span>
+						{': '}
+						{typeof fieldValue === 'string' && `"`}
+					</span>
+					<span style={{ color: orange[6] }}>{fieldValue}</span>
+					{typeof fieldValue === 'string' && `"`}
+				</Typography.Text>
+			</CopyClipboardHOC>
 		</div>
 	);
 }
@@ -53,7 +69,6 @@ function LogItem({ logData }) {
 
 	const flattenLogData = FlatLogData(logData);
 	console.log(flattenLogData);
-
 
 	return (
 		<Container>

@@ -1,12 +1,14 @@
 import { CloseCircleFilled } from '@ant-design/icons';
 import { Button, Input } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
+import getStep from 'lib/getStep';
 import React, { memo, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useClickAway } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
+import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -18,7 +20,7 @@ import { useSearchParser } from './useSearchParser';
 
 const { Search } = Input;
 
-function SearchFilter({ getLogs }) {
+function SearchFilter({ getLogs, getLogsAggregate }) {
 	const {
 		queryString,
 		updateParsedQuery,
@@ -51,9 +53,9 @@ function SearchFilter({ getLogs }) {
 		if (
 			e.nodeName === 'DIV' &&
 			![
-				// 'ant-empty-image',
-				// 'ant-select-item',
-				// 'ant-col',
+				'ant-empty-image',
+				'ant-select-item',
+				'ant-col',
 				'ant-select-item-option-content',
 				'ant-select-item-option-active',
 			].find((p) => p.indexOf(e.className) !== -1) &&
@@ -75,7 +77,19 @@ function SearchFilter({ getLogs }) {
 			...(idStart ? { idStart } : {}),
 			...(idEnd ? { idEnd } : {}),
 		});
-		setShowDropDown(false)
+
+		getLogsAggregate({
+			timestampStart: minTime,
+			timestampEnd: maxTime,
+			step: getStep({
+				start: minTime,
+				end: maxTime,
+				inputFormat: 'ns',
+			}),
+			q: queryString,
+		});
+
+		setShowDropDown(false);
 	};
 	return (
 		<div ref={searchComponentRef}>
@@ -110,12 +124,14 @@ function SearchFilter({ getLogs }) {
 
 interface DispatchProps {
 	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: () => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	getLogs: bindActionCreators(getLogs, dispatch),
+	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(memo(SearchFilter));

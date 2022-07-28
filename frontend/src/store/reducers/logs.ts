@@ -5,13 +5,15 @@ import {
 	GET_NEXT_LOG_LINES,
 	GET_PREVIOUS_LOG_LINES,
 	LogsActions,
+	RESET_ID_START_AND_END,
 	SET_FIELDS,
+	SET_LOADING,
+	SET_LOADING_AGGREGATE,
 	SET_LOG_LINES_PER_PAGE,
 	SET_LOGS,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
-	RESET_ID_START_AND_END,
-	SET_LOADING,
+	SET_LOGS_AGGREGATE_SERIES,
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -29,6 +31,8 @@ const initialState: ILogsReducer = {
 	idEnd: '',
 	idStart: '',
 	isLoading: false,
+	isLoadingAggregate: false,
+	logsAggregate: [],
 };
 
 export const LogsReducer = (
@@ -42,6 +46,14 @@ export const LogsReducer = (
 				isLoading: action.payload,
 			};
 		}
+
+		case SET_LOADING_AGGREGATE: {
+			return {
+				...state,
+				isLoadingAggregate: action.payload,
+			};
+		}
+
 		case GET_FIELDS:
 			return {
 				...state,
@@ -131,6 +143,13 @@ export const LogsReducer = (
 				...state,
 				idEnd: '',
 				idStart: '',
+			};
+		}
+
+		case SET_LOGS_AGGREGATE_SERIES: {
+			return {
+				...state,
+				logsAggregate: action.payload,
 			};
 		}
 		default:

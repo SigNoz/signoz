@@ -10,6 +10,7 @@
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { ILogsAggregate } from 'types/api/logs/logAggregate';
 
 // export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
 // export const GET_SERVICE_LIST_LOADING_START = 'GET_SERVICE_LIST_LOADING_START';
@@ -33,6 +34,8 @@ export const GET_NEXT_LOG_LINES = 'LOGS_GET_NEXT_LOG_LINES';
 export const GET_PREVIOUS_LOG_LINES = 'LOGS_GET_PREVIOUS_LOG_LINES';
 export const RESET_ID_START_AND_END = 'LOGS_RESET_ID_START_AND_END';
 export const SET_LOADING = 'LOGS_SET_LOADING';
+export const SET_LOADING_AGGREGATE = 'LOGS_SET_LOADING_AGGREGATE';
+export const SET_LOGS_AGGREGATE_SERIES = 'LOGS_SET_LOGS_AGGREGATE_SERIES';
 export interface GetFields {
 	type: typeof GET_FIELDS;
 }
@@ -80,6 +83,15 @@ export interface ResetIdStartAndEnd {
 export interface SetLoading {
 	type: typeof SET_LOADING;
 	payload: boolean;
+}
+export interface SetLoadingAggregate {
+	type: typeof SET_LOADING_AGGREGATE;
+	payload: boolean;
+}
+
+export interface SetLogsAggregateSeries {
+	type: typeof SET_LOGS_AGGREGATE_SERIES;
+	payload: ILogsAggregate[];
 }
 // export interface GetServiceListLoading {
 // 	type:
@@ -130,4 +142,6 @@ export type LogsActions =
 	| PreviousLogsLines
 	| NextLogsLines
 	| ResetIdStartAndEnd
-	| SetLoading;
+	| SetLoading
+	| SetLoadingAggregate
+	| SetLogsAggregateSeries;
