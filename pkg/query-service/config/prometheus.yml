@@ -23,4 +23,4 @@ scrape_configs:
   
 
 remote_read:
-  - url: tcp://localhost:9001/?database=signoz_metrics
+  - url: tcp://localhost:9000/?database=signoz_metrics

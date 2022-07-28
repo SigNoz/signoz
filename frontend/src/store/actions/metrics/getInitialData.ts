@@ -4,6 +4,7 @@
 // import getExternalService from 'api/metrics/getExternalService';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopEndPoints from 'api/metrics/getTopEndPoints';
+import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
 import getStep from 'lib/getStep';
@@ -47,6 +48,7 @@ export const GetInitialData = (
 				// getExternalServiceResponse,
 				getServiceOverviewResponse,
 				getTopEndPointsResponse,
+				getTopLevelOperationsResponse,
 			] = await Promise.all([
 				// getDBOverView({
 				// 	...props,
@@ -73,6 +75,9 @@ export const GetInitialData = (
 					start: minTime,
 					selectedTags: props.selectedTags,
 				}),
+				getTopLevelOperations({
+					service: props.serviceName,
+				}),
 			]);
 
 			if (
@@ -81,7 +86,8 @@ export const GetInitialData = (
 				// getExternalErrorResponse.statusCode === 200 &&
 				// getExternalServiceResponse.statusCode === 200 &&
 				getServiceOverviewResponse.statusCode === 200 &&
-				getTopEndPointsResponse.statusCode === 200
+				getTopEndPointsResponse.statusCode === 200 &&
+				getTopLevelOperationsResponse.statusCode === 200
 			) {
 				dispatch({
 					type: 'GET_INTIAL_APPLICATION_DATA',
@@ -92,6 +98,7 @@ export const GetInitialData = (
 						// externalService: getExternalServiceResponse.payload,
 						serviceOverview: getServiceOverviewResponse.payload,
 						topEndPoints: getTopEndPointsResponse.payload,
+						topLevelOperations: getTopLevelOperationsResponse.payload,
 					},
 				});
 			} else {
@@ -101,6 +108,7 @@ export const GetInitialData = (
 						errorMessage:
 							getTopEndPointsResponse.error ||
 							getServiceOverviewResponse.error ||
+							getTopLevelOperationsResponse.error ||
 							// getExternalServiceResponse.error ||
 							// getExternalErrorResponse.error ||
 							// getExternalAverageDurationResponse.error ||

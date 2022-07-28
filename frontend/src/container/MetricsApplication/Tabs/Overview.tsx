@@ -27,7 +27,9 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		serviceOverview,
 		resourceAttributePromQLQuery,
 		resourceAttributeQueries,
+		topLevelOperations,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const operationsRegex = topLevelOperations.join('|');
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
@@ -193,7 +195,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))`,
+										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation="~${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))`,
 										legend: 'Requests',
 									},
 								])}
@@ -227,7 +229,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
+										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation="~${operationsRegex}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation="~${operationsRegex}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation="~${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
 										legend: 'Error Percentage',
 									},
 								])}

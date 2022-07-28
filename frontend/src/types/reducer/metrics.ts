@@ -21,6 +21,7 @@ interface MetricReducer {
 	serviceOverview: ServiceOverview[];
 	resourceAttributeQueries: IResourceAttributeQuery[];
 	resourceAttributePromQLQuery: string;
+	topLevelOperations: string[];
 }
 
 export default MetricReducer;

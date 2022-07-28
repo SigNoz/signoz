@@ -44,6 +44,7 @@ export interface GetInitialApplicationData {
 		// externalAverageDuration: ExternalAverageDuration[];
 		// externalError: ExternalError[];
 		serviceOverview: ServiceOverview[];
+		topLevelOperations: string[];
 	};
 }
 

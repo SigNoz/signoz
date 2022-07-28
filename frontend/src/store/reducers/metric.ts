@@ -29,6 +29,7 @@ const InitialValue: InitialValueTypes = {
 	resourceAttributePromQLQuery: resourceAttributesQueryToPromQL(
 		GetResourceAttributeQueriesFromURL() || [],
 	),
+	topLevelOperations: [],
 };
 
 const metrics = (
@@ -93,6 +94,7 @@ const metrics = (
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
+				topLevelOperations,
 			} = action.payload;
 
 			return {
@@ -104,6 +106,7 @@ const metrics = (
 				// externalAverageDuration,
 				// externalError,
 				metricsApplicationLoading: false,
+				topLevelOperations,
 			};
 		}
 

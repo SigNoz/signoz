@@ -650,15 +650,53 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
+func (r *ClickHouseReader) GetTopLevelOperarions(ctx context.Context) (*map[string][]string, *model.ApiError) {
+
+	operations := map[string][]string{}
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.traceDB, r.indexTable)
+
+	rows, err := r.db.Query(ctx, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var name, serviceName string
+		if err := rows.Scan(&name, &serviceName); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("Error in processing sql query")}
+		}
+		if _, ok := operations[serviceName]; !ok {
+			operations[serviceName] = []string{}
+		}
+		operations[serviceName] = append(operations[serviceName], name)
+	}
+	return &operations, nil
+}
+
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
+	topLevelOps, apiErr := r.GetTopLevelOperarions(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	var ops []string
+	for _, op := range *topLevelOps {
+		ops = append(ops, op...)
+	}
+	operationQuery := fmt.Sprintf("name IN ['%s']", strings.Join(ops, "','"))
+
 	serviceItems := []model.ServiceItem{}
 
-	query := fmt.Sprintf("SELECT serviceName, quantile(0.99)(durationNano) as p99, avg(durationNano) as avgDuration, count(*) as numCalls FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2'", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	query := fmt.Sprintf("SELECT serviceName, quantile(0.99)(durationNano) as p99, avg(durationNano) as avgDuration, count(*) as numCalls FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND %s", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), operationQuery)
 	args := []interface{}{}
 	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
 	if errStatus != nil {
@@ -677,7 +715,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	//////////////////		Below block gets 5xx of services
 	serviceErrorItems := []model.ServiceItem{}
 
-	query = fmt.Sprintf("SELECT serviceName, count(*) as numErrors FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND (statusCode>=500 OR statusCode=2)", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	query = fmt.Sprintf("SELECT serviceName, count(*) as numErrors FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND %s AND (statusCode>=500 OR statusCode=2)", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), operationQuery)
 	args = []interface{}{}
 	args, errStatus = buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
 	if errStatus != nil {
@@ -704,7 +742,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 	service4xxItems := []model.ServiceItem{}
 
-	query = fmt.Sprintf("SELECT serviceName, count(*) as num4xx FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND statusCode>=400 AND statusCode<500", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	query = fmt.Sprintf("SELECT serviceName, count(*) as num4xx FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND %s AND statusCode>=400 AND statusCode<500", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), operationQuery)
 	args = []interface{}{}
 	args, errStatus = buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
 	if errStatus != nil {
@@ -743,9 +781,19 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
+	topLevelOps, apiErr := r.GetTopLevelOperarions(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	var ops []string
+	for _, op := range *topLevelOps {
+		ops = append(ops, op...)
+	}
+	operationQuery := fmt.Sprintf("name IN ['%s']", strings.Join(ops, "','"))
+
 	serviceOverviewItems := []model.ServiceOverviewItem{}
 
-	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, quantile(0.99)(durationNano) as p99, quantile(0.95)(durationNano) as p95,quantile(0.50)(durationNano) as p50, count(*) as numCalls FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s'", strconv.Itoa(int(queryParams.StepSeconds/60)), r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
+	query := fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, quantile(0.99)(durationNano) as p99, quantile(0.95)(durationNano) as p95,quantile(0.50)(durationNano) as p50, count(*) as numCalls FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND %s AND serviceName='%s'", strconv.Itoa(int(queryParams.StepSeconds/60)), r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), operationQuery, queryParams.ServiceName)
 	args := []interface{}{}
 	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
 	if errStatus != nil {
@@ -763,7 +811,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 
 	serviceErrorItems := []model.ServiceErrorItem{}
 
-	query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, count(*) as numErrors FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND kind='2' AND serviceName='%s' AND hasError=true", strconv.Itoa(int(queryParams.StepSeconds/60)), r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
+	query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %s minute) as time, count(*) as numErrors FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' AND %s AND serviceName='%s' AND hasError=true", strconv.Itoa(int(queryParams.StepSeconds/60)), r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), operationQuery, queryParams.ServiceName)
 	args = []interface{}{}
 	args, errStatus = buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
 	if errStatus != nil {
@@ -1518,9 +1566,19 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, *model.ApiError) {
 
+	topLevelOps, apiErr := r.GetTopLevelOperarions(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	var ops []string
+	for _, op := range *topLevelOps {
+		ops = append(ops, op...)
+	}
+	operationQuery := fmt.Sprintf("name IN ['%s']", strings.Join(ops, "','"))
+
 	var topEndpointsItems []model.TopEndpointsItem
 
-	query := fmt.Sprintf("SELECT quantile(0.5)(durationNano) as p50, quantile(0.95)(durationNano) as p95, quantile(0.99)(durationNano) as p99, COUNT(1) as numCalls, name  FROM %s.%s WHERE  timestamp >= '%s' AND timestamp <= '%s' AND  kind='2' and serviceName='%s'", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), queryParams.ServiceName)
+	query := fmt.Sprintf("SELECT quantile(0.5)(durationNano) as p50, quantile(0.95)(durationNano) as p95, quantile(0.99)(durationNano) as p99, COUNT(1) as numCalls, name  FROM %s.%s WHERE  timestamp >= '%s' AND timestamp <= '%s' AND %s and serviceName='%s'", r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10), operationQuery, queryParams.ServiceName)
 	args := []interface{}{}
 	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
 	if errStatus != nil {
