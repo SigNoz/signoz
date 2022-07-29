@@ -11,7 +11,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
+function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -94,7 +94,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 		<Table
 			showHeader
 			title={(): string => {
-				return 'Top Endpoints';
+				return 'Key Operations';
 			}}
 			tableLayout="fixed"
 			dataSource={data}
@@ -114,8 +114,8 @@ interface TopEndpointListItem {
 
 type DataProps = TopEndpointListItem;
 
-interface TopEndpointsTableProps {
+interface TopOperationsTableProps {
 	data: TopEndpointListItem[];
 }
 
-export default TopEndpointsTable;
+export default TopOperationsTable;

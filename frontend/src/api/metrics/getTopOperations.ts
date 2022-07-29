@@ -2,9 +2,9 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/metrics/getTopEndPoints';
+import { PayloadProps, Props } from 'types/api/metrics/getTopOperations';
 
-const getTopEndPoints = async (
+const getTopOperations = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
@@ -26,4 +26,4 @@ const getTopEndPoints = async (
 	}
 };
 
-export default getTopEndPoints;
+export default getTopOperations;

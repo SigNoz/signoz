@@ -21,7 +21,7 @@ const InitialValue: InitialValueTypes = {
 	services: [],
 	dbOverView: [],
 	externalService: [],
-	topEndPoints: [],
+	topOperations: [],
 	externalAverageDuration: [],
 	externalError: [],
 	serviceOverview: [],
@@ -89,7 +89,7 @@ const metrics = (
 		case GET_INTIAL_APPLICATION_DATA: {
 			const {
 				// dbOverView,
-				topEndPoints,
+				topOperations,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
@@ -100,7 +100,7 @@ const metrics = (
 			return {
 				...state,
 				// dbOverView,
-				topEndPoints,
+				topOperations,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,

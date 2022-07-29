@@ -3,8 +3,8 @@
 // import getExternalError from 'api/metrics/getExternalError';
 // import getExternalService from 'api/metrics/getExternalService';
 import getServiceOverview from 'api/metrics/getServiceOverview';
-import getTopEndPoints from 'api/metrics/getTopEndPoints';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
+import getTopOperations from 'api/metrics/getTopOperations';
 import { AxiosError } from 'axios';
 import GetMinMax from 'lib/getMinMax';
 import getStep from 'lib/getStep';
@@ -47,7 +47,7 @@ export const GetInitialData = (
 				// getExternalErrorResponse,
 				// getExternalServiceResponse,
 				getServiceOverviewResponse,
-				getTopEndPointsResponse,
+				getTopOperationsResponse,
 				getTopLevelOperationsResponse,
 			] = await Promise.all([
 				// getDBOverView({
@@ -69,7 +69,7 @@ export const GetInitialData = (
 					step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 					selectedTags: props.selectedTags,
 				}),
-				getTopEndPoints({
+				getTopOperations({
 					end: maxTime,
 					service: props.serviceName,
 					start: minTime,
@@ -86,7 +86,7 @@ export const GetInitialData = (
 				// getExternalErrorResponse.statusCode === 200 &&
 				// getExternalServiceResponse.statusCode === 200 &&
 				getServiceOverviewResponse.statusCode === 200 &&
-				getTopEndPointsResponse.statusCode === 200 &&
+				getTopOperationsResponse.statusCode === 200 &&
 				getTopLevelOperationsResponse.statusCode === 200
 			) {
 				dispatch({
@@ -97,7 +97,7 @@ export const GetInitialData = (
 						// externalError: getExternalErrorResponse.payload,
 						// externalService: getExternalServiceResponse.payload,
 						serviceOverview: getServiceOverviewResponse.payload,
-						topEndPoints: getTopEndPointsResponse.payload,
+						topOperations: getTopOperationsResponse.payload,
 						topLevelOperations: getTopLevelOperationsResponse.payload,
 					},
 				});
@@ -106,7 +106,7 @@ export const GetInitialData = (
 					type: 'GET_INITIAL_APPLICATION_ERROR',
 					payload: {
 						errorMessage:
-							getTopEndPointsResponse.error ||
+							getTopOperationsResponse.error ||
 							getServiceOverviewResponse.error ||
 							getTopLevelOperationsResponse.error ||
 							// getExternalServiceResponse.error ||
