@@ -374,14 +374,21 @@ func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.Api
 	idInt, _ := strconv.Atoi(id)
 	channel := model.ChannelItem{}
 
-	query := fmt.Sprintf("SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=%d", idInt)
+	query := "SELECT id, created_at, updated_at, name, type, data data FROM notification_channels WHERE id=? "
 
-	err := r.localDB.Get(&channel, query)
+	stmt, err := r.localDB.Preparex(query)
 
-	zap.S().Info(query)
+	zap.S().Info(query, idInt)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Debug("Error in preparing sql query for GetChannel : ", err)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = stmt.Get(&channel, idInt)
+
+	if err != nil {
+		zap.S().Debug(fmt.Sprintf("Error in getting channel with id=%d : ", idInt), err)
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
