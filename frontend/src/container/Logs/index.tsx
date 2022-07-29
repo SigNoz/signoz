@@ -14,24 +14,21 @@ import { GetLogsFields } from 'store/actions/logs/getFields';
 import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 
-
 function Logs({ getLogsFields }) {
-
 	const { search } = useLocation();
 
 	const urlQuery = useMemo(() => {
 		return new URLSearchParams(search);
 	}, [search]);
 
-	const dispatch = useDispatch()
+	const dispatch = useDispatch();
 
 	useEffect(() => {
 		dispatch({
 			type: SET_SEARCH_QUERY_STRING,
-			payload: urlQuery.get('q')
-		})
-	}, [])
-
+			payload: urlQuery.get('q'),
+		});
+	}, [dispatch]);
 
 	useEffect(() => {
 		getLogsFields();

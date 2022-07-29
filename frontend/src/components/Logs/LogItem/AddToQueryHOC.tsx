@@ -37,9 +37,7 @@ function AddToQueryHOC({ fieldKey, fieldValue, children }) {
 	}, [generatedQuery, queryString]);
 
 	const popOverContent = (
-		<span style={{ fontSize: '0.7rem' }}>
-			Add to query <Tag>{generatedQuery}</Tag>
-		</span>
+		<span style={{ fontSize: '0.9rem' }}>Add to query: {fieldKey}</span>
 	);
 	return (
 		<Button

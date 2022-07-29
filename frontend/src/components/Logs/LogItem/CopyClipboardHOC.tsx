@@ -17,7 +17,7 @@ function CopyClipboardHOC({ textToCopy, children }) {
 		>
 			<Popover
 				placement="top"
-				content={<span style={{ fontSize: '0.7rem' }}>Copy to clipboard</span>}
+				content={<span style={{ fontSize: '0.9rem' }}>Copy to clipboard</span>}
 			>
 				{children}
 			</Popover>

@@ -2,9 +2,16 @@ import { CloseCircleFilled } from '@ant-design/icons';
 import { Button, Input } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import getStep from 'lib/getStep';
-import React, { memo, useRef, useState } from 'react';
+import React, {
+	memo,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useClickAway } from 'react-use';
+import { useClickAway, useLocation } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
@@ -65,10 +72,11 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 			setShowDropDown(false);
 		}
 	});
+	const { search } = useLocation();
 
-	const handleSearch = (): void => {
+	const handleSearch = (customQuery = ''): void => {
 		getLogs({
-			q: queryString,
+			q: customQuery || queryString,
 			limit: logLinesPerPage,
 			orderBy: 'timestamp',
 			order: 'desc',
@@ -86,11 +94,20 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 				end: maxTime,
 				inputFormat: 'ns',
 			}),
-			q: queryString,
+			q: customQuery || queryString,
 		});
-
 		setShowDropDown(false);
 	};
+
+	const urlQuery = useMemo(() => {
+		return new URLSearchParams(search);
+	}, [search]);
+
+	useEffect(() => {
+		const urlQueryString = urlQuery.get('q');
+		if (urlQuery !== null) handleSearch(urlQueryString);
+	}, []);
+
 	return (
 		<div ref={searchComponentRef}>
 			<Search

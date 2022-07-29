@@ -41,13 +41,13 @@ function LogSelectedField({ fieldKey = '', fieldValue = '' }) {
 				width: '100%',
 			}}
 		>
-			{/* <AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}> */}
-			<Typography.Text>
-				{`"`}
-				<span style={{ color: blue[4] }}>{fieldKey}</span>
-				{`"`}
-			</Typography.Text>
-			{/* </AddToQueryHOC> */}
+			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
+				<Typography.Text>
+					{`"`}
+					<span style={{ color: blue[4] }}>{fieldKey}</span>
+					{`"`}
+				</Typography.Text>
+			</AddToQueryHOC>
 			<CopyClipboardHOC textToCopy={fieldValue}>
 				<Typography.Text ellipsis>
 					<span>
