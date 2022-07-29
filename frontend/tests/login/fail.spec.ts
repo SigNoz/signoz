@@ -24,5 +24,6 @@ test.describe('Version API fail while loading login page', async () => {
 		expect(el).toBeVisible();
 		expect(el).toHaveText(`${text}`);
 		expect(await el.getAttribute('disabled')).toBe(null);
+		expect(await page.screenshot()).toMatchSnapshot();
 	});
 });
