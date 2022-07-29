@@ -23,7 +23,7 @@ function AddToQueryHOC({ fieldKey, fieldValue, children }) {
 	}, [fieldKey, fieldValue]);
 
 	const handleQueryAdd = useCallback(() => {
-		let updatedQueryString = queryString;
+		let updatedQueryString = queryString || '';
 
 		if (updatedQueryString.length === 0) {
 			updatedQueryString += `${generatedQuery}`;

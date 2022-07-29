@@ -16,7 +16,7 @@ import React, {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { useHoverDirty } from 'react-use';
+import { useHoverDirty, useLocation } from 'react-use';
 import { AppState } from 'store/reducers';
 import ILogsReducer from 'types/reducer/logs';
 import { v4 } from 'uuid';

@@ -1,3 +1,4 @@
+import history from 'lib/history';
 import { parseQuery, reverseParser } from 'lib/logql';
 import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useReducer, useState } from 'react';
@@ -9,7 +10,7 @@ import {
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
-export function useSearchParser(initialQueryString = '') {
+export function useSearchParser() {
 	const dispatch = useDispatch();
 	const {
 		searchFilter: { parsedQuery, queryString },
@@ -17,6 +18,11 @@ export function useSearchParser(initialQueryString = '') {
 
 	const updateQueryString = useCallback(
 		(updatedQueryString) => {
+			history.push({
+				pathname: history.location.pathname,
+				search: updatedQueryString ? `?q=${updatedQueryString}` : '',
+			});
+
 			dispatch({
 				type: SET_SEARCH_QUERY_STRING,
 				payload: updatedQueryString,
