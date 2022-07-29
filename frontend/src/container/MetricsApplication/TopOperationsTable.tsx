@@ -85,7 +85,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			title: 'Number of Calls',
 			dataIndex: 'numCalls',
 			key: 'numCalls',
-			sorter: (a: TopEndpointListItem, b: TopEndpointListItem): number =>
+			sorter: (a: TopOperationListItem, b: TopOperationListItem): number =>
 				a.numCalls - b.numCalls,
 		},
 	];
@@ -104,7 +104,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	);
 }
 
-interface TopEndpointListItem {
+interface TopOperationListItem {
 	p50: number;
 	p95: number;
 	p99: number;
@@ -112,10 +112,10 @@ interface TopEndpointListItem {
 	name: string;
 }
 
-type DataProps = TopEndpointListItem;
+type DataProps = TopOperationListItem;
 
 interface TopOperationsTableProps {
-	data: TopEndpointListItem[];
+	data: TopOperationListItem[];
 }
 
 export default TopOperationsTable;

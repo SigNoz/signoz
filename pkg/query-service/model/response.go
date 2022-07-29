@@ -217,7 +217,7 @@ type UsageItem struct {
 	Count     uint64    `json:"count" ch:"count"`
 }
 
-type TopEndpointsItem struct {
+type TopOperationsItem struct {
 	Percentile50 float64 `json:"p50" ch:"p50"`
 	Percentile95 float64 `json:"p95" ch:"p95"`
 	Percentile99 float64 `json:"p99" ch:"p99"`

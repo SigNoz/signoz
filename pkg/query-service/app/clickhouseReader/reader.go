@@ -1565,7 +1565,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	return &cleanedTagValues, nil
 }
 
-func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *model.GetTopEndpointsParams) (*[]model.TopEndpointsItem, *model.ApiError) {
+func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	namedArgs := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
@@ -1573,7 +1573,7 @@ func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *mod
 		clickhouse.Named("serviceName", queryParams.ServiceName),
 	}
 
-	var topEndpointsItems []model.TopEndpointsItem
+	var topOperationsItems []model.TopOperationsItem
 
 	query := fmt.Sprintf(`
 		SELECT
@@ -1592,8 +1592,8 @@ func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *mod
 	if errStatus != nil {
 		return nil, errStatus
 	}
-	query += " GROUP BY name"
-	err := r.db.Select(ctx, &topEndpointsItems, query, args...)
+	query += " GROUP BY name ORDER BY p99 DESC LIMIT 10"
+	err := r.db.Select(ctx, &topOperationsItems, query, args...)
 
 	zap.S().Debug(query)
 
@@ -1602,11 +1602,11 @@ func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *mod
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
-	if topEndpointsItems == nil {
-		topEndpointsItems = []model.TopEndpointsItem{}
+	if topOperationsItems == nil {
+		topOperationsItems = []model.TopOperationsItem{}
 	}
 
-	return &topEndpointsItems, nil
+	return &topOperationsItems, nil
 }
 
 func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
