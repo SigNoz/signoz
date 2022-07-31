@@ -20,6 +20,7 @@
                 </default>
                 <s3>
                     <disk>s3</disk>
+                    <perform_ttl_move_on_insert>0</perform_ttl_move_on_insert>
                 </s3>
             </volumes>
         </tiered>
