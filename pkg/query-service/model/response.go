@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -402,4 +403,31 @@ type MetricPoint struct {
 func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
+}
+
+// MarshalJSON implements json.Marshaler.
+func (s *ServiceItem) MarshalJSON() ([]byte, error) {
+	// If a service didn't not send any data in the last interval duration
+	// it's values such as 99th percentile will return as NaN and
+	// json encoding doesn't support NaN
+	// We still want to show it in the UI, so we'll replace NaN with 0
+	type Alias ServiceItem
+	if math.IsInf(s.AvgDuration, 0) || math.IsNaN(s.AvgDuration) {
+		s.AvgDuration = 0
+	}
+	if math.IsInf(s.CallRate, 0) || math.IsNaN(s.CallRate) {
+		s.CallRate = 0
+	}
+	if math.IsInf(s.ErrorRate, 0) || math.IsNaN(s.ErrorRate) {
+		s.ErrorRate = 0
+	}
+	if math.IsInf(s.Percentile99, 0) || math.IsNaN(s.Percentile99) {
+		s.Percentile99 = 0
+	}
+
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	})
 }
