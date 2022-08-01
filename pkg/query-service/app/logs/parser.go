@@ -23,6 +23,7 @@ var operatorMapping = map[string]string{
 
 const (
 	AND             = "and"
+	OR              = "or"
 	ORDER           = "order"
 	ORDER_BY        = "orderBy"
 	TIMESTAMP_START = "timestampStart"
@@ -168,7 +169,7 @@ func parseLogQuery(query string) ([]string, error) {
 
 			operatorRemovedTokens := strings.Split(operatorRegex.ReplaceAllString(v, " "), " ")
 			searchCol := strings.ToLower(operatorRemovedTokens[0])
-			if searchCol == AND {
+			if searchCol == AND || searchCol == OR {
 				searchCol = strings.ToLower(operatorRemovedTokens[1])
 			}
 			col := searchCol
@@ -179,6 +180,8 @@ func parseLogQuery(query string) ([]string, error) {
 			f := fmt.Sprintf(`%s %s '%%%s%%' `, col, operatorMapping[opLower], searchString[1:len(searchString)-1])
 			if strings.HasPrefix(strings.ToLower(v), AND) {
 				f = "AND " + f
+			} else if strings.HasPrefix(strings.ToLower(v), OR) {
+				f = "OR " + f
 			}
 			sqlQueryTokens = append(sqlQueryTokens, f)
 		} else {
