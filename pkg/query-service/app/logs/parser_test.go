@@ -43,6 +43,11 @@ var correctQueriesTest = []struct {
 		[]string{`id IN ('2CkBCauK8m3nkyKR19YhCw6WbdY') `, `OR body ILIKE '%OPTIONS /api/v1/logs%' `},
 	},
 	{
+		"mixing and or",
+		`id in ('2CkBCauK8m3nkyKR19YhCw6WbdY') and id in ('2CkBCauK8m3nkyKR19YhCw6WbdY','2CkBCauK8m3nkyKR19YhCw6WbdY') or fulltext contains 'OPTIONS /api/v1/logs'`,
+		[]string{`id IN ('2CkBCauK8m3nkyKR19YhCw6WbdY') `, `and id IN ('2CkBCauK8m3nkyKR19YhCw6WbdY','2CkBCauK8m3nkyKR19YhCw6WbdY') `, `OR body ILIKE '%OPTIONS /api/v1/logs%' `},
+	},
+	{
 		`filters with lt,gt,lte,gte operators`,
 		`id lt 100 and id gt 50 and code lte 500 and code gte 400`,
 		[]string{`id < 100 `, `and id > 50 `, `and code <= 500 `, `and code >= 400 `},

@@ -32,7 +32,7 @@ const (
 	IDEND           = "idEnd"
 )
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([\S ]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) (')?[^']+(')?)`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([^(]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) '[^']+')`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
@@ -204,7 +204,7 @@ func parseColumn(s string) (*string, error) {
 		return nil, fmt.Errorf("incorrect filter")
 	}
 
-	if strings.HasPrefix(s, AND) {
+	if strings.HasPrefix(s, AND) || strings.HasPrefix(s, OR) {
 		colName = filter[1]
 	} else {
 		colName = filter[0]
@@ -237,7 +237,7 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 		if _, ok := selectedFieldsLookup[*col]; !ok && *col != "body" {
 			if field, ok := interestingFieldLookup[*col]; ok {
 				sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), *col)
-			} else {
+			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 {
 				return nil, fmt.Errorf("field not found for filtering")
 			}
 		}
