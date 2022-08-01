@@ -695,70 +695,80 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, apiErr
 	}
 
-	serviceItems := make(map[string]model.ServiceItem)
+	serviceItems := []model.ServiceItem{}
+	var wg sync.WaitGroup
+	// limit the number of concurrent queries to not overload the clickhouse server
+	sem := make(chan struct{}, 10)
+	var mtx sync.RWMutex
 
 	for svc, ops := range *topLevelOps {
-		var serviceItem model.ServiceItem
-		var numErrors uint64
-		query := fmt.Sprintf(
-			`SELECT
-				quantile(0.99)(durationNano) as p99,
-				avg(durationNano) as avgDuration,
-				count(*) as numCalls
-			FROM %s.%s
-			WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
-			r.traceDB, r.indexTable,
-		)
-		errorQuery := fmt.Sprintf(
-			`SELECT
-				count(*) as numErrors
-			FROM %s.%s
-			WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
-			r.traceDB, r.indexTable,
-		)
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(svc string, ops []string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			var serviceItem model.ServiceItem
+			var numErrors uint64
+			query := fmt.Sprintf(
+				`SELECT
+					quantile(0.99)(durationNano) as p99,
+					avg(durationNano) as avgDuration,
+					count(*) as numCalls
+				FROM %s.%s
+				WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
+				r.traceDB, r.indexTable,
+			)
+			errorQuery := fmt.Sprintf(
+				`SELECT
+					count(*) as numErrors
+				FROM %s.%s
+				WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				r.traceDB, r.indexTable,
+			)
 
-		args := []interface{}{}
-		args = append(args,
-			clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
-			clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
-			clickhouse.Named("serviceName", svc),
-			clickhouse.Named("names", ops),
-		)
-		args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
-		if errStatus != nil {
-			return nil, errStatus
-		}
-		err := r.db.QueryRow(
-			ctx,
-			query,
-			args...,
-		).ScanStruct(&serviceItem)
+			args := []interface{}{}
+			args = append(args,
+				clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+				clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+				clickhouse.Named("serviceName", svc),
+				clickhouse.Named("names", ops),
+			)
+			args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+			if errStatus != nil {
+				zap.S().Error("Error in processing sql query: ", errStatus)
+				return
+			}
+			err := r.db.QueryRow(
+				ctx,
+				query,
+				args...,
+			).ScanStruct(&serviceItem)
 
-		if err != nil {
-			zap.S().Error("Error in processing sql query: ", err)
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
-		}
+			if err != nil {
+				zap.S().Error("Error in processing sql query: ", err)
+				return
+			}
 
-		err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
-		if err != nil {
-			zap.S().Error("Error in processing sql query: ", err)
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
-		}
+			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
+			if err != nil {
+				zap.S().Error("Error in processing sql query: ", err)
+				return
+			}
 
-		serviceItem.ServiceName = svc
-		serviceItem.NumErrors = numErrors
-		serviceItems[svc] = serviceItem
+			serviceItem.ServiceName = svc
+			serviceItem.NumErrors = numErrors
+			mtx.Lock()
+			serviceItems = append(serviceItems, serviceItem)
+			mtx.Unlock()
+		}(svc, ops)
 	}
+	wg.Wait()
 
-	result := []model.ServiceItem{}
-	for svc := range serviceItems {
-		if serviceItem, ok := serviceItems[svc]; ok {
-			serviceItem.CallRate = float64(serviceItem.NumCalls) / float64(queryParams.Period)
-			serviceItem.ErrorRate = float64(serviceItem.NumErrors) * 100 / float64(serviceItem.NumCalls)
-			result = append(result, serviceItem)
-		}
+	for idx := range serviceItems {
+		serviceItems[idx].CallRate = float64(serviceItems[idx].NumCalls) / float64(queryParams.Period)
+		serviceItems[idx].ErrorRate = float64(serviceItems[idx].NumErrors) * 100 / float64(serviceItems[idx].NumCalls)
 	}
-	return &result, nil
+	return &serviceItems, nil
 }
 
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, *model.ApiError) {
