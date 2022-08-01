@@ -1,6 +1,13 @@
 import { Button as ButtonComponent } from 'antd';
 import styled from 'styled-components';
 
+export const RightActionContainer = styled.div`
+	&&& {
+		display: flex;
+		align-items: center;
+	}
+`;
+
 export const ButtonContainer = styled.div`
 	&&& {
 		display: flex;

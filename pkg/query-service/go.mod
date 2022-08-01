@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gosimple/slug v1.10.0
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/oklog/oklog v0.3.2
@@ -92,7 +92,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v0.3.1-0.20170117200651-66bb6560562f // indirect
