@@ -2,6 +2,7 @@ import { notification, Select } from 'antd';
 import getChannels from 'api/channels/getAll';
 import useFetch from 'hooks/useFetch';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { StyledSelect } from './styles';
 
@@ -14,6 +15,9 @@ function ChannelSelect({
 	currentValue,
 	onSelectChannels,
 }: ChannelSelectProps): JSX.Element | null {
+	// init namespace for translations
+	const { t } = useTranslation('alerts');
+
 	const { loading, payload, error, errorMessage } = useFetch(getChannels);
 
 	const handleChange = (value: string[]): void => {
@@ -48,7 +52,7 @@ function ChannelSelect({
 			status={error ? 'error' : ''}
 			mode="multiple"
 			style={{ width: '100%' }}
-			placeholder="select one or more channels"
+			placeholder={t('placeholder_channel_select')}
 			value={currentValue}
 			onChange={(value): void => {
 				handleChange(value as string[]);
