@@ -47,17 +47,17 @@ import (
 )
 
 const (
-	primaryNamespace      = "clickhouse"
-	archiveNamespace      = "clickhouse-archive"
-	signozTraceDBName     = "signoz_traces"
-	signozDurationMVTable = "durationSort"
-	signozSpansTable      = "signoz_spans"
-	signozErrorIndexTable = "signoz_error_index_v2"
-	signozTraceTableName  = "signoz_index_v2"
-	signozMetricDBName    = "signoz_metrics"
-	signozSampleTableName = "samples_v2"
-	signozTSTableName     = "time_series_v2"
-	signozRootOperations  = "root_operations"
+	primaryNamespace         = "clickhouse"
+	archiveNamespace         = "clickhouse-archive"
+	signozTraceDBName        = "signoz_traces"
+	signozDurationMVTable    = "durationSort"
+	signozSpansTable         = "signoz_spans"
+	signozErrorIndexTable    = "signoz_error_index_v2"
+	signozTraceTableName     = "signoz_index_v2"
+	signozMetricDBName       = "signoz_metrics"
+	signozSampleTableName    = "samples_v2"
+	signozTSTableName        = "time_series_v2"
+	signozTopLevelOperations = "top_level_operations"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -661,7 +661,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context) (*map[string][]string, *model.ApiError) {
 
 	operations := map[string][]string{}
-	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.traceDB, signozRootOperations)
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.traceDB, signozTopLevelOperations)
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -706,14 +706,14 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				avg(durationNano) as avgDuration,
 				count(*) as numCalls
 			FROM %s.%s
-			WHERE timestamp>= @start AND timestamp<= @end AND serviceName = @serviceName AND name In [@names]`,
+			WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
 			r.traceDB, r.indexTable,
 		)
 		errorQuery := fmt.Sprintf(
 			`SELECT
 				count(*) as numErrors
 			FROM %s.%s
-			WHERE timestamp>= @start AND timestamp<= @end AND serviceName = @serviceName AND name In [@names] AND statusCode=2`,
+			WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 			r.traceDB, r.indexTable,
 		)
 
@@ -790,7 +790,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			quantile(0.50)(durationNano) as p50,
 			count(*) as numCalls
 		FROM %s.%s
-		WHERE timestamp>= @start AND timestamp<= @end AND serviceName = @serviceName AND name In [@names]`,
+		WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
 		r.traceDB, r.indexTable,
 	)
 	args := []interface{}{}
@@ -816,7 +816,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			toStartOfInterval(timestamp, INTERVAL @interval minute) as time,
 			count(*) as numErrors
 		FROM %s.%s
-		WHERE timestamp>= @start AND timestamp<= @end AND serviceName = @serviceName AND name In [@names] AND statusCode=2`,
+		WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 		r.traceDB, r.indexTable,
 	)
 	args = []interface{}{}
@@ -1590,7 +1590,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			COUNT(*) as numCalls,
 			name
 		FROM %s.%s
-		WHERE timestamp>= @start AND timestamp<= @end AND serviceName = @serviceName`,
+		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
 		r.traceDB, r.indexTable,
 	)
 	args := []interface{}{}
