@@ -43,6 +43,11 @@ var correctQueriesTest = []struct {
 		[]string{`id < 100 `, `and id > 50 `, `and code <= 500 `, `and code >= 400 `},
 	},
 	{
+		`filters with lt,gt,lte,gte operators seprated by OR`,
+		`id lt 100 or id gt 50 or code lte 500 or code gte 400`,
+		[]string{`id < 100 `, `or id > 50 `, `or code <= 500 `, `or code >= 400 `},
+	},
+	{
 		`filter with number`,
 		`status gte 200 AND FULLTEXT ncontains '"key"'`,
 		[]string{`status >= 200 `, `AND body NOT ILIKE '%"key"%' `},
@@ -216,8 +221,8 @@ func TestGenerateSQLQuery(t *testing.T) {
 	tsEnd := uint64(1657689294000)
 	idStart := "2BsKLKv8cZrLCn6rkOcRGkdjBdM"
 	idEnd := "2BsKG6tRpFWjYMcWsAGKfSxoQdU"
-	sqlWhere := "id < 100 and id > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 and timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' "
-	Convey("testInterestingFields", t, func() {
+	sqlWhere := "timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' and id < 100 and id > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 "
+	Convey("testGenerateSQL", t, func() {
 		res, _ := GenerateSQLWhere(&allFields, &model.LogsFilterParams{Query: query, TimestampStart: tsStart, TimestampEnd: tsEnd, IdStart: idStart, IdEnd: idEnd})
 		So(res, ShouldEqual, sqlWhere)
 	})

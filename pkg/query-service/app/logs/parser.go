@@ -31,7 +31,7 @@ const (
 	IDEND           = "idEnd"
 )
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?)?(([\w.-]+ (in|nin) \([\S ]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) (')?[^']+(')?)`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([\S ]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) (')?[^']+(')?)`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
@@ -259,33 +259,42 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 		return sqlWhere, err
 	}
 
+	filterTokens := []string{}
 	if params.TimestampStart != 0 {
 		filter := fmt.Sprintf("timestamp >= '%d' ", params.TimestampStart)
-		if len(tokens) > 0 {
+		if len(filterTokens) > 0 {
 			filter = "and " + filter
 		}
-		tokens = append(tokens, filter)
+		filterTokens = append(filterTokens, filter)
 	}
 	if params.TimestampEnd != 0 {
 		filter := fmt.Sprintf("timestamp <= '%d' ", params.TimestampEnd)
-		if len(tokens) > 0 {
+		if len(filterTokens) > 0 {
 			filter = "and " + filter
 		}
-		tokens = append(tokens, filter)
+		filterTokens = append(filterTokens, filter)
 	}
 	if params.IdStart != "" {
 		filter := fmt.Sprintf("id > '%v' ", params.IdStart)
-		if len(tokens) > 0 {
+		if len(filterTokens) > 0 {
 			filter = "and " + filter
 		}
-		tokens = append(tokens, filter)
+		filterTokens = append(filterTokens, filter)
 	}
 	if params.IdEnd != "" {
 		filter := fmt.Sprintf("id < '%v' ", params.IdEnd)
-		if len(tokens) > 0 {
+		if len(filterTokens) > 0 {
 			filter = "and " + filter
 		}
-		tokens = append(tokens, filter)
+		filterTokens = append(filterTokens, filter)
+	}
+
+	if len(filterTokens) > 0 {
+		if len(tokens) > 0 {
+			tokens[0] = fmt.Sprintf("and %s", tokens[0])
+		}
+		filterTokens = append(filterTokens, tokens...)
+		tokens = filterTokens
 	}
 
 	sqlWhere = strings.Join(tokens, "")
