@@ -63,6 +63,9 @@ type Alert struct {
 
 	GeneratorURL string
 
+	// list of preferred receivers, e.g. slack
+	Receivers []string
+
 	Value      float64
 	ActiveAt   time.Time
 	FiredAt    time.Time
@@ -71,7 +74,6 @@ type Alert struct {
 	ValidUntil time.Time
 }
 
-// todo(amol): need to review this with ankit
 func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
 	if a.State == StatePending {
 		return false

@@ -33,6 +33,8 @@ type PostableRule struct {
 	// Source captures the source url where rule has been created
 	Source string `json:"source,omitempty"`
 
+	PreferredChannels []string `json:"preferredChannels,omitempty"`
+
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
@@ -225,6 +227,7 @@ type GettableRule struct {
 	Frequency     Duration      `yaml:"frequency,omitempty" json:"frequency,omitempty"`
 	RuleCondition RuleCondition `yaml:"condition,omitempty" json:"condition,omitempty"`
 
-	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
-	// Value       float64       `json:"value"`
+	Disabled bool `json:"disabled"`
+
+	PreferredChannels []string `json:"preferredChannels,omitempty"`
 }
