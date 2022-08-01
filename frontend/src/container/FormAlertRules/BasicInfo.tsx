@@ -4,9 +4,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 
+import ChannelSelect from './ChannelSelect';
 import LabelSelect from './labels';
 import {
+	ChannelSelectTip,
 	FormContainer,
+	FormItemMedium,
 	InputSmall,
 	SeveritySelect,
 	StepHeading,
@@ -80,7 +83,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 						}}
 					/>
 				</FormItem>
-				<FormItem label={t('field_labels')}>
+				<FormItemMedium label={t('field_labels')}>
 					<LabelSelect
 						onSetLabels={(l: Labels): void => {
 							setAlertDef({
@@ -92,7 +95,19 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 						}}
 						initialValues={alertDef.labels}
 					/>
-				</FormItem>
+				</FormItemMedium>
+				<FormItemMedium label="Notification Channels">
+					<ChannelSelect
+						currentValue={alertDef.preferredChannels}
+						onSelectChannels={(s: string[]): void => {
+							setAlertDef({
+								...alertDef,
+								preferredChannels: s,
+							});
+						}}
+					/>
+					<ChannelSelectTip> {t('channel_select_tooltip')}</ChannelSelectTip>
+				</FormItemMedium>
 			</FormContainer>
 		</>
 	);
