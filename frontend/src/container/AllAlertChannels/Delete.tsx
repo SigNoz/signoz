@@ -1,29 +1,31 @@
 import { Button } from 'antd';
 import { NotificationInstance } from 'antd/lib/notification';
-import deleteAlert from 'api/channels/delete';
+import deleteChannel from 'api/channels/delete';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Channels } from 'types/api/channels/getAll';
 
 function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
+	const { t } = useTranslation(['channels']);
 	const [loading, setLoading] = useState(false);
 
 	const onClickHandler = async (): Promise<void> => {
 		try {
 			setLoading(true);
-			const response = await deleteAlert({
+			const response = await deleteChannel({
 				id,
 			});
 
 			if (response.statusCode === 200) {
 				notifications.success({
 					message: 'Success',
-					description: 'Channel Deleted Successfully',
+					description: t('channel_delete_success'),
 				});
 				setChannels((preChannels) => preChannels.filter((e) => e.id !== id));
 			} else {
 				notifications.error({
 					message: 'Error',
-					description: response.error || 'Something went wrong',
+					description: response.error || t('channel_delete_unexp_error'),
 				});
 			}
 			setLoading(false);
@@ -31,7 +33,9 @@ function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 			notifications.error({
 				message: 'Error',
 				description:
-					error instanceof Error ? error.toString() : 'Something went wrong',
+					error instanceof Error
+						? error.toString()
+						: t('channel_delete_unexp_error'),
 			});
 			setLoading(false);
 		}
