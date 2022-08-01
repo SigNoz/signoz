@@ -223,20 +223,7 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Labels      map[string]string `json:"labels"`
-	Annotations map[string]string `json:"annotations"`
-	State       string            `json:"state"`
-	Alert       string            `json:"alert"`
-	// Description string            `yaml:"description,omitempty" json:"description,omitempty"`
-
-	Id            string        `json:"id"`
-	RuleType      RuleType      `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow    Duration      `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency     Duration      `yaml:"frequency,omitempty" json:"frequency,omitempty"`
-	RuleCondition RuleCondition `yaml:"condition,omitempty" json:"condition,omitempty"`
-
-	Disabled bool `json:"disabled"`
-
-	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
-	// Value       float64       `json:"value"`
+	Id    string `json:"id"`
+	State string `json:"state"`
+	PostableRule
 }

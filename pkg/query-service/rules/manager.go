@@ -229,17 +229,10 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 		return err
 	}
 
-	if !m.opts.DisableRules && !parsedRule.Disabled {
-		err = m.editTask(parsedRule, taskName)
-		if err != nil {
-			// todo(amol): using tx with sqllite3 is gets
-			// database locked. need to research and resolve this
-			//tx.Rollback()
-			return err
-		}
+	if !m.opts.DisableRules {
+		return m.syncRuleStateWithTask(taskName, parsedRule)
 	}
 
-	// return tx.Commit()
 	return nil
 }
 
@@ -658,7 +651,7 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 		return nil, err
 	}
 
-	// parsed Rule is combo of stored rule and patch received in request
+	// patchedRule is combo of stored rule and patch received in the request
 	patchedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
 	if len(errs) > 0 {
 		zap.S().Errorf("failed to parse rules:", errs)
@@ -666,6 +659,7 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 		return nil, errs[0]
 	}
 
+	// deploy or un-deploy task according to patched (new) rule state
 	if err := m.syncRuleStateWithTask(taskName, patchedRule); err != nil {
 		zap.S().Errorf("failed to sync stored rule state with the task")
 		return nil, err
@@ -690,13 +684,10 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 	}
 
 	// prepare http response
-	response := GettableRule{}
-	if err := json.Unmarshal(patchedRuleBytes, &response); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("msg:", "invalid rule data found in patchedRule", "\t err:", err, "\t data:", patchedRuleBytes)
-		return nil, err
+	response := GettableRule{
+		Id:           ruleId,
+		PostableRule: *patchedRule,
 	}
-
-	response.Id = fmt.Sprintf("%d", ruleId)
 
 	// fetch state of rule from memory
 	if rm, ok := m.rules[ruleId]; !ok {
