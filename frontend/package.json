@@ -27,7 +27,7 @@
 	"dependencies": {
 		"@ant-design/colors": "^6.0.0",
 		"@ant-design/icons": "^4.6.2",
-		"@grafana/data": "^8.4.3",
+		"@grafana/data": "^9.0.6",
 		"@monaco-editor/react": "^4.3.1",
 		"@testing-library/jest-dom": "^5.11.4",
 		"@testing-library/react": "^11.1.0",

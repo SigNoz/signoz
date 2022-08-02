@@ -1344,20 +1344,20 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@grafana/data@^8.4.3":
-  version "8.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-8.5.3.tgz#5d2405bd0902a8a8fa2d4abb1dade9a5ebb95cd9"
-  integrity sha512-WeK2y3IHMbJJ9GjRoCSb5rwZK1QSOsMjRjH/jFtTx1s7XXWFPvgE4L/1HUVMRkoNMGx1qgAiqe1hMbIjo51mmQ==
+"@grafana/data@^9.0.6":
+  version "9.0.6"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-9.0.6.tgz#a734a4e1ea29db12111b5956bd9b6321df631b5e"
+  integrity sha512-ry8DIf8+oT/kG4NuWs/mRx/L96BDHEWnN/5x9zvTUJpXhPvDqARP57aTybW9/EF5YmJUBjV8LJvAhnL2lA0Uhw==
   dependencies:
     "@braintree/sanitize-url" "6.0.0"
-    "@grafana/schema" "8.5.3"
+    "@grafana/schema" "9.0.6"
     "@types/d3-interpolate" "^1.4.0"
     d3-interpolate "1.4.0"
     date-fns "2.28.0"
     eventemitter3 "4.0.7"
     lodash "4.17.21"
-    marked "4.0.12"
-    moment "2.29.2"
+    marked "4.0.16"
+    moment "2.29.4"
     moment-timezone "0.5.34"
     ol "6.14.1"
     papaparse "5.3.2"
@@ -1365,16 +1365,16 @@
     react-dom "17.0.2"
     regenerator-runtime "0.13.9"
     rxjs "7.5.5"
-    tslib "2.3.1"
-    uplot "1.6.19"
+    tslib "2.4.0"
+    uplot "1.6.22"
     xss "1.0.11"
 
-"@grafana/schema@8.5.3":
-  version "8.5.3"
-  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-8.5.3.tgz#b132b956c271176c189f44dee526a405e095e63c"
-  integrity sha512-mqDmHQlVvpC7lmtQoYAL7HPulR/2PJDJjP77Oki7UUmxd/YvBjSQkF7Eg4fJHEdrUsX6nsAiSmgED+0/yzqxgA==
+"@grafana/schema@9.0.6":
+  version "9.0.6"
+  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-9.0.6.tgz#01b0d9f1ebd5fb09de364bad27b71802ddf874e7"
+  integrity sha512-gTI5E9Ez9ZsUOcM3kgjIX2NVfseEEr0UHFLb2VHm3xhEuWSnICnKwC0f+glckF1y9LsBc6sTuzPCTuvIB7qpaA==
   dependencies:
-    tslib "2.3.1"
+    tslib "2.4.0"
 
 "@hapi/hoek@^9.0.0":
   version "9.3.0"
@@ -8777,10 +8777,10 @@ mapbox-to-css-font@^2.4.1:
   resolved "https://registry.yarnpkg.com/mapbox-to-css-font/-/mapbox-to-css-font-2.4.1.tgz#41bf38faed36b7dab069828aa3654e4bd91a1eda"
   integrity sha512-QQ/iKiM43DM9+aujTL45Iz5o7gDeSFmy4LPl3HZmNcwCE++NxGazf+yFpY+wCb+YS23sDa1ghpo3zrNFOcHlow==
 
-marked@4.0.12:
-  version "4.0.12"
-  resolved "https://registry.yarnpkg.com/marked/-/marked-4.0.12.tgz#2262a4e6fd1afd2f13557726238b69a48b982f7d"
-  integrity sha512-hgibXWrEDNBWgGiK18j/4lkS6ihTe9sxtV4Q1OQppb/0zzyPSzoFANBa5MfsG/zgsWklmNnhm0XACZOH/0HBiQ==
+marked@4.0.16:
+  version "4.0.16"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-4.0.16.tgz#9ec18fc1a723032eb28666100344d9428cf7a264"
+  integrity sha512-wahonIQ5Jnyatt2fn8KqF/nIqZM8mh3oRu2+l5EANGMhu6RFjiSG52QNE2eWzFMI94HqYSgN184NurgNG6CztA==
 
 match-sorter@^6.0.2:
   version "6.3.1"
@@ -8995,10 +8995,10 @@ moment-timezone@0.5.34:
   dependencies:
     moment ">= 2.9.0"
 
-moment@2.29.2:
-  version "2.29.2"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.2.tgz#00910c60b20843bcba52d37d58c628b47b1f20e4"
-  integrity sha512-UgzG4rvxYpN15jgCmVJwac49h9ly9NurikMWGPdVxm8GZD6XjkKPxDTjQQ43gtGgnV3X0cAyWDdP2Wexoquifg==
+moment@2.29.4:
+  version "2.29.4"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.4.tgz#3dbe052889fe7c1b2ed966fcb3a77328964ef108"
+  integrity sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==
 
 "moment@>= 2.9.0", moment@>=2.13.0, moment@^2.24.0, moment@^2.25.3:
   version "2.29.3"
@@ -12585,20 +12585,15 @@ tsconfig-paths@^3.14.1, tsconfig-paths@^3.9.0:
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
-tslib@2.3.1:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
-  integrity sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
+tslib@2.4.0, tslib@^2.0.3, tslib@^2.1.0, tslib@^2.3.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.4.0.tgz#7cecaa7f073ce680a05847aa77be941098f36dc3"
+  integrity sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
 
 tslib@^1.8.1, tslib@^1.9.0:
   version "1.14.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
-
-tslib@^2.0.3, tslib@^2.1.0, tslib@^2.3.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.4.0.tgz#7cecaa7f073ce680a05847aa77be941098f36dc3"
-  integrity sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
 
 tsutils@^3.21.0:
   version "3.21.0"
@@ -12764,10 +12759,10 @@ unset-value@^1.0.0:
     has-value "^0.3.1"
     isobject "^3.0.0"
 
-uplot@1.6.19:
-  version "1.6.19"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.19.tgz#98f461992a3f7f3bda7a62f4a028b8afa8da7942"
-  integrity sha512-s5Oab13s8zUzuZ/KiSV0GRhEvuKptAg2831fkt2PFsginIP1NSsiNrcozlc+tTPuUEAt+4rAXqX521I1DrZwEg==
+uplot@1.6.22:
+  version "1.6.22"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.22.tgz#28a136c7c5fce92ce5e25f38f19314a029bec390"
+  integrity sha512-2jtSb/YHUgtmIUn0+QJjf7ggcJicb5PKe7ijBiRDTPsG/f8F/MFayZ+g6/0kATNkDyF/qQsHJDmCp6cxncg1EQ==
 
 uri-js@^4.2.2:
   version "4.4.1"
