@@ -75,16 +75,17 @@ var (
 
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
-	db              clickhouse.Conn
-	localDB         *sqlx.DB
-	traceDB         string
-	operationsTable string
-	durationTable   string
-	indexTable      string
-	errorTable      string
-	spansTable      string
-	queryEngine     *promql.Engine
-	remoteStorage   *remote.Storage
+	db                 clickhouse.Conn
+	localDB            *sqlx.DB
+	traceDB            string
+	operationsTable    string
+	durationTable      string
+	usageExplorerTable string
+	indexTable         string
+	errorTable         string
+	spansTable         string
+	queryEngine        *promql.Engine
+	remoteStorage      *remote.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -111,16 +112,17 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	}
 
 	return &ClickHouseReader{
-		db:              db,
-		localDB:         localDB,
-		traceDB:         options.primary.TraceDB,
-		alertManager:    alertManager,
-		operationsTable: options.primary.OperationsTable,
-		indexTable:      options.primary.IndexTable,
-		errorTable:      options.primary.ErrorTable,
-		durationTable:   options.primary.DurationTable,
-		spansTable:      options.primary.SpansTable,
-		promConfigFile:  configFile,
+		db:                 db,
+		localDB:            localDB,
+		traceDB:            options.primary.TraceDB,
+		alertManager:       alertManager,
+		operationsTable:    options.primary.OperationsTable,
+		indexTable:         options.primary.IndexTable,
+		errorTable:         options.primary.ErrorTable,
+		usageExplorerTable: options.primary.UsageExplorerTable,
+		durationTable:      options.primary.DurationTable,
+		spansTable:         options.primary.SpansTable,
+		promConfigFile:     configFile,
 	}
 }
 
@@ -1556,9 +1558,9 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 	var query string
 	if len(queryParams.ServiceName) != 0 {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s.%s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		query = fmt.Sprintf("SELECT toStartOfInterval(hour, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		query = fmt.Sprintf("SELECT toStartOfInterval(hour, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	}
 
 	err := r.db.Select(ctx, &usageItems, query)
