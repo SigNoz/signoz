@@ -1556,15 +1556,20 @@ func (r *ClickHouseReader) GetTopEndpoints(ctx context.Context, queryParams *mod
 func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
 
 	var usageItems []model.UsageItem
-
+	namedArgs := []interface{}{
+		clickhouse.Named("interval", queryParams.StepHour),
+		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+	}
 	var query string
 	if len(queryParams.ServiceName) != 0 {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE service_name='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.usageExplorerTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		namedArgs = append(namedArgs, clickhouse.Named("serviceName", queryParams.ServiceName))
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL @interval HOUR) as time, sum(count) as count FROM %s.%s WHERE service_name=@serviceName AND timestamp>=@start AND timestamp<=@end GROUP BY time ORDER BY time ASC", r.traceDB, r.usageExplorerTable)
 	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.usageExplorerTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL @interval HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>=@start AND timestamp<=@end GROUP BY time ORDER BY time ASC", r.traceDB, r.usageExplorerTable)
 	}
 
-	err := r.db.Select(ctx, &usageItems, query)
+	err := r.db.Select(ctx, &usageItems, query, namedArgs...)
 
 	zap.S().Info(query)
 
