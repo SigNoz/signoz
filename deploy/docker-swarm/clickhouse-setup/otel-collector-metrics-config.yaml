@@ -5,9 +5,11 @@ receivers:
         # otel-collector internal metrics
         - job_name: "otel-collector"
           scrape_interval: 60s
-          static_configs:
-            - targets:
-              - otel-collector:8888
+          dns_sd_configs:
+            - names:
+                - 'tasks.otel-collector'
+              type: 'A'
+              port: 8888
         # otel-collector-metrics internal metrics
         - job_name: "otel-collector-metrics"
           scrape_interval: 60s
@@ -17,9 +19,11 @@ receivers:
         # SigNoz span metrics
         - job_name: "signozspanmetrics-collector"
           scrape_interval: 60s
-          static_configs:
-            - targets:
-              - otel-collector:8889
+          dns_sd_configs:
+            - names:
+                - 'tasks.otel-collector'
+              type: 'A'
+              port: 8889
 
 processors:
   batch:
