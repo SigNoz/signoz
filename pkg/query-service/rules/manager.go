@@ -282,10 +282,7 @@ func (m *Manager) DeleteRule(id string) error {
 
 	taskName := prepareTaskName(int64(idInt))
 	if !m.opts.DisableRules {
-		if err := m.deleteTask(taskName); err != nil {
-			zap.S().Errorf("msg: ", "failed to unload the rule task from memory, please retry", "\t ruleid: ", id)
-			return err
-		}
+		m.deleteTask(taskName)
 	}
 
 	if _, _, err := m.ruleDB.DeleteRuleTx(id); err != nil {
@@ -296,7 +293,7 @@ func (m *Manager) DeleteRule(id string) error {
 	return nil
 }
 
-func (m *Manager) deleteTask(taskName string) error {
+func (m *Manager) deleteTask(taskName string) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -308,7 +305,6 @@ func (m *Manager) deleteTask(taskName string) error {
 	} else {
 		zap.S().Info("msg: ", "rule not found for deletion", "\t name:", taskName)
 	}
-	return nil
 }
 
 // CreateRule stores rule def into db and also
@@ -606,9 +602,7 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 		// check if rule has any task running
 		if _, ok := m.tasks[taskName]; ok {
 			// delete task from memory
-			if err := m.deleteTask(taskName); err != nil {
-				return err
-			}
+			m.deleteTask(taskName)
 		}
 	} else {
 		// check if rule has a task running
