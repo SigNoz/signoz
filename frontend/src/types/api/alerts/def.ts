@@ -19,6 +19,7 @@ export interface AlertDef {
 	evalWindow?: string;
 	source?: string;
 	disabled?: boolean;
+	preferredChannels?: string[];
 }
 
 export interface RuleCondition {
