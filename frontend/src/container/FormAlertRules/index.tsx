@@ -6,7 +6,7 @@ import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import {
@@ -144,10 +144,74 @@ function FormAlertRules({
 			});
 		}
 	};
+	const validatePromParams = useCallback((): boolean => {
+		let retval = true;
+		if (queryCategory !== EQueryType.PROM) return retval;
+
+		if (!promQueries || Object.keys(promQueries).length === 0) {
+			notification.error({
+				message: 'Error',
+				description: t('promql_required'),
+			});
+			return false;
+		}
+
+		Object.keys(promQueries).forEach((key) => {
+			if (promQueries[key].query === '') {
+				notification.error({
+					message: 'Error',
+					description: t('promql_required'),
+				});
+				retval = false;
+			}
+		});
+
+		return retval;
+	}, [t, promQueries, queryCategory]);
+
+	const validateQBParams = useCallback((): boolean => {
+		let retval = true;
+		if (queryCategory !== EQueryType.QUERY_BUILDER) return true;
+
+		if (!metricQueries || Object.keys(metricQueries).length === 0) {
+			notification.error({
+				message: 'Error',
+				description: t('condition_required'),
+			});
+			return false;
+		}
+
+		if (!alertDef.condition?.target) {
+			notification.error({
+				message: 'Error',
+				description: t('target_missing'),
+			});
+			return false;
+		}
+
+		Object.keys(metricQueries).forEach((key) => {
+			if (metricQueries[key].metricName === '') {
+				notification.error({
+					message: 'Error',
+					description: t('metricname_missing', { where: metricQueries[key].name }),
+				});
+				retval = false;
+			}
+		});
+
+		Object.keys(formulaQueries).forEach((key) => {
+			if (formulaQueries[key].expression === '') {
+				notification.error({
+					message: 'Error',
+					description: t('expression_missing', formulaQueries[key].name),
+				});
+				retval = false;
+			}
+		});
+		return retval;
+	}, [t, alertDef, queryCategory, metricQueries, formulaQueries]);
 
 	const isFormValid = useCallback((): boolean => {
-		let retval = true;
-
 		if (!alertDef.alert || alertDef.alert === '') {
 			notification.error({
 				message: 'Error',
@@ -156,61 +220,14 @@ function FormAlertRules({
 			return false;
 		}
 
-		if (
-			queryCategory === EQueryType.PROM &&
-			(!promQueries || Object.keys(promQueries).length === 0)
-		) {
-			notification.error({
-				message: 'Error',
-				description: t('promql_required'),
-			});
+		if (!validatePromParams()) {
 			return false;
 		}
 
-		if (
-			(queryCategory === EQueryType.QUERY_BUILDER && !metricQueries) ||
-			Object.keys(metricQueries).length === 0
-		) {
-			notification.error({
-				message: 'Error',
-				description: t('condition_required'),
-			});
-			return false;
-		}
-
-		if (queryCategory === EQueryType.QUERY_BUILDER) {
-			if (!alertDef.condition?.target) {
-				retval = false;
-				notification.error({
-					message: 'Error',
-					description: t('target_missing'),
-				});
-			}
-			Object.keys(metricQueries).forEach((key) => {
-				if (metricQueries[key].metricName === '') {
-					retval = false;
-					notification.error({
-						message: 'Error',
-						description: t('metricname_missing', { where: metricQueries[key].name }),
-					});
-				}
-			});
-			Object.keys(formulaQueries).forEach((key) => {
-				if (formulaQueries[key].expression === '') {
-					retval = false;
-					notification.error({
-						message: 'Error',
-						description: t('expression_missing', formulaQueries[key].name),
-					});
-				}
-			});
-		}
-
-		return retval;
-	}, [t, alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
+		return validateQBParams();
+	}, [t, validateQBParams, alertDef, validatePromParams]);
 
 	const preparePostData = (): AlertDef => {
-		console.log('alertDef:', alertDef);
 		const postableAlert: AlertDef = {
 			...alertDef,
 			source: window?.location.toString(),
