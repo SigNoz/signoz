@@ -18,6 +18,16 @@ import (
 // this file contains api request and responses to be
 // served over http
 
+// newApiErrorInternal returns a new api error object of type internal
+func newApiErrorInternal(err error) *model.ApiError {
+	return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+}
+
+// newApiErrorBadData returns a new api error object of bad request type
+func newApiErrorBadData(err error) *model.ApiError {
+	return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+}
+
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
 	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`

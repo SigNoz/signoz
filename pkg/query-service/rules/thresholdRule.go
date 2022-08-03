@@ -42,41 +42,42 @@ type ThresholdRule struct {
 
 	// map of active alerts
 	active map[uint64]*Alert
+
+	isTest bool
 }
 
 func NewThresholdRule(
 	id string,
-	name string,
-	ruleCondition *RuleCondition,
-	evalWindow time.Duration,
-	l, a map[string]string,
-	source string,
+	p *PostableRule,
+	isTest bool,
 ) (*ThresholdRule, error) {
 
-	if int64(evalWindow) == 0 {
-		evalWindow = 5 * time.Minute
-	}
-
-	if ruleCondition == nil {
+	if p.RuleCondition == nil {
 		return nil, fmt.Errorf("no rule condition")
-	} else if !ruleCondition.IsValid() {
+	} else if !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String())
-
-	return &ThresholdRule{
+	t := ThresholdRule{
 		id:            id,
-		name:          name,
-		source:        source,
-		ruleCondition: ruleCondition,
-		evalWindow:    evalWindow,
-		labels:        labels.FromMap(l),
-		annotations:   labels.FromMap(a),
+		name:          p.Alert,
+		source:        p.Source,
+		ruleCondition: p.RuleCondition,
+		evalWindow:    time.Duration(p.EvalWindow),
+		labels:        labels.FromMap(p.Labels),
+		annotations:   labels.FromMap(p.Annotations),
+		health:        HealthUnknown,
+		active:        map[uint64]*Alert{},
+		isTest:        isTest,
+	}
 
-		health: HealthUnknown,
-		active: map[uint64]*Alert{},
-	}, nil
+	if int64(t.evalWindow) == 0 {
+		t.evalWindow = 5 * time.Minute
+	}
+
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String())
+
+	return &t, nil
 }
 
 func (r *ThresholdRule) Name() string {
@@ -100,6 +101,14 @@ func (r *ThresholdRule) target() *float64 {
 		return nil
 	}
 	return r.ruleCondition.Target
+}
+
+func (r *ThresholdRule) targetVal() float64 {
+	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
+		return 0
+	}
+
+	return *r.ruleCondition.Target
 }
 
 func (r *ThresholdRule) matchType() MatchType {
@@ -185,25 +194,7 @@ func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
 		Metric: lb.Labels(),
 		Point:  Point{T: timestamp.FromTime(ts), V: 1},
 	}
-	return s
-}
 
-// forStateSample returns the sample for ALERTS_FOR_STATE.
-func (r *ThresholdRule) forStateSample(alert *Alert, ts time.Time, v float64) Sample {
-	lb := labels.NewBuilder(r.labels)
-
-	alertLabels := alert.Labels.(labels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(labels.MetricNameLabel, alertForStateMetricName)
-	lb.Set(labels.AlertNameLabel, r.name)
-
-	s := Sample{
-		Metric: lb.Labels(),
-		Point:  Point{T: timestamp.FromTime(ts), V: v},
-	}
 	return s
 }
 
@@ -280,10 +271,10 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	zap.S().Info("msg:", "initiating send alerts (if any)", "\t rule:", r.Name())
+	zap.S().Info("msg:", "sending alerts", "\t rule:", r.Name())
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
-		if alert.needsSending(ts, resendDelay) {
+		if r.isTest || alert.needsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			// Allow for two Eval or Alertmanager send failures.
 			delta := resendDelay
@@ -309,6 +300,10 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 	if r.ruleCondition.Target == nil {
 		zap.S().Debugf("msg:", "found null target in rule condition", "\t rulename:", r.Name())
 		return false
+	}
+
+	if r.isTest {
+		return true
 	}
 
 	switch r.ruleCondition.CompareOp {
@@ -545,7 +540,6 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var vec Vector
 	var alerts = make(map[uint64]*Alert, len(res))
 
 	for _, smpl := range res {
@@ -559,6 +553,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}"
 
+		// utility function to apply go template on labels and annots
 		expand := func(text string) string {
 
 			tmpl := NewTemplateExpander(
@@ -590,6 +585,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
 			annotations = append(annotations, labels.Label{Name: a.Name, Value: expand(a.Value)})
+		}
+
+		if r.isTest {
+			annotations = append(annotations, labels.Label{Name: AlertDescriptionLabel, Value: fmt.Sprintf("The rule threshold is set to %f, and the observed metric value is %f", r.targetVal(), smpl.V)})
 		}
 
 		lbs := lb.Labels()
@@ -656,8 +655,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	}
 	r.health = HealthGood
 	r.lastError = err
-	return vec, nil
 
+	return len(r.active), nil
 }
 
 func (r *ThresholdRule) String() string {

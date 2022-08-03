@@ -17,6 +17,12 @@ const (
 
 	// AlertForStateMetricName is the metric name for 'for' state of alert.
 	alertForStateMetricName = "ALERTS_FOR_STATE"
+
+	TestAlertPostFix = "_TEST_ALERT"
+
+	RuleThresholdLabel = "threshold"
+
+	AlertDescriptionLabel = "description"
 )
 
 type RuleType string
