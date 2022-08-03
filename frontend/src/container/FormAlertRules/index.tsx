@@ -1,6 +1,7 @@
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { FormInstance, Modal, notification, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
+import testAlertApi from 'api/alerts/testAlert';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
@@ -143,10 +144,74 @@ function FormAlertRules({
 			});
 		}
 	};
+	const validatePromParams = useCallback((): boolean => {
+		let retval = true;
+		if (queryCategory !== EQueryType.PROM) return retval;
+
+		if (!promQueries || Object.keys(promQueries).length === 0) {
+			notification.error({
+				message: 'Error',
+				description: t('promql_required'),
+			});
+			return false;
+		}
+
+		Object.keys(promQueries).forEach((key) => {
+			if (promQueries[key].query === '') {
+				notification.error({
+					message: 'Error',
+					description: t('promql_required'),
+				});
+				retval = false;
+			}
+		});
+
+		return retval;
+	}, [t, promQueries, queryCategory]);
+
+	const validateQBParams = useCallback((): boolean => {
+		let retval = true;
+		if (queryCategory !== EQueryType.QUERY_BUILDER) return true;
+
+		if (!metricQueries || Object.keys(metricQueries).length === 0) {
+			notification.error({
+				message: 'Error',
+				description: t('condition_required'),
+			});
+			return false;
+		}
+
+		if (!alertDef.condition?.target) {
+			notification.error({
+				message: 'Error',
+				description: t('target_missing'),
+			});
+			return false;
+		}
+
+		Object.keys(metricQueries).forEach((key) => {
+			if (metricQueries[key].metricName === '') {
+				notification.error({
+					message: 'Error',
+					description: t('metricname_missing', { where: metricQueries[key].name }),
+				});
+				retval = false;
+			}
+		});
+
+		Object.keys(formulaQueries).forEach((key) => {
+			if (formulaQueries[key].expression === '') {
+				notification.error({
+					message: 'Error',
+					description: t('expression_missing', formulaQueries[key].name),
+				});
+				retval = false;
+			}
+		});
+		return retval;
+	}, [t, alertDef, queryCategory, metricQueries, formulaQueries]);
 
 	const isFormValid = useCallback((): boolean => {
-		let retval = true;
-
 		if (!alertDef.alert || alertDef.alert === '') {
 			notification.error({
 				message: 'Error',
@@ -155,57 +220,14 @@ function FormAlertRules({
 			return false;
 		}
 
-		if (
-			queryCategory === EQueryType.PROM &&
-			(!promQueries || Object.keys(promQueries).length === 0)
-		) {
-			notification.error({
-				message: 'Error',
-				description: t('promql_required'),
-			});
+		if (!validatePromParams()) {
 			return false;
 		}
 
-		if (
-			(queryCategory === EQueryType.QUERY_BUILDER && !metricQueries) ||
-			Object.keys(metricQueries).length === 0
-		) {
-			notification.error({
-				message: 'Error',
-				description: t('condition_required'),
-			});
-			return false;
-		}
+		return validateQBParams();
+	}, [t, validateQBParams, alertDef, validatePromParams]);
 
-		if (queryCategory === EQueryType.QUERY_BUILDER) {
-			Object.keys(metricQueries).forEach((key) => {
-				if (metricQueries[key].metricName === '') {
-					retval = false;
-					notification.error({
-						message: 'Error',
-						description: t('metricname_missing', { where: metricQueries[key].name }),
-					});
-				}
-			});
-			Object.keys(formulaQueries).forEach((key) => {
-				if (formulaQueries[key].expression === '') {
-					retval = false;
-					notification.error({
-						message: 'Error',
-						description: t('expression_missing', formulaQueries[key].name),
-					});
-				}
-			});
-		}
-
-		return retval;
-	}, [t, alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
-
-	const saveRule = useCallback(async () => {
-		if (!isFormValid()) {
-			return;
-		}
-
+	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
 			...alertDef,
 			source: window?.location.toString(),
@@ -220,6 +242,22 @@ function FormAlertRules({
 				},
 			},
 		};
+		return postableAlert;
+	};
+
+	const memoizedPreparePostData = useCallback(preparePostData, [
+		queryCategory,
+		alertDef,
+		metricQueries,
+		formulaQueries,
+		promQueries,
+	]);
+
+	const saveRule = useCallback(async () => {
+		if (!isFormValid()) {
+			return;
+		}
+		const postableAlert = memoizedPreparePostData();
 
 		setLoading(true);
 		try {
@@ -250,24 +288,13 @@ function FormAlertRules({
 				});
 			}
 		} catch (e) {
-			console.log('save alert api failed:', e);
 			notification.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
 		}
 		setLoading(false);
-	}, [
-		t,
-		isFormValid,
-		queryCategory,
-		ruleId,
-		alertDef,
-		metricQueries,
-		formulaQueries,
-		promQueries,
-		ruleCache,
-	]);
+	}, [t, isFormValid, ruleId, ruleCache, memoizedPreparePostData]);
 
 	const onSaveHandler = useCallback(async () => {
 		const content = (
@@ -287,6 +314,44 @@ function FormAlertRules({
 			},
 		});
 	}, [t, saveRule, queryCategory]);
+
+	const onTestRuleHandler = useCallback(async () => {
+		if (!isFormValid()) {
+			return;
+		}
+		const postableAlert = memoizedPreparePostData();
+
+		setLoading(true);
+		try {
+			const response = await testAlertApi({ data: postableAlert });
+
+			if (response.statusCode === 200) {
+				const { payload } = response;
+				if (payload?.alertCount === 0) {
+					notification.error({
+						message: 'Error',
+						description: t('no_alerts_found'),
+					});
+				} else {
+					notification.success({
+						message: 'Success',
+						description: t('rule_test_fired'),
+					});
+				}
+			} else {
+				notification.error({
+					message: 'Error',
+					description: response.error || t('unexpected_error'),
+				});
+			}
+		} catch (e) {
+			notification.error({
+				message: 'Error',
+				description: t('unexpected_error'),
+			});
+		}
+		setLoading(false);
+	}, [t, isFormValid, memoizedPreparePostData]);
 
 	const renderBasicInfo = (): JSX.Element => (
 		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
@@ -353,6 +418,14 @@ function FormAlertRules({
 								icon={<SaveOutlined />}
 							>
 								{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
+							</ActionButton>
+							<ActionButton
+								loading={loading || false}
+								type="default"
+								onClick={onTestRuleHandler}
+							>
+								{' '}
+								{t('button_testrule')}
 							</ActionButton>
 							<ActionButton
 								disabled={loading || false}
