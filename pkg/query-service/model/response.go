@@ -427,7 +427,7 @@ type GetLogsResponse struct {
 	SpanID             string             `json:"spanId" ch:"span_id"`
 	TraceFlags         uint32             `json:"traceFlags" ch:"trace_flags"`
 	SeverityText       string             `json:"severityText" ch:"severity_text"`
-	SeverityNumber     int32              `json:"severityNumber" ch:"severity_number"`
+	SeverityNumber     uint8              `json:"severityNumber" ch:"severity_number"`
 	Body               string             `json:"body" ch:"body"`
 	Resources_string   map[string]string  `json:"resourcesString" ch:"resources_string"`
 	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`

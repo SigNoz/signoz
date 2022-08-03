@@ -104,6 +104,7 @@ const (
 	UINT32                = "UInt32"
 	LOWCARDINALITY_STRING = "LowCardinality(String)"
 	INT32                 = "Int32"
+	UINT8                 = "Uint8"
 )
 
 var StaticInterestingLogFields = []model.LogField{
@@ -129,7 +130,7 @@ var StaticInterestingLogFields = []model.LogField{
 	},
 	{
 		Name:     "severity_number",
-		DataType: INT32,
+		DataType: UINT8,
 		Type:     Static,
 	},
 }
