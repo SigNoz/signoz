@@ -152,6 +152,7 @@ function RuleOptions({
 						addonBefore={t('field_threshold')}
 						value={alertDef?.condition?.target}
 						onChange={(value: number | unknown): void => {
+							console.log('setting target:', value);
 							setAlertDef({
 								...alertDef,
 								condition: {

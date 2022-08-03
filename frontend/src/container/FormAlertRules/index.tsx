@@ -1,11 +1,12 @@
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { FormInstance, Modal, notification, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
+import testAlertApi from 'api/alerts/testAlert';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import {
@@ -178,6 +179,13 @@ function FormAlertRules({
 		}
 
 		if (queryCategory === EQueryType.QUERY_BUILDER) {
+			if (!alertDef.condition?.target) {
+				retval = false;
+				notification.error({
+					message: 'Error',
+					description: t('target_missing'),
+				});
+			}
 			Object.keys(metricQueries).forEach((key) => {
 				if (metricQueries[key].metricName === '') {
 					retval = false;
@@ -201,11 +209,8 @@ function FormAlertRules({
 		return retval;
 	}, [t, alertDef, queryCategory, metricQueries, formulaQueries, promQueries]);
 
-	const saveRule = useCallback(async () => {
-		if (!isFormValid()) {
-			return;
-		}
-
+	const preparePostData = (): AlertDef => {
+		console.log('alertDef:', alertDef);
 		const postableAlert: AlertDef = {
 			...alertDef,
 			source: window?.location.toString(),
@@ -220,6 +225,22 @@ function FormAlertRules({
 				},
 			},
 		};
+		return postableAlert;
+	};
+
+	const memoizedPreparePostData = useCallback(preparePostData, [
+		queryCategory,
+		alertDef,
+		metricQueries,
+		formulaQueries,
+		promQueries,
+	]);
+
+	const saveRule = useCallback(async () => {
+		if (!isFormValid()) {
+			return;
+		}
+		const postableAlert = memoizedPreparePostData();
 
 		setLoading(true);
 		try {
@@ -250,24 +271,13 @@ function FormAlertRules({
 				});
 			}
 		} catch (e) {
-			console.log('save alert api failed:', e);
 			notification.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
 		}
 		setLoading(false);
-	}, [
-		t,
-		isFormValid,
-		queryCategory,
-		ruleId,
-		alertDef,
-		metricQueries,
-		formulaQueries,
-		promQueries,
-		ruleCache,
-	]);
+	}, [t, isFormValid, ruleId, ruleCache, memoizedPreparePostData]);
 
 	const onSaveHandler = useCallback(async () => {
 		const content = (
@@ -287,6 +297,44 @@ function FormAlertRules({
 			},
 		});
 	}, [t, saveRule, queryCategory]);
+
+	const onTestRuleHandler = useCallback(async () => {
+		if (!isFormValid()) {
+			return;
+		}
+		const postableAlert = memoizedPreparePostData();
+
+		setLoading(true);
+		try {
+			const response = await testAlertApi({ data: postableAlert });
+
+			if (response.statusCode === 200) {
+				const { payload } = response;
+				if (payload?.alertCount === 0) {
+					notification.error({
+						message: 'Error',
+						description: t('no_alerts_found'),
+					});
+				} else {
+					notification.success({
+						message: 'Success',
+						description: t('rule_test_fired'),
+					});
+				}
+			} else {
+				notification.error({
+					message: 'Error',
+					description: response.error || t('unexpected_error'),
+				});
+			}
+		} catch (e) {
+			notification.error({
+				message: 'Error',
+				description: t('unexpected_error'),
+			});
+		}
+		setLoading(false);
+	}, [t, isFormValid, memoizedPreparePostData]);
 
 	const renderBasicInfo = (): JSX.Element => (
 		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
@@ -353,6 +401,14 @@ function FormAlertRules({
 								icon={<SaveOutlined />}
 							>
 								{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
+							</ActionButton>
+							<ActionButton
+								loading={loading || false}
+								type="default"
+								onClick={onTestRuleHandler}
+							>
+								{' '}
+								{t('button_testrule')}
 							</ActionButton>
 							<ActionButton
 								disabled={loading || false}
