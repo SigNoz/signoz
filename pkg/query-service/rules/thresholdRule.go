@@ -63,9 +63,7 @@ func NewThresholdRule(
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String())
-
-	return &ThresholdRule{
+	thresholdRule := &ThresholdRule{
 		id:            id,
 		name:          name,
 		source:        source,
@@ -76,7 +74,11 @@ func NewThresholdRule(
 
 		health: HealthUnknown,
 		active: map[uint64]*Alert{},
-	}, nil
+	}
+
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String(), "\t generatorURL:", thresholdRule.GeneratorURL())
+
+	return thresholdRule, nil
 }
 
 func (r *ThresholdRule) Name() string {
@@ -92,7 +94,7 @@ func (r *ThresholdRule) Condition() *RuleCondition {
 }
 
 func (r *ThresholdRule) GeneratorURL() string {
-	return r.source
+	return prepareRuleGeneratorURL(r.ID(), r.source)
 }
 
 func (r *ThresholdRule) target() *float64 {
@@ -231,9 +233,9 @@ func (r *ThresholdRule) GetEvaluationTimestamp() time.Time {
 // State returns the maximum state of alert instances for this rule.
 // StateFiring > StatePending > StateInactive
 func (r *ThresholdRule) State() AlertState {
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
-
 	maxState := StateInactive
 	for _, a := range r.active {
 		if a.State > maxState {
