@@ -75,16 +75,17 @@ var (
 
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
-	db              clickhouse.Conn
-	localDB         *sqlx.DB
-	traceDB         string
-	operationsTable string
-	durationTable   string
-	indexTable      string
-	errorTable      string
-	spansTable      string
-	queryEngine     *promql.Engine
-	remoteStorage   *remote.Storage
+	db                   clickhouse.Conn
+	localDB              *sqlx.DB
+	traceDB              string
+	operationsTable      string
+	durationTable        string
+	indexTable           string
+	errorTable           string
+	spansTable           string
+	dependencyGraphTable string
+	queryEngine          *promql.Engine
+	remoteStorage        *remote.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -111,16 +112,17 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	}
 
 	return &ClickHouseReader{
-		db:              db,
-		localDB:         localDB,
-		traceDB:         options.primary.TraceDB,
-		alertManager:    alertManager,
-		operationsTable: options.primary.OperationsTable,
-		indexTable:      options.primary.IndexTable,
-		errorTable:      options.primary.ErrorTable,
-		durationTable:   options.primary.DurationTable,
-		spansTable:      options.primary.SpansTable,
-		promConfigFile:  configFile,
+		db:                   db,
+		localDB:              localDB,
+		traceDB:              options.primary.TraceDB,
+		alertManager:         alertManager,
+		operationsTable:      options.primary.OperationsTable,
+		indexTable:           options.primary.IndexTable,
+		errorTable:           options.primary.ErrorTable,
+		durationTable:        options.primary.DurationTable,
+		spansTable:           options.primary.SpansTable,
+		dependencyGraphTable: options.primary.DependencyGraphTable,
+		promConfigFile:       configFile,
 	}
 }
 
@@ -1663,6 +1665,52 @@ func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryP
 	}
 
 	return &retMe, nil
+}
+
+func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
+
+	response := []model.ServiceMapDependencyResponseItem{}
+
+	args := []interface{}{}
+	args = append(args,
+		clickhouse.Named("start", uint64(queryParams.Start.Unix())),
+		clickhouse.Named("end", uint64(queryParams.End.Unix())),
+		clickhouse.Named("duration", uint64(queryParams.End.Unix()-queryParams.Start.Unix())),
+	)
+
+	query := fmt.Sprintf(`
+		WITH
+			quantilesMergeState(0.5, 0.75, 0.9, 0.95, 0.99)(duration_quantiles_state) AS duration_quantiles_state,
+			finalizeAggregation(duration_quantiles_state) AS result
+		SELECT
+			src as parent,
+			dest as child,
+			result[1] AS p50,
+			result[2] AS p75,
+			result[3] AS p90,
+			result[4] AS p95,
+			result[5] AS p99,
+			sum(total_count) as callCount,
+			sum(total_count)/ @duration AS callRate,
+			sum(error_count)/sum(total_count) as errorRate
+		FROM %s.%s
+		WHERE toUInt64(toDateTime(time)) >= @start AND toUInt64(toDateTime(time)) <= @end
+		GROUP BY
+			src,
+			dest`,
+		r.traceDB, r.dependencyGraphTable,
+	)
+
+	zap.S().Info(query, args)
+
+	err := r.db.Select(ctx, &response, query, args...)
+
+	if err != nil {
+		zap.S().Error("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	return &response, nil
 }
 
 func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {

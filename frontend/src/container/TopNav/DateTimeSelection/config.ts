@@ -42,8 +42,9 @@ export interface Option {
 }
 
 export const ServiceMapOptions: Option[] = [
-	{ value: '1min', label: 'Last 1 min' },
 	{ value: '5min', label: 'Last 5 min' },
+	{ value: '15min', label: 'Last 15 min' },
+	{ value: '30min', label: 'Last 30 min' },
 ];
 
 export const getDefaultOption = (route: string): Time => {

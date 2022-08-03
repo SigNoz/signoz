@@ -232,10 +232,18 @@ type TagFilters struct {
 type TagValues struct {
 	TagValues string `json:"tagValues" ch:"tagValues"`
 }
+
 type ServiceMapDependencyResponseItem struct {
-	Parent    string `json:"parent,omitempty" ch:"parent"`
-	Child     string `json:"child,omitempty" ch:"child"`
-	CallCount int    `json:"callCount,omitempty" ch:"callCount"`
+	Parent    string  `json:"parent,omitempty" ch:"parent"`
+	Child     string  `json:"child,omitempty" ch:"child"`
+	CallCount uint64  `json:"callCount" ch:"callCount"`
+	CallRate  float64 `json:"callRate" ch:"callRate"`
+	ErrorRate float64 `json:"errorRate" ch:"errorRate"`
+	P99       float64 `json:"p99" ch:"p99"`
+	P95       float64 `json:"p95" ch:"p95"`
+	P90       float64 `json:"p90" ch:"p90"`
+	P75       float64 `json:"p75" ch:"p75"`
+	P50       float64 `json:"p50" ch:"p50"`
 }
 
 type GetFilteredSpansAggregatesResponse struct {

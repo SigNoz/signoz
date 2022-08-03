@@ -1,8 +1,4 @@
-import {
-	ServiceMapItemAction,
-	ServiceMapLoading,
-	ServicesAction,
-} from './serviceMap';
+import { ServiceMapItemAction, ServiceMapLoading } from './serviceMap';
 import { GetUsageDataAction } from './usage';
 
 export enum ActionTypes {
@@ -17,6 +13,5 @@ export enum ActionTypes {
 
 export type Action =
 	| GetUsageDataAction
-	| ServicesAction
 	| ServiceMapItemAction
 	| ServiceMapLoading;
