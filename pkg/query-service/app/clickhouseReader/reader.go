@@ -47,16 +47,17 @@ import (
 )
 
 const (
-	primaryNamespace      = "clickhouse"
-	archiveNamespace      = "clickhouse-archive"
-	signozTraceDBName     = "signoz_traces"
-	signozDurationMVTable = "durationSort"
-	signozSpansTable      = "signoz_spans"
-	signozErrorIndexTable = "signoz_error_index_v2"
-	signozTraceTableName  = "signoz_index_v2"
-	signozMetricDBName    = "signoz_metrics"
-	signozSampleTableName = "samples_v2"
-	signozTSTableName     = "time_series_v2"
+	primaryNamespace         = "clickhouse"
+	archiveNamespace         = "clickhouse-archive"
+	signozTraceDBName        = "signoz_traces"
+	signozDurationMVTable    = "durationSort"
+	signozUsageExplorerTable = "usage_explorer"
+	signozSpansTable         = "signoz_spans"
+	signozErrorIndexTable    = "signoz_error_index_v2"
+	signozTraceTableName     = "signoz_index_v2"
+	signozMetricDBName       = "signoz_metrics"
+	signozSampleTableName    = "samples_v2"
+	signozTSTableName        = "time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -1558,9 +1559,9 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 	var query string
 	if len(queryParams.ServiceName) != 0 {
-		query = fmt.Sprintf("SELECT toStartOfInterval(hour, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE service_name='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.usageExplorerTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(hour, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.usageExplorerTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
 	}
 
 	err := r.db.Select(ctx, &usageItems, query)
@@ -1904,7 +1905,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	switch params.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable}
 		for _, tableName = range tableNameArray {
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
@@ -2179,7 +2180,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	switch ttlParams.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable}
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
