@@ -97,7 +97,7 @@ func (r *PromRule) Type() RuleType {
 }
 
 func (r *PromRule) GeneratorURL() string {
-	return r.source
+	return prepareRuleGeneratorURL(r.ID(), r.source)
 }
 
 func (r *PromRule) PreferredChannels() []string {
