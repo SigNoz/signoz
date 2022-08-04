@@ -18,6 +18,7 @@ export interface AlertDef {
 	annotations?: Labels;
 	evalWindow?: string;
 	source?: string;
+	disabled?: boolean;
 	preferredChannels?: string[];
 }
 

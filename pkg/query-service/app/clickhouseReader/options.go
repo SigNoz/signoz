@@ -26,6 +26,7 @@ const (
 	defaultDurationTable      string        = "durationSortMV"
 	defaultUsageExplorerTable string        = "usage_explorer"
 	defaultSpansTable         string        = "signoz_spans"
+	defaultTopLevelOperationsTable string        = "top_level_operations"
 	defaultWriteBatchDelay    time.Duration = 5 * time.Second
 	defaultWriteBatchSize     int           = 10000
 	defaultEncoding           Encoding      = EncodingJSON
@@ -54,6 +55,7 @@ type namespaceConfig struct {
 	UsageExplorerTable string
 	SpansTable         string
 	ErrorTable         string
+	TopLevelOperationsTable string
 	WriteBatchDelay    time.Duration
 	WriteBatchSize     int
 	Encoding           Encoding
@@ -114,6 +116,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			DurationTable:      defaultDurationTable,
 			UsageExplorerTable: defaultUsageExplorerTable,
 			SpansTable:         defaultSpansTable,
+			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			WriteBatchDelay:    defaultWriteBatchDelay,
 			WriteBatchSize:     defaultWriteBatchSize,
 			Encoding:           defaultEncoding,

@@ -2,7 +2,7 @@
 import type { SelectProps } from 'antd';
 import { Tag } from 'antd';
 import React, { useCallback, useMemo } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Container, Select } from './styles';
 
