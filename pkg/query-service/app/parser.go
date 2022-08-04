@@ -32,8 +32,8 @@ func parseUser(r *http.Request) (*model.User, error) {
 	return &user, nil
 }
 
-func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
-	var postData *model.GetTopEndpointsParams
+func parseGetTopOperationsRequest(r *http.Request) (*model.GetTopOperationsParams, error) {
+	var postData *model.GetTopOperationsParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
 
 	if err != nil {
@@ -467,8 +467,8 @@ func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) 
 	}
 
 	params := &model.CountErrorsParams{
-		Start:      startTime,
-		End:        endTime,
+		Start: startTime,
+		End:   endTime,
 	}
 
 	return params, nil

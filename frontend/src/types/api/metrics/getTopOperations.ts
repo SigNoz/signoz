@@ -1,6 +1,6 @@
 import { Tags } from 'types/reducer/trace';
 
-export interface TopEndPoints {
+export interface TopOperations {
 	name: string;
 	numCalls: number;
 	p50: number;
@@ -15,4 +15,4 @@ export interface Props {
 	selectedTags: Tags[];
 }
 
-export type PayloadProps = TopEndPoints[];
+export type PayloadProps = TopOperations[];

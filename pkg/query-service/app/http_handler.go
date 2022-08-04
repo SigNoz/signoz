@@ -322,7 +322,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodPost)
@@ -1103,14 +1104,14 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseGetTopEndpointsRequest(r)
+	query, err := parseGetTopOperationsRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTopEndpoints(r.Context(), query)
+	result, apiErr := (*aH.reader).GetTopOperations(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1150,6 +1151,17 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 	aH.writeJSON(w, r, result)
 
+}
+
+func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
+
+	result, apiErr := (*aH.reader).GetTopLevelOperations(r.Context())
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.writeJSON(w, r, result)
 }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
