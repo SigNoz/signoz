@@ -14,17 +14,15 @@ import (
 // RuleTask holds a rule (with composite queries)
 // and evaluates the rule at a given frequency
 type RuleTask struct {
-	name                 string
-	file                 string
-	frequency            time.Duration
-	rules                []Rule
-	seriesInPreviousEval []map[string]labels.Labels // One per Rule.
-	staleSeries          []labels.Labels
-	opts                 *ManagerOptions
-	mtx                  sync.Mutex
-	evaluationDuration   time.Duration
-	evaluationTime       time.Duration
-	lastEvaluation       time.Time
+	name               string
+	file               string
+	frequency          time.Duration
+	rules              []Rule
+	opts               *ManagerOptions
+	mtx                sync.Mutex
+	evaluationDuration time.Duration
+	evaluationTime     time.Duration
+	lastEvaluation     time.Time
 
 	markStale   bool
 	done        chan struct{}
@@ -46,16 +44,15 @@ func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 	zap.S().Info("msg:", "initiating a new rule task", "\t name:", name, "\t frequency:", frequency)
 
 	return &RuleTask{
-		name:                 name,
-		file:                 file,
-		pause:                false,
-		frequency:            frequency,
-		rules:                rules,
-		opts:                 opts,
-		seriesInPreviousEval: make([]map[string]labels.Labels, len(rules)),
-		done:                 make(chan struct{}),
-		terminated:           make(chan struct{}),
-		notify:               notify,
+		name:       name,
+		file:       file,
+		pause:      false,
+		frequency:  frequency,
+		rules:      rules,
+		opts:       opts,
+		done:       make(chan struct{}),
+		terminated: make(chan struct{}),
+		notify:     notify,
 	}
 }
 
@@ -125,24 +122,6 @@ func (g *RuleTask) Run(ctx context.Context) {
 	// after each `evalTimestamp + N * g.frequency` occurrence.
 	tick := time.NewTicker(g.frequency)
 	defer tick.Stop()
-
-	// defer cleanup
-	defer func() {
-		if !g.markStale {
-			return
-		}
-		go func(now time.Time) {
-			for _, rule := range g.seriesInPreviousEval {
-				for _, r := range rule {
-					g.staleSeries = append(g.staleSeries, r)
-				}
-			}
-			// That can be garbage collected at this point.
-			g.seriesInPreviousEval = nil
-
-		}(time.Now())
-
-	}()
 
 	iter()
 
@@ -285,17 +264,15 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 		ruleMap[nameAndLabels] = append(l, fi)
 	}
 
-	for i, rule := range g.rules {
+	for _, rule := range g.rules {
 		nameAndLabels := nameAndLabels(rule)
 		indexes := ruleMap[nameAndLabels]
 		if len(indexes) == 0 {
 			continue
 		}
 		fi := indexes[0]
-		g.seriesInPreviousEval[i] = from.seriesInPreviousEval[fi]
 		ruleMap[nameAndLabels] = indexes[1:]
 
-		// todo(amol): support other rules too here
 		ar, ok := rule.(*ThresholdRule)
 		if !ok {
 			continue
@@ -310,18 +287,6 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 		}
 	}
 
-	// Handle deleted and unmatched duplicate rules.
-	// todo(amol): possibly not needed any more
-	g.staleSeries = from.staleSeries
-	for fi, fromRule := range from.rules {
-		nameAndLabels := nameAndLabels(fromRule)
-		l := ruleMap[nameAndLabels]
-		if len(l) != 0 {
-			for _, series := range from.seriesInPreviousEval[fi] {
-				g.staleSeries = append(g.staleSeries, series)
-			}
-		}
-	}
 	return nil
 }
 
@@ -330,7 +295,6 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	zap.S().Debugf("msg:", "rule task eval started", "\t name:", g.name, "\t start time:", ts)
 
-	var samplesTotal float64
 	for i, rule := range g.rules {
 		if rule == nil {
 			continue
@@ -353,7 +317,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
-			data, err := rule.Eval(ctx, ts, g.opts.Queriers)
+			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
@@ -368,18 +332,8 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				return
 			}
 
-			vector := data.(Vector)
-			samplesTotal += float64(len(vector))
-
 			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
 
-			seriesReturned := make(map[string]labels.Labels, len(g.seriesInPreviousEval[i]))
-
-			for _, s := range vector {
-				seriesReturned[s.Metric.String()] = s.Metric
-			}
-
-			g.seriesInPreviousEval[i] = seriesReturned
 		}(i, rule)
 	}
 }

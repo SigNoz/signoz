@@ -24,6 +24,10 @@ const (
 
 	AlertRuleIdLabel = "ruleId"
 	RuleSourceLabel  = "ruleSource"
+
+	RuleThresholdLabel       = "threshold"
+	AlertAdditionalInfoLabel = "additionalInfo"
+	AlertSummaryLabel        = "summary"
 )
 
 // Label is a key/value pair of strings.
