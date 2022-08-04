@@ -381,12 +381,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		// create a threshold rule
 		tr, err := NewThresholdRule(
 			ruleId,
-			r.Alert,
-			r.RuleCondition,
-			time.Duration(r.EvalWindow),
-			r.Labels,
-			r.Annotations,
-			r.Source,
+			r,
 		)
 
 		if err != nil {
@@ -406,14 +401,8 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		// create promql rule
 		pr, err := NewPromRule(
 			ruleId,
-			r.Alert,
-			r.RuleCondition,
-			time.Duration(r.EvalWindow),
-			r.Labels,
-			r.Annotations,
-			// required as promql engine works with logger and not zap
+			r,
 			log.With(m.logger, "alert", r.Alert),
-			r.Source,
 		)
 
 		if err != nil {
@@ -521,6 +510,7 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 				Labels:       alert.Labels,
 				Annotations:  alert.Annotations,
 				GeneratorURL: generatorURL,
+				Receivers:    alert.Receivers,
 			}
 			if !alert.ResolvedAt.IsZero() {
 				a.EndsAt = alert.ResolvedAt

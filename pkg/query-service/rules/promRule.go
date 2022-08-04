@@ -29,6 +29,8 @@ type PromRule struct {
 	labels       plabels.Labels
 	annotations  plabels.Labels
 
+	preferredChannels []string
+
 	mtx                 sync.Mutex
 	evaluationDuration  time.Duration
 	evaluationTimestamp time.Time
@@ -45,38 +47,37 @@ type PromRule struct {
 
 func NewPromRule(
 	id string,
-	name string,
-	ruleCondition *RuleCondition,
-	evalWindow time.Duration,
-	labels, annotations map[string]string,
+	postableRule *PostableRule,
 	logger log.Logger,
-	source string,
 ) (*PromRule, error) {
 
-	if int64(evalWindow) == 0 {
-		evalWindow = 5 * time.Minute
-	}
-
-	if ruleCondition == nil {
+	if postableRule.RuleCondition == nil {
 		return nil, fmt.Errorf("no rule condition")
-	} else if !ruleCondition.IsValid() {
+	} else if !postableRule.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String())
+	p := PromRule{
+		id:                id,
+		name:              postableRule.Alert,
+		source:            postableRule.Source,
+		ruleCondition:     postableRule.RuleCondition,
+		evalWindow:        time.Duration(postableRule.EvalWindow),
+		labels:            plabels.FromMap(postableRule.Labels),
+		annotations:       plabels.FromMap(postableRule.Annotations),
+		preferredChannels: postableRule.PreferredChannels,
+		health:            HealthUnknown,
+		active:            map[uint64]*Alert{},
+		logger:            logger,
+	}
 
-	return &PromRule{
-		id:            id,
-		name:          name,
-		source:        source,
-		ruleCondition: ruleCondition,
-		evalWindow:    evalWindow,
-		labels:        plabels.FromMap(labels),
-		annotations:   plabels.FromMap(annotations),
-		health:        HealthUnknown,
-		active:        map[uint64]*Alert{},
-		logger:        logger,
-	}, nil
+	if int64(p.evalWindow) == 0 {
+		p.evalWindow = 5 * time.Minute
+	}
+
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", p.name, "\t condition:", p.ruleCondition.String())
+
+	return &p, nil
 }
 
 func (r *PromRule) Name() string {
@@ -97,6 +98,10 @@ func (r *PromRule) Type() RuleType {
 
 func (r *PromRule) GeneratorURL() string {
 	return prepareRuleGeneratorURL(r.ID(), r.source)
+}
+
+func (r *PromRule) PreferredChannels() []string {
+	return r.preferredChannels
 }
 
 func (r *PromRule) SetLastError(err error) {
@@ -382,6 +387,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			State:        StatePending,
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
+			Receivers:    r.preferredChannels,
 		}
 	}
 
@@ -392,6 +398,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			alert.Receivers = r.preferredChannels
 			continue
 		}
 
@@ -429,11 +436,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 func (r *PromRule) String() string {
 
 	ar := PostableRule{
-		Alert:         r.name,
-		RuleCondition: r.ruleCondition,
-		EvalWindow:    Duration(r.evalWindow),
-		Labels:        r.labels.Map(),
-		Annotations:   r.annotations.Map(),
+		Alert:             r.name,
+		RuleCondition:     r.ruleCondition,
+		EvalWindow:        Duration(r.evalWindow),
+		Labels:            r.labels.Map(),
+		Annotations:       r.annotations.Map(),
+		PreferredChannels: r.preferredChannels,
 	}
 
 	byt, err := yaml.Marshal(ar)

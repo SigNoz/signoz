@@ -32,6 +32,7 @@ type ThresholdRule struct {
 	labels        labels.Labels
 	annotations   labels.Labels
 
+	preferredChannels   []string
 	mtx                 sync.Mutex
 	evaluationDuration  time.Duration
 	evaluationTimestamp time.Time
@@ -46,39 +47,35 @@ type ThresholdRule struct {
 
 func NewThresholdRule(
 	id string,
-	name string,
-	ruleCondition *RuleCondition,
-	evalWindow time.Duration,
-	l, a map[string]string,
-	source string,
+	p *PostableRule,
 ) (*ThresholdRule, error) {
 
-	if int64(evalWindow) == 0 {
-		evalWindow = 5 * time.Minute
-	}
-
-	if ruleCondition == nil {
+	if p.RuleCondition == nil {
 		return nil, fmt.Errorf("no rule condition")
-	} else if !ruleCondition.IsValid() {
+	} else if !p.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	thresholdRule := &ThresholdRule{
-		id:            id,
-		name:          name,
-		source:        source,
-		ruleCondition: ruleCondition,
-		evalWindow:    evalWindow,
-		labels:        labels.FromMap(l),
-		annotations:   labels.FromMap(a),
-
-		health: HealthUnknown,
-		active: map[uint64]*Alert{},
+	t := ThresholdRule{
+		id:                id,
+		name:              p.Alert,
+		source:            p.Source,
+		ruleCondition:     p.RuleCondition,
+		evalWindow:        time.Duration(p.EvalWindow),
+		labels:            labels.FromMap(p.Labels),
+		annotations:       labels.FromMap(p.Annotations),
+		preferredChannels: p.PreferredChannels,
+		health:            HealthUnknown,
+		active:            map[uint64]*Alert{},
 	}
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String(), "\t generatorURL:", thresholdRule.GeneratorURL())
+	if int64(t.evalWindow) == 0 {
+		t.evalWindow = 5 * time.Minute
+	}
 
-	return thresholdRule, nil
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
+
+	return &t, nil
 }
 
 func (r *ThresholdRule) Name() string {
@@ -95,6 +92,10 @@ func (r *ThresholdRule) Condition() *RuleCondition {
 
 func (r *ThresholdRule) GeneratorURL() string {
 	return prepareRuleGeneratorURL(r.ID(), r.source)
+}
+
+func (r *ThresholdRule) PreferredChannels() []string {
+	return r.preferredChannels
 }
 
 func (r *ThresholdRule) target() *float64 {
@@ -479,6 +480,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 		}
 	}
+	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results
@@ -486,7 +488,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			result = append(result, sample)
 		}
 	}
-
+	zap.S().Debugf("ruleid:", r.ID(), "\t result (found alerts):", len(result))
 	return result, nil
 }
 
@@ -615,6 +617,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			State:        StatePending,
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
+			Receivers:    r.preferredChannels,
 		}
 	}
 
@@ -628,6 +631,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			alert.Receivers = r.preferredChannels
 			continue
 		}
 
@@ -665,11 +669,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 func (r *ThresholdRule) String() string {
 
 	ar := PostableRule{
-		Alert:         r.name,
-		RuleCondition: r.ruleCondition,
-		EvalWindow:    Duration(r.evalWindow),
-		Labels:        r.labels.Map(),
-		Annotations:   r.annotations.Map(),
+		Alert:             r.name,
+		RuleCondition:     r.ruleCondition,
+		EvalWindow:        Duration(r.evalWindow),
+		Labels:            r.labels.Map(),
+		Annotations:       r.annotations.Map(),
+		PreferredChannels: r.preferredChannels,
 	}
 
 	byt, err := yaml.Marshal(ar)

@@ -35,6 +35,8 @@ type PostableRule struct {
 	// Source captures the source url where rule has been created
 	Source string `json:"source,omitempty"`
 
+	PreferredChannels []string `json:"preferredChannels,omitempty"`
+
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
