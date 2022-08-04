@@ -514,6 +514,7 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 				Labels:       alert.Labels,
 				Annotations:  alert.Annotations,
 				GeneratorURL: generatorURL,
+				Receivers:    alert.Receivers,
 			}
 			if !alert.ResolvedAt.IsZero() {
 				a.EndsAt = alert.ResolvedAt

@@ -35,6 +35,8 @@ type PromRule struct {
 	labels       plabels.Labels
 	annotations  plabels.Labels
 
+	preferredChannels []string
+
 	mtx                 sync.Mutex
 	evaluationDuration  time.Duration
 	evaluationTimestamp time.Time
@@ -110,6 +112,10 @@ func (r *PromRule) Type() RuleType {
 
 func (r *PromRule) GeneratorURL() string {
 	return prepareRuleGeneratorURL(r.ID(), r.source)
+}
+
+func (r *PromRule) PreferredChannels() []string {
+	return r.preferredChannels
 }
 
 func (r *PromRule) SetLastError(err error) {
@@ -377,6 +383,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			State:        StatePending,
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
+			Receivers:    r.preferredChannels,
 		}
 	}
 
@@ -387,6 +394,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			alert.Receivers = r.preferredChannels
 			continue
 		}
 
@@ -424,11 +432,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 func (r *PromRule) String() string {
 
 	ar := PostableRule{
-		Alert:         r.name,
-		RuleCondition: r.ruleCondition,
-		EvalWindow:    Duration(r.evalWindow),
-		Labels:        r.labels.Map(),
-		Annotations:   r.annotations.Map(),
+		Alert:             r.name,
+		RuleCondition:     r.ruleCondition,
+		EvalWindow:        Duration(r.evalWindow),
+		Labels:            r.labels.Map(),
+		Annotations:       r.annotations.Map(),
+		PreferredChannels: r.preferredChannels,
 	}
 
 	byt, err := yaml.Marshal(ar)

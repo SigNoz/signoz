@@ -32,6 +32,7 @@ type ThresholdRule struct {
 	labels        labels.Labels
 	annotations   labels.Labels
 
+	preferredChannels   []string
 	mtx                 sync.Mutex
 	evaluationDuration  time.Duration
 	evaluationTimestamp time.Time
@@ -105,6 +106,10 @@ func (r *ThresholdRule) Condition() *RuleCondition {
 
 func (r *ThresholdRule) GeneratorURL() string {
 	return prepareRuleGeneratorURL(r.ID(), r.source)
+}
+
+func (r *ThresholdRule) PreferredChannels() []string {
+	return r.preferredChannels
 }
 
 func (r *ThresholdRule) target() *float64 {
@@ -479,6 +484,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 		}
 	}
+	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results, if sendUnmatchedResults
@@ -487,7 +493,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			result = append(result, sample)
 		}
 	}
-
+	zap.S().Debugf("ruleid:", r.ID(), "\t result (found alerts):", len(result))
 	return result, nil
 }
 
@@ -616,6 +622,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			State:        StatePending,
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
+			Receivers:    r.preferredChannels,
 		}
 	}
 
@@ -629,6 +636,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			alert.Receivers = r.preferredChannels
 			continue
 		}
 
@@ -666,11 +674,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 func (r *ThresholdRule) String() string {
 
 	ar := PostableRule{
-		Alert:         r.name,
-		RuleCondition: r.ruleCondition,
-		EvalWindow:    Duration(r.evalWindow),
-		Labels:        r.labels.Map(),
-		Annotations:   r.annotations.Map(),
+		Alert:             r.name,
+		RuleCondition:     r.ruleCondition,
+		EvalWindow:        Duration(r.evalWindow),
+		Labels:            r.labels.Map(),
+		Annotations:       r.annotations.Map(),
+		PreferredChannels: r.preferredChannels,
 	}
 
 	byt, err := yaml.Marshal(ar)
