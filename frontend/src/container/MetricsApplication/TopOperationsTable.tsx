@@ -11,7 +11,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
 
-function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
+function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -85,7 +85,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 			title: 'Number of Calls',
 			dataIndex: 'numCalls',
 			key: 'numCalls',
-			sorter: (a: TopEndpointListItem, b: TopEndpointListItem): number =>
+			sorter: (a: TopOperationListItem, b: TopOperationListItem): number =>
 				a.numCalls - b.numCalls,
 		},
 	];
@@ -94,7 +94,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 		<Table
 			showHeader
 			title={(): string => {
-				return 'Top Endpoints';
+				return 'Key Operations';
 			}}
 			tableLayout="fixed"
 			dataSource={data}
@@ -104,7 +104,7 @@ function TopEndpointsTable(props: TopEndpointsTableProps): JSX.Element {
 	);
 }
 
-interface TopEndpointListItem {
+interface TopOperationListItem {
 	p50: number;
 	p95: number;
 	p99: number;
@@ -112,10 +112,10 @@ interface TopEndpointListItem {
 	name: string;
 }
 
-type DataProps = TopEndpointListItem;
+type DataProps = TopOperationListItem;
 
-interface TopEndpointsTableProps {
-	data: TopEndpointListItem[];
+interface TopOperationsTableProps {
+	data: TopOperationListItem[];
 }
 
-export default TopEndpointsTable;
+export default TopOperationsTable;
