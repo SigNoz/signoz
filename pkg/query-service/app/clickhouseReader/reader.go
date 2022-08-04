@@ -1694,14 +1694,14 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 			sum(total_count)/ @duration AS callRate,
 			sum(error_count)/sum(total_count) as errorRate
 		FROM %s.%s
-		WHERE toUInt64(toDateTime(time)) >= @start AND toUInt64(toDateTime(time)) <= @end
+		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
 		GROUP BY
 			src,
 			dest`,
 		r.traceDB, r.dependencyGraphTable,
 	)
 
-	zap.S().Info(query, args)
+	zap.S().Debug(query, args)
 
 	err := r.db.Select(ctx, &response, query, args...)
 
@@ -1950,7 +1950,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	switch params.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + defaultDependencyGraphTable}
 		for _, tableName = range tableNameArray {
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {

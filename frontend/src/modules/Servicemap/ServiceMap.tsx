@@ -99,11 +99,11 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const graphData = { nodes, links };
 	return (
 		<Container>
-			<SelectService
+			{/* <SelectService
 				services={serviceMap.items}
 				zoomToService={zoomToService}
 				zoomToDefault={zoomToDefault}
-			/>
+			/> */}
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}

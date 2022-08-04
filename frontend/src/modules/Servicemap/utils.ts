@@ -1,15 +1,16 @@
 /*eslint-disable*/
 //@ts-nocheck
 
-import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash-es';
+import { cloneDeep, find, maxBy, uniq, uniqBy, groupBy, sumBy } from 'lodash-es';
 import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;
 const DEFAULT_FONT_SIZE = 6;
 
-export const getDimensions = () => {
-	const width = (0.7 * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
+export const getDimensions = (num, highest) => {
+	const percentage = (num / highest) * 100;
+	const width = (percentage * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
 	const fontSize = DEFAULT_FONT_SIZE;
 	return {
 		fontSize,
@@ -19,7 +20,16 @@ export const getDimensions = () => {
 
 export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	const { items } = serviceMap;
+	const services = Object.values(groupBy(items, 'child')).map((e) => {
+		return {
+			serviceName: e[0].child,
+			errorRate: sumBy(e, 'errorRate'),
+			callRate: sumBy(e, 'callRate'),
+		}
+	});
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
+	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
+
 	const divNum = Number(
 		String(1).padEnd(highestCallCount.toString().length, '0'),
 	);
@@ -39,8 +49,9 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	const uniqChild = uniqBy(cloneDeep(items), 'child').map((e) => e.child);
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
 	const nodes = uniqNodes.map((node, i) => {
+		const service = find(services, (service) => service.serviceName === node);
 		let color = isDarkMode ? '#7CA568' : '#D5F2BB';
-		if (!node) {
+		if (!service) {
 			return {
 				id: node,
 				group: i + 1,
@@ -50,7 +61,10 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 				nodeVal: MIN_WIDTH,
 			};
 		}
-		const { fontSize, width } = getDimensions();
+		if (service.errorRate > 0) {
+			color = isDarkMode ? '#DB836E' : '#F98989';
+		}
+		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {
 			id: node,
 			group: i + 1,

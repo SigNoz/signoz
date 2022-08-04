@@ -234,8 +234,8 @@ type TagValues struct {
 }
 
 type ServiceMapDependencyResponseItem struct {
-	Parent    string  `json:"parent,omitempty" ch:"parent"`
-	Child     string  `json:"child,omitempty" ch:"child"`
+	Parent    string  `json:"parent" ch:"parent"`
+	Child     string  `json:"child" ch:"child"`
 	CallCount uint64  `json:"callCount" ch:"callCount"`
 	CallRate  float64 `json:"callRate" ch:"callRate"`
 	ErrorRate float64 `json:"errorRate" ch:"errorRate"`

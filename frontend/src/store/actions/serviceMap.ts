@@ -40,13 +40,13 @@ export const getDetailedServiceMapItems = (globalTime: GlobalTime) => {
 			end,
 			tags: [],
 		};
-		const [dependencyGraph] = await Promise.all([
+		const [dependencyGraphResponse] = await Promise.all([
 			api.post<ServicesMapItem[]>(`/dependency_graph`, serviceMapPayload),
 		]);
 
 		dispatch<ServiceMapItemAction>({
 			type: ActionTypes.getServiceMapItems,
-			payload: dependencyGraph.data,
+			payload: dependencyGraphResponse.data,
 		});
 
 		dispatch<ServiceMapLoading>({
