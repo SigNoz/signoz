@@ -47,16 +47,17 @@ import (
 )
 
 const (
-	primaryNamespace      = "clickhouse"
-	archiveNamespace      = "clickhouse-archive"
-	signozTraceDBName     = "signoz_traces"
-	signozDurationMVTable = "durationSort"
-	signozSpansTable      = "signoz_spans"
-	signozErrorIndexTable = "signoz_error_index_v2"
-	signozTraceTableName  = "signoz_index_v2"
-	signozMetricDBName    = "signoz_metrics"
-	signozSampleTableName = "samples_v2"
-	signozTSTableName     = "time_series_v2"
+	primaryNamespace         = "clickhouse"
+	archiveNamespace         = "clickhouse-archive"
+	signozTraceDBName        = "signoz_traces"
+	signozDurationMVTable    = "durationSort"
+	signozUsageExplorerTable = "usage_explorer"
+	signozSpansTable         = "signoz_spans"
+	signozErrorIndexTable    = "signoz_error_index_v2"
+	signozTraceTableName     = "signoz_index_v2"
+	signozMetricDBName       = "signoz_metrics"
+	signozSampleTableName    = "samples_v2"
+	signozTSTableName        = "time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -80,6 +81,7 @@ type ClickHouseReader struct {
 	traceDB                 string
 	operationsTable         string
 	durationTable           string
+	usageExplorerTable      string
 	indexTable              string
 	errorTable              string
 	spansTable              string
@@ -120,6 +122,7 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 		operationsTable:         options.primary.OperationsTable,
 		indexTable:              options.primary.IndexTable,
 		errorTable:              options.primary.ErrorTable,
+		usageExplorerTable:      options.primary.UsageExplorerTable,
 		durationTable:           options.primary.DurationTable,
 		spansTable:              options.primary.SpansTable,
 		dependencyGraphTable:    options.primary.DependencyGraphTable,
@@ -1632,15 +1635,20 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
 
 	var usageItems []model.UsageItem
-
+	namedArgs := []interface{}{
+		clickhouse.Named("interval", queryParams.StepHour),
+		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+	}
 	var query string
 	if len(queryParams.ServiceName) != 0 {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s.%s WHERE serviceName='%s' AND timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, queryParams.ServiceName, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		namedArgs = append(namedArgs, clickhouse.Named("serviceName", queryParams.ServiceName))
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL @interval HOUR) as time, sum(count) as count FROM %s.%s WHERE service_name=@serviceName AND timestamp>=@start AND timestamp<=@end GROUP BY time ORDER BY time ASC", r.traceDB, r.usageExplorerTable)
 	} else {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d HOUR) as time, count(1) as count FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s' GROUP BY time ORDER BY time ASC", queryParams.StepHour, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL @interval HOUR) as time, sum(count) as count FROM %s.%s WHERE timestamp>=@start AND timestamp<=@end GROUP BY time ORDER BY time ASC", r.traceDB, r.usageExplorerTable)
 	}
 
-	err := r.db.Select(ctx, &usageItems, query)
+	err := r.db.Select(ctx, &usageItems, query, namedArgs...)
 
 	zap.S().Info(query)
 
@@ -1983,7 +1991,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	switch params.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + defaultDependencyGraphTable}
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
 		for _, tableName = range tableNameArray {
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
@@ -2258,7 +2266,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	switch ttlParams.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable}
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
