@@ -135,7 +135,7 @@ type MetricAutocompleteTagParams struct {
 	TagKey     string
 }
 
-type GetTopEndpointsParams struct {
+type GetTopOperationsParams struct {
 	StartTime   string `json:"start"`
 	EndTime     string `json:"end"`
 	ServiceName string `json:"service"`

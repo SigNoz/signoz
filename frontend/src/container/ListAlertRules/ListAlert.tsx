@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Tag, Typography } from 'antd';
+import { notification, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
@@ -13,15 +13,16 @@ import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Alerts } from 'types/api/alerts/getAll';
+import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer } from './styles';
+import { Button, ButtonContainer, ColumnButton, StyledTag } from './styles';
 import Status from './TableComponents/Status';
+import ToggleAlertState from './ToggleAlertState';
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
-	const [data, setData] = useState<Alerts[]>(allAlertRules || []);
+	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [addNewAlert, action] = useComponentPermission(
@@ -53,22 +54,27 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
 	};
 
-	const columns: ColumnsType<Alerts> = [
+	const columns: ColumnsType<GettableAlert> = [
 		{
 			title: 'Status',
 			dataIndex: 'state',
 			key: 'state',
 			sorter: (a, b): number =>
-				b.labels.severity.length - a.labels.severity.length,
+				(b.state ? b.state.charCodeAt(0) : 1000) -
+				(a.state ? a.state.charCodeAt(0) : 1000),
 			render: (value): JSX.Element => <Status status={value} />,
 		},
 		{
 			title: 'Alert Name',
 			dataIndex: 'alert',
 			key: 'name',
-			sorter: (a, b): number => a.name.charCodeAt(0) - b.name.charCodeAt(0),
+			sorter: (a, b): number =>
+				(a.alert ? a.alert.charCodeAt(0) : 1000) -
+				(b.alert ? b.alert.charCodeAt(0) : 1000),
 			render: (value, record): JSX.Element => (
-				<Typography.Link onClick={(): void => onEditHandler(record.id.toString())}>
+				<Typography.Link
+					onClick={(): void => onEditHandler(record.id ? record.id.toString() : '')}
+				>
 					{value}
 				</Typography.Link>
 			),
@@ -78,7 +84,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'severity',
 			sorter: (a, b): number =>
-				a.labels.severity.length - b.labels.severity.length,
+				(a.labels ? a.labels.severity.length : 0) -
+				(b.labels ? b.labels.severity.length : 0),
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
@@ -92,6 +99,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
+			width: 350,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -104,9 +112,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					<>
 						{withOutSeverityKeys.map((e) => {
 							return (
-								<Tag key={e} color="magenta">
+								<StyledTag key={e} color="magenta">
 									{e}: {value[e]}
-								</Tag>
+								</StyledTag>
 							);
 						})}
 					</>
@@ -120,14 +128,19 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			render: (id: Alerts['id']): JSX.Element => {
+			render: (id: GettableAlert['id'], record): JSX.Element => {
 				return (
 					<>
-						<DeleteAlert notifications={notifications} setData={setData} id={id} />
+						<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
 
-						<Button onClick={(): void => onEditHandler(id.toString())} type="link">
+						<ColumnButton
+							onClick={(): void => onEditHandler(id.toString())}
+							type="link"
+						>
 							Edit
-						</Button>
+						</ColumnButton>
+
+						<DeleteAlert notifications={notifications} setData={setData} id={id} />
 					</>
 				);
 			},
@@ -159,8 +172,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 }
 
 interface ListAlertProps {
-	allAlertRules: Alerts[];
-	refetch: UseQueryResult<ErrorResponse | SuccessResponse<Alerts[]>>['refetch'];
+	allAlertRules: GettableAlert[];
+	refetch: UseQueryResult<
+		ErrorResponse | SuccessResponse<GettableAlert[]>
+	>['refetch'];
 }
 
 export default ListAlert;

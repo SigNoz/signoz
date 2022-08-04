@@ -311,6 +311,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rules", EditAccess(aH.createRule)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
@@ -323,10 +324,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_endpoints", ViewAccess(aH.getTopEndpoints)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dependency_graph", ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
@@ -786,6 +788,28 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// patchRule updates only requested changes in the rule
+func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	gettableRule, err := aH.ruleManager.PatchRule(string(body), id)
+
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.respond(w, gettableRule)
+}
+
 func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
@@ -1082,14 +1106,14 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) getTopEndpoints(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseGetTopEndpointsRequest(r)
+	query, err := parseGetTopOperationsRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := (*aH.reader).GetTopEndpoints(r.Context(), query)
+	result, apiErr := (*aH.reader).GetTopOperations(r.Context(), query)
 
 	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1131,6 +1155,17 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 }
 
+func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
+
+	result, apiErr := (*aH.reader).GetTopLevelOperations(r.Context())
+	if apiErr != nil {
+		respondError(w, apiErr, nil)
+		return
+	}
+
+	aH.writeJSON(w, r, result)
+}
+
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetServicesRequest(r)
@@ -1152,14 +1187,14 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetServicesRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceMapDependencies(r.Context(), query)
+	result, err := (*aH.reader).GetDependencyGraph(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}

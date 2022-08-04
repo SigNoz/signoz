@@ -140,7 +140,7 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 		//todo(amol): find out a way to add exact domain or
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	})
 
@@ -166,7 +166,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "OPTIONS"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
 	})
 

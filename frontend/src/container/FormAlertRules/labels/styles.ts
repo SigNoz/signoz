@@ -8,8 +8,7 @@ interface SearchContainerProps {
 }
 
 export const SearchContainer = styled.div<SearchContainerProps>`
-	width: 70%;
-	border-radisu: 4px;
+	border-radius: 4px;
 	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
 	flex: 1;
 	display: flex;

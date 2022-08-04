@@ -20,7 +20,7 @@ RUN go mod download -x
 
 # Add the sources and proceed with build
 ADD . .
-RUN go build -a -ldflags "-linkmode external -extldflags '-static' -s -w $LD_FLAGS" -o ./bin/query-service ./main.go
+RUN go build -tags timetzdata -a -ldflags "-linkmode external -extldflags '-static' -s -w $LD_FLAGS" -o ./bin/query-service ./main.go
 RUN chmod +x ./bin/query-service
 
 
