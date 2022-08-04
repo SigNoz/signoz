@@ -156,7 +156,7 @@ function RuleOptions({
 								...alertDef,
 								condition: {
 									...alertDef.condition,
-									target: (value as number) || undefined,
+									target: value as number,
 								},
 							});
 						}}
