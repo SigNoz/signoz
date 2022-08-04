@@ -66,17 +66,18 @@ func NewPromRule(
 	}
 
 	p := PromRule{
-		id:            id,
-		name:          postableRule.Alert,
-		source:        postableRule.Source,
-		ruleCondition: postableRule.RuleCondition,
-		evalWindow:    time.Duration(postableRule.EvalWindow),
-		labels:        plabels.FromMap(postableRule.Labels),
-		annotations:   plabels.FromMap(postableRule.Annotations),
-		health:        HealthUnknown,
-		active:        map[uint64]*Alert{},
-		logger:        logger,
-		opts:          opts,
+		id:                id,
+		name:              postableRule.Alert,
+		source:            postableRule.Source,
+		ruleCondition:     postableRule.RuleCondition,
+		evalWindow:        time.Duration(postableRule.EvalWindow),
+		labels:            plabels.FromMap(postableRule.Labels),
+		annotations:       plabels.FromMap(postableRule.Annotations),
+		preferredChannels: p.PreferredChannels,
+		health:            HealthUnknown,
+		active:            map[uint64]*Alert{},
+		logger:            logger,
+		opts:              opts,
 	}
 
 	if int64(p.evalWindow) == 0 {

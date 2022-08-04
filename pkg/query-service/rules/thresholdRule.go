@@ -71,16 +71,17 @@ func NewThresholdRule(
 	}
 
 	t := ThresholdRule{
-		id:            id,
-		name:          p.Alert,
-		source:        p.Source,
-		ruleCondition: p.RuleCondition,
-		evalWindow:    time.Duration(p.EvalWindow),
-		labels:        labels.FromMap(p.Labels),
-		annotations:   labels.FromMap(p.Annotations),
-		health:        HealthUnknown,
-		active:        map[uint64]*Alert{},
-		opts:          opts,
+		id:                id,
+		name:              p.Alert,
+		source:            p.Source,
+		ruleCondition:     p.RuleCondition,
+		evalWindow:        time.Duration(p.EvalWindow),
+		labels:            labels.FromMap(p.Labels),
+		annotations:       labels.FromMap(p.Annotations),
+		preferredChannels: p.PreferredChannels,
+		health:            HealthUnknown,
+		active:            map[uint64]*Alert{},
+		opts:              opts,
 	}
 
 	if int64(t.evalWindow) == 0 {
