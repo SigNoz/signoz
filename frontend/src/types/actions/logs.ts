@@ -36,6 +36,10 @@ export const RESET_ID_START_AND_END = 'LOGS_RESET_ID_START_AND_END';
 export const SET_LOADING = 'LOGS_SET_LOADING';
 export const SET_LOADING_AGGREGATE = 'LOGS_SET_LOADING_AGGREGATE';
 export const SET_LOGS_AGGREGATE_SERIES = 'LOGS_SET_LOGS_AGGREGATE_SERIES';
+export const SET_DETAILED_LOG_DATA = 'LOGS_SET_DETAILED_LOG_DATA';
+export const TOGGLE_LIVE_TAIL = 'LOGS_TOGGLE_LIVE_TAIL';
+export const PUSH_LIVE_TAIL_EVENT = 'LOGS_PUSH_LIVE_TAIL_EVENT';
+
 export interface GetFields {
 	type: typeof GET_FIELDS;
 }
@@ -93,6 +97,19 @@ export interface SetLogsAggregateSeries {
 	type: typeof SET_LOGS_AGGREGATE_SERIES;
 	payload: ILogsAggregate[];
 }
+export interface SetDetailedLogData {
+	type: typeof SET_DETAILED_LOG_DATA;
+	payload: ILog;
+}
+
+export interface ToggleLiveTail {
+	type: typeof TOGGLE_LIVE_TAIL;
+	payload: boolean;
+}
+export interface PushLiveTailEvent {
+	type: typeof PUSH_LIVE_TAIL_EVENT;
+	payload: ILog;
+}
 // export interface GetServiceListLoading {
 // 	type:
 // 		| typeof GET_SERVICE_LIST_LOADING_START
@@ -144,4 +161,7 @@ export type LogsActions =
 	| ResetIdStartAndEnd
 	| SetLoading
 	| SetLoadingAggregate
-	| SetLogsAggregateSeries;
+	| SetLogsAggregateSeries
+	| SetDetailedLogData
+	| ToggleLiveTail
+	| PushLiveTailEvent;

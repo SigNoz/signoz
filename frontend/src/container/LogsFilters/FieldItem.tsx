@@ -3,7 +3,7 @@ import {
 	CloseOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons';
-import { Button, Spin } from 'antd';
+import { Button, Popover, Spin } from 'antd';
 import Spinner from 'components/Spinner';
 import React, { useRef, useState } from 'react';
 import { useHover, useHoverDirty } from 'react-use';
@@ -17,6 +17,7 @@ export function FieldItem({
 	fieldData,
 	fieldIndex,
 	isLoading,
+	iconHoverText
 }) {
 	const [isHovered, setIsHovered] = useState(false);
 	return (
@@ -32,13 +33,16 @@ export function FieldItem({
 			) : (
 				isHovered &&
 				buttonOnClick && (
-					<Button
-						type="text"
-						size="small"
-						icon={buttonIcon}
-						onClick={() => buttonOnClick({ fieldData, fieldIndex })}
-						style={{ color: 'inherit', padding: 0, height: '1rem', width: '1rem' }}
-					/>
+					<Popover content={<span>{iconHoverText}</span>}>
+
+						<Button
+							type="text"
+							size="small"
+							icon={buttonIcon}
+							onClick={() => buttonOnClick({ fieldData, fieldIndex })}
+							style={{ color: 'inherit', padding: 0, height: '1rem', width: '1rem' }}
+						/>
+					</Popover>
 				)
 			)}
 		</Field>

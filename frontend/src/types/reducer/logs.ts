@@ -17,6 +17,8 @@ export interface ILogsReducer {
 	isLoadingAggregate: boolean;
 	logsAggregate: ILogsAggregate[];
 	selectedLogId: string;
+	detailedLog: null | ILog;
+	liveTail: boolean;
 }
 
 export default ILogsReducer;

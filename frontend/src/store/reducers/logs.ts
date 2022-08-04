@@ -14,6 +14,9 @@ import {
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
 	SET_LOGS_AGGREGATE_SERIES,
+	SET_DETAILED_LOG_DATA,
+	TOGGLE_LIVE_TAIL,
+	PUSH_LIVE_TAIL_EVENT,
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -33,6 +36,32 @@ const initialState: ILogsReducer = {
 	isLoading: false,
 	isLoadingAggregate: false,
 	logsAggregate: [],
+	detailedLog: null,
+	liveTail: false,
+	// detailedLog: {
+	// 	timestamp: 1659360016955270100,
+	// 	id: '2CkBCauK8m3nkyKR19YhCw6WfvD',
+	// 	traceId: '',
+	// 	spanId: '',
+	// 	traceFlags: 0,
+	// 	severityText: '',
+	// 	severityNumber: 0,
+	// 	body:
+	// 		'49.207.215.17 - - [01/Aug/2022:13:20:16 +0000] "OPTIONS /api/v1/logs/fields HTTP/1.1" 200 23 "http://localhost:3301/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36" "-"\n',
+	// 	resourcesString: {
+	// 		source: 'docker',
+	// 	},
+	// 	attributesString: {
+	// 		container_id:
+	// 			'b3c6808322609f7671c18a09515d9c84909c873471b560da65c1afe0dfd933ea',
+	// 		log_file_path:
+	// 			'/var/lib/docker/containers/b3c6808322609f7671c18a09515d9c84909c873471b560da65c1afe0dfd933ea/b3c6808322609f7671c18a09515d9c84909c873471b560da65c1afe0dfd933ea-json.log',
+	// 		stream: 'stdout',
+	// 		time: '2022-08-01T13:20:16.955270245Z',
+	// 	},
+	// 	attributesInt: {},
+	// 	attributesFloat: {},
+	// },
 };
 
 export const LogsReducer = (
@@ -150,6 +179,28 @@ export const LogsReducer = (
 			return {
 				...state,
 				logsAggregate: action.payload,
+			};
+		}
+
+		case SET_DETAILED_LOG_DATA: {
+			return {
+				...state,
+				detailedLog: action.payload,
+			};
+		}
+
+		case TOGGLE_LIVE_TAIL: {
+			return {
+				...state,
+				liveTail: action.payload,
+				logs: [],
+			};
+		}
+
+		case PUSH_LIVE_TAIL_EVENT: {
+			return {
+				...state,
+				logs: [action.payload].concat(state.logs),
 			};
 		}
 		default:

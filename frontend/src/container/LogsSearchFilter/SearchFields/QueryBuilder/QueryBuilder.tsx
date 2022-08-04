@@ -210,7 +210,7 @@ function QueryBuilder({ updateParsedQuery }) {
 		});
 	return (
 		<div>
-			<CategoryHeading>QUERY BUILDER</CategoryHeading>
+			<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
 			<div
 				style={{
 					display: 'grid',

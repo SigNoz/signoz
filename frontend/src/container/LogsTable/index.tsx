@@ -1,14 +1,17 @@
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { Card, Typography } from 'antd';
+import { LiveTail } from 'api/logs/livetail';
 import LogItem from 'components/Logs/LogItem';
 import Spinner from 'components/Spinner';
 import { map } from 'lodash-es';
-import React, { memo, useEffect } from 'react';
-import { connect, useSelector } from 'react-redux';
+import React, { memo, useEffect, useRef } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { PUSH_LIVE_TAIL_EVENT } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -22,11 +25,13 @@ function LogsTable({ getLogs }) {
 		idEnd,
 		idStart,
 		isLoading,
+		liveTail,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+
 
 	useEffect(() => {
 		getLogs({
@@ -39,7 +44,7 @@ function LogsTable({ getLogs }) {
 			...(idStart ? { idStart } : {}),
 			...(idEnd ? { idEnd } : {}),
 		});
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [getLogs, idEnd, idStart, logLinesPerPage, maxTime, minTime]);
 
 	if (isLoading) {

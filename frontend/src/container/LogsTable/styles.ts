@@ -9,7 +9,7 @@ export const Container = styled(Col)`
 `;
 
 export const Heading = styled(Card)`
-	background: ${grey[7]};
+	
 	margin-bottom: 0.1rem;
 	.ant-card-body {
 		padding: 0.3rem 0.5rem;

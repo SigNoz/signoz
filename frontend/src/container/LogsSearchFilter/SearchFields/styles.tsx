@@ -10,7 +10,7 @@ export const QueryFieldContainer = styled.div`
 	border-radius: 0.25rem;
 	gap: 1rem;
 	&:hover {
-		background: ${blue[5]};
+		background: ${blue[6]};
 	}
 `;
 

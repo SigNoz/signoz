@@ -1,6 +1,7 @@
 import { Divider, Row } from 'antd';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
+import LogLiveTail from 'container/LogLiveTail';
 import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import SearchFilter from 'container/LogsSearchFilter';
@@ -36,9 +37,10 @@ function Logs({ getLogsFields }) {
 
 	return (
 		<div style={{ position: 'relative' }}>
-			<div>
+			<Row>
 				<SearchFilter />
-			</div>
+				{/* <LogLiveTail  /> */}
+			</Row>
 			<LogsAggregate />
 			<LogControls />
 			<Divider style={{ margin: 0 }} />

@@ -1,4 +1,8 @@
-import { CloseCircleFilled } from '@ant-design/icons';
+import {
+	CloseCircleFilled,
+	CloseCircleOutlined,
+	CloseSquareOutlined,
+} from '@ant-design/icons';
 import { Button, Input } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import getStep from 'lib/getStep';
@@ -109,7 +113,7 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 	}, []);
 
 	return (
-		<div ref={searchComponentRef}>
+		<div ref={searchComponentRef} style={{ flex: 1 }}>
 			<Search
 				placeholder="Search Filter"
 				onFocus={(): void => setShowDropDown(true)}
@@ -129,7 +133,7 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 								right: 0,
 							}}
 						>
-							<CloseCircleFilled />
+							<CloseSquareOutlined size="large" />
 						</Button>
 						<SearchFields updateParsedQuery={updateParsedQuery} />
 					</DropDownContainer>
