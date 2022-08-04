@@ -15,7 +15,7 @@ import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
-import TopEndpointsTable from '../TopEndpointsTable';
+import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
 
 function Application({ getWidget }: DashboardProps): JSX.Element {
@@ -23,11 +23,13 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 	const selectedTimeStamp = useRef(0);
 
 	const {
-		topEndPoints,
+		topOperations,
 		serviceOverview,
 		resourceAttributePromQLQuery,
 		resourceAttributeQueries,
+		topLevelOperations,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const operationsRegex = topLevelOperations.join('|');
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
@@ -107,7 +109,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 					<Button
 						type="default"
 						size="small"
-						id="Application_button"
+						id="Service_button"
 						onClick={(): void => {
 							onTracePopupClick(selectedTimeStamp.current);
 						}}
@@ -115,13 +117,13 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Application latency</GraphTitle>
+						<GraphTitle>Latency</GraphTitle>
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickHandler(ChartEvent, activeElements, chart, data, 'Application');
+									onClickHandler(ChartEvent, activeElements, chart, data, 'Service');
 								}}
-								name="application_latency"
+								name="service_latency"
 								type="line"
 								data={{
 									datasets: [
@@ -175,7 +177,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 					<Button
 						type="default"
 						size="small"
-						id="Request_button"
+						id="Rate_button"
 						onClick={(): void => {
 							onTracePopupClick(selectedTimeStamp.current);
 						}}
@@ -183,21 +185,21 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Requests</GraphTitle>
+						<GraphTitle>Rate (ops/s)</GraphTitle>
 						<GraphContainer>
 							<FullView
-								name="request_per_sec"
+								name="operations_per_sec"
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
-									onClickHandler(event, element, chart, data, 'Request');
+									onClickHandler(event, element, chart, data, 'Rate');
 								}}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))`,
-										legend: 'Requests',
+										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation=~"${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))`,
+										legend: 'Operations',
 									},
 								])}
-								yAxisUnit="reqps"
+								yAxisUnit="ops"
 							/>
 						</GraphContainer>
 					</Card>
@@ -227,7 +229,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
+										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
 										legend: 'Error Percentage',
 									},
 								])}
@@ -239,7 +241,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						<TopEndpointsTable data={topEndPoints} />
+						<TopOperationsTable data={topOperations} />
 					</Card>
 				</Col>
 			</Row>

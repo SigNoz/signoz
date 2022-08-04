@@ -5,7 +5,7 @@ import { ExternalError } from 'types/api/metrics/getExternalError';
 import { ExternalService } from 'types/api/metrics/getExternalService';
 import { ServicesList } from 'types/api/metrics/getService';
 import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
-import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
+import { TopOperations } from 'types/api/metrics/getTopOperations';
 
 interface MetricReducer {
 	services: ServicesList[];
@@ -15,12 +15,13 @@ interface MetricReducer {
 	errorMessage: string;
 	dbOverView: DBOverView[];
 	externalService: ExternalService[];
-	topEndPoints: TopEndPoints[];
+	topOperations: TopOperations[];
 	externalAverageDuration: ExternalAverageDuration[];
 	externalError: ExternalError[];
 	serviceOverview: ServiceOverview[];
 	resourceAttributeQueries: IResourceAttributeQuery[];
 	resourceAttributePromQLQuery: string;
+	topLevelOperations: string[];
 }
 
 export default MetricReducer;
