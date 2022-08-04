@@ -326,7 +326,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/serviceMapDependencies", ViewAccess(aH.serviceMapDependencies)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dependency_graph", ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
@@ -1185,14 +1185,14 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	aH.writeJSON(w, r, result)
 }
 
-func (aH *APIHandler) serviceMapDependencies(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetServicesRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, err := (*aH.reader).GetServiceMapDependencies(r.Context(), query)
+	result, err := (*aH.reader).GetDependencyGraph(r.Context(), query)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}

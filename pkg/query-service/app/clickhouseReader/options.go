@@ -25,6 +25,7 @@ const (
 	defaultErrorTable              string        = "signoz_error_index_v2"
 	defaultDurationTable           string        = "durationSortMV"
 	defaultSpansTable              string        = "signoz_spans"
+	defaultDependencyGraphTable    string        = "dependency_graph_minutes"
 	defaultTopLevelOperationsTable string        = "top_level_operations"
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
@@ -53,6 +54,7 @@ type namespaceConfig struct {
 	DurationTable           string
 	SpansTable              string
 	ErrorTable              string
+	DependencyGraphTable    string
 	TopLevelOperationsTable string
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
@@ -113,6 +115,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			ErrorTable:              defaultErrorTable,
 			DurationTable:           defaultDurationTable,
 			SpansTable:              defaultSpansTable,
+			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
