@@ -73,7 +73,7 @@ func NewPromRule(
 		evalWindow:        time.Duration(postableRule.EvalWindow),
 		labels:            plabels.FromMap(postableRule.Labels),
 		annotations:       plabels.FromMap(postableRule.Annotations),
-		preferredChannels: p.PreferredChannels,
+		preferredChannels: postableRule.PreferredChannels,
 		health:            HealthUnknown,
 		active:            map[uint64]*Alert{},
 		logger:            logger,
