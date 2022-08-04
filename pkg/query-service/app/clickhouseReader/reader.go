@@ -76,18 +76,18 @@ var (
 
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
-	db                 clickhouse.Conn
-	localDB            *sqlx.DB
-	traceDB            string
-	operationsTable    string
-	durationTable      string
-	usageExplorerTable string
-	indexTable         string
-	errorTable         string
-	spansTable         string
+	db                      clickhouse.Conn
+	localDB                 *sqlx.DB
+	traceDB                 string
+	operationsTable         string
+	durationTable           string
+	usageExplorerTable      string
+	indexTable              string
+	errorTable              string
+	spansTable              string
 	topLevelOperationsTable string
-	queryEngine        *promql.Engine
-	remoteStorage      *remote.Storage
+	queryEngine             *promql.Engine
+	remoteStorage           *remote.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -114,18 +114,18 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	}
 
 	return &ClickHouseReader{
-		db:                 db,
-		localDB:            localDB,
-		traceDB:            options.primary.TraceDB,
-		alertManager:       alertManager,
-		operationsTable:    options.primary.OperationsTable,
-		indexTable:         options.primary.IndexTable,
-		errorTable:         options.primary.ErrorTable,
-		usageExplorerTable: options.primary.UsageExplorerTable,
-		durationTable:      options.primary.DurationTable,
-		spansTable:         options.primary.SpansTable,
+		db:                      db,
+		localDB:                 localDB,
+		traceDB:                 options.primary.TraceDB,
+		alertManager:            alertManager,
+		operationsTable:         options.primary.OperationsTable,
+		indexTable:              options.primary.IndexTable,
+		errorTable:              options.primary.ErrorTable,
+		usageExplorerTable:      options.primary.UsageExplorerTable,
+		durationTable:           options.primary.DurationTable,
+		spansTable:              options.primary.SpansTable,
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
-		promConfigFile:     configFile,
+		promConfigFile:          configFile,
 	}
 }
 

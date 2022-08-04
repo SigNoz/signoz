@@ -18,18 +18,18 @@ const (
 )
 
 const (
-	defaultDatasource         string        = "tcp://localhost:9000"
-	defaultTraceDB            string        = "signoz_traces"
-	defaultOperationsTable    string        = "signoz_operations"
-	defaultIndexTable         string        = "signoz_index_v2"
-	defaultErrorTable         string        = "signoz_error_index_v2"
-	defaultDurationTable      string        = "durationSortMV"
-	defaultUsageExplorerTable string        = "usage_explorer"
-	defaultSpansTable         string        = "signoz_spans"
+	defaultDatasource              string        = "tcp://localhost:9000"
+	defaultTraceDB                 string        = "signoz_traces"
+	defaultOperationsTable         string        = "signoz_operations"
+	defaultIndexTable              string        = "signoz_index_v2"
+	defaultErrorTable              string        = "signoz_error_index_v2"
+	defaultDurationTable           string        = "durationSortMV"
+	defaultUsageExplorerTable      string        = "usage_explorer"
+	defaultSpansTable              string        = "signoz_spans"
 	defaultTopLevelOperationsTable string        = "top_level_operations"
-	defaultWriteBatchDelay    time.Duration = 5 * time.Second
-	defaultWriteBatchSize     int           = 10000
-	defaultEncoding           Encoding      = EncodingJSON
+	defaultWriteBatchDelay         time.Duration = 5 * time.Second
+	defaultWriteBatchSize          int           = 10000
+	defaultEncoding                Encoding      = EncodingJSON
 )
 
 const (
@@ -45,21 +45,21 @@ const (
 
 // NamespaceConfig is Clickhouse's internal configuration data
 type namespaceConfig struct {
-	namespace          string
-	Enabled            bool
-	Datasource         string
-	TraceDB            string
-	OperationsTable    string
-	IndexTable         string
-	DurationTable      string
-	UsageExplorerTable string
-	SpansTable         string
-	ErrorTable         string
+	namespace               string
+	Enabled                 bool
+	Datasource              string
+	TraceDB                 string
+	OperationsTable         string
+	IndexTable              string
+	DurationTable           string
+	UsageExplorerTable      string
+	SpansTable              string
+	ErrorTable              string
 	TopLevelOperationsTable string
-	WriteBatchDelay    time.Duration
-	WriteBatchSize     int
-	Encoding           Encoding
-	Connector          Connector
+	WriteBatchDelay         time.Duration
+	WriteBatchSize          int
+	Encoding                Encoding
+	Connector               Connector
 }
 
 // Connecto defines how to connect to the database
@@ -106,21 +106,21 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 
 	options := &Options{
 		primary: &namespaceConfig{
-			namespace:          primaryNamespace,
-			Enabled:            true,
-			Datasource:         datasource,
-			TraceDB:            defaultTraceDB,
-			OperationsTable:    defaultOperationsTable,
-			IndexTable:         defaultIndexTable,
-			ErrorTable:         defaultErrorTable,
-			DurationTable:      defaultDurationTable,
-			UsageExplorerTable: defaultUsageExplorerTable,
-			SpansTable:         defaultSpansTable,
+			namespace:               primaryNamespace,
+			Enabled:                 true,
+			Datasource:              datasource,
+			TraceDB:                 defaultTraceDB,
+			OperationsTable:         defaultOperationsTable,
+			IndexTable:              defaultIndexTable,
+			ErrorTable:              defaultErrorTable,
+			DurationTable:           defaultDurationTable,
+			UsageExplorerTable:      defaultUsageExplorerTable,
+			SpansTable:              defaultSpansTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
-			WriteBatchDelay:    defaultWriteBatchDelay,
-			WriteBatchSize:     defaultWriteBatchSize,
-			Encoding:           defaultEncoding,
-			Connector:          defaultConnector,
+			WriteBatchDelay:         defaultWriteBatchDelay,
+			WriteBatchSize:          defaultWriteBatchSize,
+			Encoding:                defaultEncoding,
+			Connector:               defaultConnector,
 		},
 		others: make(map[string]*namespaceConfig, len(otherNamespaces)),
 	}
