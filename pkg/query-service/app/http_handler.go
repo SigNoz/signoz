@@ -309,6 +309,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/rules", EditAccess(aH.createRule)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
@@ -782,6 +783,28 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	aH.respond(w, "rule successfully deleted")
 
+}
+
+// patchRule updates only requested changes in the rule
+func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	gettableRule, err := aH.ruleManager.PatchRule(string(body), id)
+
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.respond(w, gettableRule)
 }
 
 func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
