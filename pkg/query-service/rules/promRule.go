@@ -18,6 +18,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type PromRuleOpts struct {
+	// SendAlways will send alert irresepective of resendDelay
+	// or other params
+	SendAlways bool
+}
+
 type PromRule struct {
 	id            string
 	name          string
@@ -41,14 +47,14 @@ type PromRule struct {
 	active map[uint64]*Alert
 
 	logger log.Logger
-	isTest bool
+	opts   PromRuleOpts
 }
 
 func NewPromRule(
 	id string,
 	postableRule *PostableRule,
 	logger log.Logger,
-	isTest bool,
+	opts PromRuleOpts,
 ) (*PromRule, error) {
 
 	if postableRule.RuleCondition == nil {
@@ -68,7 +74,7 @@ func NewPromRule(
 		health:        HealthUnknown,
 		active:        map[uint64]*Alert{},
 		logger:        logger,
-		isTest:        isTest,
+		opts:          opts,
 	}
 
 	if int64(p.evalWindow) == 0 {
@@ -249,7 +255,7 @@ func (r *PromRule) ForEachActiveAlert(f func(*Alert)) {
 func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
-		if r.isTest || alert.needsSending(ts, resendDelay) {
+		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			// Allow for two Eval or Alertmanager send failures.
 			delta := resendDelay
