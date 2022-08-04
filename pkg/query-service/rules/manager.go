@@ -21,6 +21,7 @@ import (
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/utils/labels"
 )
 
 // namespace for prom metrics
@@ -383,7 +384,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		tr, err := NewThresholdRule(
 			ruleId,
 			r,
-			false,
+			ThresholdRuleOpts{},
 		)
 
 		if err != nil {
@@ -405,7 +406,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			ruleId,
 			r,
 			log.With(m.logger, "alert", r.Alert),
-			false,
+			PromRuleOpts{},
 		)
 
 		if err != nil {
@@ -711,11 +712,21 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	var err error
 
 	if parsedRule.RuleType == RuleTypeThreshold {
+
+		// add special labels for test alerts
+		parsedRule.Labels[labels.AlertAdditionalInfoLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
+		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
+		parsedRule.Labels[labels.RuleSourceLabel] = ""
+		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
+
 		// create a threshold rule
 		rule, err = NewThresholdRule(
 			alertname,
 			parsedRule,
-			true,
+			ThresholdRuleOpts{
+				SendUnmatched: true,
+				SendAlways:    true,
+			},
 		)
 
 		if err != nil {
@@ -730,7 +741,9 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 			alertname,
 			parsedRule,
 			log.With(m.logger, "alert", alertname),
-			true,
+			PromRuleOpts{
+				SendAlways: true,
+			},
 		)
 
 		if err != nil {

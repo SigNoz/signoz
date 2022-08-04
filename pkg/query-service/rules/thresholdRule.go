@@ -43,13 +43,24 @@ type ThresholdRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	isTest bool
+	opts ThresholdRuleOpts
+}
+
+type ThresholdRuleOpts struct {
+	// sendUnmatched sends observed metric values
+	// even if they dont match the rule condition. this is
+	// useful in testing the rule
+	SendUnmatched bool
+
+	// sendAlways will send alert irresepective of resendDelay
+	// or other params
+	SendAlways bool
 }
 
 func NewThresholdRule(
 	id string,
 	p *PostableRule,
-	isTest bool,
+	opts ThresholdRuleOpts,
 ) (*ThresholdRule, error) {
 
 	if p.RuleCondition == nil {
@@ -68,7 +79,7 @@ func NewThresholdRule(
 		annotations:   labels.FromMap(p.Annotations),
 		health:        HealthUnknown,
 		active:        map[uint64]*Alert{},
-		isTest:        isTest,
+		opts:          opts,
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -274,7 +285,7 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 	zap.S().Info("msg:", "sending alerts", "\t rule:", r.Name())
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
-		if r.isTest || alert.needsSending(ts, resendDelay) {
+		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			// Allow for two Eval or Alertmanager send failures.
 			delta := resendDelay
@@ -300,10 +311,6 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 	if r.ruleCondition.Target == nil {
 		zap.S().Debugf("msg:", "found null target in rule condition", "\t rulename:", r.Name())
 		return false
-	}
-
-	if r.isTest {
-		return true
 	}
 
 	switch r.ruleCondition.CompareOp {
@@ -474,8 +481,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	}
 
 	for _, sample := range resultMap {
-		// check alert rule condition before dumping results
-		if r.CheckCondition(sample.Point.V) {
+		// check alert rule condition before dumping results, if sendUnmatchedResults
+		// is set then add results irrespective of condition
+		if r.opts.SendUnmatched || r.CheckCondition(sample.Point.V) {
 			result = append(result, sample)
 		}
 	}
@@ -585,10 +593,6 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
 			annotations = append(annotations, labels.Label{Name: a.Name, Value: expand(a.Value)})
-		}
-
-		if r.isTest {
-			annotations = append(annotations, labels.Label{Name: AlertDescriptionLabel, Value: fmt.Sprintf("The rule threshold is set to %f, and the observed metric value is %f", r.targetVal(), smpl.V)})
 		}
 
 		lbs := lb.Labels()
