@@ -6,7 +6,6 @@ import (
 	"github.com/go-kit/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/pkg/labels"
-	pql "github.com/prometheus/prometheus/promql"
 	"go.uber.org/zap"
 	"sort"
 	"sync"
@@ -313,7 +312,6 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 	zap.S().Info("promql rule task:", g.name, "\t eval started at:", ts)
-	var samplesTotal float64
 	for i, rule := range g.rules {
 		if rule == nil {
 			continue
@@ -336,7 +334,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
-			data, err := rule.Eval(ctx, ts, g.opts.Queriers)
+			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
@@ -350,20 +348,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				//}
 				return
 			}
-			vector := data.(pql.Vector)
-			samplesTotal += float64(len(vector))
-
 			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
-
-			seriesReturned := make(map[string]plabels.Labels, len(g.seriesInPreviousEval[i]))
-
-			defer func() {
-				g.seriesInPreviousEval[i] = seriesReturned
-			}()
-
-			for _, s := range vector {
-				seriesReturned[s.Metric.String()] = s.Metric
-			}
 
 		}(i, rule)
 	}

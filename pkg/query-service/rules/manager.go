@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,6 +20,8 @@ import (
 
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/utils/labels"
 )
 
 // namespace for prom metrics
@@ -38,7 +41,6 @@ func prepareTaskName(ruleId interface{}) string {
 	default:
 		return fmt.Sprintf("%v-groupname", ruleId)
 	}
-
 }
 
 // ManagerOptions bundles options for the Manager.
@@ -382,6 +384,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		tr, err := NewThresholdRule(
 			ruleId,
 			r,
+			ThresholdRuleOpts{},
 		)
 
 		if err != nil {
@@ -403,6 +406,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			ruleId,
 			r,
 			log.With(m.logger, "alert", r.Alert),
+			PromRuleOpts{},
 		)
 
 		if err != nil {
@@ -682,4 +686,85 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 	}
 
 	return &response, nil
+}
+
+// TestNotification prepares a dummy rule for given rule parameters and
+// sends a test notification. returns alert count and error (if any)
+func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *model.ApiError) {
+
+	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+
+	if len(errs) > 0 {
+		zap.S().Errorf("msg: failed to parse rule from request:", "\t error: ", errs)
+		return 0, newApiErrorBadData(errs[0])
+	}
+
+	var alertname = parsedRule.Alert
+	if alertname == "" {
+		// alertname is not mandatory for testing, so picking
+		// a random string here
+		alertname = uuid.New().String()
+	}
+
+	// append name to indicate this is test alert
+	parsedRule.Alert = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
+
+	var rule Rule
+	var err error
+
+	if parsedRule.RuleType == RuleTypeThreshold {
+
+		// add special labels for test alerts
+		parsedRule.Labels[labels.AlertAdditionalInfoLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
+		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
+		parsedRule.Labels[labels.RuleSourceLabel] = ""
+		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
+
+		// create a threshold rule
+		rule, err = NewThresholdRule(
+			alertname,
+			parsedRule,
+			ThresholdRuleOpts{
+				SendUnmatched: true,
+				SendAlways:    true,
+			},
+		)
+
+		if err != nil {
+			zap.S().Errorf("msg: failed to prepare a new threshold rule for test:", "\t error: ", err)
+			return 0, newApiErrorBadData(err)
+		}
+
+	} else if parsedRule.RuleType == RuleTypeProm {
+
+		// create promql rule
+		rule, err = NewPromRule(
+			alertname,
+			parsedRule,
+			log.With(m.logger, "alert", alertname),
+			PromRuleOpts{
+				SendAlways: true,
+			},
+		)
+
+		if err != nil {
+			zap.S().Errorf("msg: failed to prepare a new promql rule for test:", "\t error: ", err)
+			return 0, newApiErrorBadData(err)
+		}
+	} else {
+		return 0, newApiErrorBadData(fmt.Errorf("failed to derive ruletype with given information"))
+	}
+
+	// set timestamp to current utc time
+	ts := time.Now().UTC()
+
+	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
+	if err != nil {
+		zap.S().Warn("msg:", "Evaluating rule failed", "\t rule:", rule, "\t err: ", err)
+		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))
+	}
+	alertsFound := count.(int)
+	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), m.prepareNotifyFunc())
+
+	return alertsFound, nil
 }

@@ -43,11 +43,25 @@ type ThresholdRule struct {
 
 	// map of active alerts
 	active map[uint64]*Alert
+
+	opts ThresholdRuleOpts
+}
+
+type ThresholdRuleOpts struct {
+	// sendUnmatched sends observed metric values
+	// even if they dont match the rule condition. this is
+	// useful in testing the rule
+	SendUnmatched bool
+
+	// sendAlways will send alert irresepective of resendDelay
+	// or other params
+	SendAlways bool
 }
 
 func NewThresholdRule(
 	id string,
 	p *PostableRule,
+	opts ThresholdRuleOpts,
 ) (*ThresholdRule, error) {
 
 	if p.RuleCondition == nil {
@@ -67,6 +81,7 @@ func NewThresholdRule(
 		preferredChannels: p.PreferredChannels,
 		health:            HealthUnknown,
 		active:            map[uint64]*Alert{},
+		opts:              opts,
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -103,6 +118,14 @@ func (r *ThresholdRule) target() *float64 {
 		return nil
 	}
 	return r.ruleCondition.Target
+}
+
+func (r *ThresholdRule) targetVal() float64 {
+	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
+		return 0
+	}
+
+	return *r.ruleCondition.Target
 }
 
 func (r *ThresholdRule) matchType() MatchType {
@@ -188,25 +211,7 @@ func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
 		Metric: lb.Labels(),
 		Point:  Point{T: timestamp.FromTime(ts), V: 1},
 	}
-	return s
-}
 
-// forStateSample returns the sample for ALERTS_FOR_STATE.
-func (r *ThresholdRule) forStateSample(alert *Alert, ts time.Time, v float64) Sample {
-	lb := labels.NewBuilder(r.labels)
-
-	alertLabels := alert.Labels.(labels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(labels.MetricNameLabel, alertForStateMetricName)
-	lb.Set(labels.AlertNameLabel, r.name)
-
-	s := Sample{
-		Metric: lb.Labels(),
-		Point:  Point{T: timestamp.FromTime(ts), V: v},
-	}
 	return s
 }
 
@@ -283,10 +288,10 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	zap.S().Info("msg:", "initiating send alerts (if any)", "\t rule:", r.Name())
+	zap.S().Info("msg:", "sending alerts", "\t rule:", r.Name())
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
-		if alert.needsSending(ts, resendDelay) {
+		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			// Allow for two Eval or Alertmanager send failures.
 			delta := resendDelay
@@ -483,8 +488,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	for _, sample := range resultMap {
-		// check alert rule condition before dumping results
-		if r.CheckCondition(sample.Point.V) {
+		// check alert rule condition before dumping results, if sendUnmatchedResults
+		// is set then add results irrespective of condition
+		if r.opts.SendUnmatched || r.CheckCondition(sample.Point.V) {
 			result = append(result, sample)
 		}
 	}
@@ -549,7 +555,6 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var vec Vector
 	var alerts = make(map[uint64]*Alert, len(res))
 
 	for _, smpl := range res {
@@ -563,6 +568,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}"
 
+		// utility function to apply go template on labels and annots
 		expand := func(text string) string {
 
 			tmpl := NewTemplateExpander(
@@ -662,8 +668,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	}
 	r.health = HealthGood
 	r.lastError = err
-	return vec, nil
 
+	return len(r.active), nil
 }
 
 func (r *ThresholdRule) String() string {
