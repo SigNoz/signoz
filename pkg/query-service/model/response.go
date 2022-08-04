@@ -205,12 +205,6 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	return returnArray
 }
 
-type ServiceMapDependencyItem struct {
-	SpanId       string `json:"spanId,omitempty" ch:"spanID"`
-	ParentSpanId string `json:"parentSpanId,omitempty" ch:"parentSpanID"`
-	ServiceName  string `json:"serviceName,omitempty" ch:"serviceName"`
-}
-
 type UsageItem struct {
 	Time      time.Time `json:"time,omitempty" ch:"time"`
 	Timestamp uint64    `json:"timestamp" ch:"timestamp"`

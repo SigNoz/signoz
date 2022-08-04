@@ -1623,50 +1623,6 @@ func interfaceArrayToStringArray(array []interface{}) []string {
 	return strArray
 }
 
-func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
-	serviceMapDependencyItems := []model.ServiceMapDependencyItem{}
-
-	query := fmt.Sprintf(`SELECT spanID, parentSpanID, serviceName FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s'`, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
-
-	err := r.db.Select(ctx, &serviceMapDependencyItems, query)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-
-	serviceMap := make(map[string]*model.ServiceMapDependencyResponseItem)
-
-	spanId2ServiceNameMap := make(map[string]string)
-	for i := range serviceMapDependencyItems {
-		spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId] = serviceMapDependencyItems[i].ServiceName
-	}
-	for i := range serviceMapDependencyItems {
-		parent2childServiceName := spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId] + "-" + spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId]
-		if _, ok := serviceMap[parent2childServiceName]; !ok {
-			serviceMap[parent2childServiceName] = &model.ServiceMapDependencyResponseItem{
-				Parent:    spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId],
-				Child:     spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId],
-				CallCount: 1,
-			}
-		} else {
-			serviceMap[parent2childServiceName].CallCount++
-		}
-	}
-
-	retMe := make([]model.ServiceMapDependencyResponseItem, 0, len(serviceMap))
-	for _, dependency := range serviceMap {
-		if dependency.Parent == "" {
-			continue
-		}
-		retMe = append(retMe, *dependency)
-	}
-
-	return &retMe, nil
-}
-
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
 	response := []model.ServiceMapDependencyResponseItem{}
