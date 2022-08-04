@@ -47,17 +47,16 @@ import (
 )
 
 const (
-	primaryNamespace         = "clickhouse"
-	archiveNamespace         = "clickhouse-archive"
-	signozTraceDBName        = "signoz_traces"
-	signozDurationMVTable    = "durationSort"
-	signozSpansTable         = "signoz_spans"
-	signozErrorIndexTable    = "signoz_error_index_v2"
-	signozTraceTableName     = "signoz_index_v2"
-	signozMetricDBName       = "signoz_metrics"
-	signozSampleTableName    = "samples_v2"
-	signozTSTableName        = "time_series_v2"
-	signozTopLevelOperations = "top_level_operations"
+	primaryNamespace      = "clickhouse"
+	archiveNamespace      = "clickhouse-archive"
+	signozTraceDBName     = "signoz_traces"
+	signozDurationMVTable = "durationSort"
+	signozSpansTable      = "signoz_spans"
+	signozErrorIndexTable = "signoz_error_index_v2"
+	signozTraceTableName  = "signoz_index_v2"
+	signozMetricDBName    = "signoz_metrics"
+	signozSampleTableName = "samples_v2"
+	signozTSTableName     = "time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -76,16 +75,17 @@ var (
 
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
-	db              clickhouse.Conn
-	localDB         *sqlx.DB
-	traceDB         string
-	operationsTable string
-	durationTable   string
-	indexTable      string
-	errorTable      string
-	spansTable      string
-	queryEngine     *promql.Engine
-	remoteStorage   *remote.Storage
+	db                      clickhouse.Conn
+	localDB                 *sqlx.DB
+	traceDB                 string
+	operationsTable         string
+	durationTable           string
+	indexTable              string
+	errorTable              string
+	spansTable              string
+	topLevelOperationsTable string
+	queryEngine             *promql.Engine
+	remoteStorage           *remote.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -112,16 +112,17 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	}
 
 	return &ClickHouseReader{
-		db:              db,
-		localDB:         localDB,
-		traceDB:         options.primary.TraceDB,
-		alertManager:    alertManager,
-		operationsTable: options.primary.OperationsTable,
-		indexTable:      options.primary.IndexTable,
-		errorTable:      options.primary.ErrorTable,
-		durationTable:   options.primary.DurationTable,
-		spansTable:      options.primary.SpansTable,
-		promConfigFile:  configFile,
+		db:                      db,
+		localDB:                 localDB,
+		traceDB:                 options.primary.TraceDB,
+		alertManager:            alertManager,
+		operationsTable:         options.primary.OperationsTable,
+		indexTable:              options.primary.IndexTable,
+		errorTable:              options.primary.ErrorTable,
+		durationTable:           options.primary.DurationTable,
+		spansTable:              options.primary.SpansTable,
+		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
+		promConfigFile:          configFile,
 	}
 }
 
@@ -661,7 +662,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context) (*map[string][]string, *model.ApiError) {
 
 	operations := map[string][]string{}
-	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.traceDB, signozTopLevelOperations)
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.traceDB, r.topLevelOperationsTable)
 
 	rows, err := r.db.Query(ctx, query)
 
