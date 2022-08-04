@@ -83,6 +83,7 @@ type ClickHouseReader struct {
 	indexTable              string
 	errorTable              string
 	spansTable              string
+	dependencyGraphTable    string
 	topLevelOperationsTable string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
@@ -121,6 +122,7 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 		errorTable:              options.primary.ErrorTable,
 		durationTable:           options.primary.DurationTable,
 		spansTable:              options.primary.SpansTable,
+		dependencyGraphTable:    options.primary.DependencyGraphTable,
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
 		promConfigFile:          configFile,
 	}
@@ -1698,48 +1700,50 @@ func interfaceArrayToStringArray(array []interface{}) []string {
 	return strArray
 }
 
-func (r *ClickHouseReader) GetServiceMapDependencies(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
-	serviceMapDependencyItems := []model.ServiceMapDependencyItem{}
+func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
-	query := fmt.Sprintf(`SELECT spanID, parentSpanID, serviceName FROM %s.%s WHERE timestamp>='%s' AND timestamp<='%s'`, r.traceDB, r.indexTable, strconv.FormatInt(queryParams.Start.UnixNano(), 10), strconv.FormatInt(queryParams.End.UnixNano(), 10))
+	response := []model.ServiceMapDependencyResponseItem{}
 
-	err := r.db.Select(ctx, &serviceMapDependencyItems, query)
+	args := []interface{}{}
+	args = append(args,
+		clickhouse.Named("start", uint64(queryParams.Start.Unix())),
+		clickhouse.Named("end", uint64(queryParams.End.Unix())),
+		clickhouse.Named("duration", uint64(queryParams.End.Unix()-queryParams.Start.Unix())),
+	)
 
-	zap.S().Info(query)
+	query := fmt.Sprintf(`
+		WITH
+			quantilesMergeState(0.5, 0.75, 0.9, 0.95, 0.99)(duration_quantiles_state) AS duration_quantiles_state,
+			finalizeAggregation(duration_quantiles_state) AS result
+		SELECT
+			src as parent,
+			dest as child,
+			result[1] AS p50,
+			result[2] AS p75,
+			result[3] AS p90,
+			result[4] AS p95,
+			result[5] AS p99,
+			sum(total_count) as callCount,
+			sum(total_count)/ @duration AS callRate,
+			sum(error_count)/sum(total_count) as errorRate
+		FROM %s.%s
+		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
+		GROUP BY
+			src,
+			dest`,
+		r.traceDB, r.dependencyGraphTable,
+	)
+
+	zap.S().Debug(query, args)
+
+	err := r.db.Select(ctx, &response, query, args...)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.S().Error("Error in processing sql query: ", err)
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	serviceMap := make(map[string]*model.ServiceMapDependencyResponseItem)
-
-	spanId2ServiceNameMap := make(map[string]string)
-	for i := range serviceMapDependencyItems {
-		spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId] = serviceMapDependencyItems[i].ServiceName
-	}
-	for i := range serviceMapDependencyItems {
-		parent2childServiceName := spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId] + "-" + spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId]
-		if _, ok := serviceMap[parent2childServiceName]; !ok {
-			serviceMap[parent2childServiceName] = &model.ServiceMapDependencyResponseItem{
-				Parent:    spanId2ServiceNameMap[serviceMapDependencyItems[i].ParentSpanId],
-				Child:     spanId2ServiceNameMap[serviceMapDependencyItems[i].SpanId],
-				CallCount: 1,
-			}
-		} else {
-			serviceMap[parent2childServiceName].CallCount++
-		}
-	}
-
-	retMe := make([]model.ServiceMapDependencyResponseItem, 0, len(serviceMap))
-	for _, dependency := range serviceMap {
-		if dependency.Parent == "" {
-			continue
-		}
-		retMe = append(retMe, *dependency)
-	}
-
-	return &retMe, nil
+	return &response, nil
 }
 
 func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, queryParams *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError) {
@@ -1979,7 +1983,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 
 	switch params.Type {
 	case constants.TraceTTL:
-		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable}
+		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + defaultDependencyGraphTable}
 		for _, tableName = range tableNameArray {
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {

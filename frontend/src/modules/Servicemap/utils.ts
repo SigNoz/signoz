@@ -1,12 +1,13 @@
 /*eslint-disable*/
 //@ts-nocheck
 
-import { cloneDeep, find, maxBy, uniq, uniqBy } from 'lodash-es';
+import { cloneDeep, find, maxBy, uniq, uniqBy, groupBy, sumBy } from 'lodash-es';
 import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;
 const DEFAULT_FONT_SIZE = 6;
+
 export const getDimensions = (num, highest) => {
 	const percentage = (num / highest) * 100;
 	const width = (percentage * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
@@ -18,19 +19,30 @@ export const getDimensions = (num, highest) => {
 };
 
 export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
-	const { items, services } = serviceMap;
+	const { items } = serviceMap;
+	const services = Object.values(groupBy(items, 'child')).map((e) => {
+		return {
+			serviceName: e[0].child,
+			errorRate: sumBy(e, 'errorRate'),
+			callRate: sumBy(e, 'callRate'),
+		}
+	});
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
 	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
+
 	const divNum = Number(
 		String(1).padEnd(highestCallCount.toString().length, '0'),
 	);
 
 	const links = cloneDeep(items).map((node) => {
-		const { parent, child, callCount } = node;
+		const { parent, child, callCount, callRate, errorRate, p99 } = node;
 		return {
 			source: parent,
 			target: child,
 			value: (100 - callCount / divNum) * 0.03,
+			callRate,
+			errorRate,
+			p99,
 		};
 	});
 	const uniqParent = uniqBy(cloneDeep(items), 'parent').map((e) => e.parent);
@@ -47,15 +59,10 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 				width: MIN_WIDTH,
 				color,
 				nodeVal: MIN_WIDTH,
-				callRate: 0,
-				errorRate: 0,
-				p99: 0,
 			};
 		}
 		if (service.errorRate > 0) {
 			color = isDarkMode ? '#DB836E' : '#F98989';
-		} else if (service.fourXXRate > 0) {
-			color = isDarkMode ? '#C79931' : '#F9DA7B';
 		}
 		const { fontSize, width } = getDimensions(service.callRate, highestCallRate);
 		return {
@@ -65,9 +72,6 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 			width,
 			color,
 			nodeVal: width,
-			callRate: service.callRate.toFixed(2),
-			errorRate: service.errorRate,
-			p99: service.p99,
 		};
 	});
 	return {
@@ -90,25 +94,31 @@ export const getZoomPx = (): number => {
 	return 190;
 };
 
-export const getTooltip = (node: {
+const getRound2DigitsAfterDecimal = (num: number) => {
+	if (num === 0) {
+		return 0;
+	}
+	return num.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/)[0];
+}
+
+export const getTooltip = (link: {
 	p99: number;
 	errorRate: number;
 	callRate: number;
 	id: string;
 }) => {
 	return `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
-								<div style="font-weight:bold; margin-bottom:16px;">${node.id}</div>
 								<div class="keyval">
 									<div class="key">P99 latency:</div>
-									<div class="val">${node.p99 / 1000000}ms</div>
+									<div class="val">${getRound2DigitsAfterDecimal(link.p99/ 1000000)}ms</div>
 								</div>
 								<div class="keyval">
 									<div class="key">Request:</div>
-									<div class="val">${node.callRate}/sec</div>
+									<div class="val">${getRound2DigitsAfterDecimal(link.callRate)}/sec</div>
 								</div>
 								<div class="keyval">
 									<div class="key">Error Rate:</div>
-									<div class="val">${node.errorRate}%</div>
+									<div class="val">${getRound2DigitsAfterDecimal(link.errorRate)}%</div>
 								</div>
 							</div>`;
 };
