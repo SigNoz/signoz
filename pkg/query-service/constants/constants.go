@@ -26,6 +26,7 @@ func IsTelemetryEnabled() bool {
 
 const TraceTTL = "traces"
 const MetricsTTL = "metrics"
+const LogsTTL = "logs"
 
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {

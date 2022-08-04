@@ -274,10 +274,14 @@ type GetTTLResponseItem struct {
 	MetricsMoveTime         int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
 	TracesTime              int    `json:"traces_ttl_duration_hrs,omitempty"`
 	TracesMoveTime          int    `json:"traces_move_ttl_duration_hrs,omitempty"`
+	LogsTime                int    `json:"logs_ttl_duration_hrs,omitempty"`
+	LogsMoveTime            int    `json:"logs_move_ttl_duration_hrs,omitempty"`
 	ExpectedMetricsTime     int    `json:"expected_metrics_ttl_duration_hrs,omitempty"`
 	ExpectedMetricsMoveTime int    `json:"expected_metrics_move_ttl_duration_hrs,omitempty"`
 	ExpectedTracesTime      int    `json:"expected_traces_ttl_duration_hrs,omitempty"`
 	ExpectedTracesMoveTime  int    `json:"expected_traces_move_ttl_duration_hrs,omitempty"`
+	ExpectedLogsTime        int    `json:"expected_logs_ttl_duration_hrs,omitempty"`
+	ExpectedLogsMoveTime    int    `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
 	Status                  string `json:"status"`
 }
 
