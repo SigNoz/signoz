@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -205,19 +206,13 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 	return returnArray
 }
 
-type ServiceMapDependencyItem struct {
-	SpanId       string `json:"spanId,omitempty" ch:"spanID"`
-	ParentSpanId string `json:"parentSpanId,omitempty" ch:"parentSpanID"`
-	ServiceName  string `json:"serviceName,omitempty" ch:"serviceName"`
-}
-
 type UsageItem struct {
 	Time      time.Time `json:"time,omitempty" ch:"time"`
 	Timestamp uint64    `json:"timestamp" ch:"timestamp"`
 	Count     uint64    `json:"count" ch:"count"`
 }
 
-type TopEndpointsItem struct {
+type TopOperationsItem struct {
 	Percentile50 float64 `json:"p50" ch:"p50"`
 	Percentile95 float64 `json:"p95" ch:"p95"`
 	Percentile99 float64 `json:"p99" ch:"p99"`
@@ -232,10 +227,18 @@ type TagFilters struct {
 type TagValues struct {
 	TagValues string `json:"tagValues" ch:"tagValues"`
 }
+
 type ServiceMapDependencyResponseItem struct {
-	Parent    string `json:"parent,omitempty" ch:"parent"`
-	Child     string `json:"child,omitempty" ch:"child"`
-	CallCount int    `json:"callCount,omitempty" ch:"callCount"`
+	Parent    string  `json:"parent" ch:"parent"`
+	Child     string  `json:"child" ch:"child"`
+	CallCount uint64  `json:"callCount" ch:"callCount"`
+	CallRate  float64 `json:"callRate" ch:"callRate"`
+	ErrorRate float64 `json:"errorRate" ch:"errorRate"`
+	P99       float64 `json:"p99" ch:"p99"`
+	P95       float64 `json:"p95" ch:"p95"`
+	P90       float64 `json:"p90" ch:"p90"`
+	P75       float64 `json:"p75" ch:"p75"`
+	P50       float64 `json:"p50" ch:"p50"`
 }
 
 type GetFilteredSpansAggregatesResponse struct {
@@ -402,4 +405,31 @@ type MetricPoint struct {
 func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
+}
+
+// MarshalJSON implements json.Marshaler.
+func (s *ServiceItem) MarshalJSON() ([]byte, error) {
+	// If a service didn't not send any data in the last interval duration
+	// it's values such as 99th percentile will return as NaN and
+	// json encoding doesn't support NaN
+	// We still want to show it in the UI, so we'll replace NaN with 0
+	type Alias ServiceItem
+	if math.IsInf(s.AvgDuration, 0) || math.IsNaN(s.AvgDuration) {
+		s.AvgDuration = 0
+	}
+	if math.IsInf(s.CallRate, 0) || math.IsNaN(s.CallRate) {
+		s.CallRate = 0
+	}
+	if math.IsInf(s.ErrorRate, 0) || math.IsNaN(s.ErrorRate) {
+		s.ErrorRate = 0
+	}
+	if math.IsInf(s.Percentile99, 0) || math.IsNaN(s.Percentile99) {
+		s.Percentile99 = 0
+	}
+
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	})
 }

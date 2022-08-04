@@ -1,7 +1,7 @@
 import getTriggeredApi from 'api/alerts/getTriggered';
 import useInterval from 'hooks/useInterval';
 import React, { useState } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import Filter, { Value } from './Filter';
 import FilteredTable from './FilteredTable';
