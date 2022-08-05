@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,6 +20,8 @@ import (
 
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/query-service/integrations/alertManager"
+	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/utils/labels"
 )
 
 // namespace for prom metrics
@@ -29,8 +32,15 @@ func ruleIdFromTaskName(n string) string {
 	return strings.Split(n, "-groupname")[0]
 }
 
-func prepareTaskName(ruleId int64) string {
-	return fmt.Sprintf("%d-groupname", ruleId)
+func prepareTaskName(ruleId interface{}) string {
+	switch ruleId.(type) {
+	case int, int64:
+		return fmt.Sprintf("%d-groupname", ruleId)
+	case string:
+		return fmt.Sprintf("%s-groupname", ruleId)
+	default:
+		return fmt.Sprintf("%v-groupname", ruleId)
+	}
 }
 
 // ManagerOptions bundles options for the Manager.
@@ -170,10 +180,11 @@ func (m *Manager) initiate() error {
 				continue
 			}
 		}
-
-		err := m.addTask(parsedRule, taskName)
-		if err != nil {
-			zap.S().Errorf("failed to load the rule definition (%s): %v", taskName, err)
+		if !parsedRule.Disabled {
+			err := m.addTask(parsedRule, taskName)
+			if err != nil {
+				zap.S().Errorf("failed to load the rule definition (%s): %v", taskName, err)
+			}
 		}
 	}
 
@@ -206,7 +217,7 @@ func (m *Manager) Stop() {
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ruleStr string, id string) error {
-	// todo(amol): fetch recent rule from db first
+
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
 	if len(errs) > 0 {
@@ -221,16 +232,9 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 	}
 
 	if !m.opts.DisableRules {
-		err = m.editTask(parsedRule, taskName)
-		if err != nil {
-			// todo(amol): using tx with sqllite3 is gets
-			// database locked. need to research and resolve this
-			//tx.Rollback()
-			return err
-		}
+		return m.syncRuleStateWithTask(taskName, parsedRule)
 	}
 
-	// return tx.Commit()
 	return nil
 }
 
@@ -249,8 +253,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	// it to finish the current iteration. Then copy it into the new group.
 	oldTask, ok := m.tasks[taskName]
 	if !ok {
-		zap.S().Errorf("msg:", "rule task not found, edit task failed", "\t task name:", taskName)
-		return errors.New("rule task not found, edit task failed")
+		zap.S().Warnf("msg:", "rule task not found, a new task will be created ", "\t task name:", taskName)
 	}
 
 	delete(m.tasks, taskName)
@@ -281,10 +284,7 @@ func (m *Manager) DeleteRule(id string) error {
 
 	taskName := prepareTaskName(int64(idInt))
 	if !m.opts.DisableRules {
-		if err := m.deleteTask(taskName); err != nil {
-			zap.S().Errorf("msg: ", "failed to unload the rule task from memory, please retry", "\t ruleid: ", id)
-			return err
-		}
+		m.deleteTask(taskName)
 	}
 
 	if _, _, err := m.ruleDB.DeleteRuleTx(id); err != nil {
@@ -295,7 +295,7 @@ func (m *Manager) DeleteRule(id string) error {
 	return nil
 }
 
-func (m *Manager) deleteTask(taskName string) error {
+func (m *Manager) deleteTask(taskName string) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -305,11 +305,8 @@ func (m *Manager) deleteTask(taskName string) error {
 		delete(m.tasks, taskName)
 		delete(m.rules, ruleIdFromTaskName(taskName))
 	} else {
-		zap.S().Errorf("msg:", "rule not found for deletion", "\t name:", taskName)
-		return fmt.Errorf("rule not found")
+		zap.S().Info("msg: ", "rule not found for deletion", "\t name:", taskName)
 	}
-
-	return nil
 }
 
 // CreateRule stores rule def into db and also
@@ -386,12 +383,8 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		// create a threshold rule
 		tr, err := NewThresholdRule(
 			ruleId,
-			r.Alert,
-			r.RuleCondition,
-			time.Duration(r.EvalWindow),
-			r.Labels,
-			r.Annotations,
-			r.Source,
+			r,
+			ThresholdRuleOpts{},
 		)
 
 		if err != nil {
@@ -411,14 +404,9 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		// create promql rule
 		pr, err := NewPromRule(
 			ruleId,
-			r.Alert,
-			r.RuleCondition,
-			time.Duration(r.EvalWindow),
-			r.Labels,
-			r.Annotations,
-			// required as promql engine works with logger and not zap
+			r,
 			log.With(m.logger, "alert", r.Alert),
-			r.Source,
+			PromRuleOpts{},
 		)
 
 		if err != nil {
@@ -526,6 +514,7 @@ func (m *Manager) prepareNotifyFunc() NotifyFunc {
 				Labels:       alert.Labels,
 				Annotations:  alert.Annotations,
 				GeneratorURL: generatorURL,
+				Receivers:    alert.Receivers,
 			}
 			if !alert.ResolvedAt.IsZero() {
 				a.EndsAt = alert.ResolvedAt
@@ -555,6 +544,9 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 	// fetch rules from DB
 	storedRules, err := m.ruleDB.GetStoredRules()
+	if err != nil {
+		return nil, err
+	}
 
 	// initiate response object
 	resp := make([]*GettableRule, 0)
@@ -571,7 +563,8 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 
 		// fetch state of rule from memory
 		if rm, ok := m.rules[ruleResponse.Id]; !ok {
-			zap.S().Warnf("msg:", "invalid rule id  found while fetching list of rules", "\t err:", err, "\t rule_id:", ruleResponse.Id)
+			ruleResponse.State = StateDisabled.String()
+			ruleResponse.Disabled = true
 		} else {
 			ruleResponse.State = rm.State().String()
 		}
@@ -592,4 +585,186 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 	}
 	r.Id = fmt.Sprintf("%d", s.Id)
 	return r, nil
+}
+
+// syncRuleStateWithTask ensures that the state of a stored rule matches
+// the task state. For example - if a stored rule is disabled, then
+// there is no task running against it.
+func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) error {
+
+	if rule.Disabled {
+		// check if rule has any task running
+		if _, ok := m.tasks[taskName]; ok {
+			// delete task from memory
+			m.deleteTask(taskName)
+		}
+	} else {
+		// check if rule has a task running
+		if _, ok := m.tasks[taskName]; !ok {
+			// rule has not task, start one
+			if err := m.addTask(rule, taskName); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// PatchRule supports attribute level changes to the rule definition unlike
+// EditRule, which updates entire rule definition in the DB.
+// the process:
+//  - get the latest rule from db
+//  - over write the patch attributes received in input (ruleStr)
+//  - re-deploy or undeploy task as necessary
+//  - update the patched rule in the DB
+func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error) {
+
+	if ruleId == "" {
+		return nil, fmt.Errorf("id is mandatory for patching rule")
+	}
+
+	taskName := prepareTaskName(ruleId)
+
+	// retrieve rule from DB
+	storedJSON, err := m.ruleDB.GetStoredRule(ruleId)
+	if err != nil {
+		zap.S().Errorf("msg:", "failed to get stored rule with given id", "\t error:", err)
+		return nil, err
+	}
+
+	// storedRule holds the current stored rule from DB
+	storedRule := PostableRule{}
+	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
+		zap.S().Errorf("msg:", "failed to get unmarshal stored rule with given id", "\t error:", err)
+		return nil, err
+	}
+
+	// patchedRule is combo of stored rule and patch received in the request
+	patchedRule, errs := parseIntoRule(storedRule, []byte(ruleStr), "json")
+	if len(errs) > 0 {
+		zap.S().Errorf("failed to parse rules:", errs)
+		// just one rule is being parsed so expect just one error
+		return nil, errs[0]
+	}
+
+	// deploy or un-deploy task according to patched (new) rule state
+	if err := m.syncRuleStateWithTask(taskName, patchedRule); err != nil {
+		zap.S().Errorf("failed to sync stored rule state with the task")
+		return nil, err
+	}
+
+	// prepare rule json to write to update db
+	patchedRuleBytes, err := json.Marshal(patchedRule)
+	if err != nil {
+		return nil, err
+	}
+
+	// write updated rule to db
+	if _, _, err = m.ruleDB.EditRuleTx(string(patchedRuleBytes), ruleId); err != nil {
+		// write failed, rollback task state
+
+		// restore task state from the stored rule
+		if err := m.syncRuleStateWithTask(taskName, &storedRule); err != nil {
+			zap.S().Errorf("msg: ", "failed to restore rule after patch failure", "\t error:", err)
+		}
+
+		return nil, err
+	}
+
+	// prepare http response
+	response := GettableRule{
+		Id:           ruleId,
+		PostableRule: *patchedRule,
+	}
+
+	// fetch state of rule from memory
+	if rm, ok := m.rules[ruleId]; !ok {
+		response.State = StateDisabled.String()
+		response.Disabled = true
+	} else {
+		response.State = rm.State().String()
+	}
+
+	return &response, nil
+}
+
+// TestNotification prepares a dummy rule for given rule parameters and
+// sends a test notification. returns alert count and error (if any)
+func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *model.ApiError) {
+
+	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+
+	if len(errs) > 0 {
+		zap.S().Errorf("msg: failed to parse rule from request:", "\t error: ", errs)
+		return 0, newApiErrorBadData(errs[0])
+	}
+
+	var alertname = parsedRule.Alert
+	if alertname == "" {
+		// alertname is not mandatory for testing, so picking
+		// a random string here
+		alertname = uuid.New().String()
+	}
+
+	// append name to indicate this is test alert
+	parsedRule.Alert = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
+
+	var rule Rule
+	var err error
+
+	if parsedRule.RuleType == RuleTypeThreshold {
+
+		// add special labels for test alerts
+		parsedRule.Labels[labels.AlertAdditionalInfoLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
+		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
+		parsedRule.Labels[labels.RuleSourceLabel] = ""
+		parsedRule.Labels[labels.AlertRuleIdLabel] = ""
+
+		// create a threshold rule
+		rule, err = NewThresholdRule(
+			alertname,
+			parsedRule,
+			ThresholdRuleOpts{
+				SendUnmatched: true,
+				SendAlways:    true,
+			},
+		)
+
+		if err != nil {
+			zap.S().Errorf("msg: failed to prepare a new threshold rule for test:", "\t error: ", err)
+			return 0, newApiErrorBadData(err)
+		}
+
+	} else if parsedRule.RuleType == RuleTypeProm {
+
+		// create promql rule
+		rule, err = NewPromRule(
+			alertname,
+			parsedRule,
+			log.With(m.logger, "alert", alertname),
+			PromRuleOpts{
+				SendAlways: true,
+			},
+		)
+
+		if err != nil {
+			zap.S().Errorf("msg: failed to prepare a new promql rule for test:", "\t error: ", err)
+			return 0, newApiErrorBadData(err)
+		}
+	} else {
+		return 0, newApiErrorBadData(fmt.Errorf("failed to derive ruletype with given information"))
+	}
+
+	// set timestamp to current utc time
+	ts := time.Now().UTC()
+
+	count, err := rule.Eval(ctx, ts, m.opts.Queriers)
+	if err != nil {
+		zap.S().Warn("msg:", "Evaluating rule failed", "\t rule:", rule, "\t err: ", err)
+		return 0, newApiErrorInternal(fmt.Errorf("rule evaluation failed"))
+	}
+	alertsFound := count.(int)
+	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), m.prepareNotifyFunc())
+
+	return alertsFound, nil
 }

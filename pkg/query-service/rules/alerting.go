@@ -2,11 +2,17 @@ package rules
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/utils/labels"
+	"net/url"
+	"strings"
 	"time"
 )
+
+// this file contains common structs and methods used by
+// rule engine
 
 // how long before re-sending the alert
 const resolvedRetention = 15 * time.Minute
@@ -17,6 +23,8 @@ const (
 
 	// AlertForStateMetricName is the metric name for 'for' state of alert.
 	alertForStateMetricName = "ALERTS_FOR_STATE"
+
+	TestAlertPostFix = "_TEST_ALERT"
 )
 
 type RuleType string
@@ -41,6 +49,7 @@ const (
 	StateInactive AlertState = iota
 	StatePending
 	StateFiring
+	StateDisabled
 )
 
 func (s AlertState) String() string {
@@ -51,6 +60,8 @@ func (s AlertState) String() string {
 		return "pending"
 	case StateFiring:
 		return "firing"
+	case StateDisabled:
+		return "disabled"
 	}
 	panic(errors.Errorf("unknown alert state: %d", s))
 }
@@ -63,6 +74,9 @@ type Alert struct {
 
 	GeneratorURL string
 
+	// list of preferred receivers, e.g. slack
+	Receivers []string
+
 	Value      float64
 	ActiveAt   time.Time
 	FiredAt    time.Time
@@ -71,7 +85,6 @@ type Alert struct {
 	ValidUntil time.Time
 }
 
-// todo(amol): need to review this with ankit
 func (a *Alert) needsSending(ts time.Time, resendDelay time.Duration) bool {
 	if a.State == StatePending {
 		return false
@@ -197,4 +210,31 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	default:
 		return errors.New("invalid duration")
 	}
+}
+
+// prepareRuleGeneratorURL creates an appropriate url
+// for the rule. the URL is sent in slack messages as well as
+// to other systems and allows backtracking to the rule definition
+// from the third party systems.
+func prepareRuleGeneratorURL(ruleId string, source string) string {
+	if source == "" {
+		return source
+	}
+
+	// check if source is a valid url
+	_, err := url.Parse(source)
+	if err != nil {
+		return ""
+	}
+	// since we capture window.location when a new rule is created
+	// we end up with rulesource host:port/alerts/new. in this case
+	// we want to replace new with rule id parameter
+
+	hasNew := strings.LastIndex(source, "new")
+	if hasNew > -1 {
+		ruleURL := fmt.Sprintf("%sedit?ruleId=%s", source[0:hasNew], ruleId)
+		return ruleURL
+	}
+
+	return source
 }

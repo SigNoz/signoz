@@ -40,6 +40,8 @@ type Alert struct {
 	StartsAt     time.Time `json:"startsAt,omitempty"`
 	EndsAt       time.Time `json:"endsAt,omitempty"`
 	GeneratorURL string    `json:"generatorURL,omitempty"`
+
+	Receivers []string `json:"receivers,omitempty"`
 }
 
 // Name returns the name of the alert. It is equivalent to the "alertname" label.
@@ -53,7 +55,7 @@ func (a *Alert) Hash() uint64 {
 }
 
 func (a *Alert) String() string {
-	s := fmt.Sprintf("%s[%s]", a.Name(), fmt.Sprintf("%016x", a.Hash())[:7])
+	s := fmt.Sprintf("%s[%s][%s]", a.Name(), fmt.Sprintf("%016x", a.Hash())[:7], a.Receivers)
 	if a.Resolved() {
 		return s + "[resolved]"
 	}

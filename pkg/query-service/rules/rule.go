@@ -19,6 +19,8 @@ type Rule interface {
 	State() AlertState
 	ActiveAlerts() []*Alert
 
+	PreferredChannels() []string
+
 	Eval(context.Context, time.Time, *Queriers) (interface{}, error)
 	String() string
 	// Query() string
