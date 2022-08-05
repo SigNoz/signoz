@@ -304,12 +304,14 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/channels", EditAccess(aH.createChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", EditAccess(aH.testChannel)).Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/rules", ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", EditAccess(aH.createRule)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.patchRule)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/testRule", EditAccess(aH.testRule)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
@@ -771,6 +773,32 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("Error in getting req body in test rule API\n", err)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, string(body))
+	if apiRrr != nil {
+		respondError(w, apiRrr, nil)
+		return
+	}
+
+	response := map[string]interface{}{
+		"alertCount": alertCount,
+		"message":    "notification sent",
+	}
+	aH.respond(w, response)
+}
+
 func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
@@ -963,6 +991,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	aH.respond(w, "rule successfully added")
 
 }
+
 func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
 
 }
