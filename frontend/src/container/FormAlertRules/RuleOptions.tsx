@@ -156,6 +156,8 @@ function RuleOptions({
 								...alertDef,
 								condition: {
 									...alertDef.condition,
+									op: alertDef.condition?.op || defaultCompareOp,
+									matchType: alertDef.condition?.matchType || defaultMatchType,
 									target: value as number,
 								},
 							});
