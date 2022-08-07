@@ -1,4 +1,15 @@
-import { Button, Card, Col, Form, Input, InputNumber, Row, Select } from 'antd';
+import {
+	Button,
+	Card,
+	Col,
+	Form,
+	Input,
+	InputNumber,
+	Row,
+	Select,
+	Typography,
+} from 'antd';
+import FormItem from 'antd/lib/form/FormItem';
 import TextArea from 'antd/lib/input/TextArea';
 import styled from 'styled-components';
 
@@ -67,21 +78,19 @@ export const InlineSelect = styled(Select)`
 `;
 
 export const SeveritySelect = styled(Select)`
-	width: 15% !important;
+	width: 25% !important;
 `;
 
 export const InputSmall = styled(Input)`
 	width: 40% !important;
 `;
 
-export const FormContainer = styled.div`
+export const FormContainer = styled(Card)`
 	padding: 2em;
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
-	background: #141414;
 	border-radius: 4px;
-	border: 1px solid #303030;
 `;
 
 export const ThresholdInput = styled(InputNumber)`
@@ -100,4 +109,12 @@ export const ThresholdInput = styled(InputNumber)`
 
 export const TextareaMedium = styled(TextArea)`
 	width: 70%;
+`;
+
+export const FormItemMedium = styled(FormItem)`
+	width: 70%;
+`;
+
+export const ChannelSelectTip = styled(Typography.Text)`
+	color: hsla(0, 0%, 100%, 0.3);
 `;

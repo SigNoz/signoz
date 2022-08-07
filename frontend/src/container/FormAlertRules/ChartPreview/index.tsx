@@ -21,7 +21,7 @@ export interface ChartPreviewProps {
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
 	headline?: JSX.Element;
-	threshold?: number;
+	threshold?: number | undefined;
 }
 
 function ChartPreview({
@@ -35,7 +35,7 @@ function ChartPreview({
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const staticLine: StaticLineProps | undefined =
-		threshold && threshold > 0
+		threshold !== undefined
 			? {
 					yMin: threshold,
 					yMax: threshold,
@@ -66,8 +66,12 @@ function ChartPreview({
 			}),
 		enabled:
 			query != null &&
-			(query.queryType !== EQueryType.PROM ||
-				(query.promQL?.length > 0 && query.promQL[0].query !== '')),
+			((query.queryType === EQueryType.PROM &&
+				query.promQL?.length > 0 &&
+				query.promQL[0].query !== '') ||
+				(query.queryType === EQueryType.QUERY_BUILDER &&
+					query.metricsBuilder?.queryBuilder?.length > 0 &&
+					query.metricsBuilder?.queryBuilder[0].metricName !== '')),
 	});
 
 	const chartDataSet = queryResponse.isError
@@ -113,7 +117,7 @@ ChartPreview.defaultProps = {
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,
-	threshold: 0,
+	threshold: undefined,
 };
 
 export default ChartPreview;
