@@ -64,9 +64,7 @@ function TableView({ logData }) {
 			title: 'Value',
 			dataIndex: 'value',
 			key: 'value',
-			ellipsis: {
-				showTitle: false,
-			},
+			ellipsis: false,
 			render: (field) => (
 				<CopyClipboardHOC textToCopy={field}>
 					<span style={{ color: orange[6] }}>{field}</span>
@@ -84,7 +82,8 @@ function TableView({ logData }) {
 				onChange={(e) => setFieldSearchInput(e.target.value)}
 			/>
 			<Table
-				// style={{ marginTop: '1rem', paddingBottom: '3rem' }}
+				// scroll={{ x: true }}
+				tableLayout='fixed'
 				dataSource={dataSource}
 				columns={columns}
 				pagination={false}

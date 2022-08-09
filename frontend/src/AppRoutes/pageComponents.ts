@@ -101,7 +101,7 @@ export const MySettings = Loadable(
 );
 
 export const Logs = Loadable(
-	() => import(/* webpackChunkName: "SomethingWentWrong" */ 'pages/Logs'),
+	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
 );
 
 export const Login = Loadable(

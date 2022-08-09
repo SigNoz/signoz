@@ -18,14 +18,16 @@ export const FieldContainer = styled(Typography.Text)`
 	color: ${blue[4]};
 `;
 
-export const Field = styled.div`
+export const Field = styled.div<{ isDarkMode: boolean }>`
 	border-radius: 0.5rem;
 	padding: 0.3rem 0.5rem;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	&:hover {
-		background: ${grey[7]};
+		background: ${({ isDarkMode }): string => {
+			return isDarkMode ? grey[7] : '#ddd';
+		}};
 	}
 `;
 

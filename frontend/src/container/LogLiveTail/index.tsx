@@ -25,6 +25,7 @@ import {
 	TOGGLE_LIVE_TAIL,
 } from 'types/actions/logs';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
+import AppReducer from 'types/reducer/app';
 import ILogsReducer from 'types/reducer/logs';
 
 import { TimePickerCard, TimePickerSelect } from './styles';
@@ -65,7 +66,7 @@ function LogLiveTail() {
 		liveTailStartRange,
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const dispatch = useDispatch();
 	const handleLiveTail = (toggleState: TLogsLiveTailState) => {
 		dispatch({
@@ -105,8 +106,8 @@ function LogLiveTail() {
 				timestampStart: timeStamp,
 				...(liveTailSourceRef.current && logs.length > 0
 					? {
-						idStart: logs[0].id,
-					}
+							idStart: logs[0].id,
+					  }
 					: {}),
 			});
 			const source = LiveTail(queryParams.toString());
@@ -135,7 +136,6 @@ function LogLiveTail() {
 			liveTailSourceRef.current = null;
 		}
 	}, [liveTail]);
-
 
 	const handleLiveTailStart = () => {
 		handleLiveTail('PLAYING');
@@ -175,7 +175,14 @@ function LogLiveTail() {
 							onClick={() => handleLiveTail('STOPPED')}
 							title="Exit live tail"
 						>
-							<ReloadOutlined />
+							<div
+								style={{
+									height: '0.8rem',
+									width: '0.8rem',
+									background: isDarkMode ? '#eee' : '#222',
+									borderRadius: '0.1rem',
+								}}
+							/>
 						</Button>
 					)}
 				</div>

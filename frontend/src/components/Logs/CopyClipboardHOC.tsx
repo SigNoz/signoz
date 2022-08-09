@@ -6,14 +6,14 @@ function CopyClipboardHOC({ textToCopy, children }) {
 	const [_state, setCopy] = useCopyToClipboard();
 
 	return (
-		<Button
-			size="small"
-			type="text"
+		<span
 			style={{
 				margin: 0,
 				padding: 0,
+				cursor: 'pointer'
 			}}
 			onClick={() => setCopy(textToCopy)}
+			role="button"
 		>
 			<Popover
 				placement="top"
@@ -21,7 +21,7 @@ function CopyClipboardHOC({ textToCopy, children }) {
 			>
 				{children}
 			</Popover>
-		</Button>
+		</span>
 	);
 }
 
