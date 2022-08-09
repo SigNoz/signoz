@@ -6,15 +6,17 @@ import {
 import { Button, Input } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import getStep from 'lib/getStep';
+import { debounce, throttle } from 'lodash-es';
 import React, {
 	memo,
+	useCallback,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useClickAway, useLocation } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -22,6 +24,7 @@ import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { TOGGLE_LIVE_TAIL } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -39,7 +42,7 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 	} = useSearchParser();
 	const [showDropDown, setShowDropDown] = useState(false);
 
-	const { logLinesPerPage, idEnd, idStart } = useSelector<
+	const { logLinesPerPage, idEnd, idStart, liveTail } = useSelector<
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
@@ -77,29 +80,44 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 		}
 	});
 	const { search } = useLocation();
-
+	const dispatch = useDispatch();
 	const handleSearch = (customQuery = ''): void => {
-		getLogs({
-			q: customQuery || queryString,
-			limit: logLinesPerPage,
-			orderBy: 'timestamp',
-			order: 'desc',
-			timestampStart: minTime,
-			timestampEnd: maxTime,
-			...(idStart ? { idStart } : {}),
-			...(idEnd ? { idEnd } : {}),
-		});
+		if (liveTail === 'PLAYING') {
+			dispatch({
+				type: TOGGLE_LIVE_TAIL,
+				payload: 'PAUSED',
+			});
+			setTimeout(
+				() =>
+					dispatch({
+						type: TOGGLE_LIVE_TAIL,
+						payload: liveTail,
+					}),
+				0,
+			);
+		} else {
+			getLogs({
+				q: customQuery || queryString,
+				limit: logLinesPerPage,
+				orderBy: 'timestamp',
+				order: 'desc',
+				timestampStart: minTime,
+				timestampEnd: maxTime,
+				...(idStart ? { idStart } : {}),
+				...(idEnd ? { idEnd } : {}),
+			});
 
-		getLogsAggregate({
-			timestampStart: minTime,
-			timestampEnd: maxTime,
-			step: getStep({
-				start: minTime,
-				end: maxTime,
-				inputFormat: 'ns',
-			}),
-			q: customQuery || queryString,
-		});
+			getLogsAggregate({
+				timestampStart: minTime,
+				timestampEnd: maxTime,
+				step: getStep({
+					start: minTime,
+					end: maxTime,
+					inputFormat: 'ns',
+				}),
+				q: customQuery || queryString,
+			});
+		}
 		setShowDropDown(false);
 	};
 
@@ -109,7 +127,7 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 
 	useEffect(() => {
 		const urlQueryString = urlQuery.get('q');
-		if (urlQuery !== null) handleSearch(urlQueryString);
+		if (urlQueryString !== null) handleSearch(urlQueryString);
 	}, []);
 
 	return (
@@ -118,7 +136,9 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 				placeholder="Search Filter"
 				onFocus={(): void => setShowDropDown(true)}
 				value={queryString}
-				onChange={(e): void => updateQueryString(e.target.value)}
+				onChange={(e): void => {
+					updateQueryString(e.target.value);
+				}}
 				onSearch={handleSearch}
 			/>
 			<div style={{ position: 'relative' }}>

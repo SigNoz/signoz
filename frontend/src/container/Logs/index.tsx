@@ -37,9 +37,10 @@ function Logs({ getLogsFields }) {
 
 	return (
 		<div style={{ position: 'relative' }}>
-			<Row>
+			<Row style={{ justifyContent: 'center', alignItems: 'center' }}>
 				<SearchFilter />
-				{/* <LogLiveTail  /> */}
+				<Divider type='vertical' style={{ height: '2rem' }} />
+				<LogLiveTail />
 			</Row>
 			<LogsAggregate />
 			<LogControls />

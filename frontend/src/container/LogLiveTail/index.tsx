@@ -1,80 +1,205 @@
-import { Button } from 'antd';
+import { green, red } from '@ant-design/colors';
+import {
+	ArrowRightOutlined,
+	IeSquareFilled,
+	PauseOutlined,
+	PlayCircleOutlined,
+	PlaySquareFilled,
+	ReloadOutlined,
+	StopFilled,
+} from '@ant-design/icons';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { Button, Card, Row, Select, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { LiveTail } from 'api/logs/livetail';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import React, { useEffect, useRef } from 'react';
+import dayjs from 'dayjs';
+import { debounce, throttle } from 'lodash-es';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { PUSH_LIVE_TAIL_EVENT, TOGGLE_LIVE_TAIL } from 'types/actions/logs';
+import {
+	FLUSH_LOGS,
+	PUSH_LIVE_TAIL_EVENT,
+	SET_LIVE_TAIL_START_TIME,
+	TOGGLE_LIVE_TAIL,
+} from 'types/actions/logs';
+import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import ILogsReducer from 'types/reducer/logs';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
+
+import { TimePickerCard, TimePickerSelect } from './styles';
+
+const { Option } = Select;
+
+const TIME_PICKER_OPTIONS = [
+	{
+		value: 5,
+		label: '5m',
+	},
+	{
+		value: 15,
+		label: '15m',
+	},
+	{
+		value: 30,
+		label: '30m',
+	},
+	{
+		value: 60,
+		label: '1hr',
+	},
+	{
+		value: 360,
+		label: '6hrs',
+	},
+	{
+		value: 720,
+		label: '12hrs',
+	},
+];
+
 function LogLiveTail() {
-	const { liveTail } = useSelector<AppState, ILogsReducer>(
-		(state) => state.logs,
-	);
+	const {
+		liveTail,
+		searchFilter: { queryString },
+		liveTailStartRange,
+		logs,
+	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
 	const dispatch = useDispatch();
-
-	const handleLiveTail = (toggleState) => {
+	const handleLiveTail = (toggleState: TLogsLiveTailState) => {
 		dispatch({
 			type: TOGGLE_LIVE_TAIL,
 			payload: toggleState,
 		});
 	};
-	const pushLiveLog = (ev) => {
-		dispatch({
-			type: PUSH_LIVE_TAIL_EVENT,
-			payload: {
-				body: JSON.parse(ev.data)
-			}
-		})
-	}
+
+	const batchedEventsRef = useRef([]);
+
+	const pushLiveLog = useCallback(
+		throttle(() => {
+			dispatch({
+				type: PUSH_LIVE_TAIL_EVENT,
+				payload: batchedEventsRef.current.reverse(),
+			});
+			// console.log('DISPATCH', batchedEventsRef.current.length);
+			batchedEventsRef.current = [];
+		}, 1500),
+		[],
+	);
+
+	const batchLiveLog = (e) => {
+		// console.log('EVENT BATCHED');
+		batchedEventsRef.current.push(JSON.parse(e.data));
+		pushLiveLog();
+	};
+
+	// This ref depicts thats whether the live tail is played from paused state or not.
 	const liveTailSourceRef = useRef(null);
 	useEffect(() => {
-		if (liveTail) {
-			// console.log('Starting Live Tail');
-			// const source = LiveTail();
-			// liveTailSourceRef.current = source;
-			// source.addEventListener(
-			// 	'message',
-			// 	(e) => {
-			// 		console.log(e);
-			// 	},
-			// 	false,
-			// );
-			// source.onmessage = function (e) {
-			// 	console.log('Event received', e)
-			// dispatch({
-			// 	type: PUSH_LIVE_TAIL_EVENT,
-			// 	payload: {
-			// 		body: JSON.parse(e.data)
-			// 	}
-			// })
-			// };
-			// source.onopen = function (event) {
-			// 	console.log('open event');
-			// 	console.log(event);
-			// };
-			// source.onerror = function (event) {
-			// 	console.log('error event');
-			// 	console.log(event);
-			// 	source.close();
-			// };
+		if (liveTail === 'PLAYING') {
+			// console.log('Starting Live Tail', logs.length);
+			const timeStamp = dayjs().subtract(liveTailStartRange, 'minute').valueOf();
+			const queryParams = new URLSearchParams({
+				...(queryString ? { q: queryString } : {}),
+				timestampStart: timeStamp,
+				...(liveTailSourceRef.current && logs.length > 0
+					? {
+						idStart: logs[0].id,
+					}
+					: {}),
+			});
+			const source = LiveTail(queryParams.toString());
+			liveTailSourceRef.current = source;
+			source.onmessage = function (e) {
+				// pushLiveLog(e)
+				batchLiveLog(e);
+			};
+			source.onopen = function (event) {
+				// console.log('open event');
+				// console.log(event);
+			};
+			source.onerror = function (event) {
+				// console.log(event);
+				source.close();
+				dispatch({
+					type: TOGGLE_LIVE_TAIL,
+					payload: false,
+				});
+			};
 		} else if (liveTailSourceRef.current) {
-			console.log('Stopping Live Tail');
 			liveTailSourceRef.current?.close();
+		}
+
+		if (liveTail === 'STOPPED') {
 			liveTailSourceRef.current = null;
 		}
 	}, [liveTail]);
 
+
+	const handleLiveTailStart = () => {
+		handleLiveTail('PLAYING');
+		if (!liveTailSourceRef.current) {
+			dispatch({
+				type: FLUSH_LOGS,
+			});
+		}
+	};
 	return (
-		<div style={{ padding: '0 0.5rem' }}>
-			{liveTail ? (
-				<Button onClick={() => handleLiveTail(false)}>Pause</Button>
-			) : (
-				<Button onClick={() => handleLiveTail(true)}>Play</Button>
-			)}
-		</div>
+		<TimePickerCard>
+			<Row
+				style={{ gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}
+			>
+				<div>
+					{liveTail === 'PLAYING' ? (
+						<Button
+							type="primary"
+							onClick={() => handleLiveTail('PAUSED')}
+							title="Pause live tail"
+							style={{ background: green[6] }}
+						>
+							Live <PauseOutlined />
+						</Button>
+					) : (
+						<Button
+							type="primary"
+							onClick={handleLiveTailStart}
+							title="Start live tail"
+						>
+							Live <PlayCircleOutlined />
+						</Button>
+					)}
+					{liveTail !== 'STOPPED' && (
+						<Button
+							type="dashed"
+							onClick={() => handleLiveTail('STOPPED')}
+							title="Exit live tail"
+						>
+							<ReloadOutlined />
+						</Button>
+					)}
+				</div>
+
+				<TimePickerSelect
+					disabled={!(liveTail === 'STOPPED')}
+					value={liveTailStartRange}
+					onChange={(value) => {
+						dispatch({
+							type: SET_LIVE_TAIL_START_TIME,
+							payload: value,
+						});
+					}}
+				>
+					{TIME_PICKER_OPTIONS.map((optionData) => (
+						<Option key={optionData.label} value={optionData.value}>
+							{optionData.label} ago
+						</Option>
+					))}
+				</TimePickerSelect>
+				<ArrowRightOutlined />
+				<Typography.Text style={{ paddingRight: '0.5rem' }}>now</Typography.Text>
+			</Row>
+		</TimePickerCard>
 	);
 }
 

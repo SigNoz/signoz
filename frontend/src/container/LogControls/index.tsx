@@ -25,7 +25,7 @@ import { Container } from './styles';
 
 const { Option } = Select;
 
-const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
+const ITEMS_PER_PAGE_OPTIONS = [25, 50, 100, 200];
 
 function LogControls({ getLogs }) {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -35,6 +35,7 @@ function LogControls({ getLogs }) {
 		logLinesPerPage,
 		idStart,
 		idEnd,
+		liveTail,
 		searchFilter: { queryString },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const dispatch = useDispatch();
@@ -51,16 +52,17 @@ function LogControls({ getLogs }) {
 			type: RESET_ID_START_AND_END,
 		});
 
-		getLogs({
-			q: queryString,
-			limit: logLinesPerPage,
-			orderBy: 'timestamp',
-			order: 'desc',
-			timestampStart: minTime,
-			timestampEnd: maxTime,
-			...(idStart ? { idStart } : {}),
-			...(idEnd ? { idEnd } : {}),
-		});
+		if (liveTail === 'STOPPED')
+			getLogs({
+				q: queryString,
+				limit: logLinesPerPage,
+				orderBy: 'timestamp',
+				order: 'desc',
+				timestampStart: minTime,
+				timestampEnd: maxTime,
+				...(idStart ? { idStart } : {}),
+				...(idEnd ? { idEnd } : {}),
+			});
 	};
 
 	const handleNavigatePrevious = () => {
@@ -74,12 +76,15 @@ function LogControls({ getLogs }) {
 		});
 	};
 
+	if (liveTail !== 'STOPPED') {
+		return null;
+	}
 	return (
 		<Container>
 			<Button size="small" type="link" onClick={handleGoToLatest}>
 				<FastBackwardOutlined /> Go to latest
 			</Button>
-			<Divider type='vertical' />
+			<Divider type="vertical" />
 			<Button size="small" type="link" onClick={handleNavigatePrevious}>
 				<LeftOutlined /> Previous
 			</Button>

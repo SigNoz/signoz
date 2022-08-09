@@ -1,22 +1,25 @@
 import { parseQuery } from 'lib/logql';
 import {
 	ADD_SEARCH_FIELD_QUERY_STRING,
+	FLUSH_LOGS,
 	GET_FIELDS,
 	GET_NEXT_LOG_LINES,
 	GET_PREVIOUS_LOG_LINES,
 	LogsActions,
+	PUSH_LIVE_TAIL_EVENT,
 	RESET_ID_START_AND_END,
+	SET_DETAILED_LOG_DATA,
 	SET_FIELDS,
 	SET_LOADING,
 	SET_LOADING_AGGREGATE,
 	SET_LOG_LINES_PER_PAGE,
 	SET_LOGS,
+	SET_LOGS_AGGREGATE_SERIES,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
-	SET_LOGS_AGGREGATE_SERIES,
-	SET_DETAILED_LOG_DATA,
+	STOP_LIVE_TAIL,
 	TOGGLE_LIVE_TAIL,
-	PUSH_LIVE_TAIL_EVENT,
+	SET_LIVE_TAIL_START_TIME,
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -30,14 +33,15 @@ const initialState: ILogsReducer = {
 		parsedQuery: [],
 	},
 	logs: [],
-	logLinesPerPage: 10,
+	logLinesPerPage: 25,
 	idEnd: '',
 	idStart: '',
 	isLoading: false,
 	isLoadingAggregate: false,
 	logsAggregate: [],
 	detailedLog: null,
-	liveTail: false,
+	liveTail: 'STOPPED',
+	liveTailStartRange: 5,
 	// detailedLog: {
 	// 	timestamp: 1659360016955270100,
 	// 	id: '2CkBCauK8m3nkyKR19YhCw6WfvD',
@@ -193,16 +197,34 @@ export const LogsReducer = (
 			return {
 				...state,
 				liveTail: action.payload,
+			};
+		}
+		case STOP_LIVE_TAIL: {
+			return {
+				...state,
+				logs: [],
+				liveTail: 'STOPPED',
+			};
+		}
+		case PUSH_LIVE_TAIL_EVENT: {
+			return {
+				...state,
+				logs: action.payload.concat(state.logs).slice(0, 100),
+			};
+		}
+		case SET_LIVE_TAIL_START_TIME: {
+			return {
+				...state,
+				liveTailStartRange: action.payload,
+			};
+		}
+		case FLUSH_LOGS: {
+			return {
+				...state,
 				logs: [],
 			};
 		}
 
-		case PUSH_LIVE_TAIL_EVENT: {
-			return {
-				...state,
-				logs: [action.payload].concat(state.logs),
-			};
-		}
 		default:
 			return state;
 	}

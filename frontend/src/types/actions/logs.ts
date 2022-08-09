@@ -9,6 +9,7 @@
 
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
+import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
 import { ILogsAggregate } from 'types/api/logs/logAggregate';
 
@@ -39,7 +40,9 @@ export const SET_LOGS_AGGREGATE_SERIES = 'LOGS_SET_LOGS_AGGREGATE_SERIES';
 export const SET_DETAILED_LOG_DATA = 'LOGS_SET_DETAILED_LOG_DATA';
 export const TOGGLE_LIVE_TAIL = 'LOGS_TOGGLE_LIVE_TAIL';
 export const PUSH_LIVE_TAIL_EVENT = 'LOGS_PUSH_LIVE_TAIL_EVENT';
-
+export const STOP_LIVE_TAIL = 'LOGS_STOP_LIVE_TAIL';
+export const FLUSH_LOGS = 'LOGS_FLUSH_LOGS';
+export const SET_LIVE_TAIL_START_TIME = 'LOGS_SET_LIVE_TAIL_START_TIME';
 export interface GetFields {
 	type: typeof GET_FIELDS;
 }
@@ -104,11 +107,21 @@ export interface SetDetailedLogData {
 
 export interface ToggleLiveTail {
 	type: typeof TOGGLE_LIVE_TAIL;
-	payload: boolean;
+	payload: TLogsLiveTailState;
 }
 export interface PushLiveTailEvent {
 	type: typeof PUSH_LIVE_TAIL_EVENT;
-	payload: ILog;
+	payload: ILog[];
+}
+export interface StopLiveTail {
+	type: typeof STOP_LIVE_TAIL;
+}
+export interface FlushLogs {
+	type: typeof FLUSH_LOGS;
+}
+export interface SetLiveTailStartTime {
+	type: typeof SET_LIVE_TAIL_START_TIME;
+	payload: number;
 }
 // export interface GetServiceListLoading {
 // 	type:
@@ -164,4 +177,7 @@ export type LogsActions =
 	| SetLogsAggregateSeries
 	| SetDetailedLogData
 	| ToggleLiveTail
-	| PushLiveTailEvent;
+	| PushLiveTailEvent
+	| StopLiveTail
+	| FlushLogs
+	| SetLiveTailStartTime;

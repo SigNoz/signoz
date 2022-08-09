@@ -1,14 +1,18 @@
+import 'eventsource/example/eventsource-polyfill';
+
+import apiV1 from 'api/apiV1';
 import getLocalStorageKey from 'api/browser/localstorage/get';
+import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-export const LiveTail = () => {
+export const LiveTail = (queryParams) => {
 	const dict = {
 		headers: {
 			Authorization: `Bearer ${getLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN)}`,
 		},
 	};
-	return new EventSource(
-		'http://localhost:3000/subscription/topic%20B',
-		// 'http://44.205.25.234:3301/api/v1/logs/tail',
+	return new EventSourcePolyfill(
+		`${ENVIRONMENT.baseURL}${apiV1}/logs/tail?${queryParams}`,
+		dict,
 	);
 };

@@ -1,5 +1,6 @@
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IFields } from 'types/api/logs/fields';
+import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
 import { ILogsAggregate } from 'types/api/logs/logAggregate';
 
@@ -18,7 +19,8 @@ export interface ILogsReducer {
 	logsAggregate: ILogsAggregate[];
 	selectedLogId: string;
 	detailedLog: null | ILog;
-	liveTail: boolean;
+	liveTail: TLogsLiveTailState;
+	liveTailStartRange: number; // time in minutes
 }
 
 export default ILogsReducer;

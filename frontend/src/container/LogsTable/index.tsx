@@ -32,20 +32,20 @@ function LogsTable({ getLogs }) {
 		(state) => state.globalTime,
 	);
 
-
 	useEffect(() => {
-		getLogs({
-			q: queryString,
-			limit: logLinesPerPage,
-			orderBy: 'timestamp',
-			order: 'desc',
-			timestampStart: minTime,
-			timestampEnd: maxTime,
-			...(idStart ? { idStart } : {}),
-			...(idEnd ? { idEnd } : {}),
-		});
+		if (liveTail === 'STOPPED')
+			getLogs({
+				q: queryString,
+				limit: logLinesPerPage,
+				orderBy: 'timestamp',
+				order: 'desc',
+				timestampStart: minTime,
+				timestampEnd: maxTime,
+				...(idStart ? { idStart } : {}),
+				...(idEnd ? { idEnd } : {}),
+			});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [getLogs, idEnd, idStart, logLinesPerPage, maxTime, minTime]);
+	}, [getLogs, idEnd, idStart, logLinesPerPage, maxTime, minTime, liveTail]);
 
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;
@@ -64,6 +64,8 @@ function LogsTable({ getLogs }) {
 			</Heading>
 			{Array.isArray(logs) && logs.length > 0 ? (
 				map(logs, (log) => <LogItem key={log.id} logData={log} />)
+			) : liveTail === 'PLAYING' ? (
+				<span>Getting live logs...</span>
 			) : (
 				<span>No log lines found</span>
 			)}
