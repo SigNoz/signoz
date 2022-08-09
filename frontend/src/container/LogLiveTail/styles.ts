@@ -9,9 +9,4 @@ export const TimePickerCard = styled(Card)`
 
 export const TimePickerSelect = styled(Select)`
 	min-width: 100px;
-	.ant-select-selector {
-		outline: none;
-		border: none !important;
-		padding: 0;
-	}
 `;

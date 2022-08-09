@@ -39,6 +39,9 @@ function LogsAggregate({ getLogsAggregate }) {
 		// console.log('LIVE TAIL LOG AGG', liveTail)
 		switch (liveTail) {
 			case 'STOPPED': {
+				if (reFetchIntervalRef.current) {
+					clearInterval(reFetchIntervalRef.current);
+				}
 				reFetchIntervalRef.current = null;
 				getLogsAggregate({
 					timestampStart: minTime,
@@ -107,7 +110,13 @@ function LogsAggregate({ getLogsAggregate }) {
 			{isLoadingAggregate ? (
 				<Spinner size="default" height="100%" />
 			) : (
-				<Graph name="usage" data={data} type="bar" containerHeight="100%" />
+				<Graph
+					name="usage"
+					data={data}
+					type="bar"
+					containerHeight="100%"
+					animate={false}
+				/>
 			)}
 		</Container>
 	);

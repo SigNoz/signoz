@@ -9,13 +9,19 @@ import {
 	StopFilled,
 } from '@ant-design/icons';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { Button, Card, Row, Select, Typography } from 'antd';
+import { Button, Card, Popover, Row, Select, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { LiveTail } from 'api/logs/livetail';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import { debounce, throttle } from 'lodash-es';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
@@ -28,6 +34,7 @@ import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import AppReducer from 'types/reducer/app';
 import ILogsReducer from 'types/reducer/logs';
 
+import OptionIcon from './OptionIcon';
 import { TimePickerCard, TimePickerSelect } from './styles';
 
 const { Option } = Select;
@@ -106,8 +113,8 @@ function LogLiveTail() {
 				timestampStart: timeStamp,
 				...(liveTailSourceRef.current && logs.length > 0
 					? {
-							idStart: logs[0].id,
-					  }
+						idStart: logs[0].id,
+					}
 					: {}),
 			});
 			const source = LiveTail(queryParams.toString());
@@ -145,6 +152,28 @@ function LogLiveTail() {
 			});
 		}
 	};
+
+	const OptionsPopOverContent = useMemo(
+		() => (
+			<TimePickerSelect
+				disabled={!(liveTail === 'STOPPED')}
+				value={liveTailStartRange}
+				onChange={(value) => {
+					dispatch({
+						type: SET_LIVE_TAIL_START_TIME,
+						payload: value,
+					});
+				}}
+			>
+				{TIME_PICKER_OPTIONS.map((optionData) => (
+					<Option key={optionData.label} value={optionData.value}>
+						{optionData.label} ago
+					</Option>
+				))}
+			</TimePickerSelect>
+		),
+		[dispatch, liveTail, liveTailStartRange],
+	);
 	return (
 		<TimePickerCard>
 			<Row
@@ -158,7 +187,7 @@ function LogLiveTail() {
 							title="Pause live tail"
 							style={{ background: green[6] }}
 						>
-							Live <PauseOutlined />
+							Pause <PauseOutlined />
 						</Button>
 					) : (
 						<Button
@@ -166,7 +195,7 @@ function LogLiveTail() {
 							onClick={handleLiveTailStart}
 							title="Start live tail"
 						>
-							Live <PlayCircleOutlined />
+							Go Live <PlayCircleOutlined />
 						</Button>
 					)}
 					{liveTail !== 'STOPPED' && (
@@ -187,24 +216,23 @@ function LogLiveTail() {
 					)}
 				</div>
 
-				<TimePickerSelect
-					disabled={!(liveTail === 'STOPPED')}
-					value={liveTailStartRange}
-					onChange={(value) => {
-						dispatch({
-							type: SET_LIVE_TAIL_START_TIME,
-							payload: value,
-						});
-					}}
+				<Popover
+					placement="bottomRight"
+					title="Select Live Tail Timing"
+					trigger="click"
+					content={OptionsPopOverContent}
 				>
-					{TIME_PICKER_OPTIONS.map((optionData) => (
-						<Option key={optionData.label} value={optionData.value}>
-							{optionData.label} ago
-						</Option>
-					))}
-				</TimePickerSelect>
-				<ArrowRightOutlined />
-				<Typography.Text style={{ paddingRight: '0.5rem' }}>now</Typography.Text>
+					<span
+						style={{
+							padding: '0.3rem 0.4rem 0.3rem 0',
+							display: 'flex',
+							justifyContent: 'center',
+							alignContent: 'center',
+						}}
+					>
+						<OptionIcon isDarkMode={isDarkMode} />
+					</span>
+				</Popover>
 			</Row>
 		</TimePickerCard>
 	);
