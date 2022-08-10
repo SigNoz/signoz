@@ -18,6 +18,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type PromRuleOpts struct {
+	// SendAlways will send alert irresepective of resendDelay
+	// or other params
+	SendAlways bool
+}
+
 type PromRule struct {
 	id            string
 	name          string
@@ -43,12 +49,14 @@ type PromRule struct {
 	active map[uint64]*Alert
 
 	logger log.Logger
+	opts   PromRuleOpts
 }
 
 func NewPromRule(
 	id string,
 	postableRule *PostableRule,
 	logger log.Logger,
+	opts PromRuleOpts,
 ) (*PromRule, error) {
 
 	if postableRule.RuleCondition == nil {
@@ -69,13 +77,20 @@ func NewPromRule(
 		health:            HealthUnknown,
 		active:            map[uint64]*Alert{},
 		logger:            logger,
+		opts:              opts,
 	}
 
 	if int64(p.evalWindow) == 0 {
 		p.evalWindow = 5 * time.Minute
 	}
+	query, err := p.getPqlQuery()
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", p.name, "\t condition:", p.ruleCondition.String())
+	if err != nil {
+		// can not generate a valid prom QL query
+		return nil, err
+	}
+
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", p.name, "\t condition:", p.ruleCondition.String(), "\t query:", query)
 
 	return &p, nil
 }
@@ -172,24 +187,6 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 	return s
 }
 
-// forStateSample returns the sample for ALERTS_FOR_STATE.
-func (r *PromRule) forStateSample(alert *Alert, ts time.Time, v float64) pql.Sample {
-	lb := plabels.NewBuilder(r.labels)
-	alertLabels := alert.Labels.(plabels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(plabels.MetricName, alertForStateMetricName)
-	lb.Set(plabels.AlertName, r.name)
-
-	s := pql.Sample{
-		Metric: lb.Labels(),
-		Point:  pql.Point{T: timestamp.FromTime(ts), V: v},
-	}
-	return s
-}
-
 // GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
 func (r *PromRule) GetEvaluationDuration() time.Duration {
 	r.mtx.Lock()
@@ -265,7 +262,7 @@ func (r *PromRule) ForEachActiveAlert(f func(*Alert)) {
 func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
-		if alert.needsSending(ts, resendDelay) {
+		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			// Allow for two Eval or Alertmanager send failures.
 			delta := resendDelay
@@ -289,7 +286,6 @@ func (r *PromRule) getPqlQuery() (string, error) {
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
-
 				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
 					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), *r.ruleCondition.Target)
 					return query, nil
@@ -321,7 +317,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var vec pql.Vector
+
 	var alerts = make(map[uint64]*Alert, len(res))
 
 	for _, smpl := range res {
@@ -358,6 +354,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
 		}
+
 		lb.Set(qslabels.AlertNameLabel, r.Name())
 		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
 		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
@@ -429,8 +426,8 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	}
 	r.health = HealthGood
 	r.lastError = err
-	return vec, nil
 
+	return len(r.active), nil
 }
 
 func (r *PromRule) String() string {
