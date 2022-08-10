@@ -92,8 +92,7 @@ exporters:
 
   # uncomment the exporter below to export logs
   # clickhouselogsexporter:
-  #   dsn: tcp://localhost:9000 
-  #   # ttl_days: 3
+  #   dsn: tcp://clickhouse:9000/
   #   timeout: 5s
   #   sending_queue:
   #     queue_size: 100
