@@ -113,7 +113,7 @@ function LogLiveTail() {
 				timestampStart: timeStamp,
 				...(liveTailSourceRef.current && logs.length > 0
 					? {
-						idStart: logs[0].id,
+						idGt: logs[0].id,
 					}
 					: {}),
 			});
@@ -156,7 +156,7 @@ function LogLiveTail() {
 	const OptionsPopOverContent = useMemo(
 		() => (
 			<TimePickerSelect
-				disabled={!(liveTail === 'STOPPED')}
+				disabled={liveTail === 'PLAYING'}
 				value={liveTailStartRange}
 				onChange={(value) => {
 					dispatch({
@@ -167,7 +167,7 @@ function LogLiveTail() {
 			>
 				{TIME_PICKER_OPTIONS.map((optionData) => (
 					<Option key={optionData.label} value={optionData.value}>
-						{optionData.label} ago
+						Last {optionData.label}
 					</Option>
 				))}
 			</TimePickerSelect>

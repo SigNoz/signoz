@@ -41,8 +41,8 @@ function LogsTable({ getLogs }) {
 				order: 'desc',
 				timestampStart: minTime,
 				timestampEnd: maxTime,
-				...(idStart ? { idStart } : {}),
-				...(idEnd ? { idEnd } : {}),
+				...(idStart ? { idGt: idStart } : {}),
+				...(idEnd ? { idLt: idEnd } : {}),
 			});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [getLogs, idEnd, idStart, logLinesPerPage, maxTime, minTime, liveTail]);

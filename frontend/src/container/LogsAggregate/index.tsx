@@ -52,8 +52,8 @@ function LogsAggregate({ getLogsAggregate }) {
 						inputFormat: 'ns',
 					}),
 					q: queryString,
-					...(idStart ? { idStart } : {}),
-					...(idEnd ? { idEnd } : {}),
+					...(idStart ? { idGt: idStart } : {}),
+					...(idEnd ? { idLt: idEnd } : {}),
 				});
 				break;
 			}
@@ -72,8 +72,8 @@ function LogsAggregate({ getLogsAggregate }) {
 							inputFormat: 'ns',
 						}),
 						q: queryString,
-						...(idStart ? { idStart } : {}),
-						...(idEnd ? { idEnd } : {}),
+						...(idStart ? {idGt:  idStart } : {}),
+						...(idEnd ? { idLt: idEnd } : {}),
 					});
 				};
 				aggregateCall();

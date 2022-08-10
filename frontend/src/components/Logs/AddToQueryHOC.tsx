@@ -57,8 +57,8 @@ function AddToQueryHOC({
 				order: 'desc',
 				timestampStart: minTime,
 				timestampEnd: maxTime,
-				...(idStart ? { idStart } : {}),
-				...(idEnd ? { idEnd } : {}),
+				...(idStart ? { idGt: idStart } : {}),
+				...(idEnd ? { idLt: idEnd } : {}),
 			});
 			getLogsAggregate({
 				timestampStart: minTime,
@@ -69,8 +69,8 @@ function AddToQueryHOC({
 					inputFormat: 'ns',
 				}),
 				q: updatedQueryString,
-				...(idStart ? { idStart } : {}),
-				...(idEnd ? { idEnd } : {}),
+				...(idStart ? { idGt: idStart } : {}),
+				...(idEnd ? { idLt: idEnd } : {}),
 			});
 		}
 

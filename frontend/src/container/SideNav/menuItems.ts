@@ -27,6 +27,7 @@ const menus: SidebarMenu[] = [
 		Icon: AlignLeftOutlined,
 		to: ROUTES.LOGS,
 		name: 'Logs',
+		tags: ['Beta'],
 	},
 	{
 		Icon: DashboardFilled,
@@ -47,7 +48,6 @@ const menus: SidebarMenu[] = [
 		to: ROUTES.SERVICE_MAP,
 		name: 'Service Map',
 		Icon: DeploymentUnitOutlined,
-		tags: ['Beta'],
 	},
 	{
 		Icon: LineChartOutlined,

@@ -10,6 +10,7 @@ import {
 	RESET_ID_START_AND_END,
 	SET_DETAILED_LOG_DATA,
 	SET_FIELDS,
+	SET_LIVE_TAIL_START_TIME,
 	SET_LOADING,
 	SET_LOADING_AGGREGATE,
 	SET_LOG_LINES_PER_PAGE,
@@ -19,7 +20,6 @@ import {
 	SET_SEARCH_QUERY_STRING,
 	STOP_LIVE_TAIL,
 	TOGGLE_LIVE_TAIL,
-	SET_LIVE_TAIL_START_TIME,
 } from 'types/actions/logs';
 import ILogsReducer from 'types/reducer/logs';
 
@@ -41,7 +41,7 @@ const initialState: ILogsReducer = {
 	logsAggregate: [],
 	detailedLog: null,
 	liveTail: 'STOPPED',
-	liveTailStartRange: 5,
+	liveTailStartRange: 15,
 	// detailedLog: {
 	// 	timestamp: 1659360016955270100,
 	// 	id: '2CkBCauK8m3nkyKR19YhCw6WfvD',

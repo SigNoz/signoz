@@ -103,8 +103,8 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 				order: 'desc',
 				timestampStart: minTime,
 				timestampEnd: maxTime,
-				...(idStart ? { idStart } : {}),
-				...(idEnd ? { idEnd } : {}),
+				...(idStart ? { idGt: idStart } : {}),
+				...(idEnd ? { idLt: idEnd } : {}),
 			});
 
 			getLogsAggregate({
