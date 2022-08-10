@@ -337,8 +337,8 @@ type LogsFilterParams struct {
 	Query          string `json:"q"`
 	TimestampStart uint64 `json:"timestampStart"`
 	TimestampEnd   uint64 `json:"timestampEnd"`
-	IdStart        string `json:"idStart"`
-	IdEnd          string `json:"idEnd"`
+	IdGt           string `json:"idGt"`
+	IdLT           string `json:"idLt"`
 }
 
 type LogsAggregateParams struct {

@@ -1902,7 +1902,7 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter.HandleFunc("", ViewAccess(aH.getLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/tail", ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", ViewAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/fields", EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 }
 

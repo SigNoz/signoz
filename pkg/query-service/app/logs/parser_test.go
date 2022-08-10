@@ -208,6 +208,69 @@ func TestReplaceInterestingFields(t *testing.T) {
 	})
 }
 
+var previousPaginateTestCases = []struct {
+	Name           string
+	Filter         model.LogsFilterParams
+	IsPaginatePrev bool
+	Order          string
+}{
+	{
+		Name:           "empty",
+		Filter:         model.LogsFilterParams{},
+		IsPaginatePrev: false,
+	},
+	{
+		Name: "next ordery by asc",
+		Filter: model.LogsFilterParams{
+			OrderBy: TIMESTAMP,
+			Order:   ASC,
+			IdGt:    "myid",
+		},
+		IsPaginatePrev: false,
+		Order:          ASC,
+	},
+	{
+		Name: "next ordery by desc",
+		Filter: model.LogsFilterParams{
+			OrderBy: TIMESTAMP,
+			Order:   DESC,
+			IdLT:    "myid",
+		},
+		IsPaginatePrev: false,
+		Order:          DESC,
+	},
+	{
+		Name: "prev ordery by desc",
+		Filter: model.LogsFilterParams{
+			OrderBy: TIMESTAMP,
+			Order:   DESC,
+			IdGt:    "myid",
+		},
+		IsPaginatePrev: true,
+		Order:          ASC,
+	},
+	{
+		Name: "prev ordery by asc",
+		Filter: model.LogsFilterParams{
+			OrderBy: TIMESTAMP,
+			Order:   ASC,
+			IdLT:    "myid",
+		},
+		IsPaginatePrev: true,
+		Order:          DESC,
+	},
+}
+
+func TestCheckIfPrevousPaginateAndModifyOrder(t *testing.T) {
+	for _, test := range previousPaginateTestCases {
+		Convey(test.Name, t, func() {
+			isPrevPaginate := CheckIfPrevousPaginateAndModifyOrder(&test.Filter)
+			So(isPrevPaginate, ShouldEqual, test.IsPaginatePrev)
+			So(test.Order, ShouldEqual, test.Filter.Order)
+		})
+	}
+}
+
 func TestGenerateSQLQuery(t *testing.T) {
 	allFields := model.GetFieldsResponse{
 		Selected: []model.LogField{
@@ -233,7 +296,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 	idEnd := "2BsKG6tRpFWjYMcWsAGKfSxoQdU"
 	sqlWhere := "timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' and id < 100 and id > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 "
 	Convey("testGenerateSQL", t, func() {
-		res, _ := GenerateSQLWhere(&allFields, &model.LogsFilterParams{Query: query, TimestampStart: tsStart, TimestampEnd: tsEnd, IdStart: idStart, IdEnd: idEnd})
+		res, _ := GenerateSQLWhere(&allFields, &model.LogsFilterParams{Query: query, TimestampStart: tsStart, TimestampEnd: tsEnd, IdGt: idStart, IdLT: idEnd})
 		So(res, ShouldEqual, sqlWhere)
 	})
 }

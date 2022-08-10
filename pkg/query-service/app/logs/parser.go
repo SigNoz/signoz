@@ -28,8 +28,11 @@ const (
 	ORDER_BY        = "orderBy"
 	TIMESTAMP_START = "timestampStart"
 	TIMESTAMP_END   = "timestampEnd"
-	IDSTART         = "idStart"
-	IDEND           = "idEnd"
+	IdGt            = "idGt"
+	IdLT            = "idLt"
+	TIMESTAMP       = "timestamp"
+	ASC             = "asc"
+	DESC            = "desc"
 )
 
 var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([^(]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) '[^']+')`)
@@ -72,11 +75,11 @@ func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 		}
 		res.TimestampEnd = uint64(ts)
 	}
-	if val, ok := params[IDSTART]; ok {
-		res.IdStart = val[0]
+	if val, ok := params[IdGt]; ok {
+		res.IdGt = val[0]
 	}
-	if val, ok := params[IDEND]; ok {
-		res.IdEnd = val[0]
+	if val, ok := params[IdLT]; ok {
+		res.IdLT = val[0]
 	}
 	return &res, nil
 }
@@ -94,8 +97,8 @@ func ParseLiveTailFilterParams(r *http.Request) (*model.LogsFilterParams, error)
 		}
 		res.TimestampStart = uint64(ts)
 	}
-	if val, ok := params[IDSTART]; ok {
-		res.IdStart = val[0]
+	if val, ok := params[IdGt]; ok {
+		res.IdGt = val[0]
 	}
 	return &res, nil
 }
@@ -246,6 +249,17 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 	return queryTokens, nil
 }
 
+func CheckIfPrevousPaginateAndModifyOrder(params *model.LogsFilterParams) (isPaginatePrevious bool) {
+	if params.IdGt != "" && params.OrderBy == TIMESTAMP && params.Order == DESC {
+		isPaginatePrevious = true
+		params.Order = ASC
+	} else if params.IdLT != "" && params.OrderBy == TIMESTAMP && params.Order == ASC {
+		isPaginatePrevious = true
+		params.Order = DESC
+	}
+	return
+}
+
 func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, error) {
 	var tokens []string
 	var err error
@@ -277,15 +291,15 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 		}
 		filterTokens = append(filterTokens, filter)
 	}
-	if params.IdStart != "" {
-		filter := fmt.Sprintf("id > '%v' ", params.IdStart)
+	if params.IdGt != "" {
+		filter := fmt.Sprintf("id > '%v' ", params.IdGt)
 		if len(filterTokens) > 0 {
 			filter = "and " + filter
 		}
 		filterTokens = append(filterTokens, filter)
 	}
-	if params.IdEnd != "" {
-		filter := fmt.Sprintf("id < '%v' ", params.IdEnd)
+	if params.IdLT != "" {
+		filter := fmt.Sprintf("id < '%v' ", params.IdLT)
 		if len(filterTokens) > 0 {
 			filter = "and " + filter
 		}

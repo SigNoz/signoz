@@ -3047,6 +3047,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		return nil, apiErr
 	}
 
+	isPaginatePrev := logs.CheckIfPrevousPaginateAndModifyOrder(params)
 	filterSql, err := logs.GenerateSQLWhere(fields, params)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
@@ -3064,7 +3065,12 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
-
+	if isPaginatePrev {
+		// rever the results from db
+		for i, j := 0, len(response)-1; i < j; i, j = i+1, j-1 {
+			response[i], response[j] = response[j], response[i]
+		}
+	}
 	return &response, nil
 }
 
@@ -3093,8 +3099,8 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 	}
 
 	var idStart string
-	if client.Filter.IdStart != "" {
-		idStart = client.Filter.IdStart
+	if client.Filter.IdGt != "" {
+		idStart = client.Filter.IdGt
 	}
 
 	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
