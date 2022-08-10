@@ -32,11 +32,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 	const operationsRegex = useMemo(() => {
 		return encodeURIComponent(
-			topLevelOperations
-				.map((e) => {
-					return escapeRegExp(e);
-				})
-				.join('|'),
+			topLevelOperations.map((e) => escapeRegExp(e)).join('|'),
 		);
 	}, [topLevelOperations]);
 
