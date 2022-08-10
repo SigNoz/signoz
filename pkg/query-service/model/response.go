@@ -19,18 +19,19 @@ type ApiError struct {
 type ErrorType string
 
 const (
-	ErrorNone           ErrorType = ""
-	ErrorTimeout        ErrorType = "timeout"
-	ErrorCanceled       ErrorType = "canceled"
-	ErrorExec           ErrorType = "execution"
-	ErrorBadData        ErrorType = "bad_data"
-	ErrorInternal       ErrorType = "internal"
-	ErrorUnavailable    ErrorType = "unavailable"
-	ErrorNotFound       ErrorType = "not_found"
-	ErrorNotImplemented ErrorType = "not_implemented"
-	ErrorUnauthorized   ErrorType = "unauthorized"
-	ErrorForbidden      ErrorType = "forbidden"
-	ErrorConflict       ErrorType = "conflict"
+	ErrorNone                  ErrorType = ""
+	ErrorTimeout               ErrorType = "timeout"
+	ErrorCanceled              ErrorType = "canceled"
+	ErrorExec                  ErrorType = "execution"
+	ErrorBadData               ErrorType = "bad_data"
+	ErrorInternal              ErrorType = "internal"
+	ErrorUnavailable           ErrorType = "unavailable"
+	ErrorNotFound              ErrorType = "not_found"
+	ErrorNotImplemented        ErrorType = "not_implemented"
+	ErrorUnauthorized          ErrorType = "unauthorized"
+	ErrorForbidden             ErrorType = "forbidden"
+	ErrorConflict              ErrorType = "conflict"
+	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
 )
 
 type QueryDataV2 struct {
@@ -276,10 +277,14 @@ type GetTTLResponseItem struct {
 	MetricsMoveTime         int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
 	TracesTime              int    `json:"traces_ttl_duration_hrs,omitempty"`
 	TracesMoveTime          int    `json:"traces_move_ttl_duration_hrs,omitempty"`
+	LogsTime                int    `json:"logs_ttl_duration_hrs,omitempty"`
+	LogsMoveTime            int    `json:"logs_move_ttl_duration_hrs,omitempty"`
 	ExpectedMetricsTime     int    `json:"expected_metrics_ttl_duration_hrs,omitempty"`
 	ExpectedMetricsMoveTime int    `json:"expected_metrics_move_ttl_duration_hrs,omitempty"`
 	ExpectedTracesTime      int    `json:"expected_traces_ttl_duration_hrs,omitempty"`
 	ExpectedTracesMoveTime  int    `json:"expected_traces_move_ttl_duration_hrs,omitempty"`
+	ExpectedLogsTime        int    `json:"expected_logs_ttl_duration_hrs,omitempty"`
+	ExpectedLogsMoveTime    int    `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
 	Status                  string `json:"status"`
 }
 
@@ -405,6 +410,60 @@ type MetricPoint struct {
 func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
+}
+
+type ShowCreateTableStatement struct {
+	Statement string `json:"statement" ch:"statement"`
+}
+
+type LogField struct {
+	Name     string `json:"name" ch:"name"`
+	DataType string `json:"dataType" ch:"datatype"`
+	Type     string `json:"type"`
+}
+
+type GetFieldsResponse struct {
+	Selected    []LogField `json:"selected"`
+	Interesting []LogField `json:"interesting"`
+}
+
+type GetLogsResponse struct {
+	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
+	ID                 string             `json:"id" ch:"id"`
+	TraceID            string             `json:"traceId" ch:"trace_id"`
+	SpanID             string             `json:"spanId" ch:"span_id"`
+	TraceFlags         uint32             `json:"traceFlags" ch:"trace_flags"`
+	SeverityText       string             `json:"severityText" ch:"severity_text"`
+	SeverityNumber     uint8              `json:"severityNumber" ch:"severity_number"`
+	Body               string             `json:"body" ch:"body"`
+	Resources_string   map[string]string  `json:"resourcesString" ch:"resources_string"`
+	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`
+	Attributes_int64   map[string]int64   `json:"attributesInt" ch:"attributes_int64"`
+	Attributes_float64 map[string]float64 `json:"attributesFloat" ch:"attributes_float64"`
+}
+
+type LogsTailClient struct {
+	Name   string
+	Logs   chan *GetLogsResponse
+	Done   chan *bool
+	Error  chan error
+	Filter LogsFilterParams
+}
+
+type GetLogsAggregatesResponse struct {
+	Items map[int64]LogsAggregatesResponseItem `json:"items"`
+}
+
+type LogsAggregatesResponseItem struct {
+	Timestamp int64                  `json:"timestamp,omitempty" `
+	Value     interface{}            `json:"value,omitempty"`
+	GroupBy   map[string]interface{} `json:"groupBy,omitempty"`
+}
+
+type LogsAggregatesDBResponseItem struct {
+	Timestamp int64   `ch:"time"`
+	Value     float64 `ch:"value"`
+	GroupBy   string  `ch:"groupBy"`
 }
 
 // MarshalJSON implements json.Marshaler.

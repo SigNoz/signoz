@@ -320,3 +320,32 @@ type FilterSet struct {
 	Operator string       `json:"op,omitempty"`
 	Items    []FilterItem `json:"items"`
 }
+
+type UpdateField struct {
+	Name             string `json:"name"`
+	DataType         string `json:"dataType"`
+	Type             string `json:"type"`
+	Selected         bool   `json:"selected"`
+	IndexType        string `json:"index"`
+	IndexGranularity int    `json:"indexGranularity"`
+}
+
+type LogsFilterParams struct {
+	Limit          int    `json:"limit"`
+	OrderBy        string `json:"orderBy"`
+	Order          string `json:"order"`
+	Query          string `json:"q"`
+	TimestampStart uint64 `json:"timestampStart"`
+	TimestampEnd   uint64 `json:"timestampEnd"`
+	IdGt           string `json:"idGt"`
+	IdLT           string `json:"idLt"`
+}
+
+type LogsAggregateParams struct {
+	Query          string `json:"q"`
+	TimestampStart uint64 `json:"timestampStart"`
+	TimestampEnd   uint64 `json:"timestampEnd"`
+	GroupBy        string `json:"groupBy"`
+	Function       string `json:"function"`
+	StepSeconds    int    `json:"step"`
+}

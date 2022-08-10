@@ -39,6 +39,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
+	"go.signoz.io/query-service/app/logs"
 	"go.signoz.io/query-service/constants"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
@@ -81,18 +82,24 @@ type ClickHouseReader struct {
 	traceDB                 string
 	operationsTable         string
 	durationTable           string
-	usageExplorerTable      string
 	indexTable              string
 	errorTable              string
+	usageExplorerTable      string
 	spansTable              string
 	dependencyGraphTable    string
 	topLevelOperationsTable string
+	logsDB                  string
+	logsTable               string
+	logsAttributeKeys       string
+	logsResourceKeys        string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
 	alertManager   am.Manager
+
+	liveTailRefreshSeconds int
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -127,6 +134,11 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 		spansTable:              options.primary.SpansTable,
 		dependencyGraphTable:    options.primary.DependencyGraphTable,
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
+		logsDB:                  options.primary.LogsDB,
+		logsTable:               options.primary.LogsTable,
+		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
+		logsResourceKeys:        options.primary.LogsResourceKeysTable,
+		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
 	}
 }
@@ -1972,7 +1984,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	return &GetFilteredSpansAggregatesResponse, nil
 }
 
-// SetTTL sets the TTL for traces or metrics tables.
+// SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
 func (r *ClickHouseReader) SetTTL(ctx context.Context,
@@ -2074,6 +2086,59 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
 				zap.S().Error(fmt.Errorf("Error in setting cold storage: %s", err.Err.Error()))
+				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+				if err == nil {
+					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+					if dbErr != nil {
+						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						return
+					}
+				}
+				return
+			}
+			zap.S().Debugf("Executing TTL request: %s\n", req)
+			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
+			if err := r.db.Exec(ctx, req); err != nil {
+				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
+				if dbErr != nil {
+					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					return
+				}
+				return
+			}
+			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
+			if dbErr != nil {
+				zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+				return
+			}
+		}(tableName)
+	case constants.LogsTTL:
+		tableName = r.logsDB + "." + r.logsTable
+		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
+		}
+		if statusItem.Status == constants.StatusPending {
+			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
+		}
+		go func(tableName string) {
+			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
+			if dbErr != nil {
+				zap.S().Error(fmt.Errorf("error in inserting to ttl_status table: %s", dbErr.Error()))
+				return
+			}
+			req = fmt.Sprintf(
+				"ALTER TABLE %v MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+			if len(params.ColdStorageVolume) > 0 {
+				req += fmt.Sprintf(", toDateTime(timestamp / 1000000000)"+
+					" + INTERVAL %v SECOND TO VOLUME '%s'",
+					params.ToColdStorageDuration, params.ColdStorageVolume)
+			}
+			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
+			if err != nil {
+				zap.S().Error(fmt.Errorf("error in setting cold storage: %s", err.Err.Error()))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
 					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
@@ -2264,6 +2329,24 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		}
 	}
 
+	getLogsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
+		var dbResp []model.DBResponseTTL
+
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.logsTable, r.logsDB)
+
+		err := r.db.Select(ctx, &dbResp, query)
+
+		if err != nil {
+			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
+		}
+		if len(dbResp) == 0 {
+			return nil, nil
+		} else {
+			return &dbResp[0], nil
+		}
+	}
+
 	switch ttlParams.Type {
 	case constants.TraceTTL:
 		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
@@ -2308,6 +2391,29 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
 		return &model.GetTTLResponseItem{MetricsTime: delTTL, MetricsMoveTime: moveTTL, ExpectedMetricsTime: ttlQuery.TTL, ExpectedMetricsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+
+	case constants.LogsTTL:
+		tableNameArray := []string{r.logsDB + "." + r.logsTable}
+		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
+		if err != nil {
+			return nil, err
+		}
+		dbResp, err := getLogsTTL()
+		if err != nil {
+			return nil, err
+		}
+		ttlQuery, err := r.checkTTLStatusItem(ctx, tableNameArray[0])
+		if err != nil {
+			return nil, err
+		}
+		ttlQuery.TTL = ttlQuery.TTL / 3600 // convert to hours
+		if ttlQuery.ColdStorageTtl != -1 {
+			ttlQuery.ColdStorageTtl = ttlQuery.ColdStorageTtl / 3600 // convert to hours
+		}
+
+		delTTL, moveTTL := parseTTL(dbResp.EngineFull)
+		return &model.GetTTLResponseItem{LogsTime: delTTL, LogsMoveTime: moveTTL, ExpectedLogsTime: ttlQuery.TTL, ExpectedLogsMoveTime: ttlQuery.ColdStorageTtl, Status: status}, nil
+
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. ttl type should be metrics|traces, got %v",
 			ttlParams.Type)}
@@ -2848,4 +2954,273 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
 	return totalSamples, nil
+}
+
+func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
+	// response will contain top level fields from the otel log model
+	response := model.GetFieldsResponse{
+		Selected:    constants.StaticSelectedLogFields,
+		Interesting: []model.LogField{},
+	}
+
+	// get attribute keys
+	attributes := []model.LogField{}
+	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsAttributeKeys)
+	err := r.db.Select(ctx, &attributes, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	// get resource keys
+	resources := []model.LogField{}
+	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s group by name, datatype", r.logsDB, r.logsResourceKeys)
+	err = r.db.Select(ctx, &resources, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response)
+
+	return &response, nil
+}
+
+func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
+	for _, field := range *fields {
+		field.Type = fieldType
+		if strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field.Name)) {
+			response.Selected = append(response.Selected, field)
+		} else {
+			response.Interesting = append(response.Interesting, field)
+		}
+	}
+}
+
+func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	// if a field is selected it means that the field needs to be indexed
+	if field.Selected {
+		// if the type is attribute or resource, create the materialized column first
+		if field.Type == constants.Attributes || field.Type == constants.Resources {
+			// create materialized
+			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')]", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+			err := r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
+		}
+
+		// create the index
+		if field.IndexType == "" {
+			field.IndexType = constants.DefaultLogSkipIndexType
+		}
+		if field.IndexGranularity == 0 {
+			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
+		}
+		query := fmt.Sprintf("ALTER TABLE %s.%s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d", r.logsDB, r.logsTable, field.Name, field.Name, field.IndexType, field.IndexGranularity)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	} else {
+		// remove index
+		query := fmt.Sprintf("ALTER TABLE %s.%s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsTable, field.Name)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+	}
+	return nil
+}
+
+func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError) {
+	response := []model.GetLogsResponse{}
+	fields, apiErr := r.GetLogFields(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	isPaginatePrev := logs.CheckIfPrevousPaginateAndModifyOrder(params)
+	filterSql, err := logs.GenerateSQLWhere(fields, params)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
+	}
+
+	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
+
+	if filterSql != "" {
+		query = fmt.Sprintf("%s where %s", query, filterSql)
+	}
+
+	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
+	zap.S().Debug(query)
+	err = r.db.Select(ctx, &response, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	if isPaginatePrev {
+		// rever the results from db
+		for i, j := 0, len(response)-1; i < j; i, j = i+1, j-1 {
+			response[i], response[j] = response[j], response[i]
+		}
+	}
+	return &response, nil
+}
+
+func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailClient) {
+
+	fields, apiErr := r.GetLogFields(ctx)
+	if apiErr != nil {
+		client.Error <- apiErr.Err
+		return
+	}
+
+	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+		Query: client.Filter.Query,
+	})
+
+	if err != nil {
+		client.Error <- err
+		return
+	}
+
+	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
+
+	tsStart := uint64(time.Now().UnixNano())
+	if client.Filter.TimestampStart != 0 {
+		tsStart = client.Filter.TimestampStart
+	}
+
+	var idStart string
+	if client.Filter.IdGt != "" {
+		idStart = client.Filter.IdGt
+	}
+
+	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			done := true
+			client.Done <- &done
+			zap.S().Debug("closing go routine : " + client.Name)
+			return
+		case <-ticker.C:
+			// get the new 100 logs as anything more older won't make sense
+			tmpQuery := fmt.Sprintf("%s where timestamp >='%d'", query, tsStart)
+			if filterSql != "" {
+				tmpQuery = fmt.Sprintf("%s and %s", tmpQuery, filterSql)
+			}
+			if idStart != "" {
+				tmpQuery = fmt.Sprintf("%s and id > '%s'", tmpQuery, idStart)
+			}
+			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
+			zap.S().Debug(tmpQuery)
+			response := []model.GetLogsResponse{}
+			err := r.db.Select(ctx, &response, tmpQuery)
+			if err != nil {
+				zap.S().Error(err)
+				client.Error <- err
+				return
+			}
+			for i := len(response) - 1; i >= 0; i-- {
+				select {
+				case <-ctx.Done():
+					done := true
+					client.Done <- &done
+					zap.S().Debug("closing go routine while sending logs : " + client.Name)
+					return
+				default:
+					client.Logs <- &response[i]
+					if i == 0 {
+						tsStart = response[i].Timestamp
+						idStart = response[i].ID
+					}
+				}
+			}
+		}
+	}
+}
+
+func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError) {
+	logAggregatesDBResponseItems := []model.LogsAggregatesDBResponseItem{}
+
+	function := "toFloat64(count()) as value"
+	if params.Function != "" {
+		function = fmt.Sprintf("toFloat64(%s) as value", params.Function)
+	}
+
+	fields, apiErr := r.GetLogFields(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+		Query: params.Query,
+	})
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
+	}
+
+	query := ""
+	if params.GroupBy != "" {
+		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as time, toString(%s) as groupBy, "+
+			"%s "+
+			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			params.StepSeconds/60, params.GroupBy, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
+	} else {
+		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as time, "+
+			"%s "+
+			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			params.StepSeconds/60, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
+	}
+	if filterSql != "" {
+		query = fmt.Sprintf("%s AND %s ", query, filterSql)
+	}
+	if params.GroupBy != "" {
+		query = fmt.Sprintf("%s GROUP BY time, toString(%s) as groupBy ORDER BY time", query, params.GroupBy)
+	} else {
+		query = fmt.Sprintf("%s GROUP BY time ORDER BY time", query)
+	}
+
+	zap.S().Debug(query)
+	err = r.db.Select(ctx, &logAggregatesDBResponseItems, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	aggregateResponse := model.GetLogsAggregatesResponse{
+		Items: make(map[int64]model.LogsAggregatesResponseItem),
+	}
+
+	for i := range logAggregatesDBResponseItems {
+		if elem, ok := aggregateResponse.Items[int64(logAggregatesDBResponseItems[i].Timestamp)]; ok {
+			if params.GroupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
+				elem.GroupBy[logAggregatesDBResponseItems[i].GroupBy] = logAggregatesDBResponseItems[i].Value
+			}
+			aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = elem
+		} else {
+			if params.GroupBy != "" && logAggregatesDBResponseItems[i].GroupBy != "" {
+				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
+					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
+					GroupBy:   map[string]interface{}{logAggregatesDBResponseItems[i].GroupBy: logAggregatesDBResponseItems[i].Value},
+				}
+			} else if params.GroupBy == "" {
+				aggregateResponse.Items[logAggregatesDBResponseItems[i].Timestamp] = model.LogsAggregatesResponseItem{
+					Timestamp: logAggregatesDBResponseItems[i].Timestamp,
+					Value:     logAggregatesDBResponseItems[i].Value,
+				}
+			}
+		}
+
+	}
+
+	return &aggregateResponse, nil
 }
