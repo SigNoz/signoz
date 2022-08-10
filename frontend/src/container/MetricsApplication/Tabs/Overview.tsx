@@ -7,6 +7,7 @@ import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
+import { escapeRegExp } from 'lodash-es';
 import React, { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -16,7 +17,6 @@ import MetricReducer from 'types/reducer/metrics';
 
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
-import escapeRegExp from './escapeRegExp';
 import { Button } from './styles';
 
 function Application({ getWidget }: DashboardProps): JSX.Element {
@@ -204,7 +204,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation=~"${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))`,
+										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation=~\`${operationsRegex}\`${resourceAttributePromQLQuery}}[5m]))`,
 										legend: 'Operations',
 									},
 								])}
@@ -238,7 +238,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
+										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`, status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`, http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
 										legend: 'Error Percentage',
 									},
 								])}
