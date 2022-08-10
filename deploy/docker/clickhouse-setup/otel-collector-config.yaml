@@ -89,6 +89,7 @@ exporters:
       enabled: true
   prometheus:
     endpoint: 0.0.0.0:8889
+  # logging: {}
 
   # uncomment the exporter below to export logs
   # clickhouselogsexporter:
