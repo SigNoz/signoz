@@ -31,11 +31,10 @@ receivers:
       filesystem: {}
       network: {}
 
-  # uncomment the reciever below to recieve logs in OLTP
-  # otlp/logs:
-  #   protocols:
-  #     grpc:
-  #       endpoint: 0.0.0.0:4319
+  otlp/logs:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4319
 
 processors:
   batch:
@@ -91,17 +90,16 @@ exporters:
     endpoint: 0.0.0.0:8889
   # logging: {}
 
-  # uncomment the exporter below to export logs
-  # clickhouselogsexporter:
-  #   dsn: tcp://clickhouse:9000/
-  #   timeout: 5s
-  #   sending_queue:
-  #     queue_size: 100
-  #   retry_on_failure:
-  #     enabled: true
-  #     initial_interval: 5s
-  #     max_interval: 30s
-  #     max_elapsed_time: 300s
+  clickhouselogsexporter:
+    dsn: tcp://clickhouse:9000/
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 service:
   telemetry:
@@ -127,8 +125,7 @@ service:
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]
-    # uncomment the pipeline below for logs
-    # logs:
-    #   receivers: [ otlp/logs ]
-    #   processors: [ batch ]
-    #   exporters: [  clickhouselogsexporter ]
+    logs:
+      receivers: [ otlp/logs ]
+      processors: [ batch ]
+      exporters: [  clickhouselogsexporter ]
