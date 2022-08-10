@@ -162,11 +162,12 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 
 	api.RegisterRoutes(r)
 	api.RegisterMetricsRoutes(r)
+	api.RegisterLogsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
 	})
 
 	handler := c.Handler(r)
@@ -217,6 +218,11 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
+// Flush implements the http.Flush interface.
+func (lrw *loggingResponseWriter) Flush() {
+	lrw.ResponseWriter.(http.Flusher).Flush()
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
@@ -236,8 +242,14 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
-		defer cancel()
+		ctx := r.Context()
+		var cancel context.CancelFunc
+		// check if route is not excluded
+		url := r.URL.Path
+		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
+			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+			defer cancel()
+		}
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

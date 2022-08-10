@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/query-service/app/dashboards"
+	"go.signoz.io/query-service/app/logs"
 	"go.signoz.io/query-service/app/metrics"
 	"go.signoz.io/query-service/app/parser"
 	"go.signoz.io/query-service/auth"
@@ -1921,4 +1923,121 @@ func (aH *APIHandler) writeJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// logs
+func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
+	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
+	subRouter.HandleFunc("", ViewAccess(aH.getLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/tail", ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/aggregate", ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
+	fields, apiErr := (*aH.reader).GetLogFields(r.Context())
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch fields from the DB")
+		return
+	}
+	aH.writeJSON(w, r, fields)
+}
+
+func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
+	field := model.UpdateField{}
+	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Failed to decode payload")
+		return
+	}
+
+	err := logs.ValidateUpdateFieldPayload(&field)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect payload")
+		return
+	}
+
+	apiErr := (*aH.reader).UpdateLogField(r.Context(), &field)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to update filed in the DB")
+		return
+	}
+	aH.writeJSON(w, r, field)
+}
+
+func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
+	params, err := logs.ParseLogFilterParams(r)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect params")
+		return
+	}
+
+	res, apiErr := (*aH.reader).GetLogs(r.Context(), params)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch logs from the DB")
+		return
+	}
+	aH.writeJSON(w, r, map[string]interface{}{"results": res})
+}
+
+func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
+	params, err := logs.ParseLogFilterParams(r)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect params")
+		return
+	}
+
+	// create the client
+	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
+	go (*aH.reader).TailLogs(r.Context(), client)
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		respondError(w, &err, "streaming is not supported")
+		return
+	}
+
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.S().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.S().Error("error occured!", err)
+			return
+		}
+	}
+}
+
+func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
+	params, err := logs.ParseLogAggregateParams(r)
+	if err != nil {
+		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		respondError(w, apiErr, "Incorrect params")
+		return
+	}
+
+	res, apiErr := (*aH.reader).AggregateLogs(r.Context(), params)
+	if apiErr != nil {
+		respondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
+		return
+	}
+	aH.writeJSON(w, r, res)
 }
