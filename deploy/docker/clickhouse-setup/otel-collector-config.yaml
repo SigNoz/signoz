@@ -126,6 +126,6 @@ service:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]
     logs:
-      receivers: [ otlp/logs ]
-      processors: [ batch ]
-      exporters: [  clickhouselogsexporter ]
+      receivers: [otlp/logs]
+      processors: [batch]
+      exporters: [clickhouselogsexporter]
