@@ -605,6 +605,10 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 			if err := m.addTask(rule, taskName); err != nil {
 				return err
 			}
+		} else {
+			if err := m.editTask(rule, taskName); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
