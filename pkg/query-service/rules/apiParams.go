@@ -18,6 +18,16 @@ import (
 // this file contains api request and responses to be
 // served over http
 
+// newApiErrorInternal returns a new api error object of type internal
+func newApiErrorInternal(err error) *model.ApiError {
+	return &model.ApiError{Typ: model.ErrorInternal, Err: err}
+}
+
+// newApiErrorBadData returns a new api error object of bad request type
+func newApiErrorBadData(err error) *model.ApiError {
+	return &model.ApiError{Typ: model.ErrorBadData, Err: err}
+}
+
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
 	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`
@@ -30,8 +40,12 @@ type PostableRule struct {
 	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 
+	Disabled bool `json:"disabled"`
+
 	// Source captures the source url where rule has been created
 	Source string `json:"source,omitempty"`
+
+	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
@@ -43,16 +57,23 @@ func ParsePostableRule(content []byte) (*PostableRule, []error) {
 }
 
 func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
-	rule := PostableRule{}
+	return parseIntoRule(PostableRule{}, content, kind)
+}
+
+// parseIntoRule loads the content (data) into PostableRule and also
+// validates the end result
+func parseIntoRule(initRule PostableRule, content []byte, kind string) (*PostableRule, []error) {
+
+	rule := &initRule
 
 	var err error
 	if kind == "json" {
-		if err = json.Unmarshal(content, &rule); err != nil {
+		if err = json.Unmarshal(content, rule); err != nil {
 			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load json")}
 		}
 	} else if kind == "yaml" {
-		if err = yaml.Unmarshal(content, &rule); err != nil {
+		if err = yaml.Unmarshal(content, rule); err != nil {
 			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load yaml")}
 		}
@@ -105,7 +126,8 @@ func parsePostableRule(content []byte, kind string) (*PostableRule, []error) {
 	if errs := rule.Validate(); len(errs) > 0 {
 		return nil, errs
 	}
-	return &rule, []error{}
+
+	return rule, []error{}
 }
 
 func isValidLabelName(ln string) bool {
@@ -213,18 +235,7 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Labels      map[string]string `json:"labels"`
-	Annotations map[string]string `json:"annotations"`
-	State       string            `json:"state"`
-	Alert       string            `json:"alert"`
-	// Description string            `yaml:"description,omitempty" json:"description,omitempty"`
-
-	Id            string        `json:"id"`
-	RuleType      RuleType      `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
-	EvalWindow    Duration      `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
-	Frequency     Duration      `yaml:"frequency,omitempty" json:"frequency,omitempty"`
-	RuleCondition RuleCondition `yaml:"condition,omitempty" json:"condition,omitempty"`
-
-	// ActiveAt    *time.Time    `json:"activeAt,omitempty"`
-	// Value       float64       `json:"value"`
+	Id    string `json:"id"`
+	State string `json:"state"`
+	PostableRule
 }

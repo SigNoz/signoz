@@ -32,8 +32,8 @@ func parseUser(r *http.Request) (*model.User, error) {
 	return &user, nil
 }
 
-func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
-	var postData *model.GetTopEndpointsParams
+func parseGetTopOperationsRequest(r *http.Request) (*model.GetTopOperationsParams, error) {
+	var postData *model.GetTopOperationsParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
 
 	if err != nil {
@@ -467,8 +467,8 @@ func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) 
 	}
 
 	params := &model.CountErrorsParams{
-		Start:      startTime,
-		End:        endTime,
+		Start: startTime,
+		End:   endTime,
 	}
 
 	return params, nil
@@ -590,8 +590,8 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	}
 
 	// Validate the type parameter
-	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-		return nil, fmt.Errorf("type param should be metrics|traces, got %v", typeTTL)
+	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+		return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 	}
 
 	// Validate the TTL duration.
@@ -629,8 +629,8 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		return nil, fmt.Errorf("type param cannot be empty from the query")
 	} else {
 		// Validate the type parameter
-		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-			return nil, fmt.Errorf("type param should be metrics|traces, got %v", typeTTL)
+		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+			return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 		}
 	}
 

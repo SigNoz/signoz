@@ -18,6 +18,12 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type PromRuleOpts struct {
+	// SendAlways will send alert irresepective of resendDelay
+	// or other params
+	SendAlways bool
+}
+
 type PromRule struct {
 	id            string
 	name          string
@@ -28,6 +34,8 @@ type PromRule struct {
 	holdDuration time.Duration
 	labels       plabels.Labels
 	annotations  plabels.Labels
+
+	preferredChannels []string
 
 	mtx                 sync.Mutex
 	evaluationDuration  time.Duration
@@ -41,42 +49,50 @@ type PromRule struct {
 	active map[uint64]*Alert
 
 	logger log.Logger
+	opts   PromRuleOpts
 }
 
 func NewPromRule(
 	id string,
-	name string,
-	ruleCondition *RuleCondition,
-	evalWindow time.Duration,
-	labels, annotations map[string]string,
+	postableRule *PostableRule,
 	logger log.Logger,
-	source string,
+	opts PromRuleOpts,
 ) (*PromRule, error) {
 
-	if int64(evalWindow) == 0 {
-		evalWindow = 5 * time.Minute
-	}
-
-	if ruleCondition == nil {
+	if postableRule.RuleCondition == nil {
 		return nil, fmt.Errorf("no rule condition")
-	} else if !ruleCondition.IsValid() {
+	} else if !postableRule.RuleCondition.IsValid() {
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", name, "\t condition:", ruleCondition.String())
+	p := PromRule{
+		id:                id,
+		name:              postableRule.Alert,
+		source:            postableRule.Source,
+		ruleCondition:     postableRule.RuleCondition,
+		evalWindow:        time.Duration(postableRule.EvalWindow),
+		labels:            plabels.FromMap(postableRule.Labels),
+		annotations:       plabels.FromMap(postableRule.Annotations),
+		preferredChannels: postableRule.PreferredChannels,
+		health:            HealthUnknown,
+		active:            map[uint64]*Alert{},
+		logger:            logger,
+		opts:              opts,
+	}
 
-	return &PromRule{
-		id:            id,
-		name:          name,
-		source:        source,
-		ruleCondition: ruleCondition,
-		evalWindow:    evalWindow,
-		labels:        plabels.FromMap(labels),
-		annotations:   plabels.FromMap(annotations),
-		health:        HealthUnknown,
-		active:        map[uint64]*Alert{},
-		logger:        logger,
-	}, nil
+	if int64(p.evalWindow) == 0 {
+		p.evalWindow = 5 * time.Minute
+	}
+	query, err := p.getPqlQuery()
+
+	if err != nil {
+		// can not generate a valid prom QL query
+		return nil, err
+	}
+
+	zap.S().Info("msg:", "creating new alerting rule", "\t name:", p.name, "\t condition:", p.ruleCondition.String(), "\t query:", query)
+
+	return &p, nil
 }
 
 func (r *PromRule) Name() string {
@@ -96,7 +112,11 @@ func (r *PromRule) Type() RuleType {
 }
 
 func (r *PromRule) GeneratorURL() string {
-	return r.source
+	return prepareRuleGeneratorURL(r.ID(), r.source)
+}
+
+func (r *PromRule) PreferredChannels() []string {
+	return r.preferredChannels
 }
 
 func (r *PromRule) SetLastError(err error) {
@@ -163,24 +183,6 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 	s := pql.Sample{
 		Metric: lb.Labels(),
 		Point:  pql.Point{T: timestamp.FromTime(ts), V: 1},
-	}
-	return s
-}
-
-// forStateSample returns the sample for ALERTS_FOR_STATE.
-func (r *PromRule) forStateSample(alert *Alert, ts time.Time, v float64) pql.Sample {
-	lb := plabels.NewBuilder(r.labels)
-	alertLabels := alert.Labels.(plabels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(plabels.MetricName, alertForStateMetricName)
-	lb.Set(plabels.AlertName, r.name)
-
-	s := pql.Sample{
-		Metric: lb.Labels(),
-		Point:  pql.Point{T: timestamp.FromTime(ts), V: v},
 	}
 	return s
 }
@@ -260,7 +262,7 @@ func (r *PromRule) ForEachActiveAlert(f func(*Alert)) {
 func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
-		if alert.needsSending(ts, resendDelay) {
+		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
 			alert.LastSentAt = ts
 			// Allow for two Eval or Alertmanager send failures.
 			delta := resendDelay
@@ -284,7 +286,6 @@ func (r *PromRule) getPqlQuery() (string, error) {
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
-
 				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
 					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), *r.ruleCondition.Target)
 					return query, nil
@@ -316,7 +317,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var vec pql.Vector
+
 	var alerts = make(map[uint64]*Alert, len(res))
 
 	for _, smpl := range res {
@@ -353,6 +354,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
 		}
+
 		lb.Set(qslabels.AlertNameLabel, r.Name())
 		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
 		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
@@ -382,6 +384,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			State:        StatePending,
 			Value:        smpl.V,
 			GeneratorURL: r.GeneratorURL(),
+			Receivers:    r.preferredChannels,
 		}
 	}
 
@@ -392,6 +395,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if alert, ok := r.active[h]; ok && alert.State != StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
+			alert.Receivers = r.preferredChannels
 			continue
 		}
 
@@ -422,18 +426,19 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	}
 	r.health = HealthGood
 	r.lastError = err
-	return vec, nil
 
+	return len(r.active), nil
 }
 
 func (r *PromRule) String() string {
 
 	ar := PostableRule{
-		Alert:         r.name,
-		RuleCondition: r.ruleCondition,
-		EvalWindow:    Duration(r.evalWindow),
-		Labels:        r.labels.Map(),
-		Annotations:   r.annotations.Map(),
+		Alert:             r.name,
+		RuleCondition:     r.ruleCondition,
+		EvalWindow:        Duration(r.evalWindow),
+		Labels:            r.labels.Map(),
+		Annotations:       r.annotations.Map(),
+		PreferredChannels: r.preferredChannels,
 	}
 
 	byt, err := yaml.Marshal(ar)

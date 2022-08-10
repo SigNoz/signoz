@@ -156,7 +156,9 @@ function RuleOptions({
 								...alertDef,
 								condition: {
 									...alertDef.condition,
-									target: (value as number) || undefined,
+									op: alertDef.condition?.op || defaultCompareOp,
+									matchType: alertDef.condition?.matchType || defaultMatchType,
+									target: value as number,
 								},
 							});
 						}}

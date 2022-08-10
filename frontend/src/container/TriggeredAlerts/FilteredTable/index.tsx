@@ -1,6 +1,6 @@
 import groupBy from 'lodash-es/groupBy';
 import React, { useMemo } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from '../Filter';
 import { FilterAlerts } from '../utils';

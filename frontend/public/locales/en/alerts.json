@@ -1,4 +1,11 @@
 {
+  "target_missing": "Please enter a threshold to proceed",
+  "rule_test_fired": "Test notification sent successfully",
+  "no_alerts_found": "No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.",
+  "button_testrule": "Test Notification",
+  "label_channel_select": "Notification Channels",
+  "placeholder_channel_select": "select one or more channels",
+  "channel_select_tooltip": "Leave empty to send this alert on all the configured channels",
   "preview_chart_unexpected_error": "An unexpeced error occurred updating the chart, please check your query.",
   "preview_chart_threshold_label": "Threshold",
   "placeholder_label_key_pair": "Click here to enter a label (key value pairs)",
