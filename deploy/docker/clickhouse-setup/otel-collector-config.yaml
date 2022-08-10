@@ -31,6 +31,11 @@ receivers:
       filesystem: {}
       network: {}
 
+  otlp/logs:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4319
+
 processors:
   batch:
     send_batch_size: 10000
@@ -85,6 +90,17 @@ exporters:
     endpoint: 0.0.0.0:8889
   # logging: {}
 
+  clickhouselogsexporter:
+    dsn: tcp://clickhouse:9000/
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
 service:
   telemetry:
     metrics:
@@ -109,3 +125,7 @@ service:
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]
+    logs:
+      receivers: [otlp/logs]
+      processors: [batch]
+      exporters: [clickhouselogsexporter]
