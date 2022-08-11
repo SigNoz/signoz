@@ -31,11 +31,6 @@ receivers:
       filesystem: {}
       network: {}
 
-  otlp/logs:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4319
-
 processors:
   batch:
     send_batch_size: 10000
@@ -126,6 +121,6 @@ service:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]
     logs:
-      receivers: [otlp/logs]
+      receivers: [otlp]
       processors: [batch]
       exporters: [clickhouselogsexporter]
