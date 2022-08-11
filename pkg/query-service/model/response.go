@@ -461,7 +461,7 @@ type LogsAggregatesResponseItem struct {
 }
 
 type LogsAggregatesDBResponseItem struct {
-	Timestamp int64   `ch:"time"`
+	Timestamp int64   `ch:"ts_start_interval"`
 	Value     float64 `ch:"value"`
 	GroupBy   string  `ch:"groupBy"`
 }
