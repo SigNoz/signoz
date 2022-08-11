@@ -241,6 +241,8 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
+	
+	zap.S().Debugf("msg:", "editing a rule task", "\t task name:", taskName)
 
 	newTask, err := m.prepareTask(false, rule, taskName)
 
@@ -298,12 +300,14 @@ func (m *Manager) DeleteRule(id string) error {
 func (m *Manager) deleteTask(taskName string) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
+	zap.S().Debugf("msg:", "deleting a rule task", "\t task name:", taskName)
 
 	oldg, ok := m.tasks[taskName]
 	if ok {
 		oldg.Stop()
 		delete(m.tasks, taskName)
 		delete(m.rules, ruleIdFromTaskName(taskName))
+		zap.S().Debugf("msg:", "rule task deleted", "\t task name:", taskName)
 	} else {
 		zap.S().Info("msg: ", "rule not found for deletion", "\t name:", taskName)
 	}
@@ -337,6 +341,7 @@ func (m *Manager) addTask(rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
+	zap.S().Debugf("msg:", "adding a new rule task", "\t task name:", taskName)
 	newTask, err := m.prepareTask(false, rule, taskName)
 
 	if err != nil {
@@ -603,6 +608,10 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 		if _, ok := m.tasks[taskName]; !ok {
 			// rule has not task, start one
 			if err := m.addTask(rule, taskName); err != nil {
+				return err
+			}
+		} else {
+			if err := m.editTask(rule, taskName); err != nil {
 				return err
 			}
 		}
