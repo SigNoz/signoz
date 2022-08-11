@@ -63,10 +63,13 @@ func createTelemetry() {
 				getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background())
 				tsInfo, _ := telemetry.reader.GetTimeSeriesInfo(context.Background())
 
+				getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
+
 				data := map[string]interface{}{
 					"totalSpans":                            totalSpans,
 					"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
 					"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
+					"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
 				}
 				for key, value := range tsInfo {
 					data[key] = value
