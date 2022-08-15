@@ -3,6 +3,8 @@ package constants
 import (
 	"os"
 	"strconv"
+
+	"go.signoz.io/query-service/model"
 )
 
 const (
@@ -24,6 +26,7 @@ func IsTelemetryEnabled() bool {
 
 const TraceTTL = "traces"
 const MetricsTTL = "metrics"
+const LogsTTL = "logs"
 
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
@@ -38,41 +41,50 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
-	ServiceName        = "serviceName"
-	HttpRoute          = "httpRoute"
-	HttpCode           = "httpCode"
-	HttpHost           = "httpHost"
-	HttpUrl            = "httpUrl"
-	HttpMethod         = "httpMethod"
-	Component          = "component"
-	OperationDB        = "name"
-	OperationRequest   = "operation"
-	Status             = "status"
-	Duration           = "duration"
-	DBName             = "dbName"
-	DBOperation        = "dbOperation"
-	DBSystem           = "dbSystem"
-	MsgSystem          = "msgSystem"
-	MsgOperation       = "msgOperation"
-	Timestamp          = "timestamp"
-	RPCMethod          = "rpcMethod"
-	ResponseStatusCode = "responseStatusCode"
-	Descending         = "descending"
-	Ascending          = "ascending"
-	ContextTimeout     = 60 // seconds
-	StatusPending      = "pending"
-	StatusFailed       = "failed"
-	StatusSuccess      = "success"
-	ExceptionType      = "exceptionType"
-	ExceptionCount     = "exceptionCount"
-	LastSeen           = "lastSeen"
-	FirstSeen          = "firstSeen"
+	ServiceName                    = "serviceName"
+	HttpRoute                      = "httpRoute"
+	HttpCode                       = "httpCode"
+	HttpHost                       = "httpHost"
+	HttpUrl                        = "httpUrl"
+	HttpMethod                     = "httpMethod"
+	Component                      = "component"
+	OperationDB                    = "name"
+	OperationRequest               = "operation"
+	Status                         = "status"
+	Duration                       = "duration"
+	DBName                         = "dbName"
+	DBOperation                    = "dbOperation"
+	DBSystem                       = "dbSystem"
+	MsgSystem                      = "msgSystem"
+	MsgOperation                   = "msgOperation"
+	Timestamp                      = "timestamp"
+	RPCMethod                      = "rpcMethod"
+	ResponseStatusCode             = "responseStatusCode"
+	Descending                     = "descending"
+	Ascending                      = "ascending"
+	ContextTimeout                 = 60 // seconds
+	StatusPending                  = "pending"
+	StatusFailed                   = "failed"
+	StatusSuccess                  = "success"
+	ExceptionType                  = "exceptionType"
+	ExceptionCount                 = "exceptionCount"
+	LastSeen                       = "lastSeen"
+	FirstSeen                      = "firstSeen"
+	Attributes                     = "attributes"
+	Resources                      = "resources"
+	Static                         = "static"
+	DefaultLogSkipIndexType        = "bloom_filter(0.01)"
+	DefaultLogSkipIndexGranularity = 64
 )
 const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
 	SIGNOZ_SAMPLES_TABLENAME    = "samples_v2"
 	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
 )
+
+var TimeoutExcludedRoutes = map[string]bool{
+	"/api/v1/logs/tail": true,
+}
 
 // alert related constants
 const (
@@ -87,3 +99,61 @@ func GetOrDefaultEnv(key string, fallback string) string {
 	}
 	return v
 }
+
+const (
+	STRING                = "String"
+	UINT32                = "UInt32"
+	LOWCARDINALITY_STRING = "LowCardinality(String)"
+	INT32                 = "Int32"
+	UINT8                 = "Uint8"
+)
+
+var StaticInterestingLogFields = []model.LogField{
+	{
+		Name:     "trace_id",
+		DataType: STRING,
+		Type:     Static,
+	},
+	{
+		Name:     "span_id",
+		DataType: STRING,
+		Type:     Static,
+	},
+	{
+		Name:     "trace_flags",
+		DataType: UINT32,
+		Type:     Static,
+	},
+	{
+		Name:     "severity_text",
+		DataType: LOWCARDINALITY_STRING,
+		Type:     Static,
+	},
+	{
+		Name:     "severity_number",
+		DataType: UINT8,
+		Type:     Static,
+	},
+}
+
+var StaticSelectedLogFields = []model.LogField{
+	{
+		Name:     "timestamp",
+		DataType: UINT32,
+		Type:     Static,
+	},
+	{
+		Name:     "id",
+		DataType: STRING,
+		Type:     Static,
+	},
+}
+
+const (
+	LogsSQLSelect = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body," +
+		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
+		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+)

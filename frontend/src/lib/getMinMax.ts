@@ -30,11 +30,11 @@ const GetMinMax = (
 		minTime = minTimeAgo;
 	} else if (interval === '1day') {
 		// one day = 24*60(min)
-		const minTimeAgo = getMinAgo({ minutes: 26 * 60 }).getTime();
+		const minTimeAgo = getMinAgo({ minutes: 24 * 60 }).getTime();
 		minTime = minTimeAgo;
 	} else if (interval === '1week') {
 		// one week = one day * 7
-		const minTimeAgo = getMinAgo({ minutes: 26 * 60 * 7 }).getTime();
+		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 7 }).getTime();
 		minTime = minTimeAgo;
 	} else if (['4hr', '6hr'].includes(interval)) {
 		const h = parseInt(interval.replace('hr', ''), 10);

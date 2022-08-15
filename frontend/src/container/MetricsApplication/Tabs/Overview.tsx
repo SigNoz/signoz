@@ -7,7 +7,8 @@ import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import React, { useRef } from 'react';
+import { escapeRegExp } from 'lodash-es';
+import React, { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -29,7 +30,11 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		resourceAttributeQueries,
 		topLevelOperations,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
-	const operationsRegex = topLevelOperations.join('|');
+	const operationsRegex = useMemo(() => {
+		return encodeURIComponent(
+			topLevelOperations.map((e) => escapeRegExp(e)).join('|'),
+		);
+	}, [topLevelOperations]);
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
@@ -44,8 +49,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${
-				ROUTES.TRACE
+			`${ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
@@ -96,12 +100,17 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${
-				ROUTES.TRACE
+			`${ROUTES.TRACE
 			}?${urlParams.toString()}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
-
+	console.log(getWidget([
+		{
+			query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
+			legend: 'Error Percentage',
+		},
+	]))
+	debugger;
 	return (
 		<>
 			<Row gutter={24}>
@@ -195,7 +204,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation=~"${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))`,
+										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation=~\`${operationsRegex}\`${resourceAttributePromQLQuery}}[5m]))`,
 										legend: 'Operations',
 									},
 								])}
@@ -229,7 +238,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 								}}
 								widget={getWidget([
 									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation=~"${operationsRegex}"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
+										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`, status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`, http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
 										legend: 'Error Percentage',
 									},
 								])}

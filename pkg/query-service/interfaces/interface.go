@@ -59,6 +59,14 @@ type Reader interface {
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
 	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+	GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+
+	// Logs
+	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
+	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError
+	GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError)
+	TailLogs(ctx context.Context, client *model.LogsTailClient)
+	AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn

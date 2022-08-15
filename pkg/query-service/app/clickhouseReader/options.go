@@ -28,6 +28,11 @@ const (
 	defaultSpansTable              string        = "signoz_spans"
 	defaultDependencyGraphTable    string        = "dependency_graph_minutes"
 	defaultTopLevelOperationsTable string        = "top_level_operations"
+	defaultLogsDB                  string        = "signoz_logs"
+	defaultLogsTable               string        = "logs"
+	defaultLogAttributeKeysTable   string        = "logs_atrribute_keys"
+	defaultLogResourceKeysTable    string        = "logs_resource_keys"
+	defaultLiveTailRefreshSeconds  int           = 10
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
 	defaultEncoding                Encoding      = EncodingJSON
@@ -58,6 +63,11 @@ type namespaceConfig struct {
 	ErrorTable              string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
+	LogsDB                  string
+	LogsTable               string
+	LogsAttributeKeysTable  string
+	LogsResourceKeysTable   string
+	LiveTailRefreshSeconds  int
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
 	Encoding                Encoding
@@ -120,6 +130,11 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			SpansTable:              defaultSpansTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
+			LogsDB:                  defaultLogsDB,
+			LogsTable:               defaultLogsTable,
+			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
+			LogsResourceKeysTable:   defaultLogResourceKeysTable,
+			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
 			Encoding:                defaultEncoding,
@@ -131,16 +146,21 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 	for _, namespace := range otherNamespaces {
 		if namespace == archiveNamespace {
 			options.others[namespace] = &namespaceConfig{
-				namespace:       namespace,
-				Datasource:      datasource,
-				TraceDB:         "",
-				OperationsTable: "",
-				IndexTable:      "",
-				ErrorTable:      "",
-				WriteBatchDelay: defaultWriteBatchDelay,
-				WriteBatchSize:  defaultWriteBatchSize,
-				Encoding:        defaultEncoding,
-				Connector:       defaultConnector,
+				namespace:              namespace,
+				Datasource:             datasource,
+				TraceDB:                "",
+				OperationsTable:        "",
+				IndexTable:             "",
+				ErrorTable:             "",
+				LogsDB:                 "",
+				LogsTable:              "",
+				LogsAttributeKeysTable: "",
+				LogsResourceKeysTable:  "",
+				LiveTailRefreshSeconds: defaultLiveTailRefreshSeconds,
+				WriteBatchDelay:        defaultWriteBatchDelay,
+				WriteBatchSize:         defaultWriteBatchSize,
+				Encoding:               defaultEncoding,
+				Connector:              defaultConnector,
 			}
 		} else {
 			options.others[namespace] = &namespaceConfig{namespace: namespace}
