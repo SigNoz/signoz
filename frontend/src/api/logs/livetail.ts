@@ -1,9 +1,8 @@
-import 'eventsource/example/eventsource-polyfill';
-
 import apiV1 from 'api/apiV1';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 export const LiveTail = (queryParams) => {
 	const dict = {
@@ -12,7 +11,7 @@ export const LiveTail = (queryParams) => {
 		},
 	};
 	return new EventSourcePolyfill(
-		`${ENVIRONMENT.baseURL}${apiV1}/logs/tail?${queryParams}`,
+		`${ENVIRONMENT.baseURL}${apiV1}logs/tail?${queryParams}`,
 		dict,
 	);
 };
