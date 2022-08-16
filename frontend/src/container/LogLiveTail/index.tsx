@@ -110,7 +110,7 @@ function LogLiveTail() {
 			const timeStamp = dayjs().subtract(liveTailStartRange, 'minute').valueOf();
 			const queryParams = new URLSearchParams({
 				...(queryString ? { q: queryString } : {}),
-				timestampStart: timeStamp,
+				timestampStart: timeStamp * 1e6,
 				...(liveTailSourceRef.current && logs.length > 0
 					? {
 						idGt: logs[0].id,

@@ -2,6 +2,7 @@ import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, CopyrightCircleFilled, ExpandAltOutlined } from '@ant-design/icons';
 import { Button, Card, Divider, Row, Typography } from 'antd';
 import { map } from 'd3';
+import dayjs from 'dayjs';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { flatMap, flatMapDeep } from 'lodash-es';
 import React, { useCallback, useMemo } from 'react';
@@ -95,7 +96,7 @@ function LogItem({ logData }) {
 						)}
 						<LogGeneralField
 							fieldKey="timestamp"
-							fieldValue={flattenLogData.timestamp}
+							fieldValue={dayjs(flattenLogData.timestamp / 1e6).format()}
 						/>
 					</div>
 					{'}'}
