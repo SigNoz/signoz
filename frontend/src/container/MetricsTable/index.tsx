@@ -55,19 +55,20 @@ function Metrics(): JSX.Element {
 			}): JSX.Element => {
 				return (
 					<Input
-					  autoFocus
-					  placeholder="Search by service name"
-					  value={selectedKeys[0]}
-					  onChange={(e): void => {
-						setSelectedKeys(e.target.value ? [e.target.value] : []);
-						confirm({ closeDropdown: false });
-					  }}
-					  onPressEnter={(): void => {
-						confirm();
-					  }}
-					  onBlur={(): void => {
-						confirm();
-					  }}
+						autoFocus
+						allowClear
+						placeholder="Search by service name"
+						value={selectedKeys[0]}
+						onChange={(e): void => {
+							setSelectedKeys(e.target.value ? [e.target.value] : []);
+							confirm({ closeDropdown: false });
+						}}
+						onPressEnter={(): void => {
+							confirm();
+						}}
+						onBlur={(): void => {
+							confirm();
+						}}
 					></Input>
 				);
 			},
