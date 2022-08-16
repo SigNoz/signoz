@@ -1,4 +1,5 @@
 import Table, { ColumnsType } from 'antd/lib/table';
+import { Input } from "antd";
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
@@ -47,6 +48,32 @@ function Metrics(): JSX.Element {
 					<Name>{text}</Name>
 				</Link>
 			),
+			filterDropdown: ({
+				setSelectedKeys,
+				selectedKeys,
+				confirm,
+			}): JSX.Element => {
+				return (
+					<Input
+					  autoFocus
+					  placeholder="Search by service name"
+					  value={selectedKeys[0]}
+					  onChange={(e): void => {
+						setSelectedKeys(e.target.value ? [e.target.value] : []);
+						confirm({ closeDropdown: false });
+					  }}
+					  onPressEnter={(): void => {
+						confirm();
+					  }}
+					  onBlur={(): void => {
+						confirm();
+					  }}
+					></Input>
+				);
+			},
+			onFilter: (value, record): boolean => {
+				return record.serviceName.toLowerCase().includes(value.toString().toLowerCase());
+			},
 		},
 		{
 			title: 'P99 latency (in ms)',
