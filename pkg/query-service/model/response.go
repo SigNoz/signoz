@@ -141,7 +141,7 @@ type GetFilterSpansResponse struct {
 	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type SearchSpanDBReponseItem struct {
+type SearchSpanDBResponseItem struct {
 	Timestamp time.Time `ch:"timestamp"`
 	TraceID   string    `ch:"traceID"`
 	Model     string    `ch:"model"`
@@ -154,7 +154,7 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
-type SearchSpanReponseItem struct {
+type SearchSpanResponseItem struct {
 	TimeUnixNano uint64            `json:"timestamp"`
 	SpanID       string            `json:"spanID"`
 	TraceID      string            `json:"traceID"`
@@ -174,14 +174,14 @@ type OtelSpanRef struct {
 	RefType string `json:"refType,omitempty"`
 }
 
-func (ref *OtelSpanRef) toString() string {
+func (ref *OtelSpanRef) ToString() string {
 
 	retString := fmt.Sprintf(`{TraceId=%s, SpanId=%s, RefType=%s}`, ref.TraceId, ref.SpanId, ref.RefType)
 
 	return retString
 }
 
-func (item *SearchSpanReponseItem) GetValues() []interface{} {
+func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
@@ -189,7 +189,7 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
 	referencesStringArray := []string{}
 	for _, item := range references {
-		referencesStringArray = append(referencesStringArray, item.toString())
+		referencesStringArray = append(referencesStringArray, item.ToString())
 	}
 
 	if item.Events == nil {
@@ -491,4 +491,35 @@ func (s *ServiceItem) MarshalJSON() ([]byte, error) {
 	}{
 		Alias: (*Alias)(s),
 	})
+}
+
+type SpanItem struct {
+	TimeUnixNano uint64        `json:"timestamp"`
+	SpanID       string        `json:"spanID"`
+	TraceID      string        `json:"traceID"`
+	ServiceName  string        `json:"serviceName"`
+	Name         string        `json:"name"`
+	Kind         int32         `json:"kind"`
+	References   []OtelSpanRef `json:"references,omitempty"`
+	DurationNano int64         `json:"durationNano"`
+	TagKeys      []string      `json:"tagKeys"`
+	TagValues    []string      `json:"tagValues"`
+	Events       []string      `json:"event"`
+	HasError     bool          `json:"hasError"`
+}
+
+type Span struct {
+	TimeUnixNano uint64            `json:"timestamp"`
+	SpanID       string            `json:"spanID"`
+	TraceID      string            `json:"traceID"`
+	ParentID     string            `json:"parentID"`
+	ParentSpan   *Span             `json:"parentSpan"`
+	ServiceName  string            `json:"serviceName"`
+	Name         string            `json:"name"`
+	Kind         int32             `json:"kind"`
+	DurationNano int64             `json:"durationNano"`
+	TagMap       map[string]string `json:"tagMap"`
+	Events       []string          `json:"event"`
+	HasError     bool              `json:"hasError"`
+	Children     []*Span           `json:"children"`
 }

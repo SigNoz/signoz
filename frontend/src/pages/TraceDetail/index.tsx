@@ -2,16 +2,21 @@ import { Typography } from 'antd';
 import getTraceItem from 'api/trace/getTraceItem';
 import Spinner from 'components/Spinner';
 import TraceDetailContainer from 'container/TraceDetail';
-import React from 'react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';
 
 function TraceDetail(): JSX.Element {
 	const { id } = useParams<TraceDetailProps>();
+	const urlQuery = useUrlQuery();
+	const [spanId] = useState<string | null>(urlQuery.get('spanId'));
+	const [levelUp] = useState<string | null>(urlQuery.get('levelUp'));
+	const [levelDown] = useState<string | null>(urlQuery.get('levelDown'));
 	const { data: traceDetailResponse, error, isLoading, isError } = useQuery(
-		`getTraceItem/${id}`,
-		() => getTraceItem({ id }),
+		`getTraceItem/${id}/${spanId}/${levelUp}/${levelDown}`,
+		() => getTraceItem({id, spanId, levelUp, levelDown}),
 		{
 			cacheTime: 3000,
 		},

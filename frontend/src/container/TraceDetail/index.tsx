@@ -77,7 +77,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		if (activeSelectedId) {
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?spanId=${activeSelectedId}`,
+				search: `?spanId=${activeSelectedId}&levelUp=0&levelDown=0`,
 			});
 		}
 	}, [activeSelectedId]);

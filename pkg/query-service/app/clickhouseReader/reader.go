@@ -1680,13 +1680,13 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error) {
 
-	var searchScanReponses []model.SearchSpanDBReponseItem
+	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
 
-	err := r.db.Select(ctx, &searchScanReponses, query, traceId)
+	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
 
 	zap.S().Info(query)
 
@@ -1697,21 +1697,203 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 
 	searchSpansResult := []model.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-		Events:  make([][]interface{}, len(searchScanReponses)),
+		Events:  make([][]interface{}, len(searchScanResponses)),
 	},
 	}
-
-	for i, item := range searchScanReponses {
-		var jsonItem model.SearchSpanReponseItem
+	searchSpanResponses := []model.SearchSpanResponseItem{}
+	for i, item := range searchScanResponses {
+		var jsonItem model.SearchSpanResponseItem
 		json.Unmarshal([]byte(item.Model), &jsonItem)
+		searchSpanResponses = append(searchSpanResponses, jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		spanEvents := jsonItem.GetValues()
 		searchSpansResult[0].Events[i] = spanEvents
+	}
+	if len(searchScanResponses) >= 1 {
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &searchSpansResult, nil
 
 }
+
+func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int) ([]model.SearchSpansResult, error) {
+	var spans []*model.Span
+	for _, spanItem := range payload {
+		var parentID string
+		if len(spanItem.References) > 0 && spanItem.References[0].RefType == "CHILD_OF" {
+			parentID = spanItem.References[0].SpanId
+		}
+		span := &model.Span{
+			TimeUnixNano: spanItem.TimeUnixNano,
+			SpanID:       spanItem.SpanID,
+			TraceID:      spanItem.TraceID,
+			ServiceName:  spanItem.ServiceName,
+			Name:         spanItem.Name,
+			Kind:         spanItem.Kind,
+			DurationNano: spanItem.DurationNano,
+			TagMap:       spanItem.TagMap,
+			ParentID:     parentID,
+			Events:       spanItem.Events,
+			HasError:     spanItem.HasError,
+		}
+		spans = append(spans, span)
+	}
+	root, err := buildSpanTree(&spans)
+	if err != nil {
+		return nil, err
+	}
+	targetSpan, err := BreadthFirstSearch(root, targetSpanId)
+	if err != nil {
+		zap.S().Error("Error during BreadthFirstSearch(): ", err)
+		return nil, err
+	}
+	levelUp = 1
+	parents := []*model.Span{}
+	preParent := targetSpan
+	for i := 0; i < levelUp+1; i++ {
+		if i == levelUp {
+			preParent.ParentID = ""
+		}
+		parents = append(parents, preParent)
+		parents = append(parents, preParent.Children...)
+		preParent = preParent.ParentSpan
+		if preParent == nil {
+			break
+		}
+	}
+	preParents := []*model.Span{targetSpan}
+	children := []*model.Span{}
+	levelDown = 1
+
+	for i := 0; i < levelDown && len(preParents) != 0; i++ {
+		parents := []*model.Span{}
+		for _, parent := range preParents {
+			children = append(children, parent.Children...)
+			parents = append(parents, parent.Children...)
+		}
+		preParents = parents
+	}
+	resultSpansSet := make(map[*model.Span]struct{})
+	resultSpansSet[targetSpan] = struct{}{}
+	for _, parent := range parents {
+		resultSpansSet[parent] = struct{}{}
+	}
+	for _, child := range children {
+		resultSpansSet[child] = struct{}{}
+	}
+	// resultSpans = append(resultSpans, parents...)
+	// resultSpans = append(resultSpans, children...)
+	// resultSpans = append(resultSpans, targetSpan)
+	searchSpansResult := []model.SearchSpansResult{{
+		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Events:  make([][]interface{}, len(resultSpansSet)),
+	},
+	}
+	resultSpans := []*model.Span{}
+	for i, _ := range resultSpansSet {
+		resultSpans = append(resultSpans, i)
+	}
+	for i, item := range resultSpans {
+		references := []model.OtelSpanRef{
+			{
+				TraceId: item.TraceID,
+				SpanId:  item.ParentID,
+				RefType: "CHILD_OF",
+			},
+		}
+
+		referencesStringArray := []string{}
+		for _, item := range references {
+			referencesStringArray = append(referencesStringArray, item.ToString())
+		}
+		keys := make([]string, 0, len(item.TagMap))
+		values := make([]string, 0, len(item.TagMap))
+
+		for k, v := range item.TagMap {
+			keys = append(keys, k)
+			values = append(values, v)
+		}
+		if item.Events == nil {
+			item.Events = []string{}
+		}
+		searchSpansResult[0].Events[i] = []interface{}{
+			item.TimeUnixNano,
+			item.SpanID,
+			item.TraceID,
+			item.ServiceName,
+			item.Name,
+			item.Kind,
+			item.DurationNano,
+			keys,
+			values,
+			referencesStringArray,
+			item.Events,
+			item.HasError,
+		}
+	}
+	return searchSpansResult, nil
+}
+
+func buildSpanTree(spansPtr *[]*model.Span) (*model.Span, error) {
+	var root *model.Span
+	spans := *spansPtr
+	mapOfSpans := make(map[string]*model.Span, len(spans))
+
+	for _, span := range spans {
+		if span.ParentID == "" {
+			root = span
+		}
+		mapOfSpans[span.SpanID] = span
+	}
+
+	if root == nil {
+		zap.S().Error("No root span found")
+		return nil, errors.New("No root span found")
+	}
+
+	for _, span := range spans {
+		if span.ParentID == "" {
+			continue
+		}
+		parent := mapOfSpans[span.ParentID]
+		if parent == nil {
+			zap.S().Error("Parent Span not found parent_id: ", span.ParentID)
+			return nil, errors.New("Parent Span not found")
+		}
+
+		span.ParentSpan = parent
+		parent.Children = append(parent.Children, span)
+	}
+
+	return root, nil
+}
+
+func BreadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, error) {
+	queue := []*model.Span{spansPtr}
+	visited := make(map[string]bool)
+
+	for len(queue) > 0 {
+		current := queue[0]
+		visited[current.SpanID] = true
+		queue = queue[1:]
+		if current.SpanID == targetId {
+			fmt.Println("Found span with id: ", current)
+			return current, nil
+		}
+
+		for _, child := range current.Children {
+			if ok, _ := visited[child.SpanID]; !ok {
+				queue = append(queue, child)
+			}
+		}
+	}
+	return nil, errors.New("Span not found")
+}
+
 func interfaceArrayToStringArray(array []interface{}) []string {
 	var strArray []string
 	for _, item := range array {

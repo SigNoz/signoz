@@ -44,7 +44,7 @@ function TraceTable(): JSX.Element {
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
 	const getLink = (record: TableType): string => {
-		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
+		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}&levelUp=0&levelDown=0`;
 	};
 
 	const getValue = (value: string): JSX.Element => {
