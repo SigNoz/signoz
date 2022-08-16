@@ -45,6 +45,9 @@ interface graphLink {
 	source: string;
 	target: string;
 	value: number;
+	callRate: number;
+	errorRate: number;
+	p99: number;
 }
 export interface graphDataType {
 	nodes: graphNode[];
@@ -96,16 +99,16 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const graphData = { nodes, links };
 	return (
 		<Container>
-			<SelectService
-				services={serviceMap.services}
+			{/* <SelectService
+				services={serviceMap.items}
 				zoomToService={zoomToService}
 				zoomToDefault={zoomToDefault}
-			/>
+			/> */}
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
 				graphData={graphData}
-				nodeLabel={getTooltip}
+				linkLabel={getTooltip}
 				linkAutoColorBy={(d) => d.target}
 				linkDirectionalParticles="value"
 				linkDirectionalParticleSpeed={(d) => d.value}
@@ -124,7 +127,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 					ctx.fillStyle = isDarkMode ? '#ffffff' : '#000000';
 					ctx.fillText(label, node.x, node.y);
 				}}
-				onNodeClick={(node) => {
+				onLinkHover={(node) => {
 					const tooltip = document.querySelector('.graph-tooltip');
 					if (tooltip && node) {
 						tooltip.innerHTML = getTooltip(node);

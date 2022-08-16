@@ -1,14 +1,15 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import { getVersion } from 'constants/api';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getVersion';
 
-const getVersion = async (): Promise<
+const getVersionApi = async (): Promise<
 	SuccessResponse<PayloadProps> | ErrorResponse
 > => {
 	try {
-		const response = await axios.get(`/version`);
+		const response = await axios.get(`/${getVersion}`);
 
 		return {
 			statusCode: 200,
@@ -21,4 +22,4 @@ const getVersion = async (): Promise<
 	}
 };
 
-export default getVersion;
+export default getVersionApi;

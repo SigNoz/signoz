@@ -22,6 +22,7 @@ import {
 	Tooltip,
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -50,6 +51,7 @@ Chart.register(
 	SubTitle,
 	BarController,
 	BarElement,
+	annotationPlugin,
 );
 
 function Graph({
@@ -62,6 +64,8 @@ function Graph({
 	name,
 	yAxisUnit = 'short',
 	forceReRender,
+	staticLine,
+	containerHeight,
 }: GraphProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -99,6 +103,30 @@ function Graph({
 					intersect: false,
 				},
 				plugins: {
+					annotation: staticLine
+						? {
+								annotations: [
+									{
+										type: 'line',
+										yMin: staticLine.yMin,
+										yMax: staticLine.yMax,
+										borderColor: staticLine.borderColor,
+										borderWidth: staticLine.borderWidth,
+										label: {
+											content: staticLine.lineText,
+											enabled: true,
+											font: {
+												size: 10,
+											},
+											borderWidth: 0,
+											position: 'start',
+											backgroundColor: 'transparent',
+											color: staticLine.textColor,
+										},
+									},
+								],
+						  }
+						: undefined,
 					title: {
 						display: title !== undefined,
 						text: title,
@@ -180,6 +208,7 @@ function Graph({
 					}
 				},
 			};
+
 			const chartHasData = hasData(data);
 			const chartPlugins = [];
 
@@ -205,6 +234,7 @@ function Graph({
 		name,
 		yAxisUnit,
 		onClickHandler,
+		staticLine,
 	]);
 
 	useEffect(() => {
@@ -212,7 +242,7 @@ function Graph({
 	}, [buildChart, forceReRender]);
 
 	return (
-		<div style={{ height: '85%' }}>
+		<div style={{ height: containerHeight }}>
 			<canvas ref={chartRef} />
 			<LegendsContainer id={name} />
 		</div>
@@ -229,6 +259,17 @@ interface GraphProps {
 	name: string;
 	yAxisUnit?: string;
 	forceReRender?: boolean | null | number;
+	staticLine?: StaticLineProps | undefined;
+	containerHeight?: string | number;
+}
+
+export interface StaticLineProps {
+	yMin: number | undefined;
+	yMax: number | undefined;
+	borderColor: string;
+	borderWidth: number;
+	lineText: string;
+	textColor: string;
 }
 
 export type GraphOnClickHandler = (
@@ -245,5 +286,7 @@ Graph.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	forceReRender: undefined,
+	staticLine: undefined,
+	containerHeight: '85%',
 };
 export default Graph;

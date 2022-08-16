@@ -1,9 +1,16 @@
-import { Alerts } from './getAll';
+import { AlertDef } from './def';
 
 export interface Props {
-	id: Alerts['id'];
+	id: AlertDef['id'];
+}
+
+export interface GettableAlert extends AlertDef {
+	id: number;
+	alert: string;
+	state: string;
+	disabled: boolean;
 }
 
 export type PayloadProps = {
-	data: string;
+	data: GettableAlert;
 };

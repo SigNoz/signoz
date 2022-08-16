@@ -5,6 +5,7 @@ package.json
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
 frontend/.pnp
+frontend/i18n-translations-hash.json
 *.pnp.js
 
 # testing

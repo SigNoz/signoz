@@ -18,4 +18,8 @@ const store = createStore(
 	),
 );
 
+if (window !== undefined) {
+	window.store = store;
+}
+
 export default store;

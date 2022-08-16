@@ -32,8 +32,8 @@ func parseUser(r *http.Request) (*model.User, error) {
 	return &user, nil
 }
 
-func parseGetTopEndpointsRequest(r *http.Request) (*model.GetTopEndpointsParams, error) {
-	var postData *model.GetTopEndpointsParams
+func parseGetTopOperationsRequest(r *http.Request) (*model.GetTopOperationsParams, error) {
+	var postData *model.GetTopOperationsParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
 
 	if err != nil {
@@ -360,28 +360,6 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 	return postData, nil
 }
 
-func parseErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
-
-	params := &model.GetErrorParams{}
-
-	serviceName := r.URL.Query().Get("serviceName")
-	if len(serviceName) != 0 {
-		params.ServiceName = serviceName
-	}
-
-	errorType := r.URL.Query().Get("errorType")
-	if len(errorType) != 0 {
-		params.ErrorType = errorType
-	}
-
-	errorId := r.URL.Query().Get("errorId")
-	if len(errorId) != 0 {
-		params.ErrorID = errorId
-	}
-
-	return params, nil
-}
-
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
 	var postData *model.TagFilterParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -427,7 +405,10 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 
 }
 
-func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
+func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
+
+	var allowedOrderParams = []string{"exceptionType", "exceptionCount", "firstSeen", "lastSeen", "serviceName"}
+	var allowedOrderDirections = []string{"ascending", "descending"}
 
 	startTime, err := parseTime("start", r)
 	if err != nil {
@@ -438,9 +419,79 @@ func parseErrorsRequest(r *http.Request) (*model.GetErrorsParams, error) {
 		return nil, err
 	}
 
-	params := &model.GetErrorsParams{
+	order := r.URL.Query().Get("order")
+	if len(order) > 0 && !DoesExistInSlice(order, allowedOrderDirections) {
+		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", order))
+	}
+	orderParam := r.URL.Query().Get("orderParam")
+	if len(order) > 0 && !DoesExistInSlice(orderParam, allowedOrderParams) {
+		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", orderParam))
+	}
+	limit := r.URL.Query().Get("limit")
+	offset := r.URL.Query().Get("offset")
+
+	if len(offset) == 0 || len(limit) == 0 {
+		return nil, fmt.Errorf("offset or limit param cannot be empty from the query")
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return nil, errors.New("limit param is not in correct format")
+	}
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return nil, errors.New("offset param is not in correct format")
+	}
+
+	params := &model.ListErrorsParams{
+		Start:      startTime,
+		End:        endTime,
+		OrderParam: orderParam,
+		Order:      order,
+		Limit:      int64(limitInt),
+		Offset:     int64(offsetInt),
+	}
+
+	return params, nil
+}
+
+func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) {
+
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTimeMinusBuffer("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &model.CountErrorsParams{
 		Start: startTime,
 		End:   endTime,
+	}
+
+	return params, nil
+}
+
+func parseGetErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
+
+	timestamp, err := parseTime("timestamp", r)
+	if err != nil {
+		return nil, err
+	}
+
+	groupID := r.URL.Query().Get("groupID")
+
+	if len(groupID) == 0 {
+		return nil, fmt.Errorf("groupID param cannot be empty from the query")
+	}
+	errorID := r.URL.Query().Get("errorID")
+
+	params := &model.GetErrorParams{
+		Timestamp: timestamp,
+		GroupID:   groupID,
+		ErrorID:   errorID,
 	}
 
 	return params, nil
@@ -539,8 +590,8 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	}
 
 	// Validate the type parameter
-	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-		return nil, fmt.Errorf("type param should be metrics|traces, got %v", typeTTL)
+	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+		return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 	}
 
 	// Validate the TTL duration.
@@ -578,8 +629,8 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		return nil, fmt.Errorf("type param cannot be empty from the query")
 	} else {
 		// Validate the type parameter
-		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL {
-			return nil, fmt.Errorf("type param should be metrics|traces, got %v", typeTTL)
+		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+			return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 		}
 	}
 
