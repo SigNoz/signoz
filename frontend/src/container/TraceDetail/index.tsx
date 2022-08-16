@@ -50,7 +50,8 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
-
+	const [levelUp] = useState<string | null>(urlQuery.get('levelUp'));
+	const [levelDown] = useState<string | null>(urlQuery.get('levelDown'));
 	const [treesData, setTreesData] = useState<ITraceForest>(
 		spanToTreeUtil(response[0].events),
 	);
@@ -77,7 +78,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		if (activeSelectedId) {
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?spanId=${activeSelectedId}&levelUp=0&levelDown=0`,
+				search: `?spanId=${activeSelectedId}&levelUp=${levelUp}&levelDown=${levelDown}`,
 			});
 		}
 	}, [activeSelectedId]);

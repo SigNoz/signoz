@@ -1249,6 +1249,13 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	spanId := r.URL.Query().Get("spanId")
 	levelUp := r.URL.Query().Get("levelUp")
 	levelDown := r.URL.Query().Get("levelDown")
+	if levelUp == "" || levelUp == "null" {
+		levelUp = "0"
+	}
+	if levelDown == "" || levelDown == "null" {
+		levelDown = "0"
+	}
+
 	levelUpInt, err := strconv.Atoi(levelUp)
 	if err != nil {
 		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading levelUp")

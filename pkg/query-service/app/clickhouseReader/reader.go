@@ -1709,7 +1709,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 		spanEvents := jsonItem.GetValues()
 		searchSpansResult[0].Events[i] = spanEvents
 	}
-	if len(searchScanResponses) >= 1 {
+	if len(searchScanResponses) >= 1 && spanId != "" {
 		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown)
 		if err != nil {
 			return nil, err
@@ -1751,7 +1751,6 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		zap.S().Error("Error during BreadthFirstSearch(): ", err)
 		return nil, err
 	}
-	levelUp = 1
 	parents := []*model.Span{}
 	preParent := targetSpan
 	for i := 0; i < levelUp+1; i++ {
@@ -1767,7 +1766,6 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 	}
 	preParents := []*model.Span{targetSpan}
 	children := []*model.Span{}
-	levelDown = 1
 
 	for i := 0; i < levelDown && len(preParents) != 0; i++ {
 		parents := []*model.Span{}
