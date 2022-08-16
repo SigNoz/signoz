@@ -183,7 +183,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
-	case model.SUM_RATE:
+	case model.SUM_RATE, model.P99_SUM_RATE, model.P90_SUM_RATE, model.P95_SUM_RATE, model.P75_SUM_RATE, model.P50_SUM_RATE:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		op := "max(value)"
