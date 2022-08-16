@@ -244,9 +244,10 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
     ```
 to set your local environment with the right `RELATIONAL_DATASOURCE_PATH` as mentioned in [`./constants/constants.go#L38`,](https://github.com/SigNoz/signoz/blob/develop/pkg/query-service/constants/constants.go#L38)
 
-- Now, install SigNoz locally **without** the `frontend` and `query-service`,
-  - If you are using `x86_64` processors (All Intel/AMD processors) run `sudo make run-x86`
-  - If you are on `arm64` processors (Apple M1 Macs) run `sudo make run-arm`
+- Now, install SigNoz locally **without** the `frontend` and `query-service`:
+  ```
+  sudo make run-x86
+  ```
 
 #### Run locally,
 ```
