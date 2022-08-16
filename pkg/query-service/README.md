@@ -28,12 +28,11 @@ alertmanager:
       - --queryService.url=http://172.17.0.1:8085
       - --storage.path=/data
 ```
-- Run the following:
-```console
-cd signoz/
-If you are using x86_64 processors (All Intel/AMD processors) run sudo make run-x86
-If you are on arm64 processors (Apple M1 Macs) run sudo make run-arm
-```
+- Run following commands:
+    ```bash
+    cd signoz/
+    sudo make run-x86
+    ```
 
 #### Backend Configuration
 
