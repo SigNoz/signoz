@@ -14,6 +14,9 @@ import React, { useMemo, useState } from 'react';
 
 import ActionItem from './ActionItem';
 
+// Fields which should be restricted from adding it to query
+const RESTRICTED_FIELDS = ['timestamp'];
+
 function TableView({ logData }) {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
@@ -38,27 +41,33 @@ function TableView({ logData }) {
 		{
 			title: 'Action',
 			width: 75,
-			render: (fieldData) => (
-				<ActionItem
-					fieldKey={fieldData.field.split('.').slice(-1)}
-					fieldValue={fieldData.value}
-				/>
-			),
+			render: (fieldData) => {
+				const fieldKey = fieldData.field.split('.').slice(-1);
+				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+					return <ActionItem fieldKey={fieldKey} fieldValue={fieldData.value} />;
+				}
+				return null;
+			},
 		},
 		{
 			title: 'Field',
 			dataIndex: 'field',
 			key: 'field',
 			width: '35%',
-			render: (field: string) => (
-				<AddToQueryHOC
-					fieldKey={field.split('.').slice(-1)}
-					fieldValue={flattenLogData[field]}
-				>
-					{' '}
-					<span style={{ color: blue[4] }}>{field}</span>
-				</AddToQueryHOC>
-			),
+			render: (field: string) => {
+				const fieldKey = field.split('.').slice(-1);
+				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
+
+				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+					return (
+						<AddToQueryHOC fieldKey={fieldKey} fieldValue={flattenLogData[field]}>
+							{' '}
+							{renderedField}
+						</AddToQueryHOC>
+					);
+				}
+				return renderedField;
+			},
 		},
 		{
 			title: 'Value',
@@ -83,7 +92,7 @@ function TableView({ logData }) {
 			/>
 			<Table
 				// scroll={{ x: true }}
-				tableLayout='fixed'
+				tableLayout="fixed"
 				dataSource={dataSource}
 				columns={columns}
 				pagination={false}
