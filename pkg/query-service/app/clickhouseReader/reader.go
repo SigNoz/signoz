@@ -1709,8 +1709,14 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 		spanEvents := jsonItem.GetValues()
 		searchSpansResult[0].Events[i] = spanEvents
 	}
-	if len(searchScanResponses) >= 1 && spanId != "" {
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown)
+
+	spanLimit, err := strconv.Atoi(constants.SpanLimitStr)
+	if err != nil {
+		zap.S().Error("Error during strconv.Atoi() on SPAN_LIMIT env variable: ", err)
+		return nil, err
+	}
+	if len(searchScanResponses) > spanLimit && spanId != "" {
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
 		if err != nil {
 			return nil, err
 		}
@@ -1720,7 +1726,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 }
 
-func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int) ([]model.SearchSpansResult, error) {
+func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error) {
 	var spans []*model.Span
 	for _, spanItem := range payload {
 		var parentID string
@@ -1760,7 +1766,7 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 	if targetSpan == nil {
 		return nil, errors.New("Span not found")
 	}
-	spanLimit := 5000
+
 	parents := []*model.Span{}
 	preParent := targetSpan
 	for i := 0; i < levelUp+1; i++ {
