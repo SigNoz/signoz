@@ -1742,23 +1742,41 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		}
 		spans = append(spans, span)
 	}
-	root, err := buildSpanTree(&spans)
+	roots, err := buildSpanTrees(&spans)
 	if err != nil {
 		return nil, err
 	}
-	targetSpan, err := BreadthFirstSearch(root, targetSpanId)
-	if err != nil {
-		zap.S().Error("Error during BreadthFirstSearch(): ", err)
-		return nil, err
+	targetSpan := &model.Span{}
+	for _, root := range roots {
+		targetSpan, err = BreadthFirstSearch(root, targetSpanId)
+		if targetSpan != nil {
+			break
+		}
+		if err != nil {
+			zap.S().Error("Error during BreadthFirstSearch(): ", err)
+			return nil, err
+		}
 	}
+	if targetSpan == nil {
+		return nil, errors.New("Span not found")
+	}
+	spanLimit := 5000
 	parents := []*model.Span{}
 	preParent := targetSpan
 	for i := 0; i < levelUp+1; i++ {
 		if i == levelUp {
 			preParent.ParentID = ""
 		}
+		if spanLimit-len(preParent.Children) <= 0 {
+			parents = append(parents, preParent)
+			parents = append(parents, preParent.Children[:spanLimit]...)
+			spanLimit -= (len(preParent.Children[:spanLimit]) + 1)
+			preParent.ParentID = ""
+			break
+		}
 		parents = append(parents, preParent)
 		parents = append(parents, preParent.Children...)
+		spanLimit -= (len(preParent.Children) + 1)
 		preParent = preParent.ParentSpan
 		if preParent == nil {
 			break
@@ -1767,9 +1785,14 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 	preParents := []*model.Span{targetSpan}
 	children := []*model.Span{}
 
-	for i := 0; i < levelDown && len(preParents) != 0; i++ {
+	for i := 0; i < levelDown && len(preParents) != 0 && spanLimit > 0; i++ {
 		parents := []*model.Span{}
 		for _, parent := range preParents {
+			if spanLimit-len(parent.Children) <= 0 {
+				children = append(children, parent.Children[:spanLimit]...)
+				spanLimit -= len(parent.Children[:spanLimit])
+				break
+			}
 			children = append(children, parent.Children...)
 			parents = append(parents, parent.Children...)
 		}
@@ -1792,7 +1815,7 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 	},
 	}
 	resultSpans := []*model.Span{}
-	for i, _ := range resultSpansSet {
+	for i := range resultSpansSet {
 		resultSpans = append(resultSpans, i)
 	}
 	for i, item := range resultSpans {
@@ -1836,19 +1859,19 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 	return searchSpansResult, nil
 }
 
-func buildSpanTree(spansPtr *[]*model.Span) (*model.Span, error) {
-	var root *model.Span
+func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
+	var roots []*model.Span
 	spans := *spansPtr
 	mapOfSpans := make(map[string]*model.Span, len(spans))
 
 	for _, span := range spans {
 		if span.ParentID == "" {
-			root = span
+			roots = append(roots, span)
 		}
 		mapOfSpans[span.SpanID] = span
 	}
 
-	if root == nil {
+	if roots == nil {
 		zap.S().Error("No root span found")
 		return nil, errors.New("No root span found")
 	}
@@ -1859,15 +1882,17 @@ func buildSpanTree(spansPtr *[]*model.Span) (*model.Span, error) {
 		}
 		parent := mapOfSpans[span.ParentID]
 		if parent == nil {
-			zap.S().Error("Parent Span not found parent_id: ", span.ParentID)
-			return nil, errors.New("Parent Span not found")
+			zap.S().Debug("Parent Span not found parent_id: ", span.ParentID)
+			roots = append(roots, span)
+			span.ParentID = ""
+			continue
 		}
 
 		span.ParentSpan = parent
 		parent.Children = append(parent.Children, span)
 	}
 
-	return root, nil
+	return roots, nil
 }
 
 func BreadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, error) {
@@ -1879,7 +1904,7 @@ func BreadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, err
 		visited[current.SpanID] = true
 		queue = queue[1:]
 		if current.SpanID == targetId {
-			fmt.Println("Found span with id: ", current)
+			// fmt.Println("Found span with id: ", current)
 			return current, nil
 		}
 
@@ -1889,7 +1914,7 @@ func BreadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, err
 			}
 		}
 	}
-	return nil, errors.New("Span not found")
+	return nil, nil
 }
 
 func interfaceArrayToStringArray(array []interface{}) []string {
