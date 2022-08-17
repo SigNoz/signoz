@@ -2,7 +2,7 @@ import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
 import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import React, { Dispatch, memo, useCallback, useMemo } from 'react';
+import React, { Dispatch, memo, useMemo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -12,9 +12,9 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING, TOGGLE_LIVE_TAIL } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
-const removeJSONStringifyQuotes = (s: string) => {
+const removeJSONStringifyQuotes = (s: string): string => {
 	if (!s || !s.length) {
 		return s;
 	}
@@ -24,7 +24,19 @@ const removeJSONStringifyQuotes = (s: string) => {
 	}
 	return s;
 };
-function ActionItem({ fieldKey, fieldValue, getLogs, getLogsAggregate }) {
+
+interface ActionItemProps {
+	fieldKey: string;
+	fieldValue: string;
+	getLogs: ReturnType<typeof getLogs>;
+	getLogsAggregate: ReturnType<typeof getLogsAggregate>;
+}
+function ActionItem({
+	fieldKey,
+	fieldValue,
+	getLogs,
+	getLogsAggregate,
+}: ActionItemProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		logLinesPerPage,
@@ -38,7 +50,7 @@ function ActionItem({ fieldKey, fieldValue, getLogs, getLogsAggregate }) {
 		(state) => state.globalTime,
 	);
 
-	const handleQueryAdd = (newQueryString) => {
+	const handleQueryAdd = (newQueryString: string): void => {
 		let updatedQueryString = queryString || '';
 
 		if (updatedQueryString.length === 0) {
@@ -94,7 +106,7 @@ function ActionItem({ fieldKey, fieldValue, getLogs, getLogsAggregate }) {
 				<Button
 					type="text"
 					size="small"
-					onClick={() =>
+					onClick={(): void =>
 						handleQueryAdd(
 							generateFilterQuery({
 								fieldKey,
@@ -110,7 +122,7 @@ function ActionItem({ fieldKey, fieldValue, getLogs, getLogsAggregate }) {
 				<Button
 					type="text"
 					size="small"
-					onClick={() =>
+					onClick={(): void =>
 						handleQueryAdd(
 							generateFilterQuery({
 								fieldKey,
@@ -124,7 +136,8 @@ function ActionItem({ fieldKey, fieldValue, getLogs, getLogsAggregate }) {
 				</Button>
 			</Col>
 		),
-		[],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[fieldKey, validatedFieldValue],
 	);
 	return (
 		<Popover placement="bottomLeft" content={PopOverMenuContent} trigger="click">

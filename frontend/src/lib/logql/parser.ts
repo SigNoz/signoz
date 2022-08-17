@@ -1,4 +1,8 @@
 // @ts-nocheck
+import {
+	ErrorConvertToFullText,
+	ErrorInvalidQueryPair,
+} from 'lib/logql/errors';
 import splitter from 'lib/logql/splitter';
 import {
 	ConditionalOperators,
@@ -6,10 +10,6 @@ import {
 	QueryOperatorsSingleVal,
 	QueryTypes,
 } from 'lib/logql/tokens';
-import {
-	ErrorConvertToFullText,
-	ErrorInvalidQueryPair,
-} from 'lib/logql/errors';
 
 const validateMultiValue = (queryToken: string): boolean => {
 	const queryValues = [];

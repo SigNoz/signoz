@@ -4,7 +4,7 @@ import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 
-export const LiveTail = (queryParams) => {
+export const LiveTail = (queryParams: string): EventSourcePolyfill => {
 	const dict = {
 		headers: {
 			Authorization: `Bearer ${getLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN)}`,

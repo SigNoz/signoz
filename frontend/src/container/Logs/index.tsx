@@ -15,7 +15,10 @@ import { GetLogsFields } from 'store/actions/logs/getFields';
 import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 
-function Logs({ getLogsFields }) {
+interface LogsProps {
+	getLogsFields: VoidFunction;
+}
+function Logs({ getLogsFields }: LogsProps): JSX.Element {
 	const { search } = useLocation();
 
 	const urlQuery = useMemo(() => {
@@ -29,7 +32,7 @@ function Logs({ getLogsFields }) {
 			type: SET_SEARCH_QUERY_STRING,
 			payload: urlQuery.get('q'),
 		});
-	}, [dispatch]);
+	}, [dispatch, urlQuery]);
 
 	useEffect(() => {
 		getLogsFields();
@@ -39,7 +42,7 @@ function Logs({ getLogsFields }) {
 		<div style={{ position: 'relative' }}>
 			<Row style={{ justifyContent: 'center', alignItems: 'center' }}>
 				<SearchFilter />
-				<Divider type='vertical' style={{ height: '2rem' }} />
+				<Divider type="vertical" style={{ height: '2rem' }} />
 				<LogLiveTail />
 			</Row>
 			<LogsAggregate />

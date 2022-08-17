@@ -3,7 +3,7 @@ import { combineReducers } from 'redux';
 import appReducer from './app';
 import dashboardReducer from './dashboard';
 import globalTimeReducer from './global';
-import LogsReducer from './logs';
+import { LogsReducer } from './logs';
 import metricsReducers from './metric';
 import { ServiceMapReducer } from './serviceMap';
 import traceReducer from './trace';

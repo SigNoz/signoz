@@ -1,22 +1,16 @@
+/* eslint-disable react/no-array-index-key */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { CloseOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Typography } from 'antd';
+import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
 	ConditionalOperators,
 	QueryOperatorsMultiVal,
 	QueryOperatorsSingleVal,
-	QueryTypes,
 } from 'lib/logql/tokens';
-import { chunk, cloneDeep, debounce, flatten } from 'lodash-es';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { flatten } from 'lodash-es';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useHoverDirty, useLocation } from 'react-use';
 import { AppState } from 'store/reducers';
 import ILogsReducer from 'types/reducer/logs';
 import { v4 } from 'uuid';
@@ -26,12 +20,24 @@ import { QueryConditionContainer, QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
 
 const { Option } = Select;
-function QueryField({ query, queryIndex, onUpdate, onDelete }) {
+interface QueryFieldProps {
+	query: { value: string; type: string }[];
+	queryIndex: number;
+	onUpdate: (query: unknown, queryIndex: number) => void;
+	onDelete: (queryIndex: number) => void;
+}
+function QueryField({
+	query,
+	queryIndex,
+	onUpdate,
+	onDelete,
+}: QueryFieldProps): JSX.Element | null {
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 
-	const getFieldType = (inputKey) => {
+	const getFieldType = (inputKey: string): string => {
+		// eslint-disable-next-line no-restricted-syntax
 		for (const selectedField of selected) {
 			if (inputKey === selectedField.name) {
 				return selectedField.type;
@@ -39,11 +45,8 @@ function QueryField({ query, queryIndex, onUpdate, onDelete }) {
 		}
 		return '';
 	};
-	const fieldType = useMemo(() => getFieldType(query[0].value), [
-		query,
-		selected,
-	]);
-	const handleChange = (qIdx, value) => {
+	const fieldType = useMemo(() => getFieldType(query[0].value), [query]);
+	const handleChange = (qIdx, value): void => {
 		query[qIdx].value = value || '';
 
 		if (qIdx === 1) {
@@ -60,7 +63,7 @@ function QueryField({ query, queryIndex, onUpdate, onDelete }) {
 		onUpdate(query, queryIndex);
 	};
 
-	const handleClear = () => {
+	const handleClear = (): void => {
 		onDelete(queryIndex);
 	};
 	if (!Array.isArray(query)) {
@@ -120,7 +123,7 @@ function QueryField({ query, queryIndex, onUpdate, onDelete }) {
 		</QueryFieldContainer>
 	);
 }
-function QueryConditionField({ query, queryIndex, onUpdate }) {
+function QueryConditionField({ query, queryIndex, onUpdate }): JSX.Element {
 	return (
 		<QueryConditionContainer>
 			<Select
@@ -149,7 +152,7 @@ const hashCode = (s) => {
 	)}`;
 };
 
-function QueryBuilder({ updateParsedQuery }) {
+function QueryBuilder({ updateParsedQuery }): JSX.Element {
 	const {
 		searchFilter: { parsedQuery },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -165,8 +168,6 @@ function QueryBuilder({ updateParsedQuery }) {
 			setKeyPrefix(incomingHashCode);
 		}
 	}, [parsedQuery]);
-
-
 
 	const handleUpdate = (query, queryIndex): void => {
 		const updatedParsedQuery = generatedQueryStructure;

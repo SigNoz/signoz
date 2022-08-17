@@ -1,10 +1,6 @@
+/* eslint-disable react/no-array-index-key */
 import { red } from '@ant-design/colors';
-import {
-	CloseCircleFilled,
-	CloseOutlined,
-	PlusCircleFilled,
-	PlusCircleOutlined,
-} from '@ant-design/icons';
+import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Input } from 'antd';
 import AddToSelectedFields from 'api/logs/AddToSelectedField';
 import RemoveSelectedField from 'api/logs/RemoveFromSelectedField';
@@ -17,34 +13,40 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GetLogsFields } from 'store/actions/logs/getFields';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import ILogsReducer from 'types/reducer/logs';
+import { IInterestingFields, ISelectedFields } from 'types/api/logs/fields';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import { FieldItem } from './FieldItem';
-import {
-	CategoryContainer,
-	Container,
-	ExtractField,
-	Field,
-	FieldContainer,
-} from './styles';
+import { CategoryContainer, Container, FieldContainer } from './styles';
 
 const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id'];
 
-function LogsFilters({ getLogsFields }) {
+interface LogsFiltersProps {
+	getLogsFields: () => void;
+}
+function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 	const {
 		fields: { interesting, selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
-	const [selectedFieldLoading, setSelectedFieldLoading] = useState([]);
-	const [interestingFieldLoading, setInterestingFieldLoading] = useState([]);
+	const [selectedFieldLoading, setSelectedFieldLoading] = useState<number[]>([]);
+	const [interestingFieldLoading, setInterestingFieldLoading] = useState<
+		number[]
+	>([]);
 
 	const [filterValuesInput, setFilterValuesInput] = useState('');
-	const handleSearch = (e) => {
+	const handleSearch = (e): void => {
 		setFilterValuesInput(e.target.value);
 	};
 
-	const handleAddInterestingToSelected = async ({ fieldData, fieldIndex }) => {
-		setInterestingFieldLoading((prevState) => {
+	const handleAddInterestingToSelected = async ({
+		fieldData,
+		fieldIndex,
+	}: {
+		fieldData: IInterestingFields;
+		fieldIndex: number;
+	}): Promise<void> => {
+		setInterestingFieldLoading((prevState: number[]) => {
 			prevState.push(fieldIndex);
 			return [...prevState];
 		});
@@ -59,7 +61,13 @@ function LogsFilters({ getLogsFields }) {
 			interestingFieldLoading.filter((e) => e !== fieldIndex),
 		);
 	};
-	const handleRemoveSelectedField = async ({ fieldData, fieldIndex }) => {
+	const handleRemoveSelectedField = async ({
+		fieldData,
+		fieldIndex,
+	}: {
+		fieldData: ISelectedFields;
+		fieldIndex: number;
+	}): Promise<void> => {
 		setSelectedFieldLoading((prevState) => {
 			prevState.push(fieldIndex);
 			return [...prevState];
@@ -93,7 +101,7 @@ function LogsFilters({ getLogsFields }) {
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
 						.map((field, idx) => (
 							<FieldItem
-								key={field + idx}
+								key={`${JSON.stringify(field)}-${idx}`}
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}
@@ -115,7 +123,7 @@ function LogsFilters({ getLogsFields }) {
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
 						.map((field, idx) => (
 							<FieldItem
-								key={field + idx}
+								key={`${JSON.stringify(field)}-${idx}`}
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}

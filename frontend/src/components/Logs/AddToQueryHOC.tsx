@@ -1,4 +1,4 @@
-import { Button, Popover, Tag, Tooltip } from 'antd';
+import { Button, Popover } from 'antd';
 import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import React, { memo, useCallback, useMemo } from 'react';
@@ -11,15 +11,22 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING, TOGGLE_LIVE_TAIL } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
+interface AddToQueryHOCProps {
+	fieldKey: string;
+	fieldValue: string;
+	children: React.ReactNode;
+	getLogs: ReturnType<typeof getLogs>;
+	getLogsAggregate: ReturnType<typeof getLogsAggregate>;
+}
 function AddToQueryHOC({
 	fieldKey,
 	fieldValue,
 	children,
 	getLogs,
 	getLogsAggregate,
-}) {
+}: AddToQueryHOCProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		logLinesPerPage,
@@ -72,9 +79,7 @@ function AddToQueryHOC({
 				...(idStart ? { idGt: idStart } : {}),
 				...(idEnd ? { idLt: idEnd } : {}),
 			});
-		}
-
-		else if (liveTail === 'PLAYING') {
+		} else if (liveTail === 'PLAYING') {
 			dispatch({
 				type: TOGGLE_LIVE_TAIL,
 				payload: 'PAUSED',
@@ -88,6 +93,7 @@ function AddToQueryHOC({
 				0,
 			);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		dispatch,
 		generatedQuery,

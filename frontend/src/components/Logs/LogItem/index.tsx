@@ -1,22 +1,26 @@
 import { blue, grey, orange } from '@ant-design/colors';
-import { CopyFilled, CopyrightCircleFilled, ExpandAltOutlined } from '@ant-design/icons';
-import { Button, Card, Divider, Row, Typography } from 'antd';
+import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
+import { Button, Divider, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { flatMap, flatMapDeep } from 'lodash-es';
 import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
-import ILogsReducer from 'types/reducer/logs';
+import { ILog } from 'types/api/logs/log';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 import { Container } from './styles';
 
-function LogGeneralField({ fieldKey, fieldValue }) {
+interface LogFieldProps {
+	fieldKey: string;
+	fieldValue: string;
+}
+function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	return (
 		<div
 			style={{
@@ -35,8 +39,10 @@ function LogGeneralField({ fieldKey, fieldValue }) {
 		</div>
 	);
 }
-
-function LogSelectedField({ fieldKey = '', fieldValue = '' }) {
+function LogSelectedField({
+	fieldKey = '',
+	fieldValue = '',
+}: LogFieldProps): JSX.Element {
 	return (
 		<div
 			style={{
@@ -66,13 +72,16 @@ function LogSelectedField({ fieldKey = '', fieldValue = '' }) {
 	);
 }
 
-function LogItem({ logData }) {
+interface LogItemProps {
+	logData: ILog;
+}
+function LogItem({ logData }: LogItemProps): JSX.Element {
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
-	const [_state, setCopy] = useCopyToClipboard();
+	const [, setCopy] = useCopyToClipboard();
 
 	const handleDetailedView = useCallback(() => {
 		dispatch({
@@ -81,9 +90,9 @@ function LogItem({ logData }) {
 		});
 	}, [dispatch, logData]);
 
-	const handleCopyJSON = () => {
-		setCopy(JSON.stringify(logData, null, 2))
-	}
+	const handleCopyJSON = (): void => {
+		setCopy(JSON.stringify(logData, null, 2));
+	};
 	return (
 		<Container>
 			<div style={{ maxWidth: '100%' }}>
