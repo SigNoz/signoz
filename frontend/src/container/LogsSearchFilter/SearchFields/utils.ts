@@ -1,3 +1,7 @@
+/* eslint-disable  */
+// @ts-ignore
+// @ts-nocheck
+
 import { QueryTypes } from 'lib/logql/tokens';
 
 export const queryKOVPair = () => [

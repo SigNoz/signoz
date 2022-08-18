@@ -72,7 +72,9 @@ function LogsTable({ getLogs }): JSX.Element {
 }
 
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

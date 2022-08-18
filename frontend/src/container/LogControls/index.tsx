@@ -27,7 +27,7 @@ const { Option } = Select;
 const ITEMS_PER_PAGE_OPTIONS = [25, 50, 100, 200];
 
 interface LogControlsProps {
-	getLogs: ReturnType<typeof getLogs>;
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
 }
 function LogControls({ getLogs }: LogControlsProps): JSX.Element | null {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -107,7 +107,9 @@ function LogControls({ getLogs }: LogControlsProps): JSX.Element | null {
 }
 
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

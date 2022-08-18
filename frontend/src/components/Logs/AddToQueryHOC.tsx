@@ -17,8 +17,10 @@ interface AddToQueryHOCProps {
 	fieldKey: string;
 	fieldValue: string;
 	children: React.ReactNode;
-	getLogs: ReturnType<typeof getLogs>;
-	getLogsAggregate: ReturnType<typeof getLogsAggregate>;
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => ReturnType<typeof getLogsAggregate>;
 }
 function AddToQueryHOC({
 	fieldKey,
@@ -127,8 +129,12 @@ function AddToQueryHOC({
 }
 
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

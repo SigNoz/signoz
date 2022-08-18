@@ -150,11 +150,15 @@ function SearchFilter({ getLogs, getLogsAggregate }): JSX.Element {
 		</div>
 	);
 }
-
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
+
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,

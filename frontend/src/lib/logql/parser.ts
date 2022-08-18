@@ -1,4 +1,7 @@
+/* eslint-disable  */
+// @ts-ignore
 // @ts-nocheck
+
 import {
 	ErrorConvertToFullText,
 	ErrorInvalidQueryPair,

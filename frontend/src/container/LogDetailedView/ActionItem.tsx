@@ -28,8 +28,10 @@ const removeJSONStringifyQuotes = (s: string): string => {
 interface ActionItemProps {
 	fieldKey: string;
 	fieldValue: string;
-	getLogs: ReturnType<typeof getLogs>;
-	getLogsAggregate: ReturnType<typeof getLogsAggregate>;
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0]
+	) => ReturnType<typeof getLogsAggregate>;
 }
 function ActionItem({
 	fieldKey,
@@ -147,10 +149,13 @@ function ActionItem({
 		</Popover>
 	);
 }
-
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

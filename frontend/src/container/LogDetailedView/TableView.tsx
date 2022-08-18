@@ -46,7 +46,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 		{
 			title: 'Action',
 			width: 75,
-			render: (fieldData): JSX.Element | null => {
+			render: (fieldData: never): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return <ActionItem fieldKey={fieldKey} fieldValue={fieldData.value} />;
@@ -79,7 +79,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			dataIndex: 'value',
 			key: 'value',
 			ellipsis: false,
-			render: (field) => (
+			render: (field: never): JSX.Element => (
 				<CopyClipboardHOC textToCopy={field}>
 					<span style={{ color: orange[6] }}>{field}</span>
 				</CopyClipboardHOC>

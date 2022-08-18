@@ -1,3 +1,6 @@
+/* eslint-disable no-bitwise */
+/* eslint-disable sonarjs/no-identical-functions */
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { CloseOutlined } from '@ant-design/icons';
@@ -12,7 +15,7 @@ import { flatten } from 'lodash-es';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 import { v4 } from 'uuid';
 
 import FieldKey from '../FieldKey';
@@ -21,7 +24,7 @@ import { createParsedQueryStructure } from '../utils';
 
 const { Option } = Select;
 interface QueryFieldProps {
-	query: { value: string; type: string }[];
+	query: { value: string | string[]; type: string }[];
 	queryIndex: number;
 	onUpdate: (query: unknown, queryIndex: number) => void;
 	onDelete: (queryIndex: number) => void;
@@ -45,8 +48,10 @@ function QueryField({
 		}
 		return '';
 	};
-	const fieldType = useMemo(() => getFieldType(query[0].value), [query]);
-	const handleChange = (qIdx, value): void => {
+	const fieldType = useMemo(() => getFieldType(query[0].value as string), [
+		query,
+	]);
+	const handleChange = (qIdx: number, value: string): void => {
 		query[qIdx].value = value || '';
 
 		if (qIdx === 1) {
@@ -54,10 +59,11 @@ function QueryField({
 				if (!Array.isArray(query[2].value)) {
 					query[2].value = [];
 				}
-			} else if (Object.values(QueryOperatorsSingleVal).includes(value)) {
-				if (Array.isArray(query[2].value)) {
-					query[2].value = '';
-				}
+			} else if (
+				Object.values(QueryOperatorsSingleVal).includes(value) &&
+				Array.isArray(query[2].value)
+			) {
+				query[2].value = '';
 			}
 		}
 		onUpdate(query, queryIndex);
@@ -75,39 +81,43 @@ function QueryField({
 			style={{ ...(queryIndex === 0 && { gridColumnStart: 2 }) }}
 		>
 			<div style={{ flex: 1, minWidth: 100 }}>
-				<FieldKey name={query[0] && query[0].value} type={fieldType} />
+				<FieldKey name={(query[0] && query[0].value) as string} type={fieldType} />
 			</div>
 			<Select
 				defaultActiveFirstOption={false}
 				placeholder="Select Operator"
 				defaultValue={
-					query[1] && query[1].value ? query[1].value.toUpperCase() : null
+					query[1] && query[1].value
+						? (query[1].value as string).toUpperCase()
+						: null
 				}
-				onChange={(e) => handleChange(1, e)}
+				onChange={(e): void => handleChange(1, e)}
 				style={{ minWidth: 150 }}
 			>
 				{Object.values({
 					...QueryOperatorsMultiVal,
 					...QueryOperatorsSingleVal,
 				}).map((cond) => (
-					<Option key={cond} value={cond} label={cond} />
+					<Option key={cond} value={cond} label={cond}>
+						{cond}
+					</Option>
 				))}
 			</Select>
 			<div style={{ flex: 2 }}>
 				{Array.isArray(query[2].value) ||
-					Object.values(QueryOperatorsMultiVal).some(
-						(op) => op.toUpperCase() === query[1].value?.toUpperCase(),
-					) ? (
+				Object.values(QueryOperatorsMultiVal).some(
+					(op) => op.toUpperCase() === (query[1].value as string)?.toUpperCase(),
+				) ? (
 					<Select
 						mode="tags"
 						style={{ width: '100%' }}
-						onChange={(e) => handleChange(2, e)}
+						onChange={(e): void => handleChange(2, e)}
 						defaultValue={(query[2] && query[2].value) || []}
 						notFoundContent={null}
 					/>
 				) : (
 					<Input
-						onChange={(e) => handleChange(2, e.target.value)}
+						onChange={(e): void => handleChange(2, e.target.value)}
 						style={{ width: '100%' }}
 						defaultValue={query[2] && query[2].value}
 					/>
@@ -123,24 +133,38 @@ function QueryField({
 		</QueryFieldContainer>
 	);
 }
-function QueryConditionField({ query, queryIndex, onUpdate }): JSX.Element {
+
+interface QueryConditionFieldProps {
+	query: { value: string | string[]; type: string }[];
+	queryIndex: number;
+	onUpdate: (arg0: unknown, arg1: number) => void;
+}
+function QueryConditionField({
+	query,
+	queryIndex,
+	onUpdate,
+}: QueryConditionFieldProps): JSX.Element {
 	return (
 		<QueryConditionContainer>
 			<Select
-				defaultValue={query.value.toUpperCase()}
-				onChange={(e) => {
+				defaultValue={
+					query.value && ((query?.value as unknown) as string).toUpperCase()
+				}
+				onChange={(e): void => {
 					onUpdate({ ...query, value: e }, queryIndex);
 				}}
 				style={{ width: '100%' }}
 			>
 				{Object.values(ConditionalOperators).map((cond) => (
-					<Option key={cond} value={cond} label={cond} />
+					<Option key={cond} value={cond} label={cond}>
+						{cond}
+					</Option>
 				))}
 			</Select>
 		</QueryConditionContainer>
 	);
 }
-const hashCode = (s) => {
+const hashCode = (s: string): string => {
 	if (!s) {
 		return '0';
 	}
@@ -152,14 +176,20 @@ const hashCode = (s) => {
 	)}`;
 };
 
-function QueryBuilder({ updateParsedQuery }): JSX.Element {
+function QueryBuilder({
+	updateParsedQuery,
+}: {
+	updateParsedQuery: (arg0: unknown) => void;
+}): JSX.Element {
 	const {
 		searchFilter: { parsedQuery },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(parsedQuery)));
 	const [keyPrefix, setKeyPrefix] = useState(keyPrefixRef.current);
-	const generatedQueryStructure = createParsedQueryStructure(parsedQuery);
+	const generatedQueryStructure = createParsedQueryStructure(
+		parsedQuery as never[],
+	);
 
 	useEffect(() => {
 		const incomingHashCode = hashCode(JSON.stringify(parsedQuery));
@@ -169,16 +199,19 @@ function QueryBuilder({ updateParsedQuery }): JSX.Element {
 		}
 	}, [parsedQuery]);
 
-	const handleUpdate = (query, queryIndex): void => {
+	const handleUpdate = (
+		query: { value: string | string[]; type: string }[],
+		queryIndex: number,
+	): void => {
 		const updatedParsedQuery = generatedQueryStructure;
-		updatedParsedQuery[queryIndex] = query;
+		updatedParsedQuery[queryIndex] = query as never;
 
 		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
 		updateParsedQuery(flatParsedQuery);
 	};
 
-	const handleDelete = (queryIndex) => {
+	const handleDelete = (queryIndex: number): void => {
 		const updatedParsedQuery = generatedQueryStructure;
 		updatedParsedQuery.splice(queryIndex - 1, 2);
 
@@ -187,7 +220,7 @@ function QueryBuilder({ updateParsedQuery }): JSX.Element {
 		updateParsedQuery(flatParsedQuery);
 	};
 
-	const QueryUI = () =>
+	const QueryUI = (): JSX.Element | JSX.Element[] =>
 		generatedQueryStructure.map((query, idx) => {
 			if (Array.isArray(query))
 				return (

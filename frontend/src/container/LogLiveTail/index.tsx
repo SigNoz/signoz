@@ -95,7 +95,7 @@ function LogLiveTail(): JSX.Element {
 			const timeStamp = dayjs().subtract(liveTailStartRange, 'minute').valueOf();
 			const queryParams = new URLSearchParams({
 				...(queryString ? { q: queryString } : {}),
-				timestampStart: timeStamp * 1e6,
+				timestampStart: (timeStamp * 1e6) as never,
 				...(liveTailSourceRef.current && logs.length > 0
 					? {
 							idGt: logs[0].id,
@@ -125,7 +125,7 @@ function LogLiveTail(): JSX.Element {
 		}
 	}, [liveTail]);
 
-	const handleLiveTailStart = () => {
+	const handleLiveTailStart = (): void => {
 		handleLiveTail('PLAYING');
 		if (!liveTailSourceRef.current) {
 			dispatch({

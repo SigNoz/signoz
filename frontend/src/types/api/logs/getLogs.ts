@@ -9,4 +9,5 @@ export type Props = {
 	idGt?: string;
 	idLt?: string;
 	timestampStart?: number;
+	timestampEnd?: number;
 };
