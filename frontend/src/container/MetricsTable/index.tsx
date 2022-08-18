@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unstable-nested-components */
+
 import { SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
@@ -53,6 +55,7 @@ function Metrics(): JSX.Element {
 		setSearchText('');
 	};
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const getColumnSearchProps = (dataIndex) => ({
 		filterDropdown: ({
 			setSelectedKeys,
@@ -69,8 +72,10 @@ function Metrics(): JSX.Element {
 					ref={searchInput}
 					placeholder={`Search ${dataIndex}`}
 					value={selectedKeys[0]}
-					onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-					onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+					onChange={(e): void =>
+						setSelectedKeys(e.target.value ? [e.target.value] : [])
+					}
+					onPressEnter={(): void => handleSearch(selectedKeys, confirm, dataIndex)}
 					style={{
 						marginBottom: 8,
 						display: 'block',
@@ -79,7 +84,7 @@ function Metrics(): JSX.Element {
 				<Space>
 					<Button
 						type="primary"
-						onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+						onClick={(): void => handleSearch(selectedKeys, confirm, dataIndex)}
 						icon={<SearchOutlined />}
 						size="large"
 						style={{
@@ -89,7 +94,7 @@ function Metrics(): JSX.Element {
 						Search
 					</Button>
 					<Button
-						onClick={() => clearFilters && handleReset(clearFilters)}
+						onClick={(): void => clearFilters && handleReset(clearFilters)}
 						size="small"
 						style={{
 							width: 90,
@@ -100,7 +105,7 @@ function Metrics(): JSX.Element {
 					<Button
 						type="link"
 						size="small"
-						onClick={() => {
+						onClick={(): void => {
 							confirm({
 								closeDropdown: false,
 							});
@@ -124,7 +129,7 @@ function Metrics(): JSX.Element {
 			record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
 		onFilterDropdownVisibleChange: (visible): void => {
 			if (visible) {
-				setTimeout(() => searchInput.current?.select(), 100);
+				setTimeout((): void => searchInput.current?.select(), 100);
 			}
 		},
 		render: (text: string): JSX.Element => (
