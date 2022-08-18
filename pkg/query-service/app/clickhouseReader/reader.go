@@ -1704,9 +1704,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 	for i, item := range searchScanResponses {
 		var jsonItem model.SearchSpanResponseItem
 		json.Unmarshal([]byte(item.Model), &jsonItem)
-		searchSpanResponses = append(searchSpanResponses, jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
 		spanEvents := jsonItem.GetValues()
+		searchSpanResponses = append(searchSpanResponses, jsonItem)
 		searchSpansResult[0].Events[i] = spanEvents
 	}
 
