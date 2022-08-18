@@ -1754,7 +1754,7 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 	}
 	targetSpan := &model.Span{}
 	for _, root := range roots {
-		targetSpan, err = BreadthFirstSearch(root, targetSpanId)
+		targetSpan, err = breadthFirstSearch(root, targetSpanId)
 		if targetSpan != nil {
 			break
 		}
@@ -1878,8 +1878,11 @@ func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
 	}
 
 	if roots == nil {
-		zap.S().Error("No root span found")
-		return nil, errors.New("No root span found")
+		zap.S().Debug("No root span found")
+		// roots = []*model.Span{{
+		// 	SpanID:  "fakeRootSpan",
+		// 	TraceID: spans[0].TraceID,
+		// }}
 	}
 
 	for _, span := range spans {
@@ -1901,7 +1904,7 @@ func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
 	return roots, nil
 }
 
-func BreadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, error) {
+func breadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, error) {
 	queue := []*model.Span{spansPtr}
 	visited := make(map[string]bool)
 
