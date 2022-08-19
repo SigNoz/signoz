@@ -1,47 +1,52 @@
 import { blue, orange } from '@ant-design/colors';
-import {
-	MenuFoldOutlined,
-	MinusCircleOutlined,
-	PlusCircleFilled,
-	PlusCircleOutlined,
-} from '@ant-design/icons';
-import { Button, Col, Input, Popover, Table, Typography } from 'antd';
+import { Input, Table } from 'antd';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import flatten from 'flat';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import React, { useMemo, useState } from 'react';
+import { ILog } from 'types/api/logs/log';
 
 import ActionItem from './ActionItem';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
 
-function TableView({ logData }) {
+interface TableViewProps {
+	logData: ILog;
+}
+function TableView({ logData }: TableViewProps): JSX.Element | null {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
-	const flattenLogData = useMemo(() => (logData ? flatten(logData) : null), [
-		logData,
-	]);
+	const flattenLogData: Record<string, never> | null = useMemo(
+		() => (logData ? flatten(logData) : null),
+		[logData],
+	);
 	if (logData === null) {
 		return null;
 	}
 
-	const dataSource = Object.keys(flattenLogData)
-		.filter((field) => fieldSearchFilter(field, fieldSearchInput))
-		.map((key) => {
-			return {
-				key,
-				field: key,
-				value: JSON.stringify(flattenLogData[key]),
-			};
-		});
+	const dataSource =
+		flattenLogData !== null &&
+		Object.keys(flattenLogData)
+			.filter((field) => fieldSearchFilter(field, fieldSearchInput))
+			.map((key) => {
+				return {
+					key,
+					field: key,
+					value: JSON.stringify(flattenLogData[key]),
+				};
+			});
+
+	if (!dataSource) {
+		return null;
+	}
 
 	const columns = [
 		{
 			title: 'Action',
 			width: 75,
-			render: (fieldData) => {
+			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return <ActionItem fieldKey={fieldKey} fieldValue={fieldData.value} />;
@@ -54,13 +59,13 @@ function TableView({ logData }) {
 			dataIndex: 'field',
 			key: 'field',
 			width: '35%',
-			render: (field: string) => {
+			render: (field: string): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
 
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return (
-						<AddToQueryHOC fieldKey={fieldKey} fieldValue={flattenLogData[field]}>
+						<AddToQueryHOC fieldKey={fieldKey[0]} fieldValue={flattenLogData[field]}>
 							{' '}
 							{renderedField}
 						</AddToQueryHOC>
@@ -74,7 +79,7 @@ function TableView({ logData }) {
 			dataIndex: 'value',
 			key: 'value',
 			ellipsis: false,
-			render: (field) => (
+			render: (field: never): JSX.Element => (
 				<CopyClipboardHOC textToCopy={field}>
 					<span style={{ color: orange[6] }}>{field}</span>
 				</CopyClipboardHOC>
@@ -88,13 +93,13 @@ function TableView({ logData }) {
 				placeholder="Search field names"
 				size="large"
 				value={fieldSearchInput}
-				onChange={(e) => setFieldSearchInput(e.target.value)}
+				onChange={(e): void => setFieldSearchInput(e.target.value)}
 			/>
 			<Table
 				// scroll={{ x: true }}
 				tableLayout="fixed"
 				dataSource={dataSource}
-				columns={columns}
+				columns={columns as never}
 				pagination={false}
 			/>
 		</div>

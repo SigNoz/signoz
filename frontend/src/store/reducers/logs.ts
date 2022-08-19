@@ -21,7 +21,7 @@ import {
 	STOP_LIVE_TAIL,
 	TOGGLE_LIVE_TAIL,
 } from 'types/actions/logs';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
 const initialState: ILogsReducer = {
 	fields: {
@@ -39,33 +39,10 @@ const initialState: ILogsReducer = {
 	isLoading: false,
 	isLoadingAggregate: false,
 	logsAggregate: [],
-	detailedLog: null,
 	liveTail: 'STOPPED',
 	liveTailStartRange: 15,
-	// detailedLog: {
-	// 	timestamp: 1659360016955270100,
-	// 	id: '2CkBCauK8m3nkyKR19YhCw6WfvD',
-	// 	traceId: '',
-	// 	spanId: '',
-	// 	traceFlags: 0,
-	// 	severityText: '',
-	// 	severityNumber: 0,
-	// 	body:
-	// 		'49.207.215.17 - - [01/Aug/2022:13:20:16 +0000] "OPTIONS /api/v1/logs/fields HTTP/1.1" 200 23 "http://localhost:3301/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36" "-"\n',
-	// 	resourcesString: {
-	// 		source: 'docker',
-	// 	},
-	// 	attributesString: {
-	// 		container_id:
-	// 			'b3c6808322609f7671c18a09515d9c84909c873471b560da65c1afe0dfd933ea',
-	// 		log_file_path:
-	// 			'/var/lib/docker/containers/b3c6808322609f7671c18a09515d9c84909c873471b560da65c1afe0dfd933ea/b3c6808322609f7671c18a09515d9c84909c873471b560da65c1afe0dfd933ea-json.log',
-	// 		stream: 'stdout',
-	// 		time: '2022-08-01T13:20:16.955270245Z',
-	// 	},
-	// 	attributesInt: {},
-	// 	attributesFloat: {},
-	// },
+	selectedLogId: null,
+	detailedLog: null,
 };
 
 export const LogsReducer = (
@@ -123,9 +100,12 @@ export const LogsReducer = (
 
 		case ADD_SEARCH_FIELD_QUERY_STRING: {
 			const updatedQueryString =
-				state.searchFilter.queryString +
-				(state.searchFilter.queryString.length > 0 ? ' and ' : '') +
-				action.payload;
+				state.searchFilter.queryString ||
+				`${
+					state.searchFilter.queryString && state.searchFilter.queryString.length > 0
+						? ' and '
+						: ''
+				}${action.payload}`;
 
 			const updatedParsedQuery = parseQuery(updatedQueryString);
 			return {

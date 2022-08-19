@@ -1,3 +1,5 @@
+/* eslint-disable  */
+// @ts-ignore
 // @ts-nocheck
 
 export const reverseParser = (
