@@ -2,7 +2,7 @@ import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
 import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import React, { Dispatch, memo, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -30,7 +30,7 @@ interface ActionItemProps {
 	fieldValue: string;
 	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
 	getLogsAggregate: (
-		props: Parameters<typeof getLogsAggregate>[0]
+		props: Parameters<typeof getLogsAggregate>[0],
 	) => ReturnType<typeof getLogsAggregate>;
 }
 function ActionItem({
@@ -38,7 +38,7 @@ function ActionItem({
 	fieldValue,
 	getLogs,
 	getLogsAggregate,
-}: ActionItemProps): JSX.Element {
+}: ActionItemProps): JSX.Element | unknown {
 	const {
 		searchFilter: { queryString },
 		logLinesPerPage,
@@ -150,12 +150,10 @@ function ActionItem({
 	);
 }
 interface DispatchProps {
-	getLogs: (
-		props: Parameters<typeof getLogs>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (props: Parameters<typeof getLogs>[0]) => (dispatch: never) => void;
 	getLogsAggregate: (
 		props: Parameters<typeof getLogsAggregate>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
+	) => (dispatch: never) => void;
 }
 
 const mapDispatchToProps = (
@@ -165,4 +163,5 @@ const mapDispatchToProps = (
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(memo(ActionItem));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default connect(null, mapDispatchToProps)(memo(ActionItem as any));

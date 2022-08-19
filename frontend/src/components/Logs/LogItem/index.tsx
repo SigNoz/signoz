@@ -99,13 +99,19 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 				<div>
 					{'{'}
 					<div style={{ marginLeft: '0.5rem' }}>
-						<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
+						<LogGeneralField
+							fieldKey="log"
+							fieldValue={flattenLogData.body as never}
+						/>
 						{flattenLogData.stream && (
-							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
+							<LogGeneralField
+								fieldKey="stream"
+								fieldValue={flattenLogData.stream as never}
+							/>
 						)}
 						<LogGeneralField
 							fieldKey="timestamp"
-							fieldValue={dayjs(flattenLogData.timestamp / 1e6).format()}
+							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
 						/>
 					</div>
 					{'}'}
@@ -116,7 +122,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 							<LogSelectedField
 								key={field.name}
 								fieldKey={field.name}
-								fieldValue={flattenLogData[field.name]}
+								fieldValue={flattenLogData[field.name] as never}
 							/>
 						) : null;
 					})}

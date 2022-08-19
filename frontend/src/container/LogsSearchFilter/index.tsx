@@ -22,7 +22,16 @@ import { useSearchParser } from './useSearchParser';
 
 const { Search } = Input;
 
-function SearchFilter({ getLogs, getLogsAggregate }): JSX.Element {
+interface SearchFilterProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => ReturnType<typeof getLogsAggregate>;
+}
+function SearchFilter({
+	getLogs,
+	getLogsAggregate,
+}: SearchFilterProps): JSX.Element {
 	const {
 		queryString,
 		updateParsedQuery,
@@ -141,9 +150,9 @@ function SearchFilter({ getLogs, getLogsAggregate }): JSX.Element {
 								right: 0,
 							}}
 						>
-							<CloseSquareOutlined size="large" />
+							<CloseSquareOutlined />
 						</Button>
-						<SearchFields updateParsedQuery={updateParsedQuery} />
+						<SearchFields updateParsedQuery={updateParsedQuery as never} />
 					</DropDownContainer>
 				)}
 			</div>
@@ -158,7 +167,6 @@ interface DispatchProps {
 		props: Parameters<typeof getLogsAggregate>[0],
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
-
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,

@@ -17,7 +17,6 @@ function SuggestedItem({ name, type }: SuggestedItemProps): JSX.Element {
 	const dispatch = useDispatch();
 
 	const addSuggestedField = (): void => {
-
 		dispatch({
 			type: ADD_SEARCH_FIELD_QUERY_STRING,
 			payload: name,

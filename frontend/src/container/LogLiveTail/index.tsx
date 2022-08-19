@@ -104,10 +104,10 @@ function LogLiveTail(): JSX.Element {
 			});
 			const source = LiveTail(queryParams.toString());
 			liveTailSourceRef.current = source;
-			source.onmessage = function connectionMessage(e: never): void {
+			source.onmessage = function connectionMessage(e): void {
 				batchLiveLog(e);
 			};
-			source.onopen = function connectionOpen(): void {};
+			// source.onopen = function connectionOpen(): void { };
 			source.onerror = function connectionError(event: unknown): void {
 				console.error(event);
 				source.close();

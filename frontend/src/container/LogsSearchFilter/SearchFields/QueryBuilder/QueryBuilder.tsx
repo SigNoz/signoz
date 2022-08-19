@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-bitwise */
 /* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable no-param-reassign */
@@ -111,7 +112,7 @@ function QueryField({
 					<Select
 						mode="tags"
 						style={{ width: '100%' }}
-						onChange={(e): void => handleChange(2, e)}
+						onChange={(e): void => handleChange(2, e as never)}
 						defaultValue={(query[2] && query[2].value) || []}
 						notFoundContent={null}
 					/>
@@ -148,7 +149,8 @@ function QueryConditionField({
 		<QueryConditionContainer>
 			<Select
 				defaultValue={
-					query.value && ((query?.value as unknown) as string).toUpperCase()
+					(query as any).value &&
+					(((query as any)?.value as any) as string).toUpperCase()
 				}
 				onChange={(e): void => {
 					onUpdate({ ...query, value: e }, queryIndex);
@@ -226,9 +228,9 @@ function QueryBuilder({
 				return (
 					<QueryField
 						key={keyPrefix + idx}
-						query={query}
+						query={query as never}
 						queryIndex={idx}
-						onUpdate={handleUpdate}
+						onUpdate={handleUpdate as never}
 						onDelete={handleDelete}
 					/>
 				);
@@ -238,7 +240,7 @@ function QueryBuilder({
 					key={keyPrefix + idx}
 					query={query}
 					queryIndex={idx}
-					onUpdate={handleUpdate}
+					onUpdate={handleUpdate as never}
 				/>
 			);
 		});

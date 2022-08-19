@@ -49,9 +49,9 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 			<LogControls />
 			<Divider style={{ margin: 0 }} />
 			<Row gutter={20} style={{ flexWrap: 'nowrap' }}>
-				<LogsFilters flex="450px" />
+				<LogsFilters />
 				<Divider type="vertical" style={{ height: '100%', margin: 0 }} />
-				<LogsTable flex="auto" />
+				<LogsTable />
 			</Row>
 			<LogDetailedView />
 		</div>

@@ -15,7 +15,10 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container, Heading } from './styles';
 
-function LogsTable({ getLogs }): JSX.Element {
+interface LogsTableProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+}
+function LogsTable({ getLogs }: LogsTableProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		logs,
@@ -49,7 +52,7 @@ function LogsTable({ getLogs }): JSX.Element {
 		return <Spinner height={20} tip="Getting Logs" />;
 	}
 	return (
-		<Container>
+		<Container flex="auto">
 			<Heading>
 				<Typography.Text
 					style={{

@@ -35,8 +35,8 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 	>([]);
 
 	const [filterValuesInput, setFilterValuesInput] = useState('');
-	const handleSearch = (e): void => {
-		setFilterValuesInput(e.target.value);
+	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setFilterValuesInput((e.target as HTMLInputElement).value);
 	};
 
 	const handleAddInterestingToSelected = async ({
@@ -85,7 +85,7 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 		);
 	};
 	return (
-		<Container>
+		<Container flex="450px">
 			<Input
 				placeholder="Filter Values"
 				onInput={handleSearch}
@@ -103,12 +103,12 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 							<FieldItem
 								key={`${JSON.stringify(field)}-${idx}`}
 								name={field.name}
-								fieldData={field}
+								fieldData={field as never}
 								fieldIndex={idx}
 								buttonIcon={<CloseOutlined style={{ color: red[5] }} />}
 								buttonOnClick={
-									!RESTRICTED_SELECTED_FIELDS.includes(field.name) &&
-									handleRemoveSelectedField
+									(!RESTRICTED_SELECTED_FIELDS.includes(field.name) &&
+										handleRemoveSelectedField) as never
 								}
 								isLoading={selectedFieldLoading.includes(idx)}
 								iconHoverText="Remove from Selected Fields"
@@ -125,10 +125,10 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 							<FieldItem
 								key={`${JSON.stringify(field)}-${idx}`}
 								name={field.name}
-								fieldData={field}
+								fieldData={field as never}
 								fieldIndex={idx}
 								buttonIcon={<PlusCircleFilled />}
-								buttonOnClick={handleAddInterestingToSelected}
+								buttonOnClick={handleAddInterestingToSelected as never}
 								isLoading={interestingFieldLoading.includes(idx)}
 								iconHoverText="Add to Selected Fields"
 							/>
