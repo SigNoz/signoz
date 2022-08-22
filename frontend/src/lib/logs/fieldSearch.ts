@@ -1,4 +1,7 @@
-export const fieldSearchFilter = (searchSpace = '', currentValue = '') => {
+export const fieldSearchFilter = (
+	searchSpace = '',
+	currentValue = '',
+): boolean => {
 	if (!currentValue || !searchSpace) {
 		return true;
 	}

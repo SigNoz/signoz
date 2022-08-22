@@ -1,7 +1,9 @@
+/* eslint-disable  */
+// @ts-ignore
 // @ts-nocheck
 
-export const splitter = (queryString) => {
-	const splittedParts = [];
+export const splitter = (queryString: string): string[] => {
+	const splittedParts: string[] = [];
 	let start = 0;
 	let isBracketStart = false;
 	let isQuoteStart = false;
@@ -12,10 +14,6 @@ export const splitter = (queryString) => {
 	};
 	for (let idx = 0; idx < queryString.length; idx += 1) {
 		const currentChar = queryString[idx];
-
-		// if (start === null) {
-		// 	start = idx;
-		// }
 
 		if (currentChar === ' ') {
 			if (!isBracketStart && !isQuoteStart) {
@@ -48,7 +46,6 @@ export const splitter = (queryString) => {
 		pushPart(queryString.length);
 	}
 
-	// console.log(splittedParts.filter(Boolean));
 	return splittedParts.map((s) => String.raw`${s}`).filter(Boolean);
 };
 

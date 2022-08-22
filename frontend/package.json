@@ -126,6 +126,8 @@
 		"@types/copy-webpack-plugin": "^8.0.1",
 		"@types/d3": "^6.2.0",
 		"@types/d3-tip": "^3.5.5",
+		"@types/event-source-polyfill": "^1.0.0",
+		"@types/flat": "^5.0.2",
 		"@types/jest": "^27.5.1",
 		"@types/lodash-es": "^4.17.4",
 		"@types/mini-css-extract-plugin": "^2.5.1",

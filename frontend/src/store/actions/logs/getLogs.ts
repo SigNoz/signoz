@@ -2,9 +2,12 @@ import GetLogs from 'api/logs/GetLogs';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_LOADING, SET_LOGS } from 'types/actions/logs';
+import { Props } from 'types/api/logs/getLogs';
 
-export const getLogs = (props): ((dispatch: Dispatch<AppActions>) => void) => {
-	return async (dispatch): void => {
+export const getLogs = (
+	props: Props,
+): ((dispatch: Dispatch<AppActions>) => void) => {
+	return async (dispatch): Promise<void> => {
 		dispatch({
 			type: SET_LOADING,
 			payload: true,

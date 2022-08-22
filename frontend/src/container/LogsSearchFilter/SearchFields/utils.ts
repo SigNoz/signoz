@@ -1,3 +1,7 @@
+/* eslint-disable  */
+// @ts-ignore
+// @ts-nocheck
+
 import { QueryTypes } from 'lib/logql/tokens';
 
 export const queryKOVPair = () => [
@@ -30,7 +34,7 @@ export const createParsedQueryStructure = (parsedQuery = []) => {
 			cond = null;
 			qCtr = -1;
 		}
-		let stagingArr = structuredArray[structuredArray.length - 1];
+		const stagingArr = structuredArray[structuredArray.length - 1];
 		const prevQuery =
 			Array.isArray(stagingArr) && qCtr >= 0 ? stagingArr[qCtr] : null;
 

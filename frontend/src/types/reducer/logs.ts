@@ -17,7 +17,7 @@ export interface ILogsReducer {
 	isLoading: boolean;
 	isLoadingAggregate: boolean;
 	logsAggregate: ILogsAggregate[];
-	selectedLogId: string;
+	selectedLogId: string | null;
 	detailedLog: null | ILog;
 	liveTail: TLogsLiveTailState;
 	liveTailStartRange: number; // time in minutes
