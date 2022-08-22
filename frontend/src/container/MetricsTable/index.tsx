@@ -1,5 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
-
 import { SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
@@ -7,7 +5,7 @@ import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -22,8 +20,6 @@ function Metrics(): JSX.Element {
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
 	);
-	const [setSearchText] = useState('');
-	const [setSearchedColumn] = useState('');
 	const searchInput = useRef(null);
 
 	const { services, loading, error } = useSelector<AppState, MetricReducer>(
@@ -34,35 +30,27 @@ function Metrics(): JSX.Element {
 		localStorageSet(SKIP_ONBOARDING, 'true');
 		setSkipOnboarding(true);
 	};
-
-	if (
-		services.length === 0 &&
-		loading === false &&
-		!skipOnboarding &&
-		error === true
-	) {
-		return <SkipBoardModal onContinueClick={onContinueClick} />;
-	}
-
-	const handleSearch = (selectedKeys, confirm, dataIndex): void => {
+	const handleSearch = (_, confirm): void => {
 		confirm();
-		setSearchText(selectedKeys[0]);
-		setSearchedColumn(dataIndex);
 	};
 
 	const handleReset = (clearFilters): void => {
 		clearFilters();
-		setSearchText('');
 	};
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	const getColumnSearchProps = (dataIndex) => ({
-		filterDropdown: ({
-			setSelectedKeys,
-			selectedKeys,
-			confirm,
-			clearFilters,
-		}): JSX.Element => (
+	const FilterIcon = useCallback(
+		({ filtered }) => (
+			<SearchOutlined
+				style={{
+					color: filtered ? '#1890ff' : undefined,
+				}}
+			/>
+		),
+		[],
+	);
+
+	const filterDropdown = useCallback(
+		({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
 			<div
 				style={{
 					padding: 8,
@@ -70,12 +58,12 @@ function Metrics(): JSX.Element {
 			>
 				<Input
 					ref={searchInput}
-					placeholder={`Search ${dataIndex}`}
+					placeholder="Search by service"
 					value={selectedKeys[0]}
 					onChange={(e): void =>
 						setSelectedKeys(e.target.value ? [e.target.value] : [])
 					}
-					onPressEnter={(): void => handleSearch(selectedKeys, confirm, dataIndex)}
+					onPressEnter={(): void => handleSearch(selectedKeys, confirm)}
 					style={{
 						marginBottom: 8,
 						display: 'block',
@@ -84,9 +72,9 @@ function Metrics(): JSX.Element {
 				<Space>
 					<Button
 						type="primary"
-						onClick={(): void => handleSearch(selectedKeys, confirm, dataIndex)}
+						onClick={(): void => handleSearch(selectedKeys, confirm)}
 						icon={<SearchOutlined />}
-						size="large"
+						size="small"
 						style={{
 							width: 90,
 						}}
@@ -109,8 +97,6 @@ function Metrics(): JSX.Element {
 							confirm({
 								closeDropdown: false,
 							});
-							setSearchText(selectedKeys[0]);
-							setSearchedColumn(dataIndex);
 						}}
 					>
 						Filter
@@ -118,13 +104,21 @@ function Metrics(): JSX.Element {
 				</Space>
 			</div>
 		),
-		filterIcon: (filtered): JSX.Element => (
-			<SearchOutlined
-				style={{
-					color: filtered ? '#1890ff' : undefined,
-				}}
-			/>
-		),
+		[],
+	);
+
+	if (
+		services.length === 0 &&
+		loading === false &&
+		!skipOnboarding &&
+		error === true
+	) {
+		return <SkipBoardModal onContinueClick={onContinueClick} />;
+	}
+
+	const getColumnSearchProps = (dataIndex): ColumnsType<DataProps> => ({
+		filterDropdown,
+		filterIcon: FilterIcon,
 		onFilter: (value, record): boolean =>
 			record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
 		onFilterDropdownVisibleChange: (visible): void => {
