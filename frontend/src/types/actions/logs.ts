@@ -123,42 +123,6 @@ export interface SetLiveTailStartTime {
 	type: typeof SET_LIVE_TAIL_START_TIME;
 	payload: number;
 }
-// export interface GetServiceListLoading {
-// 	type:
-// 		| typeof GET_SERVICE_LIST_LOADING_START
-// 		| typeof GET_INITIAL_APPLICATION_LOADING;
-// }
-
-// export interface GetServiceListError {
-// 	type: typeof GET_SERVICE_LIST_ERROR | typeof GET_INITIAL_APPLICATION_ERROR;
-// 	payload: {
-// 		errorMessage: string;
-// 	};
-// }
-
-// export interface GetInitialApplicationData {
-// 	type: typeof GET_INTIAL_APPLICATION_DATA;
-// 	payload: {
-// 		topEndPoints: TopEndPoints[];
-// 		// dbOverView: DBOverView[];
-// 		// externalService: ExternalService[];
-// 		// externalAverageDuration: ExternalAverageDuration[];
-// 		// externalError: ExternalError[];
-// 		serviceOverview: ServiceOverview[];
-// 	};
-// }
-
-// export interface ResetInitialApplicationData {
-// 	type: typeof RESET_INITIAL_APPLICATION_DATA;
-// }
-
-// export interface SetResourceAttributeQueries {
-// 	type: typeof SET_RESOURCE_ATTRIBUTE_QUERIES;
-// 	payload: {
-// 		queries: IResourceAttributeQuery[];
-// 		promQLQuery: string;
-// 	};
-// }
 
 export type LogsActions =
 	| GetFields

@@ -1,18 +1,21 @@
-import {
-	CloseCircleFilled,
-	CloseOutlined,
-	LoadingOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Popover, Spin } from 'antd';
-import Spinner from 'components/Spinner';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useHover, useHoverDirty } from 'react-use';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 import { Field } from './styles';
 
+interface FieldItemProps {
+	name: string;
+	buttonIcon: React.ReactNode;
+	buttonOnClick: (arg0: Record<string, unknown>) => void;
+	fieldData: Record<string, never>;
+	fieldIndex: number;
+	isLoading: boolean;
+	iconHoverText: string;
+}
 export function FieldItem({
 	name,
 	buttonIcon,
@@ -20,16 +23,16 @@ export function FieldItem({
 	fieldData,
 	fieldIndex,
 	isLoading,
-	iconHoverText
-}) {
+	iconHoverText,
+}: FieldItemProps): JSX.Element {
 	const [isHovered, setIsHovered] = useState(false);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	return (
 		<Field
-			onMouseEnter={() => {
+			onMouseEnter={(): void => {
 				setIsHovered(true);
 			}}
-			onMouseLeave={() => setIsHovered(false)}
+			onMouseLeave={(): void => setIsHovered(false)}
 			isDarkMode={isDarkMode}
 		>
 			<span>{name}</span>
@@ -43,7 +46,7 @@ export function FieldItem({
 							type="text"
 							size="small"
 							icon={buttonIcon}
-							onClick={() => buttonOnClick({ fieldData, fieldIndex })}
+							onClick={(): void => buttonOnClick({ fieldData, fieldIndex })}
 							style={{ color: 'inherit', padding: 0, height: '1rem', width: '1rem' }}
 						/>
 					</Popover>

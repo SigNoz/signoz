@@ -1,13 +1,12 @@
 import GetSearchFields from 'api/logs/GetSearchFields';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { GET_FIELDS, SET_FIELDS } from 'types/actions/logs';
-import { TraceReducer } from 'types/reducer/trace';
+import { SET_FIELDS } from 'types/actions/logs';
 
 const IGNORED_SELECTED_FIELDS = ['timestamp'];
 
 export const GetLogsFields = (): ((dispatch: Dispatch<AppActions>) => void) => {
-	return async (dispatch): void => {
+	return async (dispatch): Promise<void> => {
 		const response = await GetSearchFields();
 		if (response.payload) {
 			dispatch({

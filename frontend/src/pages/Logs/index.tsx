@@ -1,7 +1,7 @@
 import Logs from 'container/Logs';
 import React from 'react';
 
-function LogsHome() {
+function LogsHome(): JSX.Element {
 	return <Logs />;
 }
 

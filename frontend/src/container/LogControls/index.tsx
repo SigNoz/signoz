@@ -1,5 +1,4 @@
 import {
-	ArrowLeftOutlined,
 	FastBackwardOutlined,
 	LeftOutlined,
 	RightOutlined,
@@ -19,7 +18,7 @@ import {
 	SET_LOG_LINES_PER_PAGE,
 } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 
@@ -27,7 +26,10 @@ const { Option } = Select;
 
 const ITEMS_PER_PAGE_OPTIONS = [25, 50, 100, 200];
 
-function LogControls({ getLogs }) {
+interface LogControlsProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+}
+function LogControls({ getLogs }: LogControlsProps): JSX.Element | null {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -40,14 +42,14 @@ function LogControls({ getLogs }) {
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const dispatch = useDispatch();
 
-	const handleLogLinesPerPageChange = (e: number) => {
+	const handleLogLinesPerPageChange = (e: number): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
 			payload: e,
 		});
 	};
 
-	const handleGoToLatest = () => {
+	const handleGoToLatest = (): void => {
 		dispatch({
 			type: RESET_ID_START_AND_END,
 		});
@@ -65,12 +67,12 @@ function LogControls({ getLogs }) {
 			});
 	};
 
-	const handleNavigatePrevious = () => {
+	const handleNavigatePrevious = (): void => {
 		dispatch({
 			type: GET_PREVIOUS_LOG_LINES,
 		});
 	};
-	const handleNavigateNext = () => {
+	const handleNavigateNext = (): void => {
 		dispatch({
 			type: GET_NEXT_LOG_LINES,
 		});
@@ -105,7 +107,9 @@ function LogControls({ getLogs }) {
 }
 
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
