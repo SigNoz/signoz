@@ -1,11 +1,12 @@
 import { SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Table } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType, ColumnType } from 'antd/es/table';
+import type { FilterConfirmProps } from 'antd/es/table/interface';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -20,7 +21,6 @@ function Metrics(): JSX.Element {
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
 	);
-	const searchInput = useRef(null);
 
 	const { services, loading, error } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
@@ -30,11 +30,11 @@ function Metrics(): JSX.Element {
 		localStorageSet(SKIP_ONBOARDING, 'true');
 		setSkipOnboarding(true);
 	};
-	const handleSearch = (_, confirm): void => {
+	const handleSearch = (confirm: (param?: FilterConfirmProps) => void): void => {
 		confirm();
 	};
 
-	const handleReset = (clearFilters): void => {
+	const handleReset = (clearFilters: () => void): void => {
 		clearFilters();
 	};
 
@@ -57,13 +57,12 @@ function Metrics(): JSX.Element {
 				}}
 			>
 				<Input
-					ref={searchInput}
 					placeholder="Search by service"
 					value={selectedKeys[0]}
 					onChange={(e): void =>
 						setSelectedKeys(e.target.value ? [e.target.value] : [])
 					}
-					onPressEnter={(): void => handleSearch(selectedKeys, confirm)}
+					onPressEnter={(): void => handleSearch(confirm)}
 					style={{
 						marginBottom: 8,
 						display: 'block',
@@ -72,7 +71,7 @@ function Metrics(): JSX.Element {
 				<Space>
 					<Button
 						type="primary"
-						onClick={(): void => handleSearch(selectedKeys, confirm)}
+						onClick={(): void => handleSearch(confirm)}
 						icon={<SearchOutlined />}
 						size="small"
 						style={{
@@ -116,16 +115,18 @@ function Metrics(): JSX.Element {
 		return <SkipBoardModal onContinueClick={onContinueClick} />;
 	}
 
-	const getColumnSearchProps = (dataIndex): ColumnsType<DataProps> => ({
+	type DataIndex = keyof ServicesList;
+
+	const getColumnSearchProps = (
+		dataIndex: DataIndex,
+	): ColumnType<DataProps> => ({
 		filterDropdown,
 		filterIcon: FilterIcon,
-		onFilter: (value, record): boolean =>
-			record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
-		onFilterDropdownVisibleChange: (visible): void => {
-			if (visible) {
-				setTimeout((): void => searchInput.current?.select(), 100);
-			}
-		},
+		onFilter: (value: string | number | boolean, record: DataProps): boolean =>
+			record[dataIndex]
+				.toString()
+				.toLowerCase()
+				.includes(value.toString().toLowerCase()),
 		render: (text: string): JSX.Element => (
 			<Link to={`${ROUTES.APPLICATION}/${text}${search}`}>
 				<Name>{text}</Name>
