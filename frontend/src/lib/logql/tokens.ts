@@ -17,7 +17,6 @@ export const ConditionalOperators = {
 	OR: 'OR',
 };
 
-
 export const QueryTypes = {
 	QUERY_KEY: 'QUERY_KEY',
 	QUERY_OPERATOR: 'QUERY_OPERATOR',

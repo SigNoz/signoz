@@ -13,6 +13,8 @@ FRONTEND_DIRECTORY ?= frontend
 QUERY_SERVICE_DIRECTORY ?= pkg/query-service
 STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
 SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
+LOCAL_GOOS ?= $(shell go env GOOS)
+LOCAL_GOARCH ?= $(shell go env GOARCH)
 
 REPONAME ?= signoz
 DOCKER_TAG ?= latest
@@ -79,11 +81,25 @@ dev-setup:
 	@echo "--> Local Setup completed"
 	@echo "------------------"
 
+run-local:
+	@LOCAL_GOOS=$(LOCAL_GOOS) LOCAL_GOARCH=$(LOCAL_GOARCH) docker-compose -f \
+	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
+	up --build -d
+
+down-local:
+	@docker-compose -f \
+	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
+	down -v
+
 run-x86:
-	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml up -d
+	@docker-compose -f \
+	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-prod.yaml \
+	up --build -d
 
 down-x86:
-	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
+	@docker-compose -f \
+	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-prod.yaml \
+	down -v
 
 clear-standalone-data:
 	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \

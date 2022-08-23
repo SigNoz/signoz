@@ -762,11 +762,16 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				args...,
 			).ScanStruct(&serviceItem)
 
+			if serviceItem.NumCalls == 0 {
+				return
+			}
+
 			if err != nil {
 				zap.S().Error("Error in processing sql query: ", err)
 				return
 			}
 
+			args, errStatus = buildQueryWithTagParams(ctx, queryParams.Tags, &errorQuery, args)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
 				zap.S().Error("Error in processing sql query: ", err)

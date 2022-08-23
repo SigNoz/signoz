@@ -6,4 +6,8 @@ export type Props = {
 	limit: number;
 	orderBy: string;
 	order: string;
+	idGt?: string;
+	idLt?: string;
+	timestampStart?: number;
+	timestampEnd?: number;
 };
