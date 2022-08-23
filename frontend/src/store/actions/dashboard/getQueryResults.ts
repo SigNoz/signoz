@@ -76,9 +76,11 @@ export async function GetMetricQueryRange({
 
 			queryData[WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME].map((formula) => {
 				const generatedFormulaPayload = {};
+				legendMap[formula.name] = formula.legend || formula.name;
 				generatedFormulaPayload.queryName = formula.name;
 				generatedFormulaPayload.expression = formula.expression;
 				generatedFormulaPayload.disabled = formula.disabled;
+				generatedFormulaPayload.legend = formula.legend;
 				builderQueries[formula.name] = generatedFormulaPayload;
 			});
 			QueryPayload.compositeMetricQuery.builderQueries = builderQueries;

@@ -68,13 +68,18 @@ function QuerySection({
 	const handleFormulaChange = ({
 		formulaIndex,
 		expression,
+		legend,
 		toggleDisable,
 		toggleDelete,
 	}: IQueryBuilderFormulaHandleChange): void => {
 		const allFormulas = formulaQueries;
 		const current = allFormulas[formulaIndex];
-		if (expression) {
+		if (expression !== undefined) {
 			current.expression = expression;
+		}
+
+		if (legend !== undefined) {
+			current.legend = legend;
 		}
 
 		if (toggleDisable) {
@@ -179,6 +184,7 @@ function QuerySection({
 			formulaOnly: true,
 			expression: 'A',
 			disabled: false,
+			legend: '',
 		};
 
 		setFormulaQueries({ ...formulas });
