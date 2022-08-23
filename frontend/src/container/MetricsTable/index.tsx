@@ -34,10 +34,6 @@ function Metrics(): JSX.Element {
 		confirm();
 	};
 
-	const handleReset = (clearFilters: () => void): void => {
-		clearFilters();
-	};
-
 	const FilterIcon = useCallback(
 		({ filtered }) => (
 			<SearchOutlined
@@ -50,7 +46,7 @@ function Metrics(): JSX.Element {
 	);
 
 	const filterDropdown = useCallback(
-		({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+		({ setSelectedKeys, selectedKeys, confirm }) => (
 			<div
 				style={{
 					padding: 8,
@@ -62,10 +58,10 @@ function Metrics(): JSX.Element {
 					onChange={(e): void =>
 						setSelectedKeys(e.target.value ? [e.target.value] : [])
 					}
+					allowClear
 					onPressEnter={(): void => handleSearch(confirm)}
 					style={{
 						marginBottom: 8,
-						display: 'block',
 					}}
 				/>
 				<Space>
@@ -79,26 +75,6 @@ function Metrics(): JSX.Element {
 						}}
 					>
 						Search
-					</Button>
-					<Button
-						onClick={(): void => clearFilters && handleReset(clearFilters)}
-						size="small"
-						style={{
-							width: 90,
-						}}
-					>
-						Reset
-					</Button>
-					<Button
-						type="link"
-						size="small"
-						onClick={(): void => {
-							confirm({
-								closeDropdown: false,
-							});
-						}}
-					>
-						Filter
 					</Button>
 				</Space>
 			</div>
