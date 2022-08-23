@@ -85,6 +85,7 @@ function QueryBuilderQueryContainer({
 	const handleQueryBuilderFormulaChange = ({
 		formulaIndex,
 		expression,
+		legend,
 		toggleDisable,
 		toggleDelete,
 	}: IQueryBuilderFormulaHandleChange): void => {
@@ -94,8 +95,11 @@ function QueryBuilderQueryContainer({
 			];
 		const currentIndexFormula = allFormulas[formulaIndex as number];
 
-		if (expression) {
+		if (expression !== undefined) {
 			currentIndexFormula.expression = expression;
+		}
+		if (legend !== undefined) {
+			currentIndexFormula.legend = legend;
 		}
 
 		if (toggleDisable) {
