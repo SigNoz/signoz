@@ -28,10 +28,9 @@ export interface IBuilderQueries {
 // for api calls
 export interface IBuilderQuery
 	extends Omit<
-			IMetricQuery,
-			'aggregateOperator' | 'legend' | 'metricName' | 'tagFilters'
-		>,
-		Omit<IFormulaQuery, 'expression'> {
+		IMetricQuery,
+		'aggregateOperator' | 'legend' | 'metricName' | 'tagFilters'
+	> {
 	aggregateOperator: EAggregateOperator | undefined;
 	disabled: boolean;
 	name: string;
