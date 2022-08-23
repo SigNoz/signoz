@@ -91,22 +91,15 @@ down-local:
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
 	down -v
 
-run-prod:
+run-x86:
 	@docker-compose -f \
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-prod.yaml \
 	up --build -d
 
-down-prod:
+down-x86:
 	@docker-compose -f \
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-prod.yaml \
 	down -v
-
-run-x86:
-	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose-core.yaml \
-	-f $(STANDALONE_DIRECTORY)/docker-compose-prod.yaml up -d
-
-down-x86:
-	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
 
 clear-standalone-data:
 	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \
