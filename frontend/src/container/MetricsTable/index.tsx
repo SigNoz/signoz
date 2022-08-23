@@ -1,3 +1,4 @@
+import { blue } from '@ant-design/colors';
 import { SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Table } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
@@ -38,7 +39,7 @@ function Metrics(): JSX.Element {
 		({ filtered }) => (
 			<SearchOutlined
 				style={{
-					color: filtered ? '#1890ff' : undefined,
+					color: filtered ? blue[6] : undefined,
 				}}
 			/>
 		),
