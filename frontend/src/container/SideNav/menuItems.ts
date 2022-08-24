@@ -7,6 +7,7 @@ import {
 	DashboardFilled,
 	DeploymentUnitOutlined,
 	LineChartOutlined,
+	MenuOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
@@ -18,9 +19,15 @@ const menus: SidebarMenu[] = [
 		name: 'Services',
 	},
 	{
-		Icon: AlignLeftOutlined,
+		Icon: MenuOutlined,
 		to: ROUTES.TRACE,
 		name: 'Traces',
+	},
+	{
+		Icon: AlignLeftOutlined,
+		to: ROUTES.LOGS,
+		name: 'Logs',
+		tags: ['Beta'],
 	},
 	{
 		Icon: DashboardFilled,
@@ -41,7 +48,6 @@ const menus: SidebarMenu[] = [
 		to: ROUTES.SERVICE_MAP,
 		name: 'Service Map',
 		Icon: DeploymentUnitOutlined,
-		tags: ['Beta'],
 	},
 	{
 		Icon: LineChartOutlined,

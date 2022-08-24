@@ -26,6 +26,7 @@ const ROUTES = {
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
+	LOGS: '/logs',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 };

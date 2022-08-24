@@ -84,10 +84,10 @@ function Retention({
 	return (
 		<RetentionContainer>
 			<Row justify="space-between">
-				<Col flex={1} style={{ display: 'flex' }}>
+				<Col span={12} style={{ display: 'flex' }}>
 					<RetentionFieldLabel>{text}</RetentionFieldLabel>
 				</Col>
-				<Col flex="150px">
+				<Row justify="end">
 					<RetentionFieldInputContainer>
 						<Input
 							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
@@ -102,7 +102,7 @@ function Retention({
 							{menuItems}
 						</Select>
 					</RetentionFieldInputContainer>
-				</Col>
+				</Row>
 			</Row>
 		</RetentionContainer>
 	);

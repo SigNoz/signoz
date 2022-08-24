@@ -65,6 +65,7 @@ function Graph({
 	yAxisUnit = 'short',
 	forceReRender,
 	staticLine,
+	containerHeight,
 }: GraphProps): JSX.Element {
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -241,7 +242,7 @@ function Graph({
 	}, [buildChart, forceReRender]);
 
 	return (
-		<div style={{ height: '85%' }}>
+		<div style={{ height: containerHeight }}>
 			<canvas ref={chartRef} />
 			<LegendsContainer id={name} />
 		</div>
@@ -259,6 +260,7 @@ interface GraphProps {
 	yAxisUnit?: string;
 	forceReRender?: boolean | null | number;
 	staticLine?: StaticLineProps | undefined;
+	containerHeight?: string | number;
 }
 
 export interface StaticLineProps {
@@ -285,5 +287,6 @@ Graph.defaultProps = {
 	yAxisUnit: undefined,
 	forceReRender: undefined,
 	staticLine: undefined,
+	containerHeight: '85%',
 };
 export default Graph;
