@@ -69,7 +69,6 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
       - "4317:4317"       # OTLP GRPC receiver
-    mem_limit: 2000m
     restart: always
     depends_on:
       clickhouse:

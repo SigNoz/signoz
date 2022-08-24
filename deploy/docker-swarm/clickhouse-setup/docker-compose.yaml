@@ -105,9 +105,6 @@ services:
       mode: global
       restart_policy:
         condition: on-failure
-      resources:
-        limits:
-          memory: 2000m
     depends_on:
       - clickhouse
 
