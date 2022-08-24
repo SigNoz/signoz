@@ -12,11 +12,15 @@ services:
     container_name: query-service
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
       - STORAGE=clickhouse
-      - SIGNOZ_LOCAL_DB_PATH=/root/signoz.db
+      - GODEBUG=netdns=go
+      - TELEMETRY_ENABLED=true
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
+      - ./data/signoz/:/var/lib/signoz/
     command: ["-config=/root/config/prometheus.yml"]
     ports:
       - "6060:6060"

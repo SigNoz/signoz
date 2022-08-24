@@ -51,6 +51,8 @@ services:
       - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
@@ -98,7 +100,6 @@ services:
       # - "14268:14268"   # Jaeger thrift HTTP
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
-    mem_limit: 2000m
     restart: on-failure
     depends_on:
       clickhouse:
