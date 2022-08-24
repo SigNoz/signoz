@@ -118,7 +118,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 				</div>
 				<div>
 					{map(selected, (field) => {
-						return flattenLogData[field.name] ? (
+						return flattenLogData[field.name] !== undefined ? (
 							<LogSelectedField
 								key={field.name}
 								fieldKey={field.name}
