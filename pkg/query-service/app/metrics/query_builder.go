@@ -16,15 +16,20 @@ type RunQueries struct {
 }
 
 var AggregateOperatorToPercentile = map[model.AggregateOperator]float64{
-	model.P05: 0.5,
-	model.P10: 0.10,
-	model.P20: 0.20,
-	model.P25: 0.25,
-	model.P50: 0.50,
-	model.P75: 0.75,
-	model.P90: 0.90,
-	model.P95: 0.95,
-	model.P99: 0.99,
+	model.P05:              0.5,
+	model.P10:              0.10,
+	model.P20:              0.20,
+	model.P25:              0.25,
+	model.P50:              0.50,
+	model.P75:              0.75,
+	model.P90:              0.90,
+	model.P95:              0.95,
+	model.P99:              0.99,
+	model.HIST_QUANTILE_50: 0.50,
+	model.HIST_QUANTILE_75: 0.75,
+	model.HIST_QUANTILE_90: 0.90,
+	model.HIST_QUANTILE_95: 0.95,
+	model.HIST_QUANTILE_99: 0.99,
 }
 
 var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
@@ -183,7 +188,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
-	case model.SUM_RATE, model.P99_SUM_RATE, model.P90_SUM_RATE, model.P95_SUM_RATE, model.P75_SUM_RATE, model.P50_SUM_RATE:
+	case model.SUM_RATE:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		op := "max(value)"
@@ -203,6 +208,20 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		return query, nil
+	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
+		rateGroupBy := "fingerprint, " + groupBy
+		rateGroupTags := "fingerprint, " + groupTags
+		op := "max(value)"
+		subQuery := fmt.Sprintf(
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+		) // labels will be same so any should be fine
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		value := AggregateOperatorToPercentile[mq.AggregateOperator]
+
+		query = fmt.Sprintf(`SELECT histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value, ts FROM (%s) GROUP BY ts ORDER BY ts`, value, query)
 		return query, nil
 	case model.AVG, model.SUM, model.MIN, model.MAX:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])

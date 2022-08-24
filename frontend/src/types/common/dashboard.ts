@@ -34,6 +34,11 @@ export enum EAggregateOperator {
 	RATE_AVG = 23,
 	RATE_MAX = 24,
 	RATE_MIN = 25,
+	HIST_QUANTILE_50 = 26,
+	HIST_QUANTILE_75 = 27,
+	HIST_QUANTILE_90 = 28,
+	HIST_QUANTILE_95 = 29,
+	HIST_QUANTILE_99 = 30,
 }
 
 export enum EPanelType {
