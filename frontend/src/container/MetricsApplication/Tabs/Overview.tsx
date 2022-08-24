@@ -49,7 +49,8 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
+			`${
+				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
@@ -100,17 +101,12 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
 		history.replace(
-			`${ROUTES.TRACE
+			`${
+				ROUTES.TRACE
 			}?${urlParams.toString()}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&spanAggregateOrder=ascend`,
 		);
 	};
-	console.log(getWidget([
-		{
-			query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER", http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", span_kind="SPAN_KIND_SERVER"${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
-			legend: 'Error Percentage',
-		},
-	]))
-	debugger;
+
 	return (
 		<>
 			<Row gutter={24}>
