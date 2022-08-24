@@ -61,8 +61,10 @@ services:
   otel-collector:
     image: signoz-otel-collector:0.55.0
     command: ["--config=/etc/otel-collector-config.yaml"]
+    user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
