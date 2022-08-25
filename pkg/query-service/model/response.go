@@ -523,3 +523,8 @@ type Span struct {
 	HasError     bool              `json:"hasError"`
 	Children     []*Span           `json:"children"`
 }
+
+type GetSpansSubQueryDBResponse struct {
+	SpanID  string `ch:"spanID"`
+	TraceID string `ch:"traceID"`
+}

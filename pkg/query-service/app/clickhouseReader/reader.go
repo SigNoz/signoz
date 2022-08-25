@@ -1748,6 +1748,7 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		}
 		spans = append(spans, span)
 	}
+
 	roots, err := buildSpanTrees(&spans)
 	if err != nil {
 		return nil, err
@@ -3018,8 +3019,115 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	zap.S().Infof("Executing metric result query: %s", query)
 
-	rows, err := r.db.Query(ctx, query)
+	if strings.Index(query, "getSubTreeSpans") != -1 {
+		zap.S().Debugf("Executing getSubTreeSpans function")
 
+		// str1 := `select fromUnixTimestamp64Milli(intDiv( toUnixTimestamp64Milli ( timestamp ), 100) * 100) AS interval, toFloat64(count()) as count from (select timestamp, spanId, parentSpanId, durationNano from getSubTreeSpans(select * from signoz_traces.signoz_index_v2 where serviceName='frontend' and name='/driver.DriverService/FindNearest' and  traceID='00000000000000004b0a863cb5ed7681') where name='FindDriverIDs' group by interval order by interval asc;`
+		re := regexp.MustCompile(`getSubTreeSpans\((.*?)\)`)
+
+		submatchall := re.FindAllStringIndex(query, -1)
+
+		subtreeExpr := query[submatchall[0][0]:submatchall[0][1]]
+		// fmt.Println(subtreeExpr)
+		subtreeInput := strings.Trim(subtreeExpr, "getSubTreeSpans")
+		subtreeInput = strings.Trim(subtreeInput, "(")
+		subtreeInput = strings.Trim(subtreeInput, ")")
+		fmt.Println(subtreeInput)
+
+		query = query[:submatchall[0][0]] + " getSubTreeSpans " + query[submatchall[0][1]:]
+
+		err := r.db.Exec(ctx, "CREATE TEMPORARY TABLE IF NOT EXISTS getSubTreeSpans (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)))")
+		if err != nil {
+			return nil, err
+		}
+
+		var getSpansSubQueryDBResponses []model.GetSpansSubQueryDBResponse
+		getSpansSubQuery := subtreeInput
+
+		err = r.db.Select(ctx, &getSpansSubQueryDBResponses, getSpansSubQuery)
+
+		zap.S().Info(getSpansSubQuery)
+
+		if err != nil {
+			zap.S().Debug("Error in processing sql query: ", err)
+			return nil, fmt.Errorf("Error in processing sql query")
+		}
+
+		var searchScanResponses []model.SearchSpanDBResponseItem
+
+		modelQuery := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
+
+		if len(getSpansSubQueryDBResponses) == 0 {
+			return nil, nil
+		}
+		err = r.db.Select(ctx, &searchScanResponses, modelQuery, getSpansSubQueryDBResponses[0].TraceID)
+
+		zap.S().Info(modelQuery)
+
+		if err != nil {
+			zap.S().Debug("Error in processing sql query: ", err)
+			return nil, fmt.Errorf("Error in processing sql query")
+		}
+		searchSpansResult := []model.SearchSpansResult{{
+			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+			Events:  make([][]interface{}, len(searchScanResponses)),
+		},
+		}
+		searchSpanResponses := []model.SearchSpanResponseItem{}
+		for i, item := range searchScanResponses {
+			var jsonItem model.SearchSpanResponseItem
+			json.Unmarshal([]byte(item.Model), &jsonItem)
+			jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
+			spanEvents := jsonItem.GetValues()
+			searchSpanResponses = append(searchSpanResponses, jsonItem)
+			searchSpansResult[0].Events[i] = spanEvents
+		}
+		treeSearchResponse := []model.SearchSpanResponseItem{}
+		for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
+
+			response, err := getSubTreeAlgorithm(searchSpanResponses, getSpansSubQueryDBResponse.SpanID)
+			treeSearchResponse = append(treeSearchResponse, response...)
+			if err != nil {
+				return nil, err
+			}
+		}
+		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"))
+		if err != nil {
+			return nil, err
+		}
+
+		for _, span := range treeSearchResponse {
+			{
+				var parentID string
+				if len(span.References) > 0 && span.References[0].RefType == "CHILD_OF" {
+					parentID = span.References[0].SpanId
+				}
+				err = statement.Append(
+					time.Unix(0, int64(span.TimeUnixNano)),
+					span.TraceID,
+					span.SpanID,
+					parentID,
+					"",
+					span.ServiceName,
+					span.Name,
+					"",
+					uint64(span.DurationNano),
+				)
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, err
+				}
+			}
+		}
+		err = statement.Send()
+		if err != nil {
+			zap.S().Error("Error in sending statement: ", err)
+			return nil, err
+		}
+	}
+
+	rows, err := r.db.Query(ctx, query)
+	zap.S().Info(query)
 	if err != nil {
 		zap.S().Debug("Error in processing query: ", err)
 		return nil, fmt.Errorf("error in processing query")
@@ -3093,7 +3201,115 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
+	err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans")
+	if err != nil {
+		zap.S().Error("Error in dropping temporary table: ", err)
+		return nil, err
+	}
+
 	return seriesList, nil
+}
+
+func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string) ([]model.SearchSpanResponseItem, error) {
+	var spans []*model.Span
+	for _, spanItem := range payload {
+		var parentID string
+		if len(spanItem.References) > 0 && spanItem.References[0].RefType == "CHILD_OF" {
+			parentID = spanItem.References[0].SpanId
+		}
+		span := &model.Span{
+			TimeUnixNano: spanItem.TimeUnixNano,
+			SpanID:       spanItem.SpanID,
+			TraceID:      spanItem.TraceID,
+			ServiceName:  spanItem.ServiceName,
+			Name:         spanItem.Name,
+			Kind:         spanItem.Kind,
+			DurationNano: spanItem.DurationNano,
+			TagMap:       spanItem.TagMap,
+			ParentID:     parentID,
+			Events:       spanItem.Events,
+			HasError:     spanItem.HasError,
+		}
+		spans = append(spans, span)
+	}
+
+	roots, err := buildSpanTrees(&spans)
+	if err != nil {
+		return nil, err
+	}
+	targetSpan := &model.Span{}
+	for _, root := range roots {
+		targetSpan, err = breadthFirstSearch(root, targetSpanId)
+		if targetSpan != nil {
+			break
+		}
+		if err != nil {
+			zap.S().Error("Error during BreadthFirstSearch(): ", err)
+			return nil, err
+		}
+	}
+	if targetSpan == nil {
+		return nil, nil
+	}
+
+	targetSpan.ParentID = ""
+	preParents := []*model.Span{targetSpan}
+	children := []*model.Span{}
+
+	for i := 0; len(preParents) != 0; i++ {
+		parents := []*model.Span{}
+		for _, parent := range preParents {
+			children = append(children, parent.Children...)
+			parents = append(parents, parent.Children...)
+		}
+		preParents = parents
+	}
+	resultSpansSet := make(map[*model.Span]struct{})
+	resultSpansSet[targetSpan] = struct{}{}
+
+	for _, child := range children {
+		resultSpansSet[child] = struct{}{}
+	}
+
+	searchSpansResult := []model.SearchSpanResponseItem{}
+	resultSpans := []*model.Span{}
+	for i := range resultSpansSet {
+		resultSpans = append(resultSpans, i)
+	}
+	for _, item := range resultSpans {
+		references := []model.OtelSpanRef{
+			{
+				TraceId: item.TraceID,
+				SpanId:  item.ParentID,
+				RefType: "CHILD_OF",
+			},
+		}
+
+		// keys := make([]string, 0, len(item.TagMap))
+		// values := make([]string, 0, len(item.TagMap))
+
+		// for k, v := range item.TagMap {
+		// 	keys = append(keys, k)
+		// 	values = append(values, v)
+		// }
+		if item.Events == nil {
+			item.Events = []string{}
+		}
+		searchSpansResult = append(searchSpansResult, model.SearchSpanResponseItem{
+			TimeUnixNano: item.TimeUnixNano,
+			SpanID:       item.SpanID,
+			TraceID:      item.TraceID,
+			ServiceName:  item.ServiceName,
+			Name:         item.Name,
+			Kind:         item.Kind,
+			References:   references,
+			DurationNano: item.DurationNano,
+			TagMap:       item.TagMap,
+			Events:       item.Events,
+			HasError:     item.HasError,
+		})
+	}
+	return searchSpansResult, nil
 }
 
 func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
