@@ -166,6 +166,8 @@ type SearchSpanResponseItem struct {
 	TagMap       map[string]string `json:"tagMap"`
 	Events       []string          `json:"event"`
 	HasError     bool              `json:"hasError"`
+	RootSpanID   string            `json:"rootSpanID"`
+	RootName     string            `json:"rootName"`
 }
 
 type OtelSpanRef struct {

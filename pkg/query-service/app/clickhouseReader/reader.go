@@ -3080,7 +3080,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		for i, item := range searchScanResponses {
 			var jsonItem model.SearchSpanResponseItem
 			json.Unmarshal([]byte(item.Model), &jsonItem)
-			jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
+			jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano())
 			spanEvents := jsonItem.GetValues()
 			searchSpanResponses = append(searchSpanResponses, jsonItem)
 			searchSpansResult[0].Events[i] = spanEvents
