@@ -3056,6 +3056,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 		var searchScanResponses []model.SearchSpanDBResponseItem
 
+		// TODO : @ankit: I think the algorithm does not need to assume that subtrees are from the same TraceID. We can take this as an improvement later.
+
 		modelQuery := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
 
 		if len(getSpansSubQueryDBResponses) == 0 {
@@ -3092,7 +3094,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				return nil, err
 			}
 		}
-		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans" + uuid))
+		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+uuid))
 		if err != nil {
 			return nil, err
 		}
@@ -3112,10 +3114,10 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				span.TraceID,
 				span.SpanID,
 				parentID,
-				"",
+				span.RootSpanID,
 				span.ServiceName,
 				span.Name,
-				"",
+				span.RootName,
 				uint64(span.DurationNano),
 			)
 			if err != nil {
@@ -3311,6 +3313,8 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 			TagMap:       item.TagMap,
 			Events:       item.Events,
 			HasError:     item.HasError,
+			RootSpanID:   targetSpanId,
+			RootName:     targetSpan.Name,
 		})
 	}
 	return searchSpansResult, nil
