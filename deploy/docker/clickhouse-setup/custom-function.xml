@@ -1,17 +1,6 @@
 <functions>
     <function>
         <type>executable</type>
-        <name>runningDifferenceCustom</name>
-        <return_type>Array(Float64)</return_type>
-        <argument>
-            <type>Array(Float64)</type>
-            <name>value</name>
-        </argument>
-        <format>CSV</format>
-        <command>./runningDifferenceCustom</command>
-    </function>
-    <function>
-        <type>executable</type>
         <name>histogramQuantile</name>
         <return_type>Float64</return_type>
         <argument>

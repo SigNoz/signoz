@@ -172,6 +172,16 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" GROUP BY %s" +
 			" ORDER BY %s ts"
 
+	tagsWithoutLe := []string{}
+	for _, tag := range mq.GroupingTags {
+		if tag != "le" {
+			tagsWithoutLe = append(tagsWithoutLe, tag)
+		}
+	}
+
+	groupByWithoutLe := groupBy(tagsWithoutLe...)
+	groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
+
 	groupBy := groupBy(mq.GroupingTags...)
 	groupTags := groupSelect(mq.GroupingTags...)
 
@@ -221,7 +231,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		value := AggregateOperatorToPercentile[mq.AggregateOperator]
 
-		query = fmt.Sprintf(`SELECT histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value, ts FROM (%s) GROUP BY ts ORDER BY ts`, value, query)
+		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, groupTagsWithoutLe)
 		return query, nil
 	case model.AVG, model.SUM, model.MIN, model.MAX:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
