@@ -3037,7 +3037,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 		query = query[:submatchall[0][0]] + " getSubTreeSpans" + uuid + " " + query[submatchall[0][1]:]
 
-		err := r.db.Exec(ctx, "CREATE TEMPORARY TABLE IF NOT EXISTS "+"getSubTreeSpans"+uuid+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)))")
+		err := r.db.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+uuid+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1))) ENGINE = MergeTree() ORDER BY (timestamp)")
 		if err != nil {
 			return nil, err
 		}
@@ -3207,11 +3207,11 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
-	err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans"+uuid)
-	if err != nil {
-		zap.S().Error("Error in dropping temporary table: ", err)
-		return nil, err
-	}
+	// err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans"+uuid)
+	// if err != nil {
+	// 	zap.S().Error("Error in dropping temporary table: ", err)
+	// 	return nil, err
+	// }
 
 	return seriesList, nil
 }
