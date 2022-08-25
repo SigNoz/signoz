@@ -3018,7 +3018,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	defer utils.Elapsed("GetMetricResult")()
 
 	zap.S().Infof("Executing metric result query: %s", query)
-
+	uuidWithHyphen := uuid.New()
+	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 	if strings.Index(query, "getSubTreeSpans") != -1 {
 		zap.S().Debugf("Executing getSubTreeSpans function")
 
@@ -3034,9 +3035,9 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		subtreeInput = strings.Trim(subtreeInput, ")")
 		fmt.Println(subtreeInput)
 
-		query = query[:submatchall[0][0]] + " getSubTreeSpans " + query[submatchall[0][1]:]
+		query = query[:submatchall[0][0]] + " getSubTreeSpans" + uuid + " " + query[submatchall[0][1]:]
 
-		err := r.db.Exec(ctx, "CREATE TEMPORARY TABLE IF NOT EXISTS getSubTreeSpans (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)))")
+		err := r.db.Exec(ctx, "CREATE TEMPORARY TABLE IF NOT EXISTS "+"getSubTreeSpans"+uuid+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)))")
 		if err != nil {
 			return nil, err
 		}
@@ -3091,32 +3092,35 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				return nil, err
 			}
 		}
-		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"))
+		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans" + uuid))
 		if err != nil {
 			return nil, err
 		}
 
+		responseSet := make(map[string]struct{})
 		for _, span := range treeSearchResponse {
-			{
-				var parentID string
-				if len(span.References) > 0 && span.References[0].RefType == "CHILD_OF" {
-					parentID = span.References[0].SpanId
-				}
-				err = statement.Append(
-					time.Unix(0, int64(span.TimeUnixNano)),
-					span.TraceID,
-					span.SpanID,
-					parentID,
-					"",
-					span.ServiceName,
-					span.Name,
-					"",
-					uint64(span.DurationNano),
-				)
-				if err != nil {
-					zap.S().Debug("Error in processing sql query: ", err)
-					return nil, err
-				}
+			if _, ok := responseSet[span.SpanID]; ok {
+				continue
+			}
+			responseSet[span.SpanID] = struct{}{}
+			var parentID string
+			if len(span.References) > 0 && span.References[0].RefType == "CHILD_OF" {
+				parentID = span.References[0].SpanId
+			}
+			err = statement.Append(
+				time.Unix(0, int64(span.TimeUnixNano)),
+				span.TraceID,
+				span.SpanID,
+				parentID,
+				"",
+				span.ServiceName,
+				span.Name,
+				"",
+				uint64(span.DurationNano),
+			)
+			if err != nil {
+				zap.S().Debug("Error in processing sql query: ", err)
+				return nil, err
 			}
 		}
 		err = statement.Send()
@@ -3201,7 +3205,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
-	err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans")
+	err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans"+uuid)
 	if err != nil {
 		zap.S().Error("Error in dropping temporary table: ", err)
 		return nil, err
