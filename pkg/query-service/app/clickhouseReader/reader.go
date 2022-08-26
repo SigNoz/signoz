@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 
 	"fmt"
@@ -3016,11 +3017,11 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
 
 	defer utils.Elapsed("GetMetricResult")()
-
-	zap.S().Infof("Executing metric result query: %s", query)
-	uuidWithHyphen := uuid.New()
-	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
-	if strings.Index(query, "getSubTreeSpans") != -1 {
+	test:= query
+	zap.S().Infof("Executing metric result query: %s", test)
+	hmd5 := md5.Sum([]byte(test))
+	hash := fmt.Sprintf("%x", hmd5)
+	if strings.Index(query, "getSubTreeSpans(") != -1 {
 		zap.S().Debugf("Executing getSubTreeSpans function")
 
 		// str1 := `select fromUnixTimestamp64Milli(intDiv( toUnixTimestamp64Milli ( timestamp ), 100) * 100) AS interval, toFloat64(count()) as count from (select timestamp, spanId, parentSpanId, durationNano from getSubTreeSpans(select * from signoz_traces.signoz_index_v2 where serviceName='frontend' and name='/driver.DriverService/FindNearest' and  traceID='00000000000000004b0a863cb5ed7681') where name='FindDriverIDs' group by interval order by interval asc;`
@@ -3035,9 +3036,15 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		subtreeInput = strings.Trim(subtreeInput, ")")
 		fmt.Println(subtreeInput)
 
-		query = query[:submatchall[0][0]] + " getSubTreeSpans" + uuid + " " + query[submatchall[0][1]:]
+		query = query[:submatchall[0][0]] + " getSubTreeSpans" + hash + " " + query[submatchall[0][1]:]
 
-		err := r.db.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+uuid+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1))) ENGINE = MergeTree() ORDER BY (timestamp)")
+		err := r.db.Exec(ctx, "DROP TABLE IF EXISTS getSubTreeSpans"+hash)
+		if err != nil {
+			zap.S().Error("Error in dropping temporary table: ", err)
+			return nil, err
+		}
+
+		err = r.db.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+hash+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)), kind Int8 CODEC(T64, ZSTD(1)), tagMap Map(LowCardinality(String), String) CODEC(ZSTD(1)), events Array(String) CODEC(ZSTD(2))) ENGINE = MergeTree() ORDER BY (timestamp)")
 		if err != nil {
 			return nil, err
 		}
@@ -3094,7 +3101,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				return nil, err
 			}
 		}
-		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+uuid))
+		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 		if err != nil {
 			return nil, err
 		}
@@ -3119,6 +3126,9 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				span.Name,
 				span.RootName,
 				uint64(span.DurationNano),
+				int8(span.Kind),
+				span.TagMap,
+				span.Events,
 			)
 			if err != nil {
 				zap.S().Debug("Error in processing sql query: ", err)
@@ -3207,7 +3217,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
-	// err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans"+uuid)
+	// err = r.db.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans"+hash)
 	// if err != nil {
 	// 	zap.S().Error("Error in dropping temporary table: ", err)
 	// 	return nil, err
