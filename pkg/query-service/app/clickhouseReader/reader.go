@@ -3017,26 +3017,38 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
 
 	defer utils.Elapsed("GetMetricResult")()
-	test:= query
-	zap.S().Infof("Executing metric result query: %s", test)
-	hmd5 := md5.Sum([]byte(test))
+	zap.S().Infof("Executing metric result query: %s", query)
+	hmd5 := md5.Sum([]byte(query))
 	hash := fmt.Sprintf("%x", hmd5)
 	if strings.Index(query, "getSubTreeSpans(") != -1 {
 		zap.S().Debugf("Executing getSubTreeSpans function")
 
 		// str1 := `select fromUnixTimestamp64Milli(intDiv( toUnixTimestamp64Milli ( timestamp ), 100) * 100) AS interval, toFloat64(count()) as count from (select timestamp, spanId, parentSpanId, durationNano from getSubTreeSpans(select * from signoz_traces.signoz_index_v2 where serviceName='frontend' and name='/driver.DriverService/FindNearest' and  traceID='00000000000000004b0a863cb5ed7681') where name='FindDriverIDs' group by interval order by interval asc;`
-		re := regexp.MustCompile(`getSubTreeSpans\((.*?)\)`)
+		re3 := regexp.MustCompile(`getSubTreeSpans`)
 
-		submatchall := re.FindAllStringIndex(query, -1)
+		submatchall3 := re3.FindAllStringIndex(query, -1)
+		getSubtreeSpansMatchIndex := submatchall3[0][1]
 
-		subtreeExpr := query[submatchall[0][0]:submatchall[0][1]]
-		// fmt.Println(subtreeExpr)
-		subtreeInput := strings.Trim(subtreeExpr, "getSubTreeSpans")
-		subtreeInput = strings.Trim(subtreeInput, "(")
-		subtreeInput = strings.Trim(subtreeInput, ")")
-		fmt.Println(subtreeInput)
+		query2countParenthesis := query[getSubtreeSpansMatchIndex:]
 
-		query = query[:submatchall[0][0]] + " getSubTreeSpans" + hash + " " + query[submatchall[0][1]:]
+		sqlCompleteIndex := 0
+		countParenthesisImbalance := 0
+		for i, char := range query2countParenthesis {
+
+			if string(char) == "(" {
+				countParenthesisImbalance += 1
+			}
+			if string(char) == ")" {
+				countParenthesisImbalance -= 1
+			}
+			if countParenthesisImbalance == 0 {
+				sqlCompleteIndex = i
+				break
+			}
+		}
+		subtreeInput := query2countParenthesis[1:sqlCompleteIndex]
+
+		query = query[:getSubtreeSpansMatchIndex] + hash + " " + query2countParenthesis[sqlCompleteIndex+1:]
 
 		err := r.db.Exec(ctx, "DROP TABLE IF EXISTS getSubTreeSpans"+hash)
 		if err != nil {
