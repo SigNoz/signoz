@@ -1,0 +1,43 @@
+version: "2.4"
+
+services:
+  query-service:
+    image: signoz/query-service:0.11.0
+    container_name: query-service
+    command: ["-config=/root/config/prometheus.yml"]
+    # ports:
+    #   - "6060:6060"     # pprof port
+    #   - "8080:8080"     # query-service port
+    volumes:
+      - ./prometheus.yml:/root/config/prometheus.yml
+      - ../dashboards:/root/config/dashboards
+      - ./data/signoz/:/var/lib/signoz/
+    environment:
+      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+      - STORAGE=clickhouse
+      - GODEBUG=netdns=go
+      - TELEMETRY_ENABLED=true
+      - DEPLOYMENT_TYPE=docker-standalone-amd
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  frontend:
+    image: signoz/frontend:0.11.0
+    container_name: frontend
+    restart: on-failure
+    depends_on:
+      - alertmanager
+      - query-service
+    ports:
+      - "3301:3301"
+    volumes:
+      - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
