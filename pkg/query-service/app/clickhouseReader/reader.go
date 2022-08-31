@@ -1880,7 +1880,7 @@ func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
 	}
 
 	if roots == nil {
-		zap.S().Debug("No root span found")
+		// zap.S().Debug("No root span found")
 		// roots = []*model.Span{{
 		// 	SpanID:  "fakeRootSpan",
 		// 	TraceID: spans[0].TraceID,
@@ -1893,7 +1893,7 @@ func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
 		}
 		parent := mapOfSpans[span.ParentID]
 		if parent == nil {
-			zap.S().Debug("Parent Span not found parent_id: ", span.ParentID)
+			// zap.S().Debug("Parent Span not found parent_id: ", span.ParentID)
 			roots = append(roots, span)
 			span.ParentID = ""
 			continue
@@ -3062,6 +3062,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		}
 
 		// Create temporary table to store the getSubTreeSpans() results
+		zap.S().Debugf("Creating temporary table getSubTreeSpans%s", hash)
 		err = r.db.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+hash+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)), kind Int8 CODEC(T64, ZSTD(1)), tagMap Map(LowCardinality(String), String) CODEC(ZSTD(1)), events Array(String) CODEC(ZSTD(2))) ENGINE = MergeTree() ORDER BY (timestamp)")
 		if err != nil {
 			return nil, err
@@ -3070,9 +3071,10 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		var getSpansSubQueryDBResponses []model.GetSpansSubQueryDBResponse
 		getSpansSubQuery := subtreeInput
 		// Execute the subTree query
+		zap.S().Debugf("Executing subTree query: %s", getSpansSubQuery)
 		err = r.db.Select(ctx, &getSpansSubQueryDBResponses, getSpansSubQuery)
 
-		zap.S().Info(getSpansSubQuery)
+		// zap.S().Info(getSpansSubQuery)
 
 		if err != nil {
 			zap.S().Debug("Error in processing sql query: ", err)
@@ -3082,21 +3084,24 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		var searchScanResponses []model.SearchSpanDBResponseItem
 
 		// TODO : @ankit: I think the algorithm does not need to assume that subtrees are from the same TraceID. We can take this as an improvement later.
-
+		// Fetch all the spans from of same TraceID so that we can build subtree
 		modelQuery := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
 
 		if len(getSpansSubQueryDBResponses) == 0 {
 			return nil, nil
 		}
+		zap.S().Debugf("Executing query to fetch all the spans from the same TraceID: %s", modelQuery)
 		err = r.db.Select(ctx, &searchScanResponses, modelQuery, getSpansSubQueryDBResponses[0].TraceID)
 
-		zap.S().Info(modelQuery)
+		// zap.S().Info(modelQuery)
 
 		if err != nil {
 			zap.S().Debug("Error in processing sql query: ", err)
 			return nil, fmt.Errorf("Error in processing sql query")
 		}
 
+		// Process model to fetch the spans
+		zap.S().Debugf("Processing model to fetch the spans")
 		searchSpanResponses := []model.SearchSpanResponseItem{}
 		for _, item := range searchScanResponses {
 			var jsonItem model.SearchSpanResponseItem
@@ -3107,12 +3112,16 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			}
 			searchSpanResponses = append(searchSpanResponses, jsonItem)
 		}
-		
-		treeSearchResponse := []model.SearchSpanResponseItem{}
+		// Build the subtree and store all the subtree spans in temporary table getSubTreeSpans+hash
+		// Use map to store pointer to the spans to avoid duplicates and save memory
+		zap.S().Debugf("Building the subtree to store all the subtree spans in temporary table getSubTreeSpans%s", hash)
+		treeSearchResponse := make(map[string]*model.SearchSpanResponseItem)
 		for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
 
 			response, err := getSubTreeAlgorithm(searchSpanResponses, getSpansSubQueryDBResponse.SpanID)
-			treeSearchResponse = append(treeSearchResponse, response...)
+			for item, i := range response {
+				treeSearchResponse[item] = i
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -3121,13 +3130,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		if err != nil {
 			return nil, err
 		}
-
-		responseSet := make(map[string]struct{})
+		zap.S().Debugf("Inserting the subtree spans in temporary table getSubTreeSpans%s", hash)
 		for _, span := range treeSearchResponse {
-			if _, ok := responseSet[span.SpanID]; ok {
-				continue
-			}
-			responseSet[span.SpanID] = struct{}{}
 			var parentID string
 			if len(span.References) > 0 && span.References[0].RefType == "CHILD_OF" {
 				parentID = span.References[0].SpanId
@@ -3242,7 +3246,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	return seriesList, nil
 }
 
-func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string) ([]model.SearchSpanResponseItem, error) {
+func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string) (map[string]*model.SearchSpanResponseItem, error) {
 	var spans []*model.Span
 	for _, spanItem := range payload {
 		var parentID string
@@ -3265,6 +3269,7 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		spans = append(spans, span)
 	}
 
+	zap.S().Debug("Building sub tree for span id: ", targetSpanId)
 	roots, err := buildSpanTrees(&spans)
 	if err != nil {
 		return nil, err
@@ -3303,7 +3308,7 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		resultSpansSet[child] = struct{}{}
 	}
 
-	searchSpansResult := []model.SearchSpanResponseItem{}
+	searchSpansResult := make(map[string]*model.SearchSpanResponseItem)
 	resultSpans := []*model.Span{}
 	for i := range resultSpansSet {
 		resultSpans = append(resultSpans, i)
@@ -3327,7 +3332,7 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		if item.Events == nil {
 			item.Events = []string{}
 		}
-		searchSpansResult = append(searchSpansResult, model.SearchSpanResponseItem{
+		searchSpansResult[item.SpanID] = &model.SearchSpanResponseItem{
 			TimeUnixNano: item.TimeUnixNano,
 			SpanID:       item.SpanID,
 			TraceID:      item.TraceID,
@@ -3341,7 +3346,7 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 			HasError:     item.HasError,
 			RootSpanID:   targetSpanId,
 			RootName:     targetSpan.Name,
-		})
+		}
 	}
 	return searchSpansResult, nil
 }
