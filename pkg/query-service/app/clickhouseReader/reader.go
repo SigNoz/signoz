@@ -3128,12 +3128,12 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				return nil, err
 			}
 		}
+		zap.S().Debugf("Preparing batch to store subtree spans in temporary table getSubTreeSpans%s", hash)
 		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 		if err != nil {
 			zap.S().Error("Error in preparing batch statement: ", err)
 			return nil, err
 		}
-		zap.S().Debugf("Inserting the subtree spans in temporary table getSubTreeSpans%s", hash)
 		for _, span := range treeSearchResponse {
 			var parentID string
 			if len(span.References) > 0 && span.References[0].RefType == "CHILD_OF" {
@@ -3158,6 +3158,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				return nil, err
 			}
 		}
+		zap.S().Debugf("Inserting the subtree spans in temporary table getSubTreeSpans%s", hash)
 		err = statement.Send()
 		if err != nil {
 			zap.S().Error("Error in sending statement: ", err)
