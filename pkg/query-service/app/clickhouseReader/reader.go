@@ -3065,6 +3065,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		zap.S().Debugf("Creating temporary table getSubTreeSpans%s", hash)
 		err = r.db.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+hash+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)), kind Int8 CODEC(T64, ZSTD(1)), tagMap Map(LowCardinality(String), String) CODEC(ZSTD(1)), events Array(String) CODEC(ZSTD(2))) ENGINE = MergeTree() ORDER BY (timestamp)")
 		if err != nil {
+			zap.S().Error("Error in creating temporary table: ", err)
 			return nil, err
 		}
 
@@ -3123,11 +3124,13 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				treeSearchResponse[item] = i
 			}
 			if err != nil {
+				zap.S().Error("Error in building the subtree: ", err)
 				return nil, err
 			}
 		}
 		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 		if err != nil {
+			zap.S().Error("Error in preparing batch statement: ", err)
 			return nil, err
 		}
 		zap.S().Debugf("Inserting the subtree spans in temporary table getSubTreeSpans%s", hash)
