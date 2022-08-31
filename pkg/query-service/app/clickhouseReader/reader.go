@@ -3119,7 +3119,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 		treeSearchResponse, err := getSubTreeAlgorithm(searchSpanResponses, getSpansSubQueryDBResponses)
 		zap.S().Debugf("Preparing batch to store subtree spans in temporary table getSubTreeSpans%s", hash)
-		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
+		// time.Sleep(160 * time.Second)
+		statement, err := r.db.PrepareBatch(context.Background(), fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 		if err != nil {
 			zap.S().Error("Error in preparing batch statement: ", err)
 			return nil, err

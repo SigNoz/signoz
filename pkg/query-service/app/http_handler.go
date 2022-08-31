@@ -494,7 +494,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			wg.Add(1)
 			go func(name, query string) {
 				defer wg.Done()
-				seriesList, err := (*aH.reader).GetMetricResult(r.Context(), query)
+				seriesList, err := (*aH.reader).GetMetricResult(context.Background(), query)
 				for _, series := range seriesList {
 					series.QueryName = name
 				}
