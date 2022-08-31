@@ -3018,12 +3018,16 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	defer utils.Elapsed("GetMetricResult")()
 	zap.S().Infof("Executing metric result query: %s", query)
+	// hash the query
 	hmd5 := md5.Sum([]byte(query))
 	hash := fmt.Sprintf("%x", hmd5)
+	// If getSubTreeSpans function is used in the clickhouse query
 	if strings.Index(query, "getSubTreeSpans(") != -1 {
 		zap.S().Debugf("Executing getSubTreeSpans function")
 
 		// str1 := `select fromUnixTimestamp64Milli(intDiv( toUnixTimestamp64Milli ( timestamp ), 100) * 100) AS interval, toFloat64(count()) as count from (select timestamp, spanId, parentSpanId, durationNano from getSubTreeSpans(select * from signoz_traces.signoz_index_v2 where serviceName='frontend' and name='/driver.DriverService/FindNearest' and  traceID='00000000000000004b0a863cb5ed7681') where name='FindDriverIDs' group by interval order by interval asc;`
+
+		// process the query to fetch subTree query
 		re3 := regexp.MustCompile(`getSubTreeSpans`)
 
 		submatchall3 := re3.FindAllStringIndex(query, -1)
@@ -3048,6 +3052,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		}
 		subtreeInput := query2countParenthesis[1:sqlCompleteIndex]
 
+		// Reformat the query to use the getSubTreeSpans function
 		query = query[:getSubtreeSpansMatchIndex] + hash + " " + query2countParenthesis[sqlCompleteIndex+1:]
 
 		err := r.db.Exec(ctx, "DROP TABLE IF EXISTS getSubTreeSpans"+hash)
@@ -3056,6 +3061,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			return nil, err
 		}
 
+		// Create temporary table to store the getSubTreeSpans() results
 		err = r.db.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+hash+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)), kind Int8 CODEC(T64, ZSTD(1)), tagMap Map(LowCardinality(String), String) CODEC(ZSTD(1)), events Array(String) CODEC(ZSTD(2))) ENGINE = MergeTree() ORDER BY (timestamp)")
 		if err != nil {
 			return nil, err
@@ -3063,7 +3069,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 		var getSpansSubQueryDBResponses []model.GetSpansSubQueryDBResponse
 		getSpansSubQuery := subtreeInput
-
+		// Execute the subTree query
 		err = r.db.Select(ctx, &getSpansSubQueryDBResponses, getSpansSubQuery)
 
 		zap.S().Info(getSpansSubQuery)
@@ -3090,20 +3096,18 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			zap.S().Debug("Error in processing sql query: ", err)
 			return nil, fmt.Errorf("Error in processing sql query")
 		}
-		searchSpansResult := []model.SearchSpansResult{{
-			Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-			Events:  make([][]interface{}, len(searchScanResponses)),
-		},
-		}
+
 		searchSpanResponses := []model.SearchSpanResponseItem{}
-		for i, item := range searchScanResponses {
+		for _, item := range searchScanResponses {
 			var jsonItem model.SearchSpanResponseItem
 			json.Unmarshal([]byte(item.Model), &jsonItem)
 			jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano())
-			spanEvents := jsonItem.GetValues()
+			if jsonItem.Events == nil {
+				jsonItem.Events = []string{}
+			}
 			searchSpanResponses = append(searchSpanResponses, jsonItem)
-			searchSpansResult[0].Events[i] = spanEvents
 		}
+		
 		treeSearchResponse := []model.SearchSpanResponseItem{}
 		for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
 
