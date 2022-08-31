@@ -1879,13 +1879,13 @@ func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
 		mapOfSpans[span.SpanID] = span
 	}
 
-	if roots == nil {
-		// zap.S().Debug("No root span found")
-		// roots = []*model.Span{{
-		// 	SpanID:  "fakeRootSpan",
-		// 	TraceID: spans[0].TraceID,
-		// }}
-	}
+	// if roots == nil {
+	// zap.S().Debug("No root span found")
+	// roots = []*model.Span{{
+	// 	SpanID:  "fakeRootSpan",
+	// 	TraceID: spans[0].TraceID,
+	// }}
+	// }
 
 	for _, span := range spans {
 		if span.ParentID == "" {
@@ -3116,18 +3116,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		// Build the subtree and store all the subtree spans in temporary table getSubTreeSpans+hash
 		// Use map to store pointer to the spans to avoid duplicates and save memory
 		zap.S().Debugf("Building the subtree to store all the subtree spans in temporary table getSubTreeSpans%s", hash)
-		treeSearchResponse := make(map[string]*model.SearchSpanResponseItem)
-		for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
 
-			response, err := getSubTreeAlgorithm(searchSpanResponses, getSpansSubQueryDBResponse.SpanID)
-			for item, i := range response {
-				treeSearchResponse[item] = i
-			}
-			if err != nil {
-				zap.S().Error("Error in building the subtree: ", err)
-				return nil, err
-			}
-		}
+		treeSearchResponse, err := getSubTreeAlgorithm(searchSpanResponses, getSpansSubQueryDBResponses)
 		zap.S().Debugf("Preparing batch to store subtree spans in temporary table getSubTreeSpans%s", hash)
 		statement, err := r.db.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 		if err != nil {
@@ -3250,7 +3240,8 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	return seriesList, nil
 }
 
-func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId string) (map[string]*model.SearchSpanResponseItem, error) {
+func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, getSpansSubQueryDBResponses []model.GetSpansSubQueryDBResponse) (map[string]*model.SearchSpanResponseItem, error) {
+
 	var spans []*model.Span
 	for _, spanItem := range payload {
 		var parentID string
@@ -3273,83 +3264,86 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 		spans = append(spans, span)
 	}
 
-	zap.S().Debug("Building sub tree for span id: ", targetSpanId)
+	zap.S().Debug("Building Tree")
 	roots, err := buildSpanTrees(&spans)
 	if err != nil {
 		return nil, err
 	}
-	targetSpan := &model.Span{}
-	for _, root := range roots {
-		targetSpan, err = breadthFirstSearch(root, targetSpanId)
-		if targetSpan != nil {
-			break
-		}
-		if err != nil {
-			zap.S().Error("Error during BreadthFirstSearch(): ", err)
-			return nil, err
-		}
-	}
-	if targetSpan == nil {
-		return nil, nil
-	}
-
-	targetSpan.ParentID = ""
-	preParents := []*model.Span{targetSpan}
-	children := []*model.Span{}
-
-	for i := 0; len(preParents) != 0; i++ {
-		parents := []*model.Span{}
-		for _, parent := range preParents {
-			children = append(children, parent.Children...)
-			parents = append(parents, parent.Children...)
-		}
-		preParents = parents
-	}
-	resultSpansSet := make(map[*model.Span]struct{})
-	resultSpansSet[targetSpan] = struct{}{}
-
-	for _, child := range children {
-		resultSpansSet[child] = struct{}{}
-	}
-
 	searchSpansResult := make(map[string]*model.SearchSpanResponseItem)
-	resultSpans := []*model.Span{}
-	for i := range resultSpansSet {
-		resultSpans = append(resultSpans, i)
-	}
-	for _, item := range resultSpans {
-		references := []model.OtelSpanRef{
-			{
-				TraceId: item.TraceID,
-				SpanId:  item.ParentID,
-				RefType: "CHILD_OF",
-			},
+	for i, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
+		targetSpan := &model.Span{}
+		zap.S().Debug("Building tree for span id: " + getSpansSubQueryDBResponse.SpanID + " " + strconv.Itoa(i) + " of " + strconv.Itoa(len(getSpansSubQueryDBResponses)))
+		for _, root := range roots {
+			targetSpan, err = breadthFirstSearch(root, getSpansSubQueryDBResponse.SpanID)
+			if targetSpan != nil {
+				break
+			}
+			if err != nil {
+				zap.S().Error("Error during BreadthFirstSearch(): ", err)
+				return nil, err
+			}
+		}
+		if targetSpan == nil {
+			return nil, nil
 		}
 
-		// keys := make([]string, 0, len(item.TagMap))
-		// values := make([]string, 0, len(item.TagMap))
+		targetSpan.ParentID = ""
+		preParents := []*model.Span{targetSpan}
+		children := []*model.Span{}
 
-		// for k, v := range item.TagMap {
-		// 	keys = append(keys, k)
-		// 	values = append(values, v)
-		// }
-		if item.Events == nil {
-			item.Events = []string{}
+		for i := 0; len(preParents) != 0; i++ {
+			parents := []*model.Span{}
+			for _, parent := range preParents {
+				children = append(children, parent.Children...)
+				parents = append(parents, parent.Children...)
+			}
+			preParents = parents
 		}
-		searchSpansResult[item.SpanID] = &model.SearchSpanResponseItem{
-			TimeUnixNano: item.TimeUnixNano,
-			SpanID:       item.SpanID,
-			TraceID:      item.TraceID,
-			ServiceName:  item.ServiceName,
-			Name:         item.Name,
-			Kind:         item.Kind,
-			References:   references,
-			DurationNano: item.DurationNano,
-			TagMap:       item.TagMap,
-			Events:       item.Events,
-			HasError:     item.HasError,
-			RootSpanID:   targetSpanId,
-			RootName:     targetSpan.Name,
+		resultSpansSet := make(map[*model.Span]struct{})
+		resultSpansSet[targetSpan] = struct{}{}
+
+		for _, child := range children {
+			resultSpansSet[child] = struct{}{}
+		}
+
+		resultSpans := []*model.Span{}
+		for i := range resultSpansSet {
+			resultSpans = append(resultSpans, i)
+		}
+		for _, item := range resultSpans {
+			references := []model.OtelSpanRef{
+				{
+					TraceId: item.TraceID,
+					SpanId:  item.ParentID,
+					RefType: "CHILD_OF",
+				},
+			}
+
+			// keys := make([]string, 0, len(item.TagMap))
+			// values := make([]string, 0, len(item.TagMap))
+
+			// for k, v := range item.TagMap {
+			// 	keys = append(keys, k)
+			// 	values = append(values, v)
+			// }
+			if item.Events == nil {
+				item.Events = []string{}
+			}
+			searchSpansResult[item.SpanID] = &model.SearchSpanResponseItem{
+				TimeUnixNano: item.TimeUnixNano,
+				SpanID:       item.SpanID,
+				TraceID:      item.TraceID,
+				ServiceName:  item.ServiceName,
+				Name:         item.Name,
+				Kind:         item.Kind,
+				References:   references,
+				DurationNano: item.DurationNano,
+				TagMap:       item.TagMap,
+				Events:       item.Events,
+				HasError:     item.HasError,
+				RootSpanID:   getSpansSubQueryDBResponse.SpanID,
+				RootName:     targetSpan.Name,
+			}
 		}
 	}
 	return searchSpansResult, nil
