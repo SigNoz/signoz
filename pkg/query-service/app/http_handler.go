@@ -473,7 +473,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
 	}
 
-	// round up the end to neaerest multiple
+	// round up the end to nearest multiple
 	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
 		end := (metricsQueryRangeParams.End) / 1000
 		step := metricsQueryRangeParams.Step
@@ -486,9 +486,9 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		Err       error
 	}
 
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, string, error) {
+	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, []string, error) {
 		var seriesList []*model.Series
-		var tableName string
+		var tableName []string
 		ch := make(chan channelResult, len(queries))
 		var wg sync.WaitGroup
 
@@ -520,10 +520,10 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				continue
 			}
 			seriesList = append(seriesList, r.Series...)
-			tableName = r.TableName
+			tableName = append(tableName, r.TableName)
 		}
 		if len(errs) != 0 {
-			return nil, "", fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
+			return nil, nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
 		}
 		return seriesList, tableName, nil
 	}
@@ -585,7 +585,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	var seriesList []*model.Series
-	var tableName string
+	var tableName []string
 	var err error
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
 	case model.QUERY_BUILDER:
@@ -630,7 +630,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	type ResponseFormat struct {
 		ResultType string          `json:"resultType"`
 		Result     []*model.Series `json:"result"`
-		TableName  string          `json:"tableName"`
+		TableName  []string        `json:"tableName"`
 	}
 	resp := ResponseFormat{ResultType: "matrix", Result: seriesList, TableName: tableName}
 	aH.respond(w, resp)
