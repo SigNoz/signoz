@@ -3281,9 +3281,9 @@ func getSubTreeAlgorithm(payload []model.SearchSpanResponseItem, getSpansSubQuer
 	searchSpansResult := make(map[string]*model.SearchSpanResponseItem)
 	// Every span which was fetched from getSubTree Input SQL query is considered root
 	// For each root, get the subtree spans
-	for i, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
+	for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
 		targetSpan := &model.Span{}
-		zap.S().Debug("Building tree for span id: " + getSpansSubQueryDBResponse.SpanID + " " + strconv.Itoa(i) + " of " + strconv.Itoa(len(getSpansSubQueryDBResponses)))
+		// zap.S().Debug("Building tree for span id: " + getSpansSubQueryDBResponse.SpanID + " " + strconv.Itoa(i+1) + " of " + strconv.Itoa(len(getSpansSubQueryDBResponses)))
 		// Search target span object in the tree
 		for _, root := range roots {
 			targetSpan, err = breadthFirstSearch(root, getSpansSubQueryDBResponse.SpanID)
