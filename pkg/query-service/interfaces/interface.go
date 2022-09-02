@@ -70,4 +70,6 @@ type Reader interface {
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
+
+	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 }

@@ -9,7 +9,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -320,6 +322,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/variables/query", ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -538,6 +541,14 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			go func(name string, query *model.PromQuery) {
 				var seriesList []*model.Series
 				defer wg.Done()
+				tmpl := template.Must(template.New("query").Parse(query.Query))
+				var queryBuf bytes.Buffer
+				tmplErr := tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
+				if tmplErr != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, tmplErr)}
+					return
+				}
+				query.Query = queryBuf.String()
 				queryModel := model.QueryRangeParams{
 					Start: time.UnixMilli(metricsQueryRangeParams.Start),
 					End:   time.UnixMilli(metricsQueryRangeParams.End),
@@ -598,7 +609,19 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			if chQuery.Disabled {
 				continue
 			}
-			queries[name] = chQuery.Query
+			tmpl := template.New("query")
+			tmpl, err := tmpl.Parse(chQuery.Query)
+			if err != nil {
+				respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+				return
+			}
+			var query bytes.Buffer
+			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
+			if err != nil {
+				respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+				return
+			}
+			queries[name] = query.String()
 		}
 		seriesList, err = execClickHouseQueries(queries)
 	case model.PROM:
@@ -705,6 +728,25 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.respond(w, nil)
 
+}
+
+func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
+
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
+		return
+	}
+	if strings.Contains(strings.ToLower(query), "alter table") {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
+		return
+	}
+	dashboardVars, err := (*aH.reader).QueryDashboardVars(r.Context(), query)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.respond(w, dashboardVars)
 }
 
 func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
