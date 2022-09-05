@@ -15,15 +15,19 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	"go.signoz.io/query-service/app/clickhouseReader"
+	"go.signoz.io/query-service/ee/app/api"
+	"go.signoz.io/query-service/ee/app/db"
+	"go.signoz.io/query-service/ee/dao"
+	"go.signoz.io/query-service/ee/interfaces"
+	licensepkg "go.signoz.io/query-service/ee/license"
+
 	"go.signoz.io/query-service/app/dashboards"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/dao"
+	baseconst "go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/healthcheck"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/interfaces"
+	basealm "go.signoz.io/query-service/integrations/alertManager"
+	baseint "go.signoz.io/query-service/interfaces"
 	pqle "go.signoz.io/query-service/pqlEngine"
-	"go.signoz.io/query-service/rules"
+	rules "go.signoz.io/query-service/rules"
 	"go.signoz.io/query-service/telemetry"
 	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
@@ -38,10 +42,8 @@ type ServerOptions struct {
 	RuleRepoURL  string
 }
 
-// Server runs HTTP, Mux and a grpc server
+// Server runs HTTP api service
 type Server struct {
-	// logger       *zap.Logger
-	// tracer opentracing.Tracer // TODO make part of flags.Service
 	serverOptions *ServerOptions
 	conn          net.Listener
 	ruleManager   *rules.Manager
@@ -55,6 +57,9 @@ type Server struct {
 	privateConn net.Listener
 	privateHTTP *http.Server
 
+	// feature flags
+	featureLookup baseint.FeatureLookup
+
 	unavailableChannel chan healthcheck.Status
 }
 
@@ -66,11 +71,12 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
-	if err := dao.InitDao("sqlite", constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
 		return nil, err
 	}
 
-	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err
@@ -78,24 +84,44 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
-	var reader interfaces.Reader
+	var reader interfaces.QueryBackend
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath)
-		go clickhouseReader.Start()
-		reader = clickhouseReader
+		qb := db.NewQueryBackend(localDB, serverOptions.PromConfigPath)
+		go qb.Start()
+		reader = qb
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath,
+		baseconst.GetAlertManagerApiPrefix(),
+		serverOptions.RuleRepoURL,
+		localDB,
+		reader,
+		serverOptions.DisableRules)
+
+	if err != nil {
+		return nil, err
+	}
+
+	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	apiHandler, err := NewAPIHandler(reader, dao.DB(), rm)
+
+	apiOpts := api.APIHandlerOptions{
+		QueryBackend:   reader,
+		AppDB:          modelDao,
+		RulesManager:   rm,
+		FeatureFlags:   lm,
+		LicenseManager: lm,
+	}
+
+	apiHandler, err := api.NewAPIHandler(apiOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -126,15 +152,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
+func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
-	r := NewRouter()
+	r := mux.NewRouter()
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddlewarePrivate)
 
-	api.RegisterPrivateRoutes(r)
+	apiHandler.RegisterPrivateRoutes(r)
 
 	c := cors.New(cors.Options{
 		//todo(amol): find out a way to add exact domain or
@@ -152,17 +178,17 @@ func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
 	}, nil
 }
 
-func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
+func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
-	r := NewRouter()
+	r := mux.NewRouter()
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	api.RegisterRoutes(r)
-	api.RegisterMetricsRoutes(r)
-	api.RegisterLogsRoutes(r)
+	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterMetricsRoutes(r)
+	apiHandler.RegisterLogsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -246,8 +272,8 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		var cancel context.CancelFunc
 		// check if route is not excluded
 		url := r.URL.Path
-		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+		if _, ok := baseconst.TimeoutExcludedRoutes[url]; !ok {
+			ctx, cancel = context.WithTimeout(r.Context(), baseconst.ContextTimeout*time.Second)
 			defer cancel()
 		}
 
@@ -262,7 +288,7 @@ func (s *Server) initListeners() error {
 	var err error
 	publicHostPort := s.serverOptions.HTTPHostPort
 	if publicHostPort == "" {
-		return fmt.Errorf("constants.HTTPHostPort is required")
+		return fmt.Errorf("baseconst.HTTPHostPort is required")
 	}
 
 	s.httpConn, err = net.Listen("tcp", publicHostPort)
@@ -276,7 +302,7 @@ func (s *Server) initListeners() error {
 	privateHostPort := s.serverOptions.PrivateHostPort
 
 	if privateHostPort == "" {
-		return fmt.Errorf("constants.PrivateHostPort is required")
+		return fmt.Errorf("baseconst.PrivateHostPort is required")
 	}
 
 	s.privateConn, err = net.Listen("tcp", privateHostPort)
@@ -321,9 +347,9 @@ func (s *Server) Start() error {
 	}()
 
 	go func() {
-		zap.S().Info("Starting pprof server", zap.String("addr", constants.DebugHttpPort))
+		zap.S().Info("Starting pprof server", zap.String("addr", baseconst.DebugHttpPort))
 
-		err = http.ListenAndServe(constants.DebugHttpPort, nil)
+		err = http.ListenAndServe(baseconst.DebugHttpPort, nil)
 		if err != nil {
 			zap.S().Error("Could not start pprof server", zap.Error(err))
 		}
@@ -357,7 +383,7 @@ func makeRulesManager(
 	alertManagerURL string,
 	ruleRepoURL string,
 	db *sqlx.DB,
-	ch interfaces.Reader,
+	ch baseint.Reader,
 	disableRules bool) (*rules.Manager, error) {
 
 	// create engine
@@ -367,7 +393,7 @@ func makeRulesManager(
 	}
 
 	// notifier opts
-	notifierOpts := am.NotifierOptions{
+	notifierOpts := basealm.NotifierOptions{
 		QueueCapacity:    10000,
 		Timeout:          1 * time.Second,
 		AlertManagerURLs: []string{alertManagerURL},

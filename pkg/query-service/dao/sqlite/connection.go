@@ -88,6 +88,11 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	return mds, nil
 }
 
+// DB returns database connection
+func (mds *ModelDaoSqlite) DB() *sqlx.DB {
+	return mds.db
+}
+
 // initializeOrgPreferences initializes in-memory telemetry settings. It is planned to have
 // multiple orgs in the system. In case of multiple orgs, there will be separate instance
 // of in-memory telemetry for each of the org, having their own settings. As of now, we only

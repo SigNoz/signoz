@@ -24,6 +24,11 @@ func InitDao(engine, path string) error {
 	return nil
 }
 
+// SetDB is used by ee for setting modelDAO
+func SetDB(m ModelDao) {
+	db = m
+}
+
 func DB() ModelDao {
 	if db == nil {
 		// Should never reach here

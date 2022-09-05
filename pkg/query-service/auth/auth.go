@@ -299,39 +299,10 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		return nil, err
 	}
 
-	accessJwtExpiry := time.Now().Add(JwtExpiry).Unix()
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   accessJwtExpiry,
-	})
-
-	accessJwt, err := token.SignedString([]byte(JwtSecret))
-	if err != nil {
-		return nil, errors.Errorf("failed to encode jwt: %v", err)
-	}
-
-	refreshJwtExpiry := time.Now().Add(JwtRefresh).Unix()
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.Id,
-		"gid":   user.GroupId,
-		"email": user.Email,
-		"exp":   refreshJwtExpiry,
-	})
-
-	refreshJwt, err := token.SignedString([]byte(JwtSecret))
-	if err != nil {
-		return nil, errors.Errorf("failed to encode jwt: %v", err)
-	}
+	userjwt, err := GenerateJWTForUser(&user.User)
 
 	return &model.LoginResponse{
-		AccessJwt:        accessJwt,
-		AccessJwtExpiry:  accessJwtExpiry,
-		RefreshJwt:       refreshJwt,
-		RefreshJwtExpiry: refreshJwtExpiry,
-		UserId:           user.Id,
+		userjwt,
 	}, nil
 }
 
@@ -374,4 +345,36 @@ func passwordMatch(hash, password string) bool {
 		return false
 	}
 	return true
+}
+
+func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {
+	j := model.UserJwtObject{}
+	var err error
+	j.AccessJwtExpiry = time.Now().Add(JwtExpiry).Unix()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    user.Id,
+		"gid":   user.GroupId,
+		"email": user.Email,
+		"exp":   j.AccessJwtExpiry,
+	})
+
+	j.AccessJwt, err = token.SignedString([]byte(JwtSecret))
+	if err != nil {
+		return j, errors.Errorf("failed to encode jwt: %v", err)
+	}
+
+	j.RefreshJwtExpiry = time.Now().Add(JwtRefresh).Unix()
+	token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    user.Id,
+		"gid":   user.GroupId,
+		"email": user.Email,
+		"exp":   j.RefreshJwtExpiry,
+	})
+
+	j.RefreshJwt, err = token.SignedString([]byte(JwtSecret))
+	if err != nil {
+		return j, errors.Errorf("failed to encode jwt: %v", err)
+	}
+	return j, nil
 }
