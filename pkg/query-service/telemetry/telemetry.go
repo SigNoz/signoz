@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,12 +36,13 @@ var telemetry *Telemetry
 var once sync.Once
 
 type Telemetry struct {
-	operator    analytics.Client
-	ipAddress   string
-	isEnabled   bool
-	isAnonymous bool
-	distinctId  string
-	reader      interfaces.Reader
+	operator      analytics.Client
+	ipAddress     string
+	isEnabled     bool
+	isAnonymous   bool
+	distinctId    string
+	reader        interfaces.Reader
+	companyDomain string
 }
 
 func createTelemetry() {
@@ -106,6 +108,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
+	a.setCompanyDomain(user.Email)
 
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
@@ -113,6 +116,21 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	})
 
 }
+
+func (a *Telemetry) setCompanyDomain(email string) {
+
+	email_split := strings.Split(email, "@")
+	if len(email_split) != 2 {
+		a.companyDomain = email
+	}
+	a.companyDomain = email_split[1]
+
+}
+
+func (a *Telemetry) getCompanyDomain() string {
+	return a.companyDomain
+}
+
 func (a *Telemetry) checkEvents(event string) bool {
 	sendEvent := true
 	if event == TELEMETRY_EVENT_USER && a.isTelemetryAnonymous() {
@@ -136,6 +154,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 	properties := analytics.NewProperties()
 	properties.Set("version", version.GetVersion())
 	properties.Set("deploymentType", getDeploymentType())
+	properties.Set("companyDomain", a.getCompanyDomain())
 
 	for k, v := range data {
 		properties.Set(k, v)
