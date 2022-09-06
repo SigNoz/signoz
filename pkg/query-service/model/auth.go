@@ -37,11 +37,11 @@ type UserJwtObject struct {
 	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
 	RefreshJwt       string `json:"refreshJwt"`
 	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
-	UserId           string `json:"userId"`
 }
 
 type LoginResponse struct {
 	UserJwtObject
+	UserId string `json:"userId"`
 }
 
 type ChangePasswordRequest struct {

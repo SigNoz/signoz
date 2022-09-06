@@ -18,8 +18,8 @@ func NewApiError(typ basemodel.ErrorType, err error) *ApiError {
 	}
 }
 
-// NewBadRequestError returns a ApiError object of bad request
-func NewBadRequestError(err error) *ApiError {
+// BadRequest returns a ApiError object of bad request
+func BadRequest(err error) *ApiError {
 	return &ApiError{
 		basemodel.ApiError{
 			Typ: basemodel.ErrorBadData,

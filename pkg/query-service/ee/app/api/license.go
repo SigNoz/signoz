@@ -13,12 +13,12 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
-		RespondError(w, model.NewBadRequestError(err), nil)
+		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
 	if l.Key == "" {
-		RespondError(w, model.NewBadRequestError(fmt.Errorf("license key is required")), nil)
+		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
 

@@ -60,12 +60,12 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/apply/license", baseapp.AdminAccess(ah.applyLicense)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/licenses", baseapp.AdminAccess(ah.applyLicense)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/featureFlags", baseapp.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/loginPrecheck", baseapp.OpenAccess(ah.precheckLogin)).Methods(http.MethodGet)
 
 	// paid plans specific routes
-	router.HandleFunc("/api/v1/organization/{org_id}/complete/saml", baseapp.OpenAccess(ah.ReceiveSAML)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains-sso/{domain_id}/complete/saml", baseapp.OpenAccess(ah.ReceiveSAML)).Methods(http.MethodPost)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)

@@ -18,7 +18,7 @@ type Client struct {
 
 func New() *Client {
 	return &Client{
-		Prefix: "https://license.signoz.io/api/v1",
+		Prefix: "http://localhost:9682/api/v1", //todo(amol): replace this before prod "https://license.signoz.io/api/v1",
 	}
 }
 
@@ -34,32 +34,34 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	}
 
 	reqString, _ := json.Marshal(licenseReq)
-	response, err := http.Post(C.Prefix+"/activate", "application/json", bytes.NewBuffer(reqString))
+	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", "application/json", bytes.NewBuffer(reqString))
 
 	if err != nil {
-		return nil, model.NewBadRequestError(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	httpBody, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return nil, model.NewBadRequestError(errors.Wrap(err, "failed to read activation response from license.signoz.io"))
+		return nil, model.BadRequest(errors.Wrap(err, "failed to read activation response from license.signoz.io"))
 	}
 
-	defer response.Body.Close()
+	defer httpResponse.Body.Close()
 
-	switch response.StatusCode {
+	// read api request result
+	result := ActivationResult{}
+	err = json.Unmarshal(httpBody, &result)
+	if err != nil {
+		return nil, model.NewInternalError(errors.Wrap(err, "failed to marshal license activation response"))
+	}
+
+	switch httpResponse.StatusCode {
 	case 200, 201:
-		a := ActivationResponse{}
-		err = json.Unmarshal(body, &a)
-		if err != nil {
-			return nil, model.NewBadRequestError(errors.Wrap(err, "failed to marshal license activation response"))
-		}
-		return &a, nil
+		return result.Data, nil
 	case 400, 401:
-		return nil, model.NewBadRequestError(errors.Wrap(fmt.Errorf(string(body)),
+		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(httpBody)),
 			"bad request error received from license.signoz.io"))
 	default:
-		return nil, model.NewInternalError(errors.Wrap(fmt.Errorf(string(body)),
+		return nil, model.NewInternalError(errors.Wrap(fmt.Errorf(string(httpBody)),
 			"internal error received from license.signoz.io"))
 	}
 
@@ -72,15 +74,15 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 	}
 
 	reqString, _ := json.Marshal(validReq)
-	response, err := http.Post(C.Prefix+"/validate", "application/json", bytes.NewBuffer(reqString))
+	response, err := http.Post(C.Prefix+"/licenses/validate", "application/json", bytes.NewBuffer(reqString))
 
 	if err != nil {
-		return nil, model.NewBadRequestError(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, model.NewBadRequestError(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
+		return nil, model.BadRequest(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
 	}
 
 	defer response.Body.Close()
@@ -90,11 +92,11 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 		a := ActivationResponse{}
 		err = json.Unmarshal(body, &a)
 		if err != nil {
-			return nil, model.NewBadRequestError(errors.Wrap(err, "failed to marshal license validation response"))
+			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
 		}
 		return &a, nil
 	case 400, 401:
-		return nil, model.NewBadRequestError(errors.Wrap(fmt.Errorf(string(body)),
+		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))
 	default:
 		return nil, model.NewInternalError(errors.Wrap(fmt.Errorf(string(body)),

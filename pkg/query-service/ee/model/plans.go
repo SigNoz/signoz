@@ -5,8 +5,10 @@ import (
 )
 
 const SSO = "SSO"
+const Basic = "BASIC_PLAN"
 const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
+const DisableUpsell = "DISABLE_UPSELL"
 
 var ProPlan = basemodel.FeatureSet{
 	Pro: true,

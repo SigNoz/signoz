@@ -302,7 +302,8 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 	userjwt, err := GenerateJWTForUser(&user.User)
 
 	return &model.LoginResponse{
-		userjwt,
+		UserJwtObject: userjwt,
+		UserId:        user.User.Id,
 	}, nil
 }
 

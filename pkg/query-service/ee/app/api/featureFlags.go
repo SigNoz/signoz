@@ -4,11 +4,8 @@ import (
 	"net/http"
 )
 
-// methods that use user session or jwt to return
-// user specific data
-
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet := ah.LM().GetFeatureFlags()
+	featureSet := ah.FF().GetFeatureFlags()
 	ah.WriteJSON(w, r, featureSet)
 }
 

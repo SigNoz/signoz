@@ -1,7 +1,9 @@
 package model
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	basemodel "go.signoz.io/query-service/model"
 	"time"
@@ -24,26 +26,37 @@ type LicensePlan struct {
 	PlanKey    string `json:"planKey"`
 	ValidFrom  int64  `json:"ValidFrom"`
 	ValidUntil int64  `json:"ValidUntil"`
+	Status     string `json:"status"`
 }
 
 func (l *License) ParsePlan() error {
 	l.LicensePlan = LicensePlan{}
-	err := json.Unmarshal([]byte(l.PlanDetails), &l.LicensePlan)
-	l.ValidationMessage = "failed to parse plan from license"
+
+	planData, err := base64.StdEncoding.DecodeString(l.PlanDetails)
 	if err != nil {
+		return err
+	}
+	fmt.Println("planData:", string(planData))
+
+	plan := LicensePlan{}
+	err = json.Unmarshal([]byte(planData), &plan)
+	if err != nil {
+		l.ValidationMessage = "failed to parse plan from license"
 		return errors.Wrap(err, "failed to parse plan from license")
 	}
+
+	l.LicensePlan = plan
 	l.ParseFeatures()
 	return nil
 }
 
 func (l *License) ParseFeatures() {
 	switch l.PlanKey {
-	case "BasicPlan":
+	case Basic:
 		l.FeatureSet = basemodel.BasicPlan
-	case "ProPlan":
+	case Pro:
 		l.FeatureSet = ProPlan
-	case "EnterprisePlan":
+	case Enterprise:
 		l.FeatureSet = EnterprisePlan
 	}
 }

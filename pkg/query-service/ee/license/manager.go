@@ -195,7 +195,7 @@ func (lm *Manager) Activate(ctx context.Context, key string) (*model.License, *m
 
 	if err != nil {
 		zap.S().Errorf("failed to activate license", zap.Error(err))
-		return nil, model.NewBadRequestError(err)
+		return nil, model.BadRequest(err)
 	}
 
 	// store the license before activating it

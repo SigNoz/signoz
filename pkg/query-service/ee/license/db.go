@@ -71,9 +71,14 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 
 	query := `INSERT INTO licenses 
 						(key, planDetails, activationId, validationmessage) 
-						VALUES ($1, $2, $3, $4) RETURNING INTO $5`
+						VALUES ($1, $2, $3, $4)`
 
-	_, err := r.db.ExecContext(ctx, query, l.Key, l.Key, l.PlanDetails, l.ActivationId, l.ValidationMessage, l.ID)
+	_, err := r.db.ExecContext(ctx,
+		query,
+		l.Key,
+		l.PlanDetails,
+		l.ActivationId,
+		l.ValidationMessage)
 
 	if err != nil {
 		zap.S().Errorf("error in inserting license data: ", zap.Error(err))
