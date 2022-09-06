@@ -3267,7 +3267,7 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 		for _, v := range vars {
 			switch v := v.(type) {
 			case *string, *int8, *int16, *int32, *int64, *uint8, *uint16, *uint32, *uint64, *float32, *float64, *time.Time, *bool:
-				result.VariableValues = append(result.VariableValues, v)
+				result.VariableValues = append(result.VariableValues, reflect.ValueOf(v).Elem().Interface())
 			default:
 				return nil, fmt.Errorf("unsupported value type encountered")
 			}
