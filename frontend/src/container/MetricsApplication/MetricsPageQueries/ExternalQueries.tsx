@@ -1,32 +1,13 @@
-// import { IResourceAttributeQuery } from '../ResourceAttributesFilter/types';
-
 import {
 	IMetricsBuilderFormula,
 	IMetricsBuilderQuery,
+	IQueryBuilderTagFilterItems,
 } from 'types/api/dashboard/getAll';
-
-// const temp: object[] | undefined = [];
-// const resourceAttributeQueriesToTagFilters = (
-// 	resourceAttributeQueries: IResourceAttributeQuery[],
-// ) => {
-// 	resourceAttributeQueries.forEach((res) => {
-// 		const temp_obj = {
-// 			id: `${res.id}`,
-// 			key: `${res.tagKey}`,
-// 			op: `${res.operator}`,
-// 			value: `${res.tagValue}`,
-// 		};
-// 		temp.push({ temp_obj });
-// 	});
-// 	return temp;
-// };
-
-// console.log(temp);
 
 export const externalCallErrorPercent = (
 	servicename: string | undefined,
 	legend: '{{address}}',
-	// resourceAttributeQueries: IResourceAttributeQuery[],
+	temp: IQueryBuilderTagFilterItems[] | [],
 ): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
@@ -59,7 +40,7 @@ export const externalCallErrorPercent = (
 							op: 'IN',
 							value: ['STATUS_CODE_ERROR'],
 						},
-						// ...temp,
+						...temp,
 					],
 
 					op: 'AND',
@@ -80,7 +61,7 @@ export const externalCallErrorPercent = (
 							op: 'IN',
 							value: [`${servicename}`],
 						},
-						// ...temp,
+						...temp,
 					],
 					op: 'AND',
 				},
@@ -94,6 +75,7 @@ export const externalCallErrorPercent = (
 
 export const externalCallDuration = (
 	servicename: string | undefined,
+	temp: IQueryBuilderTagFilterItems[] | [],
 ): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
@@ -124,6 +106,7 @@ export const externalCallDuration = (
 							op: 'IN',
 							value: [`${servicename}`],
 						},
+						...temp,
 					],
 					op: 'AND',
 				},
@@ -144,12 +127,7 @@ export const externalCallDuration = (
 							op: 'IN',
 							value: [`${servicename}`],
 						},
-						// 	{
-						// 		id: '',
-						// 		key: 'resource_service_namespace',
-						// 		op: 'IN',
-						// 		value: ['', 'test'],
-						// 	},
+						...temp,
 					],
 					op: 'AND',
 				},
@@ -161,6 +139,7 @@ export const externalCallDuration = (
 export const externalCallRpsByAddress = (
 	servicename: string | undefined,
 	legend: '{{address}}',
+	temp: IQueryBuilderTagFilterItems[] | [],
 ): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
@@ -184,6 +163,7 @@ export const externalCallRpsByAddress = (
 							op: 'IN',
 							value: [`${servicename}`],
 						},
+						...temp,
 					],
 					op: 'AND',
 				},
@@ -195,6 +175,7 @@ export const externalCallRpsByAddress = (
 export const externalCallDurationByAddress = (
 	servicename: string | undefined,
 	legend: '{{address}}',
+	temp: IQueryBuilderTagFilterItems[] | [],
 ): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
@@ -225,6 +206,7 @@ export const externalCallDurationByAddress = (
 							op: 'IN',
 							value: [`${servicename}`],
 						},
+						...temp,
 					],
 					op: 'AND',
 				},
@@ -245,6 +227,7 @@ export const externalCallDurationByAddress = (
 							op: 'IN',
 							value: [`${servicename}`],
 						},
+						...temp,
 					],
 					op: 'AND',
 				},
