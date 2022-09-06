@@ -1,21 +1,26 @@
 import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import {
+	externalCallDuration,
+	externalCallDurationByAddress,
+	externalCallErrorPercent,
+	externalCallRpsByAddress,
+} from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
 import React from 'react';
+// import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+// import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+// import MetricReducer from 'types/reducer/metrics';
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
 function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
-
-	// const legend = '{{http_url}}';
-
-	// console.log(legend);
-
-	// console.log(servicename);
-
-	// console.log(getWidgetQueryBuilder);
+	// const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
+	// 	(state) => state.metrics,
+	// );
+	const legend = '{{address}}';
 
 	return (
 		<>
@@ -31,64 +36,10 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: {
-										formulas: [
-											{
-												name: 'F1',
-												expression: 'A*100/B',
-												disabled: false,
-											},
-										],
-										queryBuilder: [
-											{
-												name: 'A',
-												aggregateOperator: 18,
-												metricName: 'signoz_external_call_latency_count',
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-														{
-															id: '',
-															key: 'status_code',
-															op: 'IN',
-															value: ['STATUS_CODE_ERROR'],
-														},
-													],
-													op: 'AND',
-												},
-												groupBy: ['http_url'],
-												legend: '',
-												disabled: false,
-											},
-											{
-												name: 'B',
-												aggregateOperator: 18,
-												metricName: 'signoz_external_call_latency_count',
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-													],
-													op: 'AND',
-												},
-												groupBy: ['http_url'],
-												legend: '',
-												disabled: false,
-											},
-										],
-									},
+									metricsBuilder: externalCallErrorPercent(servicename, legend),
 									clickHouse: [],
 								})}
-								// yAxisUnit="%"
+								yAxisUnit="%"
 							/>
 						</GraphContainer>
 					</Card>
@@ -105,57 +56,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: {
-										formulas: [
-											{
-												disabled: false,
-												expression: 'A/B',
-												name: 'F1',
-											},
-										],
-										queryBuilder: [
-											{
-												aggregateOperator: 18,
-												disabled: true,
-												groupBy: [],
-												legend: '',
-												metricName: 'signoz_external_call_latency_sum',
-												name: 'A',
-												reduceTo: 1,
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-													],
-													op: 'AND',
-												},
-											},
-											{
-												aggregateOperator: 18,
-												disabled: true,
-												groupBy: [],
-												legend: '',
-												metricName: 'signoz_external_call_latency_count',
-												name: 'B',
-												reduceTo: 1,
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-													],
-													op: 'AND',
-												},
-											},
-										],
-									},
+									metricsBuilder: externalCallDuration(servicename),
 									clickHouse: [],
 								})}
 								yAxisUnit="ms"
@@ -177,31 +78,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: {
-										formulas: [],
-										queryBuilder: [
-											{
-												aggregateOperator: 18,
-												disabled: false,
-												groupBy: ['http_url', 'service_name'],
-												legend: '{{http_url}}',
-												metricName: 'signoz_external_call_latency_count',
-												name: 'A',
-												reduceTo: 1,
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-													],
-													op: 'AND',
-												},
-											},
-										],
-									},
+									metricsBuilder: externalCallRpsByAddress(servicename, legend),
 									clickHouse: [],
 								})}
 								yAxisUnit="reqps"
@@ -221,57 +98,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: {
-										formulas: [
-											{
-												disabled: false,
-												expression: 'A/B',
-												name: 'F1',
-											},
-										],
-										queryBuilder: [
-											{
-												aggregateOperator: 18,
-												disabled: false,
-												groupBy: ['http_url'],
-												legend: '',
-												metricName: 'signoz_external_call_latency_sum',
-												name: 'A',
-												reduceTo: 1,
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-													],
-													op: 'AND',
-												},
-											},
-											{
-												aggregateOperator: 18,
-												disabled: false,
-												groupBy: ['http_url'],
-												legend: '',
-												metricName: 'signoz_external_call_latency_count',
-												name: 'B',
-												reduceTo: 1,
-												tagFilters: {
-													items: [
-														{
-															id: '',
-															key: 'service_name',
-															op: 'IN',
-															value: [`${servicename}`],
-														},
-													],
-													op: 'AND',
-												},
-											},
-										],
-									},
+									metricsBuilder: externalCallDurationByAddress(servicename, legend),
 									clickHouse: [],
 								})}
 								yAxisUnit="ms"
