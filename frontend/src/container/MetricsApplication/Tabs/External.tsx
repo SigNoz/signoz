@@ -46,7 +46,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					<Card>
 						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
-							1
 							<FullView
 								name="external_call_error_percentage"
 								fullViewOptions={false}
@@ -66,7 +65,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					<Card>
 						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
-							2
 							<FullView
 								name="external_call_duration"
 								fullViewOptions={false}
@@ -88,7 +86,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					<Card>
 						<GraphTitle>External Call RPS(by Address)</GraphTitle>
 						<GraphContainer>
-							3
 							<FullView
 								name="external_call_rps_by_address"
 								fullViewOptions={false}
@@ -108,7 +105,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					<Card>
 						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>
-							4
 							<FullView
 								name="external_call_duration_by_address"
 								fullViewOptions={false}
