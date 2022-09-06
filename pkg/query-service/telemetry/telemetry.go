@@ -3,6 +3,7 @@ package telemetry
 import (
 	"context"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -23,6 +24,7 @@ const (
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
 	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
 	TELEMETRY_EVENT_ORG_SETTINGS       = "Org Settings"
+	DEFAULT_SAMPLING                   = 0.1
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -35,6 +37,18 @@ const HEART_BEAT_DURATION = 6 * time.Hour
 var telemetry *Telemetry
 var once sync.Once
 
+func (a *Telemetry) IsSampled() bool {
+
+	number := a.minRandInt + rand.Intn(a.maxRandInt-a.minRandInt)
+
+	if (number % a.maxRandInt) == 0 {
+		return true
+	} else {
+		return false
+	}
+
+}
+
 type Telemetry struct {
 	operator      analytics.Client
 	ipAddress     string
@@ -43,6 +57,8 @@ type Telemetry struct {
 	distinctId    string
 	reader        interfaces.Reader
 	companyDomain string
+	minRandInt    int
+	maxRandInt    int
 }
 
 func createTelemetry() {
@@ -50,6 +66,10 @@ func createTelemetry() {
 		operator:  analytics.New(api_key),
 		ipAddress: getOutboundIP(),
 	}
+	telemetry.minRandInt = 0
+	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
+
+	rand.Seed(time.Now().UnixNano())
 
 	data := map[string]interface{}{}
 
