@@ -39,9 +39,9 @@ var once sync.Once
 
 func (a *Telemetry) IsSampled() bool {
 
-	number := a.minRandInt + rand.Intn(a.maxRandInt-a.minRandInt)
+	random_number := a.minRandInt + rand.Intn(a.maxRandInt-a.minRandInt) + 1
 
-	if (number % a.maxRandInt) == 0 {
+	if (random_number % a.maxRandInt) == 0 {
 		return true
 	} else {
 		return false
