@@ -72,7 +72,7 @@ export type TraceFilterEnum =
 	| 'status'
 	| 'responseStatusCode'
 	| 'rpcMethod'
-	| 'searchTraceId';
+	| 'traceID';
 
 export const AllPanelHeading: {
 	key: TraceFilterEnum;
@@ -127,7 +127,7 @@ export const AllPanelHeading: {
 		displayValue: 'Status',
 	},
 	{
-		key: 'searchTraceId',
+		key: 'traceID',
 		displayValue: 'Trace ID',
 	},
 ];

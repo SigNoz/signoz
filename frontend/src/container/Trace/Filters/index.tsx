@@ -16,7 +16,7 @@ export const AllTraceFilterEnum: TraceFilterEnum[] = [
 	'httpMethod',
 	'httpRoute',
 	'httpUrl',
-	'searchTraceId',
+	'traceID',
 ];
 
 function Filters(): JSX.Element {

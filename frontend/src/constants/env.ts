@@ -1,3 +1,6 @@
 export const ENVIRONMENT = {
-	baseURL: 'http://stagingapp.signoz.io:3301',
+	baseURL:
+		process?.env?.FRONTEND_API_ENDPOINT ||
+		process?.env?.GITPOD_WORKSPACE_URL?.replace('://', '://8080-') ||
+		'',
 };

@@ -7,6 +7,7 @@ import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import CommonCheckBox from './CommonCheckBox';
 import Duration from './Duration';
+import TraceID from './SearchTraceID';
 
 function PanelBody(props: PanelBodyProps): JSX.Element {
 	const { type } = props;
@@ -25,7 +26,7 @@ function PanelBody(props: PanelBodyProps): JSX.Element {
 
 	return (
 		<Card bordered={false}>
-			{type === 'duration' ? <Duration /> : <CommonCheckBox name={type} />}
+			{type === 'duration' ? <Duration /> : type==='traceID' ? <TraceID />: <CommonCheckBox name={type} />}
 		</Card>
 	);
 }
