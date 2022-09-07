@@ -15,7 +15,11 @@ const ALL_SELECT_VALUE = '__ALL__';
 interface VariableItemProps {
 	variableData: IDashboardVariable;
 }
-function VariableItem({ variableData, onValueUpdate }: VariableItemProps) {
+function VariableItem({
+	variableData,
+	onValueUpdate,
+	onAllSelectedUpdate,
+}: VariableItemProps) {
 	const [optionsData, setOptionsData] = useState([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -26,10 +30,14 @@ function VariableItem({ variableData, onValueUpdate }: VariableItemProps) {
 					query: variableData.queryValue,
 				});
 				if (response.payload?.variableValues)
-					setOptionsData(response.payload?.variableValues);
-			} catch (e) { }
+					setOptionsData(
+						sortValues(response.payload?.variableValues, variableData.sort),
+					);
+			} catch (e) {}
 		} else if (variableData.type === 'CUSTOM') {
-			setOptionsData(commaValuesParser(variableData.customValue));
+			setOptionsData(
+				sortValues(commaValuesParser(variableData.customValue), variableData.sort),
+			);
 		}
 	}, [variableData.customValue, variableData.queryValue, variableData.type]);
 
@@ -41,15 +49,17 @@ function VariableItem({ variableData, onValueUpdate }: VariableItemProps) {
 		if (
 			value === ALL_SELECT_VALUE ||
 			(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
-		)
+		) {
 			onValueUpdate(variableData.name, optionsData);
-		else {
+			onAllSelectedUpdate(variableData.name, true);
+		} else {
 			onValueUpdate(variableData.name, value);
+			onAllSelectedUpdate(variableData.name, false);
 		}
 	};
 	return (
 		<VariableContainer>
-			<VariableName >${variableData.name}</VariableName>
+			<VariableName>${variableData.name}</VariableName>
 			{variableData.type === 'TEXTBOX' ? (
 				<Input
 					placeholder="Enter value"
@@ -64,15 +74,17 @@ function VariableItem({ variableData, onValueUpdate }: VariableItemProps) {
 				/>
 			) : (
 				<Select
-					value={variableData.selectedValue}
+					value={variableData.allSelected ? 'ALL' : variableData.selectedValue}
 					onChange={handleChange}
 					bordered={false}
 					placeholder="Select value"
-					mode={variableData.multiSelect ? 'multiple' : null}
+					mode={
+						variableData.multiSelect && !variableData.allSelected ? 'multiple' : null
+					}
 					dropdownMatchSelectWidth={false}
 					style={{
 						minWidth: 120,
-						fontSize: '0.8rem'
+						fontSize: '0.8rem',
 					}}
 					loading={isLoading}
 					// options={optionsData.map((option) => ({
@@ -84,7 +96,7 @@ function VariableItem({ variableData, onValueUpdate }: VariableItemProps) {
 					{variableData.multiSelect && variableData.showALLOption && (
 						<Option value={ALL_SELECT_VALUE}>ALL</Option>
 					)}
-					{map(sortValues(optionsData, variableData.sort), (option) => {
+					{map(optionsData, (option) => {
 						return <Option value={option}>{option.toString()}</Option>;
 					})}
 				</Select>

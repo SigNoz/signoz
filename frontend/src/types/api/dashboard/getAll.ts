@@ -31,9 +31,10 @@ export interface IDashboardVariable {
 	sort: TSortVariableValuesType;
 	multiSelect: boolean;
 	showALLOption: boolean;
-
 	selectedValue: null | string | string[];
+	// Internal use
 	modificationUUID?: string;
+	allSelected?: boolean;
 }
 export interface Dashboard {
 	id: number;

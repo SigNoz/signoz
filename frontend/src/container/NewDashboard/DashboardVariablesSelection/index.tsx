@@ -31,6 +31,13 @@ function DashboardVariableSelection({
 		updatedVariablesData[name].selectedValue = value;
 		updateDashboardVariables(updatedVariablesData);
 	};
+	const onAllSelectedUpdate = (name, value) => {
+		const updatedVariablesData = { ...variables };
+		updatedVariablesData[name].allSelected = value;
+		updateDashboardVariables(updatedVariablesData);
+	};
+
+
 	return (
 		<Row style={{ gap: '1rem' }}>
 			{map(sortBy(Object.keys(variables)), (variableName) => (
@@ -38,6 +45,7 @@ function DashboardVariableSelection({
 					key={`${variableName}${variables[variableName].modificationUUID}`}
 					variableData={{ name: variableName, ...variables[variableName] }}
 					onValueUpdate={onValueUpdate}
+					onAllSelectedUpdate={onAllSelectedUpdate}
 				/>
 			))}
 		</Row>

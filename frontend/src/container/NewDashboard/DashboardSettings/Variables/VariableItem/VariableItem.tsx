@@ -79,8 +79,10 @@ function VariableItem({
 		switch (queryType) {
 			case 'CUSTOM': {
 				setPreviewValues(
-					sortValues(commaValuesParser(variableData.customValue), variableSortType),
+					sortValues(commaValuesParser(variableCustomValue), variableSortType),
 				);
+				console.log(sortValues(commaValuesParser(variableData.customValue), variableSortType))
+
 			}
 		}
 	}, [queryType, variableData.customValue, variableData.type, variableSortType]);
