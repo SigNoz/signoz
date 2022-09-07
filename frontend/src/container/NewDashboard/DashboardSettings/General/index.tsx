@@ -1,5 +1,11 @@
-import { ShareAltOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Row, Space, Tag, Typography } from 'antd';
+import {
+	EditOutlined,
+	SaveOutlined,
+	ShareAltOutlined,
+} from '@ant-design/icons';
+import { Card, Col, Divider, Input, Space, Tag, Typography } from 'antd';
+import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
+import NameOfTheDashboard from 'container/NewDashboard/DescriptionOfDashboard/NameOfTheDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,11 +22,11 @@ import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import DashboardVariableSelection from '../DashboardVariablesSelection';
-import SettingsDrawer from './SettingsDrawer';
-import ShareModal from './ShareModal';
+import Description from './Description';
+import ShareModal from '../../DescriptionOfDashboard/ShareModal';
+import { Button, Container } from './styles';
 
-function DescriptionOfDashboard({
+function GeneralDashboardSettings({
 	updateDashboardTitleDescriptionTags,
 	toggleEditMode,
 }: DescriptionOfDashboardProps): JSX.Element {
@@ -45,76 +51,73 @@ function DescriptionOfDashboard({
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 
-	const onClickEditHandler = useCallback(() => {
-		if (isEditMode) {
-			const dashboard = selectedDashboard;
-			// @TODO need to update this function to take title,description,tags only
-			updateDashboardTitleDescriptionTags({
-				dashboard: {
-					...dashboard,
-					data: {
-						...dashboard.data,
-						description: updatedDescription,
-						tags: updatedTags,
-						title: updatedTitle,
-					},
+	const onSaveHandler = useCallback(() => {
+		const dashboard = selectedDashboard;
+		// @TODO need to update this function to take title,description,tags only
+		updateDashboardTitleDescriptionTags({
+			dashboard: {
+				...dashboard,
+				data: {
+					...dashboard.data,
+					description: updatedDescription,
+					tags: updatedTags,
+					title: updatedTitle,
 				},
-			});
-		} else {
-			toggleEditMode();
-		}
+			},
+		});
 	}, [
-		isEditMode,
 		updatedTitle,
 		updatedTags,
 		updatedDescription,
 		selectedDashboard,
-		toggleEditMode,
 		updateDashboardTitleDescriptionTags,
 	]);
 
-	const onToggleHandler = (): void => {
-		isIsJSONModalVisible((state) => !state);
-	};
+	// const onToggleHandler = (): void => {
+	// 	isIsJSONModalVisible((state) => !state);
+	// };
 
 	return (
-		<Card>
-			<Row>
-				<Col style={{ flex: 1 }}>
-					<Typography.Title level={4} style={{ padding: 0, margin: 0 }}>
-						{title}
-					</Typography.Title>
-					<Typography>{description}</Typography>
-					<div style={{ margin: '0.5rem 0' }}>
-						{tags?.map((e) => (
-							<Tag key={e}>{e}</Tag>
-						))}
+		<>
+			<Col>
+				<Space direction="vertical" style={{ width: '100%' }}>
+					<div>
+						<Typography style={{ marginBottom: '0.5rem' }}>Name</Typography>
+						<Input value={updatedTitle} onChange={(e) => setUpdatedTitle(e.target.value)} />
 					</div>
-					<DashboardVariableSelection />
-				</Col>
-				<Col>
-					<ShareModal
-						{...{
-							isJSONModalVisible,
-							onToggleHandler,
-							selectedData,
-						}}
-					/>
-					<Space direction='vertical'>
 
-						{editDashboard && <SettingsDrawer />}
-						<Button
-							style={{ width: '100%' }}
-							type="dashed"
-							onClick={onToggleHandler}
-							icon={<ShareAltOutlined />}
-						>
-							{t('share')}
+					<div>
+						<Typography style={{ marginBottom: '0.5rem' }}>Description</Typography>
+						<Input.TextArea value={updatedDescription} onChange={(e) => setUpdatedDescription(e.target.value)} />
+					</div>
+					<div>
+						<Typography style={{ marginBottom: '0.5rem' }}>Tags</Typography>
+						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
+					</div>
+					<div>
+						<Divider />
+						<Button icon={<SaveOutlined />} onClick={onSaveHandler} type="primary">
+							{t('save')}
 						</Button>
-					</Space>
-				</Col>
-			</Row>
-		</Card >
+					</div>
+
+				</Space>
+			</Col>
+
+
+
+
+			{/* <Col lg={8}>
+				<NameOfTheDashboard name={updatedTitle} setName={setUpdatedTitle} />
+
+				<Description
+					description={updatedDescription}
+					setDescription={setUpdatedDescription}
+				/>
+			</Col> */}
+			
+
+		</>
 	);
 }
 
@@ -137,4 +140,4 @@ const mapDispatchToProps = (
 
 type DescriptionOfDashboardProps = DispatchProps;
 
-export default connect(null, mapDispatchToProps)(DescriptionOfDashboard);
+export default connect(null, mapDispatchToProps)(GeneralDashboardSettings);

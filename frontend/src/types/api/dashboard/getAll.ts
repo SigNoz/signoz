@@ -11,6 +11,30 @@ import { QueryData } from '../widgets/getQuery';
 
 export type PayloadProps = Dashboard[];
 
+export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
+export type TVariableQueryType = typeof VariableQueryTypeArr[number];
+
+export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
+export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
+
+export interface IDashboardVariable {
+	name?: string; // key will be the source of truth
+	description: string;
+	type: TVariableQueryType;
+	// Query
+	queryValue?: string;
+	// Custom
+	customValue?: string;
+	// Textbox
+	textboxValue?: string;
+
+	sort: TSortVariableValuesType;
+	multiSelect: boolean;
+	showALLOption: boolean;
+
+	selectedValue: null | string | string[];
+	modificationUUID?: string;
+}
 export interface Dashboard {
 	id: number;
 	uuid: string;
@@ -26,6 +50,7 @@ export interface DashboardData {
 	widgets?: Widgets[];
 	title: string;
 	layout?: Layout[];
+	variables: Record<string, IDashboardVariable>;
 }
 
 export interface IBaseWidget {

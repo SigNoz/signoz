@@ -27,6 +27,7 @@ export const UpdateDashboard = async ({
 			description: data.description,
 			name: data.name,
 			tags: data.tags,
+			variables: {},
 			widgets: [
 				...(data.widgets || []),
 				{
