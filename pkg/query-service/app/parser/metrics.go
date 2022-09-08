@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"go.signoz.io/query-service/app/metrics"
 	"go.signoz.io/query-service/model"
@@ -26,6 +27,29 @@ func validateQueryRangeParamsV2(qp *model.QueryRangeParamsV2) error {
 	return nil
 }
 
+// FormattedValue formats the value to be used in clickhouse query
+func PromFormattedValue(v interface{}) string {
+	switch x := v.(type) {
+	case int:
+		return fmt.Sprintf("%d", x)
+	case float32, float64:
+		return fmt.Sprintf("%f", x)
+	case string:
+		return fmt.Sprintf("'%s'", x)
+	case bool:
+		return fmt.Sprintf("%v", x)
+	case []interface{}:
+		switch x[0].(type) {
+		case string, int, float32, float64, bool:
+			return strings.Join(strings.Fields(fmt.Sprint(x)), "|")
+		}
+		return ""
+	default:
+		// may be log the warning here?
+		return ""
+	}
+}
+
 func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *model.ApiError) {
 
 	var postData *model.QueryRangeParamsV2
@@ -36,6 +60,15 @@ func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *m
 	if err := validateQueryRangeParamsV2(postData); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
+	formattedVars := make(map[string]interface{})
+	for name, value := range postData.Variables {
+		if postData.CompositeMetricQuery.QueryType == model.PROM {
+			formattedVars[name] = PromFormattedValue(value)
+		} else if postData.CompositeMetricQuery.QueryType == model.CLICKHOUSE {
+			formattedVars[name] = metrics.FormattedValue(value)
+		}
+	}
+	postData.Variables = formattedVars
 
 	return postData, nil
 }

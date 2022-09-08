@@ -123,7 +123,7 @@ type QueryRangeParamsV2 struct {
 	End                  int64                  `json:"end"`
 	Step                 int64                  `json:"step"`
 	CompositeMetricQuery *CompositeMetricQuery  `json:"compositeMetricQuery"`
-	Variables            map[string]interface{} `json:"variables"`
+	Variables            map[string]interface{} `json:"variables,omitempty"`
 }
 
 // Metric auto complete types
