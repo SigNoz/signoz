@@ -11,6 +11,15 @@ export interface User {
 	profilePictureURL: UserPayload['profilePictureURL'];
 }
 
+export interface FeatureFlag {
+	SAML: {
+		DISABLE_UPSELL: boolean;
+		ENTERPRISE_PLAN: boolean;
+		SSO: boolean;
+		BASIC_PLAN: boolean;
+	};
+}
+
 export default interface AppReducer {
 	isDarkMode: boolean;
 	isLoggedIn: boolean;
@@ -24,4 +33,5 @@ export default interface AppReducer {
 	isUserFetchingError: boolean;
 	role: ROLES | null;
 	org: OrgPayload | null;
+	features: FeatureFlag;
 }

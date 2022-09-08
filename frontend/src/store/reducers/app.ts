@@ -54,6 +54,15 @@ const InitialValue: InitialValueTypes = {
 	isUserFetchingError: false,
 	org: null,
 	role: null,
+
+	features: {
+		SAML: {
+			BASIC_PLAN: false,
+			DISABLE_UPSELL: false,
+			ENTERPRISE_PLAN: false,
+			SSO: false,
+		},
+	},
 };
 
 const appReducer = (
