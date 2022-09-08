@@ -1,3 +1,4 @@
+import { orange } from '@ant-design/colors';
 import {
 	Button,
 	Card,
@@ -12,6 +13,7 @@ import {
 } from 'antd';
 import query from 'api/dashboard/variables/query';
 import Editor from 'components/Editor';
+import Spinner from 'components/Spinner';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
@@ -71,8 +73,11 @@ function VariableItem({
 	);
 	const [previewValues, setPreviewValues] = useState<string[]>([]);
 
+	// Internal states
+	const [previewLoading, setPreviewLoading] = useState<boolean>(false)
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
+	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
 		setPreviewValues(null);
@@ -81,7 +86,6 @@ function VariableItem({
 				setPreviewValues(
 					sortValues(commaValuesParser(variableCustomValue), variableSortType),
 				);
-				console.log(sortValues(commaValuesParser(variableData.customValue), variableSortType))
 
 			}
 		}
@@ -107,15 +111,25 @@ function VariableItem({
 	};
 	// Fetches the preview values for the SQL variable query
 	const handleQueryResult = async (): Promise<void> => {
+		setPreviewLoading(true)
+		setErrorPreview(null)
 		const variableQueryResponse = await query({
 			query: variableQueryValue,
 		});
-		setPreviewValues(
-			sortValues(
-				variableQueryResponse.payload?.variableValues || [],
-				variableSortType,
-			),
-		);
+		setPreviewLoading(false)
+		if (variableQueryResponse.error) {
+			setErrorPreview(variableQueryResponse.error)
+			return;
+		}
+		if (variableQueryResponse.payload?.variableValues)
+			setPreviewValues(
+				sortValues(
+					variableQueryResponse.payload?.variableValues || [],
+					variableSortType,
+				),
+			);
+
+
 	};
 	return (
 		<Col>
@@ -197,6 +211,7 @@ function VariableItem({
 								position: 'absolute',
 								bottom: 0,
 							}}
+							loading={previewLoading}
 						>
 							Test Run Query
 						</Button>
@@ -243,7 +258,9 @@ function VariableItem({
 							<Typography>Preview of Values</Typography>
 						</LabelContainer>
 						<div style={{ flex: 1 }}>
-							{map(previewValues, (value, idx) => (
+							{errorPreview ? <Typography style={{ color: orange[5] }}>
+								{errorPreview}
+							</Typography> : map(previewValues, (value, idx) => (
 								<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
 							))}
 						</div>

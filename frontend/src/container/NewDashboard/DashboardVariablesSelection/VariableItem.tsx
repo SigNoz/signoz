@@ -1,10 +1,15 @@
-import { Input, Select, Typography } from 'antd';
+import { orange, yellow } from '@ant-design/colors';
+import { WarningFilled, WarningOutlined } from '@ant-design/icons';
+import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { VariableContainer, VariableName } from './styles';
 
@@ -20,30 +25,46 @@ function VariableItem({
 	onValueUpdate,
 	onAllSelectedUpdate,
 }: VariableItemProps) {
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const [optionsData, setOptionsData] = useState([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
+	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 	const getOptions = useCallback(async (): Promise<void> => {
 		if (variableData.type === 'QUERY') {
 			try {
+				setErrorMessage(null);
+				setIsLoading(true);
+
 				const response = await query({
 					query: variableData.queryValue,
 				});
+
+				setIsLoading(false);
+				if (response.error) {
+					setErrorMessage(response.error);
+					return;
+				}
 				if (response.payload?.variableValues)
 					setOptionsData(
 						sortValues(response.payload?.variableValues, variableData.sort),
 					);
-			} catch (e) {}
+			} catch (e) { }
 		} else if (variableData.type === 'CUSTOM') {
 			setOptionsData(
 				sortValues(commaValuesParser(variableData.customValue), variableData.sort),
 			);
 		}
-	}, [variableData.customValue, variableData.queryValue, variableData.type]);
+	}, [variableData.customValue, variableData.queryValue, variableData.sort, variableData.type]);
 
 	useEffect(() => {
 		getOptions();
 	}, []);
+	useEffect(() => {
+		getOptions();
+	}, [globalTime]);
 
 	const handleChange = (value) => {
 		if (
@@ -87,10 +108,6 @@ function VariableItem({
 						fontSize: '0.8rem',
 					}}
 					loading={isLoading}
-					// options={optionsData.map((option) => ({
-					// 	value: option,
-					// 	label: option.toString(),
-					// }))}
 					showArrow
 				>
 					{variableData.multiSelect && variableData.showALLOption && (
@@ -100,6 +117,13 @@ function VariableItem({
 						return <Option value={option}>{option.toString()}</Option>;
 					})}
 				</Select>
+			)}
+			{errorMessage && (
+				<span style={{ margin: '0 0.5rem' }}>
+					<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
+						<WarningOutlined style={{ color: orange[5] }} />
+					</Popover>
+				</span>
 			)}
 		</VariableContainer>
 	);

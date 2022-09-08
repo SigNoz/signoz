@@ -8,24 +8,10 @@ const query = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		// const response = await new Promise((resolve) => {
-		// 	resolve({
-		// 		data: {
-		// 			status: '',
-		// 			data: {
-		// 				variableValues: [
-		// 					'2022-08-25T14:49:19.92605+05:30',
-		// 					'2022-08-25T14:49:19.92615+05:30',
-		// 					'2022-08-25T14:49:19.92625+05:30',
-		// 				],
-		// 			},
-		// 		},
-		// 	});
-		// });
-		// debugger
 		const response = await axios.get(
 			`/variables/query?query=${encodeURIComponent(props.query)}`,
 		);
+
 		return {
 			statusCode: 200,
 			error: null,
