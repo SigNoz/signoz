@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/govaluate"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/model"
+	"go.uber.org/zap"
 )
 
 type RunQueries struct {
@@ -62,6 +63,9 @@ func FormattedValue(v interface{}) string {
 	case bool:
 		return fmt.Sprintf("%v", x)
 	case []interface{}:
+		if len(x) == 0 {
+			return ""
+		}
 		switch x[0].(type) {
 		case string:
 			str := "["
@@ -75,10 +79,12 @@ func FormattedValue(v interface{}) string {
 			return str
 		case int, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
+		default:
+			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return ""
 		}
-		return ""
 	default:
-		// may be log the warning here?
+		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }
@@ -432,13 +438,18 @@ func PromFormattedValue(v interface{}) string {
 	case bool:
 		return fmt.Sprintf("%v", x)
 	case []interface{}:
+		if len(x) == 0 {
+			return ""
+		}
 		switch x[0].(type) {
 		case string, int, float32, float64, bool:
 			return strings.Trim(strings.Join(strings.Fields(fmt.Sprint(x)), "|"), "[]")
+		default:
+			zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return ""
 		}
-		return ""
 	default:
-		// log here?
+		zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }
