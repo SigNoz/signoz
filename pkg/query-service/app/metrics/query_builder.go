@@ -419,3 +419,26 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 	}
 	return &RunQueries{Queries: namedQueries}
 }
+
+// PromFormattedValue formats the value to be used in promql
+func PromFormattedValue(v interface{}) string {
+	switch x := v.(type) {
+	case int:
+		return fmt.Sprintf("%d", x)
+	case float32, float64:
+		return fmt.Sprintf("%f", x)
+	case string:
+		return fmt.Sprintf("%s", x)
+	case bool:
+		return fmt.Sprintf("%v", x)
+	case []interface{}:
+		switch x[0].(type) {
+		case string, int, float32, float64, bool:
+			return strings.Trim(strings.Join(strings.Fields(fmt.Sprint(x)), "|"), "[]")
+		}
+		return ""
+	default:
+		// log here?
+		return ""
+	}
+}

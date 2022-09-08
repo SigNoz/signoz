@@ -486,9 +486,11 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	type channelResult struct {
 		Series []*model.Series
 		Err    error
+		Name   string
+		Query  string
 	}
 
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error) {
+	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
 		var seriesList []*model.Series
 		ch := make(chan channelResult, len(queries))
 		var wg sync.WaitGroup
@@ -503,7 +505,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				}
 
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err)}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
 					return
 				}
 				ch <- channelResult{Series: seriesList}
@@ -514,21 +516,23 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		close(ch)
 
 		var errs []error
+		errQuriesByName := make(map[string]string)
 		// read values from the channel
 		for r := range ch {
 			if r.Err != nil {
 				errs = append(errs, r.Err)
+				errQuriesByName[r.Name] = r.Query
 				continue
 			}
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, nil
+		return seriesList, nil, nil
 	}
 
-	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error) {
+	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
 		var seriesList []*model.Series
 		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
 		var wg sync.WaitGroup
@@ -545,7 +549,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				var queryBuf bytes.Buffer
 				tmplErr := tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
 				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, tmplErr)}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
 					return
 				}
 				query.Query = queryBuf.String()
@@ -557,7 +561,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				}
 				promResult, _, err := (*aH.reader).GetQueryRangeResult(r.Context(), &queryModel)
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err)}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
 					return
 				}
 				matrix, _ := promResult.Matrix()
@@ -578,22 +582,25 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		close(ch)
 
 		var errs []error
+		errQuriesByName := make(map[string]string)
 		// read values from the channel
 		for r := range ch {
 			if r.Err != nil {
 				errs = append(errs, r.Err)
+				errQuriesByName[r.Name] = r.Query
 				continue
 			}
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, nil
+		return seriesList, nil, nil
 	}
 
 	var seriesList []*model.Series
 	var err error
+	var errQuriesByName map[string]string
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
 	case model.QUERY_BUILDER:
 		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
@@ -601,7 +608,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
-		seriesList, err = execClickHouseQueries(runQueries.Queries)
+		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
@@ -623,18 +630,18 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			}
 			queries[name] = query.String()
 		}
-		seriesList, err = execClickHouseQueries(queries)
+		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
 	case model.PROM:
-		seriesList, err = execPromQueries(metricsQueryRangeParams)
+		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
 		return
 	}
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		respondError(w, apiErrObj, nil)
+		respondError(w, apiErrObj, errQuriesByName)
 		return
 	}
 	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
@@ -743,7 +750,7 @@ func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request)
 	}
 	dashboardVars, err := (*aH.reader).QueryDashboardVars(r.Context(), query)
 	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	aH.respond(w, dashboardVars)
@@ -1076,11 +1083,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -1130,11 +1137,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{

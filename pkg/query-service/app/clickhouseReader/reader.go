@@ -2813,7 +2813,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.S().Debug("Error in processing query: ", err)
-		return nil, fmt.Errorf("error in processing query")
+		return nil, err
 	}
 
 	var (
