@@ -3,7 +3,7 @@ const { Search } = Input;
 import { AxiosError } from 'axios';
 
 import getFilters from 'api/trace/getFilters';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -13,12 +13,8 @@ import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-// import { Container, InputComponent, InputContainer, Text } from './styles';
-// import { getMs } from './util';
-
 function TraceID(): JSX.Element {
 	const {
-		filter,
 		selectedFilter,
 		filterToFetchData,
 		spansAggregate,
@@ -30,8 +26,14 @@ function TraceID(): JSX.Element {
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-		const onSearch = async (value: string): Promise<void> => {
+	const [isLoading, setIsLoading] = useState(false);
+	const [userEnteredValue, setUserEnteredValue] = useState<string>('');
+	useEffect(() => {
+		setUserEnteredValue(selectedFilter.get('traceID')?.[0] || '');
+	}, [selectedFilter]);
+	const onSearch = async (value: string): Promise<void> => {
 		try {
+			setIsLoading(true);
 			const preSelectedFilter = new Map(selectedFilter);
 			if (value !== '') {
 				preSelectedFilter.set('traceID', [value]);
@@ -48,48 +50,49 @@ function TraceID(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-			const preFilter = getFilter(response.payload);
+				const preFilter = getFilter(response.payload);
 
-			preFilter.forEach((value, key) => {
-				const values = Object.keys(value);
-				if (key !== 'duration' && values.length) {
-					preUserSelected.set(key, values);
-				}
-			});
+				preFilter.forEach((value, key) => {
+					const values = Object.keys(value);
+					if (key !== 'duration' && values.length) {
+						preUserSelected.set(key, values);
+					}
+				});
 
-			dispatch({
-				type: UPDATE_ALL_FILTERS,
-				payload: {
-					current: spansAggregate.currentPage,
-					filter: preFilter,
+				dispatch({
+					type: UPDATE_ALL_FILTERS,
+					payload: {
+						current: spansAggregate.currentPage,
+						filter: preFilter,
+						filterToFetchData,
+						selectedFilter: preSelectedFilter,
+						selectedTags,
+						userSelected: preUserSelected,
+						isFilterExclude,
+						order: spansAggregate.order,
+						pageSize: spansAggregate.pageSize,
+						orderParam: spansAggregate.orderParam,
+					},
+				});
+
+				updateURL(
+					preSelectedFilter,
 					filterToFetchData,
-					selectedFilter: preSelectedFilter,
+					spansAggregate.currentPage,
 					selectedTags,
-					userSelected: preUserSelected,
 					isFilterExclude,
-					order: spansAggregate.order,
-					pageSize: spansAggregate.pageSize,
-					orderParam: spansAggregate.orderParam,
-				},
-			});
-
-			updateURL(
-				preSelectedFilter,
-				filterToFetchData,
-				spansAggregate.currentPage,
-				selectedTags,
-				isFilterExclude,
-				userSelectedFilter,
-				spansAggregate.order,
-				spansAggregate.pageSize,
-				spansAggregate.orderParam,
-			);
-		}
+					userSelectedFilter,
+					spansAggregate.order,
+					spansAggregate.pageSize,
+					spansAggregate.orderParam,
+				);
+			}
 		} catch (error) {
 			notification.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 		}
+		setIsLoading(false);
 	};
 
 	return (
@@ -98,8 +101,11 @@ function TraceID(): JSX.Element {
 				placeholder="Filter by Trace ID"
 				onSearch={onSearch}
 				style={{
-						padding: '0 3%',
+					padding: '0 3%',
 				}}
+				loading={isLoading}
+				value={userEnteredValue}
+				onChange={(e) => setUserEnteredValue(e.target.value)}
 			/>
 		</div>
 	);
