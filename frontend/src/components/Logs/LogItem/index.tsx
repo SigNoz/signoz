@@ -15,6 +15,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 import { Container } from './styles';
+import { isValidLogField } from './util';
 
 interface LogFieldProps {
 	fieldKey: string;
@@ -118,7 +119,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 				</div>
 				<div>
 					{map(selected, (field) => {
-						return flattenLogData[field.name] ? (
+						return isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}
 								fieldKey={field.name}
