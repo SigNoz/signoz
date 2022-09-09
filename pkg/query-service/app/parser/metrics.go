@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"go.signoz.io/query-service/app/metrics"
 	"go.signoz.io/query-service/model"
