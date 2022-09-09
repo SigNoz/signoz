@@ -94,6 +94,7 @@ type ClickHouseReader struct {
 	logsResourceKeys        string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
+	fanoutStorage           *storage.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -311,12 +312,21 @@ func (r *ClickHouseReader) Start() {
 	}
 	r.queryEngine = queryEngine
 	r.remoteStorage = remoteStorage
+	r.fanoutStorage = &fanoutStorage
 
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
 
+}
+
+func (r *ClickHouseReader) GetQueryEngine() *promql.Engine {
+	return r.queryEngine
+}
+
+func (r *ClickHouseReader) GetFanoutStorage() *storage.Storage {
+	return r.fanoutStorage
 }
 
 func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {

@@ -362,7 +362,7 @@ func makeRulesManager(
 	disableRules bool) (*rules.Manager, error) {
 
 	// create engine
-	pqle, err := pqle.FromConfigPath(promConfigPath)
+	pqle, err := pqle.FromReader(ch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pql engine : %v", err)
 	}
