@@ -6,10 +6,7 @@ import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParse
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { VariableContainer, VariableName } from './styles';
 
@@ -27,9 +24,6 @@ function VariableItem({
 	onValueUpdate,
 	onAllSelectedUpdate,
 }: VariableItemProps): JSX.Element {
-	const globalTime = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 	const [optionsData, setOptionsData] = useState([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -73,13 +67,7 @@ function VariableItem({
 
 	useEffect(() => {
 		getOptions();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	useEffect(() => {
-		getOptions();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [globalTime]);
+	}, [getOptions]);
 
 	const handleChange = (value: string | string[]): void => {
 		if (

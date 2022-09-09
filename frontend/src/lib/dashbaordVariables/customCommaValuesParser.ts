@@ -7,7 +7,6 @@ export const commaValuesParser = (query: string): (string | number)[] => {
 	const options: string[] = match.map((text) => {
 		// eslint-disable-next-line no-param-reassign
 		text = text.replace(/\\,/g, ',');
-		console.log(text);
 		const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
 		if (textMatch.length === 3) {
 			const [, , value] = textMatch;

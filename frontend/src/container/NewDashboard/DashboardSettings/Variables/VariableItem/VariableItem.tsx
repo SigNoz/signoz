@@ -25,6 +25,7 @@ import {
 } from 'types/api/dashboard/getAll';
 import { v4 } from 'uuid';
 
+import { TVariableViewMode } from '../types';
 import { LabelContainer, VariableItemRow } from './styles';
 
 const { Option } = Select;
@@ -32,14 +33,16 @@ const { Option } = Select;
 interface VariableItemProps {
 	variableData: IDashboardVariable;
 	onCancel: () => void;
-	onSave: (arg0: IDashboardVariable) => void;
+	onSave: (name: string, arg0: IDashboardVariable) => void;
 	validateName: (arg0: string) => boolean;
+	variableViewMode: TVariableViewMode;
 }
 function VariableItem({
 	variableData,
 	onCancel,
 	onSave,
 	validateName,
+	variableViewMode,
 }: VariableItemProps): JSX.Element {
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
@@ -114,27 +117,36 @@ function VariableItem({
 			}),
 			modificationUUID: v4(),
 		};
-		onSave(newVariableData);
+		onSave(
+			(variableViewMode === 'EDIT' ? variableData.name : variableName) as string,
+			newVariableData,
+		);
+		onCancel();
 	};
+
 	// Fetches the preview values for the SQL variable query
 	const handleQueryResult = async (): Promise<void> => {
 		setPreviewLoading(true);
 		setErrorPreview(null);
-		const variableQueryResponse = await query({
-			query: variableQueryValue,
-		});
-		setPreviewLoading(false);
-		if (variableQueryResponse.error) {
-			setErrorPreview(variableQueryResponse.error);
-			return;
+		try {
+			const variableQueryResponse = await query({
+				query: variableQueryValue,
+			});
+			setPreviewLoading(false);
+			if (variableQueryResponse.error) {
+				setErrorPreview(variableQueryResponse.error);
+				return;
+			}
+			if (variableQueryResponse.payload?.variableValues)
+				setPreviewValues(
+					sortValues(
+						variableQueryResponse.payload?.variableValues || [],
+						variableSortType,
+					) as never,
+				);
+		} catch (e) {
+			console.error(e);
 		}
-		if (variableQueryResponse.payload?.variableValues)
-			setPreviewValues(
-				sortValues(
-					variableQueryResponse.payload?.variableValues || [],
-					variableSortType,
-				) as never,
-			);
 	};
 	return (
 		<Col>
