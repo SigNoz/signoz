@@ -232,9 +232,10 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-
-		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		if telemetry.GetInstance().IsSampled() {
+			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+			}
 		}
 
 	})
