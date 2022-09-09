@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"go.signoz.io/query-service/app/metrics"
 	"go.signoz.io/query-service/model"
@@ -42,6 +43,34 @@ func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *m
 			formattedVars[name] = metrics.PromFormattedValue(value)
 		} else if postData.CompositeMetricQuery.QueryType == model.CLICKHOUSE {
 			formattedVars[name] = metrics.FormattedValue(value)
+		}
+	}
+	// replace the variables in metrics builder filter item with actual value
+	if postData.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
+		for _, query := range postData.CompositeMetricQuery.BuilderQueries {
+			for idx := range query.TagFilters.Items {
+				item := &query.TagFilters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := postData.Variables[variableName]; ok {
+							item.Value = postData.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := postData.Variables[variableName]; ok {
+									item.Value = postData.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	postData.Variables = formattedVars
