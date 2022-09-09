@@ -1,11 +1,10 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, Row, Space, Table, Tag } from 'antd';
-import React, { Dispatch, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ToggleEditMode } from 'store/actions';
 import { UpdateDashboardVariables } from 'store/actions/dashboard/updatedDashboardVariables';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -42,7 +41,10 @@ function VariablesSetting({
 		setVariableViewMode,
 	] = useState<null | TVariableViewMode>(null);
 
-	const [variableEditData, setVariableEditData] = useState<null | number>(null);
+	const [
+		variableEditData,
+		setVariableEditData,
+	] = useState<null | IDashboardVariable>(null);
 
 	const onDoneVariableViewMode = (): void => {
 		setVariableViewMode(null);
@@ -51,7 +53,7 @@ function VariablesSetting({
 
 	const onVariableViewModeEnter = (
 		viewType: TVariableViewMode,
-		varData: number,
+		varData: IDashboardVariable,
 	): void => {
 		setVariableEditData(varData);
 		setVariableViewMode(viewType);
@@ -104,8 +106,8 @@ function VariablesSetting({
 		{
 			title: 'Actions',
 			key: 'action',
-			render: (_): JSX.Element => (
-				<Space value={8}>
+			render: (_: IDashboardVariable): JSX.Element => (
+				<Space>
 					<Button
 						type="text"
 						style={{ padding: 0, cursor: 'pointer', color: blue[5] }}
@@ -117,7 +119,7 @@ function VariablesSetting({
 						type="text"
 						style={{ padding: 0, color: red[6], cursor: 'pointer' }}
 						onClick={(): void => {
-							onVariableDeleteHandler(_.name);
+							if (_.name) onVariableDeleteHandler(_.name);
 						}}
 					>
 						Delete
@@ -131,7 +133,7 @@ function VariablesSetting({
 		<>
 			{variableViewMode ? (
 				<VariableItem
-					variableData={{ ...variableEditData }}
+					variableData={{ ...variableEditData } as IDashboardVariable}
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
@@ -141,7 +143,9 @@ function VariablesSetting({
 					<Row style={{ flexDirection: 'row-reverse', padding: '0.5rem 0' }}>
 						<Button
 							type="primary"
-							onClick={(): void => onVariableViewModeEnter('ADD', {})}
+							onClick={(): void =>
+								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
+							}
 						>
 							<PlusOutlined /> New Variables
 						</Button>
@@ -176,7 +180,6 @@ const mapDispatchToProps = (
 		UpdateDashboardVariables,
 		dispatch,
 	),
-	toggleEditMode: bindActionCreators(ToggleEditMode, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(VariablesSetting);

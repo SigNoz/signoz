@@ -1,10 +1,9 @@
 import { Row } from 'antd';
 import { map, sortBy } from 'lodash-es';
-import React, { Dispatch } from 'react';
+import React from 'react';
 import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { ToggleEditMode } from 'store/actions';
 import { UpdateDashboardVariables } from 'store/actions/dashboard/updatedDashboardVariables';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -47,8 +46,8 @@ function DashboardVariableSelection({
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
 					variableData={{ name: variableName, ...variables[variableName] }}
-					onValueUpdate={onValueUpdate}
-					onAllSelectedUpdate={onAllSelectedUpdate}
+					onValueUpdate={onValueUpdate as never}
+					onAllSelectedUpdate={onAllSelectedUpdate as never}
 				/>
 			))}
 		</Row>
@@ -57,7 +56,7 @@ function DashboardVariableSelection({
 
 interface DispatchProps {
 	updateDashboardVariables: (
-		props: Record<string, IDashboardVariable>,
+		props: Parameters<typeof UpdateDashboardVariables>[0],
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
@@ -68,7 +67,6 @@ const mapDispatchToProps = (
 		UpdateDashboardVariables,
 		dispatch,
 	),
-	toggleEditMode: bindActionCreators(ToggleEditMode, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(DashboardVariableSelection);

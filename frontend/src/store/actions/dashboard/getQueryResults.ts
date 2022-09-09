@@ -229,5 +229,5 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: ITEMS;
 	globalSelectedInterval: GlobalReducer['selectedTime'];
-	variables: IDashboardVariable;
+	variables: Record<string, unknown>;
 }

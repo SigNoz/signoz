@@ -31,8 +31,8 @@ const { Option } = Select;
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
-	onCancel: never;
-	onSave: never;
+	onCancel: () => void;
+	onSave: (arg0: IDashboardVariable) => void;
 	validateName: (arg0: string) => boolean;
 }
 function VariableItem({
@@ -80,10 +80,13 @@ function VariableItem({
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
-		setPreviewValues(null);
+		setPreviewValues([]);
 		if (queryType === 'CUSTOM') {
 			setPreviewValues(
-				sortValues(commaValuesParser(variableCustomValue), variableSortType),
+				sortValues(
+					commaValuesParser(variableCustomValue),
+					variableSortType,
+				) as never,
 			);
 		}
 	}, [
@@ -106,7 +109,8 @@ function VariableItem({
 			showALLOption: variableShowALLOption,
 			sort: variableSortType,
 			...(queryType === 'TEXTBOX' && {
-				selectedValue: variableData.selectedValue || variableTextboxValue,
+				selectedValue: (variableData.selectedValue ||
+					variableTextboxValue) as never,
 			}),
 			modificationUUID: v4(),
 		};
@@ -129,7 +133,7 @@ function VariableItem({
 				sortValues(
 					variableQueryResponse.payload?.variableValues || [],
 					variableSortType,
-				),
+				) as never,
 			);
 	};
 	return (
@@ -231,7 +235,10 @@ function VariableItem({
 						onChange={(e): void => {
 							setVariableCustomValue(e.target.value);
 							setPreviewValues(
-								sortValues(commaValuesParser(e.target.value), variableSortType),
+								sortValues(
+									commaValuesParser(e.target.value),
+									variableSortType,
+								) as never,
 							);
 						}}
 					/>
@@ -276,9 +283,11 @@ function VariableItem({
 						<Select
 							defaultActiveFirstOption
 							style={{ width: 400 }}
-							defaultValue="disabled"
+							defaultValue={VariableSortTypeArr[0]}
 							value={variableSortType}
-							onChange={(value): void => setVariableSortType(value)}
+							onChange={(value: TSortVariableValuesType): void =>
+								setVariableSortType(value)
+							}
 						>
 							<Option value={VariableSortTypeArr[0]}>Disabled</Option>
 							<Option value={VariableSortTypeArr[1]}>Ascending</Option>
