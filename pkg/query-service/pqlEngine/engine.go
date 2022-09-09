@@ -32,9 +32,6 @@ func FromConfigPath(promConfigPath string) (*PqlEngine, error) {
 }
 
 func FromReader(ch interfaces.Reader) (*PqlEngine, error) {
-	for ch.GetFanoutStorage() == nil {
-		time.Sleep(1 * time.Second)
-	}
 	return &PqlEngine{
 		engine:        ch.GetQueryEngine(),
 		fanoutStorage: *ch.GetFanoutStorage(),

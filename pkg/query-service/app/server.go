@@ -77,18 +77,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB.SetMaxOpenConns(10)
+	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath)
-		go clickhouseReader.Start()
+		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
+	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
 	if err != nil {
 		return nil, err

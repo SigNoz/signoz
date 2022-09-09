@@ -144,7 +144,7 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	}
 }
 
-func (r *ClickHouseReader) Start() {
+func (r *ClickHouseReader) Start(readerReady chan bool) {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
 	// allowedFormat := promlog.AllowedFormat{}
@@ -313,6 +313,7 @@ func (r *ClickHouseReader) Start() {
 	r.queryEngine = queryEngine
 	r.remoteStorage = remoteStorage
 	r.fanoutStorage = &fanoutStorage
+	readerReady <- true
 
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
