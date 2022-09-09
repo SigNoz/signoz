@@ -1,17 +1,14 @@
 import { Tabs } from 'antd';
 import React from 'react';
+
 import GeneralDashboardSettings from './General';
 import VariablesSetting from './Variables';
 
 const { TabPane } = Tabs;
 
-const onChange = (key) => {
-	console.log(key);
-};
-
-function DashboardSettingsContent() {
+function DashboardSettingsContent(): JSX.Element {
 	return (
-		<Tabs onChange={onChange}>
+		<Tabs>
 			<TabPane tab="General" key="general">
 				<GeneralDashboardSettings />
 			</TabPane>

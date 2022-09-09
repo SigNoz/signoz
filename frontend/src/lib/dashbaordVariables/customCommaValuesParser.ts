@@ -1,4 +1,4 @@
-export const commaValuesParser = (query: string): string[] | number[] => {
+export const commaValuesParser = (query: string): (string | number)[] => {
 	if (!query) {
 		return [];
 	}
@@ -16,6 +16,6 @@ export const commaValuesParser = (query: string): string[] | number[] => {
 		return text.trim();
 	});
 	return options.map((option): string | number =>
-		isNaN(Number(option)) ? option : Number(option),
+		Number.isNaN(Number(option)) ? option : Number(option),
 	);
 };

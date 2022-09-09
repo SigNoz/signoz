@@ -1,17 +1,18 @@
 import { SettingOutlined } from '@ant-design/icons';
-import { Button, Drawer } from 'antd';
+import { Button } from 'antd';
 import React, { useState } from 'react';
+
 import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';
 
-function SettingsDrawer() {
-	const [visible, setVisible] = useState(false); // TODO Make it False 
+function SettingsDrawer(): JSX.Element {
+	const [visible, setVisible] = useState(false); // TODO Make it False
 
-	const showDrawer = () => {
+	const showDrawer = (): void => {
 		setVisible(true);
 	};
 
-	const onClose = () => {
+	const onClose = (): void => {
 		setVisible(false);
 	};
 

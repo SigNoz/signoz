@@ -19,7 +19,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Query } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Query } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EDataSource, EPanelType, EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -229,4 +229,5 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: ITEMS;
 	globalSelectedInterval: GlobalReducer['selectedTime'];
+	variables: IDashboardVariable;
 }

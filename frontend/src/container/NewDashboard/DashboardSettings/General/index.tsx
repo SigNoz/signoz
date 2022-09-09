@@ -1,36 +1,25 @@
-import {
-	EditOutlined,
-	SaveOutlined,
-	ShareAltOutlined,
-} from '@ant-design/icons';
-import { Card, Col, Divider, Input, Space, Tag, Typography } from 'antd';
+import { SaveOutlined } from '@ant-design/icons';
+import { Col, Divider, Input, Space, Typography } from 'antd';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
-import NameOfTheDashboard from 'container/NewDashboard/DescriptionOfDashboard/NameOfTheDashboard';
-import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
-	ToggleEditMode,
 	UpdateDashboardTitleDescriptionTags,
 	UpdateDashboardTitleDescriptionTagsProps,
 } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import Description from './Description';
-import ShareModal from '../../DescriptionOfDashboard/ShareModal';
-import { Button, Container } from './styles';
+import { Button } from './styles';
 
 function GeneralDashboardSettings({
 	updateDashboardTitleDescriptionTags,
-	toggleEditMode,
 }: DescriptionOfDashboardProps): JSX.Element {
-	const { dashboards, isEditMode } = useSelector<AppState, DashboardReducer>(
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 
@@ -45,11 +34,8 @@ function GeneralDashboardSettings({
 	const [updatedDescription, setUpdatedDescription] = useState(
 		description || '',
 	);
-	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
 
 	const { t } = useTranslation('common');
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 
 	const onSaveHandler = useCallback(() => {
 		const dashboard = selectedDashboard;
@@ -73,51 +59,36 @@ function GeneralDashboardSettings({
 		updateDashboardTitleDescriptionTags,
 	]);
 
-	// const onToggleHandler = (): void => {
-	// 	isIsJSONModalVisible((state) => !state);
-	// };
-
 	return (
-		<>
-			<Col>
-				<Space direction="vertical" style={{ width: '100%' }}>
-					<div>
-						<Typography style={{ marginBottom: '0.5rem' }}>Name</Typography>
-						<Input value={updatedTitle} onChange={(e) => setUpdatedTitle(e.target.value)} />
-					</div>
+		<Col>
+			<Space direction="vertical" style={{ width: '100%' }}>
+				<div>
+					<Typography style={{ marginBottom: '0.5rem' }}>Name</Typography>
+					<Input
+						value={updatedTitle}
+						onChange={(e): void => setUpdatedTitle(e.target.value)}
+					/>
+				</div>
 
-					<div>
-						<Typography style={{ marginBottom: '0.5rem' }}>Description</Typography>
-						<Input.TextArea value={updatedDescription} onChange={(e) => setUpdatedDescription(e.target.value)} />
-					</div>
-					<div>
-						<Typography style={{ marginBottom: '0.5rem' }}>Tags</Typography>
-						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
-					</div>
-					<div>
-						<Divider />
-						<Button icon={<SaveOutlined />} onClick={onSaveHandler} type="primary">
-							{t('save')}
-						</Button>
-					</div>
-
-				</Space>
-			</Col>
-
-
-
-
-			{/* <Col lg={8}>
-				<NameOfTheDashboard name={updatedTitle} setName={setUpdatedTitle} />
-
-				<Description
-					description={updatedDescription}
-					setDescription={setUpdatedDescription}
-				/>
-			</Col> */}
-			
-
-		</>
+				<div>
+					<Typography style={{ marginBottom: '0.5rem' }}>Description</Typography>
+					<Input.TextArea
+						value={updatedDescription}
+						onChange={(e): void => setUpdatedDescription(e.target.value)}
+					/>
+				</div>
+				<div>
+					<Typography style={{ marginBottom: '0.5rem' }}>Tags</Typography>
+					<AddTags tags={updatedTags} setTags={setUpdatedTags} />
+				</div>
+				<div>
+					<Divider />
+					<Button icon={<SaveOutlined />} onClick={onSaveHandler} type="primary">
+						{t('save')}
+					</Button>
+				</div>
+			</Space>
+		</Col>
 	);
 }
 
@@ -125,7 +96,6 @@ interface DispatchProps {
 	updateDashboardTitleDescriptionTags: (
 		props: UpdateDashboardTitleDescriptionTagsProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
-	toggleEditMode: () => void;
 }
 
 const mapDispatchToProps = (
@@ -135,7 +105,6 @@ const mapDispatchToProps = (
 		UpdateDashboardTitleDescriptionTags,
 		dispatch,
 	),
-	toggleEditMode: bindActionCreators(ToggleEditMode, dispatch),
 });
 
 type DescriptionOfDashboardProps = DispatchProps;

@@ -1,11 +1,10 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { orange } from '@ant-design/colors';
 import {
 	Button,
-	Card,
 	Col,
 	Divider,
 	Input,
-	Row,
 	Select,
 	Switch,
 	Tag,
@@ -13,7 +12,6 @@ import {
 } from 'antd';
 import query from 'api/dashboard/variables/query';
 import Editor from 'components/Editor';
-import Spinner from 'components/Spinner';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
@@ -33,9 +31,11 @@ const { Option } = Select;
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
+	onCancel: never;
+	onSave: never;
+	validateName: (arg0: string) => boolean;
 }
 function VariableItem({
-	onDone,
 	variableData,
 	onCancel,
 	onSave,
@@ -74,22 +74,25 @@ function VariableItem({
 	const [previewValues, setPreviewValues] = useState<string[]>([]);
 
 	// Internal states
-	const [previewLoading, setPreviewLoading] = useState<boolean>(false)
+	const [previewLoading, setPreviewLoading] = useState<boolean>(false);
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
 		setPreviewValues(null);
-		switch (queryType) {
-			case 'CUSTOM': {
-				setPreviewValues(
-					sortValues(commaValuesParser(variableCustomValue), variableSortType),
-				);
-
-			}
+		if (queryType === 'CUSTOM') {
+			setPreviewValues(
+				sortValues(commaValuesParser(variableCustomValue), variableSortType),
+			);
 		}
-	}, [queryType, variableData.customValue, variableData.type, variableSortType]);
+	}, [
+		queryType,
+		variableCustomValue,
+		variableData.customValue,
+		variableData.type,
+		variableSortType,
+	]);
 
 	const handleSave = (): void => {
 		const newVariableData: IDashboardVariable = {
@@ -111,14 +114,14 @@ function VariableItem({
 	};
 	// Fetches the preview values for the SQL variable query
 	const handleQueryResult = async (): Promise<void> => {
-		setPreviewLoading(true)
-		setErrorPreview(null)
+		setPreviewLoading(true);
+		setErrorPreview(null);
 		const variableQueryResponse = await query({
 			query: variableQueryValue,
 		});
-		setPreviewLoading(false)
+		setPreviewLoading(false);
 		if (variableQueryResponse.error) {
-			setErrorPreview(variableQueryResponse.error)
+			setErrorPreview(variableQueryResponse.error);
 			return;
 		}
 		if (variableQueryResponse.payload?.variableValues)
@@ -128,8 +131,6 @@ function VariableItem({
 					variableSortType,
 				),
 			);
-
-
 	};
 	return (
 		<Col>
@@ -258,11 +259,13 @@ function VariableItem({
 							<Typography>Preview of Values</Typography>
 						</LabelContainer>
 						<div style={{ flex: 1 }}>
-							{errorPreview ? <Typography style={{ color: orange[5] }}>
-								{errorPreview}
-							</Typography> : map(previewValues, (value, idx) => (
-								<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
-							))}
+							{errorPreview ? (
+								<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
+							) : (
+								map(previewValues, (value, idx) => (
+									<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
+								))
+							)}
 						</div>
 					</VariableItemRow>
 					<VariableItemRow>
@@ -275,7 +278,7 @@ function VariableItem({
 							style={{ width: 400 }}
 							defaultValue="disabled"
 							value={variableSortType}
-							onChange={(value) => setVariableSortType(value)}
+							onChange={(value): void => setVariableSortType(value)}
 						>
 							<Option value={VariableSortTypeArr[0]}>Disabled</Option>
 							<Option value={VariableSortTypeArr[1]}>Ascending</Option>

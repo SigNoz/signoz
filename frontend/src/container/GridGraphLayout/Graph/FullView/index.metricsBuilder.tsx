@@ -53,7 +53,7 @@ function FullView({
 				graphType: widget.panelTypes,
 				query: widget.query,
 				globalSelectedInterval: globalSelectedTime,
-				variables: getDashboardVariables()
+				variables: getDashboardVariables(),
 			}),
 	);
 

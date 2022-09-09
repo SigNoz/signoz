@@ -1,4 +1,4 @@
-import { Row, Select, Tag, Typography } from 'antd';
+import { Row } from 'antd';
 import { map, sortBy } from 'lodash-es';
 import React, { Dispatch } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -11,13 +11,11 @@ import AppActions from 'types/actions';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import { VariableContainer } from './styles';
 import VariableItem from './VariableItem';
 
-const { Option } = Select;
 function DashboardVariableSelection({
 	updateDashboardVariables,
-}: DispatchProps) {
+}: DispatchProps): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -26,17 +24,22 @@ function DashboardVariableSelection({
 		data: { variables = {} },
 	} = selectedDashboard;
 
-	const onValueUpdate = (name, value) => {
+	const onValueUpdate = (
+		name: string,
+		value: IDashboardVariable['selectedValue'],
+	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
 		updateDashboardVariables(updatedVariablesData);
 	};
-	const onAllSelectedUpdate = (name, value) => {
+	const onAllSelectedUpdate = (
+		name: string,
+		value: IDashboardVariable['allSelected'],
+	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
 		updateDashboardVariables(updatedVariablesData);
 	};
-
 
 	return (
 		<Row style={{ gap: '1rem' }}>

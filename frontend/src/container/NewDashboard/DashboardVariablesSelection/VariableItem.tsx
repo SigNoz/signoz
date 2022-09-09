@@ -1,5 +1,5 @@
-import { orange, yellow } from '@ant-design/colors';
-import { WarningFilled, WarningOutlined } from '@ant-design/icons';
+import { orange } from '@ant-design/colors';
+import { WarningOutlined } from '@ant-design/icons';
 import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
@@ -19,12 +19,14 @@ const ALL_SELECT_VALUE = '__ALL__';
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
+	onValueUpdate: (name: string | undefined, arg1: string | string[]) => void;
+	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
 }
 function VariableItem({
 	variableData,
 	onValueUpdate,
 	onAllSelectedUpdate,
-}: VariableItemProps) {
+}: VariableItemProps): JSX.Element {
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -39,7 +41,7 @@ function VariableItem({
 				setIsLoading(true);
 
 				const response = await query({
-					query: variableData.queryValue,
+					query: variableData.queryValue || '',
 				});
 
 				setIsLoading(false);
@@ -49,24 +51,37 @@ function VariableItem({
 				}
 				if (response.payload?.variableValues)
 					setOptionsData(
-						sortValues(response.payload?.variableValues, variableData.sort),
+						sortValues(response.payload?.variableValues, variableData.sort) as never,
 					);
-			} catch (e) { }
+			} catch (e) {
+				console.error(e);
+			}
 		} else if (variableData.type === 'CUSTOM') {
 			setOptionsData(
-				sortValues(commaValuesParser(variableData.customValue), variableData.sort),
+				sortValues(
+					commaValuesParser(variableData.customValue || ''),
+					variableData.sort,
+				) as never,
 			);
 		}
-	}, [variableData.customValue, variableData.queryValue, variableData.sort, variableData.type]);
+	}, [
+		variableData.customValue,
+		variableData.queryValue,
+		variableData.sort,
+		variableData.type,
+	]);
 
 	useEffect(() => {
 		getOptions();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
 	useEffect(() => {
 		getOptions();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [globalTime]);
 
-	const handleChange = (value) => {
+	const handleChange = (value: string | string[]): void => {
 		if (
 			value === ALL_SELECT_VALUE ||
 			(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
@@ -86,11 +101,11 @@ function VariableItem({
 					placeholder="Enter value"
 					bordered={false}
 					value={variableData.selectedValue?.toString()}
-					onChange={(e) => {
+					onChange={(e): void => {
 						handleChange(e.target.value || '');
 					}}
 					style={{
-						width: 50 + (variableData.selectedValue?.length * 7 || 50),
+						width: 50 + ((variableData.selectedValue?.length || 0) * 7 || 50),
 					}}
 				/>
 			) : (
@@ -100,7 +115,9 @@ function VariableItem({
 					bordered={false}
 					placeholder="Select value"
 					mode={
-						variableData.multiSelect && !variableData.allSelected ? 'multiple' : null
+						(variableData.multiSelect && !variableData.allSelected
+							? 'multiple'
+							: null) as never
 					}
 					dropdownMatchSelectWidth={false}
 					style={{
@@ -114,7 +131,7 @@ function VariableItem({
 						<Option value={ALL_SELECT_VALUE}>ALL</Option>
 					)}
 					{map(optionsData, (option) => {
-						return <Option value={option}>{option.toString()}</Option>;
+						return <Option value={option}>{(option as string).toString()}</Option>;
 					})}
 				</Select>
 			)}

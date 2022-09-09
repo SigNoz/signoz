@@ -109,14 +109,14 @@ function GridCardGraph({
 					...state,
 					error: false,
 					errorMessage: '',
-					loading: true
+					loading: true,
 				}));
 				const response = await GetMetricQueryRange({
 					selectedTime: widget.timePreferance,
 					graphType: widget.panelTypes,
 					query: widget.query,
 					globalSelectedInterval,
-					variables: getDashboardVariables()
+					variables: getDashboardVariables(),
 				});
 
 				const isError = response.error;

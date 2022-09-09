@@ -144,7 +144,7 @@ function NewWidget({
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
 				globalSelectedInterval,
-				variables: getDashboardVariables()
+				variables: getDashboardVariables(),
 			});
 		}
 	}, [
