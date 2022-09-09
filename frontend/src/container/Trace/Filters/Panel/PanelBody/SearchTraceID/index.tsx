@@ -1,9 +1,7 @@
 import { Input, notification } from 'antd';
-const { Search } = Input;
-import { AxiosError } from 'axios';
-
 import getFilters from 'api/trace/getFilters';
-import React, { useState, useEffect } from 'react';
+import { AxiosError } from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -12,6 +10,8 @@ import AppActions from 'types/actions';
 import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+
+const { Search } = Input;
 
 function TraceID(): JSX.Element {
 	const {
@@ -35,12 +35,15 @@ function TraceID(): JSX.Element {
 		try {
 			setIsLoading(true);
 			const preSelectedFilter = new Map(selectedFilter);
+			const preUserSelected = new Map(userSelectedFilter);
+
 			if (value !== '') {
+				preUserSelected.set('traceID', [value]);
 				preSelectedFilter.set('traceID', [value]);
 			} else {
+				preUserSelected.delete('traceID');
 				preSelectedFilter.delete('traceID');
 			}
-			const preUserSelected = new Map(userSelectedFilter);
 			const response = await getFilters({
 				other: Object.fromEntries(preSelectedFilter),
 				end: String(globalTime.maxTime),
@@ -51,7 +54,7 @@ function TraceID(): JSX.Element {
 
 			if (response.statusCode === 200) {
 				const preFilter = getFilter(response.payload);
-
+				preFilter.set('traceID', { traceID: value });
 				preFilter.forEach((value, key) => {
 					const values = Object.keys(value);
 					if (key !== 'duration' && values.length) {
@@ -101,10 +104,12 @@ function TraceID(): JSX.Element {
 				placeholder="Filter by Trace ID"
 				onSearch={onSearch}
 				style={{
+					marginBottom: '5rem',
 					padding: '0 3%',
 				}}
 				loading={isLoading}
 				value={userEnteredValue}
+				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				onChange={(e) => setUserEnteredValue(e.target.value)}
 			/>
 		</div>

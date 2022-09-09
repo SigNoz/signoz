@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import React from 'react';
@@ -26,7 +27,13 @@ function PanelBody(props: PanelBodyProps): JSX.Element {
 
 	return (
 		<Card bordered={false}>
-			{type === 'duration' ? <Duration /> : type==='traceID' ? <TraceID />: <CommonCheckBox name={type} />}
+			{type === 'duration' ? (
+				<Duration />
+			) : type === 'traceID' ? (
+				<TraceID />
+			) : (
+				<CommonCheckBox name={type} />
+			)}
 		</Card>
 	);
 }
