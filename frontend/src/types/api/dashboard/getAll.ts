@@ -71,6 +71,7 @@ export interface IMetricsBuilderFormula {
 	expression: string;
 	disabled: boolean;
 	name: string;
+	legend: string;
 }
 export interface IMetricsBuilderQuery {
 	aggregateOperator: EAggregateOperator;

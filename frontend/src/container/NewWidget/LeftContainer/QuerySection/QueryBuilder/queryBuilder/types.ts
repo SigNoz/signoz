@@ -19,5 +19,6 @@ export interface IQueryBuilderFormulaHandleChange {
 	formulaIndex: number | string;
 	expression?: IMetricsBuilderFormula['expression'];
 	toggleDisable?: IMetricsBuilderFormula['disabled'];
+	legend?: IMetricsBuilderFormula['legend'];
 	toggleDelete?: boolean;
 }

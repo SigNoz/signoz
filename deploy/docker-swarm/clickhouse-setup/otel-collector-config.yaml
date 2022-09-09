@@ -1,4 +1,29 @@
 receivers:
+  filelog/dockercontainers:
+    include: [  "/var/lib/docker/containers/*/*.log" ]
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+    - type: json_parser
+      id: parser-docker
+      output: extract_metadata_from_filepath
+      timestamp:
+        parse_from: attributes.time
+        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+    - type: regex_parser
+      id: extract_metadata_from_filepath
+      regex: '^.*containers/(?P<container_id>[^_]+)/.*log$'
+      parse_from: attributes["log.file.path"]
+      output: parse_body
+    - type: move
+      id: parse_body
+      from: attributes.log
+      to: body
+      output: time
+    - type: remove
+      id: time
+      field: attributes.time
   opencensus:
     endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
@@ -117,6 +142,6 @@ service:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]
     logs:
-      receivers: [otlp]
+      receivers: [otlp, filelog/dockercontainers]
       processors: [batch]
       exporters: [clickhouselogsexporter]
