@@ -3248,7 +3248,7 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
+		return nil, err
 	}
 
 	var (

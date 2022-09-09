@@ -37,6 +37,7 @@ func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *m
 	if err := validateQueryRangeParamsV2(postData); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
+	// prepare the variables for the corrspnding query type
 	formattedVars := make(map[string]interface{})
 	for name, value := range postData.Variables {
 		if postData.CompositeMetricQuery.QueryType == model.PROM {

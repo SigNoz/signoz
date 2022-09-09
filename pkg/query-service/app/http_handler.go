@@ -545,11 +545,16 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			go func(name string, query *model.PromQuery) {
 				var seriesList []*model.Series
 				defer wg.Done()
-				tmpl := template.Must(template.New("query").Parse(query.Query))
-				var queryBuf bytes.Buffer
-				tmplErr := tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
+				tmpl := template.New("promql-query")
+				tmpl, tmplErr := tmpl.Parse(query.Query)
 				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+					return
+				}
+				var queryBuf bytes.Buffer
+				tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
+				if tmplErr != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
 					return
 				}
 				query.Query = queryBuf.String()
@@ -616,7 +621,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			if chQuery.Disabled {
 				continue
 			}
-			tmpl := template.New("query")
+			tmpl := template.New("clickhouse-query")
 			tmpl, err := tmpl.Parse(chQuery.Query)
 			if err != nil {
 				respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
