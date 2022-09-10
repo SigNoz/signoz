@@ -2813,7 +2813,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.S().Debug("Error in processing query: ", err)
-		return nil, fmt.Errorf("error in processing query")
+		return nil, err
 	}
 
 	var (
@@ -3238,4 +3238,40 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	}
 
 	return &aggregateResponse, nil
+}
+
+func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
+	var result model.DashboardVar
+	rows, err := r.db.Query(ctx, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, err
+	}
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		for _, v := range vars {
+			switch v := v.(type) {
+			case *string, *int8, *int16, *int32, *int64, *uint8, *uint16, *uint32, *uint64, *float32, *float64, *time.Time, *bool:
+				result.VariableValues = append(result.VariableValues, reflect.ValueOf(v).Elem().Interface())
+			default:
+				return nil, fmt.Errorf("unsupported value type encountered")
+			}
+		}
+	}
+	return &result, nil
 }
