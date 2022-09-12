@@ -1,6 +1,11 @@
 import { Layout } from 'react-grid-layout';
 import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettingsToPanel';
-import { Dashboard, Query, Widgets } from 'types/api/dashboard/getAll';
+import {
+	Dashboard,
+	IDashboardVariable,
+	Query,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
@@ -42,6 +47,8 @@ export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
 
 export const DELETE_QUERY = 'DELETE_QUERY';
 export const FLUSH_DASHBOARD = 'FLUSH_DASHBOARD';
+export const UPDATE_DASHBOARD_VARIABLES = 'UPDATE_DASHBOARD_VARIABLES';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -174,6 +181,10 @@ interface DeleteQuery {
 interface FlushDashboard {
 	type: typeof FLUSH_DASHBOARD;
 }
+interface UpdateDashboardVariables {
+	type: typeof UPDATE_DASHBOARD_VARIABLES;
+	payload: Record<string, IDashboardVariable>;
+}
 
 export type DashboardActions =
 	| GetDashboard
@@ -194,4 +205,5 @@ export type DashboardActions =
 	| IsAddWidget
 	| UpdateQuery
 	| DeleteQuery
-	| FlushDashboard;
+	| FlushDashboard
+	| UpdateDashboardVariables;
