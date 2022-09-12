@@ -29,6 +29,7 @@ const ROUTES = {
 	LOGS: '/logs',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
+	LIST_LICENSES: '/licenses',
 };
 
 export default ROUTES;

@@ -12,6 +12,7 @@ import {
 	EditRulesPage,
 	ErrorDetails,
 	InstrumentationPage,
+	LicensePage,
 	ListAllALertsPage,
 	Login,
 	Logs,
@@ -165,6 +166,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		component: AllErrors,
 		key: 'ALL_ERROR',
+	},
+	{
+		path: ROUTES.LIST_LICENSES,
+		exact: true,
+		component: LicensePage,
+		isPrivate: true,
+		key: 'LIST_LICENSES',
 	},
 	{
 		path: ROUTES.ERROR_DETAIL,

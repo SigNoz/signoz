@@ -18,6 +18,7 @@ import {
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
+	UPDATE_FEATURE_FLAGS,
 } from 'types/actions/app';
 import {
 	Organization,
@@ -47,6 +48,7 @@ const InitialValue: InitialValueTypes = {
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
+	featureFlags: '',
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	user: getInitialUser(),
@@ -79,6 +81,13 @@ const appReducer = (
 			return {
 				...state,
 				isSideBarCollapsed: action.payload,
+			};
+		}
+
+		case UPDATE_FEATURE_FLAGS: {
+			return {
+				...state,
+				featureFlags: action.payload?.data,
 			};
 		}
 

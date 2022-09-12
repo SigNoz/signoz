@@ -122,3 +122,7 @@ export const SomethingWentWrong = Loadable(
 			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
 		),
 );
+
+export const LicensePage = Loadable(
+	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
+);
