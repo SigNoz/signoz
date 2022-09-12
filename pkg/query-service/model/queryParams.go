@@ -118,11 +118,12 @@ const (
 )
 
 type QueryRangeParamsV2 struct {
-	DataSource           DataSource            `json:"dataSource"`
-	Start                int64                 `json:"start"`
-	End                  int64                 `json:"end"`
-	Step                 int64                 `json:"step"`
-	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery"`
+	DataSource           DataSource             `json:"dataSource"`
+	Start                int64                  `json:"start"`
+	End                  int64                  `json:"end"`
+	Step                 int64                  `json:"step"`
+	CompositeMetricQuery *CompositeMetricQuery  `json:"compositeMetricQuery"`
+	Variables            map[string]interface{} `json:"variables,omitempty"`
 }
 
 // Metric auto complete types

@@ -9,7 +9,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -320,6 +322,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/variables/query", ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -483,9 +486,11 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	type channelResult struct {
 		Series []*model.Series
 		Err    error
+		Name   string
+		Query  string
 	}
 
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error) {
+	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
 		var seriesList []*model.Series
 		ch := make(chan channelResult, len(queries))
 		var wg sync.WaitGroup
@@ -500,7 +505,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				}
 
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err)}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
 					return
 				}
 				ch <- channelResult{Series: seriesList}
@@ -511,21 +516,23 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		close(ch)
 
 		var errs []error
+		errQuriesByName := make(map[string]string)
 		// read values from the channel
 		for r := range ch {
 			if r.Err != nil {
 				errs = append(errs, r.Err)
+				errQuriesByName[r.Name] = r.Query
 				continue
 			}
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, nil
+		return seriesList, nil, nil
 	}
 
-	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error) {
+	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
 		var seriesList []*model.Series
 		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
 		var wg sync.WaitGroup
@@ -538,6 +545,19 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			go func(name string, query *model.PromQuery) {
 				var seriesList []*model.Series
 				defer wg.Done()
+				tmpl := template.New("promql-query")
+				tmpl, tmplErr := tmpl.Parse(query.Query)
+				if tmplErr != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+					return
+				}
+				var queryBuf bytes.Buffer
+				tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
+				if tmplErr != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+					return
+				}
+				query.Query = queryBuf.String()
 				queryModel := model.QueryRangeParams{
 					Start: time.UnixMilli(metricsQueryRangeParams.Start),
 					End:   time.UnixMilli(metricsQueryRangeParams.End),
@@ -546,7 +566,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				}
 				promResult, _, err := (*aH.reader).GetQueryRangeResult(r.Context(), &queryModel)
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err)}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
 					return
 				}
 				matrix, _ := promResult.Matrix()
@@ -567,22 +587,25 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		close(ch)
 
 		var errs []error
+		errQuriesByName := make(map[string]string)
 		// read values from the channel
 		for r := range ch {
 			if r.Err != nil {
 				errs = append(errs, r.Err)
+				errQuriesByName[r.Name] = r.Query
 				continue
 			}
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n"))
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, nil
+		return seriesList, nil, nil
 	}
 
 	var seriesList []*model.Series
 	var err error
+	var errQuriesByName map[string]string
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
 	case model.QUERY_BUILDER:
 		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
@@ -590,7 +613,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
-		seriesList, err = execClickHouseQueries(runQueries.Queries)
+		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
@@ -598,20 +621,32 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			if chQuery.Disabled {
 				continue
 			}
-			queries[name] = chQuery.Query
+			tmpl := template.New("clickhouse-query")
+			tmpl, err := tmpl.Parse(chQuery.Query)
+			if err != nil {
+				respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+				return
+			}
+			var query bytes.Buffer
+			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
+			if err != nil {
+				respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+				return
+			}
+			queries[name] = query.String()
 		}
-		seriesList, err = execClickHouseQueries(queries)
+		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
 	case model.PROM:
-		seriesList, err = execPromQueries(metricsQueryRangeParams)
+		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
 		return
 	}
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		respondError(w, apiErrObj, nil)
+		respondError(w, apiErrObj, errQuriesByName)
 		return
 	}
 	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
@@ -705,6 +740,25 @@ func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.respond(w, nil)
 
+}
+
+func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
+
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
+		return
+	}
+	if strings.Contains(strings.ToLower(query), "alter table") {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
+		return
+	}
+	dashboardVars, err := (*aH.reader).QueryDashboardVars(r.Context(), query)
+	if err != nil {
+		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	aH.respond(w, dashboardVars)
 }
 
 func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
@@ -1034,11 +1088,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -1088,11 +1142,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			respondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			respondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			respondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		respondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		respondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
