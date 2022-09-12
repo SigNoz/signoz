@@ -33,7 +33,7 @@ const { Option } = Select;
 interface VariableItemProps {
 	variableData: IDashboardVariable;
 	onCancel: () => void;
-	onSave: (name: string, arg0: IDashboardVariable) => void;
+	onSave: (name: string, arg0: IDashboardVariable, arg1: string) => void;
 	validateName: (arg0: string) => boolean;
 	variableViewMode: TVariableViewMode;
 }
@@ -118,8 +118,11 @@ function VariableItem({
 			modificationUUID: v4(),
 		};
 		onSave(
-			(variableViewMode === 'EDIT' ? variableData.name : variableName) as string,
+			variableName,
 			newVariableData,
+			(variableViewMode === 'EDIT' && variableName !== variableData.name
+				? variableData.name
+				: '') as string,
 		);
 		onCancel();
 	};
@@ -162,7 +165,9 @@ function VariableItem({
 						value={variableName}
 						onChange={(e): void => {
 							setVariableName(e.target.value);
-							setErrorName(!validateName(e.target.value));
+							setErrorName(
+								!validateName(e.target.value) && e.target.value !== variableData.name,
+							);
 						}}
 					/>
 					<div>

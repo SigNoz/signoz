@@ -62,13 +62,19 @@ function VariablesSetting({
 	const onVariableSaveHandler = (
 		name: string,
 		variableData: IDashboardVariable,
+		oldName: string,
 	): void => {
 		if (!variableData.name) {
 			return;
 		}
+
 		const newVariables = { ...variables };
 		newVariables[name] = variableData;
-		// if (variableViewMode === 'EDIT') delete newVariables[name];
+
+		if (oldName) {
+			delete newVariables[oldName];
+		}
+
 		updateDashboardVariables(newVariables);
 		onDoneVariableViewMode();
 	};
