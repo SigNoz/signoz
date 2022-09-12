@@ -51,14 +51,14 @@ const (
 	primaryNamespace         = "clickhouse"
 	archiveNamespace         = "clickhouse-archive"
 	signozTraceDBName        = "signoz_traces"
-	signozDurationMVTable    = "durationSort"
-	signozUsageExplorerTable = "usage_explorer"
-	signozSpansTable         = "signoz_spans"
-	signozErrorIndexTable    = "signoz_error_index_v2"
-	signozTraceTableName     = "signoz_index_v2"
+	signozDurationMVTable    = "distributed_durationSort"
+	signozUsageExplorerTable = "distributed_usage_explorer"
+	signozSpansTable         = "distributed_signoz_spans"
+	signozErrorIndexTable    = "distributed_signoz_error_index_v2"
+	signozTraceTableName     = "distributed_signoz_index_v2"
 	signozMetricDBName       = "signoz_metrics"
-	signozSampleTableName    = "samples_v2"
-	signozTSTableName        = "time_series_v2"
+	signozSampleTableName    = "distributed_samples_v2"
+	signozTSTableName        = "distributed_time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
