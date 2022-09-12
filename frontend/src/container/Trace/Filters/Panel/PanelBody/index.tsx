@@ -24,18 +24,17 @@ function PanelBody(props: PanelBodyProps): JSX.Element {
 			</Card>
 		);
 	}
-
-	return (
-		<Card bordered={false}>
-			{type === 'duration' ? (
-				<Duration />
-			) : type === 'traceID' ? (
-				<TraceID />
-			) : (
-				<CommonCheckBox name={type} />
-			)}
-		</Card>
-	);
+	const renderBody = (type: TraceFilterEnum): JSX.Element => {
+		switch (type) {
+			case 'traceID':
+				return <TraceID />;
+			case 'duration':
+				return <Duration />;
+			default:
+				return <CommonCheckBox name={type} />;
+		}
+	};
+	return <Card bordered={false}>{renderBody(type)}</Card>;
 }
 
 interface PanelBodyProps {

@@ -94,10 +94,18 @@ function TraceID(): JSX.Element {
 			notification.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
+		} finally {
+			setIsLoading(false);
 		}
-		setIsLoading(false);
 	};
-
+	const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setUserEnteredValue(e.target.value);
+	};
+	const onBlur = (): void => {
+		if (userEnteredValue !== selectedFilter.get('traceID')?.[0]) {
+			onSearch(userEnteredValue);
+		}
+	};
 	return (
 		<div>
 			<Search
@@ -109,8 +117,8 @@ function TraceID(): JSX.Element {
 				}}
 				loading={isLoading}
 				value={userEnteredValue}
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				onChange={(e) => setUserEnteredValue(e.target.value)}
+				onChange={onChange}
+				onBlur={onBlur}
 			/>
 		</div>
 	);
