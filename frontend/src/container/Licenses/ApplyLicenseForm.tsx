@@ -30,9 +30,7 @@ function ApplyLicenseForm(): JSX.Element {
 			if (response.statusCode === 200) {
 				notification.success({
 					message: 'Success',
-					description: t(
-						'License applied successfully, please refresh the page to see changes.',
-					),
+					description: t('license_applied'),
 				});
 			} else {
 				notification.error({
@@ -57,7 +55,7 @@ function ApplyLicenseForm(): JSX.Element {
 						onChange={(e): void => {
 							setKey(e.target.value as string);
 						}}
-						placeholder="Enter license key"
+						placeholder={t('placeholder_license_key')}
 					/>
 				</LicenseInput>
 				<FormItem>
@@ -67,7 +65,7 @@ function ApplyLicenseForm(): JSX.Element {
 						type="primary"
 						htmlType="submit"
 					>
-						Apply
+						{t('button_apply')}
 					</Button>
 				</FormItem>
 			</ApplyForm>
