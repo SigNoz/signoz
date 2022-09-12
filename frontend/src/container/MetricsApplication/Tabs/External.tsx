@@ -25,7 +25,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	);
 
 	/* Convert resource attributes to tagFilter items for queryBuilder */
-	const temp: IQueryBuilderTagFilterItems[] | [] = [];
+	const temp: IQueryBuilderTagFilterItems[] = [];
 	resourceAttributeQueries.forEach((res) => {
 		const tempObj: IQueryBuilderTagFilterItems = {
 			id: `${res.id}`,
