@@ -10,16 +10,46 @@ import (
 )
 
 type License struct {
-	ID           int       `json:"id" db:"id"`
-	ActivationId string    `json:"activationId" db:"activationId"`
 	Key          string    `json:"key" db:"key"`
+	ActivationId string    `json:"activationId" db:"activationId"`
 	CreatedAt    time.Time `db:"created_at"`
+
 	// PlanDetails contains the encrypted plan info
 	PlanDetails string `json:"planDetails" db:"planDetails"`
+
+	// stores parsed license details
 	LicensePlan
+
 	FeatureSet basemodel.FeatureSet
+
 	// populated in case license has any errors
 	ValidationMessage string `db:"validationMessage"`
+
+	// used only for sending details to front-end
+	IsCurrent bool `json:"isCurrent"`
+}
+
+func (l *License) MarshalJSON() ([]byte, error) {
+
+	return json.Marshal(&struct {
+		Key               string    `json:"key" db:"key"`
+		ActivationId      string    `json:"activationId" db:"activationId"`
+		ValidationMessage string    `db:"validationMessage"`
+		IsCurrent         bool      `json:"isCurrent"`
+		PlanKey           string    `json:"planKey"`
+		ValidFrom         time.Time `json:"ValidFrom"`
+		ValidUntil        time.Time `json:"ValidUntil"`
+		Status            string    `json:"status"`
+	}{
+		Key:               l.Key,
+		ActivationId:      l.ActivationId,
+		IsCurrent:         l.IsCurrent,
+		PlanKey:           l.PlanKey,
+		ValidFrom:         time.Unix(l.ValidFrom, 0),
+		ValidUntil:        time.Unix(l.ValidUntil, 0),
+		Status:            l.Status,
+		ValidationMessage: l.ValidationMessage,
+	})
 }
 
 type LicensePlan struct {
@@ -36,7 +66,6 @@ func (l *License) ParsePlan() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("planData:", string(planData))
 
 	plan := LicensePlan{}
 	err = json.Unmarshal([]byte(planData), &plan)
@@ -44,7 +73,7 @@ func (l *License) ParsePlan() error {
 		l.ValidationMessage = "failed to parse plan from license"
 		return errors.Wrap(err, "failed to parse plan from license")
 	}
-
+	fmt.Println("parsed plan:", plan)
 	l.LicensePlan = plan
 	l.ParseFeatures()
 	return nil
@@ -52,11 +81,11 @@ func (l *License) ParsePlan() error {
 
 func (l *License) ParseFeatures() {
 	switch l.PlanKey {
-	case Basic:
-		l.FeatureSet = basemodel.BasicPlan
 	case Pro:
 		l.FeatureSet = ProPlan
 	case Enterprise:
 		l.FeatureSet = EnterprisePlan
+	default:
+		l.FeatureSet = BasicPlan
 	}
 }

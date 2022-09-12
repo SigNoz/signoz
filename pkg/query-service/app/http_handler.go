@@ -52,25 +52,44 @@ type APIHandler struct {
 	basePath     string
 	apiPrefix    string
 	reader       interfaces.Reader
-	relationalDB dao.ModelDao
+	appDao       dao.ModelDao
 	alertManager am.Manager
 	ruleManager  *rules.Manager
+	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
 }
 
+type APIHandlerOpts struct {
+
+	// business data reader e.g. clickhouse
+	Reader interfaces.Reader
+
+	// dao layer to perform crud on app objects like dashboard, alerts etc
+	AppDao dao.ModelDao
+
+	// rule manager handles rule crud operations
+	RuleManager *rules.Manager
+
+	// feature flags querier
+	FeatureFlags interfaces.FeatureLookup
+}
+
 // NewAPIHandler returns an APIHandler
-func NewAPIHandler(reader interfaces.Reader, relationalDB dao.ModelDao, ruleManager *rules.Manager) (*APIHandler, error) {
+func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	alertManager, err := am.New("")
 	if err != nil {
 		return nil, err
 	}
+
 	aH := &APIHandler{
-		reader:       reader,
-		relationalDB: relationalDB,
+		reader:       opts.Reader,
+		appDao:       opts.AppDao,
 		alertManager: alertManager,
-		ruleManager:  ruleManager,
+		ruleManager:  opts.RuleManager,
+		featureFlags: opts.FeatureFlags,
 	}
+
 	aH.ready = aH.testReady
 
 	dashboards.LoadDashboardFiles()
@@ -1457,7 +1476,7 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	aH.WriteJSON(w, r, map[string]string{"version": version})
+	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N"})
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.

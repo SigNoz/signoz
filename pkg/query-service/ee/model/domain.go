@@ -1,5 +1,13 @@
 package model
 
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+)
+
 type SSOType string
 
 const (
@@ -7,12 +15,53 @@ const (
 	GoogleAuth SSOType = "GOOGLE_AUTH"
 )
 
+type SamlConfig struct {
+	SamlEntityId string `json:"samlEntity"`
+	SamlIdpURL   string `json:"samlIdp"`
+	SamlCert     string `json:"samlCert"`
+}
+
+// OrgDomain identify org owned web domains for auth and other purposes
 type OrgDomain struct {
-	Id             string     `json:"id" db:"id"`
-	OrganizationId string     `json:"organizationId" db:"organizationId"`
-	EnforceSSO     bool       `json:"enforce_sso" db:"enforce_sso"`
-	SSOType        SSOType    `json:"SSOType" db:"SSOType"`
-	SamlConfig     SamlConfig `json:"SamlConfig" db:"SamlConfig"`
+	Id         uuid.UUID  `json:"id"`
+	Name       string     `json:"name"`
+	OrgId      uuid.UUID  `json:"orgId"`
+	EnforceSSO bool       `json:"ssoEnforce"`
+	SSOType    SSOType    `json:"ssoType"`
+	SamlConfig SamlConfig `json:"samlConfig"`
+}
+
+// Valid is used a pipeline function to check if org domain
+// loaded from db is valid
+func (od *OrgDomain) Valid(err error) error {
+	if err != nil {
+		return err
+	}
+
+	if od.Id == uuid.Nil || od.OrgId == uuid.Nil {
+		return fmt.Errorf("both id and orgId are required")
+	}
+	return nil
+}
+
+// ValidNew cheks if the org domain is valid for insertion in db
+func (od *OrgDomain) ValidNew() error {
+
+	if od.OrgId == uuid.Nil {
+		return fmt.Errorf("orgId is required")
+	}
+	return nil
+}
+
+// LoadConfig loads config params from json text
+func (od *OrgDomain) LoadConfig(jsondata string) error {
+	d := *od
+	err := json.Unmarshal([]byte(jsondata), &d)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal json to OrgDomain{}")
+	}
+	*od = d
+	return nil
 }
 
 func (od *OrgDomain) GetSAMLEntityID() string {

@@ -10,6 +10,12 @@ const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
 const DisableUpsell = "DISABLE_UPSELL"
 
+var BasicPlan = basemodel.FeatureSet{
+	Basic:         true,
+	SSO:           false,
+	DisableUpsell: false,
+}
+
 var ProPlan = basemodel.FeatureSet{
 	Pro: true,
 	SSO: true,

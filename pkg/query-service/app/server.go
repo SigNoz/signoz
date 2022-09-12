@@ -95,7 +95,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	apiHandler, err := NewAPIHandler(reader, dao.DB(), rm)
+	apiHandler, err := NewAPIHandler(APIHandlerOpts{
+		Reader:      reader,
+		AppDao:      dao.DB(),
+		RuleManager: rm,
+	})
 	if err != nil {
 		return nil, err
 	}

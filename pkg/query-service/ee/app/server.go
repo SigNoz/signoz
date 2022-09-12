@@ -115,7 +115,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	apiOpts := api.APIHandlerOptions{
 		QueryBackend:   reader,
-		AppDB:          modelDao,
+		AppDao:         modelDao,
 		RulesManager:   rm,
 		FeatureFlags:   lm,
 		LicenseManager: lm,

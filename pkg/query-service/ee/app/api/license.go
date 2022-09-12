@@ -8,6 +8,14 @@ import (
 	"net/http"
 )
 
+func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
+	licenses, apiError := ah.LM().GetLicenses(context.Background())
+	if apiError != nil {
+		RespondError(w, apiError, nil)
+	}
+	ah.Respond(w, licenses)
+}
+
 func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	var l model.License

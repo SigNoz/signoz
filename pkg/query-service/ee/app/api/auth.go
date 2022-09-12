@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	baseauth "go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/ee/constants"
 	"go.signoz.io/query-service/ee/model"
 	"go.signoz.io/query-service/ee/saml"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 // methods that use user authentication
@@ -69,7 +70,7 @@ func (ah *APIHandler) ReceiveSAML(w http.ResponseWriter, r *http.Request) {
 	redirectUri := constants.GetSAMLRedirectURL()
 
 	// get org
-	domain, apiError := ah.AppDB().GetOrgDomain(context.Background(), domainID)
+	domain, apiError := ah.AppDao().GetDomain(context.Background(), domainID)
 	if apiError != nil {
 		zap.S().Errorf("[ReceiveSAML] failed to fetch organization (%s): %v", domainID, apiError)
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to identify user organization, please contact your administrator"), 301)
@@ -118,7 +119,7 @@ func (ah *APIHandler) ReceiveSAML(w http.ResponseWriter, r *http.Request) {
 	firstName := assertionInfo.Values.Get("FirstName")
 	lastName := assertionInfo.Values.Get("LastName")
 
-	userPayload, err := ah.AppDB().FetchOrRegisterSAMLUser(email, firstName, lastName)
+	userPayload, err := ah.AppDao().FetchOrRegisterSAMLUser(email, firstName, lastName)
 	if err != nil {
 		zap.S().Errorf("[ReceiveSAML] failed to find or register a new user for email %s and org %s", email, domainID)
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to authenticate, please contact your administrator"), 301)

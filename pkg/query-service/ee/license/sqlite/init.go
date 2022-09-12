@@ -12,7 +12,7 @@ func InitDB(db *sqlx.DB) error {
 	}
 
 	table_schema := `CREATE TABLE IF NOT EXISTS licenses(
-		key TEXT NOT NULL UNIQUE,
+		key TEXT PRIMARY KEY,
 		createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		planDetails TEXT,

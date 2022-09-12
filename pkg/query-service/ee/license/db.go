@@ -32,6 +32,19 @@ func (r *Repo) InitDB(engine string) error {
 	}
 }
 
+func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
+	licenses := []model.License{}
+
+	query := "SELECT key, activationId, planDetails, validationMessage FROM licenses"
+
+	err := r.db.Select(&licenses, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get licenses from db: %v", err)
+	}
+
+	return licenses, nil
+}
+
 // GetActiveLicense fetches the latest active license from DB
 func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, error) {
 	var err error
@@ -71,7 +84,7 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 
 	query := `INSERT INTO licenses 
 						(key, planDetails, activationId, validationmessage) 
-						VALUES ($1, $2, $3, $4)`
+						VALUES ($1, $2, $3, $4, $5)`
 
 	_, err := r.db.ExecContext(ctx,
 		query,

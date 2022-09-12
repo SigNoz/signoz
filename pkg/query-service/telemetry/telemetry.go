@@ -22,6 +22,9 @@ const (
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
 	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
 	TELEMETRY_EVENT_ORG_SETTINGS       = "Org Settings"
+	TELEMETRY_LICENSE_CHECK_FAILED     = "License Check Failed"
+	TELEMETRY_LICENSE_UPDATED          = "License Updated"
+	TELEMETRY_LICENSE_ACT_FAILED       = "License Activation Failed"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"

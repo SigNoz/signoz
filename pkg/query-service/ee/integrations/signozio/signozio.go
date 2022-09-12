@@ -51,7 +51,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	result := ActivationResult{}
 	err = json.Unmarshal(httpBody, &result)
 	if err != nil {
-		return nil, model.NewInternalError(errors.Wrap(err, "failed to marshal license activation response"))
+		return nil, model.InternalError(errors.Wrap(err, "failed to marshal license activation response"))
 	}
 
 	switch httpResponse.StatusCode {
@@ -61,7 +61,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(httpBody)),
 			"bad request error received from license.signoz.io"))
 	default:
-		return nil, model.NewInternalError(errors.Wrap(fmt.Errorf(string(httpBody)),
+		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(httpBody)),
 			"internal error received from license.signoz.io"))
 	}
 
@@ -70,7 +70,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 // ValidateLicense validates the license key
 func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError) {
 	validReq := map[string]string{
-		activationId: activationId,
+		"activationId": activationId,
 	}
 
 	reqString, _ := json.Marshal(validReq)
@@ -99,7 +99,7 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))
 	default:
-		return nil, model.NewInternalError(errors.Wrap(fmt.Errorf(string(body)),
+		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
 			"internal error received from license.signoz.io"))
 	}
 

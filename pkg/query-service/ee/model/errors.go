@@ -28,8 +28,8 @@ func BadRequest(err error) *ApiError {
 	}
 }
 
-// NewInternalError returns a ApiError object of internal type
-func NewInternalError(err error) *ApiError {
+// InternalError returns a ApiError object of internal type
+func InternalError(err error) *ApiError {
 	return &ApiError{
 		basemodel.ApiError{
 			Typ: basemodel.ErrorInternal,

@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+
 	"go.signoz.io/query-service/ee/constants"
 	"go.signoz.io/query-service/ee/model"
 
@@ -42,7 +43,7 @@ func PrepRequestWithOrg(domain *model.OrgDomain, pathToVisit string) (*saml2.SAM
 	}
 
 	certStore.Roots = append(certStore.Roots, idpCert)
-	acsURL := PrepareAcsURL(domain.Id)
+	acsURL := PrepareAcsURL(domain.Id.String())
 
 	// We sign the AuthnRequest with a random key because Okta doesn't seem
 	// to verify these.

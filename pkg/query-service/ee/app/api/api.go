@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	baseapp "go.signoz.io/query-service/app"
 	"go.signoz.io/query-service/ee/dao"
@@ -9,12 +11,11 @@ import (
 	baseint "go.signoz.io/query-service/interfaces"
 	rules "go.signoz.io/query-service/rules"
 	"go.signoz.io/query-service/version"
-	"net/http"
 )
 
 type APIHandlerOptions struct {
 	QueryBackend   interfaces.QueryBackend
-	AppDB          dao.ModelDao
+	AppDao         dao.ModelDao
 	RulesManager   *rules.Manager
 	FeatureFlags   baseint.FeatureLookup
 	LicenseManager *license.Manager
@@ -27,7 +28,13 @@ type APIHandler struct {
 
 // NewAPIHandler returns an APIHandler
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
-	baseHandler, err := baseapp.NewAPIHandler(opts.QueryBackend, opts.AppDB, opts.RulesManager)
+
+	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
+		Reader:       opts.QueryBackend,
+		AppDao:       opts.AppDao,
+		RuleManager:  opts.RulesManager,
+		FeatureFlags: opts.FeatureFlags})
+
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +58,8 @@ func (ah *APIHandler) LM() *license.Manager {
 	return ah.opts.LicenseManager
 }
 
-func (ah *APIHandler) AppDB() dao.ModelDao {
-	return ah.opts.AppDB
+func (ah *APIHandler) AppDao() dao.ModelDao {
+	return ah.opts.AppDao
 }
 
 // RegisterRoutes registers routes for this handler on the given router
@@ -60,12 +67,42 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/licenses", baseapp.AdminAccess(ah.applyLicense)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/featureFlags", baseapp.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/loginPrecheck", baseapp.OpenAccess(ah.precheckLogin)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/licenses",
+		baseapp.AdminAccess(ah.listLicenses)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/licenses",
+		baseapp.AdminAccess(ah.applyLicense)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/featureFlags",
+		baseapp.OpenAccess(ah.getFeatureFlags)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/loginPrecheck",
+		baseapp.OpenAccess(ah.precheckLogin)).
+		Methods(http.MethodGet)
 
 	// paid plans specific routes
-	router.HandleFunc("/api/v1/domains-sso/{domain_id}/complete/saml", baseapp.OpenAccess(ah.ReceiveSAML)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/domains-sso/{domain_id}/complete/saml",
+		baseapp.OpenAccess(ah.ReceiveSAML)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
+		baseapp.AdminAccess(ah.listDomainsByOrg)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/domains",
+		baseapp.AdminAccess(ah.postDomain)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/domains/{id}",
+		baseapp.AdminAccess(ah.putDomain)).
+		Methods(http.MethodPut)
+
+	router.HandleFunc("/api/v1/domains/{id}",
+		baseapp.AdminAccess(ah.deleteDomain)).
+		Methods(http.MethodDelete)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
@@ -76,5 +113,5 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	ah.WriteJSON(w, r, map[string]string{"version": version, "eeAvailable": "Y"})
+	ah.WriteJSON(w, r, map[string]string{"version": version, "ee": "Y"})
 }
