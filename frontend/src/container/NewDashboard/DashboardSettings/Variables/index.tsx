@@ -67,8 +67,8 @@ function VariablesSetting({
 			return;
 		}
 		const newVariables = { ...variables };
-		newVariables[variableData.name] = variableData;
-		if (variableViewMode === 'EDIT') delete newVariables[name];
+		newVariables[name] = variableData;
+		// if (variableViewMode === 'EDIT') delete newVariables[name];
 		updateDashboardVariables(newVariables);
 		onDoneVariableViewMode();
 	};
