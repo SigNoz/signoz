@@ -7,6 +7,7 @@ import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import React, { useCallback, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -52,6 +53,7 @@ function FullView({
 				graphType: widget.panelTypes,
 				query: widget.query,
 				globalSelectedInterval: globalSelectedTime,
+				variables: getDashboardVariables(),
 			}),
 	);
 
