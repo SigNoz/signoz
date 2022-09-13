@@ -30,6 +30,7 @@ const (
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
+	defaultLogsLocalTable          string        = "logs"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_atrribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
 	defaultLiveTailRefreshSeconds  int           = 10
@@ -65,6 +66,7 @@ type namespaceConfig struct {
 	TopLevelOperationsTable string
 	LogsDB                  string
 	LogsTable               string
+	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
 	LiveTailRefreshSeconds  int
@@ -132,6 +134,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,
 			LogsTable:               defaultLogsTable,
+			LogsLocalTable:          defaultLogsLocalTable,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
 			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
@@ -154,6 +157,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 				ErrorTable:             "",
 				LogsDB:                 "",
 				LogsTable:              "",
+				LogsLocalTable:         "",
 				LogsAttributeKeysTable: "",
 				LogsResourceKeysTable:  "",
 				LiveTailRefreshSeconds: defaultLiveTailRefreshSeconds,
