@@ -23,7 +23,7 @@ const (
 	defaultOperationsTable         string        = "distributed_signoz_operations"
 	defaultIndexTable              string        = "distributed_signoz_index_v2"
 	defaultErrorTable              string        = "distributed_signoz_error_index_v2"
-	defaultDurationTable           string        = "durationSortMV"
+	defaultDurationTable           string        = "distributed_durationSort"
 	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
 	defaultSpansTable              string        = "distributed_signoz_spans"
 	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes"
