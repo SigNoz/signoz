@@ -94,6 +94,7 @@ type ClickHouseReader struct {
 	logsResourceKeys        string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
+	fanoutStorage           *storage.Storage
 
 	promConfigFile string
 	promConfig     *config.Config
@@ -143,7 +144,7 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 	}
 }
 
-func (r *ClickHouseReader) Start() {
+func (r *ClickHouseReader) Start(readerReady chan bool) {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
 	// allowedFormat := promlog.AllowedFormat{}
@@ -311,12 +312,22 @@ func (r *ClickHouseReader) Start() {
 	}
 	r.queryEngine = queryEngine
 	r.remoteStorage = remoteStorage
+	r.fanoutStorage = &fanoutStorage
+	readerReady <- true
 
 	if err := g.Run(); err != nil {
 		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
 
+}
+
+func (r *ClickHouseReader) GetQueryEngine() *promql.Engine {
+	return r.queryEngine
+}
+
+func (r *ClickHouseReader) GetFanoutStorage() *storage.Storage {
+	return r.fanoutStorage
 }
 
 func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
@@ -925,6 +936,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	}
 
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+	if len(queryParams.TraceID) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.TraceID, constants.TraceID, &query, args)
+	}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -984,6 +998,8 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 
 	for _, e := range queryParams.GetFilters {
 		switch e {
+		case constants.TraceID:
+			continue
 		case constants.ServiceName:
 			finalQuery := fmt.Sprintf("SELECT serviceName, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.traceDB, r.indexTable)
 			finalQuery += query
@@ -1260,6 +1276,9 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	var query string
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+	if len(queryParams.TraceID) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.TraceID, constants.TraceID, &query, args)
+	}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1450,6 +1469,9 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 
 	var query string
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+	if len(queryParams.TraceID) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.TraceID, constants.TraceID, &query, args)
+	}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1546,6 +1568,9 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 	var query string
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+	if len(queryParams.TraceID) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.TraceID, constants.TraceID, &query, args)
+	}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -1853,6 +1878,9 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.traceDB, r.indexTable)
 	}
 
+	if len(queryParams.TraceID) > 0 {
+		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.TraceID, constants.TraceID, &query, args)
+	}
 	if len(queryParams.ServiceName) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.ServiceName, constants.ServiceName, &query, args)
 	}
@@ -2813,7 +2841,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.S().Debug("Error in processing query: ", err)
-		return nil, fmt.Errorf("error in processing query")
+		return nil, err
 	}
 
 	var (
@@ -3238,4 +3266,40 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	}
 
 	return &aggregateResponse, nil
+}
+
+func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
+	var result model.DashboardVar
+	rows, err := r.db.Query(ctx, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, err
+	}
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		for _, v := range vars {
+			switch v := v.(type) {
+			case *string, *int8, *int16, *int32, *int64, *uint8, *uint16, *uint32, *uint64, *float32, *float64, *time.Time, *bool:
+				result.VariableValues = append(result.VariableValues, reflect.ValueOf(v).Elem().Interface())
+			default:
+				return nil, fmt.Errorf("unsupported value type encountered")
+			}
+		}
+	}
+	return &result, nil
 }

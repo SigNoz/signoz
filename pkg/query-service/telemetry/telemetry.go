@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	ph "github.com/posthog/posthog-go"
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/interfaces"
 	"go.signoz.io/query-service/model"
@@ -18,16 +19,19 @@ import (
 )
 
 const (
-	TELEMETRY_EVENT_PATH               = "API Call"
-	TELEMETRY_EVENT_USER               = "User"
-	TELEMETRY_EVENT_INPRODUCT_FEEDBACK = "InProduct Feeback Submitted"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES = "Number of Services"
-	TELEMETRY_EVENT_HEART_BEAT         = "Heart Beat"
-	TELEMETRY_EVENT_ORG_SETTINGS       = "Org Settings"
-	DEFAULT_SAMPLING                   = 0.1
+	TELEMETRY_EVENT_PATH                  = "API Call"
+	TELEMETRY_EVENT_USER                  = "User"
+	TELEMETRY_EVENT_INPRODUCT_FEEDBACK    = "InProduct Feeback Submitted"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES    = "Number of Services"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH = "Number of Services V2"
+	TELEMETRY_EVENT_HEART_BEAT            = "Heart Beat"
+	TELEMETRY_EVENT_ORG_SETTINGS          = "Org Settings"
+	DEFAULT_SAMPLING                      = 0.1
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
+const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
+
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 
 const HEART_BEAT_DURATION = 6 * time.Hour
@@ -51,6 +55,7 @@ func (a *Telemetry) IsSampled() bool {
 
 type Telemetry struct {
 	operator      analytics.Client
+	phOperator    ph.Client
 	ipAddress     string
 	isEnabled     bool
 	isAnonymous   bool
@@ -63,8 +68,9 @@ type Telemetry struct {
 
 func createTelemetry() {
 	telemetry = &Telemetry{
-		operator:  analytics.New(api_key),
-		ipAddress: getOutboundIP(),
+		operator:   analytics.New(api_key),
+		phOperator: ph.New(ph_api_key),
+		ipAddress:  getOutboundIP(),
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
@@ -134,6 +140,13 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		UserId: a.ipAddress,
 		Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email).Set("ip", a.ipAddress),
 	})
+	// Updating a groups properties
+	a.phOperator.Enqueue(ph.GroupIdentify{
+		Type: "companyDomain",
+		Key:  a.getCompanyDomain(),
+		Properties: ph.NewProperties().
+			Set("companyDomain", a.getCompanyDomain()),
+	})
 
 }
 
@@ -190,6 +203,18 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		UserId:     userId,
 		Properties: properties,
 	})
+
+	if event == TELEMETRY_EVENT_NUMBER_OF_SERVICES {
+
+		a.phOperator.Enqueue(ph.Capture{
+			DistinctId: userId,
+			Event:      TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH,
+			Properties: ph.Properties(properties),
+			Groups: ph.NewGroups().
+				Set("companyDomain", a.getCompanyDomain()),
+		})
+
+	}
 }
 
 func (a *Telemetry) GetDistinctId() string {
