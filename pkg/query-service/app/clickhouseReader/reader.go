@@ -3043,6 +3043,12 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
+
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER signoz ADD COLUMN IF NOT EXISTS %s %s", r.logsDB, r.logsTable, field.Name, field.DataType)
+			err = r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 		}
 
 		// create the index
