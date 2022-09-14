@@ -360,10 +360,6 @@ There are many other ways to get involved with the community and to participate 
 - Help answer questions on forums such as Stack Overflow and [SigNoz Community Slack Channel](https://signoz.io/slack).
 - Tell others about the project on Twitter, your blog, etc.
 
-## License
-
-By contributing to SigNoz, you agree that your contributions will be licensed under its MIT license.
-
 Again, Feel free to ping us on [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
 
 Thank You!

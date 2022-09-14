@@ -40,7 +40,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.11.0
+    image: signoz/query-service:0.11.1
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -70,7 +70,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.11.0
+    image: signoz/frontend:0.11.1
     deploy:
       restart_policy:
         condition: on-failure
@@ -83,7 +83,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz-otel-collector:0.55.0
+    image: signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -111,7 +111,7 @@ services:
       - clickhouse
 
   otel-collector-metrics:
-    image: signoz-otel-collector:0.55.0
+    image: signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
