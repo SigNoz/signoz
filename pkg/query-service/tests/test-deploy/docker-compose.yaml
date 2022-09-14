@@ -61,7 +61,7 @@ services:
         condition: service_healthy
 
   otel-collector:
-    image: signoz-otel-collector:0.55.0
+    image: signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -77,7 +77,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz-otel-collector:0.55.0
+    image: signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
