@@ -14,10 +14,10 @@
   
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Dokumentation</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe auf Chinesisch</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe auf Portugiesisch</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>ReadMe auf Chinesisch</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>ReadMe auf Portugiesisch</b></a> &bull;
   <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
-  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
+  <a href="https://twitter.com/SigNozHQ"><b>Twitter</b></a>
 </h3>
 
 ## 
