@@ -6,7 +6,7 @@
 	"release_notes": "Release Notes",
 	"read_how_to_upgrade": "Read instructions on how to upgrade",
 	"latest_version_signoz": "You are running the latest version of SigNoz.",
-	"stale_version": "You are on an older version and may be loosing on the latest features we have shipped. We recommend to upgrade to the latest version",
+	"stale_version": "You are on an older version and may be losing out on the latest features we have shipped. We recommend to upgrade to the latest version",
 	"oops_something_went_wrong_version": "Oops.. facing issues with fetching updated version information",
 	"n_a": "N/A",
 	"routes": {
