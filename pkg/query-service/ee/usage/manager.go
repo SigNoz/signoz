@@ -17,8 +17,11 @@ import (
 	"go.signoz.io/query-service/utils/encryption"
 )
 
-// collect usage every 24 hours
-var collectionFrequency = 24 * time.Hour
+// collect usage every hour
+var collectionFrequency = 1 * time.Hour
+
+// send usage every 24 hour
+var uploadFrequency = 24 * time.Hour
 
 const (
 	MAX_RETRIES            = 3
@@ -61,8 +64,8 @@ func StartManager(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickho
 
 // start loads collects and exports any exported snapshot and starts the exporter
 func (lm *Manager) start() error {
-	// export enexported snapshots if any
-	err := lm.exportUnexportedSnapshots(context.Background())
+	// upload previous snapshots if any
+	err := lm.UploadUsage(context.Background())
 	if err != nil {
 		return err
 	}
@@ -88,7 +91,7 @@ func (lm *Manager) CollectCurrentUsage(ctx context.Context) error {
 	}
 	if !alreadyCreated {
 		zap.S().Info("Collecting current usage")
-		exportError := lm.CollectAndExportUsage(ctx)
+		exportError := lm.CollectAndStoreUsage(ctx)
 		if exportError != nil {
 			return exportError
 		}
@@ -98,59 +101,23 @@ func (lm *Manager) CollectCurrentUsage(ctx context.Context) error {
 	return nil
 }
 
-func (lm *Manager) exportUnexportedSnapshots(ctx context.Context) error {
-	snapshots, err := lm.repo.GetSnapshotsNotSynced(ctx)
-	if err != nil {
-		return err
-	}
-
-	if len(snapshots) <= 0 {
-		zap.S().Info("no unexported snapshots to export, skipping.")
-		return nil
-	}
-
-	zap.S().Info("exporting unexported snapshots")
-	for _, snap := range snapshots {
-		metricsBytes, err := encryption.Decrypt([]byte(snap.ActivationId.String()[:32]), []byte(snap.Snapshot))
-		if err != nil {
-			return err
-		}
-
-		metrics := model.UsageSnapshot{}
-		err = json.Unmarshal(metricsBytes, &metrics)
-		if err != nil {
-			return err
-		}
-
-		err = lm.ExportUsageWithExponentalBackOff(ctx, model.UsagePayload{
-			UsageBase: model.UsageBase{
-				Id:                snap.Id,
-				InstallationId:    snap.InstallationId,
-				ActivationId:      snap.ActivationId,
-				FailedSyncRequest: snap.FailedSyncRequest,
-			},
-			SnapshotDate: snap.CreatedAt,
-			Metrics:      metrics,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (lm *Manager) UsageExporter(ctx context.Context) {
 	defer close(lm.terminated)
-	tick := time.NewTicker(collectionFrequency)
-	defer tick.Stop()
+
+	collectionTicker := time.NewTicker(collectionFrequency)
+	defer collectionTicker.Stop()
+
+	uploadTicker := time.NewTicker(uploadFrequency)
+	defer uploadTicker.Stop()
 
 	for {
 		select {
 		case <-lm.done:
 			return
-		case <-tick.C:
-			lm.exportUnexportedSnapshots(ctx)
-			lm.CollectAndExportUsage(ctx)
+		case <-collectionTicker.C:
+			lm.CollectAndStoreUsage(ctx)
+		case <-uploadTicker.C:
+			lm.UploadUsage(ctx)
 		}
 	}
 }
@@ -162,9 +129,8 @@ type TableSize struct {
 	UncompressedBytes uint64 `ch:"uncompressed_bytes"`
 }
 
-func (lm *Manager) CollectAndExportUsage(ctx context.Context) error {
-
-	snap, err := lm.GetUsage(ctx)
+func (lm *Manager) CollectAndStoreUsage(ctx context.Context) error {
+	snap, err := lm.GetUsageFromClickHouse(ctx)
 	if err != nil {
 		return err
 	}
@@ -185,12 +151,7 @@ func (lm *Manager) CollectAndExportUsage(ctx context.Context) error {
 		SnapshotDate: time.Now(),
 	}
 
-	snapshot, err := lm.repo.InsertSnapshot(ctx, payload)
-	if err != nil {
-		return err
-	}
-
-	err = lm.ExportUsageWithExponentalBackOff(ctx, *snapshot)
+	_, err = lm.repo.InsertSnapshot(ctx, payload)
 	if err != nil {
 		return err
 	}
@@ -198,7 +159,7 @@ func (lm *Manager) CollectAndExportUsage(ctx context.Context) error {
 	return nil
 }
 
-func (lm *Manager) GetUsage(ctx context.Context) (*model.UsageSnapshot, error) {
+func (lm *Manager) GetUsageFromClickHouse(ctx context.Context) (*model.UsageSnapshot, error) {
 	tableSizes := []TableSize{}
 	snap := model.UsageSnapshot{}
 
@@ -247,7 +208,48 @@ func (lm *Manager) GetUsage(ctx context.Context) (*model.UsageSnapshot, error) {
 	return &snap, nil
 }
 
-func (lm *Manager) ExportUsageWithExponentalBackOff(ctx context.Context, payload model.UsagePayload) error {
+func (lm *Manager) UploadUsage(ctx context.Context) error {
+	snapshots, err := lm.repo.GetSnapshotsNotSynced(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(snapshots) <= 0 {
+		zap.S().Info("no snapshots to upload, skipping.")
+		return nil
+	}
+
+	zap.S().Info("uploading snapshots")
+	for _, snap := range snapshots {
+		metricsBytes, err := encryption.Decrypt([]byte(snap.ActivationId.String()[:32]), []byte(snap.Snapshot))
+		if err != nil {
+			return err
+		}
+
+		metrics := model.UsageSnapshot{}
+		err = json.Unmarshal(metricsBytes, &metrics)
+		if err != nil {
+			return err
+		}
+
+		err = lm.UploadUsageWithExponentalBackOff(ctx, model.UsagePayload{
+			UsageBase: model.UsageBase{
+				Id:                snap.Id,
+				InstallationId:    snap.InstallationId,
+				ActivationId:      snap.ActivationId,
+				FailedSyncRequest: snap.FailedSyncRequest,
+			},
+			SnapshotDate: snap.CreatedAt,
+			Metrics:      metrics,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload model.UsagePayload) error {
 	for i := 1; i <= MAX_RETRIES; i++ {
 		apiErr := licenseserver.SendUsage(ctx, &payload)
 		if apiErr != nil && i == MAX_RETRIES {
