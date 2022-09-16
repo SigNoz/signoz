@@ -3,9 +3,13 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	saml2 "github.com/russellhaering/gosaml2"
+	"go.signoz.io/query-service/ee/saml"
+	basemodel "go.signoz.io/query-service/model"
 )
 
 type SSOType string
@@ -16,19 +20,20 @@ const (
 )
 
 type SamlConfig struct {
-	SamlEntityId string `json:"samlEntity"`
-	SamlIdpURL   string `json:"samlIdp"`
-	SamlCert     string `json:"samlCert"`
+	SamlEntity string `json:"samlEntity"`
+	SamlIdp    string `json:"samlIdp"`
+	SamlCert   string `json:"samlCert"`
 }
 
 // OrgDomain identify org owned web domains for auth and other purposes
 type OrgDomain struct {
-	Id         uuid.UUID  `json:"id"`
-	Name       string     `json:"name"`
-	OrgId      uuid.UUID  `json:"orgId"`
-	EnforceSSO bool       `json:"ssoEnforce"`
-	SSOType    SSOType    `json:"ssoType"`
-	SamlConfig SamlConfig `json:"samlConfig"`
+	Id         uuid.UUID   `json:"id"`
+	Name       string      `json:"name"`
+	OrgId      string      `json:"orgId"`
+	SsoEnabled bool        `json:"ssoEnabled"`
+	SsoType    SSOType     `json:"ssoType"`
+	SamlConfig *SamlConfig `json:"samlConfig"`
+	Org        *basemodel.Organization
 }
 
 // Valid is used a pipeline function to check if org domain
@@ -38,18 +43,24 @@ func (od *OrgDomain) Valid(err error) error {
 		return err
 	}
 
-	if od.Id == uuid.Nil || od.OrgId == uuid.Nil {
+	if od.Id == uuid.Nil || od.OrgId == "" {
 		return fmt.Errorf("both id and orgId are required")
 	}
+
 	return nil
 }
 
 // ValidNew cheks if the org domain is valid for insertion in db
 func (od *OrgDomain) ValidNew() error {
 
-	if od.OrgId == uuid.Nil {
+	if od.OrgId == "" {
 		return fmt.Errorf("orgId is required")
 	}
+
+	if od.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+
 	return nil
 }
 
@@ -65,13 +76,39 @@ func (od *OrgDomain) LoadConfig(jsondata string) error {
 }
 
 func (od *OrgDomain) GetSAMLEntityID() string {
-	return "urn:example:idp"
+	if od.SamlConfig != nil {
+		return od.SamlConfig.SamlEntity
+	}
+	return ""
 }
 
 func (od *OrgDomain) GetSAMLIdpURL() string {
-	return "http://idp.oktadev.com"
+	if od.SamlConfig != nil {
+		return od.SamlConfig.SamlIdp
+	}
+	return ""
 }
 
 func (od *OrgDomain) GetSAMLCert() string {
-	return "MIIDPDCCAiQCCQDydJgOlszqbzANBgkqhkiG9w0BAQUFADBgMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZyYW5jaXNjbzEQMA4GA1UEChMHSmFua3lDbzESMBAGA1UEAxMJbG9jYWxob3N0MB4XDTE0MDMxMjE5NDYzM1oXDTI3MTExOTE5NDYzM1owYDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBGcmFuY2lzY28xEDAOBgNVBAoTB0phbmt5Q28xEjAQBgNVBAMTCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMGvJpRTTasRUSPqcbqCG+ZnTAurnu0vVpIG9lzExnh11o/BGmzu7lB+yLHcEdwrKBBmpepDBPCYxpVajvuEhZdKFx/Fdy6j5mH3rrW0Bh/zd36CoUNjbbhHyTjeM7FN2yF3u9lcyubuvOzr3B3gX66IwJlU46+wzcQVhSOlMk2tXR+fIKQExFrOuK9tbX3JIBUqItpI+HnAow509CnM134svw8PTFLkR6/CcMqnDfDK1m993PyoC1Y+N4X9XkhSmEQoAlAHPI5LHrvuujM13nvtoVYvKYoj7ScgumkpWNEvX652LfXOnKYlkB8ZybuxmFfIkzedQrbJsyOhfL03cMECAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAeHwzqwnzGEkxjzSD47imXaTqtYyETZow7XwBc0ZaFS50qRFJUgKTAmKS1xQBP/qHpStsROT35DUxJAE6NY1Kbq3ZbCuhGoSlY0L7VzVT5tpu4EY8+Dq/u2EjRmmhoL7UkskvIZ2n1DdERtd+YUMTeqYl9co43csZwDno/IKomeN5qaPc39IZjikJ+nUC6kPFKeu/3j9rgHNlRtocI6S1FdtFz9OZMQlpr0JbUt2T3xS/YoQJn6coDmJL5GTiiKM6cOe+Ur1VwzS1JEDbSS2TWWhzq8ojLdrotYLGd9JOsoQhElmz+tMfCFQUFLExinPAyy7YHlSiVX13QH2XTu/iQQ=="
+	if od.SamlConfig != nil {
+		return od.SamlConfig.SamlCert
+	}
+	return ""
+}
+
+func (od *OrgDomain) PrepareSamlRequest(siteUrl, relayState string) (*saml2.SAMLServiceProvider, error) {
+
+	acs := fmt.Sprintf("%s/%s/domain-sso/%s/%s", siteUrl, "api/v1", od.Id, "complete/saml")
+	issuer := strings.Replace(od.Id.String(), "-", ":", -1)
+	return saml.PrepareRequest(issuer, acs, siteUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
+}
+
+func (od *OrgDomain) BuildSsoUrl(siteUrl, relayState string) (ssoUrl string, err error) {
+
+	sp, err := od.PrepareSamlRequest(siteUrl, od.Id.String())
+	if err != nil {
+		return "", err
+	}
+
+	return sp.BuildAuthURL(od.Id.String())
 }

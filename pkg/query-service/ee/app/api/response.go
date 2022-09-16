@@ -1,11 +1,12 @@
 package api
 
 import (
-	baseapp "go.signoz.io/query-service/app"
-	"go.signoz.io/query-service/ee/model"
 	"net/http"
+
+	baseapp "go.signoz.io/query-service/app"
+	basemodel "go.signoz.io/query-service/model"
 )
 
-func RespondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
-	baseapp.RespondError(w, &apiErr.ApiError, data)
+func RespondError(w http.ResponseWriter, apiErr basemodel.BaseApiError, data interface{}) {
+	baseapp.RespondError(w, apiErr, data)
 }

@@ -145,12 +145,12 @@ type response struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-func RespondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
+func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status:    statusError,
-		ErrorType: apiErr.Typ,
-		Error:     apiErr.Err.Error(),
+		ErrorType: apiErr.Type(),
+		Error:     apiErr.Error(),
 		Data:      data,
 	})
 	if err != nil {
@@ -160,7 +160,7 @@ func RespondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{
 	}
 
 	var code int
-	switch apiErr.Typ {
+	switch apiErr.Type() {
 	case model.ErrorBadData:
 		code = http.StatusBadRequest
 	case model.ErrorExec:
@@ -1054,11 +1054,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{
@@ -1108,11 +1108,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{model.ErrorCanceled, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
 		}
-		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
 	}
 
 	response_data := &model.QueryData{

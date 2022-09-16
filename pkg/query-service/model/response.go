@@ -12,10 +12,34 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+type BaseApiError interface {
+	Type() ErrorType
+	ToError() error
+	Error() string
+	IsNil() bool
+}
+
 type ApiError struct {
 	Typ ErrorType
 	Err error
 }
+
+func (a *ApiError) Type() ErrorType {
+	return a.Typ
+}
+
+func (a *ApiError) ToError() error {
+	return a.Err
+}
+
+func (a *ApiError) Error() string {
+	return a.Err.Error()
+}
+
+func (a *ApiError) IsNil() bool {
+	return a.Err == nil
+}
+
 type ErrorType string
 
 const (
