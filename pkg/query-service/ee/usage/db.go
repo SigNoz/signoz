@@ -22,7 +22,7 @@ type Repo struct {
 	clickhouseConn clickhouse.Conn
 }
 
-// NewUsageRepo initiates a new license repo
+// NewUsageRepo initiates a new usage repo
 func NewUsageRepo(db *sqlx.DB, clickhouseConn clickhouse.Conn) Repo {
 	return Repo{
 		db:             db,
@@ -108,4 +108,21 @@ func (r *Repo) GetSnapshotsNotSynced(ctx context.Context) ([]model.Usage, error)
 	}
 
 	return snapshots, nil
+}
+
+// CheckSnapshotGtCreatedAt checks if there is any snapshot greater than the provided timestamp
+func (r *Repo) CheckSnapshotGtCreatedAt(ctx context.Context, ts time.Time) (bool, error) {
+	snapshots := []model.Usage{}
+
+	query := `SELECT id from usage where created_at > '$1'`
+	err := r.db.SelectContext(ctx, &snapshots, query, ts)
+	if err != nil {
+		return false, err
+	}
+
+	if len(snapshots) > 0 {
+		return true, err
+	}
+
+	return false, err
 }

@@ -17,12 +17,12 @@ import (
 	"go.signoz.io/query-service/utils/encryption"
 )
 
-// validate license every 24 hours
-var validationFrequency = 30 * time.Second
+// collect usage every 24 hours
+var collectionFrequency = 24 * time.Hour
 
 const (
-	MAX_RETRIES            = 2
-	RETRY_INTERVAL_SECONDS = 2 * time.Second
+	MAX_RETRIES            = 3
+	RETRY_INTERVAL_SECONDS = 5 * time.Second
 )
 
 type Manager struct {
@@ -59,21 +59,57 @@ func StartManager(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickho
 	return m, nil
 }
 
-// start loads active license in memory and initiates validator
+// start loads collects and exports any exported snapshot and starts the exporter
 func (lm *Manager) start() error {
-	lm.exportOldSnapshots(context.Background())
+	// export enexported snapshots if any
+	err := lm.exportUnexportedSnapshots(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// collect snapshot if incase it wasn't collect in (t - collectionFrequency)
+	err = lm.CollectCurrentUsage(context.Background())
+	if err != nil {
+		return err
+	}
 
 	go lm.UsageExporter(context.Background())
 
 	return nil
 }
 
-func (lm *Manager) exportOldSnapshots(ctx context.Context) error {
+// CollectCurrentUsage checks if needs to collect usage data
+func (lm *Manager) CollectCurrentUsage(ctx context.Context) error {
+	// check the DB if anything exist  where timestamp > t - collectionFrequency
+	ts := time.Now().Add(-collectionFrequency)
+	alreadyCreated, err := lm.repo.CheckSnapshotGtCreatedAt(ctx, ts)
+	if err != nil {
+		return nil
+	}
+	if !alreadyCreated {
+		zap.S().Info("Collecting current usage")
+		exportError := lm.CollectAndExportUsage(ctx)
+		if exportError != nil {
+			return exportError
+		}
+	} else {
+		zap.S().Info("Skipping current usage collection")
+	}
+	return nil
+}
+
+func (lm *Manager) exportUnexportedSnapshots(ctx context.Context) error {
 	snapshots, err := lm.repo.GetSnapshotsNotSynced(ctx)
 	if err != nil {
 		return err
 	}
 
+	if len(snapshots) <= 0 {
+		zap.S().Info("no unexported snapshots to export, skipping.")
+		return nil
+	}
+
+	zap.S().Info("exporting unexported snapshots")
 	for _, snap := range snapshots {
 		metricsBytes, err := encryption.Decrypt([]byte(snap.ActivationId.String()[:32]), []byte(snap.Snapshot))
 		if err != nil {
@@ -105,21 +141,16 @@ func (lm *Manager) exportOldSnapshots(ctx context.Context) error {
 
 func (lm *Manager) UsageExporter(ctx context.Context) {
 	defer close(lm.terminated)
-	tick := time.NewTicker(validationFrequency)
+	tick := time.NewTicker(collectionFrequency)
 	defer tick.Stop()
 
 	for {
 		select {
 		case <-lm.done:
 			return
-		default:
-			select {
-			case <-lm.done:
-				return
-			case <-tick.C:
-				lm.exportOldSnapshots(ctx)
-				lm.ExportUsage(ctx)
-			}
+		case <-tick.C:
+			lm.exportUnexportedSnapshots(ctx)
+			lm.CollectAndExportUsage(ctx)
 		}
 	}
 }
@@ -131,7 +162,7 @@ type TableSize struct {
 	UncompressedBytes uint64 `ch:"uncompressed_bytes"`
 }
 
-func (lm *Manager) ExportUsage(ctx context.Context) error {
+func (lm *Manager) CollectAndExportUsage(ctx context.Context) error {
 
 	snap, err := lm.GetUsage(ctx)
 	if err != nil {
