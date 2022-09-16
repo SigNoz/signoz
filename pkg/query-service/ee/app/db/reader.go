@@ -23,6 +23,6 @@ func NewQueryBackend(localDB *sqlx.DB, promConfigPath string) *ClickhouseReader 
 	}
 }
 
-func (r *ClickhouseReader) Start() {
-	r.ClickHouseReader.Start()
+func (r *ClickhouseReader) Start(readerReady chan bool) {
+	r.ClickHouseReader.Start(readerReady)
 }

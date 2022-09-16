@@ -5,5 +5,6 @@ export interface MetricRangePayloadProps {
 	data: {
 		result: QueryData[];
 		resultType: string;
+		variables: Record<string, unknown>;
 	};
 }

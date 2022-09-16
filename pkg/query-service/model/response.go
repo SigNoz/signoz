@@ -516,3 +516,7 @@ func (s *ServiceItem) MarshalJSON() ([]byte, error) {
 		Alias: (*Alias)(s),
 	})
 }
+
+type DashboardVar struct {
+	VariableValues []interface{} `json:"variableValues"`
+}

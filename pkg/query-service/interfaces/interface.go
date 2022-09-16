@@ -5,6 +5,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
 	am "go.signoz.io/query-service/integrations/alertManager"
 	"go.signoz.io/query-service/model"
@@ -70,4 +71,8 @@ type Reader interface {
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
+	GetQueryEngine() *promql.Engine
+	GetFanoutStorage() *storage.Storage
+
+	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 }
