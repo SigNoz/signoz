@@ -3,16 +3,18 @@ package license
 import (
 	"context"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"sync/atomic"
 	"time"
+
+	"github.com/jmoiron/sqlx"
+
+	"sync"
 
 	validate "go.signoz.io/query-service/ee/integrations/signozio"
 	"go.signoz.io/query-service/ee/model"
 	basemodel "go.signoz.io/query-service/model"
 	"go.signoz.io/query-service/telemetry"
 	"go.uber.org/zap"
-	"sync"
 )
 
 // validate license every 24 hours
@@ -58,6 +60,11 @@ func StartManager(dbType string, db *sqlx.DB) (*Manager, error) {
 	}
 
 	return m, nil
+}
+
+// GetRepo return the license repo
+func (lm *Manager) GetRepo() *Repo {
+	return lm.repo
 }
 
 // start loads active license in memory and initiates validator

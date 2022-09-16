@@ -2,15 +2,23 @@ package signozio
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/ee/model"
+	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
+	"go.signoz.io/query-service/ee/model"
 )
 
 var C *Client
+
+const (
+	POST             = "POST"
+	APPLICATION_JSON = "application/json"
+)
 
 type Client struct {
 	Prefix string
@@ -34,7 +42,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	}
 
 	reqString, _ := json.Marshal(licenseReq)
-	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", "application/json", bytes.NewBuffer(reqString))
+	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", APPLICATION_JSON, bytes.NewBuffer(reqString))
 
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
@@ -74,7 +82,7 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 	}
 
 	reqString, _ := json.Marshal(validReq)
-	response, err := http.Post(C.Prefix+"/licenses/validate", "application/json", bytes.NewBuffer(reqString))
+	response, err := http.Post(C.Prefix+"/licenses/validate", APPLICATION_JSON, bytes.NewBuffer(reqString))
 
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
@@ -89,12 +97,12 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 
 	switch response.StatusCode {
 	case 200, 201:
-		a := ActivationResponse{}
+		a := ActivationResult{}
 		err = json.Unmarshal(body, &a)
 		if err != nil {
 			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
 		}
-		return &a, nil
+		return a.Data, nil
 	case 400, 401:
 		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))
@@ -103,4 +111,46 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 			"internal error received from license.signoz.io"))
 	}
 
+}
+
+func NewPostRequestWithCtx(ctx context.Context, url string, contentType string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, POST, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", contentType)
+	return req, err
+
+}
+
+// SendUsage reports the usage of signoz to license server
+func SendUsage(ctx context.Context, usage *model.UsagePayload) *model.ApiError {
+	reqString, _ := json.Marshal(usage)
+	req, err := NewPostRequestWithCtx(ctx, C.Prefix+"/usage", APPLICATION_JSON, bytes.NewBuffer(reqString))
+	if err != nil {
+		return model.BadRequest(errors.Wrap(err, "unable to create http request"))
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return model.BadRequest(errors.Wrap(err, "failed to read usage response from license.signoz.io"))
+	}
+
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case 200, 201:
+		return nil
+	case 400, 401:
+		return model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
+			"bad request error received from license.signoz.io"))
+	default:
+		return model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
+			"internal error received from license.signoz.io"))
+	}
 }

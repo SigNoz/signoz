@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
 )
 
