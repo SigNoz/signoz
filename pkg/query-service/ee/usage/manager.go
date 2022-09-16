@@ -30,8 +30,11 @@ type Manager struct {
 
 	licenseRepo *license.Repo
 
+	// end the usage routine, this is important to gracefully
+	// stopping usage reporting and protect in-consistent updates
 	done chan struct{}
 
+	// terminated waits for the UsageExporter go routine to end
 	terminated chan struct{}
 }
 
