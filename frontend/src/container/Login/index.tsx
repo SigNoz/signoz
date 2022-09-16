@@ -1,18 +1,100 @@
-import { Button, Input, notification, Space, Typography } from 'antd';
+import { Button, Input, notification, Space, Tooltip, Typography } from 'antd';
 import loginApi from 'api/user/login';
+import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
 
 const { Title } = Typography;
 
-function Login(): JSX.Element {
+interface LoginProps {
+	jwt: string;
+	refreshJwt: string;
+	userId: string;
+	ssoerror: string;
+}
+
+function Login({
+	jwt,
+	refreshJwt,
+	userId,
+	ssoerror = '',
+}: LoginProps): JSX.Element {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
+
+	const [precheckResult, setPrecheckResult] = useState<PrecheckResultType>({
+		sso: false,
+		ssoUrl: '',
+		canSelfRegister: false,
+		isUser: true,
+	});
+
+	const [precheckInProcess, setPrecheckInProcess] = useState(false);
+	const [precheckComplete, setPrecheckComplete] = useState(false);
+
+	useEffect(() => {
+		async function processJwt(): Promise<void> {
+			if (jwt && jwt !== '') {
+				setIsLoading(true);
+				await afterLogin(userId, jwt, refreshJwt);
+				setIsLoading(false);
+				history.push(ROUTES.APPLICATION);
+			}
+		}
+		processJwt();
+	}, [jwt, refreshJwt, userId]);
+
+	useEffect(() => {
+		if (ssoerror !== '') {
+			notification.error({
+				message: ssoerror,
+			});
+		}
+	}, [ssoerror]);
+
+	const onNextHandler = async (): Promise<void> => {
+		if (!email) {
+			notification.error({
+				message: 'Please enter a valid email address',
+			});
+			return;
+		}
+		setPrecheckInProcess(true);
+		try {
+			const response = await loginPrecheckApi({
+				email,
+			});
+
+			if (response.statusCode === 200) {
+				setPrecheckResult({ ...precheckResult, ...response.payload });
+
+				const { isUser } = response.payload;
+				if (isUser) {
+					setPrecheckComplete(true);
+				} else {
+					notification.error({
+						message:
+							'This account does not exist. To create a new account, contact your admin to get an invite link',
+					});
+				}
+			} else {
+				notification.error({
+					message:
+						'Invalid configuration detected, please contact your administrator',
+				});
+			}
+		} catch (e) {
+			console.log('failed to call precheck Api', e);
+			notification.error({ message: 'Sorry, something went wrong' });
+		}
+		setPrecheckInProcess(false);
+	};
 
 	const onChangeHandler = (
 		setFunc: React.Dispatch<React.SetStateAction<string>>,
@@ -54,6 +136,11 @@ function Login(): JSX.Element {
 		}
 	};
 
+	const renderSAMLAction = (): JSX.Element => {
+		return <a href={precheckResult.ssoUrl}>Login with SSO</a>;
+	};
+
+	const { sso, canSelfRegister } = precheckResult;
 	return (
 		<FormWrapper>
 			<FormContainer onSubmit={onSubmitHandler}>
@@ -71,46 +158,86 @@ function Login(): JSX.Element {
 						disabled={isLoading}
 					/>
 				</ParentContainer>
-				<ParentContainer>
-					<Label htmlFor="Password">Password</Label>
-					<Input.Password
-						required
-						id="currentPassword"
-						onChange={(event): void =>
-							onChangeHandler(setPassword, event.target.value)
-						}
-						disabled={isLoading}
-						value={password}
-					/>
-				</ParentContainer>
+				{precheckComplete && !sso && (
+					<ParentContainer>
+						<Label htmlFor="Password">Password</Label>
+						<Input.Password
+							required
+							id="currentPassword"
+							onChange={(event): void =>
+								onChangeHandler(setPassword, event.target.value)
+							}
+							disabled={isLoading}
+							value={password}
+						/>
+						<Tooltip title="Ask your admin to reset your password and send you a new invite link">
+							<Typography.Link>Forgot password?</Typography.Link>
+						</Tooltip>
+					</ParentContainer>
+				)}
 				<Space
 					style={{ marginTop: '1.3125rem' }}
 					align="start"
 					direction="vertical"
 					size={20}
 				>
-					<Button
-						disabled={isLoading}
-						loading={isLoading}
-						type="primary"
-						htmlType="submit"
-						data-attr="signup"
-					>
-						Login
-					</Button>
-					<Typography.Link
-						onClick={(): void => {
-							history.push(ROUTES.SIGN_UP);
-						}}
-						style={{ fontWeight: 700 }}
-					>
-						Create an account
-					</Typography.Link>
+					{!precheckComplete && (
+						<Button
+							disabled={precheckInProcess}
+							loading={precheckInProcess}
+							type="primary"
+							onClick={onNextHandler}
+						>
+							Next
+						</Button>
+					)}
+					{precheckComplete && !sso && (
+						<Button
+							disabled={isLoading}
+							loading={isLoading}
+							type="primary"
+							htmlType="submit"
+							data-attr="signup"
+						>
+							Login
+						</Button>
+					)}
 
-					<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-						If you have forgotten you password, ask your admin to reset password and
-						send you a new invite link
-					</Typography.Paragraph>
+					{precheckComplete && sso && renderSAMLAction()}
+
+					{!canSelfRegister && (
+						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
+							Don&#39;t have an account? Contact your admin to send you an invite link.
+						</Typography.Paragraph>
+					)}
+
+					{!canSelfRegister && (
+						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
+							If you are setting up SigNoz for the first time,{' '}
+							<Typography.Link
+								onClick={(): void => {
+									history.push(ROUTES.SIGN_UP);
+								}}
+								style={{ fontWeight: 700 }}
+							>
+								Create an account
+							</Typography.Link>
+						</Typography.Paragraph>
+					)}
+
+					{canSelfRegister && (
+						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
+							If you are admin,{' '}
+							<Typography.Link
+								onClick={(): void => {
+									history.push(ROUTES.SIGN_UP);
+								}}
+								style={{ fontWeight: 700 }}
+							>
+								Create an account
+							</Typography.Link>
+						</Typography.Paragraph>
+					)}
 				</Space>
 			</FormContainer>
 		</FormWrapper>
