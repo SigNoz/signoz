@@ -13,7 +13,7 @@ WORKDIR /frontend
 COPY package.json ./
 
 # Install the dependencies and make the folder
-RUN CI=1 yarn install 
+RUN CI=1 yarn install
 
 COPY . .
 

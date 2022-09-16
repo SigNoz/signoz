@@ -16,6 +16,7 @@ require (
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/oklog/oklog v0.3.2
 	github.com/pkg/errors v0.9.1
+	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
 	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rs/cors v1.7.0

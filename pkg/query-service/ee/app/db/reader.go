@@ -24,5 +24,7 @@ func NewQueryBackend(localDB *sqlx.DB, promConfigPath string) *ClickhouseReader 
 }
 
 func (r *ClickhouseReader) Start() {
-	r.ClickHouseReader.Start()
+	readerReady := make(chan bool)
+	r.ClickHouseReader.Start(readerReady)
+	<-readerReady
 }

@@ -3,6 +3,8 @@ package promql
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/go-kit/log"
 	pmodel "github.com/prometheus/common/model"
 	plog "github.com/prometheus/common/promlog"
@@ -11,7 +13,7 @@ import (
 	pql "github.com/prometheus/prometheus/promql"
 	pstorage "github.com/prometheus/prometheus/storage"
 	premote "github.com/prometheus/prometheus/storage/remote"
-	"time"
+	"go.signoz.io/query-service/interfaces"
 )
 
 type PqlEngine struct {
@@ -27,6 +29,13 @@ func FromConfigPath(promConfigPath string) (*PqlEngine, error) {
 	}
 
 	return NewPqlEngine(c)
+}
+
+func FromReader(ch interfaces.Reader) (*PqlEngine, error) {
+	return &PqlEngine{
+		engine:        ch.GetQueryEngine(),
+		fanoutStorage: *ch.GetFanoutStorage(),
+	}, nil
 }
 
 func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
