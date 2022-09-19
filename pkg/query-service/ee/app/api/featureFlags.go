@@ -8,7 +8,3 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet := ah.FF().GetFeatureFlags()
 	ah.Respond(w, featureSet)
 }
-
-func (ah *APIHandler) CheckFeature(f string) error {
-	return ah.FF().CheckFeature(f)
-}

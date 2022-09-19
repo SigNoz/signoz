@@ -5,36 +5,47 @@ import (
 )
 
 type ApiError struct {
-	basemodel.ApiError
+	Typ basemodel.ErrorType
+	Err error
+}
+
+func (a *ApiError) Type() basemodel.ErrorType {
+	return a.Typ
+}
+
+func (a *ApiError) ToError() error {
+	return a.Err
+}
+
+func (a *ApiError) Error() string {
+	return a.Err.Error()
+}
+
+func (a *ApiError) IsNil() bool {
+	return a == nil || a.Err == nil
 }
 
 // NewApiError returns a ApiError object of given type
 func NewApiError(typ basemodel.ErrorType, err error) *ApiError {
 	return &ApiError{
-		basemodel.ApiError{
-			Typ: typ,
-			Err: err,
-		},
+		Typ: typ,
+		Err: err,
 	}
 }
 
 // BadRequest returns a ApiError object of bad request
 func BadRequest(err error) *ApiError {
 	return &ApiError{
-		basemodel.ApiError{
-			Typ: basemodel.ErrorBadData,
-			Err: err,
-		},
+		Typ: basemodel.ErrorBadData,
+		Err: err,
 	}
 }
 
 // InternalError returns a ApiError object of internal type
 func InternalError(err error) *ApiError {
 	return &ApiError{
-		basemodel.ApiError{
-			Typ: basemodel.ErrorInternal,
-			Err: err,
-		},
+		Typ: basemodel.ErrorInternal,
+		Err: err,
 	}
 }
 

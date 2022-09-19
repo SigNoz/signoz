@@ -161,7 +161,7 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 
 		lm.mutex.Unlock()
 	}()
-	fmt.Println("lm.activeLicense:", lm.activeLicense)
+
 	response, apiError := validate.ValidateLicense(lm.activeLicense.ActivationId)
 	if apiError != nil {
 		zap.S().Errorf("failed to validate license", apiError)

@@ -26,10 +26,10 @@ const (
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH = "Number of Services V2"
 	TELEMETRY_EVENT_HEART_BEAT            = "Heart Beat"
 	TELEMETRY_EVENT_ORG_SETTINGS          = "Org Settings"
+	DEFAULT_SAMPLING                      = 0.1
 	TELEMETRY_LICENSE_CHECK_FAILED        = "License Check Failed"
 	TELEMETRY_LICENSE_UPDATED             = "License Updated"
 	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
-	DEFAULT_SAMPLING                      = 0.1
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"

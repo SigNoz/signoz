@@ -62,6 +62,11 @@ func (ah *APIHandler) AppDao() dao.ModelDao {
 	return ah.opts.AppDao
 }
 
+func (ah *APIHandler) CheckFeature(f string) bool {
+	err := ah.FF().CheckFeature(f)
+	return err == nil
+}
+
 // RegisterRoutes registers routes for this handler on the given router
 func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	// note: add ee override methods first
@@ -84,7 +89,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		Methods(http.MethodGet)
 
 	// paid plans specific routes
-	router.HandleFunc("/api/v1/domains-sso/{domain_id}/complete/saml",
+	router.HandleFunc("/api/v1/complete/saml",
 		baseapp.OpenAccess(ah.ReceiveSAML)).
 		Methods(http.MethodPost)
 

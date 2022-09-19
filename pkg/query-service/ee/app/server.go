@@ -84,18 +84,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB.SetMaxOpenConns(10)
+	readerReady := make(chan bool)
 
 	var reader interfaces.QueryBackend
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		qb := db.NewQueryBackend(localDB, serverOptions.PromConfigPath)
-		go qb.Start()
+		go qb.Start(readerReady)
 		reader = qb
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
+	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath,
 		baseconst.GetAlertManagerApiPrefix(),
 		serverOptions.RuleRepoURL,

@@ -1,13 +1,12 @@
 package constants
 
 import (
-	"fmt"
 	"os"
 )
 
 const (
-	DefaultSAMLHost = "http://localhost:8080"
 	DefaultSiteURL  = "https://localhost:3301"
+	LicenseSignozIo = "http://localhost:9682/api/v1"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {
@@ -19,14 +18,19 @@ func GetOrDefaultEnv(key string, fallback string) string {
 }
 
 // constant functions that override env vars
-func GetSiteURL() string {
+
+// GetDefaultSiteURL returns default site url, primarily
+// used to send saml request and allowing backend to
+// handle http redirect
+func GetDefaultSiteURL() string {
 	return GetOrDefaultEnv("SIGNOZ_SITE_URL", DefaultSiteURL)
 }
 
-func GetSAMLHost() string {
-	return GetOrDefaultEnv("SIGNOZ_SAML_HOST", DefaultSAMLHost)
-}
-
-func GetSAMLRedirectURL() string {
-	return fmt.Sprintf("%s%s", GetSiteURL(), "/login")
+// GetDefaultSamlHost overrides SAML host to change default
+// listening host attached to saml request. this host is
+// used by IdP to send SAML response. This is usually
+// site url in presence of proxy (e.g ngnix) but can be
+// altered for dev purposes
+func GetDefaultSamlHost() string {
+	return GetOrDefaultEnv("SIGNOZ_SAML_HOST", GetDefaultSiteURL())
 }

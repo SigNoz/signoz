@@ -5,135 +5,189 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/google/uuid"
 	baseauth "go.signoz.io/query-service/auth"
 	"go.signoz.io/query-service/ee/constants"
 	"go.signoz.io/query-service/ee/model"
-	"go.signoz.io/query-service/ee/saml"
+	basemodel "go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
-// methods that use user authentication
-// precheckLogin checks if SSO or SAML is available, the check happens
-// when user enters email address in login screen.
-func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
+// precheckLogin enables browser login page to display appropriate
+// login methods
+func (ah *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 
-	// todo(amol): validate email with org domain
-	// email := r.URL.Query().Get("email")
+	email := r.URL.Query().Get("email")
 
-	// path := r.URL.Query().Get("path")
+	type precheckResponse struct {
+		SSO             bool   `json:"sso"`
+		SsoUrl          string `json:"ssoUrl"`
+		CanSelfRegister bool   `json:"canSelfRegister"`
+		IsUser          bool   `json:"isUser"`
+	}
 
-	// type precheckLoginResponse struct {
-	// 	SSOEnabled   bool   `json:"ssoEnabled"`
-	// 	SAMLEnabled  bool   `json:"samlEnabled"`
-	// 	SAMLLoginUrl string `json:"samlLoginUrl"`
-	// }
+	// assume user is valid unless proven otherwise
+	resp := precheckResponse{IsUser: true, CanSelfRegister: false}
 
-	// var org *model.Organization
-	// var apiError *model.ApiError
+	// check if email is a valid user
+	userPayload, apierr := ah.AppDao().GetUserByEmail(ctx, email)
+	if apierr != nil {
+		RespondError(w, apierr, &resp)
+		return
+	}
 
-	// if !aH.IsMultiOrgAvailable {
-	// 	org, apiError = aH.relationalDB.GetSingleOrg(context.Background())
-	// 	if apiError != nil {
-	// 		zap.S().Debugf("[precheckLogin] failed to fetch organization: %v", apiError)
-	// 		RespondError(w, apiError, nil)
-	// 		return
-	// 	}
-	// } else {
-	// 	// todo(amol): read email address from request and determine org using domain
-	// }
+	if userPayload == nil {
+		resp.IsUser = false
+	}
 
-	// // todo(amol) just responding dummy data for now
-	// precheckResp := precheckLoginResponse{
-	// 	SSOEnabled:  org.IsSSOEnabled(),
-	// 	SAMLEnabled: org.IsSAMLEnabled(),
-	// }
+	if ah.CheckFeature(model.SSO) && resp.IsUser {
 
-	// if org.IsSAMLAvailable() {
-	// 	loginURL, err := saml.BuildLoginURLWithOrg(org, path)
-	// 	if err != nil {
-	// 		RespondError(w, &model.ApiError{
-	// 			Typ: model.ErrorInternal,
-	// 			Err: err,
-	// 		}, nil)
-	// 		return
-	// 	}
-	// 	precheckResp.SAMLLoginUrl = loginURL
-	// }
+		// find domain from email
+		orgDomain, apierr := ah.AppDao().GetDomainByEmail(ctx, email)
+		if apierr != nil {
+			zap.S().Errorf("failed to get org domain during loginPrecheck()", apierr.Err)
+			RespondError(w, apierr, &resp)
+			return
+		}
+		fmt.Println("orgDomain:", orgDomain)
+		if orgDomain != nil && orgDomain.SsoEnabled {
+			// saml is enabled for this domain, lets prepare sso url
+			org, apierr := ah.AppDao().GetOrg(ctx, orgDomain.OrgId)
 
-	// aH.WriteJSON(w, r, precheckResp)
+			if apierr != nil {
+				zap.S().Errorf("failed to get org when preparing SSO url", *apierr)
+				RespondError(w, model.InternalError(fmt.Errorf("failed to prepare sso request")), &resp)
+				return
+			}
+
+			siteUrl := org.GetSiteURL()
+			if siteUrl == "" {
+				siteUrl = constants.GetDefaultSiteURL()
+			}
+
+			var err error
+			resp.SsoUrl, err = orgDomain.BuildSsoUrl(siteUrl, "")
+
+			if err != nil {
+				zap.S().Errorf("failed to prepare saml request for domain", zap.String("domain", orgDomain.Name), err)
+				RespondError(w, model.InternalError(err), &resp)
+				return
+			}
+
+			// set SSO to true, as the url is generated correctly
+			resp.SSO = true
+		}
+	}
+
+	ah.Respond(w, &resp)
 }
 
 func (ah *APIHandler) ReceiveSAML(w http.ResponseWriter, r *http.Request) {
+	redirectUri := constants.GetDefaultSiteURL() + "/login"
+	samlHost := constants.GetDefaultSamlHost()
 
-	domainID := mux.Vars(r)["domain_id"]
-	redirectUri := constants.GetSAMLRedirectURL()
+	var apierr basemodel.BaseApiError
+	var nextPage string
 
-	// get org
-	domain, apiError := ah.AppDao().GetDomain(context.Background(), domainID)
-	if apiError != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to fetch organization (%s): %v", domainID, apiError)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to identify user organization, please contact your administrator"), 301)
+	redirectOnError := func() {
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "Failed to login"), http.StatusMovedPermanently)
+	}
+
+	if !ah.CheckFeature(model.SSO) {
+		zap.S().Errorf("[ReceiveSAML] sso requested but feature unavailable %s in org domain %s", model.SSO)
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return
 	}
 
-	if err := ah.CheckFeature(model.SSO); err != nil {
-		zap.S().Errorf("[ReceiveSAML] feature unavailable %s in org %s", model.SAML, domainID)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), 301)
-		return
-	}
-
-	sp, err := saml.PrepRequestWithOrg(domain, "")
+	err := r.ParseForm()
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to prepare saml request for organization (%s): %v", domainID, err)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to send request to SSO, please contact your administrator"), 301)
+		zap.S().Errorf("[ReceiveSAML] failed to process response - invalid response from IDP", err, r)
+		redirectOnError()
 		return
 	}
 
-	err = r.ParseForm()
+	relayState := r.FormValue("RelayState")
+	zap.S().Debug("[ReceiveML] relay state", zap.String("relayState", relayState))
+
+	if relayState == "" {
+		zap.S().Errorf("[ReceiveSAML] failed to process response - invalid response from IDP", err, r)
+		redirectOnError()
+		return
+	}
+
+	domainIdStr := relayState
+	domainId, err := uuid.Parse(domainIdStr)
 	if err != nil {
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to authenticate with the SSO provider"), 301)
+		zap.S().Errorf("[ReceiveSAML] failed to process request- failed to parse domain id ifrom relay", zap.Error(err))
+		redirectOnError()
+		return
+	}
+	ctx := context.Background()
+
+	domain, apierr := ah.AppDao().GetDomain(ctx, domainId)
+	if !apierr.IsNil() {
+		zap.S().Errorf("[ReceiveSAML] failed to process request- invalid domain", domainIdStr, zap.Error(apierr))
+		redirectOnError()
+		return
+	}
+
+	sp, err := domain.PrepareSamlRequest(samlHost, relayState)
+	if err != nil {
+		zap.S().Errorf("[ReceiveSAML] failed to prepare saml request for domain (%s): %v", domainId, err)
+		redirectOnError()
 		return
 	}
 
 	assertionInfo, err := sp.RetrieveAssertionInfo(r.FormValue("SAMLResponse"))
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to retrieve assertion info from  saml response for organization (%s): %v", domainID, err)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "user not found, please contact your administrator"), 301)
+		zap.S().Errorf("[ReceiveSAML] failed to retrieve assertion info from  saml response for organization (%s): %v", domainId, err)
+		redirectOnError()
 		return
 	}
 
 	if assertionInfo.WarningInfo.InvalidTime {
-		zap.S().Errorf("[ReceiveSAML] expired saml response for organization (%s): %v", domainID, err)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "saml response expired, please contact your administrator"), 301)
+		zap.S().Errorf("[ReceiveSAML] expired saml response for organization (%s): %v", domainId, err)
+		redirectOnError()
 		return
 	}
 
 	if assertionInfo.WarningInfo.NotInAudience {
-		zap.S().Errorf("[ReceiveSAML] NotInAudience error for orgID: %s", domainID)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "this app does not have accesss to SSO provider login"), 301)
+		zap.S().Errorf("[ReceiveSAML] NotInAudience error for orgID: %s", domainId)
+		redirectOnError()
 		return
 	}
 
 	email := assertionInfo.NameID
-	firstName := assertionInfo.Values.Get("FirstName")
-	lastName := assertionInfo.Values.Get("LastName")
 
-	userPayload, err := ah.AppDao().FetchOrRegisterSAMLUser(email, firstName, lastName)
-	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to find or register a new user for email %s and org %s", email, domainID)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to authenticate, please contact your administrator"), 301)
+	org, apierr := ah.AppDao().GetOrg(ctx, domain.OrgId)
+
+	if !apierr.IsNil() {
+		zap.S().Errorf("failed to get org while completing saml request", zap.Error(apierr))
+		redirectOnError()
+		return
+	}
+
+	if org.GetSiteURL() != "" {
+		redirectUri = org.GetSiteURL()
+	}
+
+	userPayload, baseapierr := ah.AppDao().GetUserByEmail(ctx, email)
+	if baseapierr != nil {
+		zap.S().Errorf("[ReceiveSAML] failed to find or register a new user for email %s and org %s", email, domainId, zap.Error(baseapierr.Err))
+		redirectOnError()
 		return
 	}
 
 	tokenStore, err := baseauth.GenerateJWTForUser(&userPayload.User)
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to generate access token for email %s and org %s", email, domainID)
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login, please contact your administrator"), 301)
+		zap.S().Errorf("[ReceiveSAML] failed to generate access token for email %s and org %s", email, domainId, zap.Error(err))
+		redirectOnError()
 		return
 	}
-	userID := userPayload.User.Id
-	nextPage := fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s", redirectUri, tokenStore.AccessJwt, userID, tokenStore.RefreshJwt)
 
-	http.Redirect(w, r, nextPage, 301)
+	userID := userPayload.User.Id
+	nextPage = fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s", redirectUri, tokenStore.AccessJwt, userID, tokenStore.RefreshJwt)
+
+	http.Redirect(w, r, nextPage, http.StatusMovedPermanently)
 }

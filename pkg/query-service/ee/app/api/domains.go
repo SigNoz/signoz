@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.signoz.io/query-service/ee/model"
 )
@@ -63,7 +65,13 @@ func (ah *APIHandler) putDomain(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) deleteDomain(w http.ResponseWriter, r *http.Request) {
-	domainId := mux.Vars(r)["id"]
+	domainIdStr := mux.Vars(r)["id"]
+	domainId, err := uuid.Parse(domainIdStr)
+	if err != nil {
+		RespondError(w, model.BadRequest(fmt.Errorf("invalid domain id")), nil)
+		return
+	}
+
 	apierr := ah.AppDao().DeleteDomain(context.Background(), domainId)
 	if apierr != nil {
 		RespondError(w, apierr, nil)

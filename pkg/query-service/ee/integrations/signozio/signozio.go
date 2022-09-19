@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"go.signoz.io/query-service/ee/constants"
 	"go.signoz.io/query-service/ee/model"
 )
 
@@ -26,7 +27,7 @@ type Client struct {
 
 func New() *Client {
 	return &Client{
-		Prefix: "http://localhost:9682/api/v1", //todo(amol): replace this before prod "https://license.signoz.io/api/v1",
+		Prefix: constants.LicenseSignozIo, //todo(amol): replace this before prod "https://license.signoz.io/api/v1",
 	}
 }
 

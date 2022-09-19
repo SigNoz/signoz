@@ -147,12 +147,12 @@ type response struct {
 	Error     string          `json:"error,omitempty"`
 }
 
-func RespondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{}) {
+func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	b, err := json.Marshal(&response{
 		Status:    statusError,
-		ErrorType: apiErr.Typ,
-		Error:     apiErr.Err.Error(),
+		ErrorType: apiErr.Type(),
+		Error:     apiErr.Error(),
 		Data:      data,
 	})
 	if err != nil {
@@ -162,7 +162,7 @@ func RespondError(w http.ResponseWriter, apiErr *model.ApiError, data interface{
 	}
 
 	var code int
-	switch apiErr.Typ {
+	switch apiErr.Type() {
 	case model.ErrorBadData:
 		code = http.StatusBadRequest
 	case model.ErrorExec:
