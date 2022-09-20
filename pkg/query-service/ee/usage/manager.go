@@ -87,7 +87,7 @@ func (lm *Manager) CollectCurrentUsage(ctx context.Context) error {
 	ts := time.Now().Add(-collectionFrequency)
 	alreadyCreated, err := lm.repo.CheckSnapshotGtCreatedAt(ctx, ts)
 	if err != nil {
-		return nil
+		return err
 	}
 	if !alreadyCreated {
 		zap.S().Info("Collecting current usage")
