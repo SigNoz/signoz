@@ -62,7 +62,7 @@ func (r *Repo) InsertSnapshot(ctx context.Context, usage model.UsagePayload) (*m
 		string(encryptedSnapshot),
 	)
 	if err != nil {
-		zap.S().Errorf("error inserting usage data: ", zap.Error(err))
+		zap.S().Errorf("error inserting usage data: %v", zap.Error(err))
 		return nil, fmt.Errorf("failed to insert usage in db: %v", err)
 	}
 	return &usage, nil
