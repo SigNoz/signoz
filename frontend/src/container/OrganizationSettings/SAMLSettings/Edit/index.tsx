@@ -1,6 +1,6 @@
 import { Form, Input, notification } from 'antd';
 import { FormInstance } from 'antd/es/form/Form';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 function EditSaml({
@@ -18,20 +18,12 @@ function EditSaml({
 		});
 	}, [form, t]);
 
-	useEffect(() => {
-		form.setFieldsValue({
-			certificate,
-			entityId,
-			url,
-		});
-	}, [certificate, entityId, form, url]);
-
 	return (
 		<Form
 			name="basic"
 			labelCol={{ span: 8 }}
 			wrapperCol={{ span: 16 }}
-			initialValues={{ remember: true }}
+			initialValues={{ certificate, entityId, url }}
 			onFinishFailed={onFinishFailed}
 			autoComplete="off"
 			form={form}
@@ -52,7 +44,11 @@ function EditSaml({
 				<Input />
 			</Form.Item>
 
-			<Form.Item label="SAML X.509 Certificate" name="certificate">
+			<Form.Item
+				rules={[{ required: true, message: 'Please input your Certificate!' }]}
+				label="SAML X.509 Certificate"
+				name="certificate"
+			>
 				<Input.TextArea />
 			</Form.Item>
 		</Form>
