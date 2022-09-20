@@ -160,7 +160,11 @@ function SAMLSettings(): JSX.Element {
 			render: (_, record: SAMLDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
-						<Button onClick={onOpenHandler} type="link" icon={<LockTwoTone />}>
+						<Button
+							onClick={onOpenHandler(setIsSettingsOpen)}
+							type="link"
+							icon={<LockTwoTone />}
+						>
 							Update SSO configuration
 						</Button>
 					);
@@ -285,7 +289,11 @@ function SAMLSettings(): JSX.Element {
 							ns: 'organizationsettings',
 						})}
 					</Typography.Title>
-					<Button onClick={onOpenHandler} type="primary" icon={<PlusOutlined />}>
+					<Button
+						onClick={onOpenHandler(setIsSettingsOpen)}
+						type="primary"
+						icon={<PlusOutlined />}
+					>
 						Add Domains
 					</Button>
 				</Container>
