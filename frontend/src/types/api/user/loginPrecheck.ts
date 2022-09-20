@@ -1,7 +1,7 @@
 export interface PayloadProps {
 	sso: boolean;
-	ssoUrl: string;
-	canSelfRegister: boolean;
+	ssoUrl?: string;
+	canSelfRegister?: boolean;
 	isUser: boolean;
 }
 

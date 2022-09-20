@@ -12,6 +12,7 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
+import * as loginPrecheck from 'types/api/user/loginPrecheck';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
@@ -20,6 +21,11 @@ const { Title } = Typography;
 
 function SignUp({ version }: SignUpProps): JSX.Element {
 	const [loading, setLoading] = useState(false);
+
+	const [precheck, setPrecheck] = useState<loginPrecheck.PayloadProps>({
+		sso: false,
+		isUser: false,
+	});
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
@@ -38,6 +44,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
+	const defaultError = 'Something went wrong';
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>
@@ -54,12 +61,28 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.data.payload
 		) {
 			const responseDetails = getInviteDetailsResponse.data.payload;
+			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
 			setFirstName(responseDetails.name);
 			setEmail(responseDetails.email);
 			setOrganizationName(responseDetails.organization);
 			setIsDetailsDisable(true);
 		}
-	}, [getInviteDetailsResponse?.data?.payload, getInviteDetailsResponse.status]);
+		if (
+			getInviteDetailsResponse.status === 'success' &&
+			getInviteDetailsResponse.data?.error
+		) {
+			console.log('getInviteDetailsResponse:', getInviteDetailsResponse);
+			const { error } = getInviteDetailsResponse.data;
+			notification.error({
+				message: error,
+			});
+		}
+	}, [
+		getInviteDetailsResponse.data?.payload,
+		getInviteDetailsResponse.data?.error,
+		getInviteDetailsResponse.status,
+		getInviteDetailsResponse,
+	]);
 
 	const setState = (
 		value: string,
@@ -68,7 +91,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setFunction(value);
 	};
 
-	const defaultError = 'Something went wrong';
 	const isPreferenceVisible = token === null;
 
 	const commonHandler = async (
@@ -133,6 +155,54 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			});
 		}
 	};
+	const handleSubmitSSO = async (
+		e: React.FormEvent<HTMLFormElement>,
+	): Promise<void> => {
+		if (!params.get('token')) {
+			notification.error({
+				message:
+					'Invite token is required for signup, please request one from your admin',
+			});
+			return;
+		}
+		setLoading(true);
+
+		try {
+			e.preventDefault();
+			const response = await signUpApi({
+				email,
+				name: firstName,
+				orgName: organizationName,
+				password,
+				token: params.get('token') || undefined,
+			});
+			console.log('response.payload:', response.payload);
+			if (response.statusCode === 200) {
+				if (response.payload?.sso) {
+					if (response.payload?.ssoUrl) {
+						console.log('insso url:');
+						window.location.href = response.payload?.ssoUrl;
+					} else {
+						notification.error({
+							message: 'Signup completed but failed to initiate login',
+						});
+						// take user to login page as there is nothing to do here
+						history.push(ROUTES.LOGIN);
+					}
+				}
+			} else {
+				notification.error({
+					message: response.error || defaultError,
+				});
+			}
+		} catch (error) {
+			notification.error({
+				message: defaultError,
+			});
+		}
+
+		setLoading(false);
+	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
 		(async (): Promise<void> => {
@@ -195,7 +265,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
-				<form onSubmit={handleSubmit}>
+				<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
 					<Title level={4}>Create your account</Title>
 					<div>
 						<Label htmlFor="signupEmail">Email</Label>
@@ -242,53 +312,57 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							disabled={isDetailsDisable}
 						/>
 					</div>
-					<div>
-						<Label htmlFor="Password">Password</Label>
-						<Input.Password
-							value={password}
-							onChange={(e): void => {
-								setState(e.target.value, setPassword);
-							}}
-							required
-							id="currentPassword"
-						/>
-					</div>
-					<div>
-						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
-						<Input.Password
-							value={confirmPassword}
-							onChange={(e): void => {
-								const updateValue = e.target.value;
-								setState(updateValue, setConfirmPassword);
-							}}
-							required
-							id="confirmPassword"
-						/>
+					{!precheck.sso && (
+						<div>
+							<Label htmlFor="Password">Password</Label>
+							<Input.Password
+								value={password}
+								onChange={(e): void => {
+									setState(e.target.value, setPassword);
+								}}
+								required
+								id="currentPassword"
+							/>
+						</div>
+					)}
+					{!precheck.sso && (
+						<div>
+							<Label htmlFor="ConfirmPassword">Confirm Password</Label>
+							<Input.Password
+								value={confirmPassword}
+								onChange={(e): void => {
+									const updateValue = e.target.value;
+									setState(updateValue, setConfirmPassword);
+								}}
+								required
+								id="confirmPassword"
+							/>
 
-						{confirmPasswordError && (
-							<Typography.Paragraph
-								italic
-								id="password-confirm-error"
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
-								}}
-							>
-								Passwords don’t match. Please try again
-							</Typography.Paragraph>
-						)}
-						{isPasswordPolicyError && (
-							<Typography.Paragraph
-								italic
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
-								}}
-							>
-								{isPasswordNotValidMessage}
-							</Typography.Paragraph>
-						)}
-					</div>
+							{confirmPasswordError && (
+								<Typography.Paragraph
+									italic
+									id="password-confirm-error"
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									Passwords don’t match. Please try again
+								</Typography.Paragraph>
+							)}
+							{isPasswordPolicyError && (
+								<Typography.Paragraph
+									italic
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									{isPasswordNotValidMessage}
+								</Typography.Paragraph>
+							)}
+						</div>
+					)}
 
 					{isPreferenceVisible && (
 						<>
@@ -339,8 +413,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								loading ||
 								!email ||
 								!organizationName ||
-								!password ||
-								!confirmPassword ||
+								(!precheck.sso && (!password || !confirmPassword)) ||
 								!firstName ||
 								confirmPasswordError ||
 								isPasswordPolicyError

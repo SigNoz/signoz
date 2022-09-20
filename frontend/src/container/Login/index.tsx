@@ -13,16 +13,18 @@ const { Title } = Typography;
 
 interface LoginProps {
 	jwt: string;
-	refreshJwt: string;
+	refreshjwt: string;
 	userId: string;
 	ssoerror: string;
+	withPassword: string;
 }
 
 function Login({
 	jwt,
-	refreshJwt,
+	refreshjwt,
 	userId,
 	ssoerror = '',
+	withPassword = '0',
 }: LoginProps): JSX.Element {
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [email, setEmail] = useState<string>('');
@@ -39,21 +41,27 @@ function Login({
 	const [precheckComplete, setPrecheckComplete] = useState(false);
 
 	useEffect(() => {
+		if (withPassword === 'Y') {
+			setPrecheckComplete(true);
+		}
+	}, [withPassword]);
+
+	useEffect(() => {
 		async function processJwt(): Promise<void> {
 			if (jwt && jwt !== '') {
 				setIsLoading(true);
-				await afterLogin(userId, jwt, refreshJwt);
+				await afterLogin(userId, jwt, refreshjwt);
 				setIsLoading(false);
 				history.push(ROUTES.APPLICATION);
 			}
 		}
 		processJwt();
-	}, [jwt, refreshJwt, userId]);
+	}, [jwt, refreshjwt, userId]);
 
 	useEffect(() => {
 		if (ssoerror !== '') {
 			notification.error({
-				message: ssoerror,
+				message: 'sorry, failed to login',
 			});
 		}
 	}, [ssoerror]);
@@ -137,7 +145,29 @@ function Login({
 	};
 
 	const renderSAMLAction = (): JSX.Element => {
-		return <a href={precheckResult.ssoUrl}>Login with SSO</a>;
+		return (
+			<Button
+				type="primary"
+				loading={isLoading}
+				disabled={isLoading}
+				href={precheckResult.ssoUrl}
+			>
+				Login with SSO
+			</Button>
+		);
+	};
+
+	const renderOnSsoError = (): JSX.Element | null => {
+		if (!ssoerror) {
+			return null;
+		}
+
+		return (
+			<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
+				Are you trying to resolve SSO configuration issue?{' '}
+				<a href="/login?password=Y">login with password</a>.
+			</Typography.Paragraph>
+		);
 	};
 
 	const { sso, canSelfRegister } = precheckResult;
@@ -204,6 +234,7 @@ function Login({
 					)}
 
 					{precheckComplete && sso && renderSAMLAction()}
+					{!precheckComplete && ssoerror && renderOnSsoError()}
 
 					{!canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>

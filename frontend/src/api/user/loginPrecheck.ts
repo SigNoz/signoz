@@ -8,7 +8,11 @@ const loginPrecheck = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/loginPrecheck?email=${props.email}`);
+		const response = await axios.get(
+			`/loginPrecheck?email=${props.email}&ref=${encodeURIComponent(
+				window.location.href,
+			)}`,
+		);
 
 		return {
 			statusCode: 200,

@@ -17,9 +17,10 @@ function Login(): JSX.Element {
 
 	const urlQueryParams = useURLQuery();
 	const jwt = urlQueryParams.get('jwt') || '';
-	const refreshJwt = urlQueryParams.get('refreshJwt') || '';
+	const refreshJwt = urlQueryParams.get('refreshjwt') || '';
 	const userId = urlQueryParams.get('usr') || '';
 	const ssoerror = urlQueryParams.get('ssoerror') || '';
+	const withPassword = urlQueryParams.get('password') || '';
 
 	const versionResult = useQuery({
 		queryFn: getUserVersion,
@@ -52,8 +53,9 @@ function Login(): JSX.Element {
 			<LoginContainer
 				ssoerror={ssoerror}
 				jwt={jwt}
-				refreshJwt={refreshJwt}
+				refreshjwt={refreshJwt}
 				userId={userId}
+				withPassword={withPassword}
 			/>
 		</WelcomeLeftContainer>
 	);
