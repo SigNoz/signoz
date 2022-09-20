@@ -29,7 +29,7 @@ const (
 )
 
 type Manager struct {
-	repo *Repo
+	repository *Repository
 
 	licenseRepo *license.Repo
 
@@ -51,7 +51,7 @@ func StartManager(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickho
 	}
 
 	m := &Manager{
-		repo:        &repo,
+		repository:  &repo,
 		licenseRepo: licenseRepo,
 	}
 
@@ -85,7 +85,7 @@ func (lm *Manager) start() error {
 func (lm *Manager) CollectCurrentUsage(ctx context.Context) error {
 	// check the DB if anything exist  where timestamp > t - collectionFrequency
 	ts := time.Now().Add(-collectionFrequency)
-	alreadyCreated, err := lm.repo.CheckSnapshotGtCreatedAt(ctx, ts)
+	alreadyCreated, err := lm.repository.CheckSnapshotGtCreatedAt(ctx, ts)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (lm *Manager) CollectAndStoreUsage(ctx context.Context) error {
 		SnapshotDate: time.Now(),
 	}
 
-	_, err = lm.repo.InsertSnapshot(ctx, payload)
+	_, err = lm.repository.InsertSnapshot(ctx, payload)
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (lm *Manager) GetUsageFromClickHouse(ctx context.Context) (*model.UsageSnap
 			disk_name
 		ORDER BY table
 	`
-	err := lm.repo.clickhouseConn.Select(ctx, &tableSizes, query)
+	err := lm.repository.clickhouseConn.Select(ctx, &tableSizes, query)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (lm *Manager) GetUsageFromClickHouse(ctx context.Context) (*model.UsageSnap
 }
 
 func (lm *Manager) UploadUsage(ctx context.Context) error {
-	snapshots, err := lm.repo.GetSnapshotsNotSynced(ctx)
+	snapshots, err := lm.repository.GetSnapshotsNotSynced(ctx)
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 	for i := 1; i <= MAX_RETRIES; i++ {
 		apiErr := licenseserver.SendUsage(ctx, &payload)
 		if apiErr != nil && i == MAX_RETRIES {
-			err := lm.repo.IncrementFailedRequestCount(ctx, payload.Id)
+			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)
 			if err != nil {
 				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
 				return err
@@ -266,7 +266,7 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 			time.Sleep(RETRY_INTERVAL_SECONDS * time.Duration(i))
 
 			// update the failed request count
-			err := lm.repo.IncrementFailedRequestCount(ctx, payload.Id)
+			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)
 			if err != nil {
 				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
 				return err
@@ -277,7 +277,7 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 	}
 
 	// update the database that it is synced
-	err := lm.repo.MoveToSynced(ctx, payload.Id)
+	err := lm.repository.MoveToSynced(ctx, payload.Id)
 	if err != nil {
 		return err
 	}

@@ -17,20 +17,20 @@ import (
 )
 
 // Repo is usage repo. stores usage snapshot in a secured DB
-type Repo struct {
+type Repository struct {
 	db             *sqlx.DB
 	clickhouseConn clickhouse.Conn
 }
 
 // NewUsageRepo initiates a new usage repo
-func NewUsageRepo(db *sqlx.DB, clickhouseConn clickhouse.Conn) Repo {
-	return Repo{
+func NewUsageRepo(db *sqlx.DB, clickhouseConn clickhouse.Conn) Repository {
+	return Repository{
 		db:             db,
 		clickhouseConn: clickhouseConn,
 	}
 }
 
-func (r *Repo) InitDB(engine string) error {
+func (r *Repository) InitDB(engine string) error {
 	switch engine {
 	case "sqlite3", "sqlite":
 		return sqlite.InitDB(r.db)
@@ -39,7 +39,7 @@ func (r *Repo) InitDB(engine string) error {
 	}
 }
 
-func (r *Repo) InsertSnapshot(ctx context.Context, usage model.UsagePayload) (*model.UsagePayload, error) {
+func (r *Repository) InsertSnapshot(ctx context.Context, usage model.UsagePayload) (*model.UsagePayload, error) {
 
 	snapshotBytes, err := json.Marshal(usage.Metrics)
 	if err != nil {
@@ -68,7 +68,7 @@ func (r *Repo) InsertSnapshot(ctx context.Context, usage model.UsagePayload) (*m
 	return &usage, nil
 }
 
-func (r *Repo) MoveToSynced(ctx context.Context, id uuid.UUID) error {
+func (r *Repository) MoveToSynced(ctx context.Context, id uuid.UUID) error {
 
 	query := `UPDATE usage 
 						SET synced = 'true',
@@ -85,7 +85,7 @@ func (r *Repo) MoveToSynced(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *Repo) IncrementFailedRequestCount(ctx context.Context, id uuid.UUID) error {
+func (r *Repository) IncrementFailedRequestCount(ctx context.Context, id uuid.UUID) error {
 
 	query := `UPDATE usage SET failed_sync_request_count = failed_sync_request_count + 1 WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
@@ -97,7 +97,7 @@ func (r *Repo) IncrementFailedRequestCount(ctx context.Context, id uuid.UUID) er
 	return nil
 }
 
-func (r *Repo) GetSnapshotsNotSynced(ctx context.Context) ([]model.Usage, error) {
+func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) ([]model.Usage, error) {
 	snapshots := []model.Usage{}
 
 	query := `SELECT id,created_at, activation_id, snapshot, failed_sync_request_count from usage where synced!='true' order by created_at asc`
@@ -111,7 +111,7 @@ func (r *Repo) GetSnapshotsNotSynced(ctx context.Context) ([]model.Usage, error)
 }
 
 // CheckSnapshotGtCreatedAt checks if there is any snapshot greater than the provided timestamp
-func (r *Repo) CheckSnapshotGtCreatedAt(ctx context.Context, ts time.Time) (bool, error) {
+func (r *Repository) CheckSnapshotGtCreatedAt(ctx context.Context, ts time.Time) (bool, error) {
 	snapshots := []model.Usage{}
 
 	query := `SELECT id from usage where created_at > '$1'`
