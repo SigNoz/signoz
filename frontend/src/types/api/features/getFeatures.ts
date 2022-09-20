@@ -1,4 +1,3 @@
-
 export interface PayloadProps {
-	[string]: string;
+	[key: string]: string;
 }

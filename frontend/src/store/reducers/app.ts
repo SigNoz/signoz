@@ -10,6 +10,7 @@ import {
 	SWITCH_DARK_MODE,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
+	UPDATE_FEATURE_FLAGS,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
@@ -18,7 +19,6 @@ import {
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
-	UPDATE_FEATURE_FLAGS,
 } from 'types/actions/app';
 import {
 	Organization,
@@ -48,7 +48,7 @@ const InitialValue: InitialValueTypes = {
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
-	featureFlags: '',
+	featureFlags: {},
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	user: getInitialUser(),
@@ -87,7 +87,7 @@ const appReducer = (
 		case UPDATE_FEATURE_FLAGS: {
 			return {
 				...state,
-				featureFlags: action.payload?.data,
+				featureFlags: { ...action.payload },
 			};
 		}
 
