@@ -96,7 +96,7 @@ func (lm *Manager) CollectCurrentUsage(ctx context.Context) error {
 			return exportError
 		}
 	} else {
-		zap.S().Info("Skipping current usage collection")
+		zap.S().Info("Nothing to collect")
 	}
 	return nil
 }
