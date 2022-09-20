@@ -5,14 +5,14 @@ import { FeatureFlag } from 'types/reducer/app';
 
 // type FlagName = valueof FeatureFlag
 const useFeatureFlag = (
-	flagName: string,
+	flagName: string[],
 	domain: keyof FeatureFlag,
-): boolean => {
+): boolean[] => {
 	const allFeatureFlag = useSelector<AppState>(
 		(state) => state.app.features[domain],
 	);
 
-	return _get(allFeatureFlag, flagName, false);
+	return flagName.map((flag) => _get(allFeatureFlag, flag));
 };
 
 export default useFeatureFlag;

@@ -9,5 +9,6 @@
 	"add_another_team_member": "Add another team member",
 	"invite_team_members": "Invite team members",
 	"invite_members": "Invite Members",
-	"pending_invites": "Pending Invites"
+	"pending_invites": "Pending Invites",
+	"authenticated_domains": "Authenticated Domains"
 }

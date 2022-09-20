@@ -1,3 +1,4 @@
+import { PayloadProps as SAMLFeatureFlagPayload } from 'types/api/featureflag/getFeaturesFlags';
 import {
 	Organization,
 	PayloadProps as OrgPayload,
@@ -21,6 +22,7 @@ export const UPDATE_USER_ORG_ROLE = 'UPDATE_USER_ORG_ROLE';
 export const UPDATE_USER = 'UPDATE_USER';
 export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 export const UPDATE_ORG = 'UPDATE_ORG';
+export const UPDATE_FEATURE_FLAGS_SAML = 'UPDATE_FEATURE_FLAGS_SAML';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -110,6 +112,11 @@ export interface UpdateOrg {
 	};
 }
 
+export interface UpdateSAMLFeatureFlag {
+	type: typeof UPDATE_FEATURE_FLAGS_SAML;
+	payload: SAMLFeatureFlagPayload;
+}
+
 export type AppAction =
 	| SwitchDarkMode
 	| LoggedInUser
@@ -122,4 +129,5 @@ export type AppAction =
 	| UpdateUserOrgRole
 	| UpdateUser
 	| UpdateOrgName
-	| UpdateOrg;
+	| UpdateOrg
+	| UpdateSAMLFeatureFlag;

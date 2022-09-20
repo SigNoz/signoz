@@ -10,6 +10,7 @@ import {
 	SWITCH_DARK_MODE,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
+	UPDATE_FEATURE_FLAGS_SAML,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
@@ -200,6 +201,19 @@ const appReducer = (
 			return {
 				...state,
 				org: updatedOrg,
+			};
+		}
+
+		case UPDATE_FEATURE_FLAGS_SAML: {
+			const { features } = state;
+			return {
+				...state,
+				features: {
+					SAML: {
+						...features.SAML,
+						...action.payload,
+					},
+				},
 			};
 		}
 
