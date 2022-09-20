@@ -7,12 +7,12 @@ import (
 )
 
 type UsageSnapshot struct {
-	CurrentLogSizeBytes               uint64 `json:"currentLogSizeBytes"`
-	CurrentLogSizeBytesColdStorage    uint64 `json:"currentLogSizeBytesColdStorage"`
-	CurrentSpansCount                 uint64 `json:"currentSpansCount"`
-	CurrentSpansCountColdStorage      uint64 `json:"currentSpansCountColdStorage"`
-	CurrentTimeseriesCount            uint64 `json:"currentTimeseriesCount"`
-	CurrentTimeseriesCountColdStorage uint64 `json:"currentTimeseriesCountColdStorage"`
+	CurrentLogSizeBytes            uint64 `json:"currentLogSizeBytes"`
+	CurrentLogSizeBytesColdStorage uint64 `json:"currentLogSizeBytesColdStorage"`
+	CurrentSpansCount              uint64 `json:"currentSpansCount"`
+	CurrentSpansCountColdStorage   uint64 `json:"currentSpansCountColdStorage"`
+	CurrentSamplesCount            uint64 `json:"currentSamplesCount"`
+	CurrentSamplesCountColdStorage uint64 `json:"currentSamplesCountColdStorage"`
 }
 
 type UsageBase struct {

@@ -192,9 +192,9 @@ func (lm *Manager) GetUsageFromClickHouse(ctx context.Context) (*model.UsageSnap
 			}
 		case "samples_v2":
 			if val.DiskName == "default" {
-				snap.CurrentTimeseriesCount = val.Rows
+				snap.CurrentSamplesCount = val.Rows
 			} else {
-				snap.CurrentTimeseriesCountColdStorage = val.Rows
+				snap.CurrentSamplesCountColdStorage = val.Rows
 			}
 		case "signoz_index_v2":
 			if val.DiskName == "default" {
@@ -256,10 +256,11 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)
 			if err != nil {
 				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
-				// not returning error here since it is captured in the failed count
+				return err
 			}
 			zap.S().Errorf("retries stopped : ", zap.Error(err))
-			return apiErr.Err
+			// not returning error here since it is captured in the failed count
+			return nil
 		} else if apiErr != nil {
 			// sleeping for exponential backoff
 			zap.S().Errorf("failed to upload snapshot retrying after %d secs : ", RETRY_INTERVAL_SECONDS*time.Duration(i), zap.Error(apiErr.Err))
