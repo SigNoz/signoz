@@ -14,6 +14,9 @@ func (a *ApiError) Type() basemodel.ErrorType {
 }
 
 func (a *ApiError) ToError() error {
+	if a != nil {
+		return a.Err
+	}
 	return a.Err
 }
 

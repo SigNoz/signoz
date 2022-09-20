@@ -83,6 +83,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB.SetMaxOpenConns(10)
+
+	// initiate license manager
+	lm, err := licensepkg.StartManager("sqlite", localDB)
+	if err != nil {
+		return nil, err
+	}
+
+	// set license manager as feature flag provider in dao
+	modelDao.SetFlagProvider(lm)
 	readerReady := make(chan bool)
 
 	var reader interfaces.QueryBackend
@@ -104,11 +113,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		reader,
 		serverOptions.DisableRules)
 
-	if err != nil {
-		return nil, err
-	}
-
-	lm, err := licensepkg.StartManager("sqlite", localDB)
 	if err != nil {
 		return nil, err
 	}

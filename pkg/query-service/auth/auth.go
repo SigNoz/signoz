@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/dao"
 	"go.signoz.io/query-service/model"
+	"go.signoz.io/query-service/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -119,7 +120,7 @@ func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObje
 	}, nil
 }
 
-func validateInvite(ctx context.Context, req *RegisterRequest) (*model.InvitationObject, error) {
+func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.InvitationObject, error) {
 	invitation, err := dao.DB().GetInviteFromEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.Wrap(err.Err, "Failed to read from DB")
@@ -207,65 +208,43 @@ type RegisterRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 	InviteToken string `json:"token"`
+
+	// reference URL to track where the register request is coming from
+	SourceUrl string `json:"sourceUrl"`
 }
 
-// Register registers a new user. For the first register request, it doesn't need an invite token
-// and also the first registration is an enforced ADMIN registration. Every subsequent request will
-// need an invite token to go through.
-func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
+func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, *model.ApiError) {
 
-	zap.S().Debugf("Got a register request for email: %v\n", req.Email)
-
-	// TODO(Ahsan): We should optimize it, shouldn't make an extra DB call everytime to know if
-	// this is the first register request.
-	users, apiErr := dao.DB().GetUsers(ctx)
-	if apiErr != nil {
-		zap.S().Debugf("GetUser failed, err: %v\n", apiErr.Err)
-		return apiErr
+	if req.Email == "" {
+		return nil, model.BadRequest(model.ErrEmailRequired{})
 	}
 
-	var groupName, orgId string
-
-	// If there are no user, then this first user is granted Admin role. Also, an org is created
-	// based on the request. Any other user can't use any other org name, if they do then
-	// registration will fail because of foreign key violation while create user.
-	// TODO(Ahsan): We need to re-work this logic for the case of multi-tenant system.
-	if len(users) == 0 {
-		org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{Name: req.OrgName})
-		if apiErr != nil {
-			zap.S().Debugf("CreateOrg failed, err: %v\n", apiErr.Err)
-			return apiErr
-		}
-		groupName = constants.AdminGroup
-		orgId = org.Id
+	if req.Password == "" {
+		return nil, model.BadRequest(model.ErrPasswordRequired{})
 	}
 
-	if len(users) > 0 {
-		inv, err := validateInvite(ctx, req)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorUnauthorized}
-		}
-		org, apiErr := dao.DB().GetOrgByName(ctx, req.OrgName)
-		if apiErr != nil {
-			zap.S().Debugf("GetOrgByName failed, err: %v\n", apiErr.Err)
-			return apiErr
-		}
+	groupName := constants.AdminGroup
 
-		groupName = inv.Role
-		if org != nil {
-			orgId = org.Id
-		}
+	org, apierr := dao.DB().CreateOrg(ctx,
+		&model.Organization{Name: req.OrgName})
+	if apierr != nil {
+		zap.S().Debugf("CreateOrg failed, err: %v\n", zap.Error(apierr.ToError()))
+		return nil, apierr
 	}
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
 	if apiErr != nil {
 		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
-		return apiErr
+		return nil, apiErr
 	}
 
-	hash, err := passwordHash(req.Password)
+	var hash string
+	var err error
+
+	hash, err = passwordHash(req.Password)
 	if err != nil {
-		return &model.ApiError{Err: err, Typ: model.ErrorUnauthorized}
+		zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
+		return nil, model.InternalError(model.ErrSignupFailed{})
 	}
 
 	user := &model.User{
@@ -276,17 +255,118 @@ func Register(ctx context.Context, req *RegisterRequest) *model.ApiError {
 		CreatedAt:          time.Now().Unix(),
 		ProfilePirctureURL: "", // Currently unused
 		GroupId:            group.Id,
-		OrgId:              orgId,
+		OrgId:              org.Id,
+	}
+
+	return dao.DB().CreateUser(ctx, user)
+}
+
+// RegisterInvitedUser handles registering a invited user
+func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword bool) (*model.User, *model.ApiError) {
+
+	if req.InviteToken == "" {
+		return nil, model.BadRequest(fmt.Errorf("invite token is required"))
+	}
+
+	if !nopassword && req.Password == "" {
+		return nil, model.BadRequest(model.ErrPasswordRequired{})
+	}
+
+	invite, err := ValidateInvite(ctx, req)
+	if err != nil {
+		zap.S().Errorf("failed to validate invite token", err)
+		return nil, model.BadRequest(model.ErrSignupFailed{})
+	}
+
+	// checking if user email already exists, this is defensive but
+	// required as delete invitation and user creation dont happen
+	// in the same transaction at the end of this function
+	userPayload, apierr := dao.DB().GetUserByEmail(ctx, invite.Email)
+	if apierr != nil {
+		zap.S().Debugf("failed to get user by email", apierr.Err)
+		return nil, apierr
+	}
+
+	if userPayload != nil {
+		// user already exists
+		return &userPayload.User, nil
+	}
+
+	if invite.OrgId == "" {
+		zap.S().Errorf("failed to find org in the invite")
+		return nil, model.InternalError(fmt.Errorf("invalid invite, org not found"))
+	}
+
+	if invite.Role == "" {
+		// if role is not provided, default to viewer
+		invite.Role = constants.ViewerGroup
+	}
+
+	group, apiErr := dao.DB().GetGroupByName(ctx, invite.Role)
+	if apiErr != nil {
+		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
+		return nil, model.InternalError(model.ErrSignupFailed{})
+	}
+
+	var hash string
+
+	// check if password is not empty, as for SSO case it can be
+	if req.Password != "" {
+		hash, err = passwordHash(req.Password)
+		if err != nil {
+			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
+			return nil, model.InternalError(model.ErrSignupFailed{})
+		}
+	} else {
+		hash, err = passwordHash(utils.GeneratePassowrd())
+		if err != nil {
+			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
+			return nil, model.InternalError(model.ErrSignupFailed{})
+		}
+	}
+
+	user := &model.User{
+		Id:                 uuid.NewString(),
+		Name:               req.Name,
+		Email:              req.Email,
+		Password:           hash,
+		CreatedAt:          time.Now().Unix(),
+		ProfilePirctureURL: "", // Currently unused
+		GroupId:            group.Id,
+		OrgId:              invite.OrgId,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
-	_, apiErr = dao.DB().CreateUser(ctx, user)
+	user, apiErr = dao.DB().CreateUser(ctx, user)
 	if apiErr != nil {
 		zap.S().Debugf("CreateUser failed, err: %v\n", apiErr.Err)
-		return apiErr
+		return nil, apiErr
 	}
 
-	return dao.DB().DeleteInvitation(ctx, user.Email)
+	apiErr = dao.DB().DeleteInvitation(ctx, user.Email)
+	if apiErr != nil {
+		zap.S().Debugf("delete invitation failed, err: %v\n", apiErr.Err)
+		return nil, apiErr
+	}
+
+	return user, nil
+}
+
+// Register registers a new user. For the first register request, it doesn't need an invite token
+// and also the first registration is an enforced ADMIN registration. Every subsequent request will
+// need an invite token to go through.
+func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.ApiError) {
+	users, err := dao.DB().GetUsers(ctx)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to get user count"))
+	}
+
+	switch len(users) {
+	case 0:
+		return RegisterFirstUser(ctx, req)
+	default:
+		return RegisterInvitedUser(ctx, req, false)
+	}
 }
 
 // Login method returns access and refresh tokens on successful login, else it errors out.

@@ -90,7 +90,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml",
-		baseapp.OpenAccess(ah.ReceiveSAML)).
+		baseapp.OpenAccess(ah.receiveSAML)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
@@ -111,6 +111,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{token}", baseapp.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/register", baseapp.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
 
 	ah.APIHandler.RegisterRoutes(router)
 

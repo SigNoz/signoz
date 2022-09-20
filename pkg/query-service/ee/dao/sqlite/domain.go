@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.signoz.io/query-service/ee/model"
+	basemodel "go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +26,7 @@ type StoredDomain struct {
 }
 
 // GetDomain returns org domain for a given domain id
-func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, *model.ApiError) {
+func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, basemodel.BaseApiError) {
 
 	stored := StoredDomain{}
 	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE id=$1 LIMIT 1`, id)
@@ -45,7 +46,7 @@ func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomai
 }
 
 // ListDomains gets the list of auth domains by org id
-func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, *model.ApiError) {
+func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, basemodel.BaseApiError) {
 	domains := []model.OrgDomain{}
 
 	stored := []StoredDomain{}
@@ -70,7 +71,7 @@ func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDo
 }
 
 // CreateDomain creates  a new auth domain
-func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) *model.ApiError {
+func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError {
 
 	if domain.Id == uuid.Nil {
 		domain.Id = uuid.New()
@@ -104,7 +105,7 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) *m
 }
 
 // UpdateDomain updates stored config params for a domain
-func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) *model.ApiError {
+func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError {
 
 	if domain.Id == uuid.Nil {
 		zap.S().Errorf("domain update failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
@@ -132,7 +133,7 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) *m
 }
 
 // DeleteDomain deletes an org domain
-func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) *model.ApiError {
+func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError {
 
 	if id == uuid.Nil {
 		zap.S().Errorf("domain delete failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
@@ -151,7 +152,7 @@ func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) *model.ApiErr
 	return nil
 }
 
-func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, *model.ApiError) {
+func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError) {
 
 	if email == "" {
 		return nil, model.BadRequest(fmt.Errorf("could not find auth domain, missing fields: email "))
@@ -169,7 +170,7 @@ func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.O
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, model.BadRequest(fmt.Errorf("invalid domain id"))
+			return nil, nil
 		}
 		return nil, model.InternalError(err)
 	}

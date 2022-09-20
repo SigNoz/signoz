@@ -25,12 +25,3 @@ func GetOrDefaultEnv(key string, fallback string) string {
 func GetDefaultSiteURL() string {
 	return GetOrDefaultEnv("SIGNOZ_SITE_URL", DefaultSiteURL)
 }
-
-// GetDefaultSamlHost overrides SAML host to change default
-// listening host attached to saml request. this host is
-// used by IdP to send SAML response. This is usually
-// site url in presence of proxy (e.g ngnix) but can be
-// altered for dev purposes
-func GetDefaultSamlHost() string {
-	return GetOrDefaultEnv("SIGNOZ_SAML_HOST", GetDefaultSiteURL())
-}

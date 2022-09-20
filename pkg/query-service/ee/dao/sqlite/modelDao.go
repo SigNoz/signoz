@@ -6,10 +6,26 @@ import (
 	"github.com/jmoiron/sqlx"
 	basedao "go.signoz.io/query-service/dao"
 	basedsql "go.signoz.io/query-service/dao/sqlite"
+	baseint "go.signoz.io/query-service/interfaces"
 )
 
 type modelDao struct {
 	*basedsql.ModelDaoSqlite
+	flags baseint.FeatureLookup
+}
+
+// SetFlagProvider sets the feature lookup provider
+func (m *modelDao) SetFlagProvider(flags baseint.FeatureLookup) {
+	m.flags = flags
+}
+
+// CheckFeature confirms if a feature is available
+func (m *modelDao) checkFeature(key string) error {
+	if m.flags == nil {
+		return fmt.Errorf("flag provider not set")
+	}
+
+	return m.flags.CheckFeature(key)
 }
 
 // InitDB creates and extends base model DB repository
@@ -20,9 +36,7 @@ func InitDB(dataSourceName string) (*modelDao, error) {
 	}
 	// set package variable so dependent base methods (e.g. AuthCache)  will work
 	basedao.SetDB(dao)
-	m := &modelDao{
-		dao,
-	}
+	m := &modelDao{ModelDaoSqlite: dao}
 
 	table_schema := `
 	PRAGMA foreign_keys = ON;

@@ -3,16 +3,12 @@ package model
 type Organization struct {
 	Id              string `json:"id" db:"id"`
 	Name            string `json:"name" db:"name"`
-	SiteUrl         string `json:"siteUrl" db:"site_url"`
 	CreatedAt       int64  `json:"createdAt" db:"created_at"`
 	IsAnonymous     bool   `json:"isAnonymous" db:"is_anonymous"`
 	HasOptedUpdates bool   `json:"hasOptedUpdates" db:"has_opted_updates"`
 }
 
-func (o *Organization) GetSiteURL() string {
-	return o.SiteUrl
-}
-
+// InvitationObject represents the token object stored in the db
 type InvitationObject struct {
 	Id        string `json:"id" db:"id"`
 	Email     string `json:"email" db:"email"`

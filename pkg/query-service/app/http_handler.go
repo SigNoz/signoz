@@ -1605,19 +1605,24 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 	aH.WriteJSON(w, r, resp)
 }
 
+// Register extends registerUser for non-internal packages
+func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
+	aH.registerUser(w, r)
+}
+
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseRegisterRequest(r)
 	if aH.handleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	apiErr := auth.Register(context.Background(), req)
+	_, apiErr := auth.Register(context.Background(), req)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	aH.WriteJSON(w, r, map[string]string{"data": "user registered successfully"})
+	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {

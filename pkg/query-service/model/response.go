@@ -29,15 +29,21 @@ func (a *ApiError) Type() ErrorType {
 }
 
 func (a *ApiError) ToError() error {
-	return a.Err
+	if a != nil {
+		return a.Err
+	}
+	return a
 }
 
 func (a *ApiError) Error() string {
+	if a == nil || a.Err == nil {
+		return ""
+	}
 	return a.Err.Error()
 }
 
 func (a *ApiError) IsNil() bool {
-	return a.Err == nil
+	return a == nil || a.Err == nil
 }
 
 type ErrorType string
@@ -57,6 +63,22 @@ const (
 	ErrorConflict              ErrorType = "conflict"
 	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
 )
+
+// BadRequest returns a ApiError object of bad request
+func BadRequest(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorBadData,
+		Err: err,
+	}
+}
+
+// InternalError returns a ApiError object of internal type
+func InternalError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorInternal,
+		Err: err,
+	}
+}
 
 type QueryDataV2 struct {
 	ResultType promql.ValueType `json:"resultType"`

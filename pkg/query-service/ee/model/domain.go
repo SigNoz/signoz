@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
@@ -96,19 +97,40 @@ func (od *OrgDomain) GetSAMLCert() string {
 	return ""
 }
 
-func (od *OrgDomain) PrepareSamlRequest(siteUrl, relayState string) (*saml2.SAMLServiceProvider, error) {
+func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServiceProvider, error) {
 
-	acs := fmt.Sprintf("%s/%s/domain-sso/%s/%s", siteUrl, "api/v1", od.Id, "complete/saml")
+	// this is the url Idp will call after login completion
+	acs := fmt.Sprintf("%s://%s/%s",
+		siteUrl.Scheme,
+		siteUrl.Host,
+		"api/v1/complete/saml")
+
+	// this is the address of the calling url, useful to redirect user
+	sourceUrl := fmt.Sprintf("%s://%s%s",
+		siteUrl.Scheme,
+		siteUrl.Host,
+		siteUrl.Path)
+
+	// we replace hyphen to colon so idp doesnt break it in the url encode
 	issuer := strings.Replace(od.Id.String(), "-", ":", -1)
-	return saml.PrepareRequest(issuer, acs, siteUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
+
+	return saml.PrepareRequest(issuer, acs, sourceUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
 }
 
-func (od *OrgDomain) BuildSsoUrl(siteUrl, relayState string) (ssoUrl string, err error) {
+func (od *OrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
 
-	sp, err := od.PrepareSamlRequest(siteUrl, od.Id.String())
+	sp, err := od.PrepareSamlRequest(siteUrl)
 	if err != nil {
 		return "", err
 	}
 
-	return sp.BuildAuthURL(od.Id.String())
+	fmtDomainId := strings.Replace(od.Id.String(), "-", ":", -1)
+
+	relayState := fmt.Sprintf("%s://%s%s?domainId=%s",
+		siteUrl.Scheme,
+		siteUrl.Host,
+		siteUrl.Path,
+		fmtDomainId)
+
+	return sp.BuildAuthURL(relayState)
 }

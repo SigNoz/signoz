@@ -7,6 +7,7 @@ import (
 
 	saml2 "github.com/russellhaering/gosaml2"
 	dsig "github.com/russellhaering/goxmldsig"
+	"go.uber.org/zap"
 )
 
 // PrepareRequest prepares authorization URL (Idp Provider URL)
@@ -36,10 +37,9 @@ func PrepareRequest(issuer, acsUrl, audience, entity, idp, cert string) (*saml2.
 		ServiceProviderIssuer:       issuer,
 		AssertionConsumerServiceURL: acsUrl,
 		SignAuthnRequests:           true,
-		AudienceURI:                 issuer,
 		IDPCertificateStore:         &certStore,
 		SPKeyStore:                  randomKeyStore,
 	}
-	fmt.Println("request:", sp)
+	zap.S().Debugf("SAML request:", sp)
 	return sp, nil
 }
