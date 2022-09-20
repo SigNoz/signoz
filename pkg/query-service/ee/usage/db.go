@@ -16,6 +16,10 @@ import (
 	"go.signoz.io/query-service/utils/encryption"
 )
 
+const (
+	OVERALL_MAX_RETRIES = 9
+)
+
 // Repo is usage repo. stores usage snapshot in a secured DB
 type Repository struct {
 	db             *sqlx.DB
@@ -97,17 +101,17 @@ func (r *Repository) IncrementFailedRequestCount(ctx context.Context, id uuid.UU
 	return nil
 }
 
-func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) ([]model.Usage, error) {
+func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) (*[]model.Usage, error) {
 	snapshots := []model.Usage{}
 
-	query := `SELECT id,created_at, activation_id, snapshot, failed_sync_request_count from usage where synced!='true' order by created_at asc`
+	query := `SELECT id,created_at, activation_id, snapshot, failed_sync_request_count from usage where synced!='true' and failed_sync_request_count < $1 order by created_at asc `
 
-	err := r.db.SelectContext(ctx, &snapshots, query)
+	err := r.db.SelectContext(ctx, &snapshots, query, OVERALL_MAX_RETRIES)
 	if err != nil {
 		return nil, err
 	}
 
-	return snapshots, nil
+	return &snapshots, nil
 }
 
 // CheckSnapshotGtCreatedAt checks if there is any snapshot greater than the provided timestamp

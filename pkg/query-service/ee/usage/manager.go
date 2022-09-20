@@ -214,13 +214,13 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 		return err
 	}
 
-	if len(snapshots) <= 0 {
+	if len(*snapshots) <= 0 {
 		zap.S().Info("no snapshots to upload, skipping.")
 		return nil
 	}
 
 	zap.S().Info("uploading snapshots")
-	for _, snap := range snapshots {
+	for _, snap := range *snapshots {
 		metricsBytes, err := encryption.Decrypt([]byte(snap.ActivationId.String()[:32]), []byte(snap.Snapshot))
 		if err != nil {
 			return err
@@ -256,7 +256,7 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)
 			if err != nil {
 				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
-				return err
+				// not returning error here since it is captured in the failed count
 			}
 			zap.S().Errorf("retries stopped : ", zap.Error(err))
 			return apiErr.Err
