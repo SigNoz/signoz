@@ -120,9 +120,5 @@ func (r *Repo) CheckSnapshotGtCreatedAt(ctx context.Context, ts time.Time) (bool
 		return false, err
 	}
 
-	if len(snapshots) > 0 {
-		return true, err
-	}
-
-	return false, err
+	return len(snapshots) > 0, err
 }
