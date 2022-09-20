@@ -20,13 +20,13 @@ const (
 	OVERALL_MAX_RETRIES = 9
 )
 
-// Repo is usage repo. stores usage snapshot in a secured DB
+// Repository is usage Repository which stores usage snapshot in a secured DB
 type Repository struct {
 	db             *sqlx.DB
 	clickhouseConn clickhouse.Conn
 }
 
-// NewUsageRepo initiates a new usage repo
+// NewUsageRepo initiates a new usage Repository
 func NewUsageRepo(db *sqlx.DB, clickhouseConn clickhouse.Conn) Repository {
 	return Repository{
 		db:             db,
