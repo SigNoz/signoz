@@ -1086,7 +1086,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if to := r.FormValue("timeout"); to != "" {
 		var cancel context.CancelFunc
 		timeout, err := parseMetricsDuration(to)
-		if aH.handleError(w, err, http.StatusBadRequest) {
+		if aH.HandleError(w, err, http.StatusBadRequest) {
 			return
 		}
 
@@ -1140,7 +1140,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if to := r.FormValue("timeout"); to != "" {
 		var cancel context.CancelFunc
 		timeout, err := parseMetricsDuration(to)
-		if aH.handleError(w, err, http.StatusBadRequest) {
+		if aH.HandleError(w, err, http.StatusBadRequest) {
 			return
 		}
 
@@ -1212,13 +1212,13 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetTopOperationsRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetTopOperations(r.Context(), query)
 
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1229,12 +1229,12 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetUsageRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, err := aH.reader.GetUsage(r.Context(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1245,12 +1245,12 @@ func (aH *APIHandler) getUsage(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetServiceOverviewRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1272,12 +1272,12 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetServicesRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetServices(r.Context(), query)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1293,12 +1293,12 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetServicesRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, err := aH.reader.GetDependencyGraph(r.Context(), query)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1308,7 +1308,7 @@ func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 	result, err := aH.reader.GetServicesList(r.Context())
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1322,7 +1322,7 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	traceId := vars["traceId"]
 
 	result, err := aH.reader.SearchTraces(r.Context(), traceId)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1333,11 +1333,11 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseListErrorsRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 	result, apiErr := aH.reader.ListErrors(r.Context(), query)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1347,7 +1347,7 @@ func (aH *APIHandler) listErrors(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) countErrors(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseCountErrorsRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 	result, apiErr := aH.reader.CountErrors(r.Context(), query)
@@ -1362,7 +1362,7 @@ func (aH *APIHandler) countErrors(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getErrorFromErrorID(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetErrorRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 	result, apiErr := aH.reader.GetErrorFromErrorID(r.Context(), query)
@@ -1377,7 +1377,7 @@ func (aH *APIHandler) getErrorFromErrorID(w http.ResponseWriter, r *http.Request
 func (aH *APIHandler) getNextPrevErrorIDs(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetErrorRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 	result, apiErr := aH.reader.GetNextPrevErrorIDs(r.Context(), query)
@@ -1392,7 +1392,7 @@ func (aH *APIHandler) getNextPrevErrorIDs(w http.ResponseWriter, r *http.Request
 func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseGetErrorRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 	result, apiErr := aH.reader.GetErrorFromGroupID(r.Context(), query)
@@ -1407,13 +1407,13 @@ func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request
 func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseSpanFilterRequestBody(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetSpanFilters(r.Context(), query)
 
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1423,13 +1423,13 @@ func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseFilteredSpansRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetFilteredSpans(r.Context(), query)
 
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1439,13 +1439,13 @@ func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseFilteredSpanAggregatesRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetFilteredSpansAggregates(r.Context(), query)
 
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1455,13 +1455,13 @@ func (aH *APIHandler) getFilteredSpanAggregates(w http.ResponseWriter, r *http.R
 func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseTagFilterRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetTagFilters(r.Context(), query)
 
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1471,13 +1471,13 @@ func (aH *APIHandler) getTagFilters(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 
 	query, err := parseTagValueRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetTagValues(r.Context(), query)
 
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1486,7 +1486,7 @@ func (aH *APIHandler) getTagValues(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	ttlParams, err := parseTTLParams(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1494,9 +1494,9 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	result, apiErr := aH.reader.SetTTL(context.Background(), ttlParams)
 	if apiErr != nil {
 		if apiErr.Typ == model.ErrorConflict {
-			aH.handleError(w, apiErr.Err, http.StatusConflict)
+			aH.HandleError(w, apiErr.Err, http.StatusConflict)
 		} else {
-			aH.handleError(w, apiErr.Err, http.StatusInternalServerError)
+			aH.HandleError(w, apiErr.Err, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -1507,12 +1507,12 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 	ttlParams, err := parseGetTTL(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	result, apiErr := aH.reader.GetTTL(r.Context(), ttlParams)
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1521,7 +1521,7 @@ func (aH *APIHandler) getTTL(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 	result, apiErr := aH.reader.GetDisks(context.Background())
-	if apiErr != nil && aH.handleError(w, apiErr.Err, http.StatusInternalServerError) {
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1536,7 +1536,7 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 // inviteUser is used to invite a user. It is used by an admin api.
 func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseInviteRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1612,7 +1612,7 @@ func (aH *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseRegisterRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1627,7 +1627,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseLoginRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1644,7 +1644,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	resp, err := auth.Login(context.Background(), req)
-	if aH.handleError(w, err, http.StatusUnauthorized) {
+	if aH.HandleError(w, err, http.StatusUnauthorized) {
 		return
 	}
 
@@ -1701,7 +1701,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	update, err := parseUserRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1811,7 +1811,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	req, err := parseUserRoleRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1879,7 +1879,7 @@ func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	req, err := parseEditOrgRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
@@ -1928,13 +1928,13 @@ func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Reque
 
 func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	req, err := parseResetPasswordRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	if err := auth.ResetPassword(context.Background(), req); err != nil {
 		zap.S().Debugf("resetPassword failed, err: %v\n", err)
-		if aH.handleError(w, err, http.StatusInternalServerError) {
+		if aH.HandleError(w, err, http.StatusInternalServerError) {
 			return
 		}
 
@@ -1944,12 +1944,12 @@ func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 	req, err := parseChangePasswordRequest(r)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
 	if err := auth.ChangePassword(context.Background(), req); err != nil {
-		if aH.handleError(w, err, http.StatusInternalServerError) {
+		if aH.HandleError(w, err, http.StatusInternalServerError) {
 			return
 		}
 
@@ -1961,18 +1961,18 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 // 	// vars := mux.Vars(r)
 
 // 	query, err := parseApplicationPercentileRequest(r)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 	if aH.HandleError(w, err, http.StatusBadRequest) {
 // 		return
 // 	}
 
 // 	result, err := aH.reader.GetApplicationPercentiles(context.Background(), query)
-// 	if aH.handleError(w, err, http.StatusBadRequest) {
+// 	if aH.HandleError(w, err, http.StatusBadRequest) {
 // 		return
 // 	}
 // 	aH.WriteJSON(w, r, result)
 // }
 
-func (aH *APIHandler) handleError(w http.ResponseWriter, err error, statusCode int) bool {
+func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode int) bool {
 	if err == nil {
 		return false
 	}

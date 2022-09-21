@@ -6,11 +6,35 @@ import (
 	"net/url"
 	"strings"
 
+	baseconst "go.signoz.io/query-service/constants"
 	"go.signoz.io/query-service/ee/constants"
 	"go.signoz.io/query-service/ee/model"
 	basemodel "go.signoz.io/query-service/model"
 	"go.uber.org/zap"
 )
+
+func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError) {
+	domain, apierr := m.GetDomainByEmail(ctx, email)
+	if apierr != nil {
+		return false, apierr
+	}
+
+	if domain != nil && domain.SsoEnabled {
+		// sso is enabled, check if the user has admin role
+		userPayload, baseapierr := m.GetUserByEmail(ctx, email)
+
+		if baseapierr != nil || userPayload == nil {
+			return false, baseapierr
+		}
+
+		if userPayload.Role != baseconst.AdminGroup {
+			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
+		}
+
+	}
+
+	return true, nil
+}
 
 // PrecheckLogin is called when the login or signup page is loaded
 // to check sso login is to be prompted

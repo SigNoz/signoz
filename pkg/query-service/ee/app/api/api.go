@@ -113,7 +113,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/invite/{token}", baseapp.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/register", baseapp.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
-
+	router.HandleFunc("/api/v1/login", baseapp.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 	ah.APIHandler.RegisterRoutes(router)
 
 }

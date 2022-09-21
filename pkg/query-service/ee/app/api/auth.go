@@ -20,6 +20,46 @@ import (
 	"go.uber.org/zap"
 )
 
+func parseRequest(r *http.Request, req interface{}) error {
+	defer r.Body.Close()
+	requestBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(requestBody, &req)
+	return err
+}
+
+// loginUser overrides base handler and considers SSO case.
+func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
+
+	req := basemodel.LoginRequest{}
+	err := parseRequest(r, &req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	ctx := context.Background()
+
+	if req.Email != "" && ah.CheckFeature(model.SSO) {
+		var apierr basemodel.BaseApiError
+		_, apierr = ah.AppDao().CanUsePassword(ctx, req.Email)
+		if apierr != nil && !apierr.IsNil() {
+			RespondError(w, apierr, nil)
+		}
+	}
+
+	// if all looks good, call auth
+	resp, err := auth.Login(ctx, &req)
+	if ah.HandleError(w, err, http.StatusUnauthorized) {
+		return
+	}
+
+	ah.WriteJSON(w, r, resp)
+}
+
 // registerUser registers a user and responds with a precheck
 // so the front-end can decide the login method
 func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
