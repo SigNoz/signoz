@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -18,15 +19,21 @@ import (
 	"go.signoz.io/query-service/utils/encryption"
 )
 
-// collect usage every hour
-var collectionFrequency = 1 * time.Hour
-
-// send usage every 24 hour
-var uploadFrequency = 24 * time.Hour
-
 const (
-	MaxRetries    = 3
-	RetryInterval = 5 * time.Second
+	MaxRetries           = 3
+	RetryInterval        = 5 * time.Second
+	stateUnlocked uint32 = 0
+	stateLocked   uint32 = 1
+)
+
+var (
+	// collect usage every hour
+	collectionFrequency = 1 * time.Hour
+
+	// send usage every 24 hour
+	uploadFrequency = 24 * time.Hour
+
+	locker = stateUnlocked
 )
 
 type Manager struct {
@@ -62,6 +69,11 @@ func New(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickhouseConn c
 
 // start loads collects and exports any exported snapshot and starts the exporter
 func (lm *Manager) Start() error {
+	// compares the locker and stateUnlocked if both are same lock is applied else returns error
+	if !atomic.CompareAndSwapUint32(&locker, stateUnlocked, stateLocked) {
+		return fmt.Errorf("usage exporter is locked")
+	}
+
 	// upload previous snapshots if any
 	err := lm.UploadUsage(context.Background())
 	if err != nil {
@@ -212,13 +224,13 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 		return err
 	}
 
-	if len(*snapshots) <= 0 {
+	if len(snapshots) <= 0 {
 		zap.S().Info("no snapshots to upload, skipping.")
 		return nil
 	}
 
 	zap.S().Info("uploading snapshots")
-	for _, snap := range *snapshots {
+	for _, snap := range snapshots {
 		metricsBytes, err := encryption.Decrypt([]byte(snap.ActivationId.String()[:32]), []byte(snap.Snapshot))
 		if err != nil {
 			return err
@@ -287,5 +299,6 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 
 func (lm *Manager) Stop() {
 	close(lm.done)
+	atomic.StoreUint32(&locker, stateUnlocked)
 	<-lm.terminated
 }

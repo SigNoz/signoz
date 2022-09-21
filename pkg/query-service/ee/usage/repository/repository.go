@@ -98,8 +98,8 @@ func (r *Repository) IncrementFailedRequestCount(ctx context.Context, id uuid.UU
 	return nil
 }
 
-func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) (*[]model.Usage, error) {
-	snapshots := []model.Usage{}
+func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) ([]*model.Usage, error) {
+	snapshots := []*model.Usage{}
 
 	query := `SELECT id,created_at, activation_id, snapshot, failed_sync_request_count from usage where synced!='true' and failed_sync_request_count < $1 order by created_at asc `
 
@@ -108,7 +108,7 @@ func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) (*[]model.Usage,
 		return nil, err
 	}
 
-	return &snapshots, nil
+	return snapshots, nil
 }
 
 // CheckSnapshotGtCreatedAt checks if there is any snapshot greater than the provided timestamp
