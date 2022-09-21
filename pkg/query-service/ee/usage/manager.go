@@ -14,6 +14,7 @@ import (
 	licenseserver "go.signoz.io/query-service/ee/integrations/signozio"
 	"go.signoz.io/query-service/ee/license"
 	"go.signoz.io/query-service/ee/model"
+	"go.signoz.io/query-service/ee/usage/repository"
 	"go.signoz.io/query-service/utils/encryption"
 )
 
@@ -24,12 +25,14 @@ var collectionFrequency = 1 * time.Hour
 var uploadFrequency = 24 * time.Hour
 
 const (
-	MAX_RETRIES            = 3
-	RETRY_INTERVAL_SECONDS = 5 * time.Second
+	MaxRetries    = 3
+	RetryInterval = 5 * time.Second
 )
 
 type Manager struct {
-	repository *Repository
+	repository *repository.Repository
+
+	clickhouseConn clickhouse.Conn
 
 	licenseRepo *license.Repo
 
@@ -41,29 +44,24 @@ type Manager struct {
 	terminated chan struct{}
 }
 
-func StartManager(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+func New(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+	repo := repository.New(db)
 
-	repo := NewUsageRepo(db, clickhouseConn)
-	err := repo.InitDB(dbType)
-
+	err := repo.Init(dbType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate usage repo: %v", err)
 	}
 
 	m := &Manager{
-		repository:  &repo,
-		licenseRepo: licenseRepo,
+		repository:     repo,
+		clickhouseConn: clickhouseConn,
+		licenseRepo:    licenseRepo,
 	}
-
-	if err := m.start(); err != nil {
-		return m, err
-	}
-
 	return m, nil
 }
 
 // start loads collects and exports any exported snapshot and starts the exporter
-func (lm *Manager) start() error {
+func (lm *Manager) Start() error {
 	// upload previous snapshots if any
 	err := lm.UploadUsage(context.Background())
 	if err != nil {
@@ -151,7 +149,7 @@ func (lm *Manager) CollectAndStoreUsage(ctx context.Context) error {
 		SnapshotDate: time.Now(),
 	}
 
-	_, err = lm.repository.InsertSnapshot(ctx, payload)
+	err = lm.repository.InsertSnapshot(ctx, &payload)
 	if err != nil {
 		return err
 	}
@@ -177,7 +175,7 @@ func (lm *Manager) GetUsageFromClickHouse(ctx context.Context) (*model.UsageSnap
 			disk_name
 		ORDER BY table
 	`
-	err := lm.repository.clickhouseConn.Select(ctx, &tableSizes, query)
+	err := lm.clickhouseConn.Select(ctx, &tableSizes, query)
 	if err != nil {
 		return nil, err
 	}
@@ -250,9 +248,9 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 }
 
 func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload model.UsagePayload) error {
-	for i := 1; i <= MAX_RETRIES; i++ {
+	for i := 1; i <= MaxRetries; i++ {
 		apiErr := licenseserver.SendUsage(ctx, &payload)
-		if apiErr != nil && i == MAX_RETRIES {
+		if apiErr != nil && i == MaxRetries {
 			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)
 			if err != nil {
 				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
@@ -263,8 +261,8 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 			return nil
 		} else if apiErr != nil {
 			// sleeping for exponential backoff
-			zap.S().Errorf("failed to upload snapshot retrying after %d secs : ", RETRY_INTERVAL_SECONDS*time.Duration(i), zap.Error(apiErr.Err))
-			time.Sleep(RETRY_INTERVAL_SECONDS * time.Duration(i))
+			zap.S().Errorf("failed to upload snapshot retrying after %d secs : ", RetryInterval*time.Duration(i), zap.Error(apiErr.Err))
+			time.Sleep(RetryInterval * time.Duration(i))
 
 			// update the failed request count
 			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)

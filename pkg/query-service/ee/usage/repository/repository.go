@@ -1,4 +1,4 @@
-package usage
+package repository
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -17,24 +16,22 @@ import (
 )
 
 const (
-	OVERALL_MAX_RETRIES = 9
+	MaxFailedSyncCount = 9 // a snapshot will be ignored if the max failed count is greater than or equal to 9
 )
 
 // Repository is usage Repository which stores usage snapshot in a secured DB
 type Repository struct {
-	db             *sqlx.DB
-	clickhouseConn clickhouse.Conn
+	db *sqlx.DB
 }
 
-// NewUsageRepo initiates a new usage Repository
-func NewUsageRepo(db *sqlx.DB, clickhouseConn clickhouse.Conn) Repository {
-	return Repository{
-		db:             db,
-		clickhouseConn: clickhouseConn,
+// New initiates a new usage Repository
+func New(db *sqlx.DB) *Repository {
+	return &Repository{
+		db: db,
 	}
 }
 
-func (r *Repository) InitDB(engine string) error {
+func (r *Repository) Init(engine string) error {
 	switch engine {
 	case "sqlite3", "sqlite":
 		return sqlite.InitDB(r.db)
@@ -43,18 +40,18 @@ func (r *Repository) InitDB(engine string) error {
 	}
 }
 
-func (r *Repository) InsertSnapshot(ctx context.Context, usage model.UsagePayload) (*model.UsagePayload, error) {
+func (r *Repository) InsertSnapshot(ctx context.Context, usage *model.UsagePayload) error {
 
 	snapshotBytes, err := json.Marshal(usage.Metrics)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	usage.Id = uuid.New()
 
 	encryptedSnapshot, err := encryption.Encrypt([]byte(usage.ActivationId.String()[:32]), snapshotBytes)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	query := `INSERT INTO usage(id, activation_id, snapshot)
@@ -67,9 +64,9 @@ func (r *Repository) InsertSnapshot(ctx context.Context, usage model.UsagePayloa
 	)
 	if err != nil {
 		zap.S().Errorf("error inserting usage data: %v", zap.Error(err))
-		return nil, fmt.Errorf("failed to insert usage in db: %v", err)
+		return fmt.Errorf("failed to insert usage in db: %v", err)
 	}
-	return &usage, nil
+	return nil
 }
 
 func (r *Repository) MoveToSynced(ctx context.Context, id uuid.UUID) error {
@@ -106,7 +103,7 @@ func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) (*[]model.Usage,
 
 	query := `SELECT id,created_at, activation_id, snapshot, failed_sync_request_count from usage where synced!='true' and failed_sync_request_count < $1 order by created_at asc `
 
-	err := r.db.SelectContext(ctx, &snapshots, query, OVERALL_MAX_RETRIES)
+	err := r.db.SelectContext(ctx, &snapshots, query, MaxFailedSyncCount)
 	if err != nil {
 		return nil, err
 	}
