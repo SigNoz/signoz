@@ -113,13 +113,14 @@ func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) (*[]model.Usage,
 
 // CheckSnapshotGtCreatedAt checks if there is any snapshot greater than the provided timestamp
 func (r *Repository) CheckSnapshotGtCreatedAt(ctx context.Context, ts time.Time) (bool, error) {
-	snapshots := []model.Usage{}
 
-	query := `SELECT id from usage where created_at > '$1'`
-	err := r.db.SelectContext(ctx, &snapshots, query, ts)
+	var snapshots uint64
+	query := `SELECT count() from usage where created_at > '$1'`
+
+	err := r.db.QueryRowContext(ctx, query, ts).Scan(&snapshots)
 	if err != nil {
 		return false, err
 	}
 
-	return len(snapshots) > 0, err
+	return snapshots > 0, err
 }
