@@ -75,11 +75,11 @@ func (lm *Manager) Start() error {
 	}
 
 	// check if license is present or not
-	licenses, err := lm.licenseRepo.GetActiveLicense(context.Background())
+	license, err := lm.licenseRepo.GetActiveLicense(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get active license")
 	}
-	if licenses == nil {
+	if license == nil {
 		// we will not start the usage reporting if license is not present.
 		zap.S().Info("no license present, skipping usage reporting")
 		return nil
