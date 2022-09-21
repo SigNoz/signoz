@@ -23,6 +23,7 @@ func (ah *APIHandler) listDomainsByOrg(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) postDomain(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
+
 	req := model.OrgDomain{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -45,13 +46,20 @@ func (ah *APIHandler) postDomain(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) putDomain(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	req := model.OrgDomain{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	domainIdStr := mux.Vars(r)["id"]
+	domainId, err := uuid.Parse(domainIdStr)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
+	req := model.OrgDomain{Id: domainId}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	req.Id = domainId
 	if err := req.Valid(nil); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 	}
@@ -66,6 +74,7 @@ func (ah *APIHandler) putDomain(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) deleteDomain(w http.ResponseWriter, r *http.Request) {
 	domainIdStr := mux.Vars(r)["id"]
+
 	domainId, err := uuid.Parse(domainIdStr)
 	if err != nil {
 		RespondError(w, model.BadRequest(fmt.Errorf("invalid domain id")), nil)
