@@ -79,7 +79,7 @@ func (r *Repository) MoveToSynced(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.ExecContext(ctx, query, time.Now(), id)
 
 	if err != nil {
-		zap.S().Errorf("error in updating usage: ", zap.Error(err))
+		zap.S().Errorf("error in updating usage: %v", zap.Error(err))
 		return fmt.Errorf("failed to update usage in db: %v", err)
 	}
 
@@ -91,7 +91,7 @@ func (r *Repository) IncrementFailedRequestCount(ctx context.Context, id uuid.UU
 	query := `UPDATE usage SET failed_sync_request_count = failed_sync_request_count + 1 WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
-		zap.S().Errorf("error in updating usage: ", zap.Error(err))
+		zap.S().Errorf("error in updating usage: %v", zap.Error(err))
 		return fmt.Errorf("failed to update usage in db: %v", err)
 	}
 

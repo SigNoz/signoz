@@ -26,7 +26,7 @@ func InitDB(db *sqlx.DB) error {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return fmt.Errorf("error in creating usage table: %s", err.Error())
+		return fmt.Errorf("error in creating usage table: %v", err.Error())
 	}
 	return nil
 }

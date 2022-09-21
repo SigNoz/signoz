@@ -256,19 +256,19 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
 				return err
 			}
-			zap.S().Errorf("retries stopped : ", zap.Error(err))
+			zap.S().Errorf("retries stopped : %v", zap.Error(err))
 			// not returning error here since it is captured in the failed count
 			return nil
 		} else if apiErr != nil {
 			// sleeping for exponential backoff
 			sleepDuration := RetryInterval * time.Duration(i)
-			zap.S().Errorf("failed to upload snapshot retrying after %v secs : ", sleepDuration.Seconds(), zap.Error(apiErr.Err))
+			zap.S().Errorf("failed to upload snapshot retrying after %v secs : %v", sleepDuration.Seconds(), zap.Error(apiErr.Err))
 			time.Sleep(sleepDuration)
 
 			// update the failed request count
 			err := lm.repository.IncrementFailedRequestCount(ctx, payload.Id)
 			if err != nil {
-				zap.S().Errorf("failed to updated the failure count for snapshot in DB : ", zap.Error(err))
+				zap.S().Errorf("failed to updated the failure count for snapshot in DB : %v", zap.Error(err))
 				return err
 			}
 		} else {
