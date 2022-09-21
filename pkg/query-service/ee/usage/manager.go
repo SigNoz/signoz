@@ -74,8 +74,19 @@ func (lm *Manager) Start() error {
 		return fmt.Errorf("usage exporter is locked")
 	}
 
+	// check if license is present or not
+	licenses, err := lm.licenseRepo.GetActiveLicense(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get active license")
+	}
+	if licenses == nil {
+		// we will not start the usage reporting if license is not present.
+		zap.S().Info("no license present, skipping usage reporting")
+		return nil
+	}
+
 	// upload previous snapshots if any
-	err := lm.UploadUsage(context.Background())
+	err = lm.UploadUsage(context.Background())
 	if err != nil {
 		return err
 	}
