@@ -91,7 +91,7 @@ func (mds *ModelDaoSqlite) CreateOrg(ctx context.Context,
 	org.Id = uuid.NewString()
 	org.CreatedAt = time.Now().Unix()
 	_, err := mds.db.ExecContext(ctx,
-		`INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?, ?);`,
+		`INSERT INTO organizations (id, name, created_at) VALUES (?, ?, ?);`,
 		org.Id, org.Name, org.CreatedAt)
 
 	if err != nil {
