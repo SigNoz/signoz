@@ -1,5 +1,4 @@
 node_modules
 build
-\*.typegen.ts
+*.typegen.ts
 i18-generate-hash.js
-README.md
