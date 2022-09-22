@@ -20,11 +20,14 @@ import (
 var LM *Manager
 
 // validate license every 24 hours
-var validationFrequency = 24 * 60 * time.Minute
+// var validationFrequency = 24 * 60 * time.Minute
+var validationFrequency = 5 * time.Minute
 
 type Manager struct {
 	repo  *Repo
 	mutex sync.Mutex
+
+	validatorRunning bool
 
 	// end the license validation, this is important to gracefully
 	// stopping validation and protect in-consistent updates
@@ -71,9 +74,7 @@ func StartManager(dbType string, db *sqlx.DB) (*Manager, error) {
 // start loads active license in memory and initiates validator
 func (lm *Manager) start() error {
 	err := lm.LoadActiveLicense()
-	if err == nil {
-		go lm.Validator(context.Background())
-	}
+
 	return err
 }
 
@@ -86,10 +87,22 @@ func (lm *Manager) SetActive(l *model.License) {
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
+	if l == nil {
+		return
+	}
+
 	lm.activeLicense = l
 	lm.activeFeatures = l.FeatureSet
+	if !lm.validatorRunning {
+		// we want to make sure only one validator runs,
+		// we already have lock() so good to go
+		lm.validatorRunning = true
+		go lm.Validator(context.Background())
+	}
+
 }
 
+// LoadActiveLicense loads the most recent active licenseex
 func (lm *Manager) LoadActiveLicense() error {
 	var err error
 	active, err := lm.repo.GetActiveLicense(context.Background())
@@ -117,6 +130,10 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []*model.License, 
 
 		if l.Key == lm.activeLicense.Key {
 			l.IsCurrent = true
+		}
+
+		if l.ValidUntil == -1 {
+			l.ValidUntil = l.ValidFrom + 31556926
 		}
 
 		response = append(response, &l)
@@ -150,6 +167,11 @@ func (lm *Manager) Validator(ctx context.Context) {
 
 // Validate validates the current active license
 func (lm *Manager) Validate(ctx context.Context) (reterr error) {
+
+	if lm.activeLicense == nil {
+		return nil
+	}
+
 	defer func() {
 		lm.mutex.Lock()
 
@@ -215,6 +237,7 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 				map[string]interface{}{"err": errResponse.Err.Error()})
 		}
 	}()
+
 	response, apiError := validate.ActivateLicense(key, "")
 	if apiError != nil {
 		zap.S().Errorf("failed to activate license", zap.Error(apiError.Err))
@@ -253,7 +276,7 @@ func (lm *Manager) CheckFeature(featureKey string) error {
 	if _, ok := lm.activeFeatures[featureKey]; ok {
 		return nil
 	}
-	return fmt.Errorf("feature unavailable")
+	return basemodel.ErrFeatureUnavailable{Key: featureKey}
 }
 
 // GetFeatureFlags returns current active features

@@ -88,7 +88,6 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("req:", req)
 	// get invite object
 	invite, err := baseauth.ValidateInvite(ctx, req)
 	if err != nil || invite == nil {
@@ -244,7 +243,6 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 	}
 
 	domain, apierr := ah.AppDao().GetDomain(ctx, domainId)
-	fmt.Println("apierr:", apierr)
 	if (apierr != nil) || domain == nil {
 		zap.S().Errorf("[ReceiveSAML] failed to process request- invalid domain", domainIdStr, zap.Error(apierr))
 		redirectOnError()

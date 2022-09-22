@@ -1,6 +1,15 @@
 package model
 
+import "fmt"
+
 // custom errors related to registration
+type ErrFeatureUnavailable struct {
+	Key string
+}
+
+func (errFeatureUnavailable ErrFeatureUnavailable) Error() string {
+	return fmt.Sprintf("feature unavailable: %s", errFeatureUnavailable.Key)
+}
 
 type ErrEmailRequired struct{}
 

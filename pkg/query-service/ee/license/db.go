@@ -3,8 +3,9 @@ package license
 import (
 	"context"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 
 	"go.signoz.io/query-service/ee/license/sqlite"
 	"go.signoz.io/query-service/ee/model"
@@ -84,7 +85,7 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 
 	query := `INSERT INTO licenses 
 						(key, planDetails, activationId, validationmessage) 
-						VALUES ($1, $2, $3, $4, $5)`
+						VALUES ($1, $2, $3, $4)`
 
 	_, err := r.db.ExecContext(ctx,
 		query,

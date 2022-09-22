@@ -3,10 +3,10 @@ package model
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"time"
+
 	"github.com/pkg/errors"
 	basemodel "go.signoz.io/query-service/model"
-	"time"
 )
 
 type License struct {
@@ -73,7 +73,7 @@ func (l *License) ParsePlan() error {
 		l.ValidationMessage = "failed to parse plan from license"
 		return errors.Wrap(err, "failed to parse plan from license")
 	}
-	fmt.Println("parsed plan:", plan)
+
 	l.LicensePlan = plan
 	l.ParseFeatures()
 	return nil

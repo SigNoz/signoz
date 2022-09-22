@@ -6,7 +6,7 @@ import (
 
 const (
 	DefaultSiteURL  = "https://localhost:3301"
-	LicenseSignozIo = "http://localhost:9682/api/v1"
+	LicenseSignozIo = "http://18.118.169.248:9682/api/v1"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/pkg/errors"
 	"go.signoz.io/query-service/ee/constants"
 	"go.signoz.io/query-service/ee/model"
-	"io/ioutil"
-	"net/http"
+	"go.uber.org/zap"
 )
 
 var C *Client
@@ -38,12 +40,14 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", "application/json", bytes.NewBuffer(reqString))
 
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+		zap.S().Errorf("failed to connect to license.signoz.io", err)
+		return nil, model.BadRequest(fmt.Errorf("unable to connect with license.signoz.io, please check your network connection"))
 	}
 
 	httpBody, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to read activation response from license.signoz.io"))
+		zap.S().Errorf("failed to read activation response from license.signoz.io", err)
+		return nil, model.BadRequest(fmt.Errorf("failed to read activation response from license.signoz.io"))
 	}
 
 	defer httpResponse.Body.Close()
@@ -52,6 +56,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	result := ActivationResult{}
 	err = json.Unmarshal(httpBody, &result)
 	if err != nil {
+		zap.S().Errorf("failed to marshal activation response from license.signoz.io", err)
 		return nil, model.InternalError(errors.Wrap(err, "failed to marshal license activation response"))
 	}
 
@@ -59,11 +64,9 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	case 200, 201:
 		return result.Data, nil
 	case 400, 401:
-		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(httpBody)),
-			"bad request error received from license.signoz.io"))
+		return nil, model.BadRequest(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
 	default:
-		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(httpBody)),
-			"internal error received from license.signoz.io"))
+		return nil, model.InternalError(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
 	}
 
 }
