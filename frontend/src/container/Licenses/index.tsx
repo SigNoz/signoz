@@ -26,11 +26,15 @@ function Licenses(): JSX.Element {
 		<Tabs destroyInactiveTabPane defaultActiveKey="licenses">
 			<TabPane tabKey="licenses" tab={t('tab_current_license')} key="licenses">
 				<ApplyLicenseForm />
-				<ListLicenses licenses={payload.filter((l) => l.isCurrent === true)} />
+				<ListLicenses
+					licenses={payload ? payload.filter((l) => l.isCurrent === true) : []}
+				/>
 			</TabPane>
 
 			<TabPane tabKey="history" tab={t('tab_license_history')} key="history">
-				<ListLicenses licenses={payload.filter((l) => l.isCurrent === false)} />
+				<ListLicenses
+					licenses={payload ? payload.filter((l) => l.isCurrent === false) : []}
+				/>
 			</TabPane>
 		</Tabs>
 	);
