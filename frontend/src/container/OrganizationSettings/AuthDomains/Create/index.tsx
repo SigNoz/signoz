@@ -1,5 +1,5 @@
 import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import React, { useCallback } from 'react';
 
 import Row, { RowProps } from './Row';
@@ -25,6 +25,7 @@ function Create({
 			title: 'Google Apps Authentication',
 			subTitle: 'Let members sign-in with a Google account',
 			onClickHandler: onConfigureClickHandler,
+			isDisabled: true,
 		},
 		{
 			buttonText: 'Edit SAML',
@@ -32,6 +33,7 @@ function Create({
 			onClickHandler: onEditSAMLHandler,
 			subTitle: 'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
 			title: 'SAML Authentication',
+			isDisabled: false,
 		},
 	];
 
@@ -43,16 +45,19 @@ function Create({
 			</Typography.Text>
 
 			<RowContainer>
-				{data.map((rowData) => (
-					<Row
-						Icon={rowData.Icon}
-						buttonText={rowData.buttonText}
-						onClickHandler={rowData.onClickHandler}
-						subTitle={rowData.subTitle}
-						title={rowData.title}
-						key={rowData.title}
-					/>
-				))}
+				<Space direction="vertical">
+					{data.map((rowData) => (
+						<Row
+							Icon={rowData.Icon}
+							buttonText={rowData.buttonText}
+							onClickHandler={rowData.onClickHandler}
+							subTitle={rowData.subTitle}
+							title={rowData.title}
+							key={rowData.title}
+							isDisabled={rowData.isDisabled}
+						/>
+					))}
+				</Space>
 			</RowContainer>
 		</div>
 	);

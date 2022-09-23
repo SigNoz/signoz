@@ -1,12 +1,5 @@
-import { green, orange } from '@ant-design/colors';
-import {
-	CheckCircleTwoTone,
-	CloseCircleTwoTone,
-	LockTwoTone,
-	PlusOutlined,
-} from '@ant-design/icons';
+import { LockTwoTone } from '@ant-design/icons';
 import { Button, Modal, notification, Space, Table, Typography } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
@@ -21,10 +14,11 @@ import { SAMLDomain } from 'types/api/SAML/listDomain';
 import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
+import AddDomain from './AddDomain';
 import Create from './Create';
-import EditSaml, { EditFormProps } from './Edit';
-import { Container } from './styles';
+import EditSaml from './Edit';
 import SwitchComponent from './Switch';
+import { getIsValidCertificate } from './utils';
 
 function SAMLSettings(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
@@ -32,7 +26,6 @@ function SAMLSettings(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentDomain, setCurrentDomain] = useState<SAMLDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [form] = useForm<EditFormProps>();
 
 	const [SSOFlag] = useFeatureFlag(['SSO'], 'SAML');
 
@@ -91,59 +84,76 @@ function SAMLSettings(): JSX.Element {
 		[],
 	);
 
-	const onDeleteHandler = useCallback(
-		(record: SAMLDomain) => async (): Promise<void> => {
-			try {
-				const response = await deleteDomain(record);
-				if (response.statusCode === 200) {
-					notification.success({
-						message: t('common:success'),
-					});
-					refetch();
-				} else {
-					notification.error({
-						message: t('something_went_wrong', {
-							ns: 'common',
-						}),
-					});
-				}
-			} catch (error) {
-				notification.error({
-					message: t('something_went_wrong', {
-						ns: 'common',
-					}),
-				});
-			}
-		},
-		[t, refetch],
-	);
-
 	const onEditHandler = useCallback(
-		(record: SAMLDomain) => async (): Promise<void> => {
-			onOpenHandler(setIsSettingsOpen)();
+		(record: SAMLDomain) => (): void => {
+			setIsEditModalOpen(true);
 			setCurrentDomain(record);
 		},
-		[onOpenHandler],
+		[],
 	);
+
+	const onDeleteHandler = useCallback(
+		(record: SAMLDomain) => (): void => {
+			Modal.confirm({
+				centered: true,
+				title: t('delete_domain', {
+					ns: 'organizationsettings',
+				}),
+				content: t('delete_domain_message', {
+					ns: 'organizationsettings',
+				}),
+				onOk: async () => {
+					const response = await deleteDomain({
+						...record,
+					});
+
+					if (response.statusCode === 200) {
+						notification.success({
+							message: t('common:success'),
+						});
+						refetch();
+					} else {
+						notification.error({
+							message: t('common:something_went_wrong'),
+						});
+					}
+				},
+			});
+		},
+		[refetch, t],
+	);
+
+	const onClickLicenseHandler = useCallback(() => {
+		const isDevelopment = process.env.NODE_ENV === 'development';
+		const url = isDevelopment
+			? 'https://develop.license.com'
+			: 'https://prod.license.com';
+		window.open(url);
+	}, []);
 
 	const columns: ColumnsType<SAMLDomain> = [
 		{
 			title: 'Domain',
-			dataIndex: 'domain',
-			key: 'domain',
+			dataIndex: 'name',
+			key: 'name',
 		},
 		{
 			title: 'Enforce SSO',
 			dataIndex: 'ssoEnforce',
 			key: 'ssoEnforce',
 			render: (value: boolean, record: SAMLDomain): JSX.Element => {
-				if (value === false) {
+				if (!SSOFlag) {
 					return (
-						<Button type="link" icon={<LockTwoTone />}>
-							Upgrade to Enable SSO
+						<Button
+							onClick={onClickLicenseHandler}
+							type="link"
+							icon={<LockTwoTone />}
+						>
+							Upgrade to Configure SSO
 						</Button>
 					);
 				}
+
 				return (
 					<SwitchComponent
 						onRecordUpdateHandler={onRecordUpdateHandler}
@@ -154,32 +164,35 @@ function SAMLSettings(): JSX.Element {
 			},
 		},
 		{
-			title: 'Description',
+			title: '',
 			dataIndex: 'description',
 			key: 'description',
 			render: (_, record: SAMLDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
 						<Button
-							onClick={onOpenHandler(setIsSettingsOpen)}
+							onClick={(): void => {
+								setCurrentDomain(record);
+								onOpenHandler(setIsSettingsOpen)();
+							}}
 							type="link"
 							icon={<LockTwoTone />}
 						>
-							Update SSO configuration
+							Upgrade to Configure SSO
 						</Button>
 					);
 				}
 
-				const isOneKeyEmpty = !Object.values(record.samlConfig).some((x) => !!x);
+				const isValidCertificate = getIsValidCertificate(record.samlConfig);
 
-				const Icon = isOneKeyEmpty ? CloseCircleTwoTone : CheckCircleTwoTone;
-				const color = isOneKeyEmpty ? orange[6] : green[6];
+				if (!isValidCertificate) {
+					return <Typography>Configure SSO &nbsp;</Typography>;
+				}
 
 				return (
-					<Typography>
-						Configure SSO &nbsp;
-						<Icon twoToneColor={[color, '#1f1f1f']} />
-					</Typography>
+					<Button type="link" onClick={onEditHandler(record)}>
+						Edit SSO
+					</Button>
 				);
 			},
 		},
@@ -189,15 +202,14 @@ function SAMLSettings(): JSX.Element {
 			key: 'action',
 			render: (_, record): JSX.Element => {
 				return (
-					<>
-						<Button onClick={onEditHandler(record)} type="link">
-							Edit
-						</Button>
-
-						<Button onClick={onDeleteHandler(record)} danger type="link">
-							Delete
-						</Button>
-					</>
+					<Button
+						disabled={!SSOFlag}
+						onClick={onDeleteHandler(record)}
+						danger
+						type="link"
+					>
+						Delete
+					</Button>
 				);
 			},
 		},
@@ -221,7 +233,8 @@ function SAMLSettings(): JSX.Element {
 
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
-			<>
+			<Space direction="vertical" size="middle">
+				{SSOFlag && <AddDomain />}
 				<Modal
 					centered
 					title="Configure Authentication Method"
@@ -236,7 +249,7 @@ function SAMLSettings(): JSX.Element {
 					/>
 				</Modal>
 				<Table dataSource={[defaultConfig]} columns={columns} tableLayout="fixed" />
-			</>
+			</Space>
 		);
 	}
 
@@ -262,41 +275,21 @@ function SAMLSettings(): JSX.Element {
 				title="Configure SAML"
 				onCancel={onCloseHandler(setIsEditModalOpen)}
 				destroyOnClose
-				okText="Save Settings"
-				onOk={(): Promise<boolean> =>
-					onRecordUpdateHandler({
-						...(currentDomain as SAMLDomain),
-						samlConfig: {
-							samlCert: form.getFieldValue('certificate') || '',
-							samlEntity: form.getFieldValue('entityId') || '',
-							samlIdp: form.getFieldValue('url') || '',
-						},
-					})
-				}
+				style={{ minWidth: '600px' }}
+				footer={null}
 			>
 				<EditSaml
 					certificate={currentDomain?.samlConfig.samlCert || ''}
 					entityId={currentDomain?.samlConfig.samlEntity || ''}
 					url={currentDomain?.samlConfig.samlIdp || ''}
-					form={form}
+					onRecordUpdateHandler={onRecordUpdateHandler}
+					record={currentDomain as SAMLDomain}
+					setEditModalOpen={setIsEditModalOpen}
 				/>
 			</Modal>
 
 			<Space direction="vertical" size="middle">
-				<Container>
-					<Typography.Title level={3}>
-						{t('authenticated_domains', {
-							ns: 'organizationsettings',
-						})}
-					</Typography.Title>
-					<Button
-						onClick={onOpenHandler(setIsSettingsOpen)}
-						type="primary"
-						icon={<PlusOutlined />}
-					>
-						Add Domains
-					</Button>
-				</Container>
+				{SSOFlag && <AddDomain />}
 
 				<Table
 					dataSource={data?.payload || []}

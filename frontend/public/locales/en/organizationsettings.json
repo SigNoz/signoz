@@ -10,5 +10,7 @@
 	"invite_team_members": "Invite team members",
 	"invite_members": "Invite Members",
 	"pending_invites": "Pending Invites",
-	"authenticated_domains": "Authenticated Domains"
+	"authenticated_domains": "Authenticated Domains",
+	"delete_domain_message": "Are you sure you want to delete this domain?",
+	"delete_domain": "Delete Domain"
 }

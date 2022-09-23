@@ -5,10 +5,10 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import AuthDomains from './AuthDomains';
 import DisplayName from './DisplayName';
 import Members from './Members';
 import PendingInvitesContainer from './PendingInvitesContainer';
-import SAMLSettings from './SAMLSettings';
 
 function OrganizationSettings(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -39,7 +39,7 @@ function OrganizationSettings(): JSX.Element {
 			<Divider />
 			<Members />
 			<Divider />
-			{EnterprisePlanFeatureFlag && <SAMLSettings />}
+			{EnterprisePlanFeatureFlag && <AuthDomains />}
 		</>
 	);
 }

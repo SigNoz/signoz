@@ -1,6 +1,8 @@
 import { Switch } from 'antd';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SAMLDomain } from 'types/api/SAML/listDomain';
+
+import { getIsValidCertificate } from '../utils';
 
 function SwitchComponent({
 	isDefaultChecked,
@@ -23,10 +25,15 @@ function SwitchComponent({
 		setIsLoading(false);
 	};
 
+	const isInValidCertificate = useMemo(
+		() => !getIsValidCertificate(record.samlConfig),
+		[record],
+	);
+
 	return (
 		<Switch
 			loading={isLoading}
-			disabled={isLoading}
+			disabled={isInValidCertificate}
 			checked={isChecked}
 			onChange={onChangeHandler}
 		/>
