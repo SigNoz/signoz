@@ -88,7 +88,7 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) ba
 	}
 
 	_, err = m.DB().ExecContext(ctx,
-		"INSERT INTO org_domains (id, name, org_id, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)",
+		"INSERT INTO org_domains (id, name, org_id, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)",
 		domain.Id,
 		domain.Name,
 		domain.OrgId,
