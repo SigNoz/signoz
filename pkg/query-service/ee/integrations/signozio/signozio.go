@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -49,7 +48,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
-	httpBody, err := ioutil.ReadAll(httpResponse.Body)
+	httpBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "failed to read activation response from license.signoz.io"))
 	}
@@ -89,7 +88,7 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
 	}
@@ -137,7 +136,7 @@ func SendUsage(ctx context.Context, usage *model.UsagePayload) *model.ApiError {
 		return model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return model.BadRequest(errors.Wrap(err, "failed to read usage response from license.signoz.io"))
 	}
