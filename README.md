@@ -116,7 +116,7 @@ Our goal is to provide an integrated UI between metrics & traces - similar to wh
 
 ### SigNoz vs Jaeger
 
-Jaeger only does distributed tracing. SigNoz does both metrics and traces, and we also have log management in our roadmap.
+Jaeger only does distributed tracing. SigNoz supports metrics, traces and logs - all the 3 pillars of observability.
 
 Moreover, SigNoz has few more advanced features wrt Jaeger:
 
