@@ -18,7 +18,7 @@ var (
 
 // BuildDetails returns a string containing details about the SigNoz query-service binary.
 func BuildDetails() string {
-	licenseInfo := `Licensed under the MIT License`
+	licenseInfo := `Check SigNoz Github repo for license details`
 
 	return fmt.Sprintf(`
 SigNoz version   : %v

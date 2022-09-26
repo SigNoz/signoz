@@ -5,7 +5,6 @@
 </p>
 
 <p align="center">
-    <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen"> </a>
     <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Downloads"> </a>
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
@@ -15,9 +14,9 @@
   
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Documentation</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>ReadMe in German</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.de-de.md"><b>ReadMe in German</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
   <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
@@ -117,7 +116,7 @@ Our goal is to provide an integrated UI between metrics & traces - similar to wh
 
 ### SigNoz vs Jaeger
 
-Jaeger only does distributed tracing. SigNoz does both metrics and traces, and we also have log management in our roadmap.
+Jaeger only does distributed tracing. SigNoz supports metrics, traces and logs - all the 3 pillars of observability.
 
 Moreover, SigNoz has few more advanced features wrt Jaeger:
 
@@ -146,7 +145,6 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 #### Frontend
 
 - [Palash Gupta](https://github.com/palashgdev)
-- [Pranshu Chittora](https://github.com/pranshuchittora)
 
 #### DevOps
 

@@ -35,11 +35,8 @@ export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
-export const InstrumentationPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "InstrumentationPage" */ 'pages/AddInstrumentation'
-		),
+export const GettingStarted = Loadable(
+	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
 );
 
 export const DashboardPage = Loadable(
