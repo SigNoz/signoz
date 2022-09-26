@@ -16,7 +16,7 @@ function SwitchComponent({
 		setIsLoading(true);
 		const response = await onRecordUpdateHandler({
 			...record,
-			ssoEnforce: checked,
+			ssoEnabled: checked,
 		});
 
 		if (response) {
@@ -26,7 +26,7 @@ function SwitchComponent({
 	};
 
 	const isInValidCertificate = useMemo(
-		() => !getIsValidCertificate(record.samlConfig),
+		() => !getIsValidCertificate(record?.samlConfig),
 		[record],
 	);
 

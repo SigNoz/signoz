@@ -12,5 +12,7 @@
 	"pending_invites": "Pending Invites",
 	"authenticated_domains": "Authenticated Domains",
 	"delete_domain_message": "Are you sure you want to delete this domain?",
-	"delete_domain": "Delete Domain"
+	"delete_domain": "Delete Domain",
+	"add_domain": "Add Domains",
+	"saml_settings":"Your SAML settings have been saved, please login from incognito window to confirm that it has been set up correctly"
 }

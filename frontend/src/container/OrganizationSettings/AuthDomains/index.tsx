@@ -6,7 +6,7 @@ import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -45,7 +45,9 @@ function AuthDomains(): JSX.Element {
 
 				if (response.statusCode === 200) {
 					notification.success({
-						message: t('common:success'),
+						message: t('saml_settings', {
+							ns: 'organizationsettings',
+						}),
 					});
 					refetch();
 
@@ -136,8 +138,8 @@ function AuthDomains(): JSX.Element {
 		},
 		{
 			title: 'Enforce SSO',
-			dataIndex: 'ssoEnforce',
-			key: 'ssoEnforce',
+			dataIndex: 'ssoEnabled',
+			key: 'ssoEnabled',
 			render: (value: boolean, record: SAMLDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
@@ -212,26 +214,11 @@ function AuthDomains(): JSX.Element {
 		},
 	];
 
-	const defaultConfig: SAMLDomain = useMemo(
-		() => ({
-			id: v4(),
-			name: '',
-			orgId: (org || [])[0].id,
-			samlConfig: {
-				samlCert: '',
-				samlEntity: '',
-				samlIdp: '',
-			},
-			ssoEnforce: false,
-			ssoType: 'SAML',
-		}),
-		[org],
-	);
-
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
 			<Space direction="vertical" size="middle">
-				<AddDomain />
+				<AddDomain refetch={refetch} />
+
 				<Modal
 					centered
 					title="Configure Authentication Method"
@@ -245,7 +232,12 @@ function AuthDomains(): JSX.Element {
 						setIsSettingsOpen={setIsSettingsOpen}
 					/>
 				</Modal>
-				<Table dataSource={[defaultConfig]} columns={columns} tableLayout="fixed" />
+				<Table
+					rowKey={(record: SAMLDomain): string => record.name + v4()}
+					dataSource={[]}
+					columns={columns}
+					tableLayout="fixed"
+				/>
 			</Space>
 		);
 	}
@@ -276,9 +268,9 @@ function AuthDomains(): JSX.Element {
 				footer={null}
 			>
 				<EditSaml
-					certificate={currentDomain?.samlConfig.samlCert || ''}
-					entityId={currentDomain?.samlConfig.samlEntity || ''}
-					url={currentDomain?.samlConfig.samlIdp || ''}
+					certificate={currentDomain?.samlConfig?.samlCert || ''}
+					entityId={currentDomain?.samlConfig?.samlEntity || ''}
+					url={currentDomain?.samlConfig?.samlIdp || ''}
 					onRecordUpdateHandler={onRecordUpdateHandler}
 					record={currentDomain as SAMLDomain}
 					setEditModalOpen={setIsEditModalOpen}
@@ -286,13 +278,14 @@ function AuthDomains(): JSX.Element {
 			</Modal>
 
 			<Space direction="vertical" size="middle">
-				<AddDomain />
+				<AddDomain refetch={refetch} />
 
 				<Table
 					dataSource={data?.payload || []}
 					loading={isLoading}
 					columns={columns}
 					tableLayout="fixed"
+					rowKey={(record: SAMLDomain): string => record.name + v4()}
 				/>
 			</Space>
 		</>

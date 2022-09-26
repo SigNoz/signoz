@@ -1,13 +1,11 @@
-import { FeatureFlag } from 'types/reducer/app';
-
 import { Organization } from '../user/getOrganization';
 
 export interface SAMLDomain {
 	id: string;
 	name: string;
 	orgId: Organization['id'];
-	ssoEnforce: boolean;
-	ssoType: keyof FeatureFlag;
+	ssoEnabled: boolean;
+	ssoType: 'SAML';
 	samlConfig: {
 		samlEntity: string;
 		samlIdp: string;
