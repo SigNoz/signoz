@@ -125,11 +125,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onClickLicenseHandler = useCallback(() => {
-		const isDevelopment = process.env.NODE_ENV === 'development';
-		const url = isDevelopment
-			? 'https://develop.license.com'
-			: 'https://prod.license.com';
-		window.open(url);
+		window.open('http://signoz.io/pricing');
 	}, []);
 
 	const columns: ColumnsType<SAMLDomain> = [
