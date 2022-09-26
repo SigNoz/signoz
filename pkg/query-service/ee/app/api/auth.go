@@ -249,9 +249,6 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo(amol): remove this before merging. adding this for testing purpose
-	parsedState.Host = "localhost:8080"
-
 	sp, err := domain.PrepareSamlRequest(parsedState)
 	if err != nil {
 		zap.S().Errorf("[ReceiveSAML] failed to prepare saml request for domain (%s): %v", domainId, err)
