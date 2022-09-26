@@ -10,7 +10,7 @@ import {
 	SWITCH_DARK_MODE,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAGS_SAML,
+	UPDATE_FEATURE_FLAGS,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
@@ -55,15 +55,7 @@ const InitialValue: InitialValueTypes = {
 	isUserFetchingError: false,
 	org: null,
 	role: null,
-
-	features: {
-		SAML: {
-			BASIC_PLAN: false,
-			DISABLE_UPSELL: false,
-			ENTERPRISE_PLAN: false,
-			SSO: false,
-		},
-	},
+	featureFlags: null,
 };
 
 const appReducer = (
@@ -204,16 +196,10 @@ const appReducer = (
 			};
 		}
 
-		case UPDATE_FEATURE_FLAGS_SAML: {
-			const { features } = state;
+		case UPDATE_FEATURE_FLAGS: {
 			return {
 				...state,
-				features: {
-					SAML: {
-						...features.SAML,
-						...action.payload,
-					},
-				},
+				featureFlags: action.payload,
 			};
 		}
 

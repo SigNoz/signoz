@@ -4,7 +4,8 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
-import useFeatureFlag from 'hooks/getFeatureFlag';
+import { FeatureKeys } from 'constants/featureKeys';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -20,14 +21,14 @@ import EditSaml from './Edit';
 import SwitchComponent from './Switch';
 import { getIsValidCertificate } from './utils';
 
-function SAMLSettings(): JSX.Element {
+function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentDomain, setCurrentDomain] = useState<SAMLDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-	const [SSOFlag] = useFeatureFlag(['SSO'], 'SAML');
+	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
 
 	const { data, isLoading, refetch } = useQuery(['saml'], {
 		queryFn: () =>
@@ -234,7 +235,7 @@ function SAMLSettings(): JSX.Element {
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
 			<Space direction="vertical" size="middle">
-				{SSOFlag && <AddDomain />}
+				<AddDomain />
 				<Modal
 					centered
 					title="Configure Authentication Method"
@@ -289,7 +290,7 @@ function SAMLSettings(): JSX.Element {
 			</Modal>
 
 			<Space direction="vertical" size="middle">
-				{SSOFlag && <AddDomain />}
+				<AddDomain />
 
 				<Table
 					dataSource={data?.payload || []}
@@ -302,4 +303,4 @@ function SAMLSettings(): JSX.Element {
 	);
 }
 
-export default SAMLSettings;
+export default AuthDomains;

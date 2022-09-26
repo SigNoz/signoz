@@ -1,3 +1,4 @@
+import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
 import { PayloadProps as UserPayload } from 'types/api/user/getUser';
 import { ROLES } from 'types/roles';
@@ -9,15 +10,6 @@ export interface User {
 	email: UserPayload['email'];
 	name: UserPayload['name'];
 	profilePictureURL: UserPayload['profilePictureURL'];
-}
-
-export interface FeatureFlag {
-	SAML: {
-		DISABLE_UPSELL: boolean;
-		ENTERPRISE_PLAN: boolean;
-		SSO: boolean;
-		BASIC_PLAN: boolean;
-	};
 }
 
 export default interface AppReducer {
@@ -33,5 +25,5 @@ export default interface AppReducer {
 	isUserFetchingError: boolean;
 	role: ROLES | null;
 	org: OrgPayload | null;
-	features: FeatureFlag;
+	featureFlags: null | FeatureFlagPayload;
 }

@@ -2,6 +2,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Modal, notification, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/SAML/postDomain';
+import { FeatureKeys } from 'constants/featureKeys';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -14,6 +16,8 @@ function AddDomain(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
 	const [form] = useForm<FormProps>();
+	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
+
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onCreateHandler = async (): Promise<void> => {
@@ -51,13 +55,15 @@ function AddDomain(): JSX.Element {
 						ns: 'organizationsettings',
 					})}
 				</Typography.Title>
-				<Button
-					onClick={(): void => setIsDomain(true)}
-					type="primary"
-					icon={<PlusOutlined />}
-				>
-					Add Domains
-				</Button>
+				{SSOFlag && (
+					<Button
+						onClick={(): void => setIsDomain(true)}
+						type="primary"
+						icon={<PlusOutlined />}
+					>
+						Add Domains
+					</Button>
+				)}
 			</Container>
 			<Modal
 				centered

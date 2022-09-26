@@ -1,5 +1,5 @@
 import { notification } from 'antd';
-import getFeaturesFlags from 'api/featureflag/getSAMLFeaturesFlags';
+import getFeaturesFlags from 'api/features/getFeatureFlags';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import Header from 'container/Header';
@@ -16,7 +16,7 @@ import AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAGS_SAML,
+	UPDATE_FEATURE_FLAGS,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
@@ -148,7 +148,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getFeaturesResponse.data.payload
 		) {
 			dispatch({
-				type: UPDATE_FEATURE_FLAGS_SAML,
+				type: UPDATE_FEATURE_FLAGS,
 				payload: {
 					...getFeaturesResponse.data.payload,
 				},

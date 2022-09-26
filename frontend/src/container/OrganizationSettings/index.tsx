@@ -1,5 +1,6 @@
 import { Divider, Space } from 'antd';
-import useFeatureFlag from 'hooks/getFeatureFlag';
+import { FeatureKeys } from 'constants/featureKeys';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -13,10 +14,8 @@ import PendingInvitesContainer from './PendingInvitesContainer';
 function OrganizationSettings(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [EnterprisePlanFeatureFlag] = useFeatureFlag(
-		['ENTERPRISE_PLAN'],
-		'SAML',
-	);
+	const sso = useFeatureFlag(FeatureKeys.SSO);
+	const noUpsell = useFeatureFlag(FeatureKeys.DISABLE_UPSELL);
 
 	if (!org) {
 		return <div />;
@@ -39,7 +38,7 @@ function OrganizationSettings(): JSX.Element {
 			<Divider />
 			<Members />
 			<Divider />
-			{EnterprisePlanFeatureFlag && <AuthDomains />}
+			{(!noUpsell || (noUpsell && sso)) && <AuthDomains />}
 		</>
 	);
 }
