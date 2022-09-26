@@ -37,6 +37,7 @@ func PrepareRequest(issuer, acsUrl, audience, entity, idp, cert string) (*saml2.
 		ServiceProviderIssuer:       issuer,
 		AssertionConsumerServiceURL: acsUrl,
 		SignAuthnRequests:           true,
+		AllowMissingAttributes:      true,
 		IDPCertificateStore:         &certStore,
 		SPKeyStore:                  randomKeyStore,
 	}
