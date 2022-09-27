@@ -5,7 +5,6 @@ import {
 	Form,
 	Input,
 	notification,
-	Popover,
 	Space,
 	Typography,
 } from 'antd';
@@ -96,9 +95,7 @@ function EditSaml({
 
 			<Card style={{ marginBottom: '1rem' }}>
 				<Space>
-					<Popover content={<div>asd</div>}>
-						<InfoCircleFilled />
-					</Popover>
+					<InfoCircleFilled />
 					<Typography>
 						SAML won’t be enabled unless you enter all the attributes above
 					</Typography>

@@ -23,7 +23,6 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	const onCreateHandler = async (): Promise<void> => {
 		try {
-			console.log(form.getFieldValue('domain'), 'asd');
 			const response = await createDomainApi({
 				name: form.getFieldValue('domain'),
 				orgId: (org || [])[0].id,
