@@ -26,13 +26,6 @@ function EditSaml({
 
 	const { t } = useTranslation(['common']);
 
-	const onFinishFailed = useCallback(() => {
-		form.resetFields();
-		notification.error({
-			message: t('something_went_wrong', { ns: 'common' }),
-		});
-	}, [form, t]);
-
 	const onFinishHandler = useCallback(() => {
 		form
 			.validateFields()
@@ -63,7 +56,15 @@ function EditSaml({
 		<Form
 			name="basic"
 			initialValues={{ certificate, entityId, url }}
-			onFinishFailed={onFinishFailed}
+			onFinishFailed={(error): void => {
+				error.errorFields.forEach(({ errors }) => {
+					notification.error({
+						message:
+							errors[0].toString() || t('something_went_wrong', { ns: 'common' }),
+					});
+				});
+				form.resetFields();
+			}}
 			layout="vertical"
 			onFinish={onFinishHandler}
 			autoComplete="off"

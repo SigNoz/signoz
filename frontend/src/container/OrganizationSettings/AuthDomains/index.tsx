@@ -38,6 +38,13 @@ function AuthDomains(): JSX.Element {
 		enabled: org !== null,
 	});
 
+	const onCloseHandler = useCallback(
+		(func: React.Dispatch<React.SetStateAction<boolean>>) => (): void => {
+			func(false);
+		},
+		[],
+	);
+
 	const onRecordUpdateHandler = useCallback(
 		async (record: SAMLDomain): Promise<boolean> => {
 			try {
@@ -50,6 +57,7 @@ function AuthDomains(): JSX.Element {
 						}),
 					});
 					refetch();
+					onCloseHandler(setIsEditModalOpen)();
 
 					return true;
 				}
@@ -70,14 +78,7 @@ function AuthDomains(): JSX.Element {
 				return false;
 			}
 		},
-		[refetch, t],
-	);
-
-	const onCloseHandler = useCallback(
-		(func: React.Dispatch<React.SetStateAction<boolean>>) => (): void => {
-			func(false);
-		},
-		[],
+		[refetch, t, onCloseHandler],
 	);
 
 	const onOpenHandler = useCallback(
