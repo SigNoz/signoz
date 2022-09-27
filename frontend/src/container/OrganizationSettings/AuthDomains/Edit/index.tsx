@@ -31,6 +31,7 @@ function EditSaml({
 			.then(async (values) => {
 				await onRecordUpdateHandler({
 					...record,
+					ssoEnabled: true,
 					samlConfig: {
 						...record.samlConfig,
 						samlCert: values.certificate,
