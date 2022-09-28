@@ -60,7 +60,7 @@ build-query-service-amd64:
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	docker build -f Dockerfile.ee  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
 	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
