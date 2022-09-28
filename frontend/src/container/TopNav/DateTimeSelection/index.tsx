@@ -166,7 +166,7 @@ function DateTimeSelection({
 			const selectedLabel = getInputLabel(undefined, undefined, value);
 			setSelectedTimeInterval(selectedLabel as Time);
 			updateLocalStorageForRoutes(value);
-			if(refreshButtonHidden) {
+			if (refreshButtonHidden) {
 				setRefreshButtonHidden(false);
 			}
 		} else {
