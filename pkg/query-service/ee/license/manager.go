@@ -167,7 +167,7 @@ func (lm *Manager) Validator(ctx context.Context) {
 
 // Validate validates the current active license
 func (lm *Manager) Validate(ctx context.Context) (reterr error) {
-
+	zap.S().Info("License validation started")
 	if lm.activeLicense == nil {
 		return nil
 	}
@@ -177,9 +177,12 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 
 		lm.lastValidated = time.Now().Unix()
 		if reterr != nil {
+			zap.S().Errorf("License validation completed with error", reterr)
 			atomic.AddUint64(&lm.failedAttempts, 1)
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
 				map[string]interface{}{"err": reterr.Error()})
+		} else {
+			zap.S().Info("License validation completed with no errors")
 		}
 
 		lm.mutex.Unlock()
