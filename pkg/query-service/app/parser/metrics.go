@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"go.signoz.io/query-service/app/metrics"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func validateQueryRangeParamsV2(qp *model.QueryRangeParamsV2) error {

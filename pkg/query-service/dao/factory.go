@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/dao/sqlite"
+	"go.signoz.io/signoz/pkg/query-service/dao/sqlite"
 )
 
 var db ModelDao

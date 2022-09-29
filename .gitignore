@@ -43,6 +43,9 @@ pkg/query-service/signoz.db
 
 pkg/query-service/tests/test-deploy/data/
 
+ee/query-service/signoz.db
+
+ee/query-service/tests/test-deploy/data/
 
 # local data
 

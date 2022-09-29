@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type FeatureLookup interface {

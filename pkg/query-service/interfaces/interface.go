@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type Reader interface {
