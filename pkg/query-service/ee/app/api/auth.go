@@ -87,7 +87,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("failed to register user")), nil)
 		return
 	}
-	zap.S().Debugf("request url:", req.SourceUrl)
+
 	// get invite object
 	invite, err := baseauth.ValidateInvite(ctx, req)
 	if err != nil || invite == nil {
@@ -116,7 +116,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var precheckError basemodel.BaseApiError
-		zap.S().Debugf("received source url in registerUser", req.SourceUrl)
+
 		precheckResp, precheckError = ah.AppDao().PrecheckLogin(ctx, user.Email, req.SourceUrl)
 		if precheckError != nil {
 			RespondError(w, precheckError, precheckResp)

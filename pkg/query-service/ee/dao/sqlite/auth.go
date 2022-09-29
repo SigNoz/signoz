@@ -94,7 +94,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 				zap.S().Errorf("failed to parse referer", err)
 				return resp, model.InternalError(fmt.Errorf("failed to generate login request"))
 			}
-			zap.S().Debugf("acs url", siteUrl.String())
+
 			// build Idp URL that will authenticat the user
 			// the front-end will redirect user to this url
 			resp.SsoUrl, err = orgDomain.BuildSsoUrl(siteUrl)
