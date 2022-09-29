@@ -175,12 +175,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				orgName: organizationName,
 				password,
 				token: params.get('token') || undefined,
+				sourceUrl: encodeURIComponent(window.location.href),
 			});
 			console.log('response.payload:', response.payload);
 			if (response.statusCode === 200) {
 				if (response.payload?.sso) {
 					if (response.payload?.ssoUrl) {
-						console.log('insso url:');
 						window.location.href = response.payload?.ssoUrl;
 					} else {
 						notification.error({
