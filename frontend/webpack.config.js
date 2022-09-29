@@ -38,7 +38,7 @@ const config = {
 		port: portFinderSync.getPort(3301),
 		static: {
 			directory: resolve(__dirname, 'public'),
-			publicPath: '/',
+			publicPath: './',
 			watch: true,
 		},
 		allowedHosts: 'all',
@@ -46,7 +46,7 @@ const config = {
 	target: 'web',
 	output: {
 		path: resolve(__dirname, './build'),
-		publicPath: '/',
+		publicPath: './',
 	},
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
