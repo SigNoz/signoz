@@ -39,11 +39,11 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
-	"go.signoz.io/query-service/app/logs"
-	"go.signoz.io/query-service/constants"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/utils"
+	"go.signoz.io/signoz/pkg/query-service/app/logs"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 

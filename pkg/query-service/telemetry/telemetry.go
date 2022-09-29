@@ -11,10 +11,10 @@ import (
 	"time"
 
 	ph "github.com/posthog/posthog-go"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/interfaces"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/version"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/version"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
 

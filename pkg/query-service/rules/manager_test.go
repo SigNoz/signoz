@@ -7,18 +7,19 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
-	"go.signoz.io/query-service/app/clickhouseReader"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
-	pqle "go.signoz.io/query-service/pqlEngine"
-	"go.signoz.io/query-service/utils/value"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
+	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
+	"go.signoz.io/signoz/pkg/query-service/utils/value"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func initZapLog() *zap.Logger {

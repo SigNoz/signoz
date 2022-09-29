@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 )
 
 func (mds *ModelDaoSqlite) CreateInviteEntry(ctx context.Context,

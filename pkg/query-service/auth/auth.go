@@ -8,9 +8,9 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/dao"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
