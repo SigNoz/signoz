@@ -88,7 +88,8 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 
 			// parse source url that generated the login request
 			var err error
-			siteUrl, err := url.Parse(sourceUrl)
+			escapedUrl, _ := url.QueryUnescape(sourceUrl)
+			siteUrl, err := url.Parse(escapedUrl)
 			if err != nil {
 				zap.S().Errorf("failed to parse referer", err)
 				return resp, model.InternalError(fmt.Errorf("failed to generate login request"))
