@@ -111,8 +111,13 @@ func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServicePro
 		siteUrl.Host,
 		siteUrl.Path)
 
-	// we replace hyphen to colon so idp doesnt break it in the url encode
-	issuer := strings.Replace(od.Id.String(), "-", ":", -1)
+	// ideally this should be some unique ID for each installation
+	// but since we dont have UI to support it, we default it to
+	// host. this issuer is an identifier of service provider (signoz)
+	// on id provider (e.g. azure, okta). Azure requires this id to be configured
+	// in their system, while others seem to not care about it.
+	// currently we default it to host from window.location (received from browser)
+	issuer := siteUrl.Host
 
 	return saml.PrepareRequest(issuer, acs, sourceUrl, od.GetSAMLEntityID(), od.GetSAMLIdpURL(), od.GetSAMLCert())
 }
