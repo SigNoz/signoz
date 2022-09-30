@@ -6,14 +6,12 @@ import {
 	externalCallErrorPercent,
 	externalCallRpsByAddress,
 } from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
-import React from 'react';
+import { resourceAttributesToTagFilterItems } from 'lib/resourceAttributes';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import {
-	IQueryBuilderTagFilterItems,
-	Widgets,
-} from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
@@ -24,18 +22,10 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		(state) => state.metrics,
 	);
 
-	/* Convert resource attributes to tagFilter items for queryBuilder */
-	const temp: IQueryBuilderTagFilterItems[] = [];
-	resourceAttributeQueries.forEach((res) => {
-		const tempObj: IQueryBuilderTagFilterItems = {
-			id: `${res.id}`,
-			key: `${res.tagKey}`,
-			op: `${res.operator}`,
-			value: `${res.tagValue}`.split(','),
-		};
-		temp.push(tempObj);
-		return temp;
-	});
+	const tagFilterItems = useMemo(
+		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
+		[resourceAttributeQueries],
+	);
 
 	const legend = '{{address}}';
 
@@ -52,7 +42,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: externalCallErrorPercent(servicename, legend, temp),
+									metricsBuilder: externalCallErrorPercent({
+										servicename,
+										legend,
+										tagFilterItems,
+									}),
 									clickHouse: [],
 								})}
 								yAxisUnit="%"
@@ -71,7 +65,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: externalCallDuration(servicename, temp),
+									metricsBuilder: externalCallDuration(servicename, tagFilterItems),
 									clickHouse: [],
 								})}
 								yAxisUnit="ms"
@@ -92,7 +86,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: externalCallRpsByAddress(servicename, legend, temp),
+									metricsBuilder: externalCallRpsByAddress(
+										servicename,
+										legend,
+										tagFilterItems,
+									),
 									clickHouse: [],
 								})}
 								yAxisUnit="reqps"
@@ -114,7 +112,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 									metricsBuilder: externalCallDurationByAddress(
 										servicename,
 										legend,
-										temp,
+										tagFilterItems,
 									),
 									clickHouse: [],
 								})}
