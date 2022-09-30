@@ -1,5 +1,6 @@
 import { OperatorConversions } from 'constants/resourceAttributes';
 import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
+import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
 import { OperatorValues, Tags, TagsAPI } from 'types/reducer/trace';
 
 /**
@@ -68,4 +69,16 @@ export const resourceAttributesQueryToPromQL = (
 		});
 
 	return parsedQueryString;
+};
+
+/* Convert resource attributes to tagFilter items for queryBuilder */
+export const resourceAttributesToTagFilterItems = (
+	queries: IResourceAttributeQuery[],
+): IQueryBuilderTagFilterItems[] => {
+	return queries.map((res) => ({
+		id: `${res.id}`,
+		key: `${res.tagKey}`,
+		op: `${res.operator}`,
+		value: `${res.tagValue}`.split(','),
+	}));
 };
