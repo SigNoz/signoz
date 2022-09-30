@@ -13,7 +13,6 @@ import {
 
 function ManageLicense({ onToggle }: ManageLicenseProps): JSX.Element {
 	const isEnterprise = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
-	console.log('isEnterprise', isEnterprise);
 	return (
 		<>
 			<Typography>SIGNOZ STATUS</Typography>
@@ -26,7 +25,6 @@ function ManageLicense({ onToggle }: ManageLicenseProps): JSX.Element {
 
 				<Typography.Link
 					onClick={(): void => {
-						console.log('in licenses');
 						onToggle();
 						history.push(ROUTES.LIST_LICENSES);
 					}}

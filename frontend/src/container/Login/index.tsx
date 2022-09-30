@@ -5,6 +5,7 @@ import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
@@ -26,6 +27,7 @@ function Login({
 	ssoerror = '',
 	withPassword = '0',
 }: LoginProps): JSX.Element {
+	const { t } = useTranslation(['login']);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [email, setEmail] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
@@ -61,15 +63,15 @@ function Login({
 	useEffect(() => {
 		if (ssoerror !== '') {
 			notification.error({
-				message: 'sorry, failed to login',
+				message: t('failed_to_login'),
 			});
 		}
-	}, [ssoerror]);
+	}, [ssoerror, t]);
 
 	const onNextHandler = async (): Promise<void> => {
 		if (!email) {
 			notification.error({
-				message: 'Please enter a valid email address',
+				message: t('invalid_email'),
 			});
 			return;
 		}
@@ -87,19 +89,17 @@ function Login({
 					setPrecheckComplete(true);
 				} else {
 					notification.error({
-						message:
-							'This account does not exist. To create a new account, contact your admin to get an invite link',
+						message: t('invalid_account'),
 					});
 				}
 			} else {
 				notification.error({
-					message:
-						'Invalid configuration detected, please contact your administrator',
+					message: t('invalid_config'),
 				});
 			}
 		} catch (e) {
 			console.log('failed to call precheck Api', e);
-			notification.error({ message: 'Sorry, something went wrong' });
+			notification.error({ message: t('unexpected_error') });
 		}
 		setPrecheckInProcess(false);
 	};
@@ -132,14 +132,14 @@ function Login({
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notification.error({
-					message: response.error || 'Something went wrong',
+					message: response.error || t('unexpected_error'),
 				});
 			}
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
 			notification.error({
-				message: 'Something went wrong',
+				message: t('unexpected_error'),
 			});
 		}
 	};
@@ -152,7 +152,7 @@ function Login({
 				disabled={isLoading}
 				href={precheckResult.ssoUrl}
 			>
-				Login with SSO
+				{t('login_with_sso')}
 			</Button>
 		);
 	};
@@ -164,8 +164,8 @@ function Login({
 
 		return (
 			<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-				Are you trying to resolve SSO configuration issue?{' '}
-				<a href="/login?password=Y">login with password</a>.
+				{t('prompt_on_sso_error')}{' '}
+				<a href="/login?password=Y">{t('login_with_pwd')}</a>.
 			</Typography.Paragraph>
 		);
 	};
@@ -174,11 +174,11 @@ function Login({
 	return (
 		<FormWrapper>
 			<FormContainer onSubmit={onSubmitHandler}>
-				<Title level={4}>Login to SigNoz</Title>
+				<Title level={4}>{t('login_page_title')}</Title>
 				<ParentContainer>
-					<Label htmlFor="signupEmail">Email</Label>
+					<Label htmlFor="signupEmail">{t('label_email')}</Label>
 					<Input
-						placeholder="name@yourcompany.com"
+						placeholder={t('placeholder_email')}
 						type="email"
 						autoFocus
 						required
@@ -190,7 +190,7 @@ function Login({
 				</ParentContainer>
 				{precheckComplete && !sso && (
 					<ParentContainer>
-						<Label htmlFor="Password">Password</Label>
+						<Label htmlFor="Password">{t('label_password')}</Label>
 						<Input.Password
 							required
 							id="currentPassword"
@@ -200,8 +200,8 @@ function Login({
 							disabled={isLoading}
 							value={password}
 						/>
-						<Tooltip title="Ask your admin to reset your password and send you a new invite link">
-							<Typography.Link>Forgot password?</Typography.Link>
+						<Tooltip title={t('prompt_forgot_password')}>
+							<Typography.Link>{t('forgot_password')}</Typography.Link>
 						</Tooltip>
 					</ParentContainer>
 				)}
@@ -218,7 +218,7 @@ function Login({
 							type="primary"
 							onClick={onNextHandler}
 						>
-							Next
+							{t('button_initiate_login')}
 						</Button>
 					)}
 					{precheckComplete && !sso && (
@@ -229,7 +229,7 @@ function Login({
 							htmlType="submit"
 							data-attr="signup"
 						>
-							Login
+							{t('button_login')}
 						</Button>
 					)}
 
@@ -238,34 +238,34 @@ function Login({
 
 					{!canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							Don&#39;t have an account? Contact your admin to send you an invite link.
+							{t('prompt_no_account')}
 						</Typography.Paragraph>
 					)}
 
 					{!canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							If you are setting up SigNoz for the first time,{' '}
+							{t('prompt_create_account')}{' '}
 							<Typography.Link
 								onClick={(): void => {
 									history.push(ROUTES.SIGN_UP);
 								}}
 								style={{ fontWeight: 700 }}
 							>
-								Create an account
+								{t('create_an_account')}
 							</Typography.Link>
 						</Typography.Paragraph>
 					)}
 
 					{canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							If you are admin,{' '}
+							{t('prompt_if_admin')}{' '}
 							<Typography.Link
 								onClick={(): void => {
 									history.push(ROUTES.SIGN_UP);
 								}}
 								style={{ fontWeight: 700 }}
 							>
-								Create an account
+								{t('create_an_account')}
 							</Typography.Link>
 						</Typography.Paragraph>
 					)}
