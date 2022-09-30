@@ -430,16 +430,16 @@ type GetFieldsResponse struct {
 type GetLogsResponse struct {
 	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
 	ID                 string             `json:"id" ch:"id"`
-	TraceID            string             `json:"traceId" ch:"trace_id"`
-	SpanID             string             `json:"spanId" ch:"span_id"`
-	TraceFlags         uint32             `json:"traceFlags" ch:"trace_flags"`
-	SeverityText       string             `json:"severityText" ch:"severity_text"`
-	SeverityNumber     uint8              `json:"severityNumber" ch:"severity_number"`
+	TraceID            string             `json:"trace_id" ch:"trace_id"`
+	SpanID             string             `json:"span_id" ch:"span_id"`
+	TraceFlags         uint32             `json:"trace_flags" ch:"trace_flags"`
+	SeverityText       string             `json:"severity_text" ch:"severity_text"`
+	SeverityNumber     uint8              `json:"severity_number" ch:"severity_number"`
 	Body               string             `json:"body" ch:"body"`
-	Resources_string   map[string]string  `json:"resourcesString" ch:"resources_string"`
-	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`
-	Attributes_int64   map[string]int64   `json:"attributesInt" ch:"attributes_int64"`
-	Attributes_float64 map[string]float64 `json:"attributesFloat" ch:"attributes_float64"`
+	Resources_string   map[string]string  `json:"resources_string" ch:"resources_string"`
+	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
+	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
+	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 }
 
 type LogsTailClient struct {
@@ -491,4 +491,8 @@ func (s *ServiceItem) MarshalJSON() ([]byte, error) {
 	}{
 		Alias: (*Alias)(s),
 	})
+}
+
+type DashboardVar struct {
+	VariableValues []interface{} `json:"variableValues"`
 }

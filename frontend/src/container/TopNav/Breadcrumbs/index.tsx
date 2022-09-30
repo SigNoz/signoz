@@ -8,7 +8,7 @@ const breadcrumbNameMap = {
 	[ROUTES.TRACE]: 'Traces',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
-	[ROUTES.INSTRUMENTATION]: 'Add instrumentation',
+	[ROUTES.INSTRUMENTATION]: 'Get Started',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
 	[ROUTES.ALL_ERROR]: 'Exceptions',
@@ -18,7 +18,7 @@ const breadcrumbNameMap = {
 	[ROUTES.ERROR_DETAIL]: 'Errors',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
-	[ROUTES.LOGS]: 'Logs'
+	[ROUTES.LOGS]: 'Logs',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {

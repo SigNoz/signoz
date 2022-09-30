@@ -87,7 +87,7 @@ function Retention({
 				<Col span={12} style={{ display: 'flex' }}>
 					<RetentionFieldLabel>{text}</RetentionFieldLabel>
 				</Col>
-				<Row span={12} justify="end">
+				<Row justify="end">
 					<RetentionFieldInputContainer>
 						<Input
 							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}

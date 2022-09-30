@@ -6,7 +6,7 @@ const ROUTES = {
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	SETTINGS: '/settings',
-	INSTRUMENTATION: '/add-instrumentation',
+	INSTRUMENTATION: '/get-started',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/application',
 	ALL_DASHBOARD: '/dashboard',

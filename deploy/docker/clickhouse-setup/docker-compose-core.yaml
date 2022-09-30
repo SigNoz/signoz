@@ -1,0 +1,108 @@
+version: "2.4"
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:22.4.5-alpine
+    container_name: clickhouse
+    # ports:
+    # - "9000:9000"
+    # - "8123:8123"
+    tty: true
+    volumes:
+      - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+      - ./data/clickhouse/:/var/lib/clickhouse/
+    restart: on-failure
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
+    healthcheck:
+      # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  alertmanager:
+    container_name: alertmanager
+    image: signoz/alertmanager:0.23.0-0.2
+    volumes:
+      - ./data/alertmanager:/data
+    depends_on:
+      query-service:
+        condition: service_healthy
+    restart: on-failure
+    command:
+      - --queryService.url=http://query-service:8085
+      - --storage.path=/data
+
+  # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
+  otel-collector:
+    container_name: otel-collector
+    image: signoz/signoz-otel-collector:0.55.1
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    # user: root # required for reading docker container logs
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
+    ports:
+      # - "1777:1777"     # pprof extension
+      - "4317:4317"     # OTLP gRPC receiver
+      - "4318:4318"     # OTLP HTTP receiver
+      # - "8888:8888"     # OtelCollector internal metrics
+      # - "8889:8889"     # signoz spanmetrics exposed by the agent
+      # - "9411:9411"     # Zipkin port
+      # - "13133:13133"   # health check extension
+      # - "14250:14250"   # Jaeger gRPC
+      # - "14268:14268"   # Jaeger thrift HTTP
+      # - "55678:55678"   # OpenCensus receiver
+      # - "55679:55679"   # zPages extension
+    restart: on-failure
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  otel-collector-metrics:
+    container_name: otel-collector-metrics
+    image: signoz/signoz-otel-collector:0.55.1
+    command: ["--config=/etc/otel-collector-metrics-config.yaml"]
+    volumes:
+      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
+    # ports:
+    #   - "1777:1777"     # pprof extension
+    #   - "8888:8888"     # OtelCollector internal metrics
+    #   - "13133:13133"   # Health check extension
+    #   - "55679:55679"   # zPages extension
+    restart: on-failure
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  hotrod:
+    image: jaegertracing/example-hotrod:1.30
+    container_name: hotrod
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
+    command: ["all"]
+    environment:
+      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+
+  load-hotrod:
+    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+    container_name: load-hotrod
+    hostname: load-hotrod
+    environment:
+      ATTACKED_HOST: http://hotrod:8080
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
+    volumes:
+      - ../common/locust-scripts:/locust

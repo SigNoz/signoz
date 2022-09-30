@@ -62,7 +62,7 @@ const menus: SidebarMenu[] = [
 	{
 		Icon: ApiOutlined,
 		to: ROUTES.INSTRUMENTATION,
-		name: 'Add instrumentation',
+		name: 'Get Started',
 	},
 ];
 

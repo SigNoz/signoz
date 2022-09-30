@@ -77,18 +77,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB.SetMaxOpenConns(10)
+	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath)
-		go clickhouseReader.Start()
+		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
+	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
 	if err != nil {
 		return nil, err
@@ -232,9 +234,10 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-
-		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		if telemetry.GetInstance().IsSampled() {
+			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+			}
 		}
 
 	})
@@ -361,7 +364,7 @@ func makeRulesManager(
 	disableRules bool) (*rules.Manager, error) {
 
 	// create engine
-	pqle, err := pqle.FromConfigPath(promConfigPath)
+	pqle, err := pqle.FromReader(ch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pql engine : %v", err)
 	}

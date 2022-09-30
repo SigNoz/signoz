@@ -30,4 +30,5 @@ export const QueryBuilderQueryTemplate = {
 export const QueryBuilderFormulaTemplate = {
 	expression: '',
 	disabled: false,
+	legend: '',
 };

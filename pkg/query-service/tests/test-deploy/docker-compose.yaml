@@ -38,17 +38,19 @@ services:
     image: signoz/query-service:latest
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
+    ports:
+      - "8180:8080"
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data:/var/lib/signoz
-    ports:
-      - "8180:8080"
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
       interval: 30s
@@ -59,22 +61,23 @@ services:
         condition: service_healthy
 
   otel-collector:
-    image: signoz-otel-collector:0.55.0-rc.3
+    image: signoz/signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-config.yaml"]
+    user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
       - "4317:4317"       # OTLP GRPC receiver
-    mem_limit: 2000m
     restart: always
     depends_on:
       clickhouse:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz-otel-collector:0.55.0-rc.3
+    image: signoz/signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

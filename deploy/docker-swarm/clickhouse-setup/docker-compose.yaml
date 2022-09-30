@@ -40,7 +40,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.10.2
+    image: signoz/query-service:0.11.1
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -51,10 +51,12 @@ services:
       - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-swarm
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
 
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
@@ -68,7 +70,7 @@ services:
       - clickhouse
 
   frontend:
-    image: signoz/frontend:0.10.2
+    image: signoz/frontend:0.11.1
     deploy:
       restart_policy:
         condition: on-failure
@@ -81,11 +83,14 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz-otel-collector:0.55.0-rc.3
+    image: signoz/signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-config.yaml"]
-    # user: root # required for reading docker container logs
+    user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}},dockerswarm.service.name={{.Service.Name}},dockerswarm.task.name={{.Task.Name}}
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317"     # OTLP gRPC receiver
@@ -98,21 +103,15 @@ services:
       # - "14268:14268"   # Jaeger thrift HTTP
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
-    environment:
-      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}},dockerswarm.service.name={{.Service.Name}},dockerswarm.task.name={{.Task.Name}}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       restart_policy:
         condition: on-failure
-      resources:
-        limits:
-          memory: 2000m
     depends_on:
       - clickhouse
 
   otel-collector-metrics:
-    image: signoz-otel-collector:0.55.0-rc.3
+    image: signoz/signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

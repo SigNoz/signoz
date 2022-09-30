@@ -39,7 +39,7 @@ services:
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:0.10.2
+    image: signoz/query-service:0.11.1
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
@@ -51,6 +51,8 @@ services:
       - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
@@ -66,7 +68,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: signoz/frontend:0.10.2
+    image: signoz/frontend:0.11.1
     container_name: frontend
     restart: on-failure
     depends_on:
@@ -78,11 +80,12 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.55.0-rc.3
+    image: signoz/signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-config.yaml"]
-    # user: root # required for reading docker container logs
+    user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
@@ -97,14 +100,13 @@ services:
       # - "14268:14268"   # Jaeger thrift HTTP
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
-    mem_limit: 2000m
     restart: on-failure
     depends_on:
       clickhouse:
         condition: service_healthy
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.55.0-rc.3
+    image: signoz/signoz-otel-collector:0.55.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

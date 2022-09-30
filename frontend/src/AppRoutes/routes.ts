@@ -11,7 +11,7 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
-	InstrumentationPage,
+	GettingStarted,
 	LicensePage,
 	ListAllALertsPage,
 	Login,
@@ -86,7 +86,7 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.INSTRUMENTATION,
 		exact: true,
-		component: InstrumentationPage,
+		component: GettingStarted,
 		isPrivate: true,
 		key: 'INSTRUMENTATION',
 	},

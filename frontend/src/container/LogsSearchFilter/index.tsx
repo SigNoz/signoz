@@ -1,23 +1,11 @@
-import {
-	CloseCircleFilled,
-	CloseCircleOutlined,
-	CloseSquareOutlined,
-} from '@ant-design/icons';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input } from 'antd';
 import useClickOutside from 'hooks/useClickOutside';
 import getStep from 'lib/getStep';
-import { debounce, throttle } from 'lodash-es';
-import React, {
-	memo,
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { useClickAway, useLocation } from 'react-use';
+import { useLocation } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
@@ -26,7 +14,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { TOGGLE_LIVE_TAIL } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import SearchFields from './SearchFields';
 import { DropDownContainer } from './styles';
@@ -34,7 +22,16 @@ import { useSearchParser } from './useSearchParser';
 
 const { Search } = Input;
 
-function SearchFilter({ getLogs, getLogsAggregate }) {
+interface SearchFilterProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => ReturnType<typeof getLogsAggregate>;
+}
+function SearchFilter({
+	getLogs,
+	getLogsAggregate,
+}: SearchFilterProps): JSX.Element {
 	const {
 		queryString,
 		updateParsedQuery,
@@ -146,26 +143,29 @@ function SearchFilter({ getLogs, getLogsAggregate }) {
 					<DropDownContainer>
 						<Button
 							type="text"
-							onClick={() => setShowDropDown(false)}
+							onClick={(): void => setShowDropDown(false)}
 							style={{
 								position: 'absolute',
 								top: 0,
 								right: 0,
 							}}
 						>
-							<CloseSquareOutlined size="large" />
+							<CloseSquareOutlined />
 						</Button>
-						<SearchFields updateParsedQuery={updateParsedQuery} />
+						<SearchFields updateParsedQuery={updateParsedQuery as never} />
 					</DropDownContainer>
 				)}
 			</div>
 		</div>
 	);
 }
-
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (
