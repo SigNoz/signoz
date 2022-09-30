@@ -65,7 +65,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: externalCallDuration(servicename, tagFilterItems),
+									metricsBuilder: externalCallDuration({ servicename, tagFilterItems }),
 									clickHouse: [],
 								})}
 								yAxisUnit="ms"
@@ -86,11 +86,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: externalCallRpsByAddress(
+									metricsBuilder: externalCallRpsByAddress({
 										servicename,
 										legend,
 										tagFilterItems,
-									),
+									}),
 									clickHouse: [],
 								})}
 								yAxisUnit="reqps"
@@ -109,11 +109,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={getWidgetQueryBuilder({
 									queryType: 1,
 									promQL: [],
-									metricsBuilder: externalCallDurationByAddress(
+									metricsBuilder: externalCallDurationByAddress({
 										servicename,
 										legend,
 										tagFilterItems,
-									),
+									}),
 									clickHouse: [],
 								})}
 								yAxisUnit="ms"

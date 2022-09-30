@@ -71,10 +71,10 @@ export const externalCallErrorPercent = ({
 	],
 });
 
-export const externalCallDuration = (
-	servicename: string | undefined,
-	tagFilterItems: IQueryBuilderTagFilterItems[] | [],
-): {
+export const externalCallDuration = ({
+	servicename,
+	tagFilterItems,
+}: ExternalCallProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => ({
@@ -132,11 +132,11 @@ export const externalCallDuration = (
 	],
 });
 
-export const externalCallRpsByAddress = (
-	servicename: string | undefined,
-	legend: '{{address}}',
-	tagFilterItems: IQueryBuilderTagFilterItems[] | [],
-): {
+export const externalCallRpsByAddress = ({
+	servicename,
+	legend,
+	tagFilterItems,
+}: ExternalCallDurationByAddressProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => ({
@@ -166,12 +166,11 @@ export const externalCallRpsByAddress = (
 	],
 });
 
-export const externalCallDurationByAddress = (
-	servicename: string | undefined,
-	// ExternalCallDurationByAddressProps,
-	legend: '{{address}}',
-	tagFilterItems: IQueryBuilderTagFilterItems[] | [],
-): {
+export const externalCallDurationByAddress = ({
+	servicename,
+	legend,
+	tagFilterItems,
+}: ExternalCallDurationByAddressProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => ({
@@ -230,7 +229,7 @@ export const externalCallDurationByAddress = (
 });
 
 interface ExternalCallDurationByAddressProps extends ExternalCallProps {
-	legend?: '{{address}}';
+	legend: '{{address}}';
 }
 
 interface ExternalCallProps {
