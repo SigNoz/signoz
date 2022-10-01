@@ -9,10 +9,10 @@ BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 
 # Internal variables or constants.
-FRONTEND_DIRECTORY ?= frontend
-QUERY_SERVICE_DIRECTORY ?= pkg/query-service
-STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
-SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
+FRONTEND_DIRECTORY ?= ../frontend
+QUERY_SERVICE_DIRECTORY ?= query-service/ee
+STANDALONE_DIRECTORY ?= ../deploy/docker/clickhouse-setup
+SWARM_DIRECTORY ?= ../deploy/docker-swarm/clickhouse-setup
 LOCAL_GOOS ?= $(shell go env GOOS)
 LOCAL_GOARCH ?= $(shell go env GOARCH)
 
@@ -60,7 +60,7 @@ build-query-service-amd64:
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker build -f Dockerfile.ee  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
 	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
@@ -69,7 +69,7 @@ build-push-query-service:
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker buildx build --file Dockerfile.ee --progress plane --no-cache \
+	docker buildx build --file Dockerfile --progress plane --no-cache \
 	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 

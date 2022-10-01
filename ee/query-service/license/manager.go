@@ -19,9 +19,8 @@ import (
 
 var LM *Manager
 
-// validate license every 24 hours
-// var validationFrequency = 24 * 60 * time.Minute
-var validationFrequency = 5 * time.Minute
+// validate and update license every 24 hours
+var validationFrequency = 24 * 60 * time.Minute
 
 type Manager struct {
 	repo  *Repo

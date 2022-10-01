@@ -94,11 +94,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	modelDao.SetFlagProvider(lm)
 	readerReady := make(chan bool)
 
-	var reader interfaces.QueryBackend
+	var reader interfaces.DataConnector
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		qb := db.NewQueryBackend(localDB, serverOptions.PromConfigPath)
+		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath)
 		go qb.Start(readerReady)
 		reader = qb
 	} else {

@@ -21,7 +21,7 @@ type Client struct {
 
 func New() *Client {
 	return &Client{
-		Prefix: constants.LicenseSignozIo, //todo(amol): replace this before prod "https://license.signoz.io/api/v1",
+		Prefix: constants.LicenseSignozIo,
 	}
 }
 

@@ -14,7 +14,7 @@ type ClickhouseReader struct {
 	*basechr.ClickHouseReader
 }
 
-func NewQueryBackend(localDB *sqlx.DB, promConfigPath string) *ClickhouseReader {
+func NewDataConnector(localDB *sqlx.DB, promConfigPath string) *ClickhouseReader {
 	ch := basechr.NewReader(localDB, promConfigPath)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
