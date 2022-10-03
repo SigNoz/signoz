@@ -14,7 +14,7 @@ import (
 )
 
 type APIHandlerOptions struct {
-	QueryBackend   interfaces.QueryBackend
+	DataConnector  interfaces.DataConnector
 	AppDao         dao.ModelDao
 	RulesManager   *rules.Manager
 	FeatureFlags   baseint.FeatureLookup
@@ -30,7 +30,7 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:       opts.QueryBackend,
+		Reader:       opts.DataConnector,
 		AppDao:       opts.AppDao,
 		RuleManager:  opts.RulesManager,
 		FeatureFlags: opts.FeatureFlags})

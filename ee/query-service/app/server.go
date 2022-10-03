@@ -120,7 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 
 	apiOpts := api.APIHandlerOptions{
-		QueryBackend:   reader,
+		DataConnector:  reader,
 		AppDao:         modelDao,
 		RulesManager:   rm,
 		FeatureFlags:   lm,
