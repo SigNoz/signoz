@@ -24,7 +24,7 @@ FRONTEND_DOCKER_IMAGE ?= frontend
 QUERY_SERVICE_DOCKER_IMAGE ?= query-service
 
 # Build-time Go variables
-PACKAGE?=go.signoz.io/query-service
+PACKAGE?=go.signoz.io/signoz
 buildVersion=${PACKAGE}/version.buildVersion
 buildHash=${PACKAGE}/version.buildHash
 buildTime=${PACKAGE}/version.buildTime
