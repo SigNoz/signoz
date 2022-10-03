@@ -46,7 +46,7 @@ function FullView({
 	const response = useQuery<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>(
-		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}`,
+		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
 		() =>
 			GetMetricQueryRange({
 				selectedTime: selectedTime.enum,
