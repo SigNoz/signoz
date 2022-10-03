@@ -37,7 +37,7 @@ function NotFound(): JSX.Element {
 				to={ROUTES.APPLICATION}
 				tabIndex={0}
 			>
-				Return To Metrics Page
+				Return To Services Page
 			</Button>
 		</Container>
 	);
