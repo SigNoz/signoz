@@ -3053,7 +3053,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// if the type is attribute or resource, create the materialized column first
 		if field.Type == constants.Attributes || field.Type == constants.Resources {
 			// create materialized
-			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')]", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')] CODEC(LZ4)", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
 			err := r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}

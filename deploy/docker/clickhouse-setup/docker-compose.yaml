@@ -53,6 +53,7 @@ services:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
       - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+      - DASHBOARDS_PATH=/root/config/dashboards
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true

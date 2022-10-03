@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"go.signoz.io/query-service/constants"
 	"go.uber.org/zap"
 )
 
@@ -53,5 +54,6 @@ func readCurrentDir(dir string) error {
 }
 
 func LoadDashboardFiles() error {
-	return readCurrentDir("./config/dashboards")
+	dashboardsPath := constants.GetOrDefaultEnv("DASHBOARDS_PATH", "./config/dashboards")
+	return readCurrentDir(dashboardsPath)
 }
