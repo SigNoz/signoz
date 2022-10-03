@@ -11,7 +11,7 @@ RUN export GOOS=$(echo ${TARGETPLATFORM} | cut -d / -f1) && \
     export GOARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2)
 
 # Prepare and enter src directory
-WORKDIR /go/src/github.com/signoz/signoz/pkg/query-service
+WORKDIR /go/src/github.com/signoz/signoz
 
 # Cache dependencies
 ADD go.mod .
@@ -20,8 +20,10 @@ RUN go mod download -x
 
 # Add the sources and proceed with build
 ADD . .
-RUN go build -tags timetzdata -a -ldflags "-linkmode external -extldflags '-static' -s -w $LD_FLAGS" -o ./bin/query-service ./main.go
-RUN chmod +x ./bin/query-service
+RUN cd pkg/query-service \
+    && go build -tags timetzdata -a -o ./bin/query-service \
+    -ldflags "-linkmode external -extldflags '-static' -s -w $LD_FLAGS" \
+    && chmod +x ./bin/query-service
 
 
 # use a minimal alpine image
@@ -39,7 +41,8 @@ WORKDIR /root
 # copy the binary from builder
 COPY --from=builder /go/src/github.com/signoz/signoz/pkg/query-service/bin/query-service .
 
-COPY config/prometheus.yml /root/config/prometheus.yml
+# copy prometheus YAML config
+COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
 
 # run the binary
 ENTRYPOINT ["./query-service"]

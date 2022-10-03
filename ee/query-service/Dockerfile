@@ -15,9 +15,9 @@ WORKDIR /go/src/github.com/signoz/signoz
 
 # Add the sources and proceed with build
 ADD . .
-RUN cd ee/query-service && \
-    go build -tags timetzdata -a -o ./bin/query-service && \
-    -ldflags "-linkmode external -extldflags '-static' -s -w $LD_FLAGS" && \
+RUN cd ee/query-service \
+    && go build -tags timetzdata -a -o ./bin/query-service \
+    -ldflags "-linkmode external -extldflags '-static' -s -w $LD_FLAGS" \
     && chmod +x ./bin/query-service
 
 
