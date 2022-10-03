@@ -1,3 +1,4 @@
+
 node_modules
 yarn.lock
 package.json
@@ -48,6 +49,6 @@ ee/query-service/signoz.db
 ee/query-service/tests/test-deploy/data/
 
 # local data
-
+*.db
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
