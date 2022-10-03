@@ -20,6 +20,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
+	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
@@ -113,6 +114,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		reader,
 		serverOptions.DisableRules)
 
+	if err != nil {
+		return nil, err
+	}
+
+	// start the usagemanager
+	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
+	if err != nil {
+		return nil, err
+	}
+	err = usageManager.Start()
 	if err != nil {
 		return nil, err
 	}
