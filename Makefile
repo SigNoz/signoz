@@ -11,6 +11,7 @@ BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 # Internal variables or constants.
 FRONTEND_DIRECTORY ?= frontend
 QUERY_SERVICE_DIRECTORY ?= pkg/query-service
+EE_QUERY_SERVICE_DIRECTORY ?= ee/query-service
 STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
 SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
 LOCAL_GOOS ?= $(shell go env GOOS)
@@ -40,7 +41,7 @@ build-frontend-amd64:
 	@echo "--> Building frontend docker image for amd64"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) \
+	docker build --file Dockerfile  --no-cache -t $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) \
 	--build-arg TARGETPLATFORM="linux/amd64" .
 
 # Step to build and push docker image of frontend(used in push pipeline)
@@ -59,8 +60,8 @@ build-query-service-amd64:
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
-	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker build -f Dockerfile  --no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	@docker build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile \
+	--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
 	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
@@ -68,10 +69,27 @@ build-push-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
-	@cd $(QUERY_SERVICE_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache \
+	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile --progress plane --no-cache \
 	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+
+# Step to build EE docker image of query service in amd64 (used in build pipeline)
+build-ee-query-service-amd64:
+	@echo "------------------"
+	@echo "--> Building query-service docker image for amd64"
+	@echo "------------------"
+	@docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
+	--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
+
+# Step to build and push EE docker image of query in amd64 and arm64 (used in push pipeline)
+build-push-ee-query-service:
+	@echo "------------------"
+	@echo "--> Building and pushing query-service docker image"
+	@echo "------------------"
+	@docker buildx build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
+	--progress plane --no-cache --push --platform linux/arm64,linux/amd64 \
+	--build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
 	mkdir -p /var/lib/signoz
