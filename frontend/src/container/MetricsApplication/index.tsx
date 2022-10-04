@@ -58,7 +58,7 @@ function OverViewTab(): JSX.Element {
 }
 
 function DbCallTab(): JSX.Element {
-	return <DBCall getWidget={getWidget} />;
+	return <DBCall getWidgetQueryBuilder={getWidgetQueryBuilder} />;
 }
 
 function ExternalTab(): JSX.Element {
