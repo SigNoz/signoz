@@ -1,4 +1,4 @@
-import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeatures';
+import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
 import {
 	Organization,
 	PayloadProps as OrgPayload,
@@ -23,6 +23,7 @@ export const UPDATE_USER = 'UPDATE_USER';
 export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 export const UPDATE_ORG = 'UPDATE_ORG';
 export const UPDATE_FEATURE_FLAGS = 'UPDATE_FEATURE_FLAGS';
+
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
 }
@@ -113,6 +114,11 @@ export interface UpdateOrg {
 	payload: {
 		org: AppReducer['org'];
 	};
+}
+
+export interface UpdateFeatureFlags {
+	type: typeof UPDATE_FEATURE_FLAGS;
+	payload: FeatureFlagPayload;
 }
 
 export type AppAction =
