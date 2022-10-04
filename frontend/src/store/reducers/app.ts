@@ -56,7 +56,6 @@ const InitialValue: InitialValueTypes = {
 	isUserFetchingError: false,
 	org: null,
 	role: null,
-	featureFlags: null,
 };
 
 const appReducer = (
@@ -201,13 +200,6 @@ const appReducer = (
 			return {
 				...state,
 				org: updatedOrg,
-			};
-		}
-
-		case UPDATE_FEATURE_FLAGS: {
-			return {
-				...state,
-				featureFlags: action.payload,
 			};
 		}
 

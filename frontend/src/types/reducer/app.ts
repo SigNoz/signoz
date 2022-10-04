@@ -18,7 +18,6 @@ export default interface AppReducer {
 	isSideBarCollapsed: boolean;
 	currentVersion: string;
 	latestVersion: string;
-	featureFlags: null | FeatureFlagPayload;
 	isCurrentVersionError: boolean;
 	isLatestVersionError: boolean;
 	user: null | User;

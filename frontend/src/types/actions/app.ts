@@ -116,11 +116,6 @@ export interface UpdateOrg {
 	};
 }
 
-export interface UpdateFeatureFlags {
-	type: typeof UPDATE_FEATURE_FLAGS;
-	payload: FeatureFlagPayload;
-}
-
 export type AppAction =
 	| SwitchDarkMode
 	| LoggedInUser
