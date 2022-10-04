@@ -62,6 +62,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
 			getUserVersionResponse.refetch();
 		}
+		if (getFeaturesResponse.status === 'idle') {
+			getFeaturesResponse.refetch();
+		}
 	}, [
 		getFeaturesResponse,
 		getUserLatestVersionResponse,
@@ -110,6 +113,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			});
 			notification.error({
 				message: t('oops_something_went_wrong_version'),
+			});
+		}
+		if (
+			getFeaturesResponse.isFetched &&
+			getFeaturesResponse.isSuccess &&
+			getFeaturesResponse.data &&
+			getFeaturesResponse.data.payload
+		) {
+			dispatch({
+				type: UPDATE_FEATURE_FLAGS,
+				payload: {
+					...getFeaturesResponse.data.payload,
+				},
 			});
 		}
 

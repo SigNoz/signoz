@@ -1,0 +1,22 @@
+{
+  "label_email": "Email",
+  "placeholder_email": "name@yourcompany.com",
+  "label_password": "Password",
+  "button_initiate_login": "Next",
+  "button_login": "Login",
+  "login_page_title": "Login with SigNoz",
+  "login_with_sso": "Login with SSO",
+  "login_with_pwd": "Login with password",
+  "forgot_password": "Forgot password?",
+  "create_an_account": "Create an account",
+  "prompt_if_admin": "If you are admin,",
+  "prompt_create_account": "If you are setting up SigNoz for the first time,",
+  "prompt_no_account": "Don't have an account? Contact your admin to send you an invite link.",
+  "prompt_forgot_password": "Ask your admin to reset your password and send you a new invite link",
+  "prompt_on_sso_error": "Are you trying to resolve SSO configuration issue?",
+  "unexpected_error": "Sorry, something went wrong",
+  "failed_to_login": "sorry, failed to login",
+  "invalid_email": "Please enter a valid email address",
+  "invalid_account": "This account does not exist. To create a new account, contact your admin to get an invite link",
+  "invalid_config": "Invalid configuration detected, please contact your administrator"
+}
