@@ -1,0 +1,10 @@
+{
+  "entryFiles": ["src/index.tsx", "src/api/**/*.ts"],
+  "filePatterns": [
+    "src/**/*.{ts,tsx}",
+    "!**/__tests__/**",
+    "!**/__fixtures__/**",
+    "!**/*.test.{ts,tsx}",
+    "!**/*.d.ts"
+  ]
+}
