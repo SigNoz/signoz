@@ -7,6 +7,7 @@ BUILD_VERSION   ?= $(shell git describe --always --tags)
 BUILD_HASH      ?= $(shell git rev-parse --short HEAD)
 BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
+DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
 
 # Internal variables or constants.
 FRONTEND_DIRECTORY ?= frontend
@@ -22,15 +23,18 @@ DOCKER_TAG ?= latest
 
 FRONTEND_DOCKER_IMAGE ?= frontend
 QUERY_SERVICE_DOCKER_IMAGE ?= query-service
+DEV_BUILD ?= ""
 
 # Build-time Go variables
 PACKAGE?=go.signoz.io/signoz
-buildVersion=${PACKAGE}/version.buildVersion
-buildHash=${PACKAGE}/version.buildHash
-buildTime=${PACKAGE}/version.buildTime
-gitBranch=${PACKAGE}/version.gitBranch
+buildVersion=${PACKAGE}/pkg/query-service/version.buildVersion
+buildHash=${PACKAGE}/pkg/query-service/version.buildHash
+buildTime=${PACKAGE}/pkg/query-service/version.buildTime
+gitBranch=${PACKAGE}/pkg/query-service/version.gitBranch
+licenseSignozIo=${PACKAGE}/ee/query-service/constants.LicenseSignozIo
 
-LD_FLAGS="-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}"
+LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildVersion}=${BUILD_VERSION} -X ${gitBranch}=${BUILD_BRANCH}
+DEV_LD_FLAGS=-X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
 
 all: build-push-frontend build-push-query-service
 # Steps to build and push docker image of frontend
@@ -62,7 +66,7 @@ build-query-service-amd64:
 	@echo "------------------"
 	@docker build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile \
 	--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
-	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
+	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="$(LD_FLAGS)" .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
 build-push-query-service:
@@ -70,7 +74,7 @@ build-push-query-service:
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile --progress plane --no-cache \
-	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS=$(LD_FLAGS) \
+	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Step to build EE docker image of query service in amd64 (used in build pipeline)
@@ -78,9 +82,15 @@ build-ee-query-service-amd64:
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
-	@docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
-	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS=$(LD_FLAGS) .
+	@if [ $(DEV_BUILD) != "" ]; then \
+		docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
+		--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+		--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="${LD_FLAGS} ${DEV_LD_FLAGS}" .; \
+	else \
+		docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
+		--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+		--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="$(LD_FLAGS)" .; \
+	fi
 
 # Step to build and push EE docker image of query in amd64 and arm64 (used in push pipeline)
 build-push-ee-query-service:
@@ -89,7 +99,7 @@ build-push-ee-query-service:
 	@echo "------------------"
 	@docker buildx build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
 	--progress plane --no-cache --push --platform linux/arm64,linux/amd64 \
-	--build-arg LD_FLAGS=$(LD_FLAGS) --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+	--build-arg LD_FLAGS="$(LD_FLAGS)" --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
 	mkdir -p /var/lib/signoz

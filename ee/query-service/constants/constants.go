@@ -5,9 +5,10 @@ import (
 )
 
 const (
-	DefaultSiteURL  = "https://localhost:3301"
-	LicenseSignozIo = "https://license.signoz.io/api/v1"
+	DefaultSiteURL = "https://localhost:3301"
 )
+
+var LicenseSignozIo = "https://license.signoz.io/api/v1"
 
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)
