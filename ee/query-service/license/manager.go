@@ -288,3 +288,8 @@ func (lm *Manager) CheckFeature(featureKey string) error {
 func (lm *Manager) GetFeatureFlags() basemodel.FeatureSet {
 	return lm.activeFeatures
 }
+
+// GetRepo return the license repo
+func (lm *Manager) GetRepo() *Repo {
+	return lm.repo
+}
