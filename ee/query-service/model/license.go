@@ -54,8 +54,8 @@ func (l *License) MarshalJSON() ([]byte, error) {
 
 type LicensePlan struct {
 	PlanKey    string `json:"planKey"`
-	ValidFrom  int64  `json:"ValidFrom"`
-	ValidUntil int64  `json:"ValidUntil"`
+	ValidFrom  int64  `json:"validFrom"`
+	ValidUntil int64  `json:"validUntil"`
 	Status     string `json:"status"`
 }
 

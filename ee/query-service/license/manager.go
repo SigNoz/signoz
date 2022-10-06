@@ -117,7 +117,7 @@ func (lm *Manager) LoadActiveLicense() error {
 	return nil
 }
 
-func (lm *Manager) GetLicenses(ctx context.Context) (response []*model.License, apiError *model.ApiError) {
+func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, apiError *model.ApiError) {
 
 	licenses, err := lm.repo.GetLicenses(ctx)
 	if err != nil {
@@ -132,11 +132,14 @@ func (lm *Manager) GetLicenses(ctx context.Context) (response []*model.License, 
 		}
 
 		if l.ValidUntil == -1 {
+			// for subscriptions, there is no end-date as such
+			// but for showing user some validity we default one year timespan
 			l.ValidUntil = l.ValidFrom + 31556926
 		}
 
-		response = append(response, &l)
+		response = append(response, l)
 	}
+
 	return
 }
 
@@ -257,7 +260,7 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 
 	if err != nil {
 		zap.S().Errorf("failed to activate license", zap.Error(err))
-		return nil, model.BadRequest(err)
+		return nil, model.InternalError(err)
 	}
 
 	// store the license before activating it

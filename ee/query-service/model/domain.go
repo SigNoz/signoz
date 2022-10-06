@@ -97,6 +97,7 @@ func (od *OrgDomain) GetSAMLCert() string {
 	return ""
 }
 
+// PrepareSamlRequest creates a request accordingly gosaml2
 func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServiceProvider, error) {
 
 	// this is the url Idp will call after login completion

@@ -381,6 +381,10 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 	}
 
 	userjwt, err := GenerateJWTForUser(&user.User)
+	if err != nil {
+		zap.S().Debugf("Failed to generate JWT against login creds, %v", err)
+		return nil, err
+	}
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,

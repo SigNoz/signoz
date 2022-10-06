@@ -86,8 +86,21 @@ func PrepareRequest(issuer, acsUrl, audience, entity, idp, certString string) (*
 		AssertionConsumerServiceURL: acsUrl,
 		SignAuthnRequests:           true,
 		AllowMissingAttributes:      true,
-		IDPCertificateStore:         certStore,
-		SPKeyStore:                  randomKeyStore,
+
+		// about cert stores -sender(signoz app) and receiver (idp)
+		// The random key (random key store) is sender cert. The public cert store(IDPCertificateStore) that you see on org domain is receiver cert (idp provided).
+		// At the moment, the library we use doesn't bother about sender cert and IdP too. It just adds additional layer of security, which we can explore in future versions
+		// The receiver (Idp) cert will be different for each org domain. Imagine cloud setup where each company setups their domain that integrates with their Idp.
+		// @signoz.io
+		// @next.io
+		// Each of above will have their own Idp setup and hence separate public cert to decrypt the response.
+		// The way SAML request travels is -
+		// SigNoz Backend -> IdP Login Screen -> SigNoz Backend -> SigNoz Frontend
+		// ---------------- | -------------------| -------------------------------------
+		// The dotted lines indicate request boundries. So if you notice, the response from Idp starts a new request. hence we need relay state to pass the context around.
+
+		IDPCertificateStore: certStore,
+		SPKeyStore:          randomKeyStore,
 	}
 	zap.S().Debugf("SAML request:", sp)
 	return sp, nil
