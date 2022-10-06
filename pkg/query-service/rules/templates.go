@@ -14,7 +14,7 @@ import (
 	html_template "html/template"
 	text_template "text/template"
 
-	"go.signoz.io/query-service/utils/times"
+	"go.signoz.io/signoz/pkg/query-service/utils/times"
 )
 
 // this file contains all the methods and structs

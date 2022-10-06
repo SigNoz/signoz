@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func ValidateUpdateFieldPayload(field *model.UpdateField) error {
