@@ -7,7 +7,6 @@ const useFeatureFlag = (flagKey: string): boolean => {
 	const { featureFlags } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-
 	return _get(featureFlags, flagKey, false);
 };
 

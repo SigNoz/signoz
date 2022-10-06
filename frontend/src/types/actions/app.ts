@@ -40,6 +40,10 @@ export interface SideBarCollapse {
 	payload: boolean;
 }
 
+export interface UpdateFeatureFlags {
+	type: typeof UPDATE_FEATURE_FLAGS;
+	payload: null | FeatureFlagPayload;
+}
 export interface UpdateAppVersion {
 	type: typeof UPDATE_CURRENT_VERSION;
 	payload: {
@@ -110,11 +114,6 @@ export interface UpdateOrg {
 	payload: {
 		org: AppReducer['org'];
 	};
-}
-
-export interface UpdateFeatureFlags {
-	type: typeof UPDATE_FEATURE_FLAGS;
-	payload: FeatureFlagPayload;
 }
 
 export type AppAction =
