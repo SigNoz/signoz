@@ -21,17 +21,17 @@ import (
 
 const (
 	MaxRetries           = 3
-	RetryInterval        = 5 * time.Second
+	RetryInterval        = 1 * time.Second
 	stateUnlocked uint32 = 0
 	stateLocked   uint32 = 1
 )
 
 var (
 	// collect usage every hour
-	collectionFrequency = 1 * time.Hour
+	collectionFrequency = 10 * time.Second
 
 	// send usage every 24 hour
-	uploadFrequency = 24 * time.Hour
+	uploadFrequency = 30 * time.Second
 
 	locker = stateUnlocked
 )
@@ -139,6 +139,8 @@ func (lm *Manager) UsageExporter(ctx context.Context) {
 			lm.CollectAndStoreUsage(ctx)
 		case <-uploadTicker.C:
 			lm.UploadUsage(ctx)
+			// remove the old snapshots
+			lm.repository.DropOldSnapshots(ctx)
 		}
 	}
 }
