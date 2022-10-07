@@ -15,17 +15,17 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	"go.signoz.io/query-service/app/clickhouseReader"
-	"go.signoz.io/query-service/app/dashboards"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/dao"
-	"go.signoz.io/query-service/healthcheck"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/interfaces"
-	pqle "go.signoz.io/query-service/pqlEngine"
-	"go.signoz.io/query-service/rules"
-	"go.signoz.io/query-service/telemetry"
-	"go.signoz.io/query-service/utils"
+	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
+	"go.signoz.io/signoz/pkg/query-service/healthcheck"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
+	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -97,7 +97,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	apiHandler, err := NewAPIHandler(&reader, dao.DB(), rm)
+	apiHandler, err := NewAPIHandler(APIHandlerOpts{
+		Reader:      reader,
+		AppDao:      dao.DB(),
+		RuleManager: rm,
+	})
 	if err != nil {
 		return nil, err
 	}

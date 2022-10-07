@@ -11,10 +11,10 @@ import (
 	"time"
 
 	ph "github.com/posthog/posthog-go"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/interfaces"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/version"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/version"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -27,6 +27,9 @@ const (
 	TELEMETRY_EVENT_HEART_BEAT            = "Heart Beat"
 	TELEMETRY_EVENT_ORG_SETTINGS          = "Org Settings"
 	DEFAULT_SAMPLING                      = 0.1
+	TELEMETRY_LICENSE_CHECK_FAILED        = "License Check Failed"
+	TELEMETRY_LICENSE_UPDATED             = "License Updated"
+	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"

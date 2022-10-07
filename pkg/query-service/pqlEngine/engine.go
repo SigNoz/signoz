@@ -13,7 +13,7 @@ import (
 	pql "github.com/prometheus/prometheus/promql"
 	pstorage "github.com/prometheus/prometheus/storage"
 	premote "github.com/prometheus/prometheus/storage/remote"
-	"go.signoz.io/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 )
 
 type PqlEngine struct {

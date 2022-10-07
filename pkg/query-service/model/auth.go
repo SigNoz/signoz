@@ -32,12 +32,16 @@ type LoginRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-type LoginResponse struct {
+type UserJwtObject struct {
 	AccessJwt        string `json:"accessJwt"`
 	AccessJwtExpiry  int64  `json:"accessJwtExpiry"`
 	RefreshJwt       string `json:"refreshJwt"`
 	RefreshJwtExpiry int64  `json:"refreshJwtExpiry"`
-	UserId           string `json:"userId"`
+}
+
+type LoginResponse struct {
+	UserJwtObject
+	UserId string `json:"userId"`
 }
 
 type ChangePasswordRequest struct {
