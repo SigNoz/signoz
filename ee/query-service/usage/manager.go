@@ -27,17 +27,11 @@ const (
 )
 
 var (
-	// // collect usage every hour
-	// collectionFrequency = 1 * time.Hour
-
-	// // send usage every 24 hour
-	// uploadFrequency = 24 * time.Hour
-
 	// collect usage every hour
-	collectionFrequency = 5 * time.Second
+	collectionFrequency = 1 * time.Hour
 
 	// send usage every 24 hour
-	uploadFrequency = 30 * time.Second
+	uploadFrequency = 24 * time.Hour
 
 	locker = stateUnlocked
 )
