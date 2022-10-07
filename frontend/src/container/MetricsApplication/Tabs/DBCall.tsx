@@ -3,7 +3,7 @@ import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuil
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
-} from 'container/MetricsApplication/MetricsPageQueries/DBCallQueries';
+} from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
 import { resourceAttributesToTagFilterItems } from 'lib/resourceAttributes';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
