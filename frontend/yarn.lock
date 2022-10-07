@@ -6312,13 +6312,14 @@ expect@^27.5.1:
     jest-matcher-utils "^27.5.1"
     jest-message-util "^27.5.1"
 
-exportman@0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/exportman/-/exportman-0.0.2.tgz#d107c75943c9d30dc6c09b7cb1560a4b784297b3"
-  integrity sha512-BUgeq7/MWKU6Q+Nw1HdPUThg5wani0Oa5vFZgbdas0JdO8qjGS8jgbC9qcRQM212y0s1svBZ9XrDf3FahJC/eA==
+exportman@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/exportman/-/exportman-0.1.0.tgz#2ae341a8dabb6fa395a3931715e9a91c151e50d6"
+  integrity sha512-SWAd4Dv2jBv4ZaU1+hg8Gztpt9yvDlaHdtdNm1W6iqcBwm+NLI+Rut8tohYXwvkMdgo/Rvx8+kjwGLR+XcbQqA==
   dependencies:
+    micromatch "4.0.5"
     ts-morph "16.0.0"
-    ts-morph-helpers "0.3.0"
+    ts-morph-helpers "0.5.0"
 
 express@^4.17.3:
   version "4.18.1"
@@ -8910,6 +8911,14 @@ methods@~1.1.2:
   resolved "https://registry.npmjs.org/methods/-/methods-1.1.2.tgz"
   integrity sha1-VSmk1nZUE07cxSZmVoNbD4Ua/O4=
 
+micromatch@4.0.5, micromatch@^4.0.2, micromatch@^4.0.4:
+  version "4.0.5"
+  resolved "https://registry.npmjs.org/micromatch/-/micromatch-4.0.5.tgz"
+  integrity sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==
+  dependencies:
+    braces "^3.0.2"
+    picomatch "^2.3.1"
+
 micromatch@^3.1.4:
   version "3.1.10"
   resolved "https://registry.npmjs.org/micromatch/-/micromatch-3.1.10.tgz"
@@ -8928,14 +8937,6 @@ micromatch@^3.1.4:
     regex-not "^1.0.0"
     snapdragon "^0.8.1"
     to-regex "^3.0.2"
-
-micromatch@^4.0.2, micromatch@^4.0.4:
-  version "4.0.5"
-  resolved "https://registry.npmjs.org/micromatch/-/micromatch-4.0.5.tgz"
-  integrity sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==
-  dependencies:
-    braces "^3.0.2"
-    picomatch "^2.3.1"
 
 microseconds@0.2.0:
   version "0.2.0"
@@ -12620,10 +12621,10 @@ ts-jest@^27.1.4:
     semver "7.x"
     yargs-parser "20.x"
 
-ts-morph-helpers@0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/ts-morph-helpers/-/ts-morph-helpers-0.3.0.tgz#ed3cdd6c2cf94f11aeca0bd99a0617177248e58a"
-  integrity sha512-iQBFeB5KVVGKJD6FcHcEEq21AE4i1g/PIVpOTqmE95iJ3Xrpoff2mpILH78XLVuQmGM5MkzvKbZbqdnIdsRbHA==
+ts-morph-helpers@0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/ts-morph-helpers/-/ts-morph-helpers-0.5.0.tgz#de7935c2dca4280e02c190cf5a0e6fbce5c0b0a0"
+  integrity sha512-kqj+DfGj2a/sYG8agEdHfwEzPp2pzwG5KcSZQixMvbncWXA29TVuIDet5BvinCUPSKXByFxB7otfLRZSuRUkwA==
   dependencies:
     ts-morph "16.0.0"
 
