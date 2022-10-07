@@ -21,17 +21,17 @@ import (
 
 const (
 	MaxRetries           = 3
-	RetryInterval        = 1 * time.Second
+	RetryInterval        = 5 * time.Second
 	stateUnlocked uint32 = 0
 	stateLocked   uint32 = 1
 )
 
 var (
 	// collect usage every hour
-	collectionFrequency = 10 * time.Second
+	collectionFrequency = 1 * time.Hour
 
 	// send usage every 24 hour
-	uploadFrequency = 30 * time.Second
+	uploadFrequency = 24 * time.Hour
 
 	locker = stateUnlocked
 )
