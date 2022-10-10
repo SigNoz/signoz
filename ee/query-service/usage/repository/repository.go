@@ -17,6 +17,7 @@ import (
 
 const (
 	MaxFailedSyncCount = 9 // a snapshot will be ignored if the max failed count is greater than or equal to 9
+	SnapShotLife       = 3 * 24 * time.Hour
 )
 
 // Repository is usage Repository which stores usage snapshot in a secured DB
@@ -109,6 +110,18 @@ func (r *Repository) GetSnapshotsNotSynced(ctx context.Context) ([]*model.Usage,
 	}
 
 	return snapshots, nil
+}
+
+func (r *Repository) DropOldSnapshots(ctx context.Context) error {
+	query := `delete from usage where created_at <= $1`
+
+	_, err := r.db.ExecContext(ctx, query, time.Now().Add(-(SnapShotLife)))
+	if err != nil {
+		zap.S().Errorf("failed to remove old snapshots from db: %v", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 // CheckSnapshotGtCreatedAt checks if there is any snapshot greater than the provided timestamp
