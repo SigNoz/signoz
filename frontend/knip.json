@@ -1,0 +1,14 @@
+{
+	"entryFiles": [
+		"src/index.tsx",
+		"src/api/**/*.ts",
+		"**/*.{spec,test}.{ts,tsx}"
+	],
+	"projectFiles": [
+		"src/**/*.{ts,tsx}",
+		"tests/**/*.{ts,tsx}",
+		"!**/__tests__/**",
+		"!**/__fixtures__/**"
+	],
+	"exclude": ["unlisted"]
+}

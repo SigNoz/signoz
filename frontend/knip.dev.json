@@ -1,0 +1,6 @@
+{
+	"dev": true,
+	"entryFiles": ["src/index.tsx", "src/api/**/*.ts", "**/*.test.{ts,tsx}"],
+	"projectFiles": ["src/**/*.{ts,tsx}", "!**/*.d.ts"],
+	"exclude": ["unlisted"]
+}
