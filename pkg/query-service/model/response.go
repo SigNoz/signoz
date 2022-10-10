@@ -542,3 +542,14 @@ func (s *ServiceItem) MarshalJSON() ([]byte, error) {
 type DashboardVar struct {
 	VariableValues []interface{} `json:"variableValues"`
 }
+
+type TagsInfo struct {
+	Languages map[string]interface{} `json:"languages"`
+	Env       string                 `json:"env"`
+}
+
+type TagTelemetryData struct {
+	ServiceName string `json:"serviceName" ch:"serviceName"`
+	Env         string `json:"env" ch:"env"`
+	Language    string `json:"language" ch:"language"`
+}
