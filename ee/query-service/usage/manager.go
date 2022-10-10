@@ -139,6 +139,8 @@ func (lm *Manager) UsageExporter(ctx context.Context) {
 			lm.CollectAndStoreUsage(ctx)
 		case <-uploadTicker.C:
 			lm.UploadUsage(ctx)
+			// remove the old snapshots
+			lm.repository.DropOldSnapshots(ctx)
 		}
 	}
 }
