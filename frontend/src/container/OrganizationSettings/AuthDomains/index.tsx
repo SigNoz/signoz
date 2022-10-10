@@ -27,6 +27,7 @@ function AuthDomains(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentDomain, setCurrentDomain] = useState<SAMLDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const isEnterprise = useFeatureFlag(FeatureKeys.ENTERPRISE_PLAN);
 
 	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
 
@@ -128,7 +129,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onClickLicenseHandler = useCallback(() => {
-		window.open('http://signoz.io/pricing');
+		window.open('https://signoz.io/upgrade-from-app');
 	}, []);
 
 	const columns: ColumnsType<SAMLDomain> = [
@@ -243,6 +244,23 @@ function AuthDomains(): JSX.Element {
 		);
 	}
 
+	const notEntripriseData: SAMLDomain[] = [
+		{
+			id: v4(),
+			name: 'signoz.io',
+			ssoEnabled: false,
+			orgId: (org || [])[0].id || '',
+			samlConfig: {
+				samlCert: '',
+				samlEntity: '',
+				samlIdp: '',
+			},
+			ssoType: 'SAML',
+		},
+	];
+
+	const tableData = isEnterprise ? data?.payload || [] : notEntripriseData;
+
 	return (
 		<>
 			<Modal
@@ -282,7 +300,7 @@ function AuthDomains(): JSX.Element {
 				<AddDomain refetch={refetch} />
 
 				<Table
-					dataSource={data?.payload || []}
+					dataSource={tableData}
 					loading={isLoading}
 					columns={columns}
 					tableLayout="fixed"
