@@ -91,10 +91,10 @@ function AuthDomains(): JSX.Element {
 
 	const onEditHandler = useCallback(
 		(record: SAMLDomain) => (): void => {
-			setIsEditModalOpen(true);
+			onOpenHandler(setIsEditModalOpen)();
 			setCurrentDomain(record);
 		},
-		[],
+		[onOpenHandler],
 	);
 
 	const onDeleteHandler = useCallback(
@@ -172,10 +172,7 @@ function AuthDomains(): JSX.Element {
 				if (!SSOFlag) {
 					return (
 						<Button
-							onClick={(): void => {
-								setCurrentDomain(record);
-								onOpenHandler(setIsSettingsOpen)();
-							}}
+							onClick={onClickLicenseHandler}
 							type="link"
 							icon={<LockTwoTone />}
 						>
