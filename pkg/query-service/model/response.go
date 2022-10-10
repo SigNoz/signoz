@@ -12,10 +12,40 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+type BaseApiError interface {
+	Type() ErrorType
+	ToError() error
+	Error() string
+	IsNil() bool
+}
+
 type ApiError struct {
 	Typ ErrorType
 	Err error
 }
+
+func (a *ApiError) Type() ErrorType {
+	return a.Typ
+}
+
+func (a *ApiError) ToError() error {
+	if a != nil {
+		return a.Err
+	}
+	return a
+}
+
+func (a *ApiError) Error() string {
+	if a == nil || a.Err == nil {
+		return ""
+	}
+	return a.Err.Error()
+}
+
+func (a *ApiError) IsNil() bool {
+	return a == nil || a.Err == nil
+}
+
 type ErrorType string
 
 const (
@@ -33,6 +63,22 @@ const (
 	ErrorConflict              ErrorType = "conflict"
 	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
 )
+
+// BadRequest returns a ApiError object of bad request
+func BadRequest(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorBadData,
+		Err: err,
+	}
+}
+
+// InternalError returns a ApiError object of internal type
+func InternalError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorInternal,
+		Err: err,
+	}
+}
 
 type QueryDataV2 struct {
 	ResultType promql.ValueType `json:"resultType"`

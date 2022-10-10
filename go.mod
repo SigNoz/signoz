@@ -1,4 +1,4 @@
-module go.signoz.io/query-service
+module go.signoz.io/signoz
 
 go 1.17
 
@@ -20,6 +20,9 @@ require (
 	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rs/cors v1.7.0
+	github.com/russellhaering/gosaml2 v0.8.0
+	github.com/russellhaering/goxmldsig v1.2.0
+	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
 	go.uber.org/zap v1.16.0
@@ -28,8 +31,11 @@ require (
 )
 
 require (
+	github.com/beevik/etree v1.1.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
+	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
+	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -86,7 +92,6 @@ require (
 	github.com/hashicorp/serf v0.8.1-0.20161007004122-1d4fa605f6ff // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/miekg/dns v1.0.4 // indirect
@@ -133,7 +138,6 @@ require (
 	google.golang.org/grpc v1.41.0
 	google.golang.org/grpc/examples v0.0.0-20210803221256-6ba56c814be7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0

@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 const (
@@ -41,6 +41,7 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 const (
+	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
 	HttpRoute                      = "httpRoute"
 	HttpCode                       = "httpCode"

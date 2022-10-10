@@ -1,19 +1,32 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
-import React from 'react';
+import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import {
+	externalCallDuration,
+	externalCallDurationByAddress,
+	externalCallErrorPercent,
+	externalCallRpsByAddress,
+} from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
+import { resourceAttributesToTagFilterItems } from 'lib/resourceAttributes';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { PromQLWidgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
-function External({ getWidget }: ExternalProps): JSX.Element {
+function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const { resourceAttributePromQLQuery } = useSelector<AppState, MetricReducer>(
+	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
+
+	const tagFilterItems = useMemo(
+		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
+		[resourceAttributeQueries],
+	);
+
 	const legend = '{{address}}';
 
 	return (
@@ -26,12 +39,16 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_error_percentage"
 								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `max((sum(rate(signoz_external_call_latency_count{service_name="${servicename}", status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR vector(0)) by (address))*100/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address)) < 1000 OR vector(0)`,
-										legend: 'External Call Error Percentage',
-									},
-								])}
+								widget={getWidgetQueryBuilder({
+									queryType: 1,
+									promQL: [],
+									metricsBuilder: externalCallErrorPercent({
+										servicename,
+										legend,
+										tagFilterItems,
+									}),
+									clickHouse: [],
+								})}
 								yAxisUnit="%"
 							/>
 						</GraphContainer>
@@ -45,12 +62,12 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_duration"
 								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m]))/sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m]))`,
-										legend: 'Average Duration',
-									},
-								])}
+								widget={getWidgetQueryBuilder({
+									queryType: 1,
+									promQL: [],
+									metricsBuilder: externalCallDuration({ servicename, tagFilterItems }),
+									clickHouse: [],
+								})}
 								yAxisUnit="ms"
 							/>
 						</GraphContainer>
@@ -66,12 +83,16 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_rps_by_address"
 								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address)`,
+								widget={getWidgetQueryBuilder({
+									queryType: 1,
+									promQL: [],
+									metricsBuilder: externalCallRpsByAddress({
+										servicename,
 										legend,
-									},
-								])}
+										tagFilterItems,
+									}),
+									clickHouse: [],
+								})}
 								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
@@ -85,12 +106,16 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_duration_by_address"
 								fullViewOptions={false}
-								widget={getWidget([
-									{
-										query: `(sum(rate(signoz_external_call_latency_sum{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address))/(sum(rate(signoz_external_call_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (address))`,
+								widget={getWidgetQueryBuilder({
+									queryType: 1,
+									promQL: [],
+									metricsBuilder: externalCallDurationByAddress({
+										servicename,
 										legend,
-									},
-								])}
+										tagFilterItems,
+									}),
+									clickHouse: [],
+								})}
 								yAxisUnit="ms"
 							/>
 						</GraphContainer>
@@ -102,7 +127,7 @@ function External({ getWidget }: ExternalProps): JSX.Element {
 }
 
 interface ExternalProps {
-	getWidget: (query: PromQLWidgets['query']) => PromQLWidgets;
+	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 export default External;

@@ -182,6 +182,7 @@ type TagQuery struct {
 }
 
 type GetFilteredSpansParams struct {
+	TraceID            []string   `json:"traceID"`
 	ServiceName        []string   `json:"serviceName"`
 	Operation          []string   `json:"operation"`
 	Kind               string     `json:"kind"`
@@ -209,6 +210,7 @@ type GetFilteredSpansParams struct {
 }
 
 type GetFilteredSpanAggregatesParams struct {
+	TraceID            []string   `json:"traceID"`
 	ServiceName        []string   `json:"serviceName"`
 	Operation          []string   `json:"operation"`
 	Kind               string     `json:"kind"`
@@ -237,6 +239,7 @@ type GetFilteredSpanAggregatesParams struct {
 }
 
 type SpanFilterParams struct {
+	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`
@@ -259,6 +262,7 @@ type SpanFilterParams struct {
 }
 
 type TagFilterParams struct {
+	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`

@@ -1,3 +1,4 @@
+import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
 import { PayloadProps as UserPayload } from 'types/api/user/getUser';
 import { ROLES } from 'types/roles';
@@ -24,4 +25,5 @@ export default interface AppReducer {
 	isUserFetchingError: boolean;
 	role: ROLES | null;
 	org: OrgPayload | null;
+	featureFlags: null | FeatureFlagPayload;
 }
