@@ -43,6 +43,12 @@ const HEART_BEAT_DURATION = 6 * time.Hour
 
 // const HEART_BEAT_DURATION = 10 * time.Second
 
+const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
+const RATE_LIMIT_VALUE = 60
+
+// const RATE_LIMIT_CHECK_DURATION = 20 * time.Second
+// const RATE_LIMIT_VALUE = 5
+
 var telemetry *Telemetry
 var once sync.Once
 
@@ -69,6 +75,7 @@ type Telemetry struct {
 	companyDomain string
 	minRandInt    int
 	maxRandInt    int
+	rateLimits    map[string]int8
 }
 
 func createTelemetry() {
@@ -77,6 +84,7 @@ func createTelemetry() {
 		operator:   analytics.New(api_key),
 		phOperator: ph.New(ph_api_key),
 		ipAddress:  getOutboundIP(),
+		rateLimits: make(map[string]int8),
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
@@ -87,7 +95,18 @@ func createTelemetry() {
 
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
 	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
+	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
+
+	go func() {
+		for {
+			select {
+			case <-rateLimitTicker.C:
+				telemetry.rateLimits = make(map[string]int8)
+			}
+		}
+	}()
 	go func() {
 		for {
 			select {
@@ -196,6 +215,12 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 
 	ok := a.checkEvents(event)
 	if !ok {
+		return
+	}
+
+	if a.rateLimits[event] < RATE_LIMIT_VALUE {
+		a.rateLimits[event] += 1
+	} else {
 		return
 	}
 
