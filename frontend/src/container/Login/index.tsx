@@ -117,6 +117,12 @@ function Login({
 		try {
 			event.preventDefault();
 			event.persist();
+
+			if (!precheckComplete) {
+				onNextHandler();
+				return;
+			}
+
 			setIsLoading(true);
 
 			const response = await loginApi({
@@ -171,6 +177,7 @@ function Login({
 	};
 
 	const { sso, canSelfRegister } = precheckResult;
+
 	return (
 		<FormWrapper>
 			<FormContainer onSubmit={onSubmitHandler}>
