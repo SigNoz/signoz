@@ -4,6 +4,7 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import React, { useCallback, useState } from 'react';
@@ -27,9 +28,23 @@ function AuthDomains(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [currentDomain, setCurrentDomain] = useState<SAMLDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const isEnterprise = useFeatureFlag(FeatureKeys.ENTERPRISE_PLAN);
 
 	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
+
+	const notEntripriseData: SAMLDomain[] = [
+		{
+			id: v4(),
+			name: '',
+			ssoEnabled: false,
+			orgId: (org || [])[0].id || '',
+			samlConfig: {
+				samlCert: '',
+				samlEntity: '',
+				samlIdp: '',
+			},
+			ssoType: 'SAML',
+		},
+	];
 
 	const { data, isLoading, refetch } = useQuery(['saml'], {
 		queryFn: () =>
@@ -129,7 +144,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onClickLicenseHandler = useCallback(() => {
-		window.open('https://signoz.io/upgrade-from-app');
+		window.open(SIGNOZ_UPGRADE_PLAN_URL);
 	}, []);
 
 	const columns: ColumnsType<SAMLDomain> = [
@@ -233,7 +248,7 @@ function AuthDomains(): JSX.Element {
 				</Modal>
 				<Table
 					rowKey={(record: SAMLDomain): string => record.name + v4()}
-					dataSource={[]}
+					dataSource={!SSOFlag ? notEntripriseData : []}
 					columns={columns}
 					tableLayout="fixed"
 				/>
@@ -241,22 +256,7 @@ function AuthDomains(): JSX.Element {
 		);
 	}
 
-	const notEntripriseData: SAMLDomain[] = [
-		{
-			id: v4(),
-			name: 'signoz.io',
-			ssoEnabled: false,
-			orgId: (org || [])[0].id || '',
-			samlConfig: {
-				samlCert: '',
-				samlEntity: '',
-				samlIdp: '',
-			},
-			ssoType: 'SAML',
-		},
-	];
-
-	const tableData = isEnterprise ? data?.payload || [] : notEntripriseData;
+	const tableData = SSOFlag ? data?.payload || [] : notEntripriseData;
 
 	return (
 		<>
