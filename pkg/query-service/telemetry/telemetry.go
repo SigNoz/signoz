@@ -30,6 +30,8 @@ const (
 	TELEMETRY_LICENSE_CHECK_FAILED        = "License Check Failed"
 	TELEMETRY_LICENSE_UPDATED             = "License Updated"
 	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
+	TELEMETRY_EVENT_ENVIRONMENT           = "Environment"
+	TELEMETRY_EVENT_LANGUAGE              = "Language"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -70,6 +72,7 @@ type Telemetry struct {
 }
 
 func createTelemetry() {
+
 	telemetry = &Telemetry{
 		operator:   analytics.New(api_key),
 		phOperator: ph.New(ph_api_key),
@@ -89,6 +92,16 @@ func createTelemetry() {
 		for {
 			select {
 			case <-ticker.C:
+				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background())
+
+				if len(tagsInfo.Env) != 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env})
+				}
+
+				for language, _ := range tagsInfo.Languages {
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language})
+				}
+
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
 				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background())
 				getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background())
