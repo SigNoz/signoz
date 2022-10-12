@@ -207,7 +207,7 @@ If you don't want to install the SigNoz backend just for doing frontend developm
 
 Please ping us in the [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) channel or ask `@Prashant Shahi` in our [Slack Community](https://signoz.io/slack)  and we will DM you with `<test environment URL>`.
 
-**Frontend should now be accessible at** [`http://localhost:3301/application`](http://localhost:3301/application)
+**Frontend should now be accessible at** [`http://localhost:3301/services`](http://localhost:3301/services)
 
  **[`^top^`](#)**
  

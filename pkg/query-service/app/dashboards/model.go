@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

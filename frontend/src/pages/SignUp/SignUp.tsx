@@ -8,10 +8,12 @@ import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
+import * as loginPrecheck from 'types/api/user/loginPrecheck';
 
 import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
@@ -19,7 +21,13 @@ import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 const { Title } = Typography;
 
 function SignUp({ version }: SignUpProps): JSX.Element {
+	const { t } = useTranslation(['signup']);
 	const [loading, setLoading] = useState(false);
+
+	const [precheck, setPrecheck] = useState<loginPrecheck.PayloadProps>({
+		sso: false,
+		isUser: false,
+	});
 
 	const [firstName, setFirstName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
@@ -54,12 +62,27 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.data.payload
 		) {
 			const responseDetails = getInviteDetailsResponse.data.payload;
+			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
 			setFirstName(responseDetails.name);
 			setEmail(responseDetails.email);
 			setOrganizationName(responseDetails.organization);
 			setIsDetailsDisable(true);
 		}
-	}, [getInviteDetailsResponse?.data?.payload, getInviteDetailsResponse.status]);
+		if (
+			getInviteDetailsResponse.status === 'success' &&
+			getInviteDetailsResponse.data?.error
+		) {
+			const { error } = getInviteDetailsResponse.data;
+			notification.error({
+				message: error,
+			});
+		}
+	}, [
+		getInviteDetailsResponse.data?.payload,
+		getInviteDetailsResponse.data?.error,
+		getInviteDetailsResponse.status,
+		getInviteDetailsResponse,
+	]);
 
 	const setState = (
 		value: string,
@@ -68,7 +91,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setFunction(value);
 	};
 
-	const defaultError = 'Something went wrong';
 	const isPreferenceVisible = token === null;
 
 	const commonHandler = async (
@@ -101,17 +123,17 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					}
 				} else {
 					notification.error({
-						message: loginResponse.error || defaultError,
+						message: loginResponse.error || t('unexpected_error'),
 					});
 				}
 			} else {
 				notification.error({
-					message: response.error || defaultError,
+					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
 			notification.error({
-				message: defaultError,
+				message: t('unexpected_error'),
 			});
 		}
 	};
@@ -129,9 +151,56 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			history.push(ROUTES.APPLICATION);
 		} else {
 			notification.error({
-				message: editResponse.error || defaultError,
+				message: editResponse.error || t('unexpected_error'),
 			});
 		}
+	};
+	const handleSubmitSSO = async (
+		e: React.FormEvent<HTMLFormElement>,
+	): Promise<void> => {
+		if (!params.get('token')) {
+			notification.error({
+				message: t('token_required'),
+			});
+			return;
+		}
+		setLoading(true);
+
+		try {
+			e.preventDefault();
+			const response = await signUpApi({
+				email,
+				name: firstName,
+				orgName: organizationName,
+				password,
+				token: params.get('token') || undefined,
+				sourceUrl: encodeURIComponent(window.location.href),
+			});
+
+			if (response.statusCode === 200) {
+				if (response.payload?.sso) {
+					if (response.payload?.ssoUrl) {
+						window.location.href = response.payload?.ssoUrl;
+					} else {
+						notification.error({
+							message: t('failed_to_initiate_login'),
+						});
+						// take user to login page as there is nothing to do here
+						history.push(ROUTES.LOGIN);
+					}
+				}
+			} else {
+				notification.error({
+					message: response.error || t('unexpected_error'),
+				});
+			}
+		} catch (error) {
+			notification.error({
+				message: t('unexpected_error'),
+			});
+		}
+
+		setLoading(false);
 	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
@@ -159,7 +228,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				setLoading(false);
 			} catch (error) {
 				notification.error({
-					message: defaultError,
+					message: t('unexpected_error'),
 				});
 				setLoading(false);
 			}
@@ -195,12 +264,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
-				<form onSubmit={handleSubmit}>
+				<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
 					<Title level={4}>Create your account</Title>
 					<div>
-						<Label htmlFor="signupEmail">Email</Label>
+						<Label htmlFor="signupEmail">{t('label_email')}</Label>
 						<Input
-							placeholder="name@yourcompany.com"
+							placeholder={t('placeholder_email')}
 							type="email"
 							autoFocus
 							value={email}
@@ -215,9 +284,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 					{isNameVisible && (
 						<div>
-							<Label htmlFor="signupFirstName">First Name</Label>
+							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>
 							<Input
-								placeholder="Your Name"
+								placeholder={t('placeholder_firstname')}
 								value={firstName}
 								onChange={(e): void => {
 									setState(e.target.value, setFirstName);
@@ -230,9 +299,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					)}
 
 					<div>
-						<Label htmlFor="organizationName">Organization Name</Label>
+						<Label htmlFor="organizationName">{t('label_orgname')}</Label>
 						<Input
-							placeholder="Your Company"
+							placeholder={t('placeholder_orgname')}
 							value={organizationName}
 							onChange={(e): void => {
 								setState(e.target.value, setOrganizationName);
@@ -242,53 +311,57 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							disabled={isDetailsDisable}
 						/>
 					</div>
-					<div>
-						<Label htmlFor="Password">Password</Label>
-						<Input.Password
-							value={password}
-							onChange={(e): void => {
-								setState(e.target.value, setPassword);
-							}}
-							required
-							id="currentPassword"
-						/>
-					</div>
-					<div>
-						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
-						<Input.Password
-							value={confirmPassword}
-							onChange={(e): void => {
-								const updateValue = e.target.value;
-								setState(updateValue, setConfirmPassword);
-							}}
-							required
-							id="confirmPassword"
-						/>
+					{!precheck.sso && (
+						<div>
+							<Label htmlFor="Password">{t('label_password')}</Label>
+							<Input.Password
+								value={password}
+								onChange={(e): void => {
+									setState(e.target.value, setPassword);
+								}}
+								required
+								id="currentPassword"
+							/>
+						</div>
+					)}
+					{!precheck.sso && (
+						<div>
+							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>
+							<Input.Password
+								value={confirmPassword}
+								onChange={(e): void => {
+									const updateValue = e.target.value;
+									setState(updateValue, setConfirmPassword);
+								}}
+								required
+								id="confirmPassword"
+							/>
 
-						{confirmPasswordError && (
-							<Typography.Paragraph
-								italic
-								id="password-confirm-error"
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
-								}}
-							>
-								Passwords don’t match. Please try again
-							</Typography.Paragraph>
-						)}
-						{isPasswordPolicyError && (
-							<Typography.Paragraph
-								italic
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
-								}}
-							>
-								{isPasswordNotValidMessage}
-							</Typography.Paragraph>
-						)}
-					</div>
+							{confirmPasswordError && (
+								<Typography.Paragraph
+									italic
+									id="password-confirm-error"
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									{t('failed_confirm_password')}
+								</Typography.Paragraph>
+							)}
+							{isPasswordPolicyError && (
+								<Typography.Paragraph
+									italic
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									{isPasswordNotValidMessage}
+								</Typography.Paragraph>
+							)}
+						</div>
+					)}
 
 					{isPreferenceVisible && (
 						<>
@@ -298,7 +371,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 										onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
 										checked={hasOptedUpdates}
 									/>
-									<Typography>Keep me updated on new SigNoz features</Typography>
+									<Typography>{t('prompt_keepme_posted')} </Typography>
 								</Space>
 							</MarginTop>
 
@@ -308,9 +381,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 										onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
 										checked={isAnonymous}
 									/>
-									<Typography>
-										Anonymise my usage date. We collect data to measure product usage
-									</Typography>
+									<Typography>{t('prompt_anonymise')}</Typography>
 								</Space>
 							</MarginTop>
 						</>
@@ -339,14 +410,13 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								loading ||
 								!email ||
 								!organizationName ||
-								!password ||
-								!confirmPassword ||
+								(!precheck.sso && (!password || !confirmPassword)) ||
 								!firstName ||
 								confirmPasswordError ||
 								isPasswordPolicyError
 							}
 						>
-							Get Started
+							{t('button_get_started')}
 						</Button>
 					</ButtonContainer>
 				</form>

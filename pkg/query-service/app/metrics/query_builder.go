@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 

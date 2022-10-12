@@ -39,11 +39,11 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
-	"go.signoz.io/query-service/app/logs"
-	"go.signoz.io/query-service/constants"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/utils"
+	"go.signoz.io/signoz/pkg/query-service/app/logs"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -2999,6 +2999,40 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 	return totalLogLines, nil
 }
 
+func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
+
+	queryStr := fmt.Sprintf("select tagMap['service.name'] as serviceName, tagMap['deployment.environment'] as env, tagMap['telemetry.sdk.language'] as language from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", r.traceDB, r.indexTable, 1)
+
+	tagTelemetryDataList := []model.TagTelemetryData{}
+	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
+
+	if err != nil {
+		zap.S().Info(queryStr)
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, err
+	}
+
+	tagsInfo := model.TagsInfo{
+		Languages: make(map[string]interface{}),
+	}
+
+	for _, tagTelemetryData := range tagTelemetryDataList {
+
+		if len(tagTelemetryData.ServiceName) != 0 && strings.Contains(tagTelemetryData.ServiceName, "prod") {
+			tagsInfo.Env = tagTelemetryData.ServiceName
+		}
+		if len(tagTelemetryData.Env) != 0 && strings.Contains(tagTelemetryData.Env, "prod") {
+			tagsInfo.Env = tagTelemetryData.Env
+		}
+		if len(tagTelemetryData.Language) != 0 {
+			tagsInfo.Languages[tagTelemetryData.Language] = struct{}{}
+		}
+
+	}
+
+	return &tagsInfo, nil
+}
+
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -3053,7 +3087,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// if the type is attribute or resource, create the materialized column first
 		if field.Type == constants.Attributes || field.Type == constants.Resources {
 			// create materialized
-			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')]", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')] CODEC(LZ4)", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
 			err := r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
