@@ -9,7 +9,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 		// making the error status code as standard Error Status Code
 		const statusCode = response.status as ErrorStatusCode;
 
-		if (statusCode >= 400 && statusCode < 500) {
+		if (statusCode >= 400 && statusCode <= 500) {
 			const { data } = response;
 
 			if (statusCode === 404) {
