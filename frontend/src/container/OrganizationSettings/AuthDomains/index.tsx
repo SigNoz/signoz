@@ -4,6 +4,7 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import React, { useCallback, useState } from 'react';
@@ -29,6 +30,21 @@ function AuthDomains(): JSX.Element {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
+
+	const notEntripriseData: SAMLDomain[] = [
+		{
+			id: v4(),
+			name: '',
+			ssoEnabled: false,
+			orgId: (org || [])[0].id || '',
+			samlConfig: {
+				samlCert: '',
+				samlEntity: '',
+				samlIdp: '',
+			},
+			ssoType: 'SAML',
+		},
+	];
 
 	const { data, isLoading, refetch } = useQuery(['saml'], {
 		queryFn: () =>
@@ -90,10 +106,10 @@ function AuthDomains(): JSX.Element {
 
 	const onEditHandler = useCallback(
 		(record: SAMLDomain) => (): void => {
-			setIsEditModalOpen(true);
+			onOpenHandler(setIsEditModalOpen)();
 			setCurrentDomain(record);
 		},
-		[],
+		[onOpenHandler],
 	);
 
 	const onDeleteHandler = useCallback(
@@ -128,7 +144,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onClickLicenseHandler = useCallback(() => {
-		window.open('http://signoz.io/pricing');
+		window.open(SIGNOZ_UPGRADE_PLAN_URL);
 	}, []);
 
 	const columns: ColumnsType<SAMLDomain> = [
@@ -171,10 +187,7 @@ function AuthDomains(): JSX.Element {
 				if (!SSOFlag) {
 					return (
 						<Button
-							onClick={(): void => {
-								setCurrentDomain(record);
-								onOpenHandler(setIsSettingsOpen)();
-							}}
+							onClick={onClickLicenseHandler}
 							type="link"
 							icon={<LockTwoTone />}
 						>
@@ -235,13 +248,15 @@ function AuthDomains(): JSX.Element {
 				</Modal>
 				<Table
 					rowKey={(record: SAMLDomain): string => record.name + v4()}
-					dataSource={[]}
+					dataSource={!SSOFlag ? notEntripriseData : []}
 					columns={columns}
 					tableLayout="fixed"
 				/>
 			</Space>
 		);
 	}
+
+	const tableData = SSOFlag ? data?.payload || [] : notEntripriseData;
 
 	return (
 		<>
@@ -282,7 +297,7 @@ function AuthDomains(): JSX.Element {
 				<AddDomain refetch={refetch} />
 
 				<Table
-					dataSource={data?.payload || []}
+					dataSource={tableData}
 					loading={isLoading}
 					columns={columns}
 					tableLayout="fixed"
