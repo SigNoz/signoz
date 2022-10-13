@@ -381,10 +381,10 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
     </div>
     <a
       class="c3"
-      href="/application"
+      href="/services"
       tabindex="0"
     >
-      Return To Metrics Page
+      Return To Services Page
     </a>
   </div>
 </DocumentFragment>

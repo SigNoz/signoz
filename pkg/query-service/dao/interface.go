@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type ModelDao interface {

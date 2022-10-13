@@ -3,7 +3,8 @@ import ROUTES from 'constants/routes';
 import React from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
-import { PromQLWidgets } from 'types/api/dashboard/getAll';
+import { PromQLWidgets, Widgets } from 'types/api/dashboard/getAll';
+import { v4 } from 'uuid';
 
 import ResourceAttributesFilter from './ResourceAttributesFilter';
 import DBCall from './Tabs/DBCall';
@@ -31,6 +32,27 @@ const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
 	};
 };
 
+const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => {
+	return {
+		description: '',
+		id: v4(),
+		isStacked: false,
+		nullZeroValues: '',
+		opacity: '0',
+		panelTypes: 'TIME_SERIES',
+		query,
+		queryData: {
+			data: { queryData: [] },
+			error: false,
+			errorMessage: '',
+			loading: false,
+		},
+		timePreferance: 'GLOBAL_TIME',
+		title: '',
+		stepSize: 60,
+	};
+};
+
 function OverViewTab(): JSX.Element {
 	return <Overview getWidget={getWidget} />;
 }
@@ -40,7 +62,7 @@ function DbCallTab(): JSX.Element {
 }
 
 function ExternalTab(): JSX.Element {
-	return <External getWidget={getWidget} />;
+	return <External getWidgetQueryBuilder={getWidgetQueryBuilder} />;
 }
 
 function ServiceMetrics(): JSX.Element {

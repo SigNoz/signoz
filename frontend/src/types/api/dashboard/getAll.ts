@@ -112,14 +112,7 @@ export interface IMetricsBuilderQuery {
 
 export interface IQueryBuilderTagFilters {
 	op: string;
-	items:
-		| {
-				id: string;
-				key: string;
-				op: string;
-				value: string[];
-		  }[]
-		| [];
+	items: IQueryBuilderTagFilterItems[] | [];
 }
 
 export interface IClickHouseQuery {
@@ -133,4 +126,11 @@ export interface IPromQLQuery {
 	legend: string;
 	disabled: boolean;
 	name: string;
+}
+
+export interface IQueryBuilderTagFilterItems {
+	id: string;
+	key: string;
+	op: string;
+	value: string[];
 }

@@ -2,7 +2,7 @@ package rules
 
 import (
 	"github.com/ClickHouse/clickhouse-go/v2"
-	pqle "go.signoz.io/query-service/pqlEngine"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 )
 
 // Queriers register the options for querying metrics or event sources

@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go.signoz.io/query-service/app"
-	"go.signoz.io/query-service/auth"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/version"
+	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

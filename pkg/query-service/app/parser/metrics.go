@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"go.signoz.io/query-service/app/metrics"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func validateQueryRangeParamsV2(qp *model.QueryRangeParamsV2) error {
@@ -49,6 +49,9 @@ func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *m
 	// replace the variables in metrics builder filter item with actual value
 	if postData.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
 		for _, query := range postData.CompositeMetricQuery.BuilderQueries {
+			if query.TagFilters == nil || len(query.TagFilters.Items) == 0 {
+				continue
+			}
 			for idx := range query.TagFilters.Items {
 				item := &query.TagFilters.Items[idx]
 				value := item.Value

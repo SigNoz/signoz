@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build query-service image
-        run: make build-query-service-amd64
+        run: make build-ee-query-service-amd64
 
       - name: Build frontend image
         run: make build-frontend-amd64

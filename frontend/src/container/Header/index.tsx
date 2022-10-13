@@ -26,6 +26,7 @@ import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 
 import CurrentOrganization from './CurrentOrganization';
+import ManageLicense from './ManageLicense';
 import SignedInAS from './SignedInAs';
 import { Container, LogoutContainer, ToggleButton } from './styles';
 
@@ -70,6 +71,8 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 				<SignedInAS />
 				<Divider />
 				<CurrentOrganization onToggle={onArrowClickHandler} />
+				<Divider />
+				<ManageLicense onToggle={onArrowClickHandler} />
 				<Divider />
 				<LogoutContainer>
 					<LogoutOutlined />

@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   query-service:
-    image: signoz/query-service:0.11.1
+    image: signoz/query-service:0.11.2
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
@@ -15,11 +15,12 @@ services:
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+      - DASHBOARDS_PATH=/root/config/dashboards
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-standalone-amd
-      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
     restart: on-failure
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
@@ -31,7 +32,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: signoz/frontend:0.11.1
+    image: signoz/frontend:0.11.2
     container_name: frontend
     restart: on-failure
     depends_on:
