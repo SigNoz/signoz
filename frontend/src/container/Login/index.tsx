@@ -111,6 +111,8 @@ function Login({
 		setFunc(value);
 	};
 
+	const { sso, canSelfRegister } = precheckResult;
+
 	const onSubmitHandler: React.FormEventHandler<HTMLFormElement> = async (
 		event,
 	) => {
@@ -120,6 +122,11 @@ function Login({
 
 			if (!precheckComplete) {
 				onNextHandler();
+				return;
+			}
+
+			if (precheckComplete && sso) {
+				window.location.href = precheckResult.ssoUrl || '';
 				return;
 			}
 
@@ -175,8 +182,6 @@ function Login({
 			</Typography.Paragraph>
 		);
 	};
-
-	const { sso, canSelfRegister } = precheckResult;
 
 	return (
 		<FormWrapper>
