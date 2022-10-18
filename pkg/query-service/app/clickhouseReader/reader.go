@@ -22,6 +22,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/promlog"
@@ -1684,8 +1685,8 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error) {
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
-
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.traceDB, r.spansTable)
+	start := time.Now()
 
 	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
 
@@ -1695,31 +1696,43 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
-
+	end := time.Now()
+	zap.S().Debug("getTraceSQLQuery took: ", end.Sub(start))
 	searchSpansResult := []model.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 		Events:  make([][]interface{}, len(searchScanResponses)),
 	},
 	}
 	searchSpanResponses := []model.SearchSpanResponseItem{}
-	for i, item := range searchScanResponses {
+	start = time.Now()
+	for _, item := range searchScanResponses {
 		var jsonItem model.SearchSpanResponseItem
-		json.Unmarshal([]byte(item.Model), &jsonItem)
+		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		spanEvents := jsonItem.GetValues()
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
-		searchSpansResult[0].Events[i] = spanEvents
 	}
-
+	end = time.Now()
+	zap.S().Debug("getTraceSQLQuery unmarshal took: ", end.Sub(start))
+	// fmt.Println(size.Of(searchScanResponses))
+	// fmt.Println(size.Of(searchSpanResponses))
+	// fmt.Println(size.Of(searchSpansResult))
 	spanLimit, err := strconv.Atoi(constants.SpanLimitStr)
 	if err != nil {
 		zap.S().Error("Error during strconv.Atoi() on SPAN_LIMIT env variable: ", err)
 		return nil, err
 	}
 	if len(searchScanResponses) > spanLimit && spanId != "" {
+		start = time.Now()
 		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
 		if err != nil {
 			return nil, err
+		}
+		end = time.Now()
+		zap.S().Debug("smartTraceAlgo took: ", end.Sub(start))
+	} else {
+		for i, item := range searchSpanResponses {
+			spanEvents := item.GetValues()
+			searchSpansResult[0].Events[i] = spanEvents
 		}
 	}
 
@@ -1855,8 +1868,8 @@ func smartTraceAlgorithm(payload []model.SearchSpanResponseItem, targetSpanId st
 			item.TraceID,
 			item.ServiceName,
 			item.Name,
-			item.Kind,
-			item.DurationNano,
+			strconv.Itoa(int(item.Kind)),
+			strconv.FormatInt(item.DurationNano, 10),
 			keys,
 			values,
 			referencesStringArray,
@@ -3124,7 +3137,6 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 			return nil, "", err
 		}
 		zap.S().Debugf("Preparing batch to store subtree spans in temporary table getSubTreeSpans%s", hash)
-		// time.Sleep(160 * time.Second)
 		statement, err := r.db.PrepareBatch(context.Background(), fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 		if err != nil {
 			zap.S().Error("Error in preparing batch statement: ", err)

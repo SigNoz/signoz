@@ -154,19 +154,20 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
+//easyjson:json
 type SearchSpanResponseItem struct {
 	TimeUnixNano uint64            `json:"timestamp"`
-	SpanID       string            `json:"spanID"`
-	TraceID      string            `json:"traceID"`
+	DurationNano int64             `json:"durationNano"`
+	SpanID       string            `json:"spanId"`
+	RootSpanID   string            `json:"rootSpanId"`
+	TraceID      string            `json:"traceId"`
+	HasError     bool              `json:"hasError"`
+	Kind         int32             `json:"kind"`
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
-	Kind         int32             `json:"kind"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
-	DurationNano int64             `json:"durationNano"`
 	TagMap       map[string]string `json:"tagMap"`
 	Events       []string          `json:"event"`
-	HasError     bool              `json:"hasError"`
-	RootSpanID   string            `json:"rootSpanID"`
 	RootName     string            `json:"rootName"`
 }
 
