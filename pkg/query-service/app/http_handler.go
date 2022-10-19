@@ -496,7 +496,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
 	}
 
-	// round up the end to nearest multiple
+	// round up the end to neaerest multiple
 	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
 		end := (metricsQueryRangeParams.End) / 1000
 		step := metricsQueryRangeParams.Step
@@ -504,16 +504,14 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	type channelResult struct {
-		Series    []*model.Series
-		TableName string
-		Err       error
-		Name      string
-		Query     string
+		Series []*model.Series
+		Err    error
+		Name   string
+		Query  string
 	}
 
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, []string, error, map[string]string) {
+	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
 		var seriesList []*model.Series
-		var tableName []string
 		ch := make(chan channelResult, len(queries))
 		var wg sync.WaitGroup
 
@@ -521,7 +519,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			wg.Add(1)
 			go func(name, query string) {
 				defer wg.Done()
-				seriesList, tableName, err := (*aH.reader).GetMetricResult(r.Context(), query)
+				seriesList, _, err := aH.reader.GetMetricResult(r.Context(), query)
 				for _, series := range seriesList {
 					series.QueryName = name
 				}
@@ -530,7 +528,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
 					return
 				}
-				ch <- channelResult{Series: seriesList, TableName: tableName}
+				ch <- channelResult{Series: seriesList}
 			}(name, query)
 		}
 
@@ -547,12 +545,11 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				continue
 			}
 			seriesList = append(seriesList, r.Series...)
-			tableName = append(tableName, r.TableName)
 		}
 		if len(errs) != 0 {
-			return nil, nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
+			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, tableName, nil, nil
+		return seriesList, nil, nil
 	}
 
 	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
@@ -627,7 +624,6 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 
 	var seriesList []*model.Series
-	var tableName []string
 	var err error
 	var errQuriesByName map[string]string
 	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
@@ -637,11 +633,10 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
-		seriesList, tableName, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
+		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
-
 		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
 			if chQuery.Disabled {
 				continue
@@ -660,7 +655,7 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			}
 			queries[name] = query.String()
 		}
-		seriesList, tableName, err, errQuriesByName = execClickHouseQueries(queries)
+		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
 	case model.PROM:
 		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
 	default:
@@ -685,10 +680,9 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	type ResponseFormat struct {
 		ResultType string          `json:"resultType"`
 		Result     []*model.Series `json:"result"`
-		TableName  []string        `json:"tableName"`
 	}
-	resp := ResponseFormat{ResultType: "matrix", Result: seriesList, TableName: tableName}
-	aH.respond(w, resp)
+	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
+	aH.Respond(w, resp)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
@@ -1327,28 +1321,9 @@ func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
 	spanId := r.URL.Query().Get("spanId")
-	levelUp := r.URL.Query().Get("levelUp")
-	levelDown := r.URL.Query().Get("levelDown")
-	if levelUp == "" || levelUp == "null" {
-		levelUp = "0"
-	}
-	if levelDown == "" || levelDown == "null" {
-		levelDown = "0"
-	}
 
-	levelUpInt, err := strconv.Atoi(levelUp)
-	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading levelUp")
-		return
-	}
-	levelDownInt, err := strconv.Atoi(levelDown)
-	if err != nil {
-		respondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading levelDown")
-		return
-	}
-
-	result, err := (*aH.reader).SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt)
-	if aH.handleError(w, err, http.StatusBadRequest) {
+	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, 0, 0)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 

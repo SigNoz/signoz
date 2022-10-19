@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel(in *jlexer.Lexer, out *SearchSpanResponseItem) {
+func easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel(in *jlexer.Lexer, out *SearchSpanResponseItem) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -71,7 +71,7 @@ func easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel(in *jlexer.Lexer, out *Se
 				}
 				for !in.IsDelim(']') {
 					var v1 OtelSpanRef
-					easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel1(in, &v1)
+					easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel1(in, &v1)
 					out.References = append(out.References, v1)
 					in.WantComma()
 				}
@@ -128,7 +128,7 @@ func easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel(in *jlexer.Lexer, out *Se
 		in.Consumed()
 	}
 }
-func easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel(out *jwriter.Writer, in SearchSpanResponseItem) {
+func easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel(out *jwriter.Writer, in SearchSpanResponseItem) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -186,7 +186,7 @@ func easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel(out *jwriter.Writer, in S
 				if v4 > 0 {
 					out.RawByte(',')
 				}
-				easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel1(out, v5)
+				easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel1(out, v5)
 			}
 			out.RawByte(']')
 		}
@@ -239,27 +239,27 @@ func easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel(out *jwriter.Writer, in S
 // MarshalJSON supports json.Marshaler interface
 func (v SearchSpanResponseItem) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel(&w, v)
+	easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v SearchSpanResponseItem) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel(w, v)
+	easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *SearchSpanResponseItem) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel(&r, v)
+	easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *SearchSpanResponseItem) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel(l, v)
+	easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel(l, v)
 }
-func easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel1(in *jlexer.Lexer, out *OtelSpanRef) {
+func easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel1(in *jlexer.Lexer, out *OtelSpanRef) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -294,7 +294,7 @@ func easyjson6ff3ac1dDecodeGoSignozIoQueryServiceModel1(in *jlexer.Lexer, out *O
 		in.Consumed()
 	}
 }
-func easyjson6ff3ac1dEncodeGoSignozIoQueryServiceModel1(out *jwriter.Writer, in OtelSpanRef) {
+func easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel1(out *jwriter.Writer, in OtelSpanRef) {
 	out.RawByte('{')
 	first := true
 	_ = first

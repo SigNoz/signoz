@@ -40,8 +40,6 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
-var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
-
 const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"

@@ -20,7 +20,6 @@ require (
 	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
 	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1
 	github.com/prometheus/prometheus v2.5.0+incompatible
-	github.com/prometheus/tsdb v0.0.0-20181003080831-0ce41118ed20
 	github.com/rs/cors v1.7.0
 	github.com/russellhaering/gosaml2 v0.8.0
 	github.com/russellhaering/goxmldsig v1.2.0
@@ -36,13 +35,15 @@ require (
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/prometheus/client_golang v0.9.0-pre1.0.20181001174001-0a8115f42e03 // indirect
+	github.com/prometheus/tsdb v0.0.0-20181003080831-0ce41118ed20 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
