@@ -1,42 +1,41 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { blue } from '@ant-design/colors';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import dayjs from 'dayjs';
 import getStep from 'lib/getStep';
 import React, { memo, useEffect, useRef } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 
-function LogsAggregate({ getLogsAggregate }) {
+interface LogsAggregateProps {
+	getLogsAggregate: (arg0: Parameters<typeof getLogsAggregate>[0]) => void;
+}
+function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
-		logs,
-		logLinesPerPage,
 		idEnd,
 		idStart,
-		isLoading,
 		isLoadingAggregate,
 		logsAggregate,
 		liveTail,
 		liveTailStartRange,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
-	const dispatch = useDispatch();
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const reFetchIntervalRef = useRef(null);
+	const reFetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	useEffect(() => {
-		// console.log('LIVE TAIL LOG AGG', liveTail)
 		switch (liveTail) {
 			case 'STOPPED': {
 				if (reFetchIntervalRef.current) {
@@ -59,7 +58,7 @@ function LogsAggregate({ getLogsAggregate }) {
 			}
 
 			case 'PLAYING': {
-				const aggregateCall = () => {
+				const aggregateCall = (): void => {
 					const startTime =
 						dayjs().subtract(liveTailStartRange, 'minute').valueOf() * 1e6;
 					const endTime = dayjs().valueOf() * 1e6;
@@ -72,17 +71,15 @@ function LogsAggregate({ getLogsAggregate }) {
 							inputFormat: 'ns',
 						}),
 						q: queryString,
-						...(idStart ? {idGt:  idStart } : {}),
+						...(idStart ? { idGt: idStart } : {}),
 						...(idEnd ? { idLt: idEnd } : {}),
 					});
 				};
 				aggregateCall();
 				reFetchIntervalRef.current = setInterval(aggregateCall, 60000);
-				// console.log('LA Play', reFetchIntervalRef.current);
 				break;
 			}
 			case 'PAUSED': {
-				// console.log('LA Pause', reFetchIntervalRef.current);
 				if (reFetchIntervalRef.current) {
 					clearInterval(reFetchIntervalRef.current);
 				}
@@ -98,7 +95,6 @@ function LogsAggregate({ getLogsAggregate }) {
 		labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
 		datasets: [
 			{
-				// label: 'Span Count',
 				data: logsAggregate.map((s) => s.value),
 				backgroundColor: blue[4],
 			},
@@ -123,7 +119,9 @@ function LogsAggregate({ getLogsAggregate }) {
 }
 
 interface DispatchProps {
-	getLogsAggregate: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

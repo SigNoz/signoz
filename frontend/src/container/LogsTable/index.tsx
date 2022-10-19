@@ -1,23 +1,24 @@
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { Card, Typography } from 'antd';
-import { LiveTail } from 'api/logs/livetail';
+/* eslint-disable no-nested-ternary */
+import { Typography } from 'antd';
 import LogItem from 'components/Logs/LogItem';
 import Spinner from 'components/Spinner';
 import { map } from 'lodash-es';
-import React, { memo, useEffect, useRef } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import React, { memo, useEffect } from 'react';
+import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { PUSH_LIVE_TAIL_EVENT } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container, Heading } from './styles';
 
-function LogsTable({ getLogs }) {
+interface LogsTableProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+}
+function LogsTable({ getLogs }: LogsTableProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		logs,
@@ -51,7 +52,7 @@ function LogsTable({ getLogs }) {
 		return <Spinner height={20} tip="Getting Logs" />;
 	}
 	return (
-		<Container>
+		<Container flex="auto">
 			<Heading>
 				<Typography.Text
 					style={{
@@ -74,7 +75,9 @@ function LogsTable({ getLogs }) {
 }
 
 interface DispatchProps {
-	getLogs: () => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: (
+		props: Parameters<typeof getLogs>[0],
+	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

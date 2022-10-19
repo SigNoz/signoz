@@ -12,10 +12,40 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+type BaseApiError interface {
+	Type() ErrorType
+	ToError() error
+	Error() string
+	IsNil() bool
+}
+
 type ApiError struct {
 	Typ ErrorType
 	Err error
 }
+
+func (a *ApiError) Type() ErrorType {
+	return a.Typ
+}
+
+func (a *ApiError) ToError() error {
+	if a != nil {
+		return a.Err
+	}
+	return a
+}
+
+func (a *ApiError) Error() string {
+	if a == nil || a.Err == nil {
+		return ""
+	}
+	return a.Err.Error()
+}
+
+func (a *ApiError) IsNil() bool {
+	return a == nil || a.Err == nil
+}
+
 type ErrorType string
 
 const (
@@ -33,6 +63,22 @@ const (
 	ErrorConflict              ErrorType = "conflict"
 	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
 )
+
+// BadRequest returns a ApiError object of bad request
+func BadRequest(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorBadData,
+		Err: err,
+	}
+}
+
+// InternalError returns a ApiError object of internal type
+func InternalError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorInternal,
+		Err: err,
+	}
+}
 
 type QueryDataV2 struct {
 	ResultType promql.ValueType `json:"resultType"`
@@ -433,16 +479,16 @@ type GetFieldsResponse struct {
 type GetLogsResponse struct {
 	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
 	ID                 string             `json:"id" ch:"id"`
-	TraceID            string             `json:"traceId" ch:"trace_id"`
-	SpanID             string             `json:"spanId" ch:"span_id"`
-	TraceFlags         uint32             `json:"traceFlags" ch:"trace_flags"`
-	SeverityText       string             `json:"severityText" ch:"severity_text"`
-	SeverityNumber     uint8              `json:"severityNumber" ch:"severity_number"`
+	TraceID            string             `json:"trace_id" ch:"trace_id"`
+	SpanID             string             `json:"span_id" ch:"span_id"`
+	TraceFlags         uint32             `json:"trace_flags" ch:"trace_flags"`
+	SeverityText       string             `json:"severity_text" ch:"severity_text"`
+	SeverityNumber     uint8              `json:"severity_number" ch:"severity_number"`
 	Body               string             `json:"body" ch:"body"`
-	Resources_string   map[string]string  `json:"resourcesString" ch:"resources_string"`
-	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`
-	Attributes_int64   map[string]int64   `json:"attributesInt" ch:"attributes_int64"`
-	Attributes_float64 map[string]float64 `json:"attributesFloat" ch:"attributes_float64"`
+	Resources_string   map[string]string  `json:"resources_string" ch:"resources_string"`
+	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
+	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
+	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 }
 
 type LogsTailClient struct {
@@ -530,4 +576,18 @@ type Span struct {
 type GetSpansSubQueryDBResponse struct {
 	SpanID  string `ch:"spanID"`
 	TraceID string `ch:"traceID"`
+}
+type DashboardVar struct {
+	VariableValues []interface{} `json:"variableValues"`
+}
+
+type TagsInfo struct {
+	Languages map[string]interface{} `json:"languages"`
+	Env       string                 `json:"env"`
+}
+
+type TagTelemetryData struct {
+	ServiceName string `json:"serviceName" ch:"serviceName"`
+	Env         string `json:"env" ch:"env"`
+	Language    string `json:"language" ch:"language"`
 }

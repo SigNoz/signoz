@@ -1,19 +1,28 @@
-import { Button, Popover, Tooltip } from 'antd';
+import { Popover } from 'antd';
 import React from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-function CopyClipboardHOC({ textToCopy, children }) {
-	const [_state, setCopy] = useCopyToClipboard();
+interface CopyClipboardHOCProps {
+	textToCopy: string;
+	children: React.ReactNode;
+}
+function CopyClipboardHOC({
+	textToCopy,
+	children,
+}: CopyClipboardHOCProps): JSX.Element {
+	const [, setCopy] = useCopyToClipboard();
 
 	return (
 		<span
 			style={{
 				margin: 0,
 				padding: 0,
-				cursor: 'pointer'
+				cursor: 'pointer',
 			}}
-			onClick={() => setCopy(textToCopy)}
+			onClick={(): void => setCopy(textToCopy)}
+			onKeyDown={(): void => setCopy(textToCopy)}
 			role="button"
+			tabIndex={0}
 		>
 			<Popover
 				placement="top"

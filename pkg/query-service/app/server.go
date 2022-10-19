@@ -15,17 +15,17 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
-	"go.signoz.io/query-service/app/clickhouseReader"
-	"go.signoz.io/query-service/app/dashboards"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/dao"
-	"go.signoz.io/query-service/healthcheck"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/interfaces"
-	pqle "go.signoz.io/query-service/pqlEngine"
-	"go.signoz.io/query-service/rules"
-	"go.signoz.io/query-service/telemetry"
-	"go.signoz.io/query-service/utils"
+	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
+	"go.signoz.io/signoz/pkg/query-service/healthcheck"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
+	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -77,25 +77,31 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB.SetMaxOpenConns(10)
+	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
 		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath)
-		go clickhouseReader.Start()
+		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
 
+	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
 	if err != nil {
 		return nil, err
 	}
 
 	telemetry.GetInstance().SetReader(reader)
-	apiHandler, err := NewAPIHandler(&reader, dao.DB(), rm)
+	apiHandler, err := NewAPIHandler(APIHandlerOpts{
+		Reader:      reader,
+		AppDao:      dao.DB(),
+		RuleManager: rm,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -232,9 +238,10 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-
-		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		if telemetry.GetInstance().IsSampled() {
+			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+			}
 		}
 
 	})
@@ -361,7 +368,7 @@ func makeRulesManager(
 	disableRules bool) (*rules.Manager, error) {
 
 	// create engine
-	pqle, err := pqle.FromConfigPath(promConfigPath)
+	pqle, err := pqle.FromReader(ch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pql engine : %v", err)
 	}

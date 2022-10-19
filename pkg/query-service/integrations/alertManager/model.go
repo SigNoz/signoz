@@ -2,8 +2,9 @@ package alertManager
 
 import (
 	"fmt"
-	"go.signoz.io/query-service/utils/labels"
 	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 // Receiver configuration provides configuration on how to contact a receiver.

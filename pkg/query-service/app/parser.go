@@ -12,9 +12,9 @@ import (
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 
-	"go.signoz.io/query-service/auth"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}

@@ -4,7 +4,7 @@ import (
 	"os"
 	"strconv"
 
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 const (
@@ -43,6 +43,7 @@ var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/l
 var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
 
 const (
+	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
 	HttpRoute                      = "httpRoute"
 	HttpCode                       = "httpCode"

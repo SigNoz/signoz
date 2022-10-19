@@ -12,6 +12,7 @@ describe('executeSearchQueries', () => {
 		updated_at: '',
 		data: {
 			title: 'first dashboard',
+			variables: {},
 		},
 	};
 	const secondDashboard: Dashboard = {
@@ -21,6 +22,7 @@ describe('executeSearchQueries', () => {
 		updated_at: '',
 		data: {
 			title: 'second dashboard',
+			variables: {},
 		},
 	};
 	const thirdDashboard: Dashboard = {
@@ -30,6 +32,7 @@ describe('executeSearchQueries', () => {
 		updated_at: '',
 		data: {
 			title: 'third dashboard (with special characters +?\\)',
+			variables: {},
 		},
 	};
 	const dashboards = [firstDashboard, secondDashboard, thirdDashboard];

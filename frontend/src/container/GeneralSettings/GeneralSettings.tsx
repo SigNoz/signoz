@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,

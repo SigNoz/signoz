@@ -1,27 +1,11 @@
-import { green, red } from '@ant-design/colors';
-import {
-	ArrowRightOutlined,
-	IeSquareFilled,
-	PauseOutlined,
-	PlayCircleOutlined,
-	PlaySquareFilled,
-	ReloadOutlined,
-	StopFilled,
-} from '@ant-design/icons';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { Button, Card, Popover, Row, Select, Typography } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { green } from '@ant-design/colors';
+import { PauseOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Button, Popover, Row, Select } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
-import { debounce, throttle } from 'lodash-es';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { throttle } from 'lodash-es';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
@@ -32,7 +16,7 @@ import {
 } from 'types/actions/logs';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import AppReducer from 'types/reducer/app';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 
 import OptionIcon from './OptionIcon';
 import { TimePickerCard, TimePickerSelect } from './styles';
@@ -66,7 +50,7 @@ const TIME_PICKER_OPTIONS = [
 	},
 ];
 
-function LogLiveTail() {
+function LogLiveTail(): JSX.Element {
 	const {
 		liveTail,
 		searchFilter: { queryString },
@@ -75,15 +59,16 @@ function LogLiveTail() {
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const dispatch = useDispatch();
-	const handleLiveTail = (toggleState: TLogsLiveTailState) => {
+	const handleLiveTail = (toggleState: TLogsLiveTailState): void => {
 		dispatch({
 			type: TOGGLE_LIVE_TAIL,
 			payload: toggleState,
 		});
 	};
 
-	const batchedEventsRef = useRef([]);
+	const batchedEventsRef = useRef<Record<string, unknown>[]>([]);
 
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const pushLiveLog = useCallback(
 		throttle(() => {
 			dispatch({
@@ -96,46 +81,42 @@ function LogLiveTail() {
 		[],
 	);
 
-	const batchLiveLog = (e) => {
+	const batchLiveLog = (e: { data: string }): void => {
 		// console.log('EVENT BATCHED');
-		batchedEventsRef.current.push(JSON.parse(e.data));
+		batchedEventsRef.current.push(JSON.parse(e.data as string) as never);
 		pushLiveLog();
 	};
 
 	// This ref depicts thats whether the live tail is played from paused state or not.
-	const liveTailSourceRef = useRef(null);
+	const liveTailSourceRef = useRef<EventSource | null>(null);
 	useEffect(() => {
 		if (liveTail === 'PLAYING') {
 			// console.log('Starting Live Tail', logs.length);
 			const timeStamp = dayjs().subtract(liveTailStartRange, 'minute').valueOf();
 			const queryParams = new URLSearchParams({
 				...(queryString ? { q: queryString } : {}),
-				timestampStart: timeStamp,
+				timestampStart: (timeStamp * 1e6) as never,
 				...(liveTailSourceRef.current && logs.length > 0
 					? {
-						idGt: logs[0].id,
-					}
+							idGt: logs[0].id,
+					  }
 					: {}),
 			});
 			const source = LiveTail(queryParams.toString());
 			liveTailSourceRef.current = source;
-			source.onmessage = function (e) {
-				// pushLiveLog(e)
+			source.onmessage = function connectionMessage(e): void {
 				batchLiveLog(e);
 			};
-			source.onopen = function (event) {
-				// console.log('open event');
-				// console.log(event);
-			};
-			source.onerror = function (event) {
-				// console.log(event);
+			// source.onopen = function connectionOpen(): void { };
+			source.onerror = function connectionError(event: unknown): void {
+				console.error(event);
 				source.close();
 				dispatch({
 					type: TOGGLE_LIVE_TAIL,
 					payload: false,
 				});
 			};
-		} else if (liveTailSourceRef.current) {
+		} else if (liveTailSourceRef.current && liveTailSourceRef.current.close) {
 			liveTailSourceRef.current?.close();
 		}
 
@@ -144,7 +125,7 @@ function LogLiveTail() {
 		}
 	}, [liveTail]);
 
-	const handleLiveTailStart = () => {
+	const handleLiveTailStart = (): void => {
 		handleLiveTail('PLAYING');
 		if (!liveTailSourceRef.current) {
 			dispatch({
@@ -158,7 +139,7 @@ function LogLiveTail() {
 			<TimePickerSelect
 				disabled={liveTail === 'PLAYING'}
 				value={liveTailStartRange}
-				onChange={(value) => {
+				onChange={(value): void => {
 					dispatch({
 						type: SET_LIVE_TAIL_START_TIME,
 						payload: value,
@@ -183,7 +164,7 @@ function LogLiveTail() {
 					{liveTail === 'PLAYING' ? (
 						<Button
 							type="primary"
-							onClick={() => handleLiveTail('PAUSED')}
+							onClick={(): void => handleLiveTail('PAUSED')}
 							title="Pause live tail"
 							style={{ background: green[6] }}
 						>
@@ -201,7 +182,7 @@ function LogLiveTail() {
 					{liveTail !== 'STOPPED' && (
 						<Button
 							type="dashed"
-							onClick={() => handleLiveTail('STOPPED')}
+							onClick={(): void => handleLiveTail('STOPPED')}
 							title="Exit live tail"
 						>
 							<div

@@ -8,3 +8,6 @@ export const DEFAULT_AUTH0_APP_REDIRECTION_PATH = ROUTES.APPLICATION;
 
 export const IS_SIDEBAR_COLLAPSED = 'isSideBarCollapsed';
 export const INVITE_MEMBERS_HASH = '#invite-team-members';
+
+export const SIGNOZ_UPGRADE_PLAN_URL =
+	'https://upgrade.signoz.io/upgrade-from-app';

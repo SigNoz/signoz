@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var operatorMapping = map[string]string{
@@ -239,8 +240,10 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 		sqlColName := *col
 		if _, ok := selectedFieldsLookup[*col]; !ok && *col != "body" {
 			if field, ok := interestingFieldLookup[*col]; ok {
-				sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), *col)
-			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 {
+				if field.Type != constants.Static {
+					sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), *col)
+				}
+			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
 				return nil, fmt.Errorf("field not found for filtering")
 			}
 		}

@@ -8,6 +8,7 @@ type Organization struct {
 	HasOptedUpdates bool   `json:"hasOptedUpdates" db:"has_opted_updates"`
 }
 
+// InvitationObject represents the token object stored in the db
 type InvitationObject struct {
 	Id        string `json:"id" db:"id"`
 	Email     string `json:"email" db:"email"`
