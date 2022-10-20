@@ -211,7 +211,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 
 func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", ViewAccess(aH.queryRangeMetricsV2)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range", ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/autocomplete/list", ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagKey", ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagValue", ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
@@ -351,7 +351,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dependency_graph", ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
@@ -481,7 +481,7 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	aH.Respond(w, tagValueList)
 }
 
-func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -1316,7 +1316,7 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]

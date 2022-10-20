@@ -6,10 +6,16 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/model"
+	"go.uber.org/zap"
 )
 
 func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
+	if !ah.CheckFeature(model.SmartTraceDetail) {
+		zap.S().Info("SmartTraceDetail feature is not enabled in this plan")
+		ah.APIHandler.SearchTraces(w, r)
+		return
+	}
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
 	spanId := r.URL.Query().Get("spanId")
