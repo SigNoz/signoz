@@ -45,7 +45,7 @@ func (r *ClickhouseReader) Start(readerReady chan bool) {
 	r.ClickHouseReader.Start(readerReady)
 }
 
-func (r *ClickhouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]basemodel.SearchSpansResult, error) {
+func (r *ClickhouseReader) SearchTracesEE(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]basemodel.SearchSpansResult, error) {
 
 	var searchScanResponses []basemodel.SearchSpanDBResponseItem
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.ClickHouseReader.TraceDB, r.SpansTable)
@@ -304,8 +304,8 @@ func breadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, err
 	return nil, nil
 }
 
-// GetMetricResult runs the query and returns list of time series
-func (r *ClickhouseReader) GetMetricResult(ctx context.Context, query string) ([]*basemodel.Series, string, error) {
+// GetMetricResultEE runs the query and returns list of time series
+func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*basemodel.Series, string, error) {
 
 	defer utils.Elapsed("GetMetricResult")()
 	zap.S().Infof("Executing metric result query: %s", query)

@@ -1711,7 +1711,12 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTracesEE(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error) {
+	zap.S().Error("SearchTracesEE is not implemented for opensource version")
+	return nil, fmt.Errorf("SearchTracesEE is not implemented for opensource version")
+}
+
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string) (*[]model.SearchSpansResult, error) {
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
@@ -2821,6 +2826,11 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 	return &metricNameList, nil
 
+}
+
+func (r *ClickHouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error) {
+	zap.S().Error("GetMetricResultEE is not implemented for opensource version")
+	return nil, "", fmt.Errorf("GetMetricResultEE is not implemented for opensource version")
 }
 
 // GetMetricResult runs the query and returns list of time series

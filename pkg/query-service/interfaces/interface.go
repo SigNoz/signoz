@@ -46,7 +46,8 @@ type Reader interface {
 	GetNextPrevErrorIDs(ctx context.Context, params *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError)
 
 	// Search Interfaces
-	SearchTraces(ctx context.Context, traceID string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error)
+	SearchTraces(ctx context.Context, traceID string, spanId string) (*[]model.SearchSpansResult, error)
+	SearchTracesEE(ctx context.Context, traceID string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error)
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
@@ -55,6 +56,7 @@ type Reader interface {
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, string, error)
+	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)

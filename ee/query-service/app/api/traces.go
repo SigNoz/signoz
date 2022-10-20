@@ -39,7 +39,7 @@ func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := ah.opts.DataConnector.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt)
+	result, err := ah.opts.DataConnector.SearchTracesEE(r.Context(), traceId, spanId, levelUpInt, levelDownInt)
 	if ah.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

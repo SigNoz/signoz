@@ -1322,7 +1322,7 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 	traceId := vars["traceId"]
 	spanId := r.URL.Query().Get("spanId")
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, 0, 0)
+	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
