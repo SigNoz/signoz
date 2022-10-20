@@ -1,5 +1,8 @@
 version: "2.4"
 
+volumes:
+    clickhouse_data: {}
+
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:22.4.5-alpine
@@ -11,7 +14,7 @@ services:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
-      - ./data/clickhouse/:/var/lib/clickhouse/
+      - clickhouse_data:/var/lib/clickhouse/
     restart: on-failure
     logging:
       options:
