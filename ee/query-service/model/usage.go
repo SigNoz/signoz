@@ -15,21 +15,17 @@ type UsageSnapshot struct {
 	CurrentSamplesCountColdStorage uint64 `json:"currentSamplesCountColdStorage"`
 }
 
-type UsageBase struct {
-	Id                uuid.UUID `json:"id" db:"id"`
-	InstallationId    uuid.UUID `json:"installationId" db:"installation_id"`
-	ActivationId      uuid.UUID `json:"activationId" db:"activation_id"`
-	CreatedAt         time.Time `json:"createdAt" db:"created_at"`
-	FailedSyncRequest int       `json:"failedSyncRequest" db:"failed_sync_request_count"`
-}
-
 type UsagePayload struct {
-	UsageBase
-	Metrics      UsageSnapshot `json:"metrics"`
-	SnapshotDate time.Time     `json:"snapshotDate"`
+	InstallationId uuid.UUID `json:"installationId"`
+	ActivationId   uuid.UUID `json:"activationId"`
+	Usage          []Usage   `json:"usage"`
 }
 
 type Usage struct {
-	UsageBase
-	Snapshot string `db:"snapshot"`
+	CollectorId string    `json:"collectorId"`
+	Type        string    `json:"type"`
+	Tenant      string    `json:"tenant"`
+	TimeStamp   time.Time `json:"timestamp"`
+	Count       int64     `json:"count"`
+	Size        int64     `json:"size"`
 }
