@@ -8,7 +8,7 @@ import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { Container } from './styles';
 
-const routesToSkip = [
+const skipDateTimeSelectorRoutes = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
 	ROUTES.TRACE_DETAIL,
@@ -24,21 +24,19 @@ const routesToSkip = [
 	ROUTES.LIST_ALL_ALERT,
 ];
 
+const checkRouteExists = (currentPath: string): boolean =>
+	Boolean(
+		matchPath(currentPath, {
+			path: skipDateTimeSelectorRoutes,
+			exact: true,
+			strict: true,
+		}),
+	);
+
 function TopNav(): JSX.Element | null {
 	if (history.location.pathname === ROUTES.SIGN_UP) {
 		return null;
 	}
-
-	const checkRouteExists = (currentPath: string): boolean => {
-		for (let i = 0; i < routesToSkip.length; i += 1) {
-			if (
-				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
-			) {
-				return true;
-			}
-		}
-		return false;
-	};
 
 	return (
 		<Container>
