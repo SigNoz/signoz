@@ -63,23 +63,6 @@ func (lm *Manager) Start() error {
 		return fmt.Errorf("usage exporter is locked")
 	}
 
-	// check if license is present or not
-	license, err := lm.licenseRepo.GetActiveLicense(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to get active license")
-	}
-	if license == nil {
-		// we will not start the usage reporting if license is not present.
-		zap.S().Info("no license present, skipping usage reporting")
-		return nil
-	}
-
-	// upload previous snapshots if any
-	err = lm.UploadUsage(context.Background())
-	if err != nil {
-		return err
-	}
-
 	go lm.UsageExporter(context.Background())
 
 	return nil
@@ -102,6 +85,17 @@ func (lm *Manager) UsageExporter(ctx context.Context) {
 }
 
 func (lm *Manager) UploadUsage(ctx context.Context) error {
+	// check if license is present or not
+	license, err := lm.licenseRepo.GetActiveLicense(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get active license")
+	}
+	if license == nil {
+		// we will not start the usage reporting if license is not present.
+		zap.S().Info("no license present, skipping usage reporting")
+		return nil
+	}
+
 	usages := []model.UsageDB{}
 
 	// get usage from clickhouse
@@ -145,11 +139,6 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 		usageData.Type = usage.Type
 		usageData.Tenant = usage.Tenant
 		usagesPayload = append(usagesPayload, usageData)
-	}
-
-	license, err := lm.licenseRepo.GetActiveLicense(ctx)
-	if err != nil {
-		return err
 	}
 
 	key, _ := uuid.Parse(license.Key)
