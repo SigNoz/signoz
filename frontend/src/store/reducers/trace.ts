@@ -5,6 +5,7 @@ import {
 	UPDATE_ALL_FILTERS,
 	UPDATE_FILTER_EXCLUDE,
 	UPDATE_FILTER_RESPONSE_SELECTED,
+	UPDATE_FILTER_TO_FETCH_DATA,
 	UPDATE_IS_TAG_ERROR,
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
@@ -272,6 +273,16 @@ const traceReducer = (
 			return {
 				...state,
 				filterDisplayValue: action.payload,
+			};
+		}
+
+		case UPDATE_FILTER_TO_FETCH_DATA: {
+			const { payload } = action;
+			const { filter, filterToFetchData } = payload;
+			return {
+				...state,
+				filter,
+				filterToFetchData,
 			};
 		}
 

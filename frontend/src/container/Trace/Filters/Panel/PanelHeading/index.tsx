@@ -8,7 +8,10 @@ import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
+import {
+	UPDATE_ALL_FILTERS,
+	UPDATE_FILTER_TO_FETCH_DATA,
+} from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import {
 	AllPanelHeading,
@@ -92,18 +95,10 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				});
 
 				dispatch({
-					type: UPDATE_ALL_FILTERS,
+					type: UPDATE_FILTER_TO_FETCH_DATA,
 					payload: {
-						current: spansAggregate.currentPage,
 						filter: updatedFilter,
 						filterToFetchData: updatedFilterData,
-						selectedFilter: getprepdatedSelectedFilter,
-						selectedTags,
-						userSelected: getPreUserSelected,
-						isFilterExclude,
-						order: spansAggregate.order,
-						pageSize: spansAggregate.pageSize,
-						orderParam: spansAggregate.orderParam,
 					},
 				});
 
@@ -142,21 +137,11 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 			...filterToFetchData.filter((name) => name !== PanelName),
 		];
 
-		// preSelectedFilter.delete(PanelName);
-
 		dispatch({
-			type: UPDATE_ALL_FILTERS,
+			type: UPDATE_FILTER_TO_FETCH_DATA,
 			payload: {
-				current: spansAggregate.currentPage,
 				filter,
 				filterToFetchData: preFilterToFetchTheData,
-				selectedFilter: preSelectedFilter,
-				selectedTags,
-				userSelected: userSelectedFilter,
-				isFilterExclude,
-				order: spansAggregate.order,
-				pageSize: spansAggregate.pageSize,
-				orderParam: spansAggregate.orderParam,
 			},
 		});
 
