@@ -101,23 +101,15 @@ func (lm *Manager) UsageExporter(ctx context.Context) {
 	}
 }
 
-type UsageDB struct {
-	InstanceId string    `ch:"instance_id" json:"instance_id"`
-	Type       string    `ch:"-" json:"type"`
-	TimeStamp  time.Time `ch:"timestamp" json:"timestamp"`
-	Tenant     string    `ch:"tenant" json:"tenant"`
-	Data       string    `ch:"data" json:"data"`
-}
-
 func (lm *Manager) UploadUsage(ctx context.Context) error {
-	usages := []UsageDB{}
+	usages := []model.UsageDB{}
 
 	// get usage from clickhouse
 	dbs := []string{"signoz_logs", "signoz_traces", "signoz_metrics"}
-	query := `select instance_id, tenant, data from %s.usage where timestamp>=$1 order by timestamp`
+	query := `select collector_id, exporter_id, tenant, data from %s.usage where timestamp>=$1 order by timestamp`
 
 	for _, db := range dbs {
-		dbusages := []UsageDB{}
+		dbusages := []model.UsageDB{}
 		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db), time.Now().Add(-(24 * time.Hour)))
 		if err != nil {
 			return err
@@ -137,7 +129,7 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 
 	usagesPayload := []model.Usage{}
 	for _, usage := range usages {
-		usageDataBytes, err := encryption.Decrypt([]byte(usage.InstanceId[:32]), []byte(usage.Data))
+		usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
 		if err != nil {
 			return err
 		}
@@ -148,7 +140,8 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 			return err
 		}
 
-		usageData.CollectorId = usage.InstanceId
+		usageData.CollectorID = usage.CollectorID
+		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
 		usageData.Tenant = usage.Tenant
 		usagesPayload = append(usagesPayload, usageData)
@@ -159,10 +152,10 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 		return err
 	}
 
-	activationId, _ := uuid.Parse(license.ActivationId)
+	key, _ := uuid.Parse(license.Key)
 	payload := model.UsagePayload{
-		ActivationId: activationId,
-		Usage:        usagesPayload,
+		LicenseKey: key,
+		Usage:      usagesPayload,
 	}
 	err = lm.UploadUsageWithExponentalBackOff(ctx, payload)
 	if err != nil {
