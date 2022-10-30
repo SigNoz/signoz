@@ -198,8 +198,6 @@ func parseLogQuery(query string) ([]string, error) {
 }
 
 func parseColumn(s string) (*string, error) {
-	s = strings.ToLower(s)
-
 	colName := ""
 
 	// if has and/or as prefix
@@ -208,7 +206,8 @@ func parseColumn(s string) (*string, error) {
 		return nil, fmt.Errorf("incorrect filter")
 	}
 
-	if strings.HasPrefix(s, AND) || strings.HasPrefix(s, OR) {
+	first := strings.ToLower(filter[0])
+	if first == AND || first == OR {
 		colName = filter[1]
 	} else {
 		colName = filter[0]
@@ -220,7 +219,7 @@ func parseColumn(s string) (*string, error) {
 func arrayToMap(fields []model.LogField) map[string]model.LogField {
 	res := map[string]model.LogField{}
 	for _, field := range fields {
-		res[field.Name] = field
+		res[strings.ToLower(field.Name)] = field
 	}
 	return res
 }
@@ -231,25 +230,38 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 	interestingFieldLookup := arrayToMap(allFields.Interesting)
 
 	for index := 0; index < len(queryTokens); index++ {
-		queryToken := queryTokens[index]
-		col, err := parseColumn(queryToken)
+		result, err := replaceFieldInToken(queryTokens[index], selectedFieldsLookup, interestingFieldLookup)
 		if err != nil {
 			return nil, err
 		}
-
-		sqlColName := *col
-		if _, ok := selectedFieldsLookup[*col]; !ok && *col != "body" {
-			if field, ok := interestingFieldLookup[*col]; ok {
-				if field.Type != constants.Static {
-					sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), *col)
-				}
-			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
-				return nil, fmt.Errorf("field not found for filtering")
-			}
-		}
-		queryTokens[index] = strings.Replace(queryToken, *col, sqlColName, 1)
+		queryTokens[index] = result
 	}
 	return queryTokens, nil
+}
+
+func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]model.LogField, interestingFieldLookup map[string]model.LogField) (string, error) {
+	col, err := parseColumn(queryToken)
+	if err != nil {
+		return "", err
+	}
+
+	sqlColName := *col
+	lowerColName := strings.ToLower(*col)
+	if lowerColName != "body" {
+		selected_field, ok := selectedFieldsLookup[lowerColName]
+		if !ok {
+			if field, ok := interestingFieldLookup[lowerColName]; ok {
+				if field.Type != constants.Static {
+					sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+				}
+			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
+				return "", fmt.Errorf("field not found for filtering")
+			}
+		} else {
+			sqlColName = selected_field.Name
+		}
+	}
+	return strings.Replace(queryToken, *col, sqlColName, 1), nil
 }
 
 func CheckIfPrevousPaginateAndModifyOrder(params *model.LogsFilterParams) (isPaginatePrevious bool) {
