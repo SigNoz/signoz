@@ -1,44 +1,38 @@
 import { Col } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import React from 'react';
-import { matchPath } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { matchPath, useHistory } from 'react-router-dom';
 
+import AutoRefresh from './AutoRefresh';
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
+import { routesToSkip } from './DateTimeSelection/config';
 import { Container } from './styles';
 
-const routesToSkip = [
-	ROUTES.SETTINGS,
-	ROUTES.LIST_ALL_ALERT,
-	ROUTES.TRACE_DETAIL,
-	ROUTES.ALL_CHANNELS,
-	ROUTES.USAGE_EXPLORER,
-	ROUTES.INSTRUMENTATION,
-	ROUTES.VERSION,
-	ROUTES.ALL_DASHBOARD,
-	ROUTES.ORG_SETTINGS,
-	ROUTES.ERROR_DETAIL,
-	ROUTES.ALERTS_NEW,
-	ROUTES.EDIT_ALERTS,
-	ROUTES.LIST_ALL_ALERT,
-];
-
 function TopNav(): JSX.Element | null {
-	if (history.location.pathname === ROUTES.SIGN_UP) {
+	const { location } = useHistory();
+
+	const isRouteToSkip = useMemo(
+		() =>
+			routesToSkip.some((route) =>
+				matchPath(location.pathname, { path: route, exact: true }),
+			),
+		[location.pathname],
+	);
+
+	const isSignUpPage = useMemo(
+		() => matchPath(location.pathname, { path: ROUTES.SIGN_UP, exact: true }),
+		[location.pathname],
+	);
+
+	const isDashboardPage = useMemo(
+		() => matchPath(location.pathname, { path: ROUTES.DASHBOARD, exact: true }),
+		[location.pathname],
+	);
+
+	if (isSignUpPage) {
 		return null;
 	}
-
-	const checkRouteExists = (currentPath: string): boolean => {
-		for (let i = 0; i < routesToSkip.length; i += 1) {
-			if (
-				matchPath(currentPath, { path: routesToSkip[i], exact: true, strict: true })
-			) {
-				return true;
-			}
-		}
-		return false;
-	};
 
 	return (
 		<Container>
@@ -46,8 +40,14 @@ function TopNav(): JSX.Element | null {
 				<ShowBreadcrumbs />
 			</Col>
 
-			{!checkRouteExists(history.location.pathname) && (
-				<Col span={8}>
+			{isDashboardPage && (
+				<Col span={3}>
+					<AutoRefresh />
+				</Col>
+			)}
+
+			{!isRouteToSkip && (
+				<Col span={isDashboardPage ? 5 : 8}>
 					<DateTimeSelector />
 				</Col>
 			)}
