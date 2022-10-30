@@ -17,7 +17,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
-import { Container, Form, FormItem } from './styles';
+import { Form, FormItem } from './styles';
 
 const { Option } = DefaultSelect;
 
@@ -253,7 +253,7 @@ function DateTimeSelection({
 	]);
 
 	return (
-		<Container>
+		<>
 			<Form
 				form={formSelector}
 				layout="inline"
@@ -291,7 +291,7 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</Container>
+		</>
 	);
 }
 
