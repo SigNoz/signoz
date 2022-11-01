@@ -117,7 +117,8 @@ func (lm *Manager) LoadActiveLicense() error {
 	if active != nil {
 		lm.SetActive(active)
 	} else {
-		// if no active license is found, we default to free plan with all features
+		// if no active license is found, we default to basic(free) plan with all default features
+		lm.activeFeatures = basemodel.BasicPlan
 		for k, v := range baseconstants.DEFAULT_FEATURE_SET {
 			lm.activeFeatures[k] = v
 		}
