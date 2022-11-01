@@ -19,6 +19,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
+	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -77,6 +78,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB.SetMaxOpenConns(10)
+
+	// initiate feature manager
+	fm := featureManager.StartManager()
+
 	readerReady := make(chan bool)
 
 	var reader interfaces.Reader
@@ -98,9 +103,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:      reader,
-		AppDao:      dao.DB(),
-		RuleManager: rm,
+		Reader:       reader,
+		AppDao:       dao.DB(),
+		RuleManager:  rm,
+		FeatureFlags: fm,
 	})
 	if err != nil {
 		return nil, err
