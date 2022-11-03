@@ -111,12 +111,25 @@ function Login({
 		setFunc(value);
 	};
 
+	const { sso, canSelfRegister } = precheckResult;
+
 	const onSubmitHandler: React.FormEventHandler<HTMLFormElement> = async (
 		event,
 	) => {
 		try {
 			event.preventDefault();
 			event.persist();
+
+			if (!precheckComplete) {
+				onNextHandler();
+				return;
+			}
+
+			if (precheckComplete && sso) {
+				window.location.href = precheckResult.ssoUrl || '';
+				return;
+			}
+
 			setIsLoading(true);
 
 			const response = await loginApi({
@@ -170,7 +183,6 @@ function Login({
 		);
 	};
 
-	const { sso, canSelfRegister } = precheckResult;
 	return (
 		<FormWrapper>
 			<FormContainer onSubmit={onSubmitHandler}>
