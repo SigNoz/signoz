@@ -166,7 +166,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" INNER JOIN" +
+			" GLOBAL INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -228,7 +228,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" INNER JOIN" +
+				" GLOBAL INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -371,7 +371,7 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 		joinUsing = strings.Join(groupTags, ",")
 		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
 		if idx < len(vars)-1 {
-			formulaSubQuery += "INNER JOIN"
+			formulaSubQuery += "GLOBAL INNER JOIN"
 		} else if len(vars) > 1 {
 			formulaSubQuery += fmt.Sprintf("USING (%s)", joinUsing)
 		}
