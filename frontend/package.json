@@ -40,7 +40,7 @@
 		"axios": "^0.21.0",
 		"babel-eslint": "^10.1.0",
 		"babel-jest": "^26.6.0",
-		"babel-loader": "8.1.0",
+		"babel-loader": "8.2.4",
 		"babel-plugin-named-asset-import": "^0.3.7",
 		"babel-preset-minify": "^0.5.1",
 		"babel-preset-react-app": "^10.0.0",
