@@ -824,19 +824,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
-
-	var importData model.GrafanaJSONV9
-	err := json.NewDecoder(r.Body).Decode(&importData)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
-		return
-	}
-
-	var signozDashboard model.DashboardData
-
-	signozDashboard = dashboards.TransformGrafanaJSONV9ToSignoz(importData)
-
+func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model.DashboardData) {
 	toSave := make(map[string]interface{})
 	toSave["title"] = signozDashboard.Title
 	toSave["description"] = signozDashboard.Description
@@ -851,6 +839,23 @@ func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.R
 		return
 	}
 	aH.Respond(w, dashboard)
+	return
+}
+
+func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+
+	var importDataV9XX model.GrafanaJSONV9XX
+
+	err = json.Unmarshal(b, &importDataV9XX)
+	if err == nil {
+		signozDashboard := dashboards.TransformGrafanaJSONV9XXToSignoz(importDataV9XX)
+		aH.saveAndReturn(w, signozDashboard)
+		return
+	}
+
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {

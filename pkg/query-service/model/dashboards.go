@@ -1,6 +1,6 @@
 package model
 
-type GrafanaJSONV9 struct {
+type GrafanaJSONV9XX struct {
 	Inputs []struct {
 		Name        string `json:"name"`
 		Label       string `json:"label"`
@@ -125,7 +125,6 @@ type GrafanaJSONV9 struct {
 		Collapsed        bool          `json:"collapsed,omitempty"`
 		Panels           []interface{} `json:"panels,omitempty"`
 	} `json:"panels"`
-	Refresh       bool     `json:"refresh"`
 	SchemaVersion int      `json:"schemaVersion"`
 	Style         string   `json:"style"`
 	Tags          []string `json:"tags"`
@@ -172,7 +171,6 @@ type GrafanaJSONV9 struct {
 	Version   int    `json:"version"`
 	WeekStart string `json:"weekStart"`
 }
-
 type Layout struct {
 	H      int    `json:"h"`
 	I      string `json:"i"`

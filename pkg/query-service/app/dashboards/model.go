@@ -262,7 +262,7 @@ func SlugifyTitle(title string) string {
 	return s
 }
 
-func TransformGrafanaJSONV9ToSignoz(grafanaJSON model.GrafanaJSONV9) model.DashboardData {
+func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.DashboardData {
 	var toReturn model.DashboardData
 	toReturn.Title = grafanaJSON.Title
 	toReturn.Tags = grafanaJSON.Tags
@@ -280,7 +280,7 @@ func TransformGrafanaJSONV9ToSignoz(grafanaJSON model.GrafanaJSONV9) model.Dashb
 
 		if template.Type == "query" {
 			// Skip if the source is not prometheus
-			if template.Datasource.Type != "prometheus" {
+			if template.Datasource.Type != "prometheus" && template.Datasource.Type != "" {
 				zap.S().Warnf("Skipping template %s as it is not prometheus", template.Name)
 				continue
 			}
@@ -310,7 +310,7 @@ func TransformGrafanaJSONV9ToSignoz(grafanaJSON model.GrafanaJSONV9) model.Dashb
 
 	for idx, panel := range grafanaJSON.Panels {
 		// Skip if the datasource is not prometheus
-		if panel.Datasource.Type != "prometheus" {
+		if panel.Datasource.Type != "prometheus" && panel.Datasource.Type != "" {
 			continue
 		}
 
