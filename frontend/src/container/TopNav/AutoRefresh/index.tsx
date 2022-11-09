@@ -1,16 +1,15 @@
 import { Select } from 'antd';
-import get from 'api/browser/localstorage/get';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
+import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
-// import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { options } from './config';
@@ -21,14 +20,12 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	// const { dashboards } = useSelector<AppState, DashboardReducer>(
-	// 	(state) => state.dashboards,
-	// );
+	const { replace } = useHistory();
+	const params = useUrlQuery();
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
-		get(LOCALSTORAGE.DASHBOARD_TIME_IN_DURATION) || options[0].key,
+		params.get(DASHBOARD_TIME_IN_DURATION) || options[0].key,
 	);
 
 	const getOption = useMemo(
@@ -57,12 +54,18 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		}
 	}, getOption?.value || 0);
 
-	const onChangeHandler = useCallback((value: unknown) => {
-		if (typeof value === 'string') {
-			setSelectedOption(value);
-			set(LOCALSTORAGE.DASHBOARD_TIME_IN_DURATION, value);
-		}
-	}, []);
+	const onChangeHandler = useCallback(
+		(value: unknown) => {
+			if (typeof value === 'string') {
+				setSelectedOption(value);
+				params.set(DASHBOARD_TIME_IN_DURATION, value);
+				replace({
+					search: params.toString(),
+				});
+			}
+		},
+		[replace, params],
+	);
 
 	return (
 		<SelectContainer
