@@ -95,9 +95,7 @@ func (lm *Manager) SetActive(l *model.License) {
 	lm.activeLicense = l
 	lm.activeFeatures = l.FeatureSet
 	// set default features
-	for k, v := range baseconstants.DEFAULT_FEATURE_SET {
-		lm.activeFeatures[k] = v
-	}
+	setDefaultFeatures(lm)
 	if !lm.validatorRunning {
 		// we want to make sure only one validator runs,
 		// we already have lock() so good to go
@@ -105,6 +103,12 @@ func (lm *Manager) SetActive(l *model.License) {
 		go lm.Validator(context.Background())
 	}
 
+}
+
+func setDefaultFeatures(lm *Manager) {
+	for k, v := range baseconstants.DEFAULT_FEATURE_SET {
+		lm.activeFeatures[k] = v
+	}
 }
 
 // LoadActiveLicense loads the most recent active license
@@ -117,12 +121,10 @@ func (lm *Manager) LoadActiveLicense() error {
 	if active != nil {
 		lm.SetActive(active)
 	} else {
+		zap.S().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
 		lm.activeFeatures = basemodel.BasicPlan
-		for k, v := range baseconstants.DEFAULT_FEATURE_SET {
-			lm.activeFeatures[k] = v
-		}
-		zap.S().Info("No active license found.")
+		setDefaultFeatures(lm)
 	}
 
 	return nil

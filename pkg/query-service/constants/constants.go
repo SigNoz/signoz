@@ -43,9 +43,9 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
-var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "false")
+var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 
-var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "false")
+var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
