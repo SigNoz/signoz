@@ -358,6 +358,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/featureFlags", OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
@@ -1422,7 +1423,7 @@ func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseFilteredSpansRequest(r)
+	query, err := parseFilteredSpansRequest(r, aH)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1531,6 +1532,20 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
 	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N"})
+}
+
+func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
+	featureSet := aH.FF().GetFeatureFlags()
+	aH.Respond(w, featureSet)
+}
+
+func (aH *APIHandler) FF() interfaces.FeatureLookup {
+	return aH.featureFlags
+}
+
+func (aH *APIHandler) CheckFeature(f string) bool {
+	err := aH.FF().CheckFeature(f)
+	return err == nil
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.
