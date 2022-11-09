@@ -3,7 +3,6 @@ import ROUTES from 'constants/routes';
 import React, { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
 
-import AutoRefresh from './AutoRefresh';
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { routesToSkip } from './DateTimeSelection/config';
@@ -25,11 +24,6 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	const isDashboardPage = useMemo(
-		() => matchPath(location.pathname, { path: ROUTES.DASHBOARD, exact: true }),
-		[location.pathname],
-	);
-
 	if (isSignUpPage) {
 		return null;
 	}
@@ -40,14 +34,8 @@ function TopNav(): JSX.Element | null {
 				<ShowBreadcrumbs />
 			</Col>
 
-			{isDashboardPage && (
-				<Col span={3}>
-					<AutoRefresh />
-				</Col>
-			)}
-
 			{!isRouteToSkip && (
-				<Col span={isDashboardPage ? 5 : 8}>
+				<Col span={8}>
 					<DateTimeSelector />
 				</Col>
 			)}

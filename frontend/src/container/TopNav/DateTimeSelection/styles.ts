@@ -19,6 +19,12 @@ export const FormItem = styled(Form.Item)`
 	}
 `;
 
-export const RefreshTextContainer = styled.div`
+interface Props {
+	refreshButtonHidden: boolean;
+}
+
+export const RefreshTextContainer = styled.div<Props>`
 	min-height: 2rem;
+	visibility: ${({ refreshButtonHidden }): string =>
+		refreshButtonHidden ? 'hidden' : 'visible'};
 `;

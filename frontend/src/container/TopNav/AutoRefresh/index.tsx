@@ -10,16 +10,21 @@ import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
+// import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { options } from './config';
 import { SelectContainer } from './styles';
 
-function AutoRefresh(): JSX.Element {
+function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const { minTime: initialMinTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	// const { dashboards } = useSelector<AppState, DashboardReducer>(
+	// 	(state) => state.dashboards,
+	// );
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
@@ -33,6 +38,10 @@ function AutoRefresh(): JSX.Element {
 
 	useInterval(() => {
 		const selectedValue = getOption?.value;
+
+		if (disabled) {
+			return;
+		}
 
 		if (selectedOption !== 'off' && selectedValue) {
 			const min = initialMinTime / 1000000;
@@ -56,7 +65,11 @@ function AutoRefresh(): JSX.Element {
 	}, []);
 
 	return (
-		<SelectContainer onChange={onChangeHandler} value={selectedOption}>
+		<SelectContainer
+			disabled={disabled}
+			onChange={onChangeHandler}
+			value={selectedOption}
+		>
 			{options.map((option) => (
 				<Select.Option key={option.key} value={option.key}>
 					{option.label}
@@ -65,5 +78,13 @@ function AutoRefresh(): JSX.Element {
 		</SelectContainer>
 	);
 }
+
+interface AutoRefreshProps {
+	disabled?: boolean;
+}
+
+AutoRefresh.defaultProps = {
+	disabled: false,
+};
 
 export default AutoRefresh;
