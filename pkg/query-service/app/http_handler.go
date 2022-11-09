@@ -339,6 +339,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/grafana", EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
@@ -821,6 +822,35 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, dashboard)
 
+}
+
+func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
+
+	var importData model.GrafanaJSONV9
+	err := json.NewDecoder(r.Body).Decode(&importData)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		return
+	}
+
+	var signozDashboard model.DashboardData
+
+	signozDashboard = dashboards.TransformGrafanaJSONV9ToSignoz(importData)
+
+	toSave := make(map[string]interface{})
+	toSave["title"] = signozDashboard.Title
+	toSave["description"] = signozDashboard.Description
+	toSave["tags"] = signozDashboard.Tags
+	toSave["layout"] = signozDashboard.Layout
+	toSave["widgets"] = signozDashboard.Widgets
+	toSave["variables"] = signozDashboard.Variables
+
+	dashboard, apiError := dashboards.CreateDashboard(toSave)
+	if apiError != nil {
+		RespondError(w, apiError, nil)
+		return
+	}
+	aH.Respond(w, dashboard)
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {

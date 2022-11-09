@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -259,4 +260,133 @@ func SlugifyTitle(title string) string {
 		}
 	}
 	return s
+}
+
+func TransformGrafanaJSONV9ToSignoz(grafanaJSON model.GrafanaJSONV9) model.DashboardData {
+	var toReturn model.DashboardData
+	toReturn.Title = grafanaJSON.Title
+	toReturn.Tags = grafanaJSON.Tags
+	toReturn.Variables = make(map[string]model.Variable)
+
+	for _, template := range grafanaJSON.Templating.List {
+		var sort, typ, textboxValue, customValue, queryValue string
+		if template.Sort == 1 {
+			sort = "ASC"
+		} else if template.Sort == 2 {
+			sort = "DESC"
+		} else {
+			sort = "DISABLED"
+		}
+
+		if template.Type == "query" {
+			// Skip if the source is not prometheus
+			if template.Datasource.Type != "prometheus" {
+				zap.S().Warnf("Skipping template %s as it is not prometheus", template.Name)
+				continue
+			}
+			typ = "QUERY"
+		} else if template.Type == "custom" {
+			typ = "CUSTOM"
+		} else if template.Type == "textbox" {
+			typ = "TEXTBOX"
+			textboxValue = template.Current.Text
+		} else {
+			continue
+		}
+
+		toReturn.Variables[template.Name] = model.Variable{
+			AllSelected:   false,
+			CustomValue:   customValue,
+			Description:   template.Label,
+			MultiSelect:   template.Multi,
+			QueryValue:    queryValue,
+			SelectedValue: template.Current.Value,
+			ShowALLOption: template.IncludeAll,
+			Sort:          sort,
+			TextboxValue:  textboxValue,
+			Type:          typ,
+		}
+	}
+
+	for idx, panel := range grafanaJSON.Panels {
+		// Skip if the datasource is not prometheus
+		if panel.Datasource.Type != "prometheus" {
+			continue
+		}
+
+		// Create a panel from "gridPos"
+
+		toReturn.Layout = append(
+			toReturn.Layout,
+			model.Layout{
+				X: panel.GridPos.X,
+				Y: panel.GridPos.Y,
+				W: panel.GridPos.W,
+				H: panel.GridPos.H,
+				I: strconv.Itoa(idx),
+			},
+		)
+
+		widget := model.Widget{
+			Description:    panel.Description,
+			ID:             strconv.Itoa(idx),
+			IsStacked:      false,
+			NullZeroValues: "zero",
+			Opacity:        "1",
+			PanelTypes:     "TIME_SERIES", // TODO: Need to figure out how to get this
+			Query: model.Query{
+				ClickHouse: []model.ClickHouseQueryDashboard{
+					{
+						Disabled: false,
+						Legend:   "",
+						Name:     "A",
+						Query:    "",
+					},
+				},
+				MetricsBuilder: model.MetricsBuilder{
+					Formulas: []string{},
+					QueryBuilder: []model.QueryBuilder{
+						{
+							AggregateOperator: 1,
+							Disabled:          false,
+							GroupBy:           []string{},
+							Legend:            "",
+							MetricName:        "",
+							Name:              "A",
+							ReduceTo:          1,
+						},
+					},
+				},
+				PromQL:    []model.PromQueryDashboard{},
+				QueryType: int(model.PROM),
+			},
+			QueryData: model.QueryDataDashboard{
+				Data: model.Data{
+					QueryData: []interface{}{},
+				},
+			},
+			Title:     panel.Title,
+			YAxisUnit: panel.FieldConfig.Defaults.Unit,
+			QueryType: int(model.PROM), // TODO: Supprot for multiple query types
+		}
+		for _, target := range panel.Targets {
+			if target.Expr != "" {
+				for name := range toReturn.Variables {
+					target.Expr = strings.ReplaceAll(target.Expr, "$"+name, "{{"+"."+name+"}}")
+					target.Expr = strings.ReplaceAll(target.Expr, "$"+"__rate_interval", "5m")
+				}
+				widget.Query.PromQL = append(
+					widget.Query.PromQL,
+					model.PromQueryDashboard{
+						Disabled: false,
+						Legend:   target.LegendFormat,
+						Name:     target.RefID,
+						Query:    target.Expr,
+					},
+				)
+			}
+		}
+		toReturn.Widgets = append(toReturn.Widgets, widget)
+	}
+	return toReturn
 }
