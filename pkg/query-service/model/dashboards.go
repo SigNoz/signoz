@@ -1,6 +1,11 @@
 package model
 
-type GrafanaJSONV9XX struct {
+type Datasource struct {
+	Type string `json:"type"`
+	UID  string `json:"uid"`
+}
+
+type GrafanaJSON struct {
 	Inputs []struct {
 		Name        string `json:"name"`
 		Label       string `json:"label"`
@@ -9,8 +14,6 @@ type GrafanaJSONV9XX struct {
 		PluginID    string `json:"pluginId"`
 		PluginName  string `json:"pluginName"`
 	} `json:"__inputs"`
-	Elements struct {
-	} `json:"__elements"`
 	Requires []struct {
 		Type    string `json:"type"`
 		ID      string `json:"id"`
@@ -19,17 +22,14 @@ type GrafanaJSONV9XX struct {
 	} `json:"__requires"`
 	Annotations struct {
 		List []struct {
-			HashKey    string `json:"$$hashKey"`
-			BuiltIn    int    `json:"builtIn"`
-			Datasource struct {
-				Type string `json:"type"`
-				UID  string `json:"uid"`
-			} `json:"datasource"`
-			Enable    bool   `json:"enable"`
-			Hide      bool   `json:"hide"`
-			IconColor string `json:"iconColor"`
-			Name      string `json:"name"`
-			Target    struct {
+			HashKey    string      `json:"$$hashKey"`
+			BuiltIn    int         `json:"builtIn"`
+			Datasource interface{} `json:"datasource"`
+			Enable     bool        `json:"enable"`
+			Hide       bool        `json:"hide"`
+			IconColor  string      `json:"iconColor"`
+			Name       string      `json:"name"`
+			Target     struct {
 				Limit    int           `json:"limit"`
 				MatchAny bool          `json:"matchAny"`
 				Tags     []interface{} `json:"tags"`
@@ -53,27 +53,15 @@ type GrafanaJSONV9XX struct {
 	} `json:"links"`
 	LiveNow bool `json:"liveNow"`
 	Panels  []struct {
-		Datasource struct {
-			Type string `json:"type"`
-			UID  string `json:"uid"`
-		} `json:"datasource"`
-		Description string `json:"description,omitempty"`
+		Datasource  interface{} `json:"datasource"`
+		Description string      `json:"description,omitempty"`
 		FieldConfig struct {
 			Defaults struct {
 				Color struct {
 					Mode string `json:"mode"`
 				} `json:"color"`
-				Mappings []struct {
-					Options struct {
-						Match  string `json:"match"`
-						Result struct {
-							Text string `json:"text"`
-						} `json:"result"`
-					} `json:"options"`
-					Type string `json:"type"`
-				} `json:"mappings"`
-				Max        int `json:"max"`
-				Min        int `json:"min"`
+				Max        float64 `json:"max"`
+				Min        float64 `json:"min"`
 				Thresholds struct {
 					Mode  string `json:"mode"`
 					Steps []struct {
@@ -105,18 +93,15 @@ type GrafanaJSONV9XX struct {
 		} `json:"options,omitempty"`
 		PluginVersion string `json:"pluginVersion,omitempty"`
 		Targets       []struct {
-			Datasource struct {
-				Type string `json:"type"`
-				UID  string `json:"uid"`
-			} `json:"datasource"`
-			EditorMode     string `json:"editorMode"`
-			Expr           string `json:"expr"`
-			Hide           bool   `json:"hide"`
-			IntervalFactor int    `json:"intervalFactor"`
-			LegendFormat   string `json:"legendFormat"`
-			Range          bool   `json:"range"`
-			RefID          string `json:"refId"`
-			Step           int    `json:"step"`
+			Datasource     interface{} `json:"datasource"`
+			EditorMode     string      `json:"editorMode"`
+			Expr           string      `json:"expr"`
+			Hide           bool        `json:"hide"`
+			IntervalFactor int         `json:"intervalFactor"`
+			LegendFormat   string      `json:"legendFormat"`
+			Range          bool        `json:"range"`
+			RefID          string      `json:"refId"`
+			Step           int         `json:"step"`
 		} `json:"targets"`
 		Title            string        `json:"title"`
 		Type             string        `json:"type"`
@@ -131,30 +116,27 @@ type GrafanaJSONV9XX struct {
 	Templating    struct {
 		List []struct {
 			Current struct {
-				Selected bool   `json:"selected"`
-				Text     string `json:"text"`
-				Value    string `json:"value"`
+				Selected bool        `json:"selected"`
+				Text     interface{} `json:"text"`
+				Value    interface{} `json:"value"`
 			} `json:"current"`
-			Hide        int           `json:"hide"`
-			IncludeAll  bool          `json:"includeAll"`
-			Label       string        `json:"label,omitempty"`
-			Multi       bool          `json:"multi"`
-			Name        string        `json:"name"`
-			Options     []interface{} `json:"options"`
-			Query       interface{}   `json:"query"`
-			Refresh     int           `json:"refresh,omitempty"`
-			Regex       string        `json:"regex,omitempty"`
-			SkipURLSync bool          `json:"skipUrlSync"`
-			Type        string        `json:"type"`
-			Datasource  struct {
-				Type string `json:"type"`
-				UID  string `json:"uid"`
-			} `json:"datasource,omitempty"`
-			Definition     string `json:"definition,omitempty"`
-			Sort           int    `json:"sort,omitempty"`
-			TagValuesQuery string `json:"tagValuesQuery,omitempty"`
-			TagsQuery      string `json:"tagsQuery,omitempty"`
-			UseTags        bool   `json:"useTags,omitempty"`
+			Hide           int           `json:"hide"`
+			IncludeAll     bool          `json:"includeAll"`
+			Label          string        `json:"label,omitempty"`
+			Multi          bool          `json:"multi"`
+			Name           string        `json:"name"`
+			Options        []interface{} `json:"options"`
+			Query          interface{}   `json:"query"`
+			Refresh        int           `json:"refresh,omitempty"`
+			Regex          string        `json:"regex,omitempty"`
+			SkipURLSync    bool          `json:"skipUrlSync"`
+			Type           string        `json:"type"`
+			Datasource     interface{}   `json:"datasource,omitempty"`
+			Definition     string        `json:"definition,omitempty"`
+			Sort           int           `json:"sort,omitempty"`
+			TagValuesQuery string        `json:"tagValuesQuery,omitempty"`
+			TagsQuery      string        `json:"tagsQuery,omitempty"`
+			UseTags        bool          `json:"useTags,omitempty"`
 		} `json:"list"`
 	} `json:"templating"`
 	Time struct {

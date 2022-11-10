@@ -847,15 +847,15 @@ func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.R
 	defer r.Body.Close()
 	b, err := ioutil.ReadAll(r.Body)
 
-	var importDataV9XX model.GrafanaJSONV9XX
+	var importData model.GrafanaJSON
 
-	err = json.Unmarshal(b, &importDataV9XX)
+	err = json.Unmarshal(b, &importData)
 	if err == nil {
-		signozDashboard := dashboards.TransformGrafanaJSONV9XXToSignoz(importDataV9XX)
+		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
 		aH.saveAndReturn(w, signozDashboard)
 		return
 	}
-
+	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {

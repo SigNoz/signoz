@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
+	"github.com/mitchellh/mapstructure"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -262,13 +264,13 @@ func SlugifyTitle(title string) string {
 	return s
 }
 
-func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.DashboardData {
+func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.DashboardData {
 	var toReturn model.DashboardData
 	toReturn.Title = grafanaJSON.Title
 	toReturn.Tags = grafanaJSON.Tags
 	toReturn.Variables = make(map[string]model.Variable)
 
-	for _, template := range grafanaJSON.Templating.List {
+	for templateIdx, template := range grafanaJSON.Templating.List {
 		var sort, typ, textboxValue, customValue, queryValue string
 		if template.Sort == 1 {
 			sort = "ASC"
@@ -279,9 +281,31 @@ func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.D
 		}
 
 		if template.Type == "query" {
+			if template.Datasource == nil {
+				zap.S().Warnf("Skipping panel %d as it has no datasource", templateIdx)
+				continue
+			}
 			// Skip if the source is not prometheus
-			if template.Datasource.Type != "prometheus" && template.Datasource.Type != "" {
-				zap.S().Warnf("Skipping template %s as it is not prometheus", template.Name)
+			source, stringOk := template.Datasource.(string)
+			if stringOk && !strings.Contains(strings.ToLower(source), "prometheus") {
+				zap.S().Warnf("Skipping template %d as it is not prometheus", templateIdx)
+				continue
+			}
+			var result model.Datasource
+			var structOk bool
+			if reflect.TypeOf(template.Datasource).Kind() == reflect.Map {
+				err := mapstructure.Decode(template.Datasource, &result)
+				if err == nil {
+					structOk = true
+				}
+			}
+			if result.Type != "prometheus" && result.Type != "" {
+				zap.S().Warnf("Skipping template %d as it is not prometheus", templateIdx)
+				continue
+			}
+
+			if !stringOk && !structOk {
+				zap.S().Warnf("Didn't recognize source, skipping")
 				continue
 			}
 			typ = "QUERY"
@@ -289,9 +313,26 @@ func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.D
 			typ = "CUSTOM"
 		} else if template.Type == "textbox" {
 			typ = "TEXTBOX"
-			textboxValue = template.Current.Text
+			text, ok := template.Current.Text.(string)
+			if ok {
+				textboxValue = text
+			}
+			array, ok := template.Current.Text.([]string)
+			if ok {
+				textboxValue = strings.Join(array, ",")
+			}
 		} else {
 			continue
+		}
+
+		var selectedValue string
+		text, ok := template.Current.Value.(string)
+		if ok {
+			selectedValue = text
+		}
+		array, ok := template.Current.Value.([]string)
+		if ok {
+			selectedValue = strings.Join(array, ",")
 		}
 
 		toReturn.Variables[template.Name] = model.Variable{
@@ -300,7 +341,7 @@ func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.D
 			Description:   template.Label,
 			MultiSelect:   template.Multi,
 			QueryValue:    queryValue,
-			SelectedValue: template.Current.Value,
+			SelectedValue: selectedValue,
 			ShowALLOption: template.IncludeAll,
 			Sort:          sort,
 			TextboxValue:  textboxValue,
@@ -309,8 +350,31 @@ func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.D
 	}
 
 	for idx, panel := range grafanaJSON.Panels {
+		if panel.Datasource == nil {
+			zap.S().Warnf("Skipping panel %d as it has no datasource", idx)
+			continue
+		}
 		// Skip if the datasource is not prometheus
-		if panel.Datasource.Type != "prometheus" && panel.Datasource.Type != "" {
+		source, stringOk := panel.Datasource.(string)
+		if stringOk && !strings.Contains(strings.ToLower(source), "prometheus") {
+			zap.S().Warnf("Skipping panel %d as it is not prometheus", idx)
+			continue
+		}
+		var result model.Datasource
+		var structOk bool
+		if reflect.TypeOf(panel.Datasource).Kind() == reflect.Map {
+			err := mapstructure.Decode(panel.Datasource, &result)
+			if err == nil {
+				structOk = true
+			}
+		}
+		if result.Type != "prometheus" && result.Type != "" {
+			zap.S().Warnf("Skipping panel %d as it is not prometheus", idx)
+			continue
+		}
+
+		if !stringOk && !structOk {
+			zap.S().Warnf("Didn't recognize source, skipping")
 			continue
 		}
 
@@ -386,6 +450,7 @@ func TransformGrafanaJSONV9XXToSignoz(grafanaJSON model.GrafanaJSONV9XX) model.D
 				)
 			}
 		}
+
 		toReturn.Widgets = append(toReturn.Widgets, widget)
 	}
 	return toReturn
