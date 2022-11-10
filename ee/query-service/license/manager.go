@@ -10,6 +10,8 @@ import (
 
 	"sync"
 
+	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
+
 	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -92,6 +94,8 @@ func (lm *Manager) SetActive(l *model.License) {
 
 	lm.activeLicense = l
 	lm.activeFeatures = l.FeatureSet
+	// set default features
+	setDefaultFeatures(lm)
 	if !lm.validatorRunning {
 		// we want to make sure only one validator runs,
 		// we already have lock() so good to go
@@ -101,7 +105,13 @@ func (lm *Manager) SetActive(l *model.License) {
 
 }
 
-// LoadActiveLicense loads the most recent active licenseex
+func setDefaultFeatures(lm *Manager) {
+	for k, v := range baseconstants.DEFAULT_FEATURE_SET {
+		lm.activeFeatures[k] = v
+	}
+}
+
+// LoadActiveLicense loads the most recent active license
 func (lm *Manager) LoadActiveLicense() error {
 	var err error
 	active, err := lm.repo.GetActiveLicense(context.Background())
@@ -111,7 +121,10 @@ func (lm *Manager) LoadActiveLicense() error {
 	if active != nil {
 		lm.SetActive(active)
 	} else {
-		zap.S().Info("No active license found.")
+		zap.S().Info("No active license found, defaulting to basic plan")
+		// if no active license is found, we default to basic(free) plan with all default features
+		lm.activeFeatures = basemodel.BasicPlan
+		setDefaultFeatures(lm)
 	}
 
 	return nil
@@ -278,8 +291,11 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 // CheckFeature will be internally used by backend routines
 // for feature gating
 func (lm *Manager) CheckFeature(featureKey string) error {
-	if _, ok := lm.activeFeatures[featureKey]; ok {
-		return nil
+	if value, ok := lm.activeFeatures[featureKey]; ok {
+		if value {
+			return nil
+		}
+		return basemodel.ErrFeatureUnavailable{Key: featureKey}
 	}
 	return basemodel.ErrFeatureUnavailable{Key: featureKey}
 }

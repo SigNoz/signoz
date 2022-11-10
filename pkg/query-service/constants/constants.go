@@ -28,6 +28,9 @@ const TraceTTL = "traces"
 const MetricsTTL = "metrics"
 const LogsTTL = "logs"
 
+const DurationSort = "DurationSort"
+const TimestampSort = "TimestampSort"
+
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
 		return os.Getenv("ALERTMANAGER_API_PREFIX")
@@ -39,6 +42,33 @@ func GetAlertManagerApiPrefix() string {
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
+
+var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
+
+var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
+
+func IsDurationSortFeatureEnabled() bool {
+	isDurationSortFeatureEnabledStr := DurationSortFeature
+	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
+	if err != nil {
+		return false
+	}
+	return isDurationSortFeatureEnabledBool
+}
+
+func IsTimestampSortFeatureEnabled() bool {
+	isTimestampSortFeatureEnabledStr := TimestampSortFeature
+	isTimestampSortFeatureEnabledBool, err := strconv.ParseBool(isTimestampSortFeatureEnabledStr)
+	if err != nil {
+		return false
+	}
+	return isTimestampSortFeatureEnabledBool
+}
+
+var DEFAULT_FEATURE_SET = model.FeatureSet{
+	DurationSort:  IsDurationSortFeatureEnabled(),
+	TimestampSort: IsTimestampSortFeatureEnabled(),
+}
 
 const (
 	TraceID                        = "traceID"
