@@ -41,8 +41,12 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	);
 
 	useEffect(() => {
-		setSelectedOption(localStorageValue || options[0].key);
-	}, [localStorageValue]);
+		setSelectedOption(
+			params.get(DASHBOARD_TIME_IN_DURATION) ||
+				localStorageValue ||
+				options[0].key,
+		);
+	}, [localStorageValue, params]);
 
 	const getOption = useMemo(
 		() => options.find((option) => option.key === selectedOption),
