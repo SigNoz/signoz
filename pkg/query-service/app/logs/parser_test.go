@@ -29,8 +29,8 @@ var correctQueriesTest = []struct {
 	},
 	{
 		`contains search with a different attributes`,
-		`resource contains 'Hello, "World"'`,
-		[]string{`resource ILIKE '%Hello, "World"%' `},
+		`resource contains 'Hello, "World" and user\'s'`,
+		[]string{`resource ILIKE '%Hello, "World" and user\'s%' `},
 	},
 	{
 		`more than one continas`,
