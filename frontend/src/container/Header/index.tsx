@@ -2,6 +2,7 @@ import {
 	CaretDownFilled,
 	CaretUpFilled,
 	LogoutOutlined,
+	QuestionCircleOutlined,
 } from '@ant-design/icons';
 import {
 	Avatar,
@@ -12,10 +13,12 @@ import {
 	Space,
 	Typography,
 } from 'antd';
+import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { useCallback, useState } from 'react';
+import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -23,9 +26,11 @@ import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import CurrentOrganization from './CurrentOrganization';
+import HelpToolTip from './HelpToolTip';
 import ManageLicense from './ManageLicense';
 import SignedInAS from './SignedInAs';
 import { Container, LogoutContainer, ToggleButton } from './styles';
@@ -34,8 +39,26 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
+	let IsHelpToolTip = false;
+	let currentConfig: ConfigProps;
+	// get configs from dynamicConfigs api
+	const response = useQuery('dynamicConfigs', () => getDynamicConfigs());
+	const configs = response.data?.payload;
+	if (configs) {
+		Object.entries(configs).forEach((key) => {
+			if (
+				key['1'].Enabled &&
+				key['1'].FrontendPositionId === 'tooltip' &&
+				key['1'].Components.length > 0
+			) {
+				IsHelpToolTip = true;
+				currentConfig = key['1'];
+			}
+		});
+	}
 
+	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
+	const [isHelpDropDownOpen, setIsHelpDropDownOpen] = useState<boolean>();
 	const onToggleThemeHandler = useCallback(() => {
 		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
 		setTheme(preMode);
@@ -57,6 +80,9 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 		};
 	}, [toggleDarkMode, isDarkMode]);
 
+	const onHelpArrowClickHandler: VoidFunction = () => {
+		setIsHelpDropDownOpen((state) => !state);
+	};
 	const onArrowClickHandler: VoidFunction = () => {
 		setIsUserDropDownOpen((state) => !state);
 	};
@@ -92,7 +118,11 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 			</Menu.ItemGroup>
 		</Menu>
 	);
-
+	const helpMenu = (
+		<Menu style={{ padding: '1rem' }}>
+			<HelpToolTip config={currentConfig} />{' '}
+		</Menu>
+	);
 	return (
 		<Layout.Header
 			style={{
@@ -111,6 +141,33 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					</Typography.Title>
 				</NavLink>
 				<Space align="center">
+					{IsHelpToolTip && (
+						<Dropdown
+							onVisibleChange={onHelpArrowClickHandler}
+							trigger={['click']}
+							overlay={helpMenu}
+							visible={isHelpDropDownOpen}
+						>
+							<Space>
+								<QuestionCircleOutlined
+									style={{ fontSize: '1.50rem', color: '#DBDBDB' }}
+								/>
+								{!isHelpDropDownOpen ? (
+									<CaretDownFilled
+										style={{
+											color: '#DBDBDB',
+										}}
+									/>
+								) : (
+									<CaretUpFilled
+										style={{
+											color: '#DBDBDB',
+										}}
+									/>
+								)}
+							</Space>
+						</Dropdown>
+					)}
 					<ToggleButton
 						checked={isDarkMode}
 						onChange={onToggleThemeHandler}
