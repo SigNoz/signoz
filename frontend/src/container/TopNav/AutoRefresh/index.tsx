@@ -1,10 +1,12 @@
 import { Select } from 'antd';
+import get from 'api/browser/localstorage/get';
+import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -20,13 +22,27 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const { pathname } = useLocation();
+
 	const { replace } = useHistory();
+
 	const params = useUrlQuery();
+
+	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
+
+	const localStorageValue = useMemo(() => localStorageData[pathname], [
+		pathname,
+		localStorageData,
+	]);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
-		params.get(DASHBOARD_TIME_IN_DURATION) || options[0].key,
+		params.get(DASHBOARD_TIME_IN_DURATION) || localStorageValue || options[0].key,
 	);
+
+	useEffect(() => {
+		setSelectedOption(localStorageValue || options[0].key);
+	}, [localStorageValue]);
 
 	const getOption = useMemo(
 		() => options.find((option) => option.key === selectedOption),
@@ -59,12 +75,14 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 			if (typeof value === 'string') {
 				setSelectedOption(value);
 				params.set(DASHBOARD_TIME_IN_DURATION, value);
-				replace({
-					search: params.toString(),
-				});
+				set(
+					DASHBOARD_TIME_IN_DURATION,
+					JSON.stringify({ ...localStorageData, [pathname]: value }),
+				);
+				replace({ search: params.toString() });
 			}
 		},
-		[replace, params],
+		[params, pathname, localStorageData, replace],
 	);
 
 	return (
