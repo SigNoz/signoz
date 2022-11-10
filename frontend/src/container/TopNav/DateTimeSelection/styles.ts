@@ -1,10 +1,6 @@
 import { Form as FormComponent, Typography as TypographyComponent } from 'antd';
 import styled from 'styled-components';
 
-export const Container = styled.div`
-	justify-content: flex-end;
-`;
-
 export const Form = styled(FormComponent)`
 	&&& {
 		justify-content: flex-end;
@@ -23,6 +19,12 @@ export const FormItem = styled(Form.Item)`
 	}
 `;
 
-export const RefreshTextContainer = styled.div`
+interface Props {
+	refreshButtonHidden: boolean;
+}
+
+export const RefreshTextContainer = styled.div<Props>`
 	min-height: 2rem;
+	visibility: ${({ refreshButtonHidden }): string =>
+		refreshButtonHidden ? 'hidden' : 'visible'};
 `;
