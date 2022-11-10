@@ -349,6 +349,7 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 		}
 	}
 
+	row := 0
 	for idx, panel := range grafanaJSON.Panels {
 		if panel.Datasource == nil {
 			zap.S().Warnf("Skipping panel %d as it has no datasource", idx)
@@ -380,13 +381,16 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 
 		// Create a panel from "gridPos"
 
+		if idx%3 == 0 {
+			row++
+		}
 		toReturn.Layout = append(
 			toReturn.Layout,
 			model.Layout{
-				X: panel.GridPos.X,
-				Y: panel.GridPos.Y,
-				W: panel.GridPos.W,
-				H: panel.GridPos.H,
+				X: idx % 3 * 4,
+				Y: row * 3,
+				W: 4,
+				H: 3,
 				I: strconv.Itoa(idx),
 			},
 		)
