@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -24,8 +24,6 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	>((state) => state.globalTime);
 	const { pathname } = useLocation();
 
-	const { replace } = useHistory();
-
 	const params = useUrlQuery();
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
@@ -37,15 +35,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
-		params.get(DASHBOARD_TIME_IN_DURATION) || localStorageValue || options[0].key,
+		localStorageValue || options[0].key,
 	);
 
 	useEffect(() => {
-		setSelectedOption(
-			params.get(DASHBOARD_TIME_IN_DURATION) ||
-				localStorageValue ||
-				options[0].key,
-		);
+		setSelectedOption(localStorageValue || options[0].key);
 	}, [localStorageValue, params]);
 
 	const getOption = useMemo(
@@ -83,10 +77,9 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 					DASHBOARD_TIME_IN_DURATION,
 					JSON.stringify({ ...localStorageData, [pathname]: value }),
 				);
-				replace({ search: params.toString() });
 			}
 		},
-		[params, pathname, localStorageData, replace],
+		[params, pathname, localStorageData],
 	);
 
 	return (
