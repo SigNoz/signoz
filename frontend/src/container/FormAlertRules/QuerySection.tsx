@@ -12,10 +12,12 @@ import {
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
+	IChQueries,
 } from 'types/api/alerts/compositeQuery';
 import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 
 import PromqlSection from './PromqlSection';
+import ChQuerySection from './ChQuerySection';
 import { FormContainer, QueryButton, StepHeading } from './styles';
 import { toIMetricsBuilderQuery } from './utils';
 
@@ -29,6 +31,8 @@ function QuerySection({
 	setFormulaQueries,
 	promQueries,
 	setPromQueries,
+	chQueries,
+	setChQueries,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -49,6 +53,19 @@ function QuerySection({
 			});
 		}
 
+		if (
+			parseInt(s, 10) === EQueryType.CLICKHOUSE &&
+			(!chQueries || Object.keys(chQueries).length === 0)
+		) {
+			setChQueries({
+				A: {
+					rawQuery: '',
+					name: 'A',
+					legend: '',
+					disabled: false,
+				},
+			});
+		}
 		setQueryCategory(parseInt(s, 10));
 	};
 
@@ -196,6 +213,12 @@ function QuerySection({
 		);
 	};
 
+	const renderChQueryUI = (): JSX.Element => {
+		return (
+			<ChQuerySection chQueries={chQueries} setChQueries={setChQueries} />
+		);
+	};
+
 	const renderFormulaButton = (): JSX.Element => {
 		return (
 			<QueryButton onClick={addFormula} icon={<PlusOutlined />}>
@@ -258,6 +281,17 @@ function QuerySection({
 			</div>
 		);
 	};
+	const renderQuerySection =(c: EQueryType) => {
+	
+		switch (queryCategory) {
+			case EQueryType.PROM:
+				return renderPromqlUI();
+			case EQueryType.CLICKHOUSE:
+				return renderChQueryUI()
+			case EQueryType.QUERY_BUILDER:
+				return renderMetricUI();
+		}
+	}
 	return (
 		<>
 			<StepHeading> {t('alert_form_step1')}</StepHeading>
@@ -271,10 +305,11 @@ function QuerySection({
 						onChange={handleQueryCategoryChange}
 					>
 						<TabPane tab={t('tab_qb')} key={EQueryType.QUERY_BUILDER.toString()} />
+						<TabPane tab={t('tab_chquery')} key={EQueryType.CLICKHOUSE.toString()} />
 						<TabPane tab={t('tab_promql')} key={EQueryType.PROM.toString()} />
 					</Tabs>
 				</div>
-				{queryCategory === EQueryType.PROM ? renderPromqlUI() : renderMetricUI()}
+				{renderQuerySection(queryCategory)}
 			</FormContainer>
 		</>
 	);
@@ -289,6 +324,8 @@ interface QuerySectionProps {
 	setFormulaQueries: (b: IFormulaQueries) => void;
 	promQueries: IPromQueries;
 	setPromQueries: (p: IPromQueries) => void;
+	chQueries: IChQueries;
+	setChQueries: (q: IChQueries) => void;
 }
 
 export default QuerySection;

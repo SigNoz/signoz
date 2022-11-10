@@ -8,7 +8,7 @@ import { IClickHouseQueryHandleChange } from './types';
 
 interface IClickHouseQueryBuilderProps {
 	queryData: IClickHouseQuery;
-	queryIndex: number;
+	queryIndex: number | string;
 	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
 }
 
@@ -26,7 +26,7 @@ function ClickHouseQueryBuilder({
 			name={queryData.name}
 			disabled={queryData.disabled}
 			onDisable={(): void =>
-				handleQueryChange({ queryIndex, toggleDisable: true })
+				handleQueryChange({ queryIndex , toggleDisable: true })
 			}
 			onDelete={(): void => {
 				handleQueryChange({ queryIndex, toggleDelete: true });

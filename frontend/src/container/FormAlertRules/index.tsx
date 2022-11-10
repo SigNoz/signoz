@@ -13,6 +13,7 @@ import {
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
+	IChQueries,
 } from 'types/api/alerts/compositeQuery';
 import {
 	AlertDef,
@@ -82,6 +83,11 @@ function FormAlertRules({
 		...initQuery?.promQueries,
 	});
 
+	// local state to handle promql queries
+	const [chQueries, setChQueries] = useState<IChQueries>({
+		...initQuery?.chQueries,
+	});
+
 	// staged query is used to display chart preview
 	const [stagedQuery, setStagedQuery] = useState<StagedQuery>();
 	const debouncedStagedQuery = useDebounce(stagedQuery, 1000);
@@ -101,14 +107,16 @@ function FormAlertRules({
 		const fq = toFormulaQueries(initQuery?.builderQueries);
 
 		// prepare staged query
-		const sq = prepareStagedQuery(typ, mq, fq, initQuery?.promQueries);
+		const sq = prepareStagedQuery(typ, mq, fq, initQuery?.promQueries, initQuery?.chQueries);
 		const pq = initQuery?.promQueries;
+		const chq = initQuery?.chQueries;
 
 		setQueryCategory(typ);
 		setMetricQueries(mq);
 		setFormulaQueries(fq);
 		setPromQueries(pq);
 		setStagedQuery(sq);
+		setChQueries(chq);
 		setAlertDef(initialValue);
 	}, [initialValue]);
 
@@ -121,6 +129,7 @@ function FormAlertRules({
 			metricQueries,
 			formulaQueries,
 			promQueries,
+			chQueries,
 		);
 		setStagedQuery(sq);
 	}, [queryCategory, metricQueries, formulaQueries, promQueries]);
@@ -168,6 +177,31 @@ function FormAlertRules({
 
 		return retval;
 	}, [t, promQueries, queryCategory]);
+
+	const validateChQueryParams = useCallback((): boolean => {
+		let retval = true;
+		if (queryCategory !== EQueryType.CLICKHOUSE) return retval;
+
+		if (!chQueries || Object.keys(chQueries).length === 0) {
+			notification.error({
+				message: 'Error',
+				description: t('chquery_required'),
+			});
+			return false;
+		}
+
+		Object.keys(chQueries).forEach((key) => {
+			if (chQueries[key].query === '') {
+				notification.error({
+					message: 'Error',
+					description: t('chquery_required'),
+				});
+				retval = false;
+			}
+		});
+
+		return retval;
+	}, [t, chQueries, queryCategory]);
 
 	const validateQBParams = useCallback((): boolean => {
 		let retval = true;
@@ -224,6 +258,10 @@ function FormAlertRules({
 			return false;
 		}
 
+		if (!validateChQueryParams()) {
+			return false;
+		}
+
 		return validateQBParams();
 	}, [t, validateQBParams, alertDef, validatePromParams]);
 
@@ -238,6 +276,7 @@ function FormAlertRules({
 				compositeMetricQuery: {
 					builderQueries: prepareBuilderQueries(metricQueries, formulaQueries),
 					promQueries,
+					chQueries,
 					queryType: queryCategory,
 				},
 			},
@@ -251,6 +290,7 @@ function FormAlertRules({
 		metricQueries,
 		formulaQueries,
 		promQueries,
+		chQueries,
 	]);
 
 	const saveRule = useCallback(async () => {
@@ -380,6 +420,16 @@ function FormAlertRules({
 		);
 	};
 
+	const renderChQueryChartPreview = (): JSX.Element => {
+		return (
+			<ChartPreview
+				headline={<PlotTag queryType={queryCategory} />}
+				name="Chart Preview"
+				threshold={alertDef.condition?.target}
+				query={debouncedStagedQuery}
+			/>
+		);
+	};
 	return (
 		<>
 			{Element}
@@ -392,6 +442,7 @@ function FormAlertRules({
 					>
 						{queryCategory === EQueryType.QUERY_BUILDER && renderQBChartPreview()}
 						{queryCategory === EQueryType.PROM && renderPromChartPreview()}
+						{queryCategory === EQueryType.CLICKHOUSE && renderChQueryChartPreview()}
 						<QuerySection
 							queryCategory={queryCategory}
 							setQueryCategory={onQueryCategoryChange}
@@ -401,6 +452,8 @@ function FormAlertRules({
 							setFormulaQueries={setFormulaQueries}
 							promQueries={promQueries}
 							setPromQueries={setPromQueries}
+							chQueries={chQueries}
+							setChQueries={setChQueries}
 						/>
 
 						<RuleOptions

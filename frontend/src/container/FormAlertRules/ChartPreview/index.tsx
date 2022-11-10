@@ -69,6 +69,10 @@ function ChartPreview({
 			((query.queryType === EQueryType.PROM &&
 				query.promQL?.length > 0 &&
 				query.promQL[0].query !== '') ||
+				(query.queryType === EQueryType.CLICKHOUSE &&
+					query.clickHouse?.length > 0 &&
+					query.clickHouse[0].rawQuery !== '' &&
+					query.clickHouse[0].rawQuery.length > 25) ||
 				(query.queryType === EQueryType.QUERY_BUILDER &&
 					query.metricsBuilder?.queryBuilder?.length > 0 &&
 					query.metricsBuilder?.queryBuilder[0].metricName !== '')),
