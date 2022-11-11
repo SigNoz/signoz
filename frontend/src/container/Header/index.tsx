@@ -2,7 +2,6 @@ import {
 	CaretDownFilled,
 	CaretUpFilled,
 	LogoutOutlined,
-	QuestionCircleOutlined,
 } from '@ant-design/icons';
 import {
 	Avatar,
@@ -13,12 +12,11 @@ import {
 	Space,
 	Typography,
 } from 'antd';
-import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
+import DynamicConfigDropdown from 'container/DynamicConfigDropdown';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
-import React, { useCallback, useState } from 'react';
-import { useQuery } from 'react-query';
+import React, { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -26,11 +24,9 @@ import { ThunkDispatch } from 'redux-thunk';
 import { ToggleDarkMode } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import CurrentOrganization from './CurrentOrganization';
-import HelpToolTip from './HelpToolTip';
 import ManageLicense from './ManageLicense';
 import SignedInAS from './SignedInAs';
 import { Container, LogoutContainer, ToggleButton } from './styles';
@@ -39,26 +35,9 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-	let IsHelpToolTip = false;
-	let currentConfig: ConfigProps;
-	// get configs from dynamicConfigs api
-	const response = useQuery('dynamicConfigs', () => getDynamicConfigs());
-	const configs = response.data?.payload;
-	if (configs) {
-		Object.entries(configs).forEach((key) => {
-			if (
-				key['1'].Enabled &&
-				key['1'].FrontendPositionId === 'tooltip' &&
-				key['1'].Components.length > 0
-			) {
-				IsHelpToolTip = true;
-				currentConfig = key['1'];
-			}
-		});
-	}
 
-	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
-	const [isHelpDropDownOpen, setIsHelpDropDownOpen] = useState<boolean>();
+	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>(false);
+
 	const onToggleThemeHandler = useCallback(() => {
 		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
 		setTheme(preMode);
@@ -80,25 +59,21 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 		};
 	}, [toggleDarkMode, isDarkMode]);
 
-	const onHelpArrowClickHandler: VoidFunction = () => {
-		setIsHelpDropDownOpen((state) => !state);
-	};
-	const onArrowClickHandler: VoidFunction = () => {
-		setIsUserDropDownOpen((state) => !state);
-	};
-
-	const onClickLogoutHandler = (): void => {
-		Logout();
-	};
+	const onToggleHandler = useCallback(
+		(functionToExecute: Dispatch<SetStateAction<boolean>>) => (): void => {
+			functionToExecute((state) => !state);
+		},
+		[],
+	);
 
 	const menu = (
 		<Menu style={{ padding: '1rem' }}>
 			<Menu.ItemGroup>
 				<SignedInAS />
 				<Divider />
-				<CurrentOrganization onToggle={onArrowClickHandler} />
+				<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
 				<Divider />
-				<ManageLicense onToggle={onArrowClickHandler} />
+				<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
 				<Divider />
 				<LogoutContainer>
 					<LogoutOutlined />
@@ -106,11 +81,11 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 						tabIndex={0}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter' || e.key === 'Space') {
-								onClickLogoutHandler();
+								Logout();
 							}
 						}}
 						role="button"
-						onClick={onClickLogoutHandler}
+						onClick={Logout}
 					>
 						<Typography.Link>Logout</Typography.Link>
 					</div>
@@ -118,56 +93,19 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 			</Menu.ItemGroup>
 		</Menu>
 	);
-	const helpMenu = (
-		<Menu style={{ padding: '1rem' }}>
-			<HelpToolTip config={currentConfig} />{' '}
-		</Menu>
-	);
+
 	return (
-		<Layout.Header
-			style={{
-				paddingLeft: '1.125rem',
-				paddingRight: '1.125rem',
-			}}
-		>
+		<Layout.Header>
 			<Container>
-				<NavLink
-					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-					to={ROUTES.APPLICATION}
-				>
+				<NavLink to={ROUTES.APPLICATION}>
 					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
 					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
 						SigNoz
 					</Typography.Title>
 				</NavLink>
 				<Space align="center">
-					{IsHelpToolTip && (
-						<Dropdown
-							onVisibleChange={onHelpArrowClickHandler}
-							trigger={['click']}
-							overlay={helpMenu}
-							visible={isHelpDropDownOpen}
-						>
-							<Space>
-								<QuestionCircleOutlined
-									style={{ fontSize: '1.50rem', color: '#DBDBDB' }}
-								/>
-								{!isHelpDropDownOpen ? (
-									<CaretDownFilled
-										style={{
-											color: '#DBDBDB',
-										}}
-									/>
-								) : (
-									<CaretUpFilled
-										style={{
-											color: '#DBDBDB',
-										}}
-									/>
-								)}
-							</Space>
-						</Dropdown>
-					)}
+					<DynamicConfigDropdown frontendId="sidebar" />
+
 					<ToggleButton
 						checked={isDarkMode}
 						onChange={onToggleThemeHandler}
@@ -177,26 +115,14 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					/>
 
 					<Dropdown
-						onVisibleChange={onArrowClickHandler}
+						onVisibleChange={onToggleHandler(setIsUserDropDownOpen)}
 						trigger={['click']}
 						overlay={menu}
 						visible={isUserDropDownOpen}
 					>
 						<Space>
 							<Avatar shape="circle">{user?.name[0]}</Avatar>
-							{!isUserDropDownOpen ? (
-								<CaretDownFilled
-									style={{
-										color: '#DBDBDB',
-									}}
-								/>
-							) : (
-								<CaretUpFilled
-									style={{
-										color: '#DBDBDB',
-									}}
-								/>
-							)}
+							{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 						</Space>
 					</Dropdown>
 				</Space>
