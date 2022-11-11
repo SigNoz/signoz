@@ -1,11 +1,11 @@
 export interface ConfigProps {
-	Enabled: boolean;
-	FrontendPositionId: string;
-	Components: Array<{
-		Text: string;
-		Position: number;
-		IconLink: string;
-		Href: string;
+	enabled: boolean;
+	frontendPositionId: string;
+	components: Array<{
+		href: string;
+		iconLink: string;
+		position: 1;
+		text: string;
 	}>;
 }
 export interface PayloadProps {

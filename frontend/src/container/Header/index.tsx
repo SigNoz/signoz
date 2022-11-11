@@ -14,7 +14,7 @@ import {
 } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
-import DynamicConfigDropdown from 'container/DynamicConfigDropdown';
+import Config from 'container/ConfigDropdown';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
 import React, { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -103,8 +103,9 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 						SigNoz
 					</Typography.Title>
 				</NavLink>
-				<Space align="center">
-					<DynamicConfigDropdown frontendId="sidebar" />
+
+				<Space style={{ height: '100%' }} align="center">
+					<Config frontendId="tooltip" />
 
 					<ToggleButton
 						checked={isDarkMode}
