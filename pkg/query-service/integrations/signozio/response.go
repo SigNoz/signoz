@@ -10,14 +10,14 @@ type ConfigResult struct {
 }
 
 type Config struct {
-	Enabled            bool             `json:"Enabled"`
-	FrontendPositionID string           `json:"FrontendPositionId"`
-	Components         []ComponentProps `json:"Components"`
+	Enabled            bool             `json:"enabled"`
+	FrontendPositionID string           `json:"frontendPositionId"`
+	Components         []ComponentProps `json:"components"`
 }
 
 type ComponentProps struct {
-	Text     string `json:"Text"`
-	Position int    `json:"Position"`
-	IconLink string `json:"IconLink"`
-	Href     string `json:"Href"`
+	Text     string `json:"text"`
+	Position int    `json:"position"`
+	IconLink string `json:"iconLink"`
+	Href     string `json:"href"`
 }
