@@ -44,7 +44,7 @@ function DynamicConfigDropdown({
 			}
 			visible={isHelpDropDownOpen}
 		>
-			<Space align="baseline">
+			<Space align="center">
 				<QuestionCircleOutlined style={{ fontSize: 20 }} />
 				{!isHelpDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 			</Space>
