@@ -37,39 +37,39 @@ func FetchDynamicConfigs() (map[string]Config, *model.ApiError) {
 	client := http.Client{Timeout: 5 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, C.Prefix+"/configs", http.NoBody)
 	if err != nil {
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	}
 	req.SetBasicAuth("admin", "SigNoz@adm1n")
 	httpResponse, err := client.Do(req)
 	if err != nil {
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	}
 
 	defer httpResponse.Body.Close()
 
 	if err != nil {
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	}
 
 	httpBody, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	}
 
 	// read api request result
 	result := ConfigResult{}
 	err = json.Unmarshal(httpBody, &result)
 	if err != nil {
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	}
 
 	switch httpResponse.StatusCode {
 	case 200, 201:
 		return result.Data, nil
 	case 400, 401:
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	default:
-		return map[string]Config{}, nil
+		return DefaultConfig, nil
 	}
 
 }
