@@ -1,6 +1,7 @@
 import {
 	CaretDownFilled,
 	CaretUpFilled,
+	QuestionCircleFilled,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Menu, Space } from 'antd';
@@ -14,7 +15,9 @@ import HelpToolTip from './Config';
 function DynamicConfigDropdown({
 	frontendId,
 }: DynamicConfigDropdownProps): JSX.Element {
-	const { configs } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { configs, isDarkMode } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [isHelpDropDownOpen, setIsHelpDropDownOpen] = useState<boolean>(false);
 
 	const config = useMemo(
@@ -33,6 +36,9 @@ function DynamicConfigDropdown({
 		return <div />;
 	}
 
+	const Icon = isDarkMode ? QuestionCircleOutlined : QuestionCircleFilled;
+	const DropDownIcon = isHelpDropDownOpen ? CaretUpFilled : CaretDownFilled;
+
 	return (
 		<Dropdown
 			onVisibleChange={onToggleHandler}
@@ -45,8 +51,8 @@ function DynamicConfigDropdown({
 			visible={isHelpDropDownOpen}
 		>
 			<Space align="center">
-				<QuestionCircleOutlined style={{ fontSize: 20 }} />
-				{!isHelpDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+				<Icon style={{ fontSize: 20, color: 'white' }} />
+				<DropDownIcon style={{ color: 'white' }} />
 			</Space>
 		</Dropdown>
 	);

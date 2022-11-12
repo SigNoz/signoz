@@ -23,7 +23,7 @@ class ErrorLink extends PureComponent<Props, State> {
 		const { hasError } = this.state;
 
 		if (hasError) {
-			return <div>Error</div>;
+			return <div />;
 		}
 
 		return children;
