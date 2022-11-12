@@ -13,7 +13,7 @@ export const parseQuery = (queries: Query): Query => {
 				_set(
 					queries,
 					[valueIndex, 'value'],
-					`"${queries[valueIndex].value || ''}"`,
+					`'${queries[valueIndex].value || ''}'`,
 				);
 			}
 			return queries;
