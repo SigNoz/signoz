@@ -3,6 +3,7 @@ import Spinner from 'components/Spinner';
 import React, { Suspense, useMemo } from 'react';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 
+import ErrorLink from './ErrorLink';
 import LinkContainer from './Link';
 
 function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
@@ -18,16 +19,18 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 					() => import(`@ant-design/icons/es/icons/${item.iconLink}.js`),
 				);
 				return (
-					<Suspense key={item.text} fallback={<Spinner height="5vh" />}>
-						<Menu.Item>
-							<LinkContainer href={item.href}>
-								<Space size="small" align="start">
-									<Component />
-									{item.text}
-								</Space>
-							</LinkContainer>
-						</Menu.Item>
-					</Suspense>
+					<ErrorLink key={item.text}>
+						<Suspense fallback={<Spinner height="5vh" />}>
+							<Menu.Item>
+								<LinkContainer href={item.href}>
+									<Space size="small" align="start">
+										<Component />
+										{item.text}
+									</Space>
+								</LinkContainer>
+							</Menu.Item>
+						</Suspense>
+					</ErrorLink>
 				);
 			})}
 		</Menu.ItemGroup>
