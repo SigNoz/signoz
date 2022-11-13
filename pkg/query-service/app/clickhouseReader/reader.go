@@ -2430,6 +2430,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	case constants.MetricsTTL:
 		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
+		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
@@ -2452,6 +2453,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	case constants.LogsTTL:
 		tableNameArray := []string{r.logsDB + "." + r.logsTable}
+		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
