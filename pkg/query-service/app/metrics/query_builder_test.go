@@ -55,9 +55,9 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 1)
 
-		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.a != 'b'")
+		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
 		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
-		So(queries["a"], ShouldContainSubstring, "not match(labels_object.code, 'ERROR_*')")
+		So(queries["a"], ShouldContainSubstring, "not match(JSONExtractString(labels, 'code'), 'ERROR_*')")
 	})
 }
 
@@ -89,7 +89,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		}
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 2)
-		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.in IN ['a','b','c']")
+		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }
@@ -126,7 +126,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 3)
 		So(queries["c"], ShouldContainSubstring, "SELECT ts, a.value / b.value")
-		So(queries["c"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.in IN ['a','b','c']")
+		So(queries["c"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		So(queries["c"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }
