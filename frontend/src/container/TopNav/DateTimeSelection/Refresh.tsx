@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 
 import { RefreshTextContainer, Typography } from './styles';
 
-function RefreshText({ onLastRefreshHandler }: RefreshTextProps): JSX.Element {
+function RefreshText({
+	onLastRefreshHandler,
+	refreshButtonHidden,
+}: RefreshTextProps): JSX.Element {
 	const [refreshText, setRefreshText] = useState<string>('');
 
 	// this is to update the refresh text
@@ -19,7 +22,7 @@ function RefreshText({ onLastRefreshHandler }: RefreshTextProps): JSX.Element {
 	}, [onLastRefreshHandler, refreshText]);
 
 	return (
-		<RefreshTextContainer>
+		<RefreshTextContainer refreshButtonHidden={refreshButtonHidden}>
 			<Typography>{refreshText}</Typography>
 		</RefreshTextContainer>
 	);
@@ -27,6 +30,7 @@ function RefreshText({ onLastRefreshHandler }: RefreshTextProps): JSX.Element {
 
 interface RefreshTextProps {
 	onLastRefreshHandler: () => string;
+	refreshButtonHidden: boolean;
 }
 
 export default RefreshText;

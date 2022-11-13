@@ -7,8 +7,9 @@ import { PayloadProps, Props } from 'types/api/dashboard/create';
 const create = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+	const url = props.uploadedGrafana ? '/dashboards/grafana' : '/dashboards';
 	try {
-		const response = await axios.post('/dashboards', {
+		const response = await axios.post(url, {
 			...props,
 		});
 

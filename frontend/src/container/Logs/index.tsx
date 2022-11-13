@@ -6,24 +6,17 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import SearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
-import React, { memo, useEffect, useMemo } from 'react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import React, { memo, useEffect } from 'react';
 import { connect, useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetLogsFields } from 'store/actions/logs/getFields';
 import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 
-interface LogsProps {
-	getLogsFields: VoidFunction;
-}
 function Logs({ getLogsFields }: LogsProps): JSX.Element {
-	const { search } = useLocation();
-
-	const urlQuery = useMemo(() => {
-		return new URLSearchParams(search);
-	}, [search]);
+	const urlQuery = useUrlQuery();
 
 	const dispatch = useDispatch();
 
@@ -57,6 +50,8 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 		</div>
 	);
 }
+
+type LogsProps = DispatchProps;
 
 interface DispatchProps {
 	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
