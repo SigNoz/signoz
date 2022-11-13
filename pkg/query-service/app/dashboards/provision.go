@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"go.signoz.io/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.uber.org/zap"
 )
 

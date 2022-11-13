@@ -12,9 +12,9 @@ import (
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 
-	"go.signoz.io/query-service/auth"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -255,7 +255,7 @@ func parseSpanFilterRequestBody(r *http.Request) (*model.SpanFilterParams, error
 	return postData, nil
 }
 
-func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, error) {
+func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilteredSpansParams, error) {
 
 	var postData *model.GetFilteredSpansParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -275,6 +275,20 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 
 	if postData.Limit == 0 {
 		postData.Limit = 10
+	}
+
+	if len(postData.Order) != 0 {
+		if postData.Order != constants.Ascending && postData.Order != constants.Descending {
+			return nil, errors.New("order param is not in correct format")
+		}
+		if postData.OrderParam != constants.Duration && postData.OrderParam != constants.Timestamp {
+			return nil, errors.New("order param is not in correct format")
+		}
+		if postData.OrderParam == constants.Duration && !aH.CheckFeature(constants.DurationSort) {
+			return nil, model.ErrFeatureUnavailable{Key: constants.DurationSort}
+		} else if postData.OrderParam == constants.Timestamp && !aH.CheckFeature(constants.TimestampSort) {
+			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
+		}
 	}
 
 	return postData, nil

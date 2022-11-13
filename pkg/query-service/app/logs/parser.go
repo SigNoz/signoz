@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var operatorMapping = map[string]string{
@@ -36,7 +36,7 @@ const (
 	DESC            = "desc"
 )
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([^(]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) '[^']+')`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([^(]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) [^\\]?'(.*?[^\\])')`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {

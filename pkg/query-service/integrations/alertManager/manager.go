@@ -5,11 +5,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
-	"go.uber.org/zap"
 	"net/http"
 	neturl "net/url"
+
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 const contentType = "application/json"

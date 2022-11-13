@@ -3,12 +3,13 @@ package rules
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/utils/labels"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 // this file contains common structs and methods used by

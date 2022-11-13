@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/model"
-	"go.uber.org/zap"
 	"time"
 	"unicode/utf8"
 
-	"go.signoz.io/query-service/utils/times"
-	"go.signoz.io/query-service/utils/timestamp"
+	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
+
+	"go.signoz.io/signoz/pkg/query-service/utils/times"
+	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 

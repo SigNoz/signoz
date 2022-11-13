@@ -8,8 +8,8 @@ import (
 	"github.com/smartystreets/assertions/should"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.signoz.io/query-service/app/metrics"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func TestParseFilterSingleFilter(t *testing.T) {
