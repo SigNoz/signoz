@@ -57,6 +57,7 @@ const (
 	signozSpansTable           = "distributed_signoz_spans"
 	signozErrorIndexTable      = "distributed_signoz_error_index_v2"
 	signozTraceTableName       = "distributed_signoz_index_v2"
+	signozTraceLocalTableName  = "signoz_index_v2"
 	signozMetricDBName         = "signoz_metrics"
 	signozSampleLocalTableName = "samples_v2"
 	signozSampleTableName      = "distributed_samples_v2"
@@ -2068,8 +2069,8 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					return
 				}
 				req = fmt.Sprintf(
-					"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
-					tableName, params.DelDuration)
+					"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
+					tableName, cluster, params.DelDuration)
 				if len(params.ColdStorageVolume) > 0 {
 					req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
 						params.ToColdStorageDuration, params.ColdStorageVolume)
@@ -2281,7 +2282,7 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 	// Set the storage policy for the required table. If it is already set, then setting it again
 	// will not a problem.
 	if len(coldStorageVolume) > 0 {
-		policyReq := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='tiered'", tableName)
+		policyReq := fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY SETTING storage_policy='tiered'", tableName, cluster)
 
 		zap.S().Debugf("Executing Storage policy request: %s\n", policyReq)
 		if err := r.db.Exec(ctx, policyReq); err != nil {
@@ -2342,7 +2343,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleTableName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleLocalTableName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2360,7 +2361,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozTraceTableName, signozTraceDBName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozTraceLocalTableName, signozTraceDBName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2378,7 +2379,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getLogsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.logsTable, r.logsDB)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.logsLocalTable, r.logsDB)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
