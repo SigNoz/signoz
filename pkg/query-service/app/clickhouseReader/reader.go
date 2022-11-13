@@ -2049,6 +2049,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	case constants.TraceTTL:
 		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
 		for _, tableName = range tableNameArray {
+			tableName = getLocalTableName(tableName)
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
