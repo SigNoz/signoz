@@ -48,18 +48,19 @@ import (
 )
 
 const (
-	cluster                  = "signoz"
-	primaryNamespace         = "clickhouse"
-	archiveNamespace         = "clickhouse-archive"
-	signozTraceDBName        = "signoz_traces"
-	signozDurationMVTable    = "distributed_durationSort"
-	signozUsageExplorerTable = "distributed_usage_explorer"
-	signozSpansTable         = "distributed_signoz_spans"
-	signozErrorIndexTable    = "distributed_signoz_error_index_v2"
-	signozTraceTableName     = "distributed_signoz_index_v2"
-	signozMetricDBName       = "signoz_metrics"
-	signozSampleTableName    = "distributed_samples_v2"
-	signozTSTableName        = "distributed_time_series_v2"
+	cluster                    = "signoz"
+	primaryNamespace           = "clickhouse"
+	archiveNamespace           = "clickhouse-archive"
+	signozTraceDBName          = "signoz_traces"
+	signozDurationMVTable      = "distributed_durationSort"
+	signozUsageExplorerTable   = "distributed_usage_explorer"
+	signozSpansTable           = "distributed_signoz_spans"
+	signozErrorIndexTable      = "distributed_signoz_error_index_v2"
+	signozTraceTableName       = "distributed_signoz_index_v2"
+	signozMetricDBName         = "signoz_metrics"
+	signozSampleLocalTableName = "samples_v2"
+	signozSampleTableName      = "distributed_samples_v2"
+	signozTSTableName          = "distributed_time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -2020,6 +2021,13 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	return &GetFilteredSpansAggregatesResponse, nil
 }
 
+func getLocalTableName(tableName string) string {
+
+	tableNameSplit := strings.Split(tableName, ".")
+	return tableNameSplit[0] + "." + strings.Split(tableNameSplit[1], "distributed_")[1]
+
+}
+
 // SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
@@ -2050,6 +2058,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 		}
 		for _, tableName := range tableNameArray {
+			tableName = getLocalTableName(tableName)
 			// TODO: DB queries should be implemented with transactional statements but currently clickhouse doesn't support them. Issue: https://github.com/ClickHouse/ClickHouse/issues/22086
 			go func(tableName string) {
 				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
@@ -2097,7 +2106,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableName = signozMetricDBName + "." + signozSampleTableName
+		tableName = signozMetricDBName + "." + signozSampleLocalTableName
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
@@ -2112,8 +2121,8 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				return
 			}
 			req = fmt.Sprintf(
-				"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
-					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
+					"INTERVAL %v SECOND DELETE", tableName, cluster, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
 				req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
@@ -2150,7 +2159,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 		}(tableName)
 	case constants.LogsTTL:
-		tableName = r.logsDB + "." + r.logsTable
+		tableName = r.logsDB + "." + r.logsLocalTable
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
@@ -2165,8 +2174,8 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				return
 			}
 			req = fmt.Sprintf(
-				"ALTER TABLE %v MODIFY TTL toDateTime(timestamp / 1000000000) + "+
-					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+					"INTERVAL %v SECOND DELETE", tableName, cluster, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
 				req += fmt.Sprintf(", toDateTime(timestamp / 1000000000)"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
