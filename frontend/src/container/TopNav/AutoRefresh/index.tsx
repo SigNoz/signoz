@@ -14,6 +14,7 @@ import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
+import _omit from 'lodash-es/omit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -103,9 +104,16 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const onChangeAutoRefreshHandler = useCallback(
 		(event: CheckboxChangeEvent) => {
 			const { checked } = event.target;
+			if (!checked) {
+				// remove the path from localstorage
+				set(
+					DASHBOARD_TIME_IN_DURATION,
+					JSON.stringify(_omit(localStorageData, pathname)),
+				);
+			}
 			setIsAutoRefreshfreshEnabled(checked);
 		},
-		[],
+		[localStorageData, pathname],
 	);
 
 	return (
