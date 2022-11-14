@@ -1,5 +1,15 @@
 import { CaretDownFilled } from '@ant-design/icons';
-import { Button, Popover, Radio, RadioChangeEvent, Space } from 'antd';
+import {
+	Button,
+	Checkbox,
+	Divider,
+	Popover,
+	Radio,
+	RadioChangeEvent,
+	Space,
+	Typography,
+} from 'antd';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
@@ -16,6 +26,7 @@ import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { options } from './config';
+import { Container } from './styles';
 
 function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const { minTime: initialMinTime, selectedTime } = useSelector<
@@ -23,6 +34,14 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 	const { pathname } = useLocation();
+
+	const [isAutoRefreshEnabled, setIsAutoRefreshfreshEnabled] = useState<boolean>(
+		!disabled,
+	);
+
+	useEffect(() => {
+		setIsAutoRefreshfreshEnabled(disabled);
+	}, [disabled]);
 
 	const params = useUrlQuery();
 
@@ -50,7 +69,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	useInterval(() => {
 		const selectedValue = getOption?.value;
 
-		if (disabled) {
+		if (disabled || !isAutoRefreshEnabled) {
 			return;
 		}
 
@@ -81,20 +100,43 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		[params, pathname, localStorageData],
 	);
 
+	const onChangeAutoRefreshHandler = useCallback(
+		(event: CheckboxChangeEvent) => {
+			const { checked } = event.target;
+			setIsAutoRefreshfreshEnabled(checked);
+		},
+		[],
+	);
+
 	return (
 		<Popover
 			placement="bottom"
-			title="Refresh Interval"
+			trigger={['click']}
+			destroyTooltipOnHide
 			content={
-				<Radio.Group onChange={onChangeHandler} value={selectedOption}>
-					<Space direction="vertical">
-						{options.map((option) => (
-							<Radio key={option.key} value={option.key}>
-								{option.label}
-							</Radio>
-						))}
-					</Space>
-				</Radio.Group>
+				<Container>
+					<Checkbox
+						onChange={onChangeAutoRefreshHandler}
+						value={isAutoRefreshEnabled}
+						disabled={disabled}
+					>
+						Auto Refresh
+					</Checkbox>
+
+					<Divider />
+
+					<Typography.Paragraph>Refresh Interval</Typography.Paragraph>
+
+					<Radio.Group onChange={onChangeHandler} value={selectedOption}>
+						<Space direction="vertical">
+							{options.map((option) => (
+								<Radio key={option.key} value={option.key}>
+									{option.label}
+								</Radio>
+							))}
+						</Space>
+					</Radio.Group>
+				</Container>
 			}
 		>
 			<Button type="primary">
