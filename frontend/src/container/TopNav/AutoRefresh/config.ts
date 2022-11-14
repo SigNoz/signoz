@@ -1,6 +1,6 @@
 export const options: IOptions[] = [
 	{
-		label: '',
+		label: 'off',
 		key: 'off',
 		value: 0,
 	},
