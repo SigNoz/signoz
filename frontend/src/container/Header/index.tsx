@@ -14,8 +14,9 @@ import {
 } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
+import Config from 'container/ConfigDropdown';
 import setTheme, { AppMode } from 'lib/theme/setTheme';
-import React, { useCallback, useState } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -34,7 +35,8 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>();
+
+	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>(false);
 
 	const onToggleThemeHandler = useCallback(() => {
 		const preMode: AppMode = isDarkMode ? 'lightMode' : 'darkMode';
@@ -57,22 +59,21 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 		};
 	}, [toggleDarkMode, isDarkMode]);
 
-	const onArrowClickHandler: VoidFunction = () => {
-		setIsUserDropDownOpen((state) => !state);
-	};
-
-	const onClickLogoutHandler = (): void => {
-		Logout();
-	};
+	const onToggleHandler = useCallback(
+		(functionToExecute: Dispatch<SetStateAction<boolean>>) => (): void => {
+			functionToExecute((state) => !state);
+		},
+		[],
+	);
 
 	const menu = (
 		<Menu style={{ padding: '1rem' }}>
 			<Menu.ItemGroup>
 				<SignedInAS />
 				<Divider />
-				<CurrentOrganization onToggle={onArrowClickHandler} />
+				<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
 				<Divider />
-				<ManageLicense onToggle={onArrowClickHandler} />
+				<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
 				<Divider />
 				<LogoutContainer>
 					<LogoutOutlined />
@@ -80,11 +81,11 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 						tabIndex={0}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter' || e.key === 'Space') {
-								onClickLogoutHandler();
+								Logout();
 							}
 						}}
 						role="button"
-						onClick={onClickLogoutHandler}
+						onClick={Logout}
 					>
 						<Typography.Link>Logout</Typography.Link>
 					</div>
@@ -94,23 +95,18 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	);
 
 	return (
-		<Layout.Header
-			style={{
-				paddingLeft: '1.125rem',
-				paddingRight: '1.125rem',
-			}}
-		>
+		<Layout.Header>
 			<Container>
-				<NavLink
-					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-					to={ROUTES.APPLICATION}
-				>
+				<NavLink to={ROUTES.APPLICATION}>
 					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
 					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
 						SigNoz
 					</Typography.Title>
 				</NavLink>
-				<Space align="center">
+
+				<Space style={{ height: '100%' }} align="center">
+					<Config frontendId="tooltip" />
+
 					<ToggleButton
 						checked={isDarkMode}
 						onChange={onToggleThemeHandler}
@@ -120,26 +116,14 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					/>
 
 					<Dropdown
-						onVisibleChange={onArrowClickHandler}
+						onVisibleChange={onToggleHandler(setIsUserDropDownOpen)}
 						trigger={['click']}
 						overlay={menu}
 						visible={isUserDropDownOpen}
 					>
 						<Space>
 							<Avatar shape="circle">{user?.name[0]}</Avatar>
-							{!isUserDropDownOpen ? (
-								<CaretDownFilled
-									style={{
-										color: '#DBDBDB',
-									}}
-								/>
-							) : (
-								<CaretUpFilled
-									style={{
-										color: '#DBDBDB',
-									}}
-								/>
-							)}
+							{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 						</Space>
 					</Dropdown>
 				</Space>
