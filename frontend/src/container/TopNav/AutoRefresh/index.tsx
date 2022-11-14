@@ -1,6 +1,5 @@
 import { CaretDownFilled } from '@ant-design/icons';
 import {
-	Button,
 	Checkbox,
 	Divider,
 	Popover,
@@ -26,7 +25,7 @@ import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { options } from './config';
-import { Container } from './styles';
+import { ButtonContainer, Container } from './styles';
 
 function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const { minTime: initialMinTime, selectedTime } = useSelector<
@@ -111,7 +110,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 
 	return (
 		<Popover
-			placement="bottom"
+			placement="bottomLeft"
 			trigger={['click']}
 			content={
 				<Container>
@@ -141,9 +140,9 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 				</Container>
 			}
 		>
-			<Button type="primary">
+			<ButtonContainer title="Set auto refresh" type="primary">
 				<CaretDownFilled />
-			</Button>
+			</ButtonContainer>
 		</Popover>
 	);
 }
