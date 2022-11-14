@@ -1,4 +1,5 @@
-import { Select } from 'antd';
+import { CaretDownFilled } from '@ant-design/icons';
+import { Button, Popover, Radio, RadioChangeEvent, Space } from 'antd';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
@@ -15,7 +16,6 @@ import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { options } from './config';
-import { SelectContainer } from './styles';
 
 function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const { minTime: initialMinTime, selectedTime } = useSelector<
@@ -69,31 +69,38 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	}, getOption?.value || 0);
 
 	const onChangeHandler = useCallback(
-		(value: unknown) => {
-			if (typeof value === 'string') {
-				setSelectedOption(value);
-				params.set(DASHBOARD_TIME_IN_DURATION, value);
-				set(
-					DASHBOARD_TIME_IN_DURATION,
-					JSON.stringify({ ...localStorageData, [pathname]: value }),
-				);
-			}
+		(event: RadioChangeEvent) => {
+			const selectedValue = event.target.value;
+			setSelectedOption(selectedValue);
+			params.set(DASHBOARD_TIME_IN_DURATION, selectedValue);
+			set(
+				DASHBOARD_TIME_IN_DURATION,
+				JSON.stringify({ ...localStorageData, [pathname]: selectedValue }),
+			);
 		},
 		[params, pathname, localStorageData],
 	);
 
 	return (
-		<SelectContainer
-			disabled={disabled}
-			onChange={onChangeHandler}
-			value={selectedOption}
+		<Popover
+			placement="bottom"
+			title="Refresh Interval"
+			content={
+				<Radio.Group onChange={onChangeHandler} value={selectedOption}>
+					<Space direction="vertical">
+						{options.map((option) => (
+							<Radio key={option.key} value={option.key}>
+								{option.label}
+							</Radio>
+						))}
+					</Space>
+				</Radio.Group>
+			}
 		>
-			{options.map((option) => (
-				<Select.Option key={option.key} value={option.key}>
-					{option.label}
-				</Select.Option>
-			))}
-		</SelectContainer>
+			<Button type="primary">
+				<CaretDownFilled />
+			</Button>
+		</Popover>
 	);
 }
 
