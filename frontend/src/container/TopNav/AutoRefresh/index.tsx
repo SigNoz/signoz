@@ -35,22 +35,22 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	>((state) => state.globalTime);
 	const { pathname } = useLocation();
 
-	const [isAutoRefreshEnabled, setIsAutoRefreshfreshEnabled] = useState<boolean>(
-		!disabled,
-	);
-
-	useEffect(() => {
-		setIsAutoRefreshfreshEnabled(disabled);
-	}, [disabled]);
-
-	const params = useUrlQuery();
-
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
 	const localStorageValue = useMemo(() => localStorageData[pathname], [
 		pathname,
 		localStorageData,
 	]);
+
+	const [isAutoRefreshEnabled, setIsAutoRefreshfreshEnabled] = useState<boolean>(
+		Boolean(localStorageValue),
+	);
+
+	useEffect(() => {
+		setIsAutoRefreshfreshEnabled(Boolean(localStorageValue));
+	}, [localStorageValue]);
+
+	const params = useUrlQuery();
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
@@ -96,6 +96,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 				DASHBOARD_TIME_IN_DURATION,
 				JSON.stringify({ ...localStorageData, [pathname]: selectedValue }),
 			);
+			setIsAutoRefreshfreshEnabled(true);
 		},
 		[params, pathname, localStorageData],
 	);
@@ -112,12 +113,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		<Popover
 			placement="bottom"
 			trigger={['click']}
-			destroyTooltipOnHide
 			content={
 				<Container>
 					<Checkbox
 						onChange={onChangeAutoRefreshHandler}
-						value={isAutoRefreshEnabled}
+						checked={isAutoRefreshEnabled}
 						disabled={disabled}
 					>
 						Auto Refresh
@@ -129,11 +129,13 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 
 					<Radio.Group onChange={onChangeHandler} value={selectedOption}>
 						<Space direction="vertical">
-							{options.map((option) => (
-								<Radio key={option.key} value={option.key}>
-									{option.label}
-								</Radio>
-							))}
+							{options
+								.filter((e) => e.label !== 'off')
+								.map((option) => (
+									<Radio key={option.key} value={option.key}>
+										{option.label}
+									</Radio>
+								))}
 						</Space>
 					</Radio.Group>
 				</Container>
