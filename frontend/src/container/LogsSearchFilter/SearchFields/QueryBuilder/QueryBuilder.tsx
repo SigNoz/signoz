@@ -22,10 +22,11 @@ import { v4 } from 'uuid';
 import FieldKey from '../FieldKey';
 import { QueryConditionContainer, QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
+import { hashCode, parseQuery } from './utils';
 
 const { Option } = Select;
 interface QueryFieldProps {
-	query: { value: string | string[]; type: string }[];
+	query: Query;
 	queryIndex: number;
 	onUpdate: (query: unknown, queryIndex: number) => void;
 	onDelete: (queryIndex: number) => void;
@@ -49,12 +50,12 @@ function QueryField({
 		}
 		return '';
 	};
+
 	const fieldType = useMemo(() => getFieldType(query[0].value as string), [
 		query,
 	]);
 	const handleChange = (qIdx: number, value: string): void => {
 		query[qIdx].value = value || '';
-
 		if (qIdx === 1) {
 			if (Object.values(QueryOperatorsMultiVal).includes(value)) {
 				if (!Array.isArray(query[2].value)) {
@@ -166,17 +167,8 @@ function QueryConditionField({
 		</QueryConditionContainer>
 	);
 }
-const hashCode = (s: string): string => {
-	if (!s) {
-		return '0';
-	}
-	return `${Math.abs(
-		s.split('').reduce((a, b) => {
-			a = (a << 5) - a + b.charCodeAt(0);
-			return a & a;
-		}, 0),
-	)}`;
-};
+
+export type Query = { value: string | string[]; type: string }[];
 
 function QueryBuilder({
 	updateParsedQuery,
@@ -201,12 +193,9 @@ function QueryBuilder({
 		}
 	}, [parsedQuery]);
 
-	const handleUpdate = (
-		query: { value: string | string[]; type: string }[],
-		queryIndex: number,
-	): void => {
+	const handleUpdate = (query: Query, queryIndex: number): void => {
 		const updatedParsedQuery = generatedQueryStructure;
-		updatedParsedQuery[queryIndex] = query as never;
+		updatedParsedQuery[queryIndex] = parseQuery(query) as never;
 
 		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
