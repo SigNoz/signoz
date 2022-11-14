@@ -191,7 +191,7 @@ function FormAlertRules({
 		}
 
 		Object.keys(chQueries).forEach((key) => {
-			if (chQueries[key].query === '') {
+			if (chQueries[key].rawQuery === '') {
 				notification.error({
 					message: 'Error',
 					description: t('chquery_required'),
