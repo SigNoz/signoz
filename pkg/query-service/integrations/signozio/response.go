@@ -11,39 +11,43 @@ type ConfigResult struct {
 
 type Config struct {
 	Enabled            bool             `json:"enabled"`
-	FrontendPositionID string           `json:"frontendPositionId"`
+	FrontendPositionId string           `json:"frontendPositionId"`
 	Components         []ComponentProps `json:"components"`
 }
 
 type ComponentProps struct {
-	Text     string `json:"text"`
-	Position int    `json:"position"`
-	IconLink string `json:"iconLink"`
-	Href     string `json:"href"`
+	Text      string `json:"text"`
+	Position  int    `json:"position"`
+	DarkIcon  string `json:"darkIcon"`
+	LightIcon string `json:"lightIcon"`
+	Href      string `json:"href"`
 }
 
 var DefaultConfig = map[string]Config{
 	"helpConfig": {
 		Enabled:            true,
-		FrontendPositionID: "tooltip",
+		FrontendPositionId: "tooltip",
 		Components: []ComponentProps{
 			{
-				Text:     "How to use SigNoz in production",
-				Position: 1,
-				IconLink: "RiseOutlined",
-				Href:     "https://signoz.io/docs/production-readiness",
+				Text:      "How to use SigNoz in production",
+				Position:  1,
+				LightIcon: "RiseOutlined",
+				DarkIcon:  "RiseOutlined",
+				Href:      "https://signoz.io/docs/production-readiness",
 			},
 			{
-				Text:     "Create an issue in GitHub",
-				Position: 2,
-				IconLink: "GithubOutlined",
-				Href:     "https://github.com/SigNoz/signoz/issues/new/choose",
+				Text:      "Create an issue in GitHub",
+				Position:  2,
+				LightIcon: "GithubFilled",
+				DarkIcon:  "GithubOutlined",
+				Href:      "https://github.com/SigNoz/signoz/issues/new/choose",
 			},
 			{
-				Text:     "Read the docs",
-				Position: 3,
-				IconLink: "FileTextOutlined",
-				Href:     "https://signoz.io/docs",
+				Text:      "Read the docs",
+				Position:  3,
+				LightIcon: "FileTextFilled",
+				DarkIcon:  "FileTextOutlined",
+				Href:      "https://signoz.io/docs",
 			},
 		},
 	},

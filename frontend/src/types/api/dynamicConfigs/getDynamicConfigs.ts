@@ -3,7 +3,8 @@ export interface ConfigProps {
 	frontendPositionId: string;
 	components: Array<{
 		href: string;
-		iconLink: string;
+		darkIcon: string;
+		lightIcon: string;
 		position: 1;
 		text: string;
 	}>;

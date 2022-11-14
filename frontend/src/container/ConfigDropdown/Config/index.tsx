@@ -20,7 +20,7 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 	return (
 		<Menu.ItemGroup>
 			{sortedConfig.map((item) => {
-				const iconName = `${item.iconLink}${isDarkMode ? 'Outlined' : 'Filled'}`;
+				const iconName = `${isDarkMode ? item.darkIcon : item.lightIcon}`;
 
 				const Component = React.lazy(
 					() => import(`@ant-design/icons/es/icons/${iconName}.js`),
