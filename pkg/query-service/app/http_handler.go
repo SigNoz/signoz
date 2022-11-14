@@ -27,6 +27,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	signozio "go.signoz.io/signoz/pkg/query-service/integrations/signozio"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
@@ -360,6 +361,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/configs", OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
@@ -1581,6 +1583,16 @@ func (aH *APIHandler) FF() interfaces.FeatureLookup {
 func (aH *APIHandler) CheckFeature(f string) bool {
 	err := aH.FF().CheckFeature(f)
 	return err == nil
+}
+
+func (aH *APIHandler) getConfigs(w http.ResponseWriter, r *http.Request) {
+
+	configs, err := signozio.FetchDynamicConfigs()
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	aH.Respond(w, configs)
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.
