@@ -1,5 +1,5 @@
 import { CaretRightFilled } from '@ant-design/icons';
-import useClickOutside from 'hooks/useClickOutside';
+import { InputRef, Popover } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -41,33 +41,7 @@ function Search({
 	}, [traces.isTagModalError, value, updateTagIsError]);
 
 	const tagRef = useRef<HTMLDivElement>(null);
-
-	useClickOutside(tagRef, (e: HTMLElement) => {
-		// using this hack as overlay span is voilating this condition
-		if (
-			e.nodeName === 'svg' ||
-			e.nodeName === 'path' ||
-			e.nodeName === 'span' ||
-			e.nodeName === 'button'
-		) {
-			return;
-		}
-
-		if (
-			e.nodeName === 'DIV' &&
-			![
-				'ant-select-item-option-content',
-				'ant-empty-image',
-				'ant-select-item',
-				'ant-col',
-				'ant-select-item-option-active',
-			].find((p) => p.indexOf(e.className) !== -1) &&
-			!(e.ariaSelected === 'true') &&
-			traces.isTagModalOpen
-		) {
-			updateTagVisibility(false);
-		}
-	});
+	const searchRef = useRef<InputRef>(null);
 
 	const onChangeHandler = (search: string): void => {
 		setValue(search);
@@ -75,11 +49,6 @@ function Search({
 
 	const setIsTagsModalHandler = (value: boolean): void => {
 		updateTagVisibility(value);
-	};
-
-	const onFocusHandler: React.FocusEventHandler<HTMLInputElement> = (e) => {
-		e.preventDefault();
-		setIsTagsModalHandler(true);
 	};
 
 	const updateFilters = async (
@@ -116,37 +85,44 @@ function Search({
 
 	return (
 		<Container ref={tagRef}>
-			<SearchComponent
-				onChange={(event): void => onChangeHandler(event.target.value)}
-				value={value}
-				allowClear
-				disabled={traces.filterLoading}
-				onFocus={onFocusHandler}
-				placeholder="Click to filter by tags"
-				type="search"
-				enterButton={<CaretRightFilled />}
-				onSearch={(string): void => {
-					if (string.length === 0) {
-						updateTagVisibility(false);
-						updateFilters([]);
-						return;
-					}
+			<Popover
+				content={
+					<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
+				}
+				placement="bottomLeft"
+				destroyTooltipOnHide
+				visible={traces.isTagModalOpen}
+				trigger="click"
+				onVisibleChange={setIsTagsModalHandler}
+			>
+				<SearchComponent
+					ref={searchRef}
+					onChange={(event): void => onChangeHandler(event.target.value)}
+					value={value}
+					allowClear
+					disabled={traces.filterLoading}
+					placeholder="Click to filter by tags"
+					type="search"
+					enterButton={<CaretRightFilled />}
+					onSearch={(string): void => {
+						if (string.length === 0) {
+							updateTagVisibility(false);
+							updateFilters([]);
+							return;
+						}
 
-					const { isError, payload } = parseQueryToTags(string);
+						const { isError, payload } = parseQueryToTags(string);
 
-					if (isError) {
-						updateTagIsError(true);
-					} else {
-						updateTagIsError(false);
-						updateTagVisibility(false);
-						updateFilters(payload);
-					}
-				}}
-			/>
-
-			{traces.isTagModalOpen && (
-				<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
-			)}
+						if (isError) {
+							updateTagIsError(true);
+						} else {
+							updateTagIsError(false);
+							updateTagVisibility(false);
+							updateFilters(payload);
+						}
+					}}
+				/>
+			</Popover>
 		</Container>
 	);
 }
