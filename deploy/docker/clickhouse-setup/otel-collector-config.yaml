@@ -99,7 +99,6 @@ processors:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system] # include ec2 for AWS, gce for GCP and azure for Azure.
     timeout: 2s
-    override: false
 
 extensions:
   health_check:
