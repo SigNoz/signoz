@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -264,6 +265,76 @@ func SlugifyTitle(title string) string {
 	return s
 }
 
+var instanceRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
+var nodeRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
+var jobRe = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
+
+func widgetFromPanel(panel model.Panels, idx int, variables map[string]model.Variable) *model.Widget {
+	widget := model.Widget{
+		Description:    panel.Description,
+		ID:             strconv.Itoa(idx),
+		IsStacked:      false,
+		NullZeroValues: "zero",
+		Opacity:        "1",
+		PanelTypes:     "TIME_SERIES", // TODO: Need to figure out how to get this
+		Query: model.Query{
+			ClickHouse: []model.ClickHouseQueryDashboard{
+				{
+					Disabled: false,
+					Legend:   "",
+					Name:     "A",
+					Query:    "",
+				},
+			},
+			MetricsBuilder: model.MetricsBuilder{
+				Formulas: []string{},
+				QueryBuilder: []model.QueryBuilder{
+					{
+						AggregateOperator: 1,
+						Disabled:          false,
+						GroupBy:           []string{},
+						Legend:            "",
+						MetricName:        "",
+						Name:              "A",
+						ReduceTo:          1,
+					},
+				},
+			},
+			PromQL:    []model.PromQueryDashboard{},
+			QueryType: int(model.PROM),
+		},
+		QueryData: model.QueryDataDashboard{
+			Data: model.Data{
+				QueryData: []interface{}{},
+			},
+		},
+		Title:     panel.Title,
+		YAxisUnit: panel.FieldConfig.Defaults.Unit,
+		QueryType: int(model.PROM), // TODO: Supprot for multiple query types
+	}
+	for _, target := range panel.Targets {
+		if target.Expr != "" {
+			for name := range variables {
+				target.Expr = strings.ReplaceAll(target.Expr, "$"+name, "{{"+"."+name+"}}")
+				target.Expr = strings.ReplaceAll(target.Expr, "$"+"__rate_interval", "5m")
+			}
+			target.Expr = instanceRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.instance}}\"")
+			target.Expr = nodeRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.node}}\"")
+			target.Expr = jobRe.ReplaceAllString(target.Expr, "service_name=\"{{.job}}\"")
+			widget.Query.PromQL = append(
+				widget.Query.PromQL,
+				model.PromQueryDashboard{
+					Disabled: false,
+					Legend:   target.LegendFormat,
+					Name:     target.RefID,
+					Query:    target.Expr,
+				},
+			)
+		}
+	}
+	return &widget
+}
+
 func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.DashboardData {
 	var toReturn model.DashboardData
 	toReturn.Title = grafanaJSON.Title
@@ -350,7 +421,32 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 	}
 
 	row := 0
-	for idx, panel := range grafanaJSON.Panels {
+	idx := 0
+	for _, panel := range grafanaJSON.Panels {
+		if panel.Type == "row" {
+			if panel.Panels != nil && len(panel.Panels) > 0 {
+				for _, innerPanel := range panel.Panels {
+					fmt.Println("innerPanel", innerPanel)
+					if idx%3 == 0 {
+						row++
+					}
+					toReturn.Layout = append(
+						toReturn.Layout,
+						model.Layout{
+							X: idx % 3 * 4,
+							Y: row * 3,
+							W: 4,
+							H: 3,
+							I: strconv.Itoa(idx),
+						},
+					)
+
+					toReturn.Widgets = append(toReturn.Widgets, *widgetFromPanel(innerPanel, idx, toReturn.Variables))
+					idx++
+				}
+			}
+			continue
+		}
 		if panel.Datasource == nil {
 			zap.S().Warnf("Skipping panel %d as it has no datasource", idx)
 			continue
@@ -395,67 +491,8 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 			},
 		)
 
-		widget := model.Widget{
-			Description:    panel.Description,
-			ID:             strconv.Itoa(idx),
-			IsStacked:      false,
-			NullZeroValues: "zero",
-			Opacity:        "1",
-			PanelTypes:     "TIME_SERIES", // TODO: Need to figure out how to get this
-			Query: model.Query{
-				ClickHouse: []model.ClickHouseQueryDashboard{
-					{
-						Disabled: false,
-						Legend:   "",
-						Name:     "A",
-						Query:    "",
-					},
-				},
-				MetricsBuilder: model.MetricsBuilder{
-					Formulas: []string{},
-					QueryBuilder: []model.QueryBuilder{
-						{
-							AggregateOperator: 1,
-							Disabled:          false,
-							GroupBy:           []string{},
-							Legend:            "",
-							MetricName:        "",
-							Name:              "A",
-							ReduceTo:          1,
-						},
-					},
-				},
-				PromQL:    []model.PromQueryDashboard{},
-				QueryType: int(model.PROM),
-			},
-			QueryData: model.QueryDataDashboard{
-				Data: model.Data{
-					QueryData: []interface{}{},
-				},
-			},
-			Title:     panel.Title,
-			YAxisUnit: panel.FieldConfig.Defaults.Unit,
-			QueryType: int(model.PROM), // TODO: Supprot for multiple query types
-		}
-		for _, target := range panel.Targets {
-			if target.Expr != "" {
-				for name := range toReturn.Variables {
-					target.Expr = strings.ReplaceAll(target.Expr, "$"+name, "{{"+"."+name+"}}")
-					target.Expr = strings.ReplaceAll(target.Expr, "$"+"__rate_interval", "5m")
-				}
-				widget.Query.PromQL = append(
-					widget.Query.PromQL,
-					model.PromQueryDashboard{
-						Disabled: false,
-						Legend:   target.LegendFormat,
-						Name:     target.RefID,
-						Query:    target.Expr,
-					},
-				)
-			}
-		}
-
-		toReturn.Widgets = append(toReturn.Widgets, widget)
+		toReturn.Widgets = append(toReturn.Widgets, *widgetFromPanel(panel, idx, toReturn.Variables))
+		idx++
 	}
 	return toReturn
 }
