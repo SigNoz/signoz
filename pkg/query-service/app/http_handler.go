@@ -27,6 +27,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	signozio "go.signoz.io/signoz/pkg/query-service/integrations/signozio"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/rules"
@@ -339,6 +340,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/grafana", EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
@@ -358,6 +360,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/featureFlags", OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/configs", OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
@@ -820,6 +824,40 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, dashboard)
 
+}
+
+func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model.DashboardData) {
+	toSave := make(map[string]interface{})
+	toSave["title"] = signozDashboard.Title
+	toSave["description"] = signozDashboard.Description
+	toSave["tags"] = signozDashboard.Tags
+	toSave["layout"] = signozDashboard.Layout
+	toSave["widgets"] = signozDashboard.Widgets
+	toSave["variables"] = signozDashboard.Variables
+
+	dashboard, apiError := dashboards.CreateDashboard(toSave)
+	if apiError != nil {
+		RespondError(w, apiError, nil)
+		return
+	}
+	aH.Respond(w, dashboard)
+	return
+}
+
+func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+
+	var importData model.GrafanaJSON
+
+	err = json.Unmarshal(b, &importData)
+	if err == nil {
+		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
+		aH.saveAndReturn(w, signozDashboard)
+		return
+	}
+	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
@@ -1422,7 +1460,7 @@ func (aH *APIHandler) getSpanFilters(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getFilteredSpans(w http.ResponseWriter, r *http.Request) {
 
-	query, err := parseFilteredSpansRequest(r)
+	query, err := parseFilteredSpansRequest(r, aH)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1531,6 +1569,30 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
 	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N"})
+}
+
+func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
+	featureSet := aH.FF().GetFeatureFlags()
+	aH.Respond(w, featureSet)
+}
+
+func (aH *APIHandler) FF() interfaces.FeatureLookup {
+	return aH.featureFlags
+}
+
+func (aH *APIHandler) CheckFeature(f string) bool {
+	err := aH.FF().CheckFeature(f)
+	return err == nil
+}
+
+func (aH *APIHandler) getConfigs(w http.ResponseWriter, r *http.Request) {
+
+	configs, err := signozio.FetchDynamicConfigs()
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	aH.Respond(w, configs)
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.

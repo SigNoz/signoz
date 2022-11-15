@@ -2,16 +2,13 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/dashboard/create';
+import { PayloadProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 
-const create = async (
-	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
-	const url = props.uploadedGrafana ? '/dashboards/grafana' : '/dashboards';
+const getDynamicConfigs = async (): Promise<
+	SuccessResponse<PayloadProps> | ErrorResponse
+> => {
 	try {
-		const response = await axios.post(url, {
-			...props,
-		});
+		const response = await axios.get(`/configs`);
 
 		return {
 			statusCode: 200,
@@ -24,4 +21,4 @@ const create = async (
 	}
 };
 
-export default create;
+export default getDynamicConfigs;
