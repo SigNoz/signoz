@@ -21,6 +21,14 @@ import (
 // This time the global variable is unexported.
 var db *sqlx.DB
 
+// User for mapping job,instance from grafana
+var instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
+var nodeEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
+var jobEQRE = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
+var instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
+var nodeRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
+var jobRERE = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	var err error
@@ -265,10 +273,6 @@ func SlugifyTitle(title string) string {
 	return s
 }
 
-var instanceRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
-var nodeRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
-var jobRe = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
-
 func widgetFromPanel(panel model.Panels, idx int, variables map[string]model.Variable) *model.Widget {
 	widget := model.Widget{
 		Description:    panel.Description,
@@ -318,9 +322,15 @@ func widgetFromPanel(panel model.Panels, idx int, variables map[string]model.Var
 				target.Expr = strings.ReplaceAll(target.Expr, "$"+name, "{{"+"."+name+"}}")
 				target.Expr = strings.ReplaceAll(target.Expr, "$"+"__rate_interval", "5m")
 			}
-			target.Expr = instanceRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.instance}}\"")
-			target.Expr = nodeRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.node}}\"")
-			target.Expr = jobRe.ReplaceAllString(target.Expr, "service_name=\"{{.job}}\"")
+
+			// prometheus receiver in collector maps job,instance as service_name,service_instance_id
+			target.Expr = instanceEQRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.instance}}\"")
+			target.Expr = nodeEQRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.node}}\"")
+			target.Expr = jobEQRE.ReplaceAllString(target.Expr, "service_name=\"{{.job}}\"")
+			target.Expr = instanceRERE.ReplaceAllString(target.Expr, "service_instance_id=~\"{{.instance}}\"")
+			target.Expr = nodeRERE.ReplaceAllString(target.Expr, "service_instance_id=~\"{{.node}}\"")
+			target.Expr = jobRERE.ReplaceAllString(target.Expr, "service_name=~\"{{.job}}\"")
+
 			widget.Query.PromQL = append(
 				widget.Query.PromQL,
 				model.PromQueryDashboard{
@@ -426,7 +436,6 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 		if panel.Type == "row" {
 			if panel.Panels != nil && len(panel.Panels) > 0 {
 				for _, innerPanel := range panel.Panels {
-					fmt.Println("innerPanel", innerPanel)
 					if idx%3 == 0 {
 						row++
 					}
