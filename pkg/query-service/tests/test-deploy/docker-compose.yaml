@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:22.4.5-alpine
+    image: clickhouse/clickhouse-server:22.8.8-alpine
     tty: true
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
