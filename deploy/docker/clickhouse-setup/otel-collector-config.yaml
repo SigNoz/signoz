@@ -47,7 +47,7 @@ receivers:
       # thrift_binary:
       #   endpoint: 0.0.0.0:6832
   hostmetrics:
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       cpu: {}
       load: {}
@@ -58,7 +58,7 @@ receivers:
   prometheus:
     config:
       global:
-        scrape_interval: 30s
+        scrape_interval: 60s
       scrape_configs:
         # otel-collector internal metrics
         - job_name: otel-collector
