@@ -14,6 +14,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/minio/minio-go/v6 v6.0.57
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/oklog v0.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
@@ -145,4 +146,4 @@ require (
 	k8s.io/client-go v8.0.0+incompatible // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.74
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.76

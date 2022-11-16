@@ -13,14 +13,19 @@
 
 ##
 
-SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNoz使用分布式跟踪来增加软件技术栈的可见性。
+SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNoz使用分布式追踪来增加软件技术栈的可见性。
 
-👉 你能看到一些性能矩阵，服务、外部api调用、每个终端(endpoint)的p99延迟和错误率。
+👉 你能看到一些性能指标，服务、外部api调用、每个终端(endpoint)的p99延迟和错误率。
 
-👉 通过准确的跟踪来确定是什么引起了问题，并且可以看到每个独立请求的帧图(framegraph)，这样你就能找到根本原因。
+👉 通过准确的追踪来确定是什么引起了问题，并且可以看到每个独立请求的帧图(framegraph)，这样你就能找到根本原因。
 
+👉 聚合trace数据来获得业务相关指标。
 
-![SigNoz Feature](https://signoz-public.s3.us-east-2.amazonaws.com/signoz_hero_github.png)
+![screenzy-1644432902955](https://user-images.githubusercontent.com/504541/153270713-1b2156e6-ec03-42de-975b-3c02b8ec1836.png)
+<br />
+![screenzy-1644432986784](https://user-images.githubusercontent.com/504541/153270725-0efb73b3-06ed-4207-bf13-9b7e2e17c4b8.png)
+<br />
+![screenzy-1647005040573](https://user-images.githubusercontent.com/504541/157875938-a3d57904-ea6d-4278-b929-bd1408d7f94c.png)
 
 <br /><br />
 
@@ -36,12 +41,12 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 
 ## 功能:
 
-- 应用总览矩阵(matrix)，如RPS, 50/90/99百分比延迟率，错误率
+- 应用概览指标(metrics)，如RPS, p50/p90/p99延迟率分位值，错误率等。
 - 应用中最慢的终端(endpoint)
-- 查看准确的网络请求跟踪来分析下游服务问题、慢数据库查询问题 及调用第三方服务如支付网关的问题
-- 通过服务名称、操作、延迟、错误、标签来过滤跟踪
-- 对过滤后的跟踪数据做矩阵聚合。比如，获得过滤条件`customer_type: gold` or `deployment_version: v2` or `external_call: paypal`的错误率和p99延迟
-- 整合的矩阵和跟踪用户界面。不需要像从Prometheus切换到Jaeger才能调试问题
+- 查看特定请求的trace数据来分析下游服务问题、慢数据库查询问题 及调用第三方服务如支付网关的问题
+- 通过服务名称、操作、延迟、错误、标签来过滤traces。
+- 聚合trace数据(events/spans)来得到业务相关指标。比如，你可以通过过滤条件`customer_type: gold` or `deployment_version: v2` or `external_call: paypal` 来获取指定业务的错误率和p99延迟
+- 为metrics和trace提供统一的UI。排查问题不需要在Prometheus和Jaeger之间切换。
 
 <br /><br />
 
@@ -53,7 +58,7 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 
 我们想做一个自服务的开源版本的工具，类似于DataDog和NewRelic，用于那些对客户数据流入第三方有隐私和安全担忧的厂商。
 
-开源也让你对配置、采样和上线率有完整的控制，你可以在SigNoz基础上构建模块来满足特定的商业需求。
+开源也让你对配置、采样和正常运行时间有完整的控制，你可以在SigNoz基础上构建模块来满足特定的商业需求。
 
 ### 语言支持
 
@@ -71,8 +76,8 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 <img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
 
 ## 入门
-  
-  
+
+
 ### 使用Docker部署
 
 请按照[这里](https://signoz.io/docs/deployment/docker/)列出的步骤使用Docker来安装
@@ -80,35 +85,34 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 如果你遇到任何问题，这个[排查指南](https://signoz.io/docs/deployment/troubleshooting)会对你有帮助。
 
 <p>&nbsp  </p>
-  
-  
+
+
 ### 使用Helm在Kubernetes上部署
 
 请跟着[这里](https://signoz.io/docs/deployment/helm_chart)的步骤使用helm charts安装
-  
 
 <br /><br />
 
 <img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/UseSigNoz.svg" width="50px" />
 
-## Comparisons to Familiar Tools
+## 与其他方案的比较
 
 ### SigNoz vs Prometheus
 
-如果你只是需要矩阵，那Prometheus是不错的，但如果你要无缝的在矩阵和跟踪之间切换，那目前把Prometheus & Jaeger串起来的体验并不好。
+如果你只是需要监控指标(metrics)，那Prometheus是不错的，但如果你要无缝的在metrics和traces之间切换，那目前把Prometheus & Jaeger串起来的体验并不好。
 
-我们的目标是在矩阵和跟踪之间提供整合的UI - 类似于Datadog这样的Saas厂提供的方案，能够对跟踪进行过滤和聚合，这是目前Jaeger缺失的功能。
+我们的目标是为metrics和traces提供统一的UI - 类似于Datadog这样的Saas厂提供的方案。并且能够对trace进行过滤和聚合，这是目前Jaeger缺失的功能。
 
 <p>&nbsp  </p>
 
 ### SigNoz vs Jaeger
 
-Jaeger只做分布式跟踪，SigNoz则是做了矩阵和跟踪两块，我们在计划中也有日志管理功能。
+Jaeger只做分布式追踪(distributed tracing)，SigNoz则支持metrics,traces,logs ，即可视化的三大支柱。
 
 并且SigNoz有一些Jaeger没有的高级功能：
 
-- Jaegar UI无法在跟踪或过滤的跟踪基础上展示矩阵。
-- Jaeger不能在过滤的跟踪上进行聚合操作。例如，拥有tag为customer_type='premium'的所有请求的p99延迟，在SigNoz里这很容易实现。
+- Jaegar UI无法在traces或过滤的traces上展示metrics。
+- Jaeger不能对过滤的traces做聚合操作。例如，拥有tag为customer_type='premium'的所有请求的p99延迟。而这个功能在SigNoz这儿是很容易实现。
 
 <br /><br />
 
@@ -120,6 +124,23 @@ Jaeger只做分布式跟踪，SigNoz则是做了矩阵和跟踪两块，我们�
 我们 ❤️ 任何贡献无论大小。 请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 然后开始给Signoz做贡献。
 
 还不清楚怎么开始？ 只需在[slack社区](https://signoz.io/slack)的`#contributing`频道里ping我们。
+
+### Project maintainers
+
+#### Backend
+
+- [Ankit Nayan](https://github.com/ankitnayan)
+- [Nityananda Gohain](https://github.com/nityanandagohain)
+- [Srikanth Chekuri](https://github.com/srikanthccv)
+- [Vishal Sharma](https://github.com/makeavish)
+
+#### Frontend
+
+- [Palash Gupta](https://github.com/palashgdev)
+
+#### DevOps
+
+- [Prashant Shahi](https://github.com/prashant-shahi)
 
 <br /><br />
 

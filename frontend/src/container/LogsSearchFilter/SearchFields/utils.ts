@@ -2,9 +2,14 @@
 // @ts-ignore
 // @ts-nocheck
 
-import { QueryTypes } from 'lib/logql/tokens';
+import { QueryTypes, QueryOperatorsSingleVal } from 'lib/logql/tokens';
 
-export const queryKOVPair = () => [
+export interface QueryFields {
+	type: keyof typeof QueryTypes;
+	value: string;
+}
+
+export const queryKOVPair = (): QueryFields[] => [
 	{
 		type: QueryTypes.QUERY_KEY,
 		value: null,
