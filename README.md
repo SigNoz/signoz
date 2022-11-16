@@ -80,7 +80,7 @@ We support [OpenTelemetry](https://opentelemetry.io) as the library which you ca
 - Go
 - PHP
 - .NET
-- Ruby on Rails
+- Ruby
 - Elixir
 - Rust
 
