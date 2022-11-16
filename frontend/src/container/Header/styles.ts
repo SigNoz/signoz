@@ -61,3 +61,7 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 		font-size: 1rem !important;
 	}
 `;
+
+export const IconContainer = styled.div`
+	color: white;
+`;
