@@ -98,10 +98,12 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 		<Layout.Header>
 			<Container>
 				<NavLink to={ROUTES.APPLICATION}>
-					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
-					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
-						SigNoz
-					</Typography.Title>
+					<Space align="center" direction="horizontal">
+						<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
+						<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
+							SigNoz
+						</Typography.Title>
+					</Space>
 				</NavLink>
 
 				<Space style={{ height: '100%' }} align="center">
