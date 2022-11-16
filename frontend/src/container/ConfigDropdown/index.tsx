@@ -52,7 +52,7 @@ function DynamicConfigDropdown({
 		>
 			<Space align="center">
 				<Icon
-					style={{ fontSize: 26, color: 'white', paddingTop: 20, cursor: 'pointer' }}
+					style={{ fontSize: 26, color: 'white', paddingTop: 26, cursor: 'pointer' }}
 				/>
 				<DropDownIcon style={{ color: 'white' }} />
 			</Space>

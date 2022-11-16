@@ -29,7 +29,12 @@ import AppReducer from 'types/reducer/app';
 import CurrentOrganization from './CurrentOrganization';
 import ManageLicense from './ManageLicense';
 import SignedInAS from './SignedInAs';
-import { Container, LogoutContainer, ToggleButton } from './styles';
+import {
+	Container,
+	IconContainer,
+	LogoutContainer,
+	ToggleButton,
+} from './styles';
 
 function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 	const { isDarkMode, user, currentVersion } = useSelector<AppState, AppReducer>(
@@ -98,10 +103,12 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 		<Layout.Header>
 			<Container>
 				<NavLink to={ROUTES.APPLICATION}>
-					<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
-					<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
-						SigNoz
-					</Typography.Title>
+					<Space align="center" direction="horizontal">
+						<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
+						<Typography.Title style={{ margin: 0, color: '#DBDBDB' }} level={4}>
+							SigNoz
+						</Typography.Title>
+					</Space>
 				</NavLink>
 
 				<Space style={{ height: '100%' }} align="center">
@@ -123,7 +130,9 @@ function HeaderContainer({ toggleDarkMode }: Props): JSX.Element {
 					>
 						<Space>
 							<Avatar shape="circle">{user?.name[0]}</Avatar>
-							{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+							<IconContainer>
+								{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+							</IconContainer>
 						</Space>
 					</Dropdown>
 				</Space>
