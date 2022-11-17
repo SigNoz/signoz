@@ -10,3 +10,8 @@ export const DropDownContainer = styled(Card)`
 		padding: 0.8rem;
 	}
 `;
+
+export const Container = styled.div`
+	width: 100%;
+	flex: 1;
+`;

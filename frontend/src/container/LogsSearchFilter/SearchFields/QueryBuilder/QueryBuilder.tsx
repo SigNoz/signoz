@@ -68,7 +68,7 @@ function QueryField({
 				query[2].value = '';
 			}
 		}
-		onUpdate(query, queryIndex);
+		// onUpdate(query, queryIndex);
 	};
 
 	const handleClear = (): void => {

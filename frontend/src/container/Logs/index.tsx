@@ -4,7 +4,7 @@ import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
 import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
-import SearchFilter from 'container/LogsSearchFilter';
+import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import React, { memo, useEffect } from 'react';
@@ -14,6 +14,8 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GetLogsFields } from 'store/actions/logs/getFields';
 import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
+
+import SpaceContainer from './styles';
 
 function Logs({ getLogsFields }: LogsProps): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -32,22 +34,26 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 	}, [getLogsFields]);
 
 	return (
-		<div style={{ position: 'relative' }}>
-			<Row style={{ justifyContent: 'center', alignItems: 'center' }}>
-				<SearchFilter />
-				<Divider type="vertical" style={{ height: '2rem' }} />
+		<>
+			<SpaceContainer
+				split={<Divider type="vertical" />}
+				align="center"
+				direction="horizontal"
+			>
+				<LogsSearchFilter />
 				<LogLiveTail />
-			</Row>
+			</SpaceContainer>
+
 			<LogsAggregate />
 			<LogControls />
-			<Divider style={{ margin: 0 }} />
-			<Row gutter={20} style={{ flexWrap: 'nowrap' }}>
+			<Divider plain orientationMargin={1} />
+			<Row gutter={20} wrap={false}>
 				<LogsFilters />
-				<Divider type="vertical" style={{ height: '100%', margin: 0 }} />
+				<Divider type="vertical" />
 				<LogsTable />
 			</Row>
 			<LogDetailedView />
-		</div>
+		</>
 	);
 }
 
