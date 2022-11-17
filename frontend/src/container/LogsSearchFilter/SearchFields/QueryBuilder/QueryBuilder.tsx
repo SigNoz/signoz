@@ -4,7 +4,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
@@ -19,9 +19,11 @@ import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 import { v4 } from 'uuid';
 
+import { SearchFieldsProps } from '..';
 import FieldKey from '../FieldKey';
 import { QueryConditionContainer, QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
+import { Container } from './styles';
 import { hashCode, parseQuery } from './utils';
 
 const { Option } = Select;
@@ -68,7 +70,7 @@ function QueryField({
 				query[2].value = '';
 			}
 		}
-		// onUpdate(query, queryIndex);
+		onUpdate(query, queryIndex);
 	};
 
 	const handleClear = (): void => {
@@ -172,9 +174,8 @@ export type Query = { value: string | string[]; type: string }[];
 
 function QueryBuilder({
 	updateParsedQuery,
-}: {
-	updateParsedQuery: (arg0: unknown) => void;
-}): JSX.Element {
+	onDropDownToggleHandler,
+}: SearchFieldsProps): JSX.Element {
 	const {
 		searchFilter: { parsedQuery },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -233,19 +234,16 @@ function QueryBuilder({
 				/>
 			);
 		});
+
 	return (
-		<div>
-			<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
-			<div
-				style={{
-					display: 'grid',
-					gridTemplateColumns: '80px 1fr',
-					margin: '0.5rem 0',
-				}}
-			>
-				{QueryUI()}
-			</div>
-		</div>
+		<>
+			<Container isMargin={generatedQueryStructure.length === 0}>
+				<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
+				<CloseSquareOutlined onClick={onDropDownToggleHandler(false)} />
+			</Container>
+
+			<>{QueryUI()}</>
+		</>
 	);
 }
 

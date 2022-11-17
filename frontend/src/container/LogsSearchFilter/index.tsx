@@ -1,9 +1,8 @@
-import { CloseSquareOutlined } from '@ant-design/icons';
-import { Button, Input } from 'antd';
+import { Input, InputRef, Popover } from 'antd';
+import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-use';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
@@ -18,8 +17,6 @@ import SearchFields from './SearchFields';
 import { Container, DropDownContainer } from './styles';
 import { useSearchParser } from './useSearchParser';
 
-const { Search } = Input;
-
 function SearchFilter({
 	getLogs,
 	getLogsAggregate,
@@ -30,9 +27,10 @@ function SearchFilter({
 		updateQueryString,
 	} = useSearchParser();
 	const [showDropDown, setShowDropDown] = useState(false);
+	const searchRef = useRef<InputRef>(null);
 
 	const onDropDownToggleHandler = useCallback(
-		(value) => (): void => {
+		(value: boolean) => (): void => {
 			setShowDropDown(value);
 		},
 		[],
@@ -47,7 +45,6 @@ function SearchFilter({
 		(state) => state.globalTime,
 	);
 
-	const { search } = useLocation();
 	const dispatch = useDispatch();
 
 	const handleSearch = useCallback(
@@ -103,9 +100,7 @@ function SearchFilter({
 		],
 	);
 
-	const urlQuery = useMemo(() => {
-		return new URLSearchParams(search);
-	}, [search]);
+	const urlQuery = useUrlQuery();
 
 	useEffect(() => {
 		const urlQueryString = urlQuery.get('q');
@@ -115,23 +110,37 @@ function SearchFilter({
 
 	return (
 		<Container>
-			<Search
-				placeholder="Search Filter"
-				value={queryString}
-				onChange={(e): void => {
-					updateQueryString(e.target.value);
+			<Popover
+				placement="bottom"
+				content={
+					<DropDownContainer>
+						<SearchFields
+							onDropDownToggleHandler={onDropDownToggleHandler}
+							updateParsedQuery={updateParsedQuery as never}
+						/>
+					</DropDownContainer>
+				}
+				trigger="click"
+				overlayInnerStyle={{
+					width: `${searchRef?.current?.input?.offsetWidth || 0 + 300}px`,
 				}}
-				allowClear
-				onSearch={handleSearch}
-			/>
-			{showDropDown && (
-				<DropDownContainer>
-					<Button type="text" onClick={onDropDownToggleHandler(false)}>
-						<CloseSquareOutlined />
-					</Button>
-					<SearchFields updateParsedQuery={updateParsedQuery as never} />
-				</DropDownContainer>
-			)}
+				visible={showDropDown}
+				destroyTooltipOnHide
+				onVisibleChange={(value): void => {
+					onDropDownToggleHandler(value)();
+				}}
+			>
+				<Input.Search
+					ref={searchRef}
+					placeholder="Search Filter"
+					value={queryString}
+					onChange={(e): void => {
+						updateQueryString(e.target.value);
+					}}
+					allowClear
+					onSearch={handleSearch}
+				/>
+			</Popover>
 		</Container>
 	);
 }
