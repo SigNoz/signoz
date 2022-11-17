@@ -1,3 +1,4 @@
+import { PayloadProps as ConfigPayload } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
 import { PayloadProps as UserPayload } from 'types/api/user/getUser';
@@ -26,4 +27,5 @@ export default interface AppReducer {
 	role: ROLES | null;
 	org: OrgPayload | null;
 	featureFlags: null | FeatureFlagPayload;
+	configs: ConfigPayload;
 }
