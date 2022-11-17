@@ -97,6 +97,7 @@ function LogLiveTail(): JSX.Element {
 		if (liveTail === 'STOPPED') {
 			liveTailSourceRef.current = null;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [liveTail]);
 
 	const handleLiveTailStart = (): void => {

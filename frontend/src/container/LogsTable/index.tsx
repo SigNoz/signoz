@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import { Typography } from 'antd';
 import LogItem from 'components/Logs/LogItem';
 import Spinner from 'components/Spinner';
