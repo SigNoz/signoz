@@ -1,12 +1,24 @@
-import { notification, Table, TableProps, Tooltip, Typography } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import {
+	Button,
+	Card,
+	Input,
+	notification,
+	Space,
+	Table,
+	TableProps,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { FilterConfirmProps } from 'antd/lib/table/interface';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -93,11 +105,54 @@ function AllErrors(): JSX.Element {
 		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
 	);
 
+	const filterIcon = useCallback(() => <SearchOutlined />, []);
+
+	const handleSearch = (
+		confirm: (param?: FilterConfirmProps) => void,
+	): VoidFunction => (): void => {
+		confirm();
+	};
+
+	const filterDropdown = useCallback(
+		({ setSelectedKeys, selectedKeys, confirm }) => (
+			<Card size="small">
+				<Space align="start" direction="vertical">
+					<Input
+						placeholder="Search By Exception Type"
+						value={selectedKeys[0]}
+						onChange={(e): void =>
+							setSelectedKeys(e.target.value ? [e.target.value] : [])
+						}
+						allowClear
+						onPressEnter={handleSearch(confirm)}
+					/>
+					<Button
+						type="primary"
+						onClick={handleSearch(confirm)}
+						icon={<SearchOutlined />}
+						size="small"
+					>
+						Search
+					</Button>
+				</Space>
+			</Card>
+		),
+		[],
+	);
+
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
+			onFilter: (value, record): boolean => {
+				if (record.exceptionType && typeof value === 'string') {
+					return record.exceptionType.toLowerCase().includes(value.toLowerCase());
+				}
+				return false;
+			},
+			filterIcon,
+			filterDropdown,
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
