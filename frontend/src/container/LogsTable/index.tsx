@@ -15,9 +15,6 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container, Heading } from './styles';
 
-interface LogsTableProps {
-	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
-}
 function LogsTable({ getLogs }: LogsTableProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
@@ -51,6 +48,7 @@ function LogsTable({ getLogs }: LogsTableProps): JSX.Element {
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;
 	}
+
 	return (
 		<Container flex="auto">
 			<Heading>
@@ -85,5 +83,9 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	getLogs: bindActionCreators(getLogs, dispatch),
 });
+
+interface LogsTableProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+}
 
 export default connect(null, mapDispatchToProps)(memo(LogsTable));
