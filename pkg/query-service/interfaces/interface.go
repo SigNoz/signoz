@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type Reader interface {
@@ -61,7 +61,7 @@ type Reader interface {
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
 	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
-
+	GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError

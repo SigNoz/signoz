@@ -6,9 +6,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/telemetry"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.uber.org/zap"
 )
 
@@ -86,6 +86,11 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 	}
 
 	return mds, nil
+}
+
+// DB returns database connection
+func (mds *ModelDaoSqlite) DB() *sqlx.DB {
+	return mds.db
 }
 
 // initializeOrgPreferences initializes in-memory telemetry settings. It is planned to have

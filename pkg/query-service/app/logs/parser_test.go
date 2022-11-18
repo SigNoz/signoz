@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var correctQueriesTest = []struct {
@@ -29,8 +29,8 @@ var correctQueriesTest = []struct {
 	},
 	{
 		`contains search with a different attributes`,
-		`resource contains 'Hello, "World"'`,
-		[]string{`resource ILIKE '%Hello, "World"%' `},
+		`resource contains 'Hello, "World" and user\'s'`,
+		[]string{`resource ILIKE '%Hello, "World" and user\'s%' `},
 	},
 	{
 		`more than one continas`,

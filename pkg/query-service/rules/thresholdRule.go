@@ -3,21 +3,22 @@ package rules
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"math"
 	"reflect"
 	"sort"
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.signoz.io/query-service/app/metrics"
-	"go.signoz.io/query-service/constants"
-	qsmodel "go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/utils/labels"
-	"go.signoz.io/query-service/utils/times"
-	"go.signoz.io/query-service/utils/timestamp"
-	"go.signoz.io/query-service/utils/value"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	qsmodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"go.signoz.io/signoz/pkg/query-service/utils/times"
+	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
+	"go.signoz.io/signoz/pkg/query-service/utils/value"
 
 	yaml "gopkg.in/yaml.v2"
 )

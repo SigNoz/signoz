@@ -78,6 +78,12 @@ We support [OpenTelemetry](https://opentelemetry.io) as the library which you ca
 - Python
 - NodeJS
 - Go
+- PHP
+- .NET
+- Ruby
+- Elixir
+- Rust
+
 
 You can find the complete list of languages here - https://opentelemetry.io/docs/
 

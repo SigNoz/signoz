@@ -8,8 +8,10 @@ import {
 	LOGGED_IN,
 	SIDEBAR_COLLAPSE,
 	SWITCH_DARK_MODE,
+	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
+	UPDATE_FEATURE_FLAGS,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
@@ -47,6 +49,7 @@ const InitialValue: InitialValueTypes = {
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
+	featureFlags: {},
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	user: getInitialUser(),
@@ -54,6 +57,7 @@ const InitialValue: InitialValueTypes = {
 	isUserFetchingError: false,
 	org: null,
 	role: null,
+	configs: {},
 };
 
 const appReducer = (
@@ -79,6 +83,13 @@ const appReducer = (
 			return {
 				...state,
 				isSideBarCollapsed: action.payload,
+			};
+		}
+
+		case UPDATE_FEATURE_FLAGS: {
+			return {
+				...state,
+				featureFlags: { ...action.payload },
 			};
 		}
 
@@ -198,6 +209,13 @@ const appReducer = (
 			return {
 				...state,
 				org: action.payload.org,
+			};
+		}
+
+		case UPDATE_CONFIGS: {
+			return {
+				...state,
+				configs: action.payload.configs,
 			};
 		}
 

@@ -1,14 +1,14 @@
 const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
-	SERVICE_METRICS: '/application/:servicename',
+	SERVICE_METRICS: '/services/:servicename',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	SETTINGS: '/settings',
 	INSTRUMENTATION: '/get-started',
 	USAGE_EXPLORER: '/usage-explorer',
-	APPLICATION: '/application',
+	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
@@ -29,6 +29,7 @@ const ROUTES = {
 	LOGS: '/logs',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
+	LIST_LICENSES: '/licenses',
 };
 
 export default ROUTES;
