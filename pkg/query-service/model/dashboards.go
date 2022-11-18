@@ -5,6 +5,65 @@ type Datasource struct {
 	UID  string `json:"uid"`
 }
 
+type Panels struct {
+	Datasource  interface{} `json:"datasource"`
+	Description string      `json:"description,omitempty"`
+	FieldConfig struct {
+		Defaults struct {
+			Color struct {
+				Mode string `json:"mode"`
+			} `json:"color"`
+			Max        float64 `json:"max"`
+			Min        float64 `json:"min"`
+			Thresholds struct {
+				Mode  string `json:"mode"`
+				Steps []struct {
+					Color string      `json:"color"`
+					Value interface{} `json:"value"`
+				} `json:"steps"`
+			} `json:"thresholds"`
+			Unit string `json:"unit"`
+		} `json:"defaults"`
+		Overrides []interface{} `json:"overrides"`
+	} `json:"fieldConfig,omitempty"`
+	GridPos struct {
+		H int `json:"h"`
+		W int `json:"w"`
+		X int `json:"x"`
+		Y int `json:"y"`
+	} `json:"gridPos"`
+	ID      int           `json:"id"`
+	Links   []interface{} `json:"links,omitempty"`
+	Options struct {
+		Orientation   string `json:"orientation"`
+		ReduceOptions struct {
+			Calcs  []string `json:"calcs"`
+			Fields string   `json:"fields"`
+			Values bool     `json:"values"`
+		} `json:"reduceOptions"`
+		ShowThresholdLabels  bool `json:"showThresholdLabels"`
+		ShowThresholdMarkers bool `json:"showThresholdMarkers"`
+	} `json:"options,omitempty"`
+	PluginVersion string `json:"pluginVersion,omitempty"`
+	Targets       []struct {
+		Datasource     interface{} `json:"datasource"`
+		EditorMode     string      `json:"editorMode"`
+		Expr           string      `json:"expr"`
+		Hide           bool        `json:"hide"`
+		IntervalFactor int         `json:"intervalFactor"`
+		LegendFormat   string      `json:"legendFormat"`
+		Range          bool        `json:"range"`
+		RefID          string      `json:"refId"`
+		Step           int         `json:"step"`
+	} `json:"targets"`
+	Title            string   `json:"title"`
+	Type             string   `json:"type"`
+	HideTimeOverride bool     `json:"hideTimeOverride,omitempty"`
+	MaxDataPoints    int      `json:"maxDataPoints,omitempty"`
+	Collapsed        bool     `json:"collapsed,omitempty"`
+	Panels           []Panels `json:"panels,omitempty"`
+}
+
 type GrafanaJSON struct {
 	Inputs []struct {
 		Name        string `json:"name"`
@@ -51,65 +110,8 @@ type GrafanaJSON struct {
 		Type        string        `json:"type"`
 		URL         string        `json:"url"`
 	} `json:"links"`
-	LiveNow bool `json:"liveNow"`
-	Panels  []struct {
-		Datasource  interface{} `json:"datasource"`
-		Description string      `json:"description,omitempty"`
-		FieldConfig struct {
-			Defaults struct {
-				Color struct {
-					Mode string `json:"mode"`
-				} `json:"color"`
-				Max        float64 `json:"max"`
-				Min        float64 `json:"min"`
-				Thresholds struct {
-					Mode  string `json:"mode"`
-					Steps []struct {
-						Color string      `json:"color"`
-						Value interface{} `json:"value"`
-					} `json:"steps"`
-				} `json:"thresholds"`
-				Unit string `json:"unit"`
-			} `json:"defaults"`
-			Overrides []interface{} `json:"overrides"`
-		} `json:"fieldConfig,omitempty"`
-		GridPos struct {
-			H int `json:"h"`
-			W int `json:"w"`
-			X int `json:"x"`
-			Y int `json:"y"`
-		} `json:"gridPos"`
-		ID      int           `json:"id"`
-		Links   []interface{} `json:"links,omitempty"`
-		Options struct {
-			Orientation   string `json:"orientation"`
-			ReduceOptions struct {
-				Calcs  []string `json:"calcs"`
-				Fields string   `json:"fields"`
-				Values bool     `json:"values"`
-			} `json:"reduceOptions"`
-			ShowThresholdLabels  bool `json:"showThresholdLabels"`
-			ShowThresholdMarkers bool `json:"showThresholdMarkers"`
-		} `json:"options,omitempty"`
-		PluginVersion string `json:"pluginVersion,omitempty"`
-		Targets       []struct {
-			Datasource     interface{} `json:"datasource"`
-			EditorMode     string      `json:"editorMode"`
-			Expr           string      `json:"expr"`
-			Hide           bool        `json:"hide"`
-			IntervalFactor int         `json:"intervalFactor"`
-			LegendFormat   string      `json:"legendFormat"`
-			Range          bool        `json:"range"`
-			RefID          string      `json:"refId"`
-			Step           int         `json:"step"`
-		} `json:"targets"`
-		Title            string        `json:"title"`
-		Type             string        `json:"type"`
-		HideTimeOverride bool          `json:"hideTimeOverride,omitempty"`
-		MaxDataPoints    int           `json:"maxDataPoints,omitempty"`
-		Collapsed        bool          `json:"collapsed,omitempty"`
-		Panels           []interface{} `json:"panels,omitempty"`
-	} `json:"panels"`
+	LiveNow       bool     `json:"liveNow"`
+	Panels        []Panels `json:"panels"`
 	SchemaVersion int      `json:"schemaVersion"`
 	Style         string   `json:"style"`
 	Tags          []string `json:"tags"`
