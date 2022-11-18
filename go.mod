@@ -146,4 +146,4 @@ require (
 	k8s.io/client-go v8.0.0+incompatible // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.74
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.76

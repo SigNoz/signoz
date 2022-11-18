@@ -47,7 +47,7 @@ receivers:
       # thrift_binary:
       #   endpoint: 0.0.0.0:6832
   hostmetrics:
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       cpu: {}
       load: {}
@@ -55,6 +55,16 @@ receivers:
       disk: {}
       filesystem: {}
       network: {}
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        # otel-collector internal metrics
+        - job_name: otel-collector
+          static_configs:
+          - targets:
+            - localhost:8888
 
 processors:
   batch:
@@ -89,7 +99,6 @@ processors:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system] # include ec2 for AWS, gce for GCP and azure for Azure.
     timeout: 2s
-    override: false
 
 extensions:
   health_check:
@@ -138,8 +147,8 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhousemetricswrite]
-    metrics/hostmetrics:
-      receivers: [hostmetrics]
+    metrics/generic:
+      receivers: [hostmetrics, prometheus]
       processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:

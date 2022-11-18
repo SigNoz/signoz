@@ -19,7 +19,7 @@ import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
-import { Form, FormItem } from './styles';
+import { Form, FormContainer, FormItem } from './styles';
 
 const { Option } = DefaultSelect;
 
@@ -263,29 +263,31 @@ function DateTimeSelection({
 				layout="inline"
 				initialValues={{ interval: selectedTime }}
 			>
-				<DefaultSelect
-					onSelect={(value: unknown): void => onSelectHandler(value as Time)}
-					value={getInputLabel(startTime, endTime, selectedTime)}
-					data-testid="dropDown"
-				>
-					{options.map(({ value, label }) => (
-						<Option key={value + label} value={value}>
-							{label}
-						</Option>
-					))}
-				</DefaultSelect>
+				<FormContainer>
+					<DefaultSelect
+						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
+						value={getInputLabel(startTime, endTime, selectedTime)}
+						data-testid="dropDown"
+					>
+						{options.map(({ value, label }) => (
+							<Option key={value + label} value={value}>
+								{label}
+							</Option>
+						))}
+					</DefaultSelect>
 
-				<FormItem hidden={refreshButtonHidden}>
-					<Button
-						icon={<SyncOutlined />}
-						type="primary"
-						onClick={onRefreshHandler}
-					/>
-				</FormItem>
+					<FormItem hidden={refreshButtonHidden}>
+						<Button
+							icon={<SyncOutlined />}
+							type="primary"
+							onClick={onRefreshHandler}
+						/>
+					</FormItem>
 
-				<FormItem>
-					<AutoRefresh disabled={refreshButtonHidden} />
-				</FormItem>
+					<FormItem>
+						<AutoRefresh disabled={refreshButtonHidden} />
+					</FormItem>
+				</FormContainer>
 			</Form>
 
 			<RefreshText
