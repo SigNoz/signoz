@@ -16,7 +16,7 @@ function TraceDetail(): JSX.Element {
 	const [levelDown] = useState<string | null>(urlQuery.get('levelDown'));
 	const { data: traceDetailResponse, error, isLoading, isError } = useQuery(
 		`getTraceItem/${id}/${spanId}/${levelUp}/${levelDown}`,
-		() => getTraceItem({id, spanId, levelUp, levelDown}),
+		() => getTraceItem({ id, spanId, levelUp, levelDown }),
 		{
 			cacheTime: 3000,
 		},

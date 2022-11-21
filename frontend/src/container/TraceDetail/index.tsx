@@ -81,7 +81,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				search: `?spanId=${activeSelectedId}&levelUp=${levelUp}&levelDown=${levelDown}`,
 			});
 		}
-	}, [activeSelectedId]);
+	}, [activeSelectedId, levelDown, levelUp]);
 
 	const getSelectedNode = useMemo(() => {
 		return getNodeById(activeSelectedId, treesData);
