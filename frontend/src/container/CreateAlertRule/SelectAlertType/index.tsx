@@ -4,40 +4,54 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { AlertTypeCard, AlertTypeCards, SelectTypeContainer } from './styles';
 
+interface OptionType {
+	title: string;
+	selection: AlertTypes;
+	description: string;
+}
+
 function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const { t } = useTranslation(['alerts']);
+
+	const renderOptions = (): JSX.Element => {
+		const optionList: OptionType[] = [
+			{
+				title: t('metric_based_alert'),
+				selection: AlertTypes.METRICS_BASED_ALERT,
+				description: t('metric_based_alert_desc'),
+			},
+			{
+				title: t('log_based_alert'),
+				selection: AlertTypes.LOGS_BASED_ALERT,
+				description: t('log_based_alert_desc'),
+			},
+			{
+				title: t('traces_based_alert'),
+				selection: AlertTypes.TRACES_BASED_ALERT,
+				description: t('traces_based_alert_desc'),
+			},
+		];
+		return (
+			<>
+				{optionList.map((o: OptionType) => (
+					<AlertTypeCard
+						key={o.selection}
+						title={o.title}
+						onClick={(): void => {
+							onSelect(o.selection);
+						}}
+					>
+						{' '}
+						{o.description}
+					</AlertTypeCard>
+				))}
+			</>
+		);
+	};
 	return (
 		<SelectTypeContainer>
 			<h3> {t('choose_alert_type')} </h3>
-			<AlertTypeCards>
-				<AlertTypeCard
-					title={t('metric_based_alert')}
-					onClick={(): void => {
-						onSelect(AlertTypes.METRICS_BASED_ALERT);
-					}}
-				>
-					{' '}
-					{t('metric_based_alert_desc')}
-				</AlertTypeCard>
-				<AlertTypeCard
-					title={t('log_based_alert')}
-					onClick={(): void => {
-						onSelect(AlertTypes.LOGS_BASED_ALERT);
-					}}
-				>
-					{' '}
-					{t('log_based_alert_desc')}
-				</AlertTypeCard>
-				<AlertTypeCard
-					title={t('traces_based_alert')}
-					onClick={(): void => {
-						onSelect(AlertTypes.TRACES_BASED_ALERT);
-					}}
-				>
-					{' '}
-					{t('traces_based_alert_desc')}
-				</AlertTypeCard>
-			</AlertTypeCards>
+			<AlertTypeCards>{renderOptions()}</AlertTypeCards>
 		</SelectTypeContainer>
 	);
 }
