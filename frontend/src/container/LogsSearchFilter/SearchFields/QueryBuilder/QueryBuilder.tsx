@@ -142,14 +142,16 @@ interface QueryConditionFieldProps {
 	query: { value: string | string[]; type: string }[];
 	queryIndex: number;
 	onUpdate: (arg0: unknown, arg1: number) => void;
+	style?: React.CSSProperties;
 }
 function QueryConditionField({
 	query,
 	queryIndex,
 	onUpdate,
+	style,
 }: QueryConditionFieldProps): JSX.Element {
 	return (
-		<QueryConditionContainer>
+		<QueryConditionContainer style={{ ...style }}>
 			<Select
 				defaultValue={
 					(query as any).value &&
@@ -168,6 +170,10 @@ function QueryConditionField({
 		</QueryConditionContainer>
 	);
 }
+
+QueryConditionField.defaultProps = {
+	style: undefined,
+};
 
 export type Query = { value: string | string[]; type: string }[];
 
@@ -225,12 +231,18 @@ function QueryBuilder({
 				);
 
 			return (
-				<QueryConditionField
-					key={keyPrefix + idx}
-					query={query}
-					queryIndex={idx}
-					onUpdate={handleUpdate as never}
-				/>
+				<div style={{ display: 'flex' }} key={keyPrefix + idx}>
+					<div style={{ flex: 1, minWidth: 100 }} />
+					<div style={{ minWidth: 150 }}>
+						<QueryConditionField
+							key={keyPrefix + idx}
+							query={query}
+							queryIndex={idx}
+							onUpdate={handleUpdate as never}
+						/>
+					</div>
+					<div style={{ flex: 2 }} />
+				</div>
 			);
 		});
 
