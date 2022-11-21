@@ -34,7 +34,6 @@ function ChartPreview({
 	headline,
 	threshold,
 }: ChartPreviewProps): JSX.Element | null {
-	console.log('query:', query);
 	const { t } = useTranslation('alerts');
 	const [fetchError, setFetchError] = useState('');
 	const staticLine: StaticLineProps | undefined =

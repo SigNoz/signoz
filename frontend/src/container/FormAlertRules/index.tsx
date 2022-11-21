@@ -164,7 +164,6 @@ function FormAlertRules({
 	}, [queryCategory, chQueries, metricQueries, formulaQueries, promQueries]);
 
 	const onRunQuery = (): void => {
-		console.log('going to assign stage query:', stagedQuery);
 		setManualStagedQuery(stagedQuery);
 	};
 

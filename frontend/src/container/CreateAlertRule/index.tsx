@@ -1,4 +1,4 @@
-import { Form } from 'antd';
+import { Form, Row } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
 import React, { useState } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -9,7 +9,6 @@ import {
 } from 'types/api/alerts/create';
 
 import SelectAlertType from './SelectAlertType';
-import { PanelContainer } from './styles';
 
 function CreateRules(): JSX.Element {
 	const [initValues, setInitValues] = useState(alertDefaults);
@@ -36,9 +35,9 @@ function CreateRules(): JSX.Element {
 
 	if (step === 0) {
 		return (
-			<PanelContainer>
+			<Row wrap={false}>
 				<SelectAlertType onSelect={onSelectType} />
-			</PanelContainer>
+			</Row>
 		);
 	}
 	return (

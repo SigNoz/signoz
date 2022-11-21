@@ -16,7 +16,7 @@ export const AlertTypeCards = styled(Row)`
 export const AlertTypeCard = styled(Card)`
 	&&& {
 		margin: 5px;
-		width: 300px;
+		width: 18.75rem;
 		cursor: pointer;
 	}
 `;
