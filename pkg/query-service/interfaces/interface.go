@@ -46,7 +46,7 @@ type Reader interface {
 	GetNextPrevErrorIDs(ctx context.Context, params *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError)
 
 	// Search Interfaces
-	SearchTraces(ctx context.Context, traceID string, spanId string) (*[]model.SearchSpansResult, error)
+	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
 	SearchTracesEE(ctx context.Context, traceID string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error)
 
 	// Setter Interfaces
@@ -55,7 +55,7 @@ type Reader interface {
 	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
-	GetMetricResult(ctx context.Context, query string) ([]*model.Series, string, error)
+	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
 	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)

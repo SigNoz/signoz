@@ -1716,7 +1716,7 @@ func (r *ClickHouseReader) SearchTracesEE(ctx context.Context, traceId string, s
 	return nil, fmt.Errorf("SearchTracesEE is not implemented for opensource version")
 }
 
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
@@ -2834,7 +2834,7 @@ func (r *ClickHouseReader) GetMetricResultEE(ctx context.Context, query string) 
 }
 
 // GetMetricResult runs the query and returns list of time series
-func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, string, error) {
+func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
 
 	defer utils.Elapsed("GetMetricResult")()
 
@@ -2844,7 +2844,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.S().Debug("Error in processing query: ", err)
-		return nil, "", err
+		return nil, err
 	}
 
 	var (
@@ -2865,7 +2865,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 	defer rows.Close()
 	for rows.Next() {
 		if err := rows.Scan(vars...); err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		var groupBy []string
 		var metricPoint model.MetricPoint
@@ -2881,7 +2881,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 					var metric map[string]string
 					err := json.Unmarshal([]byte(*v), &metric)
 					if err != nil {
-						return nil, "", err
+						return nil, err
 					}
 					for key, val := range metric {
 						groupBy = append(groupBy, val)
@@ -2915,7 +2915,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		series := model.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
-	return seriesList, "", nil
+	return seriesList, nil
 }
 
 func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {

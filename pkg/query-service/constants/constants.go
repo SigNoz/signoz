@@ -13,7 +13,7 @@ const (
 	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
 )
 
-var ConfigSignozIo = "https://config.signoz.io/api/v1"
+var ConfigSignozIo = "https://localhost:3302/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
@@ -95,7 +95,7 @@ const (
 	ResponseStatusCode             = "responseStatusCode"
 	Descending                     = "descending"
 	Ascending                      = "ascending"
-	ContextTimeout                 = 600 // seconds
+	ContextTimeout                 = 60 // seconds
 	StatusPending                  = "pending"
 	StatusFailed                   = "failed"
 	StatusSuccess                  = "success"

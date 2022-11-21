@@ -523,7 +523,7 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			wg.Add(1)
 			go func(name, query string) {
 				defer wg.Done()
-				seriesList, _, err := aH.reader.GetMetricResult(r.Context(), query)
+				seriesList, err := aH.reader.GetMetricResult(r.Context(), query)
 				for _, series := range seriesList {
 					series.QueryName = name
 				}
@@ -1358,9 +1358,8 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	traceId := vars["traceId"]
-	spanId := r.URL.Query().Get("spanId")
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId)
+	result, err := aH.reader.SearchTraces(r.Context(), traceId)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
