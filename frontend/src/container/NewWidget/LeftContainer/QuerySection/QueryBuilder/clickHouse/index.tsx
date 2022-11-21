@@ -28,7 +28,7 @@ function ClickHouseQueryContainer({
 		toggleDelete,
 	}: IClickHouseQueryHandleChange): void => {
 		const allQueries = queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME];
-		const currentIndexQuery = allQueries[queryIndex];
+		const currentIndexQuery = allQueries[queryIndex as number];
 
 		if (rawQuery !== undefined) {
 			currentIndexQuery.rawQuery = rawQuery;
@@ -42,7 +42,7 @@ function ClickHouseQueryContainer({
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
 		}
 		if (toggleDelete) {
-			allQueries.splice(queryIndex, 1);
+			allQueries.splice(queryIndex as number, 1);
 		}
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};

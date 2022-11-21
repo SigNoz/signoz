@@ -9,11 +9,12 @@ import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
+	IChQueries,
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
-	IChQueries,
 } from 'types/api/alerts/compositeQuery';
 import {
 	AlertDef,
@@ -46,6 +47,7 @@ import {
 } from './utils';
 
 function FormAlertRules({
+	alertType,
 	formInstance,
 	initialValue,
 	ruleId,
@@ -88,9 +90,26 @@ function FormAlertRules({
 		...initQuery?.chQueries,
 	});
 
-	// staged query is used to display chart preview
+	// staged query is used to display chart preview. the query gets
+	// auto refreshed when any of the params in query section change.
+	// though this is the source of chart data, the final query used
+	// by chart will be either debouncedStagedQuery or manualStagedQuery
+	// depending on the run option (auto-run or use of run query button)
 	const [stagedQuery, setStagedQuery] = useState<StagedQuery>();
-	const debouncedStagedQuery = useDebounce(stagedQuery, 1000);
+
+	// manualStagedQuery requires manual staging of query
+	// when user clicks run query button. Useful for clickhouse tab where
+	// run query button is provided.
+	const [manualStagedQuery, setManualStagedQuery] = useState<StagedQuery>();
+
+	// delay to reduce load on backend api with auto-run query. only for clickhouse
+	// queries we have manual run, hence both debounce and debounceStagedQuery are not required
+	const debounceDelay = queryCategory !== EQueryType.CLICKHOUSE ? 1000 : 0;
+
+	// debounce query to delay backend api call and chart update.
+	// used in query builder and promql tabs to enable auto-refresh
+	// of chart on user edit
+	const debouncedStagedQuery = useDebounce(stagedQuery, debounceDelay);
 
 	// this use effect initiates staged query and
 	// other queries based on server data.
@@ -107,7 +126,13 @@ function FormAlertRules({
 		const fq = toFormulaQueries(initQuery?.builderQueries);
 
 		// prepare staged query
-		const sq = prepareStagedQuery(typ, mq, fq, initQuery?.promQueries, initQuery?.chQueries);
+		const sq = prepareStagedQuery(
+			typ,
+			mq,
+			fq,
+			initQuery?.promQueries,
+			initQuery?.chQueries,
+		);
 		const pq = initQuery?.promQueries;
 		const chq = initQuery?.chQueries;
 
@@ -116,6 +141,10 @@ function FormAlertRules({
 		setFormulaQueries(fq);
 		setPromQueries(pq);
 		setStagedQuery(sq);
+
+		// also set manually staged query
+		setManualStagedQuery(sq);
+
 		setChQueries(chq);
 		setAlertDef(initialValue);
 	}, [initialValue]);
@@ -132,7 +161,12 @@ function FormAlertRules({
 			chQueries,
 		);
 		setStagedQuery(sq);
-	}, [queryCategory, metricQueries, formulaQueries, promQueries]);
+	}, [queryCategory, chQueries, metricQueries, formulaQueries, promQueries]);
+
+	const onRunQuery = (): void => {
+		console.log('going to assign stage query:', stagedQuery);
+		setManualStagedQuery(stagedQuery);
+	};
 
 	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
@@ -263,11 +297,12 @@ function FormAlertRules({
 		}
 
 		return validateQBParams();
-	}, [t, validateQBParams, alertDef, validatePromParams]);
+	}, [t, validateQBParams, validateChQueryParams, alertDef, validatePromParams]);
 
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
 			...alertDef,
+			alertType,
 			source: window?.location.toString(),
 			ruleType:
 				queryCategory === EQueryType.PROM ? 'promql_rule' : 'threshold_rule',
@@ -291,6 +326,7 @@ function FormAlertRules({
 		formulaQueries,
 		promQueries,
 		chQueries,
+		alertType,
 	]);
 
 	const saveRule = useCallback(async () => {
@@ -426,7 +462,7 @@ function FormAlertRules({
 				headline={<PlotTag queryType={queryCategory} />}
 				name="Chart Preview"
 				threshold={alertDef.condition?.target}
-				query={debouncedStagedQuery}
+				query={manualStagedQuery}
 			/>
 		);
 	};
@@ -454,6 +490,8 @@ function FormAlertRules({
 							setPromQueries={setPromQueries}
 							chQueries={chQueries}
 							setChQueries={setChQueries}
+							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
+							runQuery={onRunQuery}
 						/>
 
 						<RuleOptions
@@ -499,7 +537,12 @@ function FormAlertRules({
 	);
 }
 
+FormAlertRules.defaultProps = {
+	alertType: AlertTypes.METRICS_BASED_ALERT,
+};
+
 interface FormAlertRuleProps {
+	alertType?: AlertTypes;
 	formInstance: FormInstance;
 	initialValue: AlertDef;
 	ruleId: number;

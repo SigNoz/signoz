@@ -26,7 +26,7 @@ function ClickHouseQueryBuilder({
 			name={queryData.name}
 			disabled={queryData.disabled}
 			onDisable={(): void =>
-				handleQueryChange({ queryIndex , toggleDisable: true })
+				handleQueryChange({ queryIndex, toggleDisable: true })
 			}
 			onDelete={(): void => {
 				handleQueryChange({ queryIndex, toggleDelete: true });
@@ -42,6 +42,9 @@ function ClickHouseQueryBuilder({
 				options={{
 					scrollbar: {
 						alwaysConsumeMouseWheel: false,
+					},
+					minimap: {
+						enabled: false,
 					},
 				}}
 			/>

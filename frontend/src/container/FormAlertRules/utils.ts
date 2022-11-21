@@ -1,14 +1,14 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	IBuilderQueries,
+	IChQueries,
+	IChQuery,
 	IFormulaQueries,
 	IFormulaQuery,
 	IMetricQueries,
 	IMetricQuery,
 	IPromQueries,
 	IPromQuery,
-	IChQueries,
-	IChQuery,
 } from 'types/api/alerts/compositeQuery';
 import {
 	IMetricsBuilderQuery,
@@ -108,10 +108,10 @@ export const prepareStagedQuery = (
 	// convert map[string]IChQuery to IChQuery[]
 	if (c) {
 		Object.keys(c).forEach((key) => {
-			chQueryList.push({ ...c[key], name: key });
+			console.log('c:', c[key]);
+			chQueryList.push({ ...c[key], name: key, rawQuery: c[key].query });
 		});
 	}
-
 
 	return {
 		queryType: t,

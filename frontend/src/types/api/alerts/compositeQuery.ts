@@ -1,9 +1,9 @@
 import {
+	IClickHouseQuery,
 	IMetricsBuilderFormula,
 	IMetricsBuilderQuery,
 	IPromQLQuery,
 	IQueryBuilderTagFilters,
-	IClickHouseQuery
 } from 'types/api/dashboard/getAll';
 import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 
@@ -15,7 +15,11 @@ export interface ICompositeMetricQuery {
 }
 
 export interface IChQueries {
-	[key: string]: IClickHouseQuery;
+	[key: string]: IChQuery;
+}
+
+export interface IChQuery extends IClickHouseQuery {
+	query: string;
 }
 
 export interface IPromQuery extends IPromQLQuery {
@@ -25,11 +29,6 @@ export interface IPromQuery extends IPromQLQuery {
 export interface IPromQueries {
 	[key: string]: IPromQuery;
 }
-
-export interface IPromQuery extends IPromQLQuery {
-	stats?: '';
-}
-
 export interface IBuilderQueries {
 	[key: string]: IBuilderQuery;
 }

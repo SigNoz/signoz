@@ -1,11 +1,12 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { notification } from 'antd';
 import { StaticLineProps } from 'components/Graph';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getChartData from 'lib/getChartData';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
@@ -33,7 +34,9 @@ function ChartPreview({
 	headline,
 	threshold,
 }: ChartPreviewProps): JSX.Element | null {
+	console.log('query:', query);
 	const { t } = useTranslation('alerts');
+	const [fetchError, setFetchError] = useState('');
 	const staticLine: StaticLineProps | undefined =
 		threshold !== undefined
 			? {
@@ -66,12 +69,13 @@ function ChartPreview({
 			}),
 		enabled:
 			query != null &&
+			query &&
 			((query.queryType === EQueryType.PROM &&
 				query.promQL?.length > 0 &&
 				query.promQL[0].query !== '') ||
 				(query.queryType === EQueryType.CLICKHOUSE &&
 					query.clickHouse?.length > 0 &&
-					query.clickHouse[0].rawQuery !== '' &&
+					query.clickHouse[0].rawQuery &&
 					query.clickHouse[0].rawQuery.length > 25) ||
 				(query.queryType === EQueryType.QUERY_BUILDER &&
 					query.metricsBuilder?.queryBuilder?.length > 0 &&
@@ -90,15 +94,24 @@ function ChartPreview({
 				],
 		  });
 
+	useEffect(() => {
+		if (queryResponse?.data?.error || queryResponse?.isError) {
+			const errorMessage =
+				queryResponse?.data?.error || t('preview_chart_unexpected_error');
+
+			setFetchError(errorMessage as string);
+			notification.error({
+				message: errorMessage,
+			});
+		}
+	}, [t, queryResponse?.data?.error, fetchError, queryResponse?.isError]);
+
 	return (
 		<ChartContainer>
 			{headline}
-			{(queryResponse?.data?.error || queryResponse?.isError) && (
+			{fetchError && (
 				<FailedMessageContainer color="red" title="Failed to refresh the chart">
-					<InfoCircleOutlined />{' '}
-					{queryResponse?.data?.error ||
-						queryResponse?.error ||
-						t('preview_chart_unexpected_error')}
+					<InfoCircleOutlined /> {fetchError}
 				</FailedMessageContainer>
 			)}
 

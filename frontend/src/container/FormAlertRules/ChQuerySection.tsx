@@ -14,7 +14,11 @@ function ChQuerySection({
 	}: IClickHouseQueryHandleChange): void => {
 		let chQuery = chQueries.A;
 
-		if (rawQuery) chQuery.rawQuery = rawQuery;
+		if (rawQuery) {
+			chQuery.rawQuery = rawQuery;
+			chQuery.query = rawQuery;
+		}
+
 		if (legend) chQuery.legend = legend;
 		if (toggleDelete) {
 			chQuery = {
@@ -22,6 +26,7 @@ function ChQuerySection({
 				legend: '',
 				name: 'A',
 				disabled: false,
+				query: '',
 			};
 		}
 		setChQueries({
@@ -34,7 +39,7 @@ function ChQuerySection({
 		<ClickHouseQueryBuilder
 			key="A"
 			queryIndex="A"
-			queryData={{ ...chQueries?.A, name: 'A' }}
+			queryData={{ ...chQueries?.A, name: 'A', rawQuery: chQueries?.A.query }}
 			handleQueryChange={handleChQueryChange}
 		/>
 	);

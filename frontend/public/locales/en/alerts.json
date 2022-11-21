@@ -90,5 +90,12 @@
   "user_guide_pql_step3": "Step 3 -Alert Configuration",
   "user_guide_pql_step3a": "Set alert severity, name and descriptions",
   "user_guide_pql_step3b": "Add tags to the alert in the Label field if needed",
-  "user_tooltip_more_help": "More details on how to create alerts"
+  "user_tooltip_more_help": "More details on how to create alerts",
+  "choose_alert_type": "Choose a type for the alert:",
+  "metric_based_alert": "Metric based Alert",
+  "metric_based_alert_desc": "Send a notification when a condition occurs in metric data",
+  "log_based_alert": "Log-based Alert",
+  "log_based_alert_desc": "Send a notification when a condition occurs in logs data.",
+  "traces_based_alert": "Trace-based Alert",
+  "traces_based_alert_desc": "Send a notification when a condition occurs in traces data."
 }
