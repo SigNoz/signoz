@@ -28,3 +28,8 @@ export const RefreshTextContainer = styled.div<Props>`
 	visibility: ${({ refreshButtonHidden }): string =>
 		refreshButtonHidden ? 'hidden' : 'visible'};
 `;
+
+export const FormContainer = styled.div`
+	display: flex;
+	gap: 0.1rem;
+`;

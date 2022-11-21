@@ -2729,7 +2729,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, para
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND JSONExtractString(labels, '%s') = '%s' ", key, val)
 	}
 	// "select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from signoz_metrics.time_series WHERE JSONExtractString(labels,'__name__')='node_udp_queues'))  WHERE distinctTagKeys ILIKE '%host%';"
 	if len(params.Match) != 0 {
@@ -2768,16 +2768,16 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	tagsWhereClause := ""
 
 	for key, val := range params.MetricTags {
-		tagsWhereClause += fmt.Sprintf(" AND labels_object.%s = '%s' ", key, val)
+		tagsWhereClause += fmt.Sprintf(" AND JSONExtractString(labels, '%s') = '%s' ", key, val)
 	}
 
 	if len(params.Match) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) from %s.%s WHERE metric_name=$1 %s AND labels_object.%s ILIKE $2;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause, params.TagKey)
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 %s AND JSONExtractString(labels, '%s') ILIKE $2;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause, params.TagKey)
 
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName, fmt.Sprintf("%%%s%%", params.Match))
 
 	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(labels_object.%s) FROM %s.%s WHERE metric_name=$2 %s;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause)
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) FROM %s.%s WHERE metric_name=$2 %s;", params.TagKey, signozMetricDBName, signozTSTableName, tagsWhereClause)
 		rows, err = r.db.Query(ctx, query, params.TagKey, params.MetricName)
 
 	}
