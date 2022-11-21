@@ -23,6 +23,7 @@ export const UPDATE_USER = 'UPDATE_USER';
 export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 export const UPDATE_ORG = 'UPDATE_ORG';
 export const UPDATE_FEATURE_FLAGS = 'UPDATE_FEATURE_FLAGS';
+export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
 
 export interface SwitchDarkMode {
 	type: typeof SWITCH_DARK_MODE;
@@ -115,6 +116,12 @@ export interface UpdateOrg {
 		org: AppReducer['org'];
 	};
 }
+export interface UpdateConfigs {
+	type: typeof UPDATE_CONFIGS;
+	payload: {
+		configs: AppReducer['configs'];
+	};
+}
 
 export type AppAction =
 	| SwitchDarkMode
@@ -129,4 +136,5 @@ export type AppAction =
 	| UpdateUser
 	| UpdateOrgName
 	| UpdateOrg
-	| UpdateFeatureFlags;
+	| UpdateFeatureFlags
+	| UpdateConfigs;
