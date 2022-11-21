@@ -652,6 +652,11 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				return
 			}
 			var query bytes.Buffer
+
+			// replace reserved variables
+			metricsQueryRangeParams.Variables["$__from_ts"] = metricsQueryRangeParams.Start
+			metricsQueryRangeParams.Variables["$__to_ts"] = metricsQueryRangeParams.End
+
 			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
 			if err != nil {
 				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)

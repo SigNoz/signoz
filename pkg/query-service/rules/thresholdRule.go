@@ -1,15 +1,16 @@
 package rules
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"math"
 	"reflect"
 	"sort"
 	"sync"
+	"text/template"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
@@ -320,6 +321,7 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 		return false
 	}
 
+	zap.S().Debugf("target:", v, *r.ruleCondition.Target)
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
 		return v == *r.ruleCondition.Target
@@ -384,6 +386,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	// but we dont know when the rates are being used
 	// so we always pick timeframe - 30 seconds interval
 	// and skip the first record for a given label combo
+	// NOTE: this is not applicable for raw queries
 	skipFirstRecord := make(map[uint64]bool, 0)
 
 	defer rows.Close()
@@ -478,12 +481,24 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 
 		} else {
-			if exists, _ := skipFirstRecord[labelHash]; exists {
-				resultMap[labelHash] = sample
+			if r.Condition().QueryType() == qsmodel.QUERY_BUILDER {
+				// for query builder, time series data
+				// we skip the first record to support rate cases correctly
+				// improvement(amol): explore approaches to limit this only for
+				// rate uses cases
+				if exists, _ := skipFirstRecord[labelHash]; exists {
+					resultMap[labelHash] = sample
+				} else {
+					// looks like the first record for this label combo, skip it
+					skipFirstRecord[labelHash] = true
+				}
 			} else {
-				// looks like the first record for this label combo, skip it
-				skipFirstRecord[labelHash] = true
+				// for clickhouse raw queries, all records are considered
+				// improvement(amol): think about supporting rate queries
+				// written by user. may have to skip a record, similar to qb case(above)
+				resultMap[labelHash] = sample
 			}
+
 		}
 	}
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
@@ -499,32 +514,105 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	return result, nil
 }
 
+func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
+	params := r.prepareQueryRange(ts)
+	runQueries := metrics.PrepareBuilderMetricQueries(params, constants.SIGNOZ_TIMESERIES_TABLENAME)
+
+	return runQueries.Queries, runQueries.Err
+}
+
+func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
+	queries := make(map[string]string)
+
+	if r.ruleCondition == nil {
+		return nil, fmt.Errorf("rule condition is empty")
+	}
+
+	if r.ruleCondition.QueryType() != qsmodel.CLICKHOUSE {
+		zap.S().Debugf("ruleid:", r.ID(), "\t msg: unsupported query type in prepareClickhouseQueries()")
+		return nil, fmt.Errorf("failed to prepare clickhouse queries")
+	}
+
+	params := r.prepareQueryRange(ts)
+
+	for name, chQuery := range r.ruleCondition.CompositeMetricQuery.ClickHouseQueries {
+		if chQuery.Disabled {
+			continue
+		}
+		tmpl := template.New("clickhouse-query")
+		tmpl, err := tmpl.Parse(chQuery.Query)
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to parse clickhouse query to populate vars", err)
+			r.SetHealth(HealthBad)
+			return nil, err
+		}
+		var query bytes.Buffer
+		err = tmpl.Execute(&query, map[string]string{
+			"$__from_ts": fmt.Sprintf("%d", params.Start),
+			"$__to_ts":   fmt.Sprintf("%d", params.End),
+		})
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to populate clickhouse query", err)
+			r.SetHealth(HealthBad)
+			return nil, err
+		}
+		zap.S().Debugf("ruleid:", r.ID(), "\t query:", query.String())
+		queries[name] = query.String()
+	}
+	return queries, nil
+}
+
 // query looks if alert condition is being
 // satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
-	params := r.prepareQueryRange(ts)
-
-	runQueries := metrics.PrepareBuilderMetricQueries(params, constants.SIGNOZ_TIMESERIES_TABLENAME)
-	if runQueries.Err != nil {
-		return nil, fmt.Errorf("failed to prepare metric queries: %v", runQueries.Err)
+	if r.ruleCondition == nil || r.ruleCondition.CompositeMetricQuery == nil {
+		r.SetHealth(HealthBad)
+		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	if len(runQueries.Queries) == 0 {
+	// var to hold target query to be executed
+	queries := make(map[string]string)
+	var err error
+
+	// fetch the target query based on query type
+	if r.ruleCondition.QueryType() == qsmodel.QUERY_BUILDER {
+
+		queries, err = r.prepareBuilderQueries(ts)
+
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
+			return nil, fmt.Errorf("failed to prepare metric queries")
+		}
+
+	} else if r.ruleCondition.QueryType() == qsmodel.CLICKHOUSE {
+
+		queries, err = r.prepareClickhouseQueries(ts)
+
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare clickhouse queries", zap.Error(err))
+			return nil, fmt.Errorf("failed to prepare clickhouse queries")
+		}
+
+	} else {
+		return nil, fmt.Errorf("unexpected rule condition - query type is empty")
+	}
+
+	if len(queries) == 0 {
 		return nil, fmt.Errorf("no queries could be built with the rule config")
 	}
 
-	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", runQueries.Queries)
+	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", queries)
 
 	// find target query label
-	if query, ok := runQueries.Queries["F1"]; ok {
+	if query, ok := queries["F1"]; ok {
 		// found a formula query, run with it
 		return r.runChQuery(ctx, ch, query)
 	}
 
 	// no formula in rule condition, now look for
 	// query label with max ascii val
-	keys := make([]string, 0, len(runQueries.Queries))
-	for k := range runQueries.Queries {
+	keys := make([]string, 0, len(queries))
+	for k := range queries {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -533,11 +621,11 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
 
-	if queryString, ok := runQueries.Queries[queryLabel]; ok {
+	if queryString, ok := queries[queryLabel]; ok {
 		return r.runChQuery(ctx, ch, queryString)
 	}
 
-	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "\t queries:", runQueries.Queries)
+	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "\t queries:", queries)
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
