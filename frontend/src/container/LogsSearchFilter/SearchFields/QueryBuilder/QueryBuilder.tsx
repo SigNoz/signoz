@@ -158,7 +158,6 @@ function QueryConditionField({
 				onChange={(e): void => {
 					onUpdate({ ...query, value: e }, queryIndex);
 				}}
-				style={{ width: '100%' }}
 			>
 				{Object.values(ConditionalOperators).map((cond) => (
 					<Option key={cond} value={cond} label={cond}>
