@@ -122,7 +122,7 @@ function SearchFilter({
 				}
 				trigger="click"
 				overlayInnerStyle={{
-					width: `${searchRef?.current?.input?.offsetWidth || 0 + 300}px`,
+					width: `${searchRef?.current?.input?.offsetWidth || 0}px`,
 				}}
 				visible={showDropDown}
 				destroyTooltipOnHide
