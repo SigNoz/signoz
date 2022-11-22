@@ -1,6 +1,7 @@
 import { TableProps, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
@@ -44,7 +45,13 @@ function TraceTable(): JSX.Element {
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
 	const getLink = (record: TableType): string => {
-		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}&levelUp=0&levelDown=0`;
+		const paramsMap = {
+			spanId: record.spanID,
+			levelUp: 0,
+			levelDown: 0,
+		};
+		const urlParams = formUrlParams(paramsMap);
+		return `${ROUTES.TRACE}/${record.traceID}${urlParams}`;
 	};
 
 	const getValue = (value: string): JSX.Element => {

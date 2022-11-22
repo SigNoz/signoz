@@ -99,24 +99,27 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	return levels;
 };
 
-export const formGetTraceItemUrlParams = (
-	paramsMap: Map<string, string | null>,
-): string => {
+export const formUrlParams = (params: Record<string, any>): string => {
 	let urlParams = '';
-	let index = 0;
-	paramsMap.forEach((value, key) => {
+	Object.entries(params).forEach(([key, value], index) => {
+		let encodedValue: string;
+		try {
+			encodedValue = decodeURIComponent(value);
+			encodedValue = encodeURIComponent(encodedValue);
+		} catch (error) {
+			encodedValue = '';
+		}
 		if (index === 0) {
-			if (value) {
-				urlParams = `?${key}=${value}`;
+			if (encodedValue) {
+				urlParams = `?${key}=${encodedValue}`;
 			} else {
 				urlParams = `?${key}=`;
 			}
-		} else if (value) {
-			urlParams = `${urlParams}&${key}=${value}`;
+		} else if (encodedValue) {
+			urlParams = `${urlParams}&${key}=${encodedValue}`;
 		} else {
 			urlParams = `${urlParams}&${key}=`;
 		}
-		index += 1;
 	});
 	return urlParams;
 };

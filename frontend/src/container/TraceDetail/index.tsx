@@ -29,6 +29,7 @@ import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
 import { FlameGraphMissingSpansContainer, GanttChartWrapper } from './styles';
 import {
+	formUrlParams,
 	getSortedData,
 	getTreeLevelsCount,
 	IIntervalUnit,
@@ -50,8 +51,13 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
-	const [levelUp] = useState<string | null>(urlQuery.get('levelUp'));
-	const [levelDown] = useState<string | null>(urlQuery.get('levelDown'));
+	const { levelDown, levelUp } = useMemo(
+		() => ({
+			levelDown: urlQuery.get('levelDown'),
+			levelUp: urlQuery.get('levelUp'),
+		}),
+		[urlQuery],
+	);
 	const [treesData, setTreesData] = useState<ITraceForest>(
 		spanToTreeUtil(response[0].events),
 	);
@@ -76,9 +82,15 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	useEffect(() => {
 		if (activeSelectedId) {
+			const paramsMap = {
+				spanId: activeSelectedId,
+				levelUp,
+				levelDown,
+			};
+			const urlParams = formUrlParams(paramsMap);
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?spanId=${activeSelectedId}&levelUp=${levelUp}&levelDown=${levelDown}`,
+				search: `${urlParams}`,
 			});
 		}
 	}, [activeSelectedId, levelDown, levelUp]);
