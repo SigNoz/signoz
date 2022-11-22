@@ -20,7 +20,7 @@ function TraceDetail(): JSX.Element {
 		[urlQuery],
 	);
 	const { data: traceDetailResponse, error, isLoading, isError } = useQuery(
-		`getTraceItem/${id}}`,
+		`getTraceItem/${id}`,
 		() => getTraceItem({ id, spanId, levelUp, levelDown }),
 		{
 			cacheTime: 3000,
