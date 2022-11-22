@@ -105,8 +105,7 @@ function SearchFilter({
 	useEffect(() => {
 		const urlQueryString = urlQuery.get('q');
 		handleSearch(urlQueryString || '');
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlQuery]);
+	}, [urlQuery, handleSearch]);
 
 	return (
 		<Container>
