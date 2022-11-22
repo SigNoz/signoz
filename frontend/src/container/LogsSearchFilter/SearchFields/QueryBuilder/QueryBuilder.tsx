@@ -23,10 +23,42 @@ import { SearchFieldsProps } from '..';
 import FieldKey from '../FieldKey';
 import { QueryConditionContainer, QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
-import { Container } from './styles';
+import { Container, QueryWrapper } from './styles';
 import { hashCode, parseQuery } from './utils';
 
 const { Option } = Select;
+
+function QueryConditionField({
+	query,
+	queryIndex,
+	onUpdate,
+	style,
+}: QueryConditionFieldProps): JSX.Element {
+	return (
+		<QueryConditionContainer style={{ ...style }}>
+			<Select
+				defaultValue={
+					(query as any).value &&
+					(((query as any)?.value as any) as string).toUpperCase()
+				}
+				onChange={(e): void => {
+					onUpdate({ ...query, value: e }, queryIndex);
+				}}
+			>
+				{Object.values(ConditionalOperators).map((cond) => (
+					<Option key={cond} value={cond} label={cond}>
+						{cond}
+					</Option>
+				))}
+			</Select>
+		</QueryConditionContainer>
+	);
+}
+
+QueryConditionField.defaultProps = {
+	style: undefined,
+};
+
 interface QueryFieldProps {
 	query: Query;
 	queryIndex: number;
@@ -144,36 +176,6 @@ interface QueryConditionFieldProps {
 	onUpdate: (arg0: unknown, arg1: number) => void;
 	style?: React.CSSProperties;
 }
-function QueryConditionField({
-	query,
-	queryIndex,
-	onUpdate,
-	style,
-}: QueryConditionFieldProps): JSX.Element {
-	return (
-		<QueryConditionContainer style={{ ...style }}>
-			<Select
-				defaultValue={
-					(query as any).value &&
-					(((query as any)?.value as any) as string).toUpperCase()
-				}
-				onChange={(e): void => {
-					onUpdate({ ...query, value: e }, queryIndex);
-				}}
-			>
-				{Object.values(ConditionalOperators).map((cond) => (
-					<Option key={cond} value={cond} label={cond}>
-						{cond}
-					</Option>
-				))}
-			</Select>
-		</QueryConditionContainer>
-	);
-}
-
-QueryConditionField.defaultProps = {
-	style: undefined,
-};
 
 export type Query = { value: string | string[]; type: string }[];
 
@@ -231,18 +233,12 @@ function QueryBuilder({
 				);
 
 			return (
-				<div style={{ display: 'flex' }} key={keyPrefix + idx}>
-					<div style={{ flex: 1, minWidth: 100 }} />
-					<div style={{ minWidth: 150 }}>
-						<QueryConditionField
-							key={keyPrefix + idx}
-							query={query}
-							queryIndex={idx}
-							onUpdate={handleUpdate as never}
-						/>
-					</div>
-					<div style={{ flex: 2 }} />
-				</div>
+				<QueryConditionField
+					key={keyPrefix + idx}
+					query={query}
+					queryIndex={idx}
+					onUpdate={handleUpdate as never}
+				/>
 			);
 		});
 
@@ -253,7 +249,7 @@ function QueryBuilder({
 				<CloseSquareOutlined onClick={onDropDownToggleHandler(false)} />
 			</Container>
 
-			<>{QueryUI()}</>
+			<QueryWrapper>{QueryUI()}</QueryWrapper>
 		</>
 	);
 }

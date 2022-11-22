@@ -1,7 +1,7 @@
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -45,7 +45,7 @@ function SearchFilter({
 		(state) => state.globalTime,
 	);
 
-	const dispatch = useDispatch();
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const handleSearch = useCallback(
 		(customQuery) => {
@@ -64,7 +64,7 @@ function SearchFilter({
 				);
 			} else {
 				getLogs({
-					q: customQuery || queryString,
+					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
 					order: 'desc',
@@ -82,7 +82,7 @@ function SearchFilter({
 						end: maxTime,
 						inputFormat: 'ns',
 					}),
-					q: customQuery || queryString,
+					q: customQuery,
 				});
 			}
 		},
@@ -96,16 +96,15 @@ function SearchFilter({
 			logLinesPerPage,
 			maxTime,
 			minTime,
-			queryString,
 		],
 	);
 
 	const urlQuery = useUrlQuery();
+	const urlQueryString = urlQuery.get('q');
 
 	useEffect(() => {
-		const urlQueryString = urlQuery.get('q');
 		handleSearch(urlQueryString || '');
-	}, [urlQuery, handleSearch]);
+	}, [handleSearch, urlQueryString]);
 
 	return (
 		<Container>
@@ -162,4 +161,4 @@ const mapDispatchToProps = (
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(memo(SearchFilter));
+export default connect(null, mapDispatchToProps)(SearchFilter);
