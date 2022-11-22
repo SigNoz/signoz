@@ -1,7 +1,7 @@
 import { Col, Row, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
@@ -106,6 +106,63 @@ function UserGuide({ queryType }: UserGuideProps): JSX.Element {
 		);
 	};
 
+	const renderStep1CH = (): JSX.Element => {
+		return (
+			<>
+				<StyledTopic>{t('user_guide_ch_step1')}</StyledTopic>
+				<StyledList>
+					<StyledListItem>
+						<Trans
+							i18nKey="user_guide_ch_step1a"
+							t={t}
+							components={[
+								// eslint-disable-next-line jsx-a11y/control-has-associated-label, jsx-a11y/anchor-has-content
+								<a
+									key={1}
+									target="_blank"
+									href=" https://signoz.io/docs/tutorial/writing-clickhouse-queries-in-dashboard/?utm_source=frontend&utm_medium=product&utm_id=alerts</>"
+								/>,
+							]}
+						/>
+					</StyledListItem>
+					<StyledListItem>{t('user_guide_ch_step1b')}</StyledListItem>
+				</StyledList>
+			</>
+		);
+	};
+	const renderStep2CH = (): JSX.Element => {
+		return (
+			<>
+				<StyledTopic>{t('user_guide_ch_step2')}</StyledTopic>
+				<StyledList>
+					<StyledListItem>{t('user_guide_ch_step2a')}</StyledListItem>
+					<StyledListItem>{t('user_guide_ch_step2b')}</StyledListItem>
+				</StyledList>
+			</>
+		);
+	};
+
+	const renderStep3CH = (): JSX.Element => {
+		return (
+			<>
+				<StyledTopic>{t('user_guide_ch_step3')}</StyledTopic>
+				<StyledList>
+					<StyledListItem>{t('user_guide_ch_step3a')}</StyledListItem>
+					<StyledListItem>{t('user_guide_ch_step3b')}</StyledListItem>
+				</StyledList>
+			</>
+		);
+	};
+
+	const renderGuideForCH = (): JSX.Element => {
+		return (
+			<>
+				{renderStep1CH()}
+				{renderStep2CH()}
+				{renderStep3CH()}
+			</>
+		);
+	};
 	return (
 		<StyledMainContainer>
 			<Row>
@@ -121,6 +178,7 @@ function UserGuide({ queryType }: UserGuideProps): JSX.Element {
 			</Row>
 			{queryType === EQueryType.QUERY_BUILDER && renderGuideForQB()}
 			{queryType === EQueryType.PROM && renderGuideForPQL()}
+			{queryType === EQueryType.CLICKHOUSE && renderGuideForCH()}
 		</StyledMainContainer>
 	);
 }

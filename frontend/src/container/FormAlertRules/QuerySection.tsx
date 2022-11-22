@@ -301,9 +301,11 @@ function QuerySection({
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={handleRunQuery}>
-									Run Query
-								</Button>
+								{queryCategory === EQueryType.CLICKHOUSE && (
+									<Button type="primary" onClick={handleRunQuery}>
+										Run Query
+									</Button>
+								)}
 							</span>
 						}
 					>
@@ -324,6 +326,15 @@ function QuerySection({
 						defaultActiveKey={EQueryType.QUERY_BUILDER.toString()}
 						activeKey={queryCategory.toString()}
 						onChange={handleQueryCategoryChange}
+						tabBarExtraContent={
+							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+								{queryCategory === EQueryType.CLICKHOUSE && (
+									<Button type="primary" onClick={handleRunQuery}>
+										Run Query
+									</Button>
+								)}
+							</span>
+						}
 					>
 						<TabPane tab={t('tab_qb')} key={EQueryType.QUERY_BUILDER.toString()} />
 						<TabPane tab={t('tab_chquery')} key={EQueryType.CLICKHOUSE.toString()} />

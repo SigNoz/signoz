@@ -60,6 +60,10 @@ function FormAlertRules({
 
 	const [loading, setLoading] = useState(false);
 
+	// queryRunId helps to override of query caching for clickhouse query
+	// tab. A random string will be assigned for each execution
+	const [runQueryId, setRunQueryId] = useState<string>();
+
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 
@@ -164,6 +168,7 @@ function FormAlertRules({
 	}, [queryCategory, chQueries, metricQueries, formulaQueries, promQueries]);
 
 	const onRunQuery = (): void => {
+		setRunQueryId(Math.random().toString(36).substring(2, 15));
 		setManualStagedQuery(stagedQuery);
 	};
 
@@ -462,6 +467,7 @@ function FormAlertRules({
 				name="Chart Preview"
 				threshold={alertDef.condition?.target}
 				query={manualStagedQuery}
+				userQueryKey={runQueryId}
 			/>
 		);
 	};
