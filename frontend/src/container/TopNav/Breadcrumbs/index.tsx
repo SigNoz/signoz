@@ -15,7 +15,7 @@ const breadcrumbNameMap = {
 	[ROUTES.VERSION]: 'Status',
 	[ROUTES.ORG_SETTINGS]: 'Organization Settings',
 	[ROUTES.MY_SETTINGS]: 'My Settings',
-	[ROUTES.ERROR_DETAIL]: 'Errors',
+	[ROUTES.ERROR_DETAIL]: 'Exceptions',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
 	[ROUTES.LOGS]: 'Logs',
