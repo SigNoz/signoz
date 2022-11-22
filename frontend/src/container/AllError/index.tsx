@@ -1,12 +1,25 @@
-import { notification, Table, TableProps, Tooltip, Typography } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import {
+	Button,
+	Card,
+	Input,
+	notification,
+	Space,
+	Table,
+	TableProps,
+	Tooltip,
+	Typography,
+} from 'antd';
+import { ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
+import { FilterConfirmProps } from 'antd/lib/table/interface';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -93,11 +106,87 @@ function AllErrors(): JSX.Element {
 		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
 	);
 
+	const filterIcon = useCallback(() => <SearchOutlined />, []);
+
+	const handleSearch = (
+		confirm: (param?: FilterConfirmProps) => void,
+	): VoidFunction => (): void => {
+		confirm();
+	};
+
+	const filterDropdownWrapper = useCallback(
+		({ setSelectedKeys, selectedKeys, confirm, placeholder }) => {
+			return (
+				<Card size="small">
+					<Space align="start" direction="vertical">
+						<Input
+							placeholder={placeholder}
+							value={selectedKeys[0]}
+							onChange={(e): void =>
+								setSelectedKeys(e.target.value ? [e.target.value] : [])
+							}
+							allowClear
+							onPressEnter={handleSearch(confirm)}
+						/>
+						<Button
+							type="primary"
+							onClick={handleSearch(confirm)}
+							icon={<SearchOutlined />}
+							size="small"
+						>
+							Search
+						</Button>
+					</Space>
+				</Card>
+			);
+		},
+		[],
+	);
+
+	const onExceptionTypeFilter = useCallback(
+		(value, record: Exception): boolean => {
+			if (record.exceptionType && typeof value === 'string') {
+				return record.exceptionType.toLowerCase().includes(value.toLowerCase());
+			}
+			return false;
+		},
+		[],
+	);
+
+	const onApplicationTypeFilter = useCallback(
+		(value, record: Exception): boolean => {
+			if (record.serviceName && typeof value === 'string') {
+				return record.serviceName.toLowerCase().includes(value.toLowerCase());
+			}
+			return false;
+		},
+		[],
+	);
+
+	const getFilter = useCallback(
+		(
+			onFilter: ColumnType<Exception>['onFilter'],
+			placeholder: string,
+		): ColumnType<Exception> => ({
+			onFilter,
+			filterIcon,
+			filterDropdown: ({ confirm, selectedKeys, setSelectedKeys }): JSX.Element =>
+				filterDropdownWrapper({
+					setSelectedKeys,
+					selectedKeys,
+					confirm,
+					placeholder,
+				}),
+		}),
+		[filterIcon, filterDropdownWrapper],
+	);
+
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
+			...getFilter(onExceptionTypeFilter, 'Search By Exception'),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
@@ -177,6 +266,7 @@ function AllErrors(): JSX.Element {
 				updatedOrder,
 				'serviceName',
 			),
+			...getFilter(onApplicationTypeFilter, 'Search By Application'),
 		},
 	];
 
