@@ -409,7 +409,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			case *time.Time:
 				timval := *v
 
-				if colName == "ts" {
+				if colName == "ts" || colName == "interval" {
 					sample.Point.T = timval.Unix()
 				} else {
 					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
