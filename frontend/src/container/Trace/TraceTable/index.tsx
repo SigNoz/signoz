@@ -3,6 +3,7 @@ import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import history from 'lib/history';
 import omit from 'lodash-es/omit';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -194,7 +195,11 @@ function TraceTable(): JSX.Element {
 				onClick: (event): void => {
 					event.preventDefault();
 					event.stopPropagation();
-					window.open(getLink(record));
+					if (event.metaKey || event.ctrlKey) {
+						window.open(getLink(record), '_blank');
+					} else {
+						history.push(getLink(record));
+					}
 				},
 			})}
 			pagination={{
