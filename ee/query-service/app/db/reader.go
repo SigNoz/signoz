@@ -104,7 +104,7 @@ func (r *ClickhouseReader) SearchTracesEE(ctx context.Context, traceId string, s
 
 // smartTraceAlgorithm is an algorithm to find the target span and build a tree of spans around it with the given levelUp and levelDown parameters and the given spanLimit
 func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]basemodel.SearchSpansResult, error) {
-	var spans []*model.Span
+	var spans []*model.SpanForTraceDetails
 
 	// Build a slice of spans from the payload
 	for _, spanItem := range payload {
@@ -112,7 +112,7 @@ func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 		if len(spanItem.References) > 0 && spanItem.References[0].RefType == "CHILD_OF" {
 			parentID = spanItem.References[0].SpanId
 		}
-		span := &model.Span{
+		span := &model.SpanForTraceDetails{
 			TimeUnixNano: spanItem.TimeUnixNano,
 			SpanID:       spanItem.SpanID,
 			TraceID:      spanItem.TraceID,
@@ -133,7 +133,7 @@ func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	if err != nil {
 		return nil, err
 	}
-	targetSpan := &model.Span{}
+	targetSpan := &model.SpanForTraceDetails{}
 
 	// Find the target span in the span trees
 	for _, root := range roots {
@@ -153,7 +153,7 @@ func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	// Build the final result
-	parents := []*model.Span{}
+	parents := []*model.SpanForTraceDetails{}
 
 	// Get the parent spans of the target span up to the given levelUp parameter and spanLimit
 	preParent := targetSpan
@@ -178,11 +178,11 @@ func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	// Get the child spans of the target span until the given levelDown and spanLimit
-	preParents := []*model.Span{targetSpan}
-	children := []*model.Span{}
+	preParents := []*model.SpanForTraceDetails{targetSpan}
+	children := []*model.SpanForTraceDetails{}
 
 	for i := 0; i < levelDown && len(preParents) != 0 && spanLimit > 0; i++ {
-		parents := []*model.Span{}
+		parents := []*model.SpanForTraceDetails{}
 		for _, parent := range preParents {
 			if spanLimit-len(parent.Children) <= 0 {
 				children = append(children, parent.Children[:spanLimit]...)
@@ -196,7 +196,7 @@ func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	// Store the final list of spans in the resultSpanSet map to avoid duplicates
-	resultSpansSet := make(map[*model.Span]struct{})
+	resultSpansSet := make(map[*model.SpanForTraceDetails]struct{})
 	resultSpansSet[targetSpan] = struct{}{}
 	for _, parent := range parents {
 		resultSpansSet[parent] = struct{}{}
@@ -256,12 +256,12 @@ func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 }
 
 // buildSpanTrees builds trees of spans from a list of spans.
-func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
+func buildSpanTrees(spansPtr *[]*model.SpanForTraceDetails) ([]*model.SpanForTraceDetails, error) {
 
 	// Build a map of spanID to span for fast lookup
-	var roots []*model.Span
+	var roots []*model.SpanForTraceDetails
 	spans := *spansPtr
-	mapOfSpans := make(map[string]*model.Span, len(spans))
+	mapOfSpans := make(map[string]*model.SpanForTraceDetails, len(spans))
 
 	for _, span := range spans {
 		if span.ParentID == "" {
@@ -293,8 +293,8 @@ func buildSpanTrees(spansPtr *[]*model.Span) ([]*model.Span, error) {
 }
 
 // breadthFirstSearch performs a breadth-first search on the span tree to find the target span.
-func breadthFirstSearch(spansPtr *model.Span, targetId string) (*model.Span, error) {
-	queue := []*model.Span{spansPtr}
+func breadthFirstSearch(spansPtr *model.SpanForTraceDetails, targetId string) (*model.SpanForTraceDetails, error) {
+	queue := []*model.SpanForTraceDetails{spansPtr}
 	visited := make(map[string]bool)
 
 	for len(queue) > 0 {
@@ -571,13 +571,13 @@ func processQuery(query string, hash string) (string, string, string) {
 // getSubTreeAlgorithm is an algorithm to build the subtrees of the spans and return the list of spans
 func getSubTreeAlgorithm(payload []basemodel.SearchSpanResponseItem, getSpansSubQueryDBResponses []model.GetSpansSubQueryDBResponse) (map[string]*basemodel.SearchSpanResponseItem, error) {
 
-	var spans []*model.Span
+	var spans []*model.SpanForTraceDetails
 	for _, spanItem := range payload {
 		var parentID string
 		if len(spanItem.References) > 0 && spanItem.References[0].RefType == "CHILD_OF" {
 			parentID = spanItem.References[0].SpanId
 		}
-		span := &model.Span{
+		span := &model.SpanForTraceDetails{
 			TimeUnixNano: spanItem.TimeUnixNano,
 			SpanID:       spanItem.SpanID,
 			TraceID:      spanItem.TraceID,
@@ -602,7 +602,7 @@ func getSubTreeAlgorithm(payload []basemodel.SearchSpanResponseItem, getSpansSub
 	// Every span which was fetched from getSubTree Input SQL query is considered root
 	// For each root, get the subtree spans
 	for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
-		targetSpan := &model.Span{}
+		targetSpan := &model.SpanForTraceDetails{}
 		// zap.S().Debug("Building tree for span id: " + getSpansSubQueryDBResponse.SpanID + " " + strconv.Itoa(i+1) + " of " + strconv.Itoa(len(getSpansSubQueryDBResponses)))
 		// Search target span object in the tree
 		for _, root := range roots {
@@ -621,12 +621,12 @@ func getSubTreeAlgorithm(payload []basemodel.SearchSpanResponseItem, getSpansSub
 		// Build subtree for the target span
 		// Mark the target span as root by setting parent ID as empty string
 		targetSpan.ParentID = ""
-		preParents := []*model.Span{targetSpan}
-		children := []*model.Span{}
+		preParents := []*model.SpanForTraceDetails{targetSpan}
+		children := []*model.SpanForTraceDetails{}
 
 		// Get the subtree child spans
 		for i := 0; len(preParents) != 0; i++ {
-			parents := []*model.Span{}
+			parents := []*model.SpanForTraceDetails{}
 			for _, parent := range preParents {
 				children = append(children, parent.Children...)
 				parents = append(parents, parent.Children...)
