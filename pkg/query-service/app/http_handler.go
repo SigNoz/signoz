@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -653,12 +654,8 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 			}
 			var query bytes.Buffer
 
-			// replace reserved variables
-			metricsQueryRangeParams.Variables["start_unix_ts"] = metricsQueryRangeParams.Start / 1000
-			metricsQueryRangeParams.Variables["end_unix_ts"] = metricsQueryRangeParams.End / 1000
-
-			metricsQueryRangeParams.Variables["start_datetime"] = fmt.Sprintf("toDateTime(%d)", metricsQueryRangeParams.Start/1000)
-			metricsQueryRangeParams.Variables["end_datetime"] = fmt.Sprintf("toDateTime(%d)", metricsQueryRangeParams.End/1000)
+			// replace go template variables
+			querytemplate.AssignReservedVars(metricsQueryRangeParams)
 
 			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
 			if err != nil {

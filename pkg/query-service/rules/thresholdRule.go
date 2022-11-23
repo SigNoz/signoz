@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"math"
 	"reflect"
 	"sort"
@@ -12,11 +11,14 @@ import (
 	"text/template"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	qsmodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	"go.signoz.io/signoz/pkg/query-service/utils/value"
@@ -338,17 +340,21 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParamsV2 {
 	// todo(amol): add 30 seconds to evalWindow for rate calc
-	tsEnd := ts.UnixNano() / int64(time.Millisecond)
-	tsStart := ts.Add(-time.Duration(r.evalWindow)).UnixNano() / int64(time.Millisecond)
 
-	// for k, v := range r.ruleCondition.CompositeMetricQuery.BuilderQueries {
-	//	v.ReduceTo = qsmodel.RMAX
-	//	r.ruleCondition.CompositeMetricQuery.BuilderQueries[k] = v
-	// }
+	if r.ruleCondition.QueryType() == qsmodel.CLICKHOUSE {
+		return &qsmodel.QueryRangeParamsV2{
+			Start:                ts.UnixMilli(),
+			End:                  ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+			Step:                 30,
+			CompositeMetricQuery: r.ruleCondition.CompositeMetricQuery,
+			Variables:            make(map[string]interface{}, 0),
+		}
+	}
 
+	// default mode
 	return &qsmodel.QueryRangeParamsV2{
-		Start:                tsStart,
-		End:                  tsEnd,
+		Start:                ts.UnixMilli(),
+		End:                  ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
 		Step:                 30,
 		CompositeMetricQuery: r.ruleCondition.CompositeMetricQuery,
 	}
@@ -535,6 +541,9 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 
 	params := r.prepareQueryRange(ts)
 
+	// replace reserved go template variables
+	querytemplate.AssignReservedVars(params)
+
 	for name, chQuery := range r.ruleCondition.CompositeMetricQuery.ClickHouseQueries {
 		if chQuery.Disabled {
 			continue
@@ -547,10 +556,7 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 			return nil, err
 		}
 		var query bytes.Buffer
-		err = tmpl.Execute(&query, map[string]string{
-			"$__from_ts": fmt.Sprintf("%d", params.Start),
-			"$__to_ts":   fmt.Sprintf("%d", params.End),
-		})
+		err = tmpl.Execute(&query, params.Variables)
 		if err != nil {
 			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to populate clickhouse query", err)
 			r.SetHealth(HealthBad)
