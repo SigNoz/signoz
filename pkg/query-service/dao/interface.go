@@ -37,7 +37,7 @@ type Mutations interface {
 	CreateInviteEntry(ctx context.Context, req *model.InvitationObject) *model.ApiError
 	DeleteInvitation(ctx context.Context, email string) *model.ApiError
 
-	CreateUser(ctx context.Context, user *model.User) (*model.User, *model.ApiError)
+	CreateUser(ctx context.Context, user *model.User, isFirstUser bool) (*model.User, *model.ApiError)
 	EditUser(ctx context.Context, update *model.User) (*model.User, *model.ApiError)
 	DeleteUser(ctx context.Context, id string) *model.ApiError
 

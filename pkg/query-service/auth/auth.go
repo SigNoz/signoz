@@ -259,7 +259,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 		OrgId:              org.Id,
 	}
 
-	return dao.DB().CreateUser(ctx, user)
+	return dao.DB().CreateUser(ctx, user, true)
 }
 
 // RegisterInvitedUser handles registering a invited user
@@ -338,7 +338,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
-	user, apiErr = dao.DB().CreateUser(ctx, user)
+	user, apiErr = dao.DB().CreateUser(ctx, user, false)
 	if apiErr != nil {
 		zap.S().Debugf("CreateUser failed, err: %v\n", apiErr.Err)
 		return nil, apiErr
