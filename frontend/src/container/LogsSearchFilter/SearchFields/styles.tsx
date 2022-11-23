@@ -9,12 +9,13 @@ export const QueryFieldContainer = styled.div`
 	align-items: center;
 	border-radius: 0.25rem;
 	gap: 1rem;
+	width: 100%;
 	&:hover {
 		background: ${blue[6]};
 	}
 `;
 
 export const QueryConditionContainer = styled.div`
-	padding: 0.25rem 0rem;
-	margin: 0.1rem 0;
+	display: flex;
+	flex-direction: row;
 `;

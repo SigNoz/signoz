@@ -4,7 +4,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
@@ -19,13 +19,48 @@ import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 import { v4 } from 'uuid';
 
+import { SearchFieldsProps } from '..';
 import FieldKey from '../FieldKey';
 import { QueryConditionContainer, QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
+import { Container, QueryWrapper } from './styles';
+import { hashCode, parseQuery } from './utils';
 
 const { Option } = Select;
+
+function QueryConditionField({
+	query,
+	queryIndex,
+	onUpdate,
+	style,
+}: QueryConditionFieldProps): JSX.Element {
+	return (
+		<QueryConditionContainer style={{ ...style }}>
+			<Select
+				defaultValue={
+					(query as any).value &&
+					(((query as any)?.value as any) as string).toUpperCase()
+				}
+				onChange={(e): void => {
+					onUpdate({ ...query, value: e }, queryIndex);
+				}}
+			>
+				{Object.values(ConditionalOperators).map((cond) => (
+					<Option key={cond} value={cond} label={cond}>
+						{cond}
+					</Option>
+				))}
+			</Select>
+		</QueryConditionContainer>
+	);
+}
+
+QueryConditionField.defaultProps = {
+	style: undefined,
+};
+
 interface QueryFieldProps {
-	query: { value: string | string[]; type: string }[];
+	query: Query;
 	queryIndex: number;
 	onUpdate: (query: unknown, queryIndex: number) => void;
 	onDelete: (queryIndex: number) => void;
@@ -49,12 +84,12 @@ function QueryField({
 		}
 		return '';
 	};
+
 	const fieldType = useMemo(() => getFieldType(query[0].value as string), [
 		query,
 	]);
 	const handleChange = (qIdx: number, value: string): void => {
 		query[qIdx].value = value || '';
-
 		if (qIdx === 1) {
 			if (Object.values(QueryOperatorsMultiVal).includes(value)) {
 				if (!Array.isArray(query[2].value)) {
@@ -139,50 +174,15 @@ interface QueryConditionFieldProps {
 	query: { value: string | string[]; type: string }[];
 	queryIndex: number;
 	onUpdate: (arg0: unknown, arg1: number) => void;
+	style?: React.CSSProperties;
 }
-function QueryConditionField({
-	query,
-	queryIndex,
-	onUpdate,
-}: QueryConditionFieldProps): JSX.Element {
-	return (
-		<QueryConditionContainer>
-			<Select
-				defaultValue={
-					(query as any).value &&
-					(((query as any)?.value as any) as string).toUpperCase()
-				}
-				onChange={(e): void => {
-					onUpdate({ ...query, value: e }, queryIndex);
-				}}
-				style={{ width: '100%' }}
-			>
-				{Object.values(ConditionalOperators).map((cond) => (
-					<Option key={cond} value={cond} label={cond}>
-						{cond}
-					</Option>
-				))}
-			</Select>
-		</QueryConditionContainer>
-	);
-}
-const hashCode = (s: string): string => {
-	if (!s) {
-		return '0';
-	}
-	return `${Math.abs(
-		s.split('').reduce((a, b) => {
-			a = (a << 5) - a + b.charCodeAt(0);
-			return a & a;
-		}, 0),
-	)}`;
-};
+
+export type Query = { value: string | string[]; type: string }[];
 
 function QueryBuilder({
 	updateParsedQuery,
-}: {
-	updateParsedQuery: (arg0: unknown) => void;
-}): JSX.Element {
+	onDropDownToggleHandler,
+}: SearchFieldsProps): JSX.Element {
 	const {
 		searchFilter: { parsedQuery },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -201,12 +201,9 @@ function QueryBuilder({
 		}
 	}, [parsedQuery]);
 
-	const handleUpdate = (
-		query: { value: string | string[]; type: string }[],
-		queryIndex: number,
-	): void => {
+	const handleUpdate = (query: Query, queryIndex: number): void => {
 		const updatedParsedQuery = generatedQueryStructure;
-		updatedParsedQuery[queryIndex] = query as never;
+		updatedParsedQuery[queryIndex] = parseQuery(query) as never;
 
 		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
@@ -244,19 +241,16 @@ function QueryBuilder({
 				/>
 			);
 		});
+
 	return (
-		<div>
-			<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
-			<div
-				style={{
-					display: 'grid',
-					gridTemplateColumns: '80px 1fr',
-					margin: '0.5rem 0',
-				}}
-			>
-				{QueryUI()}
-			</div>
-		</div>
+		<>
+			<Container isMargin={generatedQueryStructure.length === 0}>
+				<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
+				<CloseSquareOutlined onClick={onDropDownToggleHandler(false)} />
+			</Container>
+
+			<QueryWrapper>{QueryUI()}</QueryWrapper>
+		</>
 	);
 }
 

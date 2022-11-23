@@ -99,15 +99,14 @@ export const LogsReducer = (
 		}
 
 		case ADD_SEARCH_FIELD_QUERY_STRING: {
-			const updatedQueryString =
-				state.searchFilter.queryString ||
-				`${
-					state.searchFilter.queryString && state.searchFilter.queryString.length > 0
-						? ' and '
-						: ''
-				}${action.payload}`;
+			const updatedQueryString = `${state?.searchFilter?.queryString || ''}${
+				state.searchFilter.queryString && state.searchFilter.queryString.length > 0
+					? ' and '
+					: ''
+			}${action.payload}`;
 
 			const updatedParsedQuery = parseQuery(updatedQueryString);
+			console.log({ updatedParsedQuery, updatedQueryString, action });
 			return {
 				...state,
 				searchFilter: {

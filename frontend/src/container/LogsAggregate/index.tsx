@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { blue } from '@ant-design/colors';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
@@ -16,9 +15,6 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 
-interface LogsAggregateProps {
-	getLogsAggregate: (arg0: Parameters<typeof getLogsAggregate>[0]) => void;
-}
 function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
@@ -42,18 +38,18 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 					clearInterval(reFetchIntervalRef.current);
 				}
 				reFetchIntervalRef.current = null;
-				getLogsAggregate({
-					timestampStart: minTime,
-					timestampEnd: maxTime,
-					step: getStep({
-						start: minTime,
-						end: maxTime,
-						inputFormat: 'ns',
-					}),
-					q: queryString,
-					...(idStart ? { idGt: idStart } : {}),
-					...(idEnd ? { idLt: idEnd } : {}),
-				});
+				// getLogsAggregate({
+				// 	timestampStart: minTime,
+				// 	timestampEnd: maxTime,
+				// 	step: getStep({
+				// 		start: minTime,
+				// 		end: maxTime,
+				// 		inputFormat: 'ns',
+				// 	}),
+				// 	q: queryString,
+				// 	...(idStart ? { idGt: idStart } : {}),
+				// 	...(idEnd ? { idLt: idEnd } : {}),
+				// });
 				break;
 			}
 
@@ -89,17 +85,8 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 				break;
 			}
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [getLogsAggregate, maxTime, minTime, liveTail]);
-
-	const data = {
-		labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
-		datasets: [
-			{
-				data: logsAggregate.map((s) => s.value),
-				backgroundColor: blue[4],
-			},
-		],
-	};
 
 	return (
 		<Container>
@@ -108,7 +95,15 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 			) : (
 				<Graph
 					name="usage"
-					data={data}
+					data={{
+						labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
+						datasets: [
+							{
+								data: logsAggregate.map((s) => s.value),
+								backgroundColor: blue[4],
+							},
+						],
+					}}
 					type="bar"
 					containerHeight="100%"
 					animate={false}
@@ -116,6 +111,10 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 			)}
 		</Container>
 	);
+}
+
+interface LogsAggregateProps {
+	getLogsAggregate: (arg0: Parameters<typeof getLogsAggregate>[0]) => void;
 }
 
 interface DispatchProps {
