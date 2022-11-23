@@ -82,12 +82,11 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	useEffect(() => {
 		if (activeSelectedId) {
-			const paramsMap = {
+			const urlParams = formUrlParams({
 				spanId: activeSelectedId,
 				levelUp,
 				levelDown,
-			};
-			const urlParams = formUrlParams(paramsMap);
+			});
 			history.replace({
 				pathname: history.location.pathname,
 				search: `${urlParams}`,

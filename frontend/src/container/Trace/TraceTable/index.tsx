@@ -45,13 +45,11 @@ function TraceTable(): JSX.Element {
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
 	const getLink = (record: TableType): string => {
-		const paramsMap = {
+		return `${ROUTES.TRACE}/${record.traceID}${formUrlParams({
 			spanId: record.spanID,
 			levelUp: 0,
 			levelDown: 0,
-		};
-		const urlParams = formUrlParams(paramsMap);
-		return `${ROUTES.TRACE}/${record.traceID}${urlParams}`;
+		})}`;
 	};
 
 	const getValue = (value: string): JSX.Element => {

@@ -9,14 +9,12 @@ const getTraceItem = async (
 	props: GetTraceItemProps,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const paramsMap = {
-			spanId: props.spanId,
-			levelUp: props.levelUp,
-			levelDown: props.levelDown,
-		};
-		const urlParams = formUrlParams(paramsMap);
 		const response = await axios.request<PayloadProps>({
-			url: `/traces/${props.id}${urlParams}`,
+			url: `/traces/${props.id}${formUrlParams({
+				spanId: props.spanId,
+				levelUp: props.levelUp,
+				levelDown: props.levelDown,
+			})}`,
 			method: 'get',
 		});
 
