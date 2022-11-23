@@ -195,7 +195,11 @@ function TraceTable(): JSX.Element {
 				onClick: (event): void => {
 					event.preventDefault();
 					event.stopPropagation();
-					history.push(getLink(record));
+					if (event.metaKey || event.ctrlKey) {
+						window.open(getLink(record), '_blank');
+					} else {
+						history.push(getLink(record));
+					}
 				},
 			})}
 			pagination={{

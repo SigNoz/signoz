@@ -1,3 +1,4 @@
+import { SyncOutlined } from '@ant-design/icons';
 import { Button, Select as DefaultSelect } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -14,10 +15,11 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
-import { Container, Form, FormItem } from './styles';
+import { Form, FormContainer, FormItem } from './styles';
 
 const { Option } = DefaultSelect;
 
@@ -240,6 +242,8 @@ function DateTimeSelection({
 		setStartTime(dayjs(preStartTime));
 		setEndTime(dayjs(preEndTime));
 
+		setRefreshButtonHidden(updatedTime === 'custom');
+
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 	}, [
 		location.pathname,
@@ -253,35 +257,44 @@ function DateTimeSelection({
 	]);
 
 	return (
-		<Container>
+		<>
 			<Form
 				form={formSelector}
 				layout="inline"
 				initialValues={{ interval: selectedTime }}
 			>
-				<DefaultSelect
-					onSelect={(value: unknown): void => onSelectHandler(value as Time)}
-					value={getInputLabel(startTime, endTime, selectedTime)}
-					data-testid="dropDown"
-				>
-					{options.map(({ value, label }) => (
-						<Option key={value + label} value={value}>
-							{label}
-						</Option>
-					))}
-				</DefaultSelect>
+				<FormContainer>
+					<DefaultSelect
+						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
+						value={getInputLabel(startTime, endTime, selectedTime)}
+						data-testid="dropDown"
+					>
+						{options.map(({ value, label }) => (
+							<Option key={value + label} value={value}>
+								{label}
+							</Option>
+						))}
+					</DefaultSelect>
 
-				<FormItem hidden={refreshButtonHidden}>
-					<Button type="primary" onClick={onRefreshHandler}>
-						Refresh
-					</Button>
-				</FormItem>
+					<FormItem hidden={refreshButtonHidden}>
+						<Button
+							icon={<SyncOutlined />}
+							type="primary"
+							onClick={onRefreshHandler}
+						/>
+					</FormItem>
+
+					<FormItem>
+						<AutoRefresh disabled={refreshButtonHidden} />
+					</FormItem>
+				</FormContainer>
 			</Form>
 
 			<RefreshText
 				{...{
 					onLastRefreshHandler,
 				}}
+				refreshButtonHidden={refreshButtonHidden}
 			/>
 
 			<CustomDateTimeModal
@@ -291,7 +304,7 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</Container>
+		</>
 	);
 }
 
