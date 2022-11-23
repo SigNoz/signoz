@@ -41,7 +41,6 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 							onSelect(o.selection);
 						}}
 					>
-						{' '}
 						{o.description}
 					</AlertTypeCard>
 				))}

@@ -2,12 +2,12 @@ import { Form, Row } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
 import React, { useState } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+
 import {
 	alertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
-} from 'types/api/alerts/create';
-
+} from './defaults';
 import SelectAlertType from './SelectAlertType';
 
 function CreateRules(): JSX.Element {
