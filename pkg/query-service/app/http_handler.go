@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -652,11 +653,16 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				return
 			}
 			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVars(metricsQueryRangeParams)
+
 			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
 			if err != nil {
 				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 				return
 			}
+
 			queries[name] = query.String()
 		}
 		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
