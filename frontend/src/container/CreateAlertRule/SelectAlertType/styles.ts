@@ -1,15 +1,9 @@
-import { Card, Row } from 'antd';
+import { Card } from 'antd';
 import styled from 'styled-components';
 
 export const SelectTypeContainer = styled.div`
 	&&& {
 		padding: 1rem;
-	}
-`;
-
-export const AlertTypeCards = styled(Row)`
-	&&& {
-		flex-wrap: nowrap;
 	}
 `;
 

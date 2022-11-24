@@ -1,8 +1,9 @@
+import { Row } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { AlertTypeCard, AlertTypeCards, SelectTypeContainer } from './styles';
+import { AlertTypeCard, SelectTypeContainer } from './styles';
 
 interface OptionType {
 	title: string;
@@ -30,6 +31,11 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 				selection: AlertTypes.TRACES_BASED_ALERT,
 				description: t('traces_based_alert_desc'),
 			},
+			{
+				title: t('exceptions_based_alert'),
+				selection: AlertTypes.EXCEPTIONS_BASED_ALERT,
+				description: t('exceptions_based_alert_desc'),
+			},
 		];
 		return (
 			<>
@@ -50,7 +56,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	return (
 		<SelectTypeContainer>
 			<h3> {t('choose_alert_type')} </h3>
-			<AlertTypeCards>{renderOptions()}</AlertTypeCards>
+			<Row>{renderOptions()}</Row>
 		</SelectTypeContainer>
 	);
 }

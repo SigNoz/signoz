@@ -117,8 +117,8 @@ export const traceAlertDefaults: AlertDef = {
 			chQueries: {
 				A: {
 					name: 'A',
-					rawQuery: `SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
-					query: `SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
+					rawQuery: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\ttagMap['peer.service'] AS op_name, \n\ttoFloat64(avg(durationNano)) AS value \nFROM signoz_traces.signoz_index_v2  \nWHERE tagMap['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
+					query: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\ttagMap['peer.service'] AS op_name, \n\ttoFloat64(avg(durationNano)) AS value \nFROM signoz_traces.signoz_index_v2  \nWHERE tagMap['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
 				},
@@ -134,6 +134,53 @@ export const traceAlertDefaults: AlertDef = {
 	},
 	annotations: {
 		description: 'A new trace-based alert',
+	},
+	evalWindow: defaultEvalWindow,
+};
+
+export const exceptionAlertDefaults: AlertDef = {
+	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
+	condition: {
+		compositeMetricQuery: {
+			builderQueries: {
+				A: {
+					queryName: 'A',
+					name: 'A',
+					formulaOnly: false,
+					metricName: '',
+					tagFilters: {
+						op: 'AND',
+						items: [],
+					},
+					groupBy: [],
+					aggregateOperator: 1,
+					expression: 'A',
+					disabled: false,
+					toggleDisable: false,
+					toggleDelete: false,
+				},
+			},
+			promQueries: {},
+			chQueries: {
+				A: {
+					name: 'A',
+					rawQuery: `SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
+					query: `SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
+					legend: '',
+					disabled: false,
+				},
+			},
+			queryType: 2,
+		},
+		op: defaultCompareOp,
+		matchType: '4',
+	},
+	labels: {
+		severity: 'warning',
+		details: `${window.location.protocol}//${window.location.host}/exceptions`,
+	},
+	annotations: {
+		description: 'A new exceptions-based alert',
 	},
 	evalWindow: defaultEvalWindow,
 };
