@@ -5,6 +5,7 @@ import {
 	getSpanOrder,
 	getSpanOrderParam,
 } from 'container/Trace/TraceTable/util';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
@@ -48,7 +49,11 @@ function TraceTable(): JSX.Element {
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
 	const getLink = (record: TableType): string => {
-		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
+		return `${ROUTES.TRACE}/${record.traceID}${formUrlParams({
+			spanId: record.spanID,
+			levelUp: 0,
+			levelDown: 0,
+		})}`;
 	};
 
 	const getValue = (value: string): JSX.Element => {
