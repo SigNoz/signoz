@@ -343,8 +343,8 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParam
 
 	if r.ruleCondition.QueryType() == qsmodel.CLICKHOUSE {
 		return &qsmodel.QueryRangeParamsV2{
-			Start:                ts.UnixMilli(),
-			End:                  ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+			Start:                ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+			End:                  ts.UnixMilli(),
 			Step:                 30,
 			CompositeMetricQuery: r.ruleCondition.CompositeMetricQuery,
 			Variables:            make(map[string]interface{}, 0),
@@ -353,8 +353,8 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParam
 
 	// default mode
 	return &qsmodel.QueryRangeParamsV2{
-		Start:                ts.UnixMilli(),
-		End:                  ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+		Start:                ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+		End:                  ts.UnixMilli(),
 		Step:                 30,
 		CompositeMetricQuery: r.ruleCondition.CompositeMetricQuery,
 	}
