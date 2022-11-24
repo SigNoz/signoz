@@ -129,7 +129,12 @@ function TraceTable(): JSX.Element {
 		if (!Array.isArray(sort)) {
 			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				const spanOrder = order === 'ascend' ? 'ascending' : 'descending';
+				let spanOrder = '';
+				if (order === 'ascend') {
+					spanOrder = 'ascending';
+				} else if (order === 'descend') {
+					spanOrder = 'descending';
+				}
 				const orderParam = getSortKey(sort.field as string);
 
 				dispatch({
