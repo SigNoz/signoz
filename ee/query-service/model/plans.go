@@ -9,8 +9,6 @@ const Basic = "BASIC_PLAN"
 const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
 const DisableUpsell = "DISABLE_UPSELL"
-const SmartTraceDetail = "SMART_TRACE_DETAIL"
-const CustomMetricsFunction = "CUSTOM_METRICS_FUNCTION"
 
 var BasicPlan = basemodel.FeatureSet{
 	Basic:         true,
@@ -19,15 +17,15 @@ var BasicPlan = basemodel.FeatureSet{
 }
 
 var ProPlan = basemodel.FeatureSet{
-	Pro:                   true,
-	SSO:                   true,
-	SmartTraceDetail:      true,
-	CustomMetricsFunction: true,
+	Pro:                             true,
+	SSO:                             true,
+	basemodel.SmartTraceDetail:      true,
+	basemodel.CustomMetricsFunction: true,
 }
 
 var EnterprisePlan = basemodel.FeatureSet{
-	Enterprise:            true,
-	SSO:                   true,
-	SmartTraceDetail:      true,
-	CustomMetricsFunction: true,
+	Enterprise:                      true,
+	SSO:                             true,
+	basemodel.SmartTraceDetail:      true,
+	basemodel.CustomMetricsFunction: true,
 }

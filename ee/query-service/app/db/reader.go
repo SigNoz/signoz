@@ -14,14 +14,13 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/mailru/easyjson"
 	"go.uber.org/zap"
 
 	"github.com/jmoiron/sqlx"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basechr "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -32,8 +31,8 @@ type ClickhouseReader struct {
 	*basechr.ClickHouseReader
 }
 
-func NewDataConnector(localDB *sqlx.DB, promConfigPath string) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath)
+func NewDataConnector(localDB *sqlx.DB, promConfigPath string, lm interfaces.FeatureLookup) *ClickhouseReader {
+	ch := basechr.NewReader(localDB, promConfigPath, lm)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
 		appdb:            localDB,
@@ -45,65 +44,8 @@ func (r *ClickhouseReader) Start(readerReady chan bool) {
 	r.ClickHouseReader.Start(readerReady)
 }
 
-// SearchTracesEE returns spans of a trace matching the given query.
-func (r *ClickhouseReader) SearchTracesEE(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]basemodel.SearchSpansResult, error) {
-
-	var searchScanResponses []basemodel.SearchSpanDBResponseItem
-	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
-	start := time.Now()
-
-	err := r.conn.Select(ctx, &searchScanResponses, query, traceId)
-
-	zap.S().Info(query)
-
-	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
-	}
-	end := time.Now()
-	zap.S().Debug("getTraceSQLQuery took: ", end.Sub(start))
-	searchSpansResult := []basemodel.SearchSpansResult{{
-		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-		Events:  make([][]interface{}, len(searchScanResponses)),
-	},
-	}
-	searchSpanResponses := []basemodel.SearchSpanResponseItem{}
-	start = time.Now()
-	for _, item := range searchScanResponses {
-		var jsonItem basemodel.SearchSpanResponseItem
-		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
-		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		searchSpanResponses = append(searchSpanResponses, jsonItem)
-	}
-	end = time.Now()
-	zap.S().Debug("getTraceSQLQuery unmarshal took: ", end.Sub(start))
-
-	spanLimit, err := strconv.Atoi(constants.SpanLimitStr)
-	if err != nil {
-		zap.S().Error("Error during strconv.Atoi() on SPAN_LIMIT env variable: ", err)
-		return nil, err
-	}
-	if len(searchScanResponses) > spanLimit && spanId != "" {
-		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
-		if err != nil {
-			return nil, err
-		}
-		end = time.Now()
-		zap.S().Debug("smartTraceAlgo took: ", end.Sub(start))
-	} else {
-		for i, item := range searchSpanResponses {
-			spanEvents := item.GetValues()
-			searchSpansResult[0].Events[i] = spanEvents
-		}
-	}
-
-	return &searchSpansResult, nil
-
-}
-
-// smartTraceAlgorithm is an algorithm to find the target span and build a tree of spans around it with the given levelUp and levelDown parameters and the given spanLimit
-func smartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]basemodel.SearchSpansResult, error) {
+// SmartTraceAlgorithm is an algorithm to find the target span and build a tree of spans around it with the given levelUp and levelDown parameters and the given spanLimit
+func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]basemodel.SearchSpansResult, error) {
 	var spans []*model.SpanForTraceDetails
 
 	// Build a slice of spans from the payload

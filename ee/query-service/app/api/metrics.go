@@ -8,7 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -17,7 +16,7 @@ import (
 )
 
 func (ah *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
-	if !ah.CheckFeature(model.CustomMetricsFunction) {
+	if !ah.CheckFeature(basemodel.CustomMetricsFunction) {
 		zap.S().Info("CustomMetricsFunction feature is not enabled in this plan")
 		ah.APIHandler.QueryRangeMetricsV2(w, r)
 		return

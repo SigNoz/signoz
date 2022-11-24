@@ -43,6 +43,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
@@ -100,12 +101,13 @@ type ClickHouseReader struct {
 	promConfigFile string
 	promConfig     *config.Config
 	alertManager   am.Manager
+	featureFlags   interfaces.FeatureLookup
 
 	liveTailRefreshSeconds int
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
+func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.FeatureLookup) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
@@ -142,6 +144,7 @@ func NewReader(localDB *sqlx.DB, configFile string) *ClickHouseReader {
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
+		featureFlags:            featureFlag,
 	}
 }
 
@@ -1711,16 +1714,13 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTracesEE(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int) (*[]model.SearchSpansResult, error) {
-	zap.S().Error("SearchTracesEE is not implemented for opensource version")
-	return nil, fmt.Errorf("SearchTracesEE is not implemented for opensource version")
-}
-
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int, spanLimit int, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
 	query := fmt.Sprintf("SELECT timestamp, traceID, model FROM %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+
+	start := time.Now()
 
 	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
 
@@ -1730,19 +1730,40 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string) (*[
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
-
+	end := time.Now()
+	zap.S().Debug("getTraceSQLQuery took: ", end.Sub(start))
 	searchSpansResult := []model.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 		Events:  make([][]interface{}, len(searchScanResponses)),
 	},
 	}
 
-	for i, item := range searchScanResponses {
+	searchSpanResponses := []model.SearchSpanResponseItem{}
+	start = time.Now()
+	for _, item := range searchScanResponses {
 		var jsonItem model.SearchSpanResponseItem
 		easyjson.Unmarshal([]byte(item.Model), &jsonItem)
 		jsonItem.TimeUnixNano = uint64(item.Timestamp.UnixNano() / 1000000)
-		spanEvents := jsonItem.GetValues()
-		searchSpansResult[0].Events[i] = spanEvents
+		searchSpanResponses = append(searchSpanResponses, jsonItem)
+	}
+	end = time.Now()
+	zap.S().Debug("getTraceSQLQuery unmarshal took: ", end.Sub(start))
+
+	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
+	smartAlgoEnabled := err == nil
+	if len(searchScanResponses) > spanLimit && spanId != "" && smartAlgoEnabled {
+		start = time.Now()
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
+		if err != nil {
+			return nil, err
+		}
+		end = time.Now()
+		zap.S().Debug("smartTraceAlgo took: ", end.Sub(start))
+	} else {
+		for i, item := range searchSpanResponses {
+			spanEvents := item.GetValues()
+			searchSpansResult[0].Events[i] = spanEvents
+		}
 	}
 
 	return &searchSpansResult, nil
