@@ -108,7 +108,6 @@ export const prepareStagedQuery = (
 	// convert map[string]IChQuery to IChQuery[]
 	if (c) {
 		Object.keys(c).forEach((key) => {
-			console.log('c:', c[key]);
 			chQueryList.push({ ...c[key], name: key, rawQuery: c[key].query });
 		});
 	}
