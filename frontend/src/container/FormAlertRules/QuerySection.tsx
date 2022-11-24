@@ -292,6 +292,7 @@ function QuerySection({
 		switch (typ) {
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				return (
 					<Tabs
 						type="card"
