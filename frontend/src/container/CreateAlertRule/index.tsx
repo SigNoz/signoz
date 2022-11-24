@@ -5,6 +5,7 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import {
 	alertDefaults,
+	exceptionAlertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
 } from './defaults';
@@ -26,6 +27,9 @@ function CreateRules(): JSX.Element {
 				break;
 			case AlertTypes.TRACES_BASED_ALERT:
 				setInitValues(traceAlertDefaults);
+				break;
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+				setInitValues(exceptionAlertDefaults);
 				break;
 			default:
 				setInitValues(alertDefaults);
