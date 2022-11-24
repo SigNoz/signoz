@@ -225,6 +225,30 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	return postData, nil
 }
 
+func ParseSearchTracesParams(r *http.Request) (string, string, int, int, error) {
+	vars := mux.Vars(r)
+	traceId := vars["traceId"]
+	spanId := r.URL.Query().Get("spanId")
+	levelUp := r.URL.Query().Get("levelUp")
+	levelDown := r.URL.Query().Get("levelDown")
+	if levelUp == "" || levelUp == "null" {
+		levelUp = "0"
+	}
+	if levelDown == "" || levelDown == "null" {
+		levelDown = "0"
+	}
+
+	levelUpInt, err := strconv.Atoi(levelUp)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+	levelDownInt, err := strconv.Atoi(levelDown)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+	return traceId, spanId, levelUpInt, levelDownInt, nil
+}
+
 func DoesExistInSlice(item string, list []string) bool {
 	for _, element := range list {
 		if item == element {
