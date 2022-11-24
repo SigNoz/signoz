@@ -121,6 +121,16 @@ function TraceTable(): JSX.Element {
 		return '';
 	};
 
+	const getOrder = (order: string): string => {
+		if (order === 'ascend') {
+			return 'ascending';
+		}
+		if (order === 'descend') {
+			return 'descending';
+		}
+		return '';
+	};
+
 	const onChangeHandler: TableProps<TableType>['onChange'] = (
 		props,
 		_,
@@ -129,12 +139,7 @@ function TraceTable(): JSX.Element {
 		if (!Array.isArray(sort)) {
 			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				let spanOrder = '';
-				if (order === 'ascend') {
-					spanOrder = 'ascending';
-				} else if (order === 'descend') {
-					spanOrder = 'descending';
-				}
+				const spanOrder = getOrder(order as string);
 				const orderParam = getSortKey(sort.field as string);
 
 				dispatch({
