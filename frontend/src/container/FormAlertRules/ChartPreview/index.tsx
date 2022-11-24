@@ -1,11 +1,12 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
+import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getChartData from 'lib/getChartData';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
@@ -22,6 +23,10 @@ export interface ChartPreviewProps {
 	selectedInterval?: Time;
 	headline?: JSX.Element;
 	threshold?: number | undefined;
+	userQueryKey?: string;
+}
+interface QueryResponseError {
+	message?: string;
 }
 
 function ChartPreview({
@@ -32,6 +37,7 @@ function ChartPreview({
 	selectedInterval = '5min',
 	headline,
 	threshold,
+	userQueryKey,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const staticLine: StaticLineProps | undefined =
@@ -46,9 +52,34 @@ function ChartPreview({
 			  }
 			: undefined;
 
-	const queryKey = JSON.stringify(query);
+	const canQuery = useMemo((): boolean => {
+		if (!query || query == null) {
+			return false;
+		}
+
+		switch (query?.queryType) {
+			case EQueryType.PROM:
+				return query.promQL?.length > 0 && query.promQL[0].query !== '';
+			case EQueryType.CLICKHOUSE:
+				return (
+					query.clickHouse?.length > 0 && query.clickHouse[0].rawQuery?.length > 0
+				);
+			case EQueryType.QUERY_BUILDER:
+				return (
+					query.metricsBuilder?.queryBuilder?.length > 0 &&
+					query.metricsBuilder?.queryBuilder[0].metricName !== ''
+				);
+			default:
+				return false;
+		}
+	}, [query]);
+
 	const queryResponse = useQuery({
-		queryKey: ['chartPreview', queryKey, selectedInterval],
+		queryKey: [
+			'chartPreview',
+			userQueryKey || JSON.stringify(query),
+			selectedInterval,
+		],
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
@@ -64,14 +95,8 @@ function ChartPreview({
 				graphType,
 				selectedTime,
 			}),
-		enabled:
-			query != null &&
-			((query.queryType === EQueryType.PROM &&
-				query.promQL?.length > 0 &&
-				query.promQL[0].query !== '') ||
-				(query.queryType === EQueryType.QUERY_BUILDER &&
-					query.metricsBuilder?.queryBuilder?.length > 0 &&
-					query.metricsBuilder?.queryBuilder[0].metricName !== '')),
+		retry: false,
+		enabled: canQuery,
 	});
 
 	const chartDataSet = queryResponse.isError
@@ -89,15 +114,14 @@ function ChartPreview({
 	return (
 		<ChartContainer>
 			{headline}
-			{(queryResponse?.data?.error || queryResponse?.isError) && (
+			{(queryResponse?.isError || queryResponse?.error) && (
 				<FailedMessageContainer color="red" title="Failed to refresh the chart">
 					<InfoCircleOutlined />{' '}
-					{queryResponse?.data?.error ||
-						queryResponse?.error ||
+					{(queryResponse?.error as QueryResponseError).message ||
 						t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-
+			{queryResponse.isLoading && <Spinner size="large" tip="Loading..." />}
 			{chartDataSet && !queryResponse.isError && (
 				<GridGraphComponent
 					title={name}
@@ -118,6 +142,7 @@ ChartPreview.defaultProps = {
 	selectedInterval: '5min',
 	headline: undefined,
 	threshold: undefined,
+	userQueryKey: '',
 };
 
 export default ChartPreview;

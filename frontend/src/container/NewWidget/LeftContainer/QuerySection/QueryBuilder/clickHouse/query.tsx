@@ -8,7 +8,7 @@ import { IClickHouseQueryHandleChange } from './types';
 
 interface IClickHouseQueryBuilderProps {
 	queryData: IClickHouseQuery;
-	queryIndex: number;
+	queryIndex: number | string;
 	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
 }
 
@@ -42,6 +42,9 @@ function ClickHouseQueryBuilder({
 				options={{
 					scrollbar: {
 						alwaysConsumeMouseWheel: false,
+					},
+					minimap: {
+						enabled: false,
 					},
 				}}
 			/>
