@@ -12,7 +12,7 @@ export const NotFoundContainer = styled.div`
 export const FailedMessageContainer = styled(Tooltip)`
 	position: absolute;
 	color: ${red};
-	top: 50px;
+	top: 4rem;
 	left: 10px;
 `;
 
