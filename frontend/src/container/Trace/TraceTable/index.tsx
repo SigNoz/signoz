@@ -1,11 +1,11 @@
 import { TableProps, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
-import { formUrlParams } from 'container/TraceDetail/utils';
 import {
 	getSpanOrder,
 	getSpanOrderParam,
 } from 'container/Trace/TraceTable/util';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
