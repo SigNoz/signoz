@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.uber.org/zap"
 )
 
@@ -192,6 +193,10 @@ func (ah *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				return
 			}
 			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVars(metricsQueryRangeParams)
+
 			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
 			if err != nil {
 				RespondError(w, &basemodel.ApiError{Typ: basemodel.ErrorBadData, Err: err}, nil)
