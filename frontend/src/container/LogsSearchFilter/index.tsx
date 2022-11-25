@@ -104,7 +104,8 @@ function SearchFilter({
 
 	useEffect(() => {
 		handleSearch(urlQueryString || '');
-	}, [handleSearch, urlQueryString]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [urlQueryString, maxTime, minTime]);
 
 	return (
 		<Container>
