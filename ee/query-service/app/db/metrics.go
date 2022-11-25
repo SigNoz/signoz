@@ -117,8 +117,7 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 				}
 			default:
-				zap.S().Debugf("unhandled data type found in metric builder results ")
-
+				zap.S().Errorf("invalid var found in metric builder query result", v, colName)
 			}
 		}
 		sort.Strings(groupBy)
