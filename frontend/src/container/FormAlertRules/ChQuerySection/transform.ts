@@ -33,6 +33,5 @@ export const rawQueryToIChQuery = (
 // use of rawQuery (in ClickHouseQueryBuilder)
 // and query (in alert builder)
 export const toIClickHouseQuery = (src: IChQuery): IClickHouseQuery => {
-	console.log('src:', { ...src, name: 'A', rawQuery: src.query });
 	return { ...src, name: 'A', rawQuery: src.query };
 };
