@@ -4,9 +4,6 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-interface ITimeUnit {
-	[key: string]: TimeUnit;
-}
 interface IAxisTimeUintConfig {
 	unitName: TimeUnit;
 	multiplier: number;
@@ -22,7 +19,7 @@ export interface ITimeRange {
 	maxTime: number | null;
 }
 
-export const TIME_UNITS: ITimeUnit = {
+export const TIME_UNITS: Record<TimeUnit, TimeUnit> = {
 	millisecond: 'millisecond',
 	second: 'second',
 	minute: 'minute',
@@ -31,6 +28,7 @@ export const TIME_UNITS: ITimeUnit = {
 	week: 'week',
 	month: 'month',
 	year: 'year',
+	quarter: 'quarter',
 };
 
 const TIME_UNITS_CONFIG: IAxisTimeUintConfig[] = [
@@ -98,7 +96,7 @@ export const convertTimeRange = (
 
 	if (start === 0 || end === 0) {
 		return {
-			unitName: TIME_UNITS.minute,
+			unitName: TIME_UNITS.hour,
 			stepSize: stepSize !== 1 ? updatedSteps : 1,
 		};
 	}
