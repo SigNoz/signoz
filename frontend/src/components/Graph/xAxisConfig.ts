@@ -93,9 +93,19 @@ export const convertTimeRange = (
 	} catch (error) {
 		console.error(error);
 	}
+
+	const updatedSteps = Math.floor(stepSize);
+
+	if (start === 0 || end === 0) {
+		return {
+			unitName: TIME_UNITS.minute,
+			stepSize: stepSize !== 1 ? updatedSteps : 1,
+		};
+	}
+
 	return {
 		unitName: relevantTimeUnit.unitName,
-		stepSize: Math.floor(stepSize) || 1,
+		stepSize: updatedSteps || 1,
 	};
 };
 
