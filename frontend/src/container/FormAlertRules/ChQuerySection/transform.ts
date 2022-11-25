@@ -1,7 +1,7 @@
 import { IChQuery } from 'types/api/alerts/compositeQuery';
 import { IClickHouseQuery } from 'types/api/dashboard/getAll';
 
-// rawQueryToIChQuery transforms raw query (from ClickHouseQueryBuilder)
+// @description rawQueryToIChQuery transforms raw query (from ClickHouseQueryBuilder)
 // to alert specific IChQuery format
 export const rawQueryToIChQuery = (
 	src: IChQuery,
@@ -28,7 +28,7 @@ export const rawQueryToIChQuery = (
 	};
 };
 
-// toIClickHouseQuery transforms IChQuery (alert specific) to
+// @description toIClickHouseQuery transforms IChQuery (alert specific) to
 // ClickHouseQueryBuilder format. The main difference is
 // use of rawQuery (in ClickHouseQueryBuilder)
 // and query (in alert builder)
