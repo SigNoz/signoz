@@ -2916,6 +2916,27 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				metricPoint.Timestamp = v.UnixMilli()
 			case *float64:
 				metricPoint.Value = *v
+			case *uint64:
+				intv := *v
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					metricPoint.Value = float64(intv)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%d", intv))
+					groupAttributes[colName] = fmt.Sprintf("%d", intv)
+				}
+			case *uint8:
+				// note: have to re-write (copy) the logic for uint8 though
+				// they are simiar to uint64 as the type conversion (below)
+				// does not work in multiple cases in switch. means we can't use:
+				// 	case *uint64, uint8
+				intv := *v
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					metricPoint.Value = float64(intv)
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%d", intv))
+					groupAttributes[colName] = fmt.Sprintf("%d", intv)
+				}
+
 			}
 		}
 		sort.Strings(groupBy)
