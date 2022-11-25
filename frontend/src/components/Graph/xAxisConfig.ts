@@ -94,7 +94,7 @@ export const convertTimeRange = (
 		console.error(error);
 	}
 
-	const updatedSteps = Math.floor(stepSize);
+	const updatedSteps = Math.floor(stepSize) || 1;
 
 	if (start === 0 || end === 0) {
 		return {
