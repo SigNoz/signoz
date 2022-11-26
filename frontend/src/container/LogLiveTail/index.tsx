@@ -11,6 +11,7 @@ import { throttle } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { UPDATE_AUTO_REFRESH_DISABLED } from 'types/actions/globalTime';
 import {
 	FLUSH_LOGS,
 	PUSH_LIVE_TAIL_EVENT,
@@ -39,6 +40,10 @@ function LogLiveTail(): JSX.Element {
 		dispatch({
 			type: TOGGLE_LIVE_TAIL,
 			payload: toggleState,
+		});
+		dispatch({
+			type: UPDATE_AUTO_REFRESH_DISABLED,
+			payload: toggleState === 'PLAYING',
 		});
 	};
 

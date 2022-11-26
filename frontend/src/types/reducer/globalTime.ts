@@ -6,4 +6,5 @@ export interface GlobalReducer {
 	minTime: GlobalTime['minTime'];
 	loading: boolean;
 	selectedTime: Time;
+	isAutoRefreshDisabled: boolean;
 }

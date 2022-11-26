@@ -29,11 +29,17 @@ import { options } from './config';
 import { ButtonContainer, Container } from './styles';
 
 function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
-	const { minTime: initialMinTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime: initialMinTime,
+		selectedTime,
+		isAutoRefreshDisabled,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const { pathname } = useLocation();
+
+	const isDisabled = useMemo(() => disabled || isAutoRefreshDisabled, [
+		isAutoRefreshDisabled,
+		disabled,
+	]);
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
@@ -69,7 +75,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	useInterval(() => {
 		const selectedValue = getOption?.value;
 
-		if (disabled || !isAutoRefreshEnabled) {
+		if (isDisabled || !isAutoRefreshEnabled) {
 			return;
 		}
 
@@ -125,21 +131,23 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 					<Checkbox
 						onChange={onChangeAutoRefreshHandler}
 						checked={isAutoRefreshEnabled}
-						disabled={disabled}
+						disabled={isDisabled}
 					>
 						Auto Refresh
 					</Checkbox>
 
 					<Divider />
 
-					<Typography.Paragraph>Refresh Interval</Typography.Paragraph>
+					<Typography.Paragraph disabled={isDisabled}>
+						Refresh Interval
+					</Typography.Paragraph>
 
 					<Radio.Group onChange={onChangeHandler} value={selectedOption}>
 						<Space direction="vertical">
 							{options
 								.filter((e) => e.label !== 'off')
 								.map((option) => (
-									<Radio key={option.key} value={option.key}>
+									<Radio disabled={isDisabled} key={option.key} value={option.key}>
 										{option.label}
 									</Radio>
 								))}
