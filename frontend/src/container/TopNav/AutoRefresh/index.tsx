@@ -22,7 +22,10 @@ import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
+import {
+	UPDATE_AUTO_REFRESH_INTERVAL,
+	UPDATE_TIME_INTERVAL,
+} from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { options } from './config';
@@ -52,13 +55,19 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		Boolean(localStorageValue),
 	);
 
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
 	useEffect(() => {
-		setIsAutoRefreshfreshEnabled(Boolean(localStorageValue));
-	}, [localStorageValue]);
+		const isAutoRefreshEnabled = Boolean(localStorageValue);
+		dispatch({
+			type: UPDATE_AUTO_REFRESH_INTERVAL,
+			payload: localStorageValue,
+		});
+		setIsAutoRefreshfreshEnabled(isAutoRefreshEnabled);
+	}, [localStorageValue, dispatch]);
 
 	const params = useUrlQuery();
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
 		localStorageValue || options[0].key,
 	);

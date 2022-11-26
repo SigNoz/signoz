@@ -3,6 +3,7 @@ import { Time } from 'container/TopNav/DateTimeSelection/config';
 export const UPDATE_TIME_INTERVAL = 'UPDATE_TIME_INTERVAL';
 export const GLOBAL_TIME_LOADING_START = 'GLOBAL_TIME_LOADING_START';
 export const UPDATE_AUTO_REFRESH_DISABLED = 'UPDATE_AUTO_REFRESH_DISABLED';
+export const UPDATE_AUTO_REFRESH_INTERVAL = 'UPDATE_AUTO_REFRESH_INTERVAL';
 
 export type GlobalTime = {
 	maxTime: number;
@@ -30,4 +31,5 @@ interface GlobalTimeLoading {
 export type GlobalTimeAction =
 	| UpdateTimeInterval
 	| GlobalTimeLoading
-	| UpdateAutoRefreshDisabled;
+	| UpdateAutoRefreshDisabled
+	| UPDATE_AUTO_REFRESH_INTERVAL;

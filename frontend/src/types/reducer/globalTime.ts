@@ -7,4 +7,5 @@ export interface GlobalReducer {
 	loading: boolean;
 	selectedTime: Time;
 	isAutoRefreshDisabled: boolean;
+	selectedAutoRefreshInterval: string;
 }

@@ -20,6 +20,7 @@ import {
 } from 'types/actions/logs';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { TIME_PICKER_OPTIONS } from './config';
@@ -35,6 +36,10 @@ function LogLiveTail(): JSX.Element {
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { selectedAutoRefreshInterval } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const dispatch = useDispatch();
 	const handleLiveTail = (toggleState: TLogsLiveTailState): void => {
 		dispatch({
@@ -136,6 +141,10 @@ function LogLiveTail(): JSX.Element {
 		[dispatch, liveTail, liveTailStartRange],
 	);
 
+	const isDisabled = useMemo(() => selectedAutoRefreshInterval?.length > 0, [
+		selectedAutoRefreshInterval,
+	]);
+
 	return (
 		<TimePickerCard>
 			<Space size={0} align="center">
@@ -154,6 +163,7 @@ function LogLiveTail(): JSX.Element {
 						type="primary"
 						onClick={handleLiveTailStart}
 						title="Start live tail"
+						disabled={isDisabled}
 					>
 						Go Live <PlayCircleOutlined />
 					</Button>

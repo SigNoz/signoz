@@ -3,6 +3,7 @@ import {
 	GLOBAL_TIME_LOADING_START,
 	GlobalTimeAction,
 	UPDATE_AUTO_REFRESH_DISABLED,
+	UPDATE_AUTO_REFRESH_INTERVAL,
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -15,6 +16,7 @@ const intitalState: GlobalReducer = {
 		typeof window !== 'undefined' ? window?.location?.pathname : '',
 	),
 	isAutoRefreshDisabled: false,
+	selectedAutoRefreshInterval: '',
 };
 
 const globalTimeReducer = (
@@ -41,6 +43,13 @@ const globalTimeReducer = (
 			return {
 				...state,
 				isAutoRefreshDisabled: action.payload,
+			};
+		}
+
+		case UPDATE_AUTO_REFRESH_INTERVAL: {
+			return {
+				...state,
+				selectedAutoRefreshInterval: action.payload,
 			};
 		}
 
