@@ -92,18 +92,9 @@ export const convertTimeRange = (
 		console.error(error);
 	}
 
-	const updatedSteps = Math.floor(stepSize) || 1;
-
-	if (start === 0 || end === 0) {
-		return {
-			unitName: TIME_UNITS.hour,
-			stepSize: stepSize !== 1 ? updatedSteps : 1,
-		};
-	}
-
 	return {
 		unitName: relevantTimeUnit.unitName,
-		stepSize: updatedSteps || 1,
+		stepSize: Math.floor(stepSize) || 1,
 	};
 };
 
