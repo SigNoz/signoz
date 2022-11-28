@@ -2916,6 +2916,32 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 				metricPoint.Timestamp = v.UnixMilli()
 			case *float64:
 				metricPoint.Value = *v
+			case **float64:
+				// ch seems to return this type when column is derived from
+				// SELECT count(*)/ SELECT count(*)
+				floatVal := *v
+				if floatVal != nil {
+					metricPoint.Value = *floatVal
+				}
+			case *float32:
+				float32Val := float32(*v)
+				metricPoint.Value = float64(float32Val)
+			case *uint8, *uint64, *uint16, *uint32:
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					metricPoint.Value = float64(reflect.ValueOf(v).Elem().Uint())
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
+				}
+			case *int8, *int16, *int32, *int64:
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					metricPoint.Value = float64(reflect.ValueOf(v).Elem().Int())
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
+				}
+			default:
+				zap.S().Errorf("invalid var found in metric builder query result", v, colName)
 			}
 		}
 		sort.Strings(groupBy)
@@ -3274,16 +3300,16 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	if params.GroupBy != "" {
 		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, toString(%s) as groupBy, "+
 			"%s "+
-			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
 			params.StepSeconds/60, params.GroupBy, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
 	} else {
 		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, "+
 			"%s "+
-			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
 			params.StepSeconds/60, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
 	}
 	if filterSql != "" {
-		query = fmt.Sprintf("%s AND %s ", query, filterSql)
+		query = fmt.Sprintf("%s AND ( %s ) ", query, filterSql)
 	}
 	if params.GroupBy != "" {
 		query = fmt.Sprintf("%s GROUP BY ts_start_interval, toString(%s) as groupBy ORDER BY ts_start_interval", query, params.GroupBy)

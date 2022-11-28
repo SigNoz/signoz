@@ -422,25 +422,40 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				}
 
 			case *float64:
-				if colName == "res" || colName == "value" {
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = *v
-
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", *v))
 				}
-			case *uint64:
-				intv := *v
-				if colName == "res" || colName == "value" {
-					sample.Point.V = float64(intv)
-				} else {
-					lbls.Set(colName, fmt.Sprintf("%d", intv))
+			case **float64:
+				// ch seems to return this type when column is derived from
+				// SELECT count(*)/ SELECT count(*)
+				floatVal := *v
+				if floatVal != nil {
+					if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+						sample.Point.V = *floatVal
+					} else {
+						lbls.Set(colName, fmt.Sprintf("%f", *floatVal))
+					}
 				}
-			case *uint8:
-				intv := *v
-				if colName == "res" || colName == "value" {
-					sample.Point.V = float64(intv)
+			case *float32:
+				float32Val := float32(*v)
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					sample.Point.V = float64(float32Val)
 				} else {
-					lbls.Set(colName, fmt.Sprintf("%d", intv))
+					lbls.Set(colName, fmt.Sprintf("%f", float32Val))
+				}
+			case *uint8, *uint64, *uint16, *uint32:
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					sample.Point.V = float64(reflect.ValueOf(v).Elem().Uint())
+				} else {
+					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+				}
+			case *int8, *int16, *int32, *int64:
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					sample.Point.V = float64(reflect.ValueOf(v).Elem().Int())
+				} else {
+					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				}
 			default:
 				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])

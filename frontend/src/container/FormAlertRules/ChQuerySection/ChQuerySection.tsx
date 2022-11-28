@@ -3,6 +3,8 @@ import { IClickHouseQueryHandleChange } from 'container/NewWidget/LeftContainer/
 import React from 'react';
 import { IChQueries } from 'types/api/alerts/compositeQuery';
 
+import { rawQueryToIChQuery, toIClickHouseQuery } from './transform';
+
 function ChQuerySection({
 	chQueries,
 	setChQueries,
@@ -12,34 +14,25 @@ function ChQuerySection({
 		legend,
 		toggleDelete,
 	}: IClickHouseQueryHandleChange): void => {
-		let chQuery = chQueries.A;
+		const chQuery = rawQueryToIChQuery(
+			chQueries.A,
+			rawQuery,
+			legend,
+			toggleDelete,
+		);
 
-		if (rawQuery) {
-			chQuery.rawQuery = rawQuery;
-			chQuery.query = rawQuery;
-		}
-
-		if (legend) chQuery.legend = legend;
-		if (toggleDelete) {
-			chQuery = {
-				rawQuery: '',
-				legend: '',
-				name: 'A',
-				disabled: false,
-				query: '',
-			};
-		}
 		setChQueries({
 			A: {
 				...chQuery,
 			},
 		});
 	};
+
 	return (
 		<ClickHouseQueryBuilder
 			key="A"
 			queryIndex="A"
-			queryData={{ ...chQueries?.A, name: 'A', rawQuery: chQueries?.A.query }}
+			queryData={toIClickHouseQuery(chQueries?.A)}
 			handleQueryChange={handleChQueryChange}
 		/>
 	);

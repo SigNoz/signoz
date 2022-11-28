@@ -468,6 +468,7 @@ function FormAlertRules({
 				threshold={alertDef.condition?.target}
 				query={manualStagedQuery}
 				userQueryKey={runQueryId}
+				selectedInterval={toChartInterval(alertDef.evalWindow)}
 			/>
 		);
 	};

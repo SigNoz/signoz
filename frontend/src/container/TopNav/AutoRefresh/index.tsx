@@ -21,7 +21,10 @@ import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
+import {
+	UPDATE_AUTO_REFRESH_INTERVAL,
+	UPDATE_TIME_INTERVAL,
+} from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getMinMax, options } from './config';
@@ -32,6 +35,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		(state) => state.globalTime,
 	);
 	const { pathname } = useLocation();
+
+	const isDisabled = useMemo(
+		() => disabled || globalTime.isAutoRefreshDisabled,
+		[globalTime.isAutoRefreshDisabled, disabled],
+	);
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
@@ -44,13 +52,19 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		Boolean(localStorageValue),
 	);
 
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
 	useEffect(() => {
-		setIsAutoRefreshfreshEnabled(Boolean(localStorageValue));
-	}, [localStorageValue]);
+		const isAutoRefreshEnabled = Boolean(localStorageValue);
+		dispatch({
+			type: UPDATE_AUTO_REFRESH_INTERVAL,
+			payload: localStorageValue,
+		});
+		setIsAutoRefreshfreshEnabled(isAutoRefreshEnabled);
+	}, [localStorageValue, dispatch]);
 
 	const params = useUrlQuery();
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
 		localStorageValue || options[0].key,
 	);
@@ -67,7 +81,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	useInterval(() => {
 		const selectedValue = getOption?.value;
 
-		if (disabled || !isAutoRefreshEnabled) {
+		if (isDisabled || !isAutoRefreshEnabled) {
 			return;
 		}
 
@@ -127,21 +141,23 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 					<Checkbox
 						onChange={onChangeAutoRefreshHandler}
 						checked={isAutoRefreshEnabled}
-						disabled={disabled}
+						disabled={isDisabled}
 					>
 						Auto Refresh
 					</Checkbox>
 
 					<Divider />
 
-					<Typography.Paragraph>Refresh Interval</Typography.Paragraph>
+					<Typography.Paragraph disabled={isDisabled}>
+						Refresh Interval
+					</Typography.Paragraph>
 
 					<Radio.Group onChange={onChangeHandler} value={selectedOption}>
 						<Space direction="vertical">
 							{options
 								.filter((e) => e.label !== 'off')
 								.map((option) => (
-									<Radio key={option.key} value={option.key}>
+									<Radio disabled={isDisabled} key={option.key} value={option.key}>
 										{option.label}
 									</Radio>
 								))}
