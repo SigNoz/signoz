@@ -54,6 +54,7 @@ function ClickHouseQueryBuilder({
 				}
 				size="middle"
 				defaultValue={queryData.legend}
+				value={queryData.legend}
 				addonBefore="Legend Format"
 			/>
 		</QueryHeader>
