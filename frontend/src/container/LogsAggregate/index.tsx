@@ -31,6 +31,7 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 	);
 
 	const reFetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
 	useEffect(() => {
 		switch (liveTail) {
 			case 'STOPPED': {
@@ -38,18 +39,6 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 					clearInterval(reFetchIntervalRef.current);
 				}
 				reFetchIntervalRef.current = null;
-				// getLogsAggregate({
-				// 	timestampStart: minTime,
-				// 	timestampEnd: maxTime,
-				// 	step: getStep({
-				// 		start: minTime,
-				// 		end: maxTime,
-				// 		inputFormat: 'ns',
-				// 	}),
-				// 	q: queryString,
-				// 	...(idStart ? { idGt: idStart } : {}),
-				// 	...(idEnd ? { idLt: idEnd } : {}),
-				// });
 				break;
 			}
 
@@ -106,7 +95,7 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 					}}
 					type="bar"
 					containerHeight="100%"
-					animate={false}
+					animate
 				/>
 			)}
 		</Container>
