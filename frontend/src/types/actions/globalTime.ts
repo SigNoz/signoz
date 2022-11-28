@@ -28,8 +28,13 @@ interface GlobalTimeLoading {
 	type: typeof GLOBAL_TIME_LOADING_START;
 }
 
+interface UpdateAutoRefreshInterval {
+	type: typeof UPDATE_AUTO_REFRESH_INTERVAL;
+	payload: string;
+}
+
 export type GlobalTimeAction =
 	| UpdateTimeInterval
 	| GlobalTimeLoading
 	| UpdateAutoRefreshDisabled
-	| UPDATE_AUTO_REFRESH_INTERVAL;
+	| UpdateAutoRefreshInterval;
