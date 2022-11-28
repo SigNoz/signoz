@@ -3300,16 +3300,16 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	if params.GroupBy != "" {
 		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, toString(%s) as groupBy, "+
 			"%s "+
-			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
 			params.StepSeconds/60, params.GroupBy, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
 	} else {
 		query = fmt.Sprintf("SELECT toInt64(toUnixTimestamp(toStartOfInterval(toDateTime(timestamp/1000000000), INTERVAL %d minute))*1000000000) as ts_start_interval, "+
 			"%s "+
-			"FROM %s.%s WHERE timestamp >= '%d' AND timestamp <= '%d' ",
+			"FROM %s.%s WHERE (timestamp >= '%d' AND timestamp <= '%d' )",
 			params.StepSeconds/60, function, r.logsDB, r.logsTable, params.TimestampStart, params.TimestampEnd)
 	}
 	if filterSql != "" {
-		query = fmt.Sprintf("%s AND %s ", query, filterSql)
+		query = fmt.Sprintf("%s AND ( %s ) ", query, filterSql)
 	}
 	if params.GroupBy != "" {
 		query = fmt.Sprintf("%s GROUP BY ts_start_interval, toString(%s) as groupBy ORDER BY ts_start_interval", query, params.GroupBy)
