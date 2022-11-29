@@ -95,8 +95,8 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 			dispatch({
 				type: UPDATE_TIME_INTERVAL,
 				payload: {
-					maxTime: minTime,
-					minTime: maxTime,
+					maxTime,
+					minTime,
 					selectedTime: globalTime.selectedTime,
 				},
 			});
