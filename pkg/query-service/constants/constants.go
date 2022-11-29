@@ -190,3 +190,8 @@ const (
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
 )
+
+// ReservedColumnTargetAliases identifies result value from a user
+// written clickhouse query. The column alias indcate which value is
+// to be considered as final result (or target)
+var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}

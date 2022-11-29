@@ -98,7 +98,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath)
+		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath, lm)
 		go qb.Start(readerReady)
 		reader = qb
 	} else {

@@ -309,9 +309,16 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 		filterTokens = append(filterTokens, filter)
 	}
 
-	if len(filterTokens) > 0 {
-		if len(tokens) > 0 {
-			tokens[0] = fmt.Sprintf("and %s", tokens[0])
+	lenFilterTokens := len(filterTokens)
+	if lenFilterTokens > 0 {
+		// add parenthesis
+		filterTokens[0] = fmt.Sprintf("( %s", filterTokens[0])
+		filterTokens[lenFilterTokens-1] = fmt.Sprintf("%s) ", filterTokens[lenFilterTokens-1])
+
+		lenTokens := len(tokens)
+		if lenTokens > 0 {
+			tokens[0] = fmt.Sprintf("and ( %s", tokens[0])
+			tokens[lenTokens-1] = fmt.Sprintf("%s) ", tokens[lenTokens-1])
 		}
 		filterTokens = append(filterTokens, tokens...)
 		tokens = filterTokens

@@ -1,13 +1,17 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { green } from '@ant-design/colors';
-import { PauseOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Button, Popover, Row, Select } from 'antd';
+import {
+	MoreOutlined,
+	PauseOutlined,
+	PlayCircleOutlined,
+} from '@ant-design/icons';
+import { Button, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
 import { throttle } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { UPDATE_AUTO_REFRESH_DISABLED } from 'types/actions/globalTime';
 import {
 	FLUSH_LOGS,
 	PUSH_LIVE_TAIL_EVENT,
@@ -16,39 +20,13 @@ import {
 } from 'types/actions/logs';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import OptionIcon from './OptionIcon';
-import { TimePickerCard, TimePickerSelect } from './styles';
+import { TIME_PICKER_OPTIONS } from './config';
+import { StopContainer, TimePickerCard, TimePickerSelect } from './styles';
 
 const { Option } = Select;
-
-const TIME_PICKER_OPTIONS = [
-	{
-		value: 5,
-		label: '5m',
-	},
-	{
-		value: 15,
-		label: '15m',
-	},
-	{
-		value: 30,
-		label: '30m',
-	},
-	{
-		value: 60,
-		label: '1hr',
-	},
-	{
-		value: 360,
-		label: '6hrs',
-	},
-	{
-		value: 720,
-		label: '12hrs',
-	},
-];
 
 function LogLiveTail(): JSX.Element {
 	const {
@@ -58,11 +36,19 @@ function LogLiveTail(): JSX.Element {
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { selectedAutoRefreshInterval } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const dispatch = useDispatch();
 	const handleLiveTail = (toggleState: TLogsLiveTailState): void => {
 		dispatch({
 			type: TOGGLE_LIVE_TAIL,
 			payload: toggleState,
+		});
+		dispatch({
+			type: UPDATE_AUTO_REFRESH_DISABLED,
+			payload: toggleState === 'PLAYING',
 		});
 	};
 
@@ -75,14 +61,12 @@ function LogLiveTail(): JSX.Element {
 				type: PUSH_LIVE_TAIL_EVENT,
 				payload: batchedEventsRef.current.reverse(),
 			});
-			// console.log('DISPATCH', batchedEventsRef.current.length);
 			batchedEventsRef.current = [];
 		}, 1500),
 		[],
 	);
 
 	const batchLiveLog = (e: { data: string }): void => {
-		// console.log('EVENT BATCHED');
 		batchedEventsRef.current.push(JSON.parse(e.data as string) as never);
 		pushLiveLog();
 	};
@@ -123,6 +107,7 @@ function LogLiveTail(): JSX.Element {
 		if (liveTail === 'STOPPED') {
 			liveTailSourceRef.current = null;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [liveTail]);
 
 	const handleLiveTailStart = (): void => {
@@ -155,47 +140,44 @@ function LogLiveTail(): JSX.Element {
 		),
 		[dispatch, liveTail, liveTailStartRange],
 	);
+
+	const isDisabled = useMemo(() => selectedAutoRefreshInterval?.length > 0, [
+		selectedAutoRefreshInterval,
+	]);
+
 	return (
 		<TimePickerCard>
-			<Row
-				style={{ gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}
-			>
-				<div>
-					{liveTail === 'PLAYING' ? (
-						<Button
-							type="primary"
-							onClick={(): void => handleLiveTail('PAUSED')}
-							title="Pause live tail"
-							style={{ background: green[6] }}
-						>
-							Pause <PauseOutlined />
-						</Button>
-					) : (
-						<Button
-							type="primary"
-							onClick={handleLiveTailStart}
-							title="Start live tail"
-						>
-							Go Live <PlayCircleOutlined />
-						</Button>
-					)}
-					{liveTail !== 'STOPPED' && (
-						<Button
-							type="dashed"
-							onClick={(): void => handleLiveTail('STOPPED')}
-							title="Exit live tail"
-						>
-							<div
-								style={{
-									height: '0.8rem',
-									width: '0.8rem',
-									background: isDarkMode ? '#eee' : '#222',
-									borderRadius: '0.1rem',
-								}}
-							/>
-						</Button>
-					)}
-				</div>
+			<Space size={0} align="center">
+				{liveTail === 'PLAYING' ? (
+					<Button
+						type="primary"
+						onClick={(): void => handleLiveTail('PAUSED')}
+						title="Pause live tail"
+						style={{ background: green[6] }}
+					>
+						<span>Pause</span>
+						<PauseOutlined />
+					</Button>
+				) : (
+					<Button
+						type="primary"
+						onClick={handleLiveTailStart}
+						title="Start live tail"
+						disabled={isDisabled}
+					>
+						Go Live <PlayCircleOutlined />
+					</Button>
+				)}
+
+				{liveTail !== 'STOPPED' && (
+					<Button
+						type="dashed"
+						onClick={(): void => handleLiveTail('STOPPED')}
+						title="Exit live tail"
+					>
+						<StopContainer isDarkMode={isDarkMode} />
+					</Button>
+				)}
 
 				<Popover
 					placement="bottomRight"
@@ -203,18 +185,9 @@ function LogLiveTail(): JSX.Element {
 					trigger="click"
 					content={OptionsPopOverContent}
 				>
-					<span
-						style={{
-							padding: '0.3rem 0.4rem 0.3rem 0',
-							display: 'flex',
-							justifyContent: 'center',
-							alignContent: 'center',
-						}}
-					>
-						<OptionIcon isDarkMode={isDarkMode} />
-					</span>
+					<MoreOutlined style={{ fontSize: 24 }} />
 				</Popover>
-			</Row>
+			</Space>
 		</TimePickerCard>
 	);
 }

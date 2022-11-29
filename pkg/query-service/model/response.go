@@ -187,7 +187,7 @@ type GetFilterSpansResponse struct {
 	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type SearchSpanDBReponseItem struct {
+type SearchSpanDBResponseItem struct {
 	Timestamp time.Time `ch:"timestamp"`
 	TraceID   string    `ch:"traceID"`
 	Model     string    `ch:"model"`
@@ -200,18 +200,21 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
-type SearchSpanReponseItem struct {
+//easyjson:json
+type SearchSpanResponseItem struct {
 	TimeUnixNano uint64            `json:"timestamp"`
-	SpanID       string            `json:"spanID"`
-	TraceID      string            `json:"traceID"`
+	DurationNano int64             `json:"durationNano"`
+	SpanID       string            `json:"spanId"`
+	RootSpanID   string            `json:"rootSpanId"`
+	TraceID      string            `json:"traceId"`
+	HasError     bool              `json:"hasError"`
+	Kind         int32             `json:"kind"`
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
-	Kind         int32             `json:"kind"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
-	DurationNano int64             `json:"durationNano"`
 	TagMap       map[string]string `json:"tagMap"`
 	Events       []string          `json:"event"`
-	HasError     bool              `json:"hasError"`
+	RootName     string            `json:"rootName"`
 }
 
 type OtelSpanRef struct {
@@ -220,14 +223,14 @@ type OtelSpanRef struct {
 	RefType string `json:"refType,omitempty"`
 }
 
-func (ref *OtelSpanRef) toString() string {
+func (ref *OtelSpanRef) ToString() string {
 
 	retString := fmt.Sprintf(`{TraceId=%s, SpanId=%s, RefType=%s}`, ref.TraceId, ref.SpanId, ref.RefType)
 
 	return retString
 }
 
-func (item *SearchSpanReponseItem) GetValues() []interface{} {
+func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
@@ -235,7 +238,7 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
 	referencesStringArray := []string{}
 	for _, item := range references {
-		referencesStringArray = append(referencesStringArray, item.toString())
+		referencesStringArray = append(referencesStringArray, item.ToString())
 	}
 
 	if item.Events == nil {
