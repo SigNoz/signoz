@@ -20,12 +20,6 @@ const (
 	GoogleAuth SSOType = "GOOGLE_AUTH"
 )
 
-type SamlConfig struct {
-	SamlEntity string `json:"samlEntity"`
-	SamlIdp    string `json:"samlIdp"`
-	SamlCert   string `json:"samlCert"`
-}
-
 // OrgDomain identify org owned web domains for auth and other purposes
 type OrgDomain struct {
 	Id         uuid.UUID   `json:"id"`
