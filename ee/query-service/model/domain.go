@@ -27,9 +27,13 @@ type OrgDomain struct {
 	OrgId      string      `json:"orgId"`
 	SsoEnabled bool        `json:"ssoEnabled"`
 	SsoType    SSOType     `json:"ssoType"`
+
 	SamlConfig *SamlConfig `json:"samlConfig"`
+	GoogleAuthConfig *modelsso.GoogleAuthConfig `json:"googleAuthConfig"`
+
 	Org        *basemodel.Organization
 }
+
 
 // Valid is used a pipeline function to check if org domain
 // loaded from db is valid
@@ -118,19 +122,50 @@ func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServicePro
 }
 
 func (od *OrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
-
-	sp, err := od.PrepareSamlRequest(siteUrl)
-	if err != nil {
-		return "", err
-	}
+	
 
 	fmtDomainId := strings.Replace(od.Id.String(), "-", ":", -1)
+	
+	// build redirect url from window.location sent by frontend
+	redirectURL := fmt.Sprintf("%s://%s%s", siteUrl.Scheme, siteUrl.Host, siteUrl.Path)
 
-	relayState := fmt.Sprintf("%s://%s%s?domainId=%s",
-		siteUrl.Scheme,
-		siteUrl.Host,
-		siteUrl.Path,
-		fmtDomainId)
+	// prepare state that gets relayed back when the auth provider
+	// calls back our url. here we pass the app url (where signoz runs)
+	// and the domain Id. The domain Id helps in identifying sso config
+	// when the call back occurs and the app url is useful in redirecting user 
+	// back to the right path. 
+	// why do we need to pass app url? the callback typically is handled by backend
+	// and sometimes backend might right at a different port or is unaware of frontend
+	// endpoint (unless SITE_URL param is set). hence, we receive this build sso request
+	// along with frontend window.location and use it to relay the information through 
+	// auth provider to the backend (HandleCallback or HandleSSO method). 
+	relayState := fmt.Sprintf("%s?domainId=%s", redirectURL, fmtDomainId)
+		
 
-	return sp.BuildAuthURL(relayState)
+	switch (od.SsoType) {
+	case SAML:
+
+		sp, err := od.PrepareSamlRequest(siteUrl)
+		if err != nil {
+			return "", err
+		}
+	
+		return sp.BuildAuthURL(relayState)
+	
+	case GoogleAuth:
+		
+		if od.GoogleAuthConfig == nil {
+			return "", fmt.Errorf("Google auth is not setup correctly for this domain")
+		}
+
+		googleProvider, err := NewGoogleAuthProvider(od.Name, od.GoogleAuthConfig)
+
+		return googleProvider.BuildAuthURL(relayState)
+
+	default:
+		zap.S().Errorf("found unsupported SSO config for the org domain", zap.String("orgDomain":, od.Name))
+		return "", fmt.Errorf("unsupported SSO config for the domain") 
+	}
+
+
 }
