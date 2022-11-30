@@ -48,7 +48,7 @@ import (
 )
 
 const (
-	cluster                    = "signoz"
+	cluster                    = "cluster"
 	primaryNamespace           = "clickhouse"
 	archiveNamespace           = "clickhouse-archive"
 	signozTraceDBName          = "signoz_traces"
