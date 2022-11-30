@@ -8,7 +8,7 @@ import { IClickHouseQueryHandleChange } from './types';
 
 interface IClickHouseQueryBuilderProps {
 	queryData: IClickHouseQuery;
-	queryIndex: number;
+	queryIndex: number | string;
 	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
 }
 
@@ -43,6 +43,9 @@ function ClickHouseQueryBuilder({
 					scrollbar: {
 						alwaysConsumeMouseWheel: false,
 					},
+					minimap: {
+						enabled: false,
+					},
 				}}
 			/>
 			<Input
@@ -51,6 +54,7 @@ function ClickHouseQueryBuilder({
 				}
 				size="middle"
 				defaultValue={queryData.legend}
+				value={queryData.legend}
 				addonBefore="Legend Format"
 			/>
 		</QueryHeader>

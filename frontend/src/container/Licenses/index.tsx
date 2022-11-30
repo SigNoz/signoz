@@ -1,9 +1,9 @@
 import { Tabs, Typography } from 'antd';
 import getAll from 'api/licenses/getAll';
 import Spinner from 'components/Spinner';
-import useFetch from 'hooks/useFetch';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 
 import ApplyLicenseForm from './ApplyLicenseForm';
 import ListLicenses from './ListLicenses';
@@ -12,29 +12,31 @@ const { TabPane } = Tabs;
 
 function Licenses(): JSX.Element {
 	const { t } = useTranslation(['licenses']);
-	const { loading, payload, error, errorMessage } = useFetch(getAll);
+	const { data, isError, isLoading, refetch } = useQuery({
+		queryFn: getAll,
+		queryKey: 'getAllLicenses',
+	});
 
-	if (error) {
-		return <Typography>{errorMessage}</Typography>;
+	if (isError || data?.error) {
+		return <Typography>{data?.error}</Typography>;
 	}
 
-	if (loading || payload === undefined) {
+	if (isLoading || data?.payload === undefined) {
 		return <Spinner tip={t('loading_licenses')} height="90vh" />;
 	}
+
+	const allValidLicense =
+		data?.payload?.filter((license) => license.isCurrent) || [];
 
 	return (
 		<Tabs destroyInactiveTabPane defaultActiveKey="licenses">
 			<TabPane tabKey="licenses" tab={t('tab_current_license')} key="licenses">
-				<ApplyLicenseForm />
-				<ListLicenses
-					licenses={payload ? payload.filter((l) => l.isCurrent === true) : []}
-				/>
+				<ApplyLicenseForm licenseRefetch={refetch} />
+				<ListLicenses licenses={allValidLicense} />
 			</TabPane>
 
 			<TabPane tabKey="history" tab={t('tab_license_history')} key="history">
-				<ListLicenses
-					licenses={payload ? payload.filter((l) => l.isCurrent === false) : []}
-				/>
+				<ListLicenses licenses={allValidLicense} />
 			</TabPane>
 		</Tabs>
 	);
