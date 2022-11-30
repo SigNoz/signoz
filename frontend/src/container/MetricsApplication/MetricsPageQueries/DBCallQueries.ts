@@ -18,7 +18,7 @@ export const databaseCallsRPS = ({
 	queryBuilder: IMetricsBuilderQuery[];
 } => {
 	const metricName = 'Database Calls RPS';
-	const groupBy = ['address'];
+	const groupBy = ['db_system'];
 
 	return getQueryBuilderQueries({
 		metricName,
