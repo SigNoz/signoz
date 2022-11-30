@@ -56,7 +56,6 @@ export const getQueryBuilderQuerieswithFormula = ({
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => {
-	console.log(groupBy);
 	return {
 		formulas: [
 			{
