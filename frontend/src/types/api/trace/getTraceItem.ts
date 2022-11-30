@@ -2,6 +2,13 @@ export interface Props {
 	id: string;
 }
 
+export interface GetTraceItemProps {
+	id: string;
+	spanId: string | null;
+	levelUp: string | null;
+	levelDown: string | null;
+}
+
 export interface PayloadProps {
 	[id: string]: {
 		events: Span[];

@@ -98,3 +98,28 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 
 	return levels;
 };
+
+export const formUrlParams = (params: Record<string, any>): string => {
+	let urlParams = '';
+	Object.entries(params).forEach(([key, value], index) => {
+		let encodedValue: string;
+		try {
+			encodedValue = decodeURIComponent(value);
+			encodedValue = encodeURIComponent(encodedValue);
+		} catch (error) {
+			encodedValue = '';
+		}
+		if (index === 0) {
+			if (encodedValue) {
+				urlParams = `?${key}=${encodedValue}`;
+			} else {
+				urlParams = `?${key}=`;
+			}
+		} else if (encodedValue) {
+			urlParams = `${urlParams}&${key}=${encodedValue}`;
+		} else {
+			urlParams = `${urlParams}&${key}=`;
+		}
+	});
+	return urlParams;
+};

@@ -176,7 +176,7 @@ func (mds *ModelDaoSqlite) DeleteOrg(ctx context.Context, id string) *model.ApiE
 }
 
 func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
-	user *model.User) (*model.User, *model.ApiError) {
+	user *model.User, isFirstUser bool) (*model.User, *model.ApiError) {
 
 	_, err := mds.db.ExecContext(ctx,
 		`INSERT INTO users (id, name, email, password, created_at, profile_picture_url, group_id, org_id)
@@ -190,9 +190,15 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 	}
 
 	data := map[string]interface{}{
-		"name":  user.Name,
-		"email": user.Email,
+		"name":              user.Name,
+		"email":             user.Email,
+		"firstRegistration": false,
 	}
+
+	if isFirstUser {
+		data["firstRegistration"] = true
+	}
+
 	telemetry.GetInstance().IdentifyUser(user)
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
 

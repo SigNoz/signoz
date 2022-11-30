@@ -1,6 +1,6 @@
 import { blue } from '@ant-design/colors';
 import { SearchOutlined } from '@ant-design/icons';
-import { Button, Input, Space, Table } from 'antd';
+import { Button, Card, Input, Space, Table } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { FilterConfirmProps } from 'antd/es/table/interface';
 import localStorageGet from 'api/browser/localstorage/get';
@@ -48,37 +48,27 @@ function Metrics(): JSX.Element {
 
 	const filterDropdown = useCallback(
 		({ setSelectedKeys, selectedKeys, confirm }) => (
-			<div
-				style={{
-					padding: 8,
-				}}
-			>
-				<Input
-					placeholder="Search by service"
-					value={selectedKeys[0]}
-					onChange={(e): void =>
-						setSelectedKeys(e.target.value ? [e.target.value] : [])
-					}
-					allowClear
-					onPressEnter={(): void => handleSearch(confirm)}
-					style={{
-						marginBottom: 8,
-					}}
-				/>
-				<Space>
+			<Card size="small">
+				<Space align="start" direction="vertical">
+					<Input
+						placeholder="Search by service"
+						value={selectedKeys[0]}
+						onChange={(e): void =>
+							setSelectedKeys(e.target.value ? [e.target.value] : [])
+						}
+						allowClear
+						onPressEnter={(): void => handleSearch(confirm)}
+					/>
 					<Button
 						type="primary"
 						onClick={(): void => handleSearch(confirm)}
 						icon={<SearchOutlined />}
 						size="small"
-						style={{
-							width: 90,
-						}}
 					>
 						Search
 					</Button>
 				</Space>
-			</div>
+			</Card>
 		),
 		[],
 	);
