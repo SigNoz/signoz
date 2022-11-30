@@ -1,5 +1,5 @@
 import { LockTwoTone } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
@@ -20,7 +20,6 @@ import AddDomain from './AddDomain';
 import Create from './Create';
 import EditSaml from './Edit';
 import SwitchComponent from './Switch';
-import { getIsValidCertificate } from './utils';
 
 function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
@@ -194,12 +193,6 @@ function AuthDomains(): JSX.Element {
 							Upgrade to Configure SSO
 						</Button>
 					);
-				}
-
-				const isValidCertificate = getIsValidCertificate(record.samlConfig);
-
-				if (!isValidCertificate) {
-					return <Typography>Configure SSO &nbsp;</Typography>;
 				}
 
 				return (

@@ -29,6 +29,7 @@ import SelectedSpanDetails from './SelectedSpanDetails';
 import * as styles from './styles';
 import { FlameGraphMissingSpansContainer, GanttChartWrapper } from './styles';
 import {
+	formUrlParams,
 	getSortedData,
 	getTreeLevelsCount,
 	IIntervalUnit,
@@ -50,7 +51,13 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	// const [searchSpanString, setSearchSpanString] = useState('');
 	const [activeHoverId, setActiveHoverId] = useState<string>('');
 	const [activeSelectedId, setActiveSelectedId] = useState<string>(spanId || '');
-
+	const { levelDown, levelUp } = useMemo(
+		() => ({
+			levelDown: urlQuery.get('levelDown'),
+			levelUp: urlQuery.get('levelUp'),
+		}),
+		[urlQuery],
+	);
 	const [treesData, setTreesData] = useState<ITraceForest>(
 		spanToTreeUtil(response[0].events),
 	);
@@ -77,10 +84,14 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		if (activeSelectedId) {
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?spanId=${activeSelectedId}`,
+				search: `${formUrlParams({
+					spanId: activeSelectedId,
+					levelUp,
+					levelDown,
+				})}`,
 			});
 		}
-	}, [activeSelectedId]);
+	}, [activeSelectedId, levelDown, levelUp]);
 
 	const getSelectedNode = useMemo(() => {
 		return getNodeById(activeSelectedId, treesData);

@@ -25,7 +25,7 @@ function SwitchComponent({
 		setIsLoading(false);
 	};
 
-	const isInValidCertificate = useMemo(
+	const isInValidVerificate = useMemo(
 		() => !getIsValidCertificate(record?.samlConfig),
 		[record],
 	);
@@ -33,7 +33,7 @@ function SwitchComponent({
 	return (
 		<Switch
 			loading={isLoading}
-			disabled={isInValidCertificate}
+			disabled={isInValidVerificate}
 			checked={isChecked}
 			onChange={onChangeHandler}
 		/>

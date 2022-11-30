@@ -225,6 +225,30 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	return postData, nil
 }
 
+func ParseSearchTracesParams(r *http.Request) (string, string, int, int, error) {
+	vars := mux.Vars(r)
+	traceId := vars["traceId"]
+	spanId := r.URL.Query().Get("spanId")
+	levelUp := r.URL.Query().Get("levelUp")
+	levelDown := r.URL.Query().Get("levelDown")
+	if levelUp == "" || levelUp == "null" {
+		levelUp = "0"
+	}
+	if levelDown == "" || levelDown == "null" {
+		levelDown = "0"
+	}
+
+	levelUpInt, err := strconv.Atoi(levelUp)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+	levelDownInt, err := strconv.Atoi(levelDown)
+	if err != nil {
+		return "", "", 0, 0, err
+	}
+	return traceId, spanId, levelUpInt, levelDownInt, nil
+}
+
 func DoesExistInSlice(item string, list []string) bool {
 	for _, element := range list {
 		if item == element {
@@ -255,7 +279,7 @@ func parseSpanFilterRequestBody(r *http.Request) (*model.SpanFilterParams, error
 	return postData, nil
 }
 
-func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, error) {
+func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilteredSpansParams, error) {
 
 	var postData *model.GetFilteredSpansParams
 	err := json.NewDecoder(r.Body).Decode(&postData)
@@ -275,6 +299,20 @@ func parseFilteredSpansRequest(r *http.Request) (*model.GetFilteredSpansParams, 
 
 	if postData.Limit == 0 {
 		postData.Limit = 10
+	}
+
+	if len(postData.Order) != 0 {
+		if postData.Order != constants.Ascending && postData.Order != constants.Descending {
+			return nil, errors.New("order param is not in correct format")
+		}
+		if postData.OrderParam != constants.Duration && postData.OrderParam != constants.Timestamp {
+			return nil, errors.New("order param is not in correct format")
+		}
+		if postData.OrderParam == constants.Duration && !aH.CheckFeature(constants.DurationSort) {
+			return nil, model.ErrFeatureUnavailable{Key: constants.DurationSort}
+		} else if postData.OrderParam == constants.Timestamp && !aH.CheckFeature(constants.TimestampSort) {
+			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
+		}
 	}
 
 	return postData, nil
