@@ -1,0 +1,76 @@
+receivers:
+  otlp/spanmetrics:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
+  otlp:
+    protocols:
+      grpc:
+      http:
+  jaeger:
+    protocols:
+      grpc:
+      thrift_http:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      load:
+      memory:
+      disk:
+      filesystem:
+      network:
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+  signozspanmetrics/prometheus:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 10000
+    dimensions:
+      - name: service.namespace
+        default: default
+      - name: deployment.environment
+        default: default
+  # memory_limiter:
+  #   # 80% of maximum memory up to 2G
+  #   limit_mib: 1500
+  #   # 25% of limit up to 2G
+  #   spike_limit_mib: 512
+  #   check_interval: 5s
+  #
+  #   # 50% of the maximum memory
+  #   limit_percentage: 50
+  #   # 20% of max memory usage spike expected
+  #   spike_limit_percentage: 20
+  # queued_retry:
+  #   num_workers: 4
+  #   queue_size: 100
+  #   retry_on_failure: true
+extensions:
+  zpages: {}
+exporters:
+  clickhousetraces:
+    datasource: tcp://localhost:9000/?database=signoz_traces
+    migrations: exporter/clickhousetracesexporter/migrations
+  clickhousemetricswrite:
+    endpoint: tcp://localhost:9000/?database=signoz_metrics
+    resource_to_telemetry_conversion:
+      enabled: true
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+service:
+  extensions: [zpages]
+  pipelines:
+    traces:
+      receivers: [jaeger, otlp]
+      processors: [signozspanmetrics/prometheus, batch]
+      exporters: [clickhousetraces]
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/spanmetrics:
+      receivers: [otlp/spanmetrics]
+      exporters: [prometheus]
