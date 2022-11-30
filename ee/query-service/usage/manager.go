@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -105,7 +106,7 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 	for _, db := range dbs {
 		dbusages := []model.UsageDB{}
 		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db), time.Now().Add(-(24 * time.Hour)))
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
 			return err
 		}
 		for _, u := range dbusages {
