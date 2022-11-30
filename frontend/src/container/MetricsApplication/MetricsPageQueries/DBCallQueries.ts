@@ -17,7 +17,7 @@ export const databaseCallsRPS = ({
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => {
-	const metricName = 'Database Calls RPS';
+	const metricName = 'signoz_db_latency_count';
 	const groupBy = ['db_system'];
 
 	return getQueryBuilderQueries({
