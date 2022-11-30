@@ -47,7 +47,7 @@ receivers:
       # thrift_binary:
       #   endpoint: 0.0.0.0:6832
   hostmetrics:
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       cpu: {}
       load: {}
@@ -58,7 +58,7 @@ receivers:
   prometheus:
     config:
       global:
-        scrape_interval: 30s
+        scrape_interval: 60s
       scrape_configs:
         # otel-collector internal metrics
         - job_name: otel-collector
@@ -75,7 +75,6 @@ processors:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system] # include ec2 for AWS, gce for GCP and azure for Azure.
     timeout: 2s
-    override: false
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]

@@ -4,7 +4,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
@@ -19,12 +19,40 @@ import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 import { v4 } from 'uuid';
 
+import { SearchFieldsProps } from '..';
 import FieldKey from '../FieldKey';
-import { QueryConditionContainer, QueryFieldContainer } from '../styles';
+import { QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
+import { Container, QueryWrapper } from './styles';
 import { hashCode, parseQuery } from './utils';
 
 const { Option } = Select;
+
+function QueryConditionField({
+	query,
+	queryIndex,
+	onUpdate,
+}: QueryConditionFieldProps): JSX.Element {
+	const allOptions = Object.values(ConditionalOperators);
+	return (
+		<Select
+			defaultValue={
+				(query as any).value &&
+				(((query as any)?.value as any) as string).toUpperCase()
+			}
+			onChange={(e): void => {
+				onUpdate({ ...query, value: e }, queryIndex);
+			}}
+		>
+			{allOptions.map((cond) => (
+				<Option key={cond} value={cond} label={cond}>
+					{cond}
+				</Option>
+			))}
+		</Select>
+	);
+}
+
 interface QueryFieldProps {
 	query: Query;
 	queryIndex: number;
@@ -141,40 +169,13 @@ interface QueryConditionFieldProps {
 	queryIndex: number;
 	onUpdate: (arg0: unknown, arg1: number) => void;
 }
-function QueryConditionField({
-	query,
-	queryIndex,
-	onUpdate,
-}: QueryConditionFieldProps): JSX.Element {
-	return (
-		<QueryConditionContainer>
-			<Select
-				defaultValue={
-					(query as any).value &&
-					(((query as any)?.value as any) as string).toUpperCase()
-				}
-				onChange={(e): void => {
-					onUpdate({ ...query, value: e }, queryIndex);
-				}}
-				style={{ width: '100%' }}
-			>
-				{Object.values(ConditionalOperators).map((cond) => (
-					<Option key={cond} value={cond} label={cond}>
-						{cond}
-					</Option>
-				))}
-			</Select>
-		</QueryConditionContainer>
-	);
-}
 
 export type Query = { value: string | string[]; type: string }[];
 
 function QueryBuilder({
 	updateParsedQuery,
-}: {
-	updateParsedQuery: (arg0: unknown) => void;
-}): JSX.Element {
+	onDropDownToggleHandler,
+}: SearchFieldsProps): JSX.Element {
 	const {
 		searchFilter: { parsedQuery },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -225,27 +226,25 @@ function QueryBuilder({
 				);
 
 			return (
-				<QueryConditionField
-					key={keyPrefix + idx}
-					query={query}
-					queryIndex={idx}
-					onUpdate={handleUpdate as never}
-				/>
+				<div key={keyPrefix + idx}>
+					<QueryConditionField
+						query={query}
+						queryIndex={idx}
+						onUpdate={handleUpdate as never}
+					/>
+				</div>
 			);
 		});
+
 	return (
-		<div>
-			<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
-			<div
-				style={{
-					display: 'grid',
-					gridTemplateColumns: '80px 1fr',
-					margin: '0.5rem 0',
-				}}
-			>
-				{QueryUI()}
-			</div>
-		</div>
+		<>
+			<Container isMargin={generatedQueryStructure.length === 0}>
+				<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
+				<CloseSquareOutlined onClick={onDropDownToggleHandler(false)} />
+			</Container>
+
+			<QueryWrapper>{QueryUI()}</QueryWrapper>
+		</>
 	);
 }
 

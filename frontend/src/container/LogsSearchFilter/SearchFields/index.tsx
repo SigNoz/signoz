@@ -2,14 +2,23 @@ import React from 'react';
 
 import QueryBuilder from './QueryBuilder/QueryBuilder';
 import Suggestions from './Suggestions';
+import { QueryFields } from './utils';
 
-interface SearchFieldsProps {
-	updateParsedQuery: () => void;
+export interface SearchFieldsProps {
+	updateParsedQuery: (query: QueryFields[]) => void;
+	onDropDownToggleHandler: (value: boolean) => VoidFunction;
 }
-function SearchFields({ updateParsedQuery }: SearchFieldsProps): JSX.Element {
+
+function SearchFields({
+	updateParsedQuery,
+	onDropDownToggleHandler,
+}: SearchFieldsProps): JSX.Element {
 	return (
 		<>
-			<QueryBuilder updateParsedQuery={updateParsedQuery} />
+			<QueryBuilder
+				onDropDownToggleHandler={onDropDownToggleHandler}
+				updateParsedQuery={updateParsedQuery}
+			/>
 			<Suggestions />
 		</>
 	);
