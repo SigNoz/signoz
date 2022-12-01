@@ -62,6 +62,8 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				li.style.marginTop = '5px';
 
 				li.onclick = (): void => {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
 					const { type } = chart.config;
 					if (type === 'pie' || type === 'doughnut') {
 						// Pie and doughnut charts only have a single dataset and visibility is per item
