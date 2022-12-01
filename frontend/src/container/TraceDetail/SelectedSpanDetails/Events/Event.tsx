@@ -1,4 +1,4 @@
-import { Collapse } from 'antd';
+import { Collapse, Typography } from 'antd';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import keys from 'lodash-es/keys';
@@ -25,7 +25,7 @@ function ErrorTag({
 				const attributes = keys(attributeMap);
 
 				const { time, timeUnitName } = convertTimeToRelevantUnit(
-					(timeUnixNano - firstSpanStartTime) / 1e15,
+					timeUnixNano / 1e6 - firstSpanStartTime,
 				);
 
 				return (
@@ -39,10 +39,13 @@ function ErrorTag({
 							key={name || attributeMap.event}
 						>
 							<CustomSubTitle>
-								Timestamp(relative to start of the full trace)
+								Timestamp
+								<Typography.Paragraph italic>
+									(relative to start of the full trace)
+								</Typography.Paragraph>
 							</CustomSubTitle>
 							<CustomSubText isDarkMode={isDarkMode}>
-								{`${time} ${timeUnitName}`}
+								{`${time.toFixed(2)} ${timeUnitName}`}
 							</CustomSubText>
 
 							{map(attributes, (event) => {
