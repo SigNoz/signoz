@@ -6,17 +6,26 @@ export interface SAMLConfig {
 	samlCert: string;
 }
 
-export interface SAMLDomain {
+export interface GoogleAuthConfig {
+	clientId: string;
+	clientSecret: string;
+}
+
+export const SAML = 'SAML';
+export const GOOGLE_AUTH = 'GOOGLE_AUTH';
+
+export interface AuthDomain {
 	id: string;
 	name: string;
 	orgId: Organization['id'];
 	ssoEnabled: boolean;
-	ssoType: 'SAML';
-	samlConfig: SAMLConfig;
+	ssoType: 'SAML' | 'GOOGLE_AUTH';
+	samlConfig?: SAMLConfig;
+	googleAuthConfig?: GoogleAuthConfig;
 }
 
 export interface Props {
 	orgId: Organization['id'];
 }
 
-export type PayloadProps = SAMLDomain[];
+export type PayloadProps = AuthDomain[];

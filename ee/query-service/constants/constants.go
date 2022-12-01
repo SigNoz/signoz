@@ -8,7 +8,7 @@ const (
 	DefaultSiteURL = "https://localhost:3301"
 )
 
-var LicenseSignozIo = "https://license.signoz.io/api/v1"
+var LicenseSignozIo = "http://18.118.169.248:9682/api/v1"
 
 var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
 

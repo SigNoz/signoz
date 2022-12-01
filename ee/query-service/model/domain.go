@@ -9,8 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	saml2 "github.com/russellhaering/gosaml2"
-	"go.signoz.io/signoz/ee/query-service/saml"
+	"go.signoz.io/signoz/ee/query-service/sso/saml"
+	"go.signoz.io/signoz/ee/query-service/sso"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type SSOType string
@@ -29,7 +31,7 @@ type OrgDomain struct {
 	SsoType    SSOType     `json:"ssoType"`
 
 	SamlConfig *SamlConfig `json:"samlConfig"`
-	GoogleAuthConfig *modelsso.GoogleAuthConfig `json:"googleAuthConfig"`
+	GoogleAuthConfig *GoogleOAuthConfig `json:"googleAuthConfig"`
 
 	Org        *basemodel.Organization
 }
@@ -95,6 +97,16 @@ func (od *OrgDomain) GetSAMLCert() string {
 	return ""
 }
 
+// PrepareGoogleOAuthProvider creates GoogleProvider that is used in 
+// requesting OAuth and also used in processing response from google 
+func (od *OrgDomain) PrepareGoogleOAuthProvider(siteUrl *url.URL) (sso.OAuthCallbackProvider, error) {
+	if od.GoogleAuthConfig == nil {
+		return nil, fmt.Errorf("Google auth is not setup correctly for this domain")
+	}
+
+	return od.GoogleAuthConfig.GetProvider(od.Name, siteUrl)
+}
+
 // PrepareSamlRequest creates a request accordingly gosaml2
 func (od *OrgDomain) PrepareSamlRequest(siteUrl *url.URL) (*saml2.SAMLServiceProvider, error) {
 
@@ -154,16 +166,14 @@ func (od *OrgDomain) BuildSsoUrl(siteUrl *url.URL) (ssoUrl string, err error) {
 	
 	case GoogleAuth:
 		
-		if od.GoogleAuthConfig == nil {
-			return "", fmt.Errorf("Google auth is not setup correctly for this domain")
+		googleProvider, err := od.PrepareGoogleOAuthProvider(siteUrl)
+		if err != nil {
+			return "", err
 		}
-
-		googleProvider, err := NewGoogleAuthProvider(od.Name, od.GoogleAuthConfig)
-
 		return googleProvider.BuildAuthURL(relayState)
 
 	default:
-		zap.S().Errorf("found unsupported SSO config for the org domain", zap.String("orgDomain":, od.Name))
+		zap.S().Errorf("found unsupported SSO config for the org domain", zap.String("orgDomain", od.Name))
 		return "", fmt.Errorf("unsupported SSO config for the domain") 
 	}
 

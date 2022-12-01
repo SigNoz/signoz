@@ -1,27 +1,32 @@
-import { InfoCircleFilled } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Form,
-	Input,
-	notification,
-	Space,
-	Typography,
-} from 'antd';
+import { Button, Form, notification, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SAMLDomain } from 'types/api/SAML/listDomain';
+import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
 
-function EditSaml({
-	certificate,
-	entityId,
-	url,
+import EditGoogleAuth from './EditGoogleAuth';
+import EditSAML from './EditSAML';
+
+// renderFormInputs selectively renders form fields depending upon
+// sso type
+const renderFormInputs = (
+	record: AuthDomain | undefined,
+): JSX.Element | undefined => {
+	switch (record?.ssoType) {
+		case GOOGLE_AUTH:
+			return <EditGoogleAuth />;
+		case SAML:
+		default:
+			return <EditSAML />;
+	}
+};
+
+function EditSSO({
 	onRecordUpdateHandler,
 	record,
 	setEditModalOpen,
 }: EditFormProps): JSX.Element {
-	const [form] = useForm<EditFormProps>();
+	const [form] = useForm<AuthDomain>();
 
 	const { t } = useTranslation(['common']);
 
@@ -32,12 +37,24 @@ function EditSaml({
 				await onRecordUpdateHandler({
 					...record,
 					ssoEnabled: true,
-					samlConfig: {
-						...record.samlConfig,
-						samlCert: values.certificate,
-						samlEntity: values.entityId,
-						samlIdp: values.url,
-					},
+					ssoType: record.ssoType,
+					samlConfig:
+						record.ssoType === SAML
+							? {
+									...record.samlConfig,
+									samlCert: values.samlConfig?.samlCert || '',
+									samlEntity: values.samlConfig?.samlEntity || '',
+									samlIdp: values.samlConfig?.samlIdp || '',
+							  }
+							: undefined,
+					googleAuthConfig:
+						record.ssoType === GOOGLE_AUTH
+							? {
+									...record.googleAuthConfig,
+									clientId: values.googleAuthConfig?.clientId || '',
+									clientSecret: values.googleAuthConfig?.clientSecret || '',
+							  }
+							: undefined,
 				});
 			})
 			.catch(() => {
@@ -55,7 +72,7 @@ function EditSaml({
 	return (
 		<Form
 			name="basic"
-			initialValues={{ certificate, entityId, url }}
+			initialValues={record}
 			onFinishFailed={(error): void => {
 				error.errorFields.forEach(({ errors }) => {
 					notification.error({
@@ -70,39 +87,7 @@ function EditSaml({
 			autoComplete="off"
 			form={form}
 		>
-			<Form.Item
-				label="SAML ACS URL"
-				name="url"
-				rules={[{ required: true, message: 'Please input your ACS URL!' }]}
-			>
-				<Input />
-			</Form.Item>
-
-			<Form.Item
-				label="SAML Entity ID"
-				name="entityId"
-				rules={[{ required: true, message: 'Please input your Entity Id!' }]}
-			>
-				<Input />
-			</Form.Item>
-
-			<Form.Item
-				rules={[{ required: true, message: 'Please input your Certificate!' }]}
-				label="SAML X.509 Certificate"
-				name="certificate"
-			>
-				<Input.TextArea rows={4} />
-			</Form.Item>
-
-			<Card style={{ marginBottom: '1rem' }}>
-				<Space>
-					<InfoCircleFilled />
-					<Typography>
-						SAML won’t be enabled unless you enter all the attributes above
-					</Typography>
-				</Space>
-			</Card>
-
+			{renderFormInputs(record)}
 			<Space
 				style={{ width: '100%', justifyContent: 'flex-end' }}
 				align="end"
@@ -120,12 +105,9 @@ function EditSaml({
 }
 
 interface EditFormProps {
-	url: string;
-	entityId: string;
-	certificate: string;
-	onRecordUpdateHandler: (record: SAMLDomain) => Promise<boolean>;
-	record: SAMLDomain;
+	onRecordUpdateHandler: (record: AuthDomain) => Promise<boolean>;
+	record: AuthDomain;
 	setEditModalOpen: (open: boolean) => void;
 }
 
-export default EditSaml;
+export default EditSSO;

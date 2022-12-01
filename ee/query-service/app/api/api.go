@@ -93,6 +93,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		baseapp.OpenAccess(ah.receiveSAML)).
 		Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/complete/google",
+		baseapp.OpenAccess(ah.receiveGoogleAuth)).
+		Methods(http.MethodGet)
+		
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
 		baseapp.AdminAccess(ah.listDomainsByOrg)).
 		Methods(http.MethodGet)

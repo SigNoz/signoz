@@ -22,6 +22,7 @@ type ModelDao interface {
 	// auth methods
 	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, basemodel.BaseApiError)
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
+	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError)
 
 	// org domain (auth domains) CRUD ops
 	ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, basemodel.BaseApiError)
