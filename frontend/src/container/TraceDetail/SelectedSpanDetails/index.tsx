@@ -1,10 +1,9 @@
-import { Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Modal, Tabs, Tooltip } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
-
 
 import Events from './Events';
 import {

@@ -112,7 +112,7 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	return levels;
 };
 
-export const formUrlParams = (params: Record<string, any>): string => {
+export const formUrlParams = (params: Record<string, never>): string => {
 	let urlParams = '';
 	Object.entries(params).forEach(([key, value], index) => {
 		let encodedValue: string;
