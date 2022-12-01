@@ -6,7 +6,7 @@ import React, { useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import EllipsedButton from './EllipsedButton';
-import ErrorTag from './ErrorTag';
+import Events from './Events';
 import {
 	CardContainer,
 	CustomSubText,
@@ -20,7 +20,7 @@ import {
 const { TabPane } = Tabs;
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
-	const { tree } = props;
+	const { tree, firstSpanStartTime } = props;
 
 	const { isDarkMode } = useThemeMode();
 
@@ -130,15 +130,12 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 					)}
 				</TabPane>
 				<TabPane tab="Events" key="2">
-					{tree.event && Object.keys(tree.event).length !== 0 ? (
-						<ErrorTag
-							onToggleHandler={onToggleHandler}
-							setText={setText}
-							event={tree.event}
-						/>
-					) : (
-						<Typography>No events data in selected span</Typography>
-					)}
+					<Events
+						events={tree.event}
+						onToggleHandler={onToggleHandler}
+						setText={setText}
+						firstSpanStartTime={firstSpanStartTime}
+					/>
 				</TabPane>
 			</Tabs>
 		</CardContainer>
@@ -147,6 +144,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 interface SelectedSpanDetailsProps {
 	tree?: ITraceTree;
+	firstSpanStartTime: number;
 }
 
 SelectedSpanDetails.defaultProps = {
