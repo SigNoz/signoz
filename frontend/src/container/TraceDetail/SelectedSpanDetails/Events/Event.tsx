@@ -1,4 +1,5 @@
-import { Collapse, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Collapse, Popover, Space } from 'antd';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
 import keys from 'lodash-es/keys';
@@ -38,12 +39,15 @@ function ErrorTag({
 							header={name || attributeMap?.event}
 							key={name || attributeMap.event}
 						>
-							<CustomSubTitle>
-								Timestamp
-								<Typography.Paragraph italic>
-									(relative to start of the full trace)
-								</Typography.Paragraph>
-							</CustomSubTitle>
+							<Space direction="horizontal" align="center">
+								<CustomSubTitle style={{ margin: 0 }} ellipsis>
+									Event Start Time
+								</CustomSubTitle>
+								<Popover content="Relative to start of the full trace">
+									<InfoCircleOutlined />
+								</Popover>
+							</Space>
+
 							<CustomSubText isDarkMode={isDarkMode}>
 								{`${time.toFixed(2)} ${timeUnitName}`}
 							</CustomSubText>
