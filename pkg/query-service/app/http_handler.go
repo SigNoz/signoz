@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -212,7 +213,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 
 func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", ViewAccess(aH.queryRangeMetricsV2)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range", ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/autocomplete/list", ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagKey", ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagValue", ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
@@ -353,7 +354,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dependency_graph", ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
@@ -485,7 +486,7 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	aH.Respond(w, tagValueList)
 }
 
-func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -652,11 +653,16 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				return
 			}
 			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVars(metricsQueryRangeParams)
+
 			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
 			if err != nil {
 				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 				return
 			}
+
 			queries[name] = query.String()
 		}
 		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
@@ -1354,12 +1360,15 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
-	vars := mux.Vars(r)
-	traceId := vars["traceId"]
+	traceId, spanId, levelUpInt, levelDownInt, err := ParseSearchTracesParams(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
+		return
+	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId)
+	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, 0, nil)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

@@ -21,9 +21,6 @@ import { CategoryContainer, Container, FieldContainer } from './styles';
 
 const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id'];
 
-interface LogsFiltersProps {
-	getLogsFields: () => void;
-}
 function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 	const {
 		fields: { interesting, selected },
@@ -149,5 +146,7 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
+
+type LogsFiltersProps = DispatchProps;
 
 export default connect(null, mapDispatchToProps)(memo(LogsFilters));

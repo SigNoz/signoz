@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	basechr "go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 )
 
 type ClickhouseReader struct {
@@ -14,8 +15,8 @@ type ClickhouseReader struct {
 	*basechr.ClickHouseReader
 }
 
-func NewDataConnector(localDB *sqlx.DB, promConfigPath string) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath)
+func NewDataConnector(localDB *sqlx.DB, promConfigPath string, lm interfaces.FeatureLookup) *ClickhouseReader {
+	ch := basechr.NewReader(localDB, promConfigPath, lm)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
 		appdb:            localDB,
