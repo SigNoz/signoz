@@ -76,6 +76,8 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		/* eslint-enable */
 	}, [treesData, spanServiceColors]);
 
+	const firstSpanStartTime = tree.spanTree[0].startTime;
+
 	const [globalTraceMetadata] = useState<ITraceMetaData>({
 		...traceMetaData,
 	});
@@ -255,6 +257,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 			</Col>
 			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
 				<SelectedSpanDetails
+					firstSpanStartTime={firstSpanStartTime}
 					tree={[
 						...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
 						...(getSelectedNode.missingSpanTree
