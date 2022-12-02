@@ -6,7 +6,7 @@ import {
 
 import {
 	getQueryBuilderQueries,
-	getQueryBuilderQuerieswithAdditionalItems,
+	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
 export const databaseCallsRPS = ({
@@ -38,25 +38,18 @@ export const databaseCallsAvgDuration = ({
 } => {
 	const metricNameA = 'signoz_db_latency_sum';
 	const metricNameB = 'signoz_db_latency_count';
-	const additionalItems = {
-		id: '',
-		key: 'status_code',
-		op: 'IN',
-		value: ['STATUS_CODE_ERROR'],
-	};
 	const expression = 'A/B';
 	const legendFormula = '';
 	const legend = '';
 	const disabled = true;
 
-	return getQueryBuilderQuerieswithAdditionalItems({
+	return getQueryBuilderQuerieswithFormula({
 		servicename,
 		legend,
 		disabled,
 		tagFilterItems,
 		metricNameA,
 		metricNameB,
-		additionalItems,
 		expression,
 		legendFormula,
 	});
