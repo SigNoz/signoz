@@ -12,7 +12,6 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
-import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
 import _omit from 'lodash-es/omit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -28,21 +27,19 @@ import {
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { options } from './config';
+import { getMinMax, options } from './config';
 import { ButtonContainer, Container } from './styles';
 
 function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
-	const {
-		minTime: initialMinTime,
-		selectedTime,
-		isAutoRefreshDisabled,
-	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const { pathname } = useLocation();
 
-	const isDisabled = useMemo(() => disabled || isAutoRefreshDisabled, [
-		isAutoRefreshDisabled,
-		disabled,
-	]);
+	const isDisabled = useMemo(
+		() => disabled || globalTime.isAutoRefreshDisabled,
+		[globalTime.isAutoRefreshDisabled, disabled],
+	);
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
@@ -89,14 +86,18 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		}
 
 		if (selectedOption !== 'off' && selectedValue) {
-			const min = initialMinTime / 1000000;
+			const { maxTime, minTime } = getMinMax(
+				globalTime.selectedTime,
+				globalTime.minTime,
+				globalTime.maxTime,
+			);
 
 			dispatch({
 				type: UPDATE_TIME_INTERVAL,
 				payload: {
-					maxTime: dayjs().valueOf() * 1000000,
-					minTime: dayjs(min).subtract(selectedValue, 'second').valueOf() * 1000000,
-					selectedTime,
+					maxTime,
+					minTime,
+					selectedTime: globalTime.selectedTime,
 				},
 			});
 		}

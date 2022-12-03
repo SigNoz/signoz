@@ -48,9 +48,8 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 			{tags.map((tag, index) => {
 				if (editInputIndex === index) {
 					return (
-						<Col lg={4}>
+						<Col key={tag} lg={4}>
 							<Input
-								key={tag}
 								size="small"
 								value={editInputValue}
 								onChangeHandler={(event): void =>
