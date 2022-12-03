@@ -48,7 +48,7 @@ func (g *GoogleOAuthConfig) GetProvider(domain string, siteUrl *url.URL) (sso.OA
 		siteUrl.Scheme,
 		siteUrl.Host,
 		"api/v1/complete/google")
-	
+
 	return &sso.GoogleOAuthProvider{
 		RedirectURI: g.RedirectURI,
 		OAuth2Config: &oauth2.Config{

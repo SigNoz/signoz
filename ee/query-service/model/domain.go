@@ -36,6 +36,9 @@ type OrgDomain struct {
 	Org        *basemodel.Organization
 }
 
+func (od *OrgDomain) String() string {
+	return fmt.Sprintf("[%s]%s-%s ", od.Name, od.Id.String(), od.SsoType)
+}
 
 // Valid is used a pipeline function to check if org domain
 // loaded from db is valid
