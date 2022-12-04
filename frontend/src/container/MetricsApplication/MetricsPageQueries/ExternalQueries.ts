@@ -102,7 +102,7 @@ export const externalCallDurationByAddress = ({
 	const metricNameB = 'signoz_external_call_latency_count';
 	const expression = 'A/B';
 	const legendFormula = legend;
-	const disabled = true;
+	const disabled = false;
 	return getQueryBuilderQuerieswithFormula({
 		servicename,
 		legend,
