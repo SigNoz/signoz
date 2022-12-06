@@ -6,30 +6,27 @@ import (
 	"github.com/google/uuid"
 )
 
-type UsageSnapshot struct {
-	CurrentLogSizeBytes            uint64 `json:"currentLogSizeBytes"`
-	CurrentLogSizeBytesColdStorage uint64 `json:"currentLogSizeBytesColdStorage"`
-	CurrentSpansCount              uint64 `json:"currentSpansCount"`
-	CurrentSpansCountColdStorage   uint64 `json:"currentSpansCountColdStorage"`
-	CurrentSamplesCount            uint64 `json:"currentSamplesCount"`
-	CurrentSamplesCountColdStorage uint64 `json:"currentSamplesCountColdStorage"`
-}
-
-type UsageBase struct {
-	Id                uuid.UUID `json:"id" db:"id"`
-	InstallationId    uuid.UUID `json:"installationId" db:"installation_id"`
-	ActivationId      uuid.UUID `json:"activationId" db:"activation_id"`
-	CreatedAt         time.Time `json:"createdAt" db:"created_at"`
-	FailedSyncRequest int       `json:"failedSyncRequest" db:"failed_sync_request_count"`
-}
-
 type UsagePayload struct {
-	UsageBase
-	Metrics      UsageSnapshot `json:"metrics"`
-	SnapshotDate time.Time     `json:"snapshotDate"`
+	InstallationId uuid.UUID `json:"installationId"`
+	LicenseKey     uuid.UUID `json:"licenseKey"`
+	Usage          []Usage   `json:"usage"`
 }
 
 type Usage struct {
-	UsageBase
-	Snapshot string `db:"snapshot"`
+	CollectorID string    `json:"collectorId"`
+	ExporterID  string    `json:"exporterId"`
+	Type        string    `json:"type"`
+	Tenant      string    `json:"tenant"`
+	TimeStamp   time.Time `json:"timestamp"`
+	Count       int64     `json:"count"`
+	Size        int64     `json:"size"`
+}
+
+type UsageDB struct {
+	CollectorID string    `ch:"collector_id" json:"collectorId"`
+	ExporterID  string    `ch:"exporter_id" json:"exporterId"`
+	Type        string    `ch:"-" json:"type"`
+	TimeStamp   time.Time `ch:"timestamp" json:"timestamp"`
+	Tenant      string    `ch:"tenant" json:"tenant"`
+	Data        string    `ch:"data" json:"data"`
 }
