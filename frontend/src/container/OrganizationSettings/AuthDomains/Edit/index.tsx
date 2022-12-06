@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import {
 	AuthDomain,
 	GOOGLE_AUTH,
-	GoogleAuthConfig,
+	isGoogleAuthConfig,
+	isSAMLConfig,
 	SAML,
-	SAMLConfig,
 } from 'types/api/SAML/listDomain';
 
 import EditGoogleAuth from './EditGoogleAuth';
@@ -40,21 +40,16 @@ function EditSSO({
 		form
 			.validateFields()
 			.then(async (values) => {
-				const editedSamlConfig = {
-					...record.samlConfig,
-					...values.samlConfig,
-				} as SAMLConfig;
-				const editedGoogleConfig = {
-					...record.googleAuthConfig,
-					...values.googleAuthConfig,
-				} as GoogleAuthConfig;
-
 				await onRecordUpdateHandler({
 					...record,
 					ssoEnabled: true,
 					ssoType: record.ssoType,
-					samlConfig: editedSamlConfig,
-					googleAuthConfig: editedGoogleConfig,
+					samlConfig: isSAMLConfig(values.samlConfig)
+						? { ...record.samlConfig, ...values.samlConfig }
+						: record.samlConfig,
+					googleAuthConfig: isGoogleAuthConfig(values.googleAuthConfig)
+						? { ...record.googleAuthConfig, ...values.googleAuthConfig }
+						: record.googleAuthConfig,
 				});
 			})
 			.catch(() => {

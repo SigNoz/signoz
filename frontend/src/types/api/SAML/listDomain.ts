@@ -6,9 +6,25 @@ export interface SAMLConfig {
 	samlCert: string;
 }
 
+export function isSAMLConfig(
+	value: SAMLConfig | undefined,
+): value is SAMLConfig {
+	return (
+		value?.samlEntity !== undefined ||
+		value?.samlIdp !== undefined ||
+		value?.samlCert !== undefined
+	);
+}
+
 export interface GoogleAuthConfig {
 	clientId: string;
 	clientSecret: string;
+}
+
+export function isGoogleAuthConfig(
+	value: GoogleAuthConfig | undefined,
+): value is GoogleAuthConfig {
+	return value?.clientId !== undefined || value?.clientSecret !== undefined;
 }
 
 export const SAML = 'SAML';
