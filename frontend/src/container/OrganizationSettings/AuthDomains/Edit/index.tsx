@@ -2,16 +2,11 @@ import { Button, Form, notification, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	AuthDomain,
-	GOOGLE_AUTH,
-	isGoogleAuthConfig,
-	isSAMLConfig,
-	SAML,
-} from 'types/api/SAML/listDomain';
+import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
 
 import EditGoogleAuth from './EditGoogleAuth';
 import EditSAML from './EditSAML';
+import { parseGoogleAuthForm, parseSamlForm } from './helpers';
 
 // renderFormInputs selectively renders form fields depending upon
 // sso type
@@ -44,12 +39,8 @@ function EditSSO({
 					...record,
 					ssoEnabled: true,
 					ssoType: record.ssoType,
-					samlConfig: isSAMLConfig(values.samlConfig)
-						? { ...record.samlConfig, ...values.samlConfig }
-						: record.samlConfig,
-					googleAuthConfig: isGoogleAuthConfig(values.googleAuthConfig)
-						? { ...record.googleAuthConfig, ...values.googleAuthConfig }
-						: record.googleAuthConfig,
+					samlConfig: parseSamlForm(record, values),
+					googleAuthConfig: parseGoogleAuthForm(record, values),
 				});
 			})
 			.catch(() => {
