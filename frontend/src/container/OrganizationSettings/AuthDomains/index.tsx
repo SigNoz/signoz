@@ -1,9 +1,10 @@
 import { LockTwoTone } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table } from 'antd';
+import { Button, Modal, notification, Space, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
@@ -20,6 +21,7 @@ import AddDomain from './AddDomain';
 import Create from './Create';
 import EditSSO from './Edit';
 import { ConfigureSsoButtonText, EditModalTitleText } from './helpers';
+import { ColumnWithTooltip } from './styles';
 import SwitchComponent from './Switch';
 
 function AuthDomains(): JSX.Element {
@@ -166,7 +168,17 @@ function AuthDomains(): JSX.Element {
 			key: 'name',
 		},
 		{
-			title: 'Enforce SSO',
+			title: (
+				<ColumnWithTooltip>
+					<Typography>Enforce SSO</Typography>
+					<TextToolTip
+						{...{
+							text: `When enabled, this option restricts users to SSO based authentication. For more information, click `,
+							url: 'https://signoz.io/docs/userguide/sso-authentication/',
+						}}
+					/>{' '}
+				</ColumnWithTooltip>
+			),
 			dataIndex: 'ssoEnabled',
 			key: 'ssoEnabled',
 			render: (value: boolean, record: AuthDomain): JSX.Element => {
