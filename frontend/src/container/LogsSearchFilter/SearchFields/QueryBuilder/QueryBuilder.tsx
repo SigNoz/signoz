@@ -7,12 +7,13 @@
 import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
+import { useSearchParser } from 'container/LogsSearchFilter/useSearchParser';
 import {
 	ConditionalOperators,
 	QueryOperatorsMultiVal,
 	QueryOperatorsSingleVal,
 } from 'lib/logql/tokens';
-import { flatten } from 'lodash-es';
+import flatten from 'lodash-es/flatten';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -87,13 +88,13 @@ function QueryField({
 		if (qIdx === 1) {
 			if (Object.values(QueryOperatorsMultiVal).includes(value)) {
 				if (!Array.isArray(query[2].value)) {
-					query[2].value = [];
+					query[2].value = ['Enter_Value'];
 				}
 			} else if (
 				Object.values(QueryOperatorsSingleVal).includes(value) &&
 				Array.isArray(query[2].value)
 			) {
-				query[2].value = '';
+				query[2].value = 'Enter_Value';
 			}
 		}
 		onUpdate(query, queryIndex);
@@ -173,9 +174,10 @@ interface QueryConditionFieldProps {
 export type Query = { value: string | string[]; type: string }[];
 
 function QueryBuilder({
-	updateParsedQuery,
 	onDropDownToggleHandler,
 }: SearchFieldsProps): JSX.Element {
+	const { updateParsedQuery } = useSearchParser();
+
 	const {
 		searchFilter: { parsedQuery },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -197,8 +199,7 @@ function QueryBuilder({
 	const handleUpdate = (query: Query, queryIndex: number): void => {
 		const updatedParsedQuery = generatedQueryStructure;
 		updatedParsedQuery[queryIndex] = parseQuery(query) as never;
-
-		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
+		const flatParsedQuery = flatten(updatedParsedQuery);
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
 		updateParsedQuery(flatParsedQuery);
 	};
@@ -206,8 +207,7 @@ function QueryBuilder({
 	const handleDelete = (queryIndex: number): void => {
 		const updatedParsedQuery = generatedQueryStructure;
 		updatedParsedQuery.splice(queryIndex - 1, 2);
-
-		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
+		const flatParsedQuery = flatten(updatedParsedQuery);
 		keyPrefixRef.current = v4();
 		updateParsedQuery(flatParsedQuery);
 	};

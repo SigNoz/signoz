@@ -1,6 +1,5 @@
 import history from 'lib/history';
 import { parseQuery, reverseParser } from 'lib/logql';
-import { isEqual } from 'lodash-es';
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -35,14 +34,13 @@ export function useSearchParser(): {
 				payload: updatedQueryString,
 			});
 			const parsedQueryFromString = parseQuery(updatedQueryString);
-			if (!isEqual(parsedQuery, parsedQueryFromString)) {
-				dispatch({
-					type: SET_SEARCH_QUERY_PARSED_PAYLOAD,
-					payload: parsedQueryFromString,
-				});
-			}
+
+			dispatch({
+				type: SET_SEARCH_QUERY_PARSED_PAYLOAD,
+				payload: parsedQueryFromString,
+			});
 		},
-		[dispatch, parsedQuery],
+		[dispatch],
 	);
 
 	useEffect(() => {
@@ -56,17 +54,13 @@ export function useSearchParser(): {
 				payload: updatedParsedPayload,
 			});
 			const reversedParsedQuery = reverseParser(updatedParsedPayload);
-			if (
-				!isEqual(queryString, reversedParsedQuery) ||
-				(queryString === '' && reversedParsedQuery === '')
-			) {
-				dispatch({
-					type: SET_SEARCH_QUERY_STRING,
-					payload: reversedParsedQuery,
-				});
-			}
+
+			dispatch({
+				type: SET_SEARCH_QUERY_STRING,
+				payload: reversedParsedQuery,
+			});
 		},
-		[dispatch, queryString],
+		[dispatch],
 	);
 
 	return {

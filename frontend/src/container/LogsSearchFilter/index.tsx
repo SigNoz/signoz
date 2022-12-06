@@ -21,11 +21,7 @@ function SearchFilter({
 	getLogs,
 	getLogsAggregate,
 }: SearchFilterProps): JSX.Element {
-	const {
-		queryString,
-		updateParsedQuery,
-		updateQueryString,
-	} = useSearchParser();
+	const { queryString, updateQueryString } = useSearchParser();
 	const [showDropDown, setShowDropDown] = useState(false);
 	const searchRef = useRef<InputRef>(null);
 
@@ -113,10 +109,7 @@ function SearchFilter({
 				placement="bottom"
 				content={
 					<DropDownContainer>
-						<SearchFields
-							onDropDownToggleHandler={onDropDownToggleHandler}
-							updateParsedQuery={updateParsedQuery as never}
-						/>
+						<SearchFields onDropDownToggleHandler={onDropDownToggleHandler} />
 					</DropDownContainer>
 				}
 				trigger="click"
