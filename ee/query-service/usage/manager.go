@@ -101,11 +101,24 @@ func (lm *Manager) UploadUsage(ctx context.Context) error {
 
 	// get usage from clickhouse
 	dbs := []string{"signoz_logs", "signoz_traces", "signoz_metrics"}
-	query := `select collector_id, exporter_id, tenant, data from %s.usage where timestamp>=$1 order by timestamp`
+	query := `
+		SELECT tenant, collector_id, exporter_id, timestamp, data
+		FROM %s.distributed_usage as u1 
+			GLOBAL INNER JOIN 
+				(SELECT  
+					tenant, collector_id, exporter_id, MAX(timestamp) as ts 
+					FROM %s.distributed_usage as u2 
+					where timestamp >= $1 
+					GROUP BY tenant, collector_id, exporter_id 
+				) as t1
+		ON 
+		u1.tenant = t1.tenant AND u1.collector_id = t1.collector_id AND u1.exporter_id = t1.exporter_id and u1.timestamp = t1.ts 
+		order by timestamp
+	`
 
 	for _, db := range dbs {
 		dbusages := []model.UsageDB{}
-		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db), time.Now().Add(-(24 * time.Hour)))
+		err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
 		if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
 			return err
 		}
