@@ -1,7 +1,7 @@
 import { Button, Space, Typography } from 'antd';
 import React from 'react';
 
-import { IconContainer, TitleContainer } from './styles';
+import { IconContainer, TitleContainer, TitleText } from './styles';
 
 function Row({
 	onClickHandler,
@@ -16,8 +16,8 @@ function Row({
 			<IconContainer>{Icon}</IconContainer>
 
 			<TitleContainer>
-				<Typography>{title}</Typography>
-				<Typography.Text italic>{subTitle}</Typography.Text>
+				<TitleText>{title}</TitleText>
+				<Typography.Text>{subTitle}</Typography.Text>
 			</TitleContainer>
 
 			<Button disabled={isDisabled} onClick={onClickHandler} type="primary">
