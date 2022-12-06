@@ -1,19 +1,30 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
-import React from 'react';
+import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import {
+	databaseCallsAvgDuration,
+	databaseCallsRPS,
+} from 'container/MetricsApplication/MetricsPageQueries/DBCallQueries';
+import { resourceAttributesToTagFilterItems } from 'lib/resourceAttributes';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { PromQLWidgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 
-function DBCall({ getWidget }: DBCallProps): JSX.Element {
+function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const { resourceAttributePromQLQuery } = useSelector<AppState, MetricReducer>(
+	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
+	const tagFilterItems = useMemo(
+		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
+		[resourceAttributeQueries],
+	);
+	const legend = '{{db_system}}';
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -23,12 +34,16 @@ function DBCall({ getWidget }: DBCallProps): JSX.Element {
 						<FullView
 							name="database_call_rps"
 							fullViewOptions={false}
-							widget={getWidget([
-								{
-									query: `sum(rate(signoz_db_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m])) by (db_system)`,
-									legend: '{{db_system}}',
-								},
-							])}
+							widget={getWidgetQueryBuilder({
+								queryType: 1,
+								promQL: [],
+								metricsBuilder: databaseCallsRPS({
+									servicename,
+									legend,
+									tagFilterItems,
+								}),
+								clickHouse: [],
+							})}
 							yAxisUnit="reqps"
 						/>
 					</GraphContainer>
@@ -42,12 +57,15 @@ function DBCall({ getWidget }: DBCallProps): JSX.Element {
 						<FullView
 							name="database_call_avg_duration"
 							fullViewOptions={false}
-							widget={getWidget([
-								{
-									query: `sum(rate(signoz_db_latency_sum{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m]))/sum(rate(signoz_db_latency_count{service_name="${servicename}"${resourceAttributePromQLQuery}}[5m]))`,
-									legend: '',
-								},
-							])}
+							widget={getWidgetQueryBuilder({
+								queryType: 1,
+								promQL: [],
+								metricsBuilder: databaseCallsAvgDuration({
+									servicename,
+									tagFilterItems,
+								}),
+								clickHouse: [],
+							})}
 							yAxisUnit="ms"
 						/>
 					</GraphContainer>
@@ -58,7 +76,7 @@ function DBCall({ getWidget }: DBCallProps): JSX.Element {
 }
 
 interface DBCallProps {
-	getWidget: (query: PromQLWidgets['query']) => PromQLWidgets;
+	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 export default DBCall;
