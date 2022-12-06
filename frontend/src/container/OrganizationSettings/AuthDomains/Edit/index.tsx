@@ -2,7 +2,13 @@ import { Button, Form, notification, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
+import {
+	AuthDomain,
+	GOOGLE_AUTH,
+	GoogleAuthConfig,
+	SAML,
+	SAMLConfig,
+} from 'types/api/SAML/listDomain';
 
 import EditGoogleAuth from './EditGoogleAuth';
 import EditSAML from './EditSAML';
@@ -34,27 +40,21 @@ function EditSSO({
 		form
 			.validateFields()
 			.then(async (values) => {
+				const editedSamlConfig = {
+					...record.samlConfig,
+					...values.samlConfig,
+				} as SAMLConfig;
+				const editedGoogleConfig = {
+					...record.googleAuthConfig,
+					...values.googleAuthConfig,
+				} as GoogleAuthConfig;
+
 				await onRecordUpdateHandler({
 					...record,
 					ssoEnabled: true,
 					ssoType: record.ssoType,
-					samlConfig:
-						record.ssoType === SAML
-							? {
-									...record.samlConfig,
-									samlCert: values.samlConfig?.samlCert || '',
-									samlEntity: values.samlConfig?.samlEntity || '',
-									samlIdp: values.samlConfig?.samlIdp || '',
-							  }
-							: undefined,
-					googleAuthConfig:
-						record.ssoType === GOOGLE_AUTH
-							? {
-									...record.googleAuthConfig,
-									clientId: values.googleAuthConfig?.clientId || '',
-									clientSecret: values.googleAuthConfig?.clientSecret || '',
-							  }
-							: undefined,
+					samlConfig: editedSamlConfig,
+					googleAuthConfig: editedGoogleConfig,
 				});
 			})
 			.catch(() => {

@@ -57,7 +57,7 @@ function AuthDomains(): JSX.Element {
 	});
 
 	const assignSsoMethod = useCallback(
-		async (typ: AuthDomain['ssoType']): Promise<void> => {
+		(typ: AuthDomain['ssoType']): void => {
 			setCurrentDomain({ ...currentDomain, ssoType: typ } as AuthDomain);
 		},
 		[currentDomain, setCurrentDomain],

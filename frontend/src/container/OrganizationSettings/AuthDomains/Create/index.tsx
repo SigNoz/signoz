@@ -24,7 +24,7 @@ function Create({
 		setIsEditModalOpen(true);
 	}, [assignSsoMethod, setIsSettingsOpen, setIsEditModalOpen]);
 
-	const configureButtonText = useMemo(() => {
+	const ConfigureButtonText = useMemo(() => {
 		switch (ssoMethod) {
 			case GOOGLE_AUTH:
 				return 'Edit Google Auth';
@@ -37,7 +37,7 @@ function Create({
 
 	const data: RowProps[] = [
 		{
-			buttonText: configureButtonText,
+			buttonText: ConfigureButtonText,
 			Icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
 			title: 'Google Apps Authentication',
 			subTitle: 'Let members sign-in with a Google account',
@@ -45,7 +45,7 @@ function Create({
 			isDisabled: false,
 		},
 		{
-			buttonText: configureButtonText,
+			buttonText: ConfigureButtonText,
 			Icon: <KeyOutlined style={{ fontSize: '37px' }} />,
 			onClickHandler: onEditSAMLHandler,
 			subTitle: 'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
