@@ -1,3 +1,4 @@
+import { Row } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -6,8 +7,8 @@ export const Container = styled.div`
 	align-items: center;
 `;
 
-export const ColumnWithTooltip = styled.div`
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
+export const ColumnWithTooltip = styled(Row)`
+	&&& > article {
+		margin-right: 0.5rem;
+	}
 `;
