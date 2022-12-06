@@ -10,7 +10,7 @@ export const getDashboardVariables = (): Record<string, unknown> => {
 		} = store.getState();
 		const [selectedDashboard] = dashboards;
 		const {
-			data: { variables },
+			data: { variables = {} },
 		} = selectedDashboard;
 
 		const minMax = GetMinMax(globalTime.selectedTime, [
