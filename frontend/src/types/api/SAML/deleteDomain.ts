@@ -1,5 +1,5 @@
-import { SAMLDomain } from './listDomain';
+import { AuthDomain } from './listDomain';
 
-export type Props = SAMLDomain;
+export type Props = AuthDomain;
 
-export type PayloadProps = SAMLDomain;
+export type PayloadProps = AuthDomain;
