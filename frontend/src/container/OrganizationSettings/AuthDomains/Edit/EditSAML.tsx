@@ -7,7 +7,7 @@ function EditSAML(): JSX.Element {
 		<>
 			<Form.Item
 				label="SAML ACS URL"
-				name={['ssoConfig', 'samlIdp']}
+				name={['samlConfig', 'samlIdp']}
 				rules={[{ required: true, message: 'Please input your ACS URL!' }]}
 			>
 				<Input />
@@ -15,7 +15,7 @@ function EditSAML(): JSX.Element {
 
 			<Form.Item
 				label="SAML Entity ID"
-				name={['ssoConfig', 'samlEntity']}
+				name={['samlConfig', 'samlEntity']}
 				rules={[{ required: true, message: 'Please input your Entity Id!' }]}
 			>
 				<Input />
@@ -24,7 +24,7 @@ function EditSAML(): JSX.Element {
 			<Form.Item
 				rules={[{ required: true, message: 'Please input your Certificate!' }]}
 				label="SAML X.509 Certificate"
-				name={['ssoConfig', 'samlCert']}
+				name={['samlConfig', 'samlCert']}
 			>
 				<Input.TextArea rows={4} />
 			</Form.Item>
