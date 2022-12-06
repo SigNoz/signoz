@@ -13,7 +13,8 @@ export const filterSpansByString = (
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
-type TTimeUnitName = 'ms' | 's' | 'm';
+type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
+
 export interface IIntervalUnit {
 	name: TTimeUnitName;
 	multiplier: number;
@@ -30,6 +31,18 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 	{
 		name: 'm',
 		multiplier: 1 / (1e3 * 60),
+	},
+	{
+		name: 'hr',
+		multiplier: 1 / (1e3 * 60 * 60),
+	},
+	{
+		name: 'day',
+		multiplier: 1 / (1e3 * 60 * 60 * 24),
+	},
+	{
+		name: 'week',
+		multiplier: 1 / (1e3 * 60 * 60 * 24 * 7),
 	},
 ];
 
@@ -97,4 +110,29 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	traverse(tree, levels);
 
 	return levels;
+};
+
+export const formUrlParams = (params: Record<string, any>): string => {
+	let urlParams = '';
+	Object.entries(params).forEach(([key, value], index) => {
+		let encodedValue: string;
+		try {
+			encodedValue = decodeURIComponent(value);
+			encodedValue = encodeURIComponent(encodedValue);
+		} catch (error) {
+			encodedValue = '';
+		}
+		if (index === 0) {
+			if (encodedValue) {
+				urlParams = `?${key}=${encodedValue}`;
+			} else {
+				urlParams = `?${key}=`;
+			}
+		} else if (encodedValue) {
+			urlParams = `${urlParams}&${key}=${encodedValue}`;
+		} else {
+			urlParams = `${urlParams}&${key}=`;
+		}
+	});
+	return urlParams;
 };

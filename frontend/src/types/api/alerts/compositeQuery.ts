@@ -1,4 +1,5 @@
 import {
+	IClickHouseQuery,
 	IMetricsBuilderFormula,
 	IMetricsBuilderQuery,
 	IPromQLQuery,
@@ -9,17 +10,25 @@ import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 export interface ICompositeMetricQuery {
 	builderQueries: IBuilderQueries;
 	promQueries: IPromQueries;
+	chQueries: IChQueries;
 	queryType: EQueryType;
 }
 
-export interface IPromQueries {
-	[key: string]: IPromQuery;
+export interface IChQueries {
+	[key: string]: IChQuery;
+}
+
+export interface IChQuery extends IClickHouseQuery {
+	query: string;
 }
 
 export interface IPromQuery extends IPromQLQuery {
 	stats?: '';
 }
 
+export interface IPromQueries {
+	[key: string]: IPromQuery;
+}
 export interface IBuilderQueries {
 	[key: string]: IBuilderQuery;
 }

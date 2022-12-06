@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React from 'react';

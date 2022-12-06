@@ -111,21 +111,21 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 			fmtVal := FormattedValue(toFormat)
 			switch op {
 			case "eq":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s = %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key, fmtVal))
 			case "neq":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s != %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key, fmtVal))
 			case "in":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s IN %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key, fmtVal))
 			case "nin":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s NOT IN %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key, fmtVal))
 			case "like":
-				conditions = append(conditions, fmt.Sprintf("like(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			case "nlike":
-				conditions = append(conditions, fmt.Sprintf("notLike(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			case "match":
-				conditions = append(conditions, fmt.Sprintf("match(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			case "nmatch":
-				conditions = append(conditions, fmt.Sprintf("not match(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			default:
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -138,7 +138,7 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 		selectLabels = "labels,"
 	} else {
 		for _, tag := range groupTags {
-			selectLabels += fmt.Sprintf(" labels_object.%s as %s,", tag, tag)
+			selectLabels += fmt.Sprintf(" JSONExtractString(labels, '%s') as %s,", tag, tag)
 		}
 	}
 
@@ -166,7 +166,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" INNER JOIN" +
+			" GLOBAL INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -228,7 +228,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" INNER JOIN" +
+				" GLOBAL INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -371,7 +371,7 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 		joinUsing = strings.Join(groupTags, ",")
 		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
 		if idx < len(vars)-1 {
-			formulaSubQuery += "INNER JOIN"
+			formulaSubQuery += "GLOBAL INNER JOIN"
 		} else if len(vars) > 1 {
 			formulaSubQuery += fmt.Sprintf("USING (%s)", joinUsing)
 		}
