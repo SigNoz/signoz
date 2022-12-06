@@ -110,9 +110,10 @@ const (
 	DefaultLogSkipIndexGranularity = 64
 )
 const (
-	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
-	SIGNOZ_SAMPLES_TABLENAME    = "distributed_samples_v2"
-	SIGNOZ_TIMESERIES_TABLENAME = "distributed_time_series_v2"
+	SIGNOZ_METRIC_DBNAME              = "signoz_metrics"
+	SIGNOZ_SAMPLES_TABLENAME          = "distributed_samples_v2"
+	SIGNOZ_TIMESERIES_TABLENAME       = "distributed_time_series_v2"
+	SIGNOZ_TIMESERIES_LOCAL_TABLENAME = "time_series_v2"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
