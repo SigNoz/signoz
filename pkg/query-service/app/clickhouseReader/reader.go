@@ -2106,7 +2106,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					}
 					return
 				}
-				req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = 0;")
+				req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1;")
 				zap.S().Debugf("Executing TTL request: %s\n", req)
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
@@ -2162,7 +2162,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				return
 			}
-			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = 0")
+			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1")
 			zap.S().Debugf("Executing TTL request: %s\n", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
@@ -2216,7 +2216,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				return
 			}
-			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = 0")
+			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1")
 			zap.S().Debugf("Executing TTL request: %s\n", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
