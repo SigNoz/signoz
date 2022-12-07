@@ -7,8 +7,15 @@ function EditGoogleAuth(): JSX.Element {
 		<>
 			<Typography.Paragraph>
 				Enter OAuth 2.0 credentials obtained from the Google API Console below. Read
-				the <a href="signoz.io/docs/userguide/sso-authentication">docs</a> for more
-				information.
+				the{' '}
+				<a
+					href="https://signoz.io/docs/userguide/sso-authentication"
+					target="_blank"
+					rel="noreferrer"
+				>
+					docs
+				</a>{' '}
+				for more information.
 			</Typography.Paragraph>
 			<Form.Item
 				label="Client ID"
