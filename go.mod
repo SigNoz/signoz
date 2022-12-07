@@ -33,6 +33,7 @@ require (
 )
 
 require (
+	github.com/DmitriyVTitov/size v1.5.0 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
@@ -149,4 +150,4 @@ require (
 	k8s.io/client-go v8.0.0+incompatible // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.76
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.76-0.1

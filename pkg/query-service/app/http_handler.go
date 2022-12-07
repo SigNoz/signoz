@@ -589,11 +589,14 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
 					Query: query.Query,
 				}
+				queryStart := time.Now()
 				promResult, _, err := aH.reader.GetQueryRangeResult(r.Context(), &queryModel)
+				zap.L().Info("prometheus query GetQueryRangeResult took", zap.String("query", query.Query), zap.Duration("duration", time.Since(queryStart)))
 				if err != nil {
 					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
 					return
 				}
+				prepareStart := time.Now()
 				matrix, _ := promResult.Matrix()
 				for _, v := range matrix {
 					var s model.Series
@@ -604,6 +607,7 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					}
 					seriesList = append(seriesList, &s)
 				}
+				zap.L().Info("prometheus query prepare took", zap.String("query", query.Query), zap.Duration("duration", time.Since(prepareStart)))
 				ch <- channelResult{Series: seriesList}
 			}(name, query)
 		}
@@ -667,7 +671,9 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		}
 		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
 	case model.PROM:
+		start := time.Now()
 		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
+		zap.L().Info("execPromQueries", zap.Duration("time", time.Since(start)))
 	default:
 		err = fmt.Errorf("invalid query type")
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
