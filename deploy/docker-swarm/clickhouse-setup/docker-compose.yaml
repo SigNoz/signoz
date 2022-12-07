@@ -1,30 +1,133 @@
 version: "3.9"
 
+x-clickhouse-defaults: &clickhouse-defaults
+  image: clickhouse/clickhouse-server:22.8.8-alpine
+  tty: true
+  deploy:
+    restart_policy:
+      condition: on-failure
+  depends_on:
+    - zookeeper-1
+    # - zookeeper-2
+    # - zookeeper-3
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+  healthcheck:
+    # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
+    test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 262144
+      hard: 262144
+
+x-clickhouse-depend: &clickhouse-depend
+  depends_on:
+    - clickhouse
+    # - clickhouse-2
+    # - clickhouse-3
+
 services:
+  zookeeper-1:
+    image: bitnami/zookeeper:3.7.0
+    container_name: zookeeper-1
+    hostname: zookeeper-1
+    user: root
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
+    volumes:
+      - ./data/zookeeper-1:/bitnami/zookeeper
+    environment:
+      - ZOO_SERVER_ID=1
+      # - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_AUTOPURGE_INTERVAL=1
+
+  # zookeeper-2:
+  #   image: bitnami/zookeeper:3.7.0
+  #   container_name: zookeeper-2
+  #   hostname: zookeeper-2
+  #   user: root
+  #   ports:
+  #     - "2182:2181"
+  #     - "2889:2888"
+  #     - "3889:3888"
+  #   volumes:
+  #     - ./data/zookeeper-2:/bitnami/zookeeper
+  #   environment:
+  #     - ZOO_SERVER_ID=2
+  #     - ZOO_SERVERS=zookeeper-1:2888:3888,0.0.0.0:2888:3888,zookeeper-3:2888:3888
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #     - ZOO_AUTOPURGE_INTERVAL=1
+
+  # zookeeper-3:
+  #   image: bitnami/zookeeper:3.7.0
+  #   container_name: zookeeper-3
+  #   hostname: zookeeper-3
+  #   user: root
+  #   ports:
+  #     - "2183:2181"
+  #     - "2890:2888"
+  #     - "3890:3888"
+  #   volumes:
+  #     - ./data/zookeeper-3:/bitnami/zookeeper
+  #   environment:
+  #     - ZOO_SERVER_ID=3
+  #     - ZOO_SERVERS=zookeeper-1:2888:3888,zookeeper-2:2888:3888,0.0.0.0:2888:3888
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #     - ZOO_AUTOPURGE_INTERVAL=1
+
   clickhouse:
-    image: clickhouse/clickhouse-server:22.8.8-alpine
+    <<: *clickhouse-defaults
+    container_name: clickhouse
+    hostname: clickhouse
     # ports:
     #   - "9000:9000"
     #   - "8123:8123"
-    tty: true
+    #   - "9181:9181"
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
-    deploy:
-      restart_policy:
-        condition: on-failure
-    logging:
-      options:
-        max-size: 50m
-        max-file: "3"
-    healthcheck:
-      # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+
+  # clickhouse-2:
+  #   <<: *clickhouse-defaults
+  #   container_name: clickhouse-2
+  #   hostname: clickhouse-2
+  #   ports:
+  #     - "9001:9000"
+  #     - "8124:8123"
+  #     - "9182:9181"
+  #   volumes:
+  #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+  #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+  #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+  #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  #     - ./data/clickhouse-2/:/var/lib/clickhouse/
+
+  # clickhouse-3:
+  #   <<: *clickhouse-defaults
+  #   container_name: clickhouse-3
+  #   hostname: clickhouse-3
+  #   ports:
+  #     - "9002:9000"
+  #     - "8125:8123"
+  #     - "9183:9181"
+  #   volumes:
+  #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+  #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+  #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+  #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
     image: signoz/alertmanager:0.23.0-0.2
@@ -40,7 +143,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.11.3
+    image: signoz/query-service:0.11.4
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -66,11 +169,10 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    depends_on:
-      - clickhouse
+    <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:0.11.3
+    image: signoz/frontend:0.11.4
     deploy:
       restart_policy:
         condition: on-failure
@@ -107,8 +209,7 @@ services:
       mode: global
       restart_policy:
         condition: on-failure
-    depends_on:
-      - clickhouse
+    <<: *clickhouse-depend
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.63.0
@@ -123,8 +224,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    depends_on:
-      - clickhouse
+    <<: *clickhouse-depend
 
   hotrod:
     image: jaegertracing/example-hotrod:1.30
