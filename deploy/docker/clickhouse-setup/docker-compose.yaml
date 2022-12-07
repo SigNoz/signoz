@@ -188,7 +188,7 @@ services:
   otel-collector:
     image: signoz/signoz-otel-collector:0.63.0
     command: ["--config=/etc/otel-collector-config.yaml"]
-  # required for reading docker container logs
+    user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
