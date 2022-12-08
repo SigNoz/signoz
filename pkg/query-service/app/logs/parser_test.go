@@ -299,7 +299,7 @@ var generateSQLQueryFields = model.GetFieldsResponse{
 			Type:     "attributes",
 		},
 		{
-			Name:     "field2",
+			Name:     "Field2",
 			DataType: "double64",
 			Type:     "attributes",
 		},
@@ -310,6 +310,11 @@ var generateSQLQueryFields = model.GetFieldsResponse{
 		},
 	},
 	Interesting: []model.LogField{
+		{
+			Name:     "FielD1",
+			DataType: "int64",
+			Type:     "attributes",
+		},
 		{
 			Name:     "code",
 			DataType: "int64",
@@ -343,6 +348,15 @@ var generateSQLQueryTestCases = []struct {
 		},
 		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( field1 < 100 and field1 > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
 	},
+	{
+		Name: "generate case sensitive query",
+		Filter: model.LogsFilterParams{
+			Query:          "field1 lt 100 and FielD1 gt 50 and Field2 gt 10 and code lte 500 and code gte 400",
+			TimestampStart: uint64(1657689292000),
+			TimestampEnd:   uint64(1657689294000),
+		},
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( field1 < 100 and attributes_int64_value[indexOf(attributes_int64_key, 'FielD1')] > 50 and Field2 > 10 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
+	},
 }
 
 func TestGenerateSQLQuery(t *testing.T) {
@@ -352,34 +366,4 @@ func TestGenerateSQLQuery(t *testing.T) {
 			So(res, ShouldEqual, test.SqlFilter)
 		})
 	}
-}
-
-func TestGenerateSQLQueryCaseSensitivity(t *testing.T) {
-	allFields := model.GetFieldsResponse{
-		Selected: []model.LogField{
-			{
-				Name:     "OtherField",
-				DataType: "int64",
-				Type:     "attributes",
-			},
-		},
-		Interesting: []model.LogField{
-			{
-				Name:     "Code",
-				DataType: "int64",
-				Type:     "attributes",
-			},
-		},
-	}
-
-	query := "otherfield lt 100 and otherField gt 50 AND Code lte 500 and code gte 400"
-	tsStart := uint64(1657689292000)
-	tsEnd := uint64(1657689294000)
-	idStart := "2BsKLKv8cZrLCn6rkOcRGkdjBdM"
-	idEnd := "2BsKG6tRpFWjYMcWsAGKfSxoQdU"
-	sqlWhere := "timestamp >= '1657689292000' and timestamp <= '1657689294000' and id > '2BsKLKv8cZrLCn6rkOcRGkdjBdM' and id < '2BsKG6tRpFWjYMcWsAGKfSxoQdU' and OtherField < 100 and OtherField > 50 AND attributes_int64_value[indexOf(attributes_int64_key, 'Code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'Code')] >= 400 "
-	Convey("TestGenerateSQLQueryCaseSensitivity", t, func() {
-		res, _ := GenerateSQLWhere(&allFields, &model.LogsFilterParams{Query: query, TimestampStart: tsStart, TimestampEnd: tsEnd, IdGt: idStart, IdLT: idEnd})
-		So(res, ShouldEqual, sqlWhere)
-	})
 }

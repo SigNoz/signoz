@@ -219,7 +219,7 @@ func parseColumn(s string) (*string, error) {
 func arrayToMap(fields []model.LogField) map[string]model.LogField {
 	res := map[string]model.LogField{}
 	for _, field := range fields {
-		res[strings.ToLower(field.Name)] = field
+		res[field.Name] = field
 	}
 	return res
 }
@@ -248,17 +248,14 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 	sqlColName := *col
 	lowerColName := strings.ToLower(*col)
 	if lowerColName != "body" {
-		selected_field, ok := selectedFieldsLookup[lowerColName]
-		if !ok {
-			if field, ok := interestingFieldLookup[lowerColName]; ok {
+		if _, ok := selectedFieldsLookup[sqlColName]; !ok {
+			if field, ok := interestingFieldLookup[sqlColName]; ok {
 				if field.Type != constants.Static {
 					sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
 				}
 			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
 				return "", fmt.Errorf("field not found for filtering")
 			}
-		} else {
-			sqlColName = selected_field.Name
 		}
 	}
 	return strings.Replace(queryToken, *col, sqlColName, 1), nil
