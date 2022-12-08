@@ -1,32 +1,138 @@
 version: "2.4"
 
+x-clickhouse-defaults: &clickhouse-defaults
+  restart: on-failure
+  image: clickhouse/clickhouse-server:22.8.8-alpine
+  tty: true
+  depends_on:
+    - zookeeper-1
+    # - zookeeper-2
+    # - zookeeper-3
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+  healthcheck:
+    # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
+    test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 262144
+      hard: 262144
+
+x-clickhouse-depends: &clickhouse-depends
+  depends_on:
+    clickhouse:
+      condition: service_healthy
+    # clickhouse-2:
+    #   condition: service_healthy
+    # clickhouse-3:
+    #   condition: service_healthy
+
 services:
-  clickhouse:
-    image: clickhouse/clickhouse-server:22.8.8-alpine
-    tty: true
+  zookeeper-1:
+    image: bitnami/zookeeper:3.7.0
+    user: root
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
     volumes:
-      - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
-      - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
-      - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
-    restart: on-failure
-    logging:
-      options:
-        max-size: 50m
-        max-file: "3"
-    healthcheck:
-      # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      - ./data/zookeeper-1:/bitnami/zookeeper
+    environment:
+      - ZOO_SERVER_ID=1
+      - ZOO_SERVERS=0.0.0.0:2888:3888
+      # - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_AUTOPURGE_INTERVAL=1
+
+  # zookeeper-2:
+  #   image: bitnami/zookeeper:3.7.0
+  #   user: root
+  #   ports:
+  #     - "2182:2181"
+  #     - "2889:2888"
+  #     - "3889:3888"
+  #   volumes:
+  #     - ./data/zookeeper-2:/bitnami/zookeeper
+  #   environment:
+  #     - ZOO_SERVER_ID=2
+  #     - ZOO_SERVERS=zookeeper-1:2888:3888,0.0.0.0:2888:3888,zookeeper-3:2888:3888
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #     - ZOO_AUTOPURGE_INTERVAL=1
+
+  # zookeeper-3:
+  #   image: bitnami/zookeeper:3.7.0
+  #   user: root
+  #   ports:
+  #     - "2183:2181"
+  #     - "2890:2888"
+  #     - "3890:3888"
+  #   volumes:
+  #     - ./data/zookeeper-3:/bitnami/zookeeper
+  #   environment:
+  #     - ZOO_SERVER_ID=3
+  #     - ZOO_SERVERS=zookeeper-1:2888:3888,zookeeper-2:2888:3888,0.0.0.0:2888:3888
+  #     - ALLOW_ANONYMOUS_LOGIN=yes
+  #     - ZOO_AUTOPURGE_INTERVAL=1
+
+  clickhouse:
+    <<: *clickhouse-defaults
+    container_name: clickhouse
+    hostname: clickhouse
     ports:
       - "9000:9000"
       - "8123:8123"
+      - "9181:9181"
+    volumes:
+      - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+      # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+      - ./data/clickhouse/:/var/lib/clickhouse/
+
+
+  # clickhouse-2:
+  #   <<: *clickhouse-defaults
+  #   container_name: clickhouse-2
+  #   hostname: clickhouse-2
+  #   ports:
+  #     - "9001:9000"
+  #     - "8124:8123"
+  #     - "9182:9181"
+  #   volumes:
+  #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+  #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+  #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+  #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  #     - ./data/clickhouse-2/:/var/lib/clickhouse/
+
+  # clickhouse-3:
+  #   <<: *clickhouse-defaults
+  #   container_name: clickhouse-3
+  #   hostname: clickhouse-3
+  #   ports:
+  #     - "9002:9000"
+  #     - "8125:8123"
+  #     - "9183:9181"
+  #   volumes:
+  #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
+  #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
+  #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+  #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+  #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
     image: signoz/alertmanager:0.23.0-0.2
+    volumes:
+      - ./data/alertmanager:/data
     depends_on:
-      - query-service
+      query-service:
+        condition: service_healthy
     restart: on-failure
     command:
       - --queryService.url=http://query-service:8085
@@ -38,12 +144,13 @@ services:
     image: signoz/query-service:latest
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
-    ports:
-      - "8180:8080"
+    # ports:
+    #   - "6060:6060"     # pprof port
+    #   - "8080:8080"     # query-service port
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
-      - ./data:/var/lib/signoz
+      - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -52,14 +159,14 @@ services:
       - STORAGE=clickhouse
       - GODEBUG=netdns=go
       - TELEMETRY_ENABLED=true
+      - DEPLOYMENT_TYPE=docker-standalone-amd
+    restart: on-failure
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
       interval: 30s
       timeout: 5s
       retries: 3
-    depends_on:
-      clickhouse:
-        condition: service_healthy
+    <<: *clickhouse-depends
 
   otel-collector:
     image: signoz/signoz-otel-collector:0.63.0
@@ -71,30 +178,43 @@ services:
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
-      - "4317:4317"       # OTLP GRPC receiver
-    restart: always
-    depends_on:
-      clickhouse:
-        condition: service_healthy
+      # - "1777:1777"     # pprof extension
+      - "4317:4317"     # OTLP gRPC receiver
+      - "4318:4318"     # OTLP HTTP receiver
+      # - "8888:8888"     # OtelCollector internal metrics
+      # - "8889:8889"     # signoz spanmetrics exposed by the agent
+      # - "9411:9411"     # Zipkin port
+      # - "13133:13133"   # health check extension
+      # - "14250:14250"   # Jaeger gRPC
+      # - "14268:14268"   # Jaeger thrift HTTP
+      # - "55678:55678"   # OpenCensus receiver
+      # - "55679:55679"   # zPages extension
+    restart: on-failure
+    <<: *clickhouse-depends
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.63.0
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
-    depends_on:
-      clickhouse:
-        condition: service_healthy
+    # ports:
+    #   - "1777:1777"     # pprof extension
+    #   - "8888:8888"     # OtelCollector internal metrics
+    #   - "13133:13133"   # Health check extension
+    #   - "55679:55679"   # zPages extension
+    restart: on-failure
+    <<: *clickhouse-depends
+
   hotrod:
-    image: jaegertracing/example-hotrod:1.30
-    container_name: hotrod
-    logging:
-      options:
-        max-size: 50m
-        max-file: "3"
-    command: ["all"]
-    environment:
-      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+   image: jaegertracing/example-hotrod:1.30
+   container_name: hotrod
+   logging:
+     options:
+       max-size: 50m
+       max-file: "3"
+   command: ["all"]
+   environment:
+     - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
@@ -109,4 +229,4 @@ services:
       QUIET_MODE: "${QUIET_MODE:-false}"
       LOCUST_OPTS: "--headless -u 10 -r 1"
     volumes:
-      - ../../../../deploy/docker/common/locust-scripts:/locust
+      - ../common/locust-scripts:/locust

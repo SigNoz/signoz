@@ -1,9 +1,10 @@
 import { LockTwoTone } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table } from 'antd';
+import { Button, Modal, notification, Space, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
@@ -12,25 +13,27 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { SAMLDomain } from 'types/api/SAML/listDomain';
+import { AuthDomain } from 'types/api/SAML/listDomain';
 import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
 import AddDomain from './AddDomain';
 import Create from './Create';
-import EditSaml from './Edit';
+import EditSSO from './Edit';
+import { ConfigureSsoButtonText, EditModalTitleText } from './helpers';
+import { ColumnWithTooltip } from './styles';
 import SwitchComponent from './Switch';
 
 function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [currentDomain, setCurrentDomain] = useState<SAMLDomain>();
+	const [currentDomain, setCurrentDomain] = useState<AuthDomain>();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
 
-	const notEntripriseData: SAMLDomain[] = [
+	const notEntripriseData: AuthDomain[] = [
 		{
 			id: v4(),
 			name: '',
@@ -53,6 +56,13 @@ function AuthDomains(): JSX.Element {
 		enabled: org !== null,
 	});
 
+	const assignSsoMethod = useCallback(
+		(typ: AuthDomain['ssoType']): void => {
+			setCurrentDomain({ ...currentDomain, ssoType: typ } as AuthDomain);
+		},
+		[currentDomain, setCurrentDomain],
+	);
+
 	const onCloseHandler = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => (): void => {
 			func(false);
@@ -61,7 +71,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onRecordUpdateHandler = useCallback(
-		async (record: SAMLDomain): Promise<boolean> => {
+		async (record: AuthDomain): Promise<boolean> => {
 			try {
 				const response = await updateDomain(record);
 
@@ -104,15 +114,20 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onEditHandler = useCallback(
-		(record: SAMLDomain) => (): void => {
-			onOpenHandler(setIsEditModalOpen)();
+		(record: AuthDomain) => (): void => {
+			if (!record.ssoType) {
+				onOpenHandler(setIsSettingsOpen)();
+			} else {
+				onOpenHandler(setIsEditModalOpen)();
+			}
+
 			setCurrentDomain(record);
 		},
 		[onOpenHandler],
 	);
 
 	const onDeleteHandler = useCallback(
-		(record: SAMLDomain) => (): void => {
+		(record: AuthDomain) => (): void => {
 			Modal.confirm({
 				centered: true,
 				title: t('delete_domain', {
@@ -146,17 +161,27 @@ function AuthDomains(): JSX.Element {
 		window.open(SIGNOZ_UPGRADE_PLAN_URL);
 	}, []);
 
-	const columns: ColumnsType<SAMLDomain> = [
+	const columns: ColumnsType<AuthDomain> = [
 		{
 			title: 'Domain',
 			dataIndex: 'name',
 			key: 'name',
 		},
 		{
-			title: 'Enforce SSO',
+			title: (
+				<ColumnWithTooltip>
+					<Typography>Enforce SSO</Typography>
+					<TextToolTip
+						{...{
+							text: `When enabled, this option restricts users to SSO based authentication. For more information, click `,
+							url: 'https://signoz.io/docs/userguide/sso-authentication/',
+						}}
+					/>{' '}
+				</ColumnWithTooltip>
+			),
 			dataIndex: 'ssoEnabled',
 			key: 'ssoEnabled',
-			render: (value: boolean, record: SAMLDomain): JSX.Element => {
+			render: (value: boolean, record: AuthDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
 						<Button
@@ -182,7 +207,7 @@ function AuthDomains(): JSX.Element {
 			title: '',
 			dataIndex: 'description',
 			key: 'description',
-			render: (_, record: SAMLDomain): JSX.Element => {
+			render: (_, record: AuthDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
 						<Button
@@ -197,7 +222,7 @@ function AuthDomains(): JSX.Element {
 
 				return (
 					<Button type="link" onClick={onEditHandler(record)}>
-						Edit SSO
+						{ConfigureSsoButtonText(record.ssoType)}
 					</Button>
 				);
 			},
@@ -235,12 +260,14 @@ function AuthDomains(): JSX.Element {
 					footer={null}
 				>
 					<Create
+						ssoMethod={currentDomain?.ssoType as AuthDomain['ssoType']}
+						assignSsoMethod={assignSsoMethod}
 						setIsEditModalOpen={setIsEditModalOpen}
 						setIsSettingsOpen={setIsSettingsOpen}
 					/>
 				</Modal>
 				<Table
-					rowKey={(record: SAMLDomain): string => record.name + v4()}
+					rowKey={(record: AuthDomain): string => record.name + v4()}
 					dataSource={!SSOFlag ? notEntripriseData : []}
 					columns={columns}
 					tableLayout="fixed"
@@ -262,6 +289,8 @@ function AuthDomains(): JSX.Element {
 				footer={null}
 			>
 				<Create
+					ssoMethod={currentDomain?.ssoType as AuthDomain['ssoType']}
+					assignSsoMethod={assignSsoMethod}
 					setIsSettingsOpen={setIsSettingsOpen}
 					setIsEditModalOpen={setIsEditModalOpen}
 				/>
@@ -270,18 +299,15 @@ function AuthDomains(): JSX.Element {
 			<Modal
 				visible={isEditModalOpen}
 				centered
-				title="Configure SAML"
+				title={EditModalTitleText(currentDomain?.ssoType)}
 				onCancel={onCloseHandler(setIsEditModalOpen)}
 				destroyOnClose
 				style={{ minWidth: '600px' }}
 				footer={null}
 			>
-				<EditSaml
-					certificate={currentDomain?.samlConfig?.samlCert || ''}
-					entityId={currentDomain?.samlConfig?.samlEntity || ''}
-					url={currentDomain?.samlConfig?.samlIdp || ''}
+				<EditSSO
 					onRecordUpdateHandler={onRecordUpdateHandler}
-					record={currentDomain as SAMLDomain}
+					record={currentDomain as AuthDomain}
 					setEditModalOpen={setIsEditModalOpen}
 				/>
 			</Modal>
@@ -294,7 +320,7 @@ function AuthDomains(): JSX.Element {
 					loading={isLoading}
 					columns={columns}
 					tableLayout="fixed"
-					rowKey={(record: SAMLDomain): string => record.name + v4()}
+					rowKey={(record: AuthDomain): string => record.name + v4()}
 				/>
 			</Space>
 		</>

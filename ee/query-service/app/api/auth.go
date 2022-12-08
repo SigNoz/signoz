@@ -8,9 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
-
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -184,114 +181,152 @@ func (ah *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, resp)
 }
 
-func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
-	// this is the source url that initiated the login request
+func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) {
+	ssoError := []byte("Login failed. Please contact your system administrator")
+	dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
+	base64.StdEncoding.Encode(dst, ssoError)
+
+	http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectURL, string(dst)), http.StatusSeeOther)
+}
+
+// receiveGoogleAuth completes google OAuth response and forwards a request
+// to front-end to sign user in 
+func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) {
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
 
-	var apierr basemodel.BaseApiError
-
-	redirectOnError := func() {
-		ssoError := []byte("Login failed. Please contact your system administrator")
-		dst := make([]byte, base64.StdEncoding.EncodedLen(len(ssoError)))
-		base64.StdEncoding.Encode(dst, ssoError)
-
-		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, string(dst)), http.StatusMovedPermanently)
-	}
-
 	if !ah.CheckFeature(model.SSO) {
-		zap.S().Errorf("[ReceiveSAML] sso requested but feature unavailable %s in org domain %s", model.SSO)
+		zap.S().Errorf("[receiveGoogleAuth] sso requested but feature unavailable %s in org domain %s", model.SSO)
 		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
 		return
 	}
 
-	err := r.ParseForm()
-	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to process response - invalid response from IDP", err, r)
-		redirectOnError()
+	q := r.URL.Query()
+	if errType := q.Get("error"); errType != "" {
+		zap.S().Errorf("[receiveGoogleAuth] failed to login with google auth", q.Get("error_description"))
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "failed to login through SSO "), http.StatusMovedPermanently)
 		return
 	}
 
-	// the relay state is sent when a login request is submitted to
-	// Idp.
-	relayState := r.FormValue("RelayState")
-	zap.S().Debug("[ReceiveML] relay state", zap.String("relayState", relayState))
+	relayState := q.Get("state")
+	zap.S().Debug("[receiveGoogleAuth] relay state received", zap.String("state", relayState))
 
 	parsedState, err := url.Parse(relayState)
 	if err != nil || relayState == "" {
-		zap.S().Errorf("[ReceiveSAML] failed to process response - invalid response from IDP", err, r)
-		redirectOnError()
+		zap.S().Errorf("[receiveGoogleAuth] failed to process response - invalid response from IDP", err, r)
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
 	// upgrade redirect url from the relay state for better accuracy
 	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
 
-	// derive domain id from relay state now
-	var domainIdStr string
-	for k, v := range parsedState.Query() {
-		if k == "domainId" && len(v) > 0 {
-			domainIdStr = strings.Replace(v[0], ":", "-", -1)
-		}
-	}
-
-	domainId, err := uuid.Parse(domainIdStr)
+	// fetch domain by parsing relay state. 
+	domain, err := ah.AppDao().GetDomainFromSsoResponse(ctx, parsedState)
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to process request- failed to parse domain id ifrom relay", zap.Error(err))
-		redirectOnError()
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
-	domain, apierr := ah.AppDao().GetDomain(ctx, domainId)
-	if (apierr != nil) || domain == nil {
-		zap.S().Errorf("[ReceiveSAML] failed to process request- invalid domain", domainIdStr, zap.Error(apierr))
-		redirectOnError()
+	// now that we have domain, use domain to fetch sso settings. 
+	// prepare google callback handler using parsedState - 
+	// which contains redirect URL (front-end endpoint)
+	callbackHandler, err := domain.PrepareGoogleOAuthProvider(parsedState)
+
+	identity, err := callbackHandler.HandleCallback(r)
+	if err != nil {
+		zap.S().Errorf("[receiveGoogleAuth] failed to process HandleCallback ", domain.String(), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+	
+	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, identity.Email)
+	if err != nil {
+		zap.S().Errorf("[receiveGoogleAuth] failed to generate redirect URI after successful login ", domain.String(), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
+	http.Redirect(w, r, nextPage, http.StatusSeeOther)
+}
+
+
+
+// receiveSAML completes a SAML request and gets user logged in
+func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
+	// this is the source url that initiated the login request
+	redirectUri := constants.GetDefaultSiteURL()
+	ctx := context.Background()
+
+
+	if !ah.CheckFeature(model.SSO) {
+		zap.S().Errorf("[receiveSAML] sso requested but feature unavailable %s in org domain %s", model.SSO)
+		http.Redirect(w, r, fmt.Sprintf("%s?ssoerror=%s", redirectUri, "feature unavailable, please upgrade your billing plan to access this feature"), http.StatusMovedPermanently)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		zap.S().Errorf("[receiveSAML] failed to process response - invalid response from IDP", err, r)
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	// the relay state is sent when a login request is submitted to
+	// Idp.
+	relayState := r.FormValue("RelayState")
+	zap.S().Debug("[receiveML] relay state", zap.String("relayState", relayState))
+
+	parsedState, err := url.Parse(relayState)
+	if err != nil || relayState == "" {
+		zap.S().Errorf("[receiveSAML] failed to process response - invalid response from IDP", err, r)
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+
+	// upgrade redirect url from the relay state for better accuracy
+	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
+
+	// fetch domain by parsing relay state. 
+	domain, err := ah.AppDao().GetDomainFromSsoResponse(ctx, parsedState)
+	if err != nil {
+		handleSsoError(w, r, redirectUri)
+		return
+	}
+	
 	sp, err := domain.PrepareSamlRequest(parsedState)
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to prepare saml request for domain (%s): %v", domainId, err)
-		redirectOnError()
+		zap.S().Errorf("[receiveSAML] failed to prepare saml request for domain (%s): %v", domain.String(), err)
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
 	assertionInfo, err := sp.RetrieveAssertionInfo(r.FormValue("SAMLResponse"))
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to retrieve assertion info from  saml response for organization (%s): %v", domainId, err)
-		redirectOnError()
+		zap.S().Errorf("[receiveSAML] failed to retrieve assertion info from  saml response for organization (%s): %v", domain.String(), err)
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
 	if assertionInfo.WarningInfo.InvalidTime {
-		zap.S().Errorf("[ReceiveSAML] expired saml response for organization (%s): %v", domainId, err)
-		redirectOnError()
+		zap.S().Errorf("[receiveSAML] expired saml response for organization (%s): %v", domain.String(), err)
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
 	email := assertionInfo.NameID
-
-	// user email found, now start preparing jwt response
-	userPayload, baseapierr := ah.AppDao().GetUserByEmail(ctx, email)
-	if baseapierr != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to find or register a new user for email %s and org %s", email, domainId, zap.Error(baseapierr.Err))
-		redirectOnError()
+	if email == "" {
+		zap.S().Errorf("[receiveSAML] invalid email in the SSO response (%s)", domain.String())
+		handleSsoError(w, r, redirectUri)
 		return
 	}
 
-	tokenStore, err := baseauth.GenerateJWTForUser(&userPayload.User)
+	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, email)
 	if err != nil {
-		zap.S().Errorf("[ReceiveSAML] failed to generate access token for email %s and org %s", email, domainId, zap.Error(err))
-		redirectOnError()
+		zap.S().Errorf("[receiveSAML] failed to generate redirect URI after successful login ", domain.String(), zap.Error(err))
+		handleSsoError(w, r, redirectUri)
 		return
 	}
-
-	userID := userPayload.User.Id
-	nextPage := fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
-		redirectUri,
-		tokenStore.AccessJwt,
-		userID,
-		tokenStore.RefreshJwt)
-
-	http.Redirect(w, r, nextPage, http.StatusMovedPermanently)
+	
+	http.Redirect(w, r, nextPage, http.StatusSeeOther)
 }
