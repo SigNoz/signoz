@@ -17,6 +17,10 @@ import SelectService from './SelectService';
 import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
 
 const Container = styled.div`
+	.force-graph-container {
+		overflow: scroll;
+	}
+
 	.force-graph-container .graph-tooltip {
 		background: black;
 		padding: 1px;
