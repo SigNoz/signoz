@@ -3173,7 +3173,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
 
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s", r.logsDB, r.logsTable, cluster, field.Name, field.DataType)
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1", r.logsDB, r.logsTable, cluster, field.Name, field.DataType)
 			err = r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
