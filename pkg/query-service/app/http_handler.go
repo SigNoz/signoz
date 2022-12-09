@@ -1860,7 +1860,6 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 	// read user id from path var
 	userId := mux.Vars(r)["id"]
-	ctx := context.Background()
 
 	// read input into user flag
 	defer r.Body.Close()
@@ -1879,7 +1878,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newflags, apiError := dao.DB().UpdateUserFlags(ctx, userId, flags)
+	newflags, apiError := dao.DB().UpdateUserFlags(r.Context(), userId, flags)
 	if !apiError.IsNil() {
 		RespondError(w, apiError, nil)
 		return

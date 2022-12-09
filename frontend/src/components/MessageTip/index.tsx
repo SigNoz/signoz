@@ -4,8 +4,8 @@ import { StyledAlert } from './styles';
 
 interface MessageTipProps {
 	show?: boolean;
-	message: JSX.Element | string;
-	action: JSX.Element | undefined;
+	message: React.ReactNode | string;
+	action: React.ReactNode | undefined;
 }
 
 function MessageTip({

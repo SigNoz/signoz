@@ -5,11 +5,13 @@ import Spinner from 'components/Spinner';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { useLocation } from 'react-router-dom';
 
 import ListAlert from './ListAlert';
 
 function ListAlertRules(): JSX.Element {
 	const { t } = useTranslation('common');
+	const location = useLocation();
 	const { data, isError, isLoading, refetch, status } = useQuery('allAlerts', {
 		queryFn: getAll,
 		cacheTime: 0,
@@ -47,7 +49,7 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<ReleaseNote path={window.location.pathname} />
+			<ReleaseNote path={location.pathname} />
 			<ListAlert
 				{...{
 					allAlertRules: data.payload,

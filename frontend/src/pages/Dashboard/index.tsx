@@ -3,19 +3,21 @@ import ReleaseNote from 'components/ReleaseNote';
 import ListOfAllDashboard from 'container/ListOfDashboard';
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetAllDashboards } from 'store/actions';
 import AppActions from 'types/actions';
 
 function Dashboard({ getAllDashboards }: DashboardProps): JSX.Element {
+	const location = useLocation();
 	useEffect(() => {
 		getAllDashboards();
 	}, [getAllDashboards]);
 
 	return (
 		<Space direction="vertical" size="middle" style={{ width: '100%' }}>
-			<ReleaseNote path={window.location.pathname} />
+			<ReleaseNote path={location.pathname} />
 			<ListOfAllDashboard />
 		</Space>
 	);
