@@ -137,6 +137,20 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 - Jaegar UI doesn’t show any metrics on traces or on filtered traces
 - Jaeger can’t get aggregates on filtered traces. For example, p99 latency of requests which have tag - customer_type='premium'. This can be done easily on SigNoz
 
+<p>&nbsp  </p>
+
+### SigNoz vs Elastic 
+
+- SigNoz Logs management are based on ClickHouse, a columnar OLAP datastore which makes aggregate log analytics queries much more efficient
+- 50% lower resource requirement compared to Elastic during ingestion
+
+<p>&nbsp  </p>
+
+### SigNoz vs Loki
+
+- SigNoz supports full text search while Loki doesn't
+- SigNoz supports ingesting high cardinality attributes as well while Loki doesn't
+
 <br /><br />
 
 <img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributors.svg" width="50px" />
