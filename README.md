@@ -25,11 +25,15 @@
 
 SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
 
+👉 Visualise Metrics, Traces and Logs in a single pane of glass
+
 👉 You can see metrics like p99 latency, error rates for your services, external API calls and individual end points.
 
 👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
 
 👉 Run aggregates on trace data to get business relevant metrics
+
+👉 Filter and query logs, build dashboards and alerts based on attributes in logs
 
 ![screenzy-1644432902955](https://user-images.githubusercontent.com/504541/153270713-1b2156e6-ec03-42de-975b-3c02b8ec1836.png)
 <br />
