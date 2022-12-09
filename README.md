@@ -148,8 +148,9 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 ### SigNoz vs Loki
 
-- SigNoz supports full text search while Loki doesn't
-- SigNoz supports ingesting high cardinality attributes as well while Loki doesn't
+- SigNoz supports aggregations on high-cardinality data over a huge volume while loki doesn’t.
+- SigNoz supports indexes over high cardinality data and has no limitations on the number of indexes, while Loki reaches max streams with a few indexes added to it.
+- Searching over a huge volume of data is difficult and slow in Loki compared to SigNoz
 
 <br /><br />
 
