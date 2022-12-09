@@ -37,13 +37,17 @@ func readCurrentDir(dir string) error {
 			continue
 		}
 
-		_, apiErr := GetDashboard(data["uuid"].(string))
-		if apiErr == nil {
-			zap.S().Infof("Creating Dashboards: Error in file: %s\t%s", filename, "Dashboard already present in database")
-			continue
+		zap.S().Infof("Dashboard: file: %s\t uuid: %s", filename, data["uuid"].(string))
+
+		if dashboardUuid, ok := data["uuid"]; ok {
+			_, apiErr := GetDashboard(dashboardUuid.(string))
+			if apiErr == nil {
+				zap.S().Infof("Creating Dashboards: skipping file: %s\t%s", filename, "Dashboard already present in database")
+				continue
+			}
 		}
 
-		_, apiErr = CreateDashboard(data)
+		_, apiErr := CreateDashboard(data)
 		if apiErr != nil {
 			zap.S().Errorf("Creating Dashboards: Error in file: %s\t%s", filename, apiErr.Err)
 			continue

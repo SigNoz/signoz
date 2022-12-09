@@ -138,7 +138,12 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 	dash.CreatedAt = time.Now()
 	dash.UpdatedAt = time.Now()
 	dash.UpdateSlug()
-	dash.Uuid = uuid.New().String()
+
+	if dashboardUuid, ok := dash.Data["uuid"]; ok {
+		dash.Uuid = dashboardUuid.(string)
+	} else {
+		dash.Uuid = uuid.New().String()
+	}
 
 	map_data, err := json.Marshal(dash.Data)
 	if err != nil {
