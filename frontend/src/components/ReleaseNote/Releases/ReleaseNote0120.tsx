@@ -53,7 +53,7 @@ export default function ReleaseNote0120({
 				<div>
 					You are using {release} of SigNoz. We have introduced distributed setup in
 					v0.12.0 release. If you use or plan to use clickhouse queries in dashboard
-					or alerts, you might want to read about the table name changes{' '}
+					or alerts, you might want to read about querying the new distributed tables{' '}
 					<a
 						href="https://signoz.io/docs/operate/migration/upgrade-0.12/#querying-distributed-tables"
 						target="_blank"
