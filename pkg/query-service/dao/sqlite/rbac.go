@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -271,11 +272,14 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 				u.org_id,
 				u.group_id,
 				g.name as role,
-				o.name as organization
+				o.name as organization,
+				COALESCE((select uf.flags 
+					from user_flags uf 
+					where u.id = uf.user_id), '') as flags
 			from users u, groups g, organizations o
 			where
 				g.id=u.group_id and
-				o.id = u.org_id and
+				o.id = u.org_id and 
 				u.id=?;`
 
 	if err := mds.db.Select(&users, query, id); err != nil {
@@ -291,6 +295,7 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 	if len(users) == 0 {
 		return nil, nil
 	}
+
 	return &users[0], nil
 }
 
@@ -530,4 +535,54 @@ func (mds *ModelDaoSqlite) GetResetPasswordEntry(ctx context.Context,
 		return nil, nil
 	}
 	return &entries[0], nil
+}
+
+// CreateUserFlags inserts user specific flags
+func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (model.UserFlag, *model.ApiError) {
+
+	if len(flags) == 0 {
+		// nothing to do as flags are empty. In this method, we only append the flags
+		// but not set them to empty
+		return flags, nil
+	}
+
+	// fetch existing flags
+	userPayload, apiError := mds.GetUser(ctx, userId)
+	if apiError != nil {
+		return nil, apiError
+	}
+
+	if userPayload.Flags != nil {
+		for k, v := range userPayload.Flags {
+			if _, ok := flags[k]; !ok {
+				// insert only missing keys as we want to retain the
+				// flags in the db that are not part of this request
+				flags[k] = v
+			}
+		}
+	}
+
+	// append existing flags with new ones
+
+	// write the updated flags
+	flagsBytes, err := json.Marshal(flags)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	if len(userPayload.Flags) == 0 {
+		q := `INSERT INTO user_flags (user_id, flags) VALUES (?, ?);`
+
+		if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	} else {
+		q := `UPDATE user_flags SET flags = ? WHERE user_id = ?;`
+
+		if _, err := mds.db.ExecContext(ctx, q, userId, string(flagsBytes)); err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+		}
+	}
+
+	return flags, nil
 }

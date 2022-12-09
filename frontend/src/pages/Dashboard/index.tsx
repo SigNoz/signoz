@@ -1,3 +1,5 @@
+import { Space } from 'antd';
+import ReleaseNote from 'components/ReleaseNote';
 import ListOfAllDashboard from 'container/ListOfDashboard';
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
@@ -11,7 +13,12 @@ function Dashboard({ getAllDashboards }: DashboardProps): JSX.Element {
 		getAllDashboards();
 	}, [getAllDashboards]);
 
-	return <ListOfAllDashboard />;
+	return (
+		<Space direction="vertical" size="middle" style={{ width: '100%' }}>
+			<ReleaseNote path="/services" />
+			<ListOfAllDashboard />
+		</Space>
+	);
 }
 
 interface DispatchProps {

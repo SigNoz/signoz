@@ -1,5 +1,6 @@
-import { notification } from 'antd';
+import { notification, Space } from 'antd';
 import getAll from 'api/alerts/getAll';
+import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,12 +46,15 @@ function ListAlertRules(): JSX.Element {
 	}
 
 	return (
-		<ListAlert
-			{...{
-				allAlertRules: data.payload,
-				refetch,
-			}}
-		/>
+		<Space direction="vertical" size="large" style={{ width: '100%' }}>
+			<ReleaseNote path="/alerts" />
+			<ListAlert
+				{...{
+					allAlertRules: data.payload,
+					refetch,
+				}}
+			/>
+		</Space>
 	);
 }
 
