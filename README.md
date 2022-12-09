@@ -41,7 +41,8 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 <br />
 ![screenzy-1647005040573](https://user-images.githubusercontent.com/504541/157875938-a3d57904-ea6d-4278-b929-bd1408d7f94c.png)
 <br />
-![screenzy-1670569506446](https://user-images.githubusercontent.com/504541/206644856-3b5a640f-3401-45f2-9ea6-6fc10687a77a.png)
+![screenzy-1670569888865](https://user-images.githubusercontent.com/504541/206645819-1e865a56-71b4-4fde-80cc-fbdb137a4da5.png)
+
 
 
 <br /><br />
