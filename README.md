@@ -59,12 +59,12 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 ## Features:
 
+- Unified UI for metrics, traces and logs. No need to switch from Prometheus to Jaeger to debug issues, or use a logs tool like Elastic separate from your metrics and traces stack. 
 - Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
 - See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
-- Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
 
 <br /><br />
 
