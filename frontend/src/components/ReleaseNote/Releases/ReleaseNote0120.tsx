@@ -51,16 +51,16 @@ export default function ReleaseNote0120({
 			show
 			message={
 				<div>
-					You are using {release} of SigNoz. Some of the table names may have
-					changed. You can find more details{' '}
+					You are using {release} of SigNoz. We have introduced distributed setup in
+					v0.12.0 release. If you use or plan to use clickhouse queries in dashboard
+					or alerts, you might want to read about the table name changes{' '}
 					<a
 						href="https://signoz.io/docs/operate/migration/upgrade-0.12/#table-name-changes"
 						target="_blank"
 						rel="noreferrer"
 					>
 						here
-					</a>{' '}
-					on how to upgrade your clickhouse queries.
+					</a>
 				</div>
 			}
 			action={

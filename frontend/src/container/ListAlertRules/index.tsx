@@ -47,7 +47,7 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<ReleaseNote path="/alerts" />
+			<ReleaseNote path={window.location.pathname} />
 			<ListAlert
 				{...{
 					allAlertRules: data.payload,

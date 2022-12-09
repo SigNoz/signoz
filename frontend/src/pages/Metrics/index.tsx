@@ -88,7 +88,7 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
-			<ReleaseNote path="/services" />
+			<ReleaseNote path={window.location.pathname} />
 
 			<ResourceAttributesFilter />
 			<MetricTable />
