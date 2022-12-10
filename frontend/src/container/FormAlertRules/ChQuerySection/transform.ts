@@ -20,8 +20,8 @@ export const rawQueryToIChQuery = (
 	}
 
 	return {
-		rawQuery: rawQuery !== undefined ? rawQuery : src.rawQuery,
-		query: rawQuery !== undefined ? rawQuery : src.rawQuery,
+		rawQuery: rawQuery !== undefined ? rawQuery : src.query,
+		query: rawQuery !== undefined ? rawQuery : src.query,
 		legend: legend !== undefined ? legend : src.legend,
 		name: 'A',
 		disabled: false,
