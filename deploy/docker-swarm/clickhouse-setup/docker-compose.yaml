@@ -193,6 +193,7 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}},dockerswarm.service.name={{.Service.Name}},dockerswarm.task.name={{.Task.Name}}
+      - DOCKER_MULTI_NODE_CLUSTER=false
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317"     # OTLP gRPC receiver
