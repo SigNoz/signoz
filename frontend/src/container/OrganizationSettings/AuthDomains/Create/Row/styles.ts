@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import styled from 'styled-components';
 
 export const TitleContainer = styled.div`
@@ -8,4 +9,8 @@ export const TitleContainer = styled.div`
 
 export const IconContainer = styled.div`
 	min-width: 70px;
+`;
+
+export const TitleText = styled(Typography)`
+	font-weight: bold;
 `;

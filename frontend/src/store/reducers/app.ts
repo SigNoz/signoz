@@ -18,6 +18,7 @@ import {
 	UPDATE_ORG_NAME,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+	UPDATE_USER_FLAG,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
@@ -58,6 +59,7 @@ const InitialValue: InitialValueTypes = {
 	org: null,
 	role: null,
 	configs: {},
+	userFlags: {},
 };
 
 const appReducer = (
@@ -153,6 +155,7 @@ const appReducer = (
 				ROLE,
 				orgId,
 				orgName,
+				userFlags,
 			} = action.payload;
 			const orgIndex = org.findIndex((e) => e.id === orgId);
 
@@ -179,6 +182,7 @@ const appReducer = (
 				},
 				org: [...updatedOrg],
 				role: ROLE,
+				userFlags,
 			};
 		}
 
@@ -216,6 +220,14 @@ const appReducer = (
 			return {
 				...state,
 				configs: action.payload.configs,
+			};
+		}
+
+		case UPDATE_USER_FLAG: {
+			console.log('herei n update user flag');
+			return {
+				...state,
+				userFlags: { ...state.userFlags, ...action.payload.flags },
 			};
 		}
 

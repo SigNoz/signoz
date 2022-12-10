@@ -13,7 +13,8 @@ export const filterSpansByString = (
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
-type TTimeUnitName = 'ms' | 's' | 'm';
+type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
+
 export interface IIntervalUnit {
 	name: TTimeUnitName;
 	multiplier: number;
@@ -30,6 +31,18 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 	{
 		name: 'm',
 		multiplier: 1 / (1e3 * 60),
+	},
+	{
+		name: 'hr',
+		multiplier: 1 / (1e3 * 60 * 60),
+	},
+	{
+		name: 'day',
+		multiplier: 1 / (1e3 * 60 * 60 * 24),
+	},
+	{
+		name: 'week',
+		multiplier: 1 / (1e3 * 60 * 60 * 24 * 7),
 	},
 ];
 
