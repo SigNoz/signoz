@@ -127,8 +127,8 @@ down-x86:
 
 clear-standalone-data:
 	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \
-	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhous*/* signoz/* zookeeper-*/*"
 
 clear-swarm-data:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
-	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse/* signoz/*"
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhous*/* signoz/* zookeeper-*/*"

@@ -25,17 +25,25 @@
 
 SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
 
+👉 Visualise Metrics, Traces and Logs in a single pane of glass
+
 👉 You can see metrics like p99 latency, error rates for your services, external API calls and individual end points.
 
 👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
 
 👉 Run aggregates on trace data to get business relevant metrics
 
-![screenzy-1644432902955](https://user-images.githubusercontent.com/504541/153270713-1b2156e6-ec03-42de-975b-3c02b8ec1836.png)
+👉 Filter and query logs, build dashboards and alerts based on attributes in logs
+
+![screenzy-1670570187181](https://user-images.githubusercontent.com/504541/206646629-829fdafe-70e2-4503-a9c4-1301b7918586.png)
 <br />
-![screenzy-1644432986784](https://user-images.githubusercontent.com/504541/153270725-0efb73b3-06ed-4207-bf13-9b7e2e17c4b8.png)
+![screenzy-1670570193901](https://user-images.githubusercontent.com/504541/206646676-a676fdeb-331c-4847-aea9-d1cabf7c47e1.png)
 <br />
-![screenzy-1647005040573](https://user-images.githubusercontent.com/504541/157875938-a3d57904-ea6d-4278-b929-bd1408d7f94c.png)
+![screenzy-1670570199026](https://user-images.githubusercontent.com/504541/206646754-28c5534f-0377-428c-9c6e-5c7c0d9dd22d.png)
+<br />
+![screenzy-1670569888865](https://user-images.githubusercontent.com/504541/206645819-1e865a56-71b4-4fde-80cc-fbdb137a4da5.png)
+
+
 
 <br /><br />
 
@@ -51,12 +59,12 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 ## Features:
 
+- Unified UI for metrics, traces and logs. No need to switch from Prometheus to Jaeger to debug issues, or use a logs tool like Elastic separate from your metrics and traces stack. 
 - Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
 - See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
-- Unified UI for metrics and traces. No need to switch from Prometheus to Jaeger to debug issues.
 
 <br /><br />
 
@@ -128,6 +136,21 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 
 - Jaegar UI doesn’t show any metrics on traces or on filtered traces
 - Jaeger can’t get aggregates on filtered traces. For example, p99 latency of requests which have tag - customer_type='premium'. This can be done easily on SigNoz
+
+<p>&nbsp  </p>
+
+### SigNoz vs Elastic 
+
+- SigNoz Logs management are based on ClickHouse, a columnar OLAP datastore which makes aggregate log analytics queries much more efficient
+- 50% lower resource requirement compared to Elastic during ingestion
+
+<p>&nbsp  </p>
+
+### SigNoz vs Loki
+
+- SigNoz supports aggregations on high-cardinality data over a huge volume while loki doesn’t.
+- SigNoz supports indexes over high cardinality data and has no limitations on the number of indexes, while Loki reaches max streams with a few indexes added to it.
+- Searching over a huge volume of data is difficult and slow in Loki compared to SigNoz
 
 <br /><br />
 

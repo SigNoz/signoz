@@ -103,6 +103,8 @@ processors:
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
+
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
@@ -112,6 +114,7 @@ exporters:
   # logging: {}
   clickhouselogsexporter:
     dsn: tcp://clickhouse:9000/
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
     timeout: 5s
     sending_queue:
       queue_size: 100
