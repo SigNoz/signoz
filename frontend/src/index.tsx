@@ -1,6 +1,7 @@
 import './wdyr';
 import './ReactI18';
 
+import { ConfigProvider } from 'antd';
 import AppRoutes from 'AppRoutes';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -23,15 +24,17 @@ const queryClient = new QueryClient({
 });
 
 ReactDOM.render(
-	<QueryClientProvider client={queryClient}>
-		<Provider store={store}>
-			<React.StrictMode>
-				<AppRoutes />
-			</React.StrictMode>
-		</Provider>
-		{process.env.NODE_ENV === 'development' && (
-			<ReactQueryDevtools initialIsOpen />
-		)}
-	</QueryClientProvider>,
+	<ConfigProvider>
+		<QueryClientProvider client={queryClient}>
+			<Provider store={store}>
+				<React.StrictMode>
+					<AppRoutes />
+				</React.StrictMode>
+			</Provider>
+			{process.env.NODE_ENV === 'development' && (
+				<ReactQueryDevtools initialIsOpen />
+			)}
+		</QueryClientProvider>
+	</ConfigProvider>,
 	document.querySelector('#root'),
 );
