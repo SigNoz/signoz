@@ -35,10 +35,6 @@ function HeaderContainer(): JSX.Element {
 
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>(false);
 
-	const onToggleThemeHandler = useCallback(() => {
-		toggleTheme();
-	}, [toggleTheme]);
-
 	const onToggleHandler = useCallback(
 		(functionToExecute: Dispatch<SetStateAction<boolean>>) => (): void => {
 			functionToExecute((state) => !state);
@@ -94,7 +90,7 @@ function HeaderContainer(): JSX.Element {
 
 					<ToggleButton
 						checked={isDarkMode}
-						onChange={onToggleThemeHandler}
+						onChange={toggleTheme}
 						defaultChecked={isDarkMode}
 						checkedChildren="🌜"
 						unCheckedChildren="🌞"
