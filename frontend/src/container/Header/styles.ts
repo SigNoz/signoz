@@ -66,3 +66,11 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 export const IconContainer = styled.div`
 	color: white;
 `;
+
+export const NavLinkWrapper = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	gap: 0.5rem;
+`;

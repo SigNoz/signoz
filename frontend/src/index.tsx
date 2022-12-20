@@ -1,8 +1,8 @@
 import './wdyr';
 import './ReactI18';
 
-import { ConfigProvider } from 'antd';
 import AppRoutes from 'AppRoutes';
+import { ThemeProvider } from 'hooks/useDarkMode';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
 });
 
 ReactDOM.render(
-	<ConfigProvider>
+	<ThemeProvider>
 		<QueryClientProvider client={queryClient}>
 			<Provider store={store}>
 				<React.StrictMode>
@@ -35,6 +35,6 @@ ReactDOM.render(
 				<ReactQueryDevtools initialIsOpen />
 			)}
 		</QueryClientProvider>
-	</ConfigProvider>,
+	</ThemeProvider>,
 	document.querySelector('#root'),
 );

@@ -1,10 +1,8 @@
 import { Menu, Space } from 'antd';
 import Spinner from 'components/Spinner';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { Suspense, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
-import AppReducer from 'types/reducer/app';
 
 import ErrorLink from './ErrorLink';
 import LinkContainer from './Link';
@@ -15,7 +13,7 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 		[config.components],
 	);
 
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<Menu.ItemGroup>
