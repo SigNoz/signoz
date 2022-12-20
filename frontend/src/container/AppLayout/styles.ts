@@ -6,6 +6,7 @@ export const Layout = styled(LayoutComponent)`
 		display: flex;
 		position: relative;
 		min-height: calc(100vh - 4rem);
+		overflow: hidden;
 	}
 `;
 
