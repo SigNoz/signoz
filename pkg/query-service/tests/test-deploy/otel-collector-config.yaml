@@ -110,6 +110,7 @@ extensions:
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
@@ -117,6 +118,18 @@ exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
   # logging: {}
+
+  clickhouselogsexporter:
+    dsn: tcp://clickhouse:9000/
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 service:
   telemetry:

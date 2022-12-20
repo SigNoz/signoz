@@ -50,17 +50,20 @@ import (
 )
 
 const (
-	primaryNamespace         = "clickhouse"
-	archiveNamespace         = "clickhouse-archive"
-	signozTraceDBName        = "signoz_traces"
-	signozDurationMVTable    = "durationSort"
-	signozUsageExplorerTable = "usage_explorer"
-	signozSpansTable         = "signoz_spans"
-	signozErrorIndexTable    = "signoz_error_index_v2"
-	signozTraceTableName     = "signoz_index_v2"
-	signozMetricDBName       = "signoz_metrics"
-	signozSampleTableName    = "samples_v2"
-	signozTSTableName        = "time_series_v2"
+	cluster                    = "cluster"
+	primaryNamespace           = "clickhouse"
+	archiveNamespace           = "clickhouse-archive"
+	signozTraceDBName          = "signoz_traces"
+	signozDurationMVTable      = "distributed_durationSort"
+	signozUsageExplorerTable   = "distributed_usage_explorer"
+	signozSpansTable           = "distributed_signoz_spans"
+	signozErrorIndexTable      = "distributed_signoz_error_index_v2"
+	signozTraceTableName       = "distributed_signoz_index_v2"
+	signozTraceLocalTableName  = "signoz_index_v2"
+	signozMetricDBName         = "signoz_metrics"
+	signozSampleLocalTableName = "samples_v2"
+	signozSampleTableName      = "distributed_samples_v2"
+	signozTSTableName          = "distributed_time_series_v2"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -92,6 +95,7 @@ type ClickHouseReader struct {
 	topLevelOperationsTable string
 	logsDB                  string
 	logsTable               string
+	logsLocalTable          string
 	logsAttributeKeys       string
 	logsResourceKeys        string
 	queryEngine             *promql.Engine
@@ -140,6 +144,7 @@ func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.Featu
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
 		logsDB:                  options.primary.LogsDB,
 		logsTable:               options.primary.LogsTable,
+		logsLocalTable:          options.primary.LogsLocalTable,
 		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
@@ -2036,6 +2041,13 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	return &GetFilteredSpansAggregatesResponse, nil
 }
 
+func getLocalTableName(tableName string) string {
+
+	tableNameSplit := strings.Split(tableName, ".")
+	return tableNameSplit[0] + "." + strings.Split(tableNameSplit[1], "distributed_")[1]
+
+}
+
 // SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
@@ -2043,7 +2055,6 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, 100)
-	var req, tableName string
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -2056,7 +2067,8 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 	switch params.Type {
 	case constants.TraceTTL:
 		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
-		for _, tableName = range tableNameArray {
+		for _, tableName := range tableNameArray {
+			tableName := getLocalTableName(tableName)
 			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 			if err != nil {
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
@@ -2066,6 +2078,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 		}
 		for _, tableName := range tableNameArray {
+			tableName := getLocalTableName(tableName)
 			// TODO: DB queries should be implemented with transactional statements but currently clickhouse doesn't support them. Issue: https://github.com/ClickHouse/ClickHouse/issues/22086
 			go func(tableName string) {
 				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
@@ -2073,9 +2086,9 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
 					return
 				}
-				req = fmt.Sprintf(
-					"ALTER TABLE %v MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
-					tableName, params.DelDuration)
+				req := fmt.Sprintf(
+					"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
+					tableName, cluster, params.DelDuration)
 				if len(params.ColdStorageVolume) > 0 {
 					req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
 						params.ToColdStorageDuration, params.ColdStorageVolume)
@@ -2093,6 +2106,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 					}
 					return
 				}
+				req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1;")
 				zap.S().Debugf("Executing TTL request: %s\n", req)
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
@@ -2113,7 +2127,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableName = signozMetricDBName + "." + signozSampleTableName
+		tableName := signozMetricDBName + "." + signozSampleLocalTableName
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
@@ -2127,9 +2141,9 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
 				return
 			}
-			req = fmt.Sprintf(
-				"ALTER TABLE %v MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
-					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+			req := fmt.Sprintf(
+				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
+					"INTERVAL %v SECOND DELETE", tableName, cluster, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
 				req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
@@ -2148,6 +2162,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				return
 			}
+			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1")
 			zap.S().Debugf("Executing TTL request: %s\n", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
@@ -2166,7 +2181,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 		}(tableName)
 	case constants.LogsTTL:
-		tableName = r.logsDB + "." + r.logsTable
+		tableName := r.logsDB + "." + r.logsLocalTable
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 		if err != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
@@ -2180,9 +2195,9 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.S().Error(fmt.Errorf("error in inserting to ttl_status table: %s", dbErr.Error()))
 				return
 			}
-			req = fmt.Sprintf(
-				"ALTER TABLE %v MODIFY TTL toDateTime(timestamp / 1000000000) + "+
-					"INTERVAL %v SECOND DELETE", tableName, params.DelDuration)
+			req := fmt.Sprintf(
+				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
+					"INTERVAL %v SECOND DELETE", tableName, cluster, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
 				req += fmt.Sprintf(", toDateTime(timestamp / 1000000000)"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
@@ -2201,6 +2216,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				return
 			}
+			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1")
 			zap.S().Debugf("Executing TTL request: %s\n", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
@@ -2287,7 +2303,7 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 	// Set the storage policy for the required table. If it is already set, then setting it again
 	// will not a problem.
 	if len(coldStorageVolume) > 0 {
-		policyReq := fmt.Sprintf("ALTER TABLE %s MODIFY SETTING storage_policy='tiered'", tableName)
+		policyReq := fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY SETTING storage_policy='tiered'", tableName, cluster)
 
 		zap.S().Debugf("Executing Storage policy request: %s\n", policyReq)
 		if err := r.db.Exec(ctx, policyReq); err != nil {
@@ -2311,6 +2327,15 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 	zap.S().Infof("Got response: %+v\n", diskItems)
 
 	return &diskItems, nil
+}
+
+func getLocalTableNameArray(tableNames []string) []string {
+	var localTableNames []string
+	for _, name := range tableNames {
+		tableNameSplit := strings.Split(name, ".")
+		localTableNames = append(localTableNames, tableNameSplit[0]+"."+strings.Split(tableNameSplit[1], "distributed_")[1])
+	}
+	return localTableNames
 }
 
 // GetTTL returns current ttl, expected ttl and past setTTL status for metrics/traces.
@@ -2348,7 +2373,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getMetricsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleTableName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v'", signozSampleLocalTableName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2366,7 +2391,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getTracesTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozTraceTableName, signozTraceDBName)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", signozTraceLocalTableName, signozTraceDBName)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2384,7 +2409,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	getLogsTTL := func() (*model.DBResponseTTL, *model.ApiError) {
 		var dbResp []model.DBResponseTTL
 
-		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.logsTable, r.logsDB)
+		query := fmt.Sprintf("SELECT engine_full FROM system.tables WHERE name='%v' AND database='%v'", r.logsLocalTable, r.logsDB)
 
 		err := r.db.Select(ctx, &dbResp, query)
 
@@ -2402,6 +2427,8 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 	switch ttlParams.Type {
 	case constants.TraceTTL:
 		tableNameArray := []string{signozTraceDBName + "." + signozTraceTableName, signozTraceDBName + "." + signozDurationMVTable, signozTraceDBName + "." + signozSpansTable, signozTraceDBName + "." + signozErrorIndexTable, signozTraceDBName + "." + signozUsageExplorerTable, signozTraceDBName + "." + defaultDependencyGraphTable}
+
+		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
@@ -2424,6 +2451,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	case constants.MetricsTTL:
 		tableNameArray := []string{signozMetricDBName + "." + signozSampleTableName}
+		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
@@ -2446,6 +2474,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	case constants.LogsTTL:
 		tableNameArray := []string{r.logsDB + "." + r.logsTable}
+		tableNameArray = getLocalTableNameArray(tableNameArray)
 		status, err := r.setTTLQueryStatus(ctx, tableNameArray)
 		if err != nil {
 			return nil, err
@@ -3107,7 +3136,7 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	}
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsTable)
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3137,8 +3166,15 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// if the type is attribute or resource, create the materialized column first
 		if field.Type == constants.Attributes || field.Type == constants.Resources {
 			// create materialized
-			query := fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')] CODEC(LZ4)", r.logsDB, r.logsTable, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')] CODEC(LZ4)", r.logsDB, r.logsLocalTable, cluster, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+
 			err := r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
+
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1", r.logsDB, r.logsTable, cluster, field.Name, field.DataType)
+			err = r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
@@ -3151,14 +3187,15 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query := fmt.Sprintf("ALTER TABLE %s.%s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d", r.logsDB, r.logsTable, field.Name, field.Name, field.IndexType, field.IndexGranularity)
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d", r.logsDB, r.logsLocalTable, cluster, field.Name, field.Name, field.IndexType, field.IndexGranularity)
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
+
 	} else {
 		// remove index
-		query := fmt.Sprintf("ALTER TABLE %s.%s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsTable, field.Name)
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, field.Name)
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
