@@ -1,4 +1,4 @@
-import { Switch, Typography } from 'antd';
+import { Avatar, Switch, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -73,4 +73,8 @@ export const NavLinkWrapper = styled.div`
 	justify-content: center;
 	height: 100%;
 	gap: 0.5rem;
+`;
+
+export const AvatarWrapper = styled(Avatar)`
+	background-color: rgba(255, 255, 255, 0.25);
 `;

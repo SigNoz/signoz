@@ -62,6 +62,12 @@ export const useThemeConfig = (): ThemeConfig => {
 
 	return {
 		algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+		token: {
+			borderRadius: 2,
+			borderRadiusLG: 2,
+			borderRadiusSM: 2,
+			borderRadiusXS: 2,
+		},
 	};
 };
 

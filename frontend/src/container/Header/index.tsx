@@ -3,15 +3,7 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import {
-	Avatar,
-	Divider,
-	Dropdown,
-	Layout,
-	Menu,
-	Space,
-	Typography,
-} from 'antd';
+import { Divider, Dropdown, Layout, Menu, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
@@ -26,6 +18,7 @@ import CurrentOrganization from './CurrentOrganization';
 import ManageLicense from './ManageLicense';
 import SignedInAS from './SignedInAs';
 import {
+	AvatarWrapper,
 	Container,
 	IconContainer,
 	LogoutContainer,
@@ -87,7 +80,10 @@ function HeaderContainer(): JSX.Element {
 				<NavLink to={ROUTES.APPLICATION}>
 					<NavLinkWrapper>
 						<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
-						<Typography.Title style={{ margin: 0 }} level={4}>
+						<Typography.Title
+							style={{ margin: 0, color: 'rgb(219, 219, 219)' }}
+							level={4}
+						>
 							SigNoz
 						</Typography.Title>
 					</NavLinkWrapper>
@@ -111,7 +107,7 @@ function HeaderContainer(): JSX.Element {
 						visible={isUserDropDownOpen}
 					>
 						<Space>
-							<Avatar shape="circle">{user?.name[0]}</Avatar>
+							<AvatarWrapper shape="circle">{user?.name[0]}</AvatarWrapper>
 							<IconContainer>
 								{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 							</IconContainer>
