@@ -1,6 +1,5 @@
 /* eslint-disable react/jsx-no-bind */
-import { Modal } from 'antd';
-import DatePicker from 'components/DatePicker';
+import { DatePicker, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useState } from 'react';
 
