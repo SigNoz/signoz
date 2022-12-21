@@ -43,8 +43,6 @@ export function useSearchParser(): {
 		[dispatch, parsedQuery],
 	);
 
-	console.log({ queryString });
-
 	useEffect(() => {
 		if (queryString !== null) updateQueryString(queryString);
 	}, [queryString, updateQueryString]);
