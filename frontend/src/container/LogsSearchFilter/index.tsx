@@ -123,7 +123,8 @@ function SearchFilter({
 
 	useEffect(() => {
 		debouncedHandleSearch(urlQueryString || '');
-	}, [urlQueryString, maxTime, minTime, handleSearch, debouncedHandleSearch]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [urlQueryString, maxTime, minTime, idEnd, idStart]);
 
 	return (
 		<Container>
