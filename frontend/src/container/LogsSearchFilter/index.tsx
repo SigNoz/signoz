@@ -51,7 +51,7 @@ function SearchFilter({
 	}, [queryString]);
 
 	const debouncedupdateQueryString = useMemo(
-		() => debounce(updateQueryString, 1000),
+		() => debounce(updateQueryString, 300),
 		[updateQueryString],
 	);
 
@@ -117,7 +117,7 @@ function SearchFilter({
 	const urlQuery = useUrlQuery();
 	const urlQueryString = urlQuery.get('q');
 
-	const debouncedHandleSearch = useMemo(() => debounce(handleSearch, 1000), [
+	const debouncedHandleSearch = useMemo(() => debounce(handleSearch, 300), [
 		handleSearch,
 	]);
 
