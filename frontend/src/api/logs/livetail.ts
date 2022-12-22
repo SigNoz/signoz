@@ -4,14 +4,15 @@ import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 
-export const LiveTail = (queryParams: string): EventSourcePolyfill => {
-	const dict = {
-		headers: {
-			Authorization: `Bearer ${getLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN)}`,
-		},
-	};
-	return new EventSourcePolyfill(
+const TIMEOUT_IN_MS = 120000;
+
+export const LiveTail = (queryParams: string): EventSourcePolyfill =>
+	new EventSourcePolyfill(
 		`${ENVIRONMENT.baseURL}${apiV1}logs/tail?${queryParams}`,
-		dict,
+		{
+			headers: {
+				Authorization: `Bearer ${getLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN)}`,
+			},
+			heartbeatTimeout: TIMEOUT_IN_MS,
+		},
 	);
-};
