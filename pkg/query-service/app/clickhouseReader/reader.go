@@ -1177,11 +1177,18 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				traceFilterReponse.Status = map[string]uint64{"ok": 0, "error": 0}
 			}
 		case constants.Duration:
-			finalQuery := fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
+			err := r.featureFlags.CheckFeature(constants.DurationSort)
+			durationSortEnabled := err == nil
+			finalQuery := ""
+			if durationSortEnabled {
+				finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
+			} else {
+				finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
+			}
 			finalQuery += query
 			finalQuery += " ORDER BY durationNano LIMIT 1"
 			var dBResponse []model.DBResponseTotal
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
+			err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
 			zap.S().Info(finalQuery)
 
 			if err != nil {
