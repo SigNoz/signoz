@@ -20,8 +20,8 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	}
 
 	table_schema := `CREATE TABLE IF NOT EXISTS agents (
-		instance_id INTEGER PRIMARY KEY UNIQUE,
-		status TEXT NOT NULL,
+		instance_id TEXT PRIMARY KEY UNIQUE,
+		status TEXT,
 		effective_config TEXT NOT NULL
 	);`
 
@@ -37,19 +37,19 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	defer rows.Close()
 
 	agents := &Agents{
-		agentsById:  map[InstanceId]*Agent{},
-		connections: map[types.Connection]map[InstanceId]bool{},
+		agentsById:  make(map[InstanceId]*Agent),
+		connections: make(map[types.Connection]map[InstanceId]bool),
 		mux:         sync.RWMutex{},
 	}
 
-	for rows.Next() {
-		var agent Agent
-		err = rows.Scan(&agent.Id, &agent.Status, &agent.EffectiveConfig)
-		if err != nil {
-			return nil, fmt.Errorf("Error in scanning agents table: %s", err.Error())
-		}
-		agents.agentsById[agent.Id] = &agent
-	}
+	// for rows.Next() {
+	// 	var agent Agent
+	// 	err = rows.Scan(&agent.Id, &agent.Status, &agent.EffectiveConfig)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("Error in scanning agents table: %s", err.Error())
+	// 	}
+	// 	agents.agentsById[agent.Id] = &agent
+	// }
 
 	AllAgents = *agents
 
@@ -72,8 +72,6 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 		delete(agents.agentsById, instanceId)
 	}
 	delete(agents.connections, conn)
-
-	// TODO: remove agent from database?
 }
 
 func (agents *Agents) FindAgent(agentId InstanceId) *Agent {
@@ -82,14 +80,18 @@ func (agents *Agents) FindAgent(agentId InstanceId) *Agent {
 	return agents.agentsById[agentId]
 }
 
-func (agents *Agents) FindOrCreateAgent(agentId InstanceId, conn types.Connection) *Agent {
+func (agents *Agents) FindOrCreateAgent(agentId InstanceId, conn types.Connection) (*Agent, error) {
 	agents.mux.Lock()
 	defer agents.mux.Unlock()
 
 	// Ensure the Agent is in the agentsById map.
 	agent := agents.agentsById[agentId]
+	var err error
 	if agent == nil {
-		agent = NewAgent(agentId, conn)
+		agent, err = NewAgent(agentId, conn)
+		if err != nil {
+			return nil, err
+		}
 		agents.agentsById[agentId] = agent
 
 		// Ensure the Agent's instance id is associated with the connection.
@@ -98,8 +100,7 @@ func (agents *Agents) FindOrCreateAgent(agentId InstanceId, conn types.Connectio
 		}
 		agents.connections[conn][agentId] = true
 	}
-
-	return agent
+	return agent, nil
 }
 
 func (agents *Agents) UpdateAgent(agentId InstanceId, status *protobufs.AgentToServer, effectiveConfig string) error {

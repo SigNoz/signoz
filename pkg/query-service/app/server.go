@@ -156,7 +156,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 }
 
 func (s *Server) createOpampServer() (*opamp.Server, error) {
-	return opamp.NewServer(&opAmpModel.Agents{}), nil
+	return opamp.NewServer(&opAmpModel.AllAgents), nil
 }
 
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {

@@ -42,7 +42,7 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 
 	logLevel := plog.AllowedLevel{}
 	logLevel.Set("debug")
-	logger := plog.New(logLevel)
+	logger := plog.New(&plog.Config{})
 
 	opts := pql.EngineOpts{
 		Logger:        log.With(logger, "component", "promql evaluator"),

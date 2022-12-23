@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,29 +28,36 @@ type Agent struct {
 	mux       sync.RWMutex
 }
 
+func isUniqueConstraintViolation(err error) bool {
+	errStr := err.Error()
+	return bytes.Contains([]byte(errStr), []byte("UNIQUE constraint failed"))
+}
+
 func NewAgent(
 	instanceId InstanceId,
 	conn types.Connection,
-) *Agent {
-	result, err := db.Exec("INSERT INTO agents (instance_id, status, started_at, effective_config) VALUES (?, ?, ?, ?)", instanceId, nil, time.Now(), "")
+) (*Agent, error) {
+	result, err := db.Exec("INSERT INTO agents (instance_id, status, effective_config) VALUES (?, ?, ?)", instanceId, nil, "")
 	if err != nil {
-		panic(err)
+		if isUniqueConstraintViolation(err) {
+			return &Agent{Id: instanceId, conn: conn}, nil
+		}
+		return nil, err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	if rowsAffected != 1 {
-		panic("expected 1 row to be affected")
+		return nil, fmt.Errorf("Expected 1 row to be affected, got %d", rowsAffected)
 	}
-	return &Agent{Id: instanceId, conn: conn}
+	return &Agent{Id: instanceId, conn: conn}, nil
 }
 
 func (agent *Agent) UpdateStatus(
 	statusMsg *protobufs.AgentToServer,
 	response *protobufs.ServerToAgent,
 ) {
-	// TODO: update status in the database.
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 	agent.processStatusUpdate(statusMsg, response)
@@ -124,9 +132,6 @@ func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer) (agent
 	agentDescrChanged = agent.updateAgentDescription(newStatus) || agentDescrChanged
 	agent.updateRemoteConfigStatus(newStatus)
 	agent.updateHealth(newStatus)
-
-	// TODO: update status in the database.
-
 	return agentDescrChanged
 }
 
@@ -200,6 +205,7 @@ func (agent *Agent) processStatusUpdate(
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
 		response.RemoteConfig = agent.remoteConfig
+		agent.SendToAgent(response)
 	}
 
 	agent.updateEffectiveConfig(newStatus, response)
@@ -275,6 +281,7 @@ func isEqualConfigFile(f1, f2 *protobufs.AgentConfigFile) bool {
 func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {
 	agent.connMutex.Lock()
 	defer agent.connMutex.Unlock()
+	fmt.Print("agent.conn", agent.conn)
 
 	agent.conn.Send(context.Background(), msg)
 }

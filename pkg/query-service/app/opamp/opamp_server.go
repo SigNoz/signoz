@@ -2,19 +2,24 @@ package opamp
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"log"
+	"math/rand"
 	"os"
+	"time"
 
+	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
+	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 )
 
 type Server struct {
 	server server.OpAMPServer
 	agents *model.Agents
-	cnt    int
 }
 
 func NewServer(agents *model.Agents) *Server {
@@ -39,6 +44,58 @@ func (srv *Server) Start() {
 	}
 
 	srv.server.Start(settings)
+	// TODO: remove this
+	go func() {
+		ticker := time.NewTicker(60 * time.Second)
+		for range ticker.C {
+			agent := srv.agents.FindAgent(model.InstanceId("00000000000000000000000000"))
+			if agent == nil {
+				continue
+			}
+			config := agent.EffectiveConfig
+			c, err := yaml.Parser().Unmarshal([]byte(config))
+			agentConf := confmap.NewFromStringMap(c)
+
+			configs := []string{
+				`
+processors:
+  batch:
+    timeout: 2s
+`,
+				`processors:
+   batch:
+     timeout: 1s`,
+			}
+
+			// random choice between 2 configs
+			config2 := configs[rand.Intn(len(configs))]
+			c2, err := yaml.Parser().Unmarshal([]byte(config2))
+			fmt.Println("config2 err", err)
+			conf2 := confmap.NewFromStringMap(c2)
+
+			err = agentConf.Merge(conf2)
+			fmt.Println("merging", err)
+			configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
+			fmt.Println(conf2.ToStringMap())
+			fmt.Println("sending new config", string(configR), err)
+			// hash of configR
+			hash := sha256.New()
+			hash.Write(configR)
+			agent.SendToAgent(&protobufs.ServerToAgent{
+				RemoteConfig: &protobufs.AgentRemoteConfig{
+					Config: &protobufs.AgentConfigMap{
+						ConfigMap: map[string]*protobufs.AgentConfigFile{
+							"collector.yaml": {
+								Body:        configR,
+								ContentType: "application/x-yaml",
+							},
+						},
+					},
+					ConfigHash: hash.Sum(nil),
+				},
+			})
+		}
+	}()
 }
 
 func (srv *Server) Stop() {
@@ -52,33 +109,12 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	instanceId := model.InstanceId(msg.InstanceUid)
 
-	agent := srv.agents.FindOrCreateAgent(instanceId, conn)
-
-	// FIXME: This is a hack to get the agent to send the initial config
-	f, err := os.ReadFile("./server/config.yaml")
+	agent, err := srv.agents.FindOrCreateAgent(instanceId, conn)
 	if err != nil {
-		panic(err)
+		// Handle this
 	}
 	var response *protobufs.ServerToAgent
 	response = &protobufs.ServerToAgent{}
-	if srv.cnt <= 2 {
-
-		// Start building the response.
-		response = &protobufs.ServerToAgent{
-			RemoteConfig: &protobufs.AgentRemoteConfig{
-				Config: &protobufs.AgentConfigMap{
-					ConfigMap: map[string]*protobufs.AgentConfigFile{
-						"collector.yaml": {
-							Body: f,
-						},
-					},
-				},
-				ConfigHash: []byte("123"),
-			},
-		}
-		srv.cnt++
-	}
-	// Update the agent's status.
 
 	agent.UpdateStatus(msg, response)
 
