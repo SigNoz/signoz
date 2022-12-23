@@ -153,9 +153,6 @@ func ParseLogAggregateParams(r *http.Request) (*model.LogsAggregateParams, error
 func parseLogQuery(query string) ([]string, error) {
 	sqlQueryTokens := []string{}
 
-	// // trim multiple spaces to a single one
-	// query = strings.Join(strings.Fields(query), " ")
-
 	filterTokens := tokenRegex.FindAllString(query, -1)
 
 	if len(filterTokens) == 0 {
