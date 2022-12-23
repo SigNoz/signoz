@@ -88,6 +88,11 @@ var correctQueriesTest = []struct {
 		[]string{`service IN ('name > 100') `},
 	},
 	{
+		`Extra space between a query filter`,
+		`data  contains  'hello    world    .'`,
+		[]string{`data ILIKE '%hello    world    .%' `},
+	},
+	{
 		`filters with special characters in key name`,
 		`id.userid in (100) and id_userid gt 50`,
 		[]string{`id.userid IN (100) `, `and id_userid > 50 `},
