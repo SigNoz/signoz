@@ -68,6 +68,11 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			token TEXT NOT NULL,
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
+		CREATE TABLE IF NOT EXISTS user_flags (
+			user_id TEXT PRIMARY KEY,
+			flags TEXT,
+			FOREIGN KEY(user_id) REFERENCES users(id)
+		);
 	`
 
 	_, err = db.Exec(table_schema)

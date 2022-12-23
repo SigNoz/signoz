@@ -12,7 +12,7 @@ import AppReducer from 'types/reducer/app';
 import { NameInput } from '../styles';
 
 function UpdateName(): JSX.Element {
-	const { user, role, org } = useSelector<AppState, AppReducer>(
+	const { user, role, org, userFlags } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const { t } = useTranslation();
@@ -47,6 +47,7 @@ function UpdateName(): JSX.Element {
 						ROLE: role || 'ADMIN',
 						orgId: org[0].id,
 						orgName: org[0].name,
+						userFlags: userFlags || {},
 					},
 				});
 			} else {

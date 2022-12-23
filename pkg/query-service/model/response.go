@@ -72,6 +72,14 @@ func BadRequest(err error) *ApiError {
 	}
 }
 
+// BadRequestStr returns a ApiError object of bad request
+func BadRequestStr(s string) *ApiError {
+	return &ApiError{
+		Typ: ErrorBadData,
+		Err: fmt.Errorf(s),
+	}
+}
+
 // InternalError returns a ApiError object of internal type
 func InternalError(err error) *ApiError {
 	return &ApiError{

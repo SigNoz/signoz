@@ -106,7 +106,6 @@ export const LogsReducer = (
 			}${action.payload}`;
 
 			const updatedParsedQuery = parseQuery(updatedQueryString);
-			console.log({ updatedParsedQuery, updatedQueryString, action });
 			return {
 				...state,
 				searchFilter: {

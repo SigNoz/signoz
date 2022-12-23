@@ -21,7 +21,7 @@ import { v4 } from 'uuid';
 
 import { SearchFieldsProps } from '..';
 import FieldKey from '../FieldKey';
-import { QueryConditionContainer, QueryFieldContainer } from '../styles';
+import { QueryFieldContainer } from '../styles';
 import { createParsedQueryStructure } from '../utils';
 import { Container, QueryWrapper } from './styles';
 import { hashCode, parseQuery } from './utils';
@@ -32,32 +32,26 @@ function QueryConditionField({
 	query,
 	queryIndex,
 	onUpdate,
-	style,
 }: QueryConditionFieldProps): JSX.Element {
+	const allOptions = Object.values(ConditionalOperators);
 	return (
-		<QueryConditionContainer style={{ ...style }}>
-			<Select
-				defaultValue={
-					(query as any).value &&
-					(((query as any)?.value as any) as string).toUpperCase()
-				}
-				onChange={(e): void => {
-					onUpdate({ ...query, value: e }, queryIndex);
-				}}
-			>
-				{Object.values(ConditionalOperators).map((cond) => (
-					<Option key={cond} value={cond} label={cond}>
-						{cond}
-					</Option>
-				))}
-			</Select>
-		</QueryConditionContainer>
+		<Select
+			defaultValue={
+				(query as any).value &&
+				(((query as any)?.value as any) as string).toUpperCase()
+			}
+			onChange={(e): void => {
+				onUpdate({ ...query, value: e }, queryIndex);
+			}}
+		>
+			{allOptions.map((cond) => (
+				<Option key={cond} value={cond} label={cond}>
+					{cond}
+				</Option>
+			))}
+		</Select>
 	);
 }
-
-QueryConditionField.defaultProps = {
-	style: undefined,
-};
 
 interface QueryFieldProps {
 	query: Query;
@@ -174,7 +168,6 @@ interface QueryConditionFieldProps {
 	query: { value: string | string[]; type: string }[];
 	queryIndex: number;
 	onUpdate: (arg0: unknown, arg1: number) => void;
-	style?: React.CSSProperties;
 }
 
 export type Query = { value: string | string[]; type: string }[];
@@ -233,12 +226,13 @@ function QueryBuilder({
 				);
 
 			return (
-				<QueryConditionField
-					key={keyPrefix + idx}
-					query={query}
-					queryIndex={idx}
-					onUpdate={handleUpdate as never}
-				/>
+				<div key={keyPrefix + idx}>
+					<QueryConditionField
+						query={query}
+						queryIndex={idx}
+						onUpdate={handleUpdate as never}
+					/>
+				</div>
 			);
 		});
 

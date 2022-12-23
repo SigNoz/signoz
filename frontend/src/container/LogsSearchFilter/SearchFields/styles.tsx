@@ -14,8 +14,3 @@ export const QueryFieldContainer = styled.div`
 		background: ${blue[6]};
 	}
 `;
-
-export const QueryConditionContainer = styled.div`
-	display: flex;
-	flex-direction: row;
-`;

@@ -12,7 +12,6 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
-import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
 import _omit from 'lodash-es/omit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,18 +21,25 @@ import { useInterval } from 'react-use';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
+import {
+	UPDATE_AUTO_REFRESH_INTERVAL,
+	UPDATE_TIME_INTERVAL,
+} from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { options } from './config';
+import { getMinMax, options } from './config';
 import { ButtonContainer, Container } from './styles';
 
 function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
-	const { minTime: initialMinTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const { pathname } = useLocation();
+
+	const isDisabled = useMemo(
+		() => disabled || globalTime.isAutoRefreshDisabled,
+		[globalTime.isAutoRefreshDisabled, disabled],
+	);
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
@@ -46,13 +52,19 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		Boolean(localStorageValue),
 	);
 
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
 	useEffect(() => {
-		setIsAutoRefreshfreshEnabled(Boolean(localStorageValue));
-	}, [localStorageValue]);
+		const isAutoRefreshEnabled = Boolean(localStorageValue);
+		dispatch({
+			type: UPDATE_AUTO_REFRESH_INTERVAL,
+			payload: localStorageValue,
+		});
+		setIsAutoRefreshfreshEnabled(isAutoRefreshEnabled);
+	}, [localStorageValue, dispatch]);
 
 	const params = useUrlQuery();
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [selectedOption, setSelectedOption] = useState<string>(
 		localStorageValue || options[0].key,
 	);
@@ -69,19 +81,23 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	useInterval(() => {
 		const selectedValue = getOption?.value;
 
-		if (disabled || !isAutoRefreshEnabled) {
+		if (isDisabled || !isAutoRefreshEnabled) {
 			return;
 		}
 
 		if (selectedOption !== 'off' && selectedValue) {
-			const min = initialMinTime / 1000000;
+			const { maxTime, minTime } = getMinMax(
+				globalTime.selectedTime,
+				globalTime.minTime,
+				globalTime.maxTime,
+			);
 
 			dispatch({
 				type: UPDATE_TIME_INTERVAL,
 				payload: {
-					maxTime: dayjs().valueOf() * 1000000,
-					minTime: dayjs(min).subtract(selectedValue, 'second').valueOf() * 1000000,
-					selectedTime,
+					maxTime,
+					minTime,
+					selectedTime: globalTime.selectedTime,
 				},
 			});
 		}
@@ -125,21 +141,23 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 					<Checkbox
 						onChange={onChangeAutoRefreshHandler}
 						checked={isAutoRefreshEnabled}
-						disabled={disabled}
+						disabled={isDisabled}
 					>
 						Auto Refresh
 					</Checkbox>
 
 					<Divider />
 
-					<Typography.Paragraph>Refresh Interval</Typography.Paragraph>
+					<Typography.Paragraph disabled={isDisabled}>
+						Refresh Interval
+					</Typography.Paragraph>
 
 					<Radio.Group onChange={onChangeHandler} value={selectedOption}>
 						<Space direction="vertical">
 							{options
 								.filter((e) => e.label !== 'off')
 								.map((option) => (
-									<Radio key={option.key} value={option.key}>
+									<Radio disabled={isDisabled} key={option.key} value={option.key}>
 										{option.label}
 									</Radio>
 								))}

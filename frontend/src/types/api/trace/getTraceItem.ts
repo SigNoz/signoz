@@ -56,9 +56,10 @@ export interface ITraceTag {
 	value: string;
 }
 
-interface ITraceEvents {
+export interface ITraceEvents {
 	attributeMap: { event: string; [key: string]: string };
 	name?: string;
+	timeUnixNano: number;
 }
 
 export interface ITraceForest {

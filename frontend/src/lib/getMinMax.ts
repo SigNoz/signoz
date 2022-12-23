@@ -53,7 +53,7 @@ const GetMinMax = (
 	};
 };
 
-interface GetMinMaxPayload {
+export interface GetMinMaxPayload {
 	minTime: GlobalReducer['minTime'];
 	maxTime: GlobalReducer['maxTime'];
 }
