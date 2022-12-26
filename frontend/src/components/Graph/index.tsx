@@ -68,8 +68,6 @@ function Graph({
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const isDarkMode = useIsDarkMode();
 
-	console.log('isDarkMode', isDarkMode);
-
 	const currentTheme = isDarkMode ? 'dark' : 'light';
 	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
