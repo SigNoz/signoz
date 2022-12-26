@@ -44,7 +44,7 @@ const HEART_BEAT_DURATION = 6 * time.Hour
 // const HEART_BEAT_DURATION = 10 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
-const RATE_LIMIT_VALUE = 10
+const RATE_LIMIT_VALUE = 2
 
 // const RATE_LIMIT_CHECK_DURATION = 20 * time.Second
 // const RATE_LIMIT_VALUE = 5
