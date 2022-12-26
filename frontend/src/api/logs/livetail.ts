@@ -5,7 +5,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 
 // 10 min in ms
-const TIMEOUT_IN_MS = 10 * 10 * 1000;
+const TIMEOUT_IN_MS = 10 * 60 * 1000;
 
 export const LiveTail = (queryParams: string): EventSourcePolyfill =>
 	new EventSourcePolyfill(
