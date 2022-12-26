@@ -1,7 +1,14 @@
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { debounce } from 'lodash-es';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -22,12 +29,31 @@ function SearchFilter({
 	getLogsAggregate,
 }: SearchFilterProps): JSX.Element {
 	const {
-		queryString,
 		updateParsedQuery,
 		updateQueryString,
+		queryString,
 	} = useSearchParser();
+	const [searchText, setSearchText] = useState(queryString);
 	const [showDropDown, setShowDropDown] = useState(false);
 	const searchRef = useRef<InputRef>(null);
+	const { logLinesPerPage, idEnd, idStart, liveTail } = useSelector<
+		AppState,
+		ILogsReducer
+	>((state) => state.logs);
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	// keep sync with url queryString
+	useEffect(() => {
+		setSearchText(queryString);
+	}, [queryString]);
+
+	const debouncedupdateQueryString = useMemo(
+		() => debounce(updateQueryString, 300),
+		[updateQueryString],
+	);
 
 	const onDropDownToggleHandler = useCallback(
 		(value: boolean) => (): void => {
@@ -35,17 +61,6 @@ function SearchFilter({
 		},
 		[],
 	);
-
-	const { logLinesPerPage, idEnd, idStart, liveTail } = useSelector<
-		AppState,
-		ILogsReducer
-	>((state) => state.logs);
-
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const handleSearch = useCallback(
 		(customQuery) => {
@@ -102,10 +117,14 @@ function SearchFilter({
 	const urlQuery = useUrlQuery();
 	const urlQueryString = urlQuery.get('q');
 
+	const debouncedHandleSearch = useMemo(() => debounce(handleSearch, 600), [
+		handleSearch,
+	]);
+
 	useEffect(() => {
-		handleSearch(urlQueryString || '');
+		debouncedHandleSearch(urlQueryString || '');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlQueryString, maxTime, minTime]);
+	}, [urlQueryString, maxTime, minTime, idEnd, idStart]);
 
 	return (
 		<Container>
@@ -132,9 +151,11 @@ function SearchFilter({
 				<Input.Search
 					ref={searchRef}
 					placeholder="Search Filter"
-					value={queryString}
+					value={searchText}
 					onChange={(e): void => {
-						updateQueryString(e.target.value);
+						const { value } = e.target;
+						setSearchText(value);
+						debouncedupdateQueryString(value);
 					}}
 					allowClear
 					onSearch={handleSearch}
