@@ -203,8 +203,6 @@ function QueryBuilder({
 		const result: JSX.Element[] = [];
 		fieldsQuery.forEach((query, idx) => {
 			if (Array.isArray(query) && query.length > 1) {
-				console.log('query:', query);
-				console.log('keyPrefix:', keyPrefix);
 				result.push(
 					<QueryField
 						key={keyPrefix + idx}
