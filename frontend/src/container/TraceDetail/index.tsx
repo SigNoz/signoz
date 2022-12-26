@@ -76,7 +76,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		/* eslint-enable */
 	}, [treesData, spanServiceColors]);
 
-	const firstSpanStartTime = tree.spanTree[0].startTime;
+	const firstSpanStartTime = tree.spanTree[0]?.startTime;
 
 	const [globalTraceMetadata] = useState<ITraceMetaData>({
 		...traceMetaData,
