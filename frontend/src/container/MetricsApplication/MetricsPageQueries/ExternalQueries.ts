@@ -31,7 +31,7 @@ export const externalCallErrorPercent = ({
 
 	const legendFormula = 'External Call Error Percentage';
 	const expression = 'A*100/B';
-	const disabled = false;
+	const disabled = true;
 	return getQueryBuilderQuerieswithAdditionalItems({
 		metricNameA,
 		metricNameB,
@@ -102,7 +102,7 @@ export const externalCallDurationByAddress = ({
 	const metricNameB = 'signoz_external_call_latency_count';
 	const expression = 'A/B';
 	const legendFormula = legend;
-	const disabled = false;
+	const disabled = true;
 	return getQueryBuilderQuerieswithFormula({
 		servicename,
 		legend,
