@@ -32,6 +32,7 @@ const (
 	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
 	TELEMETRY_EVENT_ENVIRONMENT           = "Environment"
 	TELEMETRY_EVENT_LANGUAGE              = "Language"
+	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"

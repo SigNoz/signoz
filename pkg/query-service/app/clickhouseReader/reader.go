@@ -45,6 +45,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
@@ -3212,10 +3213,15 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	}
 
 	isPaginatePrev := logs.CheckIfPrevousPaginateAndModifyOrder(params)
-	filterSql, err := logs.GenerateSQLWhere(fields, params)
+	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, params)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
+
+	data := map[string]interface{}{
+		"lenFilters": lenFilters,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
 
 	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
 
@@ -3246,9 +3252,14 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		return
 	}
 
-	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
 		Query: client.Filter.Query,
 	})
+
+	data := map[string]interface{}{
+		"lenFilters": lenFilters,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
 
 	if err != nil {
 		client.Error <- err
@@ -3326,12 +3337,17 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		return nil, apiErr
 	}
 
-	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
 		Query: params.Query,
 	})
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
+
+	data := map[string]interface{}{
+		"lenFilters": lenFilters,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
 
 	query := ""
 	if params.GroupBy != "" {
