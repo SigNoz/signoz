@@ -80,7 +80,17 @@ var correctQueriesTest = []struct {
 	{
 		`filters with extra spaces`,
 		`service IN ('name > 100')    AND   length gt 100`,
-		[]string{`service IN ('name > 100') `, `AND   length > 100 `},
+		[]string{`service IN ('name > 100') `, `AND length > 100 `},
+	},
+	{
+		`Extra space within a filter expression`,
+		`service  IN  ('name > 100')`,
+		[]string{`service IN ('name > 100') `},
+	},
+	{
+		`Extra space between a query filter`,
+		`data  contains  'hello    world    .'`,
+		[]string{`data ILIKE '%hello    world    .%' `},
 	},
 	{
 		`filters with special characters in key name`,
@@ -160,6 +170,26 @@ var parseCorrectColumns = []struct {
 		"column with >= operator",
 		"and id_userid >= 50 ",
 		"id_userid",
+	},
+	{
+		"column starting with and",
+		"andor = 1",
+		"andor",
+	},
+	{
+		"column starting with and after an 'and'",
+		"and andor = 1",
+		"andor",
+	},
+	{
+		"column starting with And",
+		"Andor = 1",
+		"Andor",
+	},
+	{
+		"column starting with and after an 'and'",
+		"and Andor = 1",
+		"Andor",
 	},
 	{
 		"column with ilike",
@@ -279,7 +309,7 @@ var generateSQLQueryFields = model.GetFieldsResponse{
 			Type:     "attributes",
 		},
 		{
-			Name:     "field2",
+			Name:     "Field2",
 			DataType: "double64",
 			Type:     "attributes",
 		},
@@ -290,6 +320,11 @@ var generateSQLQueryFields = model.GetFieldsResponse{
 		},
 	},
 	Interesting: []model.LogField{
+		{
+			Name:     "FielD1",
+			DataType: "int64",
+			Type:     "attributes",
+		},
 		{
 			Name:     "code",
 			DataType: "int64",
@@ -322,6 +357,15 @@ var generateSQLQueryTestCases = []struct {
 			TimestampEnd:   uint64(1657689294000),
 		},
 		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( field1 < 100 and field1 > 50 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
+	},
+	{
+		Name: "generate case sensitive query",
+		Filter: model.LogsFilterParams{
+			Query:          "field1 lt 100 and FielD1 gt 50 and Field2 gt 10 and code lte 500 and code gte 400",
+			TimestampStart: uint64(1657689292000),
+			TimestampEnd:   uint64(1657689294000),
+		},
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( field1 < 100 and attributes_int64_value[indexOf(attributes_int64_key, 'FielD1')] > 50 and Field2 > 10 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] <= 500 and attributes_int64_value[indexOf(attributes_int64_key, 'code')] >= 400 ) ",
 	},
 }
 
