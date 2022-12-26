@@ -31,6 +31,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	getDefaultOrder,
+	getFilterString,
 	getNanoSeconds,
 	getOffSet,
 	getOrder,
@@ -52,6 +53,10 @@ function AllErrors(): JSX.Element {
 	const getUpdatedOffset = getOffSet(params.get(urlKey.offset));
 	const getUpdatedParams = getOrderParams(params.get(urlKey.orderParam));
 	const getUpdatedPageSize = getUpdatePageSize(params.get(urlKey.pageSize));
+	const getUpdatedExceptionType = getFilterString(
+		params.get(urlKey.exceptionType),
+	);
+	const getUpdatedServiceName = getFilterString(params.get(urlKey.serviceName));
 
 	const updatedPath = useMemo(
 		() =>
@@ -60,6 +65,8 @@ function AllErrors(): JSX.Element {
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
 				pageSize: getUpdatedPageSize,
+				exceptionType: getUpdatedExceptionType,
+				serviceName: getUpdatedServiceName,
 			})}`,
 		[
 			pathname,
@@ -67,6 +74,8 @@ function AllErrors(): JSX.Element {
 			getUpdatedOffset,
 			getUpdatedParams,
 			getUpdatedPageSize,
+			getUpdatedExceptionType,
+			getUpdatedServiceName,
 		],
 	);
 
@@ -81,6 +90,8 @@ function AllErrors(): JSX.Element {
 					limit: getUpdatedPageSize,
 					offset: getUpdatedOffset,
 					orderParam: getUpdatedParams,
+					exceptionType: getUpdatedExceptionType,
+					serviceName: getUpdatedServiceName,
 				}),
 			enabled: !loading,
 		},
@@ -115,7 +126,20 @@ function AllErrors(): JSX.Element {
 	};
 
 	const filterDropdownWrapper = useCallback(
-		({ setSelectedKeys, selectedKeys, confirm, placeholder }) => {
+		({ setSelectedKeys, selectedKeys, confirm, placeholder, filterKey }) => {
+			let defaultValue = '';
+
+			switch (filterKey) {
+				case 'serviceName':
+					defaultValue = getUpdatedServiceName;
+					break;
+				case 'exceptionType':
+					defaultValue = getUpdatedExceptionType;
+					break;
+				default:
+					break;
+			}
+
 			return (
 				<Card size="small">
 					<Space align="start" direction="vertical">
@@ -126,6 +150,7 @@ function AllErrors(): JSX.Element {
 								setSelectedKeys(e.target.value ? [e.target.value] : [])
 							}
 							allowClear
+							defaultValue={defaultValue}
 							onPressEnter={handleSearch(confirm)}
 						/>
 						<Button
@@ -140,7 +165,7 @@ function AllErrors(): JSX.Element {
 				</Card>
 			);
 		},
-		[],
+		[getUpdatedExceptionType, getUpdatedServiceName],
 	);
 
 	const onExceptionTypeFilter = useCallback(
@@ -167,6 +192,7 @@ function AllErrors(): JSX.Element {
 		(
 			onFilter: ColumnType<Exception>['onFilter'],
 			placeholder: string,
+			filterKey: string,
 		): ColumnType<Exception> => ({
 			onFilter,
 			filterIcon,
@@ -176,6 +202,7 @@ function AllErrors(): JSX.Element {
 					selectedKeys,
 					confirm,
 					placeholder,
+					filterKey,
 				}),
 		}),
 		[filterIcon, filterDropdownWrapper],
@@ -186,7 +213,7 @@ function AllErrors(): JSX.Element {
 			title: 'Exception Type',
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
-			...getFilter(onExceptionTypeFilter, 'Search By Exception'),
+			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
@@ -266,16 +293,30 @@ function AllErrors(): JSX.Element {
 				updatedOrder,
 				'serviceName',
 			),
-			...getFilter(onApplicationTypeFilter, 'Search By Application'),
+			...getFilter(
+				onApplicationTypeFilter,
+				'Search By Application',
+				'serviceName',
+			),
 		},
 	];
 
 	const onChangeHandler: TableProps<Exception>['onChange'] = (
 		paginations,
-		_,
+		filters,
 		sorter,
 	) => {
 		if (!Array.isArray(sorter)) {
+			const exceptionTypeValues = filters.exceptionType as string[];
+			const exceptionType =
+				exceptionTypeValues && exceptionTypeValues.length > 0
+					? exceptionTypeValues[0]
+					: '';
+			const serviceNameValues = filters.serviceName as string[];
+			const serviceName =
+				serviceNameValues && serviceNameValues.length > 0
+					? serviceNameValues[0]
+					: '';
 			const { pageSize = 0, current = 0 } = paginations;
 			const { columnKey = '', order } = sorter;
 			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
@@ -286,6 +327,8 @@ function AllErrors(): JSX.Element {
 					offset: (current - 1) * pageSize,
 					orderParam: columnKey,
 					pageSize,
+					exceptionType,
+					serviceName,
 				})}`,
 			);
 		}

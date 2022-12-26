@@ -10,6 +10,8 @@ export const urlKey = {
 	offset: 'offset',
 	orderParam: 'orderParam',
 	pageSize: 'pageSize',
+	exceptionType: 'exceptionType',
+	serviceName: 'serviceName',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy => {
@@ -86,4 +88,11 @@ export const getUpdatePageSize = (pageSize: string | null): number => {
 		return parseInt(pageSize, 10);
 	}
 	return 10;
+};
+
+export const getFilterString = (filter: string | null): string => {
+	if (filter) {
+		return filter;
+	}
+	return '';
 };
