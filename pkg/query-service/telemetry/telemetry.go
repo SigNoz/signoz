@@ -34,6 +34,7 @@ const (
 	TELEMETRY_EVENT_LANGUAGE              = "Language"
 	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
 	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
+	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -213,7 +214,12 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ...bool) {
+
+	rateLimitFlag := true
+	if len(opts) > 0 {
+		rateLimitFlag = opts[0]
+	}
 
 	if !a.isTelemetryEnabled() {
 		return
@@ -224,10 +230,12 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		return
 	}
 
-	if a.rateLimits[event] < RATE_LIMIT_VALUE {
-		a.rateLimits[event] += 1
-	} else {
-		return
+	if rateLimitFlag {
+		if a.rateLimits[event] < RATE_LIMIT_VALUE {
+			a.rateLimits[event] += 1
+		} else {
+			return
+		}
 	}
 
 	// zap.S().Info(data)
