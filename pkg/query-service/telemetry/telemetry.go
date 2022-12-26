@@ -33,6 +33,7 @@ const (
 	TELEMETRY_EVENT_ENVIRONMENT           = "Environment"
 	TELEMETRY_EVENT_LANGUAGE              = "Language"
 	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
+	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -139,6 +140,10 @@ func createTelemetry() {
 					data[key] = value
 				}
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+
+				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval)
+
 			}
 		}
 	}()

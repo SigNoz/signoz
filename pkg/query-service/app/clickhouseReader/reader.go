@@ -3068,6 +3068,20 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 
 	return totalSamples, nil
 }
+
+func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error) {
+
+	clusterInfo := []model.ClusterInfo{}
+
+	queryStr := `SELECT shard_num, shard_weight, replica_num, errors_count, slowdowns_count, estimated_recovery_time FROM system.clusters where cluster='cluster';`
+	r.db.Select(ctx, &clusterInfo, queryStr)
+	if len(clusterInfo) == 1 {
+		return clusterInfo[0].GetMapFromStruct(), nil
+	}
+
+	return nil, nil
+}
+
 func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
 
 	var totalLogLines uint64
