@@ -283,11 +283,14 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 	var tokens []string
 	var err error
 	var sqlWhere string
+	var lenTokens = 0
 	if params.Query != "" {
 		tokens, err = parseLogQuery(params.Query)
+
 		if err != nil {
 			return sqlWhere, -1, err
 		}
+		lenTokens = len(tokens)
 	}
 
 	tokens, err = replaceInterestingFields(allFields, tokens)
@@ -342,5 +345,5 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 
 	sqlWhere = strings.Join(tokens, "")
 
-	return sqlWhere, len(tokens), nil
+	return sqlWhere, lenTokens, nil
 }
