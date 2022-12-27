@@ -1,0 +1,37 @@
+name: testing-deploy
+# Trigger deployment only on testing-deploy label on pull request
+on:
+  pull_request:
+    types: [labeled]
+jobs:
+  deploy:
+    name: Deploy PR branch to testing
+    runs-on: ubuntu-latest
+    environment: testing
+    if: ${{ github.event.label.name == 'testing-deploy' }}
+    steps:
+      - name: Executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v0.1.6
+        env:
+          DOCKER_TAG: ${{ github.head_ref || github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          DEV_BUILD: "1"
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DOCKER_TAG,GITHUB_SHA
+          command_timeout: 60m
+          script: |
+            echo "DOCKER_TAG: ${DOCKER_TAG}"
+            echo "GITHUB_SHA: ${GITHUB_SHA}"
+            cd ~/signoz
+            git status
+            git add .
+            git stash -m "stashed on $(date --iso-8601=seconds)"
+            git fetch origin
+            git checkout ${DOCKER_TAG}
+            git pull
+            make build-ee-query-service-amd64
+            make build-frontend-amd64
+            make run-signoz
