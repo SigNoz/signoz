@@ -36,7 +36,14 @@ function SearchFields({
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(fieldsQuery)));
 
 	useEffect(() => {
-		setFieldsQuery(createParsedQueryStructure([...parsedQuery] as never[]));
+		const updatedFieldsQuery = createParsedQueryStructure([
+			...parsedQuery,
+		] as never[]);
+		setFieldsQuery(updatedFieldsQuery);
+		const incomingHashCode = hashCode(JSON.stringify(updatedFieldsQuery));
+		if (incomingHashCode !== keyPrefixRef.current) {
+			keyPrefixRef.current = incomingHashCode;
+		}
 	}, [parsedQuery]);
 
 	const addSuggestedField = useCallback(
