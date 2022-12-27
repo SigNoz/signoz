@@ -2521,12 +2521,12 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 
 	if len(queryParams.ServiceName) != 0 {
-		query = query + " AND serviceName = @serviceName"
-		args = append(args, clickhouse.Named("serviceName", queryParams.ServiceName))
+		query = query + " AND serviceName ilike @serviceName"
+		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
 	}
 	if len(queryParams.ExceptionType) != 0 {
-		query = query + " AND exceptionType = @exceptionType"
-		args = append(args, clickhouse.Named("exceptionType", queryParams.ExceptionType))
+		query = query + " AND exceptionType ilike @exceptionType"
+		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
 	}
 	query = query + " GROUP BY groupID"
 	if len(queryParams.ServiceName) != 0 {
@@ -2535,7 +2535,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	if len(queryParams.ExceptionType) != 0 {
 		query = query + ", exceptionType"
 	}
-	if len(queryParams.OrderParam) != 0 && len(queryParams.ServiceName) == 0 && len(queryParams.ExceptionType) == 0 {
+	if len(queryParams.OrderParam) != 0 {
 		if queryParams.Order == constants.Descending {
 			query = query + " ORDER BY " + queryParams.OrderParam + " DESC"
 		} else if queryParams.Order == constants.Ascending {
