@@ -1159,6 +1159,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
 		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		return
 	}
 
 	response_data := &model.QueryData{
@@ -2190,6 +2191,8 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &err, "streaming is not supported")
 		return
 	}
+	// flush the headers
+	flusher.Flush()
 
 	for {
 		select {
