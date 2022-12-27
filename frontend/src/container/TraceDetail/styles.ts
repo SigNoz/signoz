@@ -34,9 +34,10 @@ export const traceDateAndTimelineContainer = css`
 
 export const traceDateTimeContainer = css`
 	display: flex;
-	aligh-items: center;
+	align-items: center;
 	justify-content: center;
 `;
+
 export const timelineContainer = css`
 	overflow: visible;
 	margin: 0 1rem 0 0;
@@ -48,7 +49,7 @@ export const ganttChartContainer = css`
 	position: relative;
 	flex: 1;
 	overflow-y: auto;
-	overflow-x: hidden;
+	overflow-x: scroll;
 `;
 
 export const selectedSpanDetailContainer = css`
