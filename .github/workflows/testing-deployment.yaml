@@ -25,10 +25,11 @@ jobs:
           script: |
             echo "DOCKER_TAG: ${DOCKER_TAG}"
             echo "GITHUB_SHA: ${GITHUB_SHA}"
+            docker system prune --force
             cd ~/signoz
             git status
             git add .
-            git stash -m "stashed on $(date --iso-8601=seconds)"
+            git stash push -m "stashed on $(date --iso-8601=seconds)"
             git fetch origin
             git checkout ${DOCKER_TAG}
             git pull
