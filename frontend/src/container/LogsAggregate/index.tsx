@@ -3,7 +3,7 @@ import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import dayjs from 'dayjs';
 import getStep from 'lib/getStep';
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -77,6 +77,18 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [getLogsAggregate, maxTime, minTime, liveTail]);
 
+	const graphData = useMemo(() => {
+		return {
+			labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
+			datasets: [
+				{
+					data: logsAggregate.map((s) => s.value),
+					backgroundColor: blue[4],
+				},
+			],
+		};
+	}, [logsAggregate]);
+
 	return (
 		<Container>
 			{isLoadingAggregate ? (
@@ -84,15 +96,7 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 			) : (
 				<Graph
 					name="usage"
-					data={{
-						labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
-						datasets: [
-							{
-								data: logsAggregate.map((s) => s.value),
-								backgroundColor: blue[4],
-							},
-						],
-					}}
+					data={graphData}
 					type="bar"
 					containerHeight="100%"
 					animate
