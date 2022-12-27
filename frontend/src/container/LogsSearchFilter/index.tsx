@@ -127,7 +127,7 @@ function SearchFilter({
 	useEffect(() => {
 		debouncedHandleSearch(urlQueryString || '');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlQueryString, maxTime, minTime, idEnd, idStart]);
+	}, [urlQueryString, maxTime, minTime, idEnd, idStart, logLinesPerPage]);
 
 	return (
 		<Container>
