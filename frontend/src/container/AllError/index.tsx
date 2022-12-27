@@ -17,6 +17,7 @@ import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -30,6 +31,8 @@ import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
+	extractFilterValues,
+	getDefaultFilterValue,
 	getDefaultOrder,
 	getFilterString,
 	getNanoSeconds,
@@ -44,19 +47,27 @@ function AllErrors(): JSX.Element {
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { search, pathname } = useLocation();
-	const params = useMemo(() => new URLSearchParams(search), [search]);
-
+	const { pathname } = useLocation();
+	const params = useUrlQuery();
 	const { t } = useTranslation(['common']);
-
-	const updatedOrder = getOrder(params.get(urlKey.order));
-	const getUpdatedOffset = getOffSet(params.get(urlKey.offset));
-	const getUpdatedParams = getOrderParams(params.get(urlKey.orderParam));
-	const getUpdatedPageSize = getUpdatePageSize(params.get(urlKey.pageSize));
-	const getUpdatedExceptionType = getFilterString(
-		params.get(urlKey.exceptionType),
+	const {
+		updatedOrder,
+		getUpdatedOffset,
+		getUpdatedParams,
+		getUpdatedPageSize,
+		getUpdatedExceptionType,
+		getUpdatedServiceName,
+	} = useMemo(
+		() => ({
+			updatedOrder: getOrder(params.get(urlKey.order)),
+			getUpdatedOffset: getOffSet(params.get(urlKey.offset)),
+			getUpdatedParams: getOrderParams(params.get(urlKey.orderParam)),
+			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
+			getUpdatedExceptionType: getFilterString(params.get(urlKey.exceptionType)),
+			getUpdatedServiceName: getFilterString(params.get(urlKey.serviceName)),
+		}),
+		[params],
 	);
-	const getUpdatedServiceName = getFilterString(params.get(urlKey.serviceName));
 
 	const updatedPath = useMemo(
 		() =>
@@ -127,19 +138,6 @@ function AllErrors(): JSX.Element {
 
 	const filterDropdownWrapper = useCallback(
 		({ setSelectedKeys, selectedKeys, confirm, placeholder, filterKey }) => {
-			let defaultValue = '';
-
-			switch (filterKey) {
-				case 'serviceName':
-					defaultValue = getUpdatedServiceName;
-					break;
-				case 'exceptionType':
-					defaultValue = getUpdatedExceptionType;
-					break;
-				default:
-					break;
-			}
-
 			return (
 				<Card size="small">
 					<Space align="start" direction="vertical">
@@ -150,7 +148,11 @@ function AllErrors(): JSX.Element {
 								setSelectedKeys(e.target.value ? [e.target.value] : [])
 							}
 							allowClear
-							defaultValue={defaultValue}
+							defaultValue={getDefaultFilterValue(
+								filterKey,
+								getUpdatedServiceName,
+								getUpdatedExceptionType,
+							)}
 							onPressEnter={handleSearch(confirm)}
 						/>
 						<Button
@@ -307,20 +309,10 @@ function AllErrors(): JSX.Element {
 		sorter,
 	) => {
 		if (!Array.isArray(sorter)) {
-			const exceptionTypeValues = filters.exceptionType as string[];
-			const exceptionType =
-				exceptionTypeValues && exceptionTypeValues.length > 0
-					? exceptionTypeValues[0]
-					: '';
-			const serviceNameValues = filters.serviceName as string[];
-			const serviceName =
-				serviceNameValues && serviceNameValues.length > 0
-					? serviceNameValues[0]
-					: '';
 			const { pageSize = 0, current = 0 } = paginations;
 			const { columnKey = '', order } = sorter;
 			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
-
+			const { exceptionType, serviceName } = extractFilterValues(filters);
 			history.replace(
 				`${pathname}?${createQueryParams({
 					order: updatedOrder,

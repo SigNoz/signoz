@@ -1,4 +1,4 @@
-import { SortOrder } from 'antd/lib/table/interface';
+import { FilterValue, SortOrder } from 'antd/lib/table/interface';
 import Timestamp from 'timestamp-nano';
 import { Order, OrderBy } from 'types/api/errors/getAll';
 
@@ -95,4 +95,43 @@ export const getFilterString = (filter: string | null): string => {
 		return filter;
 	}
 	return '';
+};
+
+export const getDefaultFilterValue = (
+	filterKey: string | null,
+	getUpdatedServiceName: string,
+	getUpdatedExceptionType: string,
+): string | undefined => {
+	let defaultValue: string | undefined;
+	switch (filterKey) {
+		case 'serviceName':
+			defaultValue = getUpdatedServiceName;
+			break;
+		case 'exceptionType':
+			defaultValue = getUpdatedExceptionType;
+			break;
+		default:
+			break;
+	}
+	return defaultValue;
+};
+
+export const extractFilterValues = (
+	filters: Record<string, FilterValue | null>,
+): { exceptionType: string; serviceName: string } => {
+	const filterValues = {
+		exceptionType: '',
+		serviceName: '',
+	};
+	const exceptionTypeValues = filters.exceptionType as string[];
+	const exceptionType =
+		exceptionTypeValues && exceptionTypeValues.length > 0
+			? exceptionTypeValues[0]
+			: '';
+	filterValues.exceptionType = exceptionType;
+	const serviceNameValues = filters.serviceName as string[];
+	const serviceName =
+		serviceNameValues && serviceNameValues.length > 0 ? serviceNameValues[0] : '';
+	filterValues.serviceName = serviceName;
+	return filterValues;
 };
