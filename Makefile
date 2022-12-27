@@ -119,16 +119,19 @@ down-local:
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
 	down -v
 
-run-x86:
+pull-signoz:
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml pull
+
+run-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml up --build -d
 
-down-x86:
+down-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
 
 clear-standalone-data:
 	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \
-	sh -c "cd /pwd && rm -rf alertmanager/* clickhous*/* signoz/* zookeeper-*/*"
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
 
 clear-swarm-data:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
-	sh -c "cd /pwd && rm -rf alertmanager/* clickhous*/* signoz/* zookeeper-*/*"
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
