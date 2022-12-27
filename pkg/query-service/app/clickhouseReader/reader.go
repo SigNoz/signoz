@@ -1177,33 +1177,54 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				traceFilterReponse.Status = map[string]uint64{"ok": 0, "error": 0}
 			}
 		case constants.Duration:
-			finalQuery := fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
-			finalQuery += query
-			finalQuery += " ORDER BY durationNano LIMIT 1"
-			var dBResponse []model.DBResponseTotal
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			err := r.featureFlags.CheckFeature(constants.DurationSort)
+			durationSortEnabled := err == nil
+			finalQuery := ""
+			if !durationSortEnabled {
+				// if duration sort is not enabled, we need to get the min and max duration from the index table
+				finalQuery = fmt.Sprintf("SELECT min(durationNano) as min, max(durationNano) as max FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
+				finalQuery += query
+				var dBResponse []model.DBResponseMinMax
+				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
+				zap.S().Info(finalQuery)
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
+				}
+				if len(dBResponse) > 0 {
+					traceFilterReponse.Duration = map[string]uint64{"minDuration": dBResponse[0].Min, "maxDuration": dBResponse[0].Max}
+				}
+			} else {
+				// when duration sort is enabled, we need to get the min and max duration from the duration table
+				finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
+				finalQuery += query
+				finalQuery += " ORDER BY durationNano LIMIT 1"
+				var dBResponse []model.DBResponseTotal
+				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
+				zap.S().Info(finalQuery)
 
-			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
-			finalQuery += query
-			finalQuery += " ORDER BY durationNano DESC LIMIT 1"
-			var dBResponse2 []model.DBResponseTotal
-			err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
-			zap.S().Info(finalQuery)
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
+				}
 
-			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			if len(dBResponse) > 0 {
-				traceFilterReponse.Duration["minDuration"] = dBResponse[0].NumTotal
-			}
-			if len(dBResponse2) > 0 {
-				traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
+				finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
+				finalQuery += query
+				finalQuery += " ORDER BY durationNano DESC LIMIT 1"
+				var dBResponse2 []model.DBResponseTotal
+				err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
+				zap.S().Info(finalQuery)
+
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
+				}
+				if len(dBResponse) > 0 {
+					traceFilterReponse.Duration["minDuration"] = dBResponse[0].NumTotal
+				}
+				if len(dBResponse2) > 0 {
+					traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
+				}
 			}
 		case constants.RPCMethod:
 			finalQuery := fmt.Sprintf("SELECT rpcMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)

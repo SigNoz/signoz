@@ -399,6 +399,11 @@ type DBResponseTotal struct {
 	NumTotal uint64 `ch:"numTotal"`
 }
 
+type DBResponseMinMax struct {
+	Min uint64 `ch:"min"`
+	Max uint64 `ch:"max"`
+}
+
 type SpanFiltersResponse struct {
 	ServiceName        map[string]uint64 `json:"serviceName"`
 	Status             map[string]uint64 `json:"status"`
