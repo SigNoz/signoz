@@ -2191,6 +2191,8 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &err, "streaming is not supported")
 		return
 	}
+	// flush the headers
+	flusher.Flush()
 
 	for {
 		select {
