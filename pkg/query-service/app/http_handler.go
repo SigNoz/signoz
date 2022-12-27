@@ -1332,6 +1332,9 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
+	if (data["number"] != 0) || (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
+		telemetry.GetInstance().AddActiveTracesUser()
+	}
 
 	aH.WriteJSON(w, r, result)
 }

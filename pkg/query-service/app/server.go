@@ -277,12 +277,27 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 	return data, true
 }
 
+func getActiveMetricsOrLogs(path string, r *http.Request) {
+	if path == "/api/v1/dashboards/{uuid}" {
+		telemetry.GetInstance().AddActiveMetricsUser()
+	}
+	if path == "/api/v1/logs" {
+		hasFilters := len(r.URL.Query().Get("q"))
+		if hasFilters > 0 {
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+
+	}
+
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
 		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		getActiveMetricsOrLogs(path, r)
 
 		lrw := NewLoggingResponseWriter(w)
 		next.ServeHTTP(lrw, r)
