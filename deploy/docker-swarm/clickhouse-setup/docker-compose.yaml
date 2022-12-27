@@ -35,7 +35,6 @@ x-clickhouse-depend: &clickhouse-depend
 services:
   zookeeper-1:
     image: bitnami/zookeeper:3.7.0
-    container_name: zookeeper-1
     hostname: zookeeper-1
     user: root
     ports:
@@ -52,7 +51,6 @@ services:
 
   # zookeeper-2:
   #   image: bitnami/zookeeper:3.7.0
-  #   container_name: zookeeper-2
   #   hostname: zookeeper-2
   #   user: root
   #   ports:
@@ -69,7 +67,6 @@ services:
 
   # zookeeper-3:
   #   image: bitnami/zookeeper:3.7.0
-  #   container_name: zookeeper-3
   #   hostname: zookeeper-3
   #   user: root
   #   ports:
@@ -86,7 +83,6 @@ services:
 
   clickhouse:
     <<: *clickhouse-defaults
-    container_name: clickhouse
     hostname: clickhouse
     # ports:
     #   - "9000:9000"
@@ -101,7 +97,6 @@ services:
 
   # clickhouse-2:
   #   <<: *clickhouse-defaults
-  #   container_name: clickhouse-2
   #   hostname: clickhouse-2
   #   ports:
   #     - "9001:9000"
@@ -116,7 +111,6 @@ services:
 
   # clickhouse-3:
   #   <<: *clickhouse-defaults
-  #   container_name: clickhouse-3
   #   hostname: clickhouse-3
   #   ports:
   #     - "9002:9000"
