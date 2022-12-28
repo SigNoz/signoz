@@ -138,10 +138,10 @@ function AllErrors(): JSX.Element {
 			filterKey: string,
 		): VoidFunction => (): void => {
 			const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
-				getUpdatedServiceName,
-				getUpdatedExceptionType,
+				getUpdatedServiceName || '',
+				getUpdatedExceptionType || '',
 				filterKey,
-				filterValue,
+				filterValue || '',
 			);
 			history.replace(
 				`${pathname}?${createQueryParams({
@@ -333,31 +333,31 @@ function AllErrors(): JSX.Element {
 		},
 	];
 
-	const onChangeHandler: TableProps<Exception>['onChange'] = (
-		paginations,
-		filters,
-		sorter,
-	) => {
-		if (!Array.isArray(sorter)) {
-			const { pageSize = 0, current = 0 } = paginations;
-			const { columnKey = '', order } = sorter;
-			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
-			const { exceptionType, serviceName } = extractFilterValues(filters, {
-				serviceName: getUpdatedServiceName,
-				exceptionType: getUpdatedExceptionType,
-			});
-			history.replace(
-				`${pathname}?${createQueryParams({
-					order: updatedOrder,
-					offset: (current - 1) * pageSize,
-					orderParam: columnKey,
-					pageSize,
-					exceptionType,
-					serviceName,
-				})}`,
-			);
-		}
-	};
+	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(
+		(paginations, filters, sorter) => {
+			if (!Array.isArray(sorter)) {
+				const { pageSize = 0, current = 0 } = paginations;
+				const { columnKey = '', order } = sorter;
+				const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
+				const params = new URLSearchParams(window.location.search);
+				const { exceptionType, serviceName } = extractFilterValues(filters, {
+					serviceName: getFilterString(params.get(urlKey.serviceName)),
+					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
+				});
+				history.replace(
+					`${pathname}?${createQueryParams({
+						order: updatedOrder,
+						offset: (current - 1) * pageSize,
+						orderParam: columnKey,
+						pageSize,
+						exceptionType,
+						serviceName,
+					})}`,
+				);
+			}
+		},
+		[pathname],
+	);
 
 	return (
 		<Table
