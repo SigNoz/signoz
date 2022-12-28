@@ -3,14 +3,26 @@ package data
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 )
 
 var db *sqlx.DB
 
+var AllAgents = Agents{
+	agentsById:  map[string]*Agent{},
+	connections: map[types.Connection]map[string]bool{},
+}
+
+type Agents struct {
+	mux         sync.RWMutex
+	agentsById  map[string]*Agent
+	connections map[types.Connection]map[string]bool
+}
+
+// InitDB initializes the database and creates the agents table.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	var err error
 
@@ -19,47 +31,25 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	table_schema := `CREATE TABLE IF NOT EXISTS agents (
-		instance_id TEXT PRIMARY KEY UNIQUE,
-		status TEXT,
+	tableSchema := `CREATE TABLE IF NOT EXISTS agents (
+		agent_id TEXT PRIMARY KEY UNIQUE,
+		started_at datetime NOT NULL,
+		terminated_at datetime,
+		current_status TEXT NOT NULL,
 		effective_config TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(table_schema)
+	_, err = db.Exec(tableSchema)
 	if err != nil {
 		return nil, fmt.Errorf("Error in creating agents table: %s", err.Error())
 	}
 
-	rows, err := db.Query("SELECT * FROM agents")
-	if err != nil {
-		return nil, fmt.Errorf("Error in querying agents table: %s", err.Error())
-	}
-	defer rows.Close()
-
-	agents := &Agents{
-		agentsById:  make(map[InstanceId]*Agent),
-		connections: make(map[types.Connection]map[InstanceId]bool),
+	AllAgents = Agents{
+		agentsById:  make(map[string]*Agent),
+		connections: make(map[types.Connection]map[string]bool),
 		mux:         sync.RWMutex{},
 	}
-
-	// for rows.Next() {
-	// 	var agent Agent
-	// 	err = rows.Scan(&agent.Id, &agent.Status, &agent.EffectiveConfig)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("Error in scanning agents table: %s", err.Error())
-	// 	}
-	// 	agents.agentsById[agent.Id] = &agent
-	// }
-
-	AllAgents = *agents
-
 	return db, nil
-}
-
-type Agents struct {
-	mux         sync.RWMutex
-	agentsById  map[InstanceId]*Agent
-	connections map[types.Connection]map[InstanceId]bool
 }
 
 // RemoveConnection removes the connection all Agent instances associated with the
@@ -69,61 +59,43 @@ func (agents *Agents) RemoveConnection(conn types.Connection) {
 	defer agents.mux.Unlock()
 
 	for instanceId := range agents.connections[conn] {
+		agent := agents.agentsById[instanceId]
+		agent.CurrentStatus = AgentStatusDisconnected
+		agent.TerminatedAt = time.Now()
+		agent.Upsert()
 		delete(agents.agentsById, instanceId)
 	}
 	delete(agents.connections, conn)
 }
 
-func (agents *Agents) FindAgent(agentId InstanceId) *Agent {
+// FindAgent returns the Agent instance associated with the given agentID.
+func (agents *Agents) FindAgent(agentID string) *Agent {
 	agents.mux.RLock()
 	defer agents.mux.RUnlock()
-	return agents.agentsById[agentId]
+	return agents.agentsById[agentID]
 }
 
-func (agents *Agents) FindOrCreateAgent(agentId InstanceId, conn types.Connection) (*Agent, error) {
+// FindOrCreateAgent returns the Agent instance associated with the given agentID.
+// If the Agent instance does not exist, it is created and added to the list of
+// Agent instances.
+func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (*Agent, error) {
 	agents.mux.Lock()
 	defer agents.mux.Unlock()
 
-	// Ensure the Agent is in the agentsById map.
-	agent := agents.agentsById[agentId]
+	agent, ok := agents.agentsById[agentID]
 	var err error
-	if agent == nil {
-		agent, err = NewAgent(agentId, conn)
+	if !ok || agent == nil {
+		agent = New(agentID, conn)
+		err = agent.Upsert()
 		if err != nil {
 			return nil, err
 		}
-		agents.agentsById[agentId] = agent
+		agents.agentsById[agentID] = agent
 
-		// Ensure the Agent's instance id is associated with the connection.
 		if agents.connections[conn] == nil {
-			agents.connections[conn] = map[InstanceId]bool{}
+			agents.connections[conn] = map[string]bool{}
 		}
-		agents.connections[conn][agentId] = true
+		agents.connections[conn][agentID] = true
 	}
 	return agent, nil
-}
-
-func (agents *Agents) UpdateAgent(agentId InstanceId, status *protobufs.AgentToServer, effectiveConfig string) error {
-	agents.mux.Lock()
-	defer agents.mux.Unlock()
-
-	agent := agents.agentsById[agentId]
-	if agent == nil {
-		return fmt.Errorf("Agent with id %s not found", agentId)
-	}
-
-	agent.Status = status
-	agent.EffectiveConfig = effectiveConfig
-
-	_, err := db.Exec("UPDATE agents SET status = ?, effective_config = ? WHERE instance_id = ?", status, effectiveConfig, agentId)
-	if err != nil {
-		return fmt.Errorf("Error in updating agents table: %s", err.Error())
-	}
-
-	return nil
-}
-
-var AllAgents = Agents{
-	agentsById:  map[InstanceId]*Agent{},
-	connections: map[types.Connection]map[InstanceId]bool{},
 }

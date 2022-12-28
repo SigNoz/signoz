@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"sync"
 	"time"
 
@@ -14,50 +13,56 @@ import (
 	"github.com/open-telemetry/opamp-go/server/types"
 )
 
-type InstanceId string
+type AgentStatus int
+
+const (
+	AgentStatusUnknown AgentStatus = iota
+	AgentStatusConnected
+	AgentStatusDisconnected
+)
 
 type Agent struct {
-	Id              InstanceId               `json:"instanceId" yaml:"instanceId" db:"instance_id"`
-	Status          *protobufs.AgentToServer `json:"status" yaml:"status" db:"status"`
-	StartedAt       time.Time                `json:"startedAt" yaml:"startedAt" db:"started_at"`
-	EffectiveConfig string                   `json:"effectiveConfig" yaml:"effectiveConfig" db:"effective_config"`
+	ID              string      `json:"agentId" yaml:"agentId" db:"agent_id"`
+	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" db:"started_at"`
+	TerminatedAt    time.Time   `json:"terminatedAt" yaml:"terminatedAt" db:"terminated_at"`
+	EffectiveConfig string      `json:"effectiveConfig" yaml:"effectiveConfig" db:"effective_config"`
+	CurrentStatus   AgentStatus `json:"currentStatus" yaml:"currentStatus" db:"current_status"`
 	remoteConfig    *protobufs.AgentRemoteConfig
+	Status          *protobufs.AgentToServer
 
 	conn      types.Connection
 	connMutex sync.Mutex
 	mux       sync.RWMutex
 }
 
-func isUniqueConstraintViolation(err error) bool {
-	errStr := err.Error()
-	return bytes.Contains([]byte(errStr), []byte("UNIQUE constraint failed"))
+func New(ID string, conn types.Connection) *Agent {
+	return &Agent{ID: ID, StartedAt: time.Now(), CurrentStatus: AgentStatusConnected, conn: conn}
 }
 
-func NewAgent(
-	instanceId InstanceId,
-	conn types.Connection,
-) (*Agent, error) {
-	result, err := db.Exec("INSERT INTO agents (instance_id, status, effective_config) VALUES (?, ?, ?)", instanceId, nil, "")
+// Upsert inserts or updates the agent in the database.
+func (agent *Agent) Upsert() error {
+	agent.mux.Lock()
+	defer agent.mux.Unlock()
+
+	_, err := db.NamedExec(`INSERT OR REPLACE INTO agents (
+		agent_id,
+		started_at,
+		effective_config,
+		current_status
+	) VALUES (
+		:agent_id,
+		:started_at,
+		:effective_config,
+		:current_status
+	)`, agent)
 	if err != nil {
-		if isUniqueConstraintViolation(err) {
-			return &Agent{Id: instanceId, conn: conn}, nil
-		}
-		return nil, err
+		return err
 	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	if rowsAffected != 1 {
-		return nil, fmt.Errorf("Expected 1 row to be affected, got %d", rowsAffected)
-	}
-	return &Agent{Id: instanceId, conn: conn}, nil
+
+	return nil
 }
 
-func (agent *Agent) UpdateStatus(
-	statusMsg *protobufs.AgentToServer,
-	response *protobufs.ServerToAgent,
-) {
+func (agent *Agent) UpdateStatus(statusMsg *protobufs.AgentToServer, response *protobufs.ServerToAgent) {
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 	agent.processStatusUpdate(statusMsg, response)
@@ -135,10 +140,7 @@ func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer) (agent
 	return agentDescrChanged
 }
 
-func (agent *Agent) updateEffectiveConfig(
-	newStatus *protobufs.AgentToServer,
-	response *protobufs.ServerToAgent,
-) {
+func (agent *Agent) updateEffectiveConfig(newStatus *protobufs.AgentToServer, response *protobufs.ServerToAgent) {
 	// Update effective config if provided.
 	if newStatus.EffectiveConfig != nil {
 		if newStatus.EffectiveConfig.ConfigMap != nil {
@@ -146,11 +148,9 @@ func (agent *Agent) updateEffectiveConfig(
 
 			// Convert to string for displaying purposes.
 			agent.EffectiveConfig = ""
+			// There should be only one config in the map.
 			for _, cfg := range newStatus.EffectiveConfig.ConfigMap.ConfigMap {
-				// TODO: we just concatenate parts of effective config as a single
-				// blob to show in the UI. A proper approach is to keep the effective
-				// config as a set and show the set in the UI.
-				agent.EffectiveConfig = agent.EffectiveConfig + string(cfg.Body)
+				agent.EffectiveConfig = string(cfg.Body)
 			}
 		}
 	}
@@ -281,7 +281,6 @@ func isEqualConfigFile(f1, f2 *protobufs.AgentConfigFile) bool {
 func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {
 	agent.connMutex.Lock()
 	defer agent.connMutex.Unlock()
-	fmt.Print("agent.conn", agent.conn)
 
 	agent.conn.Send(context.Background(), msg)
 }
