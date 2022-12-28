@@ -3233,7 +3233,8 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// remove index
 		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, field.Name)
 		err := r.db.Exec(ctx, query)
-		if err != nil {
+		// we are ignoring errors with code 341 as it is an error with updating old part https://github.com/SigNoz/engineering-pod/issues/919#issuecomment-1366344346
+		if err != nil && !strings.HasPrefix(err.Error(), "code: 341") {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 	}
