@@ -101,6 +101,7 @@ func createTelemetry() {
 		phOperator: ph.New(ph_api_key),
 		ipAddress:  getOutboundIP(),
 		rateLimits: make(map[string]int8),
+		activeUser: make(map[string]int8),
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
