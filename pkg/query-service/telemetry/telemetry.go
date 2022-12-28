@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -67,6 +68,23 @@ func (a *Telemetry) IsSampled() bool {
 		return false
 	}
 
+}
+
+func (telemetry *Telemetry) CheckSigNozMetrics(compositeMetricQueryMap map[string]interface{}) bool {
+
+	builderQueries, builderQueriesExists := compositeMetricQueryMap["builderQueries"]
+	if builderQueriesExists {
+		builderQueriesStr, _ := json.Marshal(builderQueries)
+		return strings.Contains(string(builderQueriesStr), "signoz_")
+	}
+
+	promQueries, promQueriesExists := compositeMetricQueryMap["promQueries"]
+	if promQueriesExists {
+		promQueriesStr, _ := json.Marshal(promQueries)
+		return strings.Contains(string(promQueriesStr), "signoz_")
+	}
+
+	return false
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
