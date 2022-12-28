@@ -2528,8 +2528,35 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 
 	var getErrorResponses []model.Error
 
-	query := fmt.Sprintf("SELECT any(exceptionType) as exceptionType, any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, any(serviceName) as serviceName, groupID FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU GROUP BY groupID", r.TraceDB, r.errorTable)
+	query := "SELECT any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, groupID"
+	if len(queryParams.ServiceName) != 0 {
+		query = query + ", serviceName"
+	} else {
+		query = query + ", any(serviceName) as serviceName"
+	}
+	if len(queryParams.ExceptionType) != 0 {
+		query = query + ", exceptionType"
+	} else {
+		query = query + ", any(exceptionType) as exceptionType"
+	}
+	query += fmt.Sprintf(" FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+
+	if len(queryParams.ServiceName) != 0 {
+		query = query + " AND serviceName ilike @serviceName"
+		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
+	}
+	if len(queryParams.ExceptionType) != 0 {
+		query = query + " AND exceptionType ilike @exceptionType"
+		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+	}
+	query = query + " GROUP BY groupID"
+	if len(queryParams.ServiceName) != 0 {
+		query = query + ", serviceName"
+	}
+	if len(queryParams.ExceptionType) != 0 {
+		query = query + ", exceptionType"
+	}
 	if len(queryParams.OrderParam) != 0 {
 		if queryParams.Order == constants.Descending {
 			query = query + " ORDER BY " + queryParams.OrderParam + " DESC"
@@ -2564,7 +2591,14 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 
 	query := fmt.Sprintf("SELECT count(distinct(groupID)) FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
-
+	if len(queryParams.ServiceName) != 0 {
+		query = query + " AND serviceName = @serviceName"
+		args = append(args, clickhouse.Named("serviceName", queryParams.ServiceName))
+	}
+	if len(queryParams.ExceptionType) != 0 {
+		query = query + " AND exceptionType = @exceptionType"
+		args = append(args, clickhouse.Named("exceptionType", queryParams.ExceptionType))
+	}
 	err := r.db.QueryRow(ctx, query, args...).Scan(&errorCount)
 	zap.S().Info(query)
 
@@ -3233,7 +3267,8 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// remove index
 		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, field.Name)
 		err := r.db.Exec(ctx, query)
-		if err != nil {
+		// we are ignoring errors with code 341 as it is an error with updating old part https://github.com/SigNoz/engineering-pod/issues/919#issuecomment-1366344346
+		if err != nil && !strings.HasPrefix(err.Error(), "code: 341") {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 	}
