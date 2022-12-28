@@ -110,6 +110,7 @@ type Telemetry struct {
 	maxRandInt    int
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
+	countUsers    int8
 }
 
 func createTelemetry() {
@@ -175,6 +176,7 @@ func createTelemetry() {
 					"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
 					"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
 					"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
+					"countUsers":                            telemetry.countUsers,
 				}
 				for key, value := range tsInfo {
 					data[key] = value
@@ -215,7 +217,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	a.setCompanyDomain(user.Email)
+	a.SetCompanyDomain(user.Email)
 
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
@@ -231,7 +233,11 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 
 }
 
-func (a *Telemetry) setCompanyDomain(email string) {
+func (a *Telemetry) SetCountUsers(countUsers int8) {
+	a.countUsers = countUsers
+}
+
+func (a *Telemetry) SetCompanyDomain(email string) {
 
 	email_split := strings.Split(email, "@")
 	if len(email_split) != 2 {
