@@ -45,6 +45,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
@@ -1177,33 +1178,54 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				traceFilterReponse.Status = map[string]uint64{"ok": 0, "error": 0}
 			}
 		case constants.Duration:
-			finalQuery := fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
-			finalQuery += query
-			finalQuery += " ORDER BY durationNano LIMIT 1"
-			var dBResponse []model.DBResponseTotal
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			err := r.featureFlags.CheckFeature(constants.DurationSort)
+			durationSortEnabled := err == nil
+			finalQuery := ""
+			if !durationSortEnabled {
+				// if duration sort is not enabled, we need to get the min and max duration from the index table
+				finalQuery = fmt.Sprintf("SELECT min(durationNano) as min, max(durationNano) as max FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
+				finalQuery += query
+				var dBResponse []model.DBResponseMinMax
+				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
+				zap.S().Info(finalQuery)
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
+				}
+				if len(dBResponse) > 0 {
+					traceFilterReponse.Duration = map[string]uint64{"minDuration": dBResponse[0].Min, "maxDuration": dBResponse[0].Max}
+				}
+			} else {
+				// when duration sort is enabled, we need to get the min and max duration from the duration table
+				finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
+				finalQuery += query
+				finalQuery += " ORDER BY durationNano LIMIT 1"
+				var dBResponse []model.DBResponseTotal
+				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
+				zap.S().Info(finalQuery)
 
-			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
-			finalQuery += query
-			finalQuery += " ORDER BY durationNano DESC LIMIT 1"
-			var dBResponse2 []model.DBResponseTotal
-			err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
-			zap.S().Info(finalQuery)
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
+				}
 
-			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			if len(dBResponse) > 0 {
-				traceFilterReponse.Duration["minDuration"] = dBResponse[0].NumTotal
-			}
-			if len(dBResponse2) > 0 {
-				traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
+				finalQuery = fmt.Sprintf("SELECT durationNano as numTotal FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.durationTable)
+				finalQuery += query
+				finalQuery += " ORDER BY durationNano DESC LIMIT 1"
+				var dBResponse2 []model.DBResponseTotal
+				err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
+				zap.S().Info(finalQuery)
+
+				if err != nil {
+					zap.S().Debug("Error in processing sql query: ", err)
+					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
+				}
+				if len(dBResponse) > 0 {
+					traceFilterReponse.Duration["minDuration"] = dBResponse[0].NumTotal
+				}
+				if len(dBResponse2) > 0 {
+					traceFilterReponse.Duration["maxDuration"] = dBResponse2[0].NumTotal
+				}
 			}
 		case constants.RPCMethod:
 			finalQuery := fmt.Sprintf("SELECT rpcMethod, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
@@ -3067,6 +3089,20 @@ func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Con
 
 	return totalSamples, nil
 }
+
+func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error) {
+
+	clusterInfo := []model.ClusterInfo{}
+
+	queryStr := `SELECT shard_num, shard_weight, replica_num, errors_count, slowdowns_count, estimated_recovery_time FROM system.clusters where cluster='cluster';`
+	r.db.Select(ctx, &clusterInfo, queryStr)
+	if len(clusterInfo) == 1 {
+		return clusterInfo[0].GetMapFromStruct(), nil
+	}
+
+	return nil, nil
+}
+
 func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
 
 	var totalLogLines uint64
@@ -3197,7 +3233,8 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// remove index
 		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, field.Name)
 		err := r.db.Exec(ctx, query)
-		if err != nil {
+		// we are ignoring errors with code 341 as it is an error with updating old part https://github.com/SigNoz/engineering-pod/issues/919#issuecomment-1366344346
+		if err != nil && !strings.HasPrefix(err.Error(), "code: 341") {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 	}
@@ -3212,10 +3249,15 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	}
 
 	isPaginatePrev := logs.CheckIfPrevousPaginateAndModifyOrder(params)
-	filterSql, err := logs.GenerateSQLWhere(fields, params)
+	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, params)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
+
+	data := map[string]interface{}{
+		"lenFilters": lenFilters,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
 
 	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
 
@@ -3246,9 +3288,14 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		return
 	}
 
-	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
 		Query: client.Filter.Query,
 	})
+
+	data := map[string]interface{}{
+		"lenFilters": lenFilters,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
 
 	if err != nil {
 		client.Error <- err
@@ -3326,12 +3373,17 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		return nil, apiErr
 	}
 
-	filterSql, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
+	filterSql, lenFilters, err := logs.GenerateSQLWhere(fields, &model.LogsFilterParams{
 		Query: params.Query,
 	})
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
+
+	data := map[string]interface{}{
+		"lenFilters": lenFilters,
+	}
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
 
 	query := ""
 	if params.GroupBy != "" {
