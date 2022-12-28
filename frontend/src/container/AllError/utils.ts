@@ -2,6 +2,12 @@ import { FilterValue, SortOrder } from 'antd/lib/table/interface';
 import Timestamp from 'timestamp-nano';
 import { Order, OrderBy } from 'types/api/errors/getAll';
 
+import {
+	DEFAULT_FILTER_VALUE,
+	EXCEPTION_TYPE_FILTER_NAME,
+	SERVICE_NAME_FILTER_NAME,
+} from './constant';
+
 export const isOrder = (order: string | null): order is Order =>
 	!!(order === 'ascending' || order === 'descending');
 
@@ -116,22 +122,43 @@ export const getDefaultFilterValue = (
 	return defaultValue;
 };
 
-export const extractFilterValues = (
-	filters: Record<string, FilterValue | null>,
-): { exceptionType: string; serviceName: string } => {
-	const filterValues = {
-		exceptionType: '',
-		serviceName: '',
+type FilterValues = { exceptionType: string; serviceName: string };
+
+const extractSingleFilterValue = (
+	filterName: string,
+	filters: Filter,
+): string => {
+	const filterValues = filters[filterName];
+
+	if (
+		!filterValues ||
+		!Array.isArray(filterValues) ||
+		filterValues.length === 0
+	) {
+		return DEFAULT_FILTER_VALUE;
+	}
+
+	return String(filterValues[0]);
+};
+
+type Filter = Record<string, FilterValue | null>;
+
+export const extractFilterValues = (filters: Filter): FilterValues => {
+	const filterValues: FilterValues = {
+		exceptionType: DEFAULT_FILTER_VALUE,
+		serviceName: DEFAULT_FILTER_VALUE,
 	};
-	const exceptionTypeValues = filters.exceptionType as string[];
-	const exceptionType =
-		exceptionTypeValues && exceptionTypeValues.length > 0
-			? exceptionTypeValues[0]
-			: '';
-	filterValues.exceptionType = exceptionType;
-	const serviceNameValues = filters.serviceName as string[];
-	const serviceName =
-		serviceNameValues && serviceNameValues.length > 0 ? serviceNameValues[0] : '';
-	filterValues.serviceName = serviceName;
+	if (filters[EXCEPTION_TYPE_FILTER_NAME]) {
+		filterValues.exceptionType = extractSingleFilterValue(
+			EXCEPTION_TYPE_FILTER_NAME,
+			filters,
+		);
+	}
+	if (filters[SERVICE_NAME_FILTER_NAME]) {
+		filterValues.serviceName = extractSingleFilterValue(
+			SERVICE_NAME_FILTER_NAME,
+			filters,
+		);
+	}
 	return filterValues;
 };
