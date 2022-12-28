@@ -105,21 +105,42 @@ export const getFilterString = (filter: string | null): string => {
 
 export const getDefaultFilterValue = (
 	filterKey: string | null,
-	getUpdatedServiceName: string,
-	getUpdatedExceptionType: string,
+	serviceName: string,
+	exceptionType: string,
 ): string | undefined => {
 	let defaultValue: string | undefined;
 	switch (filterKey) {
-		case 'serviceName':
-			defaultValue = getUpdatedServiceName;
+		case SERVICE_NAME_FILTER_NAME:
+			defaultValue = serviceName;
 			break;
-		case 'exceptionType':
-			defaultValue = getUpdatedExceptionType;
+		case EXCEPTION_TYPE_FILTER_NAME:
+			defaultValue = exceptionType;
 			break;
 		default:
 			break;
 	}
 	return defaultValue;
+};
+
+export const getFilterValues = (
+	serviceName: string,
+	exceptionType: string,
+	filterKey: string,
+	filterValue: string,
+): { exceptionFilterValue: string; serviceFilterValue: string } => {
+	let serviceFilterValue = serviceName;
+	let exceptionFilterValue = exceptionType;
+	switch (filterKey) {
+		case EXCEPTION_TYPE_FILTER_NAME:
+			exceptionFilterValue = filterValue;
+			break;
+		case SERVICE_NAME_FILTER_NAME:
+			serviceFilterValue = filterValue;
+			break;
+		default:
+			break;
+	}
+	return { exceptionFilterValue, serviceFilterValue };
 };
 
 type FilterValues = { exceptionType: string; serviceName: string };
@@ -143,10 +164,13 @@ const extractSingleFilterValue = (
 
 type Filter = Record<string, FilterValue | null>;
 
-export const extractFilterValues = (filters: Filter): FilterValues => {
+export const extractFilterValues = (
+	filters: Filter,
+	prefilledFilters: FilterValues,
+): FilterValues => {
 	const filterValues: FilterValues = {
-		exceptionType: DEFAULT_FILTER_VALUE,
-		serviceName: DEFAULT_FILTER_VALUE,
+		exceptionType: prefilledFilters.exceptionType,
+		serviceName: prefilledFilters.serviceName,
 	};
 	if (filters[EXCEPTION_TYPE_FILTER_NAME]) {
 		filterValues.exceptionType = extractSingleFilterValue(

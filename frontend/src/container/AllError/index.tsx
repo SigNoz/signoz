@@ -35,6 +35,7 @@ import {
 	getDefaultFilterValue,
 	getDefaultOrder,
 	getFilterString,
+	getFilterValues,
 	getNanoSeconds,
 	getOffSet,
 	getOrder,
@@ -130,11 +131,40 @@ function AllErrors(): JSX.Element {
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
 
-	const handleSearch = (
-		confirm: (param?: FilterConfirmProps) => void,
-	): VoidFunction => (): void => {
-		confirm();
-	};
+	const handleSearch = useCallback(
+		(
+			confirm: (param?: FilterConfirmProps) => void,
+			filterValue: string,
+			filterKey: string,
+		): VoidFunction => (): void => {
+			const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
+				getUpdatedServiceName,
+				getUpdatedExceptionType,
+				filterKey,
+				filterValue,
+			);
+			history.replace(
+				`${pathname}?${createQueryParams({
+					order: updatedOrder,
+					offset: getUpdatedOffset,
+					orderParam: getUpdatedParams,
+					pageSize: getUpdatedPageSize,
+					exceptionType: exceptionFilterValue,
+					serviceName: serviceFilterValue,
+				})}`,
+			);
+			confirm();
+		},
+		[
+			getUpdatedExceptionType,
+			getUpdatedOffset,
+			getUpdatedPageSize,
+			getUpdatedParams,
+			getUpdatedServiceName,
+			pathname,
+			updatedOrder,
+		],
+	);
 
 	const filterDropdownWrapper = useCallback(
 		({ setSelectedKeys, selectedKeys, confirm, placeholder, filterKey }) => {
@@ -153,11 +183,11 @@ function AllErrors(): JSX.Element {
 								getUpdatedServiceName,
 								getUpdatedExceptionType,
 							)}
-							onPressEnter={handleSearch(confirm)}
+							onPressEnter={handleSearch(confirm, selectedKeys[0], filterKey)}
 						/>
 						<Button
 							type="primary"
-							onClick={handleSearch(confirm)}
+							onClick={handleSearch(confirm, selectedKeys[0], filterKey)}
 							icon={<SearchOutlined />}
 							size="small"
 						>
@@ -167,7 +197,7 @@ function AllErrors(): JSX.Element {
 				</Card>
 			);
 		},
-		[getUpdatedExceptionType, getUpdatedServiceName],
+		[getUpdatedExceptionType, getUpdatedServiceName, handleSearch],
 	);
 
 	const onExceptionTypeFilter = useCallback(
@@ -312,7 +342,10 @@ function AllErrors(): JSX.Element {
 			const { pageSize = 0, current = 0 } = paginations;
 			const { columnKey = '', order } = sorter;
 			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
-			const { exceptionType, serviceName } = extractFilterValues(filters);
+			const { exceptionType, serviceName } = extractFilterValues(filters, {
+				serviceName: getUpdatedServiceName,
+				exceptionType: getUpdatedExceptionType,
+			});
 			history.replace(
 				`${pathname}?${createQueryParams({
 					order: updatedOrder,
