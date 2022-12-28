@@ -171,12 +171,19 @@ func createTelemetry() {
 
 				getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
 
+				traceTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.TraceTTL})
+				metricsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.MetricsTTL})
+				logsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.LogsTTL})
+
 				data := map[string]interface{}{
 					"totalSpans":                            totalSpans,
 					"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
 					"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
 					"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
 					"countUsers":                            telemetry.countUsers,
+					"metricsTTLStatus":                      metricsTTL.Status,
+					"tracesTTLStatus":                       traceTTL.Status,
+					"logsTTLStatus":                         logsTTL.Status,
 				}
 				for key, value := range tsInfo {
 					data[key] = value
