@@ -2593,11 +2593,11 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) != 0 {
 		query = query + " AND serviceName = @serviceName"
-		args = append(args, clickhouse.Named("serviceName", queryParams.ServiceName))
+		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
 	}
 	if len(queryParams.ExceptionType) != 0 {
 		query = query + " AND exceptionType = @exceptionType"
-		args = append(args, clickhouse.Named("exceptionType", queryParams.ExceptionType))
+		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
 	}
 	err := r.db.QueryRow(ctx, query, args...).Scan(&errorCount)
 	zap.S().Info(query)
