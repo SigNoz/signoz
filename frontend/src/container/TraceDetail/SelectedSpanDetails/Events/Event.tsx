@@ -1,6 +1,4 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
-import { Collapse, Popover, Space } from 'antd';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { Collapse } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import keys from 'lodash-es/keys';
 import map from 'lodash-es/map';
