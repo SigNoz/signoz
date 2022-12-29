@@ -6,6 +6,7 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
+import useMountedState from 'hooks/useMountedState';
 import useUrlQuery from 'hooks/useUrlQuery';
 import React, { memo, useEffect } from 'react';
 import { connect, useDispatch } from 'react-redux';
@@ -18,16 +19,21 @@ import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 import SpaceContainer from './styles';
 
 function Logs({ getLogsFields }: LogsProps): JSX.Element {
-	const urlQuery = useUrlQuery();
+	const getMountedState = useMountedState();
 
+	const urlQuery = useUrlQuery();
 	const dispatch = useDispatch();
 
 	useEffect(() => {
-		dispatch({
-			type: SET_SEARCH_QUERY_STRING,
-			payload: urlQuery.get('q'),
-		});
-	}, [dispatch, urlQuery]);
+		const hasMounted = getMountedState();
+
+		if (!hasMounted) {
+			dispatch({
+				type: SET_SEARCH_QUERY_STRING,
+				payload: urlQuery.get('q'),
+			});
+		}
+	}, [dispatch, getMountedState, urlQuery]);
 
 	useEffect(() => {
 		getLogsFields();
