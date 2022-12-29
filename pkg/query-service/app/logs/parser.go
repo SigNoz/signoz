@@ -36,7 +36,7 @@ const (
 	DESC            = "desc"
 )
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([^(]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) [^\\]?'(.*?[^\\])')`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+( )+(in|nin)( )+\([^(]+\))|([\w.]+( )+(gt|lt|gte|lte)( )+(')?[\S]+(')?)|([\w.]+( )+(contains|ncontains))( )+[^\\]?'(.*?[^\\])')`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
@@ -152,6 +152,7 @@ func ParseLogAggregateParams(r *http.Request) (*model.LogsAggregateParams, error
 
 func parseLogQuery(query string) ([]string, error) {
 	sqlQueryTokens := []string{}
+
 	filterTokens := tokenRegex.FindAllString(query, -1)
 
 	if len(filterTokens) == 0 {
@@ -190,7 +191,13 @@ func parseLogQuery(query string) ([]string, error) {
 			sqlQueryTokens = append(sqlQueryTokens, f)
 		} else {
 			symbol := operatorMapping[strings.ToLower(op)]
-			sqlQueryTokens = append(sqlQueryTokens, strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)+" ")
+			sqlExpr := strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)
+			splittedExpr := strings.Split(sqlExpr, symbol)
+			if len(splittedExpr) != 2 {
+				return nil, fmt.Errorf("error while splitting expression: %s", sqlExpr)
+			}
+			trimmedSqlExpr := fmt.Sprintf("%s %s %s ", strings.Join(strings.Fields(splittedExpr[0]), " "), symbol, strings.TrimSpace(splittedExpr[1]))
+			sqlQueryTokens = append(sqlQueryTokens, trimmedSqlExpr)
 		}
 	}
 
@@ -272,20 +279,23 @@ func CheckIfPrevousPaginateAndModifyOrder(params *model.LogsFilterParams) (isPag
 	return
 }
 
-func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, error) {
+func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, int, error) {
 	var tokens []string
 	var err error
 	var sqlWhere string
+	var lenTokens = 0
 	if params.Query != "" {
 		tokens, err = parseLogQuery(params.Query)
+
 		if err != nil {
-			return sqlWhere, err
+			return sqlWhere, -1, err
 		}
+		lenTokens = len(tokens)
 	}
 
 	tokens, err = replaceInterestingFields(allFields, tokens)
 	if err != nil {
-		return sqlWhere, err
+		return sqlWhere, -1, err
 	}
 
 	filterTokens := []string{}
@@ -335,5 +345,5 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 
 	sqlWhere = strings.Join(tokens, "")
 
-	return sqlWhere, nil
+	return sqlWhere, lenTokens, nil
 }
