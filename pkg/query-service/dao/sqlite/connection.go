@@ -125,6 +125,13 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	// set telemetry fields from userPreferences
 	telemetry.GetInstance().SetDistinctId(org.Id)
 
+	users, _ := mds.GetUsers(ctx)
+	countUsers := len(users)
+	telemetry.GetInstance().SetCountUsers(int8(countUsers))
+	if countUsers > 0 {
+		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
+	}
+
 	return nil
 }
 
