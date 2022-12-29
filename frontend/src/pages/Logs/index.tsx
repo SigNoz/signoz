@@ -6,8 +6,9 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
+import useMountedState from 'hooks/useMountedState';
 import useUrlQuery from 'hooks/useUrlQuery';
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect } from 'react';
 import { connect, useDispatch } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -18,23 +19,21 @@ import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 import SpaceContainer from './styles';
 
 function Logs({ getLogsFields }: LogsProps): JSX.Element {
-	const mountedRef = useRef<boolean>(false);
+	const getMountedState = useMountedState();
 
 	const urlQuery = useUrlQuery();
 	const dispatch = useDispatch();
 
 	useEffect(() => {
-		mountedRef.current = true;
-	}, [mountedRef]);
+		const hasMounted = getMountedState();
 
-	useEffect(() => {
-		if (!mountedRef.current) {
+		if (!hasMounted) {
 			dispatch({
 				type: SET_SEARCH_QUERY_STRING,
 				payload: urlQuery.get('q'),
 			});
 		}
-	}, [dispatch, mountedRef, urlQuery]);
+	}, [dispatch, getMountedState, urlQuery]);
 
 	useEffect(() => {
 		getLogsFields();
