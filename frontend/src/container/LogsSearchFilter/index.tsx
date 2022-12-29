@@ -161,7 +161,6 @@ function SearchFilter({
 						debouncedupdateQueryString(value);
 					}}
 					allowClear
-					onSearch={handleSearch}
 				/>
 			</Popover>
 		</Container>
