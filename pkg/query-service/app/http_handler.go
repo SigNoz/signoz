@@ -1159,6 +1159,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
 		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		return
 	}
 
 	response_data := &model.QueryData{
@@ -1332,6 +1333,9 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
+	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
+		telemetry.GetInstance().AddActiveTracesUser()
+	}
 
 	aH.WriteJSON(w, r, result)
 }
@@ -2190,6 +2194,8 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &err, "streaming is not supported")
 		return
 	}
+	// flush the headers
+	flusher.Flush()
 
 	for {
 		select {
