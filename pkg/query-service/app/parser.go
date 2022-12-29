@@ -480,14 +480,18 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	if err != nil {
 		return nil, errors.New("offset param is not in correct format")
 	}
+	serviceName := r.URL.Query().Get("serviceName")
+	exceptionType := r.URL.Query().Get("exceptionType")
 
 	params := &model.ListErrorsParams{
-		Start:      startTime,
-		End:        endTime,
-		OrderParam: orderParam,
-		Order:      order,
-		Limit:      int64(limitInt),
-		Offset:     int64(offsetInt),
+		Start:         startTime,
+		End:           endTime,
+		OrderParam:    orderParam,
+		Order:         order,
+		Limit:         int64(limitInt),
+		Offset:        int64(offsetInt),
+		ServiceName:   serviceName,
+		ExceptionType: exceptionType,
 	}
 
 	return params, nil
