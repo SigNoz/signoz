@@ -89,12 +89,14 @@ function SideNav(): JSX.Element {
 		},
 	];
 
+	const currentMenu = menus.find((menu) => pathname.startsWith(menu.to));
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
-				selectedKeys={[pathname]}
+				selectedKeys={currentMenu ? [currentMenu?.to] : []}
 				mode="inline"
 			>
 				{menus.map(({ to, Icon, name, tags }) => (
