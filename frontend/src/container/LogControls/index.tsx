@@ -4,7 +4,7 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Select } from 'antd';
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
@@ -24,8 +24,9 @@ function LogControls(): JSX.Element | null {
 	const {
 		logLinesPerPage,
 		liveTail,
-		isLoading,
+		isLoading: isLogsLoading,
 		isLoadingAggregate,
+		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const dispatch = useDispatch();
 
@@ -53,14 +54,25 @@ function LogControls(): JSX.Element | null {
 		});
 	};
 
+	const isLoading = isLogsLoading || isLoadingAggregate;
+
+	const isNextAndPreviousDisabled = useMemo(
+		() =>
+			isLoading ||
+			logLinesPerPage === 0 ||
+			logs.length === 0 ||
+			logs.length < logLinesPerPage,
+		[isLoading, logLinesPerPage, logs.length],
+	);
+
 	if (liveTail !== 'STOPPED') {
 		return null;
 	}
+
 	return (
 		<Container>
 			<Button
-				loading={isLoading || isLoadingAggregate}
-				disabled={isLoading || isLoadingAggregate}
+				loading={isLoading}
 				size="small"
 				type="link"
 				onClick={handleGoToLatest}
@@ -69,26 +81,25 @@ function LogControls(): JSX.Element | null {
 			</Button>
 			<Divider type="vertical" />
 			<Button
-				loading={isLoading || isLoadingAggregate}
-				disabled={isLoading || isLoadingAggregate}
+				loading={isLoading}
 				size="small"
 				type="link"
+				disabled={isNextAndPreviousDisabled}
 				onClick={handleNavigatePrevious}
 			>
 				<LeftOutlined /> Previous
 			</Button>
 			<Button
-				loading={isLoading || isLoadingAggregate}
-				disabled={isLoading || isLoadingAggregate}
+				loading={isLoading}
 				size="small"
 				type="link"
+				disabled={isNextAndPreviousDisabled}
 				onClick={handleNavigateNext}
 			>
 				Next <RightOutlined />
 			</Button>
 			<Select
-				loading={isLoading || isLoadingAggregate}
-				disabled={isLoading || isLoadingAggregate}
+				loading={isLoading}
 				value={logLinesPerPage}
 				onChange={handleLogLinesPerPageChange}
 			>
