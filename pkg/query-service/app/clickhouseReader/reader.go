@@ -3291,7 +3291,9 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	data := map[string]interface{}{
 		"lenFilters": lenFilters,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+	if lenFilters != 0 {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+	}
 
 	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
 
@@ -3329,7 +3331,9 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 	data := map[string]interface{}{
 		"lenFilters": lenFilters,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+	if lenFilters != 0 {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+	}
 
 	if err != nil {
 		client.Error <- err
@@ -3417,7 +3421,9 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	data := map[string]interface{}{
 		"lenFilters": lenFilters,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+	if lenFilters != 0 {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+	}
 
 	query := ""
 	if params.GroupBy != "" {

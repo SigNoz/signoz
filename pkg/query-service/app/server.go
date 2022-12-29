@@ -256,10 +256,14 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 
 	compositeMetricQuery, compositeMetricQueryExists := requestBody["compositeMetricQuery"]
 	compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
+	signozMetricFound := false
+
 	if compositeMetricQueryExists {
+		signozMetricFound = telemetry.GetInstance().CheckSigNozMetrics(compositeMetricQueryMap)
 		queryType, queryTypeExists := compositeMetricQueryMap["queryType"]
 		if queryTypeExists {
 			data["queryType"] = queryType
+
 		}
 		panelType, panelTypeExists := compositeMetricQueryMap["panelType"]
 		if panelTypeExists {
@@ -272,15 +276,18 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		data["datasource"] = datasource
 	}
 
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, false)
+	if !signozMetricFound {
+		telemetry.GetInstance().AddActiveMetricsUser()
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, false)
+	}
 
 	return data, true
 }
 
-func getActiveMetricsOrLogs(path string, r *http.Request) {
-	if path == "/api/v1/dashboards/{uuid}" {
-		telemetry.GetInstance().AddActiveMetricsUser()
-	}
+func getActiveLogs(path string, r *http.Request) {
+	// if path == "/api/v1/dashboards/{uuid}" {
+	// 	telemetry.GetInstance().AddActiveMetricsUser()
+	// }
 	if path == "/api/v1/logs" {
 		hasFilters := len(r.URL.Query().Get("q"))
 		if hasFilters > 0 {
@@ -297,7 +304,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 
 		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
-		getActiveMetricsOrLogs(path, r)
+		getActiveLogs(path, r)
 
 		lrw := NewLoggingResponseWriter(w)
 		next.ServeHTTP(lrw, r)
