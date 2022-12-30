@@ -80,7 +80,7 @@ function SearchFilter({
 						}),
 					0,
 				);
-			} else {
+			} else if (minTime !== maxTime) {
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
