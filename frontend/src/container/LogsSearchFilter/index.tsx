@@ -127,6 +127,7 @@ function SearchFilter({
 		return (): void => {
 			debouncedHandleSearch.cancel();
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		urlQueryString,
 		maxTime,
@@ -135,7 +136,6 @@ function SearchFilter({
 		idStart,
 		logLinesPerPage,
 		dispatch,
-		handleSearch,
 	]);
 
 	return (
