@@ -2,9 +2,9 @@ import { Button } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import map from 'lodash-es/map';
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ADD_SEARCH_FIELD_QUERY_STRING } from 'types/actions/logs';
+// import { ADD_SEARCH_FIELD_QUERY_STRING } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import FieldKey from './FieldKey';
@@ -12,15 +12,15 @@ import FieldKey from './FieldKey';
 interface SuggestedItemProps {
 	name: string;
 	type: string;
+	applySuggestion: (name: string) => void;
 }
-function SuggestedItem({ name, type }: SuggestedItemProps): JSX.Element {
-	const dispatch = useDispatch();
-
+function SuggestedItem({
+	name,
+	type,
+	applySuggestion,
+}: SuggestedItemProps): JSX.Element {
 	const addSuggestedField = (): void => {
-		dispatch({
-			type: ADD_SEARCH_FIELD_QUERY_STRING,
-			payload: name,
-		});
+		applySuggestion(name);
 	};
 	return (
 		<Button
@@ -33,7 +33,11 @@ function SuggestedItem({ name, type }: SuggestedItemProps): JSX.Element {
 	);
 }
 
-function Suggestions(): JSX.Element {
+interface SuggestionsProps {
+	applySuggestion: (name: string) => void;
+}
+
+function Suggestions({ applySuggestion }: SuggestionsProps): JSX.Element {
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -47,6 +51,7 @@ function Suggestions(): JSX.Element {
 						key={JSON.stringify(field)}
 						name={field.name}
 						type={field.type}
+						applySuggestion={applySuggestion}
 					/>
 				))}
 			</div>
