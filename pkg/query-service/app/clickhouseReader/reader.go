@@ -2592,11 +2592,11 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 	query := fmt.Sprintf("SELECT count(distinct(groupID)) FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) != 0 {
-		query = query + " AND serviceName = @serviceName"
+		query = query + " AND serviceName ilike @serviceName"
 		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
 	}
 	if len(queryParams.ExceptionType) != 0 {
-		query = query + " AND exceptionType = @exceptionType"
+		query = query + " AND exceptionType ilike @exceptionType"
 		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
 	}
 	err := r.db.QueryRow(ctx, query, args...).Scan(&errorCount)
