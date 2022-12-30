@@ -108,12 +108,21 @@ function AllErrors(): JSX.Element {
 			enabled: !loading,
 		},
 		{
-			queryKey: ['getErrorCounts', maxTime, minTime],
+			queryKey: [
+				'getErrorCounts',
+				maxTime,
+				minTime,
+				getUpdatedExceptionType,
+				getUpdatedServiceName,
+			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
 					end: maxTime,
 					start: minTime,
+					exceptionType: getUpdatedExceptionType,
+					serviceName: getUpdatedServiceName,
 				}),
+			enabled: !loading,
 		},
 	]);
 
