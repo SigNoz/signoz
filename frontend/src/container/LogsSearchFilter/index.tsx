@@ -120,14 +120,23 @@ function SearchFilter({
 	const urlQuery = useUrlQuery();
 	const urlQueryString = urlQuery.get('q');
 
-	const debouncedHandleSearch = useMemo(() => debounce(handleSearch, 600), [
+	useEffect(() => {
+		const debouncedHandleSearch = debounce(handleSearch, 600);
+		debouncedHandleSearch(urlQueryString || '');
+
+		return (): void => {
+			debouncedHandleSearch.cancel();
+		};
+	}, [
+		urlQueryString,
+		maxTime,
+		minTime,
+		idEnd,
+		idStart,
+		logLinesPerPage,
+		dispatch,
 		handleSearch,
 	]);
-
-	useEffect(() => {
-		debouncedHandleSearch(urlQueryString || '');
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlQueryString, maxTime, minTime, idEnd, idStart, logLinesPerPage]);
 
 	return (
 		<Container>
@@ -168,12 +177,8 @@ function SearchFilter({
 }
 
 interface DispatchProps {
-	getLogs: (
-		props: Parameters<typeof getLogs>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: (
-		props: Parameters<typeof getLogsAggregate>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: typeof getLogs;
+	getLogsAggregate: typeof getLogsAggregate;
 }
 
 type SearchFilterProps = DispatchProps;
