@@ -507,10 +507,14 @@ func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) 
 	if err != nil {
 		return nil, err
 	}
+	serviceName := r.URL.Query().Get("serviceName")
+	exceptionType := r.URL.Query().Get("exceptionType")
 
 	params := &model.CountErrorsParams{
-		Start: startTime,
-		End:   endTime,
+		Start:         startTime,
+		End:           endTime,
+		ServiceName:   serviceName,
+		ExceptionType: exceptionType,
 	}
 
 	return params, nil
