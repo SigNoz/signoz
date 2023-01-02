@@ -1,11 +1,11 @@
-import { Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Modal, Tabs, Tooltip } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import useThemeMode from 'hooks/useThemeMode';
 import React, { useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-import ErrorTag from './ErrorTag';
+import Events from './Events';
 import {
 	CardContainer,
 	CustomSubText,
@@ -18,7 +18,7 @@ import Tags from './Tags';
 const { TabPane } = Tabs;
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
-	const { tree } = props;
+	const { tree, firstSpanStartTime } = props;
 
 	const { isDarkMode } = useThemeMode();
 
@@ -87,15 +87,12 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 					<Tags onToggleHandler={onToggleHandler} setText={setText} tags={tags} />
 				</TabPane>
 				<TabPane tab="Events" key="2">
-					{tree.event && Object.keys(tree.event).length !== 0 ? (
-						<ErrorTag
-							onToggleHandler={onToggleHandler}
-							setText={setText}
-							event={tree.event}
-						/>
-					) : (
-						<Typography>No events data in selected span</Typography>
-					)}
+					<Events
+						events={tree.event}
+						onToggleHandler={onToggleHandler}
+						setText={setText}
+						firstSpanStartTime={firstSpanStartTime}
+					/>
 				</TabPane>
 			</Tabs>
 		</CardContainer>
@@ -104,6 +101,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 interface SelectedSpanDetailsProps {
 	tree?: ITraceTree;
+	firstSpanStartTime: number;
 }
 
 SelectedSpanDetails.defaultProps = {

@@ -392,6 +392,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.editUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
 
+	router.HandleFunc("/api/v1/user/{id}/flags", SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
+
 	router.HandleFunc("/api/v1/rbac/role/{id}", SelfAccess(aH.getRole)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/role/{id}", AdminAccess(aH.editRole)).Methods(http.MethodPut)
 
@@ -1157,6 +1159,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
 		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		return
 	}
 
 	response_data := &model.QueryData{
@@ -1330,6 +1333,9 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
+	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
+		telemetry.GetInstance().AddActiveTracesUser()
+	}
 
 	aH.WriteJSON(w, r, result)
 }
@@ -1854,6 +1860,37 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
 }
 
+// addUserFlag patches a user flags with the changes
+func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
+	// read user id from path var
+	userId := mux.Vars(r)["id"]
+
+	// read input into user flag
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
+		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
+		return
+	}
+	flags := make(map[string]string, 0)
+
+	err = json.Unmarshal(b, &flags)
+	if err != nil {
+		zap.S().Errorf("failed parsing user flags for userId ", userId, "with error: ", err)
+		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
+		return
+	}
+
+	newflags, apiError := dao.DB().UpdateUserFlags(r.Context(), userId, flags)
+	if !apiError.IsNil() {
+		RespondError(w, apiError, nil)
+		return
+	}
+
+	aH.Respond(w, newflags)
+}
+
 func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
@@ -2157,6 +2194,8 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &err, "streaming is not supported")
 		return
 	}
+	// flush the headers
+	flusher.Flush()
 
 	for {
 		select {
