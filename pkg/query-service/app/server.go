@@ -388,6 +388,30 @@ func (s *Server) Start() error {
 	return nil
 }
 
+func (s *Server) Stop() error {
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.privateHTTP != nil {
+		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.opampServer != nil {
+		s.opampServer.Stop()
+	}
+
+	if s.ruleManager != nil {
+		s.ruleManager.Stop()
+	}
+
+	return nil
+}
+
 func makeRulesManager(
 	promConfigPath,
 	alertManagerURL string,
