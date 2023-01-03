@@ -1,0 +1,37 @@
+name: staging-deployment
+# Trigger deployment only on push to develop branch
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  deploy:
+    name: Deploy latest develop branch to staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v0.1.6
+        env:
+          DOCKER_TAG: develop
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DOCKER_TAG,GITHUB_SHA
+          command_timeout: 60m
+          script: |
+            echo "DOCKER_TAG: ${DOCKER_TAG}"
+            echo "GITHUB_SHA: ${GITHUB_SHA}"
+            docker system prune --force
+            cd ~/signoz
+            git status
+            git add .
+            git stash push -m "stashed on $(date --iso-8601=seconds)"
+            git fetch origin
+            git checkout develop
+            git pull
+            make build-ee-query-service-amd64
+            make build-frontend-amd64
+            make run-signoz
