@@ -24,6 +24,8 @@ function Version(): JSX.Element {
 	const isLatestVersion = currentVersion === latestVersion;
 	const isError = isCurrentVersionError || isLatestVersionError;
 
+	const githubReleaseURL = 'https://github.com/SigNoz/signoz/releases';
+
 	return (
 		<Card>
 			<Title ellipsis level={4}>
@@ -56,7 +58,11 @@ function Version(): JSX.Element {
 						placeholder={t('latest_version')}
 					/>
 					<Button
-						href="https://github.com/SigNoz/signoz/releases"
+						href={
+							isLatestVersionError
+								? githubReleaseURL
+								: `${githubReleaseURL}/tag/${latestVersion}`
+						}
 						target="_blank"
 						type="link"
 					>
