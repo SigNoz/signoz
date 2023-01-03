@@ -6,6 +6,7 @@ import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 
 import ErrorLink from './ErrorLink';
 import LinkContainer from './Link';
+import { MenuItem } from './styles';
 
 function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 	const sortedConfig = useMemo(
@@ -16,7 +17,7 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	return (
-		<Menu.ItemGroup>
+		<Menu>
 			{sortedConfig.map((item) => {
 				const iconName = `${isDarkMode ? item.darkIcon : item.lightIcon}`;
 
@@ -26,19 +27,19 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 				return (
 					<ErrorLink key={item.text + item.href}>
 						<Suspense fallback={<Spinner height="5vh" />}>
-							<Menu.Item>
+							<MenuItem>
 								<LinkContainer href={item.href}>
 									<Space size="small" align="start">
 										<Component />
 										{item.text}
 									</Space>
 								</LinkContainer>
-							</Menu.Item>
+							</MenuItem>
 						</Suspense>
 					</ErrorLink>
 				);
 			})}
-		</Menu.ItemGroup>
+		</Menu>
 	);
 }
 
