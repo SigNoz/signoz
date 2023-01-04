@@ -1,8 +1,11 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -266,15 +269,82 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
+func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+	var requestBody map[string]interface{}
+	data := map[string]interface{}{}
+
+	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+		bodyBytes, _ := ioutil.ReadAll(r.Body)
+		r.Body.Close() //  must close
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		json.Unmarshal(bodyBytes, &requestBody)
+
+	} else {
+		return nil, false
+	}
+
+	compositeMetricQuery, compositeMetricQueryExists := requestBody["compositeMetricQuery"]
+	compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
+	signozMetricFound := false
+
+	if compositeMetricQueryExists {
+		signozMetricFound = telemetry.GetInstance().CheckSigNozMetrics(compositeMetricQueryMap)
+		queryType, queryTypeExists := compositeMetricQueryMap["queryType"]
+		if queryTypeExists {
+			data["queryType"] = queryType
+		}
+		panelType, panelTypeExists := compositeMetricQueryMap["panelType"]
+		if panelTypeExists {
+			data["panelType"] = panelType
+		}
+	}
+
+	datasource, datasourceExists := requestBody["dataSource"]
+	if datasourceExists {
+		data["datasource"] = datasource
+	}
+
+	if !signozMetricFound {
+		telemetry.GetInstance().AddActiveMetricsUser()
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, false)
+	}
+
+	return data, true
+}
+
+func getActiveLogs(path string, r *http.Request) {
+	// if path == "/api/v1/dashboards/{uuid}" {
+	// 	telemetry.GetInstance().AddActiveMetricsUser()
+	// }
+	if path == "/api/v1/logs" {
+		hasFilters := len(r.URL.Query().Get("q"))
+		if hasFilters > 0 {
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+
+	}
+
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
+		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		getActiveLogs(path, r)
+
 		lrw := NewLoggingResponseWriter(w)
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
+		if metadataExists {
+			for key, value := range dashboardMetadata {
+				data[key] = value
+			}
+		}
 
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
