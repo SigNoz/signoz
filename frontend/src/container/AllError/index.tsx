@@ -10,13 +10,15 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { ColumnType, TablePaginationConfig } from 'antd/es/table';
+import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -29,8 +31,13 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { FilterDropdownExtendsProps } from './types';
 import {
+	extractFilterValues,
+	getDefaultFilterValue,
 	getDefaultOrder,
+	getFilterString,
+	getFilterValues,
 	getNanoSeconds,
 	getOffSet,
 	getOrder,
@@ -43,15 +50,27 @@ function AllErrors(): JSX.Element {
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { search, pathname } = useLocation();
-	const params = useMemo(() => new URLSearchParams(search), [search]);
-
+	const { pathname } = useLocation();
+	const params = useUrlQuery();
 	const { t } = useTranslation(['common']);
-
-	const updatedOrder = getOrder(params.get(urlKey.order));
-	const getUpdatedOffset = getOffSet(params.get(urlKey.offset));
-	const getUpdatedParams = getOrderParams(params.get(urlKey.orderParam));
-	const getUpdatedPageSize = getUpdatePageSize(params.get(urlKey.pageSize));
+	const {
+		updatedOrder,
+		getUpdatedOffset,
+		getUpdatedParams,
+		getUpdatedPageSize,
+		getUpdatedExceptionType,
+		getUpdatedServiceName,
+	} = useMemo(
+		() => ({
+			updatedOrder: getOrder(params.get(urlKey.order)),
+			getUpdatedOffset: getOffSet(params.get(urlKey.offset)),
+			getUpdatedParams: getOrderParams(params.get(urlKey.orderParam)),
+			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
+			getUpdatedExceptionType: getFilterString(params.get(urlKey.exceptionType)),
+			getUpdatedServiceName: getFilterString(params.get(urlKey.serviceName)),
+		}),
+		[params],
+	);
 
 	const updatedPath = useMemo(
 		() =>
@@ -60,6 +79,8 @@ function AllErrors(): JSX.Element {
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
 				pageSize: getUpdatedPageSize,
+				exceptionType: getUpdatedExceptionType,
+				serviceName: getUpdatedServiceName,
 			})}`,
 		[
 			pathname,
@@ -67,6 +88,8 @@ function AllErrors(): JSX.Element {
 			getUpdatedOffset,
 			getUpdatedParams,
 			getUpdatedPageSize,
+			getUpdatedExceptionType,
+			getUpdatedServiceName,
 		],
 	);
 
@@ -81,16 +104,27 @@ function AllErrors(): JSX.Element {
 					limit: getUpdatedPageSize,
 					offset: getUpdatedOffset,
 					orderParam: getUpdatedParams,
+					exceptionType: getUpdatedExceptionType,
+					serviceName: getUpdatedServiceName,
 				}),
 			enabled: !loading,
 		},
 		{
-			queryKey: ['getErrorCounts', maxTime, minTime],
+			queryKey: [
+				'getErrorCounts',
+				maxTime,
+				minTime,
+				getUpdatedExceptionType,
+				getUpdatedServiceName,
+			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
 					end: maxTime,
 					start: minTime,
+					exceptionType: getUpdatedExceptionType,
+					serviceName: getUpdatedServiceName,
 				}),
+			enabled: !loading,
 		},
 	]);
 
@@ -108,14 +142,49 @@ function AllErrors(): JSX.Element {
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
 
-	const handleSearch = (
-		confirm: (param?: FilterConfirmProps) => void,
-	): VoidFunction => (): void => {
-		confirm();
-	};
+	const handleSearch = useCallback(
+		(
+			confirm: (param?: FilterConfirmProps) => void,
+			filterValue: string,
+			filterKey: string,
+		): VoidFunction => (): void => {
+			const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
+				getUpdatedServiceName || '',
+				getUpdatedExceptionType || '',
+				filterKey,
+				filterValue || '',
+			);
+			history.replace(
+				`${pathname}?${createQueryParams({
+					order: updatedOrder,
+					offset: getUpdatedOffset,
+					orderParam: getUpdatedParams,
+					pageSize: getUpdatedPageSize,
+					exceptionType: exceptionFilterValue,
+					serviceName: serviceFilterValue,
+				})}`,
+			);
+			confirm();
+		},
+		[
+			getUpdatedExceptionType,
+			getUpdatedOffset,
+			getUpdatedPageSize,
+			getUpdatedParams,
+			getUpdatedServiceName,
+			pathname,
+			updatedOrder,
+		],
+	);
 
 	const filterDropdownWrapper = useCallback(
-		({ setSelectedKeys, selectedKeys, confirm, placeholder }) => {
+		({
+			setSelectedKeys,
+			selectedKeys,
+			confirm,
+			placeholder,
+			filterKey,
+		}: FilterDropdownExtendsProps) => {
 			return (
 				<Card size="small">
 					<Space align="start" direction="vertical">
@@ -126,11 +195,16 @@ function AllErrors(): JSX.Element {
 								setSelectedKeys(e.target.value ? [e.target.value] : [])
 							}
 							allowClear
-							onPressEnter={handleSearch(confirm)}
+							defaultValue={getDefaultFilterValue(
+								filterKey,
+								getUpdatedServiceName,
+								getUpdatedExceptionType,
+							)}
+							onPressEnter={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
 						/>
 						<Button
 							type="primary"
-							onClick={handleSearch(confirm)}
+							onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
 							icon={<SearchOutlined />}
 							size="small"
 						>
@@ -140,11 +214,11 @@ function AllErrors(): JSX.Element {
 				</Card>
 			);
 		},
-		[],
+		[getUpdatedExceptionType, getUpdatedServiceName, handleSearch],
 	);
 
-	const onExceptionTypeFilter = useCallback(
-		(value, record: Exception): boolean => {
+	const onExceptionTypeFilter: ColumnType<Exception>['onFilter'] = useCallback(
+		(value: unknown, record: Exception): boolean => {
 			if (record.exceptionType && typeof value === 'string') {
 				return record.exceptionType.toLowerCase().includes(value.toLowerCase());
 			}
@@ -154,7 +228,7 @@ function AllErrors(): JSX.Element {
 	);
 
 	const onApplicationTypeFilter = useCallback(
-		(value, record: Exception): boolean => {
+		(value: unknown, record: Exception): boolean => {
 			if (record.serviceName && typeof value === 'string') {
 				return record.serviceName.toLowerCase().includes(value.toLowerCase());
 			}
@@ -167,6 +241,7 @@ function AllErrors(): JSX.Element {
 		(
 			onFilter: ColumnType<Exception>['onFilter'],
 			placeholder: string,
+			filterKey: string,
 		): ColumnType<Exception> => ({
 			onFilter,
 			filterIcon,
@@ -176,6 +251,7 @@ function AllErrors(): JSX.Element {
 					selectedKeys,
 					confirm,
 					placeholder,
+					filterKey,
 				}),
 		}),
 		[filterIcon, filterDropdownWrapper],
@@ -186,7 +262,7 @@ function AllErrors(): JSX.Element {
 			title: 'Exception Type',
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
-			...getFilter(onExceptionTypeFilter, 'Search By Exception'),
+			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
@@ -266,30 +342,43 @@ function AllErrors(): JSX.Element {
 				updatedOrder,
 				'serviceName',
 			),
-			...getFilter(onApplicationTypeFilter, 'Search By Application'),
+			...getFilter(
+				onApplicationTypeFilter,
+				'Search By Application',
+				'serviceName',
+			),
 		},
 	];
 
-	const onChangeHandler: TableProps<Exception>['onChange'] = (
-		paginations,
-		_,
-		sorter,
-	) => {
-		if (!Array.isArray(sorter)) {
-			const { pageSize = 0, current = 0 } = paginations;
-			const { columnKey = '', order } = sorter;
-			const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
-
-			history.replace(
-				`${pathname}?${createQueryParams({
-					order: updatedOrder,
-					offset: (current - 1) * pageSize,
-					orderParam: columnKey,
-					pageSize,
-				})}`,
-			);
-		}
-	};
+	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(
+		(
+			paginations: TablePaginationConfig,
+			filters: Record<string, FilterValue | null>,
+			sorter: SorterResult<Exception>[] | SorterResult<Exception>,
+		) => {
+			if (!Array.isArray(sorter)) {
+				const { pageSize = 0, current = 0 } = paginations;
+				const { columnKey = '', order } = sorter;
+				const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
+				const params = new URLSearchParams(window.location.search);
+				const { exceptionType, serviceName } = extractFilterValues(filters, {
+					serviceName: getFilterString(params.get(urlKey.serviceName)),
+					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
+				});
+				history.replace(
+					`${pathname}?${createQueryParams({
+						order: updatedOrder,
+						offset: (current - 1) * pageSize,
+						orderParam: columnKey,
+						pageSize,
+						exceptionType,
+						serviceName,
+					})}`,
+				);
+			}
+		},
+		[pathname],
+	);
 
 	return (
 		<Table

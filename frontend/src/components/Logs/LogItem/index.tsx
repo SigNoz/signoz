@@ -14,7 +14,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
-import { Container } from './styles';
+import { Container, LogFieldContainer, Text, TextContainer } from './styles';
 import { isValidLogField } from './util';
 
 interface LogFieldProps {
@@ -23,21 +23,17 @@ interface LogFieldProps {
 }
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	return (
-		<div
-			style={{
-				display: 'flex',
-				overflow: 'hidden',
-				width: '100%',
-			}}
-		>
-			<Typography.Text type="secondary">{fieldKey}</Typography.Text>
+		<TextContainer>
+			<Text ellipsis type="secondary">
+				{fieldKey}
+			</Text>
 			<CopyClipboardHOC textToCopy={fieldValue}>
 				<Typography.Text ellipsis>
 					{': '}
 					{fieldValue}
 				</Typography.Text>
 			</CopyClipboardHOC>
-		</div>
+		</TextContainer>
 	);
 }
 function LogSelectedField({
@@ -99,22 +95,24 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 			<div style={{ maxWidth: '100%' }}>
 				<div>
 					{'{'}
-					<div style={{ marginLeft: '0.5rem' }}>
-						<LogGeneralField
-							fieldKey="log"
-							fieldValue={flattenLogData.body as never}
-						/>
-						{flattenLogData.stream && (
+					<LogFieldContainer>
+						<>
 							<LogGeneralField
-								fieldKey="stream"
-								fieldValue={flattenLogData.stream as never}
+								fieldKey="log"
+								fieldValue={flattenLogData.body as never}
 							/>
-						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
-					</div>
+							{flattenLogData.stream && (
+								<LogGeneralField
+									fieldKey="stream"
+									fieldValue={flattenLogData.stream as never}
+								/>
+							)}
+							<LogGeneralField
+								fieldKey="timestamp"
+								fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
+							/>
+						</>
+					</LogFieldContainer>
 					{'}'}
 				</div>
 				<div>

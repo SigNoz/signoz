@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { notification, Table, Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
