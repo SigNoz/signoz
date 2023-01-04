@@ -102,10 +102,8 @@ build-push-ee-query-service:
 	--build-arg LD_FLAGS="$(LD_FLAGS)" --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
-	@if [ $(shell uname) = "Linux" ]; then \
-		sudo apt update; \
-		sudo apt install sqlite3; \
-	fi
+	sudo apt update
+	sudo apt install sqlite3
 	mkdir -p /var/lib/signoz
 	sqlite3 /var/lib/signoz/signoz.db "VACUUM";
 	mkdir -p pkg/query-service/config/dashboards
