@@ -5,10 +5,10 @@ import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useFetch from 'hooks/useFetch';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -29,13 +29,13 @@ function AlertChannels(): JSX.Element {
 		history.push(ROUTES.CHANNELS_NEW);
 	}, []);
 
-	const { loading, payload, error, errorMessage } = useFetch(getAll);
+	const { isLoading, data, isError } = useQuery('channels', getAll);
 
-	if (error) {
-		return <Typography>{errorMessage}</Typography>;
+	if (isError || data?.error) {
+		return <Typography>{data?.error || 'Something went wrong'}</Typography>;
 	}
 
-	if (loading || payload === undefined) {
+	if (isLoading || data?.payload === undefined || data.payload === null) {
 		return <Spinner tip={t('loading_channels_message')} height="90vh" />;
 	}
 
@@ -60,7 +60,7 @@ function AlertChannels(): JSX.Element {
 				</RightActionContainer>
 			</ButtonContainer>
 
-			<AlertChannelsComponent allChannels={payload} />
+			<AlertChannelsComponent allChannels={data.payload} />
 		</>
 	);
 }

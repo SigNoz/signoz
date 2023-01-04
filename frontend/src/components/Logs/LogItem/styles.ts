@@ -29,3 +29,7 @@ export const TextContainer = styled.div`
 	overflow: hidden;
 	width: 100%;
 `;
+
+export const LogFieldContainer = styled.div`
+	margin-left: 0.5rem;
+`;
